@@ -7,7 +7,7 @@ import {Route, Router, Switch} from "react-router-dom";
 import history from "./utils/history";
 import Footer from "./components/Footer";
 import NavBar from "./components/NavBar";
-import Home from "./views/Home";
+import Peers from "./views/Peers";
 import {Container} from "reactstrap";
 
 // styles
@@ -15,7 +15,6 @@ import "./App.css";
 
 // fontawesome
 import initFontAwesome from "./utils/initFontAwesome";
-import ExternalApi from "./views/ExternalApi";
 initFontAwesome();
 
 const App = () => {
@@ -45,7 +44,7 @@ const App = () => {
                     <NavBar />
                     <Container className="flex-grow-1 mt-5">
                         <Switch>
-                            <Route path="/" exact component={ExternalApi}/>
+                            <Route path="/peers" exact component={Peers}/>
                         </Switch>
                     </Container>
                    <Footer/>
