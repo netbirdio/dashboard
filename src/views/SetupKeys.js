@@ -49,7 +49,7 @@ export const PeersComponent = () => {
     try {
       const token = await getAccessTokenSilently();
 
-      const response = await fetch(`${apiOrigin}/api/peers`, {
+      const response = await fetch(`${apiOrigin}/api/setup-keys`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -86,9 +86,7 @@ export const PeersComponent = () => {
         <div className="result-block-container">
           {peers && (
               <div className="result-block" data-testid="api-result">
-                <p className="lead">
-                  List of all available peers
-                </p>
+                <h6 className="muted">Result</h6>
                 <Highlight>
                   <span>{JSON.stringify(peers, null, 2)}</span>
                 </Highlight>
@@ -96,56 +94,6 @@ export const PeersComponent = () => {
           )}
         </div>
       </>
-
-      /*<>
-        <div className="mb-5">
-          {state.error === "Failed to fetch" && (
-              <Alert color="warning">
-                You need to{" "}
-                <a
-                    href="#/"
-                    class="alert-link"
-                    onClick={(e) => handle(e, handleConsent)}
-                >
-                  consent to get access to users api
-                </a>
-              </Alert>
-          )}
-        </div>
-
-        {state.error === "login_required" && (
-            <Alert color="warning">
-              You need to{" "}
-              <a
-                  href="#/"
-                  class="alert-link"
-                  onClick={(e) => handle(e, handleLoginAgain)}
-              >
-                log in again
-              </a>
-            </Alert>
-        )}
-        <div className="result-block-container">
-          {state.showResult && (
-              <div className="result-block" data-testid="api-result">
-                <h6 className="muted">Result</h6>
-                {/!*<Highlight>*!/}
-                <span>{JSON.stringify(state.apiMessage, null, 2)}</span>
-                {/!*</Highlight>*!/}
-              </div>
-          )}
-        </div>
-        <div className="result-block-container">
-          {state.error && (
-              <div className="result-block" data-testid="api-result">
-                <h6 className="muted">Result</h6>
-                {/!*<Highlight>*!/}
-                <span>{JSON.stringify(state.error, null, 2)}</span>
-                {/!*</Highlight>*!/}
-              </div>
-          )}
-        </div>
-      </>*/
   );
 }
 ;

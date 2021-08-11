@@ -41,7 +41,6 @@ const NavBar = () => {
           <NavbarToggler onClick={toggle} />
           <Collapse isOpen={isOpen} navbar>
             <Nav className="mr-auto" navbar>
-
               {isAuthenticated && (
                 <NavItem>
                   <NavLink
@@ -53,6 +52,42 @@ const NavBar = () => {
                     Peers
                   </NavLink>
                 </NavItem>
+              )}
+              {isAuthenticated && (
+                  <NavItem>
+                    <NavLink
+                        tag={RouterNavLink}
+                        to="/setup-keys"
+                        exact
+                        activeClassName="router-link-exact-active"
+                    >
+                      Setup Keys
+                    </NavLink>
+                  </NavItem>
+              )}
+              {isAuthenticated && (
+                  <NavItem>
+                    <NavLink
+                        tag={RouterNavLink}
+                        to="/acls"
+                        exact
+                        activeClassName="router-link-exact-active"
+                    >
+                      Access Control
+                    </NavLink>
+                  </NavItem>
+              )}
+              {isAuthenticated && (
+                  <NavItem>
+                    <NavLink
+                        tag={RouterNavLink}
+                        to="/logs"
+                        exact
+                        activeClassName="router-link-exact-active"
+                    >
+                      Activity
+                    </NavLink>
+                  </NavItem>
               )}
             </Nav>
             <Nav className="d-none d-md-block" navbar>

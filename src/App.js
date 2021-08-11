@@ -8,6 +8,9 @@ import history from "./utils/history";
 import Footer from "./components/Footer";
 import NavBar from "./components/NavBar";
 import Peers from "./views/Peers";
+import AccessControls from "./views/AccessControls";
+import Activity from "./views/Activity";
+import SetupKeys from "./views/SetupKeys";
 import {Container} from "reactstrap";
 
 // styles
@@ -45,6 +48,9 @@ const App = () => {
                     <Container className="flex-grow-1 mt-5">
                         <Switch>
                             <Route path="/peers" exact component={Peers}/>
+                            <Route path="/setup-keys" exact component={SetupKeys}/>
+                            <Route path="/acls" exact component={AccessControls}/>
+                            <Route path="/logs" exact component={Activity}/>
                         </Switch>
                     </Container>
                    <Footer/>
