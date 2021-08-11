@@ -18,17 +18,12 @@
 }
 
 .spinner {
-  position: fixed;
-  z-index: 999;
-  height: 2em;
-  width: 2em;
-  overflow: visible;
-  margin: auto;
-  top: 0;
-  left: 0;
-  bottom: 0;
-  right: 0;
-  background-color: white;
+  color: white;
+  padding: 12px;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
 }
 
 .result-block-container .result-block {
