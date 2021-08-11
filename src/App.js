@@ -3,7 +3,7 @@ import React from "react";
 import './App.css';
 import {useAuth0} from "@auth0/auth0-react";
 import Loading from "./components/Loading";
-import {Route, Router, Switch} from "react-router-dom";
+import {Route, Router, Switch, Redirect} from "react-router-dom";
 import history from "./utils/history";
 import Footer from "./components/Footer";
 import NavBar from "./components/NavBar";
@@ -47,6 +47,15 @@ const App = () => {
                     <NavBar />
                     <Container className="flex-grow-1 mt-5">
                         <Switch>
+                            <Route
+                                exact
+                                path="/"
+                                render={() => {
+                                    return (
+                                            <Redirect to="/peers" />
+                                    )
+                                }}
+                            />
                             <Route path="/peers" exact component={Peers}/>
                             <Route path="/setup-keys" exact component={SetupKeys}/>
                             <Route path="/acls" exact component={AccessControls}/>
