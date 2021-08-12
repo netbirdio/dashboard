@@ -79,15 +79,15 @@ const NavBar = () => {
                     <Nav className="d-none d-md-block" navbar>
                         {isAuthenticated && (
                             <NavDropdown id="profileDropDown" title={
-                                    <img
-                                        src={user.picture}
-                                        alt="Profile"
-                                        className="nav-user-profile rounded-circle"
-                                        width="50"
-                                    />
+                                <img
+                                    src={user.picture}
+                                    alt="Profile"
+                                    className="nav-user-profile rounded-circle"
+                                    width="50"
+                                />
                             }>
                                 <NavDropdown.Item>
-                                   <b>{user.name}</b>
+                                    <b>{user.name}</b>
                                 </NavDropdown.Item>
                                 <NavDropdown.Item
                                     as={RouterNavLink}
