@@ -11,7 +11,7 @@ import Peers from "./views/Peers";
 import AccessControls from "./views/AccessControls";
 import Activity from "./views/Activity";
 import SetupKeys from "./views/SetupKeys";
-import {Container} from "reactstrap";
+import {Container} from "react-bootstrap";
 
 // styles
 import "./App.css";
