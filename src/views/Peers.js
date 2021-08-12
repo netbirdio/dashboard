@@ -2,7 +2,9 @@ import React, {useEffect, useState} from "react";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import {getConfig} from "../config";
 import Loading from "../components/Loading";
-import Highlight from "../components/Highlight";
+import TableOptionsButton from "../components/TableOptionsButton";
+import {Dropdown, Table} from "react-bootstrap";
+import {NavLink as RouterNavLink} from "react-router-dom";
 
 export const PeersComponent = () => {
   const {apiOrigin, audience} = getConfig();
@@ -85,67 +87,63 @@ export const PeersComponent = () => {
         )}
         <div className="result-block-container">
           {peers && (
-              <div className="result-block" data-testid="api-result">
-                <p className="lead">
-                  List of all available peers
-                </p>
-                <Highlight>
-                  <span>{JSON.stringify(peers, null, 2)}</span>
-                </Highlight>
+              <div>
+                <h4>Peers</h4>
+                <br/>
+                <Table responsive>
+                  <thead style={{fontSize: "13px", color: "#838383"}}>
+                  <tr>
+                    <th>PEER</th>
+                    <th>IP</th>
+                    <th>Status</th>
+                    <th>OS</th>
+                    <th>LAST SEEN</th>
+                    <th/>
+                  </tr>
+                  </thead>
+                  <tbody>
+                  {Array.from(peers).map((peer, index) => (
+                      <tr style={{color: "black"}}>
+                        <td>
+                          {peer.Name}
+                        </td>
+                        <td>
+                          {peer.IP}
+                        </td>
+                        <td>
+                          {peer.Connected ? "Connected" : "Disconnected"}
+                        </td>
+                        <td>
+                          {peer.Os}
+                        </td>
+                        <td>
+                          {!peer.Connected ? new Intl.DateTimeFormat('en-GB', {dateStyle: 'medium'}).format((Date.parse(peer.LastSeen))) : "Just now"}
+                        </td>
+                        <td>
+                          <Dropdown>
+                            <Dropdown.Toggle as={TableOptionsButton} id="peer-table-dropdown"/>
+                            <Dropdown.Menu>
+                              <Dropdown.Item eventKey="1">
+                                <RouterNavLink
+                                    to={"/peers/" + peer.IP}
+                                    exact
+                                >
+                                  Edit
+                                </RouterNavLink>
+                              </Dropdown.Item>
+                              <Dropdown.Item eventKey="2">Disable</Dropdown.Item>
+                              <Dropdown.Item eventKey="3">Remove</Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        </td>
+                      </tr>
+                  ))}
+                  </tbody>
+                </Table>
               </div>
           )}
         </div>
       </>
-
-      /*<>
-        <div className="mb-5">
-          {state.error === "Failed to fetch" && (
-              <Alert color="warning">
-                You need to{" "}
-                <a
-                    href="#/"
-                    class="alert-link"
-                    onClick={(e) => handle(e, handleConsent)}
-                >
-                  consent to get access to users api
-                </a>
-              </Alert>
-          )}
-        </div>
-
-        {state.error === "login_required" && (
-            <Alert color="warning">
-              You need to{" "}
-              <a
-                  href="#/"
-                  class="alert-link"
-                  onClick={(e) => handle(e, handleLoginAgain)}
-              >
-                log in again
-              </a>
-            </Alert>
-        )}
-        <div className="result-block-container">
-          {state.showResult && (
-              <div className="result-block" data-testid="api-result">
-                <h6 className="muted">Result</h6>
-                {/!*<Highlight>*!/}
-                <span>{JSON.stringify(state.apiMessage, null, 2)}</span>
-                {/!*</Highlight>*!/}
-              </div>
-          )}
-        </div>
-        <div className="result-block-container">
-          {state.error && (
-              <div className="result-block" data-testid="api-result">
-                <h6 className="muted">Result</h6>
-                {/!*<Highlight>*!/}
-                <span>{JSON.stringify(state.error, null, 2)}</span>
-                {/!*</Highlight>*!/}
-              </div>
-          )}
-        </div>
-      </>*/
   );
 }
 ;
