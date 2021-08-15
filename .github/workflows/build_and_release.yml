@@ -34,12 +34,13 @@ jobs:
         run: tar zvcf build.tgz build
 
       - name: Bump version and push tag
-        if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         id: tag_version
         uses: mathieudutour/github-tag-action@v5.6
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
+          release_branches: none
           pre_release_branches: main,build-and-release
+          dry_run: ${{ startsWith(github.ref, 'refs/tags/') }} # dry run if tag and generate output
 
       - uses: haya14busa/action-cond@v1
         id: condval
