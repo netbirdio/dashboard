@@ -22,8 +22,9 @@ jobs:
 
       - name: install dependecies
         run: npm install
+        
       - name: load auth_config.json
-        run: echo "${{ secrets.AUTH_CONFIG }}" > src/auth_config.json
+        run: echo '${{ secrets.AUTH_CONFIG }}' > src/auth_config.json
 
       - name: buid 
         # skiping fail on warning for now
