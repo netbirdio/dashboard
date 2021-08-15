@@ -22,19 +22,19 @@ jobs:
 
       - name: install dependecies
         run: npm install
-        
-      - name: load auth_config.json
-        run: echo '${{ secrets.AUTH_CONFIG }}' > src/auth_config.json
 
-      - name: buid 
-        # skiping fail on warning for now
-        run: CI=false npm run build
+      # - name: load auth_config.json
+      #   run: echo '${{ secrets.AUTH_CONFIG }}' > src/auth_config.json
 
-      - name: archive
-        run: tar zvcf build.tgz build
+      # - name: buid 
+      #   # skiping fail on warning for now
+      #   run: CI=false npm run build
 
-      - name: Release
-        uses: softprops/action-gh-release@v1
-        with:
-          files: build.tgz
-          prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
+      # - name: archive
+      #   run: tar zvcf build.tgz build
+
+      # - name: Release
+      #   uses: softprops/action-gh-release@v1
+      #   with:
+      #     files: build.tgz
+      #     prerelease: ${{ !startsWith(github.ref, 'refs/tags/') }}
