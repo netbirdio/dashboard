@@ -3,7 +3,6 @@ on:
   push:
     branches:
       - main
-      - build-and-release
     tags:
       - "**"
 
@@ -39,7 +38,7 @@ jobs:
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           release_branches: none
-          pre_release_branches: main,build-and-release
+          pre_release_branches: main
           dry_run: ${{ startsWith(github.ref, 'refs/tags/') }} # dry run if tag and generate output
 
       - uses: haya14busa/action-cond@v1
