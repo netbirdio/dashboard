@@ -1,9 +1,8 @@
-name: build and release
+name: build and push
 on:
   push:
     branches:
       - main
-      - docker-push
     tags:
       - "**"
 
@@ -42,7 +41,7 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_TOKEN }}
       -
-        name: Build and push
+        name: Docker build and push
         uses: docker/build-push-action@v2
         with:
           context: .
