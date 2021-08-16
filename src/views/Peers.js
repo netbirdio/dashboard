@@ -5,6 +5,7 @@ import Loading from "../components/Loading";
 import TableOptionsButton from "../components/TableOptionsButton";
 import {Dropdown, Table} from "react-bootstrap";
 import {NavLink as RouterNavLink} from "react-router-dom";
+import Highlight from "../components/Highlight";
 
 export const PeersComponent = () => {
   const {apiOrigin, audience} = getConfig();
@@ -87,6 +88,18 @@ export const PeersComponent = () => {
         )}
         <div className="result-block-container">
           {peers && (
+              <div className="result-block" data-testid="api-result">
+                <p className="lead">
+                  List of all available peers
+                </p>
+                <Highlight>
+                  <span>{JSON.stringify(peers, null, 2)}</span>
+                </Highlight>
+              </div>
+          )}
+        </div>
+        {/*<div className="result-block-container">
+          {peers && (
               <div>
                 <h4>Peers</h4>
                 <br/>
@@ -142,7 +155,7 @@ export const PeersComponent = () => {
                 </Table>
               </div>
           )}
-        </div>
+        </div>*/}
       </>
   );
 }
