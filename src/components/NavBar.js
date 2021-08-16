@@ -24,7 +24,7 @@ const NavBar = () => {
         <Navbar bg="light" expand="md" className="border-bottom">
             <Container>
                 <Navbar.Brand className="logo"/>
-
+                <Navbar.Toggle aria-controls="responsive-navbar-nav" />
                 <Navbar.Collapse id="basic-navbar-nav">
                     <Nav className="me-auto">
                         {isAuthenticated && (
