@@ -18,6 +18,7 @@ import "./App.css";
 
 // fontawesome
 import initFontAwesome from "./utils/initFontAwesome";
+import AddPeer from "./views/AddPeer";
 initFontAwesome();
 
 const App = () => {
@@ -57,6 +58,7 @@ const App = () => {
                                 }}
                             />
                             <Route path="/peers" exact component={Peers}/>
+                            <Route path="/add-peer" exact component={AddPeer}/>
                             <Route path="/setup-keys" exact component={SetupKeys}/>
                             <Route path="/acls" exact component={AccessControls}/>
                             <Route path="/logs" exact component={Activity}/>

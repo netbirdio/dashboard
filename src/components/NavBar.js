@@ -43,6 +43,18 @@ const NavBar = () => {
                             <Nav.Item>
                                 <Nav.Link
                                     as={RouterNavLink}
+                                    to="/add-peer"
+                                    exact
+                                    activeClassName="router-link-exact-active"
+                                >
+                                    Add Peer
+                                </Nav.Link>
+                            </Nav.Item>
+                        )}
+                        {isAuthenticated && (
+                            <Nav.Item>
+                                <Nav.Link
+                                    as={RouterNavLink}
                                     to="/setup-keys"
                                     exact
                                     activeClassName="router-link-exact-active"

@@ -67,7 +67,7 @@ Highlight.propTypes = {
 };
 
 Highlight.defaultProps = {
-  language: "json",
+  language: "javascript",
 };
 
 export default Highlight;
