@@ -58,7 +58,7 @@ function App() {
                 {/*<div className='h-screen flex justify-center items-center bg-green-400'>*/}
                 <Navbar toggle={toggle}/>
                 <Dropdown isOpen={isOpen} toggle={toggle}/>
-                <div className="min-h-screen bg-gray-100">
+                <div className="min-h-screen bg-white">
                     <Switch>
                         <Route
                             exact
