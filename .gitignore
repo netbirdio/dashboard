@@ -24,3 +24,4 @@ yarn-error.log*
 
 src/auth_config.json
 .idea
+.eslintcache
