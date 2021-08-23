@@ -23,7 +23,8 @@ export const SetupKeysComponent = () => {
 
         useEffect(() => {
             getSetupKeys(getAccessTokenSilently)
-                .then(responseData => setSetupKeys(responseData))
+                .then(responseData => responseData.sort((a,b) => (a.Name > b.Name) ? 1 : -1))
+                .then(sorted => setSetupKeys(sorted))
                 .then(() => setLoading(false))
                 .catch(error => handleError(error))
         }, [getAccessTokenSilently])
@@ -61,13 +62,19 @@ export const SetupKeysComponent = () => {
                                                             scope="col"
                                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                                         >
-                                                            State
+                                                            Valid
                                                         </th>
                                                         <th
                                                             scope="col"
                                                             className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                                         >
                                                             Type
+                                                        </th>
+                                                        <th
+                                                            scope="col"
+                                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                        >
+                                                            Key
                                                         </th>
                                                         <th
                                                             scope="col"
@@ -101,17 +108,18 @@ export const SetupKeysComponent = () => {
                                                                     {setupKey.Valid && (
                                                                         <span
                                                                             className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-green-100 text-green-800">
-                                                                     Valid
+                                                                     Yes
                                                                   </span>
                                                                     )}
                                                                     {!setupKey.Valid && (
                                                                         <span
                                                                             className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-red-100 text-red-800">
-                                                                     Invalid
+                                                                     No
                                                                   </span>
                                                                     )}
                                                                 </td>
-                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.Type}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.Type.toLowerCase()}</td>
+                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.Key.toUpperCase()}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.LastUsed)}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes}</td>
                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.Expires)}</td>

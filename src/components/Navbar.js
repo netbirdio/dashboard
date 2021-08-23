@@ -32,12 +32,12 @@ const Navbar = ({toggle}) => {
                                 <div className="flex-shrink-0 flex items-center">
 
                                     <img
-                                        className="block lg:hidden h-12 w-auto"
+                                        className="block lg:hidden h-10 w-auto"
                                         src={logo}
                                         alt="Workflow"
                                     />
                                     <img
-                                        className="hidden lg:block h-12 w-auto"
+                                        className="hidden lg:block h-10 w-auto"
                                         src={logo}
                                         alt="Workflow"
                                     />

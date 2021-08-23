@@ -23,7 +23,8 @@ export const Peers = () => {
 
         useEffect(() => {
             getPeers(getAccessTokenSilently)
-                .then(responseData => setPeers(responseData))
+                .then(responseData => responseData.sort((a,b) => (a.Name > b.Name) ? 1 : -1))
+                .then(sorted => setPeers(sorted))
                 .then(() => setLoading(false))
                 .catch(error => handleError(error))
         }, [getAccessTokenSilently])
