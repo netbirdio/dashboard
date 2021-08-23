@@ -1,12 +1,13 @@
-import React from "react";
+import React from 'react';
 
-const Footer = () => (
-  <footer className="bg-light p-3 text-center">
-    <div className="logo" />
-    <p>
-      Copyright <a href="https://wiretrustee.com">Wiretrustee Authors</a>
-    </p>
-  </footer>
-);
+const Footer = () => {
+  return (
+    <div className='flex justify-center items-center h-32 bg-white text-gray'>
+        <p className="font-mono">
+            Copyright © 2021 <a className="underline text-blue-600 hover:text-blue-800 visited:text-purple-600 font-mono" href="https://wiretrustee.com">Wiretrustee Authors</a>
+        </p>
+    </div>
+  );
+};
 
 export default Footer;

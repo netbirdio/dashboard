@@ -6,54 +6,58 @@ import {getSetupKeys} from "../api/ManagementAPI";
 
 export const SetupKeysComponent = () => {
 
-  const [setupKeys, setSetupKeys] = useState("")
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+        const [setupKeys, setSetupKeys] = useState("")
+        const [loading, setLoading] = useState(true)
+        const [error, setError] = useState(null)
 
-  const {
-    getAccessTokenSilently,
-  } = useAuth0();
+        const {
+            getAccessTokenSilently,
+        } = useAuth0();
 
-  const handleError = error => {
-    console.error('Error to fetch data:', error);
-    setLoading(false)
-    setError(error);
-  };
+        const handleError = error => {
+            console.error('Error to fetch data:', error);
+            setLoading(false)
+            setError(error);
+        };
 
-  useEffect(() => {
-    getSetupKeys(getAccessTokenSilently)
-        .then(responseData => setSetupKeys(responseData))
-        .then(() => setLoading(false))
-        .catch(error => handleError(error))
-  }, [getAccessTokenSilently])
+        useEffect(() => {
+            getSetupKeys(getAccessTokenSilently)
+                .then(responseData => setSetupKeys(responseData))
+                .then(() => setLoading(false))
+                .catch(error => handleError(error))
+        }, [getAccessTokenSilently])
 
-  return (
-      <>
-        {loading && (
-            <Loading/>
-        )}
-        {error != null && (
-            <div className="result-block-container">
-              <span>{error.toString()}</span>
-            </div>
-        )}
-        <div className="result-block-container">
-          {setupKeys && (
-              <div className="result-block" data-testid="api-result">
-                <h6 className="muted">Result</h6>
-                <Highlight>
-                  <span>{JSON.stringify(setupKeys, null, 2)}</span>
-                </Highlight>
-              </div>
-          )}
-        </div>
-      </>
-  );
-}
+        return (
+            <>
+                <div className="py-10">
+                    <header>
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <h1 className="text-2xl font-mono leading-tight text-gray-900">Setup Keys</h1>
+                        </div>
+                    </header>
+                    <main>
+                        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                            <div className="px-4 py-8 sm:px-0">
+                                {loading && (<Loading/>)}
+                                {error != null && (
+                                    <span>{error.toString()}</span>
+                                )}
+                                {setupKeys && (
+                                    <Highlight>
+                                        <span>{JSON.stringify(setupKeys, null, 2)}</span>
+                                    </Highlight>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </>
+        );
+    }
 ;
 
 export default withAuthenticationRequired(SetupKeysComponent,
-{
-  onRedirecting: () => <Loading/>,
-}
+    {
+        onRedirecting: () => <Loading/>,
+    }
 );

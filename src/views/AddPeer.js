@@ -1,8 +1,6 @@
 import React, {useEffect, useState} from "react";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
-import Highlight from "../components/Highlight";
-import {Alert, Badge, Col, Form, Row, Tab, Tabs} from "react-bootstrap";
 import {getSetupKeys} from "../api/ManagementAPI";
 
 export const AddPeerComponent = () => {
@@ -31,6 +29,46 @@ export const AddPeerComponent = () => {
 
         return (
             <>
+                <div className="py-10">
+                    <header>
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                            <h1 className="text-2xl leading-tight text-gray-900 font-mono">Add Peer</h1>
+                        </div>
+                    </header>
+
+                    <main>
+                        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                            <div className="px-4 py-8 sm:px-0">
+                                {loading && (<Loading/>)}
+                                {error != null && (
+                                    <span>{error.toString()}</span>
+                                )}
+                                {setupKeys && (
+                                    <>
+                                        <div>
+                                            <div className="md:grid md:grid-cols-1 md:gap-6">
+                                                <div className="mt-5 md:mt-0 md:col-span-1">
+                                                    <form action="#" method="POST">
+                                                        <div className="shadow sm:rounded-md sm:overflow-hidden">
+                                                            <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
+
+
+                                                            </div>
+
+                                                        </div>
+                                                    </form>
+
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+                        </div>
+                    </main>
+                </div>
+            </>
+            /*<>
                 {loading && (
                     <Loading/>
                 )}
@@ -116,7 +154,7 @@ export const AddPeerComponent = () => {
                         </Tabs>
                     </div>
                 )}
-            </>
+            </>*/
         );
     }
 ;
