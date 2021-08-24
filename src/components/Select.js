@@ -1,6 +1,7 @@
 import {Fragment, useState} from 'react'
 import {Listbox, Transition} from '@headlessui/react'
 import {CheckIcon, SelectorIcon} from '@heroicons/react/solid'
+import CopyButton from "./CopyButton";
 
 function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
@@ -14,18 +15,6 @@ export default function Select({data}) {
         let keyBox = document.getElementById("key-box");
         keyBox.classList.remove("hidden")
     };
-
-    const handleKeyCopy = () => {
-        navigator.clipboard.writeText(selected.Key)
-        let copyIcon = document.getElementById("copy");
-        let copySuccessIcon = document.getElementById("copy-success");
-        copyIcon.classList.add("hidden");
-        copySuccessIcon.classList.remove("hidden");
-        setTimeout(function() {
-            copySuccessIcon.classList.add("hidden");
-            copyIcon.classList.remove("hidden");
-        }, 2000);
-    }
 
     return (
         <div className="flex flex-col space-y-2">
@@ -91,19 +80,7 @@ export default function Select({data}) {
                 <div className="ml-3 flex-1 md:flex md:justify-between">
                     <p className="text-sm font-mono text-gray-700">{selected.Key}</p>
                     <p className="mt-4 text-sm md:mt-0 md:ml-6">
-                        <button
-                            onClick={handleKeyCopy}
-                            className="whitespace-nowrap font-medium text-gray-500 hover:text-gray-400">
-                            <svg id="copy" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
-                                      d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
-                            </svg>
-                            <svg id="copy-success" xmlns="http://www.w3.org/2000/svg" className="hidden h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24"
-                                 stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
-                            </svg>
-                        </button>
+                        <CopyButton toCopy={selected.Key}/>
                     </p>
                 </div>
             </div>

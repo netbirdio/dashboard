@@ -3,6 +3,7 @@ import PropTypes from "prop-types";
 
 import hljs from "highlight.js";
 import "highlight.js/styles/monokai-sublime.css";
+import CopyButton from "./CopyButton";
 
 const registeredLanguages = {};
 

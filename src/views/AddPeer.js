@@ -5,6 +5,7 @@ import {getSetupKeys} from "../api/ManagementAPI";
 import ArrowCircleRightIcon from "@heroicons/react/outline/ArrowCircleRightIcon";
 import Highlight from "../components/Highlight";
 import Select from "../components/Select";
+import CopyButton from "../components/CopyButton";
 
 
 function classNames(...classes) {
@@ -23,7 +24,8 @@ export const AddPeerComponent = () => {
                 target: 'Select setup key to register peer:',
                 icon: ArrowCircleRightIcon,
                 iconBackground: 'bg-gray-600',
-                content: (<Select data={setupKeys.filter(k => k.Valid)}/>)
+                content: (<Select data={setupKeys.filter(k => k.Valid)}/>),
+                copy: false
             },
             {
                 id: 2,
@@ -34,7 +36,9 @@ export const AddPeerComponent = () => {
                     <Highlight language="bash">
                         {`curl -fsSL https://pkgs.wiretrustee.com/stable/ubuntu/focal.gpg | sudo apt-key add - \ncurl -fsSL https://pkgs.wiretrustee.com/stable/ubuntu/focal.list | sudo tee /etc/apt/sources.list.d/wiretrustee.list`}
                     </Highlight>
-                )
+
+                ),
+                copy: true
             },
             {
                 id: 3,
@@ -45,7 +49,8 @@ export const AddPeerComponent = () => {
                     <Highlight language="bash">
                         {`sudo apt-get update \nsudo apt-get install wiretrustee`}
                     </Highlight>
-                )
+                ),
+                copy: true
             },
             {
                 id: 4,
@@ -53,10 +58,11 @@ export const AddPeerComponent = () => {
                 icon: ArrowCircleRightIcon,
                 iconBackground: 'bg-gray-600',
                 content: (
-                    <Highlight className="bash">
+                    <Highlight language="bash">
                         {"sudo wiretrustee login --setup-key xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx \nsudo systemctl start wiretrustee"}
                     </Highlight>
-                )
+                ),
+                copy: true
             },
             {
                 id: 5,
@@ -67,13 +73,15 @@ export const AddPeerComponent = () => {
                     <Highlight language="bash">
                         {`ip addr show wt0`}
                     </Highlight>
-                )
+                ),
+                copy: true
             },
             {
                 id: 6,
                 target: 'Repeat on other machines.',
                 icon: ArrowCircleRightIcon,
                 iconBackground: 'bg-gray-600',
+                copy: false
             },
         ]
 
@@ -133,7 +141,13 @@ export const AddPeerComponent = () => {
                   </span>
                                                         <span className="ml-4 min-w-0 ">
                     <span className="text-m font-semibold tracking-wide font-mono text-gray-700">{step.target}</span>
-                    <span className="text-sm text-gray-500">{step.content}</span>
+                                        <div className="flex flex-col space-y-2 ">
+                                                            <span
+                                                                className="text-sm text-gray-500">{step.content}</span>
+                                            {step.copy && (<CopyButton toCopy={step.content.children}
+                                                                       idPrefix={"add-peer-code-" + step.id}/>)}
+
+                                        </div>
                   </span>
                                                     </a>
                                                 </>
