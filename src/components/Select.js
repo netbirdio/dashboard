@@ -7,11 +7,29 @@ function classNames(...classes) {
 }
 
 export default function Select({data}) {
-    const [selected, setSelected] = useState(data.length > 0 ? data[0] : {Name:"..."})
+    const [selected, setSelected] = useState(data.length > 0 ? data[0] : {Name: "...", Id: "none"})
+
+    const handleSelected = selectedKey => {
+        setSelected(selectedKey)
+        let keyBox = document.getElementById("key-box");
+        keyBox.classList.remove("hidden")
+    };
+
+    const handleKeyCopy = () => {
+        navigator.clipboard.writeText(selected.Key)
+        let copyIcon = document.getElementById("copy");
+        let copySuccessIcon = document.getElementById("copy-success");
+        copyIcon.classList.add("hidden");
+        copySuccessIcon.classList.remove("hidden");
+        setTimeout(function() {
+            copySuccessIcon.classList.add("hidden");
+            copyIcon.classList.remove("hidden");
+        }, 2000);
+    }
 
     return (
         <div className="flex flex-col space-y-2">
-            <Listbox value={selected} onChange={setSelected}>
+            <Listbox value={selected} onChange={handleSelected}>
                 {({open}) => (
                     <>
                         <div className="mt-1 relative">
@@ -34,7 +52,7 @@ export default function Select({data}) {
                                     className="absolute z-10 mt-1 w-full bg-white shadow-lg max-h-60 rounded-md py-1 text-base ring-1 ring-black ring-opacity-5 overflow-auto focus:outline-none sm:text-sm">
                                     {data.map((item) => (
                                         <Listbox.Option
-                                            key={item.ID}
+                                            key={item.Id}
                                             className={({active}) =>
                                                 classNames(
                                                     active ? 'text-white bg-indigo-600' : 'text-gray-900',
@@ -69,17 +87,21 @@ export default function Select({data}) {
                     </>
                 )}
             </Listbox>
-            <div className="rounded-md bg-gray-100 p-4">
+            <div id="key-box" className="hidden rounded-md bg-gray-100 p-4">
                 <div className="ml-3 flex-1 md:flex md:justify-between">
                     <p className="text-sm font-mono text-gray-700">{selected.Key}</p>
                     <p className="mt-4 text-sm md:mt-0 md:ml-6">
-                        {/*onClick={() => {navigator.clipboard.writeText(this.state.textToCopy)}}*/}
                         <button
-                                className="whitespace-nowrap font-medium text-gray-500 hover:text-gray-400">
-                            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
+                            onClick={handleKeyCopy}
+                            className="whitespace-nowrap font-medium text-gray-500 hover:text-gray-400">
+                            <svg id="copy" xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
                                  stroke="currentColor">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                                       d="M8 7v8a2 2 0 002 2h6M8 7V5a2 2 0 012-2h4.586a1 1 0 01.707.293l4.414 4.414a1 1 0 01.293.707V15a2 2 0 01-2 2h-2M8 7H6a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2v-2"/>
+                            </svg>
+                            <svg id="copy-success" xmlns="http://www.w3.org/2000/svg" className="hidden h-6 w-6 text-green-500" fill="none" viewBox="0 0 24 24"
+                                 stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7"/>
                             </svg>
                         </button>
                     </p>
