@@ -139,7 +139,7 @@ export const SetupKeysComponent = () => {
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.Type.toLowerCase()}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.Key.toUpperCase()}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.LastUsed)}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes === 0 ? "unused" : formatDate(setupKey.LastUsed)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.Expires)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-m font-medium">
