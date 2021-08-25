@@ -7,6 +7,8 @@ import {useAuth0} from "@auth0/auth0-react";
 import Loading from "./components/Loading";
 import SetupKeys from "./views/SetupKeys";
 import AddPeer from "./views/AddPeer";
+import AccessControl from "./views/AccessControl";
+import Activity from "./views/Activity";
 
 function App() {
 
@@ -70,6 +72,8 @@ function App() {
                         <Route path='/peers' exact component={Peers}/>
                         <Route path="/add-peer" component={AddPeer}/>
                         <Route path="/setup-keys" component={SetupKeys}/>
+                        <Route path="/acls" component={AccessControl}/>
+                        <Route path="/activity" component={Activity}/>
                     </Switch>
                 </div>
                 <Footer/>
