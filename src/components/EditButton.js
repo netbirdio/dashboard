@@ -1,6 +1,6 @@
 import React, {Fragment} from 'react';
 import {Menu, Transition} from "@headlessui/react";
-import {NavLink} from "react-router-dom";
+import {Link, NavLink} from "react-router-dom";
 import {classNames} from "../utils/common";
 
 const EditButton = ({items, handler}) => {
@@ -13,7 +13,7 @@ const EditButton = ({items, handler}) => {
             <Menu as="div">
                 <div>
                     <Menu.Button
-                        className="relative whitespace-nowrap font-medium text-gray-500 hover:text-gray-400 ">
+                        className="whitespace-nowrap font-medium text-gray-500 hover:text-gray-400">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
                              stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -31,18 +31,18 @@ const EditButton = ({items, handler}) => {
                     leaveTo="transform opacity-0 scale-95"
                 >
                     <Menu.Items
-                        className="absolute mt-2 w-48 squared-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        className="absolute mt-2 squared-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
 
                         {items.map((item, idx) => (
                             <Menu.Item>
                                 {({active}) => (
-                                    <NavLink
+                                    <Link
                                         to="#"
                                         className={classNames(active ? 'bg-gray-100' : 'font-mono', 'block px-4 py-2 text-sm text-gray-700 font-mono')}
                                         onClick={() => handleAction(item.name)}
                                     >
                                         {item.name}
-                                    </NavLink>
+                                    </Link>
                                 )}
                             </Menu.Item>
                         ))}
