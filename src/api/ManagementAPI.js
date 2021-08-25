@@ -44,3 +44,12 @@ export const renameSetupKey = async (getAccessTokenSilently, keyId, newName) => 
 export const getPeers = async (getAccessTokenSilently) => {
     return callApi("GET", {}, null, getAccessTokenSilently, "/api/peers")
 }
+
+export const deletePeer = async (getAccessTokenSilently, peerId) => {
+    return callApi(
+        "DELETE",
+        {},
+       null,
+        getAccessTokenSilently,
+        "/api/peers/" + peerId)
+}

@@ -1,14 +1,14 @@
 import React, {useEffect, useState} from "react";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
-import {getPeers} from "../api/ManagementAPI";
+import {getPeers, deletePeer, getSetupKeys, revokeSetupKey} from "../api/ManagementAPI";
 import {formatDate} from "../utils/common";
 import EditButton from "../components/EditButton";
 
 
 export const Peers = () => {
 
-        const [peers, setPeers] = useState("")
+        const [peers, setPeers] = useState([])
         const [loading, setLoading] = useState(true)
         const [error, setError] = useState(null)
 
@@ -22,12 +22,23 @@ export const Peers = () => {
             setError(error);
         };
 
-        useEffect(() => {
+        const refresh = () => {
             getPeers(getAccessTokenSilently)
                 .then(responseData => responseData.sort((a,b) => (a.Name > b.Name) ? 1 : -1))
                 .then(sorted => setPeers(sorted))
                 .then(() => setLoading(false))
                 .catch(error => handleError(error))
+        }
+
+        const handleDelete = peerIp => {
+            deletePeer(getAccessTokenSilently, peerIp)
+                .then(() => refresh())
+                .catch(error => console.log(error))
+        }
+
+
+        useEffect(() => {
+            refresh()
         }, [getAccessTokenSilently])
 
         return (
@@ -119,7 +130,11 @@ export const Peers = () => {
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(peer.LastSeen)}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{peer.OS}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
-                                                                                <EditButton items={[{name:"Delete"}, {name: "Rename"}]}/>
+                                                                                <EditButton items={[{name:"Delete"}]} handler={function (action) {
+                                                                                    if (action === 'Delete') {
+                                                                                        handleDelete(peer.IP)
+                                                                                    }
+                                                                                }}/>
                                                                             </td>
                                                                         </tr>
                                                                     ))}
