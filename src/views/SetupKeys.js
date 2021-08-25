@@ -126,7 +126,7 @@ export const SetupKeysComponent = () => {
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.Expires)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
-                                                                    <a href="#"
+                                                                    <a href="/#"
                                                                        className="text-indigo-600 hover:text-indigo-900">
                                                                         Edit
                                                                     </a>

@@ -24,20 +24,18 @@ export const AddPeerComponent = () => {
                 target: 'Select setup key to register peer:',
                 icon: ArrowCircleRightIcon,
                 iconBackground: 'bg-gray-600',
-                content: (<Select data={setupKeys.filter(k => k.Valid)}/>),
-                copy: false
+                content: <Select onSelected={function (selected) {
+                }} data={setupKeys.filter(k => k.Valid)}/>,
+                copy: false,
+                commands: null
             },
             {
                 id: 2,
                 target: 'Add Wiretrustee\'s repository:',
                 icon: ArrowCircleRightIcon,
                 iconBackground: 'bg-gray-600',
-                content: (
-                    <Highlight language="bash">
-                        {`curl -fsSL https://pkgs.wiretrustee.com/stable/ubuntu/focal.gpg | sudo apt-key add - \ncurl -fsSL https://pkgs.wiretrustee.com/stable/ubuntu/focal.list | sudo tee /etc/apt/sources.list.d/wiretrustee.list`}
-                    </Highlight>
-
-                ),
+                content: null,
+                commands: ["curl -fsSL https://pkgs.wiretrustee.com/stable/ubuntu/focal.gpg | sudo apt-key add -", "curl -fsSL https://pkgs.wiretrustee.com/stable/ubuntu/focal.list | sudo tee /etc/apt/sources.list.d/wiretrustee.list"],
                 copy: true
             },
             {
@@ -45,43 +43,36 @@ export const AddPeerComponent = () => {
                 target: 'Install Wiretrustee:',
                 icon: ArrowCircleRightIcon,
                 iconBackground: 'bg-gray-600',
-                content: (
-                    <Highlight language="bash">
-                        {`sudo apt-get update \nsudo apt-get install wiretrustee`}
-                    </Highlight>
-                ),
-                copy: true
+                content: null,
+                copy: true,
+                commands: ["sudo apt-get update", "sudo apt-get install wiretrustee"]
             },
             {
                 id: 4,
                 target: 'Login and run Wiretrustee:',
                 icon: ArrowCircleRightIcon,
                 iconBackground: 'bg-gray-600',
-                content: (
-                    <Highlight language="bash">
-                        {"sudo wiretrustee login --setup-key xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx \nsudo systemctl start wiretrustee"}
-                    </Highlight>
-                ),
-                copy: true
+                content: null,
+                copy: true,
+                commands: ["sudo wiretrustee login --setup-key <PASTE-SETUP-KEY>", 'sudo systemctl start wiretrustee']
             },
             {
                 id: 5,
                 target: 'Get your IP address:',
                 icon: ArrowCircleRightIcon,
                 iconBackground: 'bg-gray-600',
-                content: (
-                    <Highlight language="bash">
-                        {`ip addr show wt0`}
-                    </Highlight>
-                ),
-                copy: true
+                content: null,
+                copy: true,
+                commands: ["ip addr show wt0"]
             },
             {
                 id: 6,
                 target: 'Repeat on other machines.',
                 icon: ArrowCircleRightIcon,
                 iconBackground: 'bg-gray-600',
-                copy: false
+                copy: false,
+                content: null,
+                commands: null
             },
         ]
 
@@ -143,8 +134,18 @@ export const AddPeerComponent = () => {
                     <span className="text-m font-semibold tracking-wide font-mono text-gray-700">{step.target}</span>
                                         <div className="flex flex-col space-y-2 ">
                                                             <span
-                                                                className="text-sm text-gray-500">{step.content}</span>
-                                            {step.copy && (<CopyButton toCopy={step.content.children}
+                                                                className="text-sm text-gray-500">
+                                                                {
+
+                                                                    step.content != null ? (step.content) : (
+                                                                        step.commands && (<Highlight language="bash">
+                                                                            {step.commands.join("\n")}
+                                                                        </Highlight>)
+                                                                    )
+                                                                }
+
+                                                            </span>
+                                            {step.copy && (<CopyButton toCopy={step.commands.join("\n")}
                                                                        idPrefix={"add-peer-code-" + step.id}/>)}
 
                                         </div>

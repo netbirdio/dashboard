@@ -7,13 +7,14 @@ function classNames(...classes) {
     return classes.filter(Boolean).join(' ')
 }
 
-export default function Select({data}) {
+export default function Select({data, onSelected}) {
     const [selected, setSelected] = useState(data.length > 0 ? data[0] : {Name: "...", Id: "none"})
 
     const handleSelected = selectedKey => {
         setSelected(selectedKey)
         let keyBox = document.getElementById("key-box");
         keyBox.classList.remove("hidden")
+        onSelected(selectedKey)
     };
 
     return (

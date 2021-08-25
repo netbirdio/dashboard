@@ -118,7 +118,7 @@ export const Peers = () => {
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(peer.LastSeen)}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{peer.OS}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
-                                                                                <a href="#"
+                                                                                <a href="/#"
                                                                                    className="text-indigo-600 hover:text-indigo-900">
                                                                                     Edit
                                                                                 </a>
