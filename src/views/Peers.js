@@ -1,10 +1,11 @@
 import React, {useEffect, useState} from "react";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
-import {getPeers, deletePeer, getSetupKeys, revokeSetupKey} from "../api/ManagementAPI";
+import {deletePeer, getPeers} from "../api/ManagementAPI";
 import {formatDate} from "../utils/common";
 import EditButton from "../components/EditButton";
 import CopyText from "../components/CopyText";
+import DeleteModal from "../components/DeleteDialog";
 
 
 export const Peers = () => {
@@ -12,6 +13,10 @@ export const Peers = () => {
         const [peers, setPeers] = useState([])
         const [loading, setLoading] = useState(true)
         const [error, setError] = useState(null)
+        const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+        const [deleteDialogText, setDeleteDialogText] = useState("")
+        const [deleteDialogTitle, setDeleteDialogTitle] = useState("")
+        const [peerToDelete, setPeerToDelete] = useState(null)
 
         const {
             getAccessTokenSilently,
@@ -23,18 +28,37 @@ export const Peers = () => {
             setError(error);
         };
 
+        const handleRowMenuClick = (action, peer) => {
+            if (action === 'Delete') {
+                setPeerToDelete(peer)
+                setDeleteDialogText("Are you sure you want to delete peer from your account?")
+                setDeleteDialogTitle("Delete peer " + peer.Name)
+                setShowDeleteDialog(true)
+            }
+        };
+
         const refresh = () => {
             getPeers(getAccessTokenSilently)
-                .then(responseData => responseData.sort((a,b) => (a.Name > b.Name) ? 1 : -1))
+                .then(responseData => responseData.sort((a, b) => (a.Name > b.Name) ? 1 : -1))
                 .then(sorted => setPeers(sorted))
                 .then(() => setLoading(false))
                 .catch(error => handleError(error))
         }
 
-        const handleDelete = peerIp => {
-            deletePeer(getAccessTokenSilently, peerIp)
-                .then(() => refresh())
-                .catch(error => console.log(error))
+        // after user confirms or not deletion
+        const handleDeleteConfirmation = (delConfirmed) => {
+            setShowDeleteDialog(false)
+            if (delConfirmed) {
+                deletePeer(getAccessTokenSilently, peerToDelete.IP)
+                    .then(() => setPeerToDelete(null))
+                    .then(() => refresh())
+                    .catch(error => {
+                        setPeerToDelete(null)
+                        console.log(error)
+                    })
+            } else {
+                setPeerToDelete(null)
+            }
         }
 
 
@@ -62,9 +86,14 @@ export const Peers = () => {
                                     {error != null && (
                                         <span>{error.toString()}</span>
                                     )}
+
                                     {peers && (
+
                                         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                                             <div className="px-4 py-8 sm:px-0">
+                                                <DeleteModal show={showDeleteDialog}
+                                                             confirmCallback={handleDeleteConfirmation}
+                                                             text={deleteDialogText} title={deleteDialogTitle}/>
                                                 <div className="flex flex-col">
                                                     <div className="-my-2 sm:-mx-6 lg:-mx-8">
                                                         <div
@@ -115,7 +144,8 @@ export const Peers = () => {
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-semibold font-mono text-gray-900">{peer.Name}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-mono text-gray-900">
 
-                                                                                <CopyText text={peer.IP.toUpperCase()} idPrefix={"peers-ip-" + peer.IP}/>
+                                                                                <CopyText text={peer.IP.toUpperCase()}
+                                                                                          idPrefix={"peers-ip-" + peer.IP}/>
                                                                             </td>
                                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                                 {peer.Connected && (
@@ -134,11 +164,8 @@ export const Peers = () => {
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(peer.LastSeen)}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{peer.OS}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
-                                                                                <EditButton items={[{name:"Delete"}]} handler={function (action) {
-                                                                                    if (action === 'Delete') {
-                                                                                        handleDelete(peer.IP)
-                                                                                    }
-                                                                                }}/>
+                                                                                <EditButton items={[{name: "Delete"}]}
+                                                                                            handler={action => handleRowMenuClick(action, peer)}/>
                                                                             </td>
                                                                         </tr>
                                                                     ))}
