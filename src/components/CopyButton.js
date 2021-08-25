@@ -15,7 +15,7 @@ const CopyButton = ({idPrefix, toCopy}) => {
         setTimeout(function() {
             copySuccessIcon.classList.add(classHidden);
             copyIcon.classList.remove(classHidden);
-        }, 1500);
+        }, 1200);
     }
 
     return (

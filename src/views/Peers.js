@@ -4,6 +4,7 @@ import Loading from "../components/Loading";
 import {getPeers, deletePeer, getSetupKeys, revokeSetupKey} from "../api/ManagementAPI";
 import {formatDate} from "../utils/common";
 import EditButton from "../components/EditButton";
+import CopyText from "../components/CopyText";
 
 
 export const Peers = () => {
@@ -112,7 +113,10 @@ export const Peers = () => {
                                                                     {peers.map((peer, idx) => (
                                                                         <tr key={peer.IP}>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-semibold font-mono text-gray-900">{peer.Name}</td>
-                                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-mono text-gray-900">{peer.IP}</td>
+                                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-mono text-gray-900">
+
+                                                                                <CopyText text={peer.IP.toUpperCase()} idPrefix={"peers-" + peer.IP}/>
+                                                                            </td>
                                                                             <td className="px-6 py-4 whitespace-nowrap">
                                                                                 {peer.Connected && (
                                                                                     <span

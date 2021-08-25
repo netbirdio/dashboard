@@ -4,6 +4,7 @@ import Loading from "../components/Loading";
 import {formatDate} from "../utils/common";
 import {getSetupKeys, revokeSetupKey, renameSetupKey} from "../api/ManagementAPI";
 import EditButton from "../components/EditButton";
+import CopyText from "../components/CopyText";
 
 
 export const SetupKeysComponent = () => {
@@ -138,12 +139,16 @@ export const SetupKeysComponent = () => {
                                                                     )}
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.Type.toLowerCase()}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.Key.toUpperCase()}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+
+                                                                    <CopyText text={setupKey.Key.toUpperCase()} idPrefix={"setup-keys" + setupKey.Id}/>
+
+                                                                </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes === 0 ? "unused" : formatDate(setupKey.LastUsed)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.Expires)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-m font-medium">
-                                                                    <EditButton items={[{name:"Revoke"}, {name: "Rename"}]} handler={function (action) {
+                                                                    <EditButton items={[{name:"Revoke"}]} handler={function (action) {
                                                                         if (action === 'Revoke') {
                                                                            handleRevoke(setupKey.Id)
                                                                         } else if (action === 'Rename') {
