@@ -3,6 +3,7 @@ import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
 import {getPeers} from "../api/ManagementAPI";
 import {formatDate} from "../utils/common";
+import EditButton from "../components/EditButton";
 
 
 export const Peers = () => {
@@ -53,11 +54,11 @@ export const Peers = () => {
                                         <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                                             <div className="px-4 py-8 sm:px-0">
                                                 <div className="flex flex-col">
-                                                    <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                                    <div className="-my-2 sm:-mx-6 lg:-mx-8">
                                                         <div
                                                             className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
                                                             <div
-                                                                className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                                                className="shadow border-b border-gray-200 sm:rounded-lg">
                                                                 <table className="min-w-full divide-y divide-gray-200">
                                                                     <thead className="bg-gray-100">
                                                                     <tr>
@@ -118,10 +119,7 @@ export const Peers = () => {
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(peer.LastSeen)}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{peer.OS}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
-                                                                                <a href="/#"
-                                                                                   className="text-indigo-600 hover:text-indigo-900">
-                                                                                    Edit
-                                                                                </a>
+                                                                                <EditButton items={[{name:"Delete"}, {name: "Rename"}]}/>
                                                                             </td>
                                                                         </tr>
                                                                     ))}

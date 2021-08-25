@@ -2,7 +2,8 @@ import React, {useEffect, useState} from "react";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
 import {formatDate} from "../utils/common";
-import {getSetupKeys} from "../api/ManagementAPI";
+import {getSetupKeys, revokeSetupKey, renameSetupKey} from "../api/ManagementAPI";
+import EditButton from "../components/EditButton";
 
 
 export const SetupKeysComponent = () => {
@@ -21,12 +22,28 @@ export const SetupKeysComponent = () => {
             setError(error);
         };
 
-        useEffect(() => {
+        const refresh = () => {
             getSetupKeys(getAccessTokenSilently)
                 .then(responseData => responseData.sort((a, b) => (a.Name > b.Name) ? 1 : -1))
                 .then(sorted => setSetupKeys(sorted))
                 .then(() => setLoading(false))
                 .catch(error => handleError(error))
+        }
+
+        const handleRevoke = keyId => {
+            revokeSetupKey(getAccessTokenSilently, keyId)
+                .then(() => refresh())
+                .catch(error => console.log(error))
+        }
+
+        const handleRename = keyId => {
+            /*renameSetupKey(getAccessTokenSilently, keyId, "")
+                .then(() => refresh())
+                .catch(error => console.log(error))*/
+        }
+
+        useEffect(() => {
+            refresh()
         }, [getAccessTokenSilently])
 
         return (
@@ -46,11 +63,11 @@ export const SetupKeysComponent = () => {
                             <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                                 <div className="px-4 py-8 sm:px-0">
                                     <div className="flex flex-col">
-                                        <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+                                        <div className="-my-2 sm:-mx-6 lg:-mx-8">
                                             <div
                                                 className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
                                                 <div
-                                                    className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
+                                                    className="shadow  border-b border-gray-200 sm:rounded-lg">
                                                     <table className="min-w-full divide-y divide-gray-200">
                                                         <thead className="bg-gray-100">
                                                         <tr>
@@ -64,7 +81,7 @@ export const SetupKeysComponent = () => {
                                                                 scope="col"
                                                                 className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
                                                             >
-                                                                Valid
+                                                                State
                                                             </th>
                                                             <th
                                                                 scope="col"
@@ -110,13 +127,13 @@ export const SetupKeysComponent = () => {
                                                                     {setupKey.Valid && (
                                                                         <span
                                                                             className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-green-100 text-green-800">
-                                                                     Yes
+                                                                     valid
                                                                   </span>
                                                                     )}
                                                                     {!setupKey.Valid && (
                                                                         <span
                                                                             className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-red-100 text-red-800">
-                                                                     No
+                                                                     {setupKey.State}
                                                                   </span>
                                                                     )}
                                                                 </td>
@@ -125,11 +142,14 @@ export const SetupKeysComponent = () => {
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.LastUsed)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.Expires)}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
-                                                                    <a href="/#"
-                                                                       className="text-indigo-600 hover:text-indigo-900">
-                                                                        Edit
-                                                                    </a>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-right text-m font-medium">
+                                                                    <EditButton items={[{name:"Revoke"}, {name: "Rename"}]} handler={function (action) {
+                                                                        if (action === 'Revoke') {
+                                                                           handleRevoke(setupKey.Id)
+                                                                        } else if (action === 'Rename') {
+                                                                            handleRename(setupKey.Id)
+                                                                        }
+                                                                    }}/>
                                                                 </td>
                                                             </tr>
                                                         ))}
