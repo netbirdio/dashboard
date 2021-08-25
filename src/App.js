@@ -3,7 +3,6 @@ import Navbar from './components/Navbar';
 import {Redirect, Route, Switch} from 'react-router-dom';
 import Peers from './views/Peers';
 import Footer from './components/Footer';
-import Dropdown from './components/Dropdown';
 import {useAuth0} from "@auth0/auth0-react";
 import Loading from "./components/Loading";
 import SetupKeys from "./views/SetupKeys";
@@ -57,7 +56,6 @@ function App() {
 
                 {/*<div className='h-screen flex justify-center items-center bg-green-400'>*/}
                 <Navbar toggle={toggle}/>
-                <Dropdown isOpen={isOpen} toggle={toggle}/>
                 <div className="min-h-screen bg-white">
                     <Switch>
                         <Route
