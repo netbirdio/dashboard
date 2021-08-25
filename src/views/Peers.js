@@ -28,11 +28,12 @@ export const Peers = () => {
             setError(error);
         };
 
+        //called when user clicks on table row menu item
         const handleRowMenuClick = (action, peer) => {
             if (action === 'Delete') {
                 setPeerToDelete(peer)
                 setDeleteDialogText("Are you sure you want to delete peer from your account?")
-                setDeleteDialogTitle("Delete peer " + peer.Name)
+                setDeleteDialogTitle("Delete peer \"" + peer.Name + "\"")
                 setShowDeleteDialog(true)
             }
         };
@@ -45,10 +46,10 @@ export const Peers = () => {
                 .catch(error => handleError(error))
         }
 
-        // after user confirms or not deletion
-        const handleDeleteConfirmation = (delConfirmed) => {
+        // after user confirms (or not) deletion of the peer
+        const handleDeleteConfirmation = (confirmed) => {
             setShowDeleteDialog(false)
-            if (delConfirmed) {
+            if (confirmed) {
                 deletePeer(getAccessTokenSilently, peerToDelete.IP)
                     .then(() => setPeerToDelete(null))
                     .then(() => refresh())
