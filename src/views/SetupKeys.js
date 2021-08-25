@@ -2,9 +2,10 @@ import React, {useEffect, useState} from "react";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
 import {formatDate} from "../utils/common";
-import {getSetupKeys, revokeSetupKey, renameSetupKey} from "../api/ManagementAPI";
+import {getSetupKeys, revokeSetupKey} from "../api/ManagementAPI";
 import EditButton from "../components/EditButton";
 import CopyText from "../components/CopyText";
+import DeleteModal from "../components/DeleteDialog";
 
 
 export const SetupKeysComponent = () => {
@@ -12,6 +13,10 @@ export const SetupKeysComponent = () => {
         const [setupKeys, setSetupKeys] = useState([])
         const [loading, setLoading] = useState(true)
         const [error, setError] = useState(null)
+        const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+        const [deleteDialogText, setDeleteDialogText] = useState("")
+        const [deleteDialogTitle, setDeleteDialogTitle] = useState("")
+        const [keyToRevoke, setKeyToRevoke] = useState(null)
 
         const {
             getAccessTokenSilently,
@@ -22,6 +27,32 @@ export const SetupKeysComponent = () => {
             setLoading(false)
             setError(error);
         };
+
+        //called when user clicks on table row menu item
+        const handleRowMenuClick = (action, key) => {
+            if (action === 'Revoke') {
+                setKeyToRevoke(key)
+                setDeleteDialogText("Are you sure you want to revoke setup key?")
+                setDeleteDialogTitle("Revoke key \"" + key.Name + "\"")
+                setShowDeleteDialog(true)
+            }
+        };
+
+        // after user confirms (or not) revoking the key
+        const handleRevokeConfirmation = (confirmed) => {
+            setShowDeleteDialog(false)
+            if (confirmed && !keyToRevoke.Revoked) {
+                revokeSetupKey(getAccessTokenSilently, keyToRevoke.Id)
+                    .then(() => setKeyToRevoke(null))
+                    .then(() => refresh())
+                    .catch(error => {
+                        setKeyToRevoke(null)
+                        console.log(error)
+                    })
+            } else {
+                setKeyToRevoke(null)
+            }
+        }
 
         const refresh = () => {
             getSetupKeys(getAccessTokenSilently)
@@ -35,12 +66,6 @@ export const SetupKeysComponent = () => {
             revokeSetupKey(getAccessTokenSilently, keyId)
                 .then(() => refresh())
                 .catch(error => console.log(error))
-        }
-
-        const handleRename = keyId => {
-            /*renameSetupKey(getAccessTokenSilently, keyId, "")
-                .then(() => refresh())
-                .catch(error => console.log(error))*/
         }
 
         useEffect(() => {
@@ -63,6 +88,9 @@ export const SetupKeysComponent = () => {
                         {setupKeys && (
                             <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                                 <div className="px-4 py-8 sm:px-0">
+                                    <DeleteModal show={showDeleteDialog}
+                                                 confirmCallback={handleRevokeConfirmation}
+                                                 text={deleteDialogText} title={deleteDialogTitle}/>
                                     <div className="flex flex-col">
                                         <div className="-my-2 sm:-mx-6 lg:-mx-8">
                                             <div
@@ -141,20 +169,16 @@ export const SetupKeysComponent = () => {
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.Type.toLowerCase()}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
 
-                                                                    <CopyText text={setupKey.Key.toUpperCase()} idPrefix={"setup-keys" + setupKey.Id}/>
+                                                                    <CopyText text={setupKey.Key.toUpperCase()}
+                                                                              idPrefix={"setup-keys" + setupKey.Id}/>
 
                                                                 </td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes === 0 ? "unused" : formatDate(setupKey.LastUsed)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.Expires)}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-right text-m font-medium">
-                                                                    <EditButton items={[{name:"Revoke"}]} handler={function (action) {
-                                                                        if (action === 'Revoke') {
-                                                                           handleRevoke(setupKey.Id)
-                                                                        } else if (action === 'Rename') {
-                                                                            handleRename(setupKey.Id)
-                                                                        }
-                                                                    }}/>
+                                                                    <EditButton items={[{name: "Revoke"}]}
+                                                                                handler={action => handleRowMenuClick(action, setupKey)}/>
                                                                 </td>
                                                             </tr>
                                                         ))}
