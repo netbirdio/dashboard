@@ -17,10 +17,9 @@ The dashboard makes it possible to:
 - manage peer access (coming soon)
 
 ## Some Screenshots
-
-![peers](./media/auth.png)
-![auth](./media/peers.png)
-![add-peer](./media/add-peer.png)
+<img src="./media/auth.png" alt="auth" width="350"/>
+<img src="./media/peers.png" alt="peers" width="350"/>
+<img src="./media/add-peer.png" alt="add-peer" width="350"/>
 
 
 ## Technologies Used
