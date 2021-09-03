@@ -1,0 +1,118 @@
+import ArrowCircleRightIcon from "@heroicons/react/outline/ArrowCircleRightIcon";
+import Highlight from "../Highlight";
+import CopyButton from "../CopyButton";
+import {classNames} from "../../utils/common";
+import PropTypes from "prop-types";
+import WindowsTab from "./WindowsTab";
+
+const LinuxTab = ({setupKey}) => {
+
+    const steps = [
+        {
+            id: 1,
+            target: 'Add Wiretrustee\'s repository:',
+            icon: ArrowCircleRightIcon,
+            iconBackground: 'bg-gray-600',
+            content: null,
+            commands: ["sudo apt update && sudo apt install gnupg2 curl", "curl -fsSL https://wiretrustee.github.io/key.gpg | sudo apt-key add -", "curl -fsSL https://wiretrustee.github.io/dists/linux/lists | sudo tee /etc/apt/sources.list.d/wiretrustee.list"],
+            copy: true
+        },
+        {
+            id: 2,
+            target: 'Install Wiretrustee:',
+            icon: ArrowCircleRightIcon,
+            iconBackground: 'bg-gray-600',
+            content: null,
+            copy: true,
+            commands: ["sudo apt-get update", "sudo apt-get install wiretrustee"]
+        },
+        {
+            id: 3,
+            target: 'Login and run Wiretrustee:',
+            icon: ArrowCircleRightIcon,
+            iconBackground: 'bg-gray-600',
+            content: null,
+            copy: true,
+            commands: ["sudo wiretrustee login --setup-key <PASTE-SETUP-KEY>", 'sudo systemctl start wiretrustee']
+        },
+        {
+            id: 4,
+            target: 'Get your IP address:',
+            icon: ArrowCircleRightIcon,
+            iconBackground: 'bg-gray-600',
+            content: null,
+            copy: true,
+            commands: ["ip addr show wt0"]
+        },
+        {
+            id: 5,
+            target: 'Repeat on other machines.',
+            icon: ArrowCircleRightIcon,
+            iconBackground: 'bg-gray-600',
+            copy: false,
+            content: null,
+            commands: null
+        },
+    ]
+
+    const formatCommands = (commands, key) => {
+        return commands.map(c => key != null ? c.replace("<PASTE-SETUP-KEY>", key.Key) : c).join("\n")
+    }
+
+    return (
+
+        <ol role="list" className="overflow-hidden">
+            {steps.map((step, stepIdx) => (
+                <li key={"linux-tab-step-" + step.id}
+                    className={classNames(stepIdx !== steps.length - 1 ? 'pb-10' : '', 'relative')}>
+
+                    <>
+                        {stepIdx !== steps.length - 1 ? (
+                            <div
+                                className="-ml-px absolute mt-0.5 top-4 left-4 w-0.5 h-full bg-gray-300"
+                                aria-hidden="true"/>
+                        ) : null}
+                        <a href={step.href} className="relative flex items-start group">
+
+                  <span className="h-9 " aria-hidden="true">
+                    <span
+                        className="relative z-10 w-8 h-8 flex items-center justify-center bg-white border-2 border-gray-300 squared-full group-hover:border-gray-400">
+                      <span className="text-m font-mono text-gray-700">{step.id}</span>
+                    </span>
+                  </span>
+                            <span className="ml-4 min-w-0 ">
+                    <span className="text-m tracking-wide font-mono text-gray-700">{step.target}</span>
+                                        <div className="flex flex-col space-y-2 ">
+                                                            <span
+                                                                className="text-sm text-gray-500">
+                                                                {
+
+                                                                    step.content != null ? (step.content) : (
+                                                                        step.commands && (<Highlight language="bash">
+                                                                            {formatCommands(step.commands, setupKey)}
+                                                                        </Highlight>)
+                                                                    )
+                                                                }
+
+                                                            </span>
+                                            {step.copy && (<CopyButton toCopy={formatCommands(step.commands, setupKey)}
+                                                                       idPrefix={"add-peer-code-" + step.id}/>)}
+
+                                        </div>
+                  </span>
+                        </a>
+                    </>
+                </li>
+            ))}
+
+        </ol>
+    )
+}
+
+export default LinuxTab;
+
+LinuxTab.propTypes = {
+    setupKey: PropTypes.object,
+};
+
+LinuxTab.defaultProps = {};
