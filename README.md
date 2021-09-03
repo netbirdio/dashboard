@@ -18,6 +18,11 @@ The dashboard makes it possible to:
 
 ## Some Screenshots
 
+![peers](./media/auth.png)
+![auth](./media/peers.png)
+![add-peer](./media/add-peer.png)
+
+
 ## Technologies Used
 
 - ReactJS
