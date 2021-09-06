@@ -10,7 +10,7 @@ const WindowsTab = ({setupKey}) => {
     const steps = [
         {
             id: 1,
-            target: 'Download latest release (Windows asset):',
+            target: 'Download latest installer (Windows asset):',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: <button className="underline text-indigo-500" onClick={()=> window.open("https://github.com/wiretrustee/wiretrustee/releases", "_blank")}>Wiretrustee GitHub Releases</button>,
@@ -20,57 +20,21 @@ const WindowsTab = ({setupKey}) => {
         },
         {
             id: 2,
-            target: 'Open Powershell as Administrator.',
+            target: 'In PowerShell Login and run Wiretrustee:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
-            content: <div/>,
-            copy: false,
-            commands: []
+            content: null,
+            copy: true,
+            commands: ["wiretrustee.exe login --setup-key <PASTE-SETUP-KEY>", 'wiretrustee.exe service start']
         },
         {
             id: 3,
-            target: 'Decompress and move to a fixed path in your system:',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            content: null,
-            copy: true,
-            commands: ["mkdir C:\\Wiretrustee", "tar -xvzf wiretrustee_0.1.0-rc-1_windows_amd64.tar.gz -C C:\\Wiretrustee"]
-        },
-        {
-            id: 4,
-            target: 'Install Wiretrustee service:',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            content: null,
-            copy: true,
-            commands: ["C:\\Wiretrustee\\wiretrustee.exe service install"]
-        },
-        {
-            id: 5,
-            target: 'Login and run Wiretrustee:',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            content: null,
-            copy: true,
-            commands: ["C:\\Wiretrustee\\wiretrustee.exe login --setup-key <PASTE-SETUP-KEY>", 'C:\\Wiretrustee\\wiretrustee.exe service start']
-        },
-        {
-            id: 6,
             target: 'Get your IP address:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
             commands: ["netsh interface ip show config name=\"wt0\""]
-        },
-        {
-            id: 7,
-            target: 'Repeat on other machines.',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            copy: false,
-            content: null,
-            commands: null
         },
     ]
 

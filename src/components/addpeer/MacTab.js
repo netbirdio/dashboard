@@ -9,22 +9,21 @@ const MacTab = ({setupKey}) => {
     const steps = [
         {
             id: 1,
-            target: 'Download latest release (Darwin asset):',
+            target: 'Download and install Brew (package manager):',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
-            content: <button className="underline text-indigo-500" onClick={()=> window.open("https://github.com/wiretrustee/wiretrustee/releases", "_blank")}>Wiretrustee GitHub Releases</button>,
-            //content: <a href="https://github.com/wiretrustee/wiretrustee/releases">Wiretrustee GitHub Releases</a>,
+            content: <button className="underline text-indigo-500" onClick={()=> window.open("https://brew.sh/", "_blank")}>https://brew.sh/</button>,
             commands: [],
             copy: false
         },
         {
             id: 2,
-            target: 'Decompress and move to a fixed path in your system:',
+            target: 'Install Wiretrustee:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["tar -xvzf wiretrustee_0.1.0-rc-1_darwin_amd64.tar.gz","sudo mv wiretrusee /usr/local/bin/wiretrustee", "sudo chmod +x /usr/local/bin/wiretrustee"]
+            commands: ["brew install wiretrustee/client/wiretrustee"]
         },
         {
             id: 3,
@@ -52,15 +51,6 @@ const MacTab = ({setupKey}) => {
             content: null,
             copy: true,
             commands: ["sudo ipconfig getifaddr utun100"]
-        },
-        {
-            id: 6,
-            target: 'Repeat on other machines.',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            copy: false,
-            content: null,
-            commands: null
         },
     ]
 
