@@ -44,15 +44,6 @@ const LinuxTab = ({setupKey}) => {
             copy: true,
             commands: ["ip addr show wt0"]
         },
-        {
-            id: 5,
-            target: 'Repeat on other machines.',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            copy: false,
-            content: null,
-            commands: null
-        },
     ]
 
     const formatCommands = (commands, key) => {
