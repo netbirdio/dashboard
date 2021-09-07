@@ -21,7 +21,7 @@ const WindowsTab = ({setupKey}) => {
 
         {
             id: 2,
-            target: 'Windows Defender might complain about the installer. This is due to the unsigned exe file. In such a case please whitelist the file.',
+            target: 'Windows Defender or other antivirus might complain about the installer. This is due to the unsigned exe file. In such a case please whitelist the file.',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: "",
