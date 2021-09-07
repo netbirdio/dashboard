@@ -10,7 +10,7 @@ const WindowsTab = ({setupKey}) => {
     const steps = [
         {
             id: 1,
-            target: 'Download latest installer (Windows asset):',
+            target: 'Download latest Windows installer (Assets -> wiretrustee_installer_VERSION_windows_amd64.exe):',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: <button className="underline text-indigo-500" onClick={()=> window.open("https://github.com/wiretrustee/wiretrustee/releases", "_blank")}>Wiretrustee GitHub Releases</button>,
@@ -18,8 +18,18 @@ const WindowsTab = ({setupKey}) => {
             commands: [],
             copy: false
         },
+
         {
             id: 2,
+            target: 'Windows Defender might complain about the installer. This is due to the unsigned exe file. In such a case please whitelist the file.',
+            icon: ArrowCircleRightIcon,
+            iconBackground: 'bg-gray-600',
+            content: "",
+            copy: false,
+            commands: []
+        },
+        {
+            id: 3,
             target: 'In PowerShell Login and run Wiretrustee:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
@@ -28,7 +38,7 @@ const WindowsTab = ({setupKey}) => {
             commands: ["wiretrustee.exe login --setup-key <PASTE-SETUP-KEY>", 'wiretrustee.exe service start']
         },
         {
-            id: 3,
+            id: 4,
             target: 'Get your IP address:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
