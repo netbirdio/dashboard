@@ -27,15 +27,6 @@ const MacTab = ({setupKey}) => {
         },
         {
             id: 3,
-            target: 'Configure MAC\'s PATH environment variable:',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            content: null,
-            copy: true,
-            commands: ["export PATH=$PATH:/usr/local/bin"]
-        },
-        {
-            id: 4,
             target: 'Login and run Wiretrustee:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
@@ -44,7 +35,7 @@ const MacTab = ({setupKey}) => {
             commands: ["sudo wiretrustee login --setup-key <PASTE-SETUP-KEY>", "sudo wiretrustee up &"]
         },
         {
-            id: 5,
+            id: 4,
             target: 'Get your IP address:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
