@@ -42,7 +42,8 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
 
       ```AUTH0_DOMAIN``` ```AUTH0_CLIENT_ID``` ```AUTH0_AUDIENCE```
       
-To obtain these, please use [Auth0 React SDK Guide](https://auth0.com/docs/quickstart/spa/react/01-login#configure-auth0) up until "Configure Allowed Web Origins"
+      To obtain these, please use [Auth0 React SDK Guide](https://auth0.com/docs/quickstart/spa/react/01-login#configure-auth0) up until "Configure Allowed Web Origins"
+
 4. Wiretrustee UI Dashboard uses Wiretrustee Management Service HTTP API, so setting ```WIRETRUSTEE_MGMT_API_ENDPOINT``` is required. Most likely it will be ```http://localhost:33071``` if you are hosting Management API on the same server.
 5. Run docker container without SSL (Let's Encrypt):
    
