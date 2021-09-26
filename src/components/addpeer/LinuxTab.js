@@ -14,7 +14,7 @@ const LinuxTab = ({setupKey}) => {
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
-            commands: ["sudo apt update && sudo apt install gnupg2 curl", "curl -fsSL https://wiretrustee.github.io/key.gpg | sudo apt-key add -", "curl -fsSL https://wiretrustee.github.io/dists/linux/lists | sudo tee /etc/apt/sources.list.d/wiretrustee.list"],
+            commands: ["sudo apt install ca-certificates curl gnupg -y", "curl -L https://pkgs.wiretrustee.com/debian/public.key | sudo apt-key add -", "echo 'deb https://pkgs.wiretrustee.com/debian stable main' | sudo tee /etc/apt/sources.list.d/wiretrustee.list"],
             copy: true
         },
         {
