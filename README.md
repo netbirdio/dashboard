@@ -2,7 +2,7 @@
 
 This project is UI for Wiretrustee Management Service. 
 
-**Hosted demo version:** https://beta.wiretrustee.com/
+**Hosted demo version:** https://app.wiretrustee.com/
 
 See [Wiretrustee repo](https://github.com/wiretrustee/wiretrustee)
 
