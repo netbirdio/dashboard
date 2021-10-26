@@ -33,7 +33,7 @@ const LinuxTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["sudo wiretrustee login --setup-key <PASTE-SETUP-KEY>", 'sudo systemctl start wiretrustee']
+            commands: ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY>"]
         },
         {
             id: 4,

@@ -35,7 +35,7 @@ const WindowsTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["wiretrustee.exe login --setup-key <PASTE-SETUP-KEY>", 'wiretrustee.exe service start']
+            commands: ["wiretrustee.exe up --setup-key <PASTE-SETUP-KEY>"]
         },
         {
             id: 4,

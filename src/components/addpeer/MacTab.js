@@ -32,7 +32,7 @@ const MacTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["sudo wiretrustee login --setup-key <PASTE-SETUP-KEY>", "sudo wiretrustee service install", "sudo wiretrustee service start"]
+            commands: ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY>"]
         },
         {
             id: 4,
