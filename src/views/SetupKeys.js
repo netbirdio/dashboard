@@ -2,10 +2,12 @@ import React, {useEffect, useState} from "react";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
 import {formatDate, timeAgo} from "../utils/common";
-import {getSetupKeys, revokeSetupKey} from "../api/ManagementAPI";
+import {createSetupKey, getSetupKeys, revokeSetupKey} from "../api/ManagementAPI";
 import EditButton from "../components/EditButton";
 import CopyText from "../components/CopyText";
 import DeleteModal from "../components/DeleteDialog";
+import {PlusSmIcon as PlusSmIconSolid} from "@heroicons/react/solid";
+import NewSetupKeyDialog from "../components/NewSetupKeyDialog";
 
 
 export const SetupKeysComponent = () => {
@@ -14,9 +16,25 @@ export const SetupKeysComponent = () => {
         const [loading, setLoading] = useState(true)
         const [error, setError] = useState(null)
         const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+        const [showNewKeyDialog, setShowNewKeyDialog] = useState(false)
         const [deleteDialogText, setDeleteDialogText] = useState("")
         const [deleteDialogTitle, setDeleteDialogTitle] = useState("")
         const [keyToRevoke, setKeyToRevoke] = useState(null)
+
+        const handleNewKeyClick = () => {
+            setShowNewKeyDialog(true)
+        }
+
+        const newSetupKeyDialogCallback = (cancelled, name, type, expiresIn) => {
+            if (!cancelled) {
+                createSetupKey(getAccessTokenSilently, name, type, expiresIn)
+                    .then(() => refresh())
+                    .catch(error => {
+                        console.log(error)
+                    })
+            }
+            setShowNewKeyDialog(false)
+        }
 
         const {
             getAccessTokenSilently,
@@ -85,6 +103,20 @@ export const SetupKeysComponent = () => {
                                     <DeleteModal show={showDeleteDialog}
                                                  confirmCallback={handleRevokeConfirmation}
                                                  text={deleteDialogText} title={deleteDialogTitle}/>
+                                    <NewSetupKeyDialog show={showNewKeyDialog} closeCallback={newSetupKeyDialogCallback}/>
+                                    <div className="py-3 px-3 text-right">
+
+                                        <button
+                                            type="button"
+                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-mono squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                            onClick={() => {
+                                                handleNewKeyClick()
+                                            }}
+                                        >
+                                            <PlusSmIconSolid className="h-5 w-5" aria-hidden="true"/>
+                                            New Key
+                                        </button>
+                                    </div>
                                     <div className="flex flex-col">
                                         <div className="-my-2 sm:-mx-6 lg:-mx-8">
                                             <div
