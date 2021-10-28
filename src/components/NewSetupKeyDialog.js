@@ -1,13 +1,12 @@
 import {Fragment, useEffect, useState} from 'react'
-import {Dialog, Transition} from '@headlessui/react'
+import {Dialog, RadioGroup, Transition} from '@headlessui/react'
 import {XIcon} from '@heroicons/react/outline'
-import {QuestionMarkCircleIcon} from '@heroicons/react/solid'
+import {ExclamationCircleIcon, QuestionMarkCircleIcon} from '@heroicons/react/solid'
 import PropTypes from "prop-types";
-import { RadioGroup } from '@headlessui/react'
 
 const types = [
-    { name: 'Reusable', description: 'This type of a setup key allows to setup multiple machine', value: 'reusable' },
-    { name: 'One-off', description: 'This key can be used only once', value: 'one-off' },
+    {name: 'Reusable', description: 'This type of a setup key allows to setup multiple machine', value: 'reusable'},
+    {name: 'One-off', description: 'This key can be used only once', value: 'one-off'},
 ]
 
 function classNames(...classes) {
@@ -43,19 +42,21 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                             leaveFrom="translate-x-0"
                             leaveTo="translate-x-full"
                         >
-                            <div className="w-screen max-w-2xl">
+                            <div className="w-screen max-w-lg">
                                 <form className="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
                                     <div className="flex-1">
                                         {/* Header */}
                                         <div className="px-4 py-6 bg-gray-50 sm:px-6">
                                             <div className="flex items-start justify-between space-x-3">
                                                 <div className="space-y-1">
-                                                    <Dialog.Title className="text-lg font-mono text-gray-900">New setup
+                                                    <Dialog.Title className="text-lg font-mono font-bold text-gray-900">New
+                                                        setup
                                                         key</Dialog.Title>
                                                     <p className="text-sm text-gray-500">
                                                         Setup keys allow you to enroll new peers
                                                     </p>
                                                 </div>
+
                                                 <div className="h-7 flex items-center">
                                                     <button
                                                         type="button"
@@ -70,40 +71,49 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                 </div>
                                             </div>
                                         </div>
+                                        <hr className="border-gray-200"/>
 
-                                        {/* Divider container */}
                                         <div
-                                            className="py-6 space-y-6 sm:py-0 sm:space-y-0 sm:divide-y sm:divide-gray-200">
+                                            className="py-6 space-y-6 sm:py-0 sm:space-y-0">
 
                                             <div
-                                                className="space-y-1 px-4 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6 sm:py-5">
+                                                className="space-y-1 px-4 sm:space-y-0 grid grid-cols-2 sm:gap-4 sm:px-6 sm:py-5">
                                                 <div>
                                                     <label
                                                         htmlFor="project-name"
-                                                        className="block text-m font-mono text-gray-900 sm:mt-px sm:pt-2"
+                                                        className="block text-s font-mono font-medium text-gray-900 sm:mt-px sm:pt-2"
                                                     >
                                                         Name
                                                     </label>
                                                 </div>
-                                                <div className="sm:col-span-2">
+                                                <div className="mt-1 relative col-span-2">
                                                     <input
                                                         type="text"
-                                                        name="setup-key-name"
-                                                        id="setup-key-name"
-                                                        className="block w-full shadow-sm sm:text-sm focus:ring-gray-500 squared focus:border-gray-500 border border-gray-300"
+                                                        name="new-setup-key-name"
+                                                        id="new-setup-key-name"
+                                                        className="w-full shadow-sm text-lg font-mono focus:ring-gray-300 squared focus:border-gray-300 border border-gray-300"
                                                         value={keyName}
                                                         onChange={event => setKeyName(event.target.value)}
                                                     />
+                                                    <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none">
+                                                        <ExclamationCircleIcon id="name-validation-error-icon" className="h-5 w-5 text-red-400 hidden" aria-hidden="true" />
+                                                    </div>
                                                 </div>
+                                                <div className="sm:col-span-2">
+                                                    <p id="name-validation-error" className="mt-2 text-sm font-mono text-red-600 hidden">
+                                                        The name of the key can't be empty.
+                                                    </p>
+                                                </div>
+
                                             </div>
 
-
-                                            {/* Privacy */}
                                             <fieldset>
                                                 <div
-                                                    className="space-y-2 px-4 sm:space-y-0 sm:grid sm:grid-cols-3 sm:gap-4 sm:items-start sm:px-6 sm:py-5">
+                                                    className="space-y-2 px-4 sm:space-y-0 grid sm:grid-cols-2 sm:gap-4 sm:items-start sm:px-6 sm:py-5">
                                                     <div>
-                                                        <legend className="text-m font-mono text-gray-900">Type</legend>
+                                                        <legend
+                                                            className="text-m font-mono font-medium text-gray-900">Type
+                                                        </legend>
                                                     </div>
                                                     <div className="space-y-5 sm:col-span-2">
                                                         <RadioGroup value={selectedType} onChange={setSelectedType}>
@@ -133,7 +143,8 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                                                     )}
                                                                                     aria-hidden="true"
                                                                                 >
-                                                                                  <span className="squared-full bg-white w-1.5 h-1.5"/>
+                                                                                  <span
+                                                                                      className="squared-full bg-white w-1.5 h-1.5"/>
                                                                                 </span>
                                                                                 <div className="ml-3 flex flex-col">
                                                                                     <RadioGroup.Label
@@ -193,7 +204,14 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                 type="button"
                                                 className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-mono squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                                                 onClick={() => {
-                                                    closeCallback(false, keyName, selectedType.value, "720h0m0s")
+                                                    if (!keyName) {
+                                                        let el = document.getElementById("name-validation-error");
+                                                        el.classList.remove("hidden")
+                                                        el = document.getElementById("name-validation-error-icon");
+                                                        el.classList.remove("hidden")
+                                                    } else {
+                                                        closeCallback(false, keyName, selectedType.value, "720h0m0s")
+                                                    }
                                                 }}
                                             >
                                                 Create
