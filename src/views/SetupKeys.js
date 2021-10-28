@@ -104,7 +104,7 @@ export const SetupKeysComponent = () => {
                                                  confirmCallback={handleRevokeConfirmation}
                                                  text={deleteDialogText} title={deleteDialogTitle}/>
                                     <NewSetupKeyDialog show={showNewKeyDialog} closeCallback={newSetupKeyDialogCallback}/>
-                                    <div className="py-3 px-3 text-right">
+                                    <div className="py-3 text-right">
 
                                         <button
                                             type="button"
