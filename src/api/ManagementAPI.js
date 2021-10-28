@@ -41,6 +41,18 @@ export const renameSetupKey = async (getAccessTokenSilently, keyId, newName) => 
         "/api/setup-keys/" + keyId)
 }
 
+
+export const createSetupKey = async (getAccessTokenSilently, name, type, expiresIn) => {
+    return callApi(
+        "POST",
+        {'Content-Type': 'application/json'},
+        JSON.stringify({Name: name, Type: type, ExpiresIn: expiresIn}, (key, value) => {
+            if (value !== null) return value
+        }),
+        getAccessTokenSilently,
+        "/api/setup-keys")
+}
+
 export const getPeers = async (getAccessTokenSilently) => {
     return callApi("GET", {}, null, getAccessTokenSilently, "/api/peers")
 }
