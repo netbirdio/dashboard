@@ -2,7 +2,7 @@ import React, {useEffect, useState} from "react";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
 import {formatDate, timeAgo} from "../utils/common";
-import {getSetupKeys, revokeSetupKey} from "../api/ManagementAPI";
+import {createSetupKey, getSetupKeys, revokeSetupKey} from "../api/ManagementAPI";
 import EditButton from "../components/EditButton";
 import CopyText from "../components/CopyText";
 import DeleteModal from "../components/DeleteDialog";
@@ -25,6 +25,17 @@ export const SetupKeysComponent = () => {
             setShowNewKeyDialog(true)
         }
 
+        const newSetupKeyDialogCallback = (cancelled, name, type, expiresIn) => {
+            if (!cancelled) {
+                createSetupKey(getAccessTokenSilently, name, type, expiresIn)
+                    .then(() => refresh())
+                    .catch(error => {
+                        console.log(error)
+                    })
+            }
+            setShowNewKeyDialog(false)
+        }
+
         const {
             getAccessTokenSilently,
         } = useAuth0();
@@ -44,10 +55,6 @@ export const SetupKeysComponent = () => {
                 setShowDeleteDialog(true)
             }
         };
-
-        const newSetupKeyDialogCallback = () => {
-            setShowNewKeyDialog(false)
-        }
 
         // after user confirms (or not) revoking the key
         const handleRevokeConfirmation = (confirmed) => {
@@ -106,7 +113,7 @@ export const SetupKeysComponent = () => {
                                                 handleNewKeyClick()
                                             }}
                                         >
-                                            <PlusSmIconSolid className="h-5 w-5" aria-hidden="true" />
+                                            <PlusSmIconSolid className="h-5 w-5" aria-hidden="true"/>
                                             New Key
                                         </button>
                                     </div>
