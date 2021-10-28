@@ -46,7 +46,9 @@ export const createSetupKey = async (getAccessTokenSilently, name, type, expires
     return callApi(
         "POST",
         {'Content-Type': 'application/json'},
-        JSON.stringify({Name: name, Type: type, ExpiresIn: expiresIn}),
+        JSON.stringify({Name: name, Type: type, ExpiresIn: expiresIn}, (key, value) => {
+            if (value !== null) return value
+        }),
         getAccessTokenSilently,
         "/api/setup-keys")
 }
