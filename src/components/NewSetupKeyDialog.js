@@ -22,6 +22,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
     useEffect(() => {
         setOpen(show)
         setKeyName("")
+        setSelectedType(types[0])
     }, [show]);
 
     return (
@@ -192,7 +193,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                 type="button"
                                                 className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-mono squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                                                 onClick={() => {
-                                                    closeCallback(false, keyName, selectedType.value, null)
+                                                    closeCallback(false, keyName, selectedType.value, "720h0m0s")
                                                 }}
                                             >
                                                 Create
