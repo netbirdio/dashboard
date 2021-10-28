@@ -154,13 +154,13 @@ export const Peers = () => {
                                                                                 {peer.Connected && (
                                                                                     <span
                                                                                         className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-green-100 text-green-800">
-                                                                     Connected
+                                                                     Online
                                                                   </span>
                                                                                 )}
                                                                                 {!peer.Connected && (
                                                                                     <span
                                                                                         className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-red-100 text-red-800">
-                                                                     Disconnected
+                                                                     Offline
                                                                   </span>
                                                                                 )}
                                                                             </td>
