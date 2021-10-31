@@ -210,7 +210,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                         el = document.getElementById("name-validation-error-icon");
                                                         el.classList.remove("hidden")
                                                     } else {
-                                                        closeCallback(false, keyName, selectedType.value, "720h0m0s")
+                                                        closeCallback(false, keyName, selectedType.value, null)
                                                     }
                                                 }}
                                             >
