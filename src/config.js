@@ -7,7 +7,6 @@ if (process.env.NODE_ENV !== 'production') {
   configJson = require("./config.json");
 }
 
-// import configJson from configFile;
 export function getConfig() {
   // Configure the audience here. By default, it will take whatever is in the config
   // (specified by the `audience` key) unless it's the default value of "YOUR_API_IDENTIFIER" (which
