@@ -51,3 +51,9 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
 6. Run docker container with SSL (Let's Encrypt):
    
    ```docker run -d --name wiretrustee-dashboard --rm -p 80:80 -p 443:443 -e NGINX_SSL_PORT=443 -e LETSENCRYPT_DOMAIN=<YOUR PUBLIC DOMAIN> -e LETSENCRYPT_EMAIL=<YOUR EMAIL>  -e AUTH0_DOMAIN=<SET YOUR AUTH DOMAIN> -e AUTH0_CLIENT_ID=<SET YOUR CLEITN ID> -e AUTH0_AUDIENCE=<SET YOUR AUDIENCE> -e  WIRETRUSTEE_MGMT_API_ENDPOINT=<SET YOUR MANAGEMETN API URL> wiretrustee/dashboard:main```
+
+## How to run local development
+1. Install node 16
+2. create and update the src/.local-config.json file. This file should contain values to be replaced from src/config.json
+3. run `npm install`
+4. run `npm run start dev`

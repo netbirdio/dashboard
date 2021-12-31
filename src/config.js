@@ -1,4 +1,11 @@
-import configJson from "./config.json";
+let configJson = "";
+
+if (process.env.NODE_ENV !== 'production') {
+  configJson = require("./.local-config.json");
+  
+} else {
+  configJson = require("./config.json");
+}
 
 export function getConfig() {
   // Configure the audience here. By default, it will take whatever is in the config
