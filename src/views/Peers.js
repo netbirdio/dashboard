@@ -136,6 +136,12 @@ export const Peers = () => {
                                                                         >
                                                                             OS
                                                                         </th>
+                                                                        <th
+                                                                            scope="col"
+                                                                            className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                        >
+                                                                            Version
+                                                                        </th>
                                                                         <th scope="col" className="relative px-6 py-3">
                                                                             <span className="sr-only">Edit</span>
                                                                         </th>
@@ -146,7 +152,6 @@ export const Peers = () => {
                                                                         <tr key={peer.IP}>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-semibold font-mono text-gray-900">{peer.Name}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-mono text-gray-900">
-
                                                                                 <CopyText text={peer.IP.toUpperCase()}
                                                                                           idPrefix={"peers-ip-" + peer.IP}/>
                                                                             </td>
@@ -168,6 +173,7 @@ export const Peers = () => {
                                                                                 {peer.Connected ? ("just now") : timeAgo(peer.LastSeen)}
                                                                             </td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{peer.OS}</td>
+                                                                            <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{peer.Version}</td>
                                                                             <td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
                                                                                 <EditButton items={[{name: "Delete"}]}
                                                                                             handler={action => handleRowMenuClick(action, peer)}/>
