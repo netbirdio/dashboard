@@ -7,9 +7,14 @@ import EditButton from "../components/EditButton";
 import CopyText from "../components/CopyText";
 import DeleteModal from "../components/DeleteDialog";
 import EmptyPeersPanel from "../components/EmptyPeers";
-import PaginationBar from "./Pagination";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/solid";
 
+
+// the pagination logic should be merged together with peers
+// afterwards, we can start refactoring, to see what else we can do.
+//
+// REFERENCE 
+// https://academind.com/tutorials/reactjs-pagination
 export const Peers = () => {
 	const [peers, setPeers] = useState([]);
 	const [loading, setLoading] = useState(true);
@@ -18,7 +23,6 @@ export const Peers = () => {
 	const [deleteDialogText, setDeleteDialogText] = useState("");
 	const [deleteDialogTitle, setDeleteDialogTitle] = useState("");
 	const [peerToDelete, setPeerToDelete] = useState(null);
-	const [peerView, setPeerView] = useState([]);
 
 	const { getAccessTokenSilently } = useAuth0();
 
@@ -134,7 +138,7 @@ export const Peers = () => {
 											</tr>
 										</thead>
 										<tbody className="bg-white divide-y divide-gray-200">
-											{peerView.map((peer, idx) => (
+											{peers.map((peer, _) => (
 												<tr key={peer.IP}>
 													<td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-semibold font-mono text-gray-900">
 														{peer.Name}
@@ -227,7 +231,7 @@ export const Peers = () => {
 						</main>
 					</div>
 				</div>
-				<PaginationBar connectedDevices={peers} peerView={peerView} />
+				<Pagination connectedDevices={peers} />
 			</main>
 		</div>
 	);
@@ -235,19 +239,19 @@ export const Peers = () => {
 
 function Pagination(props) {
 	const [maxPerPage] = useState(25);
-	const [connectedDevices] = useState(props.connectedDevices);
 	const [activePage, setActivePage] = useState(0); // if there is only one page we need to show that there are 1 out of 1 pages, if no devices then show that there is 0 pages
-	const [pageNum] = useState(Math.ceil(150 / maxPerPage));
+	const [pageCount] = useState(Math.ceil(150 / maxPerPage));
+	// const [pageCount] = useState(Math.round(devices.length / pageLimit));
 
 	// pageSelect = (props) => {
 	// setActivePage(Number(props.target.id));
 	// };
 
-	const nextHandler = (props) => {
+	const nextHandler = () => {
 		setActivePage((activePage) => activePage++);
 	};
 
-	const prevHandler = (props) => {
+	const prevHandler = () => {
 		console.log(activePage);
 		setActivePage((activePage) => activePage--);
 		console.log(activePage);
@@ -272,18 +276,11 @@ function Pagination(props) {
 		);
 	}
 
-	function PaginationInfo({ devices, pageLimit }) {
-		const [currentPage, setCurrentPage] = useState(0);
-		const [pageCount] = useState(Math.round(devices.length / pageLimit));
+	// function PaginationBar({ devices, pageLimit }) {
 
-		return (
-			<p className="text-sm text-gray-700">
-				Showing <span className="font-medium">{currentPage}</span> to{" "}
-				<span className="font-medium">{currentPage}</span> of{" "}
-				<span className="font-medium">{pageCount}</span>
-			</p>
-		);
-	}
+	// return (
+	// );
+	// }
 
 	return (
 		<div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
@@ -292,10 +289,12 @@ function Pagination(props) {
                     If we have too many elements, we need to reduce the middle to none, so that at most we can only see 6 elements
                     */}
 				<div>
-					<PaginationInfo
-						devices={connectedDevices}
-						pageLimit={maxPerPage}
-					/>
+					<p className="text-sm text-gray-700">
+						Showing{" "}
+						<span className="font-medium">{activePage}</span> to{" "}
+						<span className="font-medium">{activePage}</span> of{" "}
+						<span className="font-medium">{pageCount}</span>
+					</p>
 				</div>
 				<div>
 					<nav
@@ -315,7 +314,7 @@ function Pagination(props) {
 						</a>
 						{/* Current: "z-10 bg-indigo-50 border-indigo-500 text-indigo-600", Default: "bg-white border-gray-300 text-gray-500 hover:bg-gray-50" */}
 						<div>
-							{[...Array(pageNum)].map((_, idx) => {
+							{[...Array(pageCount)].map((_, idx) => {
 								console.log("lmao", idx + 1);
 								return (
 									<PaginationElement
