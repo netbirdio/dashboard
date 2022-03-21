@@ -7,15 +7,16 @@ import EditButton from "../components/EditButton";
 import CopyText from "../components/CopyText";
 import DeleteModal from "../components/DeleteDialog";
 import EmptyPeersPanel from "../components/EmptyPeers";
+import PaginatedPeersList from "../components/PaginatedPeersList"
 
 export const Peers = () => {
 	const [peers, setPeers] = useState([]);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [peerToDelete, setPeerToDelete] = useState(null);
 	const [deleteDialogText, setDeleteDialogText] = useState("");
 	const [deleteDialogTitle, setDeleteDialogTitle] = useState("");
-	const [peerToDelete, setPeerToDelete] = useState(null);
 
 	const { getAccessTokenSilently } = useAuth0();
 
@@ -67,6 +68,49 @@ export const Peers = () => {
 		refresh();
 	}, [getAccessTokenSilently]);
 
+	const PeerRow = (peer) => {
+		return (
+			<tr key={peer.IP}>
+				<td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-semibold font-mono text-gray-900">
+					{peer.Name}
+				</td>
+				<td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-mono text-gray-900">
+					<CopyText
+						text={peer.IP.toUpperCase()}
+						idPrefix={"peers-ip-" + peer.IP}
+					/>
+				</td>
+				<td className="px-6 py-4 whitespace-nowrap">
+					{peer.Connected && (
+						<span className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-green-100 text-green-800">
+							Online
+						</span>
+					)}
+					{!peer.Connected && (
+						<span className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-red-100 text-red-800">
+							Offline
+						</span>
+					)}
+				</td>
+				<td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+					{peer.ConnectedP ? "just now" : timeAgo(peer.LastSeen)}
+				</td>
+				<td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+					{peer.OS}
+				</td>
+				<td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+					{peer.Version}
+				</td>
+				<td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
+					<EditButton
+						items={[{ name: "Delete" }]}
+						handler={(action) => handleRowMenuClick(action, peer)}
+					/>
+				</td>
+			</tr>
+		);
+	};
+
 	return (
 		<>
 			<div className="py-10">
@@ -101,140 +145,12 @@ export const Peers = () => {
 												text={deleteDialogText}
 												title={deleteDialogTitle}
 											/>
-											<div className="flex flex-col">
-												<div className="-my-2 sm:-mx-6 lg:-mx-8">
-													<div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-														<div className="shadow border-b border-gray-200 sm:rounded-lg">
-															<table className="min-w-full divide-y divide-gray-200">
-																<thead className="bg-gray-100">
-																	<tr>
-																		<th
-																			scope="col"
-																			className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-																		>
-																			Name
-																		</th>
-																		<th
-																			scope="col"
-																			className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-																		>
-																			IP
-																		</th>
-																		<th
-																			scope="col"
-																			className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-																		>
-																			Status
-																		</th>
-																		<th
-																			scope="col"
-																			className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-																		>
-																			Last
-																			Seen
-																		</th>
-																		<th
-																			scope="col"
-																			className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-																		>
-																			OS
-																		</th>
-																		<th
-																			scope="col"
-																			className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-																		>
-																			Version
-																		</th>
-																		<th
-																			scope="col"
-																			className="relative px-6 py-3"
-																		>
-																			<span className="sr-only">
-																				Edit
-																			</span>
-																		</th>
-																	</tr>
-																</thead>
-																<tbody className="bg-white divide-y divide-gray-200">
-																	{peers.map(
-																		(
-																			peer,
-																			idx
-																		) => (
-																			<tr
-																				key={
-																					peer.IP
-																				}
-																			>
-																				<td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-semibold font-mono text-gray-900">
-																					{
-																						peer.Name
-																					}
-																				</td>
-																				<td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-mono text-gray-900">
-																					<CopyText
-																						text={peer.IP.toUpperCase()}
-																						idPrefix={
-																							"peers-ip-" +
-																							peer.IP
-																						}
-																					/>
-																				</td>
-																				<td className="px-6 py-4 whitespace-nowrap">
-																					{peer.Connected && (
-																						<span className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-green-100 text-green-800">
-																							Online
-																						</span>
-																					)}
-																					{!peer.Connected && (
-																						<span className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-red-100 text-red-800">
-																							Offline
-																						</span>
-																					)}
-																				</td>
-																				<td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
-																					{peer.Connected
-																						? "just now"
-																						: timeAgo(
-																								peer.LastSeen
-																						  )}
-																				</td>
-																				<td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
-																					{
-																						peer.OS
-																					}
-																				</td>
-																				<td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
-																					{
-																						peer.Version
-																					}
-																				</td>
-																				<td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
-																					<EditButton
-																						items={[
-																							{
-																								name: "Delete",
-																							},
-																						]}
-																						handler={(
-																							action
-																						) =>
-																							handleRowMenuClick(
-																								action,
-																								peer
-																							)
-																						}
-																					/>
-																				</td>
-																			</tr>
-																		)
-																	)}
-																</tbody>
-															</table>
-														</div>
-													</div>
-												</div>
-											</div>
+											<PaginatedPeersList
+												data={peers}
+												RenderComponent={PeerRow}
+												dataLimit={1}
+												pageLimit={8}
+											/>
 										</div>
 									</div>
 								)}
@@ -246,7 +162,6 @@ export const Peers = () => {
 		</>
 	);
 };
-
 export default withAuthenticationRequired(Peers, {
 	onRedirecting: () => <Loading />,
 });
