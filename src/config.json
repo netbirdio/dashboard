@@ -2,5 +2,6 @@
   "domain": "$AUTH0_DOMAIN",
   "clientId": "$AUTH0_CLIENT_ID",
   "audience": "$AUTH0_AUDIENCE",
-  "apiOrigin": "$WIRETRUSTEE_MGMT_API_ENDPOINT"
+  "apiOrigin": "$WIRETRUSTEE_MGMT_API_ENDPOINT",
+  "grpcApiOrigin": "$WIRETRUSTEE_MGMT_GRPC_API_ENDPOINT"
 }
