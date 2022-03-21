@@ -3,6 +3,8 @@ import Highlight from "../Highlight";
 import CopyButton from "../CopyButton";
 import {classNames} from "../../utils/common";
 import PropTypes from "prop-types";
+import {getConfig} from "../../config";
+const {grpcApiOrigin} = getConfig();
 
 const MacTab = ({setupKey}) => {
 
@@ -32,7 +34,7 @@ const MacTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY>"]
+            commands: grpcApiOrigin === '' ? ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY>"] : ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
         },
         {
             id: 4,

@@ -3,7 +3,8 @@ import Highlight from "../Highlight";
 import CopyButton from "../CopyButton";
 import {classNames} from "../../utils/common";
 import PropTypes from "prop-types";
-import SetupKeySelect from "./SetupKeySelect";
+import {getConfig} from "../../config";
+const {grpcApiOrigin} = getConfig();
 
 const WindowsTab = ({setupKey}) => {
 
@@ -14,7 +15,6 @@ const WindowsTab = ({setupKey}) => {
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: <button className="underline text-indigo-500" onClick={()=> window.open("https://github.com/wiretrustee/wiretrustee/releases", "_blank")}>Wiretrustee GitHub Releases</button>,
-            //content: <a href="https://github.com/wiretrustee/wiretrustee/releases">Wiretrustee GitHub Releases</a>,
             commands: [],
             copy: false
         },
@@ -35,7 +35,7 @@ const WindowsTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["wiretrustee.exe up --setup-key <PASTE-SETUP-KEY>"]
+            commands: grpcApiOrigin === '' ? ["wiretrustee.exe --setup-key <PASTE-SETUP-KEY>"] : ["wiretrustee.exe --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
         },
         {
             id: 4,

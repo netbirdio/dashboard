@@ -23,6 +23,7 @@ export function getConfig() {
     domain: configJson.domain,
     clientId: configJson.clientId,
     apiOrigin: configJson.apiOrigin,
+    grpcApiOrigin: configJson.grpcApiOrigin,
     ...(audience ? { audience } : null),
   };
 }
