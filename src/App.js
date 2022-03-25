@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import Navbar from './components/Navbar';
 import {Redirect, Route, Switch} from 'react-router-dom';
-import Peers from './views/Peers';
+import {Peers} from './views/Peers';
 import Footer from './components/Footer';
 import {useAuth0} from "@auth0/auth0-react";
 import Loading from "./components/Loading";
