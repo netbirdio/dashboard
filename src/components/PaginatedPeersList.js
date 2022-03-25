@@ -60,15 +60,15 @@ const PaginatedPeersList = (props) => {
 		let bar = [];
 		let offset = Math.floor(props.pageLimit / 2);
 
-        if (currentPage - offset <= 1) {
-            return [...Array(props.pageLimit).keys()].map((index) => index + 1);
-        }
+		if (currentPage - offset <= 1) {
+			return [...Array(props.pageLimit).keys()].map((index) => index + 1);
+		}
 
-        if (currentPage + offset > pageCount) {
-            for (let i = pageCount - props.pageLimit + 1; i <= pageCount; i++)
-                bar.push(i);
-            return bar;
-        }
+		if (currentPage + offset > pageCount) {
+			for (let i = pageCount - props.pageLimit + 1; i <= pageCount; i++)
+				bar.push(i);
+			return bar;
+		}
 
 		for (let i = offset; i > 0; i--) {
 			bar.push(currentPage - i);
@@ -157,56 +157,60 @@ const PaginatedPeersList = (props) => {
 							of <span className="font-medium">{pageCount}</span>
 						</p>
 					</div>
-					<div>
-						<nav
-							className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-							aria-label="Pagination"
-						>
-							<a
-								className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-								onClick={goToFirst}
+					{pageCount == 1 ? (
+						<div />
+					) : (
+						<div>
+							<nav
+								className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+								aria-label="Pagination"
 							>
-								first
-							</a>
-							<a
-								className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-								onClick={goToPreviousPage}
-							>
-								<span className="sr-only">Previous</span>
-								<ChevronLeftIcon
-									className="h-5 w-5"
-									aria-hidden="true"
-								/>
-							</a>
-							<div>
-								{compressPagination().map((elem) => {
-									return (
-										<PaginationBarElem
-											clicked={currentPage}
-											pageNo={elem}
-											key={elem}
-										/>
-									);
-								})}
-							</div>
-							<a
-								className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-								onClick={goToNextPage}
-							>
-								<span className="sr-only">Next</span>
-								<ChevronRightIcon
-									className="h-5 w-5"
-									aria-hidden="true"
-								/>
-							</a>
-							<a
-								className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
-								onClick={goToLast}
-							>
-								last
-							</a>
-						</nav>
-					</div>
+								<a
+									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+									onClick={goToFirst}
+								>
+									first
+								</a>
+								<a
+									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+									onClick={goToPreviousPage}
+								>
+									<span className="sr-only">Previous</span>
+									<ChevronLeftIcon
+										className="h-5 w-5"
+										aria-hidden="true"
+									/>
+								</a>
+								<div>
+									{compressPagination().map((elem) => {
+										return (
+											<PaginationBarElem
+												clicked={currentPage}
+												pageNo={elem}
+												key={elem}
+											/>
+										);
+									})}
+								</div>
+								<a
+									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+									onClick={goToNextPage}
+								>
+									<span className="sr-only">Next</span>
+									<ChevronRightIcon
+										className="h-5 w-5"
+										aria-hidden="true"
+									/>
+								</a>
+								<a
+									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+									onClick={goToLast}
+								>
+									last
+								</a>
+							</nav>
+						</div>
+					)}
 				</div>
 			</div>
 		</>
