@@ -1,14 +1,16 @@
-# Wiretrustee Dashboard
+# netbird dashboard
 
-This project is UI for Wiretrustee Management Service. 
+### Big News! Wiretrustee becomes `netbird`. [See details](https://blog.wiretrustee.com).
+\
+This project is the UI for netbird's management service. 
 
-**Hosted demo version:** https://app.wiretrustee.com/
+**Hosted demo version:** https://app.netbird.io/
 
-See [Wiretrustee repo](https://github.com/wiretrustee/wiretrustee)
+See [netbird repo](https://github.com/netbirdio/netbird)
 
 ## Why UI dashboard is needed?
 
-The purpose of this project is simple - make it easy to manage VPN built with [Wiretrustee](https://github.com/wiretrustee/wiretrustee).
+The purpose of this project is simple - make it easy to manage VPN built with [netbird](https://github.com/netbirdio/netbird).
 The dashboard makes it possible to:
 - track the status of your peers
 - remove Peers
