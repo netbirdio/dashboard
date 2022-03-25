@@ -1,8 +1,8 @@
-# netbird Dashboard
+# netbird dashboard
 
 > Big News! Wiretrustee becomes Netbird. [See details](https://blog.wiretrustee.com).
 
-This project is UI for netbird Management Service. 
+This project is the UI for netbird's management Service. 
 
 **Hosted demo version:** https://app.netbird.io/
 
