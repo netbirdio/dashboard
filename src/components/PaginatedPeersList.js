@@ -146,9 +146,9 @@ const PaginatedPeersList = (props) => {
 					<div>
 						<p className="text-sm text-gray-700">
 							Showing{" "}
-							<span className="font-medium">{currentPage}</span>{" "}
-							to <span className="font-medium">{pageCount}</span>{" "}
-							of <span className="font-medium">{pageCount}</span>
+							<span className="font-medium font-mono">{currentPage}</span>{" "}
+							to <span className="font-medium font-mono">{pageCount}</span>{" "}
+							of <span className="font-medium font-mono">{pageCount}</span>
 						</p>
 					</div>
 					{pageCount == 1 ? (
@@ -160,7 +160,7 @@ const PaginatedPeersList = (props) => {
 								aria-label="Pagination"
 							>
 								<button
-									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-mono font-medium text-gray-500 hover:bg-gray-50"
 									onClick={goToFirst}
 								>
 									first
@@ -197,7 +197,7 @@ const PaginatedPeersList = (props) => {
 									/>
 								</button>
 								<button
-									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-mono font-medium text-gray-500 hover:bg-gray-50"
 									onClick={goToLast}
 								>
 									last
