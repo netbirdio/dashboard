@@ -85,7 +85,7 @@ const PaginatedPeersList = (props) => {
 			"z-10 bg-gray-50 border-gray-500 text-gray-600 relative inline-flex items-center px-4 py-2 border text-sm font-medium hover:bg-gray-50";
 
 		return (
-			<a
+			<button
 				aria-current="page"
 				className={
 					props.pageNo === props.clicked ? clicked_btn : default_btn
@@ -93,7 +93,7 @@ const PaginatedPeersList = (props) => {
 				onClick={changePage}
 			>
 				{props.pageNo}
-			</a>
+			</button>
 		);
 	}
 
@@ -162,13 +162,13 @@ const PaginatedPeersList = (props) => {
 								className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
 								aria-label="Pagination"
 							>
-								<a
+								<button
 									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
 									onClick={goToFirst}
 								>
 									first
-								</a>
-								<a
+								</button>
+								<button
 									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
 									onClick={goToPreviousPage}
 								>
@@ -177,7 +177,7 @@ const PaginatedPeersList = (props) => {
 										className="h-5 w-5"
 										aria-hidden="true"
 									/>
-								</a>
+								</button>
 								<div>
 									{compressPagination().map((elem) => {
 										return (
@@ -189,7 +189,7 @@ const PaginatedPeersList = (props) => {
 										);
 									})}
 								</div>
-								<a
+								<button
 									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
 									onClick={goToNextPage}
 								>
@@ -198,13 +198,13 @@ const PaginatedPeersList = (props) => {
 										className="h-5 w-5"
 										aria-hidden="true"
 									/>
-								</a>
-								<a
+								</button>
+								<button
 									className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
 									onClick={goToLast}
 								>
 									last
-								</a>
+								</button>
 							</nav>
 						</div>
 					)}
