@@ -49,12 +49,9 @@ const PaginatedPeersList = (props) => {
 		return props.data.slice(startIndex, endIndex);
 	};
 
-	// TODO: center the element if it can be centered
 	const compressPagination = () => {
 		// if the pageLimit is greater than the actual number of pages we have, just render all pages
-		console.log(props.pageLimit);
 		if (props.pageLimit > pageCount) {
-			// console.log([...Array(pageCount).keys()].map(index => index + 1));
 			return [...Array(pageCount).keys()].map((index) => index + 1);
 		}
 
@@ -63,13 +60,16 @@ const PaginatedPeersList = (props) => {
 		let bar = [];
 		let offset = Math.floor(props.pageLimit / 2);
 
-		// we need to catch cases where we don't have to rerender
         if (currentPage - offset <= 1) {
-            console.log("lmao");
             return [...Array(props.pageLimit).keys()].map((index) => index + 1);
         }
 
-		//fill the bar
+        if (currentPage + offset > pageCount) {
+            for (let i = pageCount - props.pageLimit + 1; i <= pageCount; i++)
+                bar.push(i);
+            return bar;
+        }
+
 		for (let i = offset; i > 0; i--) {
 			bar.push(currentPage - i);
 		}
@@ -77,7 +77,7 @@ const PaginatedPeersList = (props) => {
 		for (let i = 1; i <= offset; i++) {
 			bar.push(currentPage + i);
 		}
-        console.log(bar);
+
 		return bar;
 	};
 
