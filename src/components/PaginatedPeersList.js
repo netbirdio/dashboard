@@ -12,11 +12,6 @@ const PaginatedPeersList = (props) => {
 	const [currentPage, setCurrentPage] = useState(1);
 
 	// sliding window of size pageLimit for shown elements of bar
-
-	useEffect(() => {
-		window.scrollTo({ behavior: "smooth", top: "0px" });
-	}, [currentPage]);
-
 	function goToNextPage() {
 		if (currentPage === pageCount) return;
 		setCurrentPage((page) => page + 1);
