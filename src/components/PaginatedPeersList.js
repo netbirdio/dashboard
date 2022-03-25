@@ -3,22 +3,19 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/solid";
 import { withAuthenticationRequired } from "@auth0/auth0-react";
 import Loading from "../components/Loading";
 
-// @data the data that will be paginated : In this case will be Peerslist
-// @RenderComponent the component that needs to be rendered : In this case will be PeerRow
+// @data the data that will be paginated 
+// @RenderComponent the component that needs to be rendered 
 // @pageLimit number of Elements shown in Pagination bar
 // @dataLimit maximum Elements rendered per page
 const PaginatedPeersList = (props) => {
-	const [pageCount] = useState(
-		Math.ceil(props.data.length / props.dataLimit)
-	); // actual pageCount we have
+	const [pageCount] = useState(Math.ceil(props.data.length / props.dataLimit)); // actual pageCount we have
 	const [currentPage, setCurrentPage] = useState(1);
 
 	// sliding window of size pageLimit for shown elements of bar
-	// const [paginationBar, setPaginationBar] = useState([...Array(pageCount)]);
 
-	// useEffect(() => {
-	// 	window.scrollTo({ behavior: "smooth", top: "0px" });
-	// }, [currentPage]);
+	useEffect(() => {
+		window.scrollTo({ behavior: "smooth", top: "0px" });
+	}, [currentPage]);
 
 	function goToNextPage() {
 		if (currentPage === pageCount) return;
