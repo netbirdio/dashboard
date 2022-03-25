@@ -148,7 +148,7 @@ export const Peers = () => {
 											<PaginatedPeersList
 												data={peers}
 												RenderComponent={PeerRow}
-												dataLimit={25}
+												dataLimit={15}
 												pageLimit={5}
 											/>
 										</div>
