@@ -1,6 +1,6 @@
 # netbird dashboard
 
-### Big News! Wiretrustee becomes `netbird`. [See details](https://blog.wiretrustee.com).
+### Big News! Wiretrustee becomes `netbird`. [See details](https://blog.netbird.io/wiretrustee-becomes-netbird).
 \
 This project is the UI for netbird's management service. 
 
