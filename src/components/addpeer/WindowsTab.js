@@ -30,15 +30,24 @@ const WindowsTab = ({setupKey}) => {
         },
         {
             id: 3,
-            target: 'In PowerShell Login and run Wiretrustee:',
+            target: 'In PowerShell, Login Wiretrustee:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: grpcApiOrigin === '' ? ["wiretrustee.exe --setup-key <PASTE-SETUP-KEY>"] : ["wiretrustee.exe --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
+            commands: grpcApiOrigin === '' ? ["wiretrustee.exe login --setup-key <PASTE-SETUP-KEY>"] : ["wiretrustee.exe login --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
         },
         {
             id: 4,
+            target: 'In PowerShell, Start Wiretrustee Service:',
+            icon: ArrowCircleRightIcon,
+            iconBackground: 'bg-gray-600',
+            content: null,
+            copy: true,
+            commands: ["wiretrustee.exe up"]
+        },
+        {
+            id: 5,
             target: 'Get your IP address:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
