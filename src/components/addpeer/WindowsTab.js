@@ -35,7 +35,7 @@ const WindowsTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: grpcApiOrigin === '' ? ["wiretrustee.exe --setup-key <PASTE-SETUP-KEY>"] : ["wiretrustee.exe --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
+            commands: grpcApiOrigin === '' ? ["wiretrustee.exe login --setup-key <PASTE-SETUP-KEY>"] : ["wiretrustee.exe login --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
         },
         {
             id: 4,
