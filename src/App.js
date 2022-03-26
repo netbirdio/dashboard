@@ -9,6 +9,7 @@ import SetupKeys from "./views/SetupKeys";
 import AddPeer from "./views/AddPeer";
 import AccessControl from "./views/AccessControl";
 import Activity from "./views/Activity";
+import Banner from "./components/Banner";
 
 function App() {
 
@@ -57,6 +58,7 @@ function App() {
             <>
 
                 {/*<div className='h-screen flex justify-center items-center bg-green-400'>*/}
+                <Banner/>
                 <Navbar toggle={toggle}/>
                 <div className="min-h-screen bg-white">
                     <Switch>
