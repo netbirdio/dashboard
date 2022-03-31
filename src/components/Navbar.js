@@ -96,7 +96,7 @@ const Navbar = ({toggle}) => {
 
                                 </div>
                             </div>
-                            <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
+                            <div className="hidden sm:ml-6 sm:flex sm:items-center">
                                 <Menu as="div" className="ml-3 relative">
                                     <div>
                                         <Menu.Button
