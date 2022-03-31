@@ -71,10 +71,10 @@ export const Peers = () => {
 	const PeerRow = (peer) => {
 		return (
 			<tr key={peer.IP}>
-				<td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
+				<td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
 					{peer.Name}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+				<td className="px-6 py-4 whitespace-nowrap text-gray-900">
 					<CopyText
 						text={peer.IP.toUpperCase()}
 						idPrefix={"peers-ip-" + peer.IP}
@@ -82,23 +82,23 @@ export const Peers = () => {
 				</td>
 				<td className="px-6 py-4 whitespace-nowrap">
 					{peer.Connected && (
-						<span className="px-2 inline-flex text-sm leading-5 squared-full bg-green-100 text-green-800">
+						<span className="px-2 inline-flex leading-5 squared-full bg-green-100 text-green-800">
 							Online
 						</span>
 					)}
 					{!peer.Connected && (
-						<span className="px-2 inline-flex text-sm leading-5 squared-full bg-red-100 text-red-800">
+						<span className="px-2 inline-flex leading-5 squared-full bg-red-100 text-red-800">
 							Offline
 						</span>
 					)}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+				<td className="px-6 py-4 whitespace-nowrap text-gray-700">
 					{peer.ConnectedP ? "just now" : timeAgo(peer.LastSeen)}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+				<td className="px-6 py-4 whitespace-nowrap text-gray-700">
 					{peer.OS}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
+				<td className="px-6 py-4 whitespace-nowrap text-gray-700">
 					{peer.Version}
 				</td>
 				<td className="px-6 py-4 whitespace-nowrap text-right text-m font-medium">
@@ -119,13 +119,13 @@ export const Peers = () => {
 						<h1 className="text-2xl leading-tight text-gray-900 font-normal">
 							Peers
 						</h1>
-						<p className="mt-2 text-sm text-gray-700">
+						<p className="mt-2 text-gray-700">
 							A list of all the machines in your account including their name, IP and status.
 						</p>
 					</div>
 				</header>
 				<main>
-					<div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+					<div className="max-w-7xl mx-auto">
 						<div className="px-4 sm:px-0">
 							{loading && <Loading />}
 							{error != null && <span>{error.toString()}</span>}

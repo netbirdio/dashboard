@@ -77,9 +77,9 @@ const PaginatedPeersList = (props) => {
 
 	function PaginationBarElem(props) {
 		let default_btn =
-			"z-10 bg-white border-gray-300 text-gray-700 relative inline-flex items-center px-4 py-2 border text-sm hover:bg-gray-50";
+			"z-10 bg-white border-gray-300 text-gray-700 relative inline-flex items-center px-4 py-2 border  hover:bg-gray-50";
 		let clicked_btn =
-			"z-10 bg-gray-50 border-gray-500 text-gray-600 relative inline-flex items-center px-4 py-2 border text-sm hover:bg-gray-50";
+			"z-10 bg-gray-50 border-gray-500 text-gray-600 relative inline-flex items-center px-4 py-2 border  hover:bg-gray-50";
 
 		return (
 			<button
@@ -114,7 +114,7 @@ const PaginatedPeersList = (props) => {
 											return (
 												<th
 													scope="col"
-													className="py-3.5 pl-4 pr-3 text-left text-sm font-semibold text-gray-900 sm:pl-6"
+													className="py-3.5 pl-4 pr-3 text-left  font-semibold text-gray-900 sm:pl-6"
 													key={col}
 												>
 													{col}
@@ -140,14 +140,14 @@ const PaginatedPeersList = (props) => {
 							<div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
 								<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
 									<div>
-										<p className="text-sm text-gray-700">
+										<p className=" text-gray-700">
 											Showing{" "}
 											<span className="font-medium">{currentPage}</span>{" "}
 											to <span className="font-medium">{pageCount}</span>{" "}
 											of <span className="font-medium">{pageCount}</span>
 										</p>
 									</div>
-									{pageCount == 1 ? (
+									{pageCount === 1 ? (
 										<div />
 									) : (
 										<div>
@@ -156,13 +156,13 @@ const PaginatedPeersList = (props) => {
 												aria-label="Pagination"
 											>
 												<button
-													className="relative inline-flex rounded-l-md items-center px-2 py-2 border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
+													className="relative inline-flex rounded-l-md items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
 													onClick={goToFirst}
 												>
-													first
+													First
 												</button>
 												<button
-													className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
+													className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
 													onClick={goToPreviousPage}
 												>
 													<span className="sr-only">Previous</span>
@@ -183,7 +183,7 @@ const PaginatedPeersList = (props) => {
 													})}
 												</div>
 												<button
-													className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
+													className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
 													onClick={goToNextPage}
 												>
 													<span className="sr-only">Next</span>
@@ -193,10 +193,10 @@ const PaginatedPeersList = (props) => {
 													/>
 												</button>
 												<button
-													className="relative inline-flex rounded-r-md items-center px-2 py-2 border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
+													className="relative inline-flex rounded-r-md items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
 													onClick={goToLast}
 												>
-													last
+													Last
 												</button>
 											</nav>
 										</div>
