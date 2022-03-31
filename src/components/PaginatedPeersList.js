@@ -77,7 +77,7 @@ const PaginatedPeersList = (props) => {
 
 	function PaginationBarElem(props) {
 		let default_btn =
-			"z-10 bg-white squared-md border-gray-300 text-gray-700 relative inline-flex items-center px-4 py-2 border text-sm hover:bg-gray-50";
+			"z-10 bg-white border-gray-300 text-gray-700 relative inline-flex items-center px-4 py-2 border text-sm hover:bg-gray-50";
 		let clicked_btn =
 			"z-10 bg-gray-50 border-gray-500 text-gray-600 relative inline-flex items-center px-4 py-2 border text-sm hover:bg-gray-50";
 
@@ -156,13 +156,13 @@ const PaginatedPeersList = (props) => {
 												aria-label="Pagination"
 											>
 												<button
-													className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
+													className="relative inline-flex rounded-l-md items-center px-2 py-2 border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
 													onClick={goToFirst}
 												>
 													first
 												</button>
 												<button
-													className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
+													className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
 													onClick={goToPreviousPage}
 												>
 													<span className="sr-only">Previous</span>
@@ -183,7 +183,7 @@ const PaginatedPeersList = (props) => {
 													})}
 												</div>
 												<button
-													className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
+													className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
 													onClick={goToNextPage}
 												>
 													<span className="sr-only">Next</span>
@@ -193,7 +193,7 @@ const PaginatedPeersList = (props) => {
 													/>
 												</button>
 												<button
-													className="relative inline-flex items-center px-2 py-2 squared-md border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
+													className="relative inline-flex rounded-r-md items-center px-2 py-2 border border-gray-300 bg-white text-sm text-gray-500 hover:bg-gray-50"
 													onClick={goToLast}
 												>
 													last
