@@ -12,7 +12,7 @@ export const ActivityComponent = () => {
                 <div className="py-10">
                     <header>
                         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <h1 className="text-2xl font-mono leading-tight text-gray-900 font-bold">Access Control</h1>
+                            <h1 className="text-2xl leading-tight text-gray-900 font-bold">Access Control</h1>
                         </div>
                     </header>
                     <main>
@@ -22,15 +22,15 @@ export const ActivityComponent = () => {
                                     <span>{error.toString()}</span>
                                 )}
 
-                                <h1 className="text-m font-mono leading-tight text-gray-900 font-bold">
+                                <h1 className="text-m leading-tight text-gray-900 font-bold">
                                    Monitor system activity.
                                 </h1>
                                 <br/>
-                                <p className="text-sm font-mono">
+                                <p className="text-sm">
                                     Here you will be able to see activity of peers. E.g. events like Peer A has connected to Peer B
                                 </p>
                                 <br/>
-                                <p className="text-sm font-mono">Stay tuned.</p>
+                                <p className="text-sm">Stay tuned.</p>
                             </div>
                         </div>
                     </main>

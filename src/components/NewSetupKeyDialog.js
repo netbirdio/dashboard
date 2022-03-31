@@ -49,7 +49,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                         <div className="px-4 py-6 bg-gray-50 sm:px-6">
                                             <div className="flex items-start justify-between space-x-3">
                                                 <div className="space-y-1">
-                                                    <Dialog.Title className="text-lg font-mono font-bold text-gray-900">New
+                                                    <Dialog.Title className="text-lg font-bold text-gray-900">New
                                                         setup
                                                         key</Dialog.Title>
                                                     <p className="text-sm text-gray-500">
@@ -81,7 +81,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                 <div>
                                                     <label
                                                         htmlFor="project-name"
-                                                        className="block text-s font-mono font-medium text-gray-900 sm:mt-px sm:pt-2"
+                                                        className="block text-s text-gray-900 sm:mt-px sm:pt-2"
                                                     >
                                                         Name
                                                     </label>
@@ -91,7 +91,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                         type="text"
                                                         name="new-setup-key-name"
                                                         id="new-setup-key-name"
-                                                        className="w-full shadow-sm text-lg font-mono focus:ring-gray-300 squared focus:border-gray-300 border border-gray-300"
+                                                        className="w-full shadow-sm text-lg focus:ring-gray-300 squared focus:border-gray-300 border border-gray-300"
                                                         value={keyName}
                                                         onChange={event => setKeyName(event.target.value)}
                                                     />
@@ -100,7 +100,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                     </div>
                                                 </div>
                                                 <div className="sm:col-span-2">
-                                                    <p id="name-validation-error" className="mt-2 text-sm font-mono text-red-600 hidden">
+                                                    <p id="name-validation-error" className="mt-2 text-sm text-red-600 hidden">
                                                         The name of the key can't be empty.
                                                     </p>
                                                 </div>
@@ -112,7 +112,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                     className="space-y-2 px-4 sm:space-y-0 grid sm:grid-cols-2 sm:gap-4 sm:items-start sm:px-6 sm:py-5">
                                                     <div>
                                                         <legend
-                                                            className="text-m font-mono font-medium text-gray-900">Type
+                                                            className="text-m text-gray-900">Type
                                                         </legend>
                                                     </div>
                                                     <div className="space-y-5 sm:col-span-2">
@@ -149,7 +149,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                                                 <div className="ml-3 flex flex-col">
                                                                                     <RadioGroup.Label
                                                                                         as="span"
-                                                                                        className={classNames(checked ? 'text-gray-900' : 'text-gray-900', 'block text-sm font-medium')}
+                                                                                        className={classNames(checked ? 'text-gray-900' : 'text-gray-900', 'block text-sm')}
                                                                                     >
                                                                                         {setting.name}
                                                                                     </RadioGroup.Label>
@@ -193,7 +193,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                         <div className="space-x-3 flex justify-end">
                                             <button
                                                 type="button"
-                                                className="bg-white py-2 px-4 border border-gray-300 squared-md shadow-sm text-sm font-mono text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                                className="bg-white py-2 px-4 border border-gray-300 squared-md shadow-sm text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                                                 onClick={() => {
                                                     closeCallback(true, null, null, null)
                                                 }}
@@ -202,7 +202,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                             </button>
                                             <button
                                                 type="button"
-                                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-mono squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                                                 onClick={() => {
                                                     if (!keyName) {
                                                         let el = document.getElementById("name-validation-error");

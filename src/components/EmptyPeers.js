@@ -22,7 +22,7 @@ export default function EmptyPeersPanel() {
                     d="M8 14v20c0 4.418 7.163 8 16 8 1.381 0 2.721-.087 4-.252M8 14c0 4.418 7.163 8 16 8s16-3.582 16-8M8 14c0-4.418 7.163-8 16-8s16 3.582 16 8m0 0v14m0-4c0 4.418-7.163 8-16 8S8 28.418 8 24m32 10v6m0 0v6m0-6h6m-6 0h-6"
                 />
             </svg>
-                <span className="mt-2 block font-mono font-semibold text-sm font-medium text-gray-900">Let's get started by adding your first peer</span>
+                <span className="mt-2 block font-normal text-sm text-gray-900">Let's get started by adding your first peer</span>
         </Link>
     )
 }

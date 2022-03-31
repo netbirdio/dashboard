@@ -12,7 +12,7 @@ export const AccessControlComponent = () => {
                 <div className="py-10">
                     <header>
                         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <h1 className="text-2xl font-mono leading-tight text-gray-900 font-bold">Access Control</h1>
+                            <h1 className="text-2xl leading-tight text-gray-900 font-bold">Access Control</h1>
                         </div>
                     </header>
                     <main>
@@ -22,12 +22,12 @@ export const AccessControlComponent = () => {
                                     <span>{error.toString()}</span>
                                 )}
 
-                                <h1 className="text-m font-mono leading-tight text-gray-900 font-bold">
+                                <h1 className="text-m leading-tight text-gray-900 font-bold">
                                     Create and control access groups
                                 </h1>
                                 <br/>
 
-                                <p className="text-sm font-mono">
+                                <p className="text-sm">
                                     Here you will be able to specify what peers or groups of peers are able to connect to
                                     each other.
                                     For example, you might have 3 departments in your organization - IT, HR, Finance.
@@ -42,7 +42,7 @@ export const AccessControlComponent = () => {
                                     peer level.
                                 </p>
                                 <br/>
-                                <p className="text-sm font-mono">Stay tuned.</p>
+                                <p className="text-sm">Stay tuned.</p>
                             </div>
                         </div>
                     </main>

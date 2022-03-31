@@ -13,7 +13,7 @@ const EditButton = ({items, handler}) => {
             <Menu as="div">
                 <div>
                     <Menu.Button
-                        className="whitespace-nowrap font-medium text-gray-500 hover:text-gray-400">
+                        className="whitespace-nowrap text-gray-500 hover:text-gray-400">
                         <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
                              stroke="currentColor">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -38,7 +38,7 @@ const EditButton = ({items, handler}) => {
                                 {({active}) => (
                                     <Link
                                         to="#"
-                                        className={classNames(active ? 'bg-gray-100' : 'font-mono', 'block px-4 py-2 text-sm text-gray-700 font-mono')}
+                                        className={classNames(active ? 'bg-gray-100' : 'font-mono', 'block px-4 py-2 text-sm text-gray-700')}
                                         onClick={() => handleAction(item.name)}
                                     >
                                         {item.name}

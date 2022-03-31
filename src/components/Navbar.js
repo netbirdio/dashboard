@@ -23,11 +23,11 @@ const Navbar = ({toggle}) => {
         });
 
     return (
-        <Disclosure as="nav" className="bg-gray-100 border-b border-gray-200">
+        <Disclosure as="nav" className="bg-white shadow">
             {({open}) => (
                 <>
-                    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                        <div className="flex justify-between h-24">
+                    <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
+                        <div className="relative flex justify-between h-16">
                             <div className="flex">
                                 <div className="flex-shrink-0 flex items-center">
                                     <Link  to="/">
@@ -49,7 +49,7 @@ const Navbar = ({toggle}) => {
                                         <NavLink
                                             to="/peers"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m font-medium font-mono"
+                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
                                         >
                                             Peers
                                         </NavLink>
@@ -59,7 +59,7 @@ const Navbar = ({toggle}) => {
                                         <NavLink
                                             to="/add-peer"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m font-medium font-mono"
+                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
                                         >
                                             Add Peer
                                         </NavLink>
@@ -68,7 +68,7 @@ const Navbar = ({toggle}) => {
                                         <NavLink
                                             to="/setup-keys"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m font-medium font-mono"
+                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
                                         >
                                             Setup Keys
                                         </NavLink>
@@ -78,7 +78,7 @@ const Navbar = ({toggle}) => {
                                         <NavLink
                                             to="/acls"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m font-medium font-mono"
+                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
                                         >
                                             Access Control
                                         </NavLink>
@@ -88,7 +88,7 @@ const Navbar = ({toggle}) => {
                                         <NavLink
                                             to="/activity"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m font-medium font-mono"
+                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
                                         >
                                             Activity
                                         </NavLink>
@@ -96,7 +96,7 @@ const Navbar = ({toggle}) => {
 
                                 </div>
                             </div>
-                            <div className="hidden sm:ml-6 sm:flex sm:items-center">
+                            <div className="absolute inset-y-0 left-0 flex items-center sm:hidden">
                                 <Menu as="div" className="ml-3 relative">
                                     <div>
                                         <Menu.Button
@@ -125,7 +125,7 @@ const Navbar = ({toggle}) => {
                                                     <NavLink
                                                         to="#"
                                                         id="qsLogoutBtn"
-                                                        className={classNames(active ? 'bg-gray-100' : 'font-mono', 'block px-4 py-2 text-sm text-gray-700 font-mono')}
+                                                        className={classNames(active ? 'bg-gray-100' : 'font-mono', 'block px-4 py-2 text-sm text-gray-700')}
                                                         onClick={() => logoutWithRedirect()}
                                                     >
                                                         Sign out
@@ -156,7 +156,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/peers"
-                                    className="block px-4 py-2 text-base font-medium font-mono text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                                 >
                                     Peers
                                 </Link>
@@ -164,7 +164,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/add-peer"
-                                    className="block px-4 py-2 text-base font-medium font-mono text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                                 >
                                     Add Peer
                                 </Link>
@@ -172,7 +172,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/setup-keys"
-                                    className="block px-4 py-2 text-base font-medium font-mono text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                                 >
                                     Setup Keys
                                 </Link>
@@ -180,7 +180,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/acls"
-                                    className="block px-4 py-2 text-base font-medium font-mono text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                                 >
                                     Access Control
                                 </Link>
@@ -188,7 +188,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/activity"
-                                    className="block px-4 py-2 text-base font-medium font-mono text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                                 >
                                     Activity
                                 </Link>
@@ -204,14 +204,14 @@ const Navbar = ({toggle}) => {
                                     />
                                 </div>
                                 <div className="ml-3">
-                                    <div className="text-base font-medium text-gray-800 font-mono">{user.email}</div>
+                                    <div className="text-base text-gray-800">{user.email}</div>
                                 </div>
 
                             </div>
                             <div className="mt-3 space-y-1">
                                 <Link
                                     to="#"
-                                    className="block px-4 py-2 text-base font-medium font-mono text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
                                     onClick={() => logoutWithRedirect()}
                                 >
                                     Sign out

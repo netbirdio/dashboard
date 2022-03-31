@@ -71,10 +71,10 @@ export const Peers = () => {
 	const PeerRow = (peer) => {
 		return (
 			<tr key={peer.IP}>
-				<td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-semibold font-mono text-gray-900">
+				<td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">
 					{peer.Name}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-mono text-gray-900">
+				<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
 					<CopyText
 						text={peer.IP.toUpperCase()}
 						idPrefix={"peers-ip-" + peer.IP}
@@ -82,26 +82,26 @@ export const Peers = () => {
 				</td>
 				<td className="px-6 py-4 whitespace-nowrap">
 					{peer.Connected && (
-						<span className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-green-100 text-green-800">
+						<span className="px-2 inline-flex text-sm leading-5 squared-full bg-green-100 text-green-800">
 							Online
 						</span>
 					)}
 					{!peer.Connected && (
-						<span className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-red-100 text-red-800">
+						<span className="px-2 inline-flex text-sm leading-5 squared-full bg-red-100 text-red-800">
 							Offline
 						</span>
 					)}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+				<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
 					{peer.ConnectedP ? "just now" : timeAgo(peer.LastSeen)}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+				<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
 					{peer.OS}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+				<td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
 					{peer.Version}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-right  text-m font-medium">
+				<td className="px-6 py-4 whitespace-nowrap text-right text-m font-medium">
 					<EditButton
 						items={[{ name: "Delete" }]}
 						handler={(action) => handleRowMenuClick(action, peer)}
@@ -116,9 +116,12 @@ export const Peers = () => {
 			<div className="py-10">
 				<header>
 					<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-						<h1 className="text-2xl font-mono leading-tight text-gray-900 font-bold">
+						<h1 className="text-2xl leading-tight text-gray-900 font-normal">
 							Peers
 						</h1>
+						<p className="mt-2 text-sm text-gray-700">
+							A list of all the machines in your account including their name, IP and status.
+						</p>
 					</div>
 				</header>
 				<main>
@@ -148,7 +151,7 @@ export const Peers = () => {
 											<PaginatedPeersList
 												data={peers}
 												RenderComponent={PeerRow}
-												dataLimit={15}
+												dataLimit={5}
 												pageLimit={5}
 											/>
 										</div>

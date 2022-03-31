@@ -89,7 +89,7 @@ export const SetupKeysComponent = () => {
                 <div className="py-10">
                     <header>
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <h1 className="text-2xl font-mono leading-tight text-gray-900 font-bold">Setup Keys</h1>
+                            <h1 className="text-2xl leading-tight text-gray-900 font-bold">Setup Keys</h1>
                         </div>
                     </header>
                     <main>
@@ -108,7 +108,7 @@ export const SetupKeysComponent = () => {
 
                                         <button
                                             type="button"
-                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-mono squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
                                             onClick={() => {
                                                 handleNewKeyClick()
                                             }}
@@ -128,43 +128,43 @@ export const SetupKeysComponent = () => {
                                                         <tr>
                                                             <th
                                                                 scope="col"
-                                                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
                                                             >
                                                                 Name
                                                             </th>
                                                             <th
                                                                 scope="col"
-                                                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
                                                             >
                                                                 State
                                                             </th>
                                                             <th
                                                                 scope="col"
-                                                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
                                                             >
                                                                 Type
                                                             </th>
                                                             <th
                                                                 scope="col"
-                                                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
                                                             >
                                                                 Key
                                                             </th>
                                                             <th
                                                                 scope="col"
-                                                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
                                                             >
                                                                 Last Used
                                                             </th>
                                                             <th
                                                                 scope="col"
-                                                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
                                                             >
                                                                 Used Times
                                                             </th>
                                                             <th
                                                                 scope="col"
-                                                                className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
                                                             >
                                                                 Expires
                                                             </th>
@@ -176,33 +176,33 @@ export const SetupKeysComponent = () => {
                                                         <tbody className="bg-white divide-y divide-gray-200">
                                                         {setupKeys.map((setupKey, idx) => (
                                                             <tr key={setupKey.Id}>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium font-semibold font-mono text-gray-900">{setupKey.Name}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{setupKey.Name}</td>
 
                                                                 <td className="px-6 py-4 whitespace-nowrap">
                                                                     {setupKey.Valid && (
                                                                         <span
-                                                                            className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-green-100 text-green-800">
+                                                                            className="px-2 inline-flex text-sm leading-5 squared-full bg-green-100 text-green-800">
                                                                      valid
                                                                   </span>
                                                                     )}
                                                                     {!setupKey.Valid && (
                                                                         <span
-                                                                            className="px-2 inline-flex text-sm leading-5 font-mono squared-full bg-red-100 text-red-800">
+                                                                            className="px-2 inline-flex text-sm leading-5 squared-full bg-red-100 text-red-800">
                                                                      {setupKey.State}
                                                                   </span>
                                                                     )}
                                                                 </td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.Type.toLowerCase()}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{setupKey.Type.toLowerCase()}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
 
                                                                     <CopyText text={setupKey.Key.toUpperCase()}
                                                                               idPrefix={"setup-keys" + setupKey.Id}/>
 
                                                                 </td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes === 0 ? "unused" : timeAgo(setupKey.LastUsed)}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{setupKey.UsedTimes}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-mono text-gray-700">{formatDate(setupKey.Expires)}</td>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-right text-m font-medium">
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{setupKey.UsedTimes === 0 ? "unused" : timeAgo(setupKey.LastUsed)}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{setupKey.UsedTimes}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{formatDate(setupKey.Expires)}</td>
+                                                                <td className="px-6 py-4 whitespace-nowrap text-right text-m">
                                                                     <EditButton items={[{name: "Revoke"}]}
                                                                                 handler={action => handleRowMenuClick(action, setupKey)}/>
                                                                 </td>
