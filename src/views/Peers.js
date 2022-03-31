@@ -82,13 +82,13 @@ export const Peers = () => {
 				</td>
 				<td className="px-6 py-4 whitespace-nowrap">
 					{peer.Connected && (
-						<span className="px-2 inline-flex leading-5 squared-full bg-green-100 text-green-800">
-							Online
+						<span className="px-2 inline-flex leading-5 rounded-full bg-green-100 text-green-800">
+							online
 						</span>
 					)}
 					{!peer.Connected && (
-						<span className="px-2 inline-flex leading-5 squared-full bg-red-100 text-red-800">
-							Offline
+						<span className="px-2 inline-flex leading-5 rounded-full bg-red-100 text-red-800">
+							offline
 						</span>
 					)}
 				</td>
@@ -119,7 +119,7 @@ export const Peers = () => {
 						<h1 className="text-2xl leading-tight text-gray-900 font-normal">
 							Peers
 						</h1>
-						<p className="mt-2 text-gray-700">
+						<p className="mt-2 font-normal text-gray-700">
 							A list of all the machines in your account including their name, IP and status.
 						</p>
 					</div>
