@@ -14,7 +14,7 @@ const WindowsTab = ({setupKey}) => {
             target: 'Download latest Windows installer (Assets -> wiretrustee_installer_VERSION_windows_amd64.exe):',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
-            content: <button className="underline text-indigo-500" onClick={()=> window.open("https://github.com/wiretrustee/wiretrustee/releases", "_blank")}>Wiretrustee GitHub Releases</button>,
+            content: <button className="underline text-indigo-500" onClick={()=> window.open("https://github.com/wiretrustee/wiretrustee/releases", "_blank")}>Netbird GitHub Releases</button>,
             commands: [],
             copy: false
         },
@@ -30,7 +30,7 @@ const WindowsTab = ({setupKey}) => {
         },
         {
             id: 3,
-            target: 'In PowerShell, Login Wiretrustee:',
+            target: 'In PowerShell, Login Netbird:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
@@ -39,7 +39,7 @@ const WindowsTab = ({setupKey}) => {
         },
         {
             id: 4,
-            target: 'In PowerShell, Start Wiretrustee Service:',
+            target: 'In PowerShell, Start Netbird Service:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
@@ -78,12 +78,12 @@ const WindowsTab = ({setupKey}) => {
 
                   <span className="h-9 " aria-hidden="true">
                     <span
-                        className="relative z-10 w-8 h-8 flex items-center justify-center bg-white border-2 border-gray-300 squared-full group-hover:border-gray-400">
+                        className="relative z-10 w-8 h-8 flex items-center justify-center bg-white border-2 border-gray-300 rounded group-hover:border-gray-400">
                       <span className="text-m text-gray-700">{step.id}</span>
                     </span>
                   </span>
                             <span className="ml-4 min-w-0 ">
-                    <span className="text-m tracking-wide text-gray-700">{step.target}</span>
+                    <span className="tracking-wide text-gray-700">{step.target}</span>
                                         <div className="flex flex-col space-y-2 ">
                                                             <span
                                                                 className="text-sm text-gray-500">
@@ -102,7 +102,7 @@ const WindowsTab = ({setupKey}) => {
 
                                                             </span>
                                             {step.copy && (<CopyButton toCopy={formatCommands(step.commands, setupKey)}
-                                                                       idPrefix={"add-peer-code-" + step.id}/>)}
+                                                                       idPrefix={"add-peer-code-win-" + step.id}/>)}
 
                                         </div>
                   </span>
