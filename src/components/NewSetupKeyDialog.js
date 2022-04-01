@@ -193,7 +193,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                         <div className="space-x-3 flex justify-end">
                                             <button
                                                 type="button"
-                                                className="bg-white py-2 px-4 border border-gray-300 squared-md shadow-sm text-sm text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-gray-500 shadow-sm ring-1 ring-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
                                                 onClick={() => {
                                                     closeCallback(true, null, null, null)
                                                 }}
@@ -202,7 +202,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                             </button>
                                             <button
                                                 type="button"
-                                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
                                                 onClick={() => {
                                                     if (!keyName) {
                                                         let el = document.getElementById("name-validation-error");
@@ -216,6 +216,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                             >
                                                 Create
                                             </button>
+
                                         </div>
                                     </div>
                                 </form>
