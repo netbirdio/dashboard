@@ -71,37 +71,37 @@ export const Peers = () => {
 	const PeerRow = (peer) => {
 		return (
 			<tr key={peer.IP}>
-				<td className="px-6 py-4 whitespace-nowrap font-semibold text-gray-900">
+				<td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
 					{peer.Name}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-gray-900">
+				<td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
 					<CopyText
 						text={peer.IP.toUpperCase()}
 						idPrefix={"peers-ip-" + peer.IP}
 					/>
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap">
+				<td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
 					{peer.Connected && (
-						<span className="px-2 inline-flex leading-5 rounded-full bg-green-100 text-green-800">
+						<span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
 							online
 						</span>
 					)}
 					{!peer.Connected && (
-						<span className="px-2 inline-flex leading-5 rounded-full bg-red-100 text-red-800">
+						<span className="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800">
 							offline
 						</span>
 					)}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-gray-700">
+				<td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
 					{peer.ConnectedP ? "just now" : timeAgo(peer.LastSeen)}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-gray-700">
+				<td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
 					{peer.OS}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-gray-700">
+				<td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
 					{peer.Version}
 				</td>
-				<td className="px-6 py-4 whitespace-nowrap text-right text-m font-medium">
+				<td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
 					<EditButton
 						items={[{ name: "Delete" }]}
 						handler={(action) => handleRowMenuClick(action, peer)}
@@ -119,7 +119,7 @@ export const Peers = () => {
 						<h1 className="text-2xl leading-tight text-gray-900 font-normal">
 							Peers
 						</h1>
-						<p className="mt-2 font-normal text-gray-700">
+						<p className="mt-2 text-sm text-gray-700">
 							A list of all the machines in your account including their name, IP and status.
 						</p>
 					</div>

@@ -43,13 +43,12 @@ const Navbar = ({toggle}) => {
                                         />
                                     </Link>
                                 </div>
-                                <div className="hidden sm:ml-16 sm:flex sm:space-x-8">
-                                    {/* Current: "border-indigo-500 text-gray-900", Default: "border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700" */}
+                                <div className="hidden md:ml-6 md:flex md:space-x-8">
                                     {isAuthenticated && (
                                         <NavLink
                                             to="/peers"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
+                                            className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                                         >
                                             Peers
                                         </NavLink>
@@ -59,7 +58,7 @@ const Navbar = ({toggle}) => {
                                         <NavLink
                                             to="/add-peer"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
+                                            className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                                         >
                                             Add Peer
                                         </NavLink>
@@ -68,7 +67,7 @@ const Navbar = ({toggle}) => {
                                         <NavLink
                                             to="/setup-keys"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
+                                            className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                                         >
                                             Setup Keys
                                         </NavLink>
@@ -78,7 +77,7 @@ const Navbar = ({toggle}) => {
                                         <NavLink
                                             to="/acls"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
+                                            className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                                         >
                                             Access Control
                                         </NavLink>
@@ -88,7 +87,7 @@ const Navbar = ({toggle}) => {
                                         <NavLink
                                             to="/activity"
                                             activeClassName="border-indigo-500 text-gray-900 border-b-2"
-                                            className="border-indigo-500 text-gray-600 inline-flex items-center px-1 pt-1 text-m"
+                                            className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
                                         >
                                             Activity
                                         </NavLink>
@@ -156,7 +155,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/peers"
-                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                                 >
                                     Peers
                                 </Link>
@@ -164,7 +163,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/add-peer"
-                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                                 >
                                     Add Peer
                                 </Link>
@@ -172,7 +171,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/setup-keys"
-                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                                 >
                                     Setup Keys
                                 </Link>
@@ -180,7 +179,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/acls"
-                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                                 >
                                     Access Control
                                 </Link>
@@ -188,7 +187,7 @@ const Navbar = ({toggle}) => {
                             {isAuthenticated && (
                                 <Link
                                     to="/activity"
-                                    className="block px-4 py-2 text-base text-gray-500 hover:text-gray-800 hover:bg-gray-100"
+                                    className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                                 >
                                     Activity
                                 </Link>

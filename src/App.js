@@ -60,7 +60,7 @@ function App() {
                 {/*<div className='h-screen flex justify-center items-center bg-green-400'>*/}
                 <Banner/>
                 <Navbar toggle={toggle}/>
-                <div className="min-h-screen bg-gray-100">
+                <div className="min-h-screen bg-gray-50">
                     <Switch>
                         <Route
                             exact
