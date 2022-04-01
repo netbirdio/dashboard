@@ -82,12 +82,12 @@ export const Peers = () => {
 				</td>
 				<td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
 					{peer.Connected && (
-						<span className="inline-flex rounded-full bg-green-100 px-2 text-xs font-semibold leading-5 text-green-800">
+						<span className="inline-flex rounded-full bg-green-100 px-2 text-xs leading-5 text-green-800">
 							online
 						</span>
 					)}
 					{!peer.Connected && (
-						<span className="inline-flex rounded-full bg-red-100 px-2 text-xs font-semibold leading-5 text-red-800">
+						<span className="inline-flex rounded-full bg-red-100 px-2 text-xs leading-5 text-red-800">
 							offline
 						</span>
 					)}
