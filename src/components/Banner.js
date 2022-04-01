@@ -9,9 +9,9 @@ export default function Banner() {
 	};
 
 	return show ? (
-		<div className="relative bg-indigo-300">
+		<div className="relative bg-indigo-600">
 			<div className="max-w-7xl mx-auto py-1 px-1 sm:px-6 lg:px-8">
-				<div className="pr-16 sm:text-center sm:px-16">
+				<div className="pr-16 sm:text-center text-white sm:px-16">
 					<p className="font-normal">
 						<span className="md:hidden">
 							Big news! Wiretrustee becomes <strong>netbird</strong>!
