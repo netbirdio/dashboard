@@ -113,118 +113,64 @@ export const Peers = () => {
     };
 
     return (
-        <div className="py-10">
-            <div className="py-10 bg-gray-50 overflow-hidden rounded max-w-7xl mx-auto sm:px-6 lg:px-8">
-                <header className="sm:flex sm:items-center">
-                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto">
-						<h1 className="text-xl font-semibold text-gray-900">Peers</h1>
-						<p className="mt-2 text-sm text-gray-700">
-                            A list of all the machines in your account including their name, IP and status.
-                        </p>
-                    </div>
-                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
-                        <Link to="/add-peer">
-                            <button
-                                type="button"
-                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-                            >
-                                Add peer
-                            </button>
-                        </Link>
-                    </div>
-                </header>
-                <main>
-                    <div className="max-w-7xl mx-auto">
-                        <div className="px-4 sm:px-0">
+        <div className="py-10 bg-gray-50 overflow-hidden rounded max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <header className="sm:flex sm:items-center">
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto">
+                    <h1 className="text-xl font-semibold text-gray-900">Peers</h1>
+                    <p className="mt-2 text-sm text-gray-700">
+                        A list of all the machines in your account including their name, IP and status.
+                    </p>
+                </div>
+                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
+                    <Link to="/add-peer">
+                        <button
+                            type="button"
+                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                        >
+                            Add peer
+                        </button>
+                    </Link>
+                </div>
+            </header>
+            <main>
+                <div className="max-w-7xl mx-auto">
+                    <div className="px-4 sm:px-0">
+                        {loading && <Loading/>}
+                        {error != null && <span>{error.toString()}</span>}
+                        <main>
                             {loading && <Loading/>}
-                            {error != null && <span>{error.toString()}</span>}
-                            <main>
-                                {loading && <Loading/>}
-                                {error != null && (
-                                    <span>{error.toString()}</span>
-                                )}
+                            {error != null && (
+                                <span>{error.toString()}</span>
+                            )}
 
-                                {peers.length === 0 ? (
-                                    <EmptyPeersPanel/>
-                                ) : (
-                                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                                        <div className="px-4 py-8 sm:px-0">
-                                            <DeleteModal
-                                                show={showDeleteDialog}
-                                                confirmCallback={
-                                                    handleDeleteConfirmation
-                                                }
-                                                text={deleteDialogText}
-                                                title={deleteDialogTitle}
-                                            />
-                                            <PaginatedPeersList
-                                                data={peers}
-                                                RenderComponent={PeerRow}
-                                                dataLimit={5}
-                                                pageLimit={5}
-                                            />
-                                        </div>
+                            {peers.length === 0 ? (
+                                <EmptyPeersPanel/>
+                            ) : (
+                                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
+                                    <div className="px-4 py-8 sm:px-0">
+                                        <DeleteModal
+                                            show={showDeleteDialog}
+                                            confirmCallback={
+                                                handleDeleteConfirmation
+                                            }
+                                            text={deleteDialogText}
+                                            title={deleteDialogTitle}
+                                        />
+                                        <PaginatedPeersList
+                                            data={peers}
+                                            RenderComponent={PeerRow}
+                                            dataLimit={5}
+                                            pageLimit={5}
+                                        />
                                     </div>
-                                )}
-                            </main>
-                        </div>
+                                </div>
+                            )}
+                        </main>
                     </div>
-                </main>
-            </div>
+                </div>
+            </main>
         </div>
 
-        /*<>
-
-            <div className="py-10">
-                <header>
-                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                        <h1 className="text-2xl leading-tight text-gray-900 font-normal">
-                            Peers
-                        </h1>
-                        <p className="mt-2 text-sm text-gray-700">
-                            A list of all the machines in your account including their name, IP and status.
-                        </p>
-                    </div>
-                </header>
-                <main>
-                    <div className="max-w-7xl mx-auto">
-                        <div className="px-4 sm:px-0">
-                            {loading && <Loading />}
-                            {error != null && <span>{error.toString()}</span>}
-                            <main>
-                                {loading && <Loading />}
-                                {error != null && (
-                                    <span>{error.toString()}</span>
-                                )}
-
-                                {peers.length === 0 ? (
-                                    <EmptyPeersPanel />
-                                ) : (
-                                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                                        <div className="px-4 py-8 sm:px-0">
-                                            <DeleteModal
-                                                show={showDeleteDialog}
-                                                confirmCallback={
-                                                    handleDeleteConfirmation
-                                                }
-                                                text={deleteDialogText}
-                                                title={deleteDialogTitle}
-                                            />
-                                            <PaginatedPeersList
-                                                data={peers}
-                                                RenderComponent={PeerRow}
-                                                dataLimit={5}
-                                                pageLimit={5}
-                                            />
-                                        </div>
-                                    </div>
-                                )}
-                            </main>
-                        </div>
-                    </div>
-                </main>
-            </div>
-        </>*/
     );
 };
 export default withAuthenticationRequired(Peers, {
