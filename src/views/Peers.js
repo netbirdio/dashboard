@@ -9,6 +9,7 @@ import DeleteModal from "../components/DeleteDialog";
 import EmptyPeersPanel from "../components/EmptyPeers";
 import PaginatedPeersList from "../components/PaginatedPeersList"
 import {Link} from "react-router-dom";
+import {PlusSmIcon as PlusSmIconSolid} from "@heroicons/react/solid";
 
 export const Peers = () => {
     const [peers, setPeers] = useState([]);

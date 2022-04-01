@@ -6,7 +6,6 @@ import {createSetupKey, getSetupKeys, revokeSetupKey} from "../api/ManagementAPI
 import EditButton from "../components/EditButton";
 import CopyText from "../components/CopyText";
 import DeleteModal from "../components/DeleteDialog";
-import {PlusSmIcon as PlusSmIconSolid} from "@heroicons/react/solid";
 import NewSetupKeyDialog from "../components/NewSetupKeyDialog";
 
 
@@ -86,10 +85,27 @@ export const SetupKeysComponent = () => {
 
         return (
             <>
-                <div className="py-10">
-                    <header>
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <h1 className="text-2xl leading-tight text-gray-900 font-bold">Setup Keys</h1>
+                <div className="py-10 bg-gray-50 overflow-hidden rounded max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    <header className="sm:flex sm:items-center">
+                        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto">
+                            <h1 className="text-xl font-semibold text-gray-900">Setup Keys</h1>
+                            <p className="mt-2 text-sm text-gray-700">
+                                A list of all the setup keys in your account including their name, state, type and
+                                expiration.
+                            </p>
+                        </div>
+                        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
+
+
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                                onClick={() => {
+                                    handleNewKeyClick()
+                                }}
+                            >
+                                Add Key
+                            </button>
                         </div>
                     </header>
                     <main>
@@ -104,94 +120,60 @@ export const SetupKeysComponent = () => {
                                                  confirmCallback={handleRevokeConfirmation}
                                                  text={deleteDialogText} title={deleteDialogTitle}/>
                                     <NewSetupKeyDialog show={showNewKeyDialog} closeCallback={newSetupKeyDialogCallback}/>
-                                    <div className="py-3 text-right">
 
-                                        <button
-                                            type="button"
-                                            className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
-                                            onClick={() => {
-                                                handleNewKeyClick()
-                                            }}
-                                        >
-                                            <PlusSmIconSolid className="h-5 w-5" aria-hidden="true"/>
-                                            New Key
-                                        </button>
-                                    </div>
                                     <div className="flex flex-col">
                                         <div className="-my-2 sm:-mx-6 lg:-mx-8">
-                                            <div
-                                                className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                                                <div
-                                                    className="shadow  border-b border-gray-200 sm:rounded-lg">
+                                            <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+                                                <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                                                     <table className="min-w-full divide-y divide-gray-200">
-                                                        <thead className="bg-gray-100">
+                                                        <thead className="bg-gray-50">
                                                         <tr>
+                                                            {[
+                                                                "Name",
+                                                                "State",
+                                                                "Type",
+                                                                "Key",
+                                                                "Last Used",
+                                                                "Used Times",
+                                                                "Expires",
+                                                            ].map((col) => {
+                                                                return (
+                                                                    <th
+                                                                        scope="col"
+                                                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                                                        key={col}
+                                                                    >
+                                                                        {col}
+                                                                    </th>
+                                                                );
+                                                            })}
                                                             <th
                                                                 scope="col"
-                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
+                                                                className="relative px-6 py-3"
                                                             >
-                                                                Name
-                                                            </th>
-                                                            <th
-                                                                scope="col"
-                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
-                                                            >
-                                                                State
-                                                            </th>
-                                                            <th
-                                                                scope="col"
-                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
-                                                            >
-                                                                Type
-                                                            </th>
-                                                            <th
-                                                                scope="col"
-                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
-                                                            >
-                                                                Key
-                                                            </th>
-                                                            <th
-                                                                scope="col"
-                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
-                                                            >
-                                                                Last Used
-                                                            </th>
-                                                            <th
-                                                                scope="col"
-                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
-                                                            >
-                                                                Used Times
-                                                            </th>
-                                                            <th
-                                                                scope="col"
-                                                                className="px-6 py-3 text-left text-xs text-gray-500 uppercase tracking-wider"
-                                                            >
-                                                                Expires
-                                                            </th>
-                                                            <th scope="col" className="relative px-6 py-3">
-                                                                <span className="sr-only">Edit</span>
+                                                                <span className="sr-only">
+                                                                    Edit
+                                                                </span>
                                                             </th>
                                                         </tr>
                                                         </thead>
                                                         <tbody className="bg-white divide-y divide-gray-200">
                                                         {setupKeys.map((setupKey, idx) => (
                                                             <tr key={setupKey.Id}>
-                                                                <td className="px-6 py-4 whitespace-nowrap text-sm font-semibold text-gray-900">{setupKey.Name}</td>
-
-                                                                <td className="px-6 py-4 whitespace-nowrap">
+                                                                <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">{setupKey.Name}</td>
+                                                                <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                                                                     {setupKey.Valid && (
-                                                                        <span
-                                                                            className="px-2 inline-flex text-sm leading-5 squared-full bg-green-100 text-green-800">
-                                                                     valid
-                                                                  </span>
+                                                                        <span className="inline-flex rounded-full bg-green-100 px-2 text-xs leading-5 text-green-800">
+                                                                        valid
+                                                                    </span>
                                                                     )}
                                                                     {!setupKey.Valid && (
-                                                                        <span
-                                                                            className="px-2 inline-flex text-sm leading-5 squared-full bg-red-100 text-red-800">
-                                                                     {setupKey.State}
-                                                                  </span>
+                                                                        <span className="inline-flex rounded-full bg-red-100 px-2 text-xs leading-5 text-red-800">
+                                                                         {setupKey.State}
+                                                                    </span>
                                                                     )}
                                                                 </td>
+
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{setupKey.Type.toLowerCase()}</td>
                                                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">
 
