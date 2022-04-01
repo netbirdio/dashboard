@@ -9,6 +9,7 @@ import DeleteModal from "../components/DeleteDialog";
 import EmptyPeersPanel from "../components/EmptyPeers";
 import PaginatedPeersList from "../components/PaginatedPeersList"
 import {Link} from "react-router-dom";
+import {string} from "prop-types";
 
 export const Peers = () => {
     const [peers, setPeers] = useState([]);
@@ -26,6 +27,18 @@ export const Peers = () => {
         setLoading(false);
         setError(error);
     };
+
+    const formatOS = (os) => {
+        if (os.startsWith("windows 10")) {
+            return "Windows 10"
+        }
+
+        if (os.startsWith("Darwin")) {
+          return os.replace("Darwin", "MacOS")
+        }
+
+        return os
+    }
 
     //called when user clicks on table row menu item
     const handleRowMenuClick = (action, peer) => {
@@ -97,7 +110,7 @@ export const Peers = () => {
                     {peer.ConnectedP ? "just now" : timeAgo(peer.LastSeen)}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {peer.OS}
+                    {formatOS(peer.OS)}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                     {peer.Version}
@@ -121,6 +134,20 @@ export const Peers = () => {
                         A list of all the machines in your account including their name, IP and status.
                     </p>
                 </div>
+                <span className="relative z-0 inline-flex shadow-sm rounded-md">
+                  <button
+                      type="button"
+                      className="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 z-10 outline-none ring-1 ring-indigo-500 border-indigo-500"
+                  >
+                    All
+                  </button>
+                  <button
+                      type="button"
+                      className="-ml-px relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                  >
+                    Online
+                  </button>
+                </span>
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
                     <Link to="/add-peer">
                         <button
