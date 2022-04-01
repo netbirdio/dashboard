@@ -31,14 +31,14 @@ const EditButton = ({items, handler}) => {
                     leaveTo="transform opacity-0 scale-95"
                 >
                     <Menu.Items
-                        className="absolute mt-2 squared-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        className="absolute mt-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
 
                         {items.map((item, idx) => (
                             <Menu.Item key={item.name}>
                                 {({active}) => (
                                     <Link
                                         to="#"
-                                        className={classNames(active ? 'bg-gray-100' : 'font-mono', 'block px-4 py-2 text-sm text-gray-700')}
+                                        className={classNames(active ? 'bg-gray-100' : 'font-normal', 'block px-4 py-2 text-sm text-gray-700')}
                                         onClick={() => handleAction(item.name)}
                                     >
                                         {item.name}
