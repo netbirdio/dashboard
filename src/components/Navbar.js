@@ -23,7 +23,7 @@ const Navbar = ({toggle}) => {
         });
 
     return (
-        <Disclosure as="nav" className="bg-white shadow">
+        <Disclosure as="nav" className="bg-white border-b shadow">
             {({open}) => (
                 <>
                     <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">

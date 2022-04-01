@@ -114,14 +114,11 @@ export const Peers = () => {
 
     return (
         <div className="py-10">
-
-            <div className="py-10 bg-gray-100 overflow-hidden rounded max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div className="py-10 bg-gray-50 overflow-hidden rounded max-w-7xl mx-auto sm:px-6 lg:px-8">
                 <header className="sm:flex sm:items-center">
                     <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto">
-                        <h1 className="text-2xl leading-tight text-gray-900 font-normal">
-                            Peers
-                        </h1>
-                        <p className="mt-2 text-sm text-gray-700">
+						<h1 className="text-xl font-semibold text-gray-900">Peers</h1>
+						<p className="mt-2 text-sm text-gray-700">
                             A list of all the machines in your account including their name, IP and status.
                         </p>
                     </div>
