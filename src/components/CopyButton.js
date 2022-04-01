@@ -21,7 +21,7 @@ const CopyButton = ({idPrefix, toCopy}) => {
     return (
         <button
             onClick={handleKeyCopy}
-            className="whitespace-nowrap font-medium text-gray-500 hover:text-gray-400">
+            className="whitespace-nowrap text-gray-500 hover:text-gray-400">
             <svg id={copyIconId} xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24"
                  stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
