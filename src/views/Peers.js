@@ -9,7 +9,6 @@ import DeleteModal from "../components/DeleteDialog";
 import EmptyPeersPanel from "../components/EmptyPeers";
 import PaginatedPeersList from "../components/PaginatedPeersList"
 import {Link} from "react-router-dom";
-import {string} from "prop-types";
 
 export const Peers = () => {
     const [peers, setPeers] = useState([]);
@@ -34,7 +33,7 @@ export const Peers = () => {
         }
 
         if (os.startsWith("Darwin")) {
-          return os.replace("Darwin", "MacOS")
+            return os.replace("Darwin", "MacOS")
         }
 
         return os
@@ -134,7 +133,8 @@ export const Peers = () => {
                         A list of all the machines in your account including their name, IP and status.
                     </p>
                 </div>
-                <span className="relative z-0 inline-flex shadow-sm rounded-md">
+                {peers.length !== 0 ? (
+                    <span className="relative z-0 inline-flex shadow-sm rounded-md">
                   <button
                       type="button"
                       className="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 z-10 outline-none ring-1 ring-indigo-500 border-indigo-500"
@@ -148,16 +148,19 @@ export const Peers = () => {
                     Online
                   </button>
                 </span>
-                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
-                    <Link to="/add-peer">
-                        <button
-                            type="button"
-                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-                        >
-                            Add peer
-                        </button>
-                    </Link>
-                </div>
+                ) : (<div/>)}
+
+                {peers.length !== 0 ? (
+                    <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
+                        <Link to="/add-peer">
+                            <button
+                                type="button"
+                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                            >
+                                Add peer
+                            </button>
+                        </Link>
+                    </div>) : (<div/>)}
             </header>
             <main>
                 <div className="max-w-7xl mx-auto">
@@ -171,7 +174,10 @@ export const Peers = () => {
                             )}
 
                             {peers.length === 0 ? (
-                                <EmptyPeersPanel/>
+                                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-10">
+                                    <EmptyPeersPanel/>
+                                </div>
+
                             ) : (
                                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                                     <div className="px-4 py-8 sm:px-0">
