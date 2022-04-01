@@ -193,7 +193,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                         <div className="space-x-3 flex justify-end">
                                             <button
                                                 type="button"
-                                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-white px-4 py-2 text-sm font-medium text-gray-500 shadow-sm ring-1 ring-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                                                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                                                 onClick={() => {
                                                     closeCallback(true, null, null, null)
                                                 }}
