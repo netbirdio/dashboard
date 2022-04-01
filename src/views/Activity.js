@@ -12,7 +12,7 @@ export const ActivityComponent = () => {
                 <div className="py-10">
                     <header>
                         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <h1 className="text-2xl leading-tight text-gray-900 font-bold">Access Control</h1>
+                            <h1 className="text-xl font-semibold text-gray-900">Activity</h1>
                         </div>
                     </header>
                     <main>

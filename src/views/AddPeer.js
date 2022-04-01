@@ -35,7 +35,7 @@ export const AddPeerComponent = () => {
                 <div className="py-10">
                     <header>
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <h1 className="text-2xl leading-tight text-gray-900 font-normal">Add Peer</h1>
+                            <h1 className="text-xl font-semibold text-gray-900">Add Peer</h1>
                         </div>
                     </header>
 
