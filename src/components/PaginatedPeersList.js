@@ -1,17 +1,23 @@
-import React, { useState } from "react";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/solid";
-import { withAuthenticationRequired } from "@auth0/auth0-react";
+import React, {useEffect, useState} from "react";
+import {ChevronLeftIcon, ChevronRightIcon} from "@heroicons/react/solid";
+import {withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
+import PropTypes from "prop-types";
+import LinuxTab from "./addpeer/LinuxTab";
 
 // @data the data that will be paginated
 // @RenderComponent the component that needs to be rendered
 // @pageLimit number of Elements shown in Pagination bar
 // @dataLimit maximum Elements rendered per page
 const PaginatedPeersList = (props) => {
-	const [pageCount] = useState(
+	const [pageCount, setPageCount] = useState(
 		Math.ceil(props.data.length / props.dataLimit)
 	); // actual pageCount we have
 	const [currentPage, setCurrentPage] = useState(1);
+
+	function recalculate() {
+		setPageCount(Math.ceil(props.data.length / props.dataLimit))
+	}
 
 	// sliding window of size pageLimit for shown elements of bar
 	function goToNextPage() {
@@ -37,9 +43,17 @@ const PaginatedPeersList = (props) => {
 		setCurrentPage(pageCount);
 	}
 
+	const getStartIndex = () => {
+		return currentPage * props.dataLimit - props.dataLimit;
+	}
+
+	const getEndIndex = () => {
+		return getStartIndex() + props.dataLimit;
+	}
+
 	const getPaginatedData = () => {
-		const startIndex = currentPage * props.dataLimit - props.dataLimit;
-		const endIndex = startIndex + props.dataLimit;
+		const startIndex = getStartIndex();
+		const endIndex = getEndIndex();
 		return props.data.slice(startIndex, endIndex);
 	};
 
@@ -94,6 +108,10 @@ const PaginatedPeersList = (props) => {
 		);
 	}
 
+	useEffect(() => {
+		recalculate()
+	}, [props.data]);
+
 	return (
 		<>
 			<div className="flex flex-col">
@@ -102,53 +120,55 @@ const PaginatedPeersList = (props) => {
 						<div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
 							<table className="min-w-full divide-y divide-gray-200">
 								<thead className="bg-gray-50">
-									<tr>
-										{[
-											"Name",
-											"IP",
-											"Status",
-											"Last Seen",
-											"OS",
-											"Version",
-										].map((col) => {
-											return (
-												<th
-													scope="col"
-													className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-													key={col}
-												>
-													{col}
-												</th>
-											);
-										})}
-										<th
-											scope="col"
-											className="relative px-6 py-3"
-										>
+								<tr>
+									{[
+										"Name",
+										"IP",
+										"Status",
+										"Last Seen",
+										"OS",
+										"Version",
+									].map((col) => {
+										return (
+											<th
+												scope="col"
+												className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+												key={col}
+											>
+												{col}
+											</th>
+										);
+									})}
+									<th
+										scope="col"
+										className="relative px-6 py-3"
+									>
 											<span className="sr-only">
 												Edit
 											</span>
-										</th>
-									</tr>
+									</th>
+								</tr>
 								</thead>
 								<tbody className="bg-white divide-y divide-gray-200">
-									{getPaginatedData().map((elem) =>
-										props.RenderComponent(elem)
-									)}
+								{getPaginatedData().map((elem) =>
+									props.RenderComponent(elem)
+								)}
 								</tbody>
 							</table>
-							<div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+							<div
+								className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
 								<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
 									<div>
 										<p className=" text-gray-700">
 											Showing{" "}
-											<span className="font-medium">{currentPage}</span>{" "}
-											to <span className="font-medium">{pageCount}</span>{" "}
-											of <span className="font-medium">{props.data.length}</span> {props.data.length === 1 ? "peer" : "peers"}
+											<span className="font-medium">{props.data.length === 0 ? 0 : getStartIndex() + 1}</span>{" "}
+											to <span className="font-medium">{props.data.length === 0 ? 0 : getStartIndex() + getPaginatedData().length}</span>{" "}
+											of <span
+											className="font-medium">{props.data.length}</span> {props.data.length === 1 ? "peer" : "peers"}
 										</p>
 									</div>
-									{pageCount === 1 ? (
-										<div />
+									{pageCount === 1 || pageCount === 0 ? (
+										<div/>
 									) : (
 										<div>
 											<nav
@@ -211,6 +231,5 @@ const PaginatedPeersList = (props) => {
 	);
 };
 
-export default withAuthenticationRequired(PaginatedPeersList, {
-	onRedirecting: () => <Loading />,
-});
+export default PaginatedPeersList;
+
