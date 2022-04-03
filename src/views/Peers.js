@@ -9,7 +9,6 @@ import DeleteModal from "../components/DeleteDialog";
 import EmptyPeersPanel from "../components/EmptyPeers";
 import PaginatedPeersList from "../components/PaginatedPeersList"
 import {Link} from "react-router-dom";
-import {PlusSmIcon as PlusSmIconSolid} from "@heroicons/react/solid";
 
 export const Peers = () => {
     const [peers, setPeers] = useState([]);
@@ -52,12 +51,39 @@ export const Peers = () => {
         }
     };
 
-    const refresh = () => {
+    const showAll = () => {
+        const showAllBtn = document.getElementById("btn-show-all");
+        const showOnlineBtn = document.getElementById("btn-show-online");
+
+        showAllBtn.classList.add('ring-1', 'ring-indigo-500', 'border-indigo-500', 'outline-none');
+        showOnlineBtn.classList.remove('ring-1', 'ring-indigo-500', 'border-indigo-500', 'outline-none');
+        refresh(null)
+    }
+
+
+    const showConnected = () => {
+        const showAllBtn = document.getElementById("btn-show-all");
+        const showOnlineBtn = document.getElementById("btn-show-online");
+
+        showOnlineBtn.classList.add('ring-1', 'ring-indigo-500', 'border-indigo-500', 'outline-none');
+        showAllBtn.classList.remove('ring-1', 'ring-indigo-500', 'border-indigo-500', 'outline-none');
+
+        refresh(function (peers) {
+            return peers.filter(peer => {
+                return peer.Connected
+            })
+        })
+    }
+
+    const refresh = (filter) => {
         getPeers(getAccessTokenSilently)
             .then((responseData) =>
                 responseData.sort((a, b) => (a.Name > b.Name ? 1 : -1))
             )
-            .then((sorted) => setPeers(sorted))
+            .then((sorted) => {
+                return filter != null ? filter(sorted) : sorted
+            })
+            .then((filtered) => setPeers(filtered))
             .then(() => setLoading(false))
             .catch((error) => handleError(error));
     };
@@ -134,9 +160,11 @@ export const Peers = () => {
                         A list of all the machines in your account including their name, IP and status.
                     </p>
                 </div>
-                {/*{peers.length !== 0 ? (
+                {peers.length !== 0 ? (
                     <span className="relative z-0 inline-flex shadow-sm rounded-md">
                   <button
+                      id="btn-show-all"
+                      onClick={() => showAll()}
                       type="button"
                       className="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 z-10 outline-none ring-1 ring-indigo-500 border-indigo-500"
                   >
@@ -144,13 +172,15 @@ export const Peers = () => {
                   </button>
                   <button
                       type="button"
-                      className="-ml-px relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 focus:z-10 focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                      id="btn-show-online"
+                      onClick={() => showConnected()}
+                      className="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 outline-none hover:bg-gray-50"
                   >
                     Online
                   </button>
                 </span>
                 ) : (<div/>)}
-*/}
+
                 {peers.length !== 0 ? (
                     <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
                         <Link to="/add-peer">
