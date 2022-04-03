@@ -53,7 +53,7 @@ const MacTab = ({setupKey}) => {
 
     return (
 
-        <ol role="list" className="overflow-hidden">
+        <ol className="overflow-hidden">
             {steps.map((step, stepIdx) => (
                 <li key={"linux-tab-step-" + step.id}
                     className={classNames(stepIdx !== steps.length - 1 ? 'pb-10' : '', 'relative')}>

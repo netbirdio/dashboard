@@ -3,7 +3,6 @@ import {Dialog, RadioGroup, Transition} from '@headlessui/react'
 import {XIcon} from '@heroicons/react/outline'
 import {ExclamationCircleIcon, QuestionMarkCircleIcon} from '@heroicons/react/solid'
 import PropTypes from "prop-types";
-import {Link} from "react-router-dom";
 
 const types = [
     {name: 'Reusable', description: 'This type of a setup key allows to setup multiple machine', value: 'reusable'},
@@ -172,6 +171,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                                 <a
                                                                     href="https://docs.netbird.io/overview/setup-keys"
                                                                     target="_blank"
+                                                                    rel="noreferrer"
                                                                     className="group flex items-center text-sm text-gray-500 hover:text-gray-900 space-x-2.5"
                                                                 >
                                                                     <QuestionMarkCircleIcon
