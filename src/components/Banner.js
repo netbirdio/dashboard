@@ -24,6 +24,7 @@ export default function Banner() {
 								href="https://blog.netbird.io/wiretrustee-becomes-netbird"
 								className="font-bold underline"
 								target="_blank"
+								rel="noreferrer"
 							>
 								{" "}
 								Learn more{" "}
