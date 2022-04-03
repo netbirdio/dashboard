@@ -51,10 +51,6 @@ const LinuxTab = ({setupKey}) => {
         return commands.map(c => key != null ? c.replace("<PASTE-SETUP-KEY>", key.Key) : c).join("\n")
     }
 
-    const escapeHtml = (unsafe) => {
-        return unsafe.replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
-    }
-
     return (
 
         <ol className="overflow-hidden">
