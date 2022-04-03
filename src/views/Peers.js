@@ -12,7 +12,7 @@ import {Link} from "react-router-dom";
 
 export const Peers = () => {
     const [peers, setPeers] = useState([]);
-    const [empty, setEmpty] = useState(false)
+    const [empty, setEmpty] = useState(true)
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -81,16 +81,16 @@ export const Peers = () => {
             .then((responseData) =>
                 responseData.sort((a, b) => (a.Name > b.Name ? 1 : -1))
             )
-            .then(peers => {
-                if (peers.length === 0) {
-                    setEmpty(true)
-                }
-                return peers
+            .then(list => {
+                setEmpty(list.length === 0)
+                return list
             })
             .then((sorted) => {
                 return filter != null ? filter(sorted) : sorted
             })
-            .then((filtered) => setPeers(filtered))
+            .then((filtered) => {
+                setPeers(filtered)
+            })
             .then(() => setLoading(false))
             .catch((error) => handleError(error));
     };
@@ -101,7 +101,7 @@ export const Peers = () => {
         if (confirmed) {
             deletePeer(getAccessTokenSilently, peerToDelete.IP)
                 .then(() => setPeerToDelete(null))
-                .then(() => refresh())
+                .then(() => refresh(null))
                 .catch((error) => {
                     setPeerToDelete(null);
                     console.log(error);
@@ -112,7 +112,7 @@ export const Peers = () => {
     };
 
     useEffect(() => {
-        refresh();
+        refresh(null);
     }, [getAccessTokenSilently]);
 
     const PeerRow = (peer) => {
@@ -211,12 +211,7 @@ export const Peers = () => {
                                 <span>{error.toString()}</span>
                             )}
 
-                            {empty ? (
-                                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-10">
-                                    <EmptyPeersPanel/>
-                                </div>
-
-                            ) : (
+                            {!empty ? (
                                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                                     <div className="px-4 py-8 sm:px-0">
                                         <DeleteModal
@@ -234,6 +229,10 @@ export const Peers = () => {
                                             pageLimit={5}
                                         />
                                     </div>
+                                </div>
+                            ) : (
+                                <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-10">
+                                    <EmptyPeersPanel/>
                                 </div>
                             )}
                         </main>
