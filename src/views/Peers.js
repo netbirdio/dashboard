@@ -107,7 +107,7 @@ export const Peers = () => {
                     )}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                    {peer.ConnectedP ? "just now" : timeAgo(peer.LastSeen)}
+                    {peer.Connected ? "just now" : timeAgo(peer.LastSeen)}
                 </td>
                 <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                     {formatOS(peer.OS)}
@@ -134,7 +134,7 @@ export const Peers = () => {
                         A list of all the machines in your account including their name, IP and status.
                     </p>
                 </div>
-                {peers.length !== 0 ? (
+                {/*{peers.length !== 0 ? (
                     <span className="relative z-0 inline-flex shadow-sm rounded-md">
                   <button
                       type="button"
@@ -150,7 +150,7 @@ export const Peers = () => {
                   </button>
                 </span>
                 ) : (<div/>)}
-
+*/}
                 {peers.length !== 0 ? (
                     <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
                         <Link to="/add-peer">
