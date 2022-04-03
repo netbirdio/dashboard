@@ -12,6 +12,7 @@ import {Link} from "react-router-dom";
 
 export const Peers = () => {
     const [peers, setPeers] = useState([]);
+    const [empty, setEmpty] = useState(false)
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [showDeleteDialog, setShowDeleteDialog] = useState(false);
@@ -80,6 +81,12 @@ export const Peers = () => {
             .then((responseData) =>
                 responseData.sort((a, b) => (a.Name > b.Name ? 1 : -1))
             )
+            .then(peers => {
+                if (peers.length === 0) {
+                    setEmpty(true)
+                }
+                return peers
+            })
             .then((sorted) => {
                 return filter != null ? filter(sorted) : sorted
             })
@@ -160,7 +167,7 @@ export const Peers = () => {
                         A list of all the machines in your account including their name, IP and status.
                     </p>
                 </div>
-                {peers.length !== 0 ? (
+                {!empty ? (
                     <span className="relative z-0 inline-flex shadow-sm rounded-md">
                   <button
                       id="btn-show-all"
@@ -181,7 +188,7 @@ export const Peers = () => {
                 </span>
                 ) : (<div/>)}
 
-                {peers.length !== 0 ? (
+                {!empty ? (
                     <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
                         <Link to="/add-peer">
                             <button
@@ -204,7 +211,7 @@ export const Peers = () => {
                                 <span>{error.toString()}</span>
                             )}
 
-                            {peers.length === 0 ? (
+                            {empty ? (
                                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-10">
                                     <EmptyPeersPanel/>
                                 </div>
