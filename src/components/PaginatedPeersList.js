@@ -144,7 +144,7 @@ const PaginatedPeersList = (props) => {
 											Showing{" "}
 											<span className="font-medium">{currentPage}</span>{" "}
 											to <span className="font-medium">{pageCount}</span>{" "}
-											of <span className="font-medium">{pageCount}</span>
+											of <span className="font-medium">{props.data.length}</span> {props.data.length === 1 ? "peer" : "peers"}
 										</p>
 									</div>
 									{pageCount === 1 ? (
