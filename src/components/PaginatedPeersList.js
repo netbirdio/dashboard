@@ -10,9 +10,7 @@ import LinuxTab from "./addpeer/LinuxTab";
 // @pageLimit number of Elements shown in Pagination bar
 // @dataLimit maximum Elements rendered per page
 const PaginatedPeersList = (props) => {
-	const [pageCount, setPageCount] = useState(
-		Math.ceil(props.data.length / props.dataLimit)
-	); // actual pageCount we have
+	const [pageCount, setPageCount] = useState(0); // actual pageCount we have
 	const [currentPage, setCurrentPage] = useState(1);
 
 	function recalculate() {
