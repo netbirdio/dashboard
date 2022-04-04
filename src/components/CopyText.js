@@ -21,7 +21,7 @@ const CopyButton = ({idPrefix, text}) => {
     return (
         <button
             onClick={handleKeyCopy}
-            className="whitespace-nowrap font-medium text-gray-500 hover:text-gray-400">
+            className="whitespace-nowrap text-gray-500 hover:text-gray-400">
             <div id={copyIconId}>
                 {text}
             </div>

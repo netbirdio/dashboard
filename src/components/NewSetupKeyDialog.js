@@ -46,12 +46,10 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                 <form className="h-full flex flex-col bg-white shadow-xl overflow-y-scroll">
                                     <div className="flex-1">
                                         {/* Header */}
-                                        <div className="px-4 py-6 bg-gray-50 sm:px-6">
+                                        <div className="px-4 py-6 bg-white sm:px-6">
                                             <div className="flex items-start justify-between space-x-3">
                                                 <div className="space-y-1">
-                                                    <Dialog.Title className="text-lg font-mono font-bold text-gray-900">New
-                                                        setup
-                                                        key</Dialog.Title>
+                                                    <Dialog.Title className="text-lg font-medium text-gray-700">New setup key</Dialog.Title>
                                                     <p className="text-sm text-gray-500">
                                                         Setup keys allow you to enroll new peers
                                                     </p>
@@ -74,14 +72,14 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                         <hr className="border-gray-200"/>
 
                                         <div
-                                            className="py-6 space-y-6 sm:py-0 sm:space-y-0">
+                                            className="py-6 space-y-6 sm:py-0 sm:space-y-0 bg-gray-50">
 
                                             <div
                                                 className="space-y-1 px-4 sm:space-y-0 grid grid-cols-2 sm:gap-4 sm:px-6 sm:py-5">
                                                 <div>
                                                     <label
                                                         htmlFor="project-name"
-                                                        className="block text-s font-mono font-medium text-gray-900 sm:mt-px sm:pt-2"
+                                                        className="block text-gray-900 sm:mt-px sm:pt-2"
                                                     >
                                                         Name
                                                     </label>
@@ -91,7 +89,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                         type="text"
                                                         name="new-setup-key-name"
                                                         id="new-setup-key-name"
-                                                        className="w-full shadow-sm text-lg font-mono focus:ring-gray-300 squared focus:border-gray-300 border border-gray-300"
+                                                        className="w-full shadow-sm text-lg focus:ring-gray-300 rounded focus:border-gray-300 border border-gray-300"
                                                         value={keyName}
                                                         onChange={event => setKeyName(event.target.value)}
                                                     />
@@ -100,7 +98,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                     </div>
                                                 </div>
                                                 <div className="sm:col-span-2">
-                                                    <p id="name-validation-error" className="mt-2 text-sm font-mono text-red-600 hidden">
+                                                    <p id="name-validation-error" className="mt-2 text-sm text-red-600 hidden">
                                                         The name of the key can't be empty.
                                                     </p>
                                                 </div>
@@ -112,22 +110,22 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                     className="space-y-2 px-4 sm:space-y-0 grid sm:grid-cols-2 sm:gap-4 sm:items-start sm:px-6 sm:py-5">
                                                     <div>
                                                         <legend
-                                                            className="text-m font-mono font-medium text-gray-900">Type
+                                                            className="text-gray-900">Type
                                                         </legend>
                                                     </div>
                                                     <div className="space-y-5 sm:col-span-2">
                                                         <RadioGroup value={selectedType} onChange={setSelectedType}>
                                                             <RadioGroup.Label className="sr-only">Privacy
                                                                 setting</RadioGroup.Label>
-                                                            <div className="bg-white squared-md -space-y-px">
+                                                            <div className="bg-white rounded -space-y-px">
                                                                 {types.map((setting, settingIdx) => (
                                                                     <RadioGroup.Option
                                                                         key={setting.name}
                                                                         value={setting}
                                                                         className={({checked}) =>
                                                                             classNames(
-                                                                                settingIdx === 0 ? 'squared-tl-md squared-tr-md' : '',
-                                                                                settingIdx === types.length - 1 ? 'squared-bl-md squared-br-md' : '',
+                                                                                settingIdx === 0 ? 'rounded-tl-md rounded-tr-md' : '',
+                                                                                settingIdx === types.length - 1 ? 'rounded-bl-md rounded-br-md' : '',
                                                                                 checked ? 'bg-gray-50 border-gray-200 z-10' : 'border-gray-200',
                                                                                 'relative border p-4 flex cursor-pointer focus:outline-none'
                                                                             )
@@ -139,17 +137,17 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                                                     className={classNames(
                                                                                         checked ? 'bg-gray-600 border-transparent' : 'bg-white border-gray-300',
                                                                                         active ? 'ring-2 ring-offset-2 ring-gray-500' : '',
-                                                                                        'h-4 w-4 mt-0.5 cursor-pointer squared-full border flex items-center justify-center'
+                                                                                        'h-4 w-4 mt-0.5 cursor-pointer rounded border flex items-center justify-center'
                                                                                     )}
                                                                                     aria-hidden="true"
                                                                                 >
                                                                                   <span
-                                                                                      className="squared-full bg-white w-1.5 h-1.5"/>
+                                                                                      className="rounded bg-white w-1.5 h-1.5"/>
                                                                                 </span>
                                                                                 <div className="ml-3 flex flex-col">
                                                                                     <RadioGroup.Label
                                                                                         as="span"
-                                                                                        className={classNames(checked ? 'text-gray-900' : 'text-gray-900', 'block text-sm font-medium')}
+                                                                                        className={classNames(checked ? 'text-gray-900' : 'text-gray-900', 'block text-sm')}
                                                                                     >
                                                                                         {setting.name}
                                                                                     </RadioGroup.Label>
@@ -171,7 +169,9 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                                             className="flex flex-col space-between space-y-4 sm:flex-row sm:items-center sm:space-between sm:space-y-0">
                                                             <div>
                                                                 <a
-                                                                    href="#"
+                                                                    href="https://docs.netbird.io/overview/setup-keys"
+                                                                    target="_blank"
+                                                                    rel="noreferrer"
                                                                     className="group flex items-center text-sm text-gray-500 hover:text-gray-900 space-x-2.5"
                                                                 >
                                                                     <QuestionMarkCircleIcon
@@ -193,7 +193,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                         <div className="space-x-3 flex justify-end">
                                             <button
                                                 type="button"
-                                                className="bg-white py-2 px-4 border border-gray-300 squared-md shadow-sm text-sm font-mono text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                                className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
                                                 onClick={() => {
                                                     closeCallback(true, null, null, null)
                                                 }}
@@ -202,7 +202,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                             </button>
                                             <button
                                                 type="button"
-                                                className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-mono squared-md text-white bg-gray-500 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+                                                className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
                                                 onClick={() => {
                                                     if (!keyName) {
                                                         let el = document.getElementById("name-validation-error");
@@ -216,6 +216,7 @@ const NewSetupKeyDialog = ({show, closeCallback}) => {
                                             >
                                                 Create
                                             </button>
+
                                         </div>
                                     </div>
                                 </form>

@@ -20,7 +20,7 @@ const MacTab = ({setupKey}) => {
         },
         {
             id: 2,
-            target: 'Install Wiretrustee:',
+            target: 'Install Netbird:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
@@ -29,7 +29,7 @@ const MacTab = ({setupKey}) => {
         },
         {
             id: 3,
-            target: 'Login and run Wiretrustee:',
+            target: 'Login and run Netbird:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
@@ -53,7 +53,7 @@ const MacTab = ({setupKey}) => {
 
     return (
 
-        <ol role="list" className="overflow-hidden">
+        <ol className="overflow-hidden">
             {steps.map((step, stepIdx) => (
                 <li key={"linux-tab-step-" + step.id}
                     className={classNames(stepIdx !== steps.length - 1 ? 'pb-10' : '', 'relative')}>
@@ -68,12 +68,12 @@ const MacTab = ({setupKey}) => {
 
                   <span className="h-9 " aria-hidden="true">
                     <span
-                        className="relative z-10 w-8 h-8 flex items-center justify-center bg-white border-2 border-gray-300 squared-full group-hover:border-gray-400">
-                      <span className="text-m font-mono text-gray-700">{step.id}</span>
+                        className="relative z-10 w-8 h-8 flex items-center justify-center bg-white border-2 border-gray-300 rounded group-hover:border-gray-400">
+                      <span className="text-m text-gray-700">{step.id}</span>
                     </span>
                   </span>
                             <span className="ml-4 min-w-0 ">
-                    <span className="text-m tracking-wide font-mono text-gray-700">{step.target}</span>
+                    <span className="tracking-wide text-gray-700">{step.target}</span>
                                         <div className="flex flex-col space-y-2 ">
                                                             <span
                                                                 className="text-sm text-gray-500">
@@ -92,7 +92,7 @@ const MacTab = ({setupKey}) => {
 
                                                             </span>
                                             {step.copy && (<CopyButton toCopy={formatCommands(step.commands, setupKey)}
-                                                                       idPrefix={"add-peer-code-" + step.id}/>)}
+                                                                       idPrefix={"add-peer-code-mac-" + step.id}/>)}
 
                                         </div>
                   </span>

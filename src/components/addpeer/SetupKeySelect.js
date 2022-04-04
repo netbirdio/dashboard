@@ -17,7 +17,7 @@ const SetupKeySelect = ({data, onSelected}) => {
 
     return (
         <div>
-            <span className="text-m tracking-wide font-mono text-gray-700">Select setup key to register peer:</span>
+            <span className="text-m tracking-wide text-gray-700">Select setup key to register peer:</span>
             <span className="ml-4 min-w-0">
                 <div className="flex flex-col space-y-2">
             <Listbox value={selected} onChange={handleSelected}>
@@ -25,8 +25,8 @@ const SetupKeySelect = ({data, onSelected}) => {
                     <>
                         <div className="mt-1 relative">
                             <Listbox.Button
-                                className="bg-white relative w-full border border-gray-300 squared-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
-                                <span className="block truncate font-mono">{selected.Name}</span>
+                                className="bg-white relative w-full border border-gray-300 rounded-md shadow-sm pl-3 pr-10 py-2 text-left cursor-default focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm">
+                                <span className="block truncate">{selected.Name}</span>
                                 <span className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
                 <SelectorIcon className="h-5 w-5 text-gray-400" aria-hidden="true"/>
               </span>
@@ -54,7 +54,7 @@ const SetupKeySelect = ({data, onSelected}) => {
                                         >
                                             {({selected, active}) => (
                                                 <>
-                        <span className={classNames(selected ? 'font-semibold' : 'font-mono', 'block truncate')}>
+                        <span className={classNames(selected ? 'font-semibold' : 'font-normal', 'block truncate')}>
                           {item.Name}
                         </span>
 
@@ -80,7 +80,7 @@ const SetupKeySelect = ({data, onSelected}) => {
             </Listbox>
             <div id="key-box" className="hidden rounded-md bg-gray-100 p-4">
                 <div className="ml-3 flex-1 md:flex md:justify-between">
-                    <p className="text-sm font-mono text-gray-700">{selected.Key}</p>
+                    <p className="text-sm text-gray-700">{selected.Key}</p>
                     <p className="mt-4 text-sm md:mt-0 md:ml-6">
                         <CopyButton toCopy={selected.Key}/>
                     </p>
