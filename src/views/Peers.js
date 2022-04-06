@@ -86,9 +86,25 @@ export const Peers = () => {
 
   const handleSearch = (e) => {
     let tempArray = peersBackUp.filter((item) =>
-      item.Name.includes(e.toUpperCase())
+      item.Name.toUpperCase().includes(e.toUpperCase())
     );
     setPeers(tempArray);
+  };
+
+  const sortTable = (e) => {
+    let peerCopy = [...peers];
+    if (e === "0") {
+      peerCopy.sort((a, b) => (a.Name > b.Name ? 1 : -1));
+    } else if (e === "1") {
+      peerCopy.sort((a, b) => (a.Name > b.Name ? -1 : 1));
+    } else if (e === "2") {
+      peerCopy.sort((a, b) => (a.LastSeen > b.LastSeen ? 1 : -1));
+    } else if (e === "3") {
+      peerCopy.sort((a, b) => (a.LastSeen > b.LastSeen ? -1 : 1));
+    } else {
+      console.log(`Sorry, we are out of ${e}`, e);
+    }
+    setPeers(peerCopy);
   };
 
   const InnerPageNumbers = () => {
@@ -227,43 +243,6 @@ export const Peers = () => {
             and status.
           </p>
         </div>
-        {!empty ? (
-          <span className="relative z-0 inline-flex shadow-sm rounded-md">
-            <button
-              id="btn-show-all"
-              onClick={() => showAll()}
-              type="button"
-              className="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 z-10 outline-none ring-1 ring-indigo-500 border-indigo-500"
-            >
-              All
-            </button>
-            <button
-              type="button"
-              id="btn-show-online"
-              onClick={() => showConnected()}
-              className="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 outline-none hover:bg-gray-50"
-            >
-              Online
-            </button>
-          </span>
-        ) : (
-          <div />
-        )}
-
-        {!empty ? (
-          <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
-            <Link to="/add-peer">
-              <button
-                type="button"
-                className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-              >
-                Add peer
-              </button>
-            </Link>
-          </div>
-        ) : (
-          <div />
-        )}
       </header>
       <main>
         <div className="max-w-7xl mx-auto">
@@ -276,13 +255,58 @@ export const Peers = () => {
 
               {!empty ? (
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                  <div className="flex w-full">
-                    <input
-                      className="rounded p-2 mt-8 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
-                      placeholder="Search..."
-                      type="search"
-                      onChange={(e) => handleSearch(e.target.value)}
-                    />
+                  <div className="flex w-full items-center mt-8 justify-between">
+                    <div className="flex">
+                      <input
+                        className="rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
+                        placeholder="Search..."
+                        type="search"
+                        onChange={(e) => handleSearch(e.target.value)}
+                      />
+                      <div className="flex items-center">
+                        <p className="ml-4">Sort by: &nbsp;</p>
+                        <select
+                          className="rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
+                          onChange={(e) => sortTable(e.target.value)}
+                        >
+                          <option value={0}>Name: Ascending</option>
+                          <option value={1}>Name: Descending</option>
+                          <option value={2}>Last Seen: Ascending</option>
+                          <option value={3}>Last Seen: Descending</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex items-center">
+                      <span className="relative z-0 inline-flex shadow-sm rounded-md">
+                        <button
+                          id="btn-show-all"
+                          onClick={() => showAll()}
+                          type="button"
+                          className="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 z-10 outline-none ring-1 ring-indigo-500 border-indigo-500"
+                        >
+                          All
+                        </button>
+                        <button
+                          type="button"
+                          id="btn-show-online"
+                          onClick={() => showConnected()}
+                          className="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 outline-none hover:bg-gray-50"
+                        >
+                          Online
+                        </button>
+                      </span>
+
+                      <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
+                        <Link to="/add-peer">
+                          <button
+                            type="button"
+                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                          >
+                            Add peer
+                          </button>
+                        </Link>
+                      </div>
+                    </div>
                   </div>
                   <div className="px-4 py-8 sm:px-0">
                     <DeleteModal
