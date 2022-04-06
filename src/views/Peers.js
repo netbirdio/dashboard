@@ -259,14 +259,14 @@ export const Peers = () => {
                     <div className="flex">
                       <input
                         className="rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
-                        placeholder="Search..."
+                        placeholder="Search Name..."
                         type="search"
                         onChange={(e) => handleSearch(e.target.value)}
                       />
                       <div className="flex items-center">
                         <p className="ml-4">Sort by: &nbsp;</p>
                         <select
-                          className="rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
+                          className="rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[200px]"
                           onChange={(e) => sortTable(e.target.value)}
                         >
                           <option value={0}>Name: Ascending</option>
