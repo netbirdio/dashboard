@@ -276,7 +276,7 @@ export const Peers = () => {
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                   <div className="flex w-full">
                     <input
-                      className="rounded p-2 mt-8 border border-gray-200 focus:border-gray-400 outline-none w-[300px]"
+                      className="rounded p-2 mt-8 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
                       placeholder="Search..."
                       type="search"
                       onChange={(e) => handleSearch(e.target.value)}
