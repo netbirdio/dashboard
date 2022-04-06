@@ -256,23 +256,23 @@ export const Peers = () => {
               {!empty ? (
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                   <div className="flex w-full items-center mt-8 justify-between">
-                    <div className="flex">
+    <div className="flex">
                       <input
-                        className="rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
-                        placeholder="Search Name..."
+                        className="text-sm rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
+                        placeholder="Search..."
                         type="search"
                         onChange={(e) => handleSearch(e.target.value)}
                       />
                       <div className="flex items-center">
-                        <p className="ml-4">Sort by: &nbsp;</p>
+                        <p className="ml-6 text-sm text-gray-700">Sort by: &nbsp;</p>
                         <select
-                          className="rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[200px]"
+                          className="bg-gray-50 text-sm text-gray-500 rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
                           onChange={(e) => sortTable(e.target.value)}
                         >
-                          <option value={0}>Name: Ascending</option>
-                          <option value={1}>Name: Descending</option>
-                          <option value={2}>Last Seen: Ascending</option>
-                          <option value={3}>Last Seen: Descending</option>
+                          <option className="text-sm text-gray-500" value={0}>Name: Asc</option>
+                          <option className="text-sm text-gray-500" value={1}>Name: Desc</option>
+                          <option className="text-sm text-gray-500" value={2}>Last Seen: Asc</option>
+                          <option className="text-sm text-gray-500" value={3}>Last Seen: Desc</option>
                         </select>
                       </div>
                     </div>
