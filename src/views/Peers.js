@@ -113,16 +113,38 @@ export const Peers = () => {
     let clicked_btn =
       "z-10 bg-gray-50 border-gray-500 text-gray-600 relative inline-flex items-center px-4 py-2 border  hover:bg-gray-50";
     let menuItems = [];
-    for (let i = 0; i < pageCount; i++) {
-      menuItems.push(
-        <button
-          className={pageIndex === i ? clicked_btn : default_btn}
-          onClick={() => gotoPage(i)}
-        >
-          {i + 1}
-        </button>
-      );
+    if (pageCount < 6) {
+      for (let i = 0; i < pageCount; i++) {
+        menuItems.push(
+          <button
+            className={pageIndex === i ? clicked_btn : default_btn}
+            onClick={() => gotoPage(i)}
+          >
+            {i + 1}
+          </button>
+        );
+      }
+    } else {
+      let j =
+        pageIndex === 0 || pageIndex === 1
+          ? 0
+          : pageCount - pageIndex === 1 ||
+            pageCount - pageIndex === 0 ||
+            pageCount - pageIndex === 2
+          ? pageCount - 5
+          : pageIndex - 2;
+      for (let i = j; i < j + 5; i++) {
+        menuItems.push(
+          <button
+            className={pageIndex === i ? clicked_btn : default_btn}
+            onClick={() => gotoPage(i)}
+          >
+            {i + 1}
+          </button>
+        );
+      }
     }
+
     return <div>{menuItems}</div>;
   };
   const formatOS = (os) => {
@@ -256,23 +278,33 @@ export const Peers = () => {
               {!empty ? (
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                   <div className="flex w-full items-center mt-8 justify-between">
-    <div className="flex">
+                    <div className="flex">
                       <input
                         className="text-sm rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
                         placeholder="Search..."
                         type="search"
                         onChange={(e) => handleSearch(e.target.value)}
                       />
-                      <div className="flex items-center">
-                        <p className="ml-6 text-sm text-gray-700">Sort by: &nbsp;</p>
+                      <div className="flex items-center mx-auto sm:px-6 lg:px-8">
+                        <p className="ml-6 text-sm text-gray-700 px-4">
+                          Sort by: &nbsp;
+                        </p>
                         <select
                           className="bg-gray-50 text-sm text-gray-500 rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
                           onChange={(e) => sortTable(e.target.value)}
                         >
-                          <option className="text-sm text-gray-500" value={0}>Name: Asc</option>
-                          <option className="text-sm text-gray-500" value={1}>Name: Desc</option>
-                          <option className="text-sm text-gray-500" value={2}>Last Seen: Asc</option>
-                          <option className="text-sm text-gray-500" value={3}>Last Seen: Desc</option>
+                          <option className="text-sm text-gray-500" value={0}>
+                            Name: Asc
+                          </option>
+                          <option className="text-sm text-gray-500" value={1}>
+                            Name: Desc
+                          </option>
+                          <option className="text-sm text-gray-500" value={2}>
+                            Last Seen: Asc
+                          </option>
+                          <option className="text-sm text-gray-500" value={3}>
+                            Last Seen: Desc
+                          </option>
                         </select>
                       </div>
                     </div>
