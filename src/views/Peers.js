@@ -349,10 +349,14 @@ export const Peers = () => {
                               <thead className="bg-gray-50">
                                 {headerGroups.map((headerGroup) => (
                                   <tr {...headerGroup.getHeaderGroupProps()}>
-                                    {headerGroup.headers.map((column) => (
+                                    {headerGroup.headers.map((column, i) => (
                                       <th
                                         {...column.getHeaderProps()}
-                                        className="px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                        className={
+                                          i === 0
+                                            ? "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                            : "px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                        }
                                       >
                                         {column.render("Header")}
                                       </th>
