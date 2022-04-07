@@ -515,6 +515,7 @@ export const Peers = () => {
                       </div>
                     </div>
                   </div>
+                </div>
               ) : (
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-10">
                   <EmptyPeersPanel />
