@@ -112,7 +112,7 @@ export const Peers = () => {
       "z-10 bg-white border-gray-300 text-gray-700 relative inline-flex items-center px-4 py-2 border  hover:bg-gray-50";
     let clicked_btn =
       "z-10 bg-gray-50 border-gray-500 text-gray-600 relative inline-flex items-center px-4 py-2 border  hover:bg-gray-50";
-    let menuItems = [];
+    let menuItems = []
     if (pageCount < 6) {
       for (let i = 0; i < pageCount; i++) {
         menuItems.push(
@@ -144,7 +144,6 @@ export const Peers = () => {
         );
       }
     }
-
     return <div>{menuItems}</div>;
   };
   const formatOS = (os) => {
@@ -250,6 +249,7 @@ export const Peers = () => {
     }
   };
 
+
   useEffect(() => {
     refresh(null);
   }, [getAccessTokenSilently]);
@@ -278,7 +278,7 @@ export const Peers = () => {
               {!empty ? (
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                   <div className="flex w-full items-center mt-8 justify-between">
-                    <div className="flex">
+    <div className="flex">
                       <input
                         className="text-sm rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
                         placeholder="Search..."
@@ -286,25 +286,15 @@ export const Peers = () => {
                         onChange={(e) => handleSearch(e.target.value)}
                       />
                       <div className="flex items-center mx-auto sm:px-6 lg:px-8">
-                        <p className="ml-6 text-sm text-gray-700 px-4">
-                          Sort by: &nbsp;
-                        </p>
+                        <p className="ml-6 text-sm text-gray-700 px-4">Sort by: &nbsp;</p>
                         <select
                           className="bg-gray-50 text-sm text-gray-500 rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
                           onChange={(e) => sortTable(e.target.value)}
                         >
-                          <option className="text-sm text-gray-500" value={0}>
-                            Name: Asc
-                          </option>
-                          <option className="text-sm text-gray-500" value={1}>
-                            Name: Desc
-                          </option>
-                          <option className="text-sm text-gray-500" value={2}>
-                            Last Seen: Asc
-                          </option>
-                          <option className="text-sm text-gray-500" value={3}>
-                            Last Seen: Desc
-                          </option>
+                          <option className="text-sm text-gray-500" value={0}>Name: Asc</option>
+                          <option className="text-sm text-gray-500" value={1}>Name: Desc</option>
+                          <option className="text-sm text-gray-500" value={2}>Last Seen: Asc</option>
+                          <option className="text-sm text-gray-500" value={3}>Last Seen: Desc</option>
                         </select>
                       </div>
                     </div>
@@ -525,7 +515,6 @@ export const Peers = () => {
                       </div>
                     </div>
                   </div>
-                </div>
               ) : (
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-10">
                   <EmptyPeersPanel />
