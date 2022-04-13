@@ -92,6 +92,15 @@ const Navbar = ({toggle}) => {
                                             Activity
                                         </NavLink>
                                     )}
+                                    {isAuthenticated && (
+                                        <NavLink
+                                            to="/users"
+                                            activeClassName="border-indigo-500 text-gray-900 border-b-2"
+                                            className="border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700 inline-flex items-center px-1 pt-1 border-b-2 text-sm font-medium"
+                                        >
+                                        Users
+                                        </NavLink>
+                                    )}
 
                                 </div>
                             </div>
@@ -195,6 +204,14 @@ const Navbar = ({toggle}) => {
                                     className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
                                 >
                                     Activity
+                                </Link>
+                            )}
+                            {isAuthenticated && (
+                                <Link
+                                    to="/users"
+                                    className="border-transparent text-gray-500 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-700 block pl-3 pr-4 py-2 border-l-4 text-base font-medium"
+                                >
+                                    Users
                                 </Link>
                             )}
                         </div>
