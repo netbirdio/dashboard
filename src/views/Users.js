@@ -1,16 +1,12 @@
-import { useAuth0, withAuthenticationRequired } from "@auth0/auth0-react";
-import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/solid";
-import React, { useEffect, useState } from "react";
+import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
+import {ChevronLeftIcon, ChevronRightIcon} from "@heroicons/react/solid";
+import React, {useEffect, useState} from "react";
 // import PaginatedPeersList from "../components/PaginatedPeersList"
-import { Link } from "react-router-dom";
-import { usePagination, useTable } from "react-table";
-import {  getUsers } from "../api/ManagementAPI";
-import CopyText from "../components/CopyText";
-import DeleteModal from "../components/DeleteDialog";
-import EditButton from "../components/EditButton";
+import {Link} from "react-router-dom";
+import {usePagination, useTable} from "react-table";
+import {getUsers} from "../api/ManagementAPI";
 import EmptyPeersPanel from "../components/EmptyPeers";
 import Loading from "../components/Loading";
-import { timeAgo } from "../utils/common";
 
 export const Users = () => {
 	const [users, setUsers] = useState([]);
@@ -19,7 +15,7 @@ export const Users = () => {
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState(null);
 
-	const { getAccessTokenSilently } = useAuth0();
+	const {getAccessTokenSilently} = useAuth0();
 
 	const handleError = (error) => {
 		console.error("Error to fetch data:", error);
@@ -58,9 +54,9 @@ export const Users = () => {
 		gotoPage,
 		nextPage,
 		previousPage,
-		state: { pageIndex, pageSize },
+		state: {pageIndex, pageSize},
 	} = useTable(
-		{ columns, data, initialState: { pageIndex: 0, pageSize: 5 } },
+		{columns, data, initialState: {pageIndex: 0, pageSize: 5}},
 		usePagination
 	);
 
@@ -109,8 +105,8 @@ export const Users = () => {
 				pageIndex === 0 || pageIndex === 1
 					? 0
 					: pageCount - pageIndex === 1 ||
-					  pageCount - pageIndex === 0 ||
-					  pageCount - pageIndex === 2
+					pageCount - pageIndex === 0 ||
+					pageCount - pageIndex === 2
 					? pageCount - 5
 					: pageIndex - 2;
 			for (let i = j; i < j + 5; i++) {
@@ -126,7 +122,6 @@ export const Users = () => {
 		}
 		return <div>{menuItems}</div>;
 	};
-
 
 
 	const refresh = (filter) => {
@@ -150,14 +145,15 @@ export const Users = () => {
 	useEffect(() => {
 		refresh(null);
 	}, [getAccessTokenSilently]);
-	useEffect(() => {}, [users]);
+	useEffect(() => {
+	}, [users]);
 
 	return (
 		<div className="py-10 bg-gray-50 overflow-hidden rounded max-w-7xl mx-auto sm:px-6 lg:px-8">
 			<header className="sm:flex sm:items-center">
 				<div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto">
 					<h1 className="text-xl font-semibold text-gray-900">
-                        Users
+						Users
 					</h1>
 					<p className="mt-2 text-sm text-gray-700">
 						A list of all Users
@@ -167,10 +163,10 @@ export const Users = () => {
 			<main>
 				<div className="max-w-7xl mx-auto">
 					<div className="px-4 sm:px-0">
-						{loading && <Loading />}
+						{loading && <Loading/>}
 						{error != null && <span>{error.toString()}</span>}
 						<main>
-							{loading && <Loading />}
+							{loading && <Loading/>}
 							{error != null && <span>{error.toString()}</span>}
 
 							{!empty ? (
@@ -226,7 +222,8 @@ export const Users = () => {
 										</div>
 										<div className="flex items-center">
 
-											<div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
+											<div
+												className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
 												<Link to="/add-peer">
 													<button
 														type="button"
@@ -242,94 +239,107 @@ export const Users = () => {
 										{/* table */}
 										<div className="flex flex-col">
 											<div className="-my-2 sm:-mx-6 lg:-mx-8">
-												<div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-													<div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+												<div
+													className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
+													<div
+														className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
 														<table
 															{...getTableProps()}
 															className="min-w-full divide-y divide-gray-200"
 														>
 															<thead className="bg-gray-50">
-																{headerGroups.map(
-																	(
-																		headerGroup
-																	) => (
-																		<tr
-																			{...headerGroup.getHeaderGroupProps()}
+															{headerGroups.map(
+																(
+																	headerGroup
+																) => (
+																	<tr
+																		{...headerGroup.getHeaderGroupProps()}
+																	>
+																		{headerGroup.headers.map(
+																			(
+																				column,
+																				i
+																			) => (
+																				<th
+																					{...column.getHeaderProps()}
+																					className={
+																						i ===
+																						0
+																							? "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
+																							: "px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
+																					}
+																				>
+																					{column.render(
+																						"Header"
+																					)}
+																				</th>
+																			)
+																		)}
+																		<th
+																			scope="col"
+																			className="relative px-6 py-3"
 																		>
-																			{headerGroup.headers.map(
-																				(
-																					column,
-																					i
-																				) => (
-																					<th
-																						{...column.getHeaderProps()}
-																						className={
-																							i ===
-																							0
-																								? "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
-																								: "px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-																						}
-																					>
-																						{column.render(
-																							"Header"
-																						)}
-																					</th>
-																				)
-																			)}
-																			<th
-																				scope="col"
-																				className="relative px-6 py-3"
-																			>
 																				<span className="sr-only">
 																					Edit
 																				</span>
-																			</th>
-																		</tr>
-																	)
-																)}
+																		</th>
+																	</tr>
+																)
+															)}
 															</thead>
 															<tbody
 																{...getTableBodyProps()}
 																className="bg-white divide-y divide-gray-200"
 															>
-																{page.map(
-																	(row) => {
-																		prepareRow(
-																			row
-																		);
-																		return (
-																			<tr
-																				{...row.getRowProps()}
-																			>
-																				{row.cells.map(
-																					(
-																						cell
-																					) => {
-																						return (
-																							<td
-																								{...cell.getCellProps()}
-																								className={
-																									cell
-																										.column
-																										.id ===
-																									"Name"
-																										? td_class_name
-																										: td_class_other
-																								}
-																							>
-																							</td>
-																						);
-																					}
-																				)}
-																			</tr>
-																		);
-																	}
-																)}
+															{page.map(
+																(row) => {
+																	prepareRow(
+																		row
+																	);
+																	return (
+																		<tr
+																			{...row.getRowProps()}
+																		>
+																			{row.cells.map(
+																				(
+																					cell
+																				) => {
+																					return (
+																						<td
+																							{...cell.getCellProps()}
+																							className={
+																								cell
+																									.column
+																									.id ===
+																								"Id"
+																									? td_class_name
+																									: td_class_other
+																							}
+																						>
+																							{cell
+																								.column
+																								.id ===
+																							"Id" && cell.value}
+																							{cell
+																								.column
+																								.id ===
+																							"Role" &&
+																							cell.value}
+																						</td>
+																					);
+																				}
+																			)}
+																		</tr>
+																	);
+																}
+															)}
 															</tbody>
 														</table>
 														{/* pagenation */}
-														<div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-															<div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+														<div
+															className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+															<div
+																className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
 																<div>
 																	<p className=" text-gray-700">
 																		Showing{" "}
@@ -338,8 +348,8 @@ export const Users = () => {
 																			0
 																				? 0
 																				: pageIndex *
-																						pageSize +
-																				  1}
+																				pageSize +
+																				1}
 																		</span>{" "}
 																		to{" "}
 																		<span className="font-medium">
@@ -347,12 +357,12 @@ export const Users = () => {
 																			0
 																				? 0
 																				: pageIndex ===
-																				  pageCount -
-																						1
-																				? data.length
-																				: pageIndex *
-																						pageSize +
-																				  pageSize}
+																				pageCount -
+																				1
+																					? data.length
+																					: pageIndex *
+																					pageSize +
+																					pageSize}
 																		</span>{" "}
 																		of{" "}
 																		<span className="font-medium">
@@ -367,10 +377,10 @@ export const Users = () => {
 																	</p>
 																</div>
 																{pageCount ===
-																	1 ||
+																1 ||
 																pageCount ===
-																	0 ? (
-																	<div />
+																0 ? (
+																	<div/>
 																) : (
 																	<div>
 																		<nav
@@ -408,7 +418,7 @@ export const Users = () => {
 																				/>
 																			</button>
 																			<div>
-																				<InnerPageNumbers />
+																				<InnerPageNumbers/>
 																			</div>
 																			<button
 																				className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
@@ -432,7 +442,7 @@ export const Users = () => {
 																				onClick={() =>
 																					gotoPage(
 																						pageCount -
-																							1
+																						1
 																					)
 																				}
 																				disabled={
@@ -454,7 +464,7 @@ export const Users = () => {
 								</div>
 							) : (
 								<div className="max-w-7xl mx-auto sm:px-6 lg:px-8 py-10">
-									<EmptyPeersPanel />
+									<EmptyPeersPanel/>
 								</div>
 							)}
 						</main>
@@ -465,5 +475,5 @@ export const Users = () => {
 	);
 };
 export default withAuthenticationRequired(Users, {
-	onRedirecting: () => <Loading />,
+	onRedirecting: () => <Loading/>,
 });
