@@ -28,8 +28,8 @@ export const Users = () => {
 	const columns = React.useMemo(
 		() => [
 			{
-				Header: "ID",
-				accessor: "Id",
+				Header: "Email",
+				accessor: "email",
 			},
 			{
 				Header: "Role",
@@ -56,7 +56,7 @@ export const Users = () => {
 		previousPage,
 		state: {pageIndex, pageSize},
 	} = useTable(
-		{columns, data, initialState: {pageIndex: 0, pageSize: 5}},
+		{columns, data, initialState: {pageIndex: 0, pageSize: 10}},
 		usePagination
 	);
 
@@ -220,20 +220,6 @@ export const Users = () => {
 												</select>
 											</div>
 										</div>
-										<div className="flex items-center">
-
-											<div
-												className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
-												<Link to="/add-peer">
-													<button
-														type="button"
-														className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-													>
-														Add user
-													</button>
-												</Link>
-											</div>
-										</div>
 									</div>
 									<div className="px-4 py-8 sm:px-0">
 										{/* table */}
@@ -311,7 +297,7 @@ export const Users = () => {
 																								cell
 																									.column
 																									.id ===
-																								"Id"
+																								"email"
 																									? td_class_name
 																									: td_class_other
 																							}
@@ -319,7 +305,7 @@ export const Users = () => {
 																							{cell
 																								.column
 																								.id ===
-																							"Id" && cell.value}
+																							"email" && cell.value}
 																							{cell
 																								.column
 																								.id ===
