@@ -258,7 +258,7 @@ export const Peers = () => {
   return (
     <div className="py-10 bg-gray-50 overflow-hidden rounded max-w-7xl mx-auto sm:px-6 lg:px-8">
       <header className="sm:flex sm:items-center">
-        <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 sm:flex-auto">
           <h1 className="text-xl font-semibold text-gray-900">Peers</h1>
           <p className="mt-2 text-sm text-gray-700">
             A list of all the machines in your account including their name, IP
@@ -277,59 +277,66 @@ export const Peers = () => {
 
               {!empty ? (
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
-                  <div className="flex w-full items-center mt-8 justify-between">
-    <div className="flex">
-                      <input
-                        className="text-sm rounded p-2 border border-gray-300 focus:border-gray-400 outline-none w-[300px]"
-                        placeholder="Search..."
-                        type="search"
-                        onChange={(e) => handleSearch(e.target.value)}
-                      />
-                      <div className="flex items-center mx-auto sm:px-6 lg:px-8">
-                        <p className="ml-6 text-sm text-gray-700 px-4">Sort by: &nbsp;</p>
-                        <select
-                          className="bg-gray-50 text-sm text-gray-500 rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
-                          onChange={(e) => sortTable(e.target.value)}
-                        >
-                          <option className="text-sm text-gray-500" value={0}>Name: Asc</option>
-                          <option className="text-sm text-gray-500" value={1}>Name: Desc</option>
-                          <option className="text-sm text-gray-500" value={2}>Last Seen: Asc</option>
-                          <option className="text-sm text-gray-500" value={3}>Last Seen: Desc</option>
-                        </select>
+                  <div className="auto py-8">
+                    <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-5 gap-5">
+                      <div>
+                        <input
+                            className="text-sm w-full rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
+                            placeholder="Search..."
+                            type="search"
+                            onChange={(e) => handleSearch(e.target.value)}
+                        />
                       </div>
-                    </div>
-                    <div className="flex items-center">
-                      <span className="relative z-0 inline-flex shadow-sm rounded-md">
-                        <button
-                          id="btn-show-all"
-                          onClick={() => showAll()}
-                          type="button"
-                          className="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 z-10 outline-none ring-1 ring-indigo-500 border-indigo-500"
-                        >
-                          All
-                        </button>
-                        <button
-                          type="button"
-                          id="btn-show-online"
-                          onClick={() => showConnected()}
-                          className="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 outline-none hover:bg-gray-50"
-                        >
-                          Online
-                        </button>
-                      </span>
-
-                      <div className="max-w-7xl mx-auto sm:px-6 lg:px-8 sm:flex-auto mt-2 sm:mt-0 sm:ml-16 sm:flex-none">
+                      <div className="lg:col-span-2">
+                        <div className="flex">
+                          <p className="ml-0 text-sm text-gray-700 lg:px-4 md:pr-2 pr-2" sm>Sort by: &nbsp;</p>
+                          <select
+                              className="bg-gray-50 flex-1 text-sm text-gray-500 rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
+                              onChange={(e) => sortTable(e.target.value)}
+                          >
+                            <option className="text-sm text-gray-500" value={0}>Name: Asc</option>
+                            <option className="text-sm text-gray-500" value={1}>Name: Desc</option>
+                            <option className="text-sm text-gray-500" value={2}>Last Seen: Asc</option>
+                            <option className="text-sm text-gray-500" value={3}>Last Seen: Desc</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div className="flex lg:justify-end justify-center">
+                        <div className="flex items-center">
+                          <span className="relative z-0 inline-flex shadow-sm rounded-md">
+                            <button
+                                id="btn-show-all"
+                                onClick={() => showAll()}
+                                type="button"
+                                className="relative inline-flex items-center px-4 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 z-10 outline-none ring-1 ring-indigo-500 border-indigo-500"
+                            >
+                              All
+                            </button>
+                            <button
+                                type="button"
+                                id="btn-show-online"
+                                onClick={() => showConnected()}
+                                className="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 outline-none hover:bg-gray-50"
+                            >
+                              Online
+                            </button>
+                          </span>
+                        </div>
+                      </div>
+                      <div className="lg:flex lg:justify-end">
                         <Link to="/add-peer">
                           <button
-                            type="button"
-                            className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                              type="button"
+                              className="inline-flex w-full lg:w-auto justify-center items-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2"
                           >
                             Add peer
                           </button>
                         </Link>
+
                       </div>
                     </div>
                   </div>
+
                   <div className="px-4 py-8 sm:px-0">
                     <DeleteModal
                       show={showDeleteDialog}
@@ -340,8 +347,14 @@ export const Peers = () => {
                     {/* table */}
                     <div className="flex flex-col">
                       <div className="-my-2 sm:-mx-6 lg:-mx-8">
-                        <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                          <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                        <div className="py-2 align-middle min-w-full sm:px-6 lg:px-8">
+                          <div className="shadow overflow-x-auto ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                            {/*<PaginatedPeersListMUI
+                                data={peers.map((p, i) => ({id: i, ...p}))}
+                                dataLimit={5}
+                                pageLimit={5}
+                            />*/}
+
                             <table
                               {...getTableProps()}
                               className="min-w-full divide-y divide-gray-200"
@@ -436,7 +449,7 @@ export const Peers = () => {
                             </table>
                             {/* pagenation */}
                             <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
-                              <div className="hidden sm:flex-1 sm:flex sm:items-center sm:justify-between">
+                              <div className="sm:flex-1 sm:flex sm:items-center sm:justify-between">
                                 <div>
                                   <p className=" text-gray-700">
                                     Showing{" "}
@@ -465,7 +478,7 @@ export const Peers = () => {
                                 ) : (
                                   <div>
                                     <nav
-                                      className="relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                                      className="py-3 relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
                                       aria-label="Pagination"
                                     >
                                       <button
