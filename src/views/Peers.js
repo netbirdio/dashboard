@@ -278,8 +278,8 @@ export const Peers = () => {
               {!empty ? (
                 <div className="max-w-7xl mx-auto sm:px-6 lg:px-8">
                   <div className="auto py-8">
-                    <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-5 gap-5">
-                      <div>
+                    <div className="grid grid-cols-1 md:grid-cols-1 lg:grid-cols-6 gap-5">
+                      <div className="lg:col-span-2">
                         <input
                             className="text-sm w-full rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
                             placeholder="Search..."
@@ -291,7 +291,7 @@ export const Peers = () => {
                         <div className="flex">
                           <p className="ml-0 text-sm text-gray-700 lg:px-4 md:pr-2 pr-2" sm>Sort by: &nbsp;</p>
                           <select
-                              className="bg-gray-50 flex-1 text-sm text-gray-500 rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
+                              className="bg-gray-50 flex-1 lg:flex-grow-0 text-sm text-gray-500 rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
                               onChange={(e) => sortTable(e.target.value)}
                           >
                             <option className="text-sm text-gray-500" value={0}>Name: Asc</option>
