@@ -288,7 +288,7 @@ export const Peers = () => {
                         />
                       </div>
                       <div className="lg:col-span-2">
-                        <div className="flex">
+                        <div className="flex items-center">
                           <p className="ml-0 text-sm text-gray-700 lg:px-4 md:pr-2 pr-2" sm>Sort by: &nbsp;</p>
                           <select
                               className="bg-gray-50 flex-1 lg:flex-grow-0 text-sm text-gray-500 rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
@@ -348,182 +348,184 @@ export const Peers = () => {
                     <div className="flex flex-col">
                       <div className="-my-2 sm:-mx-6 lg:-mx-8">
                         <div className="py-2 align-middle min-w-full sm:px-6 lg:px-8">
-                          <div className="shadow overflow-x-auto ring-1 ring-black ring-opacity-5 md:rounded-lg">
-                            {/*<PaginatedPeersListMUI
-                                data={peers.map((p, i) => ({id: i, ...p}))}
-                                dataLimit={5}
-                                pageLimit={5}
-                            />*/}
+                          <div className="shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                            <div className="overflow-x-auto">
+                              {/*<PaginatedPeersListMUI
+                                  data={peers.map((p, i) => ({id: i, ...p}))}
+                                  dataLimit={5}
+                                  pageLimit={5}
+                              />*/}
 
-                            <table
-                              {...getTableProps()}
-                              className="min-w-full divide-y divide-gray-200"
-                            >
-                              <thead className="bg-gray-50">
-                                {headerGroups.map((headerGroup) => (
-                                  <tr {...headerGroup.getHeaderGroupProps()}>
-                                    {headerGroup.headers.map((column, i) => (
-                                      <th
-                                        {...column.getHeaderProps()}
-                                        className={
-                                          i === 0
-                                            ? "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                            : "px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
-                                        }
-                                      >
-                                        {column.render("Header")}
-                                      </th>
-                                    ))}
-                                    <th
-                                      scope="col"
-                                      className="relative px-6 py-3"
-                                    >
-                                      <span className="sr-only">Edit</span>
-                                    </th>
-                                  </tr>
-                                ))}
-                              </thead>
-                              <tbody
-                                {...getTableBodyProps()}
-                                className="bg-white divide-y divide-gray-200"
+                              <table
+                                {...getTableProps()}
+                                className="min-w-full divide-y divide-gray-200"
                               >
-                                {page.map((row) => {
-                                  prepareRow(row);
-                                  return (
-                                    <tr {...row.getRowProps()}>
-                                      {row.cells.map((cell) => {
-                                        return (
-                                          <td
-                                            {...cell.getCellProps()}
-                                            className={
-                                              cell.column.id === "Name"
-                                                ? td_class_name
-                                                : td_class_other
-                                            }
-                                          >
-                                            {cell.column.id === "IP" && (
-                                              <CopyText
-                                                text={cell.value.toUpperCase()}
-                                                idPrefix={
-                                                  "peers-ip-" + cell.value
-                                                }
-                                              />
-                                            )}
-                                            {cell.column.id === "Connected" &&
-                                              (cell.value ? (
-                                                <span className="inline-flex rounded-full bg-green-100 px-2 text-xs leading-5 text-green-800">
-                                                  online
-                                                </span>
-                                              ) : (
-                                                <span className="inline-flex rounded-full bg-red-100 px-2 text-xs leading-5 text-red-800">
-                                                  offline
-                                                </span>
-                                              ))}
-                                            {cell.column.id === "LastSeen" &&
-                                              (cell.row.original.Connected
-                                                ? "just now"
-                                                : timeAgo(cell.value))}
-                                            {cell.column.id === "OS" &&
-                                              formatOS(cell.value)}
-                                            {(cell.column.id === "Name" ||
-                                              cell.column.id === "Version") &&
-                                              cell.value}
-                                          </td>
-                                        );
-                                      })}
-                                      <td className={td_class_other}>
-                                        <EditButton
-                                          items={[{ name: "Delete" }]}
-                                          handler={(action) =>
-                                            handleRowMenuClick(
-                                              action,
-                                              row.cells
-                                            )
+                                <thead className="bg-gray-50">
+                                  {headerGroups.map((headerGroup) => (
+                                    <tr {...headerGroup.getHeaderGroupProps()}>
+                                      {headerGroup.headers.map((column, i) => (
+                                        <th
+                                          {...column.getHeaderProps()}
+                                          className={
+                                            i === 0
+                                              ? "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
+                                              : "px-3 py-3.5 text-left text-sm font-semibold text-gray-900"
                                           }
-                                        />
-                                      </td>
+                                        >
+                                          {column.render("Header")}
+                                        </th>
+                                      ))}
+                                      <th
+                                        scope="col"
+                                        className="relative px-6 py-3"
+                                      >
+                                        <span className="sr-only">Edit</span>
+                                      </th>
                                     </tr>
-                                  );
-                                })}
-                              </tbody>
-                            </table>
+                                  ))}
+                                </thead>
+                                <tbody
+                                  {...getTableBodyProps()}
+                                  className="bg-white divide-y divide-gray-200"
+                                >
+                                  {page.map((row) => {
+                                    prepareRow(row);
+                                    return (
+                                      <tr {...row.getRowProps()}>
+                                        {row.cells.map((cell) => {
+                                          return (
+                                            <td
+                                              {...cell.getCellProps()}
+                                              className={
+                                                cell.column.id === "Name"
+                                                  ? td_class_name
+                                                  : td_class_other
+                                              }
+                                            >
+                                              {cell.column.id === "IP" && (
+                                                <CopyText
+                                                  text={cell.value.toUpperCase()}
+                                                  idPrefix={
+                                                    "peers-ip-" + cell.value
+                                                  }
+                                                />
+                                              )}
+                                              {cell.column.id === "Connected" &&
+                                                (cell.value ? (
+                                                  <span className="inline-flex rounded-full bg-green-100 px-2 text-xs leading-5 text-green-800">
+                                                    online
+                                                  </span>
+                                                ) : (
+                                                  <span className="inline-flex rounded-full bg-red-100 px-2 text-xs leading-5 text-red-800">
+                                                    offline
+                                                  </span>
+                                                ))}
+                                              {cell.column.id === "LastSeen" &&
+                                                (cell.row.original.Connected
+                                                  ? "just now"
+                                                  : timeAgo(cell.value))}
+                                              {cell.column.id === "OS" &&
+                                                formatOS(cell.value)}
+                                              {(cell.column.id === "Name" ||
+                                                cell.column.id === "Version") &&
+                                                cell.value}
+                                            </td>
+                                          );
+                                        })}
+                                        <td className={td_class_other}>
+                                          <EditButton
+                                            items={[{ name: "Delete" }]}
+                                            handler={(action) =>
+                                              handleRowMenuClick(
+                                                action,
+                                                row.cells
+                                              )
+                                            }
+                                          />
+                                        </td>
+                                      </tr>
+                                    );
+                                  })}
+                                </tbody>
+                              </table>
+                            </div>
                             {/* pagenation */}
-                            <div className="bg-white px-4 py-3 flex items-center justify-between border-t border-gray-200 sm:px-6">
+                            <div className="bg-white px-4 py-3 flex items-center justify-center sm:justify-between border-t border-gray-200 sm:px-6">
                               <div className="sm:flex-1 sm:flex sm:items-center sm:justify-between">
                                 <div>
-                                  <p className=" text-gray-700">
+                                  <p className="text-gray-700 text-center sm:text-left">
                                     Showing{" "}
                                     <span className="font-medium">
-                                      {pageCount === 0
-                                        ? 0
-                                        : pageIndex * pageSize + 1}
-                                    </span>{" "}
+                                        {pageCount === 0
+                                            ? 0
+                                            : pageIndex * pageSize + 1}
+                                      </span>{" "}
                                     to{" "}
                                     <span className="font-medium">
-                                      {pageCount === 0
-                                        ? 0
-                                        : pageIndex === pageCount - 1
-                                        ? data.length
-                                        : pageIndex * pageSize + pageSize}
-                                    </span>{" "}
+                                        {pageCount === 0
+                                            ? 0
+                                            : pageIndex === pageCount - 1
+                                                ? data.length
+                                                : pageIndex * pageSize + pageSize}
+                                      </span>{" "}
                                     of{" "}
                                     <span className="font-medium">
-                                      {data.length}
-                                    </span>{" "}
+                                        {data.length}
+                                      </span>{" "}
                                     {data.length === 1 ? "peer" : "peers"}
                                   </p>
                                 </div>
                                 {pageCount === 1 || pageCount === 0 ? (
-                                  <div />
+                                    <div />
                                 ) : (
-                                  <div>
-                                    <nav
-                                      className="py-3 relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
-                                      aria-label="Pagination"
-                                    >
-                                      <button
-                                        className="relative inline-flex rounded-l-md items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
-                                        onClick={() => gotoPage(0)}
-                                        disabled={!canPreviousPage}
+                                    <div>
+                                      <nav
+                                          className="py-3 relative z-0 inline-flex rounded-md shadow-sm -space-x-px"
+                                          aria-label="Pagination"
                                       >
-                                        First
-                                      </button>
-                                      <button
-                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
-                                        onClick={() => previousPage()}
-                                        disabled={!canPreviousPage}
-                                      >
-                                        <span className="sr-only">
-                                          Previous
-                                        </span>
-                                        <ChevronLeftIcon
-                                          className="h-5 w-5"
-                                          aria-hidden="true"
-                                        />
-                                      </button>
-                                      <div>
-                                        <InnerPageNumbers />
-                                      </div>
-                                      <button
-                                        className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
-                                        onClick={() => nextPage()}
-                                        disabled={!canNextPage}
-                                      >
-                                        <span className="sr-only">Next</span>
-                                        <ChevronRightIcon
-                                          className="h-5 w-5"
-                                          aria-hidden="true"
-                                        />
-                                      </button>
-                                      <button
-                                        className="relative inline-flex rounded-r-md items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
-                                        onClick={() => gotoPage(pageCount - 1)}
-                                        disabled={!canNextPage}
-                                      >
-                                        Last
-                                      </button>
-                                    </nav>
-                                  </div>
+                                        <button
+                                            className="relative inline-flex rounded-l-md items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
+                                            onClick={() => gotoPage(0)}
+                                            disabled={!canPreviousPage}
+                                        >
+                                          First
+                                        </button>
+                                        <button
+                                            className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
+                                            onClick={() => previousPage()}
+                                            disabled={!canPreviousPage}
+                                        >
+                                          <span className="sr-only">
+                                            Previous
+                                          </span>
+                                          <ChevronLeftIcon
+                                              className="h-5 w-5"
+                                              aria-hidden="true"
+                                          />
+                                        </button>
+                                        <div>
+                                          <InnerPageNumbers />
+                                        </div>
+                                        <button
+                                            className="relative inline-flex items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
+                                            onClick={() => nextPage()}
+                                            disabled={!canNextPage}
+                                        >
+                                          <span className="sr-only">Next</span>
+                                          <ChevronRightIcon
+                                              className="h-5 w-5"
+                                              aria-hidden="true"
+                                          />
+                                        </button>
+                                        <button
+                                            className="relative inline-flex rounded-r-md items-center px-2 py-2 border border-gray-300 bg-white  text-gray-500 hover:bg-gray-50"
+                                            onClick={() => gotoPage(pageCount - 1)}
+                                            disabled={!canNextPage}
+                                        >
+                                          Last
+                                        </button>
+                                      </nav>
+                                    </div>
                                 )}
                               </div>
                             </div>
