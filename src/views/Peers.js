@@ -337,7 +337,7 @@ export const Peers = () => {
                     </div>
                   </div>
 
-                  <div className="px-4 py-8 sm:px-0">
+                  <div className="px-4 py-2 sm:px-0">
                     <DeleteModal
                       show={showDeleteDialog}
                       confirmCallback={handleDeleteConfirmation}
@@ -350,11 +350,6 @@ export const Peers = () => {
                         <div className="py-2 align-middle min-w-full sm:px-6 lg:px-8">
                           <div className="shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                             <div className="overflow-x-auto">
-                              {/*<PaginatedPeersListMUI
-                                  data={peers.map((p, i) => ({id: i, ...p}))}
-                                  dataLimit={5}
-                                  pageLimit={5}
-                              />*/}
 
                               <table
                                 {...getTableProps()}
