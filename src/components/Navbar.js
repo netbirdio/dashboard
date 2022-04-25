@@ -1,6 +1,7 @@
 import React, {Fragment} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import logo from "../assets/logo.png";
+import defaultProfilePic from "../assets/default-profile.png";
 import {Disclosure, Menu, Transition} from '@headlessui/react'
 import {MenuIcon, XIcon} from '@heroicons/react/outline'
 import {useAuth0} from "@auth0/auth0-react";
@@ -105,6 +106,10 @@ const Navbar = ({toggle}) => {
                                                 className="h-12 w-auto rounded-full"
                                                 src={user.picture}
                                                 alt=""
+                                                onError={({ currentTarget }) => {
+                                                    currentTarget.onerror = null; // prevents looping
+                                                    currentTarget.src=defaultProfilePic;
+                                                }}
                                             />
                                         </Menu.Button>
                                     </div>
@@ -205,6 +210,10 @@ const Navbar = ({toggle}) => {
                                         className="h-10 w-10 rounded-full"
                                         src={user.picture}
                                         alt=""
+                                        onError={({ currentTarget }) => {
+                                            currentTarget.onerror = null; // prevents looping
+                                            currentTarget.src=defaultProfilePic;
+                                        }}
                                     />
                                 </div>
                                 <div className="ml-3">
