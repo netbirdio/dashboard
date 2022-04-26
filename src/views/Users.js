@@ -32,6 +32,10 @@ export const Users = () => {
 	const columns = React.useMemo(
 		() => [
 			{
+				Header: "Name",
+				accessor: "name",
+			},
+			{
 				Header: "Email",
 				accessor: "email",
 			},
@@ -253,8 +257,8 @@ export const Users = () => {
 																						className={
 																							i ===
 																							0
-																								? "px-6 py-3.5 text-left text-sm font-semibold text-gray-900":
-																								 "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
+																								? "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
+																								: "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
 																						}
 																					>
 																						{column.render(
@@ -287,13 +291,21 @@ export const Users = () => {
 																						return (
 																							<td
 																								{...cell.getCellProps()}
-																								className= {td_class_name} 
+																								className={
+																									td_class_name
+																								}
 																							>
+																								{cell
+																									.column
+																									.id ===
+																									"name" &&
+																									cell.value}
 																								{cell
 																									.column
 																									.id ===
 																									"email" &&
 																									cell.value}
+
 																								{cell
 																									.column
 																									.id ===
