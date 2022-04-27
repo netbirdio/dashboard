@@ -41,7 +41,7 @@ export const Users = () => {
 			},
 			{
 				Header: "Role",
-				accessor: "Role",
+				accessor: "role",
 			},
 		],
 		[]
@@ -309,7 +309,7 @@ export const Users = () => {
 																								{cell
 																									.column
 																									.id ===
-																									"Role" &&
+																									"role" &&
 																									cell.value}
 																							</td>
 																						);
