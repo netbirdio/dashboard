@@ -289,29 +289,32 @@ export const Users = () => {
 																						cell
 																					) => {
 																						return (
-																							<td
-																								{...cell.getCellProps()}
-																								className={
-																									td_class_name
-																								}
-																							>
-																								{cell
-																									.column
-																									.id ===
-																									"name" &&
-																									cell.value}
-																								{cell
-																									.column
-																									.id ===
-																									"email" &&
-																									cell.value}
+																							cell !=
+																								null && (
+																								<td
+																									{...cell.getCellProps()}
+																									className={
+																										td_class_name
+																									}
+																								>
+																									{cell
+																										.column
+																										.id ===
+																										"name" &&
+																										cell.value}
+																									{cell
+																										.column
+																										.id ===
+																										"email" &&
+																										cell.value}
 
-																								{cell
-																									.column
-																									.id ===
-																									"role" &&
-																									cell.value}
-																							</td>
+																									{cell
+																										.column
+																										.id ===
+																										"role" &&
+																										cell.value}
+																								</td>
+																							)
 																						);
 																					}
 																				)}
