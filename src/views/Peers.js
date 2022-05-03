@@ -428,15 +428,17 @@ export const Peers = () => {
                                           );
                                         })}
                                         <td className={td_class_other}>
-                                          <EditButton
-                                            items={[{ name: "Delete" }]}
-                                            handler={(action) =>
-                                              handleRowMenuClick(
-                                                action,
-                                                row.cells
-                                              )
-                                            }
-                                          />
+                                          <div className="relative">
+                                            <EditButton
+                                              items={[{ name: "Delete" }]}
+                                              handler={(action) =>
+                                                handleRowMenuClick(
+                                                  action,
+                                                  row.cells
+                                                )
+                                              }
+                                            />
+                                          </div>
                                         </td>
                                       </tr>
                                     );

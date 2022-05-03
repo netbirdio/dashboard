@@ -31,7 +31,7 @@ const EditButton = ({items, handler}) => {
                     leaveTo="transform opacity-0 scale-95"
                 >
                     <Menu.Items
-                        className="absolute mt-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
+                        className="absolute right-6 bottom-0 mt-2 rounded-md shadow-lg py-1 bg-white ring-1 ring-black ring-opacity-5 focus:outline-none">
 
                         {items.map((item, idx) => (
                             <Menu.Item key={item.name}>
