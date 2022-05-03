@@ -3,14 +3,8 @@ import React, { useEffect, useState } from "react";
 import { usePagination, useTable } from "react-table";
 import { getUsers } from "../api/ManagementAPI";
 import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/solid";
-// import PaginatedPeersList from "../components/PaginatedPeersList"
-import { Link } from "react-router-dom";
-import { deletePeer, getPeers } from "../api/ManagementAPI";
-import CopyText from "../components/CopyText";
-import DeleteModal from "../components/DeleteDialog";
 import EmptyPeersPanel from "../components/EmptyPeers";
 import Loading from "../components/Loading";
-import { timeAgo } from "../utils/common";
 
 export const Users = () => {
 	const [users, setUsers] = useState([]);
@@ -32,12 +26,16 @@ export const Users = () => {
 	const columns = React.useMemo(
 		() => [
 			{
-				Header: "Name",
-				accessor: "name",
+				Header: "ID",
+				accessor: "id",
 			},
 			{
 				Header: "Email",
 				accessor: "email",
+			},
+			{
+				Header: "Name",
+				accessor: "name",
 			},
 			{
 				Header: "Role",
@@ -48,7 +46,6 @@ export const Users = () => {
 	);
 	const td_class_name =
 		"whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6";
-	// const td_class_other = "whitespace-nowrap px-3 py-4 text-sm text-gray-900";
 
 	const {
 		getTableProps,
@@ -249,16 +246,12 @@ export const Users = () => {
 																		>
 																			{headerGroup.headers.map(
 																				(
-																					column,
-																					i
+																					column
 																				) => (
 																					<th
 																						{...column.getHeaderProps()}
 																						className={
-																							i ===
-																							0
-																								? "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
-																								: "px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
+																							"px-6 py-3.5 text-left text-sm font-semibold text-gray-900"
 																						}
 																					>
 																						{column.render(
@@ -273,7 +266,7 @@ export const Users = () => {
 															</thead>
 															<tbody
 																{...getTableBodyProps()}
-																className="bg-white divide-y divide-gray-200"
+																className="bg-white divide-y divide-gray-200 "
 															>
 																{page.map(
 																	(row) => {
@@ -297,6 +290,11 @@ export const Users = () => {
 																										td_class_name
 																									}
 																								>
+																									{cell
+																										.column
+																										.id ===
+																										"id" &&
+																										cell.value}
 																									{cell
 																										.column
 																										.id ===
