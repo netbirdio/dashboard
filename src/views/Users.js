@@ -126,7 +126,13 @@ export const Users = () => {
 	};
 
 	const formatEmail = (cell) => {
-		return cell.value ? cell.value : cell.row.original.id
+		if (cell.value) {
+			cell.column.Header = "Email"
+			return cell.value
+		} else {
+			cell.column.Header = "ID"
+			return cell.row.original.id
+		}
 	}
 
 	const refresh = (filter) => {
