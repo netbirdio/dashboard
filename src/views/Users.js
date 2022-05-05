@@ -76,9 +76,9 @@ export const Users = () => {
 		} else if (e === "1") {
 			userCopy.sort((a, b) => (a.email > b.email ? -1 : 1));
 		} else if (e === "2") {
-			userCopy.sort((a, b) => (a.LastSeen > b.LastSeen ? 1 : -1));
+			userCopy.sort((a, b) => (a.name > b.name ? 1 : -1));
 		} else if (e === "3") {
-			userCopy.sort((a, b) => (a.LastSeen > b.LastSeen ? -1 : 1));
+			userCopy.sort((a, b) => (a.name > b.name ? -1 : 1));
 		} else {
 			console.log(`Sorry, we are out of ${e}`, e);
 		}
@@ -200,25 +200,25 @@ export const Users = () => {
 														className="text-sm text-gray-500"
 														value={0}
 													>
-														Name: Asc
+														Email: Asc
 													</option>
 													<option
 														className="text-sm text-gray-500"
 														value={1}
 													>
-														Name: Desc
+														Email: Desc
 													</option>
 													<option
 														className="text-sm text-gray-500"
 														value={2}
 													>
-														Last Seen: Asc
+														Name: Asc
 													</option>
 													<option
 														className="text-sm text-gray-500"
 														value={3}
 													>
-														Last Seen: Desc
+														Name: Desc
 													</option>
 												</select>
 											</div>
