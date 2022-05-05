@@ -85,9 +85,9 @@ export const Peers = () => {
 	);
 
 	const handleSearch = (e) => {
-		let tempArray = peersBackUp.filter((item) =>
-			item.Name.toUpperCase().includes(e.toUpperCase())
-		);
+		let tempArray = peersBackUp.filter((item) => {
+			return item.Name.toUpperCase().includes(e.toUpperCase()) || item.IP.toUpperCase().includes(e.toUpperCase())
+		});
 		setPeers(tempArray);
 	};
 
