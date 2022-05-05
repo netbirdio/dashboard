@@ -64,7 +64,7 @@ export const Users = () => {
 
 	const handleSearch = (e) => {
 		let tempArray = usersBackup.filter((item) =>
-			item.Name.toUpperCase().includes(e.toUpperCase())
+			item.email.toUpperCase().includes(e.toUpperCase()) || item.name.toUpperCase().includes(e.toUpperCase())
 		);
 		setUsers(tempArray);
 	};
