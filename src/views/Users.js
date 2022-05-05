@@ -26,10 +26,6 @@ export const Users = () => {
 	const columns = React.useMemo(
 		() => [
 			{
-				Header: "ID",
-				accessor: "id",
-			},
-			{
 				Header: "Email",
 				accessor: "email",
 			},
@@ -44,8 +40,9 @@ export const Users = () => {
 		],
 		[]
 	);
-	const td_class_name =
+	const td_class_email =
 		"whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6";
+	const td_class_other = "whitespace-nowrap px-3 py-4 text-sm text-gray-500";
 
 	const {
 		getTableProps,
@@ -127,6 +124,10 @@ export const Users = () => {
 		}
 		return <div>{menuItems}</div>;
 	};
+
+	const formatEmail = (cell) => {
+		return cell.value ? cell.value : cell.row.original.id
+	}
 
 	const refresh = (filter) => {
 		getUsers(getAccessTokenSilently)
@@ -287,14 +288,11 @@ export const Users = () => {
 																								<td
 																									{...cell.getCellProps()}
 																									className={
-																										td_class_name
+																										cell.column.id === "email"
+																											? td_class_email
+																											: td_class_other
 																									}
 																								>
-																									{cell
-																										.column
-																										.id ===
-																										"id" &&
-																										cell.value}
 																									{cell
 																										.column
 																										.id ===
@@ -303,9 +301,8 @@ export const Users = () => {
 																									{cell
 																										.column
 																										.id ===
-																										"email" &&
-																										cell.value}
-
+																										"email" && formatEmail(cell)
+																									}
 																									{cell
 																										.column
 																										.id ===
