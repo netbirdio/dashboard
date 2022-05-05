@@ -13,247 +13,247 @@ import Loading from "../components/Loading";
 import { timeAgo } from "../utils/common";
 
 export const Peers = () => {
-  const [peers, setPeers] = useState([]);
-  const [peersBackUp, setPeersBackUp] = useState([]);
-  const [empty, setEmpty] = useState(true);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const [peerToDelete, setPeerToDelete] = useState(null);
-  const [deleteDialogText, setDeleteDialogText] = useState("");
-  const [deleteDialogTitle, setDeleteDialogTitle] = useState("");
+	const [peers, setPeers] = useState([]);
+	const [peersBackUp, setPeersBackUp] = useState([]);
+	const [empty, setEmpty] = useState(true);
+	const [loading, setLoading] = useState(true);
+	const [error, setError] = useState(null);
+	const [showDeleteDialog, setShowDeleteDialog] = useState(false);
+	const [peerToDelete, setPeerToDelete] = useState(null);
+	const [deleteDialogText, setDeleteDialogText] = useState("");
+	const [deleteDialogTitle, setDeleteDialogTitle] = useState("");
 
-  const { getAccessTokenSilently } = useAuth0();
+	const { getAccessTokenSilently } = useAuth0();
 
-  const handleError = (error) => {
-    console.error("Error to fetch data:", error);
-    setLoading(false);
-    setError(error);
-  };
-  // Add React Table
-  const data = React.useMemo(() => peers, [peers]);
+	const handleError = (error) => {
+		console.error("Error to fetch data:", error);
+		setLoading(false);
+		setError(error);
+	};
+	// Add React Table
+	const data = React.useMemo(() => peers, [peers]);
 
-  const columns = React.useMemo(
-    () => [
-      {
-        Header: "Name",
-        accessor: "Name",
-      },
-      {
-        Header: "IP",
-        accessor: "IP",
-      },
-      {
-        Header: "Status",
-        accessor: "Connected",
-      },
-      {
-        Header: "Last Seen",
-        accessor: "LastSeen",
-      },
-      {
-        Header: "OS",
-        accessor: "OS",
-      },
-      {
-        Header: "Version",
-        accessor: "Version",
-      },
-    ],
-    []
-  );
-  const td_class_name =
-    "whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6";
-  const td_class_other = "whitespace-nowrap px-3 py-4 text-sm text-gray-500";
+	const columns = React.useMemo(
+		() => [
+			{
+				Header: "Name",
+				accessor: "Name",
+			},
+			{
+				Header: "IP",
+				accessor: "IP",
+			},
+			{
+				Header: "Status",
+				accessor: "Connected",
+			},
+			{
+				Header: "Last Seen",
+				accessor: "LastSeen",
+			},
+			{
+				Header: "OS",
+				accessor: "OS",
+			},
+			{
+				Header: "Version",
+				accessor: "Version",
+			},
+		],
+		[]
+	);
+	const td_class_name =
+		"whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6";
+	const td_class_other = "whitespace-nowrap px-3 py-4 text-sm text-gray-500";
 
-  const {
-    getTableProps,
-    getTableBodyProps,
-    headerGroups,
-    prepareRow,
-    page,
-    canPreviousPage,
-    canNextPage,
-    pageCount,
-    gotoPage,
-    nextPage,
-    previousPage,
-    state: { pageIndex, pageSize },
-  } = useTable(
-    { columns, data, initialState: { pageIndex: 0, pageSize: 5 } },
-    usePagination
-  );
+	const {
+		getTableProps,
+		getTableBodyProps,
+		headerGroups,
+		prepareRow,
+		page,
+		canPreviousPage,
+		canNextPage,
+		pageCount,
+		gotoPage,
+		nextPage,
+		previousPage,
+		state: { pageIndex, pageSize },
+	} = useTable(
+		{ columns, data, initialState: { pageIndex: 0, pageSize: 5 } },
+		usePagination
+	);
 
-  const handleSearch = (e) => {
-    let tempArray = peersBackUp.filter((item) =>
-      item.Name.toUpperCase().includes(e.toUpperCase())
-    );
-    setPeers(tempArray);
-  };
+	const handleSearch = (e) => {
+		let tempArray = peersBackUp.filter((item) => {
+			return item.Name.toUpperCase().includes(e.toUpperCase()) || item.IP.toUpperCase().includes(e.toUpperCase())
+		});
+		setPeers(tempArray);
+	};
 
-  const sortTable = (e) => {
-    let peerCopy = [...peers];
-    if (e === "0") {
-      peerCopy.sort((a, b) => (a.Name > b.Name ? 1 : -1));
-    } else if (e === "1") {
-      peerCopy.sort((a, b) => (a.Name > b.Name ? -1 : 1));
-    } else if (e === "2") {
-      peerCopy.sort((a, b) => (a.LastSeen > b.LastSeen ? 1 : -1));
-    } else if (e === "3") {
-      peerCopy.sort((a, b) => (a.LastSeen > b.LastSeen ? -1 : 1));
-    } else {
-      console.log(`Sorry, we are out of ${e}`, e);
-    }
-    setPeers(peerCopy);
-  };
+	const sortTable = (e) => {
+		let peerCopy = [...peers];
+		if (e === "0") {
+			peerCopy.sort((a, b) => (a.Name > b.Name ? 1 : -1));
+		} else if (e === "1") {
+			peerCopy.sort((a, b) => (a.Name > b.Name ? -1 : 1));
+		} else if (e === "2") {
+			peerCopy.sort((a, b) => (a.LastSeen > b.LastSeen ? 1 : -1));
+		} else if (e === "3") {
+			peerCopy.sort((a, b) => (a.LastSeen > b.LastSeen ? -1 : 1));
+		} else {
+			console.log(`Sorry, we are out of ${e}`, e);
+		}
+		setPeers(peerCopy);
+	};
 
-  const InnerPageNumbers = () => {
-    let default_btn =
-      "z-10 bg-white border-gray-300 text-gray-700 relative inline-flex items-center px-4 py-2 border  hover:bg-gray-50";
-    let clicked_btn =
-      "z-10 bg-gray-50 border-gray-500 text-gray-600 relative inline-flex items-center px-4 py-2 border  hover:bg-gray-50";
-    let menuItems = []
-    if (pageCount < 6) {
-      for (let i = 0; i < pageCount; i++) {
-        menuItems.push(
-          <button
-            className={pageIndex === i ? clicked_btn : default_btn}
-            onClick={() => gotoPage(i)}
-          >
-            {i + 1}
-          </button>
-        );
-      }
-    } else {
-      let j =
-        pageIndex === 0 || pageIndex === 1
-          ? 0
-          : pageCount - pageIndex === 1 ||
-            pageCount - pageIndex === 0 ||
-            pageCount - pageIndex === 2
-          ? pageCount - 5
-          : pageIndex - 2;
-      for (let i = j; i < j + 5; i++) {
-        menuItems.push(
-          <button
-            className={pageIndex === i ? clicked_btn : default_btn}
-            onClick={() => gotoPage(i)}
-          >
-            {i + 1}
-          </button>
-        );
-      }
-    }
-    return <div>{menuItems}</div>;
-  };
-  const formatOS = (os) => {
-    if (os.startsWith("windows 10")) {
-      return "Windows 10";
-    }
+	const InnerPageNumbers = () => {
+		let default_btn =
+			"z-10 bg-white border-gray-300 text-gray-700 relative inline-flex items-center px-4 py-2 border  hover:bg-gray-50";
+		let clicked_btn =
+			"z-10 bg-gray-50 border-gray-500 text-gray-600 relative inline-flex items-center px-4 py-2 border  hover:bg-gray-50";
+		let menuItems = [];
+		if (pageCount < 6) {
+			for (let i = 0; i < pageCount; i++) {
+				menuItems.push(
+					<button
+						className={pageIndex === i ? clicked_btn : default_btn}
+						onClick={() => gotoPage(i)}
+					>
+						{i + 1}
+					</button>
+				);
+			}
+		} else {
+			let j =
+				pageIndex === 0 || pageIndex === 1
+					? 0
+					: pageCount - pageIndex === 1 ||
+					  pageCount - pageIndex === 0 ||
+					  pageCount - pageIndex === 2
+					? pageCount - 5
+					: pageIndex - 2;
+			for (let i = j; i < j + 5; i++) {
+				menuItems.push(
+					<button
+						className={pageIndex === i ? clicked_btn : default_btn}
+						onClick={() => gotoPage(i)}
+					>
+						{i + 1}
+					</button>
+				);
+			}
+		}
+		return <div>{menuItems}</div>;
+	};
 
-    if (os.startsWith("Darwin")) {
-      return os.replace("Darwin", "MacOS");
-    }
+	const formatOS = (os) => {
+		if (os.startsWith("windows 10")) {
+			return "Windows 10";
+		}
 
-    return os;
-  };
+		if (os.startsWith("Darwin")) {
+			return os.replace("Darwin", "MacOS");
+		}
 
-  //called when user clicks on table row menu item
-  const handleRowMenuClick = (action, peer) => {
-    if (action === "Delete") {
-      setPeerToDelete(peer[1].value);
-      setDeleteDialogText(
-        "Are you sure you want to delete peer from your account?"
-      );
-      setDeleteDialogTitle('Delete peer "' + peer[0].value + '"');
-      setShowDeleteDialog(true);
-    }
-  };
+		return os;
+	};
 
-  const showAll = () => {
-    const showAllBtn = document.getElementById("btn-show-all");
-    const showOnlineBtn = document.getElementById("btn-show-online");
+	//called when user clicks on table row menu item
+	const handleRowMenuClick = (action, peer) => {
+		if (action === "Delete") {
+			setPeerToDelete(peer[1].value);
+			setDeleteDialogText(
+				"Are you sure you want to delete peer from your account?"
+			);
+			setDeleteDialogTitle('Delete peer "' + peer[0].value + '"');
+			setShowDeleteDialog(true);
+		}
+	};
 
-    showAllBtn.classList.add(
-      "ring-1",
-      "ring-indigo-500",
-      "border-indigo-500",
-      "outline-none"
-    );
-    showOnlineBtn.classList.remove(
-      "ring-1",
-      "ring-indigo-500",
-      "border-indigo-500",
-      "outline-none"
-    );
-    refresh(null);
-  };
+	const showAll = () => {
+		const showAllBtn = document.getElementById("btn-show-all");
+		const showOnlineBtn = document.getElementById("btn-show-online");
 
-  const showConnected = () => {
-    const showAllBtn = document.getElementById("btn-show-all");
-    const showOnlineBtn = document.getElementById("btn-show-online");
+		showAllBtn.classList.add(
+			"ring-1",
+			"ring-indigo-500",
+			"border-indigo-500",
+			"outline-none"
+		);
+		showOnlineBtn.classList.remove(
+			"ring-1",
+			"ring-indigo-500",
+			"border-indigo-500",
+			"outline-none"
+		);
+		refresh(null);
+	};
 
-    showOnlineBtn.classList.add(
-      "ring-1",
-      "ring-indigo-500",
-      "border-indigo-500",
-      "outline-none"
-    );
-    showAllBtn.classList.remove(
-      "ring-1",
-      "ring-indigo-500",
-      "border-indigo-500",
-      "outline-none"
-    );
+	const showConnected = () => {
+		const showAllBtn = document.getElementById("btn-show-all");
+		const showOnlineBtn = document.getElementById("btn-show-online");
 
-    refresh(function (peers) {
-      return peers.filter((peer) => {
-        return peer.Connected;
-      });
-    });
-  };
+		showOnlineBtn.classList.add(
+			"ring-1",
+			"ring-indigo-500",
+			"border-indigo-500",
+			"outline-none"
+		);
+		showAllBtn.classList.remove(
+			"ring-1",
+			"ring-indigo-500",
+			"border-indigo-500",
+			"outline-none"
+		);
 
-  const refresh = (filter) => {
-    getPeers(getAccessTokenSilently)
-      .then((responseData) =>
-        responseData.sort((a, b) => (a.Name > b.Name ? 1 : -1))
-      )
-      .then((list) => {
-        setEmpty(list.length === 0);
-        return list;
-      })
-      .then((sorted) => {
-        return filter != null ? filter(sorted) : sorted;
-      })
-      .then((filtered) => {
-        setPeersBackUp(filtered);
-        setPeers(filtered);
-      })
-      .then(() => setLoading(false))
-      .catch((error) => handleError(error));
-  };
+		refresh(function (peers) {
+			return peers.filter((peer) => {
+				return peer.Connected;
+			});
+		});
+	};
 
-  // after user confirms (or not) deletion of the peer
-  const handleDeleteConfirmation = (confirmed) => {
-    setShowDeleteDialog(false);
-    if (confirmed) {
-      deletePeer(getAccessTokenSilently, peerToDelete)
-        .then(() => setPeerToDelete(null))
-        .then(() => refresh(null))
-        .catch((error) => {
-          setPeerToDelete(null);
-          console.log(error);
-        });
-    } else {
-      setPeerToDelete(null);
-    }
-  };
+	const refresh = (filter) => {
+		getPeers(getAccessTokenSilently)
+			.then((responseData) =>
+				responseData.sort((a, b) => (a.Name > b.Name ? 1 : -1))
+			)
+			.then((list) => {
+				setEmpty(list.length === 0);
+				return list;
+			})
+			.then((sorted) => {
+				return filter != null ? filter(sorted) : sorted;
+			})
+			.then((filtered) => {
+				setPeersBackUp(filtered);
+				setPeers(filtered);
+			})
+			.then(() => setLoading(false))
+			.catch((error) => handleError(error));
+	};
 
+	// after user confirms (or not) deletion of the peer
+	const handleDeleteConfirmation = (confirmed) => {
+		setShowDeleteDialog(false);
+		if (confirmed) {
+			deletePeer(getAccessTokenSilently, peerToDelete)
+				.then(() => setPeerToDelete(null))
+				.then(() => refresh(null))
+				.catch((error) => {
+					setPeerToDelete(null);
+					console.log(error);
+				});
+		} else {
+			setPeerToDelete(null);
+		}
+	};
 
-  useEffect(() => {
-    refresh(null);
-  }, [getAccessTokenSilently]);
-  useEffect(() => {}, [peers]);
+	useEffect(() => {
+		refresh(null);
+	}, [getAccessTokenSilently]);
+	useEffect(() => {}, [peers]);
 
   return (
     <div className="py-10 bg-gray-50 overflow-hidden rounded max-w-7xl mx-auto sm:px-6 lg:px-8">
@@ -544,6 +544,7 @@ export const Peers = () => {
     </div>
   );
 };
+
 export default withAuthenticationRequired(Peers, {
-  onRedirecting: () => <Loading />,
+	onRedirecting: () => <Loading />,
 });
