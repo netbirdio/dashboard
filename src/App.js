@@ -2,6 +2,7 @@ import React, {useEffect, useState} from 'react';
 import Navbar from './components/Navbar';
 import {Redirect, Route, Switch} from 'react-router-dom';
 import {Peers} from './views/Peers';
+import {Users} from './views/Users';
 import Footer from './components/Footer';
 import {useAuth0} from "@auth0/auth0-react";
 import Loading from "./components/Loading";
@@ -76,6 +77,7 @@ function App() {
                         <Route path="/setup-keys" component={SetupKeys}/>
                         <Route path="/acls" component={AccessControl}/>
                         <Route path="/activity" component={Activity}/>
+                        <Route path="/users" component={Users}/>
                     </Switch>
                 </div>
                 <Footer/>
