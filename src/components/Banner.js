@@ -36,7 +36,7 @@ export default function Banner() {
 				<div className="absolute inset-y-0 right-0 pt-1 pr-1 flex items-start sm:pt-1 sm:pr-2 sm:items-start">
 					<button
 						type="button"
-						className="flex p-1 rounded-md hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-white"
+						className="flex p-1 rounded-md hover:bg-indigo-500 text-white focus:outline-none focus:ring-2 focus:ring-white"
 						onClick={dismiss}
 					>
 						<span className="sr-only">Dismiss</span>
