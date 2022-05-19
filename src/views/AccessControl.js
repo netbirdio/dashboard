@@ -291,8 +291,7 @@ export const AccessControls = () => {
                                         <div className="flex flex-col">
                                             <div className="-my-2 sm:-mx-6 lg:-mx-8">
                                                 <div className="py-2 align-middle min-w-full sm:px-6 lg:px-8">
-                                                    <div
-                                                        className="shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
+                                                    <div className="overflow-hidden shadow ring-1 ring-black ring-opacity-5 md:rounded-lg">
                                                         <div className="overflow-x-auto">
 
                                                             <table
