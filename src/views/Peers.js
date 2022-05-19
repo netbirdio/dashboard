@@ -289,7 +289,7 @@ export const Peers = () => {
                       </div>
                       <div className="lg:col-span-2">
                         <div className="flex items-center">
-                          <p className="ml-0 text-sm text-gray-700 lg:px-4 md:pr-2 pr-2" sm>Sort by: &nbsp;</p>
+                          <p className="ml-0 text-sm text-gray-700 lg:px-4 md:pr-2 pr-2">Sort by: &nbsp;</p>
                           <select
                               className="bg-gray-50 flex-1 lg:flex-grow-0 text-sm text-gray-500 rounded p-2 border border-gray-300 focus:border-gray-400 outline-none"
                               onChange={(e) => sortTable(e.target.value)}
