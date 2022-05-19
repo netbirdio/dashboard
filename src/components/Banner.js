@@ -21,7 +21,7 @@ export default function Banner() {
 						</span>
 						<span className="block sm:ml-2 sm:inline-block">
 							<a
-								href="https://blog.netbird.io/wiretrustee-becomes-netbird"
+								href="https://netbird.io/blog/wiretrustee-becomes-netbird"
 								className="font-bold underline"
 								target="_blank"
 								rel="noreferrer"

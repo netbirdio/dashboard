@@ -2,11 +2,11 @@ import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import {ChevronLeftIcon, ChevronRightIcon} from "@heroicons/react/solid";
 import React, {useEffect, useState} from "react";
 // import PaginatedPeersList from "../components/PaginatedPeersList"
-import {Link} from "react-router-dom";
 import {usePagination, useTable} from "react-table";
 import {getRules} from "../api/ManagementAPI";
 import EmptyPeersPanel from "../components/EmptyPeers";
 import Loading from "../components/Loading";
+import EditButton from "../components/EditButton";
 
 export const AccessControls = () => {
     const [rules, setRules] = useState([]);
@@ -159,7 +159,7 @@ export const AccessControls = () => {
         refresh(null);
     };
 
-    const showConnected = () => {
+    const showEnabled = () => {
         const showAllBtn = document.getElementById("btn-show-all");
         const showOnlineBtn = document.getElementById("btn-show-online");
 
@@ -212,7 +212,7 @@ export const AccessControls = () => {
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 sm:flex-auto">
                     <h1 className="text-xl font-semibold text-gray-900">Access Control</h1>
                     <p className="mt-2 text-sm text-gray-700">
-                       Create and control access groups
+                        Create and control access groups
                     </p>
                 </div>
             </header>
@@ -266,7 +266,7 @@ export const AccessControls = () => {
                                                     <button
                                                         type="button"
                                                         id="btn-show-online"
-                                                        onClick={() => showConnected()}
+                                                        onClick={() => showEnabled()}
                                                         className="relative inline-flex items-center px-4 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-700 outline-none hover:bg-gray-50"
                                                     >
                                                       Enabled
@@ -275,14 +275,12 @@ export const AccessControls = () => {
                                                 </div>
                                             </div>
                                             <div className="lg:flex lg:justify-end">
-                                                <Link to="/add-peer">
-                                                    <button
-                                                        type="button"
-                                                        className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
-                                                    >
-                                                        Add Rule
-                                                    </button>
-                                                </Link>
+                                                <button
+                                                    type="button"
+                                                    className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+                                                >
+                                                    Add Rule
+                                                </button>
 
                                             </div>
                                         </div>
@@ -375,20 +373,21 @@ export const AccessControls = () => {
 
                                                                                                 {cell.column.id === "Flow" &&
                                                                                                     (cell.value === 0 ? (
-                                                                                                        <span
-                                                                                                            className="inline-flex rounded-full bg-indigo-100 px-2 text-xs leading-5 text-indigo-800">
-                                                                                                                <svg
-                                                                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                                                                    className="h-5 w-10"
-                                                                                                                    fill="none"
-                                                                                                                    viewBox="0 0 24 24"
-                                                                                                                    stroke="currentColor"
-                                                                                                                    strokeWidth={1}>
-                                                                                                                  <path
-                                                                                                                      strokeLinecap="round"
-                                                                                                                      strokeLinejoin="round"
-                                                                                                                      d="M7 16l-4-4m0 0l4-4m-4 4h18 M17 8l4 4m0 0l-4 4m4-4H3"/>
-                                                                                                                </svg>
+                                                                                                            <span
+                                                                                                                className="inline-flex rounded-full bg-indigo-100 px-2 text-xs leading-5 text-indigo-800">
+                                                                                                                    <svg
+                                                                                                                        xmlns="http://www.w3.org/2000/svg"
+                                                                                                                        className="h-5 w-10"
+                                                                                                                        fill="none"
+                                                                                                                        viewBox="0 0 24 24"
+                                                                                                                        stroke="currentColor"
+                                                                                                                        strokeWidth={1}>
+                                                                                                                      <path
+                                                                                                                          strokeLinecap="round"
+                                                                                                                          strokeLinejoin="round"
+                                                                                                                          d="M7 16l-4-4m0 0l4-4m-4 4h18 M17 8l4 4m0 0l-4 4m4-4H3"/>
+                                                                                                                    </svg>
+
                                                                                                             </span>
                                                                                                     ) : (
                                                                                                         <span
@@ -400,20 +399,33 @@ export const AccessControls = () => {
                                                                                                 {cell.column.id === "Enabled" &&
                                                                                                     (cell.value === true ? (
                                                                                                         <span
-                                                                                                            className="inline-flex rounded-full bg-green-100 px-2 text-xs leading-5 text-green-800">
-                                                        Enabled
-                                                      </span>
+                                                                                                            className="inline-flex text-center rounded-full bg-green-100 px-2 text-xs leading-5 text-green-800">
+                                                                                                            Enabled
+                                                                                                          </span>
                                                                                                     ) : (
                                                                                                         <span
                                                                                                             className="inline-flex rounded-full bg-gray-100 px-2 text-xs leading-5 text-gray-500">
-                                                        Disabled
-                                                      </span>
+                                                                                                            Disabled
+                                                                                                          </span>
                                                                                                     ))}
                                                                                             </td>
                                                                                         )
                                                                                     );
                                                                                 }
                                                                             )}
+                                                                            <td className={td_class_other}>
+                                                                                <div className="relative">
+                                                                                    <EditButton
+                                                                                        items={[{ name: "Edit" }, { name: "Disable" }]}
+                                                                                        /*handler={(action) =>
+                                                                                            handleRowMenuClick(
+                                                                                                action,
+                                                                                                row.cells
+                                                                                            )
+                                                                                        }*/
+                                                                                    />
+                                                                                </div>
+                                                                            </td>
                                                                         </tr>
                                                                     );
                                                                 })}
