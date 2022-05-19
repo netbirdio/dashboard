@@ -21,7 +21,7 @@ export default function Banner() {
 						</span>
 						<span className="block sm:ml-2 sm:inline-block">
 							<a
-								href="https://blog.netbird.io/wiretrustee-becomes-netbird"
+								href="https://netbird.io/blog/wiretrustee-becomes-netbird"
 								className="font-bold underline"
 								target="_blank"
 								rel="noreferrer"
@@ -36,7 +36,7 @@ export default function Banner() {
 				<div className="absolute inset-y-0 right-0 pt-1 pr-1 flex items-start sm:pt-1 sm:pr-2 sm:items-start">
 					<button
 						type="button"
-						className="flex p-1 rounded-md hover:bg-indigo-500 focus:outline-none focus:ring-2 focus:ring-white"
+						className="flex p-1 rounded-md hover:bg-indigo-500 text-white focus:outline-none focus:ring-2 focus:ring-white"
 						onClick={dismiss}
 					>
 						<span className="sr-only">Dismiss</span>
