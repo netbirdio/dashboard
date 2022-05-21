@@ -73,12 +73,14 @@ export const AccessControls = () => {
     );
 
     const formatGroups = (cell) => {
-        const groups = new Map(Object.entries(cell.value));
-        if (groups.size === 1) {
-            const [firstValue] = groups.values();
-            return firstValue;
+        // single group -> show its name
+        if (cell.value.length === 1) {
+            const [firstValue] = cell.value.values();
+            return firstValue.Name;
         }
-        return groups.size + " Groups"
+
+        // many groups -> show just count
+        return cell.value.length + " Groups"
     }
 
     const handleSearch = (e) => {
