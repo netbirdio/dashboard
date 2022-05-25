@@ -1,4 +1,4 @@
-let configJson = "";
+let configJson:any = "";
 
 if (process.env.NODE_ENV !== 'production') {
   configJson = require("./.local-config.json");

@@ -12,7 +12,7 @@ import EmptyPeersPanel from "../components/EmptyPeers";
 import Loading from "../components/Loading";
 import { timeAgo } from "../utils/common";
 
-export const Peers = () => {
+export const Peers_ = () => {
   const [peers, setPeers] = useState([]);
   const [peersBackUp, setPeersBackUp] = useState([]);
   const [empty, setEmpty] = useState(true);
@@ -544,6 +544,6 @@ export const Peers = () => {
     </div>
   );
 };
-export default withAuthenticationRequired(Peers, {
+export default withAuthenticationRequired(Peers_, {
   onRedirecting: () => <Loading />,
 });

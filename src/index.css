@@ -1,6 +1,39 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import '~antd/dist/antd.css';
+
+/*@tailwind base;*/
+/*@tailwind components;*/
+/*@tailwind utilities;*/
+
+body {
+  font-size: 16px;
+}
+
+.ant-layout-header {
+  background: #fff;
+  padding: 0;
+  height: auto;
+  min-height: 64px;
+
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.ant-layout-content {
+  background-color: rgb(249, 250, 251)
+}
+
+.ant-menu-horizontal {
+  border: none;
+}
+
+.ant-menu-horizontal > .ant-menu-item a {
+  color: rgba(107, 114, 128, 1);
+  font-weight: 500;
+}
+
+.ant-menu-horizontal > .ant-menu-item-selected a {
+  color: rgba(17, 24, 39, 1);
+}
+
 
 .menu-card {
   @apply flex flex-col justify-center items-center bg-white h-screen py-40;
@@ -8,4 +41,34 @@
 
 .center-content {
   @apply flex flex-col justify-center items-center;
+}
+
+
+.space-align-container {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+}
+.space-align-block {
+  flex: none;
+  margin: 8px 4px;
+  padding: 4px;
+  border: none;
+}
+.space-align-block .mock-block {
+  display: inline-block;
+  padding: 32px 8px 16px;
+  background: rgba(150, 150, 150, 0.2);
+}
+
+.bg-indigo-600{
+  background-color: rgb(79, 70, 229);
+}
+
+.card-table .ant-pagination {
+  padding: 0 16px;
+}
+
+.card-table .ant-table-ping-right:not(.ant-table-has-fix-right) .ant-table-container::after {
+  box-shadow: none;
 }

@@ -2,15 +2,24 @@ import React, {Fragment} from 'react';
 import {Link, NavLink} from 'react-router-dom';
 import logo from "../assets/logo.png";
 import defaultProfilePic from "../assets/default-profile.png";
-import {Disclosure, Menu, Transition} from '@headlessui/react'
-import {MenuIcon, XIcon} from '@heroicons/react/outline'
+//import {Disclosure, Menu, Transition} from '@headlessui/react'
+//import {MenuIcon, XIcon} from '@heroicons/react/outline'
+import {Layout, Menu, Space, Row, Col, Typography} from 'antd'
 import {useAuth0} from "@auth0/auth0-react";
+import {useLocation} from 'react-router-dom';
 
-function classNames(...classes) {
-    return classes.filter(Boolean).join(' ')
-}
+const { Content } = Layout
+const { Title } = Typography
+const Navbar = () => {
+    let location = useLocation();
 
-const Navbar = ({toggle}) => {
+    const items = [
+        { label: (<Link  to="/peers">Peers</Link>), key: '/peers' },
+        { label: (<Link  to="/add-peer">Add Peer</Link>), key: '/add-peer' },
+        { label: (<Link  to="/setup-keys">Setup Keys</Link>), key: '/setup-keys' },
+        { label: (<Link  to="/acls">Access Control</Link>), key: '/acls' },
+        { label: (<Link  to="/activity">Activity</Link>), key: '/activity' }
+    ]
 
     const {
         user,
@@ -24,7 +33,25 @@ const Navbar = ({toggle}) => {
         });
 
     return (
-        <Disclosure as="nav" className="bg-white border-b shadow">
+        <>
+            <Row justify="space-evenly" align="middle">
+                <Col flex="0 1 60px">
+                    <Link id="logo" to="/">
+                        <img
+                            alt="logo"
+                            style={{width: "55px"}}
+                            src={logo}
+                        />
+                    </Link>
+                </Col>
+                <Col flex="1 1 auto">
+                    <div>
+                        <Menu mode="horizontal" defaultSelectedKeys={[location.pathname]} items={items}/>
+                    </div>
+                </Col>
+            </Row>
+        </>
+        /*<Disclosure as="nav" className="bg-white border-b shadow">
             {({open}) => (
                 <>
                     <div className="max-w-7xl mx-auto px-2 sm:px-6 lg:px-8">
@@ -146,7 +173,7 @@ const Navbar = ({toggle}) => {
                                 </Menu>
                             </div>
                             <div className="-mr-2 flex items-center sm:hidden">
-                                {/* Mobile menu button */}
+                                {/!* Mobile menu button *!/}
                                 <Disclosure.Button
                                     className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-indigo-500">
                                     <span className="sr-only">Open main menu</span>
@@ -234,7 +261,7 @@ const Navbar = ({toggle}) => {
                     </Disclosure.Panel>
                 </>
             )}
-        </Disclosure>
+        </Disclosure>*/
     );
 };
 

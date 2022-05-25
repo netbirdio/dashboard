@@ -46,7 +46,7 @@ const AddPeerTabSelector = ({setupKey}) => {
                         <LinuxTab setupKey={setupKey}/>
                     </div>
                     <div className={openTab === 2 ? "block" : "hidden"} id="windows-installation-steps">
-                        <WindowsTab setupKey={setupKey}/>
+                        {/*<WindowsTab setupKey={setupKey}/>*/}
                     </div>
                     <div className={openTab === 3 ? "block" : "hidden"} id="macos-installation-steps">
                         <MacTab setupKey={setupKey}/>
