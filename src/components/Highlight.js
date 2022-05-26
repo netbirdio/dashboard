@@ -2,7 +2,8 @@ import React, { Component } from "react";
 import PropTypes from "prop-types";
 
 import hljs from "highlight.js";
-import "highlight.js/styles/agate.css";
+import "highlight.js/styles/mono-blue.css";
+//import "highlight.js/styles/base16/flat.css";
 import "highlight.js/lib/languages/bash";
 
 class Highlight extends Component {
