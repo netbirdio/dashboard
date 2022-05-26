@@ -11,7 +11,7 @@ const LinuxTab = ({setupKey}) => {
     const steps = [
         {
             id: 1,
-            target: 'Add Netbird\'s repository:',
+            target: 'Add repository:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
@@ -25,16 +25,16 @@ const LinuxTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["sudo apt-get update", "sudo apt-get install wiretrustee"]
+            commands: ["sudo apt-get update", "# for CLI only\nsudo apt-get install netbird", "# for GUI package\nsudo apt-get install netbird-ui"]
         },
         {
             id: 3,
-            target: 'Login and run Netbird:',
+            target: 'Run Netbird and log in the browser:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: grpcApiOrigin === '' ? ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY>"] : ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
+            commands: grpcApiOrigin === '' ? ["sudo netbird up"] : ["sudo netbird up --management-url " + grpcApiOrigin]
         },
         {
             id: 4,
