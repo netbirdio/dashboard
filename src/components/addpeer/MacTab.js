@@ -14,7 +14,11 @@ const MacTab = ({setupKey}) => {
             target: 'Download and install Brew (package manager):',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
-            content: <button className="underline text-indigo-500" onClick={()=> window.open("https://brew.sh/", "_blank")}>https://brew.sh/</button>,
+            content: <button type="button"
+                             onClick={() => window.open("https://brew.sh/")}
+                             className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
+                Download Brew
+            </button>,
             commands: [],
             copy: false
         },
@@ -25,16 +29,16 @@ const MacTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["brew install wiretrustee/client/wiretrustee"]
+            commands: ["# for CLI only\nbrew install netbirdio/tap/netbird", "# for GUI package\nbrew install --cask netbirdio/tap/netbird-ui"]
         },
         {
             id: 3,
-            target: 'Login and run Netbird:',
+            target: 'Run Netbird and log in the browser:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: grpcApiOrigin === '' ? ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY>"] : ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
+            commands: grpcApiOrigin === '' ? ["sudo netbird up"] : ["sudo netbird up --management-url " + grpcApiOrigin]
         },
         {
             id: 4,
@@ -43,7 +47,7 @@ const MacTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["sudo ipconfig getifaddr utun100"]
+            commands: ["sudo ifconfig utun100"]
         },
     ]
 
