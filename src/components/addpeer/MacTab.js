@@ -14,7 +14,11 @@ const MacTab = ({setupKey}) => {
             target: 'Download and install Brew (package manager):',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
-            content: <button className="underline text-indigo-500" onClick={()=> window.open("https://brew.sh/", "_blank")}>https://brew.sh/</button>,
+            content: <button type="button"
+                             onClick={() => window.open("https://brew.sh/")}
+                             className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
+                Download Brew
+            </button>,
             commands: [],
             copy: false
         },
