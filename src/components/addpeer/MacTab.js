@@ -25,19 +25,10 @@ const MacTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["brew install netbirdio/tap/netbird"]
+            commands: ["# for CLI only\nbrew install netbirdio/tap/netbird", "# for GUI package\nbrew install --cask netbirdio/tap/netbird-ui"]
         },
         {
             id: 3,
-            target: 'Optionally install Netbird Desktop UI:',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            content: null,
-            copy: true,
-            commands: ["brew install --cask netbirdio/tap/netbird-ui"]
-        },
-        {
-            id: 4,
             target: 'Run Netbird and log in the browser:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
@@ -46,7 +37,7 @@ const MacTab = ({setupKey}) => {
             commands: grpcApiOrigin === '' ? ["sudo netbird up"] : ["sudo netbird up --management-url " + grpcApiOrigin]
         },
         {
-            id: 5,
+            id: 4,
             target: 'Get your IP address:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',

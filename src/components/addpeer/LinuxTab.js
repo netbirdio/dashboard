@@ -11,7 +11,7 @@ const LinuxTab = ({setupKey}) => {
     const steps = [
         {
             id: 1,
-            target: 'Add Netbird\'s repository:',
+            target: 'Add repository:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
@@ -25,19 +25,10 @@ const LinuxTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["sudo apt-get update", "sudo apt-get install netbird"]
+            commands: ["sudo apt-get update", "# for CLI only\nsudo apt-get install netbird", "# for GUI package\nsudo apt-get install netbird-ui"]
         },
         {
             id: 3,
-            target: 'Optionally install Netbird Desktop UI:',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            content: null,
-            copy: true,
-            commands: ["sudo apt-get install netbird-ui"]
-        },
-        {
-            id: 4,
             target: 'Run Netbird and log in the browser:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
@@ -46,7 +37,7 @@ const LinuxTab = ({setupKey}) => {
             commands: grpcApiOrigin === '' ? ["sudo netbird up"] : ["sudo netbird up --management-url " + grpcApiOrigin]
         },
         {
-            id: 5,
+            id: 4,
             target: 'Get your IP address:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
