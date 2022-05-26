@@ -32,10 +32,13 @@ export const AddPeerComponent = () => {
         return (
 
             <>
-                <div className="py-10">
-                    <header>
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div className="py-10 bg-gray-50 overflow-hidden rounded max-w-7xl mx-auto sm:px-6 lg:px-8">
+                    <header className="sm:flex sm:items-center">
+                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 sm:flex-auto">
                             <h1 className="text-xl font-semibold text-gray-900">Add Peer</h1>
+                            <p className="mt-2 text-sm text-gray-700">
+                                To get started with Netbird just install the app and log in.
+                            </p>
                         </div>
                     </header>
 
