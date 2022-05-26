@@ -25,25 +25,34 @@ const MacTab = ({setupKey}) => {
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["brew install wiretrustee/client/wiretrustee"]
+            commands: ["brew install netbirdio/tap/netbird"]
         },
         {
             id: 3,
-            target: 'Login and run Netbird:',
+            target: 'Optionally install Netbird Desktop UI:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: grpcApiOrigin === '' ? ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY>"] : ["sudo wiretrustee up --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
+            commands: ["brew install --cask netbirdio/tap/netbird-ui"]
         },
         {
             id: 4,
+            target: 'Run Netbird and log in the browser:',
+            icon: ArrowCircleRightIcon,
+            iconBackground: 'bg-gray-600',
+            content: null,
+            copy: true,
+            commands: grpcApiOrigin === '' ? ["sudo netbird up"] : ["sudo netbird up --management-url " + grpcApiOrigin]
+        },
+        {
+            id: 5,
             target: 'Get your IP address:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: null,
             copy: true,
-            commands: ["sudo ipconfig getifaddr utun100"]
+            commands: ["sudo ifconfig utun100"]
         },
     ]
 

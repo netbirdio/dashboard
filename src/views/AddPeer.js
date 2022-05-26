@@ -47,9 +47,9 @@ export const AddPeerComponent = () => {
                                     <span>{error.toString()}</span>
                                 )}
                                 {setupKeys && (<nav aria-label="Progress">
-                                    <div className="flex max-w-lg flex-col space-y-2">
+                                    {/*<div className="flex max-w-lg flex-col space-y-2">
                                         <SetupKeySelect data={setupKeys.filter(k => k.Valid)} onSelected={setSelectedKey}/>
-                                    </div>
+                                    </div>*/}
                                     <AddPeerTabSelector setupKey={selectedKey}/>
                                 </nav>)}
 

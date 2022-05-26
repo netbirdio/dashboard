@@ -38,7 +38,7 @@ const WindowsTab = ({setupKey}) => {
         },
         {
             id: 3,
-            target: 'Login with your email address.',
+            target: 'Log in your browser.',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: "",
