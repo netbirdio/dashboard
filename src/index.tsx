@@ -50,7 +50,6 @@ root.render(
                     <App/>
                 </React.StrictMode>
             </Auth0Provider>
-            <App />
         </React.StrictMode>
     </BrowserRouter>
 );

@@ -6,6 +6,7 @@
 
 body {
   font-size: 16px;
+  background-color: #f0f2f5;
 }
 
 .ant-layout-header {
@@ -18,7 +19,8 @@ body {
 }
 
 .ant-layout-content {
-  background-color: rgb(249, 250, 251)
+  background-color: rgb(249, 250, 251);
+  min-height: 600px;
 }
 
 .ant-menu-horizontal {
@@ -69,6 +71,19 @@ body {
   padding: 0 16px;
 }
 
+.card-table .ant-empty {
+  height: 200px;
+}
+
+.card-table .ant-table-ping-left:not(.ant-table-has-fix-left) .ant-table-container::before  {
+  box-shadow: none;
+}
 .card-table .ant-table-ping-right:not(.ant-table-has-fix-right) .ant-table-container::after {
   box-shadow: none;
+}
+
+.select-rows-per-page-en .ant-select-selector::before {
+  content: 'Rows per page';
+  width: 104px;
+  align-self: center;
 }

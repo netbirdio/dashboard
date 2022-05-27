@@ -1,9 +1,9 @@
-
 export interface Peer {
-  Name: boolean,
+  Name: string,
   IP: string,
-  Connected: string,
-  LastSeen: boolean,
-  OS: boolean,
+  Connected: boolean,
+  LastSeen: string,
+  OS: string,
+  Version: string,
   Groups?: any[]
 }

@@ -4,7 +4,7 @@ import {Redirect, Route, Switch} from 'react-router-dom';
 import {useAuth0} from "@auth0/auth0-react";
 import Navbar from './components/Navbar';
 import Peers from './views/Peers';
-import Footer from './components/Footer';
+import FooterComponent from './components/FooterComponent';
 import Loading from "./components/Loading";
 import SetupKeys from "./views/SetupKeys";
 import AddPeer from "./views/AddPeer";
@@ -92,7 +92,7 @@ function App() {
                             <Route path="/activity" component={Activity}/>
                         </Switch>
                     </Content>
-                    <Footer/>
+                    <FooterComponent/>
                 </Layout>
         }
         </Provider>

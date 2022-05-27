@@ -1,10 +1,13 @@
-import React, { Link } from 'react';
-import { Footer } from 'antd';
+import React from 'react';
+import { Layout } from 'antd';
+import {Link} from 'react-router-dom';
 
-export default FooterComponent = () => {
+const { Footer } = Layout
+
+export default () => {
   return (
       <Footer style={{ textAlign: 'center' }}>
-          Copyright © 2021 <Link to="https://wiretrustee.com">Wiretrustee Authors</Link>
+          Copyright © 2021 <a href="https://wiretrustee.com">Wiretrustee Authors</a>
       </Footer>
   );
 };

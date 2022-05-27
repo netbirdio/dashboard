@@ -1,3 +1,15 @@
+export const formatOS = (os) => {
+    if (os.startsWith("windows 10")) {
+        return "Windows 10";
+    }
+
+    if (os.startsWith("Darwin")) {
+        return os.replace("Darwin", "MacOS");
+    }
+
+    return os;
+};
+
 export const formatDate = date => {
     return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: '2-digit', month: 'short', day: 'numeric' });
 }

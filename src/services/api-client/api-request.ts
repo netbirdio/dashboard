@@ -1,6 +1,6 @@
 import axios, {AxiosError} from 'axios';
 
-import {ApiRequestParams, ApiResponse} from './types';
+import {ApiRequestParams, ApiResponse, ApiError} from './types';
 import {headersFactory, RequestHeader} from './header-factory';
 
 /*axios.interceptors.response.use(undefined, err => {
@@ -19,18 +19,21 @@ async function apiRequest<T>(params: ApiRequestParams): Promise<ApiResponse<T>> 
   const builtHeader: RequestHeader = { ...headers, ...extraHeaders };
 
   let response;
-  let error = {
+  let error:ApiError = {
+    code: '-1',
+    message: '',
+    data: null,
     statusCode: -1
   };
 
   try {
     response = await axios.request({ url, data, method: params.method, headers: builtHeader as any });
   } catch (err: any) {
-    const errorResponse = (err && err.response) || {};
-
-    error = {
-      ...errorResponse.data,
-      statusCode: errorResponse.status,
+    error = <ApiError>{
+      code: err ? err.code : '-1',
+      message: err ? err.message : '',
+      data: (err && err.response) ? err.response.data : null,
+      statusCode: (err && err.response) ? err.response.status : -1,
     };
 
     throw error;

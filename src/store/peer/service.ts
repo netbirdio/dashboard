@@ -9,6 +9,12 @@ export default {
         payload
     );
   },
+  async deletedPeer(payload:RequestPayload<string>): Promise<ApiResponse<any>> {
+    return apiClient.delete<any>(
+        `/api/peers/` + payload.payload,
+        payload
+    );
+  },
   /*
   async addQuantidade(payload: MovimentoEstoque): Promise<ApiResponse<MovimentoEstoqueResponse>> {
     return apiClient.put<MovimentoEstoqueResponse>(
