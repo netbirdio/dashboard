@@ -24,7 +24,6 @@ import {SetupKey, SetupKeyRevoke} from "../store/setup-key/types";
 import {filter, transform} from "lodash"
 import {formatDate, formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
-import loading from "../components/Loading";
 import SetupKeyNew from "../components/SetupKeyNew";
 
 const { Title, Text, Paragraph } = Typography;
@@ -41,6 +40,7 @@ export const SetupKeys = () => {
 
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
     const failed = useSelector((state: RootState) => state.setupKey.failed);
+    const loading = useSelector((state: RootState) => state.setupKey.loading);
     const deletedSetupKey = useSelector((state: RootState) => state.setupKey.deletedSetupKey);
     const revokedSetupKey = useSelector((state: RootState) => state.setupKey.revokedSetupKey);
     const createdSetupKey = useSelector((state: RootState) => state.setupKey.createdSetupKey);
@@ -252,6 +252,7 @@ export const SetupKeys = () => {
                             {failed &&
                                 <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
                             }
+                            {loading && <Loading/>}
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
                                     pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} setup keys`)}}
@@ -319,6 +320,6 @@ export const SetupKeys = () => {
 
 export default withAuthenticationRequired(SetupKeys,
     {
-        onRedirecting: () => <Loading/>,
+        onRedirecting: () => <Loading padding="3em" width="50px" height="50px"/>,
     }
 );

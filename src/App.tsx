@@ -54,7 +54,7 @@ function App() {
     }
 
     if (isLoading) {
-        return <Loading/>;
+        return <Loading padding="3em" width="50px" height="50px"/>;
     }
 
     if (!isAuthenticated) {

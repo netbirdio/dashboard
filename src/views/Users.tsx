@@ -29,7 +29,8 @@ export const Activity = () => {
     const dispatch = useDispatch()
 
     const users = useSelector((state: RootState) => state.user.data);
-    const failed = useSelector((state: RootState) => state.peer.failed);
+    const failed = useSelector((state: RootState) => state.user.failed);
+    const loading = useSelector((state: RootState) => state.user.loading);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [pageSize, setPageSize] = useState(5);
@@ -96,6 +97,7 @@ export const Activity = () => {
                         {failed &&
                             <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
                         }
+                        {loading && <Loading/>}
                         <Card bodyStyle={{padding: 0}}>
                             <Table
                                 pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)}}
@@ -127,6 +129,6 @@ export const Activity = () => {
 
 export default withAuthenticationRequired(Activity,
     {
-        onRedirecting: () => <Loading/>,
+        onRedirecting: () => <Loading padding="3em" width="50px" height="50px"/>,
     }
 );

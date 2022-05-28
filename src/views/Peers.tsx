@@ -25,7 +25,6 @@ import {Peer} from "../store/peer/types";
 import {filter, transform} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
-import loading from "../components/Loading";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -41,6 +40,7 @@ export const Peers = () => {
 
     const peers = useSelector((state: RootState) => state.peer.data);
     const failed = useSelector((state: RootState) => state.peer.failed);
+    const loading = useSelector((state: RootState) => state.peer.loading);
     const deletedPeer = useSelector((state: RootState) => state.peer.deletedPeer);
 
     const [textToSearch, setTextToSearch] = useState('');
@@ -183,6 +183,7 @@ export const Peers = () => {
                         {failed &&
                             <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
                         }
+                        {loading && <Loading/>}
                         <Card bodyStyle={{padding: 0}}>
                             <Table
                                 pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} peers`)}}
@@ -236,6 +237,6 @@ export const Peers = () => {
 
 export default withAuthenticationRequired(Peers,
    {
-       onRedirecting: () => <Loading/>,
+       onRedirecting: () => <Loading padding="3em" width="50px" height="50px"/>,
    }
 );
