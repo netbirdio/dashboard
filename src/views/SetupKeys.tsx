@@ -22,9 +22,10 @@ import {
 } from "antd";
 import {SetupKey, SetupKeyRevoke} from "../store/setup-key/types";
 import {filter, transform} from "lodash"
-import {formatDate, formatOS, timeAgo} from "../utils/common";
+import {copyToClipboard, formatDate, formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
+import ButtonCopyMessage from "../components/ButtonCopyMessage";
 
 const { Title, Text, Paragraph } = Typography;
 const { Column } = Table;
@@ -50,6 +51,8 @@ export const SetupKeys = () => {
     const [pageSize, setPageSize] = useState(5);
     const [dataTable, setDataTable] = useState([] as SetupKeyDataTable[]);
     const [setupKeyToAction, setSetupKeyToAction] = useState(null as SetupKeyDataTable | null);
+
+    const styleNotification = { marginTop: 85 }
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -89,43 +92,40 @@ export const SetupKeys = () => {
 
     const deleteKey = 'deleting';
     useEffect(() => {
-        const style = { marginTop: 85 }
         if (deletedSetupKey.loading) {
-            message.loading({ content: 'Deleting...', key: deleteKey, style });
+            message.loading({ content: 'Deleting...', key: deleteKey, style: styleNotification });
         } else if (deletedSetupKey.success) {
-            message.success({ content: 'SetupKey deleted with success!', key: deleteKey, duration: 2, style });
+            message.success({ content: 'SetupKey deleted with success!', key: deleteKey, duration: 2, style: styleNotification });
             dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, success: false }));
         } else if (deletedSetupKey.error) {
-            message.error({ content: 'Error! Something wrong to delete setupKey.', key: deleteKey, duration: 2, style  });
+            message.error({ content: 'Error! Something wrong to delete setupKey.', key: deleteKey, duration: 2, style: styleNotification  });
             dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, error: null }));
         }
     }, [deletedSetupKey])
 
     const revokeKey = 'creating';
     useEffect(() => {
-        const style = { marginTop: 85 }
         if (revokedSetupKey.loading) {
-            message.loading({ content: 'Creating...', key: revokeKey, duration: 0, style });
+            message.loading({ content: 'Creating...', key: revokeKey, duration: 0, style: styleNotification });
         } else if (revokedSetupKey.success) {
-            message.success({ content: 'Key was revoked with success!', key: revokeKey, duration: 2, style });
+            message.success({ content: 'Key was revoked with success!', key: revokeKey, duration: 2, style: styleNotification });
             dispatch(setupKeyActions.setRevokeSetupKey({ ...revokedSetupKey, success: false }));
         } else if (revokedSetupKey.error) {
-            message.error({ content: 'Error! Something wrong to revoke key.', key: revokeKey, duration: 2, style  });
+            message.error({ content: 'Error! Something wrong to revoke key.', key: revokeKey, duration: 2, style: styleNotification  });
             dispatch(setupKeyActions.setRevokeSetupKey({ ...revokedSetupKey, error: null }));
         }
     }, [revokedSetupKey])
 
     const createKey = 'creating';
     useEffect(() => {
-        const style = { marginTop: 85 }
         if (createdSetupKey.loading) {
-            message.loading({ content: 'Creating...', key: createKey, duration: 0, style });
+            message.loading({ content: 'Creating...', key: createKey, duration: 0, style: styleNotification });
         } else if (createdSetupKey.success) {
-            message.success({ content: 'Key created with success!', key: createKey, duration: 2, style });
+            message.success({ content: 'Key created with success!', key: createKey, duration: 2, style: styleNotification });
             dispatch(setupKeyActions.setSetupNewKeyVisible(false));
             dispatch(setupKeyActions.setCreateSetupKey({ ...createdSetupKey, success: false }));
         } else if (createdSetupKey.error) {
-            message.error({ content: 'Error! Something wrong to create key.', key: createKey, duration: 2, style  });
+            message.error({ content: 'Error! Something wrong to create key.', key: createKey, duration: 2, style: styleNotification  });
             dispatch(setupKeyActions.setCreateSetupKey({ ...createdSetupKey, error: null }));
         }
     }, [createdSetupKey])
@@ -280,6 +280,9 @@ export const SetupKeys = () => {
                                     <Column title="Key" dataIndex="Key"
                                             onFilter={(value: string | number | boolean, record) => (record as any).Key.includes(value)}
                                             sorter={(a, b) => ((a as any).Key.localeCompare((b as any).Key))}
+                                            render={(text, record, index) => {
+                                                return <ButtonCopyMessage key={(record as SetupKeyDataTable).key} text={text} messageText={`Key copied!`} styleNotification={{}}/>
+                                            }}
                                     />
 
                                     <Column title="Last Used" dataIndex="LastUsed"

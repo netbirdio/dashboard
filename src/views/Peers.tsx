@@ -22,9 +22,10 @@ import {
     Alert, Select, Modal, Button, message
 } from "antd";
 import {Peer} from "../store/peer/types";
-import {filter, transform} from "lodash"
+import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
+import ButtonCopyMessage from "../components/ButtonCopyMessage";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -201,7 +202,11 @@ export const Peers = () => {
                                             const a_s = _a.map((i:any) => i.padStart(3, '0')).join()
                                             const b_s = _b.map((i:any) => i.padStart(3, '0')).join()
                                             return a_s.localeCompare(b_s)
-                                        }} />
+                                        }}
+                                        render={(text, record, index) => {
+                                            return <ButtonCopyMessage key={(record as PeerDataTable).key} text={text} messageText={`IP copied!`} styleNotification={{}}/>
+                                        }}
+                                />
                                 <Column title="Status" dataIndex="Connected"
                                         render={(text, record, index) => {
                                             return text ? <Tag color="green">online</Tag> : <Tag color="red">offline</Tag>

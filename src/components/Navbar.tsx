@@ -100,7 +100,7 @@ const Navbar = () => {
                 </Col>
                 <Col flex="1 1 auto">
                     <div>
-                        <Menu mode="horizontal" defaultSelectedKeys={[location.pathname]} items={menuItems}/>
+                        <Menu mode="horizontal" selectable={true} selectedKeys={[location.pathname]} defaultSelectedKeys={[location.pathname]} items={menuItems}/>
                     </div>
                 </Col>
                 {hideMenuUser &&
