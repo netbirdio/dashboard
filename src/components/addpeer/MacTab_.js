@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 import {getConfig} from "../../config";
 const {grpcApiOrigin} = getConfig();
 
-const MacTab = ({setupKey}) => {
+const MacTab_ = ({setupKey}) => {
 
     const steps = [
         {
@@ -105,10 +105,10 @@ const MacTab = ({setupKey}) => {
     )
 }
 
-export default MacTab;
+export default MacTab_;
 
-MacTab.propTypes = {
+MacTab_.propTypes = {
     setupKey: PropTypes.object,
 };
 
-MacTab.defaultProps = {};
+MacTab_.defaultProps = {};

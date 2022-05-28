@@ -8,7 +8,6 @@ import {
     Input,
     Space,
     Radio,
-    RadioChangeEvent,
     Button, Drawer, Form, List, Divider
 } from "antd";
 import {RootState} from "typesafe-actions";
@@ -24,13 +23,13 @@ const SetupKeyNew = () => {
     const setupKey =  useSelector((state: RootState) => state.setupKey.setupKey)
 
     const [formSetupKey, setFormSetupKey] = useState({} as SetupKey)
+    const [form] = Form.useForm()
 
     useEffect(() => {
         setFormSetupKey({ ...setupKey } as SetupKey)
         form.setFieldsValue(setupKey)
     }, [setupKey])
 
-    const [form] = Form.useForm()
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {

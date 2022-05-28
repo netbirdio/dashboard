@@ -41,7 +41,7 @@ export const SetupKeys = () => {
 
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
     const failed = useSelector((state: RootState) => state.setupKey.failed);
-    const deleteSetupKey = useSelector((state: RootState) => state.setupKey.deletedSetupKey);
+    const deletedSetupKey = useSelector((state: RootState) => state.setupKey.deletedSetupKey);
     const revokedSetupKey = useSelector((state: RootState) => state.setupKey.revokedSetupKey);
     const createdSetupKey = useSelector((state: RootState) => state.setupKey.createdSetupKey);
 
@@ -80,7 +80,6 @@ export const SetupKeys = () => {
     }, [])
 
     useEffect(() => {
-        console.log(setupKeys)
         setDataTable(transformDataTable(filterDataTable()))
     }, [setupKeys])
 
@@ -91,14 +90,16 @@ export const SetupKeys = () => {
     const deleteKey = 'deleting';
     useEffect(() => {
         const style = { marginTop: 85 }
-        if (deleteSetupKey.loading) {
+        if (deletedSetupKey.loading) {
             message.loading({ content: 'Deleting...', key: deleteKey, style });
-        } else if (deleteSetupKey.success) {
+        } else if (deletedSetupKey.success) {
             message.success({ content: 'SetupKey deleted with success!', key: deleteKey, duration: 2, style });
-        } else if (deleteSetupKey.error) {
+            dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, success: false }));
+        } else if (deletedSetupKey.error) {
             message.error({ content: 'Error! Something wrong to delete setupKey.', key: deleteKey, duration: 2, style  });
+            dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, error: null }));
         }
-    }, [deleteSetupKey])
+    }, [deletedSetupKey])
 
     const revokeKey = 'creating';
     useEffect(() => {
@@ -107,8 +108,10 @@ export const SetupKeys = () => {
             message.loading({ content: 'Creating...', key: revokeKey, duration: 0, style });
         } else if (revokedSetupKey.success) {
             message.success({ content: 'Key was revoked with success!', key: revokeKey, duration: 2, style });
+            dispatch(setupKeyActions.setRevokeSetupKey({ ...revokedSetupKey, success: false }));
         } else if (revokedSetupKey.error) {
             message.error({ content: 'Error! Something wrong to revoke key.', key: revokeKey, duration: 2, style  });
+            dispatch(setupKeyActions.setRevokeSetupKey({ ...revokedSetupKey, error: null }));
         }
     }, [revokedSetupKey])
 
@@ -120,8 +123,10 @@ export const SetupKeys = () => {
         } else if (createdSetupKey.success) {
             message.success({ content: 'Key created with success!', key: createKey, duration: 2, style });
             dispatch(setupKeyActions.setSetupNewKeyVisible(false));
+            dispatch(setupKeyActions.setCreateSetupKey({ ...createdSetupKey, success: false }));
         } else if (createdSetupKey.error) {
             message.error({ content: 'Error! Something wrong to create key.', key: createKey, duration: 2, style  });
+            dispatch(setupKeyActions.setCreateSetupKey({ ...createdSetupKey, error: null }));
         }
     }, [createdSetupKey])
 
@@ -268,6 +273,11 @@ export const SetupKeys = () => {
                                     <Column title="Type" dataIndex="Type"
                                             onFilter={(value: string | number | boolean, record) => (record as any).Type.includes(value)}
                                             sorter={(a, b) => ((a as any).Type.localeCompare((b as any).Type))}
+                                    />
+
+                                    <Column title="Key" dataIndex="Key"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).Key.includes(value)}
+                                            sorter={(a, b) => ((a as any).Key.localeCompare((b as any).Key))}
                                     />
 
                                     <Column title="Last Used" dataIndex="LastUsed"

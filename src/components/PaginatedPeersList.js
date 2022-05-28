@@ -3,7 +3,7 @@ import {ChevronLeftIcon, ChevronRightIcon} from "@heroicons/react/solid";
 import {withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
 import PropTypes from "prop-types";
-import LinuxTab from "./addpeer/LinuxTab";
+import LinuxTab_ from "./addpeer/LinuxTab";
 
 // @data the data that will be paginated
 // @RenderComponent the component that needs to be rendered

@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 import {getConfig} from "../../config";
 const {grpcApiOrigin} = getConfig();
 
-const LinuxTab = ({setupKey}) => {
+const LinuxTab_ = ({setupKey}) => {
 
     const steps = [
         {
@@ -101,10 +101,10 @@ const LinuxTab = ({setupKey}) => {
     )
 }
 
-export default LinuxTab;
+export default LinuxTab_;
 
-LinuxTab.propTypes = {
+LinuxTab_.propTypes = {
     setupKey: PropTypes.object,
 };
 
-LinuxTab.defaultProps = {};
+LinuxTab_.defaultProps = {};

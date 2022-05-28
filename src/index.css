@@ -87,3 +87,33 @@ body {
   width: 104px;
   align-self: center;
 }
+
+.ant-steps-item-tail::after {
+  background-color: #1890ff !important;
+}
+
+.ant-steps-item-icon {
+  background: #1890ff !important;
+  color: #ffffff !important;
+  border: none;
+}
+
+.ant-steps-icon {
+  color: #ffffff !important;
+}
+
+.nb-code {
+  margin-bottom: 1em;
+}
+
+.nb-code pre {
+  margin-bottom: 0;
+}
+
+.nb-code code {
+  border-radius: .25em;
+}
+
+.ant-steps-item-title {
+  color: rgba(0, 0, 0, .85) !important;
+}

@@ -6,7 +6,7 @@ import PropTypes from "prop-types";
 import {getConfig} from "../../config";
 const {grpcApiOrigin} = getConfig();
 
-const WindowsTab = ({setupKey}) => {
+const WindowsTab_ = ({setupKey}) => {
 
     const steps = [
         {
@@ -115,10 +115,10 @@ const WindowsTab = ({setupKey}) => {
     )
 }
 
-export default WindowsTab;
+export default WindowsTab_;
 
-WindowsTab.propTypes = {
+WindowsTab_.propTypes = {
     setupKey: PropTypes.object,
 };
 
-WindowsTab.defaultProps = {};
+WindowsTab_.defaultProps = {};

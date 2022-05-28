@@ -1,8 +1,8 @@
-import LinuxTab from "./LinuxTab";
+import LinuxTab_ from "./LinuxTab";
 import {useState} from "react";
 import {classNames} from "../../utils/common";
-import WindowsTab from "./WindowsTab";
-import MacTab from "./MacTab";
+import WindowsTab_ from "./WindowsTab";
+import MacTab_ from "./MacTab";
 
 const tabs = [
     {name: 'Linux', idx: 1},
@@ -43,13 +43,13 @@ const AddPeerTabSelector = ({setupKey}) => {
             <div className="w-full mx-auto sm:px-6 lg:px-8">
                 <div className="px-4 py-8 sm:px-0">
                     <div className={openTab === 1 ? "block" : "hidden"} id="linux-installation-steps">
-                        <LinuxTab setupKey={setupKey}/>
+                        <LinuxTab_ setupKey={setupKey}/>
                     </div>
                     <div className={openTab === 2 ? "block" : "hidden"} id="windows-installation-steps">
                         {/*<WindowsTab setupKey={setupKey}/>*/}
                     </div>
                     <div className={openTab === 3 ? "block" : "hidden"} id="macos-installation-steps">
-                        <MacTab setupKey={setupKey}/>
+                        <MacTab_ setupKey={setupKey}/>
                     </div>
                 </div>
             </div>

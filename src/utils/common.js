@@ -84,3 +84,7 @@ export const timeAgo = (dateParam) => {
 
     return getFormattedDate(date); // 10. January 2017. at 10:20
 }
+
+export const copyToClipboard = (copyText) => {
+    navigator.clipboard.writeText(copyText);
+}
