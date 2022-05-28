@@ -132,12 +132,13 @@ export const SetupKeys = () => {
 
     const filterDataTable = ():SetupKey[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f:SetupKey[] = filter(setupKeys, (f:SetupKey) =>
-            (f.Name.toLowerCase().includes(t) || f.State.includes(t) || f.Type.includes(t) || f.Key.includes(t) || t === "")
-        ) as SetupKey[]
+        let f:SetupKey[] = [...setupKeys]
         if (optionValidAll === "valid") {
-            f = filter(setupKeys, (f:SetupKey) => f.Valid && !f.Revoked)
+            f = filter(setupKeys, (_f:SetupKey) => _f.Valid && !_f.Revoked)
         }
+        f = filter(f, (_f:SetupKey) =>
+            (_f.Name.toLowerCase().includes(t) || _f.State.includes(t) || _f.Type.includes(t) || _f.Key.includes(t) || t === "")
+        ) as SetupKey[]
         return f
     }
 

@@ -1,11 +1,10 @@
-import { XIcon } from "@heroicons/react/outline";
 import { useState } from "react";
 import {Button, Col, Row, Space, Typography} from "antd";
 import { CloseOutlined } from '@ant-design/icons';
 
-const { Title, Text, Paragraph } = Typography
+const { Text } = Typography
 
-export default function Banner() {
+const Banner = () => {
 	const [show, setShow] = useState(true);
 
 	const dismiss = () => {
@@ -27,7 +26,7 @@ export default function Banner() {
 		<div className="relative bg-indigo-600 white" color="white" style={{position: "relative", padding: "0.3rem"}} >
 			<Row>
 				<Col xs={24} sm={0} lg={0}>
-					<Text level={5} className="ant-col-md-0" style={{color: "#ffffff"}}>
+					<Text className="ant-col-md-0" style={{color: "#ffffff"}}>
 						Big news! Wiretrustee becomes <strong>netbird</strong>!
 					</Text>
 				</Col>
@@ -36,8 +35,8 @@ export default function Banner() {
 				</Col>
 			</Row>
 			<Row>
-				<Col xs={0} sm={24} align="center">
-					<Space>
+				<Col xs={0} sm={24}>
+					<Space align="center" style={{display: "flex", justifyContent: "center"}}>
 						<Text style={{color: "#ffffff"}}>
 							Big news! Wiretrustee becomes <strong>netbird</strong>!
 						</Text>
@@ -51,3 +50,5 @@ export default function Banner() {
 		</div>
 	) : null;
 }
+
+export default Banner

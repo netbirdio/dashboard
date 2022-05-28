@@ -58,11 +58,11 @@ const TabSteps:React.FC<Props> = ({stepsItems}) => {
                             { c.showCopyButton &&
                                 <>
                                 { !c.copied ? (
-                                <Button type="text" className="btn-copy-code" icon={<CopyOutlined/>}
-                                        style={{color: "rgb(107, 114, 128)"}}
-                                        onClick={() => onCopyClick(c.key, c.commands, true)}/>
+                                    <Button type="text" size="large" className="btn-copy-code" icon={<CopyOutlined/>}
+                                            style={{color: "rgb(107, 114, 128)"}}
+                                            onClick={() => onCopyClick(c.key, c.commands, true)}/>
                                 ): (
-                                    <Button type="text" className="btn-copy-code" icon={<CheckOutlined/>}
+                                    <Button type="text" size="large" className="btn-copy-code" icon={<CheckOutlined/>}
                                             style={{color: "green"}}/>
                                 )}
                                 </>

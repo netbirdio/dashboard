@@ -18,7 +18,7 @@ export const Activity = () => {
                     <Title level={4}>Activity</Title>
                     <Title level={5}>Monitor system activity.</Title>
                     <Paragraph>
-                        Here you will be able to see activity of peers. E.g. events like Peer A has connected to Peer B
+                        Here you will be able to see activity of peers. E.g. events like Peer A has connected to Peer B.
                     </Paragraph>
                     <Paragraph>
                         Stay tuned.
