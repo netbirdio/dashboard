@@ -4,7 +4,7 @@ import {StepCommand} from "./addpeer/types";
 import React from "react";
 
 type Props = {
-    key: any;
+    keyMessage: string;
     text: string;
     messageText: string;
     styleNotification?: any;
@@ -12,13 +12,13 @@ type Props = {
     className?:any;
 };
 
-const ButtonCopyMessage:React.FC<Props> = ({ key, text, messageText, styleNotification, style, className}) => {
-    const copyTextNotification = () => {
+const ButtonCopyMessage:React.FC<Props> = ({ keyMessage, text, messageText, styleNotification, style, className}) => {
+    const copyTextMessage = () => {
         copyToClipboard(text)
-        message.success({ content: `${messageText}`, key: key, duration: 1, style: (styleNotification || {}) });
+        message.success({ content: `${messageText}`, key: keyMessage, duration: 1, style: (styleNotification || {}) });
     }
     return (
-        <Button type="text" onClick={copyTextNotification} style={style || {}} className={className}>{text}</Button>
+        <Button type="text" onClick={copyTextMessage} style={style || {}} className={className}>{text}</Button>
     )
 }
 

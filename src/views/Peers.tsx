@@ -204,7 +204,7 @@ export const Peers = () => {
                                             return a_s.localeCompare(b_s)
                                         }}
                                         render={(text, record, index) => {
-                                            return <ButtonCopyMessage key={(record as PeerDataTable).key} text={text} messageText={`IP copied!`} styleNotification={{}}/>
+                                            return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key} text={text} messageText={'IP copied!'} styleNotification={{}}/>
                                         }}
                                 />
                                 <Column title="Status" dataIndex="Connected"
