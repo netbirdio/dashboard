@@ -18,6 +18,10 @@ export const callApi = async (method, headers, body, getAccessTokenSilently, end
     return await response.json();
 };
 
+export const getUsers = async (getAccessTokenSilently) => {
+    return callApi("GET", {}, null, getAccessTokenSilently, "/api/users")
+}
+
 export const getSetupKeys = async (getAccessTokenSilently) => {
     return callApi("GET", {}, null, getAccessTokenSilently, "/api/setup-keys")
 }

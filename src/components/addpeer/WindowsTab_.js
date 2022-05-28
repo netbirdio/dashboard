@@ -4,6 +4,7 @@ import CopyButton from "../CopyButton";
 import {classNames} from "../../utils/common";
 import PropTypes from "prop-types";
 import {getConfig} from "../../config";
+
 const {grpcApiOrigin} = getConfig();
 
 const WindowsTab_ = ({setupKey}) => {
@@ -11,17 +12,20 @@ const WindowsTab_ = ({setupKey}) => {
     const steps = [
         {
             id: 1,
-            target: 'Download latest Windows installer (Assets -> wiretrustee_installer_VERSION_windows_amd64.exe):',
+            target: 'Download and run Windows installer:',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
-            content: <button className="underline text-indigo-500" onClick={()=> window.open("https://github.com/wiretrustee/wiretrustee/releases", "_blank")}>Netbird GitHub Releases</button>,
+            content: <button type="button"
+                             onClick={() => window.open("https://github.com/netbirdio/netbird/releases/latest/download/netbird_installer_0.6.0_windows_amd64.exe")}
+                             className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-500 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto">
+                Download Netbird
+            </button>,
             commands: [],
             copy: false
         },
-
         {
             id: 2,
-            target: 'Windows Defender or other antivirus might complain about the installer. This is due to the unsigned exe file. In such a case please whitelist the file.',
+            target: 'Click on "Connect" from the Netbird icon in your system tray.',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
             content: "",
@@ -30,30 +34,12 @@ const WindowsTab_ = ({setupKey}) => {
         },
         {
             id: 3,
-            target: 'In PowerShell, Login Netbird:',
+            target: 'Log in your browser.',
             icon: ArrowCircleRightIcon,
             iconBackground: 'bg-gray-600',
-            content: null,
-            copy: true,
-            commands: grpcApiOrigin === '' ? ["wiretrustee.exe login --setup-key <PASTE-SETUP-KEY>"] : ["wiretrustee.exe login --setup-key <PASTE-SETUP-KEY> --management-url " + grpcApiOrigin]
-        },
-        {
-            id: 4,
-            target: 'In PowerShell, Start Netbird Service:',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            content: null,
-            copy: true,
-            commands: ["wiretrustee.exe up"]
-        },
-        {
-            id: 5,
-            target: 'Get your IP address:',
-            icon: ArrowCircleRightIcon,
-            iconBackground: 'bg-gray-600',
-            content: null,
-            copy: true,
-            commands: ["netsh interface ip show config name=\"wt0\""]
+            content: "",
+            copy: false,
+            commands: []
         },
     ]
 
