@@ -59,8 +59,7 @@ export const AccessControl = () => {
     }
 
     useEffect(() => {
-        console.log('test')
-        dispatch(ruleActions.getRules.request({getAccessTokenSilently, payload: null}));
+        //dispatch(ruleActions.getRules.request({getAccessTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
