@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Link, NavLink} from 'react-router-dom';
+import {Link} from 'react-router-dom';
 import {useDispatch, useSelector} from "react-redux";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import { RootState } from "typesafe-actions";
@@ -239,5 +239,3 @@ export default withAuthenticationRequired(Peers,
        onRedirecting: () => <Loading/>,
    }
 );
-
-//ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,sans-serif,Apple Color Emoji,Segoe UI Emoji,Segoe UI Symbol,Noto Color Emoji
