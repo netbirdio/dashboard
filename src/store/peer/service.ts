@@ -14,19 +14,5 @@ export default {
         `/api/peers/` + payload.payload,
         payload
     );
-  },
-  /*
-  async addQuantidade(payload: MovimentoEstoque): Promise<ApiResponse<MovimentoEstoqueResponse>> {
-    return apiClient.put<MovimentoEstoqueResponse>(
-      `/unidade_produto/app/adicionar`,
-      payload
-    );
-  },
-  async updateCodigoBarrasProduto(payload: CodBarrasRequest): Promise<ApiResponse<CodBarrasResponse>> {
-    return apiClient.put<CodBarrasResponse>(
-      `/produto/app/atualiza_cod_barras`,
-      payload
-    );
   }
- */
 };

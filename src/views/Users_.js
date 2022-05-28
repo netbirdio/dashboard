@@ -6,7 +6,7 @@ import { ChevronLeftIcon, ChevronRightIcon } from "@heroicons/react/solid";
 import EmptyPeersPanel from "../components/EmptyPeers";
 import Loading from "../components/Loading";
 
-export const Users = () => {
+export const Users_ = () => {
 	const [users, setUsers] = useState([]);
 	const [usersBackup, setUsersBackup] = useState([]);
 	const [empty, setEmpty] = useState(true);
@@ -462,6 +462,6 @@ export const Users = () => {
 		</div>
 	);
 };
-export default withAuthenticationRequired(Users, {
+export default withAuthenticationRequired(Users_, {
 	onRedirecting: () => <Loading />,
 });

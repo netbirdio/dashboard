@@ -1,15 +1,10 @@
-import React, {Fragment} from 'react';
-import {Link, NavLink} from 'react-router-dom';
+import React from 'react';
+import {Link} from 'react-router-dom';
 import logo from "../assets/logo.png";
-import defaultProfilePic from "../assets/default-profile.png";
-//import {Disclosure, Menu, Transition} from '@headlessui/react'
-//import {MenuIcon, XIcon} from '@heroicons/react/outline'
 import {Layout, Menu, Space, Row, Col, Typography} from 'antd'
 import {useAuth0} from "@auth0/auth0-react";
 import {useLocation} from 'react-router-dom';
 
-const { Content } = Layout
-const { Title } = Typography
 const Navbar = () => {
     let location = useLocation();
 
@@ -18,7 +13,8 @@ const Navbar = () => {
         { label: (<Link  to="/add-peer">Add Peer</Link>), key: '/add-peer' },
         { label: (<Link  to="/setup-keys">Setup Keys</Link>), key: '/setup-keys' },
         { label: (<Link  to="/acls">Access Control</Link>), key: '/acls' },
-        { label: (<Link  to="/activity">Activity</Link>), key: '/activity' }
+        { label: (<Link  to="/activity">Activity</Link>), key: '/activity' },
+        { label: (<Link  to="/users">Users</Link>), key: '/users' }
     ]
 
     const {
