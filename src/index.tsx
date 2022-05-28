@@ -44,13 +44,9 @@ const root = ReactDOM.createRoot(
 
 root.render(
     <BrowserRouter>
-        <React.StrictMode>
-            <Auth0Provider {...providerConfig}>
-                <React.StrictMode>
-                    <App/>
-                </React.StrictMode>
-            </Auth0Provider>
-        </React.StrictMode>
+        <Auth0Provider {...providerConfig}>
+            <App/>
+        </Auth0Provider>
     </BrowserRouter>
 );
 
