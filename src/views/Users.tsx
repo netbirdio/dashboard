@@ -58,7 +58,7 @@ export const Activity = () => {
     const filterDataTable = ():User[] => {
         const t = textToSearch.toLowerCase().trim()
         let f:User[] = filter(users, (f:User) =>
-            (f.email.toLowerCase().includes(t) || f.name.includes(t) || f.role.includes(t) || t === "")
+            ((f.email || f.id).toLowerCase().includes(t) || f.name.includes(t) || f.role.includes(t) || t === "")
         ) as User[]
         return f
     }
@@ -98,13 +98,18 @@ export const Activity = () => {
                         }
                         <Card bodyStyle={{padding: 0}}>
                             <Table
-                                pagination={{pageSize, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)}}
+                                pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)}}
                                 className="card-table"
+                                showSorterTooltip={false}
                                 scroll={{x: true}}
                                 dataSource={dataTable}>
                                 <Column title="Email" dataIndex="email"
                                         onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
-                                        sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))} />
+                                        sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
+                                        render={(text:string | null, record, index) => {
+                                            return (text && text.trim() !== "") ? text : (record as User).id
+                                        }}
+                                />
                                 <Column title="Name" dataIndex="name"
                                         onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                         sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))} />

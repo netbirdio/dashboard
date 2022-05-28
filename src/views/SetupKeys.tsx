@@ -254,9 +254,9 @@ export const SetupKeys = () => {
                             }
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
-                                    pagination={{pageSize, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} setupKeys`)}}
+                                    pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} setup keys`)}}
                                     className="card-table"
-                                    // footer={() => 'Footer'}
+                                    showSorterTooltip={false}
                                     scroll={{x: true}}
                                     dataSource={dataTable}>
                                     <Column title="Name" dataIndex="Name"

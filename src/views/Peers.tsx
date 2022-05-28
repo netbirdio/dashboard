@@ -185,9 +185,9 @@ export const Peers = () => {
                         }
                         <Card bodyStyle={{padding: 0}}>
                             <Table
-                                pagination={{pageSize, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} peers`)}}
+                                pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} peers`)}}
                                 className="card-table"
-                                // footer={() => 'Footer'}
+                                showSorterTooltip={false}
                                 scroll={{x: true}}
                                 dataSource={dataTable}>
                                 <Column title="Name" dataIndex="Name" key="Name"
