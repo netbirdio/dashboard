@@ -315,7 +315,6 @@ export const AccessControl = () => {
                                 <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
                             }
                             {loading && <Loading/>}
-                            {showTutorial.toString()}
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
                                     pagination={{

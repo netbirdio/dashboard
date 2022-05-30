@@ -265,14 +265,13 @@ const AccessControlNew = () => {
                                         <FlagFilled/>
                                     </Col>
                                     <Col flex="auto">
-                                        <a href="https://docs.netbird.io/overview/access-control" target="_blank">
-                                            <Paragraph>
-                                                At the moment access rules are bi-directional by default, this means both source and destination can talk to each-other in both directions. However destination peers will not be able to communicate with each other, nor will the source peers.
-                                            </Paragraph>
-                                            <Paragraph>
-                                                If you want to enable all peers of the same group to talk to each other - you can add that group both as a receiver and as a destination.
-                                            </Paragraph>
-                                        </a>
+                                        <Paragraph>
+                                            At the moment access rules are bi-directional by default, this means both source and destination can talk to each-other in both directions. However destination peers will not be able to communicate with each other, nor will the source peers.
+                                        </Paragraph>
+                                        <Paragraph>
+                                            If you want to enable all peers of the same group to talk to each other - you can add that group both as a receiver and as a destination.
+                                        </Paragraph>
+                                        <a style={{color: 'rgb(07, 114, 128)'}} href="https://docs.netbird.io/overview/access-control" target="_blank">Learn more about access control...</a>
                                     </Col>
                                 </Row>
                             </Col>
