@@ -126,6 +126,7 @@ const AccessControlNew = () => {
             event.preventDefault();
             event.stopPropagation();
         };
+
         return (
             <Tag
                 color="blue"
@@ -134,10 +135,27 @@ const AccessControlNew = () => {
                 onClose={onClose}
                 style={{ marginRight: 3 }}
             >
-                <strong>{label}</strong>
+                <strong>{value}</strong>
             </Tag>
         );
-    };
+    }
+
+    const optionRender = (label: string) => {
+        let peersCount = 'teste'
+        const g = groups.find(_g => _g.Name === label)
+        if (g)  peersCount = ` - ${g.PeersCount || 0} ${(g.PeersCount && parseInt(g.PeersCount) > 1) ? 'peers' : 'peer'} `
+        return (
+            <>
+                <Tag
+                    color="blue"
+                    style={{ marginRight: 3 }}
+                >
+                    <strong>{label}</strong>
+                </Tag>
+                <span style={{fontSize: ".85em"}}>{peersCount}</span>
+            </>
+        )
+    }
 
     const toggleEditName = (status:boolean) => setEditName(status);
 
@@ -210,7 +228,7 @@ const AccessControlNew = () => {
                                     <Select mode="tags"  style={{ width: '100%' }} placeholder="Tags Mode" tagRender={tagRender} onChange={handleChangeSource}>
                                         {
                                             tagGroups.map(m =>
-                                                <Option key={m}>{m}</Option>
+                                                <Option key={m}>{optionRender(m)}</Option>
                                             )
                                         }
                                     </Select>
@@ -226,7 +244,7 @@ const AccessControlNew = () => {
                                     <Select mode="tags" style={{ width: '100%' }} placeholder="Tags Mode" tagRender={tagRender}  onChange={handleChangeDestination}>
                                         {
                                             tagGroups.map(m =>
-                                                <Option key={m}>{m}</Option>
+                                                <Option key={m}>{optionRender(m)}</Option>
                                             )
                                         }
                                     </Select>
