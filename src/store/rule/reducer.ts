@@ -2,7 +2,7 @@ import { createReducer } from 'typesafe-actions';
 import { combineReducers } from 'redux';
 import { Rule } from './types';
 import actions, { ActionTypes } from './actions';
-import {ApiError, DeleteResponse} from "../../services/api-client/types";
+import {ApiError, DeleteResponse, CreateResponse, ChangeResponse} from "../../services/api-client/types";
 
 type StateType = Readonly<{
   data: Rule[] | null;
@@ -10,7 +10,9 @@ type StateType = Readonly<{
   loading: boolean;
   failed: ApiError | null;
   saving: boolean;
-  deletedRule: DeleteResponse<string | null>;
+  deleteRule: DeleteResponse<string | null>;
+  savedRule: CreateResponse<Rule | null>;
+  setupNewRuleVisible: boolean
 }>;
 
 const initialState: StateType = {
@@ -19,18 +21,26 @@ const initialState: StateType = {
   loading: false,
   failed: null,
   saving: false,
-  deletedRule: <DeleteResponse<string | null>>{
+  deleteRule: <DeleteResponse<string | null>>{
     loading: false,
     success: false,
     failure: false,
     error: null,
     data : null
-  }
+  },
+  savedRule: <CreateResponse<Rule | null>>{
+    loading: false,
+    success: false,
+    failure: false,
+    error: null,
+    data : null
+  },
+  setupNewRuleVisible: false
 };
 
 const data = createReducer<Rule[], ActionTypes>(initialState.data as Rule[])
-  .handleAction(actions.getRules.success,(_, action) => action.payload)
-  .handleAction(actions.getRules.failure, () => []);
+    .handleAction(actions.getRules.success,(_, action) => action.payload)
+    .handleAction(actions.getRules.failure, () => []);
 
 const rule = createReducer<Rule, ActionTypes>(initialState.rule as Rule)
     .handleAction(actions.setRule, (store, action) => action.payload);
@@ -50,11 +60,20 @@ const saving = createReducer<boolean, ActionTypes>(initialState.saving)
     .handleAction(actions.getRules.success, () => false)
     .handleAction(actions.getRules.failure, () => false);
 
-const deletedRule = createReducer<DeleteResponse<string | null>, ActionTypes>(initialState.deletedRule)
-    .handleAction(actions.deletedRule.request, () => initialState.deletedRule)
-    .handleAction(actions.deletedRule.success, (store, action) => action.payload)
-    .handleAction(actions.deletedRule.failure, (store, action) => action.payload)
-    .handleAction(actions.setDeleteRule, (store, action) => action.payload)
+const deletedRule = createReducer<DeleteResponse<string | null>, ActionTypes>(initialState.deleteRule)
+    .handleAction(actions.deleteRule.request, () => initialState.deleteRule)
+    .handleAction(actions.deleteRule.success, (store, action) => action.payload)
+    .handleAction(actions.deleteRule.failure, (store, action) => action.payload)
+    .handleAction(actions.setDeletedRule, (store, action) => action.payload);
+
+const savedRule = createReducer<CreateResponse<Rule | null>, ActionTypes>(initialState.savedRule)
+    .handleAction(actions.saveRule.request, () => initialState.savedRule)
+    .handleAction(actions.saveRule.success, (store, action) => action.payload)
+    .handleAction(actions.saveRule.failure, (store, action) => action.payload)
+    .handleAction(actions.setSavedRule, (store, action) => action.payload)
+
+const setupNewRuleVisible = createReducer<boolean, ActionTypes>(initialState.setupNewRuleVisible)
+    .handleAction(actions.setSetupNewRuleVisible, (store, action) => action.payload)
 
 export default combineReducers({
   data,
@@ -62,5 +81,7 @@ export default combineReducers({
   loading,
   failed,
   saving,
-  deletedRule
+  deletedRule,
+  savedRule,
+  setupNewRuleVisible
 });

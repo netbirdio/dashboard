@@ -21,6 +21,7 @@ const SetupKeyNew = () => {
     const dispatch = useDispatch()
     const setupNewKeyVisible = useSelector((state: RootState) => state.setupKey.setupNewKeyVisible)
     const setupKey =  useSelector((state: RootState) => state.setupKey.setupKey)
+    const createdSetupKey = useSelector((state: RootState) => state.setupKey.createdSetupKey)
 
     const [formSetupKey, setFormSetupKey] = useState({} as SetupKey)
     const [form] = Form.useForm()
@@ -45,6 +46,7 @@ const SetupKeyNew = () => {
     }
 
     const onCancel = () => {
+        if (createdSetupKey.loading) return
         dispatch(setupKeyActions.setSetupKey({
             Name: '',
             Type: 'reusable'
@@ -63,14 +65,14 @@ const SetupKeyNew = () => {
         <Drawer
             title="New setup key"
             forceRender={true}
-            width={512}
+            // width={512}
             visible={setupNewKeyVisible}
             bodyStyle={{paddingBottom: 80}}
             onClose={onCancel}
             footer={
                 <Space style={{display: 'flex', justifyContent: 'end'}}>
-                    <Button onClick={onCancel}>Cancel</Button>
-                    <Button type="primary" onClick={handleFormSubmit}>Create</Button>
+                    <Button disabled={createdSetupKey.loading} onClick={onCancel}>Cancel</Button>
+                    <Button disabled={createdSetupKey.loading} type="primary" onClick={handleFormSubmit}>Create</Button>
                 </Space>
             }
         >
@@ -124,7 +126,7 @@ const SetupKeyNew = () => {
                     <Col span={24}>
                         <Divider></Divider>
                         <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                href="https://docs.netbird.io/overview/setup-keys" style={{color: 'rgb(07, 114, 128)'}}>Learn
+                                href="https://docs.netbird.io/docs/overview/setup-keys" style={{color: 'rgb(07, 114, 128)'}}>Learn
                             more about setup keys</Button>
                     </Col>
                 </Row>

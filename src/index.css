@@ -67,6 +67,10 @@ body {
   background-color: rgb(79, 70, 229);
 }
 
+.card-table-no-placeholder .ant-table-placeholder{
+  display: none;
+}
+
 .card-table .ant-pagination {
   padding: 0 16px;
 }

@@ -6,6 +6,7 @@ import { sagas as peerSagas } from './peer';
 import { sagas as setupKeySagas } from './setup-key';
 import { sagas as userSagas } from './user';
 import { sagas as ruleSagas } from './rule';
+import { sagas as groupSagas } from './group';
 
 import rootReducer from './root-reducer';
 import { apiClient } from '../services/api-client';
@@ -21,5 +22,6 @@ sagaMiddleware.run(peerSagas);
 sagaMiddleware.run(setupKeySagas);
 sagaMiddleware.run(userSagas);
 sagaMiddleware.run(ruleSagas);
+sagaMiddleware.run(groupSagas);
 
 export { apiClient, rootReducer, store };

@@ -1,19 +1,15 @@
-export interface SourceRule {
-  ID: string;
-  Name: string;
-  PeersCount: string;
-}
-
-export interface DestinationRule {
-    ID: string;
-    Name: string;
-    PeersCount: string;
-}
+import {Group} from "../group/types";
 
 export interface Rule {
-  ID: string
+  ID?: string
   Name: string
-  Source: SourceRule[]
-  Destination: DestinationRule[]
+  Source: Group[] | string[] | null
+  Destination: Group[] | string[] | null
   Flow: string
+}
+
+export interface RuleToSave extends Rule {
+    sourcesNoId: string[],
+    destinationsNoId: string[],
+    groupsToSave: string[]
 }

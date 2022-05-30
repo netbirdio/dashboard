@@ -1,0 +1,42 @@
+import React, {useEffect, useState} from 'react';
+import {useDispatch, useSelector} from "react-redux";
+import {RootState} from "typesafe-actions";
+import { actions as ruleActions } from '../store/rule';
+import {string} from "prop-types";
+import {Avatar, List, Modal} from "antd";
+import {Group} from "../store/group/types";
+
+type Props = {
+    data?: Group[] | string[] | null;
+    title?: string;
+    visible: boolean;
+    onCancel: () => void;
+}
+
+const AccessControlModalGroups:React.FC<Props> = ({data, title, visible, onCancel}) => {
+    const [isModalVisible, setIsModalVisible] = useState(false);
+
+    useEffect(() => setIsModalVisible(visible), [visible])
+
+    return (
+        <>
+            <Modal title={title} visible={isModalVisible} onCancel={() => onCancel()} footer={null}>
+                <List
+                    itemLayout="horizontal"
+                    dataSource={data as Group[] | undefined}
+                    renderItem={(item:Group) => (
+                        <List.Item>
+                            <List.Item.Meta
+                                avatar={<Avatar>{item.Name.slice(0,1).toUpperCase()}</Avatar>}
+                                title={item.Name}
+                                description={`${item.PeersCount} peers`}
+                            />
+                        </List.Item>
+                    )}
+                />
+            </Modal>
+        </>
+    );
+}
+
+export default AccessControlModalGroups;
