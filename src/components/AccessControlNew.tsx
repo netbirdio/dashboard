@@ -3,6 +3,8 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import { actions as ruleActions } from '../store/rule';
 import { actions as groupsActions } from '../store/group';
+import inbound from '../assets/direct_in.svg';
+import outbound from '../assets/direct_out.svg';
 import {
     Col,
     Row,
@@ -12,11 +14,12 @@ import {
     Radio,
     Button, Drawer, Form, List, Divider, Select, Tag
 } from "antd";
-import {FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
+import {ArrowRightOutlined, CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
 import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
 import {Rule, RuleToSave} from "../store/rule/types";
 import {useAuth0} from "@auth0/auth0-react";
 import { uniq } from "lodash"
+import {Header} from "antd/es/layout/layout";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -34,6 +37,7 @@ const AccessControlNew = () => {
     const rule =  useSelector((state: RootState) => state.rule.rule)
     const savedRule = useSelector((state: RootState) => state.rule.savedRule)
 
+    const [editName, setEditName] = useState(false)
     const [tagGroups, setTagGroups] = useState([] as string[])
     const [formRule, setFormRule] = useState({} as FormRule)
     const [form] = Form.useForm()
@@ -88,6 +92,7 @@ const AccessControlNew = () => {
 
     const onCancel = () => {
         if (savedRule.loading) return
+        setEditName(false)
         dispatch(ruleActions.setRule({
             Name: '',
             Source: [],
@@ -134,6 +139,8 @@ const AccessControlNew = () => {
         );
     };
 
+    const toggleEditName = (status:boolean) => setEditName(status);
+
     // const testDeleteGroup = () => {
     //     groups.forEach(g => {
     //         dispatch(groupsActions.deleteGroup.request({getAccessTokenSilently, payload: g.ID || ''}))
@@ -144,7 +151,8 @@ const AccessControlNew = () => {
         <>
             {rule &&
                 <Drawer
-                    title={`${formRule.ID ? 'Edit Rule' : 'New Rule'}`}
+                    //title={`${formRule.ID ? 'Edit Rule' : 'New Rule'}`}
+                    headerStyle={{display: "none"}}
                     forceRender={true}
                     // width={512}
                     visible={setupNewRuleVisible}
@@ -160,18 +168,42 @@ const AccessControlNew = () => {
                     <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}>
                         <Row gutter={16}>
                             <Col span={24}>
-                                <Form.Item
-                                    name="Name"
-                                    label="Name"
-                                    rules={[{required: true, message: 'Please enter key name'}]}
-                                >
-                                    <Input placeholder="Please enter key name" autoComplete="off"/>
-                                </Form.Item>
+                                <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
+                                    <Row align="top">
+                                        <Col flex="none" style={{display: "flex"}}>
+                                            {!editName && formRule.ID  &&
+                                                <button type="button" aria-label="Close" className="ant-drawer-close"
+                                                        style={{paddingTop: 3}}
+                                                        onClick={onCancel}>
+                                                    <span role="img" aria-label="close" className="anticon anticon-close">
+                                                        <CloseOutlined size={16}/>
+                                                    </span>
+                                                </button>
+                                            }
+                                        </Col>
+                                        <Col flex="auto">
+                                            { !editName && formRule.ID ? (
+                                                <div className="ant-drawer-title" onClick={() => toggleEditName(true)}>{formRule.ID ? formRule.Name : 'New Rule'}</div>
+                                            ) : (
+                                                <Form.Item
+                                                    name="Name"
+                                                    label={null}
+                                                    rules={[{required: true, message: 'Please add a name for this access rule'}]}
+                                                >
+                                                    <Input placeholder="Add rule name..." onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
+                                                </Form.Item>
+                                            )}
+                                        </Col>
+                                    </Row>
+
+                                </Header>
+                            </Col>
+                            <Col span={24}>
                             </Col>
                             <Col span={24}>
                                 <Form.Item
                                     name="tagSourceGroups"
-                                    label="Source"
+                                    label={<>Source groups&nbsp;<ArrowRightOutlined /></>}
                                     rules={[{required: true, message: 'Please enter ate least one group'}]}
                                     style={{display: 'flex'}}
                                 >
@@ -187,7 +219,7 @@ const AccessControlNew = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="tagDestinationGroups"
-                                    label="Destination"
+                                    label={<><ArrowRightOutlined />&nbsp;Destination groups</>}
                                     rules={[{required: true, message: 'Please enter ate least one group'}]}
                                     style={{display: 'flex'}}
                                 >
