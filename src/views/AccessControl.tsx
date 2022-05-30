@@ -3,7 +3,7 @@ import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import {
     Alert,
     Button, Card,
-    Col, Dropdown, Input, Menu, message, Modal, Radio, RadioChangeEvent,
+    Col, Dropdown, Input, Menu, message, Modal, Popover, Radio, RadioChangeEvent,
     Row, Select, Space, Table, Tag,
     Typography
 } from "antd";
@@ -251,6 +251,29 @@ export const AccessControl = () => {
         })
     }
 
+    const renderPopoverGroups = (label: string, groups:Group[] | string[] | null) => {
+        const content = groups?.map(g => {
+            const _g = g as Group
+            const peersCount = ` - ${_g.PeersCount || 0} ${(_g.PeersCount && parseInt(_g.PeersCount) > 1) ? 'peers' : 'peer'} `
+            return (
+                <div>
+                    <Tag
+                        color="blue"
+                        style={{ marginRight: 3 }}
+                    >
+                        <strong>{_g.Name}</strong>
+                    </Tag>
+                    <span style={{fontSize: ".85em"}}>{peersCount}</span>
+                </div>
+            )
+        })
+        return (
+            <Popover content={<Space direction="vertical">{content}</Space>} title={null}>
+                <Button type="link">{label}</Button>
+            </Popover>
+        )
+    }
+
     return(
         <>
             <Container className="container-main">
@@ -312,7 +335,8 @@ export const AccessControl = () => {
                                             sorter={(a, b) => ((a as any).Name.localeCompare((b as any).Name))} />
                                     <Column title="Sources" dataIndex="sourceLabel"
                                             render={(text, record:RuleDataTable, index) => {
-                                                return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Sources`, record.Source, true)}>{text}</Button>
+                                                //return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Sources`, record.Source, true)}>{text}</Button>
+                                                return renderPopoverGroups(text, record.Source)
                                             }}
                                     />
                                     <Column title="Direction" dataIndex="Flow"
@@ -330,7 +354,8 @@ export const AccessControl = () => {
                                     />
                                     <Column title="Destinations" dataIndex="destinationLabel"
                                             render={(text, record:RuleDataTable, index) => {
-                                                return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Destinations`, record.Destination, true)}>{text}</Button>
+                                                //return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Destinations`, record.Destination, true)}>{text}</Button>
+                                                return renderPopoverGroups(text, record.Destination)
                                             }}
                                     />
                                     <Column title="" align="center"

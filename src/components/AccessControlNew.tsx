@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import { actions as ruleActions } from '../store/rule';
@@ -41,6 +41,13 @@ const AccessControlNew = () => {
     const [tagGroups, setTagGroups] = useState([] as string[])
     const [formRule, setFormRule] = useState({} as FormRule)
     const [form] = Form.useForm()
+    const inputNameRef = useRef<any>(null)
+
+    useEffect(() => {
+        if (editName) inputNameRef.current!.focus({
+            cursor: 'end',
+        });
+    }, [editName]);
 
     useEffect(() => {
         if (!rule) return
@@ -141,7 +148,7 @@ const AccessControlNew = () => {
     }
 
     const optionRender = (label: string) => {
-        let peersCount = 'teste'
+        let peersCount = ''
         const g = groups.find(_g => _g.Name === label)
         if (g)  peersCount = ` - ${g.PeersCount || 0} ${(g.PeersCount && parseInt(g.PeersCount) > 1) ? 'peers' : 'peer'} `
         return (
@@ -157,7 +164,9 @@ const AccessControlNew = () => {
         )
     }
 
-    const toggleEditName = (status:boolean) => setEditName(status);
+    const toggleEditName = (status:boolean) => {
+        setEditName(status);
+    }
 
     // const testDeleteGroup = () => {
     //     groups.forEach(g => {
@@ -201,14 +210,14 @@ const AccessControlNew = () => {
                                         </Col>
                                         <Col flex="auto">
                                             { !editName && formRule.ID ? (
-                                                <div className="ant-drawer-title" onClick={() => toggleEditName(true)}>{formRule.ID ? formRule.Name : 'New Rule'}</div>
+                                                <div className={"access-control ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRule.ID ? formRule.Name : 'New Rule'}</div>
                                             ) : (
                                                 <Form.Item
                                                     name="Name"
                                                     label={null}
                                                     rules={[{required: true, message: 'Please add a name for this access rule'}]}
                                                 >
-                                                    <Input placeholder="Add rule name..." onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
+                                                    <Input placeholder="Add rule name..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
                                                 </Form.Item>
                                             )}
                                         </Col>

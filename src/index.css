@@ -121,3 +121,8 @@ body {
 .ant-steps-item-title {
   color: rgba(0, 0, 0, .85) !important;
 }
+
+.access-control.ant-drawer-title:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
