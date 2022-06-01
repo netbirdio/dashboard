@@ -1,3 +1,15 @@
+export const formatOS = (os) => {
+    if (os.startsWith("windows 10")) {
+        return "Windows 10";
+    }
+
+    if (os.startsWith("Darwin")) {
+        return os.replace("Darwin", "MacOS");
+    }
+
+    return os;
+};
+
 export const formatDate = date => {
     return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: '2-digit', month: 'short', day: 'numeric' });
 }
@@ -71,4 +83,8 @@ export const timeAgo = (dateParam) => {
     }
 
     return getFormattedDate(date); // 10. January 2017. at 10:20
+}
+
+export const copyToClipboard = (copyText) => {
+    navigator.clipboard.writeText(copyText);
 }
