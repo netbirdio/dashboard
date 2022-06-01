@@ -6,7 +6,7 @@ import { StepCommand } from "./types"
 
 export const WindowsTab = () => {
 
-    const releaseVersion = '0.6.1'
+    const releaseVersion = '0.6.2'
     const [steps, setSteps] = useState([
         {
             key: 1,
