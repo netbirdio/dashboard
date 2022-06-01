@@ -1,16 +1,16 @@
-# netbird dashboard
+# NetBird dashboard
 
-### Big News! Wiretrustee becomes `netbird`. [See details](https://blog.netbird.io/wiretrustee-becomes-netbird).
+### Big News! Wiretrustee becomes `NetBird`. [See details](https://blog.netbird.io/wiretrustee-becomes-netbird).
 \
-This project is the UI for netbird's management service. 
+This project is the UI for NetBird's management service. 
 
 **Hosted demo version:** https://app.netbird.io/
 
-See [netbird repo](https://github.com/netbirdio/netbird)
+See [NetBird repo](https://github.com/netbirdio/netbird)
 
 ## Why UI dashboard is needed?
 
-The purpose of this project is simple - make it easy to manage VPN built with [netbird](https://github.com/netbirdio/netbird).
+The purpose of this project is simple - make it easy to manage VPN built with [NetBird](https://github.com/netbirdio/netbird).
 The dashboard makes it possible to:
 - track the status of your peers
 - remove Peers
