@@ -28,4 +28,10 @@ export default {
         payload
     );
   },
+  async editGroup(payload:RequestPayload<Group>): Promise<ApiResponse<Group>> {
+    return apiClient.put<Group>(
+        `${baseUrl}`,
+        payload
+    );
+  },
 };

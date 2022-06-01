@@ -9,12 +9,12 @@ const actions = {
       'GET_GROUPS_FAILURE',
   )<RequestPayload<null>, Group[], ApiError>(),
 
-  createGroup: createAsyncAction(
-      'CREATE_SETUP_KEY_REQUEST',
-      'CREATE_SETUP_KEY_SUCCESS',
-      'CREATE_SETUP_KEY_FAILURE',
+  saveGroup: createAsyncAction(
+      'CREATE_GROUP_REQUEST',
+      'CREATE_GROUP_SUCCESS',
+      'CREATE_GROUP_FAILURE',
   )<RequestPayload<Group>, CreateResponse<Group | null>, CreateResponse<Group | null>>(),
-  setCreateGroup: createAction('SET_CREATE_SETUP_KEY')<CreateResponse<Group | null>>(),
+  setCreateGroup: createAction('SET_CREATE_GROUP')<CreateResponse<Group | null>>(),
 
   deleteGroup: createAsyncAction(
       'DELETE_GROUP_REQUEST',

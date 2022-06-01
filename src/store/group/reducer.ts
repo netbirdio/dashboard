@@ -12,7 +12,7 @@ type StateType = Readonly<{
     saving: boolean;
     deletedGroup: DeleteResponse<string | null>;
     revokedGroup: ChangeResponse<Group | null>;
-    createdGroup: CreateResponse<Group | null>;
+    savedGroup: CreateResponse<Group | null>;
 }>;
 
 const initialState: StateType = {
@@ -35,7 +35,7 @@ const initialState: StateType = {
         error: null,
         data : null
     },
-    createdGroup: <CreateResponse<Group | null>>{
+    savedGroup: <CreateResponse<Group | null>>{
         loading: false,
         success: false,
         failure: false,
@@ -72,10 +72,10 @@ const deletedGroup = createReducer<DeleteResponse<string | null>, ActionTypes>(i
     .handleAction(actions.deleteGroup.failure, (store, action) => action.payload)
     .handleAction(actions.setDeleteGroup, (store, action) => action.payload);
 
-const createdGroup = createReducer<CreateResponse<Group | null>, ActionTypes>(initialState.createdGroup)
-    .handleAction(actions.createGroup.request, () => initialState.createdGroup)
-    .handleAction(actions.createGroup.success, (store, action) => action.payload)
-    .handleAction(actions.createGroup.failure, (store, action) => action.payload)
+const savedGroup = createReducer<CreateResponse<Group | null>, ActionTypes>(initialState.savedGroup)
+    .handleAction(actions.saveGroup.request, () => initialState.savedGroup)
+    .handleAction(actions.saveGroup.success, (store, action) => action.payload)
+    .handleAction(actions.saveGroup.failure, (store, action) => action.payload)
     .handleAction(actions.setCreateGroup, (store, action) => action.payload)
 
 export default combineReducers({
@@ -85,5 +85,5 @@ export default combineReducers({
     failed,
     saving,
     deletedGroup,
-    createdGroup,
+    savedGroup,
 });

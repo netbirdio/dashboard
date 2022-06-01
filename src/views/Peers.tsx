@@ -4,6 +4,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import { RootState } from "typesafe-actions";
 import { actions as peerActions } from '../store/peer';
+import { actions as groupActions } from '../store/group';
 import Loading from "../components/Loading";
 import {Container} from "../components/Container";
 import {
@@ -26,6 +27,7 @@ import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
+import {Group} from "../store/group/types";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -43,6 +45,8 @@ export const Peers = () => {
     const failed = useSelector((state: RootState) => state.peer.failed);
     const loading = useSelector((state: RootState) => state.peer.loading);
     const deletedPeer = useSelector((state: RootState) => state.peer.deletedPeer);
+    const groups = useSelector((state: RootState) => state.group.data);
+    const loadingGroups = useSelector((state: RootState) => state.group.loading);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
@@ -72,6 +76,12 @@ export const Peers = () => {
 
     useEffect(() => {
         dispatch(peerActions.getPeers.request({getAccessTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently, payload: null}));
+        // dispatch(groupActions.saveGroup.request({getAccessTokenSilently, payload: {
+        //     ID: "caakdnhvdm4s73ak8cgg",
+        //     Name: "ZZZZ",
+        //     Peers: ["wksAVnZSc/ewyU8f8UFqQjjb3TKOqgxSVa0FtDz0jHs="]
+        // } as Group}))
     }, [])
 
     useEffect(() => {

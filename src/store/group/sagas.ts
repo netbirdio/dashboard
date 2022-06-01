@@ -28,7 +28,7 @@ export function* setCreateGroup(action: ReturnType<typeof  actions.setCreateGrou
   yield put(actions.setCreateGroup(action.payload))
 }
 
-export function* createGroup(action: ReturnType<typeof actions.createGroup.request>): Generator {
+export function* saveGroup(action: ReturnType<typeof actions.saveGroup.request>): Generator {
   try {
     yield put(actions.setCreateGroup({
       loading: true,
@@ -38,10 +38,15 @@ export function* createGroup(action: ReturnType<typeof actions.createGroup.reque
       data: null
     } as CreateResponse<Group | null>))
 
-    const effect = yield call(service.createGroup, action.payload);
+    let effect
+    if (action.payload.payload.ID) {
+      effect = yield call(service.editGroup, action.payload);
+    } else {
+      effect = yield call(service.createGroup, action.payload);
+    }
     const response = effect as ApiResponse<Group>;
 
-    yield put(actions.createGroup.success({
+    yield put(actions.saveGroup.success({
       loading: false,
       success: true,
       failure: false,
@@ -53,7 +58,7 @@ export function* createGroup(action: ReturnType<typeof actions.createGroup.reque
     setupKeys.unshift(response.body)
     yield put(actions.getGroups.success(setupKeys));
   } catch (err) {
-    yield put(actions.createGroup.failure({
+    yield put(actions.saveGroup.failure({
       loading: false,
       success: false,
       failure: false,
@@ -104,7 +109,7 @@ export function* deleteGroup(action: ReturnType<typeof actions.deleteGroup.reque
 export default function* sagas(): Generator {
   yield all([
     takeLatest(actions.getGroups.request, getGroups),
-    takeLatest(actions.createGroup.request, createGroup),
+    takeLatest(actions.saveGroup.request, saveGroup),
     takeLatest(actions.deleteGroup.request, deleteGroup)
   ]);
 }
