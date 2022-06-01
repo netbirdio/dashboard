@@ -89,8 +89,8 @@ function App() {
                             <Route path='/peers' exact component={Peers}/>
                             <Route path="/add-peer" component={AddPeer}/>
                             <Route path="/setup-keys" component={SetupKeys}/>
-                            {/*<Route path="/acls" component={AccessControl}/>
-                            <Route path="/activity" component={Activity}/>*/}
+                            <Route path="/acls" component={AccessControl}/>
+                            <Route path="/activity" component={Activity}/>
                             <Route path="/users" component={Users}/>
                         </Switch>
                     </Content>

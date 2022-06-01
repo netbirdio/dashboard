@@ -30,8 +30,8 @@ const Navbar = () => {
         { label: (<Link  to="/peers">Peers</Link>), key: '/peers' },
         { label: (<Link  to="/add-peer">Add Peer</Link>), key: '/add-peer' },
         { label: (<Link  to="/setup-keys">Setup Keys</Link>), key: '/setup-keys' },
-        /*{ label: (<Link  to="/acls">Access Control</Link>), key: '/acls' },
-        { label: (<Link  to="/activity">Activity</Link>), key: '/activity' },*/
+        { label: (<Link  to="/acls">Access Control</Link>), key: '/acls' },
+        { label: (<Link  to="/activity">Activity</Link>), key: '/activity' },
         { label: (<Link  to="/users">Users</Link>), key: '/users' }
     ] as ItemType[])
 
