@@ -7,7 +7,7 @@ const { Footer } = Layout
 export default () => {
   return (
       <Footer style={{ textAlign: 'center' }}>
-          Copyright © 2021 <a href="https://wiretrustee.com">Wiretrustee Authors</a>
+          Copyright © 2022 <a href="https://netbird.io">NetBird Authors</a>
       </Footer>
   );
 };

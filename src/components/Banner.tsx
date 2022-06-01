@@ -27,7 +27,7 @@ const Banner = () => {
 			<Row>
 				<Col xs={24} sm={0} lg={0}>
 					<Text className="ant-col-md-0" style={{color: "#ffffff"}}>
-						Big news! Wiretrustee becomes <strong>netbird</strong>!
+						Big news! Wiretrustee becomes <strong>NetBird</strong>!
 					</Text>
 				</Col>
 				<Col xs={24} sm={0} lg={0}>
@@ -38,7 +38,7 @@ const Banner = () => {
 				<Col xs={0} sm={24}>
 					<Space align="center" style={{display: "flex", justifyContent: "center"}}>
 						<Text style={{color: "#ffffff"}}>
-							Big news! Wiretrustee becomes <strong>netbird</strong>!
+							Big news! Wiretrustee becomes <strong>NetBird</strong>!
 						</Text>
 						<span>
 							{linkLearnMore()}

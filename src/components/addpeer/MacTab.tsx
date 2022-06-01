@@ -17,7 +17,7 @@ export const LinuxTab = () => {
         } as StepCommand,
         {
             key: 2,
-            title: 'Install Netbird:',
+            title: 'Install NetBird:',
             commands: [
                 `# for CLI only`,
                 `brew install netbirdio/tap/netbird`,
@@ -29,7 +29,7 @@ export const LinuxTab = () => {
         } as StepCommand,
         {
             key: 3,
-            title: 'Run Netbird and log in the browser:',
+            title: 'Run NetBird and log in the browser:',
             commands: [
                 `sudo netbird up`
             ].join('\n'),
