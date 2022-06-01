@@ -33,7 +33,7 @@ export const LinuxTab = () => {
         } as StepCommand,
         {
             key: 2,
-            title: 'Install Netbird:',
+            title: 'Install NetBird:',
             commands: [
                 `sudo apt-get update`,
                 `# for CLI only`,
@@ -46,7 +46,7 @@ export const LinuxTab = () => {
         } as StepCommand,
         {
             key: 3,
-            title: 'Run Netbird and log in the browser:',
+            title: 'Run NetBird and log in the browser:',
             commands: formatNetBirdUP(),
             copied: false,
             showCopyButton: true
