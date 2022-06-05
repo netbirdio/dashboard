@@ -23,6 +23,16 @@ export const AddPeer = () => {
     const { getAccessTokenSilently } = useAuth0()
     const dispatch = useDispatch()
 
+    const detectOS = () => {
+        let os = 1;
+        if (navigator.userAgent.indexOf("Win")!==-1) os=2;
+        if (navigator.userAgent.indexOf("Mac")!==-1) os=3;
+        if (navigator.userAgent.indexOf("X11")!==-1) os=1;
+        if (navigator.userAgent.indexOf("Linux")!==-1) os=1
+        return 1
+    }
+    const [openTab, setOpenTab] = useState(detectOS);
+
     useEffect(() => {
     }, [])
 
@@ -36,7 +46,7 @@ export const AddPeer = () => {
                         <Title level={4}>Add Peer</Title>
                         <Paragraph>To get started with NetBird just install the app and log in.</Paragraph>
                         <Space direction="vertical" size="large" style={{ display: 'flex' }}>
-                            <Tabs onChange={onChangeTab} tabPosition="top" animated={{ inkBar: true, tabPane: false }}>
+                            <Tabs defaultActiveKey={openTab.toString()} onChange={onChangeTab} tabPosition="top" animated={{ inkBar: true, tabPane: false }}>
                                 <TabPane tab="Linux" key="1">
                                     <LinuxTab/>
                                 </TabPane>
