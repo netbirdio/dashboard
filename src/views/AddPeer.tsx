@@ -29,7 +29,7 @@ export const AddPeer = () => {
         if (navigator.userAgent.indexOf("Mac")!==-1) os=3;
         if (navigator.userAgent.indexOf("X11")!==-1) os=1;
         if (navigator.userAgent.indexOf("Linux")!==-1) os=1
-        return 1
+        return os
     }
     const [openTab, setOpenTab] = useState(detectOS);
 
