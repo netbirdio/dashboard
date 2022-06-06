@@ -24,6 +24,7 @@ export function getConfig() {
     clientId: configJson.clientId,
     apiOrigin: configJson.apiOrigin,
     grpcApiOrigin: configJson.grpcApiOrigin,
+    latestVersion: configJson.latestVersion,
     ...(audience ? { audience } : null),
   };
 }
