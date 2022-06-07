@@ -13,9 +13,9 @@ import Banner from "./components/Banner";
 import {store} from "./store";
 
 import {Button, Col, Layout, Result, Row} from 'antd';
-import { Container } from "./components/Container";
+import {Container} from "./components/Container";
 
-const { Header, Content } = Layout;
+const {Header, Content} = Layout;
 
 function App() {
 
@@ -52,11 +52,12 @@ function App() {
         return <Result
             status="warning"
             title={error.message}
-            extra={<><Link to="/">
-                <Button type="primary">
-                    Try again
-                </Button>
-            </Link>
+            extra={<>
+                <a href={window.location.origin}>
+                    <Button type="primary">
+                        Try again
+                    </Button>
+                </a>
                 <Button type="primary" onClick={function () {
                     logout({
                         returnTo: window.location.origin,
@@ -79,10 +80,15 @@ function App() {
 
     return (
         <Provider store={store}>
-            { isAuthenticated &&
+            {isAuthenticated &&
                 <Layout>
                     <Banner/>
-                    <Header className="header" style={{display: "flex", flexDirection: "column", justifyContent: "space-around", alignContent: "center"}}>
+                    <Header className="header" style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-around",
+                        alignContent: "center"
+                    }}>
                         <Row justify="space-around" align="middle">
                             <Col span={24}>
                                 <Container>
@@ -112,7 +118,7 @@ function App() {
                     </Content>
                     <FooterComponent/>
                 </Layout>
-        }
+            }
         </Provider>
     );
 }
