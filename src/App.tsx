@@ -8,13 +8,11 @@ import FooterComponent from './components/FooterComponent';
 import Loading from "./components/Loading";
 import SetupKeys from "./views/SetupKeys";
 import AddPeer from "./views/AddPeer";
-import AccessControl from "./views/AccessControl";
-import Activity from "./views/Activity";
 import Users from './views/Users';
 import Banner from "./components/Banner";
 import {store} from "./store";
 
-import {Col, Layout, Row} from 'antd';
+import {Button, Col, Layout, Result, Row} from 'antd';
 import { Container } from "./components/Container";
 
 const { Header, Content } = Layout;
@@ -25,6 +23,7 @@ function App() {
         isLoading,
         isAuthenticated,
         loginWithRedirect,
+        logout,
         error
     } = useAuth0();
 
@@ -50,7 +49,19 @@ function App() {
     });
 
     if (error) {
-        return <div>Oops... {error.message}</div>;
+        return <Result
+            status="warning"
+            title={error.message}
+            extra={
+                <Button type="primary" key="console" onClick={function () {
+                    logout({
+                        returnTo: window.location.origin,
+                    })
+                }}>
+                    Try again
+                </Button>
+            }
+        />
     }
 
     if (isLoading) {
