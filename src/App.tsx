@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Provider} from "react-redux";
-import {Redirect, Route, Switch} from 'react-router-dom';
+import {Link, Redirect, Route, Switch} from 'react-router-dom';
 import {useAuth0} from "@auth0/auth0-react";
 import Navbar from './components/Navbar';
 import Peers from './views/Peers';
@@ -53,13 +53,11 @@ function App() {
             status="warning"
             title={error.message}
             extra={
-                <Button type="primary" key="console" onClick={function () {
-                    logout({
-                        returnTo: window.location.origin,
-                    })
-                }}>
+                <Link to="/">
+                <Button type="primary">
                     Try again
                 </Button>
+                </Link>
             }
         />
     }
