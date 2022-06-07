@@ -52,12 +52,19 @@ function App() {
         return <Result
             status="warning"
             title={error.message}
-            extra={
-                <Link to="/">
+            extra={<><Link to="/">
                 <Button type="primary">
                     Try again
                 </Button>
-                </Link>
+            </Link>
+                <Button type="primary" onClick={function () {
+                    logout({
+                        returnTo: window.location.origin,
+                    })
+                }}>
+                    Log out
+                </Button>
+            </>
             }
         />
     }
