@@ -29,7 +29,7 @@ NETBIRD_MGMT_GRPC_API_ENDPOINT=${NETBIRD_MGMT_GRPC_API_ENDPOINT}
 
 REPO="https://github.com/netbirdio/netbird/"
 # this command will fetch the latest release e.g. v0.6.3
-export NETBIRD_LATEST_VERSION=$(basename $(curl -fs -o/dev/null -w %{redirect_url} ${REPO}releases/latest))
+export NETBIRD_LATEST_VERSION=$(basename $(curl -fs -o/dev/null -w %{redirect_url} ${REPO}releases/latest) | sed 's/v//')
 echo "NetBird latest version: ${NETBIRD_LATEST_VERSION}"
 
 # replace ENVs in the config
