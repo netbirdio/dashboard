@@ -98,9 +98,9 @@ export const Peers = () => {
         if (deletedPeer.loading) {
             message.loading({ content: 'Deleting...', key: deleteKey, style });
         } else if (deletedPeer.success) {
-            message.success({ content: 'Peer deleted with success!', key: deleteKey, duration: 2, style });
+            message.success({ content: 'Peer has been successfully removed.', key: deleteKey, duration: 2, style });
         } else if (deletedPeer.error) {
-            message.error({ content: 'Error! Something wrong to delete peer.', key: deleteKey, duration: 2, style  });
+            message.error({ content: 'Failed to delete peer. You might not have enough permissions.', key: deleteKey, duration: 2, style  });
         }
     }, [deletedPeer])
 
