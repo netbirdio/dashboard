@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Provider} from "react-redux";
-import {Redirect, Route, Switch} from 'react-router-dom';
+import {Link, Redirect, Route, Switch} from 'react-router-dom';
 import {useAuth0} from "@auth0/auth0-react";
 import Navbar from './components/Navbar';
 import Peers from './views/Peers';
@@ -8,16 +8,14 @@ import FooterComponent from './components/FooterComponent';
 import Loading from "./components/Loading";
 import SetupKeys from "./views/SetupKeys";
 import AddPeer from "./views/AddPeer";
-import AccessControl from "./views/AccessControl";
-import Activity from "./views/Activity";
 import Users from './views/Users';
 import Banner from "./components/Banner";
 import {store} from "./store";
 
-import {Col, Layout, Row} from 'antd';
-import { Container } from "./components/Container";
+import {Button, Col, Layout, Result, Row} from 'antd';
+import {Container} from "./components/Container";
 
-const { Header, Content } = Layout;
+const {Header, Content} = Layout;
 
 function App() {
 
@@ -25,6 +23,7 @@ function App() {
         isLoading,
         isAuthenticated,
         loginWithRedirect,
+        logout,
         error
     } = useAuth0();
 
@@ -50,7 +49,25 @@ function App() {
     });
 
     if (error) {
-        return <div>Oops... {error.message}</div>;
+        return <Result
+            status="warning"
+            title={error.message}
+            extra={<>
+                <a href={window.location.origin}>
+                    <Button type="primary">
+                        Try again
+                    </Button>
+                </a>
+                <Button type="primary" onClick={function () {
+                    logout({
+                        returnTo: window.location.origin,
+                    })
+                }}>
+                    Log out
+                </Button>
+            </>
+            }
+        />
     }
 
     if (isLoading) {
@@ -63,10 +80,15 @@ function App() {
 
     return (
         <Provider store={store}>
-            { isAuthenticated &&
+            {isAuthenticated &&
                 <Layout>
                     <Banner/>
-                    <Header className="header" style={{display: "flex", flexDirection: "column", justifyContent: "space-around", alignContent: "center"}}>
+                    <Header className="header" style={{
+                        display: "flex",
+                        flexDirection: "column",
+                        justifyContent: "space-around",
+                        alignContent: "center"
+                    }}>
                         <Row justify="space-around" align="middle">
                             <Col span={24}>
                                 <Container>
@@ -96,7 +118,7 @@ function App() {
                     </Content>
                     <FooterComponent/>
                 </Layout>
-        }
+            }
         </Provider>
     );
 }

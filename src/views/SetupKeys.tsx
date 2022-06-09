@@ -95,11 +95,11 @@ export const SetupKeys = () => {
         if (deletedSetupKey.loading) {
             message.loading({ content: 'Deleting...', key: deleteKey, style: styleNotification });
         } else if (deletedSetupKey.success) {
-            message.success({ content: 'SetupKey deleted with success!', key: deleteKey, duration: 2, style: styleNotification });
+            message.success({ content: 'Setup key has been successfully removed.', key: deleteKey, duration: 2, style: styleNotification });
             dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, success: false }))
             dispatch(setupKeyActions.resetDeletedSetupKey(null))
         } else if (deletedSetupKey.error) {
-            message.error({ content: 'Error! Something wrong to delete setupKey.', key: deleteKey, duration: 2, style: styleNotification  });
+            message.error({ content: 'Failed to delete setup key. You might not have enough permissions.', key: deleteKey, duration: 2, style: styleNotification  });
             dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, error: null }))
             dispatch(setupKeyActions.resetDeletedSetupKey(null))
         }
@@ -110,10 +110,10 @@ export const SetupKeys = () => {
         if (revokedSetupKey.loading) {
             message.loading({ content: 'Revoking...', key: revokeKey, duration: 0, style: styleNotification })
         } else if (revokedSetupKey.success) {
-            message.success({ content: 'Key was revoked with success!', key: revokeKey, duration: 2, style: styleNotification });
+            message.success({ content: 'Setup key has been successfully revoked.', key: revokeKey, duration: 2, style: styleNotification });
             dispatch(setupKeyActions.resetRevokedSetupKey(null))
         } else if (revokedSetupKey.error) {
-            message.error({ content: 'Error! Something wrong to revoke key.', key: revokeKey, duration: 2, style: styleNotification  });
+            message.error({ content: 'Failed to revoke setup key. You might not have enough permissions.', key: revokeKey, duration: 2, style: styleNotification  });
             dispatch(setupKeyActions.resetRevokedSetupKey(null))
         }
     }, [revokedSetupKey])
@@ -123,11 +123,11 @@ export const SetupKeys = () => {
         if (createdSetupKey.loading) {
             message.loading({ content: 'Creating...', key: createKey, duration: 0, style: styleNotification });
         } else if (createdSetupKey.success) {
-            message.success({ content: 'Key created with success!', key: createKey, duration: 2, style: styleNotification });
+            message.success({ content: 'Setup key has been successfully created.', key: createKey, duration: 2, style: styleNotification });
             dispatch(setupKeyActions.setSetupNewKeyVisible(false));
             dispatch(setupKeyActions.setCreateSetupKey({ ...createdSetupKey, success: false }));
         } else if (createdSetupKey.error) {
-            message.error({ content: 'Error! Something wrong to create key.', key: createKey, duration: 2, style: styleNotification  });
+            message.error({ content: 'Failed to create setup key. You might not have enough permissions.', key: createKey, duration: 2, style: styleNotification  });
             dispatch(setupKeyActions.setCreateSetupKey({ ...createdSetupKey, error: null }));
         }
     }, [createdSetupKey])
