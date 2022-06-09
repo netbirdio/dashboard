@@ -9,7 +9,7 @@ import {
     Input,
     Space,
     Switch,
-    Button, Drawer, Form, Divider, Select, Tag
+    Button, Drawer, Form, Divider, Select, Tag, Radio, RadioChangeEvent
 } from "antd";
 import {ArrowRightOutlined, CheckOutlined, CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
 import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
@@ -39,6 +39,8 @@ const AccessControlNew = () => {
     const [formRule, setFormRule] = useState({} as FormRule)
     const [form] = Form.useForm()
     const inputNameRef = useRef<any>(null)
+
+    const optionsDisabledEnabled = [{label: 'Enabled', value: false}, {label: 'Disabled', value: true}]
 
     useEffect(() => {
         if (editName) inputNameRef.current!.focus({
@@ -128,10 +130,10 @@ const AccessControlNew = () => {
         })
     };
 
-    const handleChangeDisabled = (checked: boolean) => {
+    const handleChangeDisabled = ({ target: { value } }: RadioChangeEvent) => {
         setFormRule({
             ...formRule,
-            Disabled: checked
+            Disabled: value
         })
     };
 
@@ -246,13 +248,20 @@ const AccessControlNew = () => {
                                 <Form.Item
                                     name="Disabled"
                                     label="Disabled"
-                                    valuePropName="checked"
+                                    //valuePropName="checked"
                                 >
-                                    <Switch
+                                    {/*<Switch
                                         checkedChildren={<CheckOutlined />}
                                         unCheckedChildren={<CloseOutlined />}
 
                                         onChange={handleChangeDisabled}
+                                    />*/}
+
+                                    <Radio.Group
+                                        options={optionsDisabledEnabled}
+                                        onChange={handleChangeDisabled}
+                                        optionType="button"
+                                        buttonStyle="solid"
                                     />
                                 </Form.Item>
                             </Col>

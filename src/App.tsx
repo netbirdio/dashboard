@@ -9,6 +9,8 @@ import Loading from "./components/Loading";
 import SetupKeys from "./views/SetupKeys";
 import AddPeer from "./views/AddPeer";
 import Users from './views/Users';
+import AccessControl from './views/AccessControl';
+import Activity from './views/Activity';
 import Banner from "./components/Banner";
 import {store} from "./store";
 

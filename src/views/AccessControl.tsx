@@ -115,7 +115,7 @@ export const AccessControl = () => {
 
     useEffect(() => {
         setShowTutorial(isShowTutorial(rules))
-        setDataTable(sortBy(transformDataTable(rules), "Name"))
+        setDataTable(sortBy(transformDataTable(filterDataTable()), "Name"))
     }, [rules])
 
     useEffect(() => {
@@ -220,9 +220,9 @@ export const AccessControl = () => {
         let f:Rule[] = filter(rules, (f:Rule) =>
             (f.Name.toLowerCase().includes(t) || t === "")
         ) as Rule[]
-        // if (optionAllEnabled === "enabled") {
-        //     f = filter(rules, (f:Rule) => f.)
-        // }
+        if (optionAllEnable !== "all") {
+             f = filter(rules, (f:Rule) => !f.Disabled)
+        }
         return f
     }
 
@@ -296,13 +296,13 @@ export const AccessControl = () => {
                                 </Col>
                                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                                     <Space size="middle">
-                                        {/*<Radio.Group
+                                        <Radio.Group
                                             options={optionsAllEnabled}
                                             onChange={onChangeAllEnabled}
                                             value={optionAllEnable}
                                             optionType="button"
                                             buttonStyle="solid"
-                                        />*/}
+                                        />
                                         <Select value={pageSize.toString()} options={pageSizeOptions} onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
                                 </Col>
@@ -367,7 +367,7 @@ export const AccessControl = () => {
                                     />
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
-                                                if (dataTable.length === 1 || deletedRule.loading || savedRule.loading) return <></>
+                                                if (deletedRule.loading || savedRule.loading) return <></>
                                                 return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
                                                                      onVisibleChange={visible => {
                                                                          if (visible) setRuleToAction(record as RuleDataTable)
