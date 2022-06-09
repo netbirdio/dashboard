@@ -42,7 +42,7 @@ export const Activity = () => {
     ]
 
     const transformDataTable = (d:User[]):UserDataTable[] => {
-        return d.map(p => ({ key: p.id, ...p } as UserDataTable))
+        return d.map(p => ({ key: p.ID, ...p } as UserDataTable))
     }
 
     useEffect(() => {
@@ -59,7 +59,7 @@ export const Activity = () => {
     const filterDataTable = ():User[] => {
         const t = textToSearch.toLowerCase().trim()
         let f:User[] = filter(users, (f:User) =>
-            ((f.email || f.id).toLowerCase().includes(t) || f.name.includes(t) || f.role.includes(t) || t === "")
+            ((f.Email || f.ID).toLowerCase().includes(t) || f.Name.includes(t) || f.Role.includes(t) || t === "")
         ) as User[]
         return f
     }
@@ -109,7 +109,7 @@ export const Activity = () => {
                                         onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
                                         sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
                                         render={(text:string | null, record, index) => {
-                                            return (text && text.trim() !== "") ? text : (record as User).id
+                                            return (text && text.trim() !== "") ? text : (record as User).ID
                                         }}
                                 />
                                 <Column title="Name" dataIndex="name"
