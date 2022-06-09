@@ -2,15 +2,18 @@ import { createReducer } from 'typesafe-actions';
 import { combineReducers } from 'redux';
 import { Peer } from './types';
 import actions, { ActionTypes } from './actions';
-import {ApiError, DeleteResponse} from "../../services/api-client/types";
+import {ApiError, ChangeResponse, DeleteResponse} from "../../services/api-client/types";
+import {Group} from "../group/types";
 
 type StateType = Readonly<{
   data: Peer[] | null;
-  peer: Peer | null;
+  peer?: Peer | null;
   loading: boolean;
   failed: ApiError | null;
   saving: boolean;
   deletedPeer: DeleteResponse<string | null>;
+  setUpdateGroupsVisible: boolean;
+  savedGroups: ChangeResponse<Group[] | null>;
 }>;
 
 const initialState: StateType = {
@@ -25,6 +28,14 @@ const initialState: StateType = {
     failure: false,
     error: null,
     data : null
+  },
+  setUpdateGroupsVisible: false,
+  savedGroups: <ChangeResponse<Group[] | null>> {
+    loading: false,
+    success: false,
+    failure: false,
+    error: null,
+    data: null
   }
 };
 
@@ -32,7 +43,7 @@ const data = createReducer<Peer[], ActionTypes>(initialState.data as Peer[])
   .handleAction(actions.getPeers.success,(_, action) => action.payload)
   .handleAction(actions.getPeers.failure, () => []);
 
-const peer = createReducer<Peer, ActionTypes>(initialState.peer as Peer)
+const peer = createReducer<Peer | null, ActionTypes>(initialState.peer as Peer)
     .handleAction(actions.setPeer, (store, action) => action.payload);
 
 const loading = createReducer<boolean, ActionTypes>(initialState.loading)
@@ -55,6 +66,16 @@ const deletedPeer = createReducer<DeleteResponse<string | null>, ActionTypes>(in
     .handleAction(actions.deletedPeer.success, (store, action) => action.payload)
     .handleAction(actions.deletedPeer.failure, (store, action) => action.payload)
     .handleAction(actions.setDeletePeer, (store, action) => action.payload)
+    .handleAction(actions.resetDeletedPeer, () => initialState.deletedPeer)
+
+const updateGroupsVisible = createReducer<boolean, ActionTypes>(initialState.setUpdateGroupsVisible)
+    .handleAction(actions.setUpdateGroupsVisible, (store, action) => action.payload)
+
+const savedGroups = createReducer<ChangeResponse<Group[] | null>, ActionTypes>(initialState.savedGroups)
+    .handleAction(actions.saveGroups.request, () => initialState.savedGroups)
+    .handleAction(actions.saveGroups.success, (store, action) => action.payload)
+    .handleAction(actions.saveGroups.failure, (store, action) => action.payload)
+    .handleAction(actions.resetSavedGroups, () => initialState.savedGroups)
 
 export default combineReducers({
   data,
@@ -62,5 +83,7 @@ export default combineReducers({
   loading,
   failed,
   saving,
-  deletedPeer
+  deletedPeer,
+  updateGroupsVisible,
+  savedGroups
 });

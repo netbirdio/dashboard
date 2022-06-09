@@ -1,6 +1,11 @@
 export interface Group {
     ID?: string;
     Name: string;
-    Peers?: any[];
+    Peers?: GroupPeer[] | string[];
     PeersCount?: string;
+}
+
+export interface GroupPeer {
+    ID: string,
+    Name: string
 }

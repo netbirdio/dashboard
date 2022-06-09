@@ -15,6 +15,7 @@ const actions = {
       'SAVE_RULE_FAILURE',
   )<RequestPayload<RuleToSave>, CreateResponse<Rule | null>, CreateResponse<Rule | null>>(),
   setSavedRule: createAction('SET_CREATE_RULE')<CreateResponse<Rule | null>>(),
+  resetSavedRule: createAction('RESET_CREATE_RULE')<null>(),
   
   deleteRule: createAsyncAction(
       'DELETE_RULE_REQUEST',
@@ -22,7 +23,9 @@ const actions = {
       'DELETE_RULE_FAILURE'
   )<RequestPayload<string>, DeleteResponse<string | null>, DeleteResponse<string | null>>(),
   setDeletedRule: createAction('SET_DELETED_RULE')<DeleteResponse<string | null>>(),
+  resetDeletedRule: createAction('RESET_DELETED_RULE')<null>(),
   removeRule:  createAction('REMOVE_RULE')<string>(),
+
   setRule: createAction('SET_RULE')<Rule>(),
   setSetupNewRuleVisible: createAction('SET_SETUP_NEW_RULE_VISIBLE')<boolean>()
 };

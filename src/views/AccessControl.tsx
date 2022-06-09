@@ -127,14 +127,16 @@ export const AccessControl = () => {
     const saveKey = 'saving';
     useEffect(() => {
         if (savedRule.loading) {
-            message.loading({ content: 'Saving...', key: saveKey, duration: 0, style: styleNotification });
+            message.loading({ content: 'Saving...', key: saveKey, duration: 0, style: styleNotification })
         } else if (savedRule.success) {
             message.success({ content: 'Rule saved with success!', key: saveKey, duration: 2, style: styleNotification });
-            dispatch(ruleActions.setSetupNewRuleVisible(false));
-            dispatch(ruleActions.setSavedRule({ ...savedRule, success: false }));
+            dispatch(ruleActions.setSetupNewRuleVisible(false))
+            dispatch(ruleActions.setSavedRule({ ...savedRule, success: false }))
+            dispatch(ruleActions.resetSavedRule(null))
         } else if (savedRule.error) {
             message.error({ content: 'Error! Something wrong to create key.', key: saveKey, duration: 2, style: styleNotification  });
-            dispatch(ruleActions.setSavedRule({ ...savedRule, error: null }));
+            dispatch(ruleActions.setSavedRule({ ...savedRule, error: null }))
+            dispatch(ruleActions.resetSavedRule(null))
         }
     }, [savedRule])
 
@@ -142,11 +144,13 @@ export const AccessControl = () => {
     useEffect(() => {
         const style = { marginTop: 85 }
         if (deletedRule.loading) {
-            message.loading({ content: 'Deleting...', key: deleteKey, style });
+            message.loading({ content: 'Deleting...', key: deleteKey, style })
         } else if (deletedRule.success) {
-            message.success({ content: 'Rule deleted with success!', key: deleteKey, duration: 2, style });
+            message.success({ content: 'Rule deleted with success!', key: deleteKey, duration: 2, style })
+            dispatch(ruleActions.resetDeletedRule(null))
         } else if (deletedRule.error) {
-            message.error({ content: 'Error! Something wrong to delete rule.', key: deleteKey, duration: 2, style  });
+            message.error({ content: 'Error! Something wrong to delete rule.', key: deleteKey, duration: 2, style  })
+            dispatch(ruleActions.resetDeletedRule(null))
         }
     }, [deletedRule])
 
@@ -226,9 +230,11 @@ export const AccessControl = () => {
         dispatch(ruleActions.setSetupNewRuleVisible(true));
         dispatch(ruleActions.setRule({
             Name: '',
+            Description: '',
             Source: [],
             Destination: [],
-            Flow: 'bidirect'
+            Flow: 'bidirect',
+            Disabled: false
         } as Rule))
     }
 
@@ -237,9 +243,11 @@ export const AccessControl = () => {
         dispatch(ruleActions.setRule({
             ID: ruleToAction?.ID || null,
             Name: ruleToAction?.Name,
+            Description: ruleToAction?.Description,
             Source: ruleToAction?.Source,
             Destination: ruleToAction?.Destination,
-            Flow: ruleToAction?.Flow
+            Flow: ruleToAction?.Flow,
+            Disabled: ruleToAction?.Disabled
         } as Rule))
     }
 
@@ -252,11 +260,11 @@ export const AccessControl = () => {
     }
 
     const renderPopoverGroups = (label: string, groups:Group[] | string[] | null) => {
-        const content = groups?.map(g => {
+        const content = groups?.map((g, i) => {
             const _g = g as Group
             const peersCount = ` - ${_g.PeersCount || 0} ${(_g.PeersCount && parseInt(_g.PeersCount) > 1) ? 'peers' : 'peer'} `
             return (
-                <div>
+                <div key={i}>
                     <Tag
                         color="blue"
                         style={{ marginRight: 3 }}

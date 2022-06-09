@@ -7,14 +7,6 @@ import {take} from "lodash";
 
 export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.request>): Generator {
     try {
-        yield put(actions.setDeleteSetupKey({
-            loading: false,
-            success: false,
-            failure: false,
-            error: null,
-            data: null
-        } as DeleteResponse<string | null>))
-
         const effect = yield call(service.getSetupKeys, action.payload);
         const response = effect as ApiResponse<SetupKey[]>;
 

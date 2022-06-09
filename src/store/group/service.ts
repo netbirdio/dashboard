@@ -29,8 +29,10 @@ export default {
     );
   },
   async editGroup(payload:RequestPayload<Group>): Promise<ApiResponse<Group>> {
+    const id = payload.payload.ID
+    delete payload.payload.ID
     return apiClient.put<Group>(
-        `${baseUrl}`,
+        `${baseUrl}/${id}`,
         payload
     );
   },
