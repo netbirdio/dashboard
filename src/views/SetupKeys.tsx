@@ -96,23 +96,25 @@ export const SetupKeys = () => {
             message.loading({ content: 'Deleting...', key: deleteKey, style: styleNotification });
         } else if (deletedSetupKey.success) {
             message.success({ content: 'SetupKey deleted with success!', key: deleteKey, duration: 2, style: styleNotification });
-            dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, success: false }));
+            dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, success: false }))
+            dispatch(setupKeyActions.resetDeletedSetupKey(null))
         } else if (deletedSetupKey.error) {
             message.error({ content: 'Error! Something wrong to delete setupKey.', key: deleteKey, duration: 2, style: styleNotification  });
-            dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, error: null }));
+            dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, error: null }))
+            dispatch(setupKeyActions.resetDeletedSetupKey(null))
         }
     }, [deletedSetupKey])
 
-    const revokeKey = 'creating';
+    const revokeKey = 'revoking';
     useEffect(() => {
         if (revokedSetupKey.loading) {
-            message.loading({ content: 'Creating...', key: revokeKey, duration: 0, style: styleNotification });
+            message.loading({ content: 'Revoking...', key: revokeKey, duration: 0, style: styleNotification })
         } else if (revokedSetupKey.success) {
             message.success({ content: 'Key was revoked with success!', key: revokeKey, duration: 2, style: styleNotification });
-            dispatch(setupKeyActions.setRevokeSetupKey({ ...revokedSetupKey, success: false }));
+            dispatch(setupKeyActions.resetRevokedSetupKey(null))
         } else if (revokedSetupKey.error) {
             message.error({ content: 'Error! Something wrong to revoke key.', key: revokeKey, duration: 2, style: styleNotification  });
-            dispatch(setupKeyActions.setRevokeSetupKey({ ...revokedSetupKey, error: null }));
+            dispatch(setupKeyActions.resetRevokedSetupKey(null))
         }
     }, [revokedSetupKey])
 

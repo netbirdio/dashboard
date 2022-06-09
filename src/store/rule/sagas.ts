@@ -60,19 +60,18 @@ export function* saveRule(action: ReturnType<typeof actions.saveRule.request>): 
     const newGroups = [...currentGroups, ...resGroups]
     yield put(groupActions.getGroups.success(newGroups));
 
-    console.log(resGroups)
-    console.log(ruleToSave.groupsToSave)
     const newSources = getNewGroupIds(ruleToSave.sourcesNoId, resGroups)
     const newDestinations = getNewGroupIds(ruleToSave.destinationsNoId, resGroups)
-    console.log(newDestinations)
 
     const payloadToSave = {
       getAccessTokenSilently: action.payload.getAccessTokenSilently,
       payload: {
         Name: ruleToSave.Name,
+        Description: ruleToSave.Description,
         Source: [...ruleToSave.Source as string[], ...newSources],
         Destination: [...ruleToSave.Destination as string[], ...newDestinations],
-        Flow: ruleToSave.Flow
+        Flow: ruleToSave.Flow,
+        Disabled: ruleToSave.Disabled
       } as Rule
     }
 

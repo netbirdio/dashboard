@@ -23,8 +23,10 @@ export default {
     );
   },
   async editRule(payload:RequestPayload<Rule>): Promise<ApiResponse<Rule>> {
+    const id = payload.payload.ID
+    delete payload.payload.ID
     return apiClient.put<Rule>(
-        `/api/rules`,
+        `/api/rules/${id}`,
         payload
     );
   },

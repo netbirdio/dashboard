@@ -20,21 +20,24 @@ import {
     RadioChangeEvent,
     Dropdown,
     Menu,
-    Alert, Select, Modal, Button, message
+    Alert, Select, Modal, Button, message, Popover
 } from "antd";
 import {Peer} from "../store/peer/types";
 import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
-import {Group} from "../store/group/types";
+import {Group, GroupPeer} from "../store/group/types";
+import PeerGroupsUpdate from "../components/PeerGroupsUpdate";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
 
 interface PeerDataTable extends Peer {
-    key: string
+    key: string;
+    groups: Group[];
+    groupsCount: number;
 }
 
 export const Peers = () => {
@@ -47,6 +50,7 @@ export const Peers = () => {
     const deletedPeer = useSelector((state: RootState) => state.peer.deletedPeer);
     const groups = useSelector((state: RootState) => state.group.data);
     const loadingGroups = useSelector((state: RootState) => state.group.loading);
+    const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
@@ -71,22 +75,28 @@ export const Peers = () => {
     const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
 
     const transformDataTable = (d:Peer[]):PeerDataTable[] => {
-        return d.map(p => ({ key: p.IP, ...p } as PeerDataTable))
+        const peer_ids = d.map(_p => _p.ID)
+        return d.map((p) => {
+            const gs = groups
+                .filter(g => g.Peers?.find((_p:GroupPeer) => _p.ID === p.ID))
+                .map(g => ({ID: g.ID, Name: g.Name, PeersCount: g.Peers?.length, Peers: g.Peers || []}))
+            return {
+                key: p.ID,
+                ...p,
+                groups: gs,
+                groupsCount: gs.length
+            } as PeerDataTable
+        })
     }
 
     useEffect(() => {
         dispatch(peerActions.getPeers.request({getAccessTokenSilently, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently, payload: null}));
-        // dispatch(groupActions.saveGroup.request({getAccessTokenSilently, payload: {
-        //     ID: "caakdnhvdm4s73ak8cgg",
-        //     Name: "ZZZZ",
-        //     Peers: ["wksAVnZSc/ewyU8f8UFqQjjb3TKOqgxSVa0FtDz0jHs="]
-        // } as Group}))
     }, [])
 
     useEffect(() => {
         setDataTable(transformDataTable(peers))
-    }, [peers])
+    }, [peers, groups])
 
     useEffect(() => {
         setDataTable(transformDataTable(filterDataTable()))
@@ -99,10 +109,27 @@ export const Peers = () => {
             message.loading({ content: 'Deleting...', key: deleteKey, style });
         } else if (deletedPeer.success) {
             message.success({ content: 'Peer deleted with success!', key: deleteKey, duration: 2, style });
+            dispatch(peerActions.resetDeletedPeer(null))
         } else if (deletedPeer.error) {
             message.error({ content: 'Error! Something wrong to delete peer.', key: deleteKey, duration: 2, style  });
+            dispatch(peerActions.resetDeletedPeer(null))
         }
     }, [deletedPeer])
+
+    const saveGroupsKey = 'saving_groups';
+    useEffect(() => {
+        const style = { marginTop: 85 }
+        if (savedGroups.loading) {
+            message.loading({ content: 'Updating groups...', key: saveGroupsKey, style });
+        } else if (savedGroups.success) {
+            message.success({ content: 'Groups updated with success!', key: saveGroupsKey, duration: 2, style });
+            setUpdateGroupsVisible({} as Peer, false)
+            dispatch(peerActions.resetSavedGroups(null))
+        } else if (savedGroups.error) {
+            message.error({ content: 'Error! Something wrong to update groups.', key: saveGroupsKey, duration: 2, style  });
+            dispatch(peerActions.resetSavedGroups(null))
+        }
+    }, [savedGroups])
 
     const filterDataTable = ():Peer[] => {
         const t = textToSearch.toLowerCase().trim()
@@ -154,99 +181,141 @@ export const Peers = () => {
         });
     }
 
+    const setUpdateGroupsVisible = (peerToAction:Peer, status:boolean) => {
+        if (status) {
+            dispatch(peerActions.setPeer({...peerToAction}))
+            dispatch(peerActions.setUpdateGroupsVisible(true))
+            return
+        }
+        dispatch(peerActions.setPeer(null))
+        dispatch(peerActions.setUpdateGroupsVisible(false))
+    }
+
+    const renderPopoverGroups = (label: string, groups:Group[] | string[] | null, peerToAction:PeerDataTable) => {
+        const content = groups?.map((g,i) => {
+            const _g = g as Group
+            const peersCount = ` - ${_g.PeersCount || 0} ${(_g.PeersCount && parseInt(_g.PeersCount) > 1) ? 'peers' : 'peer'} `
+            return (
+                <div key={i}>
+                    <Tag
+                        color="blue"
+                        style={{ marginRight: 3 }}
+                    >
+                        <strong>{_g.Name}</strong>
+                    </Tag>
+                    <span style={{fontSize: ".85em"}}>{peersCount}</span>
+                </div>
+            )
+        })
+        const mainContent = (<Space direction="vertical">{content}</Space>)
+        return (
+            <Popover key={peerToAction.key} content={mainContent} title={null}>
+                <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
+            </Popover>
+        )
+    }
+
     return (
-        <Container style={{paddingTop: "40px"}}>
-            <Row>
-                <Col span={24}>
-                    <Title level={4}>Peers</Title>
-                    <Paragraph>A list of all the machines in your account including their name, IP and status.</Paragraph>
-                    <Space direction="vertical" size="large" style={{ display: 'flex' }}>
-                        <Row gutter={[16, 24]}>
-                            <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                                {/*<Input.Search allowClear value={textToSearch} onPressEnter={searchDataTable} onSearch={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />*/}
-                                <Input allowClear value={textToSearch} onPressEnter={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />
-                            </Col>
-                            <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
-                                <Space size="middle">
-                                    <Radio.Group
-                                        options={optionsOnOff}
-                                        onChange={onChangeOnOff}
-                                        value={optionOnOff}
-                                        optionType="button"
-                                        buttonStyle="solid"
+        <>
+            <Container style={{paddingTop: "40px"}}>
+                <Row>
+                    <Col span={24}>
+                        <Title level={4}>Peers</Title>
+                        <Paragraph>A list of all the machines in your account including their name, IP and status.</Paragraph>
+                        <Space direction="vertical" size="large" style={{ display: 'flex' }}>
+                            <Row gutter={[16, 24]}>
+                                <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
+                                    {/*<Input.Search allowClear value={textToSearch} onPressEnter={searchDataTable} onSearch={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />*/}
+                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />
+                                </Col>
+                                <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
+                                    <Space size="middle">
+                                        <Radio.Group
+                                            options={optionsOnOff}
+                                            onChange={onChangeOnOff}
+                                            value={optionOnOff}
+                                            optionType="button"
+                                            buttonStyle="solid"
+                                        />
+                                        <Select value={pageSize.toString()} options={pageSizeOptions} onChange={onChangePageSize} className="select-rows-per-page-en"/>
+                                    </Space>
+                                </Col>
+                                <Col xs={24}
+                                     sm={24}
+                                     md={5}
+                                     lg={5}
+                                     xl={5}
+                                     xxl={5} span={5}>
+                                    <Row justify="end">
+                                        <Col>
+                                            <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add Peer</Link>
+                                        </Col>
+                                    </Row>
+                                </Col>
+                            </Row>
+                            {failed &&
+                                <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
+                            }
+                            {loading && <Loading/>}
+                            <Card bodyStyle={{padding: 0}}>
+                                <Table
+                                    pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} peers`)}}
+                                    className="card-table"
+                                    showSorterTooltip={false}
+                                    scroll={{x: true}}
+                                    dataSource={dataTable}>
+                                    <Column title="Name" dataIndex="Name"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}
+                                            sorter={(a, b) => ((a as any).Name.localeCompare((b as any).Name))} />
+                                    <Column title="IP" dataIndex="IP"
+                                            sorter={(a, b) => {
+                                                const _a = (a as any).IP.split('.')
+                                                const _b = (b as any).IP.split('.')
+                                                const a_s = _a.map((i:any) => i.padStart(3, '0')).join()
+                                                const b_s = _b.map((i:any) => i.padStart(3, '0')).join()
+                                                return a_s.localeCompare(b_s)
+                                            }}
+                                            render={(text, record, index) => {
+                                                return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key} text={text} messageText={'IP copied!'} styleNotification={{}}/>
+                                            }}
                                     />
-                                    <Select value={pageSize.toString()} options={pageSizeOptions} onChange={onChangePageSize} className="select-rows-per-page-en"/>
-                                </Space>
-                            </Col>
-                            <Col xs={24}
-                                 sm={24}
-                                 md={5}
-                                 lg={5}
-                                 xl={5}
-                                 xxl={5} span={5}>
-                                <Row justify="end">
-                                    <Col>
-                                        <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add Peer</Link>
-                                    </Col>
-                                </Row>
-                            </Col>
-                        </Row>
-                        {failed &&
-                            <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
-                        }
-                        {loading && <Loading/>}
-                        <Card bodyStyle={{padding: 0}}>
-                            <Table
-                                pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} peers`)}}
-                                className="card-table"
-                                showSorterTooltip={false}
-                                scroll={{x: true}}
-                                dataSource={dataTable}>
-                                <Column title="Name" dataIndex="Name" key="Name"
-                                        onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}
-                                        sorter={(a, b) => ((a as any).Name.localeCompare((b as any).Name))} />
-                                <Column title="IP" dataIndex="IP"
-                                        sorter={(a, b) => {
-                                            const _a = (a as any).IP.split('.')
-                                            const _b = (b as any).IP.split('.')
-                                            const a_s = _a.map((i:any) => i.padStart(3, '0')).join()
-                                            const b_s = _b.map((i:any) => i.padStart(3, '0')).join()
-                                            return a_s.localeCompare(b_s)
-                                        }}
-                                        render={(text, record, index) => {
-                                            return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key} text={text} messageText={'IP copied!'} styleNotification={{}}/>
-                                        }}
-                                />
-                                <Column title="Status" dataIndex="Connected"
-                                        render={(text, record, index) => {
-                                            return text ? <Tag color="green">online</Tag> : <Tag color="red">offline</Tag>
-                                        }}
-                                />
-                                <Column title="LastSeen" dataIndex="LastSeen"
-                                        render={(text, record, index) => {
-                                            return (record as PeerDataTable).Connected ? 'just now' : timeAgo(text)
-                                        }}
-                                />
-                                <Column title="OS" dataIndex="OS"
-                                        render={(text, record, index) => {
-                                            return formatOS(text)
-                                        }}
-                                />
-                                <Column title="Version" dataIndex="Version" />
-                                <Column title="" align="center"
-                                        render={(text, record, index) => {
-                                            return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
-                                                                    onVisibleChange={visible => {
-                                                                        if (visible) setPeerToAction(record as PeerDataTable)
-                                                                    }}></Dropdown.Button>
-                                        }}
-                                />
-                            </Table>
-                        </Card>
-                    </Space>
-                </Col>
-            </Row>
-        </Container>
+                                    <Column title="Status" dataIndex="Connected"
+                                            render={(text, record, index) => {
+                                                return text ? <Tag color="green">online</Tag> : <Tag color="red">offline</Tag>
+                                            }}
+                                    />
+                                    <Column title="LastSeen" dataIndex="LastSeen"
+                                            render={(text, record, index) => {
+                                                return (record as PeerDataTable).Connected ? 'just now' : timeAgo(text)
+                                            }}
+                                    />
+                                    <Column title="OS" dataIndex="OS"
+                                            render={(text, record, index) => {
+                                                return formatOS(text)
+                                            }}
+                                    />
+                                    <Column title="Version" dataIndex="Version" />
+                                    <Column title="Groups" dataIndex="groupsCount"
+                                            render={(text, record:PeerDataTable, index) => {
+                                                return renderPopoverGroups(text, record.groups, record)
+                                            }}
+                                    />
+                                    <Column title="" align="center"
+                                            render={(text, record, index) => {
+                                                return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
+                                                                        onVisibleChange={visible => {
+                                                                            if (visible) setPeerToAction(record as PeerDataTable)
+                                                                        }}></Dropdown.Button>
+                                            }}
+                                    />
+                                </Table>
+                            </Card>
+                        </Space>
+                    </Col>
+                </Row>
+            </Container>
+            <PeerGroupsUpdate/>
+        </>
     )
 }
 

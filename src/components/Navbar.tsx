@@ -5,7 +5,6 @@ import {useAuth0} from "@auth0/auth0-react";
 import {useLocation} from 'react-router-dom';
 import {Menu, Row, Col, Grid, Dropdown, Avatar, Button, Typography, Space} from 'antd'
 import {ItemType} from "antd/lib/menu/hooks/useItems";
-import {UserOutlined} from "@ant-design/icons";
 import {AvatarSize} from "antd/es/avatar/SizeContext";
 
 const { Text } = Typography

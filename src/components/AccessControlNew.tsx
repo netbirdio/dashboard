@@ -2,19 +2,16 @@ import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import { actions as ruleActions } from '../store/rule';
-import { actions as groupsActions } from '../store/group';
-import inbound from '../assets/direct_in.svg';
-import outbound from '../assets/direct_out.svg';
 import {
     Col,
     Row,
     Typography,
     Input,
     Space,
-    Radio,
-    Button, Drawer, Form, List, Divider, Select, Tag
+    Switch,
+    Button, Drawer, Form, Divider, Select, Tag
 } from "antd";
-import {ArrowRightOutlined, CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
+import {ArrowRightOutlined, CheckOutlined, CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
 import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
 import {Rule, RuleToSave} from "../store/rule/types";
 import {useAuth0} from "@auth0/auth0-react";
@@ -73,12 +70,14 @@ const AccessControlNew = () => {
         return {
             ID: formRule.ID,
             Name: formRule.Name,
+            Description: formRule.Description,
             Source,
             Destination,
             sourcesNoId,
             destinationsNoId,
             groupsToSave,
-            Flow: formRule.Flow
+            Flow: formRule.Flow,
+            Disabled: formRule.Disabled
         } as RuleToSave
     }
 
@@ -102,9 +101,11 @@ const AccessControlNew = () => {
         setEditName(false)
         dispatch(ruleActions.setRule({
             Name: '',
+            Description: '',
             Source: [],
             Destination: [],
-            Flow: 'bidirect'
+            Flow: 'bidirect',
+            Disabled: false
         } as Rule))
         setVisibleNewRule(false)
     }
@@ -124,6 +125,13 @@ const AccessControlNew = () => {
         setFormRule({
             ...formRule,
             tagDestinationGroups: value
+        })
+    };
+
+    const handleChangeDisabled = (checked: boolean) => {
+        setFormRule({
+            ...formRule,
+            Disabled: checked
         })
     };
 
@@ -185,6 +193,7 @@ const AccessControlNew = () => {
                     visible={setupNewRuleVisible}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
+                    autoFocus={true}
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedRule.loading}>Cancel</Button>
@@ -226,6 +235,26 @@ const AccessControlNew = () => {
                                 </Header>
                             </Col>
                             <Col span={24}>
+                                <Form.Item
+                                    name="Description"
+                                    label="Description"
+                                >
+                                    <Input placeholder="Add rule rule description..." autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="Disabled"
+                                    label="Disabled"
+                                    valuePropName="checked"
+                                >
+                                    <Switch
+                                        checkedChildren={<CheckOutlined />}
+                                        unCheckedChildren={<CloseOutlined />}
+
+                                        onChange={handleChangeDisabled}
+                                    />
+                                </Form.Item>
                             </Col>
                             <Col span={24}>
                                 <Form.Item
