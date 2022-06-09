@@ -35,10 +35,12 @@ const AccessControlNew = () => {
     const savedRule = useSelector((state: RootState) => state.rule.savedRule)
 
     const [editName, setEditName] = useState(false)
+    const [editDescription, setEditDescription] = useState(false)
     const [tagGroups, setTagGroups] = useState([] as string[])
     const [formRule, setFormRule] = useState({} as FormRule)
     const [form] = Form.useForm()
     const inputNameRef = useRef<any>(null)
+    const inputDescriptionRef = useRef<any>(null)
 
     const optionsDisabledEnabled = [{label: 'Enabled', value: false}, {label: 'Disabled', value: true}]
 
@@ -47,6 +49,12 @@ const AccessControlNew = () => {
             cursor: 'end',
         });
     }, [editName]);
+
+    useEffect(() => {
+        if (editDescription) inputDescriptionRef.current!.focus({
+            cursor: 'end',
+        });
+    }, [editDescription]);
 
     useEffect(() => {
         if (!rule) return
@@ -178,6 +186,10 @@ const AccessControlNew = () => {
         setEditName(status);
     }
 
+    const toggleEditDescription = (status:boolean) => {
+        setEditDescription(status);
+    }
+
     // const testDeleteGroup = () => {
     //     groups.forEach(g => {
     //         dispatch(groupsActions.deleteGroup.request({getAccessTokenSilently, payload: g.ID || ''}))
@@ -209,7 +221,7 @@ const AccessControlNew = () => {
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
                                     <Row align="top">
                                         <Col flex="none" style={{display: "flex"}}>
-                                            {!editName && formRule.ID  &&
+                                            {!editName && !editDescription && formRule.ID  &&
                                                 <button type="button" aria-label="Close" className="ant-drawer-close"
                                                         style={{paddingTop: 3}}
                                                         onClick={onCancel}>
@@ -221,7 +233,7 @@ const AccessControlNew = () => {
                                         </Col>
                                         <Col flex="auto">
                                             { !editName && formRule.ID ? (
-                                                <div className={"access-control ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRule.ID ? formRule.Name : 'New Rule'}</div>
+                                                <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRule.ID ? formRule.Name : 'New Rule'}</div>
                                             ) : (
                                                 <Form.Item
                                                     name="Name"
@@ -231,18 +243,29 @@ const AccessControlNew = () => {
                                                     <Input placeholder="Add rule name..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
                                                 </Form.Item>
                                             )}
+                                            { !editDescription && formRule.ID ? (
+                                                <div className={"access-control input-text ant-drawer-subtitle"} onClick={() => toggleEditDescription(true)}>{formRule.Description.trim() !== "" ? formRule.Description : 'Add description...'}</div>
+                                            ) : (
+                                                <Form.Item
+                                                    name="Description"
+                                                    label={null}
+                                                    style={{marginTop: 24}}
+                                                >
+                                                    <Input placeholder="Add description..." ref={inputDescriptionRef} onPressEnter={() => toggleEditDescription(false)} onBlur={() => toggleEditDescription(false)} autoComplete="off"/>
+                                                </Form.Item>
+                                            )}
+                                        </Col>
+                                    </Row>
+                                    <Row align="top">
+                                        <Col flex="auto">
+
                                         </Col>
                                     </Row>
 
                                 </Header>
                             </Col>
                             <Col span={24}>
-                                <Form.Item
-                                    name="Description"
-                                    label="Description"
-                                >
-                                    <Input placeholder="Add rule rule description..." autoComplete="off"/>
-                                </Form.Item>
+
                             </Col>
                             <Col span={24}>
                                 <Form.Item

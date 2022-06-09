@@ -122,7 +122,12 @@ body {
   color: rgba(0, 0, 0, .85) !important;
 }
 
-.access-control.ant-drawer-title:hover {
+.access-control.input-text:hover {
   text-decoration: underline;
   cursor: pointer;
+}
+
+.access-control.ant-drawer-subtitle {
+  line-height: 22px;
+  margin: 24px 0;
 }

@@ -218,7 +218,7 @@ export const AccessControl = () => {
     const filterDataTable = ():Rule[] => {
         const t = textToSearch.toLowerCase().trim()
         let f:Rule[] = filter(rules, (f:Rule) =>
-            (f.Name.toLowerCase().includes(t) || t === "")
+            (f.Name.toLowerCase().includes(t) || f.Description.toLowerCase().includes(t) || t === "")
         ) as Rule[]
         if (optionAllEnable !== "all") {
              f = filter(rules, (f:Rule) => !f.Disabled)
@@ -340,6 +340,14 @@ export const AccessControl = () => {
                                     <Column title="Name" dataIndex="Name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}
                                             sorter={(a, b) => ((a as any).Name.localeCompare((b as any).Name))} />
+                                    <Column title="Description" dataIndex="Description"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).Description.includes(value)}
+                                            sorter={(a, b) => ((a as any).Description.localeCompare((b as any).Description))} />
+                                    <Column title="Status" dataIndex="Disabled"
+                                            render={(text:Boolean, record:RuleDataTable, index) => {
+                                                return text ? <Tag color="red">Inactive</Tag> : <Tag color="green">Active</Tag>
+                                            }}
+                                    />
                                     <Column title="Sources" dataIndex="sourceLabel"
                                             render={(text, record:RuleDataTable, index) => {
                                                 //return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Sources`, record.Source, true)}>{text}</Button>
