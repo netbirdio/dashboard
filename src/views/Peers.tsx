@@ -284,6 +284,11 @@ export const Peers = () => {
                                                 return text ? <Tag color="green">online</Tag> : <Tag color="red">offline</Tag>
                                             }}
                                     />
+                                    <Column title="Groups" dataIndex="groupsCount"
+                                            render={(text, record:PeerDataTable, index) => {
+                                                return renderPopoverGroups(text, record.groups, record)
+                                            }}
+                                    />
                                     <Column title="LastSeen" dataIndex="LastSeen"
                                             render={(text, record, index) => {
                                                 return (record as PeerDataTable).Connected ? 'just now' : timeAgo(text)
@@ -295,11 +300,6 @@ export const Peers = () => {
                                             }}
                                     />
                                     <Column title="Version" dataIndex="Version" />
-                                    <Column title="Groups" dataIndex="groupsCount"
-                                            render={(text, record:PeerDataTable, index) => {
-                                                return renderPopoverGroups(text, record.groups, record)
-                                            }}
-                                    />
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
                                                 return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}

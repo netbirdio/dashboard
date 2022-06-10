@@ -4,7 +4,7 @@ import {
     Alert,
     Button, Card,
     Col, Dropdown, Input, Menu, message, Modal, Popover, Radio, RadioChangeEvent,
-    Row, Select, Space, Table, Tag,
+    Row, Select, Space, Table, Tag, Tooltip,
     Typography
 } from "antd";
 import {Container} from "../components/Container";
@@ -55,7 +55,7 @@ export const AccessControl = () => {
 
     const [showTutorial, setShowTutorial] = useState(true)
     const [textToSearch, setTextToSearch] = useState('');
-    const [optionAllEnable, setOptionAllEnable] = useState('all');
+    const [optionAllEnable, setOptionAllEnable] = useState('enabled');
     const [pageSize, setPageSize] = useState(5);
     const [currentPage, setCurrentPage] = useState(1);
     const [dataTable, setDataTable] = useState([] as RuleDataTable[]);
@@ -262,7 +262,7 @@ export const AccessControl = () => {
     const renderPopoverGroups = (label: string, groups:Group[] | string[] | null) => {
         const content = groups?.map((g, i) => {
             const _g = g as Group
-            const peersCount = ` - ${_g.PeersCount || 0} ${(_g.PeersCount && parseInt(_g.PeersCount) > 1) ? 'peers' : 'peer'} `
+            const peersCount = ` - ${_g.PeersCount || 0} ${(!_g.PeersCount || parseInt(_g.PeersCount) !== 1) ? 'peers' : 'peer'} `
             return (
                 <div key={i}>
                     <Tag
@@ -333,16 +333,20 @@ export const AccessControl = () => {
                                             setCurrentPage(page)
                                         }
                                     }}
-                                    className={`${showTutorial ? "card-table card-table-no-placeholder" : "card-table"}`}
+                                    className={`access-control-table ${showTutorial ? "card-table card-table-no-placeholder" : "card-table"}`}
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
                                     dataSource={dataTable}>
                                     <Column title="Name" dataIndex="Name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}
-                                            sorter={(a, b) => ((a as any).Name.localeCompare((b as any).Name))} />
-                                    <Column title="Description" dataIndex="Description"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).Description.includes(value)}
-                                            sorter={(a, b) => ((a as any).Description.localeCompare((b as any).Description))} />
+                                            sorter={(a, b) => ((a as any).Name.localeCompare((b as any).Name))}
+                                            render={(text, record, index) => {
+                                                const desc = (record as RuleDataTable).Description.trim()
+                                                return <Tooltip title={desc !== "" ?  desc : "no description"} arrowPointAtCenter>
+                                                    <span className="tooltip-label">{text}</span>
+                                                </Tooltip>
+                                            }}
+                                    />
                                     <Column title="Status" dataIndex="Disabled"
                                             render={(text:Boolean, record:RuleDataTable, index) => {
                                                 return text ? <Tag color="red">Inactive</Tag> : <Tag color="green">Active</Tag>

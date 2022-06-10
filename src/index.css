@@ -122,6 +122,11 @@ body {
   color: rgba(0, 0, 0, .85) !important;
 }
 
+.access-control-table .tooltip-label:hover {
+  text-decoration: underline;
+  cursor: pointer;
+}
+
 .access-control.input-text:hover {
   text-decoration: underline;
   cursor: pointer;

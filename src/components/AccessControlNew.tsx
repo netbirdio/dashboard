@@ -168,7 +168,7 @@ const AccessControlNew = () => {
     const optionRender = (label: string) => {
         let peersCount = ''
         const g = groups.find(_g => _g.Name === label)
-        if (g)  peersCount = ` - ${g.PeersCount || 0} ${(g.PeersCount && parseInt(g.PeersCount) > 1) ? 'peers' : 'peer'} `
+        if (g)  peersCount = ` - ${g.PeersCount || 0} ${(!g.PeersCount || parseInt(g.PeersCount) !== 1) ? 'peers' : 'peer'} `
         return (
             <>
                 <Tag
@@ -243,8 +243,8 @@ const AccessControlNew = () => {
                                                     <Input placeholder="Add rule name..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
                                                 </Form.Item>
                                             )}
-                                            { !editDescription && formRule.ID ? (
-                                                <div className={"access-control input-text ant-drawer-subtitle"} onClick={() => toggleEditDescription(true)}>{formRule.Description.trim() !== "" ? formRule.Description : 'Add description...'}</div>
+                                            { !editDescription ? (
+                                                <div className={"access-control input-text ant-drawer-subtitle"} onClick={() => toggleEditDescription(true)}>{formRule.Description && formRule.Description.trim() !== "" ? formRule.Description : 'Add description...'}</div>
                                             ) : (
                                                 <Form.Item
                                                     name="Description"
