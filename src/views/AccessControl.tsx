@@ -24,6 +24,8 @@ import AccessControlNew from "../components/AccessControlNew";
 import {Group} from "../store/group/types";
 import {actions as setupKeyActions} from "../store/setup-key";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
+import TableSpin from "../components/Spin";
+import tableSpin from "../components/Spin";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -322,7 +324,6 @@ export const AccessControl = () => {
                             {failed &&
                                 <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
                             }
-                            {loading && <Loading/>}
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
                                     pagination={{
@@ -336,6 +337,7 @@ export const AccessControl = () => {
                                     className={`access-control-table ${showTutorial ? "card-table card-table-no-placeholder" : "card-table"}`}
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
+                                    loading={tableSpin(loading)}
                                     dataSource={dataTable}>
                                     <Column title="Name" dataIndex="Name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}

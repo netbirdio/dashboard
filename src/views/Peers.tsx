@@ -20,7 +20,7 @@ import {
     RadioChangeEvent,
     Dropdown,
     Menu,
-    Alert, Select, Modal, Button, message, Popover
+    Alert, Select, Modal, Button, message, Popover, SpinProps, Spin
 } from "antd";
 import {Peer} from "../store/peer/types";
 import {filter} from "lodash"
@@ -29,6 +29,8 @@ import {ExclamationCircleOutlined} from "@ant-design/icons";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerGroupsUpdate from "../components/PeerGroupsUpdate";
+import TableSpin from "../components/Spin";
+import tableSpin from "../components/Spin";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -256,13 +258,14 @@ export const Peers = () => {
                             {failed &&
                                 <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
                             }
-                            {loading && <Loading/>}
+                            {/*{loading && <Loading/>}*/}
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
                                     pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} peers`)}}
                                     className="card-table"
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
+                                    loading={tableSpin(loading)}
                                     dataSource={dataTable}>
                                     <Column title="Name" dataIndex="Name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}

@@ -16,6 +16,7 @@ import {
 import { User } from "../store/user/types";
 import {filter} from "lodash";
 import {formatOS, timeAgo} from "../utils/common";
+import tableSpin from "../components/Spin";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -97,13 +98,13 @@ export const Activity = () => {
                         {failed &&
                             <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
                         }
-                        {loading && <Loading/>}
                         <Card bodyStyle={{padding: 0}}>
                             <Table
                                 pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)}}
                                 className="card-table"
                                 showSorterTooltip={false}
                                 scroll={{x: true}}
+                                loading={tableSpin(loading)}
                                 dataSource={dataTable}>
                                 <Column title="Email" dataIndex="email"
                                         onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}

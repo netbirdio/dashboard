@@ -26,6 +26,8 @@ import {copyToClipboard, formatDate, formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
+import TableSpin from "../components/Spin";
+import tableSpin from "../components/Spin";
 
 const { Title, Text, Paragraph } = Typography;
 const { Column } = Table;
@@ -254,13 +256,13 @@ export const SetupKeys = () => {
                             {failed &&
                                 <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
                             }
-                            {loading && <Loading/>}
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
                                     pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} setup keys`)}}
                                     className="card-table"
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
+                                    loading={tableSpin(loading)}
                                     dataSource={dataTable}>
                                     <Column title="Name" dataIndex="Name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}
