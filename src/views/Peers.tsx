@@ -120,13 +120,13 @@ export const Peers = () => {
     useEffect(() => {
         const style = { marginTop: 85 }
         if (savedGroups.loading) {
-            message.loading({ content: 'Updating groups...', key: saveGroupsKey, style });
+            message.loading({ content: 'Updating peer groups...', key: saveGroupsKey, style });
         } else if (savedGroups.success) {
-            message.success({ content: 'Groups updated with success!', key: saveGroupsKey, duration: 2, style });
+            message.success({ content: 'Peer groups have been successfully updated.', key: saveGroupsKey, duration: 2, style });
             setUpdateGroupsVisible({} as Peer, false)
             dispatch(peerActions.resetSavedGroups(null))
         } else if (savedGroups.error) {
-            message.error({ content: 'Error! Something wrong to update groups.', key: saveGroupsKey, duration: 2, style  });
+            message.error({ content: 'Failed to update peer groups. You might not have enough permissions.', key: saveGroupsKey, duration: 2, style  });
             dispatch(peerActions.resetSavedGroups(null))
         }
     }, [savedGroups])

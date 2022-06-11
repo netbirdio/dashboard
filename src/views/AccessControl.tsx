@@ -129,12 +129,12 @@ export const AccessControl = () => {
         if (savedRule.loading) {
             message.loading({ content: 'Saving...', key: saveKey, duration: 0, style: styleNotification })
         } else if (savedRule.success) {
-            message.success({ content: 'Rule saved with success!', key: saveKey, duration: 2, style: styleNotification });
+            message.success({ content: 'Rule has been successfully updated.', key: saveKey, duration: 2, style: styleNotification });
             dispatch(ruleActions.setSetupNewRuleVisible(false))
             dispatch(ruleActions.setSavedRule({ ...savedRule, success: false }))
             dispatch(ruleActions.resetSavedRule(null))
         } else if (savedRule.error) {
-            message.error({ content: 'Error! Something wrong to create key.', key: saveKey, duration: 2, style: styleNotification  });
+            message.error({ content: 'Failed to update rule. You might not have enough permissions.', key: saveKey, duration: 2, style: styleNotification  });
             dispatch(ruleActions.setSavedRule({ ...savedRule, error: null }))
             dispatch(ruleActions.resetSavedRule(null))
         }
@@ -146,10 +146,10 @@ export const AccessControl = () => {
         if (deletedRule.loading) {
             message.loading({ content: 'Deleting...', key: deleteKey, style })
         } else if (deletedRule.success) {
-            message.success({ content: 'Rule deleted with success!', key: deleteKey, duration: 2, style })
+            message.success({ content: 'Rule has been successfully disabled.', key: deleteKey, duration: 2, style })
             dispatch(ruleActions.resetDeletedRule(null))
         } else if (deletedRule.error) {
-            message.error({ content: 'Error! Something wrong to delete rule.', key: deleteKey, duration: 2, style  })
+            message.error({ content: 'Failed to remove rule. You might not have enough permissions.', key: deleteKey, duration: 2, style  })
             dispatch(ruleActions.resetDeletedRule(null))
         }
     }, [deletedRule])
