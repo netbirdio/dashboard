@@ -194,7 +194,7 @@ export const Peers = () => {
     const renderPopoverGroups = (label: string, groups:Group[] | string[] | null, peerToAction:PeerDataTable) => {
         const content = groups?.map((g,i) => {
             const _g = g as Group
-            const peersCount = ` - ${_g.PeersCount || 0} ${(_g.PeersCount && parseInt(_g.PeersCount) > 1) ? 'peers' : 'peer'} `
+            const peersCount = ` - ${_g.PeersCount || 0} ${(!_g.PeersCount || parseInt(_g.PeersCount) !== 1) ? 'peers' : 'peer'} `
             return (
                 <div key={i}>
                     <Tag

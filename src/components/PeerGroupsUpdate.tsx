@@ -89,7 +89,7 @@ const PeerGroupsUpdate = () => {
     const optionRender = (label: string) => {
         let peersCount = ''
         const g = groups.find(_g => _g.Name === label)
-        if (g)  peersCount = ` - ${g.PeersCount || 0} ${(g.PeersCount && parseInt(g.PeersCount) > 1) ? 'peers' : 'peer'} `
+        if (g)  peersCount = ` - ${g.PeersCount || 0} ${(!g.PeersCount || parseInt(g.PeersCount) !== 1) ? 'peers' : 'peer'} `
         return (
             <>
                 <Tag
