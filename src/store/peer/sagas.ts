@@ -1,4 +1,4 @@
-import {all, call, put, select, takeLatest} from 'redux-saga/effects';
+import {all, call, spawn, put, select, takeLatest} from 'redux-saga/effects';
 import {
   ApiError,
   ApiResponse,
@@ -116,6 +116,10 @@ export function* saveGroups(action: ReturnType<typeof actions.saveGroups.request
       Peers: [peerGroupsToSave.ID]
     }))
 
+    if (!groupsNoId.length && !groupsToSave.length) {
+      return
+    }
+
     const responsesGroup = yield all(groupsToSave.map(g => call(serviceGroup.editGroup, {
          getAccessTokenSilently: action.payload.getAccessTokenSilently,
          payload: g
@@ -127,7 +131,7 @@ export function* saveGroups(action: ReturnType<typeof actions.saveGroups.request
          payload: g
        })
     ))
-
+    
     yield put(actions.saveGroups.success({
       loading: false,
       success: true,
@@ -144,8 +148,8 @@ export function* saveGroups(action: ReturnType<typeof actions.saveGroups.request
     yield put(actions.saveGroups.failure({
       loading: false,
       success: false,
-      failure: false,
-      error: null,
+      failure: true,
+      error: err as ApiError,
       data: null
     } as ChangeResponse<Group[] | null>));
   }

@@ -160,7 +160,7 @@ const PeerGroupsUpdate = () => {
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedGroups.loading}>Cancel</Button>
-                            <Button type="primary" disabled={savedGroups.loading} onClick={handleFormSubmit}>Save</Button>
+                            <Button type="primary" disabled={savedGroups.loading || (!peerGroupsToSave.groupsToRemove.length && !peerGroupsToSave.groupsToAdd.length && !peerGroupsToSave.groupsNoId.length)} onClick={handleFormSubmit}>Save</Button>
                         </Space>
                     }
                 >
