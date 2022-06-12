@@ -17,9 +17,9 @@ The dashboard makes it possible to:
 - define access controls
 
 ## Some Screenshots
-<img src="./media/auth.png" alt="auth" width="350"/>
-<img src="./media/peers.png" alt="peers" width="350"/>
-<img src="./media/add-peer.png" alt="add-peer" width="350"/>
+<img src="./media/auth.png" alt="auth"/>
+<img src="./media/peers.png" alt="peers"/>
+<img src="./media/add-peer.png" alt="add-peer"/>
 
 
 ## Technologies Used
