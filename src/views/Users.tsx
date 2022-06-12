@@ -106,17 +106,17 @@ export const Activity = () => {
                                 scroll={{x: true}}
                                 loading={tableSpin(loading)}
                                 dataSource={dataTable}>
-                                <Column title="Email" dataIndex="email"
+                                <Column title="Email" dataIndex="Email"
                                         onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
                                         sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
                                         render={(text:string | null, record, index) => {
                                             return (text && text.trim() !== "") ? text : (record as User).ID
                                         }}
                                 />
-                                <Column title="Name" dataIndex="name"
+                                <Column title="Name" dataIndex="Name"
                                         onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                         sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))} />
-                                <Column title="Role" dataIndex="role"
+                                <Column title="Role" dataIndex="Role"
                                         onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
                                         sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))} />
                             </Table>
