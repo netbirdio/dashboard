@@ -223,7 +223,7 @@ export const AccessControl = () => {
             (f.name.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
         ) as Rule[]
         if (optionAllEnable !== "all") {
-             f = filter(rules, (f:Rule) => !f.disabled)
+             f = filter(f, (f:Rule) => !f.disabled)
         }
         return f
     }
