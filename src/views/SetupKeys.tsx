@@ -77,7 +77,7 @@ export const SetupKeys = () => {
     const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
 
     const transformDataTable = (d:SetupKey[]):SetupKeyDataTable[] => {
-        return d.map(p => ({ key: p.Id, ...p } as SetupKeyDataTable))
+        return d.map(p => ({ key: p.id, ...p } as SetupKeyDataTable))
     }
 
     useEffect(() => {
@@ -138,10 +138,10 @@ export const SetupKeys = () => {
         const t = textToSearch.toLowerCase().trim()
         let f:SetupKey[] = [...setupKeys]
         if (optionValidAll === "valid") {
-            f = filter(setupKeys, (_f:SetupKey) => _f.Valid && !_f.Revoked)
+            f = filter(setupKeys, (_f:SetupKey) => _f.valid && !_f.revoked)
         }
         f = filter(f, (_f:SetupKey) =>
-            (_f.Name.toLowerCase().includes(t) || _f.State.includes(t) || _f.Type.includes(t) || _f.Key.includes(t) || t === "")
+            (_f.name.toLowerCase().includes(t) || _f.state.includes(t) || _f.type.includes(t) || _f.key.includes(t) || t === "")
         ) as SetupKey[]
         return f
     }
@@ -170,14 +170,14 @@ export const SetupKeys = () => {
             content: <Space direction="vertical" size="small">
                 {setupKeyToAction &&
                     <>
-                        <Title level={5}>Delete setupKey "{setupKeyToAction ? setupKeyToAction.Name : ''}"</Title>
+                        <Title level={5}>Delete setupKey "{setupKeyToAction ? setupKeyToAction.name : ''}"</Title>
                         <Paragraph>Are you sure you want to delete key?</Paragraph>
                     </>
                 }
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.deleteSetupKey.request({getAccessTokenSilently, payload: setupKeyToAction ? setupKeyToAction.Id : ''}));
+                dispatch(setupKeyActions.deleteSetupKey.request({getAccessTokenSilently, payload: setupKeyToAction ? setupKeyToAction.id : ''}));
             },
             onCancel() {
                 setSetupKeyToAction(null);
@@ -192,14 +192,14 @@ export const SetupKeys = () => {
             content: <Space direction="vertical" size="small">
                 {setupKeyToAction &&
                     <>
-                        <Title level={5}>Revoke setupKey "{setupKeyToAction ? setupKeyToAction.Name : ''}"</Title>
+                        <Title level={5}>Revoke setupKey "{setupKeyToAction ? setupKeyToAction.name : ''}"</Title>
                         <Paragraph>Are you sure you want to revoke key?</Paragraph>
                     </>
                 }
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.revokeSetupKey.request({getAccessTokenSilently, payload: { Id: setupKeyToAction ? setupKeyToAction.Id : null, Revoked: true } as SetupKeyRevoke}));
+                dispatch(setupKeyActions.revokeSetupKey.request({getAccessTokenSilently, payload: { id: setupKeyToAction ? setupKeyToAction.id : null,revoked: true } as SetupKeyRevoke}));
             },
             onCancel() {
                 setSetupKeyToAction(null);
@@ -210,8 +210,8 @@ export const SetupKeys = () => {
     const onClickAddNewSetupKey = () => {
         dispatch(setupKeyActions.setSetupNewKeyVisible(true));
         dispatch(setupKeyActions.setSetupKey({
-            Name: '',
-            Type: 'reusable'
+            name: '',
+            type: 'reusable'
         } as SetupKey))
     }
 
@@ -264,41 +264,42 @@ export const SetupKeys = () => {
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
-                                    <Column title="Name" dataIndex="Name"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}
-                                            sorter={(a, b) => ((a as any).Name.localeCompare((b as any).Name))}
+                                    <Column title="Name" dataIndex="name"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                     />
 
-                                    <Column title="State" dataIndex="State"
+                                    <Column title="State" dataIndex="state"
                                             render={(text, record, index) => {
                                                 return (text === 'valid') ? <Tag color="green">{text}</Tag> : <Tag color="red">{text}</Tag>
                                             }}
-                                            sorter={(a, b) => ((a as any).State.localeCompare((b as any).State))}
+                                            sorter={(a, b) => ((a as any).state.localeCompare((b as any).state))}
                                     />
 
-                                    <Column title="Type" dataIndex="Type"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).Type.includes(value)}
-                                            sorter={(a, b) => ((a as any).Type.localeCompare((b as any).Type))}
+                                    <Column title="Type" dataIndex="type"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).type.includes(value)}
+                                            sorter={(a, b) => ((a as any).type.localeCompare((b as any).type))}
                                     />
 
-                                    <Column title="Key" dataIndex="Key"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).Key.includes(value)}
-                                            sorter={(a, b) => ((a as any).Key.localeCompare((b as any).Key))}
+                                    <Column title="Key" dataIndex="key"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).key.includes(value)}
+                                            sorter={(a, b) => ((a as any).key.localeCompare((b as any).key))}
                                             render={(text, record, index) => {
                                                 return <ButtonCopyMessage keyMessage={(record as SetupKeyDataTable).key} text={text} messageText={`Key copied!`} styleNotification={{}}/>
                                             }}
                                     />
 
-                                    <Column title="Last Used" dataIndex="LastUsed"
+                                    <Column title="Last Used" dataIndex="last_used"
+                                            sorter={(a, b) => ((a as any).last_used.localeCompare((b as any).last_used))}
                                             render={(text, record, index) => {
-                                                return !(record as SetupKey).UsedTimes ? 'unused' : timeAgo(text)
+                                                return !(record as SetupKey).used_times ? 'unused' : timeAgo(text)
                                             }}
                                     />
-                                    <Column title="Used Times" dataIndex="UsedTimes"
-                                            sorter={(a, b) => ((a as any).Type.localeCompare((b as any).Type))}
+                                    <Column title="Used Times" dataIndex="used_times"
+                                            sorter={(a, b) => ((a as any).used_times - ((b as any).used_times))}
                                     />
 
-                                    <Column title="Expires" dataIndex="Expires"
+                                    <Column title="Expires" dataIndex="expires"
                                             render={(text, record, index) => {
                                                 return formatDate(text)
                                             }}
@@ -306,7 +307,7 @@ export const SetupKeys = () => {
 
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
-                                                return !(record as SetupKeyDataTable).Revoked ? (
+                                                return !(record as SetupKeyDataTable).revoked ? (
                                                     <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
                                                                         onVisibleChange={visible => {
                                                                             if (visible) setSetupKeyToAction(record as SetupKeyDataTable)

@@ -48,8 +48,8 @@ const SetupKeyNew = () => {
     const onCancel = () => {
         if (createdSetupKey.loading) return
         dispatch(setupKeyActions.setSetupKey({
-            Name: '',
-            Type: 'reusable'
+            name: '',
+            type: 'reusable'
         } as SetupKey))
         setVisibleNewSetupKey(false)
     }

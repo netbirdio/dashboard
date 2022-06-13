@@ -81,7 +81,7 @@ export function* deleteSetupKey(action: ReturnType<typeof actions.deleteSetupKey
         } as DeleteResponse<string | null>));
 
         const setupKeys = (yield select(state => state.setupKey.data)) as SetupKey[]
-        yield put(actions.getSetupKeys.success(setupKeys.filter((p:SetupKey) => p.Id !== action.payload.payload)))
+        yield put(actions.getSetupKeys.success(setupKeys.filter((p:SetupKey) => p.id !== action.payload.payload)))
     } catch (err) {
         yield put(actions.deleteSetupKey.failure({
             loading: false,
@@ -115,12 +115,12 @@ export function* revokeSetupKey(action: ReturnType<typeof actions.revokeSetupKey
         } as ChangeResponse<SetupKey | null>));
 
         const setupKeys = [...(yield select(state => state.setupKey.data)) as SetupKey[]]
-        let setupKey = setupKeys.find(s => s.Id === response.body.Id) as SetupKey
+        let setupKey = setupKeys.find(s => s.id === response.body.id) as SetupKey
         if (setupKey) {
-            setupKey.Revoked = response.body.Revoked
-            setupKey.Valid = response.body.Valid
-            setupKey.State = response.body.State
-            setupKey.Expires = response.body.Expires
+            setupKey.revoked = response.body.revoked
+            setupKey.valid = response.body.valid
+            setupKey.state = response.body.state
+            setupKey.expires = response.body.expires
         }
         yield put(actions.getSetupKeys.success(setupKeys));
     } catch (err) {
