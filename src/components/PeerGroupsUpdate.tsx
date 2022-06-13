@@ -40,8 +40,8 @@ const PeerGroupsUpdate = () => {
 
     useEffect(() => {
         if (!peer) return
-        const gs = peer?.Groups?.map(g => ({ID: g?.ID || '', Name: g.Name} as GroupPeer)) as GroupPeer[]
-        const gs_name = gs?.map(g => g.Name) as string[]
+        const gs = peer?.groups?.map(g => ({id: g?.id || '', name: g.name} as GroupPeer)) as GroupPeer[]
+        const gs_name = gs?.map(g => g.name) as string[]
         setPeerGroups(gs)
         setSelectedTagGroups(gs_name)
         form.setFieldsValue({
@@ -50,16 +50,16 @@ const PeerGroupsUpdate = () => {
     }, [peer])
 
     useEffect(() => {
-        setTagGroups(groups?.map(g => g.Name) || [])
+        setTagGroups(groups?.map(g => g.name) || [])
     }, [groups])
 
     useEffect(() => {
-        const groupsToRemove = peerGroups.filter(pg => !selectedTagGroups.includes(pg.Name)).map(g => g.ID)
-        const groupsToAdd = (groups as Group[]).filter(g => selectedTagGroups.includes(g.Name) && !groupsToRemove.includes(g.ID || '') && !peerGroups.find(pg => pg.ID === g.ID)).map(g => g.ID) as string[]
-        const groupsNoId = selectedTagGroups.filter(stg => !groups.find(g => g.Name === stg))
+        const groupsToRemove = peerGroups.filter(pg => !selectedTagGroups.includes(pg.name)).map(g => g.id)
+        const groupsToAdd = (groups as Group[]).filter(g => selectedTagGroups.includes(g.name) && !groupsToRemove.includes(g.id || '') && !peerGroups.find(pg => pg.id === g.id)).map(g => g.id) as string[]
+        const groupsNoId = selectedTagGroups.filter(stg => !groups.find(g => g.name === stg))
         setPeerGroupsToSave({
             ...peerGroupsToSave,
-            ID: peer?.ID || '',
+            ID: peer?.id || '',
             groupsToRemove,
             groupsToAdd,
             groupsNoId
@@ -88,8 +88,8 @@ const PeerGroupsUpdate = () => {
 
     const optionRender = (label: string) => {
         let peersCount = ''
-        const g = groups.find(_g => _g.Name === label)
-        if (g)  peersCount = ` - ${g.PeersCount || 0} ${(!g.PeersCount || parseInt(g.PeersCount) !== 1) ? 'peers' : 'peer'} `
+        const g = groups.find(_g => _g.name === label)
+        if (g)  peersCount = ` - ${g.peers_count || 0} ${(!g.peers_count || parseInt(g.peers_count) !== 1) ? 'peers' : 'peer'} `
         return (
             <>
                 <Tag
@@ -151,7 +151,7 @@ const PeerGroupsUpdate = () => {
         <>
             {peer &&
                 <Drawer
-                    title={`${peer.Name}`}
+                    title={`${peer.name}`}
                     forceRender={true}
                     visible={true}
                     bodyStyle={{paddingBottom: 80}}

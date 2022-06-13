@@ -1,14 +1,14 @@
 import {Group} from "../group/types";
 
 export interface Peer {
-  ID?: string,
-  Name: string,
-  IP: string,
-  Connected: boolean,
-  LastSeen: string,
-  OS: string,
-  Version: string,
-  Groups?: Group[]
+  id?: string,
+  name: string,
+  ip: string,
+  connected: boolean,
+  last_seen: string,
+  os: string,
+  version: string,
+  groups?: Group[]
 }
 
 export interface PeerToSave extends Peer {

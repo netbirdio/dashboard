@@ -62,7 +62,7 @@ export function* deletePeer(action: ReturnType<typeof actions.deletedPeer.reques
     } as DeleteResponse<string | null>));
 
     const peers = (yield select(state => state.peer.data)) as Peer[]
-    yield put(actions.getPeers.success(peers.filter((p:Peer) => p.IP !== action.payload.payload)))
+    yield put(actions.getPeers.success(peers.filter((p:Peer) => p.ip !== action.payload.payload)))
   } catch (err) {
     yield put(actions.deletedPeer.failure({
       loading: false,
@@ -93,27 +93,27 @@ export function* saveGroups(action: ReturnType<typeof actions.saveGroups.request
 
     groupsToSave = groupsToSave.concat(
         currentGroups
-            .filter(g => peerGroupsToSave.groupsToRemove.includes(g.ID || ''))
+            .filter(g => peerGroupsToSave.groupsToRemove.includes(g.id || ''))
             .map(g => ({
-              ID: g.ID,
-              Name: g.Name,
-              Peers: (g.Peers as GroupPeer[]).filter(p => p.ID !== peerGroupsToSave.ID).map(p => p.ID) as string[]
+              id: g.id,
+              name: g.name,
+              peers: (g.peers as GroupPeer[]).filter(p => p.id !== peerGroupsToSave.ID).map(p => p.id) as string[]
             }))
     )
 
     groupsToSave = groupsToSave.concat(
         currentGroups
-            .filter(g => peerGroupsToSave.groupsToAdd.includes(g.ID || ''))
+            .filter(g => peerGroupsToSave.groupsToAdd.includes(g.id || ''))
             .map(g => ({
-              ID: g.ID,
-              Name: g.Name,
-              Peers: g.Peers ? [...(g.Peers as GroupPeer[]).map((p:GroupPeer) => p.ID), peerGroupsToSave.ID] : [peerGroupsToSave.ID]
+              id: g.id,
+              name: g.name,
+              Peers: g.peers ? [...(g.peers as GroupPeer[]).map((p:GroupPeer) => p.id), peerGroupsToSave.ID] : [peerGroupsToSave.ID]
             }))
     )
 
     groupsNoId = peerGroupsToSave.groupsNoId.map(g => ({
-      Name: g,
-      Peers: [peerGroupsToSave.ID]
+      name: g,
+      peers: [peerGroupsToSave.ID]
     }))
 
     if (!groupsNoId.length && !groupsToSave.length) {

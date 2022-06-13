@@ -77,13 +77,13 @@ export const Peers = () => {
     const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
 
     const transformDataTable = (d:Peer[]):PeerDataTable[] => {
-        const peer_ids = d.map(_p => _p.ID)
+        const peer_ids = d.map(_p => _p.id)
         return d.map((p) => {
             const gs = groups
-                .filter(g => g.Peers?.find((_p:GroupPeer) => _p.ID === p.ID))
-                .map(g => ({ID: g.ID, Name: g.Name, PeersCount: g.Peers?.length, Peers: g.Peers || []}))
+                .filter(g => g.peers?.find((_p:GroupPeer) => _p.id === p.id))
+                .map(g => ({id: g.id, name: g.name, peers_count: g.peers?.length, peers: g.peers || []}))
             return {
-                key: p.ID,
+                key: p.id,
                 ...p,
                 groups: gs,
                 groupsCount: gs.length
@@ -136,10 +136,10 @@ export const Peers = () => {
     const filterDataTable = ():Peer[] => {
         const t = textToSearch.toLowerCase().trim()
          let f:Peer[] = filter(peers, (f:Peer) =>
-             (f.Name.toLowerCase().includes(t) || f.IP.includes(t) || f.OS.includes(t) || t === "")
+             (f.name.toLowerCase().includes(t) || f.ip.includes(t) || f.os.includes(t) || t === "")
          ) as Peer[]
         if (optionOnOff === "on") {
-            f = filter(peers, (f:Peer) => f.Connected)
+            f = filter(peers, (f:Peer) => f.connected)
         }
         return f
     }
@@ -168,14 +168,14 @@ export const Peers = () => {
             content: <Space direction="vertical" size="small">
                 {peerToAction &&
                     <>
-                        <Title level={5}>Delete peer "{peerToAction ? peerToAction.Name : ''}"</Title>
+                        <Title level={5}>Delete peer "{peerToAction ? peerToAction.name : ''}"</Title>
                         <Paragraph>Are you sure you want to delete peer from your account?</Paragraph>
                     </>
                 }
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(peerActions.deletedPeer.request({getAccessTokenSilently, payload: peerToAction ? peerToAction.IP : ''}));
+                dispatch(peerActions.deletedPeer.request({getAccessTokenSilently, payload: peerToAction ? peerToAction.ip : ''}));
             },
             onCancel() {
                 setPeerToAction(null);
@@ -196,14 +196,14 @@ export const Peers = () => {
     const renderPopoverGroups = (label: string, groups:Group[] | string[] | null, peerToAction:PeerDataTable) => {
         const content = groups?.map((g,i) => {
             const _g = g as Group
-            const peersCount = ` - ${_g.PeersCount || 0} ${(!_g.PeersCount || parseInt(_g.PeersCount) !== 1) ? 'peers' : 'peer'} `
+            const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
             return (
                 <div key={i}>
                     <Tag
                         color="blue"
                         style={{ marginRight: 3 }}
                     >
-                        <strong>{_g.Name}</strong>
+                        <strong>{_g.name}</strong>
                     </Tag>
                     <span style={{fontSize: ".85em"}}>{peersCount}</span>
                 </div>
@@ -267,13 +267,13 @@ export const Peers = () => {
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
-                                    <Column title="Name" dataIndex="Name"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}
-                                            sorter={(a, b) => ((a as any).Name.localeCompare((b as any).Name))} />
-                                    <Column title="IP" dataIndex="IP"
+                                    <Column title="Name" dataIndex="name"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))} />
+                                    <Column title="IP" dataIndex="ip"
                                             sorter={(a, b) => {
-                                                const _a = (a as any).IP.split('.')
-                                                const _b = (b as any).IP.split('.')
+                                                const _a = (a as any).ip.split('.')
+                                                const _b = (b as any).ip.split('.')
                                                 const a_s = _a.map((i:any) => i.padStart(3, '0')).join()
                                                 const b_s = _b.map((i:any) => i.padStart(3, '0')).join()
                                                 return a_s.localeCompare(b_s)
@@ -282,7 +282,7 @@ export const Peers = () => {
                                                 return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key} text={text} messageText={'IP copied!'} styleNotification={{}}/>
                                             }}
                                     />
-                                    <Column title="Status" dataIndex="Connected"
+                                    <Column title="Status" dataIndex="connected"
                                             render={(text, record, index) => {
                                                 return text ? <Tag color="green">online</Tag> : <Tag color="red">offline</Tag>
                                             }}
@@ -292,17 +292,17 @@ export const Peers = () => {
                                                 return renderPopoverGroups(text, record.groups, record)
                                             }}
                                     />
-                                    <Column title="LastSeen" dataIndex="LastSeen"
+                                    <Column title="LastSeen" dataIndex="last_seen"
                                             render={(text, record, index) => {
-                                                return (record as PeerDataTable).Connected ? 'just now' : timeAgo(text)
+                                                return (record as PeerDataTable).connected ? 'just now' : timeAgo(text)
                                             }}
                                     />
-                                    <Column title="OS" dataIndex="OS"
+                                    <Column title="OS" dataIndex="os"
                                             render={(text, record, index) => {
                                                 return formatOS(text)
                                             }}
                                     />
-                                    <Column title="Version" dataIndex="Version" />
+                                    <Column title="Version" dataIndex="version" />
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
                                                 return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
