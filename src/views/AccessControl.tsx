@@ -89,22 +89,22 @@ export const AccessControl = () => {
     const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
 
     const getSourceDestinationLabel = (data:Group[]):string => {
-        return (!data) ? "No group" : (data.length > 1) ? `${data.length} Groups` : (data.length === 1) ? data[0].Name : "No group"
+        return (!data) ? "No group" : (data.length > 1) ? `${data.length} Groups` : (data.length === 1) ? data[0].name : "No group"
     }
 
     const isShowTutorial = (rules:Rule[]):boolean => {
-        return (!rules.length || (rules.length === 1 && rules[0].Name === "Default"))
+        return (!rules.length || (rules.length === 1 && rules[0].name === "Default"))
     }
 
     const transformDataTable = (d:Rule[]):RuleDataTable[] => {
         return d.map(p => {
-            const sourceLabel = getSourceDestinationLabel(p.Source as Group[])
-            const destinationLabel = getSourceDestinationLabel(p.Destination as Group[])
+            const sourceLabel = getSourceDestinationLabel(p.sources as Group[])
+            const destinationLabel = getSourceDestinationLabel(p.destinations as Group[])
             return {
-                key: p.ID, ...p,
-                sourceCount: p.Source?.length,
+                key: p.id, ...p,
+                sourceCount: p.sources?.length,
                 sourceLabel,
-                destinationCount: p.Destination?.length,
+                destinationCount: p.destinations?.length,
                 destinationLabel
             } as RuleDataTable
         })
@@ -117,7 +117,7 @@ export const AccessControl = () => {
 
     useEffect(() => {
         setShowTutorial(isShowTutorial(rules))
-        setDataTable(sortBy(transformDataTable(filterDataTable()), "Name"))
+        setDataTable(sortBy(transformDataTable(filterDataTable()), "name"))
     }, [rules])
 
     useEffect(() => {
@@ -180,14 +180,14 @@ export const AccessControl = () => {
             content: <Space direction="vertical" size="small">
                 {ruleToAction &&
                     <>
-                        <Title level={5}>Delete rule "{ruleToAction ? ruleToAction.Name : ''}"</Title>
+                        <Title level={5}>Delete rule "{ruleToAction ? ruleToAction.name : ''}"</Title>
                         <Paragraph>Are you sure you want to delete peer from your account?</Paragraph>
                     </>
                 }
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(ruleActions.deleteRule.request({getAccessTokenSilently, payload: ruleToAction?.ID || ''}));
+                dispatch(ruleActions.deleteRule.request({getAccessTokenSilently, payload: ruleToAction?.id || ''}));
             },
             onCancel() {
                 setRuleToAction(null);
@@ -202,14 +202,14 @@ export const AccessControl = () => {
             content: <Space direction="vertical" size="small">
                 {ruleToAction &&
                     <>
-                        <Title level={5}>Deactivate rule "{ruleToAction ? ruleToAction.Name : ''}"</Title>
+                        <Title level={5}>Deactivate rule "{ruleToAction ? ruleToAction.name : ''}"</Title>
                         <Paragraph>Are you sure you want to deactivate peer from your account?</Paragraph>
                     </>
                 }
             </Space>,
             okType: 'danger',
             onOk() {
-                //dispatch(ruleActions.deleteRule.request({getAccessTokenSilently, payload: ruleToAction?.ID || ''}));
+                //dispatch(ruleActions.deleteRule.request({getAccessTokenSilently, payload: ruleToAction?.id || ''}));
             },
             onCancel() {
                 setRuleToAction(null);
@@ -220,10 +220,10 @@ export const AccessControl = () => {
     const filterDataTable = ():Rule[] => {
         const t = textToSearch.toLowerCase().trim()
         let f:Rule[] = filter(rules, (f:Rule) =>
-            (f.Name.toLowerCase().includes(t) || f.Description.toLowerCase().includes(t) || t === "")
+            (f.name.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
         ) as Rule[]
         if (optionAllEnable !== "all") {
-             f = filter(rules, (f:Rule) => !f.Disabled)
+             f = filter(rules, (f:Rule) => !f.disabled)
         }
         return f
     }
@@ -231,25 +231,25 @@ export const AccessControl = () => {
     const onClickAddNewRule = () => {
         dispatch(ruleActions.setSetupNewRuleVisible(true));
         dispatch(ruleActions.setRule({
-            Name: '',
-            Description: '',
-            Source: [],
-            Destination: [],
-            Flow: 'bidirect',
-            Disabled: false
+            name: '',
+            description: '',
+            sources: [],
+            destinations: [],
+            flow: 'bidirect',
+            disabled: false
         } as Rule))
     }
 
     const onClickViewRule = () => {
         dispatch(ruleActions.setSetupNewRuleVisible(true));
         dispatch(ruleActions.setRule({
-            ID: ruleToAction?.ID || null,
-            Name: ruleToAction?.Name,
-            Description: ruleToAction?.Description,
-            Source: ruleToAction?.Source,
-            Destination: ruleToAction?.Destination,
-            Flow: ruleToAction?.Flow,
-            Disabled: ruleToAction?.Disabled
+            id: ruleToAction?.id || null,
+            name: ruleToAction?.name,
+            description: ruleToAction?.description,
+            sources: ruleToAction?.sources,
+            destinations: ruleToAction?.destinations,
+            flow: ruleToAction?.flow,
+            disabled: ruleToAction?.disabled
         } as Rule))
     }
 
@@ -264,14 +264,14 @@ export const AccessControl = () => {
     const renderPopoverGroups = (label: string, groups:Group[] | string[] | null) => {
         const content = groups?.map((g, i) => {
             const _g = g as Group
-            const peersCount = ` - ${_g.PeersCount || 0} ${(!_g.PeersCount || parseInt(_g.PeersCount) !== 1) ? 'peers' : 'peer'} `
+            const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
             return (
                 <div key={i}>
                     <Tag
                         color="blue"
                         style={{ marginRight: 3 }}
                     >
-                        <strong>{_g.Name}</strong>
+                        <strong>{_g.name}</strong>
                     </Tag>
                     <span style={{fontSize: ".85em"}}>{peersCount}</span>
                 </div>
@@ -339,17 +339,17 @@ export const AccessControl = () => {
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
-                                    <Column title="Name" dataIndex="Name"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).Name.includes(value)}
-                                            sorter={(a, b) => ((a as any).Name.localeCompare((b as any).Name))}
+                                    <Column title="Name" dataIndex="name"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                             render={(text, record, index) => {
-                                                const desc = (record as RuleDataTable).Description.trim()
+                                                const desc = (record as RuleDataTable).description.trim()
                                                 return <Tooltip title={desc !== "" ?  desc : "no description"} arrowPointAtCenter>
                                                     <span className="tooltip-label">{text}</span>
                                                 </Tooltip>
                                             }}
                                     />
-                                    <Column title="Status" dataIndex="Disabled"
+                                    <Column title="Status" dataIndex="disabled"
                                             render={(text:Boolean, record:RuleDataTable, index) => {
                                                 return text ? <Tag color="red">Inactive</Tag> : <Tag color="green">Active</Tag>
                                             }}
@@ -357,10 +357,10 @@ export const AccessControl = () => {
                                     <Column title="Sources" dataIndex="sourceLabel"
                                             render={(text, record:RuleDataTable, index) => {
                                                 //return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Sources`, record.Source, true)}>{text}</Button>
-                                                return renderPopoverGroups(text, record.Source)
+                                                return renderPopoverGroups(text, record.sources)
                                             }}
                                     />
-                                    <Column title="Direction" dataIndex="Flow"
+                                    <Column title="Direction" dataIndex="flow"
                                             render={(text, record:RuleDataTable, index) => {
                                                 const s = {minWidth: 50, textAlign: "center"} as React.CSSProperties
                                                 if (text === "bidirect")
@@ -375,8 +375,8 @@ export const AccessControl = () => {
                                     />
                                     <Column title="Destinations" dataIndex="destinationLabel"
                                             render={(text, record:RuleDataTable, index) => {
-                                                //return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Destinations`, record.Destination, true)}>{text}</Button>
-                                                return renderPopoverGroups(text, record.Destination)
+                                                //return <Button type="link" onClick={() => toggleModalGroups(`${record.name} - Destinations`, record.destinations, true)}>{text}</Button>
+                                                return renderPopoverGroups(text, record.destinations)
                                             }}
                                     />
                                     <Column title="" align="center"

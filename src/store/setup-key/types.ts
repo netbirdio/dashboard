@@ -1,23 +1,23 @@
 export interface SetupKey {
-  Expires: string;
-  Id: string;
-  Key: string;
-  LastUsed: string;
-  Name: string;
-  Revoked: boolean;
-  State: string;
-  Type: string;
-  UsedTimes: number;
-  Valid: boolean;
+  expires: string;
+  id: string;
+  key: string;
+  last_used: string;
+  name: string;
+  revoked: boolean;
+  state: string;
+  type: string;
+  used_times: number;
+  valid: boolean;
 }
 
 export interface SetupKeyNew {
-  Id: string;
-  Name: string;
-  Type: string;
+  id: string;
+  name: string;
+  type: string;
 }
 
 export interface SetupKeyRevoke {
-  Id: string;
-  Revoked: boolean;
+  id: string;
+  revoked: boolean;
 }

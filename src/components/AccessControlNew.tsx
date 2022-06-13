@@ -60,34 +60,34 @@ const AccessControlNew = () => {
         if (!rule) return
         const fRule = {
             ...rule,
-            tagSourceGroups: rule.Source ? rule.Source?.map(t => t.Name) : [],
-            tagDestinationGroups: rule.Destination ? rule.Destination?.map(t => t.Name) : []
+            tagSourceGroups: rule.sources ? rule.sources?.map(t => t.name) : [],
+            tagDestinationGroups: rule.destinations ? rule.destinations?.map(t => t.name) : []
         } as FormRule
         setFormRule(fRule)
         form.setFieldsValue(fRule)
     }, [rule])
 
     useEffect(() => {
-        setTagGroups(groups?.map(g => g.Name) || [])
+        setTagGroups(groups?.map(g => g.name) || [])
     }, [groups])
 
     const createRuleToSave = ():RuleToSave => {
-        const Source = groups?.filter(g => formRule.tagSourceGroups.includes(g.Name)).map(g => g.ID || '') || []
-        const Destination = groups?.filter(g => formRule.tagDestinationGroups.includes(g.Name)).map(g => g.ID || '') || []
+        const sources = groups?.filter(g => formRule.tagSourceGroups.includes(g.name)).map(g => g.id || '') || []
+        const destinations = groups?.filter(g => formRule.tagDestinationGroups.includes(g.name)).map(g => g.id || '') || []
         const sourcesNoId = formRule.tagSourceGroups.filter(s => !tagGroups.includes(s))
         const destinationsNoId = formRule.tagDestinationGroups.filter(s => !tagGroups.includes(s))
         const groupsToSave = uniq([...sourcesNoId, ...destinationsNoId])
         return {
-            ID: formRule.ID,
-            Name: formRule.Name,
-            Description: formRule.Description,
-            Source,
-            Destination,
+            id: formRule.id,
+            name: formRule.name,
+            description: formRule.description,
+            sources,
+            destinations,
             sourcesNoId,
             destinationsNoId,
             groupsToSave,
-            Flow: formRule.Flow,
-            Disabled: formRule.Disabled
+            flow: formRule.flow,
+            disabled: formRule.disabled
         } as RuleToSave
     }
 
@@ -110,12 +110,12 @@ const AccessControlNew = () => {
         if (savedRule.loading) return
         setEditName(false)
         dispatch(ruleActions.setRule({
-            Name: '',
-            Description: '',
-            Source: [],
-            Destination: [],
-            Flow: 'bidirect',
-            Disabled: false
+            name: '',
+            description: '',
+            sources: [],
+            destinations: [],
+            flow: 'bidirect',
+            disabled: false
         } as Rule))
         setVisibleNewRule(false)
     }
@@ -141,7 +141,7 @@ const AccessControlNew = () => {
     const handleChangeDisabled = ({ target: { value } }: RadioChangeEvent) => {
         setFormRule({
             ...formRule,
-            Disabled: value
+            disabled: value
         })
     };
 
@@ -167,8 +167,8 @@ const AccessControlNew = () => {
 
     const optionRender = (label: string) => {
         let peersCount = ''
-        const g = groups.find(_g => _g.Name === label)
-        if (g)  peersCount = ` - ${g.PeersCount || 0} ${(!g.PeersCount || parseInt(g.PeersCount) !== 1) ? 'peers' : 'peer'} `
+        const g = groups.find(_g => _g.name === label)
+        if (g)  peersCount = ` - ${g.peers_count || 0} ${(!g.peers_count || parseInt(g.peers_count) !== 1) ? 'peers' : 'peer'} `
         return (
             <>
                 <Tag
@@ -228,7 +228,7 @@ const AccessControlNew = () => {
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedRule.loading}>Cancel</Button>
-                            <Button type="primary" disabled={savedRule.loading} onClick={handleFormSubmit}>{`${formRule.ID ? 'Save' : 'Create'}`}</Button>
+                            <Button type="primary" disabled={savedRule.loading} onClick={handleFormSubmit}>{`${formRule.id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
                 >
@@ -238,7 +238,7 @@ const AccessControlNew = () => {
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
                                     <Row align="top">
                                         <Col flex="none" style={{display: "flex"}}>
-                                            {!editName && !editDescription && formRule.ID  &&
+                                            {!editName && !editDescription && formRule.id  &&
                                                 <button type="button" aria-label="Close" className="ant-drawer-close"
                                                         style={{paddingTop: 3}}
                                                         onClick={onCancel}>
@@ -249,23 +249,23 @@ const AccessControlNew = () => {
                                             }
                                         </Col>
                                         <Col flex="auto">
-                                            { !editName && formRule.ID ? (
-                                                <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRule.ID ? formRule.Name : 'New Rule'}</div>
+                                            { !editName && formRule.id ? (
+                                                <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRule.id ? formRule.name : 'New Rule'}</div>
                                             ) : (
                                                 <Form.Item
-                                                    name="Name"
-                                                    label={null}
+                                                    name="name"
+                                                    label="Name"
                                                     rules={[{required: true, message: 'Please add a name for this access rule'}]}
                                                 >
                                                     <Input placeholder="Add rule name..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
                                                 </Form.Item>
                                             )}
                                             { !editDescription ? (
-                                                <div className={"access-control input-text ant-drawer-subtitle"} onClick={() => toggleEditDescription(true)}>{formRule.Description && formRule.Description.trim() !== "" ? formRule.Description : 'Add description...'}</div>
+                                                <div className={"access-control input-text ant-drawer-subtitle"} onClick={() => toggleEditDescription(true)}>{formRule.description && formRule.description.trim() !== "" ? formRule.description : 'Add description...'}</div>
                                             ) : (
                                                 <Form.Item
-                                                    name="Description"
-                                                    label={null}
+                                                    name="description"
+                                                    label="Description"
                                                     style={{marginTop: 24}}
                                                 >
                                                     <Input placeholder="Add description..." ref={inputDescriptionRef} onPressEnter={() => toggleEditDescription(false)} onBlur={() => toggleEditDescription(false)} autoComplete="off"/>
@@ -286,8 +286,8 @@ const AccessControlNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="Disabled"
-                                    label="Disabled"
+                                    name="disabled"
+                                    label="Status"
                                     //valuePropName="checked"
                                 >
                                     {/*<Switch
