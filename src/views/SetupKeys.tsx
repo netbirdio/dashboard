@@ -77,7 +77,7 @@ export const SetupKeys = () => {
     const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
 
     const transformDataTable = (d:SetupKey[]):SetupKeyDataTable[] => {
-        return d.map(p => ({ key: p.id, ...p } as SetupKeyDataTable))
+        return d.map(p => ({ ...p } as SetupKeyDataTable))
     }
 
     useEffect(() => {
@@ -141,7 +141,7 @@ export const SetupKeys = () => {
             f = filter(setupKeys, (_f:SetupKey) => _f.valid && !_f.revoked)
         }
         f = filter(f, (_f:SetupKey) =>
-            (_f.name.toLowerCase().includes(t) || _f.state.includes(t) || _f.type.includes(t) || _f.key.includes(t) || t === "")
+            (_f.name.toLowerCase().includes(t) || _f.state.includes(t) || _f.type.toLowerCase().includes(t) || _f.key.toLowerCase().includes(t) || t === "")
         ) as SetupKey[]
         return f
     }
