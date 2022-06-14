@@ -29,7 +29,6 @@ import {ExclamationCircleOutlined} from "@ant-design/icons";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerGroupsUpdate from "../components/PeerGroupsUpdate";
-import TableSpin from "../components/Spin";
 import tableSpin from "../components/Spin";
 
 const { Title, Paragraph } = Typography;

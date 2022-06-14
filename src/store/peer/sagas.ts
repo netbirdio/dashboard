@@ -13,7 +13,6 @@ import actions from './actions';
 import {Group, GroupPeer} from "../group/types";
 import serviceGroup from "../group/service";
 import {actions as groupActions} from "../group";
-import {Rule} from "../rule/types";
 
 
 export function* getPeers(action: ReturnType<typeof actions.getPeers.request>): Generator {
@@ -29,8 +28,7 @@ export function* getPeers(action: ReturnType<typeof actions.getPeers.request>): 
 
     const effect = yield call(service.getPeers, action.payload);
     const response = effect as ApiResponse<Peer[]>;
-
-    yield put(actions.getPeers.success(response.body));
+    yield put(actions.getPeers.success(response.body.sort((a: Peer, b: Peer) => b.name.localeCompare(a.name))));
   } catch (err) {
     yield put(actions.getPeers.failure(err as ApiError));
   }

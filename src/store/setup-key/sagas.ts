@@ -3,14 +3,13 @@ import {ApiError, ApiResponse, ChangeResponse, CreateResponse, DeleteResponse} f
 import {SetupKey, SetupKeyRevoke} from './types'
 import service from './service';
 import actions from './actions';
-import {take} from "lodash";
 
 export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.request>): Generator {
     try {
         const effect = yield call(service.getSetupKeys, action.payload);
         const response = effect as ApiResponse<SetupKey[]>;
 
-        yield put(actions.getSetupKeys.success(response.body));
+        yield put(actions.getSetupKeys.success(response.body.sort((a: SetupKey, b: SetupKey) => b.name.localeCompare(a.name))));
     } catch (err) {
         yield put(actions.getSetupKeys.failure(err as ApiError));
     }
