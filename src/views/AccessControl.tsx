@@ -290,7 +290,7 @@ export const AccessControl = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Access Control</Title>
-                        <Paragraph>Create and control access groups</Paragraph>
+                        <Paragraph>Access rules help you manage access permissions in your organisation.</Paragraph>
                         <Space direction="vertical" size="large" style={{ display: 'flex' }}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -392,11 +392,6 @@ export const AccessControl = () => {
                                 {showTutorial &&
                                     <Space direction="vertical" size="small" align="center"
                                            style={{display: 'flex', padding: '45px 15px'}}>
-                                        <img src={tutorial} style={{width: 362, paddingBottom: 45}}/>
-                                        <Title level={5}>Create and control access groups</Title>
-                                        <Paragraph>
-                                            Access rules help you manage access permissions in your organisation.
-                                        </Paragraph>
                                         <Button type="link" onClick={onClickAddNewRule}>Add new access rule</Button>
                                     </Space>
                                 }
