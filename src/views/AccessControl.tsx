@@ -253,6 +253,19 @@ export const AccessControl = () => {
         } as Rule))
     }
 
+    const setRuleAndView = (rule: RuleDataTable) => {
+        dispatch(ruleActions.setSetupNewRuleVisible(true));
+        dispatch(ruleActions.setRule({
+            id: rule.id || null,
+            name: rule.name,
+            description: rule.description,
+            sources: rule.sources,
+            destinations: rule.destinations,
+            flow: rule.flow,
+            disabled: rule.disabled
+        } as Rule))
+    }
+
     const toggleModalGroups = (title:string, groups:Group[] | string[] | null, modalVisible:boolean) => {
         setGroupsToShow({
             title,
@@ -261,7 +274,7 @@ export const AccessControl = () => {
         })
     }
 
-    const renderPopoverGroups = (label: string, groups:Group[] | string[] | null) => {
+    const renderPopoverGroups = (label: string, groups:Group[] | string[] | null, rule: RuleDataTable) => {
         const content = groups?.map((g, i) => {
             const _g = g as Group
             const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
@@ -279,7 +292,7 @@ export const AccessControl = () => {
         })
         return (
             <Popover content={<Space direction="vertical">{content}</Space>} title={null}>
-                <Button type="link">{label}</Button>
+                <Button type="link" onClick={() => setRuleAndView(rule)}>{label}</Button>
             </Popover>
         )
     }
@@ -345,7 +358,7 @@ export const AccessControl = () => {
                                             render={(text, record, index) => {
                                                 const desc = (record as RuleDataTable).description.trim()
                                                 return <Tooltip title={desc !== "" ?  desc : "no description"} arrowPointAtCenter>
-                                                    <span className="tooltip-label">{text}</span>
+                                                    <span onClick={() => setRuleAndView(record as RuleDataTable)} className="tooltip-label">{text}</span>
                                                 </Tooltip>
                                             }}
                                     />
@@ -357,7 +370,7 @@ export const AccessControl = () => {
                                     <Column title="Sources" dataIndex="sourceLabel"
                                             render={(text, record:RuleDataTable, index) => {
                                                 //return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Sources`, record.Source, true)}>{text}</Button>
-                                                return renderPopoverGroups(text, record.sources)
+                                                return renderPopoverGroups(text, record.sources,record as RuleDataTable)
                                             }}
                                     />
                                     <Column title="Direction" dataIndex="flow"
@@ -376,7 +389,7 @@ export const AccessControl = () => {
                                     <Column title="Destinations" dataIndex="destinationLabel"
                                             render={(text, record:RuleDataTable, index) => {
                                                 //return <Button type="link" onClick={() => toggleModalGroups(`${record.name} - Destinations`, record.destinations, true)}>{text}</Button>
-                                                return renderPopoverGroups(text, record.destinations)
+                                                return renderPopoverGroups(text, record.destinations,record as RuleDataTable)
                                             }}
                                     />
                                     <Column title="" align="center"
