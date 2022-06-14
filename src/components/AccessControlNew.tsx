@@ -361,7 +361,6 @@ const AccessControlNew = () => {
                                         <Paragraph>
                                             If you want to enable all peers of the same group to talk to each other - you can add that group both as a receiver and as a destination.
                                         </Paragraph>
-                                        <a style={{color: 'rgb(07, 114, 128)'}} href="https://docs.netbird.io/overview/access-control" target="_blank">Learn more about access control...</a>
                                     </Col>
                                 </Row>
                             </Col>
@@ -369,7 +368,7 @@ const AccessControlNew = () => {
                                 <Divider></Divider>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
                                         href="https://docs.netbird.io/docs/overview/acls" style={{color: 'rgb(07, 114, 128)'}}>Learn
-                                    more about setup keys</Button>
+                                    more about access controls</Button>
                             </Col>
                         </Row>
                     </Form>

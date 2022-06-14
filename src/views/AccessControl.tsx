@@ -351,7 +351,7 @@ export const AccessControl = () => {
                                     />
                                     <Column title="Status" dataIndex="disabled"
                                             render={(text:Boolean, record:RuleDataTable, index) => {
-                                                return text ? <Tag color="red">Inactive</Tag> : <Tag color="green">Active</Tag>
+                                                return text ? <Tag color="red">disabled</Tag> : <Tag color="green">enabled</Tag>
                                             }}
                                     />
                                     <Column title="Sources" dataIndex="sourceLabel"
