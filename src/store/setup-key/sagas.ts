@@ -9,7 +9,7 @@ export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.req
         const effect = yield call(service.getSetupKeys, action.payload);
         const response = effect as ApiResponse<SetupKey[]>;
 
-        yield put(actions.getSetupKeys.success(response.body.sort((a: SetupKey, b: SetupKey) => b.name.localeCompare(a.name))));
+        yield put(actions.getSetupKeys.success(response.body));
     } catch (err) {
         yield put(actions.getSetupKeys.failure(err as ApiError));
     }

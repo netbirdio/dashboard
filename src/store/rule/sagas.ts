@@ -21,7 +21,7 @@ export function* getRules(action: ReturnType<typeof actions.getRules.request>): 
     const effect = yield call(service.getRules, action.payload);
     const response = effect as ApiResponse<Rule[]>;
 
-    yield put(actions.getRules.success(response.body.sort((a: Rule, b: Rule) => b.name.localeCompare(a.name))));
+    yield put(actions.getRules.success(response.body));
   } catch (err) {
     yield put(actions.getRules.failure(err as ApiError));
   }

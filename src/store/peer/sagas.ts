@@ -28,7 +28,7 @@ export function* getPeers(action: ReturnType<typeof actions.getPeers.request>): 
 
     const effect = yield call(service.getPeers, action.payload);
     const response = effect as ApiResponse<Peer[]>;
-    yield put(actions.getPeers.success(response.body.sort((a: Peer, b: Peer) => b.name.localeCompare(a.name))));
+    yield put(actions.getPeers.success(response.body));
   } catch (err) {
     yield put(actions.getPeers.failure(err as ApiError));
   }

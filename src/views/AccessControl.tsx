@@ -355,6 +355,7 @@ export const AccessControl = () => {
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
+                                            defaultSortOrder='ascend'
                                             render={(text, record, index) => {
                                                 const desc = (record as RuleDataTable).description.trim()
                                                 return <Tooltip title={desc !== "" ?  desc : "no description"} arrowPointAtCenter>

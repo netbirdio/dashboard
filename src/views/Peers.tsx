@@ -268,6 +268,7 @@ export const Peers = () => {
                                     dataSource={dataTable}>
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            defaultSortOrder='ascend'
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))} />
                                     <Column title="IP" dataIndex="ip"
                                             sorter={(a, b) => {

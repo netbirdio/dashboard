@@ -109,6 +109,7 @@ export const Activity = () => {
                                 <Column title="Email" dataIndex="email"
                                         onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
                                         sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
+                                        defaultSortOrder='ascend'
                                         render={(text:string | null, record, index) => {
                                             return (text && text.trim() !== "") ? text : (record as User).id
                                         }}

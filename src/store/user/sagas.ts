@@ -9,7 +9,7 @@ export function* getPeers(action: ReturnType<typeof actions.getUsers.request>): 
     const effect = yield call(service.getUsers, action.payload);
     const response = effect as ApiResponse<User[]>;
 
-    yield put(actions.getUsers.success(response.body.sort((a: User, b: User) => b.name.localeCompare(a.name))));
+    yield put(actions.getUsers.success(response.body));
   } catch (err) {
     yield put(actions.getUsers.failure(err as ApiError));
   }
