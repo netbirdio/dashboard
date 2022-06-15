@@ -39,7 +39,7 @@ export function* saveGroup(action: ReturnType<typeof actions.saveGroup.request>)
     } as CreateResponse<Group | null>))
 
     let effect
-    if (action.payload.payload.ID) {
+    if (action.payload.payload.id) {
       effect = yield call(service.editGroup, action.payload);
     } else {
       effect = yield call(service.createGroup, action.payload);
@@ -94,7 +94,7 @@ export function* deleteGroup(action: ReturnType<typeof actions.deleteGroup.reque
     } as DeleteResponse<string | null>));
 
     const rules = (yield select(state => state.rule.data)) as Group[]
-    yield put(actions.getGroups.success(rules.filter((p:Group) => p.ID !== action.payload.payload)))
+    yield put(actions.getGroups.success(rules.filter((p:Group) => p.id !== action.payload.payload)))
   } catch (err) {
     yield put(actions.deleteGroup.failure({
       loading: false,

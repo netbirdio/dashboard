@@ -27,9 +27,9 @@ const AccessControlModalGroups:React.FC<Props> = ({data, title, visible, onCance
                     renderItem={(item:Group) => (
                         <List.Item>
                             <List.Item.Meta
-                                avatar={<Avatar>{item.Name.slice(0,1).toUpperCase()}</Avatar>}
-                                title={item.Name}
-                                description={`${item.PeersCount} peers`}
+                                avatar={<Avatar>{item.name.slice(0,1).toUpperCase()}</Avatar>}
+                                title={item.name}
+                                description={`${item.peers_count} peers`}
                             />
                         </List.Item>
                     )}

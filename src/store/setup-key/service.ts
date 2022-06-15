@@ -17,13 +17,13 @@ export default {
   },
   async revokeSetupKey(payload:RequestPayload<SetupKeyRevoke>): Promise<ApiResponse<SetupKey>> {
     return apiClient.put<SetupKey>(
-        `/api/setup-keys/` + payload.payload.Id,
+        `/api/setup-keys/` + payload.payload.id,
         payload
     );
   },
   async renameSetupKey(payload:RequestPayload<any>): Promise<ApiResponse<SetupKey>> {
     return apiClient.put<SetupKey>(
-        `/api/setup-keys/` + payload.payload.Id,
+        `/api/setup-keys/` + payload.payload.id,
         payload
     );
   },
