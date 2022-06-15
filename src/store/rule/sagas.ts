@@ -32,7 +32,7 @@ export function* setCreatedRule(action: ReturnType<typeof  actions.setSavedRule>
 }
 
 function getNewGroupIds(dataString:string[], responses:Group[]):string[] {
-  return responses.filter(r => dataString.includes(r.Name)).map(r => r.ID || '')
+  return responses.filter(r => dataString.includes(r.name)).map(r => r.id || '')
 }
 
 export function* saveRule(action: ReturnType<typeof actions.saveRule.request>): Generator {
@@ -49,7 +49,7 @@ export function* saveRule(action: ReturnType<typeof actions.saveRule.request>): 
 
     const responsesGroup = yield all(ruleToSave.groupsToSave.map(g => call(serviceGroup.createGroup, {
         getAccessTokenSilently: action.payload.getAccessTokenSilently,
-        payload: { Name: g }
+        payload: { name: g }
       })
     ))
 
@@ -60,27 +60,26 @@ export function* saveRule(action: ReturnType<typeof actions.saveRule.request>): 
     const newGroups = [...currentGroups, ...resGroups]
     yield put(groupActions.getGroups.success(newGroups));
 
-    console.log(resGroups)
-    console.log(ruleToSave.groupsToSave)
     const newSources = getNewGroupIds(ruleToSave.sourcesNoId, resGroups)
     const newDestinations = getNewGroupIds(ruleToSave.destinationsNoId, resGroups)
-    console.log(newDestinations)
 
     const payloadToSave = {
       getAccessTokenSilently: action.payload.getAccessTokenSilently,
       payload: {
-        Name: ruleToSave.Name,
-        Source: [...ruleToSave.Source as string[], ...newSources],
-        Destination: [...ruleToSave.Destination as string[], ...newDestinations],
-        Flow: ruleToSave.Flow
+        name: ruleToSave.name,
+        description: ruleToSave.description,
+        sources: [...ruleToSave.sources as string[], ...newSources],
+        destinations: [...ruleToSave.destinations as string[], ...newDestinations],
+        flow: ruleToSave.flow,
+        disabled: ruleToSave.disabled
       } as Rule
     }
 
     let effect
-    if (!ruleToSave.ID) {
+    if (!ruleToSave.id) {
        effect = yield call(service.createRule, payloadToSave);
     } else {
-      payloadToSave.payload.ID = ruleToSave.ID
+      payloadToSave.payload.id = ruleToSave.id
       effect = yield call(service.editRule, payloadToSave);
     }
 
@@ -133,7 +132,7 @@ export function* deleteRule(action: ReturnType<typeof actions.deleteRule.request
     } as DeleteResponse<string | null>));
 
     const rules = (yield select(state => state.rule.data)) as Rule[]
-    yield put(actions.getRules.success(rules.filter((p:Rule) => p.ID !== action.payload.payload)))
+    yield put(actions.getRules.success(rules.filter((p:Rule) => p.id !== action.payload.payload)))
   } catch (err) {
     yield put(actions.deleteRule.failure({
       loading: false,

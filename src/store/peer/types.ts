@@ -1,9 +1,23 @@
+import {Group} from "../group/types";
+
 export interface Peer {
-  Name: string,
-  IP: string,
-  Connected: boolean,
-  LastSeen: string,
-  OS: string,
-  Version: string,
-  Groups?: any[]
+  id?: string,
+  name: string,
+  ip: string,
+  connected: boolean,
+  last_seen: string,
+  os: string,
+  version: string,
+  groups?: Group[]
+}
+
+export interface PeerToSave extends Peer {
+  groupsToSave: string[]
+}
+
+export interface PeerGroupsToSave {
+  ID: string;
+  groupsToRemove: string[];
+  groupsToAdd: string[];
+  groupsNoId: string[];
 }

@@ -25,19 +25,6 @@ const providerConfig = {
     onRedirectCallback,
 };
 
-/*
-ReactDOM.render(
-    <Auth0Provider {...providerConfig}>
-        <React.StrictMode>
-            <BrowserRouter>
-                <App/>
-            </BrowserRouter>
-        </React.StrictMode>
-    </Auth0Provider>,
-    document.getElementById('root')
-);
-*/
-
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
 );

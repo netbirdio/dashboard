@@ -64,13 +64,15 @@ const deletedRule = createReducer<DeleteResponse<string | null>, ActionTypes>(in
     .handleAction(actions.deleteRule.request, () => initialState.deleteRule)
     .handleAction(actions.deleteRule.success, (store, action) => action.payload)
     .handleAction(actions.deleteRule.failure, (store, action) => action.payload)
-    .handleAction(actions.setDeletedRule, (store, action) => action.payload);
+    .handleAction(actions.setDeletedRule, (store, action) => action.payload)
+    .handleAction(actions.resetDeletedRule, () => initialState.deleteRule)
 
 const savedRule = createReducer<CreateResponse<Rule | null>, ActionTypes>(initialState.savedRule)
     .handleAction(actions.saveRule.request, () => initialState.savedRule)
     .handleAction(actions.saveRule.success, (store, action) => action.payload)
     .handleAction(actions.saveRule.failure, (store, action) => action.payload)
     .handleAction(actions.setSavedRule, (store, action) => action.payload)
+    .handleAction(actions.resetSavedRule, () => initialState.savedRule)
 
 const setupNewRuleVisible = createReducer<boolean, ActionTypes>(initialState.setupNewRuleVisible)
     .handleAction(actions.setSetupNewRuleVisible, (store, action) => action.payload)

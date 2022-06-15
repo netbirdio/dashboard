@@ -5,8 +5,8 @@ import {useAuth0} from "@auth0/auth0-react";
 import {useLocation} from 'react-router-dom';
 import {Menu, Row, Col, Grid, Dropdown, Avatar, Button, Typography, Space} from 'antd'
 import {ItemType} from "antd/lib/menu/hooks/useItems";
-import {UserOutlined} from "@ant-design/icons";
 import {AvatarSize} from "antd/es/avatar/SizeContext";
+import { UserOutlined } from '@ant-design/icons';
 
 const { Text } = Typography
 const { useBreakpoint } = Grid;
@@ -30,8 +30,8 @@ const Navbar = () => {
         { label: (<Link  to="/peers">Peers</Link>), key: '/peers' },
         { label: (<Link  to="/add-peer">Add Peer</Link>), key: '/add-peer' },
         { label: (<Link  to="/setup-keys">Setup Keys</Link>), key: '/setup-keys' },
-        /*{ label: (<Link  to="/acls">Access Control</Link>), key: '/acls' },
-        { label: (<Link  to="/activity">Activity</Link>), key: '/activity' },*/
+        { label: (<Link  to="/acls">Access Control</Link>), key: '/acls' },
+        // { label: (<Link  to="/activity">Activity</Link>), key: '/activity' },
         { label: (<Link  to="/users">Users</Link>), key: '/users' }
     ] as ItemType[])
 
@@ -80,7 +80,7 @@ const Navbar = () => {
 
     const createAvatar = (size:AvatarSize) => {
         return user?.picture ? (
-            <Avatar size={size} src={user?.picture}/>
+            <Avatar size={size} src={user?.picture} icon={<UserOutlined />} />
         ) : (
             <Avatar size={size}>{(user?.name || '').slice(0, 1).toUpperCase()}</Avatar>
         )
