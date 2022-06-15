@@ -65,7 +65,7 @@ export const Peers = () => {
         {label: "15", value: "15"}
     ]
 
-    const optionsOnOff = [{label: 'All', value: 'all'}, {label: 'Online', value: 'on'}]
+    const optionsOnOff = [{label: 'Online', value: 'on'},{label: 'All', value: 'all'}]
 
     const itemsMenuAction = [
         {

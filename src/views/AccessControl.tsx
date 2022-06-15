@@ -70,7 +70,7 @@ export const AccessControl = () => {
         {label: "15", value: "15"}
     ]
 
-    const optionsAllEnabled = [{label: 'All', value: 'all'}, {label: 'Enabled', value: 'enabled'}]
+    const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'},{label: 'All', value: 'all'}]
 
     const itemsMenuAction = [
         {
