@@ -6,6 +6,7 @@ import {useLocation} from 'react-router-dom';
 import {Menu, Row, Col, Grid, Dropdown, Avatar, Button, Typography, Space} from 'antd'
 import {ItemType} from "antd/lib/menu/hooks/useItems";
 import {AvatarSize} from "antd/es/avatar/SizeContext";
+import { UserOutlined } from '@ant-design/icons';
 
 const { Text } = Typography
 const { useBreakpoint } = Grid;
@@ -79,7 +80,7 @@ const Navbar = () => {
 
     const createAvatar = (size:AvatarSize) => {
         return user?.picture ? (
-            <Avatar size={size} src={user?.picture}/>
+            <Avatar size={size} src={user?.picture} icon={<UserOutlined />} />
         ) : (
             <Avatar size={size}>{(user?.name || '').slice(0, 1).toUpperCase()}</Avatar>
         )
