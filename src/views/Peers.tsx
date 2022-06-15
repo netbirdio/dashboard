@@ -20,7 +20,7 @@ import {
     RadioChangeEvent,
     Dropdown,
     Menu,
-    Alert, Select, Modal, Button, message, Popover, SpinProps, Spin
+    Alert, Select, Modal, Button, message, Popover, SpinProps, Spin, Switch
 } from "antd";
 import {Peer} from "../store/peer/types";
 import {filter} from "lodash"
@@ -216,6 +216,10 @@ export const Peers = () => {
         )
     }
 
+    function handleSwitchSSH(record :PeerDataTable) {
+        console.log(record.ssh_enabled);
+    }
+
     return (
         <>
             <Container style={{paddingTop: "40px"}}>
@@ -282,15 +286,20 @@ export const Peers = () => {
                                                 return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key} text={text} messageText={'IP copied!'} styleNotification={{}}/>
                                             }}
                                     />
-                                    <Column title="Status" dataIndex="connected"
+                                    <Column title="Status" dataIndex="connected" align="center"
                                             render={(text, record, index) => {
                                                 return text ? <Tag color="green">online</Tag> : <Tag color="red">offline</Tag>
                                             }}
                                     />
-                                    <Column title="Groups" dataIndex="groupsCount"
+                                    <Column title="Groups" dataIndex="groupsCount" align="center"
                                             render={(text, record:PeerDataTable, index) => {
                                                 return renderPopoverGroups(text, record.groups, record)
                                             }}
+                                    />
+                                    <Column title="SSH Server" dataIndex="ssh_enabled" align="center"
+                                            render={(text, record:PeerDataTable, index) => (
+                                                <Switch size={"small"} onChange={() => handleSwitchSSH(record)} defaultChecked={text} />)
+                                    }
                                     />
                                     <Column title="LastSeen" dataIndex="last_seen"
                                             render={(text, record, index) => {
