@@ -22,7 +22,7 @@ import {
     Menu,
     Alert, Select, Modal, Button, message, Popover, SpinProps, Spin, Switch
 } from "antd";
-import {Peer} from "../store/peer/types";
+import {Peer, PeerToSave} from "../store/peer/types";
 import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
@@ -30,6 +30,7 @@ import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerGroupsUpdate from "../components/PeerGroupsUpdate";
 import tableSpin from "../components/Spin";
+import {RuleToSave} from "../store/rule/types";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -216,8 +217,14 @@ export const Peers = () => {
         )
     }
 
-    function handleSwitchSSH(record :PeerDataTable) {
-        console.log(record.ssh_enabled);
+
+    function handleSwitchSSH(record: PeerDataTable, checked: boolean) {
+        const peer = {
+            id: record.id,
+            ssh_enabled: checked,
+            name: record.name
+        } as Peer
+        dispatch(peerActions.updatePeer.request({getAccessTokenSilently, payload: peer}));
     }
 
     return (
@@ -297,8 +304,8 @@ export const Peers = () => {
                                             }}
                                     />
                                     <Column title="SSH Server" dataIndex="ssh_enabled" align="center"
-                                            render={(text, record:PeerDataTable, index) => (
-                                                <Switch size={"small"} onChange={() => handleSwitchSSH(record)} defaultChecked={text} />)
+                                            render={(e, record:PeerDataTable, index) => (
+                                                <Switch size={"small"} onChange={(checked: boolean) => handleSwitchSSH(record, checked)} defaultChecked={e} />)
                                     }
                                     />
                                     <Column title="LastSeen" dataIndex="last_seen"

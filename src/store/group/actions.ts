@@ -1,6 +1,12 @@
 import { ActionType, createAction, createAsyncAction } from 'typesafe-actions';
 import { Group } from './types';
-import {ApiError, CreateResponse, DeleteResponse, RequestPayload} from '../../services/api-client/types';
+import {
+  ApiError,
+  ChangeResponse,
+  CreateResponse,
+  DeleteResponse,
+  RequestPayload
+} from '../../services/api-client/types';
 
 const actions = {
   getGroups: createAsyncAction(
