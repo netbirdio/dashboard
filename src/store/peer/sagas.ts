@@ -14,6 +14,7 @@ import {Group, GroupPeer} from "../group/types";
 import serviceGroup from "../group/service";
 import {actions as groupActions} from "../group";
 import {Rule} from "../rule/types";
+import peers from "../../views/Peers";
 
 
 export function* getPeers(action: ReturnType<typeof actions.getPeers.request>): Generator {
@@ -183,7 +184,8 @@ export function* updatePeer(action: ReturnType<typeof actions.updatePeer.request
       data: response.body
     } as ChangeResponse<Peer | null>));
 
-    yield put(actions.getPeers.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
+    const peers = (yield select(state => state.peer.data)) as Peer[]
+    yield put(actions.getPeers.success(peers.filter((p:Peer) => p.id !== peerId).concat(response.body)))
 
   } catch (err) {
     console.log(err)
