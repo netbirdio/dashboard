@@ -2,8 +2,9 @@ import { createReducer } from 'typesafe-actions';
 import { combineReducers } from 'redux';
 import { Peer } from './types';
 import actions, { ActionTypes } from './actions';
-import {ApiError, ChangeResponse, DeleteResponse} from "../../services/api-client/types";
+import {ApiError, ChangeResponse, CreateResponse, DeleteResponse} from "../../services/api-client/types";
 import {Group} from "../group/types";
+import {Rule} from "../rule/types";
 
 type StateType = Readonly<{
   data: Peer[] | null;
@@ -14,6 +15,7 @@ type StateType = Readonly<{
   deletedPeer: DeleteResponse<string | null>;
   setUpdateGroupsVisible: boolean;
   savedGroups: ChangeResponse<Group[] | null>;
+  updatedPeer: CreateResponse<Peer | null>;
 }>;
 
 const initialState: StateType = {
@@ -36,7 +38,14 @@ const initialState: StateType = {
     failure: false,
     error: null,
     data: null
-  }
+  },
+  updatedPeer: <ChangeResponse<Peer | null>>{
+    loading: false,
+    success: false,
+    failure: false,
+    error: null,
+    data : null
+  },
 };
 
 const data = createReducer<Peer[], ActionTypes>(initialState.data as Peer[])
@@ -77,6 +86,13 @@ const savedGroups = createReducer<ChangeResponse<Group[] | null>, ActionTypes>(i
     .handleAction(actions.saveGroups.failure, (store, action) => action.payload)
     .handleAction(actions.resetSavedGroups, () => initialState.savedGroups)
 
+const updatedPeer = createReducer<CreateResponse<Peer | null>, ActionTypes>(initialState.updatedPeer)
+    .handleAction(actions.updatePeer.request, () => initialState.updatedPeer)
+    .handleAction(actions.updatePeer.success, (store, action) => action.payload)
+    .handleAction(actions.updatePeer.failure, (store, action) => action.payload)
+    .handleAction(actions.setUpdatedPeer, (store, action) => action.payload)
+    .handleAction(actions.resetUpdatedPeer, () => initialState.updatedPeer)
+
 export default combineReducers({
   data,
   peer,
@@ -85,5 +101,6 @@ export default combineReducers({
   saving,
   deletedPeer,
   updateGroupsVisible,
-  savedGroups
+  savedGroups,
+  updatedPeer
 });

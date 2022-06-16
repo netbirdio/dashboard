@@ -19,12 +19,9 @@ import {CloseOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
 import bidirect from '../assets/direct_bi.svg';
 import inbound from '../assets/direct_in.svg';
 import outbound from '../assets/direct_out.svg';
-import tutorial from "../assets/access_control_tutorial.svg";
 import AccessControlNew from "../components/AccessControlNew";
 import {Group} from "../store/group/types";
-import {actions as setupKeyActions} from "../store/setup-key";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
-import TableSpin from "../components/Spin";
 import tableSpin from "../components/Spin";
 
 const { Title, Paragraph } = Typography;

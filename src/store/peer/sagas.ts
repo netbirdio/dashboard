@@ -165,6 +165,7 @@ export function* updatePeer(action: ReturnType<typeof actions.updatePeer.request
     }))
 
     const peer = action.payload.payload
+    const peerId = peer.id
 
     const payloadToSave = {
       getAccessTokenSilently: action.payload.getAccessTokenSilently,
@@ -181,6 +182,8 @@ export function* updatePeer(action: ReturnType<typeof actions.updatePeer.request
       error: null,
       data: response.body
     } as ChangeResponse<Peer | null>));
+
+    yield put(actions.getPeers.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
 
   } catch (err) {
     console.log(err)

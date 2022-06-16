@@ -22,7 +22,7 @@ import {
     Menu,
     Alert, Select, Modal, Button, message, Popover, SpinProps, Spin, Switch
 } from "antd";
-import {Peer, PeerToSave} from "../store/peer/types";
+import {Peer} from "../store/peer/types";
 import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
@@ -30,7 +30,6 @@ import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerGroupsUpdate from "../components/PeerGroupsUpdate";
 import tableSpin from "../components/Spin";
-import {RuleToSave} from "../store/rule/types";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -53,6 +52,7 @@ export const Peers = () => {
     const groups = useSelector((state: RootState) => state.group.data);
     const loadingGroups = useSelector((state: RootState) => state.group.loading);
     const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
+    const updatedPeer = useSelector((state: RootState) => state.peer.updatedPeer);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
@@ -132,6 +132,22 @@ export const Peers = () => {
             dispatch(peerActions.resetSavedGroups(null))
         }
     }, [savedGroups])
+
+    const updatePeerKey = 'updating_peer';
+    useEffect(() => {
+        const style = { marginTop: 85 }
+        if (updatedPeer.loading) {
+            message.loading({ content: 'Updating peer...', key: updatePeerKey, duration: 0, style })
+        } else if (updatedPeer.success) {
+            message.success({ content: 'Peer has been successfully updated.', key: updatePeerKey, duration: 2, style });
+            dispatch(peerActions.setUpdatedPeer({ ...updatedPeer, success: false }))
+            dispatch(peerActions.resetUpdatedPeer(null))
+        } else if (updatedPeer.error) {
+            message.error({ content: 'Failed to update peer. You might not have enough permissions.', key: updatePeerKey, duration: 2, style  });
+            dispatch(peerActions.setUpdatedPeer({ ...updatedPeer, error: null }))
+            dispatch(peerActions.resetUpdatedPeer(null))
+        }
+    }, [updatedPeer])
 
     const filterDataTable = ():Peer[] => {
         const t = textToSearch.toLowerCase().trim()
@@ -305,7 +321,7 @@ export const Peers = () => {
                                     />
                                     <Column title="SSH Server" dataIndex="ssh_enabled" align="center"
                                             render={(e, record:PeerDataTable, index) => (
-                                                <Switch size={"small"} onChange={(checked: boolean) => handleSwitchSSH(record, checked)} defaultChecked={e} />)
+                                                <Switch size={"small"} onChange={(checked: boolean) => handleSwitchSSH(record, checked)} defaultChecked={e}/>)
                                     }
                                     />
                                     <Column title="LastSeen" dataIndex="last_seen"

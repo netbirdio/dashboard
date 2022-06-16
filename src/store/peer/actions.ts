@@ -41,7 +41,8 @@ const actions = {
       'UPDATE_PEER_SUCCESS',
       'UPDATE_PEER_FAILURE',
   )<RequestPayload<Peer>, ChangeResponse<Peer | null>, ChangeResponse<Peer | null>>(),
-  setUpdatedPeer: createAction('SET_UPDATED_PEER')<ChangeResponse<Peer[] | null>>(),
+  setUpdatedPeer: createAction('SET_UPDATED_PEER')<ChangeResponse<Peer | null>>(),
+  resetUpdatedPeer: createAction('RESET_UPDATED_PEER')<null>(),
 };
 
 export type ActionTypes = ActionType<typeof actions>;
