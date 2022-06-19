@@ -13,6 +13,7 @@ import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
 import {useAuth0} from "@auth0/auth0-react";
 import {PeerGroupsToSave} from "../store/peer/types";
 import {Group, GroupPeer} from "../store/group/types";
+import {FlagFilled} from "@ant-design/icons";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -73,11 +74,16 @@ const PeerGroupsUpdate = () => {
             event.stopPropagation();
         };
 
+        let tagClosable = true
+        if (value === "All") {
+            tagClosable = false
+        }
+
         return (
             <Tag
                 color="blue"
                 onMouseDown={onPreventMouseDown}
-                closable={closable}
+                closable={tagClosable}
                 onClose={onClose}
                 style={{ marginRight: 3 }}
             >
@@ -172,8 +178,9 @@ const PeerGroupsUpdate = () => {
                                     label="Groups"
                                     rules={[{required: true, message: 'Please enter ate least one group'}]}
                                     style={{display: 'flex'}}
+                                    validateTrigger='onSubmit'
                                 >
-                                    <Select mode="tags"  style={{ width: '100%' }} placeholder="Select groups..." tagRender={tagRender} dropdownRender={dropDownRender} onChange={handleChangeTags}>
+                                    <Select mode="tags"  style={{ width: '100%' }} placeholder="Select groups..." tagRender={tagRender} dropdownRender={dropDownRender} onChange={handleChangeTags} open={true}>
                                         {
                                             tagGroups.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
@@ -181,6 +188,21 @@ const PeerGroupsUpdate = () => {
                                         }
                                     </Select>
                                 </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Row wrap={false} gutter={12}>
+                                    <Col flex="none">
+                                        <FlagFilled/>
+                                    </Col>
+                                    <Col flex="auto">
+                                        <Paragraph>
+                                            At the moment access rules are bi-directional by default, this means both source and destination can talk to each-other in both directions. However destination peers will not be able to communicate with each other, nor will the source peers.
+                                        </Paragraph>
+                                        <Paragraph>
+                                            If you want to enable all peers of the same group to talk to each other - you can add that group both as a receiver and as a destination.
+                                        </Paragraph>
+                                    </Col>
+                                </Row>
                             </Col>
                         </Row>
                     </Form>

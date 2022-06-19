@@ -255,7 +255,7 @@ const AccessControlNew = () => {
                                                 <Form.Item
                                                     name="name"
                                                     label="Name"
-                                                    rules={[{required: true, message: 'Please add a name for this access rule'}]}
+                                                    rules={[{required: true, message: 'Please add a name for this access rule', whitespace: true}]}
                                                 >
                                                     <Input placeholder="Add rule name..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
                                                 </Form.Item>
