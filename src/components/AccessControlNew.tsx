@@ -328,7 +328,7 @@ const AccessControlNew = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="tagSourceGroups"
-                                    label={<>Source groups&nbsp;<ArrowRightOutlined /></>}
+                                    label="Source groups"
                                     rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
                                 >
@@ -350,7 +350,7 @@ const AccessControlNew = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="tagDestinationGroups"
-                                    label={<><ArrowRightOutlined />&nbsp;Destination groups</>}
+                                    label="Destination groups"
                                     rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
                                 >
