@@ -14,6 +14,7 @@ import {useAuth0} from "@auth0/auth0-react";
 import {PeerGroupsToSave} from "../store/peer/types";
 import {Group, GroupPeer} from "../store/group/types";
 import {FlagFilled} from "@ant-design/icons";
+import { RuleObject } from 'antd/lib/form';
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -140,7 +141,13 @@ const PeerGroupsUpdate = () => {
     }
 
     const handleChangeTags = (value: string[]) => {
-        setSelectedTagGroups(value)
+        let validatedValues: string[] = []
+        value.forEach(function(v) {
+            if (v.trim().length) {
+                validatedValues.push(v)
+            }
+        })
+        setSelectedTagGroups(validatedValues)
     };
 
     const handleFormSubmit = () => {
@@ -151,6 +158,33 @@ const PeerGroupsUpdate = () => {
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
             });
+    }
+
+    const selectValidator = (_: RuleObject, value: string[]) => {
+        let hasSpaceNamed = []
+        let isAllPresent = false
+        if (!value.length) {
+            return Promise.reject(new Error("Please enter ate least one group"))
+        }
+
+        value.forEach(function(v: string) {
+            if (!v.trim().length) {
+                hasSpaceNamed.push(v)
+            }
+            if (v === 'All') {
+                isAllPresent = true
+            }
+        })
+
+        if (!isAllPresent) {
+            return Promise.reject(new Error("The All group can't be removed"))
+        }
+
+        if (hasSpaceNamed.length) {
+            return Promise.reject(new Error("Group names with just spaces are not allowed"))
+        }
+
+        return Promise.resolve()
     }
 
     return (
@@ -176,11 +210,17 @@ const PeerGroupsUpdate = () => {
                                 <Form.Item
                                     name="groups"
                                     label="Groups"
-                                    rules={[{required: true, message: 'Please enter ate least one group'}]}
+                                    rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
-                                    validateTrigger='onSubmit'
                                 >
-                                    <Select mode="tags"  style={{ width: '100%' }} placeholder="Select groups..." tagRender={tagRender} dropdownRender={dropDownRender} onChange={handleChangeTags} open={true}>
+                                    <Select
+                                        mode="tags"
+                                        style={{ width: '100%' }}
+                                        placeholder="Select groups..."
+                                        tagRender={tagRender}
+                                        dropdownRender={dropDownRender}
+                                        onChange={handleChangeTags}
+                                        defaultOpen={true}>
                                         {
                                             tagGroups.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
@@ -196,10 +236,10 @@ const PeerGroupsUpdate = () => {
                                     </Col>
                                     <Col flex="auto">
                                         <Paragraph>
-                                            At the moment access rules are bi-directional by default, this means both source and destination can talk to each-other in both directions. However destination peers will not be able to communicate with each other, nor will the source peers.
+                                            Select or Create groups to associate with this peer.
                                         </Paragraph>
                                         <Paragraph>
-                                            If you want to enable all peers of the same group to talk to each other - you can add that group both as a receiver and as a destination.
+                                            Every peer is part of the group All, thus you can't remove it.
                                         </Paragraph>
                                     </Col>
                                 </Row>
