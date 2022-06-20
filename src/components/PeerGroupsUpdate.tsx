@@ -161,6 +161,7 @@ const PeerGroupsUpdate = () => {
     }
 
     const selectValidator = (_: RuleObject, value: string[]) => {
+        console.log(value)
         let hasSpaceNamed = []
         let isAllPresent = false
         if (!value.length) {
@@ -209,7 +210,7 @@ const PeerGroupsUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="groups"
-                                    label="Groups"
+                                    label="Select groups to associate with this peer"
                                     rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
                                 >
@@ -219,8 +220,7 @@ const PeerGroupsUpdate = () => {
                                         placeholder="Select groups..."
                                         tagRender={tagRender}
                                         dropdownRender={dropDownRender}
-                                        onChange={handleChangeTags}
-                                        defaultOpen={true}>
+                                        onChange={handleChangeTags}>
                                         {
                                             tagGroups.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
@@ -235,9 +235,6 @@ const PeerGroupsUpdate = () => {
                                         <FlagFilled/>
                                     </Col>
                                     <Col flex="auto">
-                                        <Paragraph>
-                                            Select or Create groups to associate with this peer.
-                                        </Paragraph>
                                         <Paragraph>
                                             Every peer is part of the group All, thus you can't remove it.
                                         </Paragraph>
