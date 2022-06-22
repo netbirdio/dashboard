@@ -14,6 +14,7 @@ import {
 
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import LinuxTab from "../components/addpeer/LinuxTab";
+import UbuntuTab from "../components/addpeer/UbuntuTab";
 import MacTab from "../components/addpeer/MacTab";
 import WindowsTab from "../components/addpeer/WindowsTab";
 const { Title, Paragraph } = Typography;
@@ -47,13 +48,16 @@ export const AddPeer = () => {
                         <Paragraph>To get started with NetBird just install the app and log in.</Paragraph>
                         <Space direction="vertical" size="large" style={{ display: 'flex' }}>
                             <Tabs defaultActiveKey={openTab.toString()} onChange={onChangeTab} tabPosition="top" animated={{ inkBar: true, tabPane: false }}>
-                                <TabPane tab="Linux" key="1">
+                                <TabPane tab="Ubuntu" key="1">
+                                    <UbuntuTab/>
+                                </TabPane>
+                                <TabPane tab="Other Distros" key="2">
                                     <LinuxTab/>
                                 </TabPane>
-                                <TabPane tab="Windows" key="2">
+                                <TabPane tab="Windows" key="3">
                                     <WindowsTab/>
                                 </TabPane>
-                                <TabPane tab="MacOS" key="3">
+                                <TabPane tab="MacOS" key="4">
                                     <MacTab/>
                                 </TabPane>
                             </Tabs>
