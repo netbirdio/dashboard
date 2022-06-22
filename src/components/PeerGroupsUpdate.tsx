@@ -13,6 +13,8 @@ import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
 import {useAuth0} from "@auth0/auth0-react";
 import {PeerGroupsToSave} from "../store/peer/types";
 import {Group, GroupPeer} from "../store/group/types";
+import {FlagFilled} from "@ant-design/icons";
+import { RuleObject } from 'antd/lib/form';
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -73,11 +75,16 @@ const PeerGroupsUpdate = () => {
             event.stopPropagation();
         };
 
+        let tagClosable = true
+        if (value === "All") {
+            tagClosable = false
+        }
+
         return (
             <Tag
                 color="blue"
                 onMouseDown={onPreventMouseDown}
-                closable={closable}
+                closable={tagClosable}
                 onClose={onClose}
                 style={{ marginRight: 3 }}
             >
@@ -134,7 +141,13 @@ const PeerGroupsUpdate = () => {
     }
 
     const handleChangeTags = (value: string[]) => {
-        setSelectedTagGroups(value)
+        let validatedValues: string[] = []
+        value.forEach(function(v) {
+            if (v.trim().length) {
+                validatedValues.push(v)
+            }
+        })
+        setSelectedTagGroups(validatedValues)
     };
 
     const handleFormSubmit = () => {
@@ -145,6 +158,34 @@ const PeerGroupsUpdate = () => {
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
             });
+    }
+
+    const selectValidator = (_: RuleObject, value: string[]) => {
+        console.log(value)
+        let hasSpaceNamed = []
+        let isAllPresent = false
+        if (!value.length) {
+            return Promise.reject(new Error("Please enter ate least one group"))
+        }
+
+        value.forEach(function(v: string) {
+            if (!v.trim().length) {
+                hasSpaceNamed.push(v)
+            }
+            if (v === 'All') {
+                isAllPresent = true
+            }
+        })
+
+        if (!isAllPresent) {
+            return Promise.reject(new Error("The All group can't be removed"))
+        }
+
+        if (hasSpaceNamed.length) {
+            return Promise.reject(new Error("Group names with just spaces are not allowed"))
+        }
+
+        return Promise.resolve()
     }
 
     return (
@@ -169,11 +210,17 @@ const PeerGroupsUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="groups"
-                                    label="Groups"
-                                    rules={[{required: true, message: 'Please enter ate least one group'}]}
+                                    label="Select groups to associate with this peer"
+                                    rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
                                 >
-                                    <Select mode="tags"  style={{ width: '100%' }} placeholder="Select groups..." tagRender={tagRender} dropdownRender={dropDownRender} onChange={handleChangeTags}>
+                                    <Select
+                                        mode="tags"
+                                        style={{ width: '100%' }}
+                                        placeholder="Select groups..."
+                                        tagRender={tagRender}
+                                        dropdownRender={dropDownRender}
+                                        onChange={handleChangeTags}>
                                         {
                                             tagGroups.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
@@ -181,6 +228,18 @@ const PeerGroupsUpdate = () => {
                                         }
                                     </Select>
                                 </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Row wrap={false} gutter={12}>
+                                    <Col flex="none">
+                                        <FlagFilled/>
+                                    </Col>
+                                    <Col flex="auto">
+                                        <Paragraph>
+                                            Every peer is part of the group All, thus you can't remove it.
+                                        </Paragraph>
+                                    </Col>
+                                </Row>
                             </Col>
                         </Row>
                     </Form>

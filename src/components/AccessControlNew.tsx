@@ -17,6 +17,7 @@ import {Rule, RuleToSave} from "../store/rule/types";
 import {useAuth0} from "@auth0/auth0-react";
 import { uniq } from "lodash"
 import {Header} from "antd/es/layout/layout";
+import {RuleObject} from "antd/lib/form";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -213,6 +214,25 @@ const AccessControlNew = () => {
     //     })
     // }
 
+    const selectValidator = (_: RuleObject, value: string[]) => {
+        let hasSpaceNamed = []
+        if (!value.length) {
+            return Promise.reject(new Error("Please enter ate least one group"))
+        }
+
+        value.forEach(function(v: string) {
+            if (!v.trim().length) {
+                hasSpaceNamed.push(v)
+            }
+        })
+
+        if (hasSpaceNamed.length) {
+            return Promise.reject(new Error("Group names with just spaces are not allowed"))
+        }
+
+        return Promise.resolve()
+    }
+
     return (
         <>
             {rule &&
@@ -255,7 +275,7 @@ const AccessControlNew = () => {
                                                 <Form.Item
                                                     name="name"
                                                     label="Name"
-                                                    rules={[{required: true, message: 'Please add a name for this access rule'}]}
+                                                    rules={[{required: true, message: 'Please add a name for this access rule', whitespace: true}]}
                                                 >
                                                     <Input placeholder="Add rule name..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
                                                 </Form.Item>
@@ -308,8 +328,8 @@ const AccessControlNew = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="tagSourceGroups"
-                                    label={<>Source groups&nbsp;<ArrowRightOutlined /></>}
-                                    rules={[{required: true, message: 'Please enter ate least one group'}]}
+                                    label="Source groups"
+                                    rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
                                 >
                                     <Select mode="tags"
@@ -330,8 +350,8 @@ const AccessControlNew = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="tagDestinationGroups"
-                                    label={<><ArrowRightOutlined />&nbsp;Destination groups</>}
-                                    rules={[{required: true, message: 'Please enter ate least one group'}]}
+                                    label="Destination groups"
+                                    rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
                                 >
                                     <Select

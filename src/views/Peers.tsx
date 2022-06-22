@@ -30,6 +30,7 @@ import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerGroupsUpdate from "../components/PeerGroupsUpdate";
 import tableSpin from "../components/Spin";
+import {TooltipPlacement} from "antd/es/tooltip";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -226,8 +227,13 @@ export const Peers = () => {
             )
         })
         const mainContent = (<Space direction="vertical">{content}</Space>)
+        let popoverPlacement = "top"
+        if (content && content.length > 5) {
+            popoverPlacement = "rightTop"
+        }
+
         return (
-            <Popover key={peerToAction.key} content={mainContent} title={null}>
+            <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent} title={null}>
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>
         )
