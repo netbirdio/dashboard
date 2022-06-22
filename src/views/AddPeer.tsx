@@ -13,7 +13,7 @@ import {
 } from "antd";
 
 import {ExclamationCircleOutlined} from "@ant-design/icons";
-import LinuxTab from "../components/addpeer/LinuxTab";
+import OtherTab from "../components/addpeer/LinuxTab";
 import UbuntuTab from "../components/addpeer/UbuntuTab";
 import MacTab from "../components/addpeer/MacTab";
 import WindowsTab from "../components/addpeer/WindowsTab";
@@ -26,8 +26,8 @@ export const AddPeer = () => {
 
     const detectOS = () => {
         let os = 1;
-        if (navigator.userAgent.indexOf("Win")!==-1) os=3;
-        if (navigator.userAgent.indexOf("Mac")!==-1) os=4;
+        if (navigator.userAgent.indexOf("Win")!==-1) os=2;
+        if (navigator.userAgent.indexOf("Mac")!==-1) os=3;
         if (navigator.userAgent.indexOf("X11")!==-1) os=1;
         if (navigator.userAgent.indexOf("Linux")!==-1) os=1
         return os
@@ -51,14 +51,14 @@ export const AddPeer = () => {
                                 <TabPane tab="Ubuntu" key="1">
                                     <UbuntuTab/>
                                 </TabPane>
-                                <TabPane tab="Other Distros" key="2">
-                                    <LinuxTab/>
-                                </TabPane>
-                                <TabPane tab="Windows" key="3">
+                                <TabPane tab="Windows" key="2">
                                     <WindowsTab/>
                                 </TabPane>
-                                <TabPane tab="MacOS" key="4">
+                                <TabPane tab="MacOS" key="3">
                                     <MacTab/>
+                                </TabPane>
+                                <TabPane tab="Other" key="4">
+                                    <OtherTab/>
                                 </TabPane>
                             </Tabs>
                         </Space>

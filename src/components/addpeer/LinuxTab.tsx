@@ -5,12 +5,12 @@ import TabSteps from "./TabSteps";
 import { StepCommand } from "./types"
 
 
-export const LinuxTab = () => {
+export const OtherTab = () => {
 
     const [steps, _] = useState([
         {
             key: 1,
-            title: 'For different distros, or to install from source:',
+            title: 'For different installation options check out our documentation.',
             commands: (
                 <Button type="primary" href={`https://netbird.io/docs/getting-started/installation#binary-install`} target="_blank">
                     Documentation
@@ -25,4 +25,4 @@ export const LinuxTab = () => {
     )
 }
 
-export default LinuxTab
+export default OtherTab
