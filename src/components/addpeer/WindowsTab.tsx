@@ -3,10 +3,12 @@ import React, {useState} from 'react';
 import { Button } from "antd";
 import TabSteps from "./TabSteps";
 import { StepCommand } from "./types"
+import {getConfig} from "../../config";
+const {latestVersion} = getConfig();
 
 export const WindowsTab = () => {
 
-    const releaseVersion = '0.6.2'
+    const releaseVersion = latestVersion ? latestVersion.replace("v", "") : "0.6.3"
     const [steps, setSteps] = useState([
         {
             key: 1,

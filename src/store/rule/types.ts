@@ -1,11 +1,13 @@
 import {Group} from "../group/types";
 
 export interface Rule {
-  ID?: string
-  Name: string
-  Source: Group[] | string[] | null
-  Destination: Group[] | string[] | null
-  Flow: string
+    id?: string
+    name: string
+    description: string
+    sources: Group[] | string[] | null
+    destinations: Group[] | string[] | null
+    flow: string
+    disabled: boolean
 }
 
 export interface RuleToSave extends Rule {

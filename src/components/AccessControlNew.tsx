@@ -2,24 +2,22 @@ import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import { actions as ruleActions } from '../store/rule';
-import { actions as groupsActions } from '../store/group';
-import inbound from '../assets/direct_in.svg';
-import outbound from '../assets/direct_out.svg';
 import {
     Col,
     Row,
     Typography,
     Input,
     Space,
-    Radio,
-    Button, Drawer, Form, List, Divider, Select, Tag
+    Switch,
+    Button, Drawer, Form, Divider, Select, Tag, Radio, RadioChangeEvent
 } from "antd";
-import {ArrowRightOutlined, CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
+import {ArrowRightOutlined, CheckOutlined, CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
 import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
 import {Rule, RuleToSave} from "../store/rule/types";
 import {useAuth0} from "@auth0/auth0-react";
 import { uniq } from "lodash"
 import {Header} from "antd/es/layout/layout";
+import {RuleObject} from "antd/lib/form";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -38,10 +36,14 @@ const AccessControlNew = () => {
     const savedRule = useSelector((state: RootState) => state.rule.savedRule)
 
     const [editName, setEditName] = useState(false)
+    const [editDescription, setEditDescription] = useState(false)
     const [tagGroups, setTagGroups] = useState([] as string[])
     const [formRule, setFormRule] = useState({} as FormRule)
     const [form] = Form.useForm()
     const inputNameRef = useRef<any>(null)
+    const inputDescriptionRef = useRef<any>(null)
+
+    const optionsDisabledEnabled = [{label: 'Enabled', value: false}, {label: 'Disabled', value: true}]
 
     useEffect(() => {
         if (editName) inputNameRef.current!.focus({
@@ -50,35 +52,43 @@ const AccessControlNew = () => {
     }, [editName]);
 
     useEffect(() => {
+        if (editDescription) inputDescriptionRef.current!.focus({
+            cursor: 'end',
+        });
+    }, [editDescription]);
+
+    useEffect(() => {
         if (!rule) return
         const fRule = {
             ...rule,
-            tagSourceGroups: rule.Source ? rule.Source?.map(t => t.Name) : [],
-            tagDestinationGroups: rule.Destination ? rule.Destination?.map(t => t.Name) : []
+            tagSourceGroups: rule.sources ? rule.sources?.map(t => t.name) : [],
+            tagDestinationGroups: rule.destinations ? rule.destinations?.map(t => t.name) : []
         } as FormRule
         setFormRule(fRule)
         form.setFieldsValue(fRule)
     }, [rule])
 
     useEffect(() => {
-        setTagGroups(groups?.map(g => g.Name) || [])
+        setTagGroups(groups?.map(g => g.name) || [])
     }, [groups])
 
     const createRuleToSave = ():RuleToSave => {
-        const Source = groups?.filter(g => formRule.tagSourceGroups.includes(g.Name)).map(g => g.ID || '') || []
-        const Destination = groups?.filter(g => formRule.tagDestinationGroups.includes(g.Name)).map(g => g.ID || '') || []
+        const sources = groups?.filter(g => formRule.tagSourceGroups.includes(g.name)).map(g => g.id || '') || []
+        const destinations = groups?.filter(g => formRule.tagDestinationGroups.includes(g.name)).map(g => g.id || '') || []
         const sourcesNoId = formRule.tagSourceGroups.filter(s => !tagGroups.includes(s))
         const destinationsNoId = formRule.tagDestinationGroups.filter(s => !tagGroups.includes(s))
         const groupsToSave = uniq([...sourcesNoId, ...destinationsNoId])
         return {
-            ID: formRule.ID,
-            Name: formRule.Name,
-            Source,
-            Destination,
+            id: formRule.id,
+            name: formRule.name,
+            description: formRule.description,
+            sources,
+            destinations,
             sourcesNoId,
             destinationsNoId,
             groupsToSave,
-            Flow: formRule.Flow
+            flow: formRule.flow,
+            disabled: formRule.disabled
         } as RuleToSave
     }
 
@@ -101,10 +111,12 @@ const AccessControlNew = () => {
         if (savedRule.loading) return
         setEditName(false)
         dispatch(ruleActions.setRule({
-            Name: '',
-            Source: [],
-            Destination: [],
-            Flow: 'bidirect'
+            name: '',
+            description: '',
+            sources: [],
+            destinations: [],
+            flow: 'bidirect',
+            disabled: false
         } as Rule))
         setVisibleNewRule(false)
     }
@@ -124,6 +136,13 @@ const AccessControlNew = () => {
         setFormRule({
             ...formRule,
             tagDestinationGroups: value
+        })
+    };
+
+    const handleChangeDisabled = ({ target: { value } }: RadioChangeEvent) => {
+        setFormRule({
+            ...formRule,
+            disabled: value
         })
     };
 
@@ -149,8 +168,8 @@ const AccessControlNew = () => {
 
     const optionRender = (label: string) => {
         let peersCount = ''
-        const g = groups.find(_g => _g.Name === label)
-        if (g)  peersCount = ` - ${g.PeersCount || 0} ${(g.PeersCount && parseInt(g.PeersCount) > 1) ? 'peers' : 'peer'} `
+        const g = groups.find(_g => _g.name === label)
+        if (g)  peersCount = ` - ${g.peers_count || 0} ${(!g.peers_count || parseInt(g.peers_count) !== 1) ? 'peers' : 'peer'} `
         return (
             <>
                 <Tag
@@ -164,8 +183,29 @@ const AccessControlNew = () => {
         )
     }
 
+    const dropDownRender = (menu: React.ReactElement) => (
+        <>
+            {menu}
+            <Divider style={{ margin: '8px 0' }} />
+            <Row style={{padding: '0 8px 4px'}}>
+                <Col flex="auto">
+                    <span style={{color: "#9CA3AF"}}>Add new group by pressing "Enter"</span>
+                </Col>
+                <Col flex="none">
+                    <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path d="M1.70455 7.19176V5.89915H10.3949C10.7727 5.89915 11.1174 5.80634 11.429 5.62074C11.7405 5.43513 11.9875 5.18655 12.1697 4.875C12.3554 4.56345 12.4482 4.21875 12.4482 3.84091C12.4482 3.46307 12.3554 3.12003 12.1697 2.81179C11.9841 2.50024 11.7356 2.25166 11.424 2.06605C11.1158 1.88044 10.7727 1.78764 10.3949 1.78764H9.83807V0.5H10.3949C11.0114 0.5 11.5715 0.650805 12.0753 0.952414C12.5791 1.25402 12.9818 1.65672 13.2834 2.16051C13.585 2.6643 13.7358 3.22443 13.7358 3.84091C13.7358 4.30161 13.648 4.73414 13.4723 5.13849C13.3 5.54285 13.0613 5.89915 12.7564 6.20739C12.4515 6.51562 12.0968 6.75758 11.6925 6.93324C11.2881 7.10559 10.8556 7.19176 10.3949 7.19176H1.70455ZM4.90128 11.0646L0.382102 6.54545L4.90128 2.02628L5.79119 2.91619L2.15696 6.54545L5.79119 10.1747L4.90128 11.0646Z" fill="#9CA3AF"/>
+                    </svg>
+                </Col>
+            </Row>
+        </>
+    )
+
     const toggleEditName = (status:boolean) => {
         setEditName(status);
+    }
+
+    const toggleEditDescription = (status:boolean) => {
+        setEditDescription(status);
     }
 
     // const testDeleteGroup = () => {
@@ -173,6 +213,25 @@ const AccessControlNew = () => {
     //         dispatch(groupsActions.deleteGroup.request({getAccessTokenSilently, payload: g.ID || ''}))
     //     })
     // }
+
+    const selectValidator = (_: RuleObject, value: string[]) => {
+        let hasSpaceNamed = []
+        if (!value.length) {
+            return Promise.reject(new Error("Please enter ate least one group"))
+        }
+
+        value.forEach(function(v: string) {
+            if (!v.trim().length) {
+                hasSpaceNamed.push(v)
+            }
+        })
+
+        if (hasSpaceNamed.length) {
+            return Promise.reject(new Error("Group names with just spaces are not allowed"))
+        }
+
+        return Promise.resolve()
+    }
 
     return (
         <>
@@ -185,10 +244,11 @@ const AccessControlNew = () => {
                     visible={setupNewRuleVisible}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
+                    autoFocus={true}
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedRule.loading}>Cancel</Button>
-                            <Button type="primary" disabled={savedRule.loading} onClick={handleFormSubmit}>{`${formRule.ID ? 'Save' : 'Create'}`}</Button>
+                            <Button type="primary" disabled={savedRule.loading} onClick={handleFormSubmit}>{`${formRule.id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
                 >
@@ -198,7 +258,7 @@ const AccessControlNew = () => {
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
                                     <Row align="top">
                                         <Col flex="none" style={{display: "flex"}}>
-                                            {!editName && formRule.ID  &&
+                                            {!editName && !editDescription && formRule.id  &&
                                                 <button type="button" aria-label="Close" className="ant-drawer-close"
                                                         style={{paddingTop: 3}}
                                                         onClick={onCancel}>
@@ -209,32 +269,76 @@ const AccessControlNew = () => {
                                             }
                                         </Col>
                                         <Col flex="auto">
-                                            { !editName && formRule.ID ? (
-                                                <div className={"access-control ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRule.ID ? formRule.Name : 'New Rule'}</div>
+                                            { !editName && formRule.id ? (
+                                                <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRule.id ? formRule.name : 'New Rule'}</div>
                                             ) : (
                                                 <Form.Item
-                                                    name="Name"
-                                                    label={null}
-                                                    rules={[{required: true, message: 'Please add a name for this access rule'}]}
+                                                    name="name"
+                                                    label="Name"
+                                                    rules={[{required: true, message: 'Please add a name for this access rule', whitespace: true}]}
                                                 >
                                                     <Input placeholder="Add rule name..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
                                                 </Form.Item>
                                             )}
+                                            { !editDescription ? (
+                                                <div className={"access-control input-text ant-drawer-subtitle"} onClick={() => toggleEditDescription(true)}>{formRule.description && formRule.description.trim() !== "" ? formRule.description : 'Add description...'}</div>
+                                            ) : (
+                                                <Form.Item
+                                                    name="description"
+                                                    label="Description"
+                                                    style={{marginTop: 24}}
+                                                >
+                                                    <Input placeholder="Add description..." ref={inputDescriptionRef} onPressEnter={() => toggleEditDescription(false)} onBlur={() => toggleEditDescription(false)} autoComplete="off"/>
+                                                </Form.Item>
+                                            )}
+                                        </Col>
+                                    </Row>
+                                    <Row align="top">
+                                        <Col flex="auto">
+
                                         </Col>
                                     </Row>
 
                                 </Header>
                             </Col>
                             <Col span={24}>
+
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="disabled"
+                                    label="Status"
+                                    //valuePropName="checked"
+                                >
+                                    {/*<Switch
+                                        checkedChildren={<CheckOutlined />}
+                                        unCheckedChildren={<CloseOutlined />}
+
+                                        onChange={handleChangeDisabled}
+                                    />*/}
+
+                                    <Radio.Group
+                                        options={optionsDisabledEnabled}
+                                        onChange={handleChangeDisabled}
+                                        optionType="button"
+                                        buttonStyle="solid"
+                                    />
+                                </Form.Item>
                             </Col>
                             <Col span={24}>
                                 <Form.Item
                                     name="tagSourceGroups"
-                                    label={<>Source groups&nbsp;<ArrowRightOutlined /></>}
-                                    rules={[{required: true, message: 'Please enter ate least one group'}]}
+                                    label="Source groups"
+                                    rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
                                 >
-                                    <Select mode="tags"  style={{ width: '100%' }} placeholder="Tags Mode" tagRender={tagRender} onChange={handleChangeSource}>
+                                    <Select mode="tags"
+                                            style={{ width: '100%' }}
+                                            placeholder="Tags Mode"
+                                            tagRender={tagRender}
+                                            onChange={handleChangeSource}
+                                            dropdownRender={dropDownRender}
+                                    >
                                         {
                                             tagGroups.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
@@ -246,11 +350,17 @@ const AccessControlNew = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="tagDestinationGroups"
-                                    label={<><ArrowRightOutlined />&nbsp;Destination groups</>}
-                                    rules={[{required: true, message: 'Please enter ate least one group'}]}
+                                    label="Destination groups"
+                                    rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
                                 >
-                                    <Select mode="tags" style={{ width: '100%' }} placeholder="Tags Mode" tagRender={tagRender}  onChange={handleChangeDestination}>
+                                    <Select
+                                        mode="tags" style={{ width: '100%' }}
+                                        placeholder="Tags Mode"
+                                        tagRender={tagRender}
+                                        onChange={handleChangeDestination}
+                                        dropdownRender={dropDownRender}
+                                    >
                                         {
                                             tagGroups.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
@@ -271,7 +381,6 @@ const AccessControlNew = () => {
                                         <Paragraph>
                                             If you want to enable all peers of the same group to talk to each other - you can add that group both as a receiver and as a destination.
                                         </Paragraph>
-                                        <a style={{color: 'rgb(07, 114, 128)'}} href="https://docs.netbird.io/overview/access-control" target="_blank">Learn more about access control...</a>
                                     </Col>
                                 </Row>
                             </Col>
@@ -279,7 +388,7 @@ const AccessControlNew = () => {
                                 <Divider></Divider>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
                                         href="https://docs.netbird.io/docs/overview/acls" style={{color: 'rgb(07, 114, 128)'}}>Learn
-                                    more about setup keys</Button>
+                                    more about access controls</Button>
                             </Col>
                         </Row>
                     </Form>
