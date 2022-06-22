@@ -1,10 +1,11 @@
-import React, {useState} from 'react';
+import React, { useState } from 'react';
 
 import { Button } from "antd";
 import TabSteps from "./TabSteps";
 import { StepCommand } from "./types"
-import {getConfig} from "../../config";
-const {grpcApiOrigin} = getConfig();
+import { getConfig } from "../../config";
+import Paragraph from 'antd/lib/skeleton/Paragraph';
+const { grpcApiOrigin } = getConfig();
 
 
 export const LinuxTab = () => {
@@ -59,7 +60,17 @@ export const LinuxTab = () => {
             ].join('\n'),
             copied: false,
             showCopyButton: true
-        } as StepCommand
+        } as StepCommand,
+        {
+            key: 5,
+            title: 'For different distros, or to install from source:',
+            commands: (
+                <Button type="primary" href={`https://netbird.io/docs/getting-started/installation#binary-install`} target="_blank">
+                    Documentation
+                </Button>
+            ),
+            copied: false,
+        } as StepCommand,
     ])
 
     /*const clickTest = () => {
@@ -74,7 +85,7 @@ export const LinuxTab = () => {
     }*/
 
     return (
-        <TabSteps stepsItems={steps}/>
+        <TabSteps stepsItems={steps} />
     )
 }
 
