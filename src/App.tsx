@@ -99,7 +99,7 @@ function App() {
                             </Col>
                         </Row>
                     </Header>
-                    <Content>
+                    <Content style={{ minHeight: "100vh"}}>
                         <Switch>
                             <Route
                                 exact
