@@ -2,30 +2,37 @@ import React, {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {useDispatch, useSelector} from "react-redux";
 import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
-import { RootState } from "typesafe-actions";
-import { actions as peerActions } from '../store/peer';
-import { actions as groupActions } from '../store/group';
+import {RootState} from "typesafe-actions";
+import {actions as peerActions} from '../store/peer';
+import {actions as groupActions} from '../store/group';
 import Loading from "../components/Loading";
 import {Container} from "../components/Container";
 import {
-    Col,
-    Row,
-    Typography,
-    Table,
+    Alert,
+    Button,
     Card,
-    Tag,
+    Col,
+    Dropdown,
     Input,
-    Space,
+    Menu,
+    message,
+    Modal,
+    Popover,
     Radio,
     RadioChangeEvent,
-    Dropdown,
-    Menu,
-    Alert, Select, Modal, Button, message, Popover, SpinProps, Spin, Switch
+    Row,
+    Select,
+    Space,
+    Switch,
+    Table,
+    Tag,
+    Typography,
+    Tooltip
 } from "antd";
 import {Peer} from "../store/peer/types";
 import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
-import {ExclamationCircleOutlined} from "@ant-design/icons";
+import Icon, {ExclamationCircleOutlined, QuestionCircleOutlined, WarningOutlined} from "@ant-design/icons";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerGroupsUpdate from "../components/PeerGroupsUpdate";
@@ -68,6 +75,15 @@ export const Peers = () => {
     ]
 
     const optionsOnOff = [{label: 'Online', value: 'on'},{label: 'All', value: 'all'}]
+
+    const sshColumnTitle = (
+        <span>
+        SSH Server
+        <Tooltip title="Experimental feature. Enabling this option allows remote SSH access to the machine.">
+            <ExclamationCircleOutlined style={{marginLeft: '0.5em', color: '#ffa940'}}/>
+        </Tooltip>
+      </span>
+    )
 
     const itemsMenuAction = [
         {
@@ -325,7 +341,14 @@ export const Peers = () => {
                                                 return renderPopoverGroups(text, record.groups, record)
                                             }}
                                     />
-                                    <Column title="SSH Server" dataIndex="ssh_enabled" align="center"
+                                    {/*<Column
+                                        title="SSH Server" dataIndex="ssh_enabled" align="center"
+                                            render={(e, record:PeerDataTable, index) => (
+                                                <Switch size={"small"} onChange={(checked: boolean) => handleSwitchSSH(record, checked)} defaultChecked={e}/>)
+                                    }
+                                    />*/}
+                                    <Column
+                                        title={sshColumnTitle} dataIndex="ssh_enabled" align="center"
                                             render={(e, record:PeerDataTable, index) => (
                                                 <Switch size={"small"} onChange={(checked: boolean) => handleSwitchSSH(record, checked)} defaultChecked={e}/>)
                                     }
