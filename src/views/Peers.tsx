@@ -205,7 +205,7 @@ export const Peers = () => {
     const showConfirmEnableSSH = (record: PeerDataTable) => {
         confirm({
             icon: <ExclamationCircleOutlined />,
-            title: "Enable SSH Service for \"" + record.name + "\"?",
+            title: "Enable SSH Server for \"" + record.name + "\"?",
             width: 600,
             content: "Experimental feature. Enabling this option allows remote SSH access to this machine from other connected network participants.",
             okType: 'danger',
