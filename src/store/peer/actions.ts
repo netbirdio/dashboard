@@ -1,6 +1,12 @@
 import { ActionType, createAction, createAsyncAction } from 'typesafe-actions';
 import {Peer, PeerGroupsToSave} from './types';
-import {ApiError, ChangeResponse, DeleteResponse, RequestPayload} from '../../services/api-client/types';
+import {
+  ApiError,
+  ChangeResponse,
+  CreateResponse,
+  DeleteResponse,
+  RequestPayload
+} from '../../services/api-client/types';
 import {Group} from "../group/types";
 
 const actions = {
@@ -28,7 +34,14 @@ const actions = {
 
   removePeer:  createAction('REMOVE_PEER')<string>(),
   setPeer: createAction('SET_PEER')<Peer | null>(),
-  setUpdateGroupsVisible: createAction('SET_UPDATE_GROUPS_VISIBLE')<boolean>()
+  setUpdateGroupsVisible: createAction('SET_UPDATE_GROUPS_VISIBLE')<boolean>(),
+  updatePeer: createAsyncAction(
+      'UPDATE_PEER',
+      'UPDATE_PEER_SUCCESS',
+      'UPDATE_PEER_FAILURE',
+  )<RequestPayload<Peer>, ChangeResponse<Peer | null>, ChangeResponse<Peer | null>>(),
+  setUpdatedPeer: createAction('SET_UPDATED_PEER')<ChangeResponse<Peer | null>>(),
+  resetUpdatedPeer: createAction('RESET_UPDATED_PEER')<null>(),
 };
 
 export type ActionTypes = ActionType<typeof actions>;
