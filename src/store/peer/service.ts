@@ -14,5 +14,13 @@ export default {
         `/api/peers/` + payload.payload,
         payload
     );
+  },
+  async updatePeer(payload:RequestPayload<Peer>): Promise<ApiResponse<Peer>> {
+    const id = payload.payload.id
+    delete payload.payload.id
+    return apiClient.put<Peer>(
+        `/api/peers/${id}`,
+        payload
+    );
   }
 };

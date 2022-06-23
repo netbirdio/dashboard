@@ -4,8 +4,7 @@ import {
   ApiResponse,
   ChangeResponse,
   CreateResponse,
-  DeleteResponse,
-  RequestPayload
+  DeleteResponse
 } from '../../services/api-client/types';
 import { Peer } from './types'
 import service from './service';
@@ -153,11 +152,56 @@ export function* saveGroups(action: ReturnType<typeof actions.saveGroups.request
   }
 }
 
+export function* updatePeer(action: ReturnType<typeof actions.updatePeer.request>): Generator {
+  try {
+    yield put(actions.setUpdatedPeer({
+      loading: true,
+      success: false,
+      failure: false,
+      error: null,
+      data: null
+    }))
+
+    const peer = action.payload.payload
+    const peerId = peer.id
+
+    const payloadToSave = {
+      getAccessTokenSilently: action.payload.getAccessTokenSilently,
+      payload: peer
+    }
+
+    const effect = yield call(service.updatePeer, payloadToSave)
+    const response = effect as ApiResponse<Peer>;
+
+    yield put(actions.updatePeer.success({
+      loading: false,
+      success: true,
+      failure: false,
+      error: null,
+      data: response.body
+    } as ChangeResponse<Peer | null>));
+
+    const peers = (yield select(state => state.peer.data)) as Peer[]
+    yield put(actions.getPeers.success(peers.filter((p:Peer) => p.id !== peerId).concat(response.body)))
+
+  } catch (err) {
+    console.log(err)
+    yield put(actions.updatePeer.failure({
+      loading: false,
+      success: false,
+      failure: true,
+      error: err as ApiError,
+      data: null
+    } as ChangeResponse<Peer | null>));
+  }
+}
+
 export default function* sagas(): Generator {
   yield all([
     takeLatest(actions.getPeers.request, getPeers),
     takeLatest(actions.deletedPeer.request, deletePeer),
-    takeLatest(actions.saveGroups.request, saveGroups)
+    takeLatest(actions.saveGroups.request, saveGroups),
+    takeLatest(actions.updatePeer.request, updatePeer)
   ]);
 }
 

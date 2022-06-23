@@ -2,7 +2,7 @@ import { createReducer } from 'typesafe-actions';
 import { combineReducers } from 'redux';
 import { Rule } from './types';
 import actions, { ActionTypes } from './actions';
-import {ApiError, DeleteResponse, CreateResponse, ChangeResponse} from "../../services/api-client/types";
+import {ApiError, DeleteResponse, CreateResponse} from "../../services/api-client/types";
 
 type StateType = Readonly<{
   data: Rule[] | null;

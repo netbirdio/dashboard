@@ -9,6 +9,7 @@ export interface Peer {
   os: string,
   version: string,
   groups?: Group[]
+  ssh_enabled: boolean,
 }
 
 export interface PeerToSave extends Peer {
