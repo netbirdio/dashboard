@@ -4,8 +4,7 @@ import {
   ApiResponse,
   ChangeResponse,
   CreateResponse,
-  DeleteResponse,
-  RequestPayload
+  DeleteResponse
 } from '../../services/api-client/types';
 import { Peer } from './types'
 import service from './service';
@@ -13,8 +12,6 @@ import actions from './actions';
 import {Group, GroupPeer} from "../group/types";
 import serviceGroup from "../group/service";
 import {actions as groupActions} from "../group";
-import {Rule} from "../rule/types";
-import peers from "../../views/Peers";
 
 
 export function* getPeers(action: ReturnType<typeof actions.getPeers.request>): Generator {

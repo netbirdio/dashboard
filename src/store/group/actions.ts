@@ -2,7 +2,6 @@ import { ActionType, createAction, createAsyncAction } from 'typesafe-actions';
 import { Group } from './types';
 import {
   ApiError,
-  ChangeResponse,
   CreateResponse,
   DeleteResponse,
   RequestPayload

@@ -1,7 +1,6 @@
 import {ApiResponse, RequestPayload} from '../../services/api-client/types';
 import { apiClient } from '../../services/api-client';
 import { Peer } from './types';
-import {Rule} from "../rule/types";
 
 export default {
   async getPeers(payload:RequestPayload<null>): Promise<ApiResponse<Peer[]>> {

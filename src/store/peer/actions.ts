@@ -8,7 +8,6 @@ import {
   RequestPayload
 } from '../../services/api-client/types';
 import {Group} from "../group/types";
-import {SetupKey} from "../setup-key/types";
 
 const actions = {
   getPeers: createAsyncAction(

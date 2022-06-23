@@ -4,7 +4,6 @@ import { Peer } from './types';
 import actions, { ActionTypes } from './actions';
 import {ApiError, ChangeResponse, CreateResponse, DeleteResponse} from "../../services/api-client/types";
 import {Group} from "../group/types";
-import {Rule} from "../rule/types";
 
 type StateType = Readonly<{
   data: Peer[] | null;
