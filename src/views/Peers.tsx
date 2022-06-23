@@ -356,7 +356,7 @@ export const Peers = () => {
                                                 />
 
                                                 if (isWindows) {
-                                                    return <Tooltip title="SSH Server is not yet supported on Windows">
+                                                    return <Tooltip title="SSH server feature is not yet supported on Windows">
                                                         {toggle}
                                                     </Tooltip>
                                                 } else {
