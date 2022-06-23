@@ -76,15 +76,6 @@ export const Peers = () => {
 
     const optionsOnOff = [{label: 'Online', value: 'on'},{label: 'All', value: 'all'}]
 
-    const sshColumnTitle = (
-        <span>
-        SSH Server
-        <Tooltip title="Experimental feature. Enabling this option allows remote SSH access to the machine.">
-            <ExclamationCircleOutlined style={{marginLeft: '0.5em', color: '#ffa940'}}/>
-        </Tooltip>
-      </span>
-    )
-
     const itemsMenuAction = [
         {
             key: "delete",
@@ -195,17 +186,12 @@ export const Peers = () => {
     }
 
     const showConfirmDelete = () => {
+        let name = peerToAction ? peerToAction.name : ''
         confirm({
             icon: <ExclamationCircleOutlined />,
+            title: "Delete peer \"" + name + "\"",
             width: 600,
-            content: <Space direction="vertical" size="small">
-                {peerToAction &&
-                    <>
-                        <Title level={5}>Delete peer "{peerToAction ? peerToAction.name : ''}"</Title>
-                        <Paragraph>Are you sure you want to delete peer from your account?</Paragraph>
-                    </>
-                }
-            </Space>,
+            content: "Are you sure you want to delete peer from your account?",
             okType: 'danger',
             onOk() {
                 dispatch(peerActions.deletedPeer.request({getAccessTokenSilently, payload: peerToAction ? peerToAction.ip : ''}));
@@ -216,6 +202,30 @@ export const Peers = () => {
         });
     }
 
+    const showConfirmEnableSSH = (record: PeerDataTable) => {
+        confirm({
+            icon: <ExclamationCircleOutlined />,
+            title: "Enable SSH Service for \"" + record.name + "\"?",
+            width: 600,
+            content: "Experimental feature. Enabling this option allows remote SSH access to this machine from other connected network participants.",
+            okType: 'danger',
+            onOk() {
+
+                handleSwitchSSH(record, true)
+            },
+            onCancel() {
+            },
+        });
+    }
+    function handleSwitchSSH(record: PeerDataTable, checked: boolean) {
+        const peer = {
+            id: record.id,
+            ssh_enabled: checked,
+            name: record.name
+        } as Peer
+        dispatch(peerActions.updatePeer.request({getAccessTokenSilently, payload: peer}));
+
+    }
     const setUpdateGroupsVisible = (peerToAction:Peer, status:boolean) => {
         if (status) {
             dispatch(peerActions.setPeer({...peerToAction}))
@@ -253,16 +263,6 @@ export const Peers = () => {
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>
         )
-    }
-
-
-    function handleSwitchSSH(record: PeerDataTable, checked: boolean) {
-        const peer = {
-            id: record.id,
-            ssh_enabled: checked,
-            name: record.name
-        } as Peer
-        dispatch(peerActions.updatePeer.request({getAccessTokenSilently, payload: peer}));
     }
 
     return (
@@ -341,18 +341,22 @@ export const Peers = () => {
                                                 return renderPopoverGroups(text, record.groups, record)
                                             }}
                                     />
-                                    {/*<Column
+                                    <Column
                                         title="SSH Server" dataIndex="ssh_enabled" align="center"
                                             render={(e, record:PeerDataTable, index) => (
-                                                <Switch size={"small"} onChange={(checked: boolean) => handleSwitchSSH(record, checked)} defaultChecked={e}/>)
-                                    }
-                                    />*/}
-                                    <Column
-                                        title={sshColumnTitle} dataIndex="ssh_enabled" align="center"
-                                            render={(e, record:PeerDataTable, index) => (
-                                                <Switch size={"small"} onChange={(checked: boolean) => handleSwitchSSH(record, checked)} defaultChecked={e}/>)
+
+                                                <Switch size={"small"} checked={e}
+                                                        onClick={(checked: boolean) => {
+                                                            if (checked) {
+                                                                showConfirmEnableSSH(record)
+                                                            } else {
+                                                                handleSwitchSSH(record, checked)
+                                                            }
+                                                        }}
+                                                />)
                                     }
                                     />
+
                                     <Column title="LastSeen" dataIndex="last_seen"
                                             render={(text, record, index) => {
                                                 return (record as PeerDataTable).connected ? 'just now' : timeAgo(text)
