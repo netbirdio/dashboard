@@ -10,7 +10,7 @@ export const OtherTab = () => {
     const [steps, _] = useState([
         {
             key: 1,
-            title: 'For different installation options check out our documentation.',
+            title: 'For other installation options check our documentation.',
             commands: (
                 <Button type="primary" href={`https://netbird.io/docs/getting-started/installation#binary-install`} target="_blank">
                     Documentation

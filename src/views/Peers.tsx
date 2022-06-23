@@ -210,7 +210,6 @@ export const Peers = () => {
             content: "Experimental feature. Enabling this option allows remote SSH access to this machine from other connected network participants.",
             okType: 'danger',
             onOk() {
-
                 handleSwitchSSH(record, true)
             },
             onCancel() {
@@ -343,17 +342,27 @@ export const Peers = () => {
                                     />
                                     <Column
                                         title="SSH Server" dataIndex="ssh_enabled" align="center"
-                                            render={(e, record:PeerDataTable, index) => (
+                                            render={(e, record:PeerDataTable, index) => {
+                                                let isWindows = record.os.toLocaleLowerCase().startsWith("windows")
+                                                let toggle = <Switch size={"small"} checked={e}
+                                                                     disabled={isWindows}
+                                                                     onClick={(checked: boolean) => {
+                                                                         if (checked) {
+                                                                             showConfirmEnableSSH(record)
+                                                                         } else {
+                                                                             handleSwitchSSH(record, checked)
+                                                                         }
+                                                                     }}
+                                                />
 
-                                                <Switch size={"small"} checked={e}
-                                                        onClick={(checked: boolean) => {
-                                                            if (checked) {
-                                                                showConfirmEnableSSH(record)
-                                                            } else {
-                                                                handleSwitchSSH(record, checked)
-                                                            }
-                                                        }}
-                                                />)
+                                                if (isWindows) {
+                                                    return <Tooltip title="SSH Server is not yet supported on Windows">
+                                                        {toggle}
+                                                    </Tooltip>
+                                                } else {
+                                                    return toggle
+                                                }
+                                            }
                                     }
                                     />
 
