@@ -1,21 +1,15 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
-import { actions as peerActions } from '../store/peer';
-import {
-    Col,
-    Row,
-    Typography,
-    Space,
-    Button, Drawer, Form, Select, Tag, Divider, Input
-} from "antd";
+import {actions as peerActions} from '../store/peer';
+import {Button, Col, Divider, Drawer, Form, Input, Row, Select, Space, Tag, Typography} from "antd";
 import {Header} from "antd/es/layout/layout";
-import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
+import type {CustomTagProps} from 'rc-select/lib/BaseSelect'
 import {useAuth0} from "@auth0/auth0-react";
 import {Peer, PeerGroupsToSave} from "../store/peer/types";
 import {Group, GroupPeer} from "../store/group/types";
-import {CloseOutlined, FlagFilled, EditOutlined} from "@ant-design/icons";
-import { RuleObject } from 'antd/lib/form';
+import {CloseOutlined, EditOutlined, FlagFilled} from "@ant-design/icons";
+import {RuleObject} from 'antd/lib/form';
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -283,35 +277,42 @@ const PeerUpdate = () => {
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
                                     <Row align="top">
                                         <Col flex="none" style={{display: "flex"}}>
-                                            {!editName && peer.id  &&
+                                            {!editName && peer.id &&
                                                 <button type="button" aria-label="Close" className="ant-drawer-close"
                                                         style={{paddingTop: 3}}
                                                         onClick={onCancel}>
-                                                    <span role="img" aria-label="close" className="anticon anticon-close">
+                                                    <span role="img" aria-label="close"
+                                                          className="anticon anticon-close">
                                                         <CloseOutlined size={16}/>
                                                     </span>
                                                 </button>
                                             }
                                         </Col>
                                         <Col flex="auto">
-                                { !editName && peer.id && formPeer.name? (
-                                    <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formPeer.name? formPeer.name: peer.name} <EditOutlined/></div>
-                                ) : (
-                                <Form.Item
-                                    name="name"
-                                    label="Update Name"
-                                    rules={[{required: true, message: 'Please add a new name for this peer', whitespace: true}]}
-                                    style={{display: 'flex'}}
-                                >
-                                    <Input
-                                        placeholder={peer.name}
-                                        ref={inputNameRef}
-                                        onPressEnter={() => toggleEditName(false)}
-                                        onBlur={() => toggleEditName(false)}
-                                        // onChange={(e) => handleChangeName(e.)}
-                                        autoComplete="off"/>
-                                </Form.Item>)}
-                            </Col>
+                                            {!editName && peer.id && formPeer.name ? (
+                                                <div className={"access-control input-text ant-drawer-title"}
+                                                     onClick={() => toggleEditName(true)}>{formPeer.name ? formPeer.name : peer.name}
+                                                    <EditOutlined/></div>
+                                            ) : (
+                                                <Form.Item
+                                                    name="name"
+                                                    label="Update Name"
+                                                    rules={[{
+                                                        required: true,
+                                                        message: 'Please add a new name for this peer',
+                                                        whitespace: true
+                                                    }]}
+                                                    style={{display: 'flex'}}
+                                                >
+                                                    <Input
+                                                        placeholder={peer.name}
+                                                        ref={inputNameRef}
+                                                        onPressEnter={() => toggleEditName(false)}
+                                                        onBlur={() => toggleEditName(false)}
+                                                        // onChange={(e) => handleChangeName(e.)}
+                                                        autoComplete="off"/>
+                                                </Form.Item>)}
+                                        </Col>
                                     </Row>
 
                                 </Header>
