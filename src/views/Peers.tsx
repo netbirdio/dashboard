@@ -35,7 +35,7 @@ import {formatOS, timeAgo} from "../utils/common";
 import Icon, {ExclamationCircleOutlined, QuestionCircleOutlined, WarningOutlined} from "@ant-design/icons";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
-import PeerGroupsUpdate from "../components/PeerGroupsUpdate";
+import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
 import {TooltipPlacement} from "antd/es/tooltip";
 
@@ -391,7 +391,7 @@ export const Peers = () => {
                     </Col>
                 </Row>
             </Container>
-            <PeerGroupsUpdate/>
+            <PeerUpdate/>
         </>
     )
 }

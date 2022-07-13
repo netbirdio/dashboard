@@ -20,7 +20,7 @@ import { RuleObject } from 'antd/lib/form';
 const { Paragraph } = Typography;
 const { Option } = Select;
 
-const PeerGroupsUpdate = () => {
+const PeerUpdate = () => {
     const { getAccessTokenSilently } = useAuth0()
     const dispatch = useDispatch()
     const groups =  useSelector((state: RootState) => state.group.data)
@@ -364,4 +364,4 @@ const PeerGroupsUpdate = () => {
     )
 }
 
-export default PeerGroupsUpdate
+export default PeerUpdate
