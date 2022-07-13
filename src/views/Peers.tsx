@@ -78,6 +78,10 @@ export const Peers = () => {
 
     const itemsMenuAction = [
         {
+            key: "view",
+            label: (<Button type="text" block onClick={() => onClickViewRule()}>View</Button>)
+        },
+        {
             key: "delete",
             label: (<Button type="text" onClick={() => showConfirmDelete()}>Delete</Button>)
         }
@@ -225,6 +229,12 @@ export const Peers = () => {
         dispatch(peerActions.updatePeer.request({getAccessTokenSilently, payload: peer}));
 
     }
+
+    const onClickViewRule = () => {
+        dispatch(peerActions.setUpdateGroupsVisible(true))
+        dispatch(peerActions.setPeer(peerToAction as Peer))
+    }
+
     const setUpdateGroupsVisible = (peerToAction:Peer, status:boolean) => {
         if (status) {
             dispatch(peerActions.setPeer({...peerToAction}))
@@ -317,7 +327,11 @@ export const Peers = () => {
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             defaultSortOrder='ascend'
-                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))} />
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
+                                            render={(text:string, record:PeerDataTable,) => {
+                                                return <Button type="text" onClick={() => setUpdateGroupsVisible(record, true)}>{text}</Button>
+                                            }}
+                                    />
                                     <Column title="IP" dataIndex="ip"
                                             sorter={(a, b) => {
                                                 const _a = (a as any).ip.split('.')
