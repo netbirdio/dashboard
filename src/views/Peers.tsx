@@ -133,7 +133,7 @@ export const Peers = () => {
             message.loading({ content: 'Updating peer groups...', key: saveGroupsKey, style });
         } else if (savedGroups.success) {
             message.success({ content: 'Peer groups have been successfully updated.', key: saveGroupsKey, duration: 2, style });
-            setUpdateGroupsVisible({} as Peer, false)
+            // setUpdateGroupsVisible({} as Peer, false)
             dispatch(peerActions.resetSavedGroups(null))
         } else if (savedGroups.error) {
             message.error({ content: 'Failed to update peer groups. You might not have enough permissions.', key: saveGroupsKey, duration: 2, style  });
