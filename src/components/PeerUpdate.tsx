@@ -1,35 +1,37 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
-import { actions as peerActions } from '../store/peer';
-import {
-    Col,
-    Row,
-    Typography,
-    Space,
-    Button, Drawer, Form, Select, Tag, Divider
-} from "antd";
-import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
+import {actions as peerActions} from '../store/peer';
+import {Button, Col, Divider, Drawer, Form, Input, Row, Select, Space, Tag, Typography} from "antd";
+import {Header} from "antd/es/layout/layout";
+import type {CustomTagProps} from 'rc-select/lib/BaseSelect'
 import {useAuth0} from "@auth0/auth0-react";
-import {PeerGroupsToSave} from "../store/peer/types";
+import {Peer, PeerGroupsToSave} from "../store/peer/types";
 import {Group, GroupPeer} from "../store/group/types";
-import {FlagFilled} from "@ant-design/icons";
-import { RuleObject } from 'antd/lib/form';
+import {CloseOutlined, EditOutlined, FlagFilled} from "@ant-design/icons";
+import {RuleObject} from 'antd/lib/form';
 
 const { Paragraph } = Typography;
 const { Option } = Select;
 
-const PeerGroupsUpdate = () => {
+const PeerUpdate = () => {
     const { getAccessTokenSilently } = useAuth0()
     const dispatch = useDispatch()
     const groups =  useSelector((state: RootState) => state.group.data)
     const peer =   useSelector((state: RootState) => state.peer.peer)
+    const [formPeer, setFormPeer] = useState({} as Peer)
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
     const savedGroups = useSelector((state: RootState) => state.peer.savedGroups)
+    const updatedPeers = useSelector((state: RootState) => state.peer.updatedPeer)
 
     const [tagGroups, setTagGroups] = useState([] as string[])
     const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[])
     const [peerGroups, setPeerGroups] = useState([] as GroupPeer[])
+    const inputNameRef = useRef<any>(null)
+    const [editName, setEditName] = useState(false)
+    const [callingPeerAPI, setCallingPeerAPI] = useState(false)
+    const [callingGroupAPI, setCallingGroupAPI] = useState(false)
+    const [isSubmitRunning, setSubmitRunning] = useState(false)
     const [peerGroupsToSave, setPeerGroupsToSave] = useState({
         ID: '',
         groupsNoId: [],
@@ -40,13 +42,42 @@ const PeerGroupsUpdate = () => {
 
     const [form] = Form.useForm()
 
+    // wait peer update to succeed
+    useEffect(() => {
+        if (callingPeerAPI && updatedPeers.success) {
+            setCallingPeerAPI(false)
+        }
+    },[updatedPeers])
+
+    // wait save groups to succeed
+    useEffect(() => {
+        if (callingGroupAPI && savedGroups.success) {
+            setCallingGroupAPI(false)
+        }
+    },[savedGroups])
+
+    // clean temp state and close
+    useEffect(() => {
+        if (isSubmitRunning && !callingGroupAPI && !callingPeerAPI) {
+            onCancel()
+        }
+    },[callingGroupAPI,callingPeerAPI])
+
+    useEffect(() => {
+        if (editName) inputNameRef.current!.focus({
+            cursor: 'end',
+        });
+    }, [editName]);
+
     useEffect(() => {
         if (!peer) return
         const gs = peer?.groups?.map(g => ({id: g?.id || '', name: g.name} as GroupPeer)) as GroupPeer[]
         const gs_name = gs?.map(g => g.name) as string[]
         setPeerGroups(gs)
         setSelectedTagGroups(gs_name)
+        setFormPeer(peer)
         form.setFieldsValue({
+            name: formPeer.name ? formPeer.name: peer.name,
             groups: gs_name
         })
     }, [peer])
@@ -54,6 +85,10 @@ const PeerGroupsUpdate = () => {
     useEffect(() => {
         setTagGroups(groups?.map(g => g.name) || [])
     }, [groups])
+
+    const toggleEditName = (status:boolean) => {
+        setEditName(status)
+    }
 
     useEffect(() => {
         const groupsToRemove = peerGroups.filter(pg => !selectedTagGroups.includes(pg.name)).map(g => g.id)
@@ -134,10 +169,24 @@ const PeerGroupsUpdate = () => {
     const onCancel = () => {
         dispatch(peerActions.setPeer(null))
         setUpdateGroupsVisible(false)
+        setEditName(false)
+        // setSaveBtnDisabled(true)
+        setFormPeer({} as Peer)
+        setCallingPeerAPI(false)
+        setCallingPeerAPI(false)
+        setSubmitRunning(false)
+    }
+
+    const noUpdateToGroups = ():Boolean => {
+        return !peerGroupsToSave.groupsToRemove.length && !peerGroupsToSave.groupsToAdd.length && !peerGroupsToSave.groupsNoId.length
+    }
+
+    const noUpdateToName = ():Boolean => {
+        return !formPeer.name || formPeer.name === peer.name
     }
 
     const onChange = (data:any) => {
-        //setFormRule({...formRule, ...data})
+        setFormPeer({...formPeer, ...data})
     }
 
     const handleChangeTags = (value: string[]) => {
@@ -150,10 +199,27 @@ const PeerGroupsUpdate = () => {
         setSelectedTagGroups(validatedValues)
     };
 
+    const createPeerToSave = ():Peer => {
+        return {
+            id: formPeer.id,
+            ssh_enabled: formPeer.ssh_enabled,
+            name: formPeer.name
+        } as Peer
+    }
+
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
-                dispatch(peerActions.saveGroups.request({getAccessTokenSilently, payload: peerGroupsToSave}))
+                setSubmitRunning(true)
+                if (!noUpdateToName()) {
+                    const peerUpdate = createPeerToSave()
+                    setCallingPeerAPI(true)
+                    dispatch(peerActions.updatePeer.request({getAccessTokenSilently, payload: peerUpdate}))
+                }
+                if (peerGroupsToSave.groupsToRemove.length || peerGroupsToSave.groupsToAdd.length || peerGroupsToSave.groupsNoId.length) {
+                    setCallingGroupAPI(true)
+                    dispatch(peerActions.saveGroups.request({getAccessTokenSilently, payload: peerGroupsToSave}))
+                }
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
@@ -161,9 +227,9 @@ const PeerGroupsUpdate = () => {
     }
 
     const selectValidator = (_: RuleObject, value: string[]) => {
-        console.log(value)
         let hasSpaceNamed = []
         let isAllPresent = false
+
         if (!value.length) {
             return Promise.reject(new Error("Please enter ate least one group"))
         }
@@ -192,8 +258,8 @@ const PeerGroupsUpdate = () => {
         <>
             {peer &&
                 <Drawer
-                    title={`${peer.name}`}
                     forceRender={true}
+                    headerStyle={{display: "none"}}
                     visible={true}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
@@ -201,12 +267,59 @@ const PeerGroupsUpdate = () => {
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedGroups.loading}>Cancel</Button>
-                            <Button type="primary" disabled={savedGroups.loading || (!peerGroupsToSave.groupsToRemove.length && !peerGroupsToSave.groupsToAdd.length && !peerGroupsToSave.groupsNoId.length)} onClick={handleFormSubmit}>Save</Button>
+                            <Button type="primary" disabled={(savedGroups.loading || updatedPeers.loading) || (noUpdateToGroups() && noUpdateToName())} onClick={handleFormSubmit}>Save</Button>
                         </Space>
                     }
                 >
                     <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}>
                         <Row gutter={16}>
+                            <Col span={24}>
+                                <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
+                                    <Row align="top">
+                                        <Col flex="none" style={{display: "flex"}}>
+                                            {!editName && peer.id &&
+                                                <button type="button" aria-label="Close" className="ant-drawer-close"
+                                                        style={{paddingTop: 3}}
+                                                        onClick={onCancel}>
+                                                    <span role="img" aria-label="close"
+                                                          className="anticon anticon-close">
+                                                        <CloseOutlined size={16}/>
+                                                    </span>
+                                                </button>
+                                            }
+                                        </Col>
+                                        <Col flex="auto">
+                                            {!editName && peer.id && formPeer.name ? (
+                                                <div className={"access-control input-text ant-drawer-title"}
+                                                     onClick={() => toggleEditName(true)}>{formPeer.name ? formPeer.name : peer.name}
+                                                    <EditOutlined/></div>
+                                            ) : (
+                                                <Form.Item
+                                                    name="name"
+                                                    label="Update Name"
+                                                    rules={[{
+                                                        required: true,
+                                                        message: 'Please add a new name for this peer',
+                                                        whitespace: true
+                                                    }]}
+                                                    style={{display: 'flex'}}
+                                                >
+                                                    <Input
+                                                        placeholder={peer.name}
+                                                        ref={inputNameRef}
+                                                        onPressEnter={() => toggleEditName(false)}
+                                                        onBlur={() => toggleEditName(false)}
+                                                        // onChange={(e) => handleChangeName(e.)}
+                                                        autoComplete="off"/>
+                                                </Form.Item>)}
+                                        </Col>
+                                    </Row>
+
+                                </Header>
+                            </Col>
+                        </Row>
+                            <Row gutter={16}>
+
                             <Col span={24}>
                                 <Form.Item
                                     name="groups"
@@ -219,6 +332,9 @@ const PeerGroupsUpdate = () => {
                                         style={{ width: '100%' }}
                                         placeholder="Select groups..."
                                         tagRender={tagRender}
+                                        // onDropdownVisibleChange={evaluateSubmit}
+                                        // onSelect={evaluateSubmit}
+
                                         dropdownRender={dropDownRender}
                                         onChange={handleChangeTags}>
                                         {
@@ -249,4 +365,4 @@ const PeerGroupsUpdate = () => {
     )
 }
 
-export default PeerGroupsUpdate
+export default PeerUpdate
