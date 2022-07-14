@@ -35,7 +35,7 @@ import {formatOS, timeAgo} from "../utils/common";
 import Icon, {ExclamationCircleOutlined, QuestionCircleOutlined, WarningOutlined} from "@ant-design/icons";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
-import PeerGroupsUpdate from "../components/PeerGroupsUpdate";
+import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
 import {TooltipPlacement} from "antd/es/tooltip";
 
@@ -77,6 +77,10 @@ export const Peers = () => {
     const optionsOnOff = [{label: 'Online', value: 'on'},{label: 'All', value: 'all'}]
 
     const itemsMenuAction = [
+        {
+            key: "view",
+            label: (<Button type="text" block onClick={() => onClickViewRule()}>View</Button>)
+        },
         {
             key: "delete",
             label: (<Button type="text" onClick={() => showConfirmDelete()}>Delete</Button>)
@@ -133,7 +137,7 @@ export const Peers = () => {
             message.loading({ content: 'Updating peer groups...', key: saveGroupsKey, style });
         } else if (savedGroups.success) {
             message.success({ content: 'Peer groups have been successfully updated.', key: saveGroupsKey, duration: 2, style });
-            setUpdateGroupsVisible({} as Peer, false)
+            // setUpdateGroupsVisible({} as Peer, false)
             dispatch(peerActions.resetSavedGroups(null))
         } else if (savedGroups.error) {
             message.error({ content: 'Failed to update peer groups. You might not have enough permissions.', key: saveGroupsKey, duration: 2, style  });
@@ -225,6 +229,12 @@ export const Peers = () => {
         dispatch(peerActions.updatePeer.request({getAccessTokenSilently, payload: peer}));
 
     }
+
+    const onClickViewRule = () => {
+        dispatch(peerActions.setUpdateGroupsVisible(true))
+        dispatch(peerActions.setPeer(peerToAction as Peer))
+    }
+
     const setUpdateGroupsVisible = (peerToAction:Peer, status:boolean) => {
         if (status) {
             dispatch(peerActions.setPeer({...peerToAction}))
@@ -317,7 +327,11 @@ export const Peers = () => {
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             defaultSortOrder='ascend'
-                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))} />
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
+                                            render={(text:string, record:PeerDataTable,) => {
+                                                return <Button type="text" onClick={() => setUpdateGroupsVisible(record, true)}>{text}</Button>
+                                            }}
+                                    />
                                     <Column title="IP" dataIndex="ip"
                                             sorter={(a, b) => {
                                                 const _a = (a as any).ip.split('.')
@@ -391,7 +405,7 @@ export const Peers = () => {
                     </Col>
                 </Row>
             </Container>
-            <PeerGroupsUpdate/>
+            <PeerUpdate/>
         </>
     )
 }
