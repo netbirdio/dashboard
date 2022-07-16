@@ -2,9 +2,8 @@ import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import { RootState } from "typesafe-actions";
 import { actions as setupKeyActions } from '../store/setup-key';
-import Loading from "../components/Loading";
 import {Container} from "../components/Container";
-import { withOidcSecure } from '@axa-fr/react-oidc';
+import {useOidcAccessToken, withOidcSecure} from '@axa-fr/react-oidc';
 import {
     Col,
     Row,
@@ -21,12 +20,11 @@ import {
     Alert, Select, Modal, Button, message, Drawer, Form, List
 } from "antd";
 import {SetupKey, SetupKeyRevoke} from "../store/setup-key/types";
-import {filter, transform} from "lodash"
-import {copyToClipboard, formatDate, formatOS, timeAgo} from "../utils/common";
+import {filter} from "lodash"
+import {formatDate, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
-import TableSpin from "../components/Spin";
 import tableSpin from "../components/Spin";
 
 const { Title, Text, Paragraph } = Typography;
@@ -38,7 +36,7 @@ interface SetupKeyDataTable extends SetupKey {
 }
 
 export const SetupKeys = () => {
-    // const { getAccessTokenSilently } = useAuth0()
+    const {accessToken} = useOidcAccessToken()
     const dispatch = useDispatch()
 
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
@@ -81,7 +79,7 @@ export const SetupKeys = () => {
     }
 
     useEffect(() => {
-        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently:null, payload: null}));
+        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently:accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -177,7 +175,7 @@ export const SetupKeys = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.deleteSetupKey.request({getAccessTokenSilently:null, payload: setupKeyToAction ? setupKeyToAction.id : ''}));
+                dispatch(setupKeyActions.deleteSetupKey.request({getAccessTokenSilently:accessToken, payload: setupKeyToAction ? setupKeyToAction.id : ''}));
             },
             onCancel() {
                 setSetupKeyToAction(null);
@@ -199,7 +197,7 @@ export const SetupKeys = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.revokeSetupKey.request({getAccessTokenSilently:null, payload: { id: setupKeyToAction ? setupKeyToAction.id : null,revoked: true } as SetupKeyRevoke}));
+                dispatch(setupKeyActions.revokeSetupKey.request({getAccessTokenSilently:accessToken, payload: { id: setupKeyToAction ? setupKeyToAction.id : null,revoked: true } as SetupKeyRevoke}));
             },
             onCancel() {
                 setSetupKeyToAction(null);

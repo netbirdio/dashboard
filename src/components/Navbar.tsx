@@ -7,11 +7,13 @@ import {ItemType} from "antd/lib/menu/hooks/useItems";
 import {AvatarSize} from "antd/es/avatar/SizeContext";
 import { UserOutlined } from '@ant-design/icons';
 import { useOidc,useOidcUser } from '@axa-fr/react-oidc';
+import {getConfig} from "../config";
 const { Text } = Typography
 const { useBreakpoint } = Grid;
 
 const Navbar = () => {
     let location = useLocation();
+    const config = getConfig();
     const {
         isAuthenticated,
         logout,
@@ -32,11 +34,10 @@ const Navbar = () => {
         { label: (<Link  to="/add-peer">Add Peer</Link>), key: '/add-peer' },
         { label: (<Link  to="/setup-keys">Setup Keys</Link>), key: '/setup-keys' },
         { label: (<Link  to="/acls">Access Control</Link>), key: '/acls' },
-        // { label: (<Link  to="/activity">Activity</Link>), key: '/activity' },
         { label: (<Link  to="/users">Users</Link>), key: '/users' }
     ] as ItemType[])
     const logoutWithRedirect = () =>
-        logout("/logout");
+        logout("",{client_id:config.clientId});
     useEffect(() => {
         const fs = menuItems.filter(m => m?.key !== userEmailKey && m?.key !== userLogoutKey && m?.key !== userDividerKey)
         if (screens.xs === true) {

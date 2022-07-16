@@ -2,9 +2,8 @@ import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import { RootState } from "typesafe-actions";
 import { actions as userActions } from '../store/user';
-import Loading from "../components/Loading";
 import {Container} from "../components/Container";
-import { withOidcSecure } from '@axa-fr/react-oidc';
+import {useOidcAccessToken, withOidcSecure} from '@axa-fr/react-oidc';
 import {
     Col,
     Row,
@@ -15,7 +14,6 @@ import {
 } from "antd";
 import { User } from "../store/user/types";
 import {filter} from "lodash";
-import {formatOS, timeAgo} from "../utils/common";
 import tableSpin from "../components/Spin";
 
 const { Title, Paragraph } = Typography;
@@ -25,8 +23,8 @@ interface UserDataTable extends User {
     key: string
 }
 
-export const Activity = () => {
-    // const { getAccessTokenSilently } = useAuth0()
+export const Users = () => {
+    const {accessToken} = useOidcAccessToken()
     const dispatch = useDispatch()
 
     const users = useSelector((state: RootState) => state.user.data);
@@ -47,7 +45,7 @@ export const Activity = () => {
     }
 
     useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently:null,payload: null}));
+        dispatch(userActions.getUsers.request({getAccessTokenSilently:accessToken,payload: null}));
     }, [])
     useEffect(() => {
         setDataTable(transformDataTable(users))
@@ -129,4 +127,4 @@ export const Activity = () => {
     )
 }
 
-export default withOidcSecure(Activity);
+export default withOidcSecure(Users);

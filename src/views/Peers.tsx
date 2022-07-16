@@ -4,7 +4,6 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
-import Loading from "../components/Loading";
 import {Container} from "../components/Container";
 import { withOidcSecure, useOidcAccessToken, OidcSecure } from '@axa-fr/react-oidc';
 import {
@@ -51,7 +50,6 @@ interface PeerDataTable extends Peer {
 
 export const Peers = () => {
 
-    // const { getAccessTokenSilently } = useAuth0()
     const {accessToken} = useOidcAccessToken()
     const dispatch = useDispatch()
 

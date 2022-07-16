@@ -1,6 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {useDispatch, useSelector} from "react-redux";
-import Loading from "../components/Loading";
+import {useDispatch} from "react-redux";
 import {Container} from "../components/Container";
 import { withOidcSecure } from '@axa-fr/react-oidc';
 import {
@@ -11,7 +10,6 @@ import {
     Tabs
 } from "antd";
 
-import {ExclamationCircleOutlined} from "@ant-design/icons";
 import OtherTab from "../components/addpeer/LinuxTab";
 import UbuntuTab from "../components/addpeer/UbuntuTab";
 import MacTab from "../components/addpeer/MacTab";
@@ -20,7 +18,6 @@ const { Title, Paragraph } = Typography;
 const { TabPane } = Tabs;
 
 export const AddPeer = () => {
-    // const { getAccessTokenSilently } = useAuth0()
     const dispatch = useDispatch()
 
     const detectOS = () => {
