@@ -1,7 +1,7 @@
 import { Method } from 'axios';
 
 export interface RequestPayload<T> {
-  getAccessTokenSilently: any;
+  getAccessTokenSilently: any | null;
   payload:T;
 }
 

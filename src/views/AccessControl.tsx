@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import {
     Alert,
     Button, Card,
@@ -23,7 +22,7 @@ import AccessControlNew from "../components/AccessControlNew";
 import {Group} from "../store/group/types";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
-
+import { withOidcSecure } from '@axa-fr/react-oidc';
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
@@ -43,7 +42,7 @@ interface GroupsToShow {
 }
 
 export const AccessControl = () => {
-    const { getAccessTokenSilently } = useAuth0()
+    // const { getAccessTokenSilently } = useAuth0()
     const dispatch = useDispatch()
 
     const rules = useSelector((state: RootState) => state.rule.data);
@@ -108,8 +107,8 @@ export const AccessControl = () => {
     }
 
     useEffect(() => {
-        dispatch(ruleActions.getRules.request({getAccessTokenSilently, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently, payload: null}));
+        dispatch(ruleActions.getRules.request({getAccessTokenSilently:null, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently:null, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -184,7 +183,7 @@ export const AccessControl = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(ruleActions.deleteRule.request({getAccessTokenSilently, payload: ruleToAction?.id || ''}));
+                dispatch(ruleActions.deleteRule.request({getAccessTokenSilently:null, payload: ruleToAction?.id || ''}));
             },
             onCancel() {
                 setRuleToAction(null);
@@ -417,8 +416,4 @@ export const AccessControl = () => {
     )
 }
 
-export default withAuthenticationRequired(AccessControl,
-    {
-        onRedirecting: () => <Loading/>,
-    }
-);
+export default withOidcSecure(AccessControl);

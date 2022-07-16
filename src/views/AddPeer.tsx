@@ -1,9 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import Loading from "../components/Loading";
 import {Container} from "../components/Container";
-
+import { withOidcSecure } from '@axa-fr/react-oidc';
 import {
     Col,
     Row,
@@ -21,7 +20,7 @@ const { Title, Paragraph } = Typography;
 const { TabPane } = Tabs;
 
 export const AddPeer = () => {
-    const { getAccessTokenSilently } = useAuth0()
+    // const { getAccessTokenSilently } = useAuth0()
     const dispatch = useDispatch()
 
     const detectOS = () => {
@@ -69,8 +68,4 @@ export const AddPeer = () => {
     )
 }
 
-export default withAuthenticationRequired(AddPeer,
-    {
-        onRedirecting: () => <Loading/>,
-    }
-)
+export default withOidcSecure(AddPeer)

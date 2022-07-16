@@ -1,23 +1,24 @@
 import React, {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import logo from "../assets/logo.png";
-import {useAuth0} from "@auth0/auth0-react";
 import {useLocation} from 'react-router-dom';
 import {Menu, Row, Col, Grid, Dropdown, Avatar, Button, Typography, Space} from 'antd'
 import {ItemType} from "antd/lib/menu/hooks/useItems";
 import {AvatarSize} from "antd/es/avatar/SizeContext";
 import { UserOutlined } from '@ant-design/icons';
-
+import { useOidc,useOidcUser } from '@axa-fr/react-oidc';
 const { Text } = Typography
 const { useBreakpoint } = Grid;
 
 const Navbar = () => {
     let location = useLocation();
     const {
-        user,
         isAuthenticated,
         logout,
-    } = useAuth0();
+    } = useOidc();
+
+    const { oidcUser } = useOidcUser();
+    const user = oidcUser;
 
     const screens = useBreakpoint();
 
@@ -34,7 +35,8 @@ const Navbar = () => {
         // { label: (<Link  to="/activity">Activity</Link>), key: '/activity' },
         { label: (<Link  to="/users">Users</Link>), key: '/users' }
     ] as ItemType[])
-
+    const logoutWithRedirect = () =>
+        logout("/logout");
     useEffect(() => {
         const fs = menuItems.filter(m => m?.key !== userEmailKey && m?.key !== userLogoutKey && m?.key !== userDividerKey)
         if (screens.xs === true) {
@@ -63,20 +65,12 @@ const Navbar = () => {
                     key: '0',
                 },
                 {
-                    label: <a onClick={e => {
-                        logoutWithRedirect()
-                        e.preventDefault()}
-                    }>Logout</a>,
+                    label: (<Link  to="/logout" onClick={logoutWithRedirect}>Logout</Link>),
                     key: '1',
                 }
             ]}
         />
     );
-
-    const logoutWithRedirect = () =>
-        logout({
-            returnTo: window.location.origin,
-        });
 
     const createAvatar = (size:AvatarSize) => {
         return user?.picture ? (

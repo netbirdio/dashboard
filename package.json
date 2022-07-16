@@ -5,6 +5,7 @@
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
     "@auth0/auth0-react": "^1.6.0",
+    "@axa-fr/react-oidc": "^5.14.0",
     "@headlessui/react": "^1.5.0",
     "@heroicons/react": "^1.0.4",
     "@testing-library/jest-dom": "^5.11.4",
@@ -44,6 +45,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "copy": "copyfiles -f ./node_modules/@axa-fr/react-oidc/dist/OidcServiceWorker.js ./public && copyfiles -f -s ./node_modules/@axa-fr/react-oidc/dist/OidcTrustedDomains.js ./public",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",

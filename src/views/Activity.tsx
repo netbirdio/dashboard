@@ -1,5 +1,5 @@
 import React from 'react';
-import {withAuthenticationRequired} from "@auth0/auth0-react";
+import { withOidcSecure } from '@axa-fr/react-oidc';
 import {
     Col,
     Row,
@@ -29,8 +29,4 @@ export const Activity = () => {
     )
 }
 
-export default withAuthenticationRequired(Activity,
-    {
-        onRedirecting: () => <Loading/>,
-    }
-);
+export default withOidcSecure(Activity);

@@ -14,7 +14,6 @@ import {
 import {ArrowRightOutlined, CheckOutlined, CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
 import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
 import {Rule, RuleToSave} from "../store/rule/types";
-import {useAuth0} from "@auth0/auth0-react";
 import { uniq } from "lodash"
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
@@ -28,7 +27,7 @@ interface FormRule extends Rule {
 }
 
 const AccessControlNew = () => {
-    const { getAccessTokenSilently } = useAuth0()
+    // const { getAccessTokenSilently } = useAuth0()
     const dispatch = useDispatch()
     const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible)
     const groups =  useSelector((state: RootState) => state.group.data)
@@ -96,7 +95,7 @@ const AccessControlNew = () => {
         form.validateFields()
             .then((values) => {
                 const ruleToSave = createRuleToSave()
-                dispatch(ruleActions.saveRule.request({getAccessTokenSilently, payload: ruleToSave}))
+                dispatch(ruleActions.saveRule.request({getAccessTokenSilently:null, payload: ruleToSave}))
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)

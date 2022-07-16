@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import { RootState } from "typesafe-actions";
-import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import { actions as userActions } from '../store/user';
 import Loading from "../components/Loading";
 import {Container} from "../components/Container";
+import { withOidcSecure } from '@axa-fr/react-oidc';
 import {
     Col,
     Row,
@@ -26,7 +26,7 @@ interface UserDataTable extends User {
 }
 
 export const Activity = () => {
-    const { getAccessTokenSilently } = useAuth0()
+    // const { getAccessTokenSilently } = useAuth0()
     const dispatch = useDispatch()
 
     const users = useSelector((state: RootState) => state.user.data);
@@ -47,7 +47,7 @@ export const Activity = () => {
     }
 
     useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently, payload: null}));
+        dispatch(userActions.getUsers.request({getAccessTokenSilently:null,payload: null}));
     }, [])
     useEffect(() => {
         setDataTable(transformDataTable(users))
@@ -129,8 +129,4 @@ export const Activity = () => {
     )
 }
 
-export default withAuthenticationRequired(Activity,
-    {
-        onRedirecting: () => <Loading padding="3em" width="50px" height="50px"/>,
-    }
-);
+export default withOidcSecure(Activity);

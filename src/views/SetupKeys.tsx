@@ -1,10 +1,10 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import { RootState } from "typesafe-actions";
 import { actions as setupKeyActions } from '../store/setup-key';
 import Loading from "../components/Loading";
 import {Container} from "../components/Container";
+import { withOidcSecure } from '@axa-fr/react-oidc';
 import {
     Col,
     Row,
@@ -38,7 +38,7 @@ interface SetupKeyDataTable extends SetupKey {
 }
 
 export const SetupKeys = () => {
-    const { getAccessTokenSilently } = useAuth0()
+    // const { getAccessTokenSilently } = useAuth0()
     const dispatch = useDispatch()
 
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
@@ -81,7 +81,7 @@ export const SetupKeys = () => {
     }
 
     useEffect(() => {
-        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently, payload: null}));
+        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently:null, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -177,7 +177,7 @@ export const SetupKeys = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.deleteSetupKey.request({getAccessTokenSilently, payload: setupKeyToAction ? setupKeyToAction.id : ''}));
+                dispatch(setupKeyActions.deleteSetupKey.request({getAccessTokenSilently:null, payload: setupKeyToAction ? setupKeyToAction.id : ''}));
             },
             onCancel() {
                 setSetupKeyToAction(null);
@@ -199,7 +199,7 @@ export const SetupKeys = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.revokeSetupKey.request({getAccessTokenSilently, payload: { id: setupKeyToAction ? setupKeyToAction.id : null,revoked: true } as SetupKeyRevoke}));
+                dispatch(setupKeyActions.revokeSetupKey.request({getAccessTokenSilently:null, payload: { id: setupKeyToAction ? setupKeyToAction.id : null,revoked: true } as SetupKeyRevoke}));
             },
             onCancel() {
                 setSetupKeyToAction(null);
@@ -327,8 +327,4 @@ export const SetupKeys = () => {
     )
 }
 
-export default withAuthenticationRequired(SetupKeys,
-    {
-        onRedirecting: () => <Loading padding="3em" width="50px" height="50px"/>,
-    }
-);
+export default withOidcSecure(SetupKeys);

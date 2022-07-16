@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Provider} from "react-redux";
 import {Link, Redirect, Route, Switch} from 'react-router-dom';
-import {useAuth0} from "@auth0/auth0-react";
+// import {useAuth0} from "@auth0/auth0-react";
 import Navbar from './components/Navbar';
 import Peers from './views/Peers';
 import FooterComponent from './components/FooterComponent';
@@ -16,18 +16,19 @@ import {store} from "./store";
 
 import {Button, Col, Layout, Result, Row} from 'antd';
 import {Container} from "./components/Container";
-
+import {useOidc, useOidcUser, OidcUserStatus, withOidcSecure} from '@axa-fr/react-oidc';
+import { getConfig } from "./config";
 const {Header, Content} = Layout;
-
+// const [clickedLogOut, setClickedLogOut] = useState(false)
 function App() {
-
+    console.log("entered here at the start")
     const {
-        isLoading,
         isAuthenticated,
-        loginWithRedirect,
         logout,
-        error
-    } = useAuth0();
+        login
+    } = useOidc();
+
+    const { oidcUserLoadingState } = useOidcUser();
 
     const [isOpen, setIsOpen] = useState(false);
 
@@ -50,10 +51,10 @@ function App() {
         };
     });
 
-    if (error) {
+    if (oidcUserLoadingState === OidcUserStatus.LoadingError) {
         return <Result
             status="warning"
-            title={error.message}
+            title="User loading error"
             extra={<>
                 <a href={window.location.origin}>
                     <Button type="primary">
@@ -61,9 +62,7 @@ function App() {
                     </Button>
                 </a>
                 <Button type="primary" onClick={function () {
-                    logout({
-                        returnTo: window.location.origin,
-                    })
+                    logout(window.location.origin)
                 }}>
                     Log out
                 </Button>
@@ -72,12 +71,38 @@ function App() {
         />
     }
 
-    if (isLoading) {
+    if (oidcUserLoadingState === OidcUserStatus.Loading) {
         return <Loading padding="3em" width="50px" height="50px"/>;
     }
+    console.log(window.location.pathname,"/logout")
+    let isLogout = false
+    if (window.location.pathname === "/logout") {
+        isLogout = true
+    }
 
-    if (!isAuthenticated) {
-        loginWithRedirect({})
+    if (isLogout) {
+        console.log("entered here")
+        return <Result
+            status="warning"
+            title="User loading error"
+            extra={<>
+                <a href={window.location.origin + "/peers"}>
+                    <Button type="primary">
+                        Try again
+                    </Button>
+                </a>
+                <Button type="primary" onClick={function () {
+                    logout(window.location.origin)
+                }}>
+                    Log out
+                </Button>
+            </>
+            }
+        />
+    }
+    console.log(!isAuthenticated && !isLogout)
+    if (!isAuthenticated && !isLogout) {
+        login(window.location.pathname)
     }
 
     return (
@@ -114,7 +139,6 @@ function App() {
                             <Route path="/add-peer" component={AddPeer}/>
                             <Route path="/setup-keys" component={SetupKeys}/>
                             <Route path="/acls" component={AccessControl}/>
-                            {/*<Route path="/activity" component={Activity}/>*/}
                             <Route path="/users" component={Users}/>
                         </Switch>
                     </Content>
