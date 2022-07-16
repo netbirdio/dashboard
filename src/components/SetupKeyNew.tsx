@@ -13,11 +13,11 @@ import {
 import {RootState} from "typesafe-actions";
 import {QuestionCircleFilled} from "@ant-design/icons";
 import {SetupKey} from "../store/setup-key/types";
-import {useAuth0} from "@auth0/auth0-react";
+import {useOidcAccessToken} from "@axa-fr/react-oidc";
 const { Text } = Typography;
 
 const SetupKeyNew = () => {
-    const { getAccessTokenSilently } = useAuth0()
+    const {accessToken} = useOidcAccessToken()
     const dispatch = useDispatch()
     const setupNewKeyVisible = useSelector((state: RootState) => state.setupKey.setupNewKeyVisible)
     const setupKey =  useSelector((state: RootState) => state.setupKey.setupKey)
@@ -34,7 +34,7 @@ const SetupKeyNew = () => {
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
-                dispatch(setupKeyActions.createSetupKey.request({getAccessTokenSilently, payload: formSetupKey}))
+                dispatch(setupKeyActions.createSetupKey.request({getAccessTokenSilently:accessToken, payload: formSetupKey}))
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)

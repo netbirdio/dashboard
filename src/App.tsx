@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {Provider} from "react-redux";
-import {Link, Redirect, Route, Switch} from 'react-router-dom';
-import {useAuth0} from "@auth0/auth0-react";
+import {Redirect, Route, Switch} from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Peers from './views/Peers';
 import FooterComponent from './components/FooterComponent';
@@ -10,25 +9,23 @@ import SetupKeys from "./views/SetupKeys";
 import AddPeer from "./views/AddPeer";
 import Users from './views/Users';
 import AccessControl from './views/AccessControl';
-// import Activity from './views/Activity';
 import Banner from "./components/Banner";
 import {store} from "./store";
-
 import {Button, Col, Layout, Result, Row} from 'antd';
 import {Container} from "./components/Container";
+import {useOidc, useOidcUser, OidcUserStatus, withOidcSecure} from '@axa-fr/react-oidc';
 
 const {Header, Content} = Layout;
 
 function App() {
 
     const {
-        isLoading,
         isAuthenticated,
-        loginWithRedirect,
         logout,
-        error
-    } = useAuth0();
+        login
+    } = useOidc();
 
+    const { oidcUserLoadingState } = useOidcUser();
     const [isOpen, setIsOpen] = useState(false);
 
     const toggle = () => {
@@ -50,10 +47,10 @@ function App() {
         };
     });
 
-    if (error) {
+    if (oidcUserLoadingState === OidcUserStatus.LoadingError) {
         return <Result
             status="warning"
-            title={error.message}
+            title="User loading error"
             extra={<>
                 <a href={window.location.origin}>
                     <Button type="primary">
@@ -61,9 +58,7 @@ function App() {
                     </Button>
                 </a>
                 <Button type="primary" onClick={function () {
-                    logout({
-                        returnTo: window.location.origin,
-                    })
+                    logout(window.location.origin)
                 }}>
                     Log out
                 </Button>
@@ -72,17 +67,17 @@ function App() {
         />
     }
 
-    if (isLoading) {
+    if (oidcUserLoadingState === OidcUserStatus.Loading) {
         return <Loading padding="3em" width="50px" height="50px"/>;
     }
 
     if (!isAuthenticated) {
-        loginWithRedirect({})
+        login(window.location.pathname)
     }
 
     return (
         <Provider store={store}>
-            {isAuthenticated &&
+            { isAuthenticated &&
                 <Layout>
                     <Banner/>
                     <Header className="header" style={{
@@ -114,7 +109,6 @@ function App() {
                             <Route path="/add-peer" component={AddPeer}/>
                             <Route path="/setup-keys" component={SetupKeys}/>
                             <Route path="/acls" component={AccessControl}/>
-                            {/*<Route path="/activity" component={Activity}/>*/}
                             <Route path="/users" component={Users}/>
                         </Switch>
                     </Content>
@@ -125,4 +119,4 @@ function App() {
     );
 }
 
-export default App;
+export default withOidcSecure(App);

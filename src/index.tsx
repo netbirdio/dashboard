@@ -5,8 +5,9 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import history from "./utils/history";
 import { getConfig } from "./config";
-import {Auth0Provider} from "@auth0/auth0-react";
+import { OidcProvider } from '@axa-fr/react-oidc';
 import {BrowserRouter} from "react-router-dom";
+import Loading from "./components/Loading";
 
 const onRedirectCallback = (appState:any) => {
     history.push(
@@ -16,24 +17,42 @@ const onRedirectCallback = (appState:any) => {
 
 const config = getConfig();
 
+const authority = 'https://' + config.domain
 const providerConfig = {
-    domain: config.domain,
-    clientId: config.clientId,
-    ...(config.audience ? { audience: config.audience } : null),
-    redirectUri: window.location.origin,
-    useRefreshTokens: true,
-    onRedirectCallback,
+    authority: authority,
+    client_id: config.clientId,
+    redirect_uri: window.location.origin,
+    refresh_time_before_tokens_expiration_in_second: 30,
+    silent_redirect_uri: window.location.origin + '/add-peers',
+    scope: 'openid profile email api offline_access email_verified',
+    service_worker_relative_url:'/OidcServiceWorker.js',
+    service_worker_only: false,
+    authority_configuration: {
+        authorization_endpoint: authority + "/authorize",
+        token_endpoint: authority + "/oauth/token",
+        revocation_endpoint: authority + "/oauth/revoke",
+        end_session_endpoint: authority + "/v2/logout",
+        userinfo_endpoint: authority + "/userinfo"
+    },
+    ...(config.audience ? {extras:{ audience: config.audience }} : null)
 };
 
 const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
 );
 
+const loadingComponent = () => <Loading padding="3em" width="50px" height="50px"/>
 root.render(
     <BrowserRouter>
-        <Auth0Provider {...providerConfig}>
+        <OidcProvider
+            configuration={providerConfig}
+            callbackSuccessComponent={loadingComponent}
+            authenticatingComponent={loadingComponent}
+            sessionLostComponent={loadingComponent}
+            loadingComponent={loadingComponent}
+        >
             <App/>
-        </Auth0Provider>
+        </OidcProvider>
     </BrowserRouter>
 );
 

@@ -4,7 +4,7 @@
   "private": true,
   "dependencies": {
     "@ant-design/icons": "^4.7.0",
-    "@auth0/auth0-react": "^1.6.0",
+    "@axa-fr/react-oidc": "^5.14.0",
     "@headlessui/react": "^1.5.0",
     "@heroicons/react": "^1.0.4",
     "@testing-library/jest-dom": "^5.11.4",
@@ -29,10 +29,10 @@
     "prop-types": "^15.7.2",
     "react": "^18.1.0",
     "react-dom": "^18.1.0",
-    "react-highlight": "^0.14.0",
     "react-redux": "^8.0.2",
     "react-router-dom": "^5.2.0",
     "react-scripts": "^5.0.1",
+    "react-syntax-highlighter": "^15.5.0",
     "react-table": "^7.7.0",
     "redux": "^4.2.0",
     "redux-devtools-extension": "^2.13.9",
@@ -44,6 +44,7 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "copy": "copyfiles -f ./node_modules/@axa-fr/react-oidc/dist/OidcServiceWorker.js ./public && copyfiles -f -s ./node_modules/@axa-fr/react-oidc/dist/OidcTrustedDomains.js ./public",
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
@@ -68,6 +69,6 @@
     ]
   },
   "devDependencies": {
-    "@types/react-highlight": "^0.12.5"
+    "@types/react-syntax-highlighter": "^15.5.3"
   }
 }

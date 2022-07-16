@@ -5,17 +5,16 @@ import {actions as peerActions} from '../store/peer';
 import {Button, Col, Divider, Drawer, Form, Input, Row, Select, Space, Tag, Typography} from "antd";
 import {Header} from "antd/es/layout/layout";
 import type {CustomTagProps} from 'rc-select/lib/BaseSelect'
-import {useAuth0} from "@auth0/auth0-react";
 import {Peer, PeerGroupsToSave} from "../store/peer/types";
 import {Group, GroupPeer} from "../store/group/types";
 import {CloseOutlined, EditOutlined, FlagFilled} from "@ant-design/icons";
 import {RuleObject} from 'antd/lib/form';
-
+import { useOidcAccessToken } from '@axa-fr/react-oidc';
 const { Paragraph } = Typography;
 const { Option } = Select;
 
 const PeerUpdate = () => {
-    const { getAccessTokenSilently } = useAuth0()
+    const { accessToken } = useOidcAccessToken()
     const dispatch = useDispatch()
     const groups =  useSelector((state: RootState) => state.group.data)
     const peer =   useSelector((state: RootState) => state.peer.peer)
@@ -214,11 +213,11 @@ const PeerUpdate = () => {
                 if (!noUpdateToName()) {
                     const peerUpdate = createPeerToSave()
                     setCallingPeerAPI(true)
-                    dispatch(peerActions.updatePeer.request({getAccessTokenSilently, payload: peerUpdate}))
+                    dispatch(peerActions.updatePeer.request({getAccessTokenSilently:accessToken, payload: peerUpdate}))
                 }
                 if (peerGroupsToSave.groupsToRemove.length || peerGroupsToSave.groupsToAdd.length || peerGroupsToSave.groupsNoId.length) {
                     setCallingGroupAPI(true)
-                    dispatch(peerActions.saveGroups.request({getAccessTokenSilently, payload: peerGroupsToSave}))
+                    dispatch(peerActions.saveGroups.request({getAccessTokenSilently:accessToken, payload: peerGroupsToSave}))
                 }
             })
             .catch((errorInfo) => {

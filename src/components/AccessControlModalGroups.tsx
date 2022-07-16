@@ -1,8 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import {useDispatch, useSelector} from "react-redux";
-import {RootState} from "typesafe-actions";
-import { actions as ruleActions } from '../store/rule';
-import {string} from "prop-types";
 import {Avatar, List, Modal} from "antd";
 import {Group} from "../store/group/types";
 
