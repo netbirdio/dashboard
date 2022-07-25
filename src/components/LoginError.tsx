@@ -1,9 +1,11 @@
 import {OidcUserStatus, useOidc, useOidcUser} from "@axa-fr/react-oidc";
 import {Button, Result} from "antd";
 import React from "react";
+import {getConfig} from "../config";
 
 function LoginError() {
     const { logout } = useOidc();
+    const config = getConfig();
     const { oidcUserLoadingState } = useOidcUser();
     const queryString = window.location.search;
     const urlParams = new URLSearchParams(queryString);
@@ -19,7 +21,7 @@ function LoginError() {
                     </Button>
                 </a>
                 <Button type="primary" onClick={function () {
-                    logout(window.location.origin)
+                    logout("",{client_id:config.clientId})
                 }}>
                     Log out
                 </Button>
