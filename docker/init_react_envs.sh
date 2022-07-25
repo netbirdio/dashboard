@@ -35,8 +35,11 @@ echo "NetBird latest version: ${NETBIRD_LATEST_VERSION}"
 # replace ENVs in the config
 ENV_STR="\$\$AUTH0_DOMAIN \$\$AUTH0_CLIENT_ID \$\$AUTH0_AUDIENCE \$\$NETBIRD_MGMT_API_ENDPOINT \$\$NETBIRD_MGMT_GRPC_API_ENDPOINT \$\$NETBIRD_LATEST_VERSION"
 MAIN_JS=$(find /usr/share/nginx/html/static/js/main.*js)
+OIDC_TRUSTED_DOMAINS="/usr/share/nginx/html/OidcTrustedDomains.js"
 cp "$MAIN_JS" "$MAIN_JS".copy
 envsubst "$ENV_STR" < "$MAIN_JS".copy > "$MAIN_JS"
+mv "$OIDC_TRUSTED_DOMAINS" "$OIDC_TRUSTED_DOMAINS".copy
+envsubst "$ENV_STR" < "$OIDC_TRUSTED_DOMAINS".copy > "$OIDC_TRUSTED_DOMAINS"
 rm "$MAIN_JS".copy
 
 

@@ -37,16 +37,6 @@ const root = ReactDOM.createRoot(
 );
 
 const loadingComponent = () => <Loading padding="3em" width="50px" height="50px"/>
-const loginLoading = () => {
-    let appState = {returnTo:""}
-    if (window.location.pathname === "/") {
-        appState.returnTo="/peers"
-    }
-    history.push(
-        appState && appState.returnTo ? appState.returnTo : window.location.pathname
-    );
-    return <div>authenticating</div>
-}
 
 root.render(
 
