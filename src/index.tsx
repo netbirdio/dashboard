@@ -5,15 +5,10 @@ import App from './App';
 import reportWebVitals from './reportWebVitals';
 import history from "./utils/history";
 import { getConfig } from "./config";
-import { OidcProvider } from '@axa-fr/react-oidc';
+import {OidcProvider, useOidc} from '@axa-fr/react-oidc';
 import {BrowserRouter} from "react-router-dom";
 import Loading from "./components/Loading";
-
-const onRedirectCallback = (appState:any) => {
-    history.push(
-        appState && appState.returnTo ? appState.returnTo : window.location.pathname
-    );
-};
+import LoginError from "./components/LoginError";
 
 const config = getConfig();
 
@@ -21,9 +16,9 @@ const authority = 'https://' + config.domain
 const providerConfig = {
     authority: authority,
     client_id: config.clientId,
-    redirect_uri: window.location.origin,
+    redirect_uri: window.location.origin+'#callback',
     refresh_time_before_tokens_expiration_in_second: 30,
-    silent_redirect_uri: window.location.origin + '/add-peers',
+    silent_redirect_uri: window.location.origin + '#silent-callback',
     scope: 'openid profile email api offline_access email_verified',
     service_worker_relative_url:'/OidcServiceWorker.js',
     service_worker_only: false,
@@ -34,7 +29,7 @@ const providerConfig = {
         end_session_endpoint: authority + "/v2/logout",
         userinfo_endpoint: authority + "/userinfo"
     },
-    ...(config.audience ? {extras:{ audience: config.audience }} : null)
+    ...(config.audience ? {extras:{ audience: config.audience}} : null)
 };
 
 const root = ReactDOM.createRoot(
@@ -42,18 +37,35 @@ const root = ReactDOM.createRoot(
 );
 
 const loadingComponent = () => <Loading padding="3em" width="50px" height="50px"/>
+const loginLoading = () => {
+    let appState = {returnTo:""}
+    if (window.location.pathname === "/") {
+        appState.returnTo="/peers"
+    }
+    history.push(
+        appState && appState.returnTo ? appState.returnTo : window.location.pathname
+    );
+    return <div>authenticating</div>
+}
+
 root.render(
-    <BrowserRouter>
+
         <OidcProvider
             configuration={providerConfig}
             callbackSuccessComponent={loadingComponent}
+            authenticatingErrorComponent={LoginError}
             authenticatingComponent={loadingComponent}
             sessionLostComponent={loadingComponent}
             loadingComponent={loadingComponent}
+            onSessionLost={()=>{
+                history.push("/peers")
+            }}
         >
-            <App/>
+            <BrowserRouter>
+              <App/>
+            </BrowserRouter>
         </OidcProvider>
-    </BrowserRouter>
+
 );
 
 // If you want to start measuring performance in your app, pass a function

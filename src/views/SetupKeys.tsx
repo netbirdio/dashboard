@@ -3,7 +3,7 @@ import {useDispatch, useSelector} from "react-redux";
 import { RootState } from "typesafe-actions";
 import { actions as setupKeyActions } from '../store/setup-key';
 import {Container} from "../components/Container";
-import {useOidcAccessToken, withOidcSecure} from '@axa-fr/react-oidc';
+import {useOidcAccessToken} from '@axa-fr/react-oidc';
 import {
     Col,
     Row,
@@ -325,4 +325,4 @@ export const SetupKeys = () => {
     )
 }
 
-export default withOidcSecure(SetupKeys);
+export default SetupKeys;

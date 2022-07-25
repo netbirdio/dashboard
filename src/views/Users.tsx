@@ -3,14 +3,14 @@ import {useDispatch, useSelector} from "react-redux";
 import { RootState } from "typesafe-actions";
 import { actions as userActions } from '../store/user';
 import {Container} from "../components/Container";
-import {useOidcAccessToken, withOidcSecure} from '@axa-fr/react-oidc';
+import {useOidcAccessToken} from '@axa-fr/react-oidc';
 import {
     Col,
     Row,
     Typography,
     Table,
     Card,
-    Space, Input, Radio, Select, Alert, Tag, Dropdown
+    Space, Input, Select, Alert,
 } from "antd";
 import { User } from "../store/user/types";
 import {filter} from "lodash";
@@ -127,4 +127,4 @@ export const Users = () => {
     )
 }
 
-export default withOidcSecure(Users);
+export default Users;

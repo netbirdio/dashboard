@@ -1,7 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch} from "react-redux";
 import {Container} from "../components/Container";
-import { withOidcSecure } from '@axa-fr/react-oidc';
 import {
     Col,
     Row,
@@ -65,4 +64,4 @@ export const AddPeer = () => {
     )
 }
 
-export default withOidcSecure(AddPeer)
+export default AddPeer;

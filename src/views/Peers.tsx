@@ -5,7 +5,7 @@ import {RootState} from "typesafe-actions";
 import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
 import {Container} from "../components/Container";
-import { withOidcSecure, useOidcAccessToken, OidcSecure } from '@axa-fr/react-oidc';
+import { useOidcAccessToken } from '@axa-fr/react-oidc';
 import {
     Alert,
     Button,
@@ -410,4 +410,4 @@ export const Peers = () => {
     )
 }
 
-export default withOidcSecure(Peers);
+export default Peers;

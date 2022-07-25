@@ -21,7 +21,7 @@ import AccessControlNew from "../components/AccessControlNew";
 import {Group} from "../store/group/types";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
-import {useOidcAccessToken, withOidcSecure} from '@axa-fr/react-oidc';
+import {useOidcAccessToken} from '@axa-fr/react-oidc';
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
@@ -415,4 +415,4 @@ export const AccessControl = () => {
     )
 }
 
-export default withOidcSecure(AccessControl);
+export default AccessControl;
