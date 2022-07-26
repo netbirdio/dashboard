@@ -1,5 +1,4 @@
 import React, {useEffect, useState} from 'react';
-import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import {
     Alert,
     Button, Card,
@@ -8,7 +7,6 @@ import {
     Typography
 } from "antd";
 import {Container} from "../components/Container";
-import Loading from "../components/Loading";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {Rule} from "../store/rule/types";
@@ -23,7 +21,7 @@ import AccessControlNew from "../components/AccessControlNew";
 import {Group} from "../store/group/types";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
-
+import {useOidcAccessToken} from '@axa-fr/react-oidc';
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
@@ -43,7 +41,7 @@ interface GroupsToShow {
 }
 
 export const AccessControl = () => {
-    const { getAccessTokenSilently } = useAuth0()
+    const {accessToken} = useOidcAccessToken()
     const dispatch = useDispatch()
 
     const rules = useSelector((state: RootState) => state.rule.data);
@@ -108,8 +106,8 @@ export const AccessControl = () => {
     }
 
     useEffect(() => {
-        dispatch(ruleActions.getRules.request({getAccessTokenSilently, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently, payload: null}));
+        dispatch(ruleActions.getRules.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently:accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -184,7 +182,7 @@ export const AccessControl = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(ruleActions.deleteRule.request({getAccessTokenSilently, payload: ruleToAction?.id || ''}));
+                dispatch(ruleActions.deleteRule.request({getAccessTokenSilently:accessToken, payload: ruleToAction?.id || ''}));
             },
             onCancel() {
                 setRuleToAction(null);
@@ -417,8 +415,4 @@ export const AccessControl = () => {
     )
 }
 
-export default withAuthenticationRequired(AccessControl,
-    {
-        onRedirecting: () => <Loading/>,
-    }
-);
+export default AccessControl;

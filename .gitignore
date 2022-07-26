@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+/node_modules.bkp
 /.pnp
 .pnp.js
 
@@ -26,3 +27,5 @@ src/auth_config.json
 .idea
 .eslintcache
 src/.local-config.json
+/public/OidcServiceWorker.js
+/public/OidcTrustedDomains.js

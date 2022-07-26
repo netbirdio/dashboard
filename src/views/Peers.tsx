@@ -1,12 +1,11 @@
 import React, {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {useDispatch, useSelector} from "react-redux";
-import {useAuth0, withAuthenticationRequired} from "@auth0/auth0-react";
 import {RootState} from "typesafe-actions";
 import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
-import Loading from "../components/Loading";
 import {Container} from "../components/Container";
+import { useOidcAccessToken } from '@axa-fr/react-oidc';
 import {
     Alert,
     Button,
@@ -50,7 +49,8 @@ interface PeerDataTable extends Peer {
 }
 
 export const Peers = () => {
-    const { getAccessTokenSilently } = useAuth0()
+
+    const {accessToken} = useOidcAccessToken()
     const dispatch = useDispatch()
 
     const peers = useSelector((state: RootState) => state.peer.data);
@@ -104,8 +104,8 @@ export const Peers = () => {
     }
 
     useEffect(() => {
-        dispatch(peerActions.getPeers.request({getAccessTokenSilently, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently, payload: null}));
+        dispatch(peerActions.getPeers.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently:accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -198,7 +198,7 @@ export const Peers = () => {
             content: "Are you sure you want to delete peer from your account?",
             okType: 'danger',
             onOk() {
-                dispatch(peerActions.deletedPeer.request({getAccessTokenSilently, payload: peerToAction ? peerToAction.ip : ''}));
+                dispatch(peerActions.deletedPeer.request({getAccessTokenSilently:accessToken, payload: peerToAction ? peerToAction.ip : ''}));
             },
             onCancel() {
                 setPeerToAction(null);
@@ -226,7 +226,7 @@ export const Peers = () => {
             ssh_enabled: checked,
             name: record.name
         } as Peer
-        dispatch(peerActions.updatePeer.request({getAccessTokenSilently, payload: peer}));
+        dispatch(peerActions.updatePeer.request({getAccessTokenSilently:accessToken, payload: peer}));
 
     }
 
@@ -410,8 +410,4 @@ export const Peers = () => {
     )
 }
 
-export default withAuthenticationRequired(Peers,
-   {
-       onRedirecting: () => <Loading padding="3em" width="50px" height="50px"/>,
-   }
-);
+export default Peers;

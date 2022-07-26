@@ -1,39 +1,24 @@
 import React, {useEffect, useState} from 'react';
 import {Provider} from "react-redux";
-import {Link, Redirect, Route, Switch} from 'react-router-dom';
-import {useAuth0} from "@auth0/auth0-react";
+import {Redirect, Route, Switch} from 'react-router-dom';
 import Navbar from './components/Navbar';
 import Peers from './views/Peers';
 import FooterComponent from './components/FooterComponent';
-import Loading from "./components/Loading";
 import SetupKeys from "./views/SetupKeys";
 import AddPeer from "./views/AddPeer";
 import Users from './views/Users';
 import AccessControl from './views/AccessControl';
-// import Activity from './views/Activity';
 import Banner from "./components/Banner";
 import {store} from "./store";
-
-import {Button, Col, Layout, Result, Row} from 'antd';
+import { Col, Layout, Row} from 'antd';
 import {Container} from "./components/Container";
+import {withOidcSecure} from '@axa-fr/react-oidc';
 
 const {Header, Content} = Layout;
 
 function App() {
 
-    const {
-        isLoading,
-        isAuthenticated,
-        loginWithRedirect,
-        logout,
-        error
-    } = useAuth0();
-
     const [isOpen, setIsOpen] = useState(false);
-
-    const toggle = () => {
-        setIsOpen(!isOpen);
-    };
 
     useEffect(() => {
         const hideMenu = () => {
@@ -50,39 +35,8 @@ function App() {
         };
     });
 
-    if (error) {
-        return <Result
-            status="warning"
-            title={error.message}
-            extra={<>
-                <a href={window.location.origin}>
-                    <Button type="primary">
-                        Try again
-                    </Button>
-                </a>
-                <Button type="primary" onClick={function () {
-                    logout({
-                        returnTo: window.location.origin,
-                    })
-                }}>
-                    Log out
-                </Button>
-            </>
-            }
-        />
-    }
-
-    if (isLoading) {
-        return <Loading padding="3em" width="50px" height="50px"/>;
-    }
-
-    if (!isAuthenticated) {
-        loginWithRedirect({})
-    }
-
     return (
         <Provider store={store}>
-            {isAuthenticated &&
                 <Layout>
                     <Banner/>
                     <Header className="header" style={{
@@ -110,17 +64,15 @@ function App() {
                                     )
                                 }}
                             />
-                            <Route path='/peers' exact component={Peers}/>
-                            <Route path="/add-peer" component={AddPeer}/>
-                            <Route path="/setup-keys" component={SetupKeys}/>
-                            <Route path="/acls" component={AccessControl}/>
-                            {/*<Route path="/activity" component={Activity}/>*/}
-                            <Route path="/users" component={Users}/>
+                            <Route path='/peers' exact component={withOidcSecure(Peers)}/>
+                            <Route path="/add-peer" component={withOidcSecure(AddPeer)}/>
+                            <Route path="/setup-keys" component={withOidcSecure(SetupKeys)}/>
+                            <Route path="/acls" component={withOidcSecure(AccessControl)}/>
+                            <Route path="/users" component={withOidcSecure(Users)}/>
                         </Switch>
                     </Content>
                     <FooterComponent/>
                 </Layout>
-            }
         </Provider>
     );
 }

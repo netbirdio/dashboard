@@ -5,6 +5,7 @@ on:
       - main
     tags:
       - "**"
+  pull_request:
 
 jobs:
   build_n_push:
