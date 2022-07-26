@@ -38,9 +38,5 @@ MAIN_JS=$(find /usr/share/nginx/html/static/js/main.*js)
 OIDC_TRUSTED_DOMAINS="/usr/share/nginx/html/OidcTrustedDomains.js"
 cp "$MAIN_JS" "$MAIN_JS".copy
 envsubst "$ENV_STR" < "$MAIN_JS".copy > "$MAIN_JS"
-mv "$OIDC_TRUSTED_DOMAINS" "$OIDC_TRUSTED_DOMAINS".copy
-envsubst "$ENV_STR" < "$OIDC_TRUSTED_DOMAINS".copy > "$OIDC_TRUSTED_DOMAINS"
+envsubst "$ENV_STR" < "$OIDC_TRUSTED_DOMAINS".tmpl > "$OIDC_TRUSTED_DOMAINS"
 rm "$MAIN_JS".copy
-
-
-
