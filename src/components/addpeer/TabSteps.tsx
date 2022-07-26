@@ -1,9 +1,8 @@
-import {useDispatch, useSelector} from "react-redux";
-import Highlight from 'react-highlight';
 import "highlight.js/styles/mono-blue.css";
 import "highlight.js/lib/languages/bash";
 import { StepCommand } from './types'
-
+import SyntaxHighlighter from 'react-syntax-highlighter';
+import { monoBlue } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import {
     Typography,
     Space,
@@ -12,8 +11,6 @@ import {
 import {copyToClipboard} from "../../utils/common";
 import {CheckOutlined, CopyOutlined} from "@ant-design/icons";
 import React, {useEffect, useState} from "react";
-
-const { Title, Text } = Typography;
 const { Step } = Steps;
 
 type Props = {
@@ -48,10 +45,10 @@ const TabSteps:React.FC<Props> = ({stepsItems}) => {
                     title={c.title}
                     description={
                         <Space className="nb-code" direction="vertical" size="small" style={{display: "flex"}}>
-                            { (c.commands && (typeof c.commands === 'string' || c.commands instanceof String)) ? (
-                            <Highlight className='bash'>
+                            { (c.commands && (typeof c.commands === 'string')) ? (
+                            <SyntaxHighlighter language="bash" style={monoBlue}>
                                 {c.commands}
-                            </Highlight>
+                            </SyntaxHighlighter>
                             ) : (
                                 c.commands
                             )}
