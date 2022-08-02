@@ -10,19 +10,21 @@ import {BrowserRouter} from "react-router-dom";
 import Loading from "./components/Loading";
 
 const onRedirectCallback = (appState:any) => {
-        navigator.serviceWorker.getRegistrations().then(function (registrations) {
-            for (let registration of registrations) {
-                registration.unregister().then(function (b) {
-                    console.log(b)
-                    if (b){
-                        window.location.reload()
-                    }
-                })}})
-
     history.push(
         appState && appState.returnTo ? appState.returnTo : window.location.pathname
     );
 };
+
+const removeWorkers = () => {
+    navigator.serviceWorker.getRegistrations().then(function (registrations) {
+        for (let registration of registrations) {
+            registration.unregister().then(function (b) {
+                console.log(b)
+                if (b){
+                    window.location.reload()
+                }
+            })}})
+}
 
 const config = getConfig();
 
@@ -51,3 +53,4 @@ root.render(
 // to log results (for example: reportWebVitals(console.log))
 // or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();
+removeWorkers();
