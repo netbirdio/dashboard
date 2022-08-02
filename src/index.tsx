@@ -7,8 +7,18 @@ import history from "./utils/history";
 import { getConfig } from "./config";
 import {Auth0Provider} from "@auth0/auth0-react";
 import {BrowserRouter} from "react-router-dom";
+import Loading from "./components/Loading";
 
 const onRedirectCallback = (appState:any) => {
+        navigator.serviceWorker.getRegistrations().then(function (registrations) {
+            for (let registration of registrations) {
+                registration.unregister().then(function (b) {
+                    console.log(b)
+                    if (b){
+                        window.location.reload()
+                    }
+                })}})
+
     history.push(
         appState && appState.returnTo ? appState.returnTo : window.location.pathname
     );
