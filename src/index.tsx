@@ -20,7 +20,8 @@ const providerConfig = {
     refresh_time_before_tokens_expiration_in_second: 30,
     silent_redirect_uri: window.location.origin + '#silent-callback',
     scope: 'openid profile email api offline_access email_verified',
-    service_worker_relative_url:'/OidcServiceWorker.js',
+    // disabling service worker
+    // service_worker_relative_url:'/OidcServiceWorker.js',
     service_worker_only: false,
     authority_configuration: {
         authorization_endpoint: authority + "/authorize",

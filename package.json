@@ -47,8 +47,8 @@
   "scripts": {
     "copy": "copyfiles -f ./node_modules/@axa-fr/react-oidc/dist/OidcServiceWorker.js ./public",
     "copytrusted": "copyfiles -f ./public/local/OidcTrustedDomains.js ./public",
-    "start": "npm run copy && npm run copytrusted && react-scripts start",
-    "build": "npm run copy && react-scripts build",
+    "start": "react-scripts start",
+    "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
