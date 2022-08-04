@@ -38,7 +38,9 @@ async function apiRequest<T>(params: ApiRequestParams): Promise<ApiResponse<T>> 
     if (error.statusCode === 401) {
       let old = error.message
       error.message = old + ". Please refresh the page if the issue continues."
+      error.code = 'ERR_UNAUTHORIZED'
     }
+    console.log(error)
     throw error;
   }
 
