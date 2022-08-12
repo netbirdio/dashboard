@@ -12,23 +12,22 @@ import LoginError from "./components/LoginError";
 
 const config = getConfig();
 
-const authority = 'https://' + config.domain
 const providerConfig = {
-    authority: authority,
+    authority:  config.domain,
     client_id: config.clientId,
     redirect_uri: window.location.origin+'#callback',
     refresh_time_before_tokens_expiration_in_second: 30,
     silent_redirect_uri: window.location.origin + '#silent-callback',
-    scope: 'openid profile email api offline_access email_verified',
+    scope: config.scopesSupported,
     // disabling service worker
     // service_worker_relative_url:'/OidcServiceWorker.js',
     service_worker_only: false,
     authority_configuration: {
-        authorization_endpoint: authority + "/authorize",
-        token_endpoint: authority + "/oauth/token",
-        revocation_endpoint: authority + "/oauth/revoke",
-        end_session_endpoint: authority + "/v2/logout",
-        userinfo_endpoint: authority + "/userinfo"
+        authorization_endpoint: config.authorizationEndpoint,
+        token_endpoint: config.tokenEndpoint,
+        revocation_endpoint: config.revocationEndpoint,
+        end_session_endpoint: config.endSessionEndpoint,
+        userinfo_endpoint: config.userinfoEndpoint
     },
     ...(config.audience ? {extras:{ audience: config.audience}} : null)
 };

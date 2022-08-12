@@ -21,6 +21,13 @@ export function getConfig() {
 
   return {
     domain: configJson.domain,
+    authority: configJson.authority,
+    authorizationEndpoint: configJson.authorization_endpoint,
+    tokenEndpoint: configJson.token_endpoint,
+    revocationEndpoint: configJson.revocation_endpoint,
+    endSessionEndpoint: configJson.end_session_endpoint,
+    userinfoEndpoint: configJson.userinfo_endpoint,
+    scopesSupported: configJson.scopes_supported,
     clientId: configJson.clientId,
     apiOrigin: configJson.apiOrigin,
     grpcApiOrigin: configJson.grpcApiOrigin,
