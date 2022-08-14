@@ -13,11 +13,11 @@ import LoginError from "./components/LoginError";
 const config = getConfig();
 
 const providerConfig = {
-    authority:  config.domain,
+    authority:  config.authority,
     client_id: config.clientId,
-    redirect_uri: window.location.origin+'#callback',
+    redirect_uri: window.location.origin+'/#callback',
     refresh_time_before_tokens_expiration_in_second: 30,
-    silent_redirect_uri: window.location.origin + '#silent-callback',
+    silent_redirect_uri: window.location.origin + '/#silent-callback',
     scope: config.scopesSupported,
     // disabling service worker
     // service_worker_relative_url:'/OidcServiceWorker.js',

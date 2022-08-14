@@ -20,7 +20,6 @@ export function getConfig() {
       : null;
 
   return {
-    domain: configJson.domain,
     authority: configJson.authority,
     authorizationEndpoint: configJson.authorization_endpoint,
     tokenEndpoint: configJson.token_endpoint,
