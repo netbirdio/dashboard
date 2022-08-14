@@ -20,6 +20,7 @@ export function getConfig() {
       : null;
 
   return {
+    auth0Auth: configJson.auth0Auth,
     authority: configJson.authAuthority,
     clientId: configJson.authClientId,
     scopesSupported: configJson.authScopesSupported,
