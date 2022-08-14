@@ -22,13 +22,13 @@ const providerConfig = {
     // disabling service worker
     // service_worker_relative_url:'/OidcServiceWorker.js',
     service_worker_only: false,
-    authority_configuration: {
+    /*authority_configuration: {
         authorization_endpoint: config.authorizationEndpoint,
         token_endpoint: config.tokenEndpoint,
         revocation_endpoint: config.revocationEndpoint,
         end_session_endpoint: config.endSessionEndpoint,
         userinfo_endpoint: config.userinfoEndpoint
-    },
+    },*/
     ...(config.audience ? {extras:{ audience: config.audience}} : null)
 };
 
