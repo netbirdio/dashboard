@@ -173,7 +173,7 @@ const RouteUpdate = () => {
             return Promise.reject(new Error("Please enter one peer"))
         }
 
-        if (typeof value !== 'string') {
+        if (typeof value !== 'string' && value.length > 1) {
             return Promise.reject(new Error("Please select only one peer"))
         }
 

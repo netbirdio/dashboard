@@ -344,7 +344,7 @@ export const Routes = () => {
                                     />
                                     <Column title="Prefix" dataIndex="prefix"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
+                                            // sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                             defaultSortOrder='ascend'
                                     />
                                     <Column title="Enabled" dataIndex="enabled"
