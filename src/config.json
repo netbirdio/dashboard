@@ -1,7 +1,10 @@
 {
-  "domain": "$AUTH0_DOMAIN",
-  "clientId": "$AUTH0_CLIENT_ID",
-  "audience": "$AUTH0_AUDIENCE",
+  "auth0Auth": "$USE_AUTH0",
+  "authAuthority": "$AUTH_AUTHORITY",
+  "authClientId": "$AUTH_CLIENT_ID",
+  "authScopesSupported": "$AUTH_SUPPORTED_SCOPES",
+  "authAudience": "$AUTH_AUDIENCE",
+
   "apiOrigin": "$NETBIRD_MGMT_API_ENDPOINT",
   "grpcApiOrigin": "$NETBIRD_MGMT_GRPC_API_ENDPOINT",
   "latestVersion": "$NETBIRD_LATEST_VERSION"

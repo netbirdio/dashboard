@@ -37,7 +37,7 @@ const Navbar = () => {
         { label: (<Link  to="/users">Users</Link>), key: '/users' }
     ] as ItemType[])
     const logoutWithRedirect = () =>
-        logout("",{client_id:config.clientId});
+        logout("/",{client_id:config.clientId});
     useEffect(() => {
         const fs = menuItems.filter(m => m?.key !== userEmailKey && m?.key !== userLogoutKey && m?.key !== userDividerKey)
         if (screens.xs === true) {
