@@ -1,19 +1,39 @@
 #!/bin/bash
 set -e
 
-if [[ -z "${AUTH0_DOMAIN}" ]]; then
-    echo "AUTH0_DOMAIN environment variable must be set"
-    exit 1
+if [[ -z "${AUTH_AUTHORITY}" ]]; then
+    if [[ -z "${AUTH0_DOMAIN}" ]]; then
+        echo "AUTH_AUTHORITY or AUTH0_DOMAIN environment variable must be set"
+        exit 1
+    fi
 fi
 
-if [[ -z "${AUTH0_CLIENT_ID}" ]]; then
-    echo "AUTH0_CLIENT_ID environment variable must be set"
-    exit 1
+if [[ -z "${AUTH_CLIENT_ID}" ]]; then
+    if [[ -z "${AUTH0_CLIENT_ID}" ]]; then
+        echo "AUTH_CLIENT_ID or AUTH0_CLIENT_ID environment variable must be set"
+        exit 1
+    fi
 fi
 
-if [[ -z "${AUTH0_AUDIENCE}" ]]; then
-    echo "AUTH0_AUDIENCE environment variable must be set"
-    exit 1
+if [[ -z "${AUTH_AUDIENCE}" ]]; then
+    if [[ -z "${AUTH0_AUDIENCE}" ]]; then
+        echo "AUTH_AUDIENCE or AUTH0_AUDIENCE environment variable must be set"
+        exit 1
+    fi
+fi
+
+if [[ -z "${AUTH_SUPPORTED_SCOPES}" ]]; then
+    if [[ -z "${AUTH0_DOMAIN}" ]]; then
+        echo "AUTH_SUPPORTED_SCOPES environment variable must be set"
+        exit 1
+    fi
+fi
+
+if [[ -z "${USE_AUTH0}" ]]; then
+    if [[ -z "${AUTH0_DOMAIN}" ]]; then
+        echo "USE_AUTH0 environment variable must be set"
+        exit 1
+    fi
 fi
 
 if [[ -z "${NETBIRD_MGMT_API_ENDPOINT}" ]]; then
@@ -21,11 +41,14 @@ if [[ -z "${NETBIRD_MGMT_API_ENDPOINT}" ]]; then
     exit 1
 fi
 
-AUTH0_DOMAIN=${AUTH0_DOMAIN}
-AUTH0_CLIENT_ID=${AUTH0_CLIENT_ID}
-AUTH0_AUDIENCE=${AUTH0_AUDIENCE}
-NETBIRD_MGMT_API_ENDPOINT=$(echo $NETBIRD_MGMT_API_ENDPOINT | sed -E 's/(:80|:443)$//')
-NETBIRD_MGMT_GRPC_API_ENDPOINT=${NETBIRD_MGMT_GRPC_API_ENDPOINT}
+export AUTH_AUTHORITY=${AUTH_AUTHORITY:-https://$AUTH0_DOMAIN}
+export AUTH_CLIENT_ID=${AUTH_CLIENT_ID:-$AUTH0_CLIENT_ID}
+export AUTH_AUDIENCE=${AUTH_AUDIENCE:-$AUTH0_AUDIENCE}
+export USE_AUTH0=${USE_AUTH0:-true}
+export AUTH_SUPPORTED_SCOPES=${AUTH_SUPPORTED_SCOPES:-openid profile email api offline_access email_verified}
+
+export NETBIRD_MGMT_API_ENDPOINT=$(echo $NETBIRD_MGMT_API_ENDPOINT | sed -E 's/(:80|:443)$//')
+export NETBIRD_MGMT_GRPC_API_ENDPOINT=${NETBIRD_MGMT_GRPC_API_ENDPOINT}
 
 REPO="https://github.com/netbirdio/netbird/"
 # this command will fetch the latest release e.g. v0.6.3
@@ -33,7 +56,7 @@ export NETBIRD_LATEST_VERSION=$(basename $(curl -fs -o/dev/null -w %{redirect_ur
 echo "NetBird latest version: ${NETBIRD_LATEST_VERSION}"
 
 # replace ENVs in the config
-ENV_STR="\$\$AUTH0_DOMAIN \$\$AUTH0_CLIENT_ID \$\$AUTH0_AUDIENCE \$\$NETBIRD_MGMT_API_ENDPOINT \$\$NETBIRD_MGMT_GRPC_API_ENDPOINT \$\$NETBIRD_LATEST_VERSION"
+ENV_STR="\$\$USE_AUTH0 \$\$AUTH_AUDIENCE \$\$AUTH_AUTHORITY \$\$AUTH_CLIENT_ID \$\$AUTH_SUPPORTED_SCOPES \$\$NETBIRD_MGMT_API_ENDPOINT \$\$NETBIRD_MGMT_GRPC_API_ENDPOINT \$\$NETBIRD_LATEST_VERSION"
 MAIN_JS=$(find /usr/share/nginx/html/static/js/main.*js)
 OIDC_TRUSTED_DOMAINS="/usr/share/nginx/html/OidcTrustedDomains.js"
 cp "$MAIN_JS" "$MAIN_JS".copy
