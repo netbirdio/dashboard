@@ -106,8 +106,8 @@ export const AccessControl = () => {
     }
 
     useEffect(() => {
-        dispatch(ruleActions.getRules.request({getAccessTokenSilently:accessToken, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(ruleActions.getRules.request({accessToken:accessToken, payload: null}));
+        dispatch(groupActions.getGroups.request({accessToken:accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -182,7 +182,7 @@ export const AccessControl = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(ruleActions.deleteRule.request({getAccessTokenSilently:accessToken, payload: ruleToAction?.id || ''}));
+                dispatch(ruleActions.deleteRule.request({accessToken:accessToken, payload: ruleToAction?.id || ''}));
             },
             onCancel() {
                 setRuleToAction(null);
@@ -204,7 +204,7 @@ export const AccessControl = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                //dispatch(ruleActions.deleteRule.request({getAccessTokenSilently, payload: ruleToAction?.id || ''}));
+                //dispatch(ruleActions.deleteRule.request({accessToken, payload: ruleToAction?.id || ''}));
             },
             onCancel() {
                 setRuleToAction(null);

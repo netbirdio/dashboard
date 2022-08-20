@@ -104,8 +104,8 @@ export const Peers = () => {
     }
 
     useEffect(() => {
-        dispatch(peerActions.getPeers.request({getAccessTokenSilently:accessToken, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(peerActions.getPeers.request({accessToken:accessToken, payload: null}));
+        dispatch(groupActions.getGroups.request({accessToken:accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -198,7 +198,7 @@ export const Peers = () => {
             content: "Are you sure you want to delete peer from your account?",
             okType: 'danger',
             onOk() {
-                dispatch(peerActions.deletedPeer.request({getAccessTokenSilently:accessToken, payload: peerToAction ? peerToAction.ip : ''}));
+                dispatch(peerActions.deletedPeer.request({accessToken:accessToken, payload: peerToAction ? peerToAction.ip : ''}));
             },
             onCancel() {
                 setPeerToAction(null);
@@ -226,7 +226,7 @@ export const Peers = () => {
             ssh_enabled: checked,
             name: record.name
         } as Peer
-        dispatch(peerActions.updatePeer.request({getAccessTokenSilently:accessToken, payload: peer}));
+        dispatch(peerActions.updatePeer.request({accessToken:accessToken, payload: peer}));
 
     }
 

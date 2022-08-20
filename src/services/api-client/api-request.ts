@@ -14,7 +14,7 @@ async function apiRequest<T>(params: ApiRequestParams): Promise<ApiResponse<T>> 
   const url = `${params.urlBase}${params.url}`;
 
   const extraHeaders = params.extraHeaders || {};
-  const headers = await headersFactory((params.data as any).getAccessTokenSilently);
+  const headers = await headersFactory((params.data as any).accessToken);
 
   const builtHeader: RequestHeader = { ...headers, ...extraHeaders };
 

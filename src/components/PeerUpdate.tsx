@@ -213,11 +213,11 @@ const PeerUpdate = () => {
                 if (!noUpdateToName()) {
                     const peerUpdate = createPeerToSave()
                     setCallingPeerAPI(true)
-                    dispatch(peerActions.updatePeer.request({getAccessTokenSilently:accessToken, payload: peerUpdate}))
+                    dispatch(peerActions.updatePeer.request({accessToken:accessToken, payload: peerUpdate}))
                 }
                 if (peerGroupsToSave.groupsToRemove.length || peerGroupsToSave.groupsToAdd.length || peerGroupsToSave.groupsNoId.length) {
                     setCallingGroupAPI(true)
-                    dispatch(peerActions.saveGroups.request({getAccessTokenSilently:accessToken, payload: peerGroupsToSave}))
+                    dispatch(peerActions.saveGroups.request({accessToken:accessToken, payload: peerGroupsToSave}))
                 }
             })
             .catch((errorInfo) => {

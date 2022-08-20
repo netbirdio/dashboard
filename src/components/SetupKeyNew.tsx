@@ -34,7 +34,7 @@ const SetupKeyNew = () => {
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
-                dispatch(setupKeyActions.createSetupKey.request({getAccessTokenSilently:accessToken, payload: formSetupKey}))
+                dispatch(setupKeyActions.createSetupKey.request({accessToken:accessToken, payload: formSetupKey}))
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)

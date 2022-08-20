@@ -3,19 +3,14 @@ export interface RequestHeader {
   [key: string]: unknown;
 }
 
-const headersFactory = async (getAccessTokenSilently:any): Promise<RequestHeader> => {
+const headersFactory = async (accessToken:any): Promise<RequestHeader> => {
   const headers: RequestHeader = {
     'Content-Type': 'application/json',
     'Accept': 'application/json'
   };
 
-  //const token = await getLocalItem<string>(StorageKey.token);
-  //const token = ''
-  // const token = await getAccessTokenSilently()
-  const token = getAccessTokenSilently
-
-  if (token) {
-    headers.authorization = `Bearer ${token}`;
+  if (accessToken) {
+    headers.authorization = `Bearer ${accessToken}`;
   }
 
   return headers;

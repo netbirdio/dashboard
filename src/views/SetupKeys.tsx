@@ -79,7 +79,7 @@ export const SetupKeys = () => {
     }
 
     useEffect(() => {
-        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(setupKeyActions.getSetupKeys.request({accessToken:accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -175,7 +175,7 @@ export const SetupKeys = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.deleteSetupKey.request({getAccessTokenSilently:accessToken, payload: setupKeyToAction ? setupKeyToAction.id : ''}));
+                dispatch(setupKeyActions.deleteSetupKey.request({accessToken:accessToken, payload: setupKeyToAction ? setupKeyToAction.id : ''}));
             },
             onCancel() {
                 setSetupKeyToAction(null);
@@ -197,7 +197,7 @@ export const SetupKeys = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.revokeSetupKey.request({getAccessTokenSilently:accessToken, payload: { id: setupKeyToAction ? setupKeyToAction.id : null,revoked: true } as SetupKeyRevoke}));
+                dispatch(setupKeyActions.revokeSetupKey.request({accessToken:accessToken, payload: { id: setupKeyToAction ? setupKeyToAction.id : null,revoked: true } as SetupKeyRevoke}));
             },
             onCancel() {
                 setSetupKeyToAction(null);

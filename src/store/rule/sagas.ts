@@ -48,7 +48,7 @@ export function* saveRule(action: ReturnType<typeof actions.saveRule.request>): 
     const ruleToSave = action.payload.payload
 
     const responsesGroup = yield all(ruleToSave.groupsToSave.map(g => call(serviceGroup.createGroup, {
-        getAccessTokenSilently: action.payload.getAccessTokenSilently,
+        accessToken: action.payload.accessToken,
         payload: { name: g }
       })
     ))
@@ -64,7 +64,7 @@ export function* saveRule(action: ReturnType<typeof actions.saveRule.request>): 
     const newDestinations = getNewGroupIds(ruleToSave.destinationsNoId, resGroups)
 
     const payloadToSave = {
-      getAccessTokenSilently: action.payload.getAccessTokenSilently,
+      accessToken: action.payload.accessToken,
       payload: {
         name: ruleToSave.name,
         description: ruleToSave.description,
@@ -93,8 +93,8 @@ export function* saveRule(action: ReturnType<typeof actions.saveRule.request>): 
       data: response.body
     } as CreateResponse<Rule | null>));
 
-    yield put(groupActions.getGroups.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
-    yield put(actions.getRules.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
+    yield put(groupActions.getGroups.request({ accessToken: action.payload.accessToken, payload: null }));
+    yield put(actions.getRules.request({ accessToken: action.payload.accessToken, payload: null }));
   } catch (err) {
     yield put(actions.saveRule.failure({
       loading: false,

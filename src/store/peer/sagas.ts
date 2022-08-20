@@ -118,13 +118,13 @@ export function* saveGroups(action: ReturnType<typeof actions.saveGroups.request
     }
 
     const responsesGroup = yield all(groupsToSave.map(g => call(serviceGroup.editGroup, {
-         getAccessTokenSilently: action.payload.getAccessTokenSilently,
+         accessToken: action.payload.accessToken,
          payload: g
        })
     ))
 
     const responsesGroupNoId = yield all(groupsNoId.map(g => call(serviceGroup.createGroup, {
-         getAccessTokenSilently: action.payload.getAccessTokenSilently,
+         accessToken: action.payload.accessToken,
          payload: g
        })
     ))
@@ -137,8 +137,8 @@ export function* saveGroups(action: ReturnType<typeof actions.saveGroups.request
       data: [...(responsesGroup as ApiResponse<Group>[]).map(r => r.body), ...(responsesGroupNoId as ApiResponse<Group>[]).map(r => r.body)]
     } as CreateResponse<Group[] | null>))
 
-    yield put(groupActions.getGroups.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
-    yield put(actions.getPeers.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
+    yield put(groupActions.getGroups.request({ accessToken: action.payload.accessToken, payload: null }));
+    yield put(actions.getPeers.request({ accessToken: action.payload.accessToken, payload: null }));
 
   } catch (err) {
     console.log(err)
@@ -166,7 +166,7 @@ export function* updatePeer(action: ReturnType<typeof actions.updatePeer.request
     const peerId = peer.id
 
     const payloadToSave = {
-      getAccessTokenSilently: action.payload.getAccessTokenSilently,
+      accessToken: action.payload.accessToken,
       payload: peer
     }
 

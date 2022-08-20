@@ -96,7 +96,7 @@ const AccessControlNew = () => {
         form.validateFields()
             .then((values) => {
                 const ruleToSave = createRuleToSave()
-                dispatch(ruleActions.saveRule.request({getAccessTokenSilently:accessToken, payload: ruleToSave}))
+                dispatch(ruleActions.saveRule.request({accessToken:accessToken, payload: ruleToSave}))
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
@@ -210,7 +210,7 @@ const AccessControlNew = () => {
 
     // const testDeleteGroup = () => {
     //     groups.forEach(g => {
-    //         dispatch(groupsActions.deleteGroup.request({getAccessTokenSilently, payload: g.ID || ''}))
+    //         dispatch(groupsActions.deleteGroup.request({accessToken, payload: g.ID || ''}))
     //     })
     // }
 

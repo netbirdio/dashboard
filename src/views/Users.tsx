@@ -45,7 +45,7 @@ export const Users = () => {
     }
 
     useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently:accessToken,payload: null}));
+        dispatch(userActions.getUsers.request({accessToken:accessToken,payload: null}));
     }, [])
     useEffect(() => {
         setDataTable(transformDataTable(users))
