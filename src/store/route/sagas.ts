@@ -54,7 +54,8 @@ export function* saveRoute(action: ReturnType<typeof actions.saveRoute.request>)
         enabled: routeToSave.enabled,
         masquerade: routeToSave.masquerade,
         metric: routeToSave.metric,
-        prefix: routeToSave.prefix,
+        network: routeToSave.network,
+        network_id: routeToSave.network_id,
         peer: routeToSave.peer
       } as Route
     }

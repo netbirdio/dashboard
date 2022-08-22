@@ -3,8 +3,9 @@ export interface Route {
     description: string
     enabled: boolean
     peer: string
-    prefix:	string
-    prefix_type?: string
+    network:	string
+    network_id: string
+    network_type?: string
     metric?: number
     masquerade:	boolean
 }
