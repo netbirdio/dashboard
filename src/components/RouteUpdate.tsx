@@ -90,7 +90,8 @@ const RouteUpdate = () => {
 
         return {
             id: formRoute.id,
-            prefix: formRoute.prefix,
+            network: formRoute.network,
+            network_id: formRoute.network_id,
             description: formRoute.description,
             peer: peerID,
             enabled: formRoute.enabled,
@@ -118,7 +119,8 @@ const RouteUpdate = () => {
         if (savedRoute.loading) return
         setEditName(false)
         dispatch(routeActions.setRoute({
-            prefix: '',
+            network: '',
+            network_id: '',
             description: '',
             peer: '',
             metric: 9999,
@@ -165,6 +167,10 @@ const RouteUpdate = () => {
 
     const toggleEditName = (status:boolean) => {
         setEditName(status);
+    }
+
+    const toggleEditDescription = (status:boolean) => {
+        setEditDescription(status);
     }
 
 
@@ -217,25 +223,27 @@ const RouteUpdate = () => {
                                         </Col>
                                         <Col flex="auto">
                                             { !editName && formRoute.id ? (
-                                                <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRoute.id ? formRoute.prefix : 'New Route'}</div>
+                                                <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRoute.id ? formRoute.network_id : 'New Route'} Network</div>
                                             ) : (
                                                 <Form.Item
-                                                    name="prefix"
-                                                    label="Prefix"
-                                                    rules={[{required: true, message: 'Please add a prefix for this route', whitespace: true}]}
+                                                    name="network_id"
+                                                    label="Network Identifier"
+                                                    rules={[{required: true, message: 'Please add an identifier for this access route', whitespace: true}]}
                                                 >
-                                                    <Input placeholder="Add route prefix..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off"/>
+                                                    <Input placeholder="Add network identifier..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" maxLength={40}/>
                                                 </Form.Item>
                                             )}
-
+                                            { !editDescription ? (
+                                                <div className={"access-control input-text ant-drawer-subtitle"} onClick={() => toggleEditDescription(true)}>{formRoute.description && formRoute.description.trim() !== "" ? formRoute.description : 'Add description...'}</div>
+                                            ) : (
                                                 <Form.Item
                                                     name="description"
                                                     label="Description"
                                                     style={{marginTop: 24}}
                                                 >
-                                                    <Input placeholder="Add description..." ref={inputDescriptionRef} autoComplete="off"/>
+                                                    <Input placeholder="Add description..." ref={inputDescriptionRef} onPressEnter={() => toggleEditDescription(false)} onBlur={() => toggleEditDescription(false)} autoComplete="off" maxLength={200}/>
                                                 </Form.Item>
-
+                                            )}
                                         </Col>
                                     </Row>
                                     <Row align="top">
@@ -251,6 +259,17 @@ const RouteUpdate = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
+                                    name="network"
+                                    label="Network CIDR"
+                                    tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
+                                    // todo: handle ipv6 min CIDR notation
+                                    rules={[{required: true, whitespace: true, min: 9, max: 43}]}
+                                >
+                                    <Input placeholder="Add route network range..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" minLength={9} maxLength={43}/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
                                     name="enabled"
                                     label="Status"
                                 >
@@ -262,23 +281,12 @@ const RouteUpdate = () => {
                                     />
                                 </Form.Item>
                             </Col>
-                            <Col span={24}>
-                                <Form.Item
-                                    name="masquerade"
-                                    label="Masquerade"
-                                >
-                                    <Radio.Group
-                                        options={optionsDisabledEnabled}
-                                        onChange={handleChangeMasquerade}
-                                        optionType="button"
-                                        buttonStyle="solid"
-                                    />
-                                </Form.Item>
-                            </Col>
+
                             <Col span={24}>
                                 <Form.Item
                                     name="peer"
-                                    label="Peer"
+                                    label="Routing peer"
+                                    tooltip="You can choose one routing peer or None"
                                     rules={[{ validator: selectValidator }]}
                                     style={{display: 'flex'}}
                                 >
@@ -294,33 +302,27 @@ const RouteUpdate = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
+                                    name="masquerade"
+                                    label="Masquerade"
+                                    tooltip="Enable masquerade or hiding the traffic with the routing peer address"
+                                >
+                                    <Switch size={"small"} checked={formRoute.masquerade}/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
                                     name="metric"
                                     label="Metric"
-                                    // rules={[{required: false, message: 'Please add a metric value between 1 and 9999 for this route', min: 1,max: 9999,type: "number",validateTrigger: ["onChange","onClick"]}]}
+                                    tooltip="Choose from 1 to 9999. Lower number has higher priority"
                                     style={{display: 'flex'}}
                                 >
                                     <InputNumber min={1} max={9999} autoComplete="off" defaultValue={formRoute.metric}/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
-                                <Row wrap={false} gutter={12}>
-                                    <Col flex="none">
-                                        <FlagFilled/>
-                                    </Col>
-                                    <Col flex="auto">
-                                        <Paragraph>
-                                            At the moment access routes are bi-directional by default, this means both source and destination can talk to each-other in both directions. However destination peers will not be able to communicate with each other, nor will the source peers.
-                                        </Paragraph>
-                                        <Paragraph>
-                                            If you want to enable all peers of the same group to talk to each other - you can add that group both as a receiver and as a destination.
-                                        </Paragraph>
-                                    </Col>
-                                </Row>
-                            </Col>
-                            <Col span={24}>
                                 <Divider></Divider>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                        href="https://docs.netbird.io/docs/overview/acls" style={{color: 'rgb(07, 114, 128)'}}>Learn
+                                        href="https://docs.netbird.io/docs/overview/routes" style={{color: 'rgb(07, 114, 128)'}}>Learn
                                     more about access controls</Button>
                             </Col>
                         </Row>

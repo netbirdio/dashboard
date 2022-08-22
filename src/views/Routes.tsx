@@ -3,7 +3,7 @@ import {
     Alert,
     Button, Card,
     Col, Dropdown, Input, Menu, message, Modal, Popover, Radio, RadioChangeEvent,
-    Row, Select, Space, Table, Tag, Tooltip,
+    Row, Select, Space, Switch, Table, Tag, Tooltip,
     Typography
 } from "antd";
 import {Container} from "../components/Container";
@@ -84,7 +84,7 @@ export const Routes = () => {
     }
 
     const isShowTutorial = (routes:Route[]):boolean => {
-        return (!routes.length || (routes.length === 1 && routes[0].prefix === "Default"))
+        return (!routes.length || (routes.length === 1 && routes[0].network === "Default"))
     }
 
     const transformDataTable = (d:Route[]):RouteDataTable[] => {
@@ -166,7 +166,7 @@ export const Routes = () => {
             content: <Space direction="vertical" size="small">
                 {routeToAction &&
                     <>
-                        <Title level={5}>Delete route "{routeToAction ? routeToAction.prefix : ''}"</Title>
+                        <Title level={5}>Delete route "{routeToAction ? routeToAction.network_id : ''}"</Title>
                         <Paragraph>Are you sure you want to delete peer from your account?</Paragraph>
                     </>
                 }
@@ -188,7 +188,7 @@ export const Routes = () => {
             content: <Space direction="vertical" size="small">
                 {routeToAction &&
                     <>
-                        <Title level={5}>Deactivate route "{routeToAction ? routeToAction.prefix : ''}"</Title>
+                        <Title level={5}>Deactivate route "{routeToAction ? routeToAction.network : ''}"</Title>
                         <Paragraph>Are you sure you want to deactivate peer from your account?</Paragraph>
                     </>
                 }
@@ -206,7 +206,7 @@ export const Routes = () => {
     const filterDataTable = ():Route[] => {
         const t = textToSearch.toLowerCase().trim()
         let f:Route[] = filter(routes, (f:Route) =>
-            (f.prefix.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
+            (f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
         ) as Route[]
         if (optionAllEnable !== "all") {
              f = filter(f, (f:Route) => f.enabled)
@@ -217,7 +217,8 @@ export const Routes = () => {
     const onClickAddNewRoute = () => {
         dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
-            prefix: '',
+            network: '',
+            network_id: '',
             description: '',
             peer: '',
             masquerade: false,
@@ -230,7 +231,8 @@ export const Routes = () => {
         dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             id: routeToAction?.id || null,
-            prefix: routeToAction?.prefix,
+            network: routeToAction?.network,
+            network_id: routeToAction?.network_id,
             description: routeToAction?.description,
             peer: routeToAction?.peer,
             metric: routeToAction?.metric,
@@ -243,7 +245,8 @@ export const Routes = () => {
         dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             id: route.id || null,
-            prefix: route.prefix,
+            network: route.network,
+            network_id: route.network_id,
             description: route.description,
             peer: route.peer,
             metric: route.metric,
@@ -283,13 +286,45 @@ export const Routes = () => {
         )
     }
 
+    const showConfirmEnableMasquerade = (record: RouteDataTable, checked: boolean) => {
+        let label = record.network_id ? record.network_id : record.network
+        let tittle = "Enable Masquerade for \"" + label + "\"?"
+        let content = "Enabling this option hide all traffic coming from other NetBird peers through the routing peer address."
+
+        if (!checked) {
+            tittle = "Disable Masquerade for \"" + label + "\"?"
+            content = "Disabling this option stops hiding all traffic coming from other NetBird peers through the routing peer address."
+        }
+
+        confirm({
+            icon: <ExclamationCircleOutlined />,
+            title: tittle,
+            width: 600,
+            content: content,
+            okType: 'danger',
+            onOk() {
+                handleSwitchMasquerade(record, checked)
+            },
+            onCancel() {
+            },
+        });
+    }
+
+    function handleSwitchMasquerade(record: RouteDataTable, checked: boolean) {
+        const route = {
+            ...record,
+            masquerade: checked,
+        } as Route
+        dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: route}));
+    }
+
     return(
         <>
             <Container className="container-main">
                 <Row>
                     <Col span={24}>
-                        <Title level={4}>Access Control</Title>
-                        <Paragraph>Access routes help you manage access permissions in your organisation.</Paragraph>
+                        <Title level={4}>Network Routes</Title>
+                        <Paragraph>Network routes allow you to create routes to network ranges and assign NetBird peers as routers for these ranges.</Paragraph>
                         <Space direction="vertical" size="large" style={{ display: 'flex' }}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -338,13 +373,20 @@ export const Routes = () => {
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
-                                    <Column title="Description" dataIndex="description"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).type.includes(value)}
-                                            sorter={(a, b) => ((a as any).type.localeCompare((b as any).type))}
-                                    />
-                                    <Column title="Prefix" dataIndex="prefix"
+                                    <Column title="Network Identifier" dataIndex="network_id"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                            // sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
+                                            defaultSortOrder='ascend'
+                                            sorter={(a, b) => ((a as any).network_id.localeCompare((b as any).network_id))}
+                                            render={(text, record, index) => {
+                                                const desc = (record as RouteDataTable).description.trim()
+                                                return <Tooltip title={desc !== "" ?  desc : "no description"} arrowPointAtCenter>
+                                                    <span onClick={() => setRouteAndView(record as RouteDataTable)} className="tooltip-label">{text}</span>
+                                                </Tooltip>
+                                            }}
+                                    />
+                                    <Column title="Network CIDR" dataIndex="network"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).network.includes(value)}
+                                            sorter={(a, b) => ((a as any).network.localeCompare((b as any).network))}
                                             defaultSortOrder='ascend'
                                     />
                                     <Column title="Enabled" dataIndex="enabled"
@@ -352,21 +394,29 @@ export const Routes = () => {
                                                 return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
                                             }}
                                     />
-                                    <Column title="Peer" dataIndex="peer"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).type.includes(value)}
-                                            sorter={(a, b) => ((a as any).type.localeCompare((b as any).type))}
+                                    <Column title="Routing Peer" dataIndex="peer"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).peer.includes(value)}
+                                            sorter={(a, b) => ((a as any).peer.localeCompare((b as any).peer))}
                                             render={(peerIP:string, RouteDataTable,) => {
                                                 let p = peers.find(_p => _p?.ip === peerIP)
                                                 return <div>{p?.name}</div>
                                             }}
                                     />
                                     <Column title="Metric" dataIndex="metric"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).type.includes(value)}
-                                            sorter={(a, b) => ((a as any).type.localeCompare((b as any).type))}
+                                            onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}
+                                            sorter={(a, b) => ((a as any).metric - ((b as any).metric))}
                                     />
-                                    <Column title="Masquerade" dataIndex="masquerade"
-                                            render={(text:Boolean, record:RouteDataTable, index) => {
-                                                return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
+                                    <Column title="Masquerade traffic" dataIndex="masquerade"
+                                            render={(e, record: RouteDataTable, index) => {
+                                                let toggle = <Switch size={"small"} checked={e}
+                                                                     onClick={(checked: boolean) => {
+                                                                         showConfirmEnableMasquerade(record, checked)
+                                                                     }}
+                                                />
+                                                return <Tooltip
+                                                    title="Hides the traffic with the routing peer address">
+                                                    {toggle}
+                                                </Tooltip>
                                             }}
                                     />
                                     <Column title="" align="center"
