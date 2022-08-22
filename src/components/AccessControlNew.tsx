@@ -308,14 +308,7 @@ const AccessControlNew = () => {
                                 <Form.Item
                                     name="disabled"
                                     label="Status"
-                                    //valuePropName="checked"
                                 >
-                                    {/*<Switch
-                                        checkedChildren={<CheckOutlined />}
-                                        unCheckedChildren={<CloseOutlined />}
-
-                                        onChange={handleChangeDisabled}
-                                    />*/}
 
                                     <Radio.Group
                                         options={optionsDisabledEnabled}
@@ -330,7 +323,6 @@ const AccessControlNew = () => {
                                     name="tagSourceGroups"
                                     label="Source groups"
                                     rules={[{ validator: selectValidator }]}
-                                    style={{display: 'flex'}}
                                 >
                                     <Select mode="tags"
                                             style={{ width: '100%' }}
@@ -352,7 +344,6 @@ const AccessControlNew = () => {
                                     name="tagDestinationGroups"
                                     label="Destination groups"
                                     rules={[{ validator: selectValidator }]}
-                                    style={{display: 'flex'}}
                                 >
                                     <Select
                                         mode="tags" style={{ width: '100%' }}
