@@ -4,8 +4,9 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
+import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
-import { useOidcAccessToken } from '@axa-fr/react-oidc';
+import {useOidcAccessToken} from '@axa-fr/react-oidc';
 import {
     Alert,
     Button,
@@ -13,6 +14,7 @@ import {
     Col,
     Dropdown,
     Input,
+    List,
     Menu,
     message,
     Modal,
@@ -25,22 +27,22 @@ import {
     Switch,
     Table,
     Tag,
-    Typography,
-    Tooltip
+    Tooltip,
+    Typography
 } from "antd";
 import {Peer} from "../store/peer/types";
 import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
-import Icon, {ExclamationCircleOutlined, QuestionCircleOutlined, WarningOutlined} from "@ant-design/icons";
+import {ExclamationCircleOutlined} from "@ant-design/icons";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
 import {TooltipPlacement} from "antd/es/tooltip";
 
-const { Title, Paragraph } = Typography;
-const { Column } = Table;
-const { confirm } = Modal;
+const {Title, Paragraph, Text} = Typography;
+const {Column} = Table;
+const {confirm} = Modal;
 
 interface PeerDataTable extends Peer {
     key: string;
@@ -54,6 +56,7 @@ export const Peers = () => {
     const dispatch = useDispatch()
 
     const peers = useSelector((state: RootState) => state.peer.data);
+    const routes = useSelector((state: RootState) => state.route.data);
     const failed = useSelector((state: RootState) => state.peer.failed);
     const loading = useSelector((state: RootState) => state.peer.loading);
     const deletedPeer = useSelector((state: RootState) => state.peer.deletedPeer);
@@ -74,7 +77,7 @@ export const Peers = () => {
         {label: "15", value: "15"}
     ]
 
-    const optionsOnOff = [{label: 'Online', value: 'on'},{label: 'All', value: 'all'}]
+    const optionsOnOff = [{label: 'Online', value: 'on'}, {label: 'All', value: 'all'}]
 
     const itemsMenuAction = [
         {
@@ -86,13 +89,13 @@ export const Peers = () => {
             label: (<Button type="text" onClick={() => showConfirmDelete()}>Delete</Button>)
         }
     ]
-    const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
+    const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
-    const transformDataTable = (d:Peer[]):PeerDataTable[] => {
+    const transformDataTable = (d: Peer[]): PeerDataTable[] => {
         const peer_ids = d.map(_p => _p.id)
         return d.map((p) => {
             const gs = groups
-                .filter(g => g.peers?.find((_p:GroupPeer) => _p.id === p.id))
+                .filter(g => g.peers?.find((_p: GroupPeer) => _p.id === p.id))
                 .map(g => ({id: g.id, name: g.name, peers_count: g.peers?.length, peers: g.peers || []}))
             return {
                 key: p.id,
@@ -104,8 +107,9 @@ export const Peers = () => {
     }
 
     useEffect(() => {
-        dispatch(peerActions.getPeers.request({getAccessTokenSilently:accessToken, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(peerActions.getPeers.request({getAccessTokenSilently: accessToken, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: accessToken, payload: null}));
+        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -118,56 +122,76 @@ export const Peers = () => {
 
     const deleteKey = 'deleting';
     useEffect(() => {
-        const style = { marginTop: 85 }
+        const style = {marginTop: 85}
         if (deletedPeer.loading) {
-            message.loading({ content: 'Deleting...', key: deleteKey, style });
+            message.loading({content: 'Deleting...', key: deleteKey, style});
         } else if (deletedPeer.success) {
-            message.success({ content: 'Peer has been successfully removed.', key: deleteKey, duration: 2, style });
+            message.success({content: 'Peer has been successfully removed.', key: deleteKey, duration: 2, style});
             dispatch(peerActions.resetDeletedPeer(null))
         } else if (deletedPeer.error) {
-            message.error({ content: 'Failed to delete peer. You might not have enough permissions.', key: deleteKey, duration: 2, style  });
+            message.error({
+                content: 'Failed to delete peer. You might not have enough permissions.',
+                key: deleteKey,
+                duration: 2,
+                style
+            });
             dispatch(peerActions.resetDeletedPeer(null))
         }
     }, [deletedPeer])
 
     const saveGroupsKey = 'saving_groups';
     useEffect(() => {
-        const style = { marginTop: 85 }
+        const style = {marginTop: 85}
         if (savedGroups.loading) {
-            message.loading({ content: 'Updating peer groups...', key: saveGroupsKey, style });
+            message.loading({content: 'Updating peer groups...', key: saveGroupsKey, style});
         } else if (savedGroups.success) {
-            message.success({ content: 'Peer groups have been successfully updated.', key: saveGroupsKey, duration: 2, style });
+            message.success({
+                content: 'Peer groups have been successfully updated.',
+                key: saveGroupsKey,
+                duration: 2,
+                style
+            });
             // setUpdateGroupsVisible({} as Peer, false)
             dispatch(peerActions.resetSavedGroups(null))
         } else if (savedGroups.error) {
-            message.error({ content: 'Failed to update peer groups. You might not have enough permissions.', key: saveGroupsKey, duration: 2, style  });
+            message.error({
+                content: 'Failed to update peer groups. You might not have enough permissions.',
+                key: saveGroupsKey,
+                duration: 2,
+                style
+            });
             dispatch(peerActions.resetSavedGroups(null))
         }
     }, [savedGroups])
 
     const updatePeerKey = 'updating_peer';
     useEffect(() => {
-        const style = { marginTop: 85 }
+        const style = {marginTop: 85}
         if (updatedPeer.loading) {
-            message.loading({ content: 'Updating peer...', key: updatePeerKey, duration: 0, style })
+            message.loading({content: 'Updating peer...', key: updatePeerKey, duration: 0, style})
         } else if (updatedPeer.success) {
-            message.success({ content: 'Peer has been successfully updated.', key: updatePeerKey, duration: 2, style });
-            dispatch(peerActions.setUpdatedPeer({ ...updatedPeer, success: false }))
+            message.success({content: 'Peer has been successfully updated.', key: updatePeerKey, duration: 2, style});
+            dispatch(peerActions.setUpdatedPeer({...updatedPeer, success: false}))
             dispatch(peerActions.resetUpdatedPeer(null))
         } else if (updatedPeer.error) {
-            message.error({ content: 'Failed to update peer. You might not have enough permissions.', key: updatePeerKey, duration: 2, style  });
-            dispatch(peerActions.setUpdatedPeer({ ...updatedPeer, error: null }))
+            message.error({
+                content: 'Failed to update peer. You might not have enough permissions.',
+                key: updatePeerKey,
+                duration: 2,
+                style
+            });
+            dispatch(peerActions.setUpdatedPeer({...updatedPeer, error: null}))
             dispatch(peerActions.resetUpdatedPeer(null))
         }
     }, [updatedPeer])
 
-    const filterDataTable = ():Peer[] => {
+    const filterDataTable = (): Peer[] => {
         const t = textToSearch.toLowerCase().trim()
-         let f:Peer[] = filter(peers, (f:Peer) =>
-             (f.name.toLowerCase().includes(t) || f.ip.includes(t) || f.os.includes(t) || t === "")
-         ) as Peer[]
+        let f: Peer[] = filter(peers, (f: Peer) =>
+            (f.name.toLowerCase().includes(t) || f.ip.includes(t) || f.os.includes(t) || t === "")
+        ) as Peer[]
         if (optionOnOff === "on") {
-            f = filter(peers, (f:Peer) => f.connected)
+            f = filter(peers, (f: Peer) => f.connected)
         }
         return f
     }
@@ -181,7 +205,7 @@ export const Peers = () => {
         setDataTable(transformDataTable(data))
     }
 
-    const onChangeOnOff = ({ target: { value } }: RadioChangeEvent) => {
+    const onChangeOnOff = ({target: {value}}: RadioChangeEvent) => {
         setOptionOnOff(value)
     }
 
@@ -190,15 +214,59 @@ export const Peers = () => {
     }
 
     const showConfirmDelete = () => {
+        let peerRoutes: string[] = []
+        routes.forEach((r) => {
+            if (r.peer == peerToAction?.ip) {
+                peerRoutes.push(r.network_id)
+            }
+        })
+
+        let content = <Paragraph>Are you sure you want to delete peer from your account?</Paragraph>
+        let contentModule = <div>{content}</div>
+        if (peerRoutes.length) {
+            let contentWithRoutes =
+                "Removing this peer will disable the following routes: " + peerRoutes
+            let B = <Alert
+                message={contentWithRoutes}
+                type="warning"
+                showIcon
+                closable={false}
+            />
+
+            contentModule = <div>
+                {content}
+                <Paragraph>
+                    <Alert
+                        message={
+                            <div>
+                                <Paragraph>Removing this peer will disable the following routes:</Paragraph>
+                                <List
+                                    dataSource={peerRoutes}
+                                    renderItem={item => <List.Item><Text strong>- {item}</Text></List.Item>}
+                                    bordered={false}
+                                    split={false}
+                                />
+                            </div>}
+                        type="warning"
+                        showIcon={false}
+                        closable={false}
+                    />
+
+                </Paragraph>
+            </div>
+        }
         let name = peerToAction ? peerToAction.name : ''
         confirm({
-            icon: <ExclamationCircleOutlined />,
+            icon: <ExclamationCircleOutlined/>,
             title: "Delete peer \"" + name + "\"",
             width: 600,
-            content: "Are you sure you want to delete peer from your account?",
+            content: contentModule,
             okType: 'danger',
             onOk() {
-                dispatch(peerActions.deletedPeer.request({getAccessTokenSilently:accessToken, payload: peerToAction ? peerToAction.ip : ''}));
+                dispatch(peerActions.deletedPeer.request({
+                    getAccessTokenSilently: accessToken,
+                    payload: peerToAction ? peerToAction.ip : ''
+                }));
             },
             onCancel() {
                 setPeerToAction(null);
@@ -208,7 +276,7 @@ export const Peers = () => {
 
     const showConfirmEnableSSH = (record: PeerDataTable) => {
         confirm({
-            icon: <ExclamationCircleOutlined />,
+            icon: <ExclamationCircleOutlined/>,
             title: "Enable SSH Server for \"" + record.name + "\"?",
             width: 600,
             content: "Experimental feature. Enabling this option allows remote SSH access to this machine from other connected network participants.",
@@ -220,13 +288,14 @@ export const Peers = () => {
             },
         });
     }
+
     function handleSwitchSSH(record: PeerDataTable, checked: boolean) {
         const peer = {
             id: record.id,
             ssh_enabled: checked,
             name: record.name
         } as Peer
-        dispatch(peerActions.updatePeer.request({getAccessTokenSilently:accessToken, payload: peer}));
+        dispatch(peerActions.updatePeer.request({getAccessTokenSilently: accessToken, payload: peer}));
 
     }
 
@@ -235,7 +304,7 @@ export const Peers = () => {
         dispatch(peerActions.setPeer(peerToAction as Peer))
     }
 
-    const setUpdateGroupsVisible = (peerToAction:Peer, status:boolean) => {
+    const setUpdateGroupsVisible = (peerToAction: Peer, status: boolean) => {
         if (status) {
             dispatch(peerActions.setPeer({...peerToAction}))
             dispatch(peerActions.setUpdateGroupsVisible(true))
@@ -245,15 +314,15 @@ export const Peers = () => {
         dispatch(peerActions.setUpdateGroupsVisible(false))
     }
 
-    const renderPopoverGroups = (label: string, groups:Group[] | string[] | null, peerToAction:PeerDataTable) => {
-        const content = groups?.map((g,i) => {
+    const renderPopoverGroups = (label: string, groups: Group[] | string[] | null, peerToAction: PeerDataTable) => {
+        const content = groups?.map((g, i) => {
             const _g = g as Group
             const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
             return (
                 <div key={i}>
                     <Tag
                         color="blue"
-                        style={{ marginRight: 3 }}
+                        style={{marginRight: 3}}
                     >
                         <strong>{_g.name}</strong>
                     </Tag>
@@ -268,7 +337,8 @@ export const Peers = () => {
         }
 
         return (
-            <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent} title={null}>
+            <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent}
+                     title={null}>
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>
         )
@@ -280,12 +350,14 @@ export const Peers = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Peers</Title>
-                        <Paragraph>A list of all the machines in your account including their name, IP and status.</Paragraph>
-                        <Space direction="vertical" size="large" style={{ display: 'flex' }}>
+                        <Paragraph>A list of all the machines in your account including their name, IP and
+                            status.</Paragraph>
+                        <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
                                     {/*<Input.Search allowClear value={textToSearch} onPressEnter={searchDataTable} onSearch={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />*/}
-                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />
+                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
+                                           placeholder="Search..." onChange={onChangeTextToSearch}/>
                                 </Col>
                                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                                     <Space size="middle">
@@ -296,7 +368,8 @@ export const Peers = () => {
                                             optionType="button"
                                             buttonStyle="solid"
                                         />
-                                        <Select value={pageSize.toString()} options={pageSizeOptions} onChange={onChangePageSize} className="select-rows-per-page-en"/>
+                                        <Select value={pageSize.toString()} options={pageSizeOptions}
+                                                onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
                                 </Col>
                                 <Col xs={24}
@@ -307,18 +380,24 @@ export const Peers = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add Peer</Link>
+                                            <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
+                                                Peer</Link>
                                         </Col>
                                     </Row>
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
+                                <Alert message={failed.code} description={failed.message} type="error" showIcon
+                                       closable/>
                             }
                             {/*{loading && <Loading/>}*/}
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
-                                    pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} peers`)}}
+                                    pagination={{
+                                        pageSize,
+                                        showSizeChanger: false,
+                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} peers`)
+                                    }}
                                     className="card-table"
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
@@ -328,56 +407,61 @@ export const Peers = () => {
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             defaultSortOrder='ascend'
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
-                                            render={(text:string, record:PeerDataTable,) => {
-                                                return <Button type="text" onClick={() => setUpdateGroupsVisible(record, true)}>{text}</Button>
+                                            render={(text: string, record: PeerDataTable,) => {
+                                                return <Button type="text"
+                                                               onClick={() => setUpdateGroupsVisible(record, true)}>{text}</Button>
                                             }}
                                     />
                                     <Column title="IP" dataIndex="ip"
                                             sorter={(a, b) => {
                                                 const _a = (a as any).ip.split('.')
                                                 const _b = (b as any).ip.split('.')
-                                                const a_s = _a.map((i:any) => i.padStart(3, '0')).join()
-                                                const b_s = _b.map((i:any) => i.padStart(3, '0')).join()
+                                                const a_s = _a.map((i: any) => i.padStart(3, '0')).join()
+                                                const b_s = _b.map((i: any) => i.padStart(3, '0')).join()
                                                 return a_s.localeCompare(b_s)
                                             }}
                                             render={(text, record, index) => {
-                                                return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key} text={text} messageText={'IP copied!'} styleNotification={{}}/>
+                                                return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key}
+                                                                          text={text} messageText={'IP copied!'}
+                                                                          styleNotification={{}}/>
                                             }}
                                     />
                                     <Column title="Status" dataIndex="connected" align="center"
                                             render={(text, record, index) => {
-                                                return text ? <Tag color="green">online</Tag> : <Tag color="red">offline</Tag>
+                                                return text ? <Tag color="green">online</Tag> :
+                                                    <Tag color="red">offline</Tag>
                                             }}
                                     />
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
-                                            render={(text, record:PeerDataTable, index) => {
+                                            render={(text, record: PeerDataTable, index) => {
                                                 return renderPopoverGroups(text, record.groups, record)
                                             }}
                                     />
                                     <Column
                                         title="SSH Server" dataIndex="ssh_enabled" align="center"
-                                            render={(e, record:PeerDataTable, index) => {
-                                                let isWindows = record.os.toLocaleLowerCase().startsWith("windows")
-                                                let toggle = <Switch size={"small"} checked={e}
-                                                                     disabled={isWindows}
-                                                                     onClick={(checked: boolean) => {
-                                                                         if (checked) {
-                                                                             showConfirmEnableSSH(record)
-                                                                         } else {
-                                                                             handleSwitchSSH(record, checked)
-                                                                         }
-                                                                     }}
-                                                />
+                                        render={(e, record: PeerDataTable, index) => {
+                                            let isWindows = record.os.toLocaleLowerCase().startsWith("windows")
+                                            let toggle = <Switch size={"small"} checked={e}
+                                                                 disabled={isWindows}
+                                                                 onClick={(checked: boolean) => {
+                                                                     if (checked) {
+                                                                         showConfirmEnableSSH(record)
+                                                                     } else {
+                                                                         handleSwitchSSH(record, checked)
+                                                                     }
+                                                                 }}
+                                            />
 
-                                                if (isWindows) {
-                                                    return <Tooltip title="SSH server feature is not yet supported on Windows">
-                                                        {toggle}
-                                                    </Tooltip>
-                                                } else {
-                                                    return toggle
-                                                }
+                                            if (isWindows) {
+                                                return <Tooltip
+                                                    title="SSH server feature is not yet supported on Windows">
+                                                    {toggle}
+                                                </Tooltip>
+                                            } else {
+                                                return toggle
                                             }
-                                    }
+                                        }
+                                        }
                                     />
 
                                     <Column title="LastSeen" dataIndex="last_seen"
@@ -390,10 +474,11 @@ export const Peers = () => {
                                                 return formatOS(text)
                                             }}
                                     />
-                                    <Column title="Version" dataIndex="version" />
+                                    <Column title="Version" dataIndex="version"/>
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
-                                                return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
+                                                return <Dropdown.Button type="text" overlay={actionsMenu}
+                                                                        trigger={["click"]}
                                                                         onVisibleChange={visible => {
                                                                             if (visible) setPeerToAction(record as PeerDataTable)
                                                                         }}></Dropdown.Button>
