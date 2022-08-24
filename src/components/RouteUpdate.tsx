@@ -19,9 +19,6 @@ import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
 
-const { Paragraph } = Typography;
-const { Option } = Select;
-
 interface FormRoute extends Route {
 }
 
@@ -77,11 +74,13 @@ const RouteUpdate = () => {
         })
     })
 
-    options?.push({
-        label: "None",
-        value: "",
-        disabled: false
-    })
+
+
+    // options?.push({
+    //     label: "None",
+    //     value: "",
+    //     disabled: false
+    // })
 
     const createRouteToSave = ():Route => {
         let peerID = ''
@@ -122,7 +121,7 @@ const RouteUpdate = () => {
             network: '',
             network_id: '',
             description: '',
-            peer: '',
+            peer: "",
             metric: 9999,
             masquerade: false,
             enabled: false
@@ -134,13 +133,11 @@ const RouteUpdate = () => {
         setFormRoute({...formRoute, ...data})
     }
 
-    const handleChangeSource = (value: string[]) => {
-        if (value.length == 1) {
+    const handlePeerChange = (value: string) => {
             setFormRoute({
                 ...formRoute,
-                peer: value[0]
+                peer: value
             })
-        }
     };
 
 
@@ -173,27 +170,12 @@ const RouteUpdate = () => {
         setEditDescription(status);
     }
 
-
-    const selectValidator = (_: RuleObject, value: string[]) => {
-        if (!value.length) {
-            return Promise.reject(new Error("Please enter one peer"))
-        }
-
-        if (typeof value !== 'string' && value.length > 1) {
-            return Promise.reject(new Error("Please select only one peer"))
-        }
-
-        return Promise.resolve()
-    }
-
     return (
         <>
             {route &&
                 <Drawer
-                    //title={`${formRoute.ID ? 'Edit Route' : 'New Route'}`}
                     headerStyle={{display: "none"}}
                     forceRender={true}
-                    // width={512}
                     visible={setupNewRouteVisible}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
@@ -286,14 +268,15 @@ const RouteUpdate = () => {
                                 <Form.Item
                                     name="peer"
                                     label="Routing peer"
-                                    tooltip="You can choose one routing peer or None"
-                                    rules={[{ validator: selectValidator }]}
+                                    tooltip="You can choose one routing peer or leave it empty"
                                     style={{display: 'flex'}}
                                 >
-                                    <Select mode="multiple"
+                                    <Select
+                                            // mode="multiple"
+                                            showSearch
                                             style={{ width: '100%' }}
                                             placeholder="Select Peer"
-                                            onChange={handleChangeSource}
+                                            onChange={handlePeerChange}
                                             dropdownRender={dropDownRender}
                                             options={options}
                                             allowClear={true}
@@ -316,14 +299,14 @@ const RouteUpdate = () => {
                                     tooltip="Choose from 1 to 9999. Lower number has higher priority"
                                     style={{display: 'flex'}}
                                 >
-                                    <InputNumber min={1} max={9999} autoComplete="off" defaultValue={formRoute.metric}/>
+                                    <InputNumber min={1} max={9999} autoComplete="off"/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
                                 <Divider></Divider>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
                                         href="https://docs.netbird.io/docs/overview/routes" style={{color: 'rgb(07, 114, 128)'}}>Learn
-                                    more about access controls</Button>
+                                    more about network routes</Button>
                             </Col>
                         </Row>
                     </Form>

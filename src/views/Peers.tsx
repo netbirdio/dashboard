@@ -213,6 +213,7 @@ export const Peers = () => {
         setPageSize(parseInt(value.toString()))
     }
 
+
     const showConfirmDelete = () => {
         let peerRoutes: string[] = []
         routes.forEach((r) => {
@@ -239,19 +240,19 @@ export const Peers = () => {
                     <Alert
                         message={
                             <div>
-                                <Paragraph>Removing this peer will disable the following routes:</Paragraph>
+                                <>This peer is part of one or more network routes. Removing this peer will disable the following routes:</>
                                 <List
                                     dataSource={peerRoutes}
                                     renderItem={item => <List.Item><Text strong>- {item}</Text></List.Item>}
                                     bordered={false}
                                     split={false}
+                                    itemLayout={"vertical"}
                                 />
                             </div>}
                         type="warning"
                         showIcon={false}
                         closable={false}
                     />
-
                 </Paragraph>
             </div>
         }

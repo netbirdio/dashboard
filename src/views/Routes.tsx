@@ -13,9 +13,8 @@ import {Route} from "../store/route/types";
 import {actions as routeActions} from "../store/route";
 import {actions as peerActions} from "../store/peer";
 import {filter, sortBy} from "lodash";
-import {CloseOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
+import { ExclamationCircleOutlined} from "@ant-design/icons";
 import RouteUpdate from "../components/RouteUpdate";
-import {Group} from "../store/group/types";
 import tableSpin from "../components/Spin";
 import {useOidcAccessToken} from '@axa-fr/react-oidc';
 const { Title, Paragraph } = Typography;
@@ -28,12 +27,6 @@ interface RouteDataTable extends Route {
     sourceLabel: '';
     destinationCount: number;
     destinationLabel: '';
-}
-
-interface GroupsToShow {
-    title: string,
-    groups: Group[] | string[] | null,
-    modalVisible: boolean
 }
 
 export const Routes = () => {
@@ -53,7 +46,6 @@ export const Routes = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [dataTable, setDataTable] = useState([] as RouteDataTable[]);
     const [routeToAction, setRouteToAction] = useState(null as RouteDataTable | null);
-    const [groupsToShow, setGroupsToShow] = useState({} as GroupsToShow)
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -79,9 +71,6 @@ export const Routes = () => {
     ]
     const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
 
-    const getSourceDestinationLabel = (data:Group[]):string => {
-        return (!data) ? "No group" : (data.length > 1) ? `${data.length} Groups` : (data.length === 1) ? data[0].name : "No group"
-    }
 
     const isShowTutorial = (routes:Route[]):boolean => {
         return (!routes.length || (routes.length === 1 && routes[0].network === "Default"))
@@ -166,8 +155,8 @@ export const Routes = () => {
             content: <Space direction="vertical" size="small">
                 {routeToAction &&
                     <>
-                        <Title level={5}>Delete route "{routeToAction ? routeToAction.network_id : ''}"</Title>
-                        <Paragraph>Are you sure you want to delete peer from your account?</Paragraph>
+                        <Title level={5}>Delete netowork route "{routeToAction ? routeToAction.network_id : ''}"</Title>
+                        <Paragraph>Are you sure you want to delete this route from your account?</Paragraph>
                     </>
                 }
             </Space>,
@@ -181,32 +170,10 @@ export const Routes = () => {
         });
     }
 
-    const showConfirmDeactivate = () => {
-        confirm({
-            icon: <ExclamationCircleOutlined />,
-            width: 600,
-            content: <Space direction="vertical" size="small">
-                {routeToAction &&
-                    <>
-                        <Title level={5}>Deactivate route "{routeToAction ? routeToAction.network : ''}"</Title>
-                        <Paragraph>Are you sure you want to deactivate peer from your account?</Paragraph>
-                    </>
-                }
-            </Space>,
-            okType: 'danger',
-            onOk() {
-                //dispatch(routeActions.deleteRoute.request({getAccessTokenSilently, payload: routeToAction?.id || ''}));
-            },
-            onCancel() {
-                setRouteToAction(null);
-            },
-        });
-    }
-
     const filterDataTable = ():Route[] => {
         const t = textToSearch.toLowerCase().trim()
         let f:Route[] = filter(routes, (f:Route) =>
-            (f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
+            (f.network_id.toLowerCase().includes(t) ||f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
         ) as Route[]
         if (optionAllEnable !== "all") {
              f = filter(f, (f:Route) => f.enabled)
@@ -253,37 +220,6 @@ export const Routes = () => {
             masquerade: route.masquerade,
             enabled: route.enabled
         } as Route))
-    }
-
-    const toggleModalGroups = (title:string, groups:Group[] | string[] | null, modalVisible:boolean) => {
-        setGroupsToShow({
-            title,
-            groups,
-            modalVisible
-        })
-    }
-
-    const renderPopoverGroups = (label: string, groups:Group[] | string[] | null, route: RouteDataTable) => {
-        const content = groups?.map((g, i) => {
-            const _g = g as Group
-            const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
-            return (
-                <div key={i}>
-                    <Tag
-                        color="blue"
-                        style={{ marginRight: 3 }}
-                    >
-                        <strong>{_g.name}</strong>
-                    </Tag>
-                    <span style={{fontSize: ".85em"}}>{peersCount}</span>
-                </div>
-            )
-        })
-        return (
-            <Popover content={<Space direction="vertical">{content}</Space>} title={null}>
-                <Button type="link" onClick={() => setRouteAndView(route)}>{label}</Button>
-            </Popover>
-        )
     }
 
     const showConfirmEnableMasquerade = (record: RouteDataTable, checked: boolean) => {
@@ -440,7 +376,6 @@ export const Routes = () => {
                     </Col>
                 </Row>
             </Container>
-            {/*<AccessControlModalGroups data={groupsToShow.groups} title={groupsToShow.title} visible={groupsToShow.modalVisible} onCancel={() => toggleModalGroups("", [], false)}/>*/}
             <RouteUpdate/>
         </>
     )
