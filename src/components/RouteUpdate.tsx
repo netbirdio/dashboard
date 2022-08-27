@@ -18,6 +18,7 @@ import {Route} from "../store/route/types";
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
+import cidrRegex from 'cidr-regex';
 
 interface FormRoute extends Route {
 }
@@ -170,6 +171,14 @@ const RouteUpdate = () => {
         setEditDescription(status);
     }
 
+    const networkRangeValidator = (_: RuleObject, value: string) => {
+        if (!cidrRegex().test(value)) {
+            return Promise.reject(new Error("invalid CIDR"))
+        }
+
+        return Promise.resolve()
+    }
+
     return (
         <>
             {route &&
@@ -210,6 +219,7 @@ const RouteUpdate = () => {
                                                 <Form.Item
                                                     name="network_id"
                                                     label="Network Identifier"
+                                                    tooltip="You can combine an identifier with a Network CIDR to form a high availability route"
                                                     rules={[{required: true, message: 'Please add an identifier for this access route', whitespace: true}]}
                                                 >
                                                     <Input placeholder="Add network identifier..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" maxLength={40}/>
@@ -245,7 +255,7 @@ const RouteUpdate = () => {
                                     label="Network CIDR"
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
                                     // todo: handle ipv6 min CIDR notation
-                                    rules={[{required: true, whitespace: true, min: 9, max: 43}]}
+                                    rules={[{validator: networkRangeValidator}]}
                                 >
                                     <Input placeholder="Add route network range..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" minLength={9} maxLength={43}/>
                                 </Form.Item>

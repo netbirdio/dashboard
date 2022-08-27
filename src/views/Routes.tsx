@@ -13,7 +13,7 @@ import {Route} from "../store/route/types";
 import {actions as routeActions} from "../store/route";
 import {actions as peerActions} from "../store/peer";
 import {filter, sortBy} from "lodash";
-import { ExclamationCircleOutlined} from "@ant-design/icons";
+import { ExclamationCircleOutlined,QuestionCircleOutlined} from "@ant-design/icons";
 import RouteUpdate from "../components/RouteUpdate";
 import tableSpin from "../components/Spin";
 import {useOidcAccessToken} from '@axa-fr/react-oidc';
@@ -111,7 +111,7 @@ export const Routes = () => {
             dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }))
             dispatch(routeActions.resetSavedRoute(null))
         } else if (savedRoute.error) {
-            message.error({ content: 'Failed to update route. You might not have enough permissions.', key: saveKey, duration: 2, style: styleNotification  });
+            message.error({ content: savedRoute.error.data? savedRoute.error.data : savedRoute.error.message, key: saveKey, duration: 2, style: styleNotification  });
             dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }))
             dispatch(routeActions.resetSavedRoute(null))
         }
@@ -260,7 +260,7 @@ export const Routes = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Network Routes</Title>
-                        <Paragraph>Network routes allow you to create routes to network ranges and assign NetBird peers as routers for these ranges.</Paragraph>
+                        <Paragraph>Network routes allow you to create routes to access other networks without installing NetBird on every resource.</Paragraph>
                         <Space direction="vertical" size="large" style={{ display: 'flex' }}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -309,7 +309,15 @@ export const Routes = () => {
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
-                                    <Column title="Network Identifier" dataIndex="network_id"
+                                    <Column title={() =>
+                                        <span>
+                                            Network Identifier
+                                            <Tooltip title="You can combine an identifier with a Network CIDR to form a high availability route">
+                                                <QuestionCircleOutlined style={{ marginLeft: '0.25em', color: "gray" }}/>
+                                            </Tooltip>
+                                        </span>
+                                    }
+                                            dataIndex="network_id"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             defaultSortOrder='ascend'
                                             sorter={(a, b) => ((a as any).network_id.localeCompare((b as any).network_id))}
