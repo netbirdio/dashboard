@@ -5,7 +5,6 @@ import { actions as routeActions } from '../store/route';
 import {
     Col,
     Row,
-    Typography,
     Input,
     InputNumber,
     Space,
@@ -13,7 +12,7 @@ import {
     SelectProps,
     Button, Drawer, Form, Divider, Select, Tag, Radio, RadioChangeEvent
 } from "antd";
-import {ArrowRightOutlined, CheckOutlined, CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
+import {CloseOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import {Route} from "../store/route/types";
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
@@ -75,14 +74,6 @@ const RouteUpdate = () => {
         })
     })
 
-
-
-    // options?.push({
-    //     label: "None",
-    //     value: "",
-    //     disabled: false
-    // })
-
     const createRouteToSave = ():Route => {
         let peerID = ''
         let p = peers.find(_p => _p.name === formRoute.peer)
@@ -125,7 +116,7 @@ const RouteUpdate = () => {
             peer: "",
             metric: 9999,
             masquerade: false,
-            enabled: false
+            enabled: true
         } as Route))
         setVisibleNewRoute(false)
     }
@@ -140,22 +131,6 @@ const RouteUpdate = () => {
                 peer: value
             })
     };
-
-
-    const handleChangeEnabled = ({ target: { value } }: RadioChangeEvent) => {
-        setFormRoute({
-            ...formRoute,
-            enabled: value
-        })
-    };
-
-    const handleChangeMasquerade = ({ target: { value } }: RadioChangeEvent) => {
-        setFormRoute({
-            ...formRoute,
-            masquerade: value
-        })
-    };
-
 
     const dropDownRender = (menu: React.ReactElement) => (
         <>
@@ -266,7 +241,6 @@ const RouteUpdate = () => {
                                 >
                                     <Radio.Group
                                         options={optionsDisabledEnabled}
-                                        onChange={handleChangeEnabled}
                                         optionType="button"
                                         buttonStyle="solid"
                                     />
