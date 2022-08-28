@@ -254,7 +254,6 @@ const RouteUpdate = () => {
                                     name="network"
                                     label="Network CIDR"
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
-                                    // todo: handle ipv6 min CIDR notation
                                     rules={[{validator: networkRangeValidator}]}
                                 >
                                     <Input placeholder="Add route network range..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" minLength={9} maxLength={43}/>
@@ -279,10 +278,8 @@ const RouteUpdate = () => {
                                     name="peer"
                                     label="Routing peer"
                                     tooltip="You can choose one routing peer or leave it empty"
-                                    style={{display: 'flex'}}
                                 >
                                     <Select
-                                            // mode="multiple"
                                             showSearch
                                             style={{ width: '100%' }}
                                             placeholder="Select Peer"
@@ -307,7 +304,6 @@ const RouteUpdate = () => {
                                     name="metric"
                                     label="Metric"
                                     tooltip="Choose from 1 to 9999. Lower number has higher priority"
-                                    style={{display: 'flex'}}
                                 >
                                     <InputNumber min={1} max={9999} autoComplete="off"/>
                                 </Form.Item>

@@ -190,7 +190,7 @@ export const Routes = () => {
             peer: '',
             masquerade: false,
             metric: 9999,
-            enabled: false
+            enabled: true
         } as Route))
     }
 
