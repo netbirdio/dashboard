@@ -238,7 +238,7 @@ const RouteUpdate = () => {
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
                                     rules={[{validator: networkRangeValidator}]}
                                 >
-                                    <Input placeholder="e.g. 172.16.0.0/16" ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" minLength={9} maxLength={43}/>
+                                    <Input placeholder="e.g. 172.16.0.0/16" autoComplete="off" minLength={9} maxLength={43}/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
