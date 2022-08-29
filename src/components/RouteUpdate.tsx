@@ -155,7 +155,7 @@ const RouteUpdate = () => {
 
     const networkRangeValidator = (_: RuleObject, value: string) => {
         if (!cidrRegex().test(value)) {
-            return Promise.reject(new Error("please enter a valid CIDR, e.g. 192.168.1.0/24"))
+            return Promise.reject(new Error("Please enter a valid CIDR, e.g. 192.168.1.0/24"))
         }
 
         return Promise.resolve()
@@ -204,7 +204,7 @@ const RouteUpdate = () => {
                                                     tooltip="You can combine an identifier with a Network CIDR to form a high availability route"
                                                     rules={[{required: true, message: 'Please add an identifier for this access route', whitespace: true}]}
                                                 >
-                                                    <Input placeholder="Add network identifier..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" maxLength={40}/>
+                                                    <Input placeholder="e.g. aws-eu-central-1-vpc" ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" maxLength={40}/>
                                                 </Form.Item>
                                             )}
                                             { !editDescription ? (
@@ -238,7 +238,7 @@ const RouteUpdate = () => {
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
                                     rules={[{validator: networkRangeValidator}]}
                                 >
-                                    <Input placeholder="Add route network range..." ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" minLength={9} maxLength={43}/>
+                                    <Input placeholder="e.g. 172.16.0.0/16" ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" minLength={9} maxLength={43}/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
