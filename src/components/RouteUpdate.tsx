@@ -37,6 +37,7 @@ const RouteUpdate = () => {
     const [form] = Form.useForm()
     const inputNameRef = useRef<any>(null)
     const inputDescriptionRef = useRef<any>(null)
+    const peerSeparator = " - "
 
     const optionsDisabledEnabled = [{label: 'Enabled', value: true}, {label: 'Disabled', value: false}]
 
@@ -56,7 +57,7 @@ const RouteUpdate = () => {
         if (!route) return
         let peerName = ''
         let p = peers.find(_p => _p.ip === route.peer)
-        peerName = p ? p.name : route.peer
+        peerName = p ? p.name  + peerSeparator + p.ip : route.peer
 
         const fRoute = {
             ...route,
@@ -68,16 +69,22 @@ const RouteUpdate = () => {
 
     peers.forEach((p) => {
         options?.push({
-            label: p.name,
-            value: p.name,
+            label: p.name + peerSeparator + p.ip,
+            value: p.name + peerSeparator + p.ip,
             disabled: false
         })
     })
 
+
+
     const createRouteToSave = ():Route => {
         let peerID = ''
-        let p = peers.find(_p => _p.name === formRoute.peer)
-        peerID = p ? p.ip : ''
+        if (formRoute.peer != '') {
+            peerID = formRoute.peer.split(peerSeparator)[1]
+        }
+        console.log(formRoute)
+        // let p = peers.find(_p => _p.name === formRoute.peer)
+        // peerID = p ? p.ip : ''
 
         return {
             id: formRoute.id,
@@ -125,12 +132,12 @@ const RouteUpdate = () => {
         setFormRoute({...formRoute, ...data})
     }
 
-    const handlePeerChange = (value: string) => {
-            setFormRoute({
-                ...formRoute,
-                peer: value
-            })
-    };
+    // const handlePeerChange = (value: string) => {
+    //         setFormRoute({
+    //             ...formRoute,
+    //             peer: value
+    //         })
+    // };
 
     const dropDownRender = (menu: React.ReactElement) => (
         <>
@@ -148,7 +155,7 @@ const RouteUpdate = () => {
 
     const networkRangeValidator = (_: RuleObject, value: string) => {
         if (!cidrRegex().test(value)) {
-            return Promise.reject(new Error("invalid CIDR"))
+            return Promise.reject(new Error("please enter a valid CIDR, e.g. 192.168.1.0/24"))
         }
 
         return Promise.resolve()
@@ -189,7 +196,7 @@ const RouteUpdate = () => {
                                         </Col>
                                         <Col flex="auto">
                                             { !editName && formRoute.id ? (
-                                                <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRoute.id ? formRoute.network_id : 'New Route'} Network</div>
+                                                <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRoute.id ? formRoute.network_id : 'New Route'}</div>
                                             ) : (
                                                 <Form.Item
                                                     name="network_id"
@@ -257,7 +264,7 @@ const RouteUpdate = () => {
                                             showSearch
                                             style={{ width: '100%' }}
                                             placeholder="Select Peer"
-                                            onChange={handlePeerChange}
+                                            // onChange={handlePeerChange}
                                             dropdownRender={dropDownRender}
                                             options={options}
                                             allowClear={true}
@@ -268,7 +275,7 @@ const RouteUpdate = () => {
                                 <Form.Item
                                     name="masquerade"
                                     label="Masquerade"
-                                    tooltip="Enable masquerade or hiding the traffic with the routing peer address"
+                                    tooltip="Enabling this option hides all traffic from other NetBird peers through the routing peer address"
                                 >
                                     <Switch size={"small"} checked={formRoute.masquerade}/>
                                 </Form.Item>

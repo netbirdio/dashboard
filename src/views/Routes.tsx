@@ -225,7 +225,7 @@ export const Routes = () => {
     const showConfirmEnableMasquerade = (record: RouteDataTable, checked: boolean) => {
         let label = record.network_id ? record.network_id : record.network
         let tittle = "Enable Masquerade for \"" + label + "\"?"
-        let content = "Enabling this option hide all traffic coming from other NetBird peers through the routing peer address."
+        let content = "Enabling this option hides all traffic from other NetBird peers through the routing peer address."
 
         if (!checked) {
             tittle = "Disable Masquerade for \"" + label + "\"?"
