@@ -157,6 +157,10 @@ const RouteUpdate = () => {
             return Promise.reject(new Error("Please enter a valid CIDR, e.g. 192.168.1.0/24"))
         }
 
+        if (Number(value.split("/")[1]) < 7) {
+            return Promise.reject(new Error("enter a CIDR larger than /7"))
+        }
+
         return Promise.resolve()
     }
 
