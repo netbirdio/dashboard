@@ -158,7 +158,7 @@ const RouteUpdate = () => {
         }
 
         if (Number(value.split("/")[1]) < 7) {
-            return Promise.reject(new Error("enter a CIDR larger than /7"))
+            return Promise.reject(new Error("Please enter a network mask larger than /7"))
         }
 
         return Promise.resolve()
