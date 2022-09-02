@@ -10,14 +10,16 @@ import {
     Space,
     Switch,
     SelectProps,
-    Button, Drawer, Form, Divider, Select, Tag, Radio, RadioChangeEvent
+    Button, Drawer, Form, Divider, Select, Tag, Radio, RadioChangeEvent, Typography
 } from "antd";
-import {CloseOutlined, QuestionCircleFilled} from "@ant-design/icons";
+import {CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
 import {Route} from "../store/route/types";
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import cidrRegex from 'cidr-regex';
+
+const { Paragraph } = Typography;
 
 interface FormRoute extends Route {
 }
@@ -68,11 +70,15 @@ const RouteUpdate = () => {
     }, [route])
 
     peers.forEach((p) => {
-        options?.push({
-            label: p.name + peerSeparator + p.ip,
-            value: p.name + peerSeparator + p.ip,
-            disabled: false
-        })
+        let os:string
+        os = p.os
+        if (!os.toLowerCase().startsWith("darwin") && !os.toLowerCase().startsWith("windows")) {
+            options?.push({
+                label: p.name + peerSeparator + p.ip,
+                value: p.name + peerSeparator + p.ip,
+                disabled: false
+            })
+        }
     })
 
 
@@ -131,13 +137,6 @@ const RouteUpdate = () => {
     const onChange = (data:any) => {
         setFormRoute({...formRoute, ...data})
     }
-
-    // const handlePeerChange = (value: string) => {
-    //         setFormRoute({
-    //             ...formRoute,
-    //             peer: value
-    //         })
-    // };
 
     const dropDownRender = (menu: React.ReactElement) => (
         <>
@@ -201,7 +200,7 @@ const RouteUpdate = () => {
                                                 <Form.Item
                                                     name="network_id"
                                                     label="Network Identifier"
-                                                    tooltip="You can combine an identifier with a Network CIDR to form a high availability route"
+                                                    tooltip="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes"
                                                     rules={[{required: true, message: 'Please add an identifier for this access route', whitespace: true}]}
                                                 >
                                                     <Input placeholder="e.g. aws-eu-central-1-vpc" ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" maxLength={40}/>
@@ -258,7 +257,7 @@ const RouteUpdate = () => {
                                 <Form.Item
                                     name="peer"
                                     label="Routing peer"
-                                    tooltip="You can choose one routing peer or leave it empty"
+                                    tooltip="Assign a peer as a routing peer for the Network CIDR"
                                 >
                                     <Select
                                             showSearch
@@ -275,7 +274,7 @@ const RouteUpdate = () => {
                                 <Form.Item
                                     name="masquerade"
                                     label="Masquerade"
-                                    tooltip="Enabling this option hides all traffic from other NetBird peers through the routing peer address"
+                                    tooltip="Enabling this option hides other NetBird network IPs behind the routing peer local address when accessing the target Network CIDR. This option allows access to your private networks without configuring routes on your local routers or other devices."
                                 >
                                     <Switch size={"small"} checked={formRoute.masquerade}/>
                                 </Form.Item>
@@ -288,6 +287,18 @@ const RouteUpdate = () => {
                                 >
                                     <InputNumber min={1} max={9999} autoComplete="off"/>
                                 </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Row wrap={false} gutter={12}>
+                                    <Col flex="none">
+                                        <FlagFilled/>
+                                    </Col>
+                                    <Col flex="auto">
+                                        <Paragraph>
+                                            You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes.
+                                        </Paragraph>
+                                    </Col>
+                                </Row>
                             </Col>
                             <Col span={24}>
                                 <Divider></Divider>

@@ -76,11 +76,30 @@ export const Routes = () => {
         return (!routes.length || (routes.length === 1 && routes[0].network === "Default"))
     }
 
+    const peerNameToID = (name:string):string => {
+        let id = name
+        let p = peers.find(_p => _p?.name === name)
+        if (p) {
+            id = p.ip
+        }
+        return id
+    }
+
+    const peerIDToName = (id:string):string => {
+            let name = id
+            let p = peers.find(_p => _p?.ip === id)
+            if (p) {
+                name = p.name
+            }
+            return name
+    }
+
     const transformDataTable = (d:Route[]):RouteDataTable[] => {
         return d.map(p => {
             return {
                 key: p.id,
                 ...p,
+                peer: peerIDToName(p.peer),
             } as RouteDataTable
         })
     }
@@ -173,7 +192,7 @@ export const Routes = () => {
     const filterDataTable = ():Route[] => {
         const t = textToSearch.toLowerCase().trim()
         let f:Route[] = filter(routes, (f:Route) =>
-            (f.network_id.toLowerCase().includes(t) ||f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
+            (f.network_id.toLowerCase().includes(t) ||f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || peerIDToName(f.peer).toLowerCase().includes(t) || t === "")
         ) as Route[]
         if (optionAllEnable !== "all") {
              f = filter(f, (f:Route) => f.enabled)
@@ -225,11 +244,11 @@ export const Routes = () => {
     const showConfirmEnableMasquerade = (record: RouteDataTable, checked: boolean) => {
         let label = record.network_id ? record.network_id : record.network
         let tittle = "Enable Masquerade for \"" + label + "\"?"
-        let content = "Enabling this option hides all traffic from other NetBird peers through the routing peer address."
+        let content = "Enabling this option hides other NetBird network IPs behind the routing peer local address when accessing the target Network CIDR. This option allows access to your private networks without configuring routes on your local routers or other devices."
 
         if (!checked) {
             tittle = "Disable Masquerade for \"" + label + "\"?"
-            content = "Disabling this option stops hiding all traffic coming from other NetBird peers through the routing peer address."
+            content = "Disabling this option stops hiding all traffic coming from other NetBird peers behind the routing peer local address when accessing the target Network CIDR. You will need to configure routes for your NetBird network pointing to your routing peer on your local routers or other devices."
         }
 
         confirm({
@@ -249,6 +268,7 @@ export const Routes = () => {
     function handleSwitchMasquerade(record: RouteDataTable, checked: boolean) {
         const route = {
             ...record,
+            peer: peerNameToID(record.peer),
             masquerade: checked,
         } as Route
         dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: route}));
@@ -312,7 +332,7 @@ export const Routes = () => {
                                     <Column title={() =>
                                         <span>
                                             Network Identifier
-                                            <Tooltip title="You can combine an identifier with a Network CIDR to form a high availability route">
+                                            <Tooltip title="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes">
                                                 <QuestionCircleOutlined style={{ marginLeft: '0.25em', color: "gray" }}/>
                                             </Tooltip>
                                         </span>
@@ -341,10 +361,10 @@ export const Routes = () => {
                                     <Column title="Routing Peer" dataIndex="peer"
                                             onFilter={(value: string | number | boolean, record) => (record as any).peer.includes(value)}
                                             sorter={(a, b) => ((a as any).peer.localeCompare((b as any).peer))}
-                                            render={(peerIP:string, RouteDataTable,) => {
-                                                let p = peers.find(_p => _p?.ip === peerIP)
-                                                return <div>{p?.name}</div>
-                                            }}
+                                            // render={(peerIP:string, RouteDataTable,) => {
+                                            //     let p = peers.find(_p => _p?.ip === peerIP)
+                                            //     return <div>{p?.name}</div>
+                                            // }}
                                     />
                                     <Column title="Metric" dataIndex="metric"
                                             onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}
