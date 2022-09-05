@@ -237,7 +237,7 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="network"
-                                    label="Network range"
+                                    label="Network Range"
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
                                     rules={[{validator: networkRangeValidator}]}
                                 >
@@ -260,7 +260,7 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="peer"
-                                    label="Routing peer"
+                                    label="Routing Peer"
                                     tooltip="Assign a peer as a routing peer for the Network CIDR"
                                 >
                                     <Select
