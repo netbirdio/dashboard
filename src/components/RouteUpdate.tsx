@@ -307,7 +307,7 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Divider></Divider>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                        href="https://docs.netbird.io/docs/how-to-guides/routes" style={{color: 'rgb(07, 114, 128)'}}>Learn
+                                        href="https://docs.netbird.io/docs/how-to-guides/network-routes" style={{color: 'rgb(07, 114, 128)'}}>Learn
                                     more about network routes</Button>
                             </Col>
                         </Row>
