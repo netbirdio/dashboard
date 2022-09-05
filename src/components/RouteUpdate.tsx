@@ -237,7 +237,7 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="network"
-                                    label="Network CIDR"
+                                    label="Network Range"
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
                                     rules={[{validator: networkRangeValidator}]}
                                 >
@@ -260,7 +260,7 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="peer"
-                                    label="Routing peer"
+                                    label="Routing Peer"
                                     tooltip="Assign a peer as a routing peer for the Network CIDR"
                                 >
                                     <Select
@@ -307,7 +307,7 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Divider></Divider>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                        href="https://docs.netbird.io/docs/overview/routes" style={{color: 'rgb(07, 114, 128)'}}>Learn
+                                        href="https://docs.netbird.io/docs/how-to-guides/routes" style={{color: 'rgb(07, 114, 128)'}}>Learn
                                     more about network routes</Button>
                             </Col>
                         </Row>
