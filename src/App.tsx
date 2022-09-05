@@ -39,7 +39,7 @@ function App() {
     return (
         <Provider store={store}>
                 <Layout>
-                    {/*<Banner/>*/}
+                    <Banner/>
                     <Header className="header" style={{
                         display: "flex",
                         flexDirection: "column",
