@@ -5,11 +5,13 @@ import { reducer as setupKey } from './setup-key';
 import { reducer as user } from './user';
 import { reducer as group } from './group';
 import { reducer as rule } from './rule';
+import { reducer as route } from './route';
 
 export default combineReducers({
   peer,
   setupKey,
   user,
   group,
-  rule
+  rule,
+  route
 });

@@ -21,6 +21,7 @@
     "antd": "^4.20.6",
     "autoprefixer": "^10.4.4",
     "axios": "^0.27.2",
+    "cidr-regex": "^3.1.1",
     "copyfiles": "^2.4.1",
     "heroicons": "^1.0.6",
     "highlight.js": "^11.2.0",

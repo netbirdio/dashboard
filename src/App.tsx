@@ -8,6 +8,7 @@ import SetupKeys from "./views/SetupKeys";
 import AddPeer from "./views/AddPeer";
 import Users from './views/Users';
 import AccessControl from './views/AccessControl';
+import Routes from './views/Routes';
 import Banner from "./components/Banner";
 import {store} from "./store";
 import { Col, Layout, Row} from 'antd';
@@ -68,6 +69,7 @@ function App() {
                             <Route path="/add-peer" component={withOidcSecure(AddPeer)}/>
                             <Route path="/setup-keys" component={withOidcSecure(SetupKeys)}/>
                             <Route path="/acls" component={withOidcSecure(AccessControl)}/>
+                            <Route path="/routes" component={withOidcSecure(Routes)}/>
                             <Route path="/users" component={withOidcSecure(Users)}/>
                         </Switch>
                     </Content>
