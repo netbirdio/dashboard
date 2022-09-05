@@ -207,7 +207,7 @@ export const Routes = () => {
             network_id: '',
             description: '',
             peer: '',
-            masquerade: false,
+            masquerade: true,
             metric: 9999,
             enabled: true
         } as Route))
@@ -348,7 +348,7 @@ export const Routes = () => {
                                                 </Tooltip>
                                             }}
                                     />
-                                    <Column title="Network CIDR" dataIndex="network"
+                                    <Column title="Network Range" dataIndex="network"
                                             onFilter={(value: string | number | boolean, record) => (record as any).network.includes(value)}
                                             sorter={(a, b) => ((a as any).network.localeCompare((b as any).network))}
                                             defaultSortOrder='ascend'
@@ -370,7 +370,7 @@ export const Routes = () => {
                                             onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}
                                             sorter={(a, b) => ((a as any).metric - ((b as any).metric))}
                                     />
-                                    <Column title="Masquerade traffic" dataIndex="masquerade"
+                                    <Column title="Masquerade Traffic" dataIndex="masquerade"
                                             render={(e, record: RouteDataTable, index) => {
                                                 let toggle = <Switch size={"small"} checked={e}
                                                                      onClick={(checked: boolean) => {
