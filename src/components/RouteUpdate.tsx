@@ -237,7 +237,7 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="network"
-                                    label="Network CIDR"
+                                    label="Network range"
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
                                     rules={[{validator: networkRangeValidator}]}
                                 >

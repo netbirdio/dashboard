@@ -207,7 +207,7 @@ export const Routes = () => {
             network_id: '',
             description: '',
             peer: '',
-            masquerade: false,
+            masquerade: true,
             metric: 9999,
             enabled: true
         } as Route))
@@ -348,7 +348,7 @@ export const Routes = () => {
                                                 </Tooltip>
                                             }}
                                     />
-                                    <Column title="Network CIDR" dataIndex="network"
+                                    <Column title="Network range" dataIndex="network"
                                             onFilter={(value: string | number | boolean, record) => (record as any).network.includes(value)}
                                             sorter={(a, b) => ((a as any).network.localeCompare((b as any).network))}
                                             defaultSortOrder='ascend'
