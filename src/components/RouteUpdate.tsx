@@ -18,6 +18,7 @@ import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import cidrRegex from 'cidr-regex';
+import {masqueradeDisabledMSG, peerToPeerIP, initPeerMaps, routePeerSeparator} from '../utils/routes'
 
 const { Paragraph } = Typography;
 
@@ -39,7 +40,8 @@ const RouteUpdate = () => {
     const [form] = Form.useForm()
     const inputNameRef = useRef<any>(null)
     const inputDescriptionRef = useRef<any>(null)
-    const peerSeparator = " - "
+
+    const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
 
     const optionsDisabledEnabled = [{label: 'Enabled', value: true}, {label: 'Disabled', value: false}]
 
@@ -57,13 +59,9 @@ const RouteUpdate = () => {
 
     useEffect(() => {
         if (!route) return
-        let peerName = ''
-        let p = peers.find(_p => _p.ip === route.peer)
-        peerName = p ? p.name  + peerSeparator + p.ip : route.peer
 
         const fRoute = {
             ...route,
-            peer: peerName
         } as FormRoute
         setFormRoute(fRoute)
         form.setFieldsValue(fRoute)
@@ -74,23 +72,21 @@ const RouteUpdate = () => {
         os = p.os
         if (!os.toLowerCase().startsWith("darwin") && !os.toLowerCase().startsWith("windows")) {
             options?.push({
-                label: p.name + peerSeparator + p.ip,
-                value: p.name + peerSeparator + p.ip,
+                label: peerToPeerIP(p.name,p.ip),
+                value: peerToPeerIP(p.name,p.ip),
                 disabled: false
             })
         }
     })
 
-
-
     const createRouteToSave = ():Route => {
+        let peerIDList = formRoute.peer.split(routePeerSeparator)
         let peerID = ''
-        if (formRoute.peer != '') {
-            peerID = formRoute.peer.split(peerSeparator)[1]
+        if (peerIDList[1]) {
+            peerID = peerIDList[1]
+        } else {
+            peerID = peerNameToIP[formRoute.peer]
         }
-        console.log(formRoute)
-        // let p = peers.find(_p => _p.name === formRoute.peer)
-        // peerID = p ? p.ip : ''
 
         return {
             id: formRoute.id,
@@ -278,7 +274,7 @@ const RouteUpdate = () => {
                                 <Form.Item
                                     name="masquerade"
                                     label="Masquerade"
-                                    tooltip="Enabling this option hides other NetBird network IPs behind the routing peer local address when accessing the target Network CIDR. This option allows access to your private networks without configuring routes on your local routers or other devices."
+                                    tooltip={masqueradeDisabledMSG}
                                 >
                                     <Switch size={"small"} checked={formRoute.masquerade}/>
                                 </Form.Item>

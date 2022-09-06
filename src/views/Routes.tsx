@@ -10,6 +10,7 @@ import {Container} from "../components/Container";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {Route} from "../store/route/types";
+import {PeerNameToIP, PeerIPToName} from "../store/peer/types";
 import {actions as routeActions} from "../store/route";
 import {actions as peerActions} from "../store/peer";
 import {filter, sortBy} from "lodash";
@@ -17,6 +18,8 @@ import { ExclamationCircleOutlined,QuestionCircleOutlined} from "@ant-design/ico
 import RouteUpdate from "../components/RouteUpdate";
 import tableSpin from "../components/Spin";
 import {useOidcAccessToken} from '@axa-fr/react-oidc';
+import {masqueradeDisabledMSG,masqueradeEnabledMSG,peerToPeerIP,initPeerMaps} from '../utils/routes'
+
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
@@ -39,6 +42,7 @@ export const Routes = () => {
     const deletedRoute = useSelector((state: RootState) => state.route.deletedRoute);
     const savedRoute = useSelector((state: RootState) => state.route.savedRoute);
     const peers =  useSelector((state: RootState) => state.peer.data)
+    const loadingPeer = useSelector((state: RootState) => state.peer.loading);
     const [showTutorial, setShowTutorial] = useState(true)
     const [textToSearch, setTextToSearch] = useState('');
     const [optionAllEnable, setOptionAllEnable] = useState('enabled');
@@ -46,6 +50,8 @@ export const Routes = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [dataTable, setDataTable] = useState([] as RouteDataTable[]);
     const [routeToAction, setRouteToAction] = useState(null as RouteDataTable | null);
+
+    const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -76,42 +82,28 @@ export const Routes = () => {
         return (!routes.length || (routes.length === 1 && routes[0].network === "Default"))
     }
 
-    const peerNameToID = (name:string):string => {
-        let id = name
-        let p = peers.find(_p => _p?.name === name)
-        if (p) {
-            id = p.ip
-        }
-        return id
-    }
-
-    const peerIDToName = (id:string):string => {
-            let name = id
-            let p = peers.find(_p => _p?.ip === id)
-            if (p) {
-                name = p.name
-            }
-            return name
-    }
 
     const transformDataTable = (d:Route[]):RouteDataTable[] => {
         return d.map(p => {
             return {
                 key: p.id,
                 ...p,
-                peer: peerIDToName(p.peer),
+                peer: peerIPToName[p.peer] ? peerIPToName[p.peer] : p.peer,
             } as RouteDataTable
         })
     }
 
     useEffect(() => {
         dispatch(routeActions.getRoutes.request({getAccessTokenSilently:accessToken, payload: null}));
+    }, [peers])
+
+    useEffect(() => {
         dispatch(peerActions.getPeers.request({getAccessTokenSilently:accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
         setShowTutorial(isShowTutorial(routes))
-        setDataTable(sortBy(transformDataTable(filterDataTable()), "name"))
+        setDataTable(sortBy(transformDataTable(filterDataTable()), "network_id"))
     }, [routes])
 
     useEffect(() => {
@@ -192,7 +184,7 @@ export const Routes = () => {
     const filterDataTable = ():Route[] => {
         const t = textToSearch.toLowerCase().trim()
         let f:Route[] = filter(routes, (f:Route) =>
-            (f.network_id.toLowerCase().includes(t) ||f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || peerIDToName(f.peer).toLowerCase().includes(t) || t === "")
+            (f.network_id.toLowerCase().includes(t) ||f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || peerIPToName[f.peer].toLowerCase().includes(t) || t === "")
         ) as Route[]
         if (optionAllEnable !== "all") {
              f = filter(f, (f:Route) => f.enabled)
@@ -214,13 +206,14 @@ export const Routes = () => {
     }
 
     const onClickViewRoute = () => {
+        console.log(routeToAction!.peer)
         dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             id: routeToAction?.id || null,
             network: routeToAction?.network,
             network_id: routeToAction?.network_id,
             description: routeToAction?.description,
-            peer: routeToAction?.peer,
+            peer: peerToPeerIP(routeToAction!.peer,peerNameToIP[routeToAction!.peer]),
             metric: routeToAction?.metric,
             masquerade: routeToAction?.masquerade,
             enabled: routeToAction?.enabled
@@ -228,27 +221,27 @@ export const Routes = () => {
     }
 
     const setRouteAndView = (route: RouteDataTable) => {
-        dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             id: route.id || null,
             network: route.network,
             network_id: route.network_id,
             description: route.description,
-            peer: route.peer,
+            peer: peerToPeerIP(route.peer,peerNameToIP[route.peer]),
             metric: route.metric,
             masquerade: route.masquerade,
             enabled: route.enabled
         } as Route))
+        dispatch(routeActions.setSetupNewRouteVisible(true));
     }
 
     const showConfirmEnableMasquerade = (record: RouteDataTable, checked: boolean) => {
         let label = record.network_id ? record.network_id : record.network
         let tittle = "Enable Masquerade for \"" + label + "\"?"
-        let content = "Enabling this option hides other NetBird network IPs behind the routing peer local address when accessing the target Network CIDR. This option allows access to your private networks without configuring routes on your local routers or other devices."
+        let content = masqueradeDisabledMSG
 
         if (!checked) {
             tittle = "Disable Masquerade for \"" + label + "\"?"
-            content = "Disabling this option stops hiding all traffic coming from other NetBird peers behind the routing peer local address when accessing the target Network CIDR. You will need to configure routes for your NetBird network pointing to your routing peer on your local routers or other devices."
+            content = masqueradeEnabledMSG
         }
 
         confirm({
@@ -268,7 +261,7 @@ export const Routes = () => {
     function handleSwitchMasquerade(record: RouteDataTable, checked: boolean) {
         const route = {
             ...record,
-            peer: peerNameToID(record.peer),
+            peer: peerNameToIP[record.peer],
             masquerade: checked,
         } as Route
         dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: route}));
@@ -327,7 +320,7 @@ export const Routes = () => {
                                     className={`access-control-table ${showTutorial ? "card-table card-table-no-placeholder" : "card-table"}`}
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
-                                    loading={tableSpin(loading)}
+                                    loading={tableSpin(loading || loadingPeer)}
                                     dataSource={dataTable}>
                                     <Column title={() =>
                                         <span>
