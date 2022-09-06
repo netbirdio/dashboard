@@ -29,6 +29,7 @@ const RouteUpdate = () => {
     const {accessToken} = useOidcAccessToken()
     const dispatch = useDispatch()
     const setupNewRouteVisible = useSelector((state: RootState) => state.route.setupNewRouteVisible)
+    const setupNewRouteHA = useSelector((state: RootState) => state.route.setupNewRouteHA)
     const peers =  useSelector((state: RootState) => state.peer.data)
     const route =  useSelector((state: RootState) => state.route.route)
     const savedRoute = useSelector((state: RootState) => state.route.savedRoute)
@@ -115,6 +116,10 @@ const RouteUpdate = () => {
         dispatch(routeActions.setSetupNewRouteVisible(status));
     }
 
+    const setSetupNewRouteHA = (status:boolean) => {
+        dispatch(routeActions.setSetupNewRouteHA(status));
+    }
+
     const onCancel = () => {
         if (savedRoute.loading) return
         setEditName(false)
@@ -128,6 +133,7 @@ const RouteUpdate = () => {
             enabled: true
         } as Route))
         setVisibleNewRoute(false)
+        setSetupNewRouteHA(false)
     }
 
     const onChange = (data:any) => {
@@ -202,6 +208,7 @@ const RouteUpdate = () => {
                                                     label="Network Identifier"
                                                     tooltip="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes"
                                                     rules={[{required: true, message: 'Please add an identifier for this access route', whitespace: true}]}
+                                                    hidden={setupNewRouteHA}
                                                 >
                                                     <Input placeholder="e.g. aws-eu-central-1-vpc" ref={inputNameRef} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" maxLength={40}/>
                                                 </Form.Item>
@@ -213,6 +220,7 @@ const RouteUpdate = () => {
                                                     name="description"
                                                     label="Description"
                                                     style={{marginTop: 24}}
+                                                    hidden={setupNewRouteHA}
                                                 >
                                                     <Input placeholder="Add description..." ref={inputDescriptionRef} onPressEnter={() => toggleEditDescription(false)} onBlur={() => toggleEditDescription(false)} autoComplete="off" maxLength={200}/>
                                                 </Form.Item>
@@ -236,6 +244,7 @@ const RouteUpdate = () => {
                                     label="Network Range"
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
                                     rules={[{validator: networkRangeValidator}]}
+                                    hidden={setupNewRouteHA}
                                 >
                                     <Input placeholder="e.g. 172.16.0.0/16" autoComplete="off" minLength={9} maxLength={43}/>
                                 </Form.Item>
@@ -275,6 +284,7 @@ const RouteUpdate = () => {
                                     name="masquerade"
                                     label="Masquerade"
                                     tooltip={masqueradeDisabledMSG}
+                                    hidden={setupNewRouteHA}
                                 >
                                     <Switch size={"small"} checked={formRoute.masquerade}/>
                                 </Form.Item>

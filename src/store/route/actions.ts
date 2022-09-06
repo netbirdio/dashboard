@@ -27,7 +27,8 @@ const actions = {
   removeRoute:  createAction('REMOVE_ROUTE')<string>(),
 
   setRoute: createAction('SET_ROUTE')<Route>(),
-  setSetupNewRouteVisible: createAction('SET_SETUP_NEW_ROUTE_VISIBLE')<boolean>()
+  setSetupNewRouteVisible: createAction('SET_SETUP_NEW_ROUTE_VISIBLE')<boolean>(),
+  setSetupNewRouteHA: createAction('SET_SETUP_NEW_ROUTE_HA')<boolean>()
 };
 
 export type ActionTypes = ActionType<typeof actions>;

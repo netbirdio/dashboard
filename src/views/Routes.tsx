@@ -19,6 +19,7 @@ import RouteUpdate from "../components/RouteUpdate";
 import tableSpin from "../components/Spin";
 import {useOidcAccessToken} from '@axa-fr/react-oidc';
 import {masqueradeDisabledMSG,masqueradeEnabledMSG,peerToPeerIP,initPeerMaps} from '../utils/routes'
+import {GroupPeer} from "../store/group/types";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -30,6 +31,16 @@ interface RouteDataTable extends Route {
     sourceLabel: '';
     destinationCount: number;
     destinationLabel: '';
+}
+
+interface GroupedDataTable {
+    key: string
+    network_id: string
+    network: string
+    enabled: boolean
+    masquerade: boolean
+    description: string
+    // children: RouteDataTable[]
 }
 
 export const Routes = () => {
@@ -50,6 +61,7 @@ export const Routes = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const [dataTable, setDataTable] = useState([] as RouteDataTable[]);
     const [routeToAction, setRouteToAction] = useState(null as RouteDataTable | null);
+    const [groupedDataTable, setGroupedDataTable] = useState([] as GroupedDataTable[]);
 
     const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
 
@@ -100,6 +112,45 @@ export const Routes = () => {
     useEffect(() => {
         dispatch(peerActions.getPeers.request({getAccessTokenSilently:accessToken, payload: null}));
     }, [])
+
+    const makeChildren = () => {
+        let keySet = new Set(routes.map(r => {
+            return r.network_id + r.network
+        }))
+
+        let groupedRoutes:GroupedDataTable[] = []
+        keySet.forEach((p) => {
+            // let children:RouteDataTable[] = []
+            // dataTable.forEach((r) => {
+            //     console.log(p,r)
+            //     if ( p.toString() === r.network_id + r.network ) {
+            //         children.push(r)
+            //     }
+            // })
+            let hasEnabled = false
+            let lastRoute:Route
+            routes.forEach((r) => {
+                    if ( p === r.network_id + r.network ) {
+                        lastRoute = r
+                        if (r.enabled) {
+                            hasEnabled = true
+                        }
+                    }
+                })
+            groupedRoutes.push({
+                key: p.toString(),
+                network_id: lastRoute!.network_id,
+                network: lastRoute!.network,
+                masquerade: lastRoute!.masquerade,
+                description: lastRoute!.description,
+                enabled: hasEnabled,
+            })
+        })
+        console.log(groupedRoutes)
+        setGroupedDataTable(groupedRoutes)
+    }
+
+    useEffect(() =>{ makeChildren() },[dataTable])
 
     useEffect(() => {
         setShowTutorial(isShowTutorial(routes))
@@ -221,13 +272,17 @@ export const Routes = () => {
     }
 
     const setRouteAndView = (route: RouteDataTable) => {
+        if (!route.id) {
+            dispatch(routeActions.setSetupNewRouteHA(true));
+            route.enabled = true
+        }
         dispatch(routeActions.setRoute({
             id: route.id || null,
             network: route.network,
             network_id: route.network_id,
             description: route.description,
-            peer: peerToPeerIP(route.peer,peerNameToIP[route.peer]),
-            metric: route.metric,
+            peer: route.peer? peerToPeerIP(route.peer,peerNameToIP[route.peer]) : '',
+            metric: route.metric? route.metric : 9999,
             masquerade: route.masquerade,
             enabled: route.enabled
         } as Route))
@@ -266,6 +321,50 @@ export const Routes = () => {
         } as Route
         dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: route}));
     }
+
+    const expandedRowRender = (record: GroupedDataTable) => {
+        let children:RouteDataTable[] = []
+        dataTable.forEach((r) => {
+            console.log(record.key,r)
+            if ( record.key === r.network_id + r.network ) {
+                children.push(r)
+            }
+        })
+
+
+        return <Table
+            dataSource={children}
+            rowKey="id"
+            pagination={false}
+            showHeader={true}
+            tableLayout="fixed"
+            size="small"
+            bordered={true}
+        >
+            <Column title="Routing Peer" dataIndex="peer"
+                    onFilter={(value: string | number | boolean, record) => (record as any).peer.includes(value)}
+                    sorter={(a, b) => ((a as any).peer.localeCompare((b as any).peer))}
+            />
+            <Column title="Metric" dataIndex="metric"
+                    onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}
+                    sorter={(a, b) => ((a as any).metric - ((b as any).metric))}
+            />
+            <Column title="Enabled" dataIndex="enabled"
+                    render={(text:Boolean, record:RouteDataTable, index) => {
+                        return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
+                    }}
+            />
+            <Column title="" align="center"
+                    render={(text, record, index) => {
+                        if (deletedRoute.loading || savedRoute.loading) return <></>
+                        return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
+                                                onVisibleChange={visible => {
+                                                    if (visible) setRouteToAction(record as RouteDataTable)
+                                                }}></Dropdown.Button>
+                    }}
+            />
+        </Table>
+    };
 
     return(
         <>
@@ -321,7 +420,11 @@ export const Routes = () => {
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
                                     loading={tableSpin(loading || loadingPeer)}
-                                    dataSource={dataTable}>
+                                    dataSource={groupedDataTable}
+                                    expandable={{
+                                        expandedRowRender
+                                    }}
+                                >
                                     <Column title={() =>
                                         <span>
                                             Network Identifier
@@ -344,25 +447,25 @@ export const Routes = () => {
                                     <Column title="Network Range" dataIndex="network"
                                             onFilter={(value: string | number | boolean, record) => (record as any).network.includes(value)}
                                             sorter={(a, b) => ((a as any).network.localeCompare((b as any).network))}
-                                            defaultSortOrder='ascend'
+                                            // defaultSortOrder='ascend'
                                     />
                                     <Column title="Enabled" dataIndex="enabled"
                                             render={(text:Boolean, record:RouteDataTable, index) => {
                                                 return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
                                             }}
                                     />
-                                    <Column title="Routing Peer" dataIndex="peer"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).peer.includes(value)}
-                                            sorter={(a, b) => ((a as any).peer.localeCompare((b as any).peer))}
-                                            // render={(peerIP:string, RouteDataTable,) => {
-                                            //     let p = peers.find(_p => _p?.ip === peerIP)
-                                            //     return <div>{p?.name}</div>
-                                            // }}
-                                    />
-                                    <Column title="Metric" dataIndex="metric"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}
-                                            sorter={(a, b) => ((a as any).metric - ((b as any).metric))}
-                                    />
+                                    {/*<Column title="Routing Peer" dataIndex="peer"*/}
+                                    {/*        onFilter={(value: string | number | boolean, record) => (record as any).peer.includes(value)}*/}
+                                    {/*        sorter={(a, b) => ((a as any).peer.localeCompare((b as any).peer))}*/}
+                                    {/*        // render={(peerIP:string, RouteDataTable,) => {*/}
+                                    {/*        //     let p = peers.find(_p => _p?.ip === peerIP)*/}
+                                    {/*        //     return <div>{p?.name}</div>*/}
+                                    {/*        // }}*/}
+                                    {/*/>*/}
+                                    {/*<Column title="Metric" dataIndex="metric"*/}
+                                    {/*        onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}*/}
+                                    {/*        sorter={(a, b) => ((a as any).metric - ((b as any).metric))}*/}
+                                    {/*/>*/}
                                     <Column title="Masquerade Traffic" dataIndex="masquerade"
                                             render={(e, record: RouteDataTable, index) => {
                                                 let toggle = <Switch size={"small"} checked={e}
@@ -378,13 +481,18 @@ export const Routes = () => {
                                     />
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
-                                                if (deletedRoute.loading || savedRoute.loading) return <></>
-                                                return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
-                                                                     onVisibleChange={visible => {
-                                                                         if (visible) setRouteToAction(record as RouteDataTable)
-                                                                     }}></Dropdown.Button>
+                                                return <Button type="primary" onClick={() => setRouteAndView(record as RouteDataTable)}>Add HA</Button>
                                             }}
                                     />
+                                    {/*<Column title="" align="center"*/}
+                                    {/*        render={(text, record, index) => {*/}
+                                    {/*            if (deletedRoute.loading || savedRoute.loading) return <></>*/}
+                                    {/*            return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}*/}
+                                    {/*                                 onVisibleChange={visible => {*/}
+                                    {/*                                     if (visible) setRouteToAction(record as RouteDataTable)*/}
+                                    {/*                                 }}></Dropdown.Button>*/}
+                                    {/*        }}*/}
+                                    {/*/>*/}
                                 </Table>
                                 {showTutorial &&
                                     <Space direction="vertical" size="small" align="center"

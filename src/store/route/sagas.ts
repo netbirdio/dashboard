@@ -78,7 +78,6 @@ export function* saveRoute(action: ReturnType<typeof actions.saveRoute.request>)
       data: response.body
     } as CreateResponse<Route | null>));
 
-    yield put(groupActions.getGroups.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
     yield put(actions.getRoutes.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
   } catch (err) {
     yield put(actions.saveRoute.failure({
