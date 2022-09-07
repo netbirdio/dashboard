@@ -3,8 +3,8 @@ import {
     Alert,
     Button, Card,
     Col, Dropdown, Input, Menu, message, Modal, Popover, Radio, RadioChangeEvent,
-    Row, Select, Space, Switch, Table, Tag, Tooltip,
-    Typography
+    Row, Select, Space, Switch, Table, Tag, Tooltip, Badge,
+    Typography, Divider
 } from "antd";
 import {Container} from "../components/Container";
 import {useDispatch, useSelector} from "react-redux";
@@ -40,6 +40,7 @@ interface GroupedDataTable {
     enabled: boolean
     masquerade: boolean
     description: string
+    childrenCount: number
     // children: RouteDataTable[]
 }
 
@@ -129,12 +130,14 @@ export const Routes = () => {
             // })
             let hasEnabled = false
             let lastRoute:Route
+            let count = 0
             routes.forEach((r) => {
                     if ( p === r.network_id + r.network ) {
                         lastRoute = r
                         if (r.enabled) {
                             hasEnabled = true
                         }
+                        count = count + 1
                     }
                 })
             groupedRoutes.push({
@@ -144,6 +147,7 @@ export const Routes = () => {
                 masquerade: lastRoute!.masquerade,
                 description: lastRoute!.description,
                 enabled: hasEnabled,
+                childrenCount: count
             })
         })
         console.log(groupedRoutes)
@@ -349,7 +353,7 @@ export const Routes = () => {
                     onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}
                     sorter={(a, b) => ((a as any).metric - ((b as any).metric))}
             />
-            <Column title="Enabled" dataIndex="enabled"
+            <Column title="Status" dataIndex="enabled"
                     render={(text:Boolean, record:RouteDataTable, index) => {
                         return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
                     }}
@@ -435,7 +439,7 @@ export const Routes = () => {
                                     }
                                             dataIndex="network_id"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                            defaultSortOrder='ascend'
+                                            defaultSortOrder='ascend' align="center"
                                             sorter={(a, b) => ((a as any).network_id.localeCompare((b as any).network_id))}
                                             render={(text, record, index) => {
                                                 const desc = (record as RouteDataTable).description.trim()
@@ -444,12 +448,12 @@ export const Routes = () => {
                                                 </Tooltip>
                                             }}
                                     />
-                                    <Column title="Network Range" dataIndex="network"
+                                    <Column title="Network Range" dataIndex="network" align="center"
                                             onFilter={(value: string | number | boolean, record) => (record as any).network.includes(value)}
                                             sorter={(a, b) => ((a as any).network.localeCompare((b as any).network))}
                                             // defaultSortOrder='ascend'
                                     />
-                                    <Column title="Enabled" dataIndex="enabled"
+                                    <Column title="Status" dataIndex="enabled" align="center"
                                             render={(text:Boolean, record:RouteDataTable, index) => {
                                                 return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
                                             }}
@@ -466,7 +470,7 @@ export const Routes = () => {
                                     {/*        onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}*/}
                                     {/*        sorter={(a, b) => ((a as any).metric - ((b as any).metric))}*/}
                                     {/*/>*/}
-                                    <Column title="Masquerade Traffic" dataIndex="masquerade"
+                                    <Column title="Masquerade Traffic" dataIndex="masquerade" align="center"
                                             render={(e, record: RouteDataTable, index) => {
                                                 let toggle = <Switch size={"small"} checked={e}
                                                                      onClick={(checked: boolean) => {
@@ -479,9 +483,13 @@ export const Routes = () => {
                                                 </Tooltip>
                                             }}
                                     />
-                                    <Column title="" align="center"
-                                            render={(text, record, index) => {
-                                                return <Button type="primary" onClick={() => setRouteAndView(record as RouteDataTable)}>Add HA</Button>
+                                    <Column title="High Availability" align="center" dataIndex="childrenCount"
+                                            render={(count, record: RouteDataTable, index) => {
+                                                let tag = <Tag color="red">off</Tag>
+                                                if (count > 1) {
+                                                    tag = <Tag color="green">on</Tag>
+                                                }
+                                                return <Button type="link" ghost onClick={() => setRouteAndView(record)}>{tag}<Divider type="vertical" />Configure</Button>
                                             }}
                                     />
                                     {/*<Column title="" align="center"*/}
