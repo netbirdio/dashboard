@@ -19,7 +19,6 @@ import RouteUpdate from "../components/RouteUpdate";
 import tableSpin from "../components/Spin";
 import {useOidcAccessToken} from '@axa-fr/react-oidc';
 import {masqueradeDisabledMSG,masqueradeEnabledMSG,peerToPeerIP,initPeerMaps} from '../utils/routes'
-import {GroupPeer} from "../store/group/types";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -40,8 +39,8 @@ interface GroupedDataTable {
     enabled: boolean
     masquerade: boolean
     description: string
-    childrenCount: number
-    // children: RouteDataTable[]
+    routesCount: number
+    groupedRoutes: RouteDataTable[]
 }
 
 export const Routes = () => {
@@ -121,25 +120,20 @@ export const Routes = () => {
 
         let groupedRoutes:GroupedDataTable[] = []
         keySet.forEach((p) => {
-            // let children:RouteDataTable[] = []
-            // dataTable.forEach((r) => {
-            //     console.log(p,r)
-            //     if ( p.toString() === r.network_id + r.network ) {
-            //         children.push(r)
-            //     }
-            // })
             let hasEnabled = false
             let lastRoute:Route
-            let count = 0
+            let listedRoutes:Route[] = []
             routes.forEach((r) => {
                     if ( p === r.network_id + r.network ) {
                         lastRoute = r
                         if (r.enabled) {
                             hasEnabled = true
                         }
-                        count = count + 1
+                        listedRoutes.push(r)
                     }
                 })
+            let groupDataTableRoutes = transformDataTable(listedRoutes)
+            console.log(groupDataTableRoutes.length)
             groupedRoutes.push({
                 key: p.toString(),
                 network_id: lastRoute!.network_id,
@@ -147,7 +141,8 @@ export const Routes = () => {
                 masquerade: lastRoute!.masquerade,
                 description: lastRoute!.description,
                 enabled: hasEnabled,
-                childrenCount: count
+                routesCount: groupDataTableRoutes.length,
+                groupedRoutes: groupDataTableRoutes,
             })
         })
         console.log(groupedRoutes)
@@ -327,17 +322,9 @@ export const Routes = () => {
     }
 
     const expandedRowRender = (record: GroupedDataTable) => {
-        let children:RouteDataTable[] = []
-        dataTable.forEach((r) => {
-            console.log(record.key,r)
-            if ( record.key === r.network_id + r.network ) {
-                children.push(r)
-            }
-        })
-
 
         return <Table
-            dataSource={children}
+            dataSource={record.groupedRoutes}
             rowKey="id"
             pagination={false}
             showHeader={true}
@@ -345,15 +332,15 @@ export const Routes = () => {
             size="small"
             bordered={true}
         >
-            <Column title="Routing Peer" dataIndex="peer"
+            <Column title="Routing Peer" dataIndex="peer" align="center"
                     onFilter={(value: string | number | boolean, record) => (record as any).peer.includes(value)}
                     sorter={(a, b) => ((a as any).peer.localeCompare((b as any).peer))}
             />
-            <Column title="Metric" dataIndex="metric"
+            <Column title="Metric" dataIndex="metric" align="center"
                     onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}
                     sorter={(a, b) => ((a as any).metric - ((b as any).metric))}
             />
-            <Column title="Status" dataIndex="enabled"
+            <Column title="Status" dataIndex="enabled" align="center"
                     render={(text:Boolean, record:RouteDataTable, index) => {
                         return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
                     }}
@@ -483,13 +470,13 @@ export const Routes = () => {
                                                 </Tooltip>
                                             }}
                                     />
-                                    <Column title="High Availability" align="center" dataIndex="childrenCount"
+                                    <Column title="High Availability" align="center" dataIndex="routesCount"
                                             render={(count, record: RouteDataTable, index) => {
                                                 let tag = <Tag color="red">off</Tag>
                                                 if (count > 1) {
                                                     tag = <Tag color="green">on</Tag>
                                                 }
-                                                return <Button type="link" ghost onClick={() => setRouteAndView(record)}>{tag}<Divider type="vertical" />Configure</Button>
+                                                return <div>{tag}<Divider type="vertical" /><Button type="link" ghost onClick={() => setRouteAndView(record)}>Configure</Button></div>
                                             }}
                                     />
                                     {/*<Column title="" align="center"*/}
