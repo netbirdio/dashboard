@@ -62,7 +62,6 @@ const RouteUpdate = () => {
 
     useEffect(() => {
         if (setupNewRouteHA) {
-            // setGroupedDataTable(transformGroupedDataTable(routes,peerIPToName))
             setRoutingPeerMSG("Add additional routing peer")
             setMasqueradeMSG("Update Masquerade")
             setStatusMSG("Update Status")
@@ -229,7 +228,7 @@ const RouteUpdate = () => {
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedRoute.loading}>Cancel</Button>
-                            <Button type="primary" disabled={savedRoute.loading} onClick={handleFormSubmit}>{`${formRoute.id ? 'Save' : 'Create'}`}</Button>
+                            <Button type="primary" disabled={savedRoute.loading} onClick={handleFormSubmit}>{`${formRoute.network_id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
                 >
