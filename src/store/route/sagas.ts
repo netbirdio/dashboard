@@ -1,10 +1,8 @@
 import {all, call, put, select, takeLatest} from 'redux-saga/effects';
-import {ApiError, ApiResponse, CreateResponse, DeleteResponse, RequestPayload} from '../../services/api-client/types';
+import {ApiError, ApiResponse, CreateResponse, DeleteResponse} from '../../services/api-client/types';
 import {Route} from './types'
 import service from './service';
 import actions from './actions';
-import { actions as groupActions } from '../group';
-import {Group} from "../group/types";
 
 export function* getRoutes(action: ReturnType<typeof actions.getRoutes.request>): Generator {
   try {
@@ -28,10 +26,6 @@ export function* getRoutes(action: ReturnType<typeof actions.getRoutes.request>)
 
 export function* setCreatedRoute(action: ReturnType<typeof  actions.setSavedRoute>): Generator {
   yield put(actions.setSavedRoute(action.payload))
-}
-
-function getNewGroupIds(dataString:string[], responses:Group[]):string[] {
-  return responses.filter(r => dataString.includes(r.name)).map(r => r.id || '')
 }
 
 export function* saveRoute(action: ReturnType<typeof actions.saveRoute.request>): Generator {

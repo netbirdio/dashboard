@@ -10,7 +10,7 @@ import {
     Space,
     Switch,
     SelectProps,
-    Button, Drawer, Form, Divider, Select, Tag, Radio, RadioChangeEvent, Typography
+    Button, Drawer, Form, Divider, Select, Radio, Typography
 } from "antd";
 import {CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
 import {Route} from "../store/route/types";
@@ -18,7 +18,13 @@ import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import cidrRegex from 'cidr-regex';
-import {masqueradeDisabledMSG, peerToPeerIP, initPeerMaps, routePeerSeparator} from '../utils/routes'
+import {
+    masqueradeDisabledMSG,
+    peerToPeerIP,
+    initPeerMaps,
+    routePeerSeparator,
+    transformGroupedDataTable
+} from '../utils/routes'
 
 const { Paragraph } = Typography;
 
@@ -32,8 +38,10 @@ const RouteUpdate = () => {
     const setupNewRouteHA = useSelector((state: RootState) => state.route.setupNewRouteHA)
     const peers =  useSelector((state: RootState) => state.peer.data)
     const route =  useSelector((state: RootState) => state.route.route)
+    const routes =  useSelector((state: RootState) => state.route.data)
     const savedRoute = useSelector((state: RootState) => state.route.savedRoute)
-
+    // const [groupedDataTable, setGroupedDataTable] = useState([] as GroupedDataTable[]);
+    const [previousRouteKey, setPreviousRouteKey] = useState("")
     const [editName, setEditName] = useState(false)
     const [editDescription, setEditDescription] = useState(false)
     const options: SelectProps['options'] = [];
@@ -42,9 +50,29 @@ const RouteUpdate = () => {
     const inputNameRef = useRef<any>(null)
     const inputDescriptionRef = useRef<any>(null)
 
+    const defaultRoutingPeerMSG = "Routing Peer"
+    const [routingPeerMSG, setRoutingPeerMSG] = useState(defaultRoutingPeerMSG)
+    const defaultMasqueradeMSG = "Masquerade"
+    const [masqueradeMSG, setMasqueradeMSG] = useState(defaultMasqueradeMSG)
+    const defaultStatusMSG = "Status"
+    const [statusMSG, setStatusMSG] = useState(defaultStatusMSG)
     const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
 
     const optionsDisabledEnabled = [{label: 'Enabled', value: true}, {label: 'Disabled', value: false}]
+
+    useEffect(() => {
+        if (setupNewRouteHA) {
+            // setGroupedDataTable(transformGroupedDataTable(routes,peerIPToName))
+            setRoutingPeerMSG("Add additional routing peer")
+            setMasqueradeMSG("Update Masquerade")
+            setStatusMSG("Update Status")
+        } else {
+            setRoutingPeerMSG(defaultRoutingPeerMSG)
+            setMasqueradeMSG(defaultMasqueradeMSG)
+            setStatusMSG(defaultStatusMSG)
+            setPreviousRouteKey("")
+        }
+    }, [setupNewRouteHA])
 
     useEffect(() => {
         if (editName) inputNameRef.current!.focus({
@@ -65,6 +93,7 @@ const RouteUpdate = () => {
             ...route,
         } as FormRoute
         setFormRoute(fRoute)
+        setPreviousRouteKey(fRoute.network_id+fRoute.network)
         form.setFieldsValue(fRoute)
     }, [route])
 
@@ -80,32 +109,52 @@ const RouteUpdate = () => {
         }
     })
 
-    const createRouteToSave = ():Route => {
-        let peerIDList = formRoute.peer.split(routePeerSeparator)
-        let peerID = ''
+    const createRouteToSave = (inputRoute:FormRoute):Route => {
+        let peerIDList = inputRoute.peer.split(routePeerSeparator)
+        let peerID:string
         if (peerIDList[1]) {
             peerID = peerIDList[1]
         } else {
-            peerID = peerNameToIP[formRoute.peer]
+            peerID = peerNameToIP[inputRoute.peer]
         }
 
         return {
-            id: formRoute.id,
-            network: formRoute.network,
-            network_id: formRoute.network_id,
-            description: formRoute.description,
+            id: inputRoute.id,
+            network: inputRoute.network,
+            network_id: inputRoute.network_id,
+            description: inputRoute.description,
             peer: peerID,
-            enabled: formRoute.enabled,
-            masquerade: formRoute.masquerade,
-            metric: formRoute.metric
+            enabled: inputRoute.enabled,
+            masquerade: inputRoute.masquerade,
+            metric: inputRoute.metric
         } as Route
     }
 
     const handleFormSubmit = () => {
         form.validateFields()
-            .then((values) => {
-                const routeToSave = createRouteToSave()
-                dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: routeToSave}))
+            .then(() => {
+                if (!setupNewRouteHA || formRoute.peer != '') {
+                    const routeToSave = createRouteToSave(formRoute)
+                    dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: routeToSave}))
+                } else {
+                    let groupedDataTable = transformGroupedDataTable(routes,peerIPToName)
+                    groupedDataTable.forEach((group) => {
+                        if (group.key == previousRouteKey) {
+                            group.groupedRoutes.forEach((route) => {
+                                let updateRoute:FormRoute = {
+                                    ...formRoute,
+                                    id: route.id,
+                                    peer: route.peer,
+                                    metric: route.metric,
+                                    enabled: (formRoute.enabled != group.enabled) ? formRoute.enabled : route.enabled
+                                }
+                                const routeToSave = createRouteToSave(updateRoute)
+                                dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: routeToSave}))
+                            })
+                        }
+                    })
+                }
+
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
@@ -134,6 +183,7 @@ const RouteUpdate = () => {
         } as Route))
         setVisibleNewRoute(false)
         setSetupNewRouteHA(false)
+        setPreviousRouteKey("")
     }
 
     const onChange = (data:any) => {
@@ -209,7 +259,7 @@ const RouteUpdate = () => {
                                                     tooltip="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes"
                                                     rules={[{required: true, message: 'Please add an identifier for this access route', whitespace: true}]}
                                                 >
-                                                    <Input placeholder="e.g. aws-eu-central-1-vpc" ref={inputNameRef} disabled={setupNewRouteHA} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" maxLength={40}/>
+                                                    <Input placeholder="e.g. aws-eu-central-1-vpc" ref={inputNameRef} disabled={!setupNewRouteHA} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" maxLength={40}/>
                                                 </Form.Item>
                                             )}
                                             { !editDescription ? (
@@ -220,7 +270,7 @@ const RouteUpdate = () => {
                                                     label="Description"
                                                     style={{marginTop: 24}}
                                                 >
-                                                    <Input placeholder="Add description..." ref={inputDescriptionRef} disabled={setupNewRouteHA} onPressEnter={() => toggleEditDescription(false)} onBlur={() => toggleEditDescription(false)} autoComplete="off" maxLength={200}/>
+                                                    <Input placeholder="Add description..." ref={inputDescriptionRef} disabled={!setupNewRouteHA} onPressEnter={() => toggleEditDescription(false)} onBlur={() => toggleEditDescription(false)} autoComplete="off" maxLength={200}/>
                                                 </Form.Item>
                                             )}
 
@@ -244,13 +294,13 @@ const RouteUpdate = () => {
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
                                     rules={[{validator: networkRangeValidator}]}
                                 >
-                                    <Input placeholder="e.g. 172.16.0.0/16" disabled={setupNewRouteHA} autoComplete="off" minLength={9} maxLength={43}/>
+                                    <Input placeholder="e.g. 172.16.0.0/16" disabled={!setupNewRouteHA} autoComplete="off" minLength={9} maxLength={43}/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
                                 <Form.Item
                                     name="enabled"
-                                    label="Status"
+                                    label={statusMSG}
                                 >
                                     <Radio.Group
                                         options={optionsDisabledEnabled}
@@ -263,14 +313,13 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="peer"
-                                    label="Routing Peer"
+                                    label={routingPeerMSG}
                                     tooltip="Assign a peer as a routing peer for the Network CIDR"
                                 >
                                     <Select
                                             showSearch
                                             style={{ width: '100%' }}
                                             placeholder="Select Peer"
-                                            // onChange={handlePeerChange}
                                             dropdownRender={dropDownRender}
                                             options={options}
                                             allowClear={true}
@@ -280,10 +329,10 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="masquerade"
-                                    label="Masquerade"
+                                    label={masqueradeMSG}
                                     tooltip={masqueradeDisabledMSG}
                                 >
-                                    <Switch size={"small"} checked={formRoute.masquerade}/>
+                                    <Switch size={"small"} disabled={!setupNewRouteHA} checked={formRoute.masquerade}/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
