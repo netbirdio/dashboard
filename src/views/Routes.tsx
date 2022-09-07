@@ -26,10 +26,6 @@ const { confirm } = Modal;
 
 interface RouteDataTable extends Route {
     key: string;
-    sourceCount: number;
-    sourceLabel: '';
-    destinationCount: number;
-    destinationLabel: '';
 }
 
 interface GroupedDataTable {
@@ -113,7 +109,7 @@ export const Routes = () => {
         dispatch(peerActions.getPeers.request({getAccessTokenSilently:accessToken, payload: null}));
     }, [])
 
-    const makeChildren = () => {
+    const transformGroupedDataTable = () => {
         let keySet = new Set(routes.map(r => {
             return r.network_id + r.network
         }))
@@ -149,7 +145,7 @@ export const Routes = () => {
         setGroupedDataTable(groupedRoutes)
     }
 
-    useEffect(() =>{ makeChildren() },[dataTable])
+    useEffect(() =>{ transformGroupedDataTable() },[dataTable])
 
     useEffect(() => {
         setShowTutorial(isShowTutorial(routes))
