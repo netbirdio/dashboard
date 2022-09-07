@@ -109,7 +109,7 @@ export const Routes = () => {
         dispatch(peerActions.getPeers.request({getAccessTokenSilently:accessToken, payload: null}));
     }, [])
 
-    const transformGroupedDataTable = () => {
+    const transformGroupedDataTable = ():GroupedDataTable[] => {
         let keySet = new Set(routes.map(r => {
             return r.network_id + r.network
         }))
@@ -142,18 +142,31 @@ export const Routes = () => {
             })
         })
         console.log(groupedRoutes)
-        setGroupedDataTable(groupedRoutes)
+        return groupedRoutes
     }
 
-    useEffect(() =>{ transformGroupedDataTable() },[dataTable])
+    const filterGroupedDataTable = (routes:GroupedDataTable[]):GroupedDataTable[] => {
+        const t = textToSearch.toLowerCase().trim()
+        let f:GroupedDataTable[] = filter(routes, (f) =>
+            (f.network_id.toLowerCase().includes(t) ||f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
+        ) as GroupedDataTable[]
+        if (optionAllEnable !== "all") {
+            f = filter(f, (f) => f.enabled)
+        }
+        return f
+    }
+
+    useEffect(() =>{
+        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable()))
+    },[dataTable])
 
     useEffect(() => {
         setShowTutorial(isShowTutorial(routes))
-        setDataTable(sortBy(transformDataTable(filterDataTable()), "network_id"))
+        setDataTable(sortBy(transformDataTable(routes), "network_id"))
     }, [routes])
 
     useEffect(() => {
-        setDataTable(transformDataTable(filterDataTable()))
+        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable()))
     }, [textToSearch, optionAllEnable])
 
     const styleNotification = { marginTop: 85 }
@@ -193,8 +206,7 @@ export const Routes = () => {
     };
 
     const searchDataTable = () => {
-        const data = filterDataTable()
-        setDataTable(transformDataTable(data))
+        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable()))
     }
 
     const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
@@ -227,16 +239,7 @@ export const Routes = () => {
         });
     }
 
-    const filterDataTable = ():Route[] => {
-        const t = textToSearch.toLowerCase().trim()
-        let f:Route[] = filter(routes, (f:Route) =>
-            (f.network_id.toLowerCase().includes(t) ||f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || peerIPToName[f.peer].toLowerCase().includes(t) || t === "")
-        ) as Route[]
-        if (optionAllEnable !== "all") {
-             f = filter(f, (f:Route) => f.enabled)
-        }
-        return f
-    }
+
 
     const onClickAddNewRoute = () => {
         dispatch(routeActions.setSetupNewRouteVisible(true));
