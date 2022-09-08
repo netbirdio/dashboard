@@ -183,6 +183,7 @@ export const Routes = () => {
 
 
     const onClickAddNewRoute = () => {
+        dispatch(routeActions.setSetupNewRouteHA(true));
         dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             network: '',
@@ -196,6 +197,7 @@ export const Routes = () => {
     }
 
     const onClickViewRoute = () => {
+        dispatch(routeActions.setSetupNewRouteHA(false));
         dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             id: routeToAction?.id || null,
