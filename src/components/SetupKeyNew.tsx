@@ -10,6 +10,10 @@ import {Header} from "antd/es/layout/layout";
 
 const {Text} = Typography;
 
+interface FormSetupKey extends SetupKey {
+}
+
+
 const SetupKeyNew = () => {
     const {accessToken} = useOidcAccessToken()
     const dispatch = useDispatch()
@@ -29,7 +33,11 @@ const SetupKeyNew = () => {
     }, [editName]);
 
     useEffect(() => {
-        setFormSetupKey({...setupKey} as SetupKey)
+        if (!setupKey) return
+        const fSetupKey = {
+            ...setupKey,
+        } as FormSetupKey
+        setFormSetupKey(fSetupKey)
         form.setFieldsValue(setupKey)
     }, [setupKey])
 
@@ -122,7 +130,6 @@ const SetupKeyNew = () => {
                                                         ref={inputNameRef}
                                                         onPressEnter={() => toggleEditName(false)}
                                                         onBlur={() => toggleEditName(false)}
-                                                        // onChange={(e) => handleChangeName(e.)}
                                                         autoComplete="off"/>
                                                 </Form.Item>)}
                                         </Col>
@@ -131,7 +138,7 @@ const SetupKeyNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="Type"
+                                    name="type"
                                     label="Type"
                                     rules={[{required: true, message: 'Please enter key type'}]}
                                     style={{display: 'flex'}}
