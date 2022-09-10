@@ -9,15 +9,19 @@ export interface SetupKey {
   type: string;
   used_times: number;
   valid: boolean;
+  auto_groups: string[]
 }
 
 export interface SetupKeyNew {
   id: string;
   name: string;
   type: string;
+  auto_groups: string[]
 }
 
 export interface SetupKeyRevoke {
   id: string;
   revoked: boolean;
+  name: string;
+  auto_groups: string[]
 }

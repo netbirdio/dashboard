@@ -1,23 +1,27 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import { RootState } from "typesafe-actions";
-import { actions as setupKeyActions } from '../store/setup-key';
+import {RootState} from "typesafe-actions";
+import {actions as setupKeyActions} from '../store/setup-key';
 import {Container} from "../components/Container";
 import {useOidcAccessToken} from '@axa-fr/react-oidc';
 import {
-    Col,
-    Row,
-    Typography,
-    Table,
+    Alert,
+    Button,
     Card,
-    Tag,
+    Col,
+    Dropdown,
     Input,
-    Space,
+    Menu,
+    message,
+    Modal,
     Radio,
     RadioChangeEvent,
-    Dropdown,
-    Menu,
-    Alert, Select, Modal, Button, message, Drawer, Form, List
+    Row,
+    Select,
+    Space,
+    Table,
+    Tag,
+    Typography
 } from "antd";
 import {SetupKey, SetupKeyRevoke} from "../store/setup-key/types";
 import {filter} from "lodash"
@@ -27,9 +31,9 @@ import SetupKeyNew from "../components/SetupKeyNew";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import tableSpin from "../components/Spin";
 
-const { Title, Text, Paragraph } = Typography;
-const { Column } = Table;
-const { confirm } = Modal;
+const {Title, Text, Paragraph} = Typography;
+const {Column} = Table;
+const {confirm} = Modal;
 
 interface SetupKeyDataTable extends SetupKey {
     key: string
@@ -52,7 +56,7 @@ export const SetupKeys = () => {
     const [dataTable, setDataTable] = useState([] as SetupKeyDataTable[]);
     const [setupKeyToAction, setSetupKeyToAction] = useState(null as SetupKeyDataTable | null);
 
-    const styleNotification = { marginTop: 85 }
+    const styleNotification = {marginTop: 85}
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -66,20 +70,16 @@ export const SetupKeys = () => {
         {
             key: "revoke",
             label: (<Button type="text" onClick={() => showConfirmRevoke()}>Revoke</Button>)
-        },
-        /*{
-            key: "delete",
-            label: (<Button type="text" onClick={() => showConfirmDelete()}>Delete</Button>)
-        }*/
+        }
     ]
-    const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
+    const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
-    const transformDataTable = (d:SetupKey[]):SetupKeyDataTable[] => {
-        return d.map(p => ({ ...p } as SetupKeyDataTable))
+    const transformDataTable = (d: SetupKey[]): SetupKeyDataTable[] => {
+        return d.map(p => ({...p} as SetupKeyDataTable))
     }
 
     useEffect(() => {
-        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently: accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -93,14 +93,24 @@ export const SetupKeys = () => {
     const deleteKey = 'deleting';
     useEffect(() => {
         if (deletedSetupKey.loading) {
-            message.loading({ content: 'Deleting...', key: deleteKey, style: styleNotification });
+            message.loading({content: 'Deleting...', key: deleteKey, style: styleNotification});
         } else if (deletedSetupKey.success) {
-            message.success({ content: 'Setup key has been successfully removed.', key: deleteKey, duration: 2, style: styleNotification });
-            dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, success: false }))
+            message.success({
+                content: 'Setup key has been successfully removed.',
+                key: deleteKey,
+                duration: 2,
+                style: styleNotification
+            });
+            dispatch(setupKeyActions.setDeleteSetupKey({...deletedSetupKey, success: false}))
             dispatch(setupKeyActions.resetDeletedSetupKey(null))
         } else if (deletedSetupKey.error) {
-            message.error({ content: 'Failed to delete setup key. You might not have enough permissions.', key: deleteKey, duration: 2, style: styleNotification  });
-            dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, error: null }))
+            message.error({
+                content: 'Failed to delete setup key. You might not have enough permissions.',
+                key: deleteKey,
+                duration: 2,
+                style: styleNotification
+            });
+            dispatch(setupKeyActions.setDeleteSetupKey({...deletedSetupKey, error: null}))
             dispatch(setupKeyActions.resetDeletedSetupKey(null))
         }
     }, [deletedSetupKey])
@@ -108,12 +118,22 @@ export const SetupKeys = () => {
     const revokeKey = 'revoking';
     useEffect(() => {
         if (revokedSetupKey.loading) {
-            message.loading({ content: 'Revoking...', key: revokeKey, duration: 0, style: styleNotification })
+            message.loading({content: 'Revoking...', key: revokeKey, duration: 0, style: styleNotification})
         } else if (revokedSetupKey.success) {
-            message.success({ content: 'Setup key has been successfully revoked.', key: revokeKey, duration: 2, style: styleNotification });
+            message.success({
+                content: 'Setup key has been successfully revoked.',
+                key: revokeKey,
+                duration: 2,
+                style: styleNotification
+            });
             dispatch(setupKeyActions.resetRevokedSetupKey(null))
         } else if (revokedSetupKey.error) {
-            message.error({ content: 'Failed to revoke setup key. You might not have enough permissions.', key: revokeKey, duration: 2, style: styleNotification  });
+            message.error({
+                content: 'Failed to revoke setup key. You might not have enough permissions.',
+                key: revokeKey,
+                duration: 2,
+                style: styleNotification
+            });
             dispatch(setupKeyActions.resetRevokedSetupKey(null))
         }
     }, [revokedSetupKey])
@@ -121,24 +141,34 @@ export const SetupKeys = () => {
     const createKey = 'creating';
     useEffect(() => {
         if (createdSetupKey.loading) {
-            message.loading({ content: 'Creating...', key: createKey, duration: 0, style: styleNotification });
+            message.loading({content: 'Creating...', key: createKey, duration: 0, style: styleNotification});
         } else if (createdSetupKey.success) {
-            message.success({ content: 'Setup key has been successfully created.', key: createKey, duration: 2, style: styleNotification });
+            message.success({
+                content: 'Setup key has been successfully created.',
+                key: createKey,
+                duration: 2,
+                style: styleNotification
+            });
             dispatch(setupKeyActions.setSetupNewKeyVisible(false));
-            dispatch(setupKeyActions.setCreateSetupKey({ ...createdSetupKey, success: false }));
+            dispatch(setupKeyActions.setCreateSetupKey({...createdSetupKey, success: false}));
         } else if (createdSetupKey.error) {
-            message.error({ content: 'Failed to create setup key. You might not have enough permissions.', key: createKey, duration: 2, style: styleNotification  });
-            dispatch(setupKeyActions.setCreateSetupKey({ ...createdSetupKey, error: null }));
+            message.error({
+                content: 'Failed to create setup key. You might not have enough permissions.',
+                key: createKey,
+                duration: 2,
+                style: styleNotification
+            });
+            dispatch(setupKeyActions.setCreateSetupKey({...createdSetupKey, error: null}));
         }
     }, [createdSetupKey])
 
-    const filterDataTable = ():SetupKey[] => {
+    const filterDataTable = (): SetupKey[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f:SetupKey[] = [...setupKeys]
+        let f: SetupKey[] = [...setupKeys]
         if (optionValidAll === "valid") {
-            f = filter(setupKeys, (_f:SetupKey) => _f.valid && !_f.revoked)
+            f = filter(setupKeys, (_f: SetupKey) => _f.valid && !_f.revoked)
         }
-        f = filter(f, (_f:SetupKey) =>
+        f = filter(f, (_f: SetupKey) =>
             (_f.name.toLowerCase().includes(t) || _f.state.includes(t) || _f.type.toLowerCase().includes(t) || _f.key.toLowerCase().includes(t) || t === "")
         ) as SetupKey[]
         return f
@@ -153,7 +183,7 @@ export const SetupKeys = () => {
         setDataTable(transformDataTable(data))
     }
 
-    const onChangeValidAll = ({ target: { value } }: RadioChangeEvent) => {
+    const onChangeValidAll = ({target: {value}}: RadioChangeEvent) => {
         setOptionValidAll(value)
     }
 
@@ -163,7 +193,7 @@ export const SetupKeys = () => {
 
     const showConfirmDelete = () => {
         confirm({
-            icon: <ExclamationCircleOutlined />,
+            icon: <ExclamationCircleOutlined/>,
             width: 600,
             content: <Space direction="vertical" size="small">
                 {setupKeyToAction &&
@@ -175,7 +205,10 @@ export const SetupKeys = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.deleteSetupKey.request({getAccessTokenSilently:accessToken, payload: setupKeyToAction ? setupKeyToAction.id : ''}));
+                dispatch(setupKeyActions.deleteSetupKey.request({
+                    getAccessTokenSilently: accessToken,
+                    payload: setupKeyToAction ? setupKeyToAction.id : ''
+                }));
             },
             onCancel() {
                 setSetupKeyToAction(null);
@@ -185,7 +218,7 @@ export const SetupKeys = () => {
 
     const showConfirmRevoke = () => {
         confirm({
-            icon: <ExclamationCircleOutlined />,
+            icon: <ExclamationCircleOutlined/>,
             width: 600,
             content: <Space direction="vertical" size="small">
                 {setupKeyToAction &&
@@ -197,7 +230,15 @@ export const SetupKeys = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.revokeSetupKey.request({getAccessTokenSilently:accessToken, payload: { id: setupKeyToAction ? setupKeyToAction.id : null,revoked: true } as SetupKeyRevoke}));
+                dispatch(setupKeyActions.revokeSetupKey.request({
+                    getAccessTokenSilently: accessToken,
+                    payload: {
+                        id: setupKeyToAction ? setupKeyToAction.id : null,
+                        revoked: true,
+                        name: setupKeyToAction ? setupKeyToAction.name : null,
+                        auto_groups: setupKeyToAction ? setupKeyToAction.auto_groups : [],
+                    } as SetupKeyRevoke
+                }));
             },
             onCancel() {
                 setSetupKeyToAction(null);
@@ -219,12 +260,14 @@ export const SetupKeys = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Setup Keys</Title>
-                        <Paragraph>A list of all the setup keys in your account including their name, state, type and expiration.</Paragraph>
-                        <Space direction="vertical" size="large" style={{ display: 'flex' }}>
+                        <Paragraph>A list of all the setup keys in your account including their name, state, type and
+                            expiration.</Paragraph>
+                        <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
                                     {/*<Input.Search allowClear value={textToSearch} onPressEnter={searchDataTable} onSearch={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />*/}
-                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />
+                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
+                                           placeholder="Search..." onChange={onChangeTextToSearch}/>
                                 </Col>
                                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                                     <Space size="middle">
@@ -235,7 +278,8 @@ export const SetupKeys = () => {
                                             optionType="button"
                                             buttonStyle="solid"
                                         />
-                                        <Select value={pageSize.toString()} options={pageSizeOptions} onChange={onChangePageSize} className="select-rows-per-page-en"/>
+                                        <Select value={pageSize.toString()} options={pageSizeOptions}
+                                                onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
                                 </Col>
                                 <Col xs={24}
@@ -252,11 +296,16 @@ export const SetupKeys = () => {
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
+                                <Alert message={failed.code} description={failed.message} type="error" showIcon
+                                       closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
-                                    pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} setup keys`)}}
+                                    pagination={{
+                                        pageSize,
+                                        showSizeChanger: false,
+                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} setup keys`)
+                                    }}
                                     className="card-table"
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
@@ -270,7 +319,8 @@ export const SetupKeys = () => {
 
                                     <Column title="State" dataIndex="state"
                                             render={(text, record, index) => {
-                                                return (text === 'valid') ? <Tag color="green">{text}</Tag> : <Tag color="red">{text}</Tag>
+                                                return (text === 'valid') ? <Tag color="green">{text}</Tag> :
+                                                    <Tag color="red">{text}</Tag>
                                             }}
                                             sorter={(a, b) => ((a as any).state.localeCompare((b as any).state))}
                                     />
@@ -284,7 +334,9 @@ export const SetupKeys = () => {
                                             onFilter={(value: string | number | boolean, record) => (record as any).key.includes(value)}
                                             sorter={(a, b) => ((a as any).key.localeCompare((b as any).key))}
                                             render={(text, record, index) => {
-                                                return <ButtonCopyMessage keyMessage={(record as SetupKeyDataTable).key} text={text} messageText={`Key copied!`} styleNotification={{}}/>
+                                                return <ButtonCopyMessage keyMessage={(record as SetupKeyDataTable).key}
+                                                                          text={text} messageText={`Key copied!`}
+                                                                          styleNotification={{}}/>
                                             }}
                                     />
 
@@ -307,10 +359,11 @@ export const SetupKeys = () => {
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
                                                 return !(record as SetupKeyDataTable).revoked ? (
-                                                    <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
-                                                                        onVisibleChange={visible => {
-                                                                            if (visible) setSetupKeyToAction(record as SetupKeyDataTable)
-                                                                        }}></Dropdown.Button>) : <></>
+                                                    <Dropdown.Button type="text" overlay={actionsMenu}
+                                                                     trigger={["click"]}
+                                                                     onVisibleChange={visible => {
+                                                                         if (visible) setSetupKeyToAction(record as SetupKeyDataTable)
+                                                                     }}></Dropdown.Button>) : <></>
                                             }}
                                     />
                                 </Table>
