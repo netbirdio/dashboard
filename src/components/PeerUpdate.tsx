@@ -295,7 +295,7 @@ const PeerUpdate = () => {
                                             ) : (
                                                 <Form.Item
                                                     name="name"
-                                                    label="Update Name"
+                                                    label="Name"
                                                     rules={[{
                                                         required: true,
                                                         message: 'Please add a new name for this peer',

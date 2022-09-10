@@ -30,6 +30,10 @@ import {ExclamationCircleOutlined} from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import tableSpin from "../components/Spin";
+import {actions as peerActions} from "../store/peer";
+import {Peer} from "../store/peer/types";
+import {actions as ruleActions} from "../store/rule";
+import {Rule} from "../store/rule/types";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
@@ -70,7 +74,12 @@ export const SetupKeys = () => {
         {
             key: "revoke",
             label: (<Button type="text" onClick={() => showConfirmRevoke()}>Revoke</Button>)
-        }
+        },
+        {
+            key: "edit",
+            label: (<Button type="text" onClick={() => onClickEditSetupKey()}>Edit</Button>)
+        },
+
     ]
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
@@ -251,6 +260,22 @@ export const SetupKeys = () => {
         dispatch(setupKeyActions.setSetupKey({
             name: '',
             type: 'reusable'
+        } as SetupKey))
+    }
+
+    const onClickEditSetupKey = () => {
+        dispatch(setupKeyActions.setSetupNewKeyVisible(true));
+        dispatch(setupKeyActions.setSetupKey({
+            id: setupKeyToAction?.id || null,
+            key: setupKeyToAction?.key,
+            name: setupKeyToAction?.name,
+            revoked: setupKeyToAction?.revoked,
+            expires: setupKeyToAction?.expires,
+            state: setupKeyToAction?.state,
+            type: setupKeyToAction?.type,
+            used_times: setupKeyToAction?.used_times,
+            valid: setupKeyToAction?.valid,
+            auto_groups: setupKeyToAction?.auto_groups,
         } as SetupKey))
     }
 

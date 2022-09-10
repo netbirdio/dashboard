@@ -82,7 +82,7 @@ export const Peers = () => {
     const itemsMenuAction = [
         {
             key: "view",
-            label: (<Button type="text" block onClick={() => onClickViewRule()}>View</Button>)
+            label: (<Button type="text" block onClick={() => onClickViewPeer()}>View</Button>)
         },
         {
             key: "delete",
@@ -300,7 +300,7 @@ export const Peers = () => {
 
     }
 
-    const onClickViewRule = () => {
+    const onClickViewPeer = () => {
         dispatch(peerActions.setUpdateGroupsVisible(true))
         dispatch(peerActions.setPeer(peerToAction as Peer))
     }
