@@ -31,15 +31,6 @@ const actions = {
   setDeleteSetupKey: createAction('SET_DELETE_SETUP_KEY')<DeleteResponse<string | null>>(),
   resetDeletedSetupKey: createAction('RESET_DELETE_SETUP_KEY')<null>(),
 
-  revokeSetupKey: createAsyncAction(
-      'REVOKE_SETUP_KEY_REQUEST',
-      'REVOKE_SETUP_KEY_SUCCESS',
-      'REVOKE_SETUP_KEY_FAILURE'
-  )<RequestPayload<SetupKeyRevoke>, ChangeResponse<SetupKey | null>, ChangeResponse<SetupKey | null>>(),
-  setRevokeSetupKey: createAction('SET_REVOKED_SETUP_KEY')<ChangeResponse<SetupKey | null>>(),
-  resetRevokedSetupKey: createAction('RESET_REVOKED_SETUP_KEY')<null>(),
-
-
   removeSetupKey:  createAction('REMOVE_SETUP_KEY')<string>(),
   setSetupKey: createAction('SET_SETUP_KEY')<SetupKey>(),
   setSetupNewKeyVisible: createAction('SET_SETUP_NEW_KEY_VISIBLE')<boolean>()

@@ -116,53 +116,11 @@ export function* deleteSetupKey(action: ReturnType<typeof actions.deleteSetupKey
     }
 }
 
-export function* revokeSetupKey(action: ReturnType<typeof actions.revokeSetupKey.request>): Generator {
-    try {
-        yield put(actions.setRevokeSetupKey({
-            loading: true,
-            success: false,
-            failure: false,
-            error: null,
-            data: null
-        } as ChangeResponse<SetupKey | null>))
-
-        const effect = yield call(service.revokeSetupKey, action.payload);
-        const response = effect as ApiResponse<SetupKey>;
-
-        yield put(actions.revokeSetupKey.success({
-            loading: false,
-            success: true,
-            failure: false,
-            error: null,
-            data: response.body
-        } as ChangeResponse<SetupKey | null>));
-
-        const setupKeys = [...(yield select(state => state.setupKey.data)) as SetupKey[]]
-        let setupKey = setupKeys.find(s => s.id === response.body.id) as SetupKey
-        if (setupKey) {
-            setupKey.revoked = response.body.revoked
-            setupKey.valid = response.body.valid
-            setupKey.state = response.body.state
-            setupKey.expires = response.body.expires
-        }
-        yield put(actions.getSetupKeys.success(setupKeys));
-    } catch (err) {
-        yield put(actions.saveSetupKey.failure({
-            loading: false,
-            success: false,
-            failure: false,
-            error: err as ApiError,
-            data: null
-        } as CreateResponse<SetupKey | null>));
-    }
-}
-
 export default function* sagas(): Generator {
     yield all([
         takeLatest(actions.getSetupKeys.request, getSetupKeys),
         takeLatest(actions.saveSetupKey.request, saveSetupKey),
-        takeLatest(actions.deleteSetupKey.request, deleteSetupKey),
-        takeLatest(actions.revokeSetupKey.request, revokeSetupKey)
+        takeLatest(actions.deleteSetupKey.request, deleteSetupKey)
     ]);
 }
 

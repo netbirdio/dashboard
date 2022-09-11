@@ -47,7 +47,6 @@ export const SetupKeys = () => {
     const failed = useSelector((state: RootState) => state.setupKey.failed);
     const loading = useSelector((state: RootState) => state.setupKey.loading);
     const deletedSetupKey = useSelector((state: RootState) => state.setupKey.deletedSetupKey);
-    const revokedSetupKey = useSelector((state: RootState) => state.setupKey.revokedSetupKey);
     const savedSetupKey = useSelector((state: RootState) => state.setupKey.savedSetupKey);
 
     const [textToSearch, setTextToSearch] = useState('');
@@ -119,29 +118,6 @@ export const SetupKeys = () => {
             dispatch(setupKeyActions.resetDeletedSetupKey(null))
         }
     }, [deletedSetupKey])
-
-    const revokeKey = 'revoking';
-    useEffect(() => {
-        if (revokedSetupKey.loading) {
-            message.loading({content: 'Revoking...', key: revokeKey, duration: 0, style: styleNotification})
-        } else if (revokedSetupKey.success) {
-            message.success({
-                content: 'Setup key has been successfully revoked.',
-                key: revokeKey,
-                duration: 2,
-                style: styleNotification
-            });
-            dispatch(setupKeyActions.resetRevokedSetupKey(null))
-        } else if (revokedSetupKey.error) {
-            message.error({
-                content: 'Failed to revoke setup key. You might not have enough permissions.',
-                key: revokeKey,
-                duration: 2,
-                style: styleNotification
-            });
-            dispatch(setupKeyActions.resetRevokedSetupKey(null))
-        }
-    }, [revokedSetupKey])
 
     const createKey = 'saving';
     useEffect(() => {
@@ -237,14 +213,14 @@ export const SetupKeys = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(setupKeyActions.revokeSetupKey.request({
+                dispatch(setupKeyActions.saveSetupKey.request({
                     getAccessTokenSilently: accessToken,
                     payload: {
                         id: setupKeyToAction ? setupKeyToAction.id : null,
                         revoked: true,
                         name: setupKeyToAction ? setupKeyToAction.name : null,
                         auto_groups: setupKeyToAction ? setupKeyToAction.auto_groups : [],
-                    } as SetupKeyRevoke
+                    } as SetupKey
                 }));
             },
             onCancel() {

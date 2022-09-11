@@ -360,8 +360,8 @@ const SetupKeyNew = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="auto_groups"
-                                    label="Auto-assign groups"
-                                    tooltip="Every peer enrolled with this key will be automatically assign to these groups"
+                                    label="Auto-assigned groups"
+                                    tooltip="Every peer enrolled with this key will be automatically assigned to these groups"
                                     rules={[{validator: selectValidator}]}
                                 >
                                     <Select mode="tags"

@@ -16,12 +16,6 @@ export default {
         payload
     );
   },
-  async revokeSetupKey(payload:RequestPayload<SetupKeyRevoke>): Promise<ApiResponse<SetupKey>> {
-    return apiClient.put<SetupKey>(
-        `/api/setup-keys/` + payload.payload.id,
-        payload
-    );
-  },
   async createSetupKey(payload:RequestPayload<SetupKey>): Promise<ApiResponse<SetupKey>> {
     return apiClient.post<SetupKey>(
         `/api/setup-keys`,
