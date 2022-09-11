@@ -1,18 +1,48 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {actions as setupKeyActions} from '../store/setup-key';
-import {Button, Col, Divider, Drawer, Form, Input, List, Radio, Row, Space, Typography} from "antd";
+import {
+    Button,
+    Col,
+    DatePicker,
+    DatePickerProps,
+    Divider,
+    Drawer,
+    Form,
+    Input,
+    List,
+    Radio,
+    Row,
+    Space,
+    Typography
+} from "antd";
 import {RootState} from "typesafe-actions";
 import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import {SetupKey} from "../store/setup-key/types";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import {Header} from "antd/es/layout/layout";
+import {formatDate, timeAgo} from "../utils/common";
+import ButtonCopyMessage from "./ButtonCopyMessage";
 
 const {Text} = Typography;
 
-interface FormSetupKey extends SetupKey {
+const customExpiresFormat: DatePickerProps['format'] = value => {
+    return formatDate(value)
 }
 
+const customLastUsedFormat: DatePickerProps['format'] = value => {
+    if (value.toString().startsWith("0001")) {
+        return "never"
+    }
+    let ago = timeAgo(value.toString())
+    if (!ago) {
+        return "unused"
+    }
+    return ago
+}
+
+interface FormSetupKey extends SetupKey {
+}
 
 const SetupKeyNew = () => {
     const {accessToken} = useOidcAccessToken()
@@ -138,6 +168,16 @@ const SetupKeyNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
+                                    name="key"
+                                    label="Key"
+                                >
+                                    <Input
+                                        disabled={true}
+                                        autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
                                     name="type"
                                     label="Type"
                                     rules={[{required: true, message: 'Please enter key type'}]}
@@ -170,6 +210,25 @@ const SetupKeyNew = () => {
 
                                         </Space>
                                     </Radio.Group>
+
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="expires"
+                                    label="Expires"
+                                    tooltip="The expiration date of the key"
+                                >
+                                    <DatePicker disabled={true} format={customExpiresFormat}/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="last_used"
+                                    label="Last Used"
+                                    tooltip="The last time the key was used"
+                                >
+                                    <DatePicker disabled={true} format={customLastUsedFormat}/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>

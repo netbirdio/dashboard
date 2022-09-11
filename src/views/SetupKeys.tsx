@@ -276,6 +276,7 @@ export const SetupKeys = () => {
             used_times: setupKeyToAction?.used_times,
             valid: setupKeyToAction?.valid,
             auto_groups: setupKeyToAction?.auto_groups,
+            last_used: setupKeyToAction?.last_used,
         } as SetupKey))
     }
 
@@ -368,7 +369,7 @@ export const SetupKeys = () => {
                                     <Column title="Last Used" dataIndex="last_used"
                                             sorter={(a, b) => ((a as any).last_used.localeCompare((b as any).last_used))}
                                             render={(text, record, index) => {
-                                                return !(record as SetupKey).used_times ? 'unused' : timeAgo(text)
+                                                return !(record as SetupKey).used_times ? 'never' : timeAgo(text)
                                             }}
                                     />
                                     <Column title="Used Times" dataIndex="used_times"
