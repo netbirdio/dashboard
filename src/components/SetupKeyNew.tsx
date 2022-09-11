@@ -102,10 +102,17 @@ const SetupKeyNew = () => {
 
     const onCancel = () => {
         if (createdSetupKey.loading) return
+        let auto_groups: string[] = []
         dispatch(setupKeyActions.setSetupKey({
-            name: '',
-            type: 'reusable'
+            name: "",
+            type: "reusable",
+            key: "",
+            last_used: "",
+            expires: "",
+            state: "valid",
+            auto_groups: auto_groups
         } as SetupKey))
+        setFormSetupKey({} as FormSetupKey)
         setVisibleNewSetupKey(false)
     }
 
@@ -217,10 +224,10 @@ const SetupKeyNew = () => {
     )
 
     const inputLabel = (text: any) => (
-         <>
-             <span>{text}</span>
-             <Tag color="red">{formSetupKey.state}</Tag>
-         </>
+        <>
+            <span>{text}</span>
+            <Tag color="red">{formSetupKey.state}</Tag>
+        </>
     )
 
     return (
@@ -284,40 +291,49 @@ const SetupKeyNew = () => {
                                     </Row>
                                 </Header>
                             </Col>
-                            <Col span={24}>
-                                <Form.Item
-                                    name="key"
-                                    label={<>
-                                        <span style={{
-                                            marginRight: "5px",
-                                        }}>Key</span>
-                                        <Tag color={formSetupKey.state === "valid" ? "green" : "red"}>{formSetupKey.state}</Tag>
-                                    </>}
-                                >
-                                    <Input
-                                        disabled={true}
-                                        autoComplete="off"/>
-                                </Form.Item>
-                            </Col>
+                            {setupKey.id && formSetupKey.name &&
+                                <Col span={24}>
+                                    <Form.Item
+                                        name="key"
+                                        label={<>
+                                            <span style={{
+                                                marginRight: "5px",
+                                            }}>Key</span>
+                                            <Tag
+                                                color={formSetupKey.state === "valid" ? "green" : "red"}>{formSetupKey.state}</Tag>
+                                        </>}
+                                    >
+                                        <Input
+                                            disabled={true}
+                                            autoComplete="off"/>
+                                    </Form.Item>
+                                </Col>
+                            }
 
-                            <Col span={12}>
-                                <Form.Item
-                                    name="expires"
-                                    label="Expires"
-                                    tooltip="The expiration date of the key"
-                                >
-                                    <DatePicker disabled={true} style={{width: '100%'}} format={customExpiresFormat}/>
-                                </Form.Item>
-                            </Col>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="last_used"
-                                    label="Last Used"
-                                    tooltip="The last time the key was used"
-                                >
-                                    <DatePicker disabled={true} style={{width: '100%'}} format={customLastUsedFormat}/>
-                                </Form.Item>
-                            </Col>
+                            {setupKey.id && formSetupKey.name &&
+                                <Col span={12}>
+                                    <Form.Item
+                                        name="expires"
+                                        label="Expires"
+                                        tooltip="The expiration date of the key"
+                                    >
+                                        <DatePicker disabled={true} style={{width: '100%'}}
+                                                    format={customExpiresFormat}/>
+                                    </Form.Item>
+                                </Col>
+                            }
+                            {setupKey.id && formSetupKey.name &&
+                                <Col span={12}>
+                                    <Form.Item
+                                        name="last_used"
+                                        label="Last Used"
+                                        tooltip="The last time the key was used"
+                                    >
+                                        <DatePicker disabled={true} style={{width: '100%'}}
+                                                    format={customLastUsedFormat}/>
+                                    </Form.Item>
+                                </Col>
+                            }
                             <Col span={24}>
                                 <Form.Item
                                     name="type"
@@ -325,7 +341,7 @@ const SetupKeyNew = () => {
                                     rules={[{required: true, message: 'Please enter key type'}]}
                                     style={{display: 'flex'}}
                                 >
-                                    <Radio.Group style={{display: 'flex'}} disabled={true}>
+                                    <Radio.Group style={{display: 'flex'}} disabled={!setupKey && !formSetupKey.name}>
                                         <Space direction="vertical" style={{flex: 1}}>
                                             <List
                                                 size="large"
