@@ -13,7 +13,9 @@ import {
     List,
     Radio,
     Row,
+    Select,
     Space,
+    Tag,
     Typography
 } from "antd";
 import {RootState} from "typesafe-actions";
@@ -22,7 +24,10 @@ import {SetupKey} from "../store/setup-key/types";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import {Header} from "antd/es/layout/layout";
 import {formatDate, timeAgo} from "../utils/common";
-import ButtonCopyMessage from "./ButtonCopyMessage";
+import {RuleObject} from "antd/lib/form";
+import {CustomTagProps} from "rc-select/lib/BaseSelect";
+
+const {Option} = Select;
 
 const {Text} = Typography;
 
@@ -50,8 +55,11 @@ const SetupKeyNew = () => {
     const setupNewKeyVisible = useSelector((state: RootState) => state.setupKey.setupNewKeyVisible)
     const setupKey = useSelector((state: RootState) => state.setupKey.setupKey)
     const createdSetupKey = useSelector((state: RootState) => state.setupKey.createdSetupKey)
+    const groups = useSelector((state: RootState) => state.group.data)
     const [editName, setEditName] = useState(false)
     const inputNameRef = useRef<any>(null)
+    const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[])
+    const [tagGroups, setTagGroups] = useState([] as string[])
 
     const [formSetupKey, setFormSetupKey] = useState({} as SetupKey)
     const [form] = Form.useForm()
@@ -70,6 +78,10 @@ const SetupKeyNew = () => {
         setFormSetupKey(fSetupKey)
         form.setFieldsValue(setupKey)
     }, [setupKey])
+
+    useEffect(() => {
+        setTagGroups(groups?.map(g => g.name) || [])
+    }, [groups])
 
     const handleFormSubmit = () => {
         form.validateFields()
@@ -104,6 +116,112 @@ const SetupKeyNew = () => {
     const toggleEditName = (status: boolean) => {
         setEditName(status);
     }
+
+    const tagRender = (props: CustomTagProps) => {
+        const {label, value, closable, onClose} = props;
+        const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
+            event.preventDefault();
+            event.stopPropagation();
+        };
+
+        let tagClosable = true
+        if (value === "All") {
+            tagClosable = false
+        }
+
+        return (
+            <Tag
+                color="blue"
+                onMouseDown={onPreventMouseDown}
+                closable={tagClosable}
+                onClose={onClose}
+                style={{marginRight: 3}}
+            >
+                <strong>{value}</strong>
+            </Tag>
+        );
+    }
+
+    const selectValidator = (_: RuleObject, value: string[]) => {
+        let hasSpaceNamed = []
+        let isAllPresent = false
+
+        if (!value.length) {
+            return Promise.reject(new Error("Please enter ate least one group"))
+        }
+
+        value.forEach(function (v: string) {
+            if (!v.trim().length) {
+                hasSpaceNamed.push(v)
+            }
+            if (v === 'All') {
+                isAllPresent = true
+            }
+        })
+
+        if (!isAllPresent) {
+            return Promise.reject(new Error("The All group can't be removed"))
+        }
+
+        if (hasSpaceNamed.length) {
+            return Promise.reject(new Error("Group names with just spaces are not allowed"))
+        }
+
+        return Promise.resolve()
+    }
+
+    const optionRender = (label: string) => {
+        let peersCount = ''
+        const g = groups.find(_g => _g.name === label)
+        if (g) peersCount = ` - ${g.peers_count || 0} ${(!g.peers_count || parseInt(g.peers_count) !== 1) ? 'peers' : 'peer'} `
+        return (
+            <>
+                <Tag
+                    color="blue"
+                    style={{marginRight: 3}}
+                >
+                    <strong>{label}</strong>
+                </Tag>
+                <span style={{fontSize: ".85em"}}>{peersCount}</span>
+            </>
+        )
+    }
+
+    const handleChangeTags = (value: string[]) => {
+        let validatedValues: string[] = []
+        value.forEach(function (v) {
+            if (v.trim().length) {
+                validatedValues.push(v)
+            }
+        })
+        setSelectedTagGroups(validatedValues)
+    };
+
+    const dropDownRender = (menu: React.ReactElement) => (
+        <>
+            {menu}
+            <Divider style={{margin: '8px 0'}}/>
+            <Row style={{padding: '0 8px 4px'}}>
+                <Col flex="auto">
+                    <span style={{color: "#9CA3AF"}}>Add new group by pressing "Enter"</span>
+                </Col>
+                <Col flex="none">
+                    <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M1.70455 7.19176V5.89915H10.3949C10.7727 5.89915 11.1174 5.80634 11.429 5.62074C11.7405 5.43513 11.9875 5.18655 12.1697 4.875C12.3554 4.56345 12.4482 4.21875 12.4482 3.84091C12.4482 3.46307 12.3554 3.12003 12.1697 2.81179C11.9841 2.50024 11.7356 2.25166 11.424 2.06605C11.1158 1.88044 10.7727 1.78764 10.3949 1.78764H9.83807V0.5H10.3949C11.0114 0.5 11.5715 0.650805 12.0753 0.952414C12.5791 1.25402 12.9818 1.65672 13.2834 2.16051C13.585 2.6643 13.7358 3.22443 13.7358 3.84091C13.7358 4.30161 13.648 4.73414 13.4723 5.13849C13.3 5.54285 13.0613 5.89915 12.7564 6.20739C12.4515 6.51562 12.0968 6.75758 11.6925 6.93324C11.2881 7.10559 10.8556 7.19176 10.3949 7.19176H1.70455ZM4.90128 11.0646L0.382102 6.54545L4.90128 2.02628L5.79119 2.91619L2.15696 6.54545L5.79119 10.1747L4.90128 11.0646Z"
+                            fill="#9CA3AF"/>
+                    </svg>
+                </Col>
+            </Row>
+        </>
+    )
+
+    const inputLabel = (text: any) => (
+         <>
+             <span>{text}</span>
+             <Tag color="red">{formSetupKey.state}</Tag>
+         </>
+    )
 
     return (
         <>
@@ -169,11 +287,35 @@ const SetupKeyNew = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="key"
-                                    label="Key"
+                                    label={<>
+                                        <span style={{
+                                            marginRight: "5px",
+                                        }}>Key</span>
+                                        <Tag color={formSetupKey.state === "valid" ? "green" : "red"}>{formSetupKey.state}</Tag>
+                                    </>}
                                 >
                                     <Input
                                         disabled={true}
                                         autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
+
+                            <Col span={12}>
+                                <Form.Item
+                                    name="expires"
+                                    label="Expires"
+                                    tooltip="The expiration date of the key"
+                                >
+                                    <DatePicker disabled={true} style={{width: '100%'}} format={customExpiresFormat}/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="last_used"
+                                    label="Last Used"
+                                    tooltip="The last time the key was used"
+                                >
+                                    <DatePicker disabled={true} style={{width: '100%'}} format={customLastUsedFormat}/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
@@ -183,7 +325,7 @@ const SetupKeyNew = () => {
                                     rules={[{required: true, message: 'Please enter key type'}]}
                                     style={{display: 'flex'}}
                                 >
-                                    <Radio.Group style={{display: 'flex'}}>
+                                    <Radio.Group style={{display: 'flex'}} disabled={true}>
                                         <Space direction="vertical" style={{flex: 1}}>
                                             <List
                                                 size="large"
@@ -193,8 +335,8 @@ const SetupKeyNew = () => {
                                                     <Radio value={"reusable"}>
                                                         <Space direction="vertical" size="small">
                                                             <Text strong>Reusable</Text>
-                                                            <Text>This type of a setup key allows to setup multiple
-                                                                machine</Text>
+                                                            <Text>This type of a setup key allows to enroll multiple
+                                                                machines</Text>
                                                         </Space>
                                                     </Radio>
                                                 </List.Item>
@@ -215,20 +357,24 @@ const SetupKeyNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="expires"
-                                    label="Expires"
-                                    tooltip="The expiration date of the key"
+                                    name="tagSourceGroups"
+                                    label="Auto-assign groups"
+                                    tooltip="Every peer enrolled with this key will be automatically assign to these groups"
+                                    rules={[{validator: selectValidator}]}
                                 >
-                                    <DatePicker disabled={true} format={customExpiresFormat}/>
-                                </Form.Item>
-                            </Col>
-                            <Col span={24}>
-                                <Form.Item
-                                    name="last_used"
-                                    label="Last Used"
-                                    tooltip="The last time the key was used"
-                                >
-                                    <DatePicker disabled={true} format={customLastUsedFormat}/>
+                                    <Select mode="tags"
+                                            style={{width: '100%'}}
+                                            placeholder="Tags Mode"
+                                            tagRender={tagRender}
+                                            onChange={handleChangeTags}
+                                            dropdownRender={dropDownRender}
+                                    >
+                                        {
+                                            tagGroups.map(m =>
+                                                <Option key={m}>{optionRender(m)}</Option>
+                                            )
+                                        }
+                                    </Select>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
