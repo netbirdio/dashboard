@@ -12,7 +12,7 @@ type StateType = Readonly<{
     saving: boolean;
     deletedSetupKey: DeleteResponse<string | null>;
     revokedSetupKey: ChangeResponse<SetupKey | null>;
-    createdSetupKey: CreateResponse<SetupKey | null>;
+    savedSetupKey: CreateResponse<SetupKey | null>;
     setupNewKeyVisible: boolean
 }>;
 
@@ -36,7 +36,7 @@ const initialState: StateType = {
         error: null,
         data : null
     },
-    createdSetupKey: <CreateResponse<SetupKey | null>>{
+    savedSetupKey: <CreateResponse<SetupKey | null>>{
         loading: false,
         success: false,
         failure: false,
@@ -82,11 +82,12 @@ const revokedSetupKey = createReducer<ChangeResponse<SetupKey | null>, ActionTyp
     .handleAction(actions.setRevokeSetupKey, (store, action) => action.payload)
     .handleAction(actions.resetRevokedSetupKey, () => initialState.revokedSetupKey)
 
-const createdSetupKey = createReducer<CreateResponse<SetupKey | null>, ActionTypes>(initialState.createdSetupKey)
-    .handleAction(actions.saveSetupKey.request, () => initialState.createdSetupKey)
+const savedSetupKey = createReducer<CreateResponse<SetupKey | null>, ActionTypes>(initialState.savedSetupKey)
+    .handleAction(actions.saveSetupKey.request, () => initialState.savedSetupKey)
     .handleAction(actions.saveSetupKey.success, (store, action) => action.payload)
     .handleAction(actions.saveSetupKey.failure, (store, action) => action.payload)
-    .handleAction(actions.setSaveSetupKey, (store, action) => action.payload)
+    .handleAction(actions.setSavedSetupKey, (store, action) => action.payload)
+    .handleAction(actions.resetSavedSetupKey, () => initialState.savedSetupKey)
 
 const setupNewKeyVisible = createReducer<boolean, ActionTypes>(initialState.setupNewKeyVisible)
     .handleAction(actions.setSetupNewKeyVisible, (store, action) => action.payload)
@@ -99,6 +100,6 @@ export default combineReducers({
     saving,
     deletedSetupKey,
     revokedSetupKey,
-    createdSetupKey,
+    savedSetupKey: savedSetupKey,
     setupNewKeyVisible
 });

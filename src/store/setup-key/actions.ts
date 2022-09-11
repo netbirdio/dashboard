@@ -20,7 +20,8 @@ const actions = {
       'SAVE_SETUP_KEY_SUCCESS',
       'SAVE_SETUP_KEY_FAILURE',
   )<RequestPayload<SetupKey>, CreateResponse<SetupKey | null>, CreateResponse<SetupKey | null>>(),
-  setSaveSetupKey: createAction('SET_SAVE_SETUP_KEY')<CreateResponse<SetupKey | null>>(),
+  setSavedSetupKey: createAction('SET_SAVE_SETUP_KEY')<CreateResponse<SetupKey | null>>(),
+  resetSavedSetupKey: createAction('RESET_SAVE_SETUP_KEY')<null>(),
 
   deleteSetupKey: createAsyncAction(
       'DELETE_SETUP_KEY_REQUEST',

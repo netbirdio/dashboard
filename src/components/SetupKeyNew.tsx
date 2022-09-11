@@ -54,7 +54,7 @@ const SetupKeyNew = () => {
     const dispatch = useDispatch()
     const setupNewKeyVisible = useSelector((state: RootState) => state.setupKey.setupNewKeyVisible)
     const setupKey = useSelector((state: RootState) => state.setupKey.setupKey)
-    const createdSetupKey = useSelector((state: RootState) => state.setupKey.createdSetupKey)
+    const savedSetupKey = useSelector((state: RootState) => state.setupKey.savedSetupKey)
     const groups = useSelector((state: RootState) => state.group.data)
     const [editName, setEditName] = useState(false)
     const inputNameRef = useRef<any>(null)
@@ -101,7 +101,7 @@ const SetupKeyNew = () => {
     }
 
     const onCancel = () => {
-        if (createdSetupKey.loading) return
+        if (savedSetupKey.loading) return
         dispatch(setupKeyActions.setSetupKey({
             name: "",
             type: "reusable",
@@ -228,8 +228,8 @@ const SetupKeyNew = () => {
                     onClose={onCancel}
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
-                            <Button disabled={createdSetupKey.loading} onClick={onCancel}>Cancel</Button>
-                            <Button type="primary" disabled={createdSetupKey.loading} onClick={handleFormSubmit}>{`${formSetupKey.id ? 'Save' : 'Create'}`}</Button>
+                            <Button disabled={savedSetupKey.loading} onClick={onCancel}>Cancel</Button>
+                            <Button type="primary" disabled={savedSetupKey.loading} onClick={handleFormSubmit}>{`${formSetupKey.id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
                 >

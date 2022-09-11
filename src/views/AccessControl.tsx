@@ -126,7 +126,7 @@ export const AccessControl = () => {
         if (savedRule.loading) {
             message.loading({ content: 'Saving...', key: saveKey, duration: 0, style: styleNotification })
         } else if (savedRule.success) {
-            message.success({ content: 'Rule has been successfully updated.', key: saveKey, duration: 2, style: styleNotification });
+            message.success({ content: 'Rule has been successfully saved.', key: saveKey, duration: 2, style: styleNotification });
             dispatch(ruleActions.setSetupNewRuleVisible(false))
             dispatch(ruleActions.setSavedRule({ ...savedRule, success: false }))
             dispatch(ruleActions.resetSavedRule(null))

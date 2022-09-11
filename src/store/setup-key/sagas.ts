@@ -16,13 +16,13 @@ export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.req
     }
 }
 
-export function* setCreateSetupKey(action: ReturnType<typeof  actions.setSaveSetupKey>): Generator {
-    yield put(actions.setSaveSetupKey(action.payload))
+export function* setCreateSetupKey(action: ReturnType<typeof  actions.setSavedSetupKey>): Generator {
+    yield put(actions.setSavedSetupKey(action.payload))
 }
 
 export function* createSetupKey(action: ReturnType<typeof actions.saveSetupKey.request>): Generator {
     try {
-        yield put(actions.setSaveSetupKey({
+        yield put(actions.setSavedSetupKey({
             loading: true,
             success: false,
             failure: false,

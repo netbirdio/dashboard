@@ -30,6 +30,7 @@ import {ExclamationCircleOutlined} from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import tableSpin from "../components/Spin";
+import {actions as ruleActions} from "../store/rule";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
@@ -48,7 +49,7 @@ export const SetupKeys = () => {
     const loading = useSelector((state: RootState) => state.setupKey.loading);
     const deletedSetupKey = useSelector((state: RootState) => state.setupKey.deletedSetupKey);
     const revokedSetupKey = useSelector((state: RootState) => state.setupKey.revokedSetupKey);
-    const createdSetupKey = useSelector((state: RootState) => state.setupKey.createdSetupKey);
+    const savedSetupKey = useSelector((state: RootState) => state.setupKey.savedSetupKey);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionValidAll, setOptionValidAll] = useState('valid');
@@ -143,29 +144,31 @@ export const SetupKeys = () => {
         }
     }, [revokedSetupKey])
 
-    const createKey = 'creating';
+    const createKey = 'saving';
     useEffect(() => {
-        if (createdSetupKey.loading) {
-            message.loading({content: 'Creating...', key: createKey, duration: 0, style: styleNotification});
-        } else if (createdSetupKey.success) {
+        if (savedSetupKey.loading) {
+            message.loading({content: 'Saving...', key: createKey, duration: 0, style: styleNotification});
+        } else if (savedSetupKey.success) {
             message.success({
-                content: 'Setup key has been successfully created.',
+                content: 'Setup key has been successfully saved.',
                 key: createKey,
                 duration: 2,
                 style: styleNotification
             });
-            dispatch(setupKeyActions.setSetupNewKeyVisible(false));
-            dispatch(setupKeyActions.setSaveSetupKey({...createdSetupKey, success: false}));
-        } else if (createdSetupKey.error) {
+/*            dispatch(setupKeyActions.setSetupNewKeyVisible(false));
+            dispatch(setupKeyActions.setSavedSetupKey({...savedSetupKey, success: false}));*/
+            dispatch(setupKeyActions.resetSavedSetupKey(null))
+        } else if (savedSetupKey.error) {
             message.error({
                 content: 'Failed to create setup key. You might not have enough permissions.',
                 key: createKey,
                 duration: 2,
                 style: styleNotification
             });
-            dispatch(setupKeyActions.setSaveSetupKey({...createdSetupKey, error: null}));
+            dispatch(setupKeyActions.setSavedSetupKey({...savedSetupKey, error: null}));
+            dispatch(setupKeyActions.resetSavedSetupKey(null))
         }
-    }, [createdSetupKey])
+    }, [savedSetupKey])
 
     const filterDataTable = (): SetupKey[] => {
         const t = textToSearch.toLowerCase().trim()
