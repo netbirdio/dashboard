@@ -83,10 +83,10 @@ const revokedSetupKey = createReducer<ChangeResponse<SetupKey | null>, ActionTyp
     .handleAction(actions.resetRevokedSetupKey, () => initialState.revokedSetupKey)
 
 const createdSetupKey = createReducer<CreateResponse<SetupKey | null>, ActionTypes>(initialState.createdSetupKey)
-    .handleAction(actions.createSetupKey.request, () => initialState.createdSetupKey)
-    .handleAction(actions.createSetupKey.success, (store, action) => action.payload)
-    .handleAction(actions.createSetupKey.failure, (store, action) => action.payload)
-    .handleAction(actions.setCreateSetupKey, (store, action) => action.payload)
+    .handleAction(actions.saveSetupKey.request, () => initialState.createdSetupKey)
+    .handleAction(actions.saveSetupKey.success, (store, action) => action.payload)
+    .handleAction(actions.saveSetupKey.failure, (store, action) => action.payload)
+    .handleAction(actions.setSaveSetupKey, (store, action) => action.payload)
 
 const setupNewKeyVisible = createReducer<boolean, ActionTypes>(initialState.setupNewKeyVisible)
     .handleAction(actions.setSetupNewKeyVisible, (store, action) => action.payload)

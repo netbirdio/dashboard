@@ -155,7 +155,7 @@ export const SetupKeys = () => {
                 style: styleNotification
             });
             dispatch(setupKeyActions.setSetupNewKeyVisible(false));
-            dispatch(setupKeyActions.setCreateSetupKey({...createdSetupKey, success: false}));
+            dispatch(setupKeyActions.setSaveSetupKey({...createdSetupKey, success: false}));
         } else if (createdSetupKey.error) {
             message.error({
                 content: 'Failed to create setup key. You might not have enough permissions.',
@@ -163,7 +163,7 @@ export const SetupKeys = () => {
                 duration: 2,
                 style: styleNotification
             });
-            dispatch(setupKeyActions.setCreateSetupKey({...createdSetupKey, error: null}));
+            dispatch(setupKeyActions.setSaveSetupKey({...createdSetupKey, error: null}));
         }
     }, [createdSetupKey])
 

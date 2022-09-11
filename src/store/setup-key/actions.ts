@@ -15,12 +15,12 @@ const actions = {
       'GET_SETUP_KEYS_FAILURE',
   )<RequestPayload<null>, SetupKey[], ApiError>(),
 
-  createSetupKey: createAsyncAction(
-      'CREATE_SETUP_KEY_REQUEST',
-      'CREATE_SETUP_KEY_SUCCESS',
-      'CREATE_SETUP_KEY_FAILURE',
+  saveSetupKey: createAsyncAction(
+      'SAVE_SETUP_KEY_REQUEST',
+      'SAVE_SETUP_KEY_SUCCESS',
+      'SAVE_SETUP_KEY_FAILURE',
   )<RequestPayload<SetupKey>, CreateResponse<SetupKey | null>, CreateResponse<SetupKey | null>>(),
-  setCreateSetupKey: createAction('SET_CREATE_SETUP_KEY')<CreateResponse<SetupKey | null>>(),
+  setSaveSetupKey: createAction('SET_SAVE_SETUP_KEY')<CreateResponse<SetupKey | null>>(),
 
   deleteSetupKey: createAsyncAction(
       'DELETE_SETUP_KEY_REQUEST',

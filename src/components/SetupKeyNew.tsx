@@ -86,7 +86,7 @@ const SetupKeyNew = () => {
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
-                dispatch(setupKeyActions.createSetupKey.request({
+                dispatch(setupKeyActions.saveSetupKey.request({
                     getAccessTokenSilently: accessToken,
                     payload: formSetupKey
                 }))
@@ -150,24 +150,12 @@ const SetupKeyNew = () => {
 
     const selectValidator = (_: RuleObject, value: string[]) => {
         let hasSpaceNamed = []
-        let isAllPresent = false
-
-        if (!value.length) {
-            return Promise.reject(new Error("Please enter ate least one group"))
-        }
 
         value.forEach(function (v: string) {
             if (!v.trim().length) {
                 hasSpaceNamed.push(v)
             }
-            if (v === 'All') {
-                isAllPresent = true
-            }
         })
-
-        if (!isAllPresent) {
-            return Promise.reject(new Error("The All group can't be removed"))
-        }
 
         if (hasSpaceNamed.length) {
             return Promise.reject(new Error("Group names with just spaces are not allowed"))
@@ -241,8 +229,7 @@ const SetupKeyNew = () => {
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button disabled={createdSetupKey.loading} onClick={onCancel}>Cancel</Button>
-                            <Button disabled={createdSetupKey.loading} type="primary"
-                                    onClick={handleFormSubmit}>Create</Button>
+                            <Button type="primary" disabled={createdSetupKey.loading} onClick={handleFormSubmit}>{`${formSetupKey.id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
                 >
@@ -379,7 +366,7 @@ const SetupKeyNew = () => {
                                 >
                                     <Select mode="tags"
                                             style={{width: '100%'}}
-                                            placeholder="Tags Mode"
+                                            placeholder="Associate groups with the key"
                                             tagRender={tagRender}
                                             onChange={handleChangeTags}
                                             dropdownRender={dropDownRender}

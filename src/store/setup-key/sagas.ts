@@ -3,6 +3,7 @@ import {ApiError, ApiResponse, ChangeResponse, CreateResponse, DeleteResponse} f
 import {SetupKey, SetupKeyRevoke} from './types'
 import service from './service';
 import actions from './actions';
+import {Rule} from "../rule/types";
 
 export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.request>): Generator {
     try {
@@ -15,13 +16,13 @@ export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.req
     }
 }
 
-export function* setCreateSetupKey(action: ReturnType<typeof  actions.setCreateSetupKey>): Generator {
-    yield put(actions.setCreateSetupKey(action.payload))
+export function* setCreateSetupKey(action: ReturnType<typeof  actions.setSaveSetupKey>): Generator {
+    yield put(actions.setSaveSetupKey(action.payload))
 }
 
-export function* createSetupKey(action: ReturnType<typeof actions.createSetupKey.request>): Generator {
+export function* createSetupKey(action: ReturnType<typeof actions.saveSetupKey.request>): Generator {
     try {
-        yield put(actions.setCreateSetupKey({
+        yield put(actions.setSaveSetupKey({
             loading: true,
             success: false,
             failure: false,
@@ -29,10 +30,46 @@ export function* createSetupKey(action: ReturnType<typeof actions.createSetupKey
             data: null
         } as CreateResponse<SetupKey | null>))
 
-        const effect = yield call(service.createSetupKey, action.payload);
+        const keyToSave = action.payload.payload
+        const payloadToSave = {
+            getAccessTokenSilently: action.payload.getAccessTokenSilently,
+            payload: {
+                id: keyToSave.id,
+                name: keyToSave.name,
+                revoked: keyToSave.revoked,
+                auto_groups: keyToSave.auto_groups,
+                expires: keyToSave.expires,
+                type: keyToSave.type
+            } as SetupKey
+        }
+
+        console.log(keyToSave)
+        let effect
+        if (!keyToSave.id) {
+            effect = yield call(service.createSetupKey, {
+                getAccessTokenSilently: action.payload.getAccessTokenSilently,
+                payload: {
+                    name: keyToSave.name,
+                    auto_groups: keyToSave.auto_groups,
+                    expires: keyToSave.expires,
+                    type: keyToSave.type
+                } as SetupKey
+            });
+        } else {
+            effect = yield call(service.editSetupKey, {
+                getAccessTokenSilently: action.payload.getAccessTokenSilently,
+                payload: {
+                    id: keyToSave.id,
+                    name: keyToSave.name,
+                    revoked: keyToSave.revoked,
+                    auto_groups: keyToSave.auto_groups,
+                    expires: keyToSave.expires,
+                } as SetupKey
+            });
+        }
         const response = effect as ApiResponse<SetupKey>;
 
-        yield put(actions.createSetupKey.success({
+        yield put(actions.saveSetupKey.success({
             loading: false,
             success: true,
             failure: false,
@@ -44,7 +81,7 @@ export function* createSetupKey(action: ReturnType<typeof actions.createSetupKey
         setupKeys.unshift(response.body)
         yield put(actions.getSetupKeys.success(setupKeys));
     } catch (err) {
-        yield put(actions.createSetupKey.failure({
+        yield put(actions.saveSetupKey.failure({
             loading: false,
             success: false,
             failure: false,
@@ -123,7 +160,7 @@ export function* revokeSetupKey(action: ReturnType<typeof actions.revokeSetupKey
         }
         yield put(actions.getSetupKeys.success(setupKeys));
     } catch (err) {
-        yield put(actions.createSetupKey.failure({
+        yield put(actions.saveSetupKey.failure({
             loading: false,
             success: false,
             failure: false,
@@ -136,7 +173,7 @@ export function* revokeSetupKey(action: ReturnType<typeof actions.revokeSetupKey
 export default function* sagas(): Generator {
     yield all([
         takeLatest(actions.getSetupKeys.request, getSetupKeys),
-        takeLatest(actions.createSetupKey.request, createSetupKey),
+        takeLatest(actions.saveSetupKey.request, createSetupKey),
         takeLatest(actions.deleteSetupKey.request, deleteSetupKey),
         takeLatest(actions.revokeSetupKey.request, revokeSetupKey)
     ]);
