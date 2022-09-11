@@ -30,10 +30,6 @@ import {ExclamationCircleOutlined} from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import tableSpin from "../components/Spin";
-import {actions as peerActions} from "../store/peer";
-import {Peer} from "../store/peer/types";
-import {actions as ruleActions} from "../store/rule";
-import {Rule} from "../store/rule/types";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;

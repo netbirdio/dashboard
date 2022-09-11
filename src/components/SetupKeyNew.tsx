@@ -102,7 +102,6 @@ const SetupKeyNew = () => {
 
     const onCancel = () => {
         if (createdSetupKey.loading) return
-        let auto_groups: string[] = []
         dispatch(setupKeyActions.setSetupKey({
             name: "",
             type: "reusable",
@@ -110,7 +109,7 @@ const SetupKeyNew = () => {
             last_used: "",
             expires: "",
             state: "valid",
-            auto_groups: auto_groups
+            auto_groups: new Array()
         } as SetupKey))
         setFormSetupKey({} as FormSetupKey)
         setVisibleNewSetupKey(false)
@@ -341,7 +340,7 @@ const SetupKeyNew = () => {
                                     rules={[{required: true, message: 'Please enter key type'}]}
                                     style={{display: 'flex'}}
                                 >
-                                    <Radio.Group style={{display: 'flex'}} disabled={!setupKey && !formSetupKey.name}>
+                                    <Radio.Group style={{display: 'flex'}} disabled={setupKey.id}>
                                         <Space direction="vertical" style={{flex: 1}}>
                                             <List
                                                 size="large"
@@ -373,7 +372,7 @@ const SetupKeyNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="tagSourceGroups"
+                                    name="auto_groups"
                                     label="Auto-assign groups"
                                     tooltip="Every peer enrolled with this key will be automatically assign to these groups"
                                     rules={[{validator: selectValidator}]}
