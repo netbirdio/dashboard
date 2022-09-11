@@ -30,7 +30,6 @@ import {ExclamationCircleOutlined} from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import tableSpin from "../components/Spin";
-import {actions as ruleActions} from "../store/rule";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
@@ -155,8 +154,8 @@ export const SetupKeys = () => {
                 duration: 2,
                 style: styleNotification
             });
-/*            dispatch(setupKeyActions.setSetupNewKeyVisible(false));
-            dispatch(setupKeyActions.setSavedSetupKey({...savedSetupKey, success: false}));*/
+            dispatch(setupKeyActions.setSetupNewKeyVisible(false));
+            dispatch(setupKeyActions.setSavedSetupKey({...savedSetupKey, success: false}));
             dispatch(setupKeyActions.resetSavedSetupKey(null))
         } else if (savedSetupKey.error) {
             message.error({
@@ -257,8 +256,8 @@ export const SetupKeys = () => {
     const onClickAddNewSetupKey = () => {
         dispatch(setupKeyActions.setSetupNewKeyVisible(true));
         dispatch(setupKeyActions.setSetupKey({
-            name: '',
-            type: 'reusable'
+            name: "",
+            type: "reusable"
         } as SetupKey))
     }
 

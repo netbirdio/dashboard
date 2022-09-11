@@ -4,6 +4,7 @@ import {SetupKey, SetupKeyRevoke} from './types'
 import service from './service';
 import actions from './actions';
 import {Rule} from "../rule/types";
+import {Peer} from "../peer/types";
 
 export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.request>): Generator {
     try {
@@ -20,7 +21,7 @@ export function* setCreateSetupKey(action: ReturnType<typeof  actions.setSavedSe
     yield put(actions.setSavedSetupKey(action.payload))
 }
 
-export function* createSetupKey(action: ReturnType<typeof actions.saveSetupKey.request>): Generator {
+export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.request>): Generator {
     try {
         yield put(actions.setSavedSetupKey({
             loading: true,
@@ -31,19 +32,7 @@ export function* createSetupKey(action: ReturnType<typeof actions.saveSetupKey.r
         } as CreateResponse<SetupKey | null>))
 
         const keyToSave = action.payload.payload
-        const payloadToSave = {
-            getAccessTokenSilently: action.payload.getAccessTokenSilently,
-            payload: {
-                id: keyToSave.id,
-                name: keyToSave.name,
-                revoked: keyToSave.revoked,
-                auto_groups: keyToSave.auto_groups,
-                expires: keyToSave.expires,
-                type: keyToSave.type
-            } as SetupKey
-        }
 
-        console.log(keyToSave)
         let effect
         if (!keyToSave.id) {
             effect = yield call(service.createSetupKey, {
@@ -77,9 +66,7 @@ export function* createSetupKey(action: ReturnType<typeof actions.saveSetupKey.r
             data: response.body
         } as CreateResponse<SetupKey | null>));
 
-        const setupKeys = [...(yield select(state => state.setupKey.data)) as SetupKey[]]
-        setupKeys.unshift(response.body)
-        yield put(actions.getSetupKeys.success(setupKeys));
+        yield put(actions.getSetupKeys.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
     } catch (err) {
         yield put(actions.saveSetupKey.failure({
             loading: false,
@@ -173,7 +160,7 @@ export function* revokeSetupKey(action: ReturnType<typeof actions.revokeSetupKey
 export default function* sagas(): Generator {
     yield all([
         takeLatest(actions.getSetupKeys.request, getSetupKeys),
-        takeLatest(actions.saveSetupKey.request, createSetupKey),
+        takeLatest(actions.saveSetupKey.request, saveSetupKey),
         takeLatest(actions.deleteSetupKey.request, deleteSetupKey),
         takeLatest(actions.revokeSetupKey.request, revokeSetupKey)
     ]);
