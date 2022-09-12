@@ -30,6 +30,7 @@ import {ExclamationCircleOutlined} from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import tableSpin from "../components/Spin";
+import {actions as groupActions} from "../store/group";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
@@ -83,6 +84,7 @@ export const SetupKeys = () => {
     }
 
     useEffect(() => {
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: accessToken, payload: null}));
         dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently: accessToken, payload: null}));
     }, [])
 
