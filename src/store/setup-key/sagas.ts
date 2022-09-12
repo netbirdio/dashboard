@@ -1,10 +1,8 @@
 import {all, call, put, select, takeLatest} from 'redux-saga/effects';
-import {ApiError, ApiResponse, ChangeResponse, CreateResponse, DeleteResponse} from '../../services/api-client/types';
-import {SetupKey, SetupKeyRevoke} from './types'
+import {ApiError, ApiResponse, CreateResponse, DeleteResponse} from '../../services/api-client/types';
+import {SetupKey, SetupKeyToSave} from './types'
 import service from './service';
 import actions from './actions';
-import {Rule} from "../rule/types";
-import {Peer} from "../peer/types";
 
 export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.request>): Generator {
     try {
@@ -40,9 +38,8 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
                 payload: {
                     name: keyToSave.name,
                     auto_groups: keyToSave.auto_groups,
-                    expires: keyToSave.expires,
                     type: keyToSave.type
-                } as SetupKey
+                } as SetupKeyToSave
             });
         } else {
             effect = yield call(service.editSetupKey, {
@@ -52,8 +49,7 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
                     name: keyToSave.name,
                     revoked: keyToSave.revoked,
                     auto_groups: keyToSave.auto_groups,
-                    expires: keyToSave.expires,
-                } as SetupKey
+                } as SetupKeyToSave
             });
         }
         const response = effect as ApiResponse<SetupKey>;

@@ -23,7 +23,7 @@ import {
     Tag,
     Typography
 } from "antd";
-import {SetupKey, SetupKeyRevoke} from "../store/setup-key/types";
+import {SetupKey, SetupKeyToSave} from "../store/setup-key/types";
 import {filter} from "lodash"
 import {formatDate, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
@@ -219,8 +219,8 @@ export const SetupKeys = () => {
                         id: setupKeyToAction ? setupKeyToAction.id : null,
                         revoked: true,
                         name: setupKeyToAction ? setupKeyToAction.name : null,
-                        auto_groups: setupKeyToAction ? setupKeyToAction.auto_groups : [],
-                    } as SetupKey
+                        auto_groups: setupKeyToAction ? setupKeyToAction.auto_groups.map(g => g.id) : [],
+                    } as SetupKeyToSave
                 }));
             },
             onCancel() {

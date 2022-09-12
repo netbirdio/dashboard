@@ -1,3 +1,5 @@
+import {Group} from "../group/types";
+
 export interface SetupKey {
   expires: string;
   id: string;
@@ -9,19 +11,14 @@ export interface SetupKey {
   type: string;
   used_times: number;
   valid: boolean;
-  auto_groups: string[]
+  auto_groups: Group[]
 }
 
-export interface SetupKeyNew {
+export interface SetupKeyToSave
+{
   id: string;
   name: string;
   type: string;
-  auto_groups: string[]
-}
-
-export interface SetupKeyRevoke {
-  id: string;
   revoked: boolean;
-  name: string;
   auto_groups: string[]
 }

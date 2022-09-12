@@ -1,8 +1,7 @@
 import { ActionType, createAction, createAsyncAction } from 'typesafe-actions';
-import {SetupKey, SetupKeyRevoke} from './types';
+import {SetupKey, SetupKeyToSave} from './types';
 import {
   ApiError,
-  ChangeResponse,
   CreateResponse,
   DeleteResponse,
   RequestPayload
@@ -19,7 +18,7 @@ const actions = {
       'SAVE_SETUP_KEY_REQUEST',
       'SAVE_SETUP_KEY_SUCCESS',
       'SAVE_SETUP_KEY_FAILURE',
-  )<RequestPayload<SetupKey>, CreateResponse<SetupKey | null>, CreateResponse<SetupKey | null>>(),
+  )<RequestPayload<SetupKeyToSave>, CreateResponse<SetupKey | null>, CreateResponse<SetupKey | null>>(),
   setSavedSetupKey: createAction('SET_SAVE_SETUP_KEY')<CreateResponse<SetupKey | null>>(),
   resetSavedSetupKey: createAction('RESET_SAVE_SETUP_KEY')<null>(),
 

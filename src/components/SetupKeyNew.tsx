@@ -20,7 +20,7 @@ import {
 } from "antd";
 import {RootState} from "typesafe-actions";
 import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
-import {SetupKey} from "../store/setup-key/types";
+import {SetupKey, SetupKeyToSave} from "../store/setup-key/types";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import {Header} from "antd/es/layout/layout";
 import {formatDate, timeAgo} from "../utils/common";
@@ -74,6 +74,7 @@ const SetupKeyNew = () => {
         if (!setupKey) return
         const fSetupKey = {
             ...setupKey,
+            auto_groups: setupKey.auto_groups ? setupKey.auto_groups?.map(t => t.name) : [],
         } as FormSetupKey
         setFormSetupKey(fSetupKey)
         form.setFieldsValue(setupKey)
@@ -88,7 +89,13 @@ const SetupKeyNew = () => {
             .then((values) => {
                 dispatch(setupKeyActions.saveSetupKey.request({
                     getAccessTokenSilently: accessToken,
-                    payload: formSetupKey
+                    payload: {
+                        id : formSetupKey.id,
+                        name: formSetupKey.name,
+                        type: formSetupKey.type,
+                        auto_groups: formSetupKey.auto_groups.map(g => g.id),
+                        revoked: formSetupKey.revoked
+                    } as SetupKeyToSave
                 }))
             })
             .catch((errorInfo) => {
@@ -124,24 +131,19 @@ const SetupKeyNew = () => {
     }
 
     const tagRender = (props: CustomTagProps) => {
-        const {label, value, closable, onClose} = props;
+        const { label, value, closable, onClose } = props;
         const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
             event.preventDefault();
             event.stopPropagation();
         };
 
-        let tagClosable = true
-        if (value === "All") {
-            tagClosable = false
-        }
-
         return (
             <Tag
                 color="blue"
                 onMouseDown={onPreventMouseDown}
-                closable={tagClosable}
+                closable={true}
                 onClose={onClose}
-                style={{marginRight: 3}}
+                style={{ marginRight: 3 }}
             >
                 <strong>{value}</strong>
             </Tag>
@@ -167,12 +169,12 @@ const SetupKeyNew = () => {
     const optionRender = (label: string) => {
         let peersCount = ''
         const g = groups.find(_g => _g.name === label)
-        if (g) peersCount = ` - ${g.peers_count || 0} ${(!g.peers_count || parseInt(g.peers_count) !== 1) ? 'peers' : 'peer'} `
+        if (g)  peersCount = ` - ${g.peers_count || 0} ${(!g.peers_count || parseInt(g.peers_count) !== 1) ? 'peers' : 'peer'} `
         return (
             <>
                 <Tag
                     color="blue"
-                    style={{marginRight: 3}}
+                    style={{ marginRight: 3 }}
                 >
                     <strong>{label}</strong>
                 </Tag>
@@ -194,16 +196,14 @@ const SetupKeyNew = () => {
     const dropDownRender = (menu: React.ReactElement) => (
         <>
             {menu}
-            <Divider style={{margin: '8px 0'}}/>
+            <Divider style={{ margin: '8px 0' }} />
             <Row style={{padding: '0 8px 4px'}}>
                 <Col flex="auto">
                     <span style={{color: "#9CA3AF"}}>Add new group by pressing "Enter"</span>
                 </Col>
                 <Col flex="none">
                     <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path
-                            d="M1.70455 7.19176V5.89915H10.3949C10.7727 5.89915 11.1174 5.80634 11.429 5.62074C11.7405 5.43513 11.9875 5.18655 12.1697 4.875C12.3554 4.56345 12.4482 4.21875 12.4482 3.84091C12.4482 3.46307 12.3554 3.12003 12.1697 2.81179C11.9841 2.50024 11.7356 2.25166 11.424 2.06605C11.1158 1.88044 10.7727 1.78764 10.3949 1.78764H9.83807V0.5H10.3949C11.0114 0.5 11.5715 0.650805 12.0753 0.952414C12.5791 1.25402 12.9818 1.65672 13.2834 2.16051C13.585 2.6643 13.7358 3.22443 13.7358 3.84091C13.7358 4.30161 13.648 4.73414 13.4723 5.13849C13.3 5.54285 13.0613 5.89915 12.7564 6.20739C12.4515 6.51562 12.0968 6.75758 11.6925 6.93324C11.2881 7.10559 10.8556 7.19176 10.3949 7.19176H1.70455ZM4.90128 11.0646L0.382102 6.54545L4.90128 2.02628L5.79119 2.91619L2.15696 6.54545L5.79119 10.1747L4.90128 11.0646Z"
-                            fill="#9CA3AF"/>
+                        <path d="M1.70455 7.19176V5.89915H10.3949C10.7727 5.89915 11.1174 5.80634 11.429 5.62074C11.7405 5.43513 11.9875 5.18655 12.1697 4.875C12.3554 4.56345 12.4482 4.21875 12.4482 3.84091C12.4482 3.46307 12.3554 3.12003 12.1697 2.81179C11.9841 2.50024 11.7356 2.25166 11.424 2.06605C11.1158 1.88044 10.7727 1.78764 10.3949 1.78764H9.83807V0.5H10.3949C11.0114 0.5 11.5715 0.650805 12.0753 0.952414C12.5791 1.25402 12.9818 1.65672 13.2834 2.16051C13.585 2.6643 13.7358 3.22443 13.7358 3.84091C13.7358 4.30161 13.648 4.73414 13.4723 5.13849C13.3 5.54285 13.0613 5.89915 12.7564 6.20739C12.4515 6.51562 12.0968 6.75758 11.6925 6.93324C11.2881 7.10559 10.8556 7.19176 10.3949 7.19176H1.70455ZM4.90128 11.0646L0.382102 6.54545L4.90128 2.02628L5.79119 2.91619L2.15696 6.54545L5.79119 10.1747L4.90128 11.0646Z" fill="#9CA3AF"/>
                     </svg>
                 </Col>
             </Row>
