@@ -232,10 +232,12 @@ export const SetupKeys = () => {
     }
 
     const onClickAddNewSetupKey = () => {
+        const autoGroups : string[] = []
         dispatch(setupKeyActions.setSetupNewKeyVisible(true));
         dispatch(setupKeyActions.setSetupKey({
             name: "",
-            type: "reusable"
+            type: "reusable",
+            auto_groups: autoGroups
         } as SetupKey))
     }
 
