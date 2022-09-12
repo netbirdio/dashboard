@@ -130,26 +130,6 @@ const SetupKeyNew = () => {
         setEditName(status);
     }
 
-    const tagRender = (props: CustomTagProps) => {
-        const { label, value, closable, onClose } = props;
-        const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
-            event.preventDefault();
-            event.stopPropagation();
-        };
-
-        return (
-            <Tag
-                color="blue"
-                onMouseDown={onPreventMouseDown}
-                closable={true}
-                onClose={onClose}
-                style={{ marginRight: 3 }}
-            >
-                <strong>{value}</strong>
-            </Tag>
-        );
-    }
-
     const selectValidator = (_: RuleObject, value: string[]) => {
         let hasSpaceNamed = []
 
@@ -164,6 +144,26 @@ const SetupKeyNew = () => {
         }
 
         return Promise.resolve()
+    }
+
+    const tagRender = (props: CustomTagProps) => {
+        const { label, value, closable, onClose } = props;
+        const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
+            event.preventDefault();
+            event.stopPropagation();
+        };
+
+        return (
+            <Tag
+                color="blue"
+                onMouseDown={onPreventMouseDown}
+                closable={closable}
+                onClose={onClose}
+                style={{ marginRight: 3 }}
+            >
+                <strong>{value}</strong>
+            </Tag>
+        );
     }
 
     const optionRender = (label: string) => {
@@ -183,16 +183,6 @@ const SetupKeyNew = () => {
         )
     }
 
-    const handleChangeTags = (value: string[]) => {
-        let validatedValues: string[] = []
-        value.forEach(function (v) {
-            if (v.trim().length) {
-                validatedValues.push(v)
-            }
-        })
-        setSelectedTagGroups(validatedValues)
-    };
-
     const dropDownRender = (menu: React.ReactElement) => (
         <>
             {menu}
@@ -209,6 +199,16 @@ const SetupKeyNew = () => {
             </Row>
         </>
     )
+
+    const handleChangeTags = (value: string[]) => {
+        let validatedValues: string[] = []
+        value.forEach(function (v) {
+            if (v.trim().length) {
+                validatedValues.push(v)
+            }
+        })
+        setSelectedTagGroups(validatedValues)
+    };
 
     const inputLabel = (text: any) => (
         <>
