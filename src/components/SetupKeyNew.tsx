@@ -26,6 +26,7 @@ import {Header} from "antd/es/layout/layout";
 import {formatDate, timeAgo} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
+import {Group} from "../store/group/types";
 
 const {Option} = Select;
 
@@ -77,9 +78,17 @@ const SetupKeyNew = () => {
 
     useEffect(() => {
         if (!setupKey) return
+
+        let allGroups = new Map<string, Group>();
+        groups.forEach(g => {
+            allGroups.set(g.id!, g)
+        })
+
+        let formKeyGroups = setupKey.auto_groups.map(g => allGroups.get(g)!.name)
+
         const fSetupKey = {
             ...setupKey,
-            autoGroupNames: setupKey.auto_groups ? setupKey.auto_groups?.map(t => t.name) : [],
+            autoGroupNames: setupKey.auto_groups ? formKeyGroups : [],
         } as FormSetupKey
         setFormSetupKey(fSetupKey)
         form.setFieldsValue(fSetupKey)

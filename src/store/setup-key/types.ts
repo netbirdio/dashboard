@@ -11,15 +11,10 @@ export interface SetupKey {
   type: string;
   used_times: number;
   valid: boolean;
-  auto_groups: Group[]
+  auto_groups: string[]
 }
 
-export interface SetupKeyToSave
+export interface SetupKeyToSave extends SetupKey
 {
-  id: string;
-  name: string;
-  type: string;
-  revoked: boolean;
-  auto_groups: string[]
   groupsToCreate: string[]
 }

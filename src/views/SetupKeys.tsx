@@ -221,7 +221,7 @@ export const SetupKeys = () => {
                         id: setupKeyToAction ? setupKeyToAction.id : null,
                         revoked: true,
                         name: setupKeyToAction ? setupKeyToAction.name : null,
-                        auto_groups: setupKeyToAction ? setupKeyToAction.auto_groups.map(g => g.id) : [],
+                        auto_groups: setupKeyToAction ? setupKeyToAction.auto_groups : [],
                     } as SetupKeyToSave
                 }));
             },
