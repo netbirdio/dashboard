@@ -383,7 +383,8 @@ const SetupKeyNew = () => {
                                             tagRender={tagRender}
                                             onChange={handleChangeTags}
                                             dropdownRender={dropDownRender}
-                                            disabled={!formSetupKey.valid}
+                                            // enabled only when we have a new key !setupkey.id or when the key is valid
+                                            disabled={!(!setupKey.id || setupKey.valid)}
                                     >
                                         {
                                             tagGroups.map(m =>
