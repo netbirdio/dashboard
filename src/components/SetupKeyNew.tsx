@@ -84,8 +84,7 @@ const SetupKeyNew = () => {
             allGroups.set(g.id!, g)
         })
 
-        console.log(allGroups)
-        let formKeyGroups = setupKey.auto_groups.map(g => allGroups.get(g)!.name)
+        let formKeyGroups = setupKey.auto_groups.filter(g => allGroups.get(g)).map(g => allGroups.get(g)!.name)
 
         const fSetupKey = {
             ...setupKey,
