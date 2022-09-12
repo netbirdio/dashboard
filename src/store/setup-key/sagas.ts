@@ -6,6 +6,7 @@ import actions from './actions';
 import serviceGroup from "../group/service";
 import {Rule} from "../rule/types";
 import {Group} from "../group/types";
+import {actions as groupActions} from "../group";
 
 export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.request>): Generator {
     try {
@@ -79,6 +80,7 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
             data: response.body
         } as CreateResponse<SetupKey | null>));
 
+        yield put(groupActions.getGroups.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
         yield put(actions.getSetupKeys.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
     } catch (err) {
         yield put(actions.saveSetupKey.failure({
