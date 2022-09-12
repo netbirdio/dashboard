@@ -67,7 +67,7 @@ export const Peers = () => {
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
-    const [pageSize, setPageSize] = useState(5);
+    const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
 

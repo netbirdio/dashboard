@@ -21,4 +21,5 @@ export interface SetupKeyToSave
   type: string;
   revoked: boolean;
   auto_groups: string[]
+  groupsToCreate: string[]
 }

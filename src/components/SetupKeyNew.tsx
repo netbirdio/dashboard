@@ -47,6 +47,7 @@ const customLastUsedFormat: DatePickerProps['format'] = value => {
 }
 
 interface FormSetupKey extends SetupKey {
+    autoGroupNames: string[]
 }
 
 const SetupKeyNew = () => {
@@ -61,7 +62,7 @@ const SetupKeyNew = () => {
     const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[])
     const [tagGroups, setTagGroups] = useState([] as string[])
 
-    const [formSetupKey, setFormSetupKey] = useState({} as SetupKey)
+    const [formSetupKey, setFormSetupKey] = useState({} as FormSetupKey)
     const [form] = Form.useForm()
 
     useEffect(() => {
@@ -78,20 +79,24 @@ const SetupKeyNew = () => {
         if (!setupKey) return
         const fSetupKey = {
             ...setupKey,
-            auto_groups: setupKey.auto_groups ? setupKey.auto_groups?.map(t => t.name) : [],
+            autoGroupNames: setupKey.auto_groups ? setupKey.auto_groups?.map(t => t.name) : [],
         } as FormSetupKey
         setFormSetupKey(fSetupKey)
         form.setFieldsValue(fSetupKey)
     }, [setupKey])
 
     const createSetupKeyToSave = (): SetupKeyToSave => {
-        const autoGroups = groups?.filter(g => formSetupKey.auto_groups.includes(g.name)).map(g => g.id || '') || []
+        const autoGroups = groups?.filter(g => formSetupKey.autoGroupNames.includes(g.name)).map(g => g.id || '') || []
+        // find groups that do not yet exist (newly added by the user)
+        const allGroupsNames : string[] = groups?.map(g => g.name);
+        const groupsToCreate = formSetupKey.autoGroupNames.filter(s => !allGroupsNames.includes(s))
         return {
             id: formSetupKey.id,
             name: formSetupKey.name,
             type: formSetupKey.type,
             auto_groups: autoGroups,
-            revoked: formSetupKey.revoked
+            revoked: formSetupKey.revoked,
+            groupsToCreate: groupsToCreate
         } as SetupKeyToSave
     }
     const handleFormSubmit = () => {
@@ -367,7 +372,7 @@ const SetupKeyNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="auto_groups"
+                                    name="autoGroupNames"
                                     label="Auto-assigned groups"
                                     tooltip="Every peer enrolled with this key will be automatically added to these groups"
                                     rules={[{validator: selectValidator}]}

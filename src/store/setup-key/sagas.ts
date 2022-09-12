@@ -3,6 +3,9 @@ import {ApiError, ApiResponse, CreateResponse, DeleteResponse} from '../../servi
 import {SetupKey, SetupKeyToSave} from './types'
 import service from './service';
 import actions from './actions';
+import serviceGroup from "../group/service";
+import {Rule} from "../rule/types";
+import {Group} from "../group/types";
 
 export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.request>): Generator {
     try {
@@ -31,13 +34,22 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
 
         const keyToSave = action.payload.payload
 
+        // first, create groups that were newly added by user
+        const responsesGroup = yield all(keyToSave.groupsToCreate.map(g => call(serviceGroup.createGroup, {
+                getAccessTokenSilently: action.payload.getAccessTokenSilently,
+                payload: { name: g }
+            })
+        ))
+
+        const resGroups = (responsesGroup as ApiResponse<Group>[]).filter(r => r.statusCode === 200).map(g => (g.body as Group)).map(g => g.id)
+        const newGroups = [...keyToSave.auto_groups, ...resGroups]
         let effect
         if (!keyToSave.id) {
             effect = yield call(service.createSetupKey, {
                 getAccessTokenSilently: action.payload.getAccessTokenSilently,
                 payload: {
                     name: keyToSave.name,
-                    auto_groups: keyToSave.auto_groups,
+                    auto_groups: newGroups,
                     type: keyToSave.type
                 } as SetupKeyToSave
             });
@@ -48,7 +60,7 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
                     id: keyToSave.id,
                     name: keyToSave.name,
                     revoked: keyToSave.revoked,
-                    auto_groups: keyToSave.auto_groups,
+                    auto_groups: newGroups,
                 } as SetupKeyToSave
             });
         }

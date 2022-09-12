@@ -52,7 +52,7 @@ export const SetupKeys = () => {
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionValidAll, setOptionValidAll] = useState('valid');
-    const [pageSize, setPageSize] = useState(5);
+    const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as SetupKeyDataTable[]);
     const [setupKeyToAction, setSetupKeyToAction] = useState(null as SetupKeyDataTable | null);
 
