@@ -316,6 +316,12 @@ export const SetupKeys = () => {
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
+                                            render={(text, record, index) => {
+                                                return <Button type="text" onClick={() => {
+                                                    setSetupKeyToAction(record as SetupKeyDataTable)
+                                                    onClickEditSetupKey()
+                                                }} className="tooltip-label">{text}</Button>
+                                            }}
                                             defaultSortOrder='ascend'
                                     />
 

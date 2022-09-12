@@ -34,8 +34,13 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
 
         const keyToSave = action.payload.payload
 
+        let groupsToCreate = keyToSave.groupsToCreate
+        if (!groupsToCreate) {
+            groupsToCreate = []
+        }
+
         // first, create groups that were newly added by user
-        const responsesGroup = yield all(keyToSave.groupsToCreate.map(g => call(serviceGroup.createGroup, {
+        const responsesGroup = yield all(groupsToCreate.map(g => call(serviceGroup.createGroup, {
                 getAccessTokenSilently: action.payload.getAccessTokenSilently,
                 payload: { name: g }
             })
