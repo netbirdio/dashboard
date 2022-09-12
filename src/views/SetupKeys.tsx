@@ -84,8 +84,8 @@ export const SetupKeys = () => {
     }
 
     useEffect(() => {
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: accessToken, payload: null}));
         dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently: accessToken, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: accessToken, payload: null}));
     }, [])
 
     useEffect(() => {
