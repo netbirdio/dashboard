@@ -383,6 +383,7 @@ const SetupKeyNew = () => {
                                             tagRender={tagRender}
                                             onChange={handleChangeTags}
                                             dropdownRender={dropDownRender}
+                                            disabled={!formSetupKey.valid}
                                     >
                                         {
                                             tagGroups.map(m =>

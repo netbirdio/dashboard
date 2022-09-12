@@ -239,6 +239,23 @@ export const SetupKeys = () => {
         } as SetupKey))
     }
 
+    const setKeyAndView = (key: SetupKeyDataTable) => {
+        dispatch(setupKeyActions.setSetupNewKeyVisible(true));
+        dispatch(setupKeyActions.setSetupKey({
+            id: key?.id || null,
+            key: key?.key,
+            name: key?.name,
+            revoked: key?.revoked,
+            expires: key?.expires,
+            state: key?.state,
+            type: key?.type,
+            used_times: key?.used_times,
+            valid: key?.valid,
+            auto_groups: key?.auto_groups,
+            last_used: key?.last_used,
+        } as SetupKey))
+    }
+
     const onClickEditSetupKey = () => {
         dispatch(setupKeyActions.setSetupNewKeyVisible(true));
         dispatch(setupKeyActions.setSetupKey({
@@ -317,10 +334,9 @@ export const SetupKeys = () => {
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                             render={(text, record, index) => {
-                                                return <Button type="text" onClick={() => {
-                                                    setSetupKeyToAction(record as SetupKeyDataTable)
-                                                    onClickEditSetupKey()
-                                                }} className="tooltip-label">{text}</Button>
+                                                return <Button type="text"
+                                                               onClick={() => setKeyAndView(record as SetupKeyDataTable)}
+                                                               className="tooltip-label">{text}</Button>
                                             }}
                                             defaultSortOrder='ascend'
                                     />
