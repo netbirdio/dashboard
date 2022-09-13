@@ -141,7 +141,7 @@ export const SetupKeys = () => {
             dispatch(setupKeyActions.resetSavedSetupKey(null))
         } else if (savedSetupKey.error) {
             message.error({
-                content: 'Failed to create setup key. You might not have enough permissions.',
+                content: 'Failed to update setup key. You might not have enough permissions.',
                 key: createKey,
                 duration: 2,
                 style: styleNotification
@@ -225,7 +225,7 @@ export const SetupKeys = () => {
                         id: setupKeyToAction ? setupKeyToAction.id : null,
                         revoked: true,
                         name: setupKeyToAction ? setupKeyToAction.name : null,
-                        auto_groups: setupKeyToAction ? setupKeyToAction.auto_groups : [],
+                        auto_groups: setupKeyToAction && setupKeyToAction.auto_groups ? setupKeyToAction.auto_groups : [],
                     } as SetupKeyToSave
                 }));
             },

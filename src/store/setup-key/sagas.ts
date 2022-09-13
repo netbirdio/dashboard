@@ -4,7 +4,6 @@ import {SetupKey, SetupKeyToSave} from './types'
 import service from './service';
 import actions from './actions';
 import serviceGroup from "../group/service";
-import {Rule} from "../rule/types";
 import {Group} from "../group/types";
 import {actions as groupActions} from "../group";
 
@@ -13,7 +12,13 @@ export function* getSetupKeys(action: ReturnType<typeof actions.getSetupKeys.req
         const effect = yield call(service.getSetupKeys, action.payload);
         const response = effect as ApiResponse<SetupKey[]>;
 
-        yield put(actions.getSetupKeys.success(response.body));
+        yield put(actions.getSetupKeys.success(response.body.map(k => {
+            // always set auto_groups even if absent (avoid null)
+            if (k.auto_groups) {
+                return k
+            }
+            return {...k, auto_groups: []}
+        })));
     } catch (err) {
         yield put(actions.getSetupKeys.failure(err as ApiError));
     }
