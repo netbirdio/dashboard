@@ -84,7 +84,7 @@ export const SetupKeys = () => {
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
     const transformDataTable = (d: SetupKey[]): SetupKeyDataTable[] => {
-        return d.map(p => ({...p, groupsCount: p.auto_groups.length} as SetupKeyDataTable))
+        return d.map(p => ({...p, groupsCount: p.auto_groups ? p.auto_groups.length : 0} as SetupKeyDataTable))
     }
 
     useEffect(() => {
