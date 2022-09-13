@@ -53,7 +53,6 @@ export function* saveRule(action: ReturnType<typeof actions.saveRule.request>): 
       })
     ))
 
-
     const resGroups = (responsesGroup as ApiResponse<Rule>[]).filter(r => r.statusCode === 200).map(r => (r.body as Group))
 
     const currentGroups = [...(yield select(state => state.group.data)) as Rule[]]
