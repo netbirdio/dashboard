@@ -66,7 +66,6 @@ export const transformGroupedDataTable = (routes:Route[],peerIPToName:PeerIPToNa
             }
         })
         let groupDataTableRoutes = transformDataTable(listedRoutes,peerIPToName)
-        console.log(groupDataTableRoutes.length)
         groupedRoutes.push({
             key: p.toString(),
             network_id: lastRoute!.network_id,
@@ -78,6 +77,5 @@ export const transformGroupedDataTable = (routes:Route[],peerIPToName:PeerIPToNa
             groupedRoutes: groupDataTableRoutes,
         })
     })
-    console.log(groupedRoutes)
     return groupedRoutes
 }

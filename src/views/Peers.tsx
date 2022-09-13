@@ -67,7 +67,7 @@ export const Peers = () => {
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
-    const [pageSize, setPageSize] = useState(5);
+    const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
 
@@ -82,7 +82,7 @@ export const Peers = () => {
     const itemsMenuAction = [
         {
             key: "view",
-            label: (<Button type="text" block onClick={() => onClickViewRule()}>View</Button>)
+            label: (<Button type="text" block onClick={() => onClickViewPeer()}>View</Button>)
         },
         {
             key: "delete",
@@ -300,7 +300,7 @@ export const Peers = () => {
 
     }
 
-    const onClickViewRule = () => {
+    const onClickViewPeer = () => {
         dispatch(peerActions.setUpdateGroupsVisible(true))
         dispatch(peerActions.setPeer(peerToAction as Peer))
     }
