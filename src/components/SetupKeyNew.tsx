@@ -27,7 +27,6 @@ import {formatDate, timeAgo} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
-import {string} from "prop-types";
 
 const {Option} = Select;
 

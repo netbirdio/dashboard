@@ -13,7 +13,7 @@ import {
     Input,
     Menu,
     message,
-    Modal,
+    Modal, Popover,
     Radio,
     RadioChangeEvent,
     Row,
@@ -31,6 +31,8 @@ import SetupKeyNew from "../components/SetupKeyNew";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import tableSpin from "../components/Spin";
 import {actions as groupActions} from "../store/group";
+import {Group} from "../store/group/types";
+import {TooltipPlacement} from "antd/es/tooltip";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
@@ -38,6 +40,7 @@ const {confirm} = Modal;
 
 interface SetupKeyDataTable extends SetupKey {
     key: string
+    groupsCount: number
 }
 
 export const SetupKeys = () => {
@@ -49,6 +52,7 @@ export const SetupKeys = () => {
     const loading = useSelector((state: RootState) => state.setupKey.loading);
     const deletedSetupKey = useSelector((state: RootState) => state.setupKey.deletedSetupKey);
     const savedSetupKey = useSelector((state: RootState) => state.setupKey.savedSetupKey);
+    const groups = useSelector((state: RootState) => state.group.data)
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionValidAll, setOptionValidAll] = useState('valid');
@@ -80,7 +84,7 @@ export const SetupKeys = () => {
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
     const transformDataTable = (d: SetupKey[]): SetupKeyDataTable[] => {
-        return d.map(p => ({...p} as SetupKeyDataTable))
+        return d.map(p => ({...p, groupsCount: p.auto_groups.length} as SetupKeyDataTable))
     }
 
     useEffect(() => {
@@ -275,6 +279,60 @@ export const SetupKeys = () => {
         } as SetupKey))
     }
 
+    const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, setupKeyToAction: SetupKeyDataTable) => {
+        let groupsMap = new Map<string, Group>();
+        groups.forEach(g => {
+            groupsMap.set(g.id!, g)
+        })
+
+        let displayGroups :Group[] = []
+        if (rowGroups) {
+            displayGroups = rowGroups.filter(g => groupsMap.get(g)).map(g => groupsMap.get(g)!)
+        }
+        const content = displayGroups?.map((g, i) => {
+            const _g = g as Group
+            const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
+            return (
+                <div key={i}>
+                    <Tag
+                        color="blue"
+                        style={{marginRight: 3}}
+                    >
+                        <strong>{_g.name}</strong>
+                    </Tag>
+                    <span style={{fontSize: ".85em"}}>{peersCount}</span>
+                </div>
+            )
+        })
+        const mainContent = (<Space direction="vertical">{content}</Space>)
+        let popoverPlacement = "top"
+        if (content && content.length > 5) {
+            popoverPlacement = "rightTop"
+        }
+
+        return (
+            <Popover placement={popoverPlacement as TooltipPlacement} key={setupKeyToAction.key} content={mainContent}
+                     title={null}>
+                <Button type="link" onClick={() => setUpdateGroupsVisible(setupKeyToAction, true)}>{label}</Button>
+            </Popover>
+        )
+    }
+
+    const setUpdateGroupsVisible = (setupKeyToAction: SetupKey, status: boolean) => {
+        if (status) {
+            dispatch(setupKeyActions.setSetupKey({...setupKeyToAction}))
+            dispatch(setupKeyActions.setSetupNewKeyVisible(true))
+            return
+        }
+        const autoGroups : string[] = []
+        dispatch(setupKeyActions.setSetupKey({
+            name: "",
+            type: "reusable",
+            auto_groups: autoGroups
+        } as SetupKey))
+        dispatch(setupKeyActions.setSetupNewKeyVisible(false))
+    }
+
     return (
         <>
             <Container style={{paddingTop: "40px"}}>
@@ -355,7 +413,11 @@ export const SetupKeys = () => {
                                             onFilter={(value: string | number | boolean, record) => (record as any).type.includes(value)}
                                             sorter={(a, b) => ((a as any).type.localeCompare((b as any).type))}
                                     />
-
+                                    <Column title="Groups" dataIndex="groupsCount" align="center"
+                                            render={(text, record: SetupKeyDataTable, index) => {
+                                                return renderPopoverGroups(text, record.auto_groups, record)
+                                            }}
+                                    />
                                     <Column title="Key" dataIndex="key"
                                             onFilter={(value: string | number | boolean, record) => (record as any).key.includes(value)}
                                             sorter={(a, b) => ((a as any).key.localeCompare((b as any).key))}
