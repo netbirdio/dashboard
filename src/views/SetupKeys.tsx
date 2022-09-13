@@ -281,11 +281,6 @@ export const SetupKeys = () => {
 
     const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, setupKeyToAction: SetupKeyDataTable) => {
 
-        let btn = <Button type="link" onClick={() => setUpdateGroupsVisible(setupKeyToAction, true)}>{label}</Button>
-        if (!rowGroups || rowGroups!.length < 1) {
-            return btn
-        }
-
         let groupsMap = new Map<string, Group>();
         groups.forEach(g => {
             groupsMap.set(g.id!, g)
@@ -295,6 +290,12 @@ export const SetupKeys = () => {
         if (rowGroups) {
             displayGroups = rowGroups.filter(g => groupsMap.get(g)).map(g => groupsMap.get(g)!)
         }
+
+        let btn = <Button type="link" onClick={() => setUpdateGroupsVisible(setupKeyToAction, true)}>{displayGroups.length}</Button>
+        if (!displayGroups || displayGroups!.length < 1) {
+            return btn
+        }
+
         const content = displayGroups?.map((g, i) => {
             const _g = g as Group
             const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
