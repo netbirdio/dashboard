@@ -73,7 +73,7 @@ const SetupKeyNew = () => {
     }, [editName]);
 
     useEffect(() => {
-        setTagGroups(groups?.map(g => g.name) || [])
+        setTagGroups(groups?.filter(g => g.name != "All").map(g => g.name) || [])
     }, [groups])
 
     useEffect(() => {
