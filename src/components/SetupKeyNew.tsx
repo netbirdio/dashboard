@@ -27,6 +27,7 @@ import {formatDate, timeAgo} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
+import {string} from "prop-types";
 
 const {Option} = Select;
 
@@ -84,7 +85,11 @@ const SetupKeyNew = () => {
             allGroups.set(g.id!, g)
         })
 
-        let formKeyGroups = setupKey.auto_groups.filter(g => allGroups.get(g)).map(g => allGroups.get(g)!.name)
+        let formKeyGroups :string[] = []
+
+        if (setupKey.auto_groups) {
+            formKeyGroups = setupKey.auto_groups.filter(g => allGroups.get(g)).map(g => allGroups.get(g)!.name)
+        }
 
         const fSetupKey = {
             ...setupKey,
