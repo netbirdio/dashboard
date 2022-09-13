@@ -280,6 +280,12 @@ export const SetupKeys = () => {
     }
 
     const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, setupKeyToAction: SetupKeyDataTable) => {
+
+        let btn = <Button type="link" onClick={() => setUpdateGroupsVisible(setupKeyToAction, true)}>{label}</Button>
+        if (!rowGroups || rowGroups!.length < 1) {
+            return btn
+        }
+
         let groupsMap = new Map<string, Group>();
         groups.forEach(g => {
             groupsMap.set(g.id!, g)
@@ -313,7 +319,7 @@ export const SetupKeys = () => {
         return (
             <Popover placement={popoverPlacement as TooltipPlacement} key={setupKeyToAction.key} content={mainContent}
                      title={null}>
-                <Button type="link" onClick={() => setUpdateGroupsVisible(setupKeyToAction, true)}>{label}</Button>
+                {btn}
             </Popover>
         )
     }
