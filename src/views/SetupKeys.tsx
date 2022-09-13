@@ -73,7 +73,7 @@ export const SetupKeys = () => {
         },
         {
             key: "edit",
-            label: (<Button type="text" onClick={() => onClickEditSetupKey()}>Edit</Button>)
+            label: (<Button type="text" onClick={() => onClickEditSetupKey()}>View</Button>)
         },
 
     ]
