@@ -59,6 +59,8 @@ export const SetupKeys = () => {
     const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as SetupKeyDataTable[]);
     const [setupKeyToAction, setSetupKeyToAction] = useState(null as SetupKeyDataTable | null);
+    const setupNewKeyVisible =   useSelector((state: RootState) => state.setupKey.setupNewKeyVisible)
+    const [groupPopupVisible,setGroupPopupVisible] = useState(false as boolean|undefined)
 
     const styleNotification = {marginTop: 85}
 
@@ -279,6 +281,20 @@ export const SetupKeys = () => {
         } as SetupKey))
     }
 
+    useEffect(() => {
+        if (setupNewKeyVisible) {
+            setGroupPopupVisible(false)
+        }
+    }, [setupNewKeyVisible])
+
+    const onPopoverVisibleChange = (b:boolean) => {
+        if (setupNewKeyVisible) {
+            setGroupPopupVisible(false)
+        } else {
+            setGroupPopupVisible(undefined)
+        }
+    }
+
     const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, setupKeyToAction: SetupKeyDataTable) => {
 
         let groupsMap = new Map<string, Group>();
@@ -318,7 +334,11 @@ export const SetupKeys = () => {
         }
 
         return (
-            <Popover placement={popoverPlacement as TooltipPlacement} key={setupKeyToAction.key} content={mainContent}
+            <Popover placement={popoverPlacement as TooltipPlacement}
+                     key={setupKeyToAction.key}
+                     onVisibleChange={onPopoverVisibleChange}
+                     visible={groupPopupVisible}
+                     content={mainContent}
                      title={null}>
                 {btn}
             </Popover>
