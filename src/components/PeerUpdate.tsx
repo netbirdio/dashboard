@@ -301,7 +301,6 @@ const PeerUpdate = () => {
                                                         message: 'Please add a new name for this peer',
                                                         whitespace: true
                                                     }]}
-                                                    style={{display: 'flex'}}
                                                 >
                                                     <Input
                                                         placeholder={peer.name}
