@@ -58,6 +58,8 @@ export const AccessControl = () => {
     const [dataTable, setDataTable] = useState([] as RuleDataTable[]);
     const [ruleToAction, setRuleToAction] = useState(null as RuleDataTable | null);
     const [groupsToShow, setGroupsToShow] = useState({} as GroupsToShow)
+    const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible);
+    const [groupPopupVisible,setGroupPopupVisible] = useState(false as boolean|undefined)
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -269,24 +271,44 @@ export const AccessControl = () => {
         })
     }
 
+    useEffect(() => {
+        if (setupNewRuleVisible) {
+            setGroupPopupVisible(false)
+        }
+    }, [setupNewRuleVisible])
+
+    const onPopoverVisibleChange = (b:boolean) => {
+        if (setupNewRuleVisible) {
+            setGroupPopupVisible(false)
+        } else {
+            setGroupPopupVisible(undefined)
+        }
+    }
+
     const renderPopoverGroups = (label: string, groups:Group[] | string[] | null, rule: RuleDataTable) => {
         const content = groups?.map((g, i) => {
             const _g = g as Group
             const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
             return (
-                <div key={i}>
-                    <Tag
-                        color="blue"
-                        style={{ marginRight: 3 }}
-                    >
-                        <strong>{_g.name}</strong>
-                    </Tag>
-                    <span style={{fontSize: ".85em"}}>{peersCount}</span>
-                </div>
+                <Space direction="vertical">
+                    <div key={i}>
+                        <Tag
+                            color="blue"
+                            style={{ marginRight: 3 }}
+                        >
+                            <strong>{_g.name}</strong>
+                        </Tag>
+                        <span style={{fontSize: ".85em"}}>{peersCount}</span>
+                    </div>
+                </Space>
             )
         })
         return (
-            <Popover content={<Space direction="vertical">{content}</Space>} title={null}>
+            <Popover
+                onVisibleChange={onPopoverVisibleChange}
+                visible={groupPopupVisible}
+                content={content}
+                title={null}>
                 <Button type="link" onClick={() => setRuleAndView(rule)}>{label}</Button>
             </Popover>
         )

@@ -277,7 +277,7 @@ const PeerUpdate = () => {
                                     <Row align="top">
                                         <Col flex="none" style={{display: "flex"}}>
                                             {!editName && peer.id &&
-                                                <button type="button" aria-label="Close" className="ant-drawer-close"
+                                                <button type="button" aria-label="Close" autoFocus={true} className="ant-drawer-close"
                                                         style={{paddingTop: 3}}
                                                         onClick={onCancel}>
                                                     <span role="img" aria-label="close"
@@ -308,7 +308,6 @@ const PeerUpdate = () => {
                                                         ref={inputNameRef}
                                                         onPressEnter={() => toggleEditName(false)}
                                                         onBlur={() => toggleEditName(false)}
-                                                        // onChange={(e) => handleChangeName(e.)}
                                                         autoComplete="off"/>
                                                 </Form.Item>)}
                                         </Col>
@@ -322,17 +321,15 @@ const PeerUpdate = () => {
                             <Col span={24}>
                                 <Form.Item
                                     name="groups"
-                                    label="Select groups to associate with this peer"
+                                    label="Select peer groups"
                                     rules={[{ validator: selectValidator }]}
-                                    style={{display: 'flex'}}
+
                                 >
                                     <Select
                                         mode="tags"
                                         style={{ width: '100%' }}
                                         placeholder="Select groups..."
                                         tagRender={tagRender}
-                                        // onDropdownVisibleChange={evaluateSubmit}
-                                        // onSelect={evaluateSubmit}
 
                                         dropdownRender={dropDownRender}
                                         onChange={handleChangeTags}>
