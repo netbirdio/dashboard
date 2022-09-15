@@ -64,12 +64,14 @@ export const Peers = () => {
     const loadingGroups = useSelector((state: RootState) => state.group.loading);
     const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
     const updatedPeer = useSelector((state: RootState) => state.peer.updatedPeer);
+    const updateGroupsVisible =   useSelector((state: RootState) => state.peer.updateGroupsVisible)
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
     const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
+    const [groupPopupVisible,setGroupPopupVisible] = useState(false as boolean|undefined)
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -305,6 +307,20 @@ export const Peers = () => {
         dispatch(peerActions.setPeer(peerToAction as Peer))
     }
 
+    useEffect(() => {
+        if (updateGroupsVisible) {
+            setGroupPopupVisible(false)
+        }
+    }, [updateGroupsVisible])
+
+    const onPopoverVisibleChange = (b:boolean) => {
+        if (updateGroupsVisible) {
+            setGroupPopupVisible(false)
+        } else {
+            setGroupPopupVisible(undefined)
+        }
+    }
+
     const setUpdateGroupsVisible = (peerToAction: Peer, status: boolean) => {
         if (status) {
             dispatch(peerActions.setPeer({...peerToAction}))
@@ -338,7 +354,7 @@ export const Peers = () => {
         }
 
         return (
-            <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent}
+            <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent} onVisibleChange={onPopoverVisibleChange} visible={groupPopupVisible}
                      title={null}>
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>

@@ -290,7 +290,6 @@ const SetupKeyNew = () => {
                                                         message: 'Please add a new name for this peer',
                                                         whitespace: true
                                                     }]}
-                                                    style={{display: 'flex'}}
                                                 >
                                                     <Input
                                                         placeholder={setupKey.name}
@@ -351,7 +350,6 @@ const SetupKeyNew = () => {
                                     name="type"
                                     label="Type"
                                     rules={[{required: true, message: 'Please enter key type'}]}
-                                    style={{display: 'flex'}}
                                 >
                                     <Radio.Group style={{display: 'flex'}} disabled={setupKey.id}>
                                         <Space direction="vertical" style={{flex: 1}}>
