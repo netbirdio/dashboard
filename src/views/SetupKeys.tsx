@@ -33,6 +33,7 @@ import tableSpin from "../components/Spin";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
+import {actions as userActions} from "../store/user";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
@@ -44,7 +45,7 @@ interface SetupKeyDataTable extends SetupKey {
 }
 
 export const SetupKeys = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {accessToken,accessTokenPayload} = useOidcAccessToken()
     const dispatch = useDispatch()
 
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
@@ -61,6 +62,7 @@ export const SetupKeys = () => {
     const [setupKeyToAction, setSetupKeyToAction] = useState(null as SetupKeyDataTable | null);
     const setupNewKeyVisible =   useSelector((state: RootState) => state.setupKey.setupNewKeyVisible)
     const [groupPopupVisible,setGroupPopupVisible] = useState(false as boolean|undefined)
+    const [loadOnce, setLoadOnce] = useState(false)
 
     const styleNotification = {marginTop: 85}
 
@@ -89,9 +91,25 @@ export const SetupKeys = () => {
         return d.map(p => ({...p, groupsCount: p.auto_groups ? p.auto_groups.length : 0} as SetupKeyDataTable))
     }
 
-    useEffect(() => {
+    const doPageRequests = () => {
         dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently: accessToken, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: accessToken, payload: null}));
+    }
+
+    useEffect(() => {
+        if (!loadOnce) {
+            doPageRequests()
+            setLoadOnce(true)
+        }
+    },[accessToken])
+
+    useEffect(() => {
+        if ((accessTokenPayload.exp * 1000) > (Date.now() - 5000)) {
+            doPageRequests()
+            if (!loadOnce) {
+                setLoadOnce(true)
+            }
+        }
     }, [])
 
     useEffect(() => {

@@ -22,6 +22,7 @@ import {Group} from "../store/group/types";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
 import {useOidcAccessToken} from '@axa-fr/react-oidc';
+import {actions as userActions} from "../store/user";
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
@@ -41,7 +42,7 @@ interface GroupsToShow {
 }
 
 export const AccessControl = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {accessToken,accessTokenPayload} = useOidcAccessToken()
     const dispatch = useDispatch()
 
     const rules = useSelector((state: RootState) => state.rule.data);
@@ -60,6 +61,7 @@ export const AccessControl = () => {
     const [groupsToShow, setGroupsToShow] = useState({} as GroupsToShow)
     const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible);
     const [groupPopupVisible,setGroupPopupVisible] = useState(false as boolean|undefined)
+    const [loadOnce, setLoadOnce] = useState(false)
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -107,10 +109,27 @@ export const AccessControl = () => {
         })
     }
 
-    useEffect(() => {
+    const doPageRequests = () => {
         dispatch(ruleActions.getRules.request({getAccessTokenSilently:accessToken, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently:accessToken, payload: null}));
+    }
+
+    useEffect(() => {
+        if (!loadOnce) {
+            doPageRequests()
+            setLoadOnce(true)
+        }
+    },[accessToken])
+
+    useEffect(() => {
+        if ((accessTokenPayload.exp * 1000) > (Date.now() - 5000)) {
+            doPageRequests()
+            if (!loadOnce) {
+                setLoadOnce(true)
+            }
+        }
     }, [])
+
 
     useEffect(() => {
         setShowTutorial(isShowTutorial(rules))

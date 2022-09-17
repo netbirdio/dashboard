@@ -52,7 +52,7 @@ interface PeerDataTable extends Peer {
 
 export const Peers = () => {
 
-    const {accessToken} = useOidcAccessToken()
+    const {accessToken,accessTokenPayload} = useOidcAccessToken()
     const dispatch = useDispatch()
 
     const peers = useSelector((state: RootState) => state.peer.data);
@@ -72,6 +72,7 @@ export const Peers = () => {
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
     const [groupPopupVisible,setGroupPopupVisible] = useState(false as boolean|undefined)
+    const [loadOnce, setLoadOnce] = useState(false)
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -108,10 +109,26 @@ export const Peers = () => {
         })
     }
 
-    useEffect(() => {
+    const doPageRequests = () => {
         dispatch(peerActions.getPeers.request({getAccessTokenSilently: accessToken, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: accessToken, payload: null}));
         dispatch(routeActions.getRoutes.request({getAccessTokenSilently: accessToken, payload: null}));
+    }
+
+    useEffect(() => {
+        if (!loadOnce) {
+            doPageRequests()
+            setLoadOnce(true)
+        }
+    },[accessToken])
+
+    useEffect(() => {
+        if ((accessTokenPayload.exp * 1000) > (Date.now() - 5000)) {
+            doPageRequests()
+            if (!loadOnce) {
+                setLoadOnce(true)
+            }
+        }
     }, [])
 
     useEffect(() => {

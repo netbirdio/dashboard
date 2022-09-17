@@ -22,13 +22,14 @@ import {
     RouteDataTable,GroupedDataTable,
     transformGroupedDataTable,transformDataTable
 } from '../utils/routes'
+import {actions as userActions} from "../store/user";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
 
 export const Routes = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {accessToken,accessTokenPayload} = useOidcAccessToken()
     const dispatch = useDispatch()
 
     const routes = useSelector((state: RootState) => state.route.data);
@@ -47,6 +48,7 @@ export const Routes = () => {
     const [routeToAction, setRouteToAction] = useState(null as RouteDataTable | null);
     const [groupedDataTable, setGroupedDataTable] = useState([] as GroupedDataTable[]);
     const [expandRowsOnClick,setExpandRowsOnClick] = useState(true)
+    const [loadOnce, setLoadOnce] = useState(false)
 
     const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
 
@@ -82,8 +84,24 @@ export const Routes = () => {
         dispatch(routeActions.getRoutes.request({getAccessTokenSilently:accessToken, payload: null}));
     }, [peers])
 
-    useEffect(() => {
+    const doPageRequests = () => {
         dispatch(peerActions.getPeers.request({getAccessTokenSilently:accessToken, payload: null}));
+    }
+
+    useEffect(() => {
+        if (!loadOnce) {
+            doPageRequests()
+            setLoadOnce(true)
+        }
+    },[accessToken])
+
+    useEffect(() => {
+        if ((accessTokenPayload.exp * 1000) > (Date.now() - 5000)) {
+            doPageRequests()
+            if (!loadOnce) {
+                setLoadOnce(true)
+            }
+        }
     }, [])
 
     const filterGroupedDataTable = (routes:GroupedDataTable[]):GroupedDataTable[] => {

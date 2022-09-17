@@ -15,6 +15,9 @@ import {
 import { User } from "../store/user/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
+import {actions as peerActions} from "../store/peer";
+import {actions as groupActions} from "../store/group";
+import {actions as routeActions} from "../store/route";
 
 const { Title, Paragraph } = Typography;
 const { Column } = Table;
@@ -24,7 +27,7 @@ interface UserDataTable extends User {
 }
 
 export const Users = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {accessToken,accessTokenPayload} = useOidcAccessToken()
     const dispatch = useDispatch()
 
     const users = useSelector((state: RootState) => state.user.data);
@@ -40,13 +43,32 @@ export const Users = () => {
         {label: "15", value: "15"}
     ]
 
+    const [loadOnce, setLoadOnce] = useState(false)
+
     const transformDataTable = (d:User[]):UserDataTable[] => {
         return d.map(p => ({ key: p.id, ...p } as UserDataTable))
     }
 
-    useEffect(() => {
+    const doPageRequests = () => {
         dispatch(userActions.getUsers.request({getAccessTokenSilently:accessToken,payload: null}));
+    }
+
+    useEffect(() => {
+        if (!loadOnce) {
+            doPageRequests()
+            setLoadOnce(true)
+        }
+    },[accessToken])
+
+    useEffect(() => {
+        if ((accessTokenPayload.exp * 1000) > (Date.now() - 5000)) {
+            doPageRequests()
+            if (!loadOnce) {
+                setLoadOnce(true)
+            }
+        }
     }, [])
+
     useEffect(() => {
         setDataTable(transformDataTable(users))
     }, [users])
