@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {Button, Col, DatePickerProps, Divider, Drawer, Form, Input, Row, Select, Space, Tag, Typography} from "antd";
 import {RootState} from "typesafe-actions";
-import {CloseOutlined, QuestionCircleFilled} from "@ant-design/icons";
+import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import {Header} from "antd/es/layout/layout";
 import {formatDate, timeAgo} from "../utils/common";
@@ -202,6 +202,7 @@ const UserUpdate = () => {
                             <Col span={24}>
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
                                     <Row align="top">
+                                        {/*Close Icon*/}
                                         <Col flex="none" style={{display: "flex"}}>
                                             {user.id &&
                                                 <button type="button" aria-label="Close" className="ant-drawer-close"
@@ -214,21 +215,10 @@ const UserUpdate = () => {
                                                 </button>
                                             }
                                         </Col>
+                                       {/* Name Label*/}
                                         <Col flex="auto">
-                                            <Form.Item
-                                                name="name"
-                                                label="Name"
-                                                rules={[{
-                                                    required: true,
-                                                    message: 'Please add a new name for this peer',
-                                                    whitespace: true
-                                                }]}
-                                                style={{display: 'flex'}}
-                                            >
-                                                <Input
-                                                    placeholder={user.name}
-                                                    autoComplete="off"/>
-                                            </Form.Item>
+                                                <div className={"access-control input-text ant-drawer-title"}>
+                                                    {formUser.name}</div>
                                         </Col>
                                     </Row>
                                 </Header>
