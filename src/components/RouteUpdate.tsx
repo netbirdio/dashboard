@@ -1,44 +1,50 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
-import { actions as routeActions } from '../store/route';
+import {actions as routeActions} from '../store/route';
 import {
+    Button,
     Col,
-    Row,
+    Divider,
+    Drawer,
+    Form,
     Input,
     InputNumber,
+    Radio,
+    Row,
+    Select,
+    SelectProps,
     Space,
     Switch,
-    SelectProps,
-    Button, Drawer, Form, Divider, Select, Radio, Typography
+    Typography
 } from "antd";
 import {CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
 import {Route} from "../store/route/types";
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
-import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import cidrRegex from 'cidr-regex';
 import {
+    initPeerMaps,
     masqueradeDisabledMSG,
     peerToPeerIP,
-    initPeerMaps,
     routePeerSeparator,
     transformGroupedDataTable
 } from '../utils/routes'
+import {useGetAccessTokenSilently} from "../utils/token";
 
-const { Paragraph } = Typography;
+const {Paragraph} = Typography;
 
 interface FormRoute extends Route {
 }
 
 const RouteUpdate = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const setupNewRouteVisible = useSelector((state: RootState) => state.route.setupNewRouteVisible)
     const setupNewRouteHA = useSelector((state: RootState) => state.route.setupNewRouteHA)
-    const peers =  useSelector((state: RootState) => state.peer.data)
-    const route =  useSelector((state: RootState) => state.route.route)
-    const routes =  useSelector((state: RootState) => state.route.data)
+    const peers = useSelector((state: RootState) => state.peer.data)
+    const route = useSelector((state: RootState) => state.route.route)
+    const routes = useSelector((state: RootState) => state.route.data)
     const savedRoute = useSelector((state: RootState) => state.route.savedRoute)
     // const [groupedDataTable, setGroupedDataTable] = useState([] as GroupedDataTable[]);
     const [previousRouteKey, setPreviousRouteKey] = useState("")
@@ -92,25 +98,25 @@ const RouteUpdate = () => {
             ...route,
         } as FormRoute
         setFormRoute(fRoute)
-        setPreviousRouteKey(fRoute.network_id+fRoute.network)
+        setPreviousRouteKey(fRoute.network_id + fRoute.network)
         form.setFieldsValue(fRoute)
     }, [route])
 
     peers.forEach((p) => {
-        let os:string
+        let os: string
         os = p.os
         if (!os.toLowerCase().startsWith("darwin") && !os.toLowerCase().startsWith("windows")) {
             options?.push({
-                label: peerToPeerIP(p.name,p.ip),
-                value: peerToPeerIP(p.name,p.ip),
+                label: peerToPeerIP(p.name, p.ip),
+                value: peerToPeerIP(p.name, p.ip),
                 disabled: false
             })
         }
     })
 
-    const createRouteToSave = (inputRoute:FormRoute):Route => {
+    const createRouteToSave = (inputRoute: FormRoute): Route => {
         let peerIDList = inputRoute.peer.split(routePeerSeparator)
-        let peerID:string
+        let peerID: string
         if (peerIDList[1]) {
             peerID = peerIDList[1]
         } else {
@@ -134,13 +140,16 @@ const RouteUpdate = () => {
             .then(() => {
                 if (!setupNewRouteHA || formRoute.peer != '') {
                     const routeToSave = createRouteToSave(formRoute)
-                    dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: routeToSave}))
+                    dispatch(routeActions.saveRoute.request({
+                        getAccessTokenSilently: getAccessTokenSilently,
+                        payload: routeToSave
+                    }))
                 } else {
-                    let groupedDataTable = transformGroupedDataTable(routes,peerIPToName)
+                    let groupedDataTable = transformGroupedDataTable(routes, peerIPToName)
                     groupedDataTable.forEach((group) => {
                         if (group.key == previousRouteKey) {
                             group.groupedRoutes.forEach((route) => {
-                                let updateRoute:FormRoute = {
+                                let updateRoute: FormRoute = {
                                     ...formRoute,
                                     id: route.id,
                                     peer: route.peer,
@@ -148,7 +157,10 @@ const RouteUpdate = () => {
                                     enabled: (formRoute.enabled != group.enabled) ? formRoute.enabled : route.enabled
                                 }
                                 const routeToSave = createRouteToSave(updateRoute)
-                                dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: routeToSave}))
+                                dispatch(routeActions.saveRoute.request({
+                                    getAccessTokenSilently: getAccessTokenSilently,
+                                    payload: routeToSave
+                                }))
                             })
                         }
                     })
@@ -160,11 +172,11 @@ const RouteUpdate = () => {
             });
     };
 
-    const setVisibleNewRoute = (status:boolean) => {
+    const setVisibleNewRoute = (status: boolean) => {
         dispatch(routeActions.setSetupNewRouteVisible(status));
     }
 
-    const setSetupNewRouteHA = (status:boolean) => {
+    const setSetupNewRouteHA = (status: boolean) => {
         dispatch(routeActions.setSetupNewRouteHA(status));
     }
 
@@ -185,7 +197,7 @@ const RouteUpdate = () => {
         setPreviousRouteKey("")
     }
 
-    const onChange = (data:any) => {
+    const onChange = (data: any) => {
         setFormRoute({...formRoute, ...data})
     }
 
@@ -195,11 +207,11 @@ const RouteUpdate = () => {
         </>
     )
 
-    const toggleEditName = (status:boolean) => {
+    const toggleEditName = (status: boolean) => {
         setEditName(status);
     }
 
-    const toggleEditDescription = (status:boolean) => {
+    const toggleEditDescription = (status: boolean) => {
         setEditDescription(status);
     }
 
@@ -228,7 +240,8 @@ const RouteUpdate = () => {
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedRoute.loading}>Cancel</Button>
-                            <Button type="primary" disabled={savedRoute.loading} onClick={handleFormSubmit}>{`${formRoute.network_id ? 'Save' : 'Create'}`}</Button>
+                            <Button type="primary" disabled={savedRoute.loading}
+                                    onClick={handleFormSubmit}>{`${formRoute.network_id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
                 >
@@ -238,38 +251,53 @@ const RouteUpdate = () => {
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
                                     <Row align="top">
                                         <Col flex="none" style={{display: "flex"}}>
-                                            {!editName && !editDescription && formRoute.id  &&
+                                            {!editName && !editDescription && formRoute.id &&
                                                 <button type="button" aria-label="Close" className="ant-drawer-close"
                                                         style={{paddingTop: 3}}
                                                         onClick={onCancel}>
-                                                    <span role="img" aria-label="close" className="anticon anticon-close">
+                                                    <span role="img" aria-label="close"
+                                                          className="anticon anticon-close">
                                                         <CloseOutlined size={16}/>
                                                     </span>
                                                 </button>
                                             }
                                         </Col>
                                         <Col flex="auto">
-                                            { !editName && formRoute.id ? (
-                                                <div className={"access-control input-text ant-drawer-title"} onClick={() => toggleEditName(true)}>{formRoute.id ? formRoute.network_id : 'New Route'}</div>
+                                            {!editName && formRoute.id ? (
+                                                <div className={"access-control input-text ant-drawer-title"}
+                                                     onClick={() => toggleEditName(true)}>{formRoute.id ? formRoute.network_id : 'New Route'}</div>
                                             ) : (
                                                 <Form.Item
                                                     name="network_id"
                                                     label="Network Identifier"
                                                     tooltip="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes"
-                                                    rules={[{required: true, message: 'Please add an identifier for this access route', whitespace: true}]}
+                                                    rules={[{
+                                                        required: true,
+                                                        message: 'Please add an identifier for this access route',
+                                                        whitespace: true
+                                                    }]}
                                                 >
-                                                    <Input placeholder="e.g. aws-eu-central-1-vpc" ref={inputNameRef} disabled={!setupNewRouteHA} onPressEnter={() => toggleEditName(false)} onBlur={() => toggleEditName(false)} autoComplete="off" maxLength={40}/>
+                                                    <Input placeholder="e.g. aws-eu-central-1-vpc" ref={inputNameRef}
+                                                           disabled={!setupNewRouteHA}
+                                                           onPressEnter={() => toggleEditName(false)}
+                                                           onBlur={() => toggleEditName(false)} autoComplete="off"
+                                                           maxLength={40}/>
                                                 </Form.Item>
                                             )}
-                                            { !editDescription ? (
-                                                <div className={"access-control input-text ant-drawer-subtitle"} onClick={() => toggleEditDescription(true)}>{formRoute.description && formRoute.description.trim() !== "" ? formRoute.description : 'Add description...'}</div>
+                                            {!editDescription ? (
+                                                <div className={"access-control input-text ant-drawer-subtitle"}
+                                                     onClick={() => toggleEditDescription(true)}>{formRoute.description && formRoute.description.trim() !== "" ? formRoute.description : 'Add description...'}</div>
                                             ) : (
                                                 <Form.Item
                                                     name="description"
                                                     label="Description"
                                                     style={{marginTop: 24}}
                                                 >
-                                                    <Input placeholder="Add description..." ref={inputDescriptionRef} disabled={!setupNewRouteHA} onPressEnter={() => toggleEditDescription(false)} onBlur={() => toggleEditDescription(false)} autoComplete="off" maxLength={200}/>
+                                                    <Input placeholder="Add description..." ref={inputDescriptionRef}
+                                                           disabled={!setupNewRouteHA}
+                                                           onPressEnter={() => toggleEditDescription(false)}
+                                                           onBlur={() => toggleEditDescription(false)}
+                                                           autoComplete="off" maxLength={200}/>
                                                 </Form.Item>
                                             )}
 
@@ -293,7 +321,8 @@ const RouteUpdate = () => {
                                     tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
                                     rules={[{validator: networkRangeValidator}]}
                                 >
-                                    <Input placeholder="e.g. 172.16.0.0/16" disabled={!setupNewRouteHA} autoComplete="off" minLength={9} maxLength={43}/>
+                                    <Input placeholder="e.g. 172.16.0.0/16" disabled={!setupNewRouteHA}
+                                           autoComplete="off" minLength={9} maxLength={43}/>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
@@ -316,12 +345,12 @@ const RouteUpdate = () => {
                                     tooltip="Assign a peer as a routing peer for the Network CIDR"
                                 >
                                     <Select
-                                            showSearch
-                                            style={{ width: '100%' }}
-                                            placeholder="Select Peer"
-                                            dropdownRender={dropDownRender}
-                                            options={options}
-                                            allowClear={true}
+                                        showSearch
+                                        style={{width: '100%'}}
+                                        placeholder="Select Peer"
+                                        dropdownRender={dropDownRender}
+                                        options={options}
+                                        allowClear={true}
                                     />
                                 </Form.Item>
                             </Col>
@@ -350,7 +379,8 @@ const RouteUpdate = () => {
                                     </Col>
                                     <Col flex="auto">
                                         <Paragraph>
-                                            You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes.
+                                            You can enable high-availability by assigning the same network identifier
+                                            and network CIDR to multiple routes.
                                         </Paragraph>
                                     </Col>
                                 </Row>
@@ -358,7 +388,8 @@ const RouteUpdate = () => {
                             <Col span={24}>
                                 <Divider></Divider>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                        href="https://netbird.io/docs/how-to-guides/network-routes" style={{color: 'rgb(07, 114, 128)'}}>Learn
+                                        href="https://netbird.io/docs/how-to-guides/network-routes"
+                                        style={{color: 'rgb(07, 114, 128)'}}>Learn
                                     more about network routes</Button>
                             </Col>
                         </Row>

@@ -1,9 +1,25 @@
 import React, {useEffect, useState} from 'react';
 import {
     Alert,
-    Button, Card,
-    Col, Dropdown, Input, Menu, message, Modal, Radio, RadioChangeEvent,
-    Row, Select, Space, Switch, Table, Tag, Tooltip, Typography, Divider
+    Button,
+    Card,
+    Col,
+    Divider,
+    Dropdown,
+    Input,
+    Menu,
+    message,
+    Modal,
+    Radio,
+    RadioChangeEvent,
+    Row,
+    Select,
+    Space,
+    Switch,
+    Table,
+    Tag,
+    Tooltip,
+    Typography
 } from "antd";
 import {Container} from "../components/Container";
 import {useDispatch, useSelector} from "react-redux";
@@ -12,23 +28,27 @@ import {Route} from "../store/route/types";
 import {actions as routeActions} from "../store/route";
 import {actions as peerActions} from "../store/peer";
 import {filter, sortBy} from "lodash";
-import { ExclamationCircleOutlined,QuestionCircleOutlined} from "@ant-design/icons";
+import {ExclamationCircleOutlined, QuestionCircleOutlined} from "@ant-design/icons";
 import RouteUpdate from "../components/RouteUpdate";
 import tableSpin from "../components/Spin";
-import {useOidcAccessToken} from '@axa-fr/react-oidc';
 import {
-    masqueradeDisabledMSG,masqueradeEnabledMSG,
-    peerToPeerIP,initPeerMaps,
-    RouteDataTable,GroupedDataTable,
-    transformGroupedDataTable,transformDataTable
+    GroupedDataTable,
+    initPeerMaps,
+    masqueradeDisabledMSG,
+    masqueradeEnabledMSG,
+    peerToPeerIP,
+    RouteDataTable,
+    transformDataTable,
+    transformGroupedDataTable
 } from '../utils/routes'
+import {useGetAccessTokenSilently} from "../utils/token";
 
-const { Title, Paragraph } = Typography;
-const { Column } = Table;
-const { confirm } = Modal;
+const {Title, Paragraph} = Typography;
+const {Column} = Table;
+const {confirm} = Modal;
 
 export const Routes = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
     const routes = useSelector((state: RootState) => state.route.data);
@@ -36,7 +56,7 @@ export const Routes = () => {
     const loading = useSelector((state: RootState) => state.route.loading);
     const deletedRoute = useSelector((state: RootState) => state.route.deletedRoute);
     const savedRoute = useSelector((state: RootState) => state.route.savedRoute);
-    const peers =  useSelector((state: RootState) => state.peer.data)
+    const peers = useSelector((state: RootState) => state.peer.data)
     const loadingPeer = useSelector((state: RootState) => state.peer.loading);
     const [showTutorial, setShowTutorial] = useState(true)
     const [textToSearch, setTextToSearch] = useState('');
@@ -46,7 +66,7 @@ export const Routes = () => {
     const [dataTable, setDataTable] = useState([] as RouteDataTable[]);
     const [routeToAction, setRouteToAction] = useState(null as RouteDataTable | null);
     const [groupedDataTable, setGroupedDataTable] = useState([] as GroupedDataTable[]);
-    const [expandRowsOnClick,setExpandRowsOnClick] = useState(true)
+    const [expandRowsOnClick, setExpandRowsOnClick] = useState(true)
 
     const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
 
@@ -56,7 +76,7 @@ export const Routes = () => {
         {label: "15", value: "15"}
     ]
 
-    const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'},{label: 'All', value: 'all'}]
+    const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
 
     const itemsMenuAction = [
         {
@@ -72,24 +92,24 @@ export const Routes = () => {
             label: (<Button type="text" block onClick={() => showConfirmDelete()}>Delete</Button>)
         }
     ]
-    const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
+    const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
-    const isShowTutorial = (routes:Route[]):boolean => {
+    const isShowTutorial = (routes: Route[]): boolean => {
         return (!routes.length || (routes.length === 1 && routes[0].network === "Default"))
     }
 
     useEffect(() => {
-        dispatch(routeActions.getRoutes.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [peers])
 
     useEffect(() => {
-        dispatch(peerActions.getPeers.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
 
-    const filterGroupedDataTable = (routes:GroupedDataTable[]):GroupedDataTable[] => {
+    const filterGroupedDataTable = (routes: GroupedDataTable[]): GroupedDataTable[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f:GroupedDataTable[] = filter(routes, (f) =>
-            (f.network_id.toLowerCase().includes(t) ||f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
+        let f: GroupedDataTable[] = filter(routes, (f) =>
+            (f.network_id.toLowerCase().includes(t) || f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
         ) as GroupedDataTable[]
         if (optionAllEnable !== "all") {
             f = filter(f, (f) => f.enabled)
@@ -97,47 +117,62 @@ export const Routes = () => {
         return f
     }
 
-    useEffect(() =>{
-        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes,peerIPToName)))
-    },[dataTable])
+    useEffect(() => {
+        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes, peerIPToName)))
+    }, [dataTable])
 
     useEffect(() => {
         setShowTutorial(isShowTutorial(routes))
-        setDataTable(sortBy(transformDataTable(routes,peerIPToName), "network_id"))
+        setDataTable(sortBy(transformDataTable(routes, peerIPToName), "network_id"))
     }, [routes])
 
     useEffect(() => {
-        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes,peerIPToName)))
+        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes, peerIPToName)))
     }, [textToSearch, optionAllEnable])
 
-    const styleNotification = { marginTop: 85 }
+    const styleNotification = {marginTop: 85}
 
     const saveKey = 'saving';
     useEffect(() => {
         if (savedRoute.loading) {
-            message.loading({ content: 'Saving...', key: saveKey, duration: 0, style: styleNotification })
+            message.loading({content: 'Saving...', key: saveKey, duration: 0, style: styleNotification})
         } else if (savedRoute.success) {
-            message.success({ content: 'Route has been successfully updated.', key: saveKey, duration: 2, style: styleNotification });
+            message.success({
+                content: 'Route has been successfully updated.',
+                key: saveKey,
+                duration: 2,
+                style: styleNotification
+            });
             dispatch(routeActions.setSetupNewRouteVisible(false))
-            dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }))
+            dispatch(routeActions.setSavedRoute({...savedRoute, success: false}))
             dispatch(routeActions.resetSavedRoute(null))
         } else if (savedRoute.error) {
-            message.error({ content: savedRoute.error.data? savedRoute.error.data : savedRoute.error.message, key: saveKey, duration: 2, style: styleNotification  });
-            dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }))
+            message.error({
+                content: savedRoute.error.data ? savedRoute.error.data : savedRoute.error.message,
+                key: saveKey,
+                duration: 2,
+                style: styleNotification
+            });
+            dispatch(routeActions.setSavedRoute({...savedRoute, error: null}))
             dispatch(routeActions.resetSavedRoute(null))
         }
     }, [savedRoute])
 
     const deleteKey = 'deleting';
     useEffect(() => {
-        const style = { marginTop: 85 }
+        const style = {marginTop: 85}
         if (deletedRoute.loading) {
-            message.loading({ content: 'Deleting...', key: deleteKey, style })
+            message.loading({content: 'Deleting...', key: deleteKey, style})
         } else if (deletedRoute.success) {
-            message.success({ content: 'Route has been successfully disabled.', key: deleteKey, duration: 2, style })
+            message.success({content: 'Route has been successfully disabled.', key: deleteKey, duration: 2, style})
             dispatch(routeActions.resetDeletedRoute(null))
         } else if (deletedRoute.error) {
-            message.error({ content: 'Failed to remove route. You might not have enough permissions.', key: deleteKey, duration: 2, style  })
+            message.error({
+                content: 'Failed to remove route. You might not have enough permissions.',
+                key: deleteKey,
+                duration: 2,
+                style
+            })
             dispatch(routeActions.resetDeletedRoute(null))
         }
     }, [deletedRoute])
@@ -147,10 +182,10 @@ export const Routes = () => {
     };
 
     const searchDataTable = () => {
-        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes,peerIPToName)))
+        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes, peerIPToName)))
     }
 
-    const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
+    const onChangeAllEnabled = ({target: {value}}: RadioChangeEvent) => {
         setOptionAllEnable(value)
     }
 
@@ -160,7 +195,7 @@ export const Routes = () => {
 
     const showConfirmDelete = () => {
         confirm({
-            icon: <ExclamationCircleOutlined />,
+            icon: <ExclamationCircleOutlined/>,
             width: 600,
             content: <Space direction="vertical" size="small">
                 {routeToAction &&
@@ -172,14 +207,16 @@ export const Routes = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(routeActions.deleteRoute.request({getAccessTokenSilently:accessToken, payload: routeToAction?.id || ''}));
+                dispatch(routeActions.deleteRoute.request({
+                    getAccessTokenSilently: getAccessTokenSilently,
+                    payload: routeToAction?.id || ''
+                }));
             },
             onCancel() {
                 setRouteToAction(null);
             },
         });
     }
-
 
 
     const onClickAddNewRoute = () => {
@@ -204,7 +241,7 @@ export const Routes = () => {
             network: routeToAction?.network,
             network_id: routeToAction?.network_id,
             description: routeToAction?.description,
-            peer: peerToPeerIP(routeToAction!.peer,peerNameToIP[routeToAction!.peer]),
+            peer: peerToPeerIP(routeToAction!.peer, peerNameToIP[routeToAction!.peer]),
             metric: routeToAction?.metric,
             masquerade: routeToAction?.masquerade,
             enabled: routeToAction?.enabled
@@ -220,8 +257,8 @@ export const Routes = () => {
             network: route.network,
             network_id: route.network_id,
             description: route.description,
-            peer: route.peer? peerToPeerIP(route.peer,peerNameToIP[route.peer]) : '',
-            metric: route.metric? route.metric : 9999,
+            peer: route.peer ? peerToPeerIP(route.peer, peerNameToIP[route.peer]) : '',
+            metric: route.metric ? route.metric : 9999,
             masquerade: route.masquerade,
             enabled: route.enabled
         } as Route))
@@ -239,7 +276,7 @@ export const Routes = () => {
         }
 
         confirm({
-            icon: <ExclamationCircleOutlined />,
+            icon: <ExclamationCircleOutlined/>,
             title: tittle,
             width: 600,
             content: content,
@@ -259,7 +296,7 @@ export const Routes = () => {
                 peer: peerNameToIP[record.peer],
                 masquerade: checked,
             } as Route
-            dispatch(routeActions.saveRoute.request({getAccessTokenSilently:accessToken, payload: route}));
+            dispatch(routeActions.saveRoute.request({getAccessTokenSilently: getAccessTokenSilently, payload: route}));
         })
     }
 
@@ -278,7 +315,8 @@ export const Routes = () => {
                     onFilter={(value: string | number | boolean, record) => (record as any).peer.includes(value)}
                     sorter={(a, b) => ((a as any).peer.localeCompare((b as any).peer))}
                     render={(text, record) => {
-                        return <span onClick={() => setRouteAndView(record as RouteDataTable)} className="tooltip-label">{text}</span>
+                        return <span onClick={() => setRouteAndView(record as RouteDataTable)}
+                                     className="tooltip-label">{text}</span>
                     }}
             />
             <Column title="Metric" dataIndex="metric" align="center"
@@ -286,7 +324,7 @@ export const Routes = () => {
                     sorter={(a, b) => ((a as any).metric - ((b as any).metric))}
             />
             <Column title="Status" dataIndex="enabled" align="center"
-                    render={(text:Boolean) => {
+                    render={(text: Boolean) => {
                         return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
                     }}
             />
@@ -302,17 +340,19 @@ export const Routes = () => {
         </Table>
     };
 
-    return(
+    return (
         <>
             <Container className="container-main">
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Network Routes</Title>
-                        <Paragraph>Network routes allow you to create routes to access other networks without installing NetBird on every resource.</Paragraph>
-                        <Space direction="vertical" size="large" style={{ display: 'flex' }}>
+                        <Paragraph>Network routes allow you to create routes to access other networks without installing
+                            NetBird on every resource.</Paragraph>
+                        <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />
+                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
+                                           placeholder="Search..." onChange={onChangeTextToSearch}/>
                                 </Col>
                                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                                     <Space size="middle">
@@ -323,7 +363,8 @@ export const Routes = () => {
                                             optionType="button"
                                             buttonStyle="solid"
                                         />
-                                        <Select value={pageSize.toString()} options={pageSizeOptions} onChange={onChangePageSize} className="select-rows-per-page-en"/>
+                                        <Select value={pageSize.toString()} options={pageSizeOptions}
+                                                onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
                                 </Col>
                                 <Col xs={24}
@@ -334,13 +375,15 @@ export const Routes = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Button type="primary" disabled={savedRoute.loading} onClick={onClickAddNewRoute}>Add Route</Button>
+                                            <Button type="primary" disabled={savedRoute.loading}
+                                                    onClick={onClickAddNewRoute}>Add Route</Button>
                                         </Col>
                                     </Row>
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
+                                <Alert message={failed.code} description={failed.message} type="error" showIcon
+                                       closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
@@ -360,14 +403,17 @@ export const Routes = () => {
                                     expandable={{
                                         expandedRowRender,
                                         expandRowByClick: expandRowsOnClick,
-                                        onExpandedRowsChange: (r) => {setExpandRowsOnClick((!r.length))},
+                                        onExpandedRowsChange: (r) => {
+                                            setExpandRowsOnClick((!r.length))
+                                        },
                                     }}
                                 >
                                     <Column title={() =>
                                         <span>
                                             Network Identifier
-                                            <Tooltip title="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes">
-                                                <QuestionCircleOutlined style={{ marginLeft: '0.25em', color: "gray" }}/>
+                                            <Tooltip
+                                                title="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes">
+                                                <QuestionCircleOutlined style={{marginLeft: '0.25em', color: "gray"}}/>
                                             </Tooltip>
                                         </span>
                                     }
@@ -377,17 +423,19 @@ export const Routes = () => {
                                             sorter={(a, b) => ((a as any).network_id.localeCompare((b as any).network_id))}
                                             render={(text, record) => {
                                                 const desc = (record as RouteDataTable).description.trim()
-                                                return <Tooltip title={desc !== "" ?  desc : "no description"} arrowPointAtCenter>{text}</Tooltip>
+                                                return <Tooltip title={desc !== "" ? desc : "no description"}
+                                                                arrowPointAtCenter>{text}</Tooltip>
                                             }}
                                     />
                                     <Column title="Network Range" dataIndex="network" align="center"
                                             onFilter={(value: string | number | boolean, record) => (record as any).network.includes(value)}
                                             sorter={(a, b) => ((a as any).network.localeCompare((b as any).network))}
-                                            // defaultSortOrder='ascend'
+                                        // defaultSortOrder='ascend'
                                     />
                                     <Column title="Status" dataIndex="enabled" align="center"
-                                            render={(text:Boolean) => {
-                                                return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
+                                            render={(text: Boolean) => {
+                                                return text ? <Tag color="green">enabled</Tag> :
+                                                    <Tag color="red">disabled</Tag>
                                             }}
                                     />
                                     <Column title="Masquerade Traffic" dataIndex="masquerade" align="center"
@@ -409,7 +457,9 @@ export const Routes = () => {
                                                 if (count > 1) {
                                                     tag = <Tag color="green">on</Tag>
                                                 }
-                                                return <div>{tag}<Divider type="vertical" /><Button type="link" onClick={() => setRouteAndView(record)}>Configure</Button></div>
+                                                return <div>{tag}<Divider type="vertical"/><Button type="link"
+                                                                                                   onClick={() => setRouteAndView(record)}>Configure</Button>
+                                                </div>
                                             }}
                                     />
                                 </Table>
