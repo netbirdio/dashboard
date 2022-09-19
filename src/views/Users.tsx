@@ -1,30 +1,23 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import { RootState } from "typesafe-actions";
-import { actions as userActions } from '../store/user';
+import {RootState} from "typesafe-actions";
+import {actions as userActions} from '../store/user';
 import {Container} from "../components/Container";
-import {useOidcAccessToken} from '@axa-fr/react-oidc';
-import {
-    Col,
-    Row,
-    Typography,
-    Table,
-    Card,
-    Space, Input, Select, Alert,
-} from "antd";
-import { User } from "../store/user/types";
+import {Alert, Card, Col, Input, Row, Select, Space, Table, Typography,} from "antd";
+import {User} from "../store/user/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
+import {useGetAccessTokenSilently} from "../utils/token";
 
-const { Title, Paragraph } = Typography;
-const { Column } = Table;
+const {Title, Paragraph} = Typography;
+const {Column} = Table;
 
 interface UserDataTable extends User {
     key: string
 }
 
 export const Users = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
     const users = useSelector((state: RootState) => state.user.data);
@@ -40,12 +33,12 @@ export const Users = () => {
         {label: "15", value: "15"}
     ]
 
-    const transformDataTable = (d:User[]):UserDataTable[] => {
-        return d.map(p => ({ key: p.id, ...p } as UserDataTable))
+    const transformDataTable = (d: User[]): UserDataTable[] => {
+        return d.map(p => ({key: p.id, ...p} as UserDataTable))
     }
 
     useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently:accessToken,payload: null}));
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
     useEffect(() => {
         setDataTable(transformDataTable(users))
@@ -55,9 +48,9 @@ export const Users = () => {
         setDataTable(transformDataTable(filterDataTable()))
     }, [textToSearch])
 
-    const filterDataTable = ():User[] => {
+    const filterDataTable = (): User[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f:User[] = filter(users, (f:User) =>
+        let f: User[] = filter(users, (f: User) =>
             ((f.email || f.id).toLowerCase().includes(t) || f.name.includes(t) || f.role.includes(t) || t === "")
         ) as User[]
         return f
@@ -76,20 +69,22 @@ export const Users = () => {
         setPageSize(parseInt(value.toString()))
     }
 
-    return(
+    return (
         <Container style={{paddingTop: "40px"}}>
             <Row>
                 <Col span={24}>
                     <Title level={4}>Users</Title>
                     <Paragraph>A list of all Users</Paragraph>
-                    <Space direction="vertical" size="large" style={{ display: 'flex' }}>
+                    <Space direction="vertical" size="large" style={{display: 'flex'}}>
                         <Row gutter={[16, 24]}>
                             <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                                <Input allowClear value={textToSearch} onPressEnter={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />
+                                <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
+                                       placeholder="Search..." onChange={onChangeTextToSearch}/>
                             </Col>
                             <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                                 <Space size="middle">
-                                    <Select value={pageSize.toString()} options={pageSizeOptions} onChange={onChangePageSize} className="select-rows-per-page-en"/>
+                                    <Select value={pageSize.toString()} options={pageSizeOptions}
+                                            onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                 </Space>
                             </Col>
                         </Row>
@@ -98,7 +93,11 @@ export const Users = () => {
                         }
                         <Card bodyStyle={{padding: 0}}>
                             <Table
-                                pagination={{pageSize, showSizeChanger: false, showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)}}
+                                pagination={{
+                                    pageSize,
+                                    showSizeChanger: false,
+                                    showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)
+                                }}
                                 className="card-table"
                                 showSorterTooltip={false}
                                 scroll={{x: true}}
@@ -108,16 +107,16 @@ export const Users = () => {
                                         onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
                                         sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
                                         defaultSortOrder='ascend'
-                                        render={(text:string | null, record, index) => {
+                                        render={(text: string | null, record, index) => {
                                             return (text && text.trim() !== "") ? text : (record as User).id
                                         }}
                                 />
                                 <Column title="Name" dataIndex="name"
                                         onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                        sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))} />
+                                        sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
                                 <Column title="Role" dataIndex="role"
                                         onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
-                                        sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))} />
+                                        sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}/>
                             </Table>
                         </Card>
                     </Space>

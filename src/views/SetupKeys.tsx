@@ -3,7 +3,6 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as setupKeyActions} from '../store/setup-key';
 import {Container} from "../components/Container";
-import {useOidcAccessToken} from '@axa-fr/react-oidc';
 import {
     Alert,
     Button,
@@ -33,6 +32,7 @@ import tableSpin from "../components/Spin";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
+import {useGetAccessTokenSilently} from "../utils/token";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
@@ -44,7 +44,8 @@ interface SetupKeyDataTable extends SetupKey {
 }
 
 export const SetupKeys = () => {
-    const {accessToken} = useOidcAccessToken()
+    //const {accessToken} = useOidcAccessToken()
+    const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
@@ -90,8 +91,8 @@ export const SetupKeys = () => {
     }
 
     useEffect(() => {
-        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently: accessToken, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: accessToken, payload: null}));
+        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -197,7 +198,7 @@ export const SetupKeys = () => {
             okType: 'danger',
             onOk() {
                 dispatch(setupKeyActions.deleteSetupKey.request({
-                    getAccessTokenSilently: accessToken,
+                    getAccessTokenSilently: getAccessTokenSilently,
                     payload: setupKeyToAction ? setupKeyToAction.id : ''
                 }));
             },
@@ -222,7 +223,7 @@ export const SetupKeys = () => {
             okType: 'danger',
             onOk() {
                 dispatch(setupKeyActions.saveSetupKey.request({
-                    getAccessTokenSilently: accessToken,
+                    getAccessTokenSilently: getAccessTokenSilently,
                     payload: {
                         id: setupKeyToAction ? setupKeyToAction.id : null,
                         revoked: true,

@@ -1,9 +1,23 @@
 import React, {useEffect, useState} from 'react';
 import {
     Alert,
-    Button, Card,
-    Col, Dropdown, Input, Menu, message, Modal, Popover, Radio, RadioChangeEvent,
-    Row, Select, Space, Table, Tag, Tooltip,
+    Button,
+    Card,
+    Col,
+    Dropdown,
+    Input,
+    Menu,
+    message,
+    Modal,
+    Popover,
+    Radio,
+    RadioChangeEvent,
+    Row,
+    Select,
+    Space,
+    Table,
+    Tag,
+    Tooltip,
     Typography
 } from "antd";
 import {Container} from "../components/Container";
@@ -21,10 +35,11 @@ import AccessControlNew from "../components/AccessControlNew";
 import {Group} from "../store/group/types";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
-import {useOidcAccessToken} from '@axa-fr/react-oidc';
-const { Title, Paragraph } = Typography;
-const { Column } = Table;
-const { confirm } = Modal;
+import {useGetAccessTokenSilently} from "../utils/token";
+
+const {Title, Paragraph} = Typography;
+const {Column} = Table;
+const {confirm} = Modal;
 
 interface RuleDataTable extends Rule {
     key: string;
@@ -41,7 +56,7 @@ interface GroupsToShow {
 }
 
 export const AccessControl = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
     const rules = useSelector((state: RootState) => state.rule.data);
@@ -59,7 +74,7 @@ export const AccessControl = () => {
     const [ruleToAction, setRuleToAction] = useState(null as RuleDataTable | null);
     const [groupsToShow, setGroupsToShow] = useState({} as GroupsToShow)
     const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible);
-    const [groupPopupVisible,setGroupPopupVisible] = useState(false as boolean|undefined)
+    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -67,7 +82,7 @@ export const AccessControl = () => {
         {label: "15", value: "15"}
     ]
 
-    const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'},{label: 'All', value: 'all'}]
+    const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
 
     const itemsMenuAction = [
         {
@@ -83,17 +98,17 @@ export const AccessControl = () => {
             label: (<Button type="text" block onClick={() => showConfirmDelete()}>Delete</Button>)
         }
     ]
-    const actionsMenu = (<Menu items={itemsMenuAction} ></Menu>)
+    const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
-    const getSourceDestinationLabel = (data:Group[]):string => {
+    const getSourceDestinationLabel = (data: Group[]): string => {
         return (!data) ? "No group" : (data.length > 1) ? `${data.length} Groups` : (data.length === 1) ? data[0].name : "No group"
     }
 
-    const isShowTutorial = (rules:Rule[]):boolean => {
+    const isShowTutorial = (rules: Rule[]): boolean => {
         return (!rules.length || (rules.length === 1 && rules[0].name === "Default"))
     }
 
-    const transformDataTable = (d:Rule[]):RuleDataTable[] => {
+    const transformDataTable = (d: Rule[]): RuleDataTable[] => {
         return d.map(p => {
             const sourceLabel = getSourceDestinationLabel(p.sources as Group[])
             const destinationLabel = getSourceDestinationLabel(p.destinations as Group[])
@@ -108,8 +123,8 @@ export const AccessControl = () => {
     }
 
     useEffect(() => {
-        dispatch(ruleActions.getRules.request({getAccessTokenSilently:accessToken, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently:accessToken, payload: null}));
+        dispatch(ruleActions.getRules.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -121,34 +136,49 @@ export const AccessControl = () => {
         setDataTable(transformDataTable(filterDataTable()))
     }, [textToSearch, optionAllEnable])
 
-    const styleNotification = { marginTop: 85 }
+    const styleNotification = {marginTop: 85}
 
     const saveKey = 'saving';
     useEffect(() => {
         if (savedRule.loading) {
-            message.loading({ content: 'Saving...', key: saveKey, duration: 0, style: styleNotification })
+            message.loading({content: 'Saving...', key: saveKey, duration: 0, style: styleNotification})
         } else if (savedRule.success) {
-            message.success({ content: 'Rule has been successfully saved.', key: saveKey, duration: 2, style: styleNotification });
+            message.success({
+                content: 'Rule has been successfully saved.',
+                key: saveKey,
+                duration: 2,
+                style: styleNotification
+            });
             dispatch(ruleActions.setSetupNewRuleVisible(false))
-            dispatch(ruleActions.setSavedRule({ ...savedRule, success: false }))
+            dispatch(ruleActions.setSavedRule({...savedRule, success: false}))
             dispatch(ruleActions.resetSavedRule(null))
         } else if (savedRule.error) {
-            message.error({ content: 'Failed to update rule. You might not have enough permissions.', key: saveKey, duration: 2, style: styleNotification  });
-            dispatch(ruleActions.setSavedRule({ ...savedRule, error: null }))
+            message.error({
+                content: 'Failed to update rule. You might not have enough permissions.',
+                key: saveKey,
+                duration: 2,
+                style: styleNotification
+            });
+            dispatch(ruleActions.setSavedRule({...savedRule, error: null}))
             dispatch(ruleActions.resetSavedRule(null))
         }
     }, [savedRule])
 
     const deleteKey = 'deleting';
     useEffect(() => {
-        const style = { marginTop: 85 }
+        const style = {marginTop: 85}
         if (deletedRule.loading) {
-            message.loading({ content: 'Deleting...', key: deleteKey, style })
+            message.loading({content: 'Deleting...', key: deleteKey, style})
         } else if (deletedRule.success) {
-            message.success({ content: 'Rule has been successfully disabled.', key: deleteKey, duration: 2, style })
+            message.success({content: 'Rule has been successfully disabled.', key: deleteKey, duration: 2, style})
             dispatch(ruleActions.resetDeletedRule(null))
         } else if (deletedRule.error) {
-            message.error({ content: 'Failed to remove rule. You might not have enough permissions.', key: deleteKey, duration: 2, style  })
+            message.error({
+                content: 'Failed to remove rule. You might not have enough permissions.',
+                key: deleteKey,
+                duration: 2,
+                style
+            })
             dispatch(ruleActions.resetDeletedRule(null))
         }
     }, [deletedRule])
@@ -162,7 +192,7 @@ export const AccessControl = () => {
         setDataTable(transformDataTable(data))
     }
 
-    const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
+    const onChangeAllEnabled = ({target: {value}}: RadioChangeEvent) => {
         setOptionAllEnable(value)
     }
 
@@ -172,7 +202,7 @@ export const AccessControl = () => {
 
     const showConfirmDelete = () => {
         confirm({
-            icon: <ExclamationCircleOutlined />,
+            icon: <ExclamationCircleOutlined/>,
             width: 600,
             content: <Space direction="vertical" size="small">
                 {ruleToAction &&
@@ -184,7 +214,10 @@ export const AccessControl = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(ruleActions.deleteRule.request({getAccessTokenSilently:accessToken, payload: ruleToAction?.id || ''}));
+                dispatch(ruleActions.deleteRule.request({
+                    getAccessTokenSilently: getAccessTokenSilently,
+                    payload: ruleToAction?.id || ''
+                }));
             },
             onCancel() {
                 setRuleToAction(null);
@@ -194,7 +227,7 @@ export const AccessControl = () => {
 
     const showConfirmDeactivate = () => {
         confirm({
-            icon: <ExclamationCircleOutlined />,
+            icon: <ExclamationCircleOutlined/>,
             width: 600,
             content: <Space direction="vertical" size="small">
                 {ruleToAction &&
@@ -214,13 +247,13 @@ export const AccessControl = () => {
         });
     }
 
-    const filterDataTable = ():Rule[] => {
+    const filterDataTable = (): Rule[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f:Rule[] = filter(rules, (f:Rule) =>
+        let f: Rule[] = filter(rules, (f: Rule) =>
             (f.name.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
         ) as Rule[]
         if (optionAllEnable !== "all") {
-             f = filter(f, (f:Rule) => !f.disabled)
+            f = filter(f, (f: Rule) => !f.disabled)
         }
         return f
     }
@@ -263,7 +296,7 @@ export const AccessControl = () => {
         } as Rule))
     }
 
-    const toggleModalGroups = (title:string, groups:Group[] | string[] | null, modalVisible:boolean) => {
+    const toggleModalGroups = (title: string, groups: Group[] | string[] | null, modalVisible: boolean) => {
         setGroupsToShow({
             title,
             groups,
@@ -277,7 +310,7 @@ export const AccessControl = () => {
         }
     }, [setupNewRuleVisible])
 
-    const onPopoverVisibleChange = (b:boolean) => {
+    const onPopoverVisibleChange = (b: boolean) => {
         if (setupNewRuleVisible) {
             setGroupPopupVisible(false)
         } else {
@@ -285,7 +318,7 @@ export const AccessControl = () => {
         }
     }
 
-    const renderPopoverGroups = (label: string, groups:Group[] | string[] | null, rule: RuleDataTable) => {
+    const renderPopoverGroups = (label: string, groups: Group[] | string[] | null, rule: RuleDataTable) => {
         const content = groups?.map((g, i) => {
             const _g = g as Group
             const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
@@ -294,7 +327,7 @@ export const AccessControl = () => {
                     <div key={i}>
                         <Tag
                             color="blue"
-                            style={{ marginRight: 3 }}
+                            style={{marginRight: 3}}
                         >
                             <strong>{_g.name}</strong>
                         </Tag>
@@ -314,17 +347,18 @@ export const AccessControl = () => {
         )
     }
 
-    return(
+    return (
         <>
             <Container className="container-main">
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Access Control</Title>
                         <Paragraph>Access rules help you manage access permissions in your organisation.</Paragraph>
-                        <Space direction="vertical" size="large" style={{ display: 'flex' }}>
+                        <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />
+                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
+                                           placeholder="Search..." onChange={onChangeTextToSearch}/>
                                 </Col>
                                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                                     <Space size="middle">
@@ -335,7 +369,8 @@ export const AccessControl = () => {
                                             optionType="button"
                                             buttonStyle="solid"
                                         />
-                                        <Select value={pageSize.toString()} options={pageSizeOptions} onChange={onChangePageSize} className="select-rows-per-page-en"/>
+                                        <Select value={pageSize.toString()} options={pageSizeOptions}
+                                                onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
                                 </Col>
                                 <Col xs={24}
@@ -346,13 +381,15 @@ export const AccessControl = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Button type="primary" disabled={savedRule.loading} onClick={onClickAddNewRule}>Add Rule</Button>
+                                            <Button type="primary" disabled={savedRule.loading}
+                                                    onClick={onClickAddNewRule}>Add Rule</Button>
                                         </Col>
                                     </Row>
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.code} description={failed.message} type="error" showIcon closable/>
+                                <Alert message={failed.code} description={failed.message} type="error" showIcon
+                                       closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
@@ -375,24 +412,27 @@ export const AccessControl = () => {
                                             defaultSortOrder='ascend'
                                             render={(text, record, index) => {
                                                 const desc = (record as RuleDataTable).description.trim()
-                                                return <Tooltip title={desc !== "" ?  desc : "no description"} arrowPointAtCenter>
-                                                    <span onClick={() => setRuleAndView(record as RuleDataTable)} className="tooltip-label">{text}</span>
+                                                return <Tooltip title={desc !== "" ? desc : "no description"}
+                                                                arrowPointAtCenter>
+                                                    <span onClick={() => setRuleAndView(record as RuleDataTable)}
+                                                          className="tooltip-label">{text}</span>
                                                 </Tooltip>
                                             }}
                                     />
                                     <Column title="Status" dataIndex="disabled"
-                                            render={(text:Boolean, record:RuleDataTable, index) => {
-                                                return text ? <Tag color="red">disabled</Tag> : <Tag color="green">enabled</Tag>
+                                            render={(text: Boolean, record: RuleDataTable, index) => {
+                                                return text ? <Tag color="red">disabled</Tag> :
+                                                    <Tag color="green">enabled</Tag>
                                             }}
                                     />
                                     <Column title="Sources" dataIndex="sourceLabel"
-                                            render={(text, record:RuleDataTable, index) => {
+                                            render={(text, record: RuleDataTable, index) => {
                                                 //return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Sources`, record.Source, true)}>{text}</Button>
-                                                return renderPopoverGroups(text, record.sources,record as RuleDataTable)
+                                                return renderPopoverGroups(text, record.sources, record as RuleDataTable)
                                             }}
                                     />
                                     <Column title="Direction" dataIndex="flow"
-                                            render={(text, record:RuleDataTable, index) => {
+                                            render={(text, record: RuleDataTable, index) => {
                                                 const s = {minWidth: 50, textAlign: "center"} as React.CSSProperties
                                                 if (text === "bidirect")
                                                     return <Tag color="processing" style={s}><img src={bidirect}/></Tag>
@@ -401,22 +441,23 @@ export const AccessControl = () => {
                                                 } else if (text === "destToSrc") {
                                                     return <Tag color="green" style={s}><img src={inbound}/></Tag>
                                                 }
-                                                return <Tag color="red" style={s}><CloseOutlined /></Tag>
+                                                return <Tag color="red" style={s}><CloseOutlined/></Tag>
                                             }}
                                     />
                                     <Column title="Destinations" dataIndex="destinationLabel"
-                                            render={(text, record:RuleDataTable, index) => {
+                                            render={(text, record: RuleDataTable, index) => {
                                                 //return <Button type="link" onClick={() => toggleModalGroups(`${record.name} - Destinations`, record.destinations, true)}>{text}</Button>
-                                                return renderPopoverGroups(text, record.destinations,record as RuleDataTable)
+                                                return renderPopoverGroups(text, record.destinations, record as RuleDataTable)
                                             }}
                                     />
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
                                                 if (deletedRule.loading || savedRule.loading) return <></>
-                                                return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
-                                                                     onVisibleChange={visible => {
-                                                                         if (visible) setRuleToAction(record as RuleDataTable)
-                                                                     }}></Dropdown.Button>
+                                                return <Dropdown.Button type="text" overlay={actionsMenu}
+                                                                        trigger={["click"]}
+                                                                        onVisibleChange={visible => {
+                                                                            if (visible) setRuleToAction(record as RuleDataTable)
+                                                                        }}></Dropdown.Button>
                                             }}
                                     />
                                 </Table>
@@ -431,7 +472,9 @@ export const AccessControl = () => {
                     </Col>
                 </Row>
             </Container>
-            <AccessControlModalGroups data={groupsToShow.groups} title={groupsToShow.title} visible={groupsToShow.modalVisible} onCancel={() => toggleModalGroups("", [], false)}/>
+            <AccessControlModalGroups data={groupsToShow.groups} title={groupsToShow.title}
+                                      visible={groupsToShow.modalVisible}
+                                      onCancel={() => toggleModalGroups("", [], false)}/>
             <AccessControlNew/>
         </>
     )
