@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
@@ -6,7 +6,7 @@ import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
 import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
-import {useOidcAccessToken} from '@axa-fr/react-oidc';
+import {useOidc, useOidcAccessToken} from '@axa-fr/react-oidc';
 import {
     Alert,
     Button,
@@ -39,10 +39,12 @@ import {Group, GroupPeer} from "../store/group/types";
 import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
 import {TooltipPlacement} from "antd/es/tooltip";
+import {useGetAccessTokenSilently} from "../utils/token";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
 const {confirm} = Modal;
+
 
 interface PeerDataTable extends Peer {
     key: string;
@@ -52,7 +54,8 @@ interface PeerDataTable extends Peer {
 
 export const Peers = () => {
 
-    const {accessToken} = useOidcAccessToken()
+    //const {accessToken} = useOidcAccessToken()
+    const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
     const peers = useSelector((state: RootState) => state.peer.data);
@@ -64,14 +67,14 @@ export const Peers = () => {
     const loadingGroups = useSelector((state: RootState) => state.group.loading);
     const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
     const updatedPeer = useSelector((state: RootState) => state.peer.updatedPeer);
-    const updateGroupsVisible =   useSelector((state: RootState) => state.peer.updateGroupsVisible)
+    const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
     const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
-    const [groupPopupVisible,setGroupPopupVisible] = useState(false as boolean|undefined)
+    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -109,9 +112,9 @@ export const Peers = () => {
     }
 
     useEffect(() => {
-        dispatch(peerActions.getPeers.request({getAccessTokenSilently: accessToken, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: accessToken, payload: null}));
-        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: accessToken, payload: null}));
+        dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -242,7 +245,9 @@ export const Peers = () => {
                     <Alert
                         message={
                             <div>
-                                <>This peer is part of one or more network routes. Removing this peer will disable the following routes:</>
+                                <>This peer is part of one or more network routes. Removing this peer will disable the
+                                    following routes:
+                                </>
                                 <List
                                     dataSource={peerRoutes}
                                     renderItem={item => <List.Item><Text strong>- {item}</Text></List.Item>}
@@ -267,7 +272,7 @@ export const Peers = () => {
             okType: 'danger',
             onOk() {
                 dispatch(peerActions.deletedPeer.request({
-                    getAccessTokenSilently: accessToken,
+                    getAccessTokenSilently: getAccessTokenSilently,
                     payload: peerToAction ? peerToAction.ip : ''
                 }));
             },
@@ -298,7 +303,7 @@ export const Peers = () => {
             ssh_enabled: checked,
             name: record.name
         } as Peer
-        dispatch(peerActions.updatePeer.request({getAccessTokenSilently: accessToken, payload: peer}));
+        dispatch(peerActions.updatePeer.request({getAccessTokenSilently: getAccessTokenSilently, payload: peer}));
 
     }
 
@@ -313,7 +318,7 @@ export const Peers = () => {
         }
     }, [updateGroupsVisible])
 
-    const onPopoverVisibleChange = (b:boolean) => {
+    const onPopoverVisibleChange = (b: boolean) => {
         if (updateGroupsVisible) {
             setGroupPopupVisible(false)
         } else {
@@ -354,7 +359,8 @@ export const Peers = () => {
         }
 
         return (
-            <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent} onVisibleChange={onPopoverVisibleChange} visible={groupPopupVisible}
+            <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent}
+                     onVisibleChange={onPopoverVisibleChange} visible={groupPopupVisible}
                      title={null}>
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>

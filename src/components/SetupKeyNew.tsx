@@ -21,12 +21,12 @@ import {
 import {RootState} from "typesafe-actions";
 import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import {SetupKey, SetupKeyToSave} from "../store/setup-key/types";
-import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import {Header} from "antd/es/layout/layout";
 import {formatDate, timeAgo} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
+import {useGetAccessTokenSilently} from "../utils/token";
 
 const {Option} = Select;
 
@@ -52,7 +52,7 @@ interface FormSetupKey extends SetupKey {
 }
 
 const SetupKeyNew = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const setupNewKeyVisible = useSelector((state: RootState) => state.setupKey.setupNewKeyVisible)
     const setupKey = useSelector((state: RootState) => state.setupKey.setupKey)
@@ -117,7 +117,7 @@ const SetupKeyNew = () => {
             .then((values) => {
                 let setupKeyToSave = createSetupKeyToSave()
                 dispatch(setupKeyActions.saveSetupKey.request({
-                    getAccessTokenSilently: accessToken,
+                    getAccessTokenSilently: getAccessTokenSilently,
                     payload: setupKeyToSave
                 }))
             })
