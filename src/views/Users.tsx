@@ -3,8 +3,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as userActions} from '../store/user';
 import {Container} from "../components/Container";
-import {useOidcAccessToken} from '@axa-fr/react-oidc';
-import {Alert, Button, Card, Col, Input, Row, Select, Space, Table, Typography,} from "antd";
+import {Alert, Button, Card, Col, Dropdown, Input, Menu, Row, Select, Space, Table, Typography,} from "antd";
 import {User} from "../store/user/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
@@ -83,6 +82,25 @@ export const Users = () => {
         setPageSize(parseInt(value.toString()))
     }
 
+    const onClickEdit = () => {
+        dispatch(userActions.setUpdateUserDrawerVisible(true));
+        dispatch(userActions.setUser({
+            id: userToAction?.id,
+            email: userToAction?.email,
+            auto_groups: userToAction?.auto_groups ? userToAction?.auto_groups : [],
+            name: userToAction?.name
+        } as User));
+    }
+
+    const itemsMenuAction = [
+        {
+            key: "edit",
+            label: (<Button type="text" onClick={() => onClickEdit()}>View</Button>)
+        },
+
+    ]
+    const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
+
     return (
         <>
             <Container style={{paddingTop: "40px"}}>
@@ -135,6 +153,16 @@ export const Users = () => {
                                     <Column title="Role" dataIndex="role"
                                             onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
                                             sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}/>
+                                    <Column title="" align="center" width="30px"
+                                            render={(text, record, index) => {
+                                                return (
+                                                    <Dropdown.Button type="text" overlay={actionsMenu}
+                                                                     trigger={["click"]}
+                                                                     onVisibleChange={visible => {
+                                                                         if (visible) setUserToAction(record as UserDataTable)
+                                                                     }}></Dropdown.Button>)
+                                            }}
+                                    />
                                 </Table>
                             </Card>
                         </Space>
