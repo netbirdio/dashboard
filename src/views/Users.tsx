@@ -8,6 +8,7 @@ import {Alert, Button, Card, Col, Input, Row, Select, Space, Table, Typography,}
 import {User} from "../store/user/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
+import {useGetAccessTokenSilently} from "../utils/token";
 import UserUpdate from "../components/UserUpdate";
 
 const {Title, Paragraph} = Typography;
@@ -18,7 +19,7 @@ interface UserDataTable extends User {
 }
 
 export const Users = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
     const users = useSelector((state: RootState) => state.user.data);
@@ -51,7 +52,7 @@ export const Users = () => {
     }
 
     useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently: accessToken, payload: null}));
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
     useEffect(() => {
         setDataTable(transformDataTable(users))
