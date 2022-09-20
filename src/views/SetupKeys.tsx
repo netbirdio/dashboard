@@ -183,31 +183,6 @@ export const SetupKeys = () => {
         setPageSize(parseInt(value.toString()))
     }
 
-    const showConfirmDelete = () => {
-        confirm({
-            icon: <ExclamationCircleOutlined/>,
-            width: 600,
-            content: <Space direction="vertical" size="small">
-                {setupKeyToAction &&
-                    <>
-                        <Title level={5}>Delete setupKey "{setupKeyToAction ? setupKeyToAction.name : ''}"</Title>
-                        <Paragraph>Are you sure you want to delete key?</Paragraph>
-                    </>
-                }
-            </Space>,
-            okType: 'danger',
-            onOk() {
-                dispatch(setupKeyActions.deleteSetupKey.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
-                    payload: setupKeyToAction ? setupKeyToAction.id : ''
-                }));
-            },
-            onCancel() {
-                setSetupKeyToAction(null);
-            },
-        });
-    }
-
     const showConfirmRevoke = () => {
         confirm({
             icon: <ExclamationCircleOutlined/>,
