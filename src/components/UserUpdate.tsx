@@ -27,7 +27,7 @@ const UserUpdate = () => {
     const [form] = Form.useForm()
 
     useEffect(() => {
-        setTagGroups(groups?.map(g => g.name) || [])
+        setTagGroups(groups?.filter(g => g.name != "All").map(g => g.name) || [])
     }, [groups])
 
     useEffect(() => {
@@ -226,7 +226,7 @@ const UserUpdate = () => {
                                 <Form.Item
                                     name="autoGroupsNames"
                                     label="Auto-assigned groups"
-                                    tooltip="Every peer enrolled with this key will be automatically added to these groups"
+                                    tooltip="Every peer enrolled with this user will be automatically added to these groups"
                                     rules={[{validator: selectValidator}]}
                                 >
                                     <Select mode="tags"
@@ -246,10 +246,10 @@ const UserUpdate = () => {
                             </Col>
                             <Col span={24}>
                                 <Divider></Divider>
-                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
+                                {/*<Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
                                         href="https://docs.netbird.io/docs/overview/setup-keys"
                                         style={{color: 'rgb(07, 114, 128)'}}>Learn
-                                    more about setup keys</Button>
+                                    more about setup keys</Button>*/}
                             </Col>
                         </Row>
                     </Form>
