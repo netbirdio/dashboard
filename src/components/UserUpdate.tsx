@@ -11,11 +11,12 @@ import {FormUser, User, UserToSave} from "../store/user/types";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {actions as userActions} from "../store/user";
+import {useGetAccessTokenSilently} from "../utils/token";
 
 const {Option} = Select;
 
 const UserUpdate = () => {
-    const {accessToken} = useOidcAccessToken()
+    const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const user = useSelector((state: RootState) => state.user.user)
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
@@ -151,7 +152,7 @@ const UserUpdate = () => {
             .then((values) => {
                 let userToSave = createUserToSave()
                 dispatch(userActions.saveUser.request({
-                    getAccessTokenSilently: accessToken,
+                    getAccessTokenSilently: getAccessTokenSilently,
                     payload: userToSave
                 }))
             })

@@ -1,5 +1,5 @@
 import {ActionType, createAction, createAsyncAction} from 'typesafe-actions';
-import { User } from './types';
+import {User, UserToSave} from './types';
 import {ApiError, CreateResponse, RequestPayload} from '../../services/api-client/types';
 
 const actions = {
@@ -18,7 +18,7 @@ const actions = {
       'SAVE_USER_REQUEST',
       'SAVE_USER_SUCCESS',
       'SAVE_USER_FAILURE',
-  )<RequestPayload<User>, CreateResponse<User | null>, CreateResponse<User | null>>(),
+  )<RequestPayload<UserToSave>, CreateResponse<User | null>, CreateResponse<User | null>>(),
   setSavedUser: createAction('SET_SAVED_USER')<CreateResponse<User | null>>(),
   resetSavedUser: createAction('RESET_SAVED_USER')<null>(),
 };
