@@ -10,6 +10,7 @@ import {Group} from "../store/group/types";
 import {FormUser, User} from "../store/user/types";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
+import {actions as userActions} from "../store/user";
 
 const {Option} = Select;
 
@@ -162,18 +163,16 @@ const UserUpdate = () => {
     };
 
     const onCancel = () => {
-        /*if (savedSetupKey.loading) return
-        dispatch(setupKeyActions.setSetupKey({
-            name: "",
-            type: "reusable",
-            key: "",
-            last_used: "",
-            expires: "",
-            state: "valid",
-            auto_groups: new Array()
-        } as SetupKey))
-        setFormSetupKey({} as FormSetupKey)
-        setVisibleNewSetupKey(false)*/
+        if (savedUser.loading) return
+        dispatch(userActions.setUser({
+            id: "",
+            email: "",
+            role: "",
+            auto_groups: [],
+            name: user.name
+        } as User));
+        setFormUser({} as FormUser)
+        dispatch(userActions.setUpdateUserDrawerVisible(false));
     }
 
     const onChange = (data: any) => {
