@@ -9,6 +9,7 @@ import {filter} from "lodash";
 import tableSpin from "../components/Spin";
 import {useGetAccessTokenSilently} from "../utils/token";
 import UserUpdate from "../components/UserUpdate";
+import {actions as groupActions} from "../store/group";
 
 const {Title, Paragraph} = Typography;
 const {Column} = Table;
@@ -52,6 +53,7 @@ export const Users = () => {
 
     useEffect(() => {
         dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
     useEffect(() => {
         setDataTable(transformDataTable(users))
