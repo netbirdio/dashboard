@@ -1,11 +1,9 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {Button, Col, DatePickerProps, Divider, Drawer, Form, Row, Select, Space, Tag, Typography} from "antd";
+import {Button, Col, Divider, Drawer, Form, Row, Select, Space, Tag} from "antd";
 import {RootState} from "typesafe-actions";
 import {CloseOutlined, QuestionCircleFilled} from "@ant-design/icons";
-import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import {Header} from "antd/es/layout/layout";
-import {formatDate, timeAgo} from "../utils/common";
 import {Group} from "../store/group/types";
 import {FormUser, User, UserToSave} from "../store/user/types";
 import {RuleObject} from "antd/lib/form";
@@ -40,6 +38,9 @@ const UserUpdate = () => {
             allGroups.set(g.id!, g)
         })
 
+        if (!user.auto_groups) {
+            user.auto_groups = []
+        }
         let formKeyGroups = user.auto_groups.filter(g => allGroups.get(g)).map(g => allGroups.get(g)!.name)
 
         const fUser = {
@@ -223,7 +224,7 @@ const UserUpdate = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="autoGroupNames"
+                                    name="autoGroupsNames"
                                     label="Auto-assigned groups"
                                     tooltip="Every peer enrolled with this key will be automatically added to these groups"
                                     rules={[{validator: selectValidator}]}
