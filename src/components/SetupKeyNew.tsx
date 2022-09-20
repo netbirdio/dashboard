@@ -20,7 +20,7 @@ import {
 } from "antd";
 import {RootState} from "typesafe-actions";
 import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
-import {SetupKey, SetupKeyToSave} from "../store/setup-key/types";
+import {SetupKey, SetupKeyToSave, FormSetupKey} from "../store/setup-key/types";
 import {Header} from "antd/es/layout/layout";
 import {formatDate, timeAgo} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
@@ -45,10 +45,6 @@ const customLastUsedFormat: DatePickerProps['format'] = value => {
         return "unused"
     }
     return ago
-}
-
-interface FormSetupKey extends SetupKey {
-    autoGroupNames: string[]
 }
 
 const SetupKeyNew = () => {

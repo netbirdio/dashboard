@@ -1,35 +1,18 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {Button, Col, DatePickerProps, Divider, Drawer, Form, Input, Row, Select, Space, Tag, Typography} from "antd";
+import {Button, Col, DatePickerProps, Divider, Drawer, Form, Row, Select, Space, Tag, Typography} from "antd";
 import {RootState} from "typesafe-actions";
-import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
+import {CloseOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
 import {Header} from "antd/es/layout/layout";
 import {formatDate, timeAgo} from "../utils/common";
 import {Group} from "../store/group/types";
-import {FormUser, User} from "../store/user/types";
+import {FormUser, User, UserToSave} from "../store/user/types";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {actions as userActions} from "../store/user";
 
 const {Option} = Select;
-
-const {Text} = Typography;
-
-const customExpiresFormat: DatePickerProps['format'] = value => {
-    return formatDate(value)
-}
-
-const customLastUsedFormat: DatePickerProps['format'] = value => {
-    if (value.toString().startsWith("0001")) {
-        return "never"
-    }
-    let ago = timeAgo(value.toString())
-    if (!ago) {
-        return "unused"
-    }
-    return ago
-}
 
 const UserUpdate = () => {
     const {accessToken} = useOidcAccessToken()
@@ -41,7 +24,7 @@ const UserUpdate = () => {
     const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[])
     const [tagGroups, setTagGroups] = useState([] as string[])
 
-    const [formUser, setFormUser] = useState({} as User)
+    const [formUser, setFormUser] = useState({} as FormUser)
     const [form] = Form.useForm()
 
     useEffect(() => {
@@ -60,7 +43,7 @@ const UserUpdate = () => {
 
         const fUser = {
             ...user,
-            auto_groups_names: user.auto_groups ? formKeyGroups : [],
+            autoGroupsNames: user.auto_groups ? formKeyGroups : [],
         } as FormUser
         setFormUser(fUser)
         form.setFieldsValue(fUser)
@@ -148,14 +131,29 @@ const UserUpdate = () => {
         setSelectedTagGroups(validatedValues)
     };
 
+    const createUserToSave = (): UserToSave => {
+        const autoGroups = groups?.filter(g => formUser.autoGroupsNames.includes(g.name)).map(g => g.id || '') || []
+        // find groups that do not yet exist (newly added by the user)
+        const allGroupsNames: string[] = groups?.map(g => g.name);
+        const groupsToCreate = formUser.autoGroupsNames.filter(s => !allGroupsNames.includes(s))
+        return {
+            id: formUser.id,
+            email: formUser.email,
+            role: formUser.role,
+            name: formUser.name,
+            groupsToCreate: groupsToCreate,
+            auto_groups: autoGroups,
+        } as UserToSave
+    }
+
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
-                /*let setupKeyToSave = createSetupKeyToSave()
-                dispatch(setupKeyActions.saveSetupKey.request({
+                let userToSave = createUserToSave()
+                dispatch(userActions.saveUser.request({
                     getAccessTokenSilently: accessToken,
-                    payload: setupKeyToSave
-                }))*/
+                    payload: userToSave
+                }))
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
@@ -214,10 +212,10 @@ const UserUpdate = () => {
                                                 </button>
                                             }
                                         </Col>
-                                       {/* Name Label*/}
+                                        {/* Name Label*/}
                                         <Col flex="auto">
-                                                <div className={"access-control input-text ant-drawer-title"}>
-                                                    {formUser.name}</div>
+                                            <div className={"access-control input-text ant-drawer-title"}>
+                                                {formUser.name}</div>
                                         </Col>
                                     </Row>
                                 </Header>

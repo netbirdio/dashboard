@@ -7,5 +7,10 @@ export interface User {
 }
 
 export interface FormUser extends User {
-    auto_groups_names: string[]
+    autoGroupsNames: string[]
+}
+
+export interface UserToSave extends User
+{
+    groupsToCreate: string[]
 }
