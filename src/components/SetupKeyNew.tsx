@@ -20,7 +20,7 @@ import {
 } from "antd";
 import {RootState} from "typesafe-actions";
 import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
-import {SetupKey, SetupKeyToSave, FormSetupKey} from "../store/setup-key/types";
+import {FormSetupKey, SetupKey, SetupKeyToSave} from "../store/setup-key/types";
 import {Header} from "antd/es/layout/layout";
 import {formatDate, timeAgo} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
@@ -80,7 +80,7 @@ const SetupKeyNew = () => {
             allGroups.set(g.id!, g)
         })
 
-        let formKeyGroups :string[] = []
+        let formKeyGroups: string[] = []
 
         if (setupKey.auto_groups) {
             formKeyGroups = setupKey.auto_groups.filter(g => allGroups.get(g)).map(g => allGroups.get(g)!.name)
@@ -97,7 +97,7 @@ const SetupKeyNew = () => {
     const createSetupKeyToSave = (): SetupKeyToSave => {
         const autoGroups = groups?.filter(g => formSetupKey.autoGroupNames.includes(g.name)).map(g => g.id || '') || []
         // find groups that do not yet exist (newly added by the user)
-        const allGroupsNames : string[] = groups?.map(g => g.name);
+        const allGroupsNames: string[] = groups?.map(g => g.name);
         const groupsToCreate = formSetupKey.autoGroupNames.filter(s => !allGroupsNames.includes(s))
         return {
             id: formSetupKey.id,
@@ -238,6 +238,19 @@ const SetupKeyNew = () => {
         </>
     )
 
+    const changesDetected = (): boolean => {
+        return formSetupKey.name == null || formSetupKey.name !== setupKey.name || groupsChanged()
+    }
+
+    const groupsChanged = (): boolean => {
+        if (formSetupKey.autoGroupNames.length != setupKey.auto_groups.length) {
+            return true
+        }
+        const formGroupIds = groups?.filter(g => formSetupKey.autoGroupNames.includes(g.name)).map(g => g.id || '') || []
+
+        return setupKey.auto_groups?.filter(g => !formGroupIds.includes(g)).length > 0
+    }
+
     return (
         <>
             {setupKey &&
@@ -250,7 +263,7 @@ const SetupKeyNew = () => {
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button disabled={savedSetupKey.loading} onClick={onCancel}>Cancel</Button>
-                            <Button type="primary" disabled={savedSetupKey.loading}
+                            <Button type="primary" disabled={savedSetupKey.loading || !changesDetected()}
                                     onClick={handleFormSubmit}>{`${formSetupKey.id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
@@ -393,7 +406,7 @@ const SetupKeyNew = () => {
                                             tagRender={tagRender}
                                             onChange={handleChangeTags}
                                             dropdownRender={dropDownRender}
-                                            // enabled only when we have a new key !setupkey.id or when the key is valid
+                                        // enabled only when we have a new key !setupkey.id or when the key is valid
                                             disabled={!(!setupKey.id || setupKey.valid)}
                                     >
                                         {
