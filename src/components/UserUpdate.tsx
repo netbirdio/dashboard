@@ -232,7 +232,7 @@ const UserUpdate = () => {
                                         </Col>
                                         {/* Name Label*/}
                                         <Col flex="auto">
-                                            <div className={"access-control input-text ant-drawer-title"}>
+                                            <div className={"ant-drawer-title"}>
                                                 {formUser.name}</div>
                                         </Col>
                                     </Row>
