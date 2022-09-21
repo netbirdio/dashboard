@@ -179,6 +179,22 @@ const UserUpdate = () => {
         setFormUser({...formUser, ...data})
     }
 
+    const changesDetected = (): boolean => {
+        return groupsChanged()
+    }
+
+    const groupsChanged = (): boolean => {
+        if (!formUser.autoGroupsNames) {
+            return false
+        }
+        if (formUser.autoGroupsNames.length != user.auto_groups.length) {
+            return true
+        }
+        const formGroupIds = groups?.filter(g => formUser.autoGroupsNames.includes(g.name)).map(g => g.id || '') || []
+
+        return user.auto_groups?.filter(g => !formGroupIds.includes(g)).length > 0
+    }
+
     return (
         <>
             {user &&
@@ -191,7 +207,7 @@ const UserUpdate = () => {
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button disabled={savedUser.loading} onClick={onCancel}>Cancel</Button>
-                            <Button type="primary" disabled={savedUser.loading}
+                            <Button type="primary" disabled={savedUser.loading || !changesDetected()}
                                     onClick={handleFormSubmit}>Save</Button>
                         </Space>
                     }
