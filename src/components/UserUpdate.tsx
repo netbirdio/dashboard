@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {Button, Col, Divider, Drawer, Form, Row, Select, Space, Tag} from "antd";
+import {Button, Col, Divider, Drawer, Form, Input, Row, Select, Space, Tag} from "antd";
 import {RootState} from "typesafe-actions";
 import {CloseOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import {Header} from "antd/es/layout/layout";
@@ -221,6 +221,18 @@ const UserUpdate = () => {
                                         </Col>
                                     </Row>
                                 </Header>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="email"
+                                    label="Email"
+                                >
+                                    <Input
+                                        disabled={true}
+                                        value={formUser.email}
+                                        style={{color: "#5a5c5a"}}
+                                        autoComplete="off"/>
+                                </Form.Item>
                             </Col>
                             <Col span={24}>
                                 <Form.Item

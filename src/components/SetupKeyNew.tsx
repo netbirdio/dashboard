@@ -312,6 +312,7 @@ const SetupKeyNew = () => {
                                     >
                                         <Input
                                             disabled={true}
+                                            style={{color: "#5a5c5a"}}
                                             autoComplete="off"/>
                                     </Form.Item>
                                 </Col>
@@ -324,7 +325,8 @@ const SetupKeyNew = () => {
                                         label="Expires"
                                         tooltip="The expiration date of the key"
                                     >
-                                        <DatePicker disabled={true} style={{width: '100%'}}
+                                        <DatePicker disabled={true}
+                                                    style={{width: "100%", color: "#5a5c5a"}}
                                                     format={customExpiresFormat}/>
                                     </Form.Item>
                                 </Col>
@@ -336,7 +338,8 @@ const SetupKeyNew = () => {
                                         label="Last Used"
                                         tooltip="The last time the key was used"
                                     >
-                                        <DatePicker disabled={true} style={{width: '100%'}}
+                                        <DatePicker disabled={true}
+                                                    style={{width: "100%", color: "#5a5c5a"}}
                                                     format={customLastUsedFormat}/>
                                     </Form.Item>
                                 </Col>
