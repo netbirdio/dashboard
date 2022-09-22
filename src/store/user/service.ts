@@ -1,6 +1,6 @@
 import {ApiResponse, RequestPayload} from '../../services/api-client/types';
 import { apiClient } from '../../services/api-client';
-import { User } from './types';
+import {User, UserToSave} from './types';
 
 export default {
   async getUsers(payload:RequestPayload<null>): Promise<ApiResponse<User[]>> {
@@ -8,5 +8,14 @@ export default {
       `/api/users`,
         payload
     );
-  }
+  },
+  async editUser(payload:RequestPayload<UserToSave>): Promise<ApiResponse<User>> {
+    const id = payload.payload.id
+    // @ts-ignore
+    delete payload.payload.id
+    return apiClient.put<User>(
+        `/api/users/${id}`,
+        payload
+    );
+  },
 };
