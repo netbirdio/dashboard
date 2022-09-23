@@ -65,6 +65,7 @@ export const Users = () => {
         dispatch(userActions.setUser({
             id: user.id,
             email: user.email,
+            role: user.role,
             auto_groups: user.auto_groups ? user.auto_groups : [],
             name: user.name
         } as User));

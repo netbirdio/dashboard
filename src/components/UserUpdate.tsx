@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {Button, Col, Divider, Drawer, Form, Input, Row, Select, Space, Tag} from "antd";
+import {Alert, Button, Col, Divider, Drawer, Form, Input, Modal, Row, Select, Space, Tag, Typography} from "antd";
 import {RootState} from "typesafe-actions";
-import {CloseOutlined, QuestionCircleFilled} from "@ant-design/icons";
+import {CloseOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
 import {Header} from "antd/es/layout/layout";
 import {Group} from "../store/group/types";
 import {FormUser, User, UserToSave} from "../store/user/types";
@@ -10,25 +10,44 @@ import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {actions as userActions} from "../store/user";
 import {useGetAccessTokenSilently} from "../utils/token";
+import {useOidcUser} from "@axa-fr/react-oidc";
+
+const {Paragraph, Text} = Typography;
+
+const {confirm} = Modal;
 
 const {Option} = Select;
 
 const UserUpdate = () => {
+    const {oidcUser} = useOidcUser();
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const user = useSelector((state: RootState) => state.user.user)
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
     const groups = useSelector((state: RootState) => state.group.data)
+    const users = useSelector((state: RootState) => state.user.data)
     const updateUserDrawerVisible = useSelector((state: RootState) => state.user.updateUserDrawerVisible)
     const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[])
     const [tagGroups, setTagGroups] = useState([] as string[])
 
     const [formUser, setFormUser] = useState({} as FormUser)
+    const [currentUser, setCurrentUser] = useState({} as User)
     const [form] = Form.useForm()
 
     useEffect(() => {
         setTagGroups(groups?.filter(g => g.name != "All").map(g => g.name) || [])
     }, [groups])
+    useEffect(() => {
+        if (oidcUser && oidcUser.sub) {
+            const found = users.find(u => u.id == oidcUser.sub)
+            if (found) {
+                setCurrentUser(found)
+            }
+        } else {
+            setCurrentUser({} as User)
+        }
+
+    }, [oidcUser, users])
 
     useEffect(() => {
         if (!user) return
@@ -148,14 +167,46 @@ const UserUpdate = () => {
         } as UserToSave
     }
 
-    const handleFormSubmit = () => {
-        form.validateFields()
-            .then((values) => {
-                let userToSave = createUserToSave()
+    const showConfirmChangeRole = (userToSave: UserToSave) => {
+        let content = <Paragraph>With this action, you will remove the administrative privileges of your user.
+            Your user will be limited to read-only operations only in this account. Are you sure?</Paragraph>
+        let contentModule = <div>{content}</div>
+
+        let name = formUser ? formUser.email : ''
+        confirm({
+            icon: <ExclamationCircleOutlined/>,
+            title: "Update user \"" + name + "\"",
+            width: 600,
+            content: contentModule,
+            okType: 'danger',
+            onOk() {
                 dispatch(userActions.saveUser.request({
                     getAccessTokenSilently: getAccessTokenSilently,
                     payload: userToSave
                 }))
+            },
+            onCancel() {
+            },
+        });
+    }
+
+    // check if currentUser (who is doing the modification) removes the administrative privileges from themselves
+    const isShowConfirmWarning = (userToSave: UserToSave): boolean => {
+        return currentUser.id == userToSave.id && currentUser.role === "admin" && userToSave.role !== "admin"
+    }
+
+    const handleFormSubmit = () => {
+        form.validateFields()
+            .then((values) => {
+                let userToSave = createUserToSave()
+                if (isShowConfirmWarning(userToSave)) {
+                    showConfirmChangeRole(userToSave)
+                } else {
+                    dispatch(userActions.saveUser.request({
+                        getAccessTokenSilently: getAccessTokenSilently,
+                        payload: userToSave
+                    }))
+                }
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
@@ -180,7 +231,11 @@ const UserUpdate = () => {
     }
 
     const changesDetected = (): boolean => {
-        return groupsChanged()
+        return groupsChanged() || roleChanged()
+    }
+
+    const roleChanged = (): boolean => {
+        return formUser.role !== user.role
     }
 
     const groupsChanged = (): boolean => {
@@ -201,7 +256,7 @@ const UserUpdate = () => {
                 <Drawer
                     forceRender={true}
                     headerStyle={{display: "none"}}
-                    visible={updateUserDrawerVisible}
+                    open={updateUserDrawerVisible}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
                     footer={
@@ -252,6 +307,20 @@ const UserUpdate = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
+                                    name="role"
+                                    label="Role"
+                                >
+                                    <Select
+                                        defaultValue={formUser.role}
+                                        style={{width: '100%'}}
+                                        disabled={currentUser.role != null && currentUser.role !== "admin"}>
+                                        <Option value="admin">admin</Option>
+                                        <Option value="user">user</Option>
+                                    </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
                                     name="autoGroupsNames"
                                     label="Auto-assigned groups"
                                     tooltip="Every peer enrolled with this user will be automatically added to these groups"
@@ -262,6 +331,7 @@ const UserUpdate = () => {
                                             placeholder="Associate groups with the key"
                                             tagRender={tagRender}
                                             onChange={handleChangeTags}
+                                            disabled={currentUser.role != null && currentUser.role !== "admin"}
                                             dropdownRender={dropDownRender}
                                     >
                                         {
@@ -279,6 +349,18 @@ const UserUpdate = () => {
                                         style={{color: 'rgb(07, 114, 128)'}}>Learn
                                     more about setup keys</Button>*/}
                             </Col>
+                            {currentUser && currentUser.role !== "admin" && (
+                                <div>
+                                    <Col span={24}>
+                                        <Alert
+                                            message={<div style={{color: "#5a5c5a"}}>
+                                                You are not an administrator, therefore you can't update users.</div>}
+                                            showIcon={false}
+                                            type="warning"/>
+                                    </Col>
+                                    <br></br>
+                                </div>
+                            )}
                         </Row>
                     </Form>
 
