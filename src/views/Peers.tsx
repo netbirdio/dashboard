@@ -6,7 +6,6 @@ import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
 import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
-import {useOidc, useOidcAccessToken} from '@axa-fr/react-oidc';
 import {
     Alert,
     Button,
