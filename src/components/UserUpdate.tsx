@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {Alert, Button, Col, Divider, Drawer, Form, Input, Row, Select, Space, Tag} from "antd";
+import {Alert, Button, Col, Divider, Drawer, Form, Input, List, Modal, Row, Select, Space, Tag, Typography} from "antd";
 import {RootState} from "typesafe-actions";
-import {CloseOutlined} from "@ant-design/icons";
+import {CloseOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
 import {Header} from "antd/es/layout/layout";
 import {Group} from "../store/group/types";
 import {FormUser, User, UserToSave} from "../store/user/types";
@@ -11,6 +11,10 @@ import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {actions as userActions} from "../store/user";
 import {useGetAccessTokenSilently} from "../utils/token";
 import {useOidcUser} from "@axa-fr/react-oidc";
+import {actions as peerActions} from "../store/peer";
+const {Paragraph, Text} = Typography;
+
+const {confirm} = Modal;
 
 const {Option} = Select;
 
@@ -163,14 +167,43 @@ const UserUpdate = () => {
         } as UserToSave
     }
 
-    const handleFormSubmit = () => {
-        form.validateFields()
-            .then((values) => {
-                let userToSave = createUserToSave()
+    const showConfirmChangeRole = (userToSave : UserToSave) => {
+        let content = <Paragraph>With this action, you will remove the administrative privileges of your user.
+            Your user will be limited to read-only operations only in this account. Are you sure?</Paragraph>
+        let contentModule = <div>{content}</div>
+
+        let name = formUser ? formUser.email : ''
+        confirm({
+            icon: <ExclamationCircleOutlined/>,
+            title: "Update user \"" + name + "\"",
+            width: 600,
+            content: contentModule,
+            okType: 'danger',
+            onOk() {
                 dispatch(userActions.saveUser.request({
                     getAccessTokenSilently: getAccessTokenSilently,
                     payload: userToSave
                 }))
+            },
+            onCancel() {
+            },
+        });
+    }
+
+    const handleFormSubmit = () => {
+        form.validateFields()
+            .then((values) => {
+                let userToSave = createUserToSave()
+                // check if currentUser (who is doing the modification) removes the administrative privileges from themselves
+                if (currentUser.id == userToSave.id && currentUser.role === "admin" && userToSave.role !== "admin") {
+                    showConfirmChangeRole(userToSave)
+                    return
+                } else {
+                    dispatch(userActions.saveUser.request({
+                        getAccessTokenSilently: getAccessTokenSilently,
+                        payload: userToSave
+                    }))
+                }
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
@@ -315,11 +348,10 @@ const UserUpdate = () => {
                             </Col>
                             {currentUser && currentUser.role !== "admin" && (
                                 <div>
-
                                     <Col span={24}>
                                         <Alert
                                             message={<div style={{color: "#5a5c5a"}}>
-                                                You are not an administrator, therefore you can't modify users.</div>}
+                                                You are not an administrator, therefore you can't update users.</div>}
                                             showIcon={false}
                                             type="warning"/>
                                     </Col>
