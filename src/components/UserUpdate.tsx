@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {Button, Col, Divider, Drawer, Form, Input, Row, Select, Space, Tag} from "antd";
+import {Alert, Button, Col, Divider, Drawer, Form, Input, Row, Select, Space, Tag} from "antd";
 import {RootState} from "typesafe-actions";
-import {CloseOutlined, QuestionCircleFilled} from "@ant-design/icons";
+import {CloseOutlined} from "@ant-design/icons";
 import {Header} from "antd/es/layout/layout";
 import {Group} from "../store/group/types";
 import {FormUser, User, UserToSave} from "../store/user/types";
@@ -10,25 +10,40 @@ import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {actions as userActions} from "../store/user";
 import {useGetAccessTokenSilently} from "../utils/token";
+import {useOidcUser} from "@axa-fr/react-oidc";
 
 const {Option} = Select;
 
 const UserUpdate = () => {
+    const {oidcUser} = useOidcUser();
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const user = useSelector((state: RootState) => state.user.user)
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
     const groups = useSelector((state: RootState) => state.group.data)
+    const users = useSelector((state: RootState) => state.user.data)
     const updateUserDrawerVisible = useSelector((state: RootState) => state.user.updateUserDrawerVisible)
     const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[])
     const [tagGroups, setTagGroups] = useState([] as string[])
 
     const [formUser, setFormUser] = useState({} as FormUser)
+    const [currentUser, setCurrentUser] = useState({} as User)
     const [form] = Form.useForm()
 
     useEffect(() => {
         setTagGroups(groups?.filter(g => g.name != "All").map(g => g.name) || [])
     }, [groups])
+    useEffect(() => {
+        if (oidcUser && oidcUser.sub) {
+            const found = users.find(u => u.id == oidcUser.sub)
+            if (found) {
+                setCurrentUser(found)
+            }
+        } else {
+            setCurrentUser({} as User)
+        }
+
+    }, [oidcUser, users])
 
     useEffect(() => {
         if (!user) return
@@ -205,7 +220,7 @@ const UserUpdate = () => {
                 <Drawer
                     forceRender={true}
                     headerStyle={{display: "none"}}
-                    visible={updateUserDrawerVisible}
+                    open={updateUserDrawerVisible}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
                     footer={
@@ -262,10 +277,7 @@ const UserUpdate = () => {
                                     <Select
                                         defaultValue={formUser.role}
                                         style={{width: '100%'}}
-                                        disabled={false}
-                                        onChange={function () {
-                                        console.log(formUser)
-                                    }}>
+                                        disabled={currentUser.role != null && currentUser.role !== "admin"}>
                                         <Option value="admin">admin</Option>
                                         <Option value="user">user</Option>
                                     </Select>
@@ -283,6 +295,7 @@ const UserUpdate = () => {
                                             placeholder="Associate groups with the key"
                                             tagRender={tagRender}
                                             onChange={handleChangeTags}
+                                            disabled={currentUser.role != null && currentUser.role !== "admin"}
                                             dropdownRender={dropDownRender}
                                     >
                                         {
@@ -300,6 +313,19 @@ const UserUpdate = () => {
                                         style={{color: 'rgb(07, 114, 128)'}}>Learn
                                     more about setup keys</Button>*/}
                             </Col>
+                            {currentUser && currentUser.role !== "admin" && (
+                                <div>
+
+                                    <Col span={24}>
+                                        <Alert
+                                            message={<div style={{color: "#5a5c5a"}}>
+                                                You are not an administrator, therefore you can't modify users.</div>}
+                                            showIcon={false}
+                                            type="warning"/>
+                                    </Col>
+                                    <br></br>
+                                </div>
+                            )}
                         </Row>
                     </Form>
 
