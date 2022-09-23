@@ -18,6 +18,7 @@ const PeerUpdate = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const groups = useSelector((state: RootState) => state.group.data)
+    const users = useSelector((state: RootState) => state.user.data)
     const peer = useSelector((state: RootState) => state.peer.peer)
     const [formPeer, setFormPeer] = useState({} as Peer)
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
@@ -76,11 +77,10 @@ const PeerUpdate = () => {
         setPeerGroups(gs)
         setSelectedTagGroups(gs_name)
         setFormPeer(peer)
-        console.log(peer)
         form.setFieldsValue({
             name: formPeer.name ? formPeer.name : peer.name,
             groups: gs_name,
-            user_id: peer.user_id,
+            user_id: users?.find(u => u.id === peer.user_id)?.email,
             hostname: peer.hostname,
         })
     }, [peer])
@@ -88,6 +88,9 @@ const PeerUpdate = () => {
     useEffect(() => {
         setTagGroups(groups?.map(g => g.name) || [])
     }, [groups])
+
+    useEffect(() => {
+    }, [users])
 
     const toggleEditName = (status: boolean) => {
         setEditName(status)
@@ -331,6 +334,20 @@ const PeerUpdate = () => {
                             </Col>
                         </Row>
                         <Row gutter={16}>
+                            {formPeer.user_id && (
+                                <Col span={24}>
+                                    <Form.Item
+                                        name="user_id"
+                                        label="User"
+                                    >
+                                        <Input
+                                            disabled={true}
+                                            value={formPeer.user_id}
+                                            style={{color: "#5a5c5a"}}
+                                            autoComplete="off"/>
+                                    </Form.Item>
+                                </Col>
+                            )}
                             <Col span={24}>
                                 <Form.Item
                                     name="hostname"
@@ -339,18 +356,6 @@ const PeerUpdate = () => {
                                     <Input
                                         disabled={true}
                                         value={formPeer.hostname}
-                                        style={{color: "#5a5c5a"}}
-                                        autoComplete="off"/>
-                                </Form.Item>
-                            </Col>
-                            <Col span={24}>
-                                <Form.Item
-                                    name="user_id"
-                                    label="User"
-                                >
-                                    <Input
-                                        disabled={true}
-                                        value={formPeer.user_id}
                                         style={{color: "#5a5c5a"}}
                                         autoComplete="off"/>
                                 </Form.Item>
