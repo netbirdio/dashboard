@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
@@ -29,7 +29,7 @@ import {
     Tooltip,
     Typography
 } from "antd";
-import {Peer} from "../store/peer/types";
+import {Peer, PeerDataTable} from "../store/peer/types";
 import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
@@ -39,17 +39,11 @@ import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {useGetAccessTokenSilently} from "../utils/token";
+import {actions as userActions} from "../store/user";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
 const {confirm} = Modal;
-
-
-interface PeerDataTable extends Peer {
-    key: string;
-    groups: Group[];
-    groupsCount: number;
-}
 
 export const Peers = () => {
 
@@ -67,6 +61,7 @@ export const Peers = () => {
     const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
     const updatedPeer = useSelector((state: RootState) => state.peer.updatedPeer);
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
+    const users = useSelector((state: RootState) => state.user.data);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
@@ -111,6 +106,7 @@ export const Peers = () => {
     }
 
     useEffect(() => {
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));

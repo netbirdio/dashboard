@@ -76,9 +76,12 @@ const PeerUpdate = () => {
         setPeerGroups(gs)
         setSelectedTagGroups(gs_name)
         setFormPeer(peer)
+        console.log(peer)
         form.setFieldsValue({
             name: formPeer.name ? formPeer.name : peer.name,
-            groups: gs_name
+            groups: gs_name,
+            user_id: peer.user_id,
+            hostname: peer.hostname,
         })
     }, [peer])
 
@@ -328,7 +331,30 @@ const PeerUpdate = () => {
                             </Col>
                         </Row>
                         <Row gutter={16}>
-
+                            <Col span={24}>
+                                <Form.Item
+                                    name="hostname"
+                                    label="Hostname"
+                                >
+                                    <Input
+                                        disabled={true}
+                                        value={formPeer.hostname}
+                                        style={{color: "#5a5c5a"}}
+                                        autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="user_id"
+                                    label="User"
+                                >
+                                    <Input
+                                        disabled={true}
+                                        value={formPeer.user_id}
+                                        style={{color: "#5a5c5a"}}
+                                        autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
                             <Col span={24}>
                                 <Form.Item
                                     name="groups"
