@@ -159,8 +159,8 @@ export const Users = () => {
         return (
             <Popover placement={popoverPlacement as TooltipPlacement}
                      key={userToAction.id}
-                     onVisibleChange={onPopoverVisibleChange}
-                     visible={groupPopupVisible}
+                     onOpenChange={onPopoverVisibleChange}
+                     open={groupPopupVisible}
                      content={mainContent}
                      title={null}>
                 {btn}
