@@ -267,7 +267,11 @@ const UserUpdate = () => {
                         </Space>
                     }
                 >
-                    <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}>
+                    <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}
+                          initialValues={{
+                              ["role"]: formUser.role
+                          }}
+                    >
                         <Row gutter={16}>
                             <Col span={24}>
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
@@ -311,7 +315,6 @@ const UserUpdate = () => {
                                     label="Role"
                                 >
                                     <Select
-                                        defaultValue={formUser.role}
                                         style={{width: '100%'}}
                                         disabled={currentUser.role != null && currentUser.role !== "admin"}>
                                         <Option value="admin">admin</Option>
