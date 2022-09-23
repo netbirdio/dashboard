@@ -180,7 +180,11 @@ const UserUpdate = () => {
     }
 
     const changesDetected = (): boolean => {
-        return groupsChanged()
+        return groupsChanged() || roleChanged()
+    }
+
+    const roleChanged = (): boolean => {
+        return formUser.role !== user.role
     }
 
     const groupsChanged = (): boolean => {
@@ -248,6 +252,23 @@ const UserUpdate = () => {
                                         value={formUser.email}
                                         style={{color: "#5a5c5a"}}
                                         autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="role"
+                                    label="Role"
+                                >
+                                    <Select
+                                        defaultValue={formUser.role}
+                                        style={{width: '100%'}}
+                                        disabled={false}
+                                        onChange={function () {
+                                        console.log(formUser)
+                                    }}>
+                                        <Option value="admin">admin</Option>
+                                        <Option value="user">user</Option>
+                                    </Select>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
