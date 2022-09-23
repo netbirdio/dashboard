@@ -1,6 +1,6 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
-import {Alert, Button, Col, Divider, Drawer, Form, Input, List, Modal, Row, Select, Space, Tag, Typography} from "antd";
+import {Alert, Button, Col, Divider, Drawer, Form, Input, Modal, Row, Select, Space, Tag, Typography} from "antd";
 import {RootState} from "typesafe-actions";
 import {CloseOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
 import {Header} from "antd/es/layout/layout";
@@ -11,7 +11,7 @@ import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {actions as userActions} from "../store/user";
 import {useGetAccessTokenSilently} from "../utils/token";
 import {useOidcUser} from "@axa-fr/react-oidc";
-import {actions as peerActions} from "../store/peer";
+
 const {Paragraph, Text} = Typography;
 
 const {confirm} = Modal;
@@ -167,7 +167,7 @@ const UserUpdate = () => {
         } as UserToSave
     }
 
-    const showConfirmChangeRole = (userToSave : UserToSave) => {
+    const showConfirmChangeRole = (userToSave: UserToSave) => {
         let content = <Paragraph>With this action, you will remove the administrative privileges of your user.
             Your user will be limited to read-only operations only in this account. Are you sure?</Paragraph>
         let contentModule = <div>{content}</div>
@@ -190,14 +190,17 @@ const UserUpdate = () => {
         });
     }
 
+    // check if currentUser (who is doing the modification) removes the administrative privileges from themselves
+    const isShowConfirmWarning = (userToSave: UserToSave): boolean => {
+        return currentUser.id == userToSave.id && currentUser.role === "admin" && userToSave.role !== "admin"
+    }
+
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
                 let userToSave = createUserToSave()
-                // check if currentUser (who is doing the modification) removes the administrative privileges from themselves
-                if (currentUser.id == userToSave.id && currentUser.role === "admin" && userToSave.role !== "admin") {
+                if (isShowConfirmWarning(userToSave)) {
                     showConfirmChangeRole(userToSave)
-                    return
                 } else {
                     dispatch(userActions.saveUser.request({
                         getAccessTokenSilently: getAccessTokenSilently,
