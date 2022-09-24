@@ -1,0 +1,12 @@
+# Quick Development Environment with Gitpod.io
+
+tasks:
+  - init: npm install && npm run build
+    command: npm run start
+
+ports:
+  - port: 3000
+    visibility: private
+
+## If you are using Gitpod, you will need to configure the full endpoint on "Allowed Callback URLs"
+## in Auth0 -> Application -> Settings

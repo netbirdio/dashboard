@@ -4,7 +4,20 @@ import { Button } from "antd";
 import TabSteps from "./TabSteps";
 import { StepCommand } from "./types"
 
+import { getConfig } from "../../config";
+const { grpcApiOrigin } = getConfig();
+
 export const LinuxTab = () => {
+
+    const formatNetBirdUP = () => {
+        let cmd = "sudo netbird up"
+        if (grpcApiOrigin) {
+            cmd = "sudo netbird up --management-url " + grpcApiOrigin
+        }
+        return [
+            cmd
+        ].join('\n')
+    }
 
     const [steps, setSteps] = useState([
         {
@@ -30,9 +43,7 @@ export const LinuxTab = () => {
         {
             key: 3,
             title: 'Run NetBird and log in the browser:',
-            commands: [
-                `sudo netbird up`
-            ].join('\n'),
+            commands: formatNetBirdUP(),
             copied: false,
             showCopyButton: true
         } as StepCommand,
