@@ -22,3 +22,11 @@ export interface PeerGroupsToSave {
   groupsToAdd: string[];
   groupsNoId: string[];
 }
+
+export interface PeerNameToIP {
+  [key: string]: string;
+}
+
+export interface PeerIPToName {
+  [key: string]: string;
+}

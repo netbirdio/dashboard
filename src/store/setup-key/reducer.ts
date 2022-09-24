@@ -12,7 +12,7 @@ type StateType = Readonly<{
     saving: boolean;
     deletedSetupKey: DeleteResponse<string | null>;
     revokedSetupKey: ChangeResponse<SetupKey | null>;
-    createdSetupKey: CreateResponse<SetupKey | null>;
+    savedSetupKey: CreateResponse<SetupKey | null>;
     setupNewKeyVisible: boolean
 }>;
 
@@ -36,7 +36,7 @@ const initialState: StateType = {
         error: null,
         data : null
     },
-    createdSetupKey: <CreateResponse<SetupKey | null>>{
+    savedSetupKey: <CreateResponse<SetupKey | null>>{
         loading: false,
         success: false,
         failure: false,
@@ -75,18 +75,12 @@ const deletedSetupKey = createReducer<DeleteResponse<string | null>, ActionTypes
     .handleAction(actions.setDeleteSetupKey, (store, action) => action.payload)
     .handleAction(actions.resetDeletedSetupKey, (store, action) => initialState.deletedSetupKey);
 
-const revokedSetupKey = createReducer<ChangeResponse<SetupKey | null>, ActionTypes>(initialState.revokedSetupKey)
-    .handleAction(actions.revokeSetupKey.request, () => initialState.revokedSetupKey)
-    .handleAction(actions.revokeSetupKey.success, (store, action) => action.payload)
-    .handleAction(actions.revokeSetupKey.failure, (store, action) => action.payload)
-    .handleAction(actions.setRevokeSetupKey, (store, action) => action.payload)
-    .handleAction(actions.resetRevokedSetupKey, () => initialState.revokedSetupKey)
-
-const createdSetupKey = createReducer<CreateResponse<SetupKey | null>, ActionTypes>(initialState.createdSetupKey)
-    .handleAction(actions.createSetupKey.request, () => initialState.createdSetupKey)
-    .handleAction(actions.createSetupKey.success, (store, action) => action.payload)
-    .handleAction(actions.createSetupKey.failure, (store, action) => action.payload)
-    .handleAction(actions.setCreateSetupKey, (store, action) => action.payload)
+const savedSetupKey = createReducer<CreateResponse<SetupKey | null>, ActionTypes>(initialState.savedSetupKey)
+    .handleAction(actions.saveSetupKey.request, () => initialState.savedSetupKey)
+    .handleAction(actions.saveSetupKey.success, (store, action) => action.payload)
+    .handleAction(actions.saveSetupKey.failure, (store, action) => action.payload)
+    .handleAction(actions.setSavedSetupKey, (store, action) => action.payload)
+    .handleAction(actions.resetSavedSetupKey, () => initialState.savedSetupKey)
 
 const setupNewKeyVisible = createReducer<boolean, ActionTypes>(initialState.setupNewKeyVisible)
     .handleAction(actions.setSetupNewKeyVisible, (store, action) => action.payload)
@@ -98,7 +92,6 @@ export default combineReducers({
     failed,
     saving,
     deletedSetupKey,
-    revokedSetupKey,
-    createdSetupKey,
+    savedSetupKey: savedSetupKey,
     setupNewKeyVisible
 });

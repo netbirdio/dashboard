@@ -1,6 +1,6 @@
 import {ApiResponse, RequestPayload} from '../../services/api-client/types';
 import { apiClient } from '../../services/api-client';
-import {SetupKey, SetupKeyNew, SetupKeyRevoke} from './types';
+import {SetupKey, SetupKeyToSave} from './types';
 
 export default {
   async getSetupKeys(payload:RequestPayload<null>): Promise<ApiResponse<SetupKey[]>> {
@@ -15,21 +15,18 @@ export default {
         payload
     );
   },
-  async revokeSetupKey(payload:RequestPayload<SetupKeyRevoke>): Promise<ApiResponse<SetupKey>> {
-    return apiClient.put<SetupKey>(
-        `/api/setup-keys/` + payload.payload.id,
-        payload
-    );
-  },
-  async renameSetupKey(payload:RequestPayload<any>): Promise<ApiResponse<SetupKey>> {
-    return apiClient.put<SetupKey>(
-        `/api/setup-keys/` + payload.payload.id,
-        payload
-    );
-  },
-  async createSetupKey(payload:RequestPayload<SetupKey>): Promise<ApiResponse<SetupKey>> {
+  async createSetupKey(payload:RequestPayload<SetupKeyToSave>): Promise<ApiResponse<SetupKey>> {
     return apiClient.post<SetupKey>(
         `/api/setup-keys`,
+        payload
+    );
+  },
+  async editSetupKey(payload:RequestPayload<SetupKeyToSave>): Promise<ApiResponse<SetupKey>> {
+    const id = payload.payload.id
+    // @ts-ignore
+    delete payload.payload.id
+    return apiClient.put<SetupKey>(
+        `/api/setup-keys/${id}`,
         payload
     );
   },

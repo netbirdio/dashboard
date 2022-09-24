@@ -9,11 +9,7 @@ const headersFactory = async (getAccessTokenSilently:any): Promise<RequestHeader
     'Accept': 'application/json'
   };
 
-  //const token = await getLocalItem<string>(StorageKey.token);
-  //const token = ''
-  // const token = await getAccessTokenSilently()
-  const token = getAccessTokenSilently
-
+  const token = await getAccessTokenSilently() as string
   if (token) {
     headers.authorization = `Bearer ${token}`;
   }

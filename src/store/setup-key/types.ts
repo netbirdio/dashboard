@@ -9,15 +9,14 @@ export interface SetupKey {
   type: string;
   used_times: number;
   valid: boolean;
+  auto_groups: string[]
 }
 
-export interface SetupKeyNew {
-  id: string;
-  name: string;
-  type: string;
+export interface FormSetupKey extends SetupKey {
+  autoGroupNames: string[]
 }
 
-export interface SetupKeyRevoke {
-  id: string;
-  revoked: boolean;
+export interface SetupKeyToSave extends SetupKey
+{
+  groupsToCreate: string[]
 }
