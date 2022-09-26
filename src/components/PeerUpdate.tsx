@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as peerActions} from '../store/peer';
-import {Button, Col, Divider, Drawer, Form, Input, Row, Select, Space, Tag, Typography} from "antd";
+import {Button, Col, Collapse, Divider, Drawer, Form, Input, Row, Select, Space, Tag, Typography} from "antd";
 import {Header} from "antd/es/layout/layout";
 import type {CustomTagProps} from 'rc-select/lib/BaseSelect'
 import {Peer, PeerGroupsToSave} from "../store/peer/types";
@@ -13,6 +13,7 @@ import {useGetAccessTokenSilently} from "../utils/token";
 
 const {Paragraph} = Typography;
 const {Option} = Select;
+const {Panel} = Collapse;
 
 const PeerUpdate = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
@@ -78,6 +79,7 @@ const PeerUpdate = () => {
         setSelectedTagGroups(gs_name)
         setFormPeer(peer)
         form.setFieldsValue({
+            ...peer,
             name: formPeer.name ? formPeer.name : peer.name,
             groups: gs_name,
             user_id: users?.find(u => u.id === peer.user_id)?.email,
@@ -333,6 +335,24 @@ const PeerUpdate = () => {
                                 </Header>
                             </Col>
                         </Row>
+                        <Col span={24}>
+                            <Form.Item
+                                name="ip"
+                                label={<>
+                                            <span style={{
+                                                marginRight: "5px",
+                                            }}>NetBird IP</span>
+                                    <Tag
+                                        color={formPeer.connected ? "green" : "red"}>{formPeer.connected ? "online" : "offline"}</Tag>
+                                </>}
+                            >
+                                <Input
+                                    disabled={true}
+                                    value={formPeer.ip}
+                                    style={{color: "#5a5c5a"}}
+                                    autoComplete="off"/>
+                            </Form.Item>
+                        </Col>
                         <Row gutter={16}>
                             {formPeer.user_id && (
                                 <Col span={24}>
@@ -348,18 +368,6 @@ const PeerUpdate = () => {
                                     </Form.Item>
                                 </Col>
                             )}
-                            <Col span={24}>
-                                <Form.Item
-                                    name="hostname"
-                                    label="Hostname"
-                                >
-                                    <Input
-                                        disabled={true}
-                                        value={formPeer.hostname}
-                                        style={{color: "#5a5c5a"}}
-                                        autoComplete="off"/>
-                                </Form.Item>
-                            </Col>
                             <Col span={24}>
                                 <Form.Item
                                     name="groups"
@@ -383,7 +391,7 @@ const PeerUpdate = () => {
                                     </Select>
                                 </Form.Item>
                             </Col>
-                            <Col span={24}>
+                            {/*<Col span={24}>
                                 <Row wrap={false} gutter={12}>
                                     <Col flex="none">
                                         <FlagFilled/>
@@ -394,6 +402,55 @@ const PeerUpdate = () => {
                                         </Paragraph>
                                     </Col>
                                 </Row>
+                            </Col>*/}
+                            {/*<Col span={24}>
+                                <Divider orientation="left" plain style={{color: "#5a5c5a"}}>
+                                    System Info
+                                </Divider>
+                            </Col>*/}
+                            <Col span={24}>
+                                <Collapse onChange={onChange} bordered={false} ghost={true} style={{color: "#5a5c5a"}}>
+                                    <Panel key="1" header="System Info">
+                                        <Row gutter={16}>
+                                            <Col span={12}>
+                                                <Form.Item
+                                                    name="hostname"
+                                                    label="Hostname"
+                                                >
+                                                    <Input
+                                                        disabled={true}
+                                                        value={formPeer.hostname}
+                                                        style={{color: "#5a5c5a"}}
+                                                        autoComplete="off"/>
+                                                </Form.Item>
+                                            </Col>
+                                            <Col span={12}>
+                                                <Form.Item
+                                                    name="os"
+                                                    label="Operating system"
+                                                >
+                                                    <Input
+                                                        disabled={true}
+                                                        value={formPeer.os}
+                                                        style={{color: "#5a5c5a"}}
+                                                        autoComplete="off"/>
+                                                </Form.Item>
+                                            </Col>
+                                            <Col span={12}>
+                                                <Form.Item
+                                                    name="version"
+                                                    label="NetBird version"
+                                                >
+                                                    <Input
+                                                        disabled={true}
+                                                        value={formPeer.os}
+                                                        style={{color: "#5a5c5a"}}
+                                                        autoComplete="off"/>
+                                                </Form.Item>
+                                            </Col>
+                                        </Row>
+                                    </Panel>
+                                </Collapse>
                             </Col>
                         </Row>
                     </Form>
