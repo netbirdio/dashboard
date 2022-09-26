@@ -371,13 +371,13 @@ export const Peers = () => {
         const userEmail = users?.find(u => u.id === peer.user_id)?.email
         if (!userEmail) {
             return <Button type="text" onClick={() => setUpdateGroupsVisible(peer, true)}>
-                <strong>{peer.name}</strong>
+                <strong style={{color: "#5a5c5a"}}>{peer.name}</strong>
             </Button>
         }
         return <div>
             <Button type="text" style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
                     onClick={() => setUpdateGroupsVisible(peer, true)}>
-                <strong>{peer.name}</strong>
+                <strong style={{color: "#5a5c5a"}}>{peer.name}</strong>
                 <br/>
                 <div style={{color: "#5a5c5a"}}>{userEmail}</div>
             </Button>
@@ -395,7 +395,6 @@ export const Peers = () => {
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                                    {/*<Input.Search allowClear value={textToSearch} onPressEnter={searchDataTable} onSearch={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />*/}
                                     <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
                                            placeholder="Search..." onChange={onChangeTextToSearch}/>
                                 </Col>
