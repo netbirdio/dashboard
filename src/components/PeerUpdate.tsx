@@ -409,8 +409,8 @@ const PeerUpdate = () => {
                                 </Divider>
                             </Col>*/}
                             <Col span={24}>
-                                <Collapse onChange={onChange} bordered={false} ghost={true} style={{color: "#5a5c5a"}}>
-                                    <Panel key="1" header="System Info">
+                                <Collapse defaultActiveKey="0" onChange={onChange} bordered={false} ghost={true} style={{color: "#5a5c5a"}}>
+                                    <Panel key="0" header="System Info">
                                         <Row gutter={16}>
                                             <Col span={12}>
                                                 <Form.Item

@@ -7,11 +7,10 @@ import {actions as groupActions} from '../store/group';
 import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
 import {
-    Alert, Anchor,
+    Alert,
     Button,
     Card,
     Col,
-    Divider,
     Dropdown,
     Input,
     List,
@@ -188,8 +187,13 @@ export const Peers = () => {
 
     const filterDataTable = (): Peer[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f: Peer[] = filter(peers, (f: Peer) =>
-            (f.name.toLowerCase().includes(t) || f.ip.includes(t) || f.os.includes(t) || t === "")
+        let f: Peer[] = filter(peers, (f: Peer) => {
+                let userEmail: string | null
+                const u = users?.find(u => u.id === f.user_id)?.email
+                userEmail = u ? u : ""
+                return (f.name.toLowerCase().includes(t) || f.ip.includes(t) || f.os.includes(t) || t === "" ||
+                    (userEmail && userEmail.toLowerCase().includes(t)))
+            }
         ) as Peer[]
         if (optionOnOff === "on") {
             f = filter(peers, (f: Peer) => f.connected)
@@ -371,7 +375,8 @@ export const Peers = () => {
             </Button>
         }
         return <div>
-            <Button type="text" style={{height:"auto", whiteSpace: "normal", textAlign:"left"}} onClick={() => setUpdateGroupsVisible(peer, true)}>
+            <Button type="text" style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
+                    onClick={() => setUpdateGroupsVisible(peer, true)}>
                 <strong>{peer.name}</strong>
                 <br/>
                 <div style={{color: "#5a5c5a"}}>{userEmail}</div>
