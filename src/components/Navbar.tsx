@@ -35,6 +35,7 @@ const Navbar = () => {
         { label: (<Link  to="/setup-keys">Setup Keys</Link>), key: '/setup-keys' },
         { label: (<Link  to="/acls">Access Control</Link>), key: '/acls' },
         { label: (<Link  to="/routes">Network Routes</Link>), key: '/routes' },
+        { label: (<Link  to="/domains">DNS</Link>), key: '/domains' },
         { label: (<Link  to="/users">Users</Link>), key: '/users' }
     ] as ItemType[])
     const logoutWithRedirect = () =>
