@@ -279,7 +279,7 @@ const PeerUpdate = () => {
                 <Drawer
                     forceRender={true}
                     headerStyle={{display: "none"}}
-                    visible={true}
+                    open={true}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
                     autoFocus={true}
