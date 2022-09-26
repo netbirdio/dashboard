@@ -424,7 +424,9 @@ export const Routes = () => {
                                             render={(text, record) => {
                                                 const desc = (record as RouteDataTable).description.trim()
                                                 return <Tooltip title={desc !== "" ? desc : "no description"}
-                                                                arrowPointAtCenter>{text}</Tooltip>
+                                                                arrowPointAtCenter>
+                                                    <strong style={{color: "#5a5c5a"}}>{text}</strong>
+                                                </Tooltip>
                                             }}
                                     />
                                     <Column title="Network Range" dataIndex="network" align="center"

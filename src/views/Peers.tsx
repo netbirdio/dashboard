@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useRef, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
@@ -29,7 +29,7 @@ import {
     Tooltip,
     Typography
 } from "antd";
-import {Peer} from "../store/peer/types";
+import {Peer, PeerDataTable} from "../store/peer/types";
 import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
@@ -39,17 +39,11 @@ import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {useGetAccessTokenSilently} from "../utils/token";
+import {actions as userActions} from "../store/user";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
 const {confirm} = Modal;
-
-
-interface PeerDataTable extends Peer {
-    key: string;
-    groups: Group[];
-    groupsCount: number;
-}
 
 export const Peers = () => {
 
@@ -67,6 +61,7 @@ export const Peers = () => {
     const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
     const updatedPeer = useSelector((state: RootState) => state.peer.updatedPeer);
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
+    const users = useSelector((state: RootState) => state.user.data);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
@@ -111,6 +106,7 @@ export const Peers = () => {
     }
 
     useEffect(() => {
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
@@ -191,8 +187,13 @@ export const Peers = () => {
 
     const filterDataTable = (): Peer[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f: Peer[] = filter(peers, (f: Peer) =>
-            (f.name.toLowerCase().includes(t) || f.ip.includes(t) || f.os.includes(t) || t === "")
+        let f: Peer[] = filter(peers, (f: Peer) => {
+                let userEmail: string | null
+                const u = users?.find(u => u.id === f.user_id)?.email
+                userEmail = u ? u : ""
+                return (f.name.toLowerCase().includes(t) || f.ip.includes(t) || f.os.includes(t) || t === "" ||
+                    (userEmail && userEmail.toLowerCase().includes(t)))
+            }
         ) as Peer[]
         if (optionOnOff === "on") {
             f = filter(peers, (f: Peer) => f.connected)
@@ -359,11 +360,28 @@ export const Peers = () => {
 
         return (
             <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent}
-                     onVisibleChange={onPopoverVisibleChange} visible={groupPopupVisible}
+                     onOpenChange={onPopoverVisibleChange} open={groupPopupVisible}
                      title={null}>
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>
         )
+    }
+
+    const renderName = (peer: PeerDataTable) => {
+        const userEmail = users?.find(u => u.id === peer.user_id)?.email
+        if (!userEmail) {
+            return <Button type="text" onClick={() => setUpdateGroupsVisible(peer, true)}>
+                <strong style={{color: "#5a5c5a"}}>{peer.name}</strong>
+            </Button>
+        }
+        return <div>
+            <Button type="text" style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
+                    onClick={() => setUpdateGroupsVisible(peer, true)}>
+                <strong style={{color: "#5a5c5a"}}>{peer.name}</strong>
+                <br/>
+                <div style={{color: "#5a5c5a"}}>{userEmail}</div>
+            </Button>
+        </div>
     }
 
     return (
@@ -377,7 +395,6 @@ export const Peers = () => {
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                                    {/*<Input.Search allowClear value={textToSearch} onPressEnter={searchDataTable} onSearch={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />*/}
                                     <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
                                            placeholder="Search..." onChange={onChangeTextToSearch}/>
                                 </Col>
@@ -428,10 +445,10 @@ export const Peers = () => {
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             defaultSortOrder='ascend'
+                                            align="left"
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                             render={(text: string, record: PeerDataTable,) => {
-                                                return <Button type="text"
-                                                               onClick={() => setUpdateGroupsVisible(record, true)}>{text}</Button>
+                                                return renderName(record)
                                             }}
                                     />
                                     <Column title="IP" dataIndex="ip"
@@ -501,7 +518,7 @@ export const Peers = () => {
                                             render={(text, record, index) => {
                                                 return <Dropdown.Button type="text" overlay={actionsMenu}
                                                                         trigger={["click"]}
-                                                                        onVisibleChange={visible => {
+                                                                        onOpenChange={visible => {
                                                                             if (visible) setPeerToAction(record as PeerDataTable)
                                                                         }}></Dropdown.Button>
                                             }}

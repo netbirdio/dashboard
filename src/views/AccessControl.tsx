@@ -415,7 +415,7 @@ export const AccessControl = () => {
                                                 return <Tooltip title={desc !== "" ? desc : "no description"}
                                                                 arrowPointAtCenter>
                                                     <span onClick={() => setRuleAndView(record as RuleDataTable)}
-                                                          className="tooltip-label">{text}</span>
+                                                          className="tooltip-label"><strong style={{color: "#5a5c5a"}}>{text}</strong></span>
                                                 </Tooltip>
                                             }}
                                     />
