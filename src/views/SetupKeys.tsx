@@ -12,7 +12,8 @@ import {
     Input,
     Menu,
     message,
-    Modal, Popover,
+    Modal,
+    Popover,
     Radio,
     RadioChangeEvent,
     Row,
@@ -399,7 +400,8 @@ export const SetupKeys = () => {
                                             render={(text, record, index) => {
                                                 return <Button type="text"
                                                                onClick={() => setKeyAndView(record as SetupKeyDataTable)}
-                                                               className="tooltip-label">{text}</Button>
+                                                               className="tooltip-label"> <strong style={{color: "#5a5c5a"}}>{text}</strong>
+                                                </Button>
                                             }}
                                             defaultSortOrder='ascend'
                                     />

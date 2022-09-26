@@ -260,7 +260,10 @@ export const Users = () => {
                                             render={(text, record, index) => {
                                                 return <Button type="text"
                                                                onClick={() => setUserAndView(record as UserDataTable)}
-                                                               className="tooltip-label">{(text && text.trim() !== "") ? text : (record as User).id}</Button>
+                                                               className="tooltip-label">
+                                                    <strong style={{color: "#5a5c5a"}}>{(text && text.trim() !== "") ? text : (record as User).id}</strong>
+
+                                                </Button>
                                             }}
                                     />
                                     <Column title="Name" dataIndex="name"
