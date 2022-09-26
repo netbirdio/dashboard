@@ -14,6 +14,11 @@ export interface Peer {
   user_id?: string
 }
 
+export interface FormPeer extends Peer {
+  groupsNames: string[],
+  userEmail?: string
+}
+
 export interface PeerToSave extends Peer {
   groupsToSave: string[]
 }

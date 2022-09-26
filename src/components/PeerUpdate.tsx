@@ -5,11 +5,12 @@ import {actions as peerActions} from '../store/peer';
 import {Button, Col, Collapse, Divider, Drawer, Form, Input, Row, Select, Space, Tag, Typography} from "antd";
 import {Header} from "antd/es/layout/layout";
 import type {CustomTagProps} from 'rc-select/lib/BaseSelect'
-import {Peer, PeerGroupsToSave} from "../store/peer/types";
+import {FormPeer, Peer, PeerGroupsToSave} from "../store/peer/types";
 import {Group, GroupPeer} from "../store/group/types";
-import {CloseOutlined, EditOutlined, FlagFilled} from "@ant-design/icons";
+import {CloseOutlined, EditOutlined} from "@ant-design/icons";
 import {RuleObject} from 'antd/lib/form';
 import {useGetAccessTokenSilently} from "../utils/token";
+import {timeAgo} from "../utils/common";
 
 const {Paragraph} = Typography;
 const {Option} = Select;
@@ -20,8 +21,8 @@ const PeerUpdate = () => {
     const dispatch = useDispatch()
     const groups = useSelector((state: RootState) => state.group.data)
     const users = useSelector((state: RootState) => state.user.data)
-    const peer = useSelector((state: RootState) => state.peer.peer)
-    const [formPeer, setFormPeer] = useState({} as Peer)
+    const peer: Peer = useSelector((state: RootState) => state.peer.peer)
+    const [formPeer, setFormPeer] = useState({} as FormPeer)
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
     const savedGroups = useSelector((state: RootState) => state.peer.savedGroups)
     const updatedPeers = useSelector((state: RootState) => state.peer.updatedPeer)
@@ -77,14 +78,15 @@ const PeerUpdate = () => {
         const gs_name = gs?.map(g => g.name) as string[]
         setPeerGroups(gs)
         setSelectedTagGroups(gs_name)
-        setFormPeer(peer)
-        form.setFieldsValue({
+        const fPeer = {
             ...peer,
             name: formPeer.name ? formPeer.name : peer.name,
-            groups: gs_name,
-            user_id: users?.find(u => u.id === peer.user_id)?.email,
-            hostname: peer.hostname,
-        })
+            groupsNames: gs_name,
+            userEmail: users?.find(u => u.id === peer.user_id)?.email,
+            last_seen: peer.connected ? "just now" : String(timeAgo(peer.last_seen))
+        } as FormPeer
+        setFormPeer(fPeer)
+        form.setFieldsValue(fPeer)
     }, [peer])
 
     useEffect(() => {
@@ -181,7 +183,7 @@ const PeerUpdate = () => {
         setUpdateGroupsVisible(false)
         setEditName(false)
         // setSaveBtnDisabled(true)
-        setFormPeer({} as Peer)
+        setFormPeer({} as FormPeer)
         setCallingPeerAPI(false)
         setCallingPeerAPI(false)
         setSubmitRunning(false)
@@ -335,34 +337,48 @@ const PeerUpdate = () => {
                                 </Header>
                             </Col>
                         </Row>
-                        <Col span={24}>
-                            <Form.Item
-                                name="ip"
-                                label={<>
+                        <Row gutter={16}>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="ip"
+                                    label={<>
                                             <span style={{
                                                 marginRight: "5px",
                                             }}>NetBird IP</span>
-                                    <Tag
-                                        color={formPeer.connected ? "green" : "red"}>{formPeer.connected ? "online" : "offline"}</Tag>
-                                </>}
-                            >
-                                <Input
-                                    disabled={true}
-                                    value={formPeer.ip}
-                                    style={{color: "#5a5c5a"}}
-                                    autoComplete="off"/>
-                            </Form.Item>
-                        </Col>
+                                        <Tag
+                                            color={formPeer.connected ? "green" : "red"}>{formPeer.connected ? "online" : "offline"}</Tag>
+                                    </>}
+                                >
+                                    <Input
+                                        disabled={true}
+                                        value={formPeer.ip}
+                                        style={{color: "#5a5c5a"}}
+                                        autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item
+                                    name="last_seen"
+                                    label="Last seen"
+                                >
+                                    <Input
+                                        disabled={true}
+                                        value={formPeer.last_seen}
+                                        style={{color: "#5a5c5a"}}
+                                        autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
+                        </Row>
                         <Row gutter={16}>
                             {formPeer.user_id && (
                                 <Col span={24}>
                                     <Form.Item
-                                        name="user_id"
+                                        name="userEmail"
                                         label="User"
                                     >
                                         <Input
                                             disabled={true}
-                                            value={formPeer.user_id}
+                                            value={formPeer.userEmail}
                                             style={{color: "#5a5c5a"}}
                                             autoComplete="off"/>
                                     </Form.Item>
@@ -370,7 +386,7 @@ const PeerUpdate = () => {
                             )}
                             <Col span={24}>
                                 <Form.Item
-                                    name="groups"
+                                    name="groupsNames"
                                     label="Select peer groups"
                                     rules={[{validator: selectValidator}]}
 
@@ -409,7 +425,8 @@ const PeerUpdate = () => {
                                 </Divider>
                             </Col>*/}
                             <Col span={24}>
-                                <Collapse defaultActiveKey="0" onChange={onChange} bordered={false} ghost={true} style={{color: "#5a5c5a"}}>
+                                <Collapse defaultActiveKey="0" onChange={onChange} bordered={false} ghost={true}
+                                          style={{color: "#5a5c5a"}}>
                                     <Panel key="0" header="System Info">
                                         <Row gutter={16}>
                                             <Col span={12}>
