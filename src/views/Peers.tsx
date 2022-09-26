@@ -360,7 +360,7 @@ export const Peers = () => {
 
         return (
             <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent}
-                     onVisibleChange={onPopoverVisibleChange} visible={groupPopupVisible}
+                     onVisibleChange={onPopoverVisibleChange} open={groupPopupVisible}
                      title={null}>
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>
@@ -519,7 +519,7 @@ export const Peers = () => {
                                             render={(text, record, index) => {
                                                 return <Dropdown.Button type="text" overlay={actionsMenu}
                                                                         trigger={["click"]}
-                                                                        onVisibleChange={visible => {
+                                                                        onOpenChange={visible => {
                                                                             if (visible) setPeerToAction(record as PeerDataTable)
                                                                         }}></Dropdown.Button>
                                             }}
