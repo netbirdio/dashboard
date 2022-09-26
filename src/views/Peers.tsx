@@ -360,7 +360,7 @@ export const Peers = () => {
 
         return (
             <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent}
-                     onVisibleChange={onPopoverVisibleChange} open={groupPopupVisible}
+                     onOpenChange={onPopoverVisibleChange} open={groupPopupVisible}
                      title={null}>
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>

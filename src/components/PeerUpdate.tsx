@@ -289,7 +289,7 @@ const PeerUpdate = () => {
                         </Space>
                     }
                 >
-                    <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}>
+                    <Form layout="vertical" requiredMark={false} form={form} onValuesChange={onChange}>
                         <Row gutter={16}>
                             <Col span={24}>
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
