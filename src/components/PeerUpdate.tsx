@@ -83,7 +83,8 @@ const PeerUpdate = () => {
             name: formPeer.name ? formPeer.name : peer.name,
             groupsNames: gs_name,
             userEmail: users?.find(u => u.id === peer.user_id)?.email,
-            last_seen: peer.connected ? "just now" : String(timeAgo(peer.last_seen))
+            last_seen: peer.connected ? "just now" : String(timeAgo(peer.last_seen)),
+            ui_version: peer.ui_version ? peer.ui_version.replace("netbird-desktop-ui/", "") : ""
         } as FormPeer
         setFormPeer(fPeer)
         form.setFieldsValue(fPeer)
@@ -425,7 +426,7 @@ const PeerUpdate = () => {
                                 </Divider>
                             </Col>*/}
                             <Col span={24}>
-                                <Collapse defaultActiveKey="0" onChange={onChange} bordered={false} ghost={true}
+                                <Collapse onChange={onChange} bordered={false} ghost={true}
                                           style={{color: "#5a5c5a"}}>
                                     <Panel key="0" header="System Info">
                                         <Row gutter={16}>
@@ -456,7 +457,7 @@ const PeerUpdate = () => {
                                             <Col span={12}>
                                                 <Form.Item
                                                     name="version"
-                                                    label="NetBird version"
+                                                    label="Agent version"
                                                 >
                                                     <Input
                                                         disabled={true}
@@ -465,6 +466,19 @@ const PeerUpdate = () => {
                                                         autoComplete="off"/>
                                                 </Form.Item>
                                             </Col>
+                                            {formPeer.ui_version && (
+                                                <Col span={12}>
+                                                <Form.Item
+                                                    name="ui_version"
+                                                    label="UI version"
+                                                >
+                                                    <Input
+                                                        disabled={true}
+                                                        value={formPeer.ui_version}
+                                                        style={{color: "#5a5c5a"}}
+                                                        autoComplete="off"/>
+                                                </Form.Item>
+                                            </Col>)}
                                         </Row>
                                     </Panel>
                                 </Collapse>

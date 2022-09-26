@@ -11,7 +11,8 @@ export interface Peer {
   groups?: Group[]
   ssh_enabled: boolean,
   hostname: string,
-  user_id?: string
+  user_id?: string,
+  ui_version?: string,
 }
 
 export interface FormPeer extends Peer {
