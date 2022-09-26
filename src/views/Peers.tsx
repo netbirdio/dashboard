@@ -7,10 +7,11 @@ import {actions as groupActions} from '../store/group';
 import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
 import {
-    Alert,
+    Alert, Anchor,
     Button,
     Card,
     Col,
+    Divider,
     Dropdown,
     Input,
     List,
@@ -362,6 +363,22 @@ export const Peers = () => {
         )
     }
 
+    const renderName = (peer: PeerDataTable) => {
+        const userEmail = users?.find(u => u.id === peer.user_id)?.email
+        if (!userEmail) {
+            return <Button type="text" onClick={() => setUpdateGroupsVisible(peer, true)}>
+                <strong>{peer.name}</strong>
+            </Button>
+        }
+        return <div>
+            <Button type="text" style={{height:"auto", whiteSpace: "normal", textAlign:"left"}} onClick={() => setUpdateGroupsVisible(peer, true)}>
+                <strong>{peer.name}</strong>
+                <br/>
+                <div style={{color: "#5a5c5a"}}>{userEmail}</div>
+            </Button>
+        </div>
+    }
+
     return (
         <>
             <Container style={{paddingTop: "40px"}}>
@@ -424,10 +441,10 @@ export const Peers = () => {
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             defaultSortOrder='ascend'
+                                            align="left"
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                             render={(text: string, record: PeerDataTable,) => {
-                                                return <Button type="text"
-                                                               onClick={() => setUpdateGroupsVisible(record, true)}>{text}</Button>
+                                                return renderName(record)
                                             }}
                                     />
                                     <Column title="IP" dataIndex="ip"
