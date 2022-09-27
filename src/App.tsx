@@ -14,7 +14,7 @@ import {store} from "./store";
 import { Col, Layout, Row} from 'antd';
 import {Container} from "./components/Container";
 import {withOidcSecure} from '@axa-fr/react-oidc';
-import DNS from "./views/domains";
+import DNS from "./views/dns";
 
 const {Header, Content} = Layout;
 
@@ -72,7 +72,7 @@ function App() {
                             <Route path="/acls" component={withOidcSecure(AccessControl)}/>
                             <Route path="/routes" component={withOidcSecure(Routes)}/>
                             <Route path="/users" component={withOidcSecure(Users)}/>
-                            <Route path="/domains" component={withOidcSecure(DNS)}/>
+                            <Route path="/dns" component={withOidcSecure(DNS)}/>
                         </Switch>
                     </Content>
                     <FooterComponent/>

@@ -16,7 +16,7 @@ import {
     Row,
     Select,
     Space,
-    Table,
+    Table, Tabs,
     Tag,
     Typography,
 } from "antd";
@@ -29,7 +29,7 @@ import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 
-const {Title, Paragraph} = Typography;
+const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
 
 interface UserDataTable extends User {
@@ -77,10 +77,10 @@ export const DNS = () => {
         return d.map(p => ({key: p.id, ...p} as UserDataTable))
     }
 
-    useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-    }, [])
+    // useEffect(() => {
+    //     dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+    //     dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+    // }, [])
     useEffect(() => {
         setDataTable(transformDataTable(users))
     }, [users])
@@ -226,8 +226,15 @@ export const DNS = () => {
             <Container style={{paddingTop: "40px"}}>
                 <Row>
                     <Col span={24}>
-                        <Title level={4}>Upstream DNS servers</Title>
-                        <Paragraph>Manage your network upstream DNS servers</Paragraph>
+                        <Title level={4}>DNS</Title>
+                        <Paragraph><Text>Manage your DNS settings for your network. Your peers will be accessible via </Text><Text type="secondary">peer-name</Text><Text>.netbird.cloud</Text></Paragraph>
+                    </Col>
+                </Row>
+                <Tabs defaultActiveKey="1">
+                    <Tabs.TabPane tab={<Title level={5}>Nameservers</Title>} key="1">
+                <Row>
+                    <Col span={24}>
+                        <Paragraph>Add upstream nameservers servers for name resolution</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -248,7 +255,7 @@ export const DNS = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Button type="primary" onClick={onClickAddNewSetupKey}>Add Upstream</Button>
+                                            <Button type="primary" onClick={onClickAddNewSetupKey}>Add Nameserver</Button>
                                         </Col>
                                     </Row>
                                 </Col>
@@ -269,7 +276,7 @@ export const DNS = () => {
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
-                                    <Column title="Name" dataIndex="email"
+                                    <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
                                             sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
                                             defaultSortOrder='ascend'
@@ -279,7 +286,7 @@ export const DNS = () => {
                                                                className="tooltip-label">{(text && text.trim() !== "") ? text : (record as User).id}</Button>
                                             }}
                                     />
-                                    <Column title="Upstreams" dataIndex="name"
+                                    <Column title="Nameservers" dataIndex="nameservers"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
@@ -302,6 +309,90 @@ export const DNS = () => {
                         </Space>
                     </Col>
                 </Row>
+                    </Tabs.TabPane>
+                    <Tabs.TabPane tab={<Title level={5}>Custom domains</Title>} key="2">
+                <Row>
+                    <Col span={24}>
+                        <Paragraph>Add custom domains</Paragraph>
+                        <Space direction="vertical" size="large" style={{display: 'flex'}}>
+                            <Row gutter={[16, 24]}>
+                                <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
+                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
+                                           placeholder="Search..." onChange={onChangeTextToSearch}/>
+                                </Col>
+                                <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
+                                    <Space size="middle">
+                                        <Select value={pageSize.toString()} options={pageSizeOptions}
+                                                onChange={onChangePageSize} className="select-rows-per-page-en"/>
+                                    </Space>
+                                </Col>
+                                <Col xs={24}
+                                     sm={24}
+                                     md={5}
+                                     lg={5}
+                                     xl={5}
+                                     xxl={5} span={5}>
+                                    <Row justify="end">
+                                        <Col>
+                                            <Button type="primary" onClick={onClickAddNewSetupKey}>Add domain</Button>
+                                        </Col>
+                                    </Row>
+                                </Col>
+                            </Row>
+                            {failed &&
+                                <Alert message={failed.code} description={failed.message} type="error" showIcon
+                                       closable/>
+                            }
+                            <Card bodyStyle={{padding: 0}}>
+                                <Table
+                                    pagination={{
+                                        pageSize,
+                                        showSizeChanger: false,
+                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)
+                                    }}
+                                    className="card-table"
+                                    showSorterTooltip={false}
+                                    scroll={{x: true}}
+                                    loading={tableSpin(loading)}
+                                    dataSource={dataTable}>
+                                    <Column title="Domain" dataIndex="name"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
+                                            sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
+                                            defaultSortOrder='ascend'
+                                            render={(text, record, index) => {
+                                                return <Button type="text"
+                                                               onClick={() => setUserAndView(record as UserDataTable)}
+                                                               className="tooltip-label">{(text && text.trim() !== "") ? text : (record as User).id}</Button>
+                                            }}
+                                    />
+                                    <Column title="Type" dataIndex="nameservers"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
+                                    <Column title="TTL" dataIndex="nameservers"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
+                                    <Column title="Value" dataIndex="nameservers"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
+                                    <Column title="" align="center" width="30px"
+                                            render={(text, record, index) => {
+                                                return (
+                                                    <Dropdown.Button type="text" overlay={actionsMenu}
+                                                                     trigger={["click"]}
+                                                                     onVisibleChange={visible => {
+                                                                         if (visible) setUserToAction(record as UserDataTable)
+                                                                     }}></Dropdown.Button>)
+                                            }}
+                                    />
+                                </Table>
+                            </Card>
+                        </Space>
+                    </Col>
+                </Row>
+                    </Tabs.TabPane>
+                    <Tabs.TabPane tab={<Title level={5}>Peers Domains</Title>} key="3">
+                    </Tabs.TabPane>
+                </Tabs>
          </Container>
             <UserUpdate/>
         </>
