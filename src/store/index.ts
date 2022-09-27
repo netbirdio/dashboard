@@ -8,6 +8,7 @@ import { sagas as userSagas } from './user';
 import { sagas as ruleSagas } from './rule';
 import { sagas as groupSagas } from './group';
 import { sagas as routeSagas } from './route';
+import { sagas as dnsSagas } from './dns';
 
 import rootReducer from './root-reducer';
 import { apiClient } from '../services/api-client';
@@ -25,5 +26,6 @@ sagaMiddleware.run(userSagas);
 sagaMiddleware.run(ruleSagas);
 sagaMiddleware.run(groupSagas);
 sagaMiddleware.run(routeSagas);
+sagaMiddleware.run(dnsSagas);
 
 export { apiClient, rootReducer, store };
