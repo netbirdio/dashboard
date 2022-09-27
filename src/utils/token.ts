@@ -1,35 +1,44 @@
 import {useOidcAccessToken} from "@axa-fr/react-oidc";
-import {useEffect, useRef} from "react";
+import {useEffect} from "react";
 
 function sleep(ms : number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function isTokenValid(tokenPayload: any) {
-    return tokenPayload && (tokenPayload.current.exp * 1000) > (Date.now() - 5000)
+function b64DecodeUnicode(str:string) {
+    return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''))
 }
+function parseJwt(token:string) {
+    return JSON.parse(b64DecodeUnicode(token.split('.')[1].replace('-', '+').replace('_', '/')))
+}
+
+function isTokenValid(token:string) {
+    let tokenPayload = parseJwt(token)
+    return tokenPayload && (tokenPayload.exp * 1000) > (Date.now() - 5000)
+}
+
+// latestToken as global allows for use of the latest state value across calls
+let latestToken:string
+
 
 // hook that returns a getAccessTokenSilently function that returns an access token promise,
 // waiting for renewal if it was expired
 export const useGetAccessTokenSilently = () => {
-    const {accessToken, accessTokenPayload} = useOidcAccessToken()
-    const token = useRef(accessToken)
-    const tokenPayload = useRef(accessTokenPayload)
-
+    const {accessToken} = useOidcAccessToken()
+    latestToken = accessToken
     const getAccessTokenSilently = async (): Promise<string> => {
-        isTokenValid(tokenPayload)
         let attempt = 0
-        while (!isTokenValid(tokenPayload) && attempt < 30){
+        while (!isTokenValid(latestToken) && attempt < 15){
             attempt++
             await sleep(500)
         }
-        return token.current
+
+        return latestToken
     };
 
     useEffect(() => {
-        token.current = accessToken
-        tokenPayload.current = accessTokenPayload
-    }, [accessToken, accessTokenPayload])
+        latestToken = accessToken
+    }, [accessToken])
 
     return {getAccessTokenSilently}
 }

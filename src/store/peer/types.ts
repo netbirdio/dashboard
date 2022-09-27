@@ -10,6 +10,14 @@ export interface Peer {
   version: string,
   groups?: Group[]
   ssh_enabled: boolean,
+  hostname: string,
+  user_id?: string,
+  ui_version?: string,
+}
+
+export interface FormPeer extends Peer {
+  groupsNames: string[],
+  userEmail?: string
 }
 
 export interface PeerToSave extends Peer {
@@ -29,4 +37,10 @@ export interface PeerNameToIP {
 
 export interface PeerIPToName {
   [key: string]: string;
+}
+
+export interface PeerDataTable extends Peer {
+  key: string;
+  groups: Group[];
+  groupsCount: number;
 }
