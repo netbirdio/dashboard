@@ -219,15 +219,15 @@ export const DNS = () => {
     ]
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
+    const onClickAddNewSetupKey = () => {return}
+
     return (
         <>
             <Container style={{paddingTop: "40px"}}>
-                <Collapse bordered={false} defaultActiveKey={['1']}>
-                    <Panel header="Configure Upstream servers" key="1">
                 <Row>
                     <Col span={24}>
-                        <Title level={4}>Users</Title>
-                        <Paragraph>A list of all Users</Paragraph>
+                        <Title level={4}>Upstream DNS servers</Title>
+                        <Paragraph>Manage your network upstream DNS servers</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -239,6 +239,18 @@ export const DNS = () => {
                                         <Select value={pageSize.toString()} options={pageSizeOptions}
                                                 onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
+                                </Col>
+                                <Col xs={24}
+                                     sm={24}
+                                     md={5}
+                                     lg={5}
+                                     xl={5}
+                                     xxl={5} span={5}>
+                                    <Row justify="end">
+                                        <Col>
+                                            <Button type="primary" onClick={onClickAddNewSetupKey}>Add Upstream</Button>
+                                        </Col>
+                                    </Row>
                                 </Col>
                             </Row>
                             {failed &&
@@ -275,9 +287,6 @@ export const DNS = () => {
                                                 return renderPopoverGroups(text, record.auto_groups, record)
                                             }}
                                     />
-                                    <Column title="Upstreams" dataIndex="role"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
-                                            sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}/>
                                     <Column title="" align="center" width="30px"
                                             render={(text, record, index) => {
                                                 return (
@@ -293,62 +302,7 @@ export const DNS = () => {
                         </Space>
                     </Col>
                 </Row>
-                    </Panel>
-                    <Panel header="Configure custom domains" key="2">
-                <Row>
-                    <Col span={24}>
-                        <Space direction="vertical" size="large" style={{display: 'flex'}}>
-                            <Card bodyStyle={{padding: 0}}>
-                                <Table
-                                    pagination={{
-                                        pageSize,
-                                        showSizeChanger: false,
-                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)
-                                    }}
-                                    className="card-table"
-                                    showSorterTooltip={false}
-                                    scroll={{x: true}}
-                                    loading={tableSpin(loading)}
-                                    dataSource={dataTable}>
-                                    <Column title="Name" dataIndex="email"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
-                                            sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
-                                            defaultSortOrder='ascend'
-                                            render={(text, record, index) => {
-                                                return <Button type="text"
-                                                               onClick={() => setUserAndView(record as UserDataTable)}
-                                                               className="tooltip-label">{(text && text.trim() !== "") ? text : (record as User).id}</Button>
-                                            }}
-                                    />
-                                    <Column title="Upstreams" dataIndex="name"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
-                                    <Column title="Groups" dataIndex="groupsCount" align="center"
-                                            render={(text, record: UserDataTable, index) => {
-                                                return renderPopoverGroups(text, record.auto_groups, record)
-                                            }}
-                                    />
-                                    <Column title="Upstreams" dataIndex="role"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
-                                            sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}/>
-                                    <Column title="" align="center" width="30px"
-                                            render={(text, record, index) => {
-                                                return (
-                                                    <Dropdown.Button type="text" overlay={actionsMenu}
-                                                                     trigger={["click"]}
-                                                                     onVisibleChange={visible => {
-                                                                         if (visible) setUserToAction(record as UserDataTable)
-                                                                     }}></Dropdown.Button>)
-                                            }}
-                                    />
-                                </Table>
-                            </Card>
-                        </Space>
-                    </Col>
-                </Row>
-                    </Panel>
-                </Collapse>
-            </Container>
+         </Container>
             <UserUpdate/>
         </>
     )
