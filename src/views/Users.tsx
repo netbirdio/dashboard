@@ -10,7 +10,8 @@ import {
     Col,
     Dropdown,
     Input,
-    Menu, message,
+    Menu,
+    message,
     Popover,
     Row,
     Select,
@@ -27,6 +28,7 @@ import UserUpdate from "../components/UserUpdate";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
+import {Link} from "react-router-dom";
 
 const {Title, Paragraph} = Typography;
 const {Column} = Table;
@@ -236,6 +238,20 @@ export const Users = () => {
                                                 onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
                                 </Col>
+                                <Col xs={24}
+                                     sm={24}
+                                     md={5}
+                                     lg={5}
+                                     xl={5}
+                                     xxl={5} span={5}>
+                                    <Row justify="end">
+                                        <Col>
+                                            <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">
+                                                Invite User
+                                            </Link>
+                                        </Col>
+                                    </Row>
+                                </Col>
                             </Row>
                             {failed &&
                                 <Alert message={failed.code} description={failed.message} type="error" showIcon
@@ -261,7 +277,8 @@ export const Users = () => {
                                                 return <Button type="text"
                                                                onClick={() => setUserAndView(record as UserDataTable)}
                                                                className="tooltip-label">
-                                                    <strong style={{color: "#5a5c5a"}}>{(text && text.trim() !== "") ? text : (record as User).id}</strong>
+                                                    <strong
+                                                        style={{color: "#5a5c5a"}}>{(text && text.trim() !== "") ? text : (record as User).id}</strong>
 
                                                 </Button>
                                             }}
@@ -269,6 +286,19 @@ export const Users = () => {
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
+                                    <Column title="Status" dataIndex="status"
+                                            align="center"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).status.includes(value)}
+                                            sorter={(a, b) => ((a as any).status.localeCompare((b as any).status))}
+                                            render={(text, record, index) => {
+                                                if (text == "active") {
+                                                    return <Tag color="green">{text}</Tag>
+                                                } else if (text === "invited"){
+                                                    return <Tag color="gold">{text}</Tag>
+                                                }
+                                                return <Tag color="red">{text}</Tag>
+                                            }}
+                                    />
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
                                             render={(text, record: UserDataTable, index) => {
                                                 return renderPopoverGroups(text, record.auto_groups, record)

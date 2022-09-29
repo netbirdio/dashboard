@@ -18,7 +18,7 @@ const {confirm} = Modal;
 
 const {Option} = Select;
 
-const UserUpdate = () => {
+const UserInvite = () => {
     const {oidcUser} = useOidcUser();
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
@@ -374,4 +374,4 @@ const UserUpdate = () => {
     )
 }
 
-export default UserUpdate
+export default UserInvite
