@@ -43,7 +43,7 @@ import {
 } from '../utils/routes'
 import {useGetAccessTokenSilently} from "../utils/token";
 
-const {Title, Paragraph} = Typography;
+const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
 const {confirm} = Modal;
 
@@ -425,7 +425,7 @@ export const Routes = () => {
                                                 const desc = (record as RouteDataTable).description.trim()
                                                 return <Tooltip title={desc !== "" ? desc : "no description"}
                                                                 arrowPointAtCenter>
-                                                    <strong style={{color: "#5a5c5a"}}>{text}</strong>
+                                                    <Text strong>{text}</Text>
                                                 </Tooltip>
                                             }}
                                     />

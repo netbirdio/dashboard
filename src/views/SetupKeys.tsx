@@ -400,7 +400,7 @@ export const SetupKeys = () => {
                                             render={(text, record, index) => {
                                                 return <Button type="text"
                                                                onClick={() => setKeyAndView(record as SetupKeyDataTable)}
-                                                               className="tooltip-label"> <strong style={{color: "#5a5c5a"}}>{text}</strong>
+                                                               className="tooltip-label">  <Text strong>{text}</Text>
                                                 </Button>
                                             }}
                                             defaultSortOrder='ascend'
