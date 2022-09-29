@@ -114,7 +114,8 @@ export const Users = () => {
             id: userToAction?.id,
             email: userToAction?.email,
             auto_groups: userToAction?.auto_groups ? userToAction?.auto_groups : [],
-            name: userToAction?.name
+            name: userToAction?.name,
+            role: userToAction?.role,
         } as User));
     }
 
