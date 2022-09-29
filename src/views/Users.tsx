@@ -29,7 +29,7 @@ import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {useOidcUser} from "@axa-fr/react-oidc";
 
-const {Title, Paragraph} = Typography;
+const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
 
 interface UserDataTable extends User {
@@ -277,7 +277,7 @@ export const Users = () => {
                                                 const btn = <Button type="text"
                                                                            onClick={() => setUserAndView(record as UserDataTable)}
                                                                            className="tooltip-label">
-                                                    <strong style={{color: "#5a5c5a"}}>{(text && text.trim() !== "") ? text : (record as User).id}</strong>
+                                                    <Text strong>{(text && text.trim() !== "") ? text : (record as User).id}</Text>
                                                 </Button>
                                                 if ((record as User).id !== currentUser.id) {
                                                     return btn

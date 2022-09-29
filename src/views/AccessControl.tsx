@@ -37,7 +37,7 @@ import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
 import {useGetAccessTokenSilently} from "../utils/token";
 
-const {Title, Paragraph} = Typography;
+const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
 const {confirm} = Modal;
 
@@ -415,7 +415,7 @@ export const AccessControl = () => {
                                                 return <Tooltip title={desc !== "" ? desc : "no description"}
                                                                 arrowPointAtCenter>
                                                     <span onClick={() => setRuleAndView(record as RuleDataTable)}
-                                                          className="tooltip-label"><strong style={{color: "#5a5c5a"}}>{text}</strong></span>
+                                                          className="tooltip-label"><Text strong>{text}</Text></span>
                                                 </Tooltip>
                                             }}
                                     />

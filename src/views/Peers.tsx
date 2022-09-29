@@ -371,15 +371,15 @@ export const Peers = () => {
         const userEmail = users?.find(u => u.id === peer.user_id)?.email
         if (!userEmail) {
             return <Button type="text" onClick={() => setUpdateGroupsVisible(peer, true)}>
-                <strong style={{color: "#5a5c5a"}}>{peer.name}</strong>
+                <Text strong>{peer.name}</Text>
             </Button>
         }
         return <div>
             <Button type="text" style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
                     onClick={() => setUpdateGroupsVisible(peer, true)}>
-                <strong style={{color: "#5a5c5a"}}>{peer.name}</strong>
+                <Text strong>{peer.name}</Text>
                 <br/>
-                <div style={{color: "#5a5c5a"}}>{userEmail}</div>
+                <Text type="secondary">{userEmail}</Text>
             </Button>
         </div>
     }
