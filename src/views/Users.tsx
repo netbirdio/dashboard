@@ -28,6 +28,7 @@ import UserUpdate from "../components/UserUpdate";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
+import {useOidcUser} from "@axa-fr/react-oidc";
 import {Link} from "react-router-dom";
 
 const {Title, Paragraph} = Typography;
@@ -41,6 +42,7 @@ const styleNotification = {marginTop: 85}
 
 export const Users = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {oidcUser} = useOidcUser();
     const dispatch = useDispatch()
 
     const groups = useSelector((state: RootState) => state.group.data)
@@ -55,6 +57,7 @@ export const Users = () => {
     const [textToSearch, setTextToSearch] = useState('');
     const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as UserDataTable[]);
+    const [currentUser, setCurrentUser] = useState({} as User)
     const pageSizeOptions = [
         {label: "5", value: "5"},
         {label: "10", value: "10"},
@@ -89,6 +92,18 @@ export const Users = () => {
         setDataTable(transformDataTable(filterDataTable()))
     }, [textToSearch])
 
+    useEffect(() => {
+        if (oidcUser && oidcUser.sub) {
+            const found = users.find(u => u.id == oidcUser.sub)
+            if (found) {
+                setCurrentUser(found)
+            }
+        } else {
+            setCurrentUser({} as User)
+        }
+
+    }, [oidcUser, users])
+
     const filterDataTable = (): User[] => {
         const t = textToSearch.toLowerCase().trim()
         let f: User[] = filter(users, (f: User) =>
@@ -116,7 +131,8 @@ export const Users = () => {
             id: userToAction?.id,
             email: userToAction?.email,
             auto_groups: userToAction?.auto_groups ? userToAction?.auto_groups : [],
-            name: userToAction?.name
+            name: userToAction?.name,
+            role: userToAction?.role,
         } as User));
     }
 
@@ -274,13 +290,18 @@ export const Users = () => {
                                             sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
                                             defaultSortOrder='ascend'
                                             render={(text, record, index) => {
-                                                return <Button type="text"
-                                                               onClick={() => setUserAndView(record as UserDataTable)}
-                                                               className="tooltip-label">
-                                                    <strong
-                                                        style={{color: "#5a5c5a"}}>{(text && text.trim() !== "") ? text : (record as User).id}</strong>
-
+                                                const btn = <Button type="text"
+                                                                           onClick={() => setUserAndView(record as UserDataTable)}
+                                                                           className="tooltip-label">
+                                                    <strong style={{color: "#5a5c5a"}}>{(text && text.trim() !== "") ? text : (record as User).id}</strong>
                                                 </Button>
+                                                if ((record as User).id !== currentUser.id) {
+                                                    return btn
+                                                }
+
+                                                return <div>{btn}
+                                                    <Tag color="blue">me</Tag>
+                                                </div>
                                             }}
                                     />
                                     <Column title="Name" dataIndex="name"
