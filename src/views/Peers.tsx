@@ -69,6 +69,7 @@ export const Peers = () => {
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
+    const [showTutorial, setShowTutorial] = useState(false)
 
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -113,6 +114,11 @@ export const Peers = () => {
     }, [])
 
     useEffect(() => {
+        if (peers.length) {
+            setShowTutorial(false)
+        } else {
+            setShowTutorial(true)
+        }
         setDataTable(transformDataTable(peers))
     }, [peers, groups])
 
@@ -419,8 +425,9 @@ export const Peers = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
-                                                Peer</Link>
+                                            {!showTutorial &&
+                                                <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
+                                                    Peer</Link>}
                                         </Col>
                                     </Row>
                                 </Col>
@@ -437,7 +444,7 @@ export const Peers = () => {
                                         showSizeChanger: false,
                                         showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} peers`)
                                     }}
-                                    className="card-table"
+                                    className={`access-control-table ${showTutorial ? "card-table card-table-no-placeholder" : "card-table"}`}
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
@@ -524,6 +531,17 @@ export const Peers = () => {
                                             }}
                                     />
                                 </Table>
+                                {showTutorial &&
+                                    <Space direction="vertical" size="small" align="center"
+                                           style={{display: 'flex', padding: '45px 15px', justifyContent: 'center'}}>
+                                        <Paragraph type="secondary" style={{textAlign: "center", whiteSpace: "pre-line"}}>
+                                            It looks like you don't have any connected machines. {"\n"}
+                                            Get started by adding one to your network!
+                                        </Paragraph>
+                                        <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
+                                            Peer</Link>
+                                    </Space>
+                                }
                             </Card>
                         </Space>
                     </Col>
