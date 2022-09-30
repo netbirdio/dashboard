@@ -239,7 +239,7 @@ export const Users = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Users</Title>
-                        <Paragraph>A list of all Users</Paragraph>
+                        <Paragraph>A list of all Users{(window.location.hostname == "app.netbird.io") ? ". Users with email from the same private organization domain will automatically join when they sign in for the first time." : ""}</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
