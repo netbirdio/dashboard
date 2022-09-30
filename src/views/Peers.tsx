@@ -534,8 +534,10 @@ export const Peers = () => {
                                 {showTutorial &&
                                     <Space direction="vertical" size="small" align="center"
                                            style={{display: 'flex', padding: '45px 15px', justifyContent: 'center'}}>
-                                        <Text type="secondary">It looks like you don't have any connected machines.
-                                            Get started by adding one to your network!</Text>
+                                        <Paragraph type="secondary" style={{textAlign: "center", whiteSpace: "pre-line"}}>
+                                            It looks like you don't have any connected machines. {"\n"}
+                                            Get started by adding one to your network!
+                                        </Paragraph>
                                         <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
                                             Peer</Link>
                                     </Space>
