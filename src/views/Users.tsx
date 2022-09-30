@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as userActions} from '../store/user';
@@ -30,6 +30,8 @@ import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {useOidcUser} from "@axa-fr/react-oidc";
 import {Link} from "react-router-dom";
+import {actions as setupKeyActions} from "../store/setup-key";
+import {SetupKey} from "../store/setup-key/types";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -133,6 +135,18 @@ export const Users = () => {
             auto_groups: userToAction?.auto_groups ? userToAction?.auto_groups : [],
             name: userToAction?.name,
             role: userToAction?.role,
+        } as User));
+    }
+
+    const onClickInviteUser = () => {
+        const autoGroups : string[] = []
+        dispatch(userActions.setUpdateUserDrawerVisible(true));
+        dispatch(userActions.setUser({
+            id: "",
+            email: "",
+            auto_groups: autoGroups,
+            name: "",
+            role: "user",
         } as User));
     }
 
@@ -262,9 +276,7 @@ export const Users = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">
-                                                Invite User
-                                            </Link>
+                                            <Button type="primary" onClick={onClickInviteUser}>Invite User</Button>
                                         </Col>
                                     </Row>
                                 </Col>

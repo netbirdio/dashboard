@@ -1,8 +1,8 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {Alert, Button, Col, Divider, Drawer, Form, Input, Modal, Row, Select, Space, Tag, Typography} from "antd";
 import {RootState} from "typesafe-actions";
-import {CloseOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
+import {CloseOutlined, EditOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
 import {Header} from "antd/es/layout/layout";
 import {Group} from "../store/group/types";
 import {FormUser, User, UserToSave} from "../store/user/types";
@@ -29,10 +29,22 @@ const UserUpdate = () => {
     const updateUserDrawerVisible = useSelector((state: RootState) => state.user.updateUserDrawerVisible)
     const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[])
     const [tagGroups, setTagGroups] = useState([] as string[])
+    const [editName, setEditName] = useState(false)
+    const inputNameRef = useRef<any>(null)
 
     const [formUser, setFormUser] = useState({} as FormUser)
     const [currentUser, setCurrentUser] = useState({} as User)
     const [form] = Form.useForm()
+
+    useEffect(() => {
+        if (editName) inputNameRef.current!.focus({
+            cursor: 'end',
+        });
+    }, [editName]);
+
+    const toggleEditName = (status: boolean) => {
+        setEditName(status);
+    }
 
     useEffect(() => {
         setTagGroups(groups?.filter(g => g.name != "All").map(g => g.name) || [])
@@ -264,7 +276,7 @@ const UserUpdate = () => {
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button disabled={savedUser.loading} onClick={onCancel}>Cancel</Button>
                             <Button type="primary" disabled={savedUser.loading || !changesDetected()}
-                                    onClick={handleFormSubmit}>Save</Button>
+                                    onClick={handleFormSubmit}>{`${formUser.id ? 'Save' : 'Invite'}`}</Button>
                         </Space>
                     }
                 >
@@ -279,7 +291,7 @@ const UserUpdate = () => {
                                     <Row align="top">
                                         {/*Close Icon*/}
                                         <Col flex="none" style={{display: "flex"}}>
-                                            {user.id &&
+                                            {!editName && user.id &&
                                                 <button type="button" aria-label="Close" className="ant-drawer-close"
                                                         style={{paddingTop: 3}}
                                                         onClick={onCancel}>
@@ -292,8 +304,27 @@ const UserUpdate = () => {
                                         </Col>
                                         {/* Name Label*/}
                                         <Col flex="auto">
-                                            <div className={"ant-drawer-title"}>
-                                                {formUser.name}</div>
+                                            {!editName && user.id && formUser.name ? (
+                                                <div className={"access-control input-text ant-drawer-title"}
+                                                     onClick={() => toggleEditName(true)}>{formUser.name ? formUser.name : formUser.name}
+                                                    <EditOutlined/></div>
+                                            ) : (
+                                                <Form.Item
+                                                    name="name"
+                                                    label="Name"
+                                                    rules={[{
+                                                        required: true,
+                                                        message: 'Please add a new name for this peer',
+                                                        whitespace: true
+                                                    }]}
+                                                >
+                                                    <Input
+                                                        placeholder={formUser.name}
+                                                        ref={inputNameRef}
+                                                        onPressEnter={() => toggleEditName(false)}
+                                                        onBlur={() => toggleEditName(false)}
+                                                        autoComplete="off"/>
+                                                </Form.Item>)}
                                         </Col>
                                     </Row>
                                 </Header>
@@ -304,7 +335,7 @@ const UserUpdate = () => {
                                     label="Email"
                                 >
                                     <Input
-                                        disabled={true}
+                                        disabled={user.id}
                                         value={formUser.email}
                                         style={{color: "#5a5c5a"}}
                                         autoComplete="off"/>
@@ -348,10 +379,6 @@ const UserUpdate = () => {
                             </Col>
                             <Col span={24}>
                                 <Divider></Divider>
-                                {/*<Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                        href="https://docs.netbird.io/docs/overview/setup-keys"
-                                        style={{color: 'rgb(07, 114, 128)'}}>Learn
-                                    more about setup keys</Button>*/}
                             </Col>
                             {currentUser && currentUser.role !== "admin" && (
                                 <div>
