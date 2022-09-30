@@ -425,8 +425,9 @@ export const Peers = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
-                                                Peer</Link>
+                                            {!showTutorial &&
+                                                <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
+                                                    Peer</Link>}
                                         </Col>
                                     </Row>
                                 </Col>
@@ -532,8 +533,11 @@ export const Peers = () => {
                                 </Table>
                                 {showTutorial &&
                                     <Space direction="vertical" size="small" align="center"
-                                           style={{display: 'flex', padding: '45px 15px'}}>
-                                        <Link  to="/add-peer">Add Peer</Link>
+                                           style={{display: 'flex', padding: '45px 15px', justifyContent: 'center'}}>
+                                        <Text type="secondary">It looks like you don't have any connected machines.
+                                            Get started by adding one to your network!</Text>
+                                        <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
+                                            Peer</Link>
                                     </Space>
                                 }
                             </Card>
