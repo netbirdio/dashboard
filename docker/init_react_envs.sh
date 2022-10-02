@@ -49,6 +49,7 @@ export AUTH_SUPPORTED_SCOPES=${AUTH_SUPPORTED_SCOPES:-openid profile email api o
 
 export NETBIRD_MGMT_API_ENDPOINT=$(echo $NETBIRD_MGMT_API_ENDPOINT | sed -E 's/(:80|:443)$//')
 export NETBIRD_MGMT_GRPC_API_ENDPOINT=${NETBIRD_MGMT_GRPC_API_ENDPOINT}
+export NETBIRD_HOTJAR_TRACK_ID=${NETBIRD_HOTJAR_TRACK_ID}
 
 REPO="https://github.com/netbirdio/netbird/"
 # this command will fetch the latest release e.g. v0.6.3
@@ -56,7 +57,7 @@ export NETBIRD_LATEST_VERSION=$(basename $(curl -fs -o/dev/null -w %{redirect_ur
 echo "NetBird latest version: ${NETBIRD_LATEST_VERSION}"
 
 # replace ENVs in the config
-ENV_STR="\$\$USE_AUTH0 \$\$AUTH_AUDIENCE \$\$AUTH_AUTHORITY \$\$AUTH_CLIENT_ID \$\$AUTH_SUPPORTED_SCOPES \$\$NETBIRD_MGMT_API_ENDPOINT \$\$NETBIRD_MGMT_GRPC_API_ENDPOINT \$\$NETBIRD_LATEST_VERSION"
+ENV_STR="\$\$USE_AUTH0 \$\$AUTH_AUDIENCE \$\$AUTH_AUTHORITY \$\$AUTH_CLIENT_ID \$\$AUTH_SUPPORTED_SCOPES \$\$NETBIRD_MGMT_API_ENDPOINT \$\$NETBIRD_MGMT_GRPC_API_ENDPOINT \$\$NETBIRD_LATEST_VERSION \$\$NETBIRD_HOTJAR_TRACK_ID"
 MAIN_JS=$(find /usr/share/nginx/html/static/js/main.*js)
 OIDC_TRUSTED_DOMAINS="/usr/share/nginx/html/OidcTrustedDomains.js"
 cp "$MAIN_JS" "$MAIN_JS".copy
