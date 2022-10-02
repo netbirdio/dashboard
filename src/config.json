@@ -7,5 +7,6 @@
 
   "apiOrigin": "$NETBIRD_MGMT_API_ENDPOINT",
   "grpcApiOrigin": "$NETBIRD_MGMT_GRPC_API_ENDPOINT",
-  "latestVersion": "$NETBIRD_LATEST_VERSION"
+  "latestVersion": "$NETBIRD_LATEST_VERSION",
+  "hotjarTrackID": "$NETBIRD_HOTJAR_TRACK_ID"
 }
