@@ -18,5 +18,6 @@ export function getConfig() {
     grpcApiOrigin: configJson.grpcApiOrigin,
     latestVersion: configJson.latestVersion,
     audience: configJson.authAudience,
+    hotjarTrackID: configJson.hotjarTrackID,
   };
 }
