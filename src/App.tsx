@@ -22,7 +22,8 @@ const {Header, Content} = Layout;
 function App() {
 
     const { hotjarTrackID } = getConfig();
-    if (hotjarTrackID) {
+    // @ts-ignore
+    if (hotjarTrackID && window._DATADOG_SYNTHETICS_BROWSER === undefined) {
         hotjar.initialize(hotjarTrackID, 6);
     }
 
