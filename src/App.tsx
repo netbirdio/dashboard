@@ -18,7 +18,7 @@ import Users from "./views/Users";
 import FooterComponent from "./components/FooterComponent";
 import {useGetAccessTokenSilently} from "./utils/token";
 import {User} from "./store/user/types";
-import Loading from "./components/Loading";
+import Loading, {SecureLoading} from "./components/Loading";
 
 const {Header, Content} = Layout;
 
@@ -56,16 +56,19 @@ function App() {
                 .then(() => {
                   setShow(true)
                 })
-                .catch(e => console.log(e))
+                .catch(e => {
+                    console.log(e)
+                    setShow(true)
+                })
         }
 
     }, [getAccessTokenSilently])
 
     return (
         <>
-            {!show && <Loading padding="3em" width="50px" height="50px"/>}
-            {show &&
             <Provider store={store}>
+                {!show && <SecureLoading padding="3em" width={50} height={50}/>}
+                {show &&
                 <Layout>
                     <Banner/>
                     <Header className="header" style={{
@@ -103,7 +106,8 @@ function App() {
                     </Content>
                     <FooterComponent/>
                 </Layout>
-            </Provider>}
+                }
+            </Provider>
         </>
     )
 }
