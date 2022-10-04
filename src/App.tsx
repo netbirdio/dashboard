@@ -1,27 +1,32 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Provider} from "react-redux";
-import {Redirect, Route, Switch} from 'react-router-dom';
-import Navbar from './components/Navbar';
-import Peers from './views/Peers';
-import FooterComponent from './components/FooterComponent';
-import SetupKeys from "./views/SetupKeys";
-import AddPeer from "./views/AddPeer";
-import Users from './views/Users';
-import AccessControl from './views/AccessControl';
-import Routes from './views/Routes';
-import Banner from "./components/Banner";
-import {store} from "./store";
-import { Col, Layout, Row} from 'antd';
-import {Container} from "./components/Container";
-import {withOidcSecure} from '@axa-fr/react-oidc';
-import { hotjar } from 'react-hotjar';
+import {apiClient, store} from "./store";
+import {hotjar} from 'react-hotjar';
 import {getConfig} from "./config";
+import Banner from "./components/Banner";
+import {Col, Layout, Row} from "antd";
+import {Container} from "./components/Container";
+import Navbar from "./components/Navbar";
+import {Redirect, Route, Switch} from "react-router-dom";
+import {withOidcSecure} from "@axa-fr/react-oidc";
+import Peers from "./views/Peers";
+import Routes from "./views/Routes";
+import AddPeer from "./views/AddPeer";
+import SetupKeys from "./views/SetupKeys";
+import AccessControl from "./views/AccessControl";
+import Users from "./views/Users";
+import FooterComponent from "./components/FooterComponent";
+import {useGetAccessTokenSilently} from "./utils/token";
+import {User} from "./store/user/types";
+import Loading from "./components/Loading";
+
 const {Header, Content} = Layout;
 
-
 function App() {
-
-    const { hotjarTrackID } = getConfig();
+    const run = useRef(false)
+    const [show, setShow] = useState(false)
+    const {getAccessTokenSilently} = useGetAccessTokenSilently();
+    const {hotjarTrackID} = getConfig();
     // @ts-ignore
     if (hotjarTrackID && window._DATADOG_SYNTHETICS_BROWSER === undefined) {
         hotjar.initialize(hotjarTrackID, 6);
@@ -42,10 +47,25 @@ function App() {
         return () => {
             window.removeEventListener('resize', hideMenu);
         };
-    });
+    }, []);
+
+    useEffect(() => {
+        if (!run.current) {
+            run.current = true
+            apiClient.request<User[]>('GET', `/api/users`, {getAccessTokenSilently: getAccessTokenSilently})
+                .then(() => {
+                  setShow(true)
+                })
+                .catch(e => console.log(e))
+        }
+
+    }, [getAccessTokenSilently])
 
     return (
-        <Provider store={store}>
+        <>
+            {!show && <Loading padding="3em" width="50px" height="50px"/>}
+            {show &&
+            <Provider store={store}>
                 <Layout>
                     <Banner/>
                     <Header className="header" style={{
@@ -62,7 +82,7 @@ function App() {
                             </Col>
                         </Row>
                     </Header>
-                    <Content style={{ minHeight: "100vh"}}>
+                    <Content style={{minHeight: "100vh"}}>
                         <Switch>
                             <Route
                                 exact
@@ -83,8 +103,9 @@ function App() {
                     </Content>
                     <FooterComponent/>
                 </Layout>
-        </Provider>
-    );
+            </Provider>}
+        </>
+    )
 }
 
 export default App;
