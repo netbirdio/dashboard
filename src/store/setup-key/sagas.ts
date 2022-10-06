@@ -56,12 +56,14 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
         const newGroups = [...keyToSave.auto_groups, ...resGroups]
         let effect
         if (!keyToSave.id) {
+            console.log(keyToSave)
             effect = yield call(service.createSetupKey, {
                 getAccessTokenSilently: action.payload.getAccessTokenSilently,
                 payload: {
                     name: keyToSave.name,
                     auto_groups: newGroups,
-                    type: keyToSave.type
+                    type: keyToSave.type,
+                    expires_in: keyToSave.expires_in
                 } as SetupKeyToSave
             });
         } else {
