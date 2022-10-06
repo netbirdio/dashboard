@@ -61,7 +61,8 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
                 payload: {
                     name: keyToSave.name,
                     auto_groups: newGroups,
-                    type: keyToSave.type
+                    type: keyToSave.type,
+                    expires_in: keyToSave.expires_in
                 } as SetupKeyToSave
             });
         } else {

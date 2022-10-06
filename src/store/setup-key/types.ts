@@ -1,3 +1,5 @@
+import {ExpiresInValue} from "../../views/ExpiresInInput";
+
 export interface SetupKey {
   expires: string;
   id: string;
@@ -10,10 +12,12 @@ export interface SetupKey {
   used_times: number;
   valid: boolean;
   auto_groups: string[]
+  expires_in: number;
 }
 
 export interface FormSetupKey extends SetupKey {
   autoGroupNames: string[]
+  expiresInFormatted: ExpiresInValue
 }
 
 export interface SetupKeyToSave extends SetupKey
