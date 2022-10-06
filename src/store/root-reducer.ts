@@ -6,7 +6,7 @@ import { reducer as user } from './user';
 import { reducer as group } from './group';
 import { reducer as rule } from './rule';
 import { reducer as route } from './route';
-import { reducer as dns } from './dns';
+import { reducer as dns } from './nameservers';
 
 export default combineReducers({
   peer,
