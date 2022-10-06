@@ -9,6 +9,6 @@ export interface NameServerGroup {
 
 export interface NameServers {
     ip: string
-    type: string
+    ns_type: string
     port: number
 }

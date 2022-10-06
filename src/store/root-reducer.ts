@@ -6,7 +6,7 @@ import { reducer as user } from './user';
 import { reducer as group } from './group';
 import { reducer as rule } from './rule';
 import { reducer as route } from './route';
-import { reducer as dns } from './nameservers';
+import { reducer as nameserverGroup } from './nameservers';
 
 export default combineReducers({
   peer,
@@ -15,5 +15,5 @@ export default combineReducers({
   group,
   rule,
   route,
-  dns
+  nameserverGroup
 });

@@ -3,7 +3,7 @@ import { apiClient } from '../../services/api-client';
 import { NameServerGroup } from './types';
 
 export default {
-  async getNameServerGroup(payload:RequestPayload<null>): Promise<ApiResponse<NameServerGroup[]>> {
+  async getNameServerGroups(payload:RequestPayload<null>): Promise<ApiResponse<NameServerGroup[]>> {
     return apiClient.get<NameServerGroup[]>(
       `/api/dns/nameservers`,
         payload

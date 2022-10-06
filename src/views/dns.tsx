@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
-import {actions as userActions} from '../store/user';
+import {actions as nsGroupActions} from '../store/nameservers';
 import {Container} from "../components/Container";
 import {
     Alert,
@@ -20,7 +20,6 @@ import {
     Tag,
     Typography,
 } from "antd";
-import {User} from "../store/user/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
 import {useGetAccessTokenSilently} from "../utils/token";
@@ -28,11 +27,12 @@ import UserUpdate from "../components/UserUpdate";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
+import {NameServerGroup} from "../store/nameservers/types";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
 
-interface UserDataTable extends User {
+interface NameserverGroupDataTable extends NameServerGroup {
     key: string
 }
 
@@ -44,17 +44,17 @@ export const DNS = () => {
     const dispatch = useDispatch()
 
     const groups = useSelector((state: RootState) => state.group.data)
-    const users = useSelector((state: RootState) => state.user.data);
-    const failed = useSelector((state: RootState) => state.user.failed);
-    const loading = useSelector((state: RootState) => state.user.loading);
-    const updateUserDrawerVisible = useSelector((state: RootState) => state.user.updateUserDrawerVisible)
-    const savedUser = useSelector((state: RootState) => state.user.savedUser)
+    const nsGroup = useSelector((state: RootState) => state.nameserverGroup.data);
+    const failed = useSelector((state: RootState) => state.nameserverGroup.failed);
+    const loading = useSelector((state: RootState) => state.nameserverGroup.loading);
+    const updateNameServerGroupVisible = useSelector((state: RootState) => state.nameserverGroup.setupNewNameServerGroupVisible)
+    const savedNSGroup = useSelector((state: RootState) => state.nameserverGroup.savedNameServerGroup)
 
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
-    const [userToAction, setUserToAction] = useState(null as UserDataTable | null);
+    const [nsGroupToAction, setNsGroupToAction] = useState(null as NameserverGroupDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
     const [pageSize, setPageSize] = useState(10);
-    const [dataTable, setDataTable] = useState([] as UserDataTable[]);
+    const [dataTable, setDataTable] = useState([] as NameserverGroupDataTable[]);
     const pageSizeOptions = [
         {label: "5", value: "5"},
         {label: "10", value: "10"},
@@ -62,38 +62,38 @@ export const DNS = () => {
     ]
 
     // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
-    const setUserAndView = (user: User) => {
-        dispatch(userActions.setUpdateUserDrawerVisible(true));
-        dispatch(userActions.setUser({
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            auto_groups: user.auto_groups ? user.auto_groups : [],
-            name: user.name
-        } as User));
+    const setUserAndView = (nsGroup: NameServerGroup) => {
+        dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(true));
+        dispatch(nsGroupActions.setNameServerGroup({
+            id: nsGroup.id,
+            groups: nsGroup.groups,
+            name: nsGroup.name,
+            nameservers: nsGroup.nameservers,
+        } as NameServerGroup));
     }
 
-    const transformDataTable = (d: User[]): UserDataTable[] => {
-        return d.map(p => ({key: p.id, ...p} as UserDataTable))
+    const transformDataTable = (d: NameServerGroup[]): NameserverGroupDataTable[] => {
+        return d.map(p => ({key: p.id, ...p} as NameserverGroupDataTable))
     }
 
-    // useEffect(() => {
-    //     dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-    //     dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-    // }, [])
     useEffect(() => {
-        setDataTable(transformDataTable(users))
-    }, [users])
+        dispatch(nsGroupActions.getNameServerGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+    }, [])
+
+    useEffect(() => {
+        setDataTable(transformDataTable(nsGroup))
+    }, [nsGroup])
 
     useEffect(() => {
         setDataTable(transformDataTable(filterDataTable()))
     }, [textToSearch])
 
-    const filterDataTable = (): User[] => {
+    const filterDataTable = (): NameServerGroup[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f: User[] = filter(users, (f: User) =>
-            ((f.email || f.id).toLowerCase().includes(t) || f.name.includes(t) || f.role.includes(t) || t === "")
-        ) as User[]
+        let f: NameServerGroup[] = filter(nsGroup, (f: NameServerGroup) =>
+            ((f.name ).toLowerCase().includes(t) || f.name.includes(t) || t === "")
+        ) as NameServerGroup[]
         return f
     }
 
@@ -111,16 +111,17 @@ export const DNS = () => {
     }
 
     const onClickEdit = () => {
-        dispatch(userActions.setUpdateUserDrawerVisible(true));
-        dispatch(userActions.setUser({
-            id: userToAction?.id,
-            email: userToAction?.email,
-            auto_groups: userToAction?.auto_groups ? userToAction?.auto_groups : [],
-            name: userToAction?.name
-        } as User));
+        dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(true));
+        dispatch(nsGroupActions.setNameServerGroup({
+            id: nsGroupToAction?.id,
+            name: nsGroupToAction?.name,
+            groups: nsGroupToAction?.groups,
+            enabled: nsGroupToAction?.enabled,
+            nameservers: nsGroupToAction?.nameservers,
+        } as NameServerGroup));
     }
 
-    const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, userToAction: UserDataTable) => {
+    const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, userToAction: NameserverGroupDataTable) => {
 
         let groupsMap = new Map<string, Group>();
         groups.forEach(g => {
@@ -171,39 +172,39 @@ export const DNS = () => {
     }
 
     useEffect(() => {
-        if (updateUserDrawerVisible) {
+        if (updateNameServerGroupVisible) {
             setGroupPopupVisible(false)
         }
-    }, [updateUserDrawerVisible])
+    }, [updateNameServerGroupVisible])
 
     const createKey = 'saving';
     useEffect(() => {
-        if (savedUser.loading) {
+        if (savedNSGroup.loading) {
             message.loading({content: 'Saving...', key: createKey, duration: 0, style: styleNotification});
-        } else if (savedUser.success) {
+        } else if (savedNSGroup.success) {
             message.success({
                 content: 'User has been successfully saved.',
                 key: createKey,
                 duration: 2,
                 style: styleNotification
             });
-            dispatch(userActions.setUpdateUserDrawerVisible(false));
-            dispatch(userActions.setSavedUser({...savedUser, success: false}));
-            dispatch(userActions.resetSavedUser(null))
-        } else if (savedUser.error) {
+            dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(false));
+            dispatch(nsGroupActions.setSavedNameServerGroup({...savedNSGroup, success: false}));
+            dispatch(nsGroupActions.resetSavedNameServerGroup(null))
+        } else if (savedNSGroup.error) {
             message.error({
                 content: 'Failed to update user. You might not have enough permissions.',
                 key: createKey,
                 duration: 2,
                 style: styleNotification
             });
-            dispatch(userActions.setSavedUser({...savedUser, error: null}));
-            dispatch(userActions.resetSavedUser(null))
+            dispatch(nsGroupActions.setSavedNameServerGroup({...savedNSGroup, error: null}));
+            dispatch(nsGroupActions.resetSavedNameServerGroup(null))
         }
-    }, [savedUser])
+    }, [savedNSGroup])
 
     const onPopoverVisibleChange = (b: boolean) => {
-        if (updateUserDrawerVisible) {
+        if (updateNameServerGroupVisible) {
             setGroupPopupVisible(false)
         } else {
             setGroupPopupVisible(undefined)
@@ -282,16 +283,16 @@ export const DNS = () => {
                                             defaultSortOrder='ascend'
                                             render={(text, record, index) => {
                                                 return <Button type="text"
-                                                               onClick={() => setUserAndView(record as UserDataTable)}
-                                                               className="tooltip-label">{(text && text.trim() !== "") ? text : (record as User).id}</Button>
+                                                               onClick={() => setUserAndView(record as NameserverGroupDataTable)}
+                                                               className="tooltip-label">{(text && text.trim() !== "") ? text : (record as NameServerGroup).id}</Button>
                                             }}
                                     />
                                     <Column title="Nameservers" dataIndex="nameservers"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
-                                            render={(text, record: UserDataTable, index) => {
-                                                return renderPopoverGroups(text, record.auto_groups, record)
+                                            render={(text, record: NameserverGroupDataTable, index) => {
+                                                return renderPopoverGroups(text, record.groups, record)
                                             }}
                                     />
                                     <Column title="" align="center" width="30px"
@@ -300,87 +301,7 @@ export const DNS = () => {
                                                     <Dropdown.Button type="text" overlay={actionsMenu}
                                                                      trigger={["click"]}
                                                                      onVisibleChange={visible => {
-                                                                         if (visible) setUserToAction(record as UserDataTable)
-                                                                     }}></Dropdown.Button>)
-                                            }}
-                                    />
-                                </Table>
-                            </Card>
-                        </Space>
-                    </Col>
-                </Row>
-                    </Tabs.TabPane>
-                    <Tabs.TabPane tab={<Title level={5}>Custom domains</Title>} key="2">
-                <Row>
-                    <Col span={24}>
-                        <Paragraph>Add custom domains</Paragraph>
-                        <Space direction="vertical" size="large" style={{display: 'flex'}}>
-                            <Row gutter={[16, 24]}>
-                                <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                                    <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
-                                           placeholder="Search..." onChange={onChangeTextToSearch}/>
-                                </Col>
-                                <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
-                                    <Space size="middle">
-                                        <Select value={pageSize.toString()} options={pageSizeOptions}
-                                                onChange={onChangePageSize} className="select-rows-per-page-en"/>
-                                    </Space>
-                                </Col>
-                                <Col xs={24}
-                                     sm={24}
-                                     md={5}
-                                     lg={5}
-                                     xl={5}
-                                     xxl={5} span={5}>
-                                    <Row justify="end">
-                                        <Col>
-                                            <Button type="primary" onClick={onClickAddNewSetupKey}>Add domain</Button>
-                                        </Col>
-                                    </Row>
-                                </Col>
-                            </Row>
-                            {failed &&
-                                <Alert message={failed.code} description={failed.message} type="error" showIcon
-                                       closable/>
-                            }
-                            <Card bodyStyle={{padding: 0}}>
-                                <Table
-                                    pagination={{
-                                        pageSize,
-                                        showSizeChanger: false,
-                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)
-                                    }}
-                                    className="card-table"
-                                    showSorterTooltip={false}
-                                    scroll={{x: true}}
-                                    loading={tableSpin(loading)}
-                                    dataSource={dataTable}>
-                                    <Column title="Domain" dataIndex="name"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
-                                            sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
-                                            defaultSortOrder='ascend'
-                                            render={(text, record, index) => {
-                                                return <Button type="text"
-                                                               onClick={() => setUserAndView(record as UserDataTable)}
-                                                               className="tooltip-label">{(text && text.trim() !== "") ? text : (record as User).id}</Button>
-                                            }}
-                                    />
-                                    <Column title="Type" dataIndex="nameservers"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
-                                    <Column title="TTL" dataIndex="nameservers"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
-                                    <Column title="Value" dataIndex="nameservers"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
-                                    <Column title="" align="center" width="30px"
-                                            render={(text, record, index) => {
-                                                return (
-                                                    <Dropdown.Button type="text" overlay={actionsMenu}
-                                                                     trigger={["click"]}
-                                                                     onVisibleChange={visible => {
-                                                                         if (visible) setUserToAction(record as UserDataTable)
+                                                                         if (visible) setNsGroupToAction(record as NameserverGroupDataTable)
                                                                      }}></Dropdown.Button>)
                                             }}
                                     />

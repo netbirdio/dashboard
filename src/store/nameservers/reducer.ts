@@ -41,26 +41,26 @@ const initialState: StateType = {
 };
 
 const data = createReducer<NameServerGroup[], ActionTypes>(initialState.data as NameServerGroup[])
-    .handleAction(actions.getNameServerGroup.success,(_, action) => action.payload)
-    .handleAction(actions.getNameServerGroup.failure, () => []);
+    .handleAction(actions.getNameServerGroups.success,(_, action) => action.payload)
+    .handleAction(actions.getNameServerGroups.failure, () => []);
 
 const nameserverGroup = createReducer<NameServerGroup, ActionTypes>(initialState.nameserverGroup as NameServerGroup)
     .handleAction(actions.setNameServerGroup, (store, action) => action.payload);
 
 const loading = createReducer<boolean, ActionTypes>(initialState.loading)
-    .handleAction(actions.getNameServerGroup.request, () => true)
-    .handleAction(actions.getNameServerGroup.success, () => false)
-    .handleAction(actions.getNameServerGroup.failure, () => false);
+    .handleAction(actions.getNameServerGroups.request, () => true)
+    .handleAction(actions.getNameServerGroups.success, () => false)
+    .handleAction(actions.getNameServerGroups.failure, () => false);
 
 const failed = createReducer<ApiError | null, ActionTypes>(initialState.failed)
-    .handleAction(actions.getNameServerGroup.request, () => null)
-    .handleAction(actions.getNameServerGroup.success, () => null)
-    .handleAction(actions.getNameServerGroup.failure, (store, action) => action.payload);
+    .handleAction(actions.getNameServerGroups.request, () => null)
+    .handleAction(actions.getNameServerGroups.success, () => null)
+    .handleAction(actions.getNameServerGroups.failure, (store, action) => action.payload);
 
 const saving = createReducer<boolean, ActionTypes>(initialState.saving)
-    .handleAction(actions.getNameServerGroup.request, () => true)
-    .handleAction(actions.getNameServerGroup.success, () => false)
-    .handleAction(actions.getNameServerGroup.failure, () => false);
+    .handleAction(actions.getNameServerGroups.request, () => true)
+    .handleAction(actions.getNameServerGroups.success, () => false)
+    .handleAction(actions.getNameServerGroups.failure, () => false);
 
 const deletedNameServerGroup = createReducer<DeleteResponse<string | null>, ActionTypes>(initialState.deleteNameServerGroup)
     .handleAction(actions.deleteNameServerGroup.request, () => initialState.deleteNameServerGroup)

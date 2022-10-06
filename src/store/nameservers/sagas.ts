@@ -4,7 +4,7 @@ import {NameServerGroup} from './types'
 import service from './service';
 import actions from './actions';
 
-export function* getNameServerGroup(action: ReturnType<typeof actions.getNameServerGroup.request>): Generator {
+export function* getNameServerGroups(action: ReturnType<typeof actions.getNameServerGroups.request>): Generator {
   try {
 
     yield put(actions.setDeletedNameServerGroup({
@@ -15,12 +15,12 @@ export function* getNameServerGroup(action: ReturnType<typeof actions.getNameSer
       data: null
     } as DeleteResponse<string | null>))
 
-    const effect = yield call(service.getNameServerGroup, action.payload);
+    const effect = yield call(service.getNameServerGroups, action.payload);
     const response = effect as ApiResponse<NameServerGroup[]>;
 
-    yield put(actions.getNameServerGroup.success(response.body));
+    yield put(actions.getNameServerGroups.success(response.body));
   } catch (err) {
-    yield put(actions.getNameServerGroup.failure(err as ApiError));
+    yield put(actions.getNameServerGroups.failure(err as ApiError));
   }
 }
 
@@ -68,7 +68,7 @@ export function* saveNameServerGroup(action: ReturnType<typeof actions.saveNameS
       data: response.body
     } as CreateResponse<NameServerGroup | null>));
 
-    yield put(actions.getNameServerGroup.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
+    yield put(actions.getNameServerGroups.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
   } catch (err) {
     yield put(actions.saveNameServerGroup.failure({
       loading: false,
@@ -106,7 +106,7 @@ export function* deleteNameServerGroup(action: ReturnType<typeof actions.deleteN
     } as DeleteResponse<string | null>));
 
     const nameserverGroup = (yield select(state => state.nameserverGroup.data)) as NameServerGroup[]
-    yield put(actions.getNameServerGroup.success(nameserverGroup.filter((p:NameServerGroup) => p.id !== action.payload.payload)))
+    yield put(actions.getNameServerGroups.success(nameserverGroup.filter((p:NameServerGroup) => p.id !== action.payload.payload)))
   } catch (err) {
     yield put(actions.deleteNameServerGroup.failure({
       loading: false,
@@ -120,7 +120,7 @@ export function* deleteNameServerGroup(action: ReturnType<typeof actions.deleteN
 
 export default function* sagas(): Generator {
   yield all([
-    takeLatest(actions.getNameServerGroup.request, getNameServerGroup),
+    takeLatest(actions.getNameServerGroups.request, getNameServerGroups),
     takeLatest(actions.saveNameServerGroup.request, saveNameServerGroup),
     takeLatest(actions.deleteNameServerGroup.request, deleteNameServerGroup)
   ]);

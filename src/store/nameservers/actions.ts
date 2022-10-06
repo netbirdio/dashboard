@@ -3,7 +3,7 @@ import {NameServerGroup} from './types';
 import {ApiError, CreateResponse, DeleteResponse, RequestPayload} from '../../services/api-client/types';
 
 const actions = {
-  getNameServerGroup: createAsyncAction(
+  getNameServerGroups: createAsyncAction(
       'GET_NameServerGroup_REQUEST',
       'GET_NameServerGroup_SUCCESS',
       'GET_NameServerGroup_FAILURE',
