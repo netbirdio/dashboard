@@ -311,7 +311,7 @@ export const DNS = () => {
                     </Col>
                 </Row>
                     </Tabs.TabPane>
-                    <Tabs.TabPane tab={<Title level={5}>Peers Domains</Title>} key="3">
+                    <Tabs.TabPane tab={<Title level={5}>Other Settings</Title>} key="3">
                     </Tabs.TabPane>
                 </Tabs>
          </Container>
