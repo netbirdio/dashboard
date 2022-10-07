@@ -57,6 +57,7 @@ function App() {
                   setShow(true)
                 })
                 .catch(e => {
+                    setShow(true)
                     console.log(e)
                 })
         }
