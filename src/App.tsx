@@ -16,9 +16,18 @@ import {Container} from "./components/Container";
 import {withOidcSecure} from '@axa-fr/react-oidc';
 import DNS from "./views/dns";
 
+import { hotjar } from 'react-hotjar';
+import {getConfig} from "./config";
 const {Header, Content} = Layout;
 
+
 function App() {
+
+    const { hotjarTrackID } = getConfig();
+    // @ts-ignore
+    if (hotjarTrackID && window._DATADOG_SYNTHETICS_BROWSER === undefined) {
+        hotjar.initialize(hotjarTrackID, 6);
+    }
 
     const [isOpen, setIsOpen] = useState(false);
 

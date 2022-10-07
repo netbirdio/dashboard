@@ -11,6 +11,9 @@ export const formatOS = (os) => {
 };
 
 export const formatDate = date => {
+    if (new Date(date).getTime() > new Date("2099-12-31").getTime()) {
+        return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' });
+    }
     return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: '2-digit', month: 'short', day: 'numeric' });
 }
 

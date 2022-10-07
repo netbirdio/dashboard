@@ -27,10 +27,13 @@ import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
 import {useGetAccessTokenSilently} from "../utils/token";
+import ExpiresInInput, {ExpiresInValue} from "../views/ExpiresInInput";
 
 const {Option} = Select;
 
 const {Text} = Typography;
+
+const ExpiresInDefault: ExpiresInValue = {number: 30, interval: "Days"}
 
 const customExpiresFormat: DatePickerProps['format'] = value => {
     return formatDate(value)
@@ -89,6 +92,7 @@ const SetupKeyNew = () => {
         const fSetupKey = {
             ...setupKey,
             autoGroupNames: setupKey.auto_groups ? formKeyGroups : [],
+            expiresInFormatted: ExpiresInDefault
         } as FormSetupKey
         setFormSetupKey(fSetupKey)
         form.setFieldsValue(fSetupKey)
@@ -99,15 +103,44 @@ const SetupKeyNew = () => {
         // find groups that do not yet exist (newly added by the user)
         const allGroupsNames: string[] = groups?.map(g => g.name);
         const groupsToCreate = formSetupKey.autoGroupNames.filter(s => !allGroupsNames.includes(s))
+
+        let expiresIn = expiresInToSeconds(formSetupKey.expiresInFormatted)
         return {
             id: formSetupKey.id,
             name: formSetupKey.name,
             type: formSetupKey.type,
             auto_groups: autoGroups,
             revoked: formSetupKey.revoked,
-            groupsToCreate: groupsToCreate
+            groupsToCreate: groupsToCreate,
+            expires_in: expiresIn
         } as SetupKeyToSave
     }
+    const expiresInToSeconds = (expiresIn: ExpiresInValue) : number => {
+        if (!expiresIn.number || !expiresIn.interval) {
+            return 0
+        }
+        let multiplier = 0
+        switch (expiresIn.interval.toLowerCase()) {
+            case "day":
+                multiplier = 24 * 3600
+                break
+            case "week":
+                multiplier = 7 * 24 * 3600
+                break
+            case "month":
+                multiplier = 30 * 24 * 3600
+                break
+            case "year":
+                multiplier = 365 * 24 * 3600
+                break
+            default:
+                multiplier = 0
+        }
+
+        return expiresIn.number * multiplier
+
+    }
+
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
@@ -135,7 +168,8 @@ const SetupKeyNew = () => {
             last_used: "",
             expires: "",
             state: "valid",
-            auto_groups: new Array()
+            auto_groups: new Array(),
+            expires_in: 0
         } as SetupKey))
         setFormSetupKey({} as FormSetupKey)
         setVisibleNewSetupKey(false)
@@ -251,6 +285,13 @@ const SetupKeyNew = () => {
         return setupKey.auto_groups?.filter(g => !formGroupIds.includes(g)).length > 0
     }
 
+    const checkExpiresIn = (_: any, value: { number: number }) => {
+        if (value.number > 0) {
+            return Promise.resolve();
+        }
+        return Promise.reject(new Error("Expiration must be greater than zero"));
+    };
+
     return (
         <>
             {setupKey &&
@@ -268,7 +309,11 @@ const SetupKeyNew = () => {
                         </Space>
                     }
                 >
-                    <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}>
+                    <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}
+                          initialValues={{
+                              expiresInFormatted: ExpiresInDefault,
+                          }}
+                    >
                         <Row gutter={16}>
                             <Col span={24}>
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
@@ -393,6 +438,13 @@ const SetupKeyNew = () => {
 
                                 </Form.Item>
                             </Col>
+                            {!setupKey.id &&
+                                <Col span={24}>
+                                    <Form.Item name="expiresInFormatted" label="Expires In"
+                                               rules={[{validator: checkExpiresIn}]}>
+                                        <ExpiresInInput/>
+                                    </Form.Item>
+                                </Col>}
                             <Col span={24}>
                                 <Form.Item
                                     name="autoGroupNames"
