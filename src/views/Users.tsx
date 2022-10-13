@@ -32,6 +32,7 @@ import {useOidcUser} from "@axa-fr/react-oidc";
 import {Link} from "react-router-dom";
 import {actions as setupKeyActions} from "../store/setup-key";
 import {SetupKey} from "../store/setup-key/types";
+import {isLocalDev, isNetBirdHosted} from "../utils/common";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -283,11 +284,12 @@ export const Users = () => {
                                      lg={5}
                                      xl={5}
                                      xxl={5} span={5}>
+                                    {(isNetBirdHosted() || isLocalDev()) &&
                                     <Row justify="end">
                                         <Col>
                                             <Button type="primary" onClick={onClickInviteUser}>Invite User</Button>
                                         </Col>
-                                    </Row>
+                                    </Row>}
                                 </Col>
                             </Row>
                             {failed &&
