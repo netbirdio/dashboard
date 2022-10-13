@@ -93,7 +93,7 @@ export const copyToClipboard = (copyText) => {
 }
 
 export const isNetBirdHosted = () => {
-    return window.location.hostname.endsWith(".netbird.io")
+    return window.location.hostname.endsWith(".netbird.io") || window.location.hostname.endsWith(".wiretrustee.com")
 }
 
 export const isLocalDev = () => {
