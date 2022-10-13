@@ -244,11 +244,15 @@ const UserUpdate = () => {
     }
 
     const changesDetected = (): boolean => {
-        return groupsChanged() || roleChanged()
+        return formUser.email !== "" && (nameChanged() || groupsChanged() || roleChanged())
     }
 
     const roleChanged = (): boolean => {
         return formUser.role !== user.role
+    }
+
+    const nameChanged = (): boolean => {
+        return formUser.name !== user.name
     }
 
     const groupsChanged = (): boolean => {
