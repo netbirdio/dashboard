@@ -181,7 +181,7 @@ const UserUpdate = () => {
 
     const showConfirmChangeRole = (userToSave: UserToSave) => {
         let content = <Paragraph>With this action, you will remove the administrative privileges of your user.
-            Your user will be limited to read-only operations only in this account. Are you sure?</Paragraph>
+            Your user will be limited to read-only operations in this account. Are you sure?</Paragraph>
         let contentModule = <div>{content}</div>
 
         let name = formUser ? formUser.email : ''
