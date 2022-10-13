@@ -41,7 +41,7 @@ const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
 );
 
-const loadingComponent = () => <Loading padding="3em" width="50px" height="50px"/>
+const loadingComponent = () => <Loading padding="3em" width={50} height={50}/>
 
 root.render(
     <OidcProvider

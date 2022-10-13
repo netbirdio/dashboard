@@ -18,4 +18,11 @@ export default {
         payload
     );
   },
+  async createUser(payload:RequestPayload<UserToSave>): Promise<ApiResponse<User>> {
+    // @ts-ignore
+    return apiClient.post<User>(
+        `/api/users`,
+        payload
+    );
+  },
 };
