@@ -91,3 +91,11 @@ export const timeAgo = (dateParam) => {
 export const copyToClipboard = (copyText) => {
     navigator.clipboard.writeText(copyText);
 }
+
+export const isNetBirdHosted = () => {
+    return window.location.hostname.endsWith(".netbird.io")
+}
+
+export const isLocalDev = () => {
+    return window.location.hostname.includes("localhost")
+}
