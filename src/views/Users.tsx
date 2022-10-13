@@ -221,10 +221,19 @@ export const Users = () => {
             dispatch(userActions.setSavedUser({...savedUser, success: false}));
             dispatch(userActions.resetSavedUser(null))
         } else if (savedUser.error) {
+            let errorMsg = "Failed to update user"
+            switch (savedUser.error.statusCode) {
+                case 412:
+                    errorMsg = savedUser.error.data
+                    break
+                case 403:
+                    errorMsg = "Failed to update user. You might not have enough permissions."
+                    break
+            }
             message.error({
-                content: 'Failed to update user. You might not have enough permissions.',
+                content: errorMsg,
                 key: createKey,
-                duration: 2,
+                duration: 5,
                 style: styleNotification
             });
             dispatch(userActions.setSavedUser({...savedUser, error: null}));
