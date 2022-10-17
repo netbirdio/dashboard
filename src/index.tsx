@@ -16,12 +16,16 @@ const config = getConfig();
 // Unfortunately Auth0 https://<DOMAIN>/.well-known/openid-configuration doesn't contain end_session_endpoint that
 // is required for doing logout. Therefore, we need to hardcode the config for auth
 const auth0AuthorityConfig: AuthorityConfiguration = {
-    authorization_endpoint: new URL("authorize", config.authority).href,
-    token_endpoint:  new URL("oauth/token", config.authority).href,
-    revocation_endpoint: new URL("oauth/revoke", config.authority).href,
-    end_session_endpoint: new URL("v2/logout", config.authority).href,
-    userinfo_endpoint: new URL("userinfo", config.authority).href,
-} as AuthorityConfiguration
+  issuer:
+    config.authority.slice(-1) === "/"
+      ? config.authority
+      : config.authority + "/",
+  authorization_endpoint: new URL("authorize", config.authority).href,
+  token_endpoint: new URL("oauth/token", config.authority).href,
+  revocation_endpoint: new URL("oauth/revoke", config.authority).href,
+  end_session_endpoint: new URL("v2/logout", config.authority).href,
+  userinfo_endpoint: new URL("userinfo", config.authority).href,
+} as AuthorityConfiguration;
 
 const providerConfig = {
     authority: config.authority,
