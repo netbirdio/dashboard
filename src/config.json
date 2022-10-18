@@ -11,5 +11,6 @@
   "latestVersion": "$NETBIRD_LATEST_VERSION",
   "hotjarTrackID": "$NETBIRD_HOTJAR_TRACK_ID",
   "redirectURI": "$AUTH_REDIRECT_URI",
-  "silentRedirectURI": "$AUTH_SILENT_REDIRECT_URI"
+  "silentRedirectURI": "$AUTH_SILENT_REDIRECT_URI",
+  "tokenType": "$AUTH_TOKEN_TYPE"
 }

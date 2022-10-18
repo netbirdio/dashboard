@@ -10,6 +10,7 @@ if (process.env.NODE_ENV !== 'production') {
 const defaultRedirectURI = '/#callback';
 const defaultSilentRedirectURI = '/#silent-callback'
 const defaultClientSecret = '';
+const defaultTokenType = 'access'; // Allow setting if we need to use the Access Token or Id token returned from the IDP
 
 export function getConfig() {
   let redirectURI = defaultRedirectURI
@@ -27,6 +28,11 @@ export function getConfig() {
     clientSecret = configJson.authClientSecret
   }
 
+  let tokenType = defaultTokenType
+  if (configJson.tokenType) {
+    tokenType = configJson.tokenType
+  }
+
   return {
     auth0Auth: configJson.auth0Auth == "true", //due to substitution we can't use boolean in the config
     authority: configJson.authAuthority,
@@ -40,5 +46,6 @@ export function getConfig() {
     hotjarTrackID: configJson.hotjarTrackID,
     redirectURI: redirectURI,
     silentRedirectURI: silentRedirectURI,
+    tokenType: tokenType,
   };
 }

@@ -1,5 +1,6 @@
-import {useOidcAccessToken} from "@axa-fr/react-oidc";
+import {useOidcAccessToken, useOidcIdToken} from "@axa-fr/react-oidc";
 import {useEffect} from "react";
+import {getConfig} from "../config";
 
 function sleep(ms : number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -33,8 +34,11 @@ let latestToken:string
 // hook that returns a getAccessTokenSilently function that returns an access token promise,
 // waiting for renewal if it was expired
 export const useGetAccessTokenSilently = () => {
+    const {tokenType} = getConfig()
+    const {idToken} = useOidcIdToken()
     const {accessToken} = useOidcAccessToken()
-    latestToken = accessToken
+
+    latestToken = tokenType === 'id' ? idToken: accessToken
     const getAccessTokenSilently = async (): Promise<string> => {
         let attempt = 0
         while (!isTokenValid(latestToken) && attempt < 15){
@@ -46,8 +50,8 @@ export const useGetAccessTokenSilently = () => {
     };
 
     useEffect(() => {
-        latestToken = accessToken
-    }, [accessToken])
+        latestToken = tokenType === 'id' ? idToken: accessToken
+    }, [accessToken, idToken])
 
     return {getAccessTokenSilently}
 }
