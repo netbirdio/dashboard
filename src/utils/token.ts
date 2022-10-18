@@ -5,9 +5,18 @@ function sleep(ms : number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function b64DecodeUnicode(str:string) {
-    return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''))
+function b64DecodeUnicode(str: string): string {
+    // See https://www.rfc-editor.org/rfc/rfc7515.txt, Appendix C
+    str = str.replace('-', '+');
+    str = str.replace('_', '/');
+    switch (str.length % 4) {
+        case 0: break;
+        case 2: str += '=='; break;
+        case 3: str += '='; break;
+    }
+    return decodeURIComponent(Array.prototype.map.call(atob(str), (c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)).join(''));
 }
+
 function parseJwt(token:string) {
     return JSON.parse(b64DecodeUnicode(token.split('.')[1].replace('-', '+').replace('_', '/')))
 }
