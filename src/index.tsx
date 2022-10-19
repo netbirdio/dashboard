@@ -26,9 +26,9 @@ const auth0AuthorityConfig: AuthorityConfiguration = {
 const providerConfig = {
     authority: config.authority,
     client_id: config.clientId,
-    redirect_uri: window.location.origin + '/#callback',
+    redirect_uri: window.location.origin + config.redirectURI,
     refresh_time_before_tokens_expiration_in_second: 30,
-    silent_redirect_uri: window.location.origin + '/#silent-callback',
+    silent_redirect_uri: window.location.origin + config.silentRedirectURI,
     scope: config.scopesSupported,
     // disabling service worker
     // service_worker_relative_url:'/OidcServiceWorker.js',
@@ -41,7 +41,7 @@ const root = ReactDOM.createRoot(
     document.getElementById('root') as HTMLElement
 );
 
-const loadingComponent = () => <Loading padding="3em" width="50px" height="50px"/>
+const loadingComponent = () => <Loading padding="3em" width={50} height={50}/>
 
 root.render(
     <OidcProvider

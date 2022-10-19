@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as userActions} from '../store/user';
@@ -7,10 +7,11 @@ import {
     Alert,
     Button,
     Card,
-    Col, Divider,
+    Col,
     Dropdown,
     Input,
-    Menu, message,
+    Menu,
+    message,
     Popover,
     Row,
     Select,
@@ -28,6 +29,10 @@ import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {useOidcUser} from "@axa-fr/react-oidc";
+import {Link} from "react-router-dom";
+import {actions as setupKeyActions} from "../store/setup-key";
+import {SetupKey} from "../store/setup-key/types";
+import {isLocalDev, isNetBirdHosted} from "../utils/common";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -134,6 +139,18 @@ export const Users = () => {
         } as User));
     }
 
+    const onClickInviteUser = () => {
+        const autoGroups : string[] = []
+        dispatch(userActions.setUpdateUserDrawerVisible(true));
+        dispatch(userActions.setUser({
+            id: "",
+            email: "",
+            auto_groups: autoGroups,
+            name: "",
+            role: "user",
+        } as User));
+    }
+
     const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, userToAction: UserDataTable) => {
 
         let groupsMap = new Map<string, Group>();
@@ -205,10 +222,19 @@ export const Users = () => {
             dispatch(userActions.setSavedUser({...savedUser, success: false}));
             dispatch(userActions.resetSavedUser(null))
         } else if (savedUser.error) {
+            let errorMsg = "Failed to update user"
+            switch (savedUser.error.statusCode) {
+                case 412:
+                    errorMsg = savedUser.error.data
+                    break
+                case 403:
+                    errorMsg = "Failed to update user. You might not have enough permissions."
+                    break
+            }
             message.error({
-                content: 'Failed to update user. You might not have enough permissions.',
+                content: errorMsg,
                 key: createKey,
-                duration: 2,
+                duration: 5,
                 style: styleNotification
             });
             dispatch(userActions.setSavedUser({...savedUser, error: null}));
@@ -252,6 +278,19 @@ export const Users = () => {
                                                 onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
                                 </Col>
+                                <Col xs={24}
+                                     sm={24}
+                                     md={5}
+                                     lg={5}
+                                     xl={5}
+                                     xxl={5} span={5}>
+                                    {(isNetBirdHosted() || isLocalDev()) &&
+                                    <Row justify="end">
+                                        <Col>
+                                            <Button type="primary" onClick={onClickInviteUser}>Invite User</Button>
+                                        </Col>
+                                    </Row>}
+                                </Col>
                             </Row>
                             {failed &&
                                 <Alert message={failed.code} description={failed.message} type="error" showIcon
@@ -291,6 +330,19 @@ export const Users = () => {
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
+                                    <Column title="Status" dataIndex="status"
+                                            align="center"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).status.includes(value)}
+                                            sorter={(a, b) => ((a as any).status.localeCompare((b as any).status))}
+                                            render={(text, record, index) => {
+                                                if (text == "active") {
+                                                    return <Tag color="green">{text}</Tag>
+                                                } else if (text === "invited"){
+                                                    return <Tag color="gold">{text}</Tag>
+                                                }
+                                                return <Tag color="red">{text}</Tag>
+                                            }}
+                                    />
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
                                             render={(text, record: UserDataTable, index) => {
                                                 return renderPopoverGroups(text, record.auto_groups, record)
