@@ -15,14 +15,14 @@ const Banner = () => {
 		localStorage.setItem(banner_closed_key,'true');
 	};
 
-	const announcement = "New Release! Access private networks with the Network Routes feature."
+	const announcement = "New Release! Add teammates to your NetBird network."
 
 	const announcement_md5 = Md5.hashStr(announcement)
 
 	const linkLearnMore = () => {
 		return (
 			<a
-				href="https://netbird.io/docs/how-to-guides/network-routes"
+				href="https://netbird.io/docs/how-to-guides/adding-users-to-netbird"
 				className="font-bold underline"
 				target="_blank"
 				rel="noreferrer"
