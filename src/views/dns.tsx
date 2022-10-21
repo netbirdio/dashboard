@@ -295,8 +295,8 @@ export const DNS = () => {
                                     />
                                     <Column title="Status" dataIndex="enabled"
                                             render={(text: Boolean) => {
-                                                return text ? <Tag color="red">disabled</Tag> :
-                                                    <Tag color="green">enabled</Tag>
+                                                return text ? <Tag color="green">enabled</Tag> :
+                                                    <Tag color="red">disabled</Tag>
                                             }}
                                     />
                                     <Column title="Nameservers" dataIndex="nameservers"

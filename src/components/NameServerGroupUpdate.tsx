@@ -129,6 +129,7 @@ const NameServerGroupUpdate = () => {
             nameservers: formNSGroup.nameservers,
             groups: existingGroups,
             groupsToCreate: newGroups,
+            enabled: formNSGroup.enabled,
         } as NameServerGroupToSave
     }
 
