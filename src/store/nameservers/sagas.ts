@@ -3,6 +3,8 @@ import {ApiError, ApiResponse, CreateResponse, DeleteResponse} from '../../servi
 import {NameServerGroup} from './types'
 import service from './service';
 import actions from './actions';
+import serviceGroup from "../group/service";
+import {Group} from "../group/types";
 
 export function* getNameServerGroups(action: ReturnType<typeof actions.getNameServerGroups.request>): Generator {
   try {
@@ -40,13 +42,30 @@ export function* saveNameServerGroup(action: ReturnType<typeof actions.saveNameS
 
     const nameserverGroupToSave = action.payload.payload
 
+    let groupsToCreate = nameserverGroupToSave.groupsToCreate
+    if (!groupsToCreate) {
+      groupsToCreate = []
+    }
+
+    // first, create groups that were newly added by user
+    const responsesGroup = yield all(groupsToCreate.map(g => call(serviceGroup.createGroup, {
+          getAccessTokenSilently: action.payload.getAccessTokenSilently,
+          payload: {name: g}
+        })
+    ))
+
+    const resGroups = (responsesGroup as ApiResponse<Group>[]).filter(r => r.statusCode === 200).map(g => (g.body as Group)).map(g => g.id)
+    const newGroups = [...nameserverGroupToSave.groups, ...resGroups]
+
     const payloadToSave = {
       getAccessTokenSilently: action.payload.getAccessTokenSilently,
       payload: {
         id: nameserverGroupToSave.id,
         name: nameserverGroupToSave.name,
         description: nameserverGroupToSave.description,
-        nameservers: nameserverGroupToSave.nameservers
+        nameservers: nameserverGroupToSave.nameservers,
+        groups: newGroups,
+        enabled: nameserverGroupToSave.enabled,
       } as NameServerGroup
     }
 

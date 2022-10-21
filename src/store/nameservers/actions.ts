@@ -1,5 +1,5 @@
 import { ActionType, createAction, createAsyncAction } from 'typesafe-actions';
-import {NameServerGroup} from './types';
+import {NameServerGroup, NameServerGroupToSave} from './types';
 import {ApiError, CreateResponse, DeleteResponse, RequestPayload} from '../../services/api-client/types';
 
 const actions = {
@@ -13,7 +13,7 @@ const actions = {
       'SAVE_NameServerGroup_REQUEST',
       'SAVE_NameServerGroup_SUCCESS',
       'SAVE_NameServerGroup_FAILURE',
-  )<RequestPayload<NameServerGroup>, CreateResponse<NameServerGroup | null>, CreateResponse<NameServerGroup | null>>(),
+  )<RequestPayload<NameServerGroupToSave>, CreateResponse<NameServerGroup | null>, CreateResponse<NameServerGroup | null>>(),
   setSavedNameServerGroup: createAction('SET_CREATE_NameServerGroup')<CreateResponse<NameServerGroup | null>>(),
   resetSavedNameServerGroup: createAction('RESET_CREATE_NameServerGroup')<null>(),
   

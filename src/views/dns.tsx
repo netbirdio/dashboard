@@ -8,7 +8,6 @@ import {
     Button,
     Card,
     Col,
-    Collapse,
     Dropdown,
     Input,
     Menu, message,
@@ -23,11 +22,11 @@ import {
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
 import {useGetAccessTokenSilently} from "../utils/token";
-import UserUpdate from "../components/UserUpdate";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
-import {NameServerGroup} from "../store/nameservers/types";
+import {NameServerGroup, NameServer} from "../store/nameservers/types";
+import NameServerGroupUpdate from "../components/NameServerGroupUpdate";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -39,7 +38,6 @@ interface NameserverGroupDataTable extends NameServerGroup {
 const styleNotification = {marginTop: 85}
 
 export const DNS = () => {
-    const { Panel } = Collapse;
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
@@ -66,9 +64,11 @@ export const DNS = () => {
         dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(true));
         dispatch(nsGroupActions.setNameServerGroup({
             id: nsGroup.id,
-            groups: nsGroup.groups,
             name: nsGroup.name,
+            description: nsGroup.description,
             nameservers: nsGroup.nameservers,
+            groups: nsGroup.groups,
+            enabled: nsGroup.enabled,
         } as NameServerGroup));
     }
 
@@ -91,10 +91,9 @@ export const DNS = () => {
 
     const filterDataTable = (): NameServerGroup[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f: NameServerGroup[] = filter(nsGroup, (f: NameServerGroup) =>
+        return filter(nsGroup, (f: NameServerGroup) =>
             ((f.name ).toLowerCase().includes(t) || f.name.includes(t) || t === "")
         ) as NameServerGroup[]
-        return f
     }
 
     const onChangeTextToSearch = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -115,13 +114,14 @@ export const DNS = () => {
         dispatch(nsGroupActions.setNameServerGroup({
             id: nsGroupToAction?.id,
             name: nsGroupToAction?.name,
+            description: nsGroupToAction?.description,
             groups: nsGroupToAction?.groups,
             enabled: nsGroupToAction?.enabled,
             nameservers: nsGroupToAction?.nameservers,
         } as NameServerGroup));
     }
 
-    const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, userToAction: NameserverGroupDataTable) => {
+    const renderPopoverGroups = (label: string, rowGroups: string[] | null, userToAction: NameserverGroupDataTable) => {
 
         let groupsMap = new Map<string, Group>();
         groups.forEach(g => {
@@ -203,7 +203,7 @@ export const DNS = () => {
         }
     }, [savedNSGroup])
 
-    const onPopoverVisibleChange = (b: boolean) => {
+    const onPopoverVisibleChange = () => {
         if (updateNameServerGroupVisible) {
             setGroupPopupVisible(false)
         } else {
@@ -218,9 +218,15 @@ export const DNS = () => {
         },
 
     ]
+
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
-    const onClickAddNewSetupKey = () => {return}
+    const onClickAddNewNSGroup = () => {
+        dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(true));
+        dispatch(nsGroupActions.setNameServerGroup({
+            enabled: true,
+        } as NameServerGroup))
+    }
 
     return (
         <>
@@ -256,7 +262,7 @@ export const DNS = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Button type="primary" onClick={onClickAddNewSetupKey}>Add Nameserver</Button>
+                                            <Button type="primary" onClick={onClickAddNewNSGroup}>Add Nameserver</Button>
                                         </Col>
                                     </Row>
                                 </Col>
@@ -281,26 +287,44 @@ export const DNS = () => {
                                             onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
                                             sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
                                             defaultSortOrder='ascend'
-                                            render={(text, record, index) => {
+                                            render={(text, record) => {
                                                 return <Button type="text"
                                                                onClick={() => setUserAndView(record as NameserverGroupDataTable)}
                                                                className="tooltip-label">{(text && text.trim() !== "") ? text : (record as NameServerGroup).id}</Button>
                                             }}
                                     />
+                                    <Column title="Status" dataIndex="enabled"
+                                            render={(text: Boolean) => {
+                                                return text ? <Tag color="red">disabled</Tag> :
+                                                    <Tag color="green">enabled</Tag>
+                                            }}
+                                    />
                                     <Column title="Nameservers" dataIndex="nameservers"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
+                                            // onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            // sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
+                                            render={(record:NameServer[]) => {
+                                                let urls = ""
+                                                record.forEach((v) => {
+                                                    urls = urls + v.ns_type + "://" + v.ip + ":" + v.port + ", "
+                                                })
+
+                                                urls = urls.slice(0, -2)
+
+                                                return <Button type="link"
+                                                               className="tooltip-label">{urls}</Button>
+                                            }}
+                                    />
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
-                                            render={(text, record: NameserverGroupDataTable, index) => {
+                                            render={(text, record: NameserverGroupDataTable) => {
                                                 return renderPopoverGroups(text, record.groups, record)
                                             }}
                                     />
                                     <Column title="" align="center" width="30px"
-                                            render={(text, record, index) => {
+                                            render={(text, record) => {
                                                 return (
                                                     <Dropdown.Button type="text" overlay={actionsMenu}
                                                                      trigger={["click"]}
-                                                                     onVisibleChange={visible => {
+                                                                     onOpenChange={visible => {
                                                                          if (visible) setNsGroupToAction(record as NameserverGroupDataTable)
                                                                      }}></Dropdown.Button>)
                                             }}
@@ -315,7 +339,7 @@ export const DNS = () => {
                     </Tabs.TabPane>
                 </Tabs>
          </Container>
-            <UserUpdate/>
+            <NameServerGroupUpdate/>
         </>
     )
 }

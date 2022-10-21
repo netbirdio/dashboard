@@ -6,11 +6,6 @@ import {getConfig} from "./config";
 import Banner from "./components/Banner";
 import {Col, Layout, Row} from "antd";
 import {Container} from "./components/Container";
-import {withOidcSecure} from '@axa-fr/react-oidc';
-import DNS from "./views/dns";
-
-import { hotjar } from 'react-hotjar';
-import {getConfig} from "./config";
 import Navbar from "./components/Navbar";
 import {Redirect, Route, Switch} from "react-router-dom";
 import {withOidcSecure} from "@axa-fr/react-oidc";
@@ -23,7 +18,10 @@ import Users from "./views/Users";
 import FooterComponent from "./components/FooterComponent";
 import {useGetAccessTokenSilently} from "./utils/token";
 import {User} from "./store/user/types";
-import Loading, {SecureLoading} from "./components/Loading";
+import {SecureLoading} from "./components/Loading";
+import DNS from "./views/dns";
+
+
 
 const {Header, Content} = Layout;
 
