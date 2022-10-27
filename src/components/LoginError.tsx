@@ -1,5 +1,5 @@
 import {useOidc, useOidcUser} from "@axa-fr/react-oidc";
-import {Anchor, Button, Result} from "antd";
+import {Anchor, Button, Col, Result, Row, Space} from "antd";
 import React from "react";
 import {getConfig} from "../config";
 import {ResultStatusType} from "antd/lib/result";
@@ -27,20 +27,25 @@ function LoginError() {
             status={status}
             title={title}
             extra={<>
-                <h4>Already verified your email address?</h4>
-                <a href={window.location.origin}>
-                    <Button type="primary">
-                        Continue
-                    </Button>
-                </a>
-                <br/>
-                <br/>
+                <Space style={{
+                    display: "flex-inline",
+                    flexDirection: "column",
+                    justifyContent: "space-around",
+                    alignContent: "center"
+                }}>
+                    <h4>Already verified your email address?</h4>
+                    <a href={window.location.origin}>
+                        <Button type="primary">
+                            Continue
+                        </Button>
+                    </a>
 
                 <Button type="link" onClick={function () {
                     logout("", {client_id: config.clientId})
                 }}>
                     Trouble logging in? Try again.
                 </Button>
+                </Space>
 
             </>
             }
