@@ -42,7 +42,6 @@ import {
     transformGroupedDataTable
 } from '../utils/routes'
 import {useGetAccessTokenSilently} from "../utils/token";
-import {ApiError} from "../services/api-client/types";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -387,7 +386,7 @@ export const Routes = () => {
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.message} description={failed.data ? failed.data : failed.message} type="error" showIcon
+                                <Alert message={failed.message} description={failed.data ? failed.data : " "} type="error" showIcon
                                        closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
