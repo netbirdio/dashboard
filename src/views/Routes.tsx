@@ -122,8 +122,12 @@ export const Routes = () => {
     }, [dataTable])
 
     useEffect(() => {
-        setShowTutorial(isShowTutorial(routes))
-        setDataTable(sortBy(transformDataTable(routes, peerIPToName), "network_id"))
+        if (failed) {
+            setShowTutorial(false)
+        } else {
+            setShowTutorial(isShowTutorial(routes))
+            setDataTable(sortBy(transformDataTable(routes, peerIPToName), "network_id"))
+        }
     }, [routes])
 
     useEffect(() => {
@@ -382,7 +386,7 @@ export const Routes = () => {
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.code} description={failed.message} type="error" showIcon
+                                <Alert message={failed.message} description={failed.data ? failed.data : " "} type="error" showIcon
                                        closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
