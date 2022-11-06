@@ -128,8 +128,12 @@ export const AccessControl = () => {
     }, [])
 
     useEffect(() => {
-        setShowTutorial(isShowTutorial(rules))
-        setDataTable(sortBy(transformDataTable(filterDataTable()), "name"))
+        if (failed) {
+            setShowTutorial(false)
+        } else {
+            setShowTutorial(isShowTutorial(rules))
+            setDataTable(sortBy(transformDataTable(filterDataTable()), "name"))
+        }
     }, [rules])
 
     useEffect(() => {
@@ -388,7 +392,7 @@ export const AccessControl = () => {
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.code} description={failed.message} type="error" showIcon
+                                <Alert message={failed.message} description={failed.data ? failed.data : " "} type="error" showIcon
                                        closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>

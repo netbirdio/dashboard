@@ -1,6 +1,6 @@
-import axios, {AxiosError} from 'axios';
+import axios from 'axios';
 
-import {ApiRequestParams, ApiResponse, ApiError} from './types';
+import {ApiError, ApiRequestParams, ApiResponse} from './types';
 import {headersFactory, RequestHeader} from './header-factory';
 
 /*axios.interceptors.response.use(undefined, err => {
@@ -16,10 +16,10 @@ async function apiRequest<T>(params: ApiRequestParams): Promise<ApiResponse<T>> 
   const extraHeaders = params.extraHeaders || {};
   const headers = await headersFactory((params.data as any).getAccessTokenSilently);
 
-  const builtHeader: RequestHeader = { ...headers, ...extraHeaders };
+  const builtHeader: RequestHeader = {...headers, ...extraHeaders};
 
   let response;
-  let error:ApiError = {
+  let error: ApiError = {
     code: '-1',
     message: '',
     data: null,
@@ -27,7 +27,7 @@ async function apiRequest<T>(params: ApiRequestParams): Promise<ApiResponse<T>> 
   };
 
   try {
-    response = await axios.request({ url, data, method: params.method, headers: builtHeader as any });
+    response = await axios.request({url, data, method: params.method, headers: builtHeader as any});
   } catch (err: any) {
     error = <ApiError>{
       code: err ? err.code : '-1',
@@ -39,12 +39,15 @@ async function apiRequest<T>(params: ApiRequestParams): Promise<ApiResponse<T>> 
       let old = error.message
       error.message = old + ". Please refresh the page if the issue continues."
       error.code = 'ERR_UNAUTHORIZED'
+    } else if (error.statusCode === 403) {
+      error.code = 'ERR_FORBIDDEN'
+      console.log(error)
     }
     console.log(error)
     throw error;
   }
 
-  return { statusCode: response ? response.status : error.statusCode, body: response ? response.data : error };
+  return {statusCode: response ? response.status : error.statusCode, body: response ? response.data : error};
 }
 
-export { apiRequest };
+export {apiRequest};
