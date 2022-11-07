@@ -63,6 +63,8 @@ export function* saveNameServerGroup(action: ReturnType<typeof actions.saveNameS
         id: nameserverGroupToSave.id,
         name: nameserverGroupToSave.name,
         description: nameserverGroupToSave.description,
+        primary: nameserverGroupToSave.primary,
+        domains: nameserverGroupToSave.domains,
         nameservers: nameserverGroupToSave.nameservers,
         groups: newGroups,
         enabled: nameserverGroupToSave.enabled,

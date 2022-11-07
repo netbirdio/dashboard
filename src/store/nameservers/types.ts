@@ -2,6 +2,8 @@ export interface NameServerGroup {
     id?: string
     name: string
     description: string
+    primary: boolean
+    domains: string[]
     nameservers: NameServer[]
     groups: string[]
     enabled: boolean

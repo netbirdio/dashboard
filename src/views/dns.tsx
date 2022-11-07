@@ -10,7 +10,7 @@ import {
     Col,
     Dropdown,
     Input,
-    Menu, message,
+    Menu, message, Modal,
     Popover,
     Row,
     Select,
@@ -27,9 +27,12 @@ import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {NameServerGroup, NameServer} from "../store/nameservers/types";
 import NameServerGroupUpdate from "../components/NameServerGroupUpdate";
+import {ExclamationCircleOutlined} from "@ant-design/icons";
+import {actions as ruleActions} from "../store/rule";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
+const {confirm} = Modal;
 
 interface NameserverGroupDataTable extends NameServerGroup {
     key: string
@@ -65,6 +68,8 @@ export const DNS = () => {
         dispatch(nsGroupActions.setNameServerGroup({
             id: nsGroup.id,
             name: nsGroup.name,
+            primary: nsGroup.primary,
+            domains: nsGroup.domains,
             description: nsGroup.description,
             nameservers: nsGroup.nameservers,
             groups: nsGroup.groups,
@@ -114,11 +119,38 @@ export const DNS = () => {
         dispatch(nsGroupActions.setNameServerGroup({
             id: nsGroupToAction?.id,
             name: nsGroupToAction?.name,
+            primary: nsGroupToAction?.primary,
+            domains: nsGroupToAction?.domains,
             description: nsGroupToAction?.description,
             groups: nsGroupToAction?.groups,
             enabled: nsGroupToAction?.enabled,
             nameservers: nsGroupToAction?.nameservers,
         } as NameServerGroup));
+    }
+
+    const showConfirmDelete = () => {
+        confirm({
+            icon: <ExclamationCircleOutlined/>,
+            width: 600,
+            content: <Space direction="vertical" size="small">
+                {nsGroupToAction &&
+                    <>
+                        <Title level={5}>Delete Nameserver group "{nsGroupToAction ? nsGroupToAction.name : ''}"</Title>
+                        <Paragraph>Are you sure you want to delete this nameserver group from your account?</Paragraph>
+                    </>
+                }
+            </Space>,
+            okType: 'danger',
+            onOk() {
+                dispatch(nsGroupActions.deleteNameServerGroup.request({
+                    getAccessTokenSilently: getAccessTokenSilently,
+                    payload: nsGroupToAction?.id || ''
+                }));
+            },
+            onCancel() {
+                setNsGroupToAction(null);
+            },
+        });
     }
 
     const renderPopoverGroups = (label: string, rowGroups: string[] | null, userToAction: NameserverGroupDataTable) => {
@@ -216,7 +248,10 @@ export const DNS = () => {
             key: "edit",
             label: (<Button type="text" onClick={() => onClickEdit()}>View</Button>)
         },
-
+        {
+            key: "delete",
+            label: (<Button type="text" onClick={() => showConfirmDelete()}>Delete</Button>)
+        },
     ]
 
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
@@ -284,8 +319,8 @@ export const DNS = () => {
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
                                     <Column title="Name" dataIndex="name"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).email.includes(value)}
-                                            sorter={(a, b) => ((a as any).email.localeCompare((b as any).email))}
+                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                             defaultSortOrder='ascend'
                                             render={(text, record) => {
                                                 return <Button type="text"
@@ -300,19 +335,23 @@ export const DNS = () => {
                                             }}
                                     />
                                     <Column title="Nameservers" dataIndex="nameservers"
-                                            // onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                            // sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
-                                            render={(record:NameServer[]) => {
-                                                let urls = ""
-                                                record.forEach((v) => {
-                                                    urls = urls + v.ns_type + "://" + v.ip + ":" + v.port + ", "
-                                                })
-
-                                                urls = urls.slice(0, -2)
-
-                                                return <Button type="link"
-                                                               className="tooltip-label">{urls}</Button>
+                                            render={(nameservers:NameServer[]) => (
+                                                <>
+                                                    {nameservers.map(nameserver => (
+                                                        <Tag key={nameserver.ip}>
+                                                            {nameserver.ip}
+                                                        </Tag>
+                                                    ))}
+                                                </>
+                                            )}
+                                    />
+                                    <Column title="Primary" dataIndex="primary"
+                                            render={(text: Boolean) => {
+                                                return text ? <Tag color="green">yes</Tag> :
+                                                    <Tag color="red">no</Tag>
                                             }}
+                                    />
+                                    <Column title="Domains" dataIndex="domains"
                                     />
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
                                             render={(text, record: NameserverGroupDataTable) => {
