@@ -19,7 +19,7 @@ import FooterComponent from "./components/FooterComponent";
 import {useGetAccessTokenSilently} from "./utils/token";
 import {User} from "./store/user/types";
 import {SecureLoading} from "./components/Loading";
-import DNS from "./views/dns";
+import DNS from "./views/DNS";
 
 
 
