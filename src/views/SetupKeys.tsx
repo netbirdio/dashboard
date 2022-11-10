@@ -379,7 +379,7 @@ export const SetupKeys = () => {
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.code} description={failed.message} type="error" showIcon
+                                <Alert message={failed.message} description={failed.data ? failed.data.message : " "} type="error" showIcon
                                        closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>

@@ -386,7 +386,7 @@ export const Routes = () => {
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.message} description={failed.data ? failed.data : " "} type="error" showIcon
+                                <Alert message={failed.message} description={failed.data ? failed.data.message : " "} type="error" showIcon
                                        closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
