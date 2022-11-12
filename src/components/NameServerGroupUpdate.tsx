@@ -182,11 +182,31 @@ const NameServerGroupUpdate = () => {
 
 
     const onChange = (data: formNSGroup) => {
-        if (!data.nameservers) {
-            setFormNSGroup({...formNSGroup, ...data})
-            return
+        if (data.nameservers) {
+            updateNameservers(data)
         }
+        if (data.domains) {
+            updateFormDomains(data)
+        }
+        setFormNSGroup({...formNSGroup, ...data})
+    }
 
+    const updateFormDomains = (data: formNSGroup) => {
+        console.log(data.domains,formNSGroup.domains)
+        let newDomainList: string[]
+        newDomainList = formNSGroup.domains ? formNSGroup.domains : data.domains
+        data.domains.forEach((value: string, index: number) => {
+            if (value == null) {
+                newDomainList.splice(index,1)
+            }
+            newDomainList[index] = value
+        })
+        console.log(newDomainList)
+
+        setFormNSGroup({...formNSGroup, domains: newDomainList})
+    }
+
+    const updateNameservers = (data: formNSGroup) => {
         let newNSList: NameServer[]
         newNSList = formNSGroup.nameservers ? formNSGroup.nameservers : data.nameservers
         data.nameservers.forEach((value: NameServer, index: number) => {
@@ -352,6 +372,38 @@ const NameServerGroupUpdate = () => {
         </>
     )
 
+    // @ts-ignore
+    const renderDomains = (fields: FormListFieldData[], {add, remove}, {errors}) => (
+        <>
+            <Row>Domains</Row>
+            {fields.map((field, index) => {
+                return (
+                    <Row key={index}>
+                        <Col span={20} style={{margin: '1px'}}>
+                            <Form.Item style={{margin: '1px'}}
+                                       name={[field.name]}
+                                       // rules={[{validator: ipValidator}]}
+                            >
+                                <Input placeholder="e.g. google.com" style={{width: '100%'}}
+                                       autoComplete="off"/>
+                            </Form.Item>
+                        </Col>
+                        <Col span={2} style={{textAlign: 'center'}}>
+                            <MinusCircleOutlined onClick={() => remove(field.name)}/>
+                        </Col>
+                    </Row>
+                )
+            })}
+
+            <Form.Item>
+                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined/>}>
+                    Add Nameserver
+                </Button>
+            </Form.Item>
+            <Form.ErrorList errors={errors}/>
+        </>
+    )
+
     return (
         <>
             {nsGroup &&
@@ -473,6 +525,14 @@ const NameServerGroupUpdate = () => {
                                         rules={[{validator: formListValidator}]}
                                     >
                                         {renderNSList}
+                                    </Form.List>
+                                </Col>
+                                <Col span={24} flex="auto">
+                                    <Form.List
+                                        name="domains"
+                                        // rules={[{validator: formListValidator}]}
+                                    >
+                                        {renderDomains}
                                     </Form.List>
                                 </Col>
                                 <Col span={24}>
