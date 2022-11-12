@@ -249,7 +249,7 @@ const UserUpdate = () => {
     }
 
     const emailChanged = (): boolean => {
-        return formUser.role !== user.role || formUser.email !== ""
+        return formUser.email !== user.email
     }
 
     const roleChanged = (): boolean => {
