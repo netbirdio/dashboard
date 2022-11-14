@@ -433,10 +433,9 @@ export const Peers = () => {
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.code} description={failed.message} type="error" showIcon
+                                <Alert message={failed.message} description={failed.data ? failed.data.message : " "} type="error" showIcon
                                        closable/>
                             }
-                            {/*{loading && <Loading/>}*/}
                             <Card bodyStyle={{padding: 0}}>
                                 <Table
                                     pagination={{

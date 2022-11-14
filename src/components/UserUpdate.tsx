@@ -236,6 +236,7 @@ const UserUpdate = () => {
             name: user.name
         } as User));
         setFormUser({} as FormUser)
+        toggleEditName(false)
         dispatch(userActions.setUpdateUserDrawerVisible(false));
     }
 
@@ -244,7 +245,11 @@ const UserUpdate = () => {
     }
 
     const changesDetected = (): boolean => {
-        return formUser.email !== "" && (nameChanged() || groupsChanged() || roleChanged())
+        return emailChanged() || nameChanged() || groupsChanged() || roleChanged()
+    }
+
+    const emailChanged = (): boolean => {
+        return formUser.email !== user.email
     }
 
     const roleChanged = (): boolean => {
@@ -308,7 +313,7 @@ const UserUpdate = () => {
                                         </Col>
                                         {/* Name Label*/}
                                         <Col flex="auto">
-                                            {!editName && user.id && formUser.name ? (
+                                            {!editName && user.id && formUser.name !== "" ? (
                                                 <div className={"access-control input-text ant-drawer-title"}
                                                      onClick={() => toggleEditName(true)}>{formUser.name ? formUser.name : formUser.name}
                                                     <EditOutlined/></div>
@@ -317,8 +322,8 @@ const UserUpdate = () => {
                                                     name="name"
                                                     label="Name"
                                                     rules={[{
-                                                        required: true,
-                                                        message: 'Please add a new name for this peer',
+                                                        required: false,
+                                                        message: 'Please add a new name for this user',
                                                         whitespace: true
                                                     }]}
                                                 >
@@ -367,7 +372,7 @@ const UserUpdate = () => {
                                 >
                                     <Select mode="tags"
                                             style={{width: '100%'}}
-                                            placeholder="Associate groups with the key"
+                                            placeholder="Associate groups with the user"
                                             tagRender={tagRender}
                                             onChange={handleChangeTags}
                                             disabled={currentUser.role != null && currentUser.role !== "admin"}
