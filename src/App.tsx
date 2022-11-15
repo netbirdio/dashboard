@@ -25,7 +25,6 @@ const {Header, Content} = Layout;
 function App() {
     const run = useRef(false)
     const [show, setShow] = useState(false)
-    const [users, setUsers] = useState([] as User[])
     const {getAccessTokenSilently} = useGetAccessTokenSilently();
     const {hotjarTrackID} = getConfig();
     // @ts-ignore
@@ -39,7 +38,6 @@ function App() {
         const hideMenu = () => {
             if (window.innerWidth > 768 && isOpen) {
                 setIsOpen(false);
-                console.log('i resized');
             }
         };
 
@@ -55,7 +53,6 @@ function App() {
             run.current = true
             apiClient.request<User[]>('GET', `/api/users`, {getAccessTokenSilently: getAccessTokenSilently})
                 .then((resp) => {
-                    setUsers(resp.body)
                     setShow(true)
                 })
                 .catch(e => {
@@ -65,8 +62,6 @@ function App() {
         }
 
     }, [getAccessTokenSilently])
-
-    const obj = {users: users};
 
     return (
         <>
@@ -84,7 +79,7 @@ function App() {
                             <Row justify="space-around" align="middle">
                                 <Col span={24}>
                                     <Container>
-                                        <Navbar {...obj}></Navbar>
+                                        <Navbar/>
                                     </Container>
                                 </Col>
                             </Row>

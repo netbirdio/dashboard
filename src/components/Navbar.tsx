@@ -8,6 +8,8 @@ import {UserOutlined} from '@ant-design/icons';
 import {useOidc, useOidcUser} from '@axa-fr/react-oidc';
 import {getConfig} from "../config";
 import {User} from "../store/user/types";
+import {useSelector} from "react-redux";
+import {RootState} from "typesafe-actions";
 
 const {Text} = Typography
 const {useBreakpoint} = Grid;
@@ -17,7 +19,7 @@ interface NavbarProps {
 }
 
 
-const Navbar = ({users}: NavbarProps) => {
+const Navbar = () => {
     let location = useLocation();
     const config = getConfig();
     const {
@@ -32,6 +34,7 @@ const Navbar = ({users}: NavbarProps) => {
     const screens = useBreakpoint();
 
     const [hideMenuUser, setHideMenuUser] = useState(false)
+    const users = useSelector((state: RootState) => state.user.data)
 
     const items = [
         {label: (<Link to="/peers">Peers</Link>), key: '/peers'},
@@ -85,7 +88,6 @@ const Navbar = ({users}: NavbarProps) => {
     }, [users, user])
 
     const showTab = (key: string | undefined, user: User | undefined) => {
-        console.log(currentUser)
         if (!user) {
             return false
         }
