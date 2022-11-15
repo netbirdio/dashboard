@@ -18,13 +18,14 @@ import Users from "./views/Users";
 import FooterComponent from "./components/FooterComponent";
 import {useGetAccessTokenSilently} from "./utils/token";
 import {User} from "./store/user/types";
-import Loading, {SecureLoading} from "./components/Loading";
+import {SecureLoading} from "./components/Loading";
 
 const {Header, Content} = Layout;
 
 function App() {
     const run = useRef(false)
     const [show, setShow] = useState(false)
+    const [users, setUsers] = useState([] as User[])
     const {getAccessTokenSilently} = useGetAccessTokenSilently();
     const {hotjarTrackID} = getConfig();
     // @ts-ignore
@@ -53,8 +54,9 @@ function App() {
         if (!run.current) {
             run.current = true
             apiClient.request<User[]>('GET', `/api/users`, {getAccessTokenSilently: getAccessTokenSilently})
-                .then(() => {
-                  setShow(true)
+                .then((resp) => {
+                    setUsers(resp.body)
+                    setShow(true)
                 })
                 .catch(e => {
                     setShow(true)
@@ -64,48 +66,50 @@ function App() {
 
     }, [getAccessTokenSilently])
 
+    const obj = {users: users};
+
     return (
         <>
             <Provider store={store}>
                 {!show && <SecureLoading padding="3em" width={50} height={50}/>}
                 {show &&
-                <Layout>
-                    <Banner/>
-                    <Header className="header" style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-around",
-                        alignContent: "center"
-                    }}>
-                        <Row justify="space-around" align="middle">
-                            <Col span={24}>
-                                <Container>
-                                    <Navbar/>
-                                </Container>
-                            </Col>
-                        </Row>
-                    </Header>
-                    <Content style={{minHeight: "100vh"}}>
-                        <Switch>
-                            <Route
-                                exact
-                                path="/"
-                                render={() => {
-                                    return (
-                                        <Redirect to="/peers"/>
-                                    )
-                                }}
-                            />
-                            <Route path='/peers' exact component={withOidcSecure(Peers)}/>
-                            <Route path="/add-peer" component={withOidcSecure(AddPeer)}/>
-                            <Route path="/setup-keys" component={withOidcSecure(SetupKeys)}/>
-                            <Route path="/acls" component={withOidcSecure(AccessControl)}/>
-                            <Route path="/routes" component={withOidcSecure(Routes)}/>
-                            <Route path="/users" component={withOidcSecure(Users)}/>
-                        </Switch>
-                    </Content>
-                    <FooterComponent/>
-                </Layout>
+                    <Layout>
+                        <Banner/>
+                        <Header className="header" style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-around",
+                            alignContent: "center"
+                        }}>
+                            <Row justify="space-around" align="middle">
+                                <Col span={24}>
+                                    <Container>
+                                        <Navbar {...obj}></Navbar>
+                                    </Container>
+                                </Col>
+                            </Row>
+                        </Header>
+                        <Content style={{minHeight: "100vh"}}>
+                            <Switch>
+                                <Route
+                                    exact
+                                    path="/"
+                                    render={() => {
+                                        return (
+                                            <Redirect to="/peers"/>
+                                        )
+                                    }}
+                                />
+                                <Route path='/peers' exact component={withOidcSecure(Peers)}/>
+                                <Route path="/add-peer" component={withOidcSecure(AddPeer)}/>
+                                <Route path="/setup-keys" component={withOidcSecure(SetupKeys)}/>
+                                <Route path="/acls" component={withOidcSecure(AccessControl)}/>
+                                <Route path="/routes" component={withOidcSecure(Routes)}/>
+                                <Route path="/users" component={withOidcSecure(Users)}/>
+                            </Switch>
+                        </Content>
+                        <FooterComponent/>
+                    </Layout>
                 }
             </Provider>
         </>

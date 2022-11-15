@@ -8,10 +8,16 @@ import {AvatarSize} from "antd/es/avatar/SizeContext";
 import { UserOutlined } from '@ant-design/icons';
 import { useOidc,useOidcUser } from '@axa-fr/react-oidc';
 import {getConfig} from "../config";
+import {User} from "../store/user/types";
 const { Text } = Typography
 const { useBreakpoint } = Grid;
 
-const Navbar = () => {
+interface NavbarProps {
+    users: User[]
+}
+
+
+const Navbar = ({users}: NavbarProps) => {
     let location = useLocation();
     const config = getConfig();
     const {
@@ -21,6 +27,7 @@ const Navbar = () => {
 
     const { oidcUser } = useOidcUser();
     const user = oidcUser;
+    const [currentUser, setCurrentUser] = useState({} as User)
 
     const screens = useBreakpoint();
 
@@ -29,6 +36,7 @@ const Navbar = () => {
     const userEmailKey = 'user-email'
     const userLogoutKey = 'user-logout'
     const userDividerKey = 'user-divider'
+    const adminOnlyTabs = ["/setup-keys", "/acls", "/routes"]
     const [menuItems, setMenuItems] = useState([
         { label: (<Link  to="/peers">Peers</Link>), key: '/peers' },
         { label: (<Link  to="/add-peer">Add Peer</Link>), key: '/add-peer' },
@@ -39,8 +47,9 @@ const Navbar = () => {
     ] as ItemType[])
     const logoutWithRedirect = () =>
         logout("/",{client_id:config.clientId});
+
     useEffect(() => {
-        const fs = menuItems.filter(m => m?.key !== userEmailKey && m?.key !== userLogoutKey && m?.key !== userDividerKey)
+        const fs = menuItems.filter(m => showTab(m?.key?.toString(), currentUser) && m?.key !== userEmailKey && m?.key !== userLogoutKey && m?.key !== userDividerKey)
         if (screens.xs === true) {
             setHideMenuUser(false)
             fs.push({ type: 'divider', key: userDividerKey })
@@ -58,6 +67,27 @@ const Navbar = () => {
         setMenuItems([...fs])
         setHideMenuUser(true)
     }, [screens])
+
+    useEffect(() => {
+        if (oidcUser && oidcUser.sub) {
+            const found = users.find(u => u.id == oidcUser.sub)
+            if (found) {
+                setCurrentUser(found)
+            }
+        } else {
+            setCurrentUser({} as User)
+        }
+    }, [users, user])
+
+    const showTab = (key:string|undefined, user:User|undefined) => {
+        if (!user) {
+            return false
+        }
+        if (user?.role?.toLowerCase() === "admin") {
+            return true
+        }
+        return !adminOnlyTabs.find(t => t === key)
+    }
 
     const menuUser = (
         <Menu
