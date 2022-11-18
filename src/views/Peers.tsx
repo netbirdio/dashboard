@@ -33,13 +33,13 @@ import {Peer, PeerDataTable} from "../store/peer/types";
 import {filter} from "lodash"
 import {formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
-import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {useGetAccessTokenSilently} from "../utils/token";
 import {actions as userActions} from "../store/user";
+import ButtonCopyMessage from "../components/ButtonCopyMessage";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -372,6 +372,28 @@ export const Peers = () => {
             </Popover>
         )
     }
+    //
+    // <Text type="secondary">{peer.dns_label}.netbird.local</Text>
+    // <br/>
+    const renderAddress = (peer: PeerDataTable) => {
+        /* return <div>
+             <Button type="text" style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                 <Text>{peer.dns_label}.netbird.local</Text>
+                 <br/>
+                 <Text type="secondary">{peer.ip}</Text>
+             </Button>
+         </div>*/
+        const body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+            <Text>{peer.dns_label}.netbird.local</Text>
+            <br/>
+            <Text type="secondary">{peer.ip}</Text>        </span>
+        const toCopy: string = peer.dns_label + ".netbird.local"
+        return <ButtonCopyMessage keyMessage={peer.key}
+                                  toCopy={toCopy}
+                                  body={body}
+                                  messageText={'Peer domain copied'}
+                                  styleNotification={{}}/>
+    }
 
     const renderName = (peer: PeerDataTable) => {
         const userEmail = users?.find(u => u.id === peer.user_id)?.email
@@ -433,7 +455,8 @@ export const Peers = () => {
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.message} description={failed.data ? failed.data.message : " "} type="error" showIcon
+                                <Alert message={failed.message} description={failed.data ? failed.data.message : " "}
+                                       type="error" showIcon
                                        closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
@@ -457,7 +480,7 @@ export const Peers = () => {
                                                 return renderName(record)
                                             }}
                                     />
-                                    <Column title="IP" dataIndex="ip"
+                                    <Column title="Address" dataIndex="ip"
                                             sorter={(a, b) => {
                                                 const _a = (a as any).ip.split('.')
                                                 const _b = (b as any).ip.split('.')
@@ -465,11 +488,14 @@ export const Peers = () => {
                                                 const b_s = _b.map((i: any) => i.padStart(3, '0')).join()
                                                 return a_s.localeCompare(b_s)
                                             }}
-                                            render={(text, record, index) => {
-                                                return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key}
-                                                                          text={text} messageText={'IP copied!'}
-                                                                          styleNotification={{}}/>
+                                            render={(text: string, record: PeerDataTable, index: number) => {
+                                                return renderAddress(record)
                                             }}
+                                        /*render={(text, record, index) => {
+                                            return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key}
+                                                                      text={text} messageText={'IP copied!'}
+                                                                      styleNotification={{}}/>
+                                        }}*/
                                     />
                                     <Column title="Status" dataIndex="connected" align="center"
                                             render={(text, record, index) => {
@@ -533,7 +559,8 @@ export const Peers = () => {
                                 {showTutorial &&
                                     <Space direction="vertical" size="small" align="center"
                                            style={{display: 'flex', padding: '45px 15px', justifyContent: 'center'}}>
-                                        <Paragraph type="secondary" style={{textAlign: "center", whiteSpace: "pre-line"}}>
+                                        <Paragraph type="secondary"
+                                                   style={{textAlign: "center", whiteSpace: "pre-line"}}>
                                             It looks like you don't have any connected machines. {"\n"}
                                             Get started by adding one to your network!
                                         </Paragraph>
