@@ -384,7 +384,7 @@ export const Peers = () => {
              </Button>
          </div>*/
         const body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-            <Text>{peer.dns_label}.netbird.local</Text>
+            <Text>{peer.dns_label}</Text>
             <br/>
             <Text type="secondary">{peer.ip}</Text>        </span>
         const toCopy: string = peer.dns_label + ".netbird.local"
