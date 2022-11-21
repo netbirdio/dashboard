@@ -41,7 +41,6 @@ function App() {
         const hideMenu = () => {
             if (window.innerWidth > 768 && isOpen) {
                 setIsOpen(false);
-                console.log('i resized');
             }
         };
 

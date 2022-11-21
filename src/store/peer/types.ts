@@ -13,6 +13,7 @@ export interface Peer {
   hostname: string,
   user_id?: string,
   ui_version?: string,
+  dns_label: string,
 }
 
 export interface FormPeer extends Peer {

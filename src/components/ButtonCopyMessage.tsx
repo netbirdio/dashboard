@@ -1,24 +1,36 @@
 import {copyToClipboard} from "../utils/common";
-import {Button, message} from "antd";
-import {StepCommand} from "./addpeer/types";
-import React from "react";
+import {Button, message, Typography} from "antd";
+import React, {ReactNode} from "react";
+
+const {Text} = Typography;
 
 type Props = {
     keyMessage: string;
-    text: string;
+    toCopy: string;
+    body: ReactNode;
     messageText: string;
     styleNotification?: any;
     style?: any;
-    className?:any;
+    className?: any;
 };
 
-const ButtonCopyMessage:React.FC<Props> = ({ keyMessage, text, messageText, styleNotification, style, className}) => {
+const ButtonCopyMessage: React.FC<Props> = ({
+                                                keyMessage,
+                                                toCopy,
+                                                body,
+                                                messageText,
+                                                styleNotification,
+                                                style,
+                                                className
+                                            }) => {
     const copyTextMessage = () => {
-        copyToClipboard(text)
-        message.success({ content: `${messageText}`, key: keyMessage, duration: 1, style: (styleNotification || {}) });
+        copyToClipboard(toCopy)
+        message.success({content: `${messageText}`, key: keyMessage, duration: 1, style: (styleNotification || {})});
     }
     return (
-        <Button type="text" onClick={copyTextMessage} style={style || {}} className={className}>{text}</Button>
+        <Button type="text" onClick={copyTextMessage} style={style || {}} className={className}>
+            {body}
+        </Button>
     )
 }
 
