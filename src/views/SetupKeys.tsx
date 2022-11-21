@@ -427,8 +427,10 @@ export const SetupKeys = () => {
                                             onFilter={(value: string | number | boolean, record) => (record as any).key.includes(value)}
                                             sorter={(a, b) => ((a as any).key.localeCompare((b as any).key))}
                                             render={(text, record, index) => {
+                                                const body = <Text>{text}</Text>
                                                 return <ButtonCopyMessage keyMessage={(record as SetupKeyDataTable).key}
-                                                                          text={text} messageText={`Key copied!`}
+                                                                          toCopy={text}
+                                                                          body={body} messageText={"Key copied"}
                                                                           styleNotification={{}}/>
                                             }}
                                     />
