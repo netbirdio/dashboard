@@ -372,24 +372,23 @@ export const Peers = () => {
             </Popover>
         )
     }
-    //
-    // <Text type="secondary">{peer.dns_label}.netbird.local</Text>
-    // <br/>
+
     const renderAddress = (peer: PeerDataTable) => {
-        /* return <div>
-             <Button type="text" style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                 <Text>{peer.dns_label}.netbird.local</Text>
-                 <br/>
-                 <Text type="secondary">{peer.ip}</Text>
-             </Button>
-         </div>*/
+        if (!peer.dns_label) {
+            return <ButtonCopyMessage keyMessage={peer.key}
+                                      toCopy={peer.ip}
+                                      body={peer.ip}
+                                      messageText={'IP copied'}
+                                      styleNotification={{}}/>
+        }
+
         const body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
             <Text>{peer.dns_label}</Text>
             <br/>
-            <Text type="secondary">{peer.ip}</Text>        </span>
-        const toCopy: string = peer.dns_label + ".netbird.local"
+            <Text type="secondary">{peer.ip}</Text>
+        </span>
         return <ButtonCopyMessage keyMessage={peer.key}
-                                  toCopy={toCopy}
+                                  toCopy={peer.dns_label}
                                   body={body}
                                   messageText={'Peer domain copied'}
                                   styleNotification={{}}/>
@@ -491,11 +490,6 @@ export const Peers = () => {
                                             render={(text: string, record: PeerDataTable, index: number) => {
                                                 return renderAddress(record)
                                             }}
-                                        /*render={(text, record, index) => {
-                                            return <ButtonCopyMessage keyMessage={(record as PeerDataTable).key}
-                                                                      text={text} messageText={'IP copied!'}
-                                                                      styleNotification={{}}/>
-                                        }}*/
                                     />
                                     <Column title="Status" dataIndex="connected" align="center"
                                             render={(text, record, index) => {
