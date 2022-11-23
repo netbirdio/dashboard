@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {Link, useLocation} from 'react-router-dom';
 import logo from "../assets/logo.png";
-import {Avatar, Button, Col, Dropdown, Grid, Menu, Row, Typography} from 'antd'
+import {Avatar, Button, Col, Dropdown, Grid, Menu, Row} from 'antd'
 import {ItemType} from "antd/lib/menu/hooks/useItems";
 import {AvatarSize} from "antd/es/avatar/SizeContext";
 import {UserOutlined} from '@ant-design/icons';
@@ -11,20 +11,12 @@ import {User} from "../store/user/types";
 import {useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 
-const {Text} = Typography
 const {useBreakpoint} = Grid;
-
-interface NavbarProps {
-    users: User[]
-}
 
 const Navbar = () => {
     let location = useLocation();
     const config = getConfig();
-    const {
-        isAuthenticated,
-        logout,
-    } = useOidc();
+    const { logout } = useOidc();
 
     const {oidcUser} = useOidcUser();
     const user = oidcUser;
@@ -41,8 +33,8 @@ const Navbar = () => {
         {label: (<Link to="/setup-keys">Setup Keys</Link>), key: '/setup-keys'},
         {label: (<Link to="/acls">Access Control</Link>), key: '/acls'},
         {label: (<Link to="/routes">Network Routes</Link>), key: '/routes'},
-        {label: (<Link to="/users">Users</Link>), key: '/users'},
-        { label: (<Link  to="/dns">DNS</Link>), key: '/dns' }
+        { label: (<Link  to="/dns">DNS</Link>), key: '/dns' },
+        {label: (<Link to="/users">Users</Link>), key: '/users'}
     ] as ItemType[]
 
     const userEmailKey = 'user-email'
