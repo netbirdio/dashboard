@@ -5,6 +5,7 @@ import service from './service';
 import actions from './actions';
 import serviceGroup from "../group/service";
 import {Group} from "../group/types";
+import {actions as groupActions} from "../group";
 
 export function* getNameServerGroups(action: ReturnType<typeof actions.getNameServerGroups.request>): Generator {
   try {
@@ -89,7 +90,13 @@ export function* saveNameServerGroup(action: ReturnType<typeof actions.saveNameS
       data: response.body
     } as CreateResponse<NameServerGroup | null>));
 
+    yield put(groupActions.getGroups.request({
+      getAccessTokenSilently: action.payload.getAccessTokenSilently,
+      payload: null
+    }));
+
     yield put(actions.getNameServerGroups.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
+
   } catch (err) {
     yield put(actions.saveNameServerGroup.failure({
       loading: false,
