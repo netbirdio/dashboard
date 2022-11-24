@@ -11,11 +11,11 @@ import {
     Dropdown,
     Input,
     Menu, message, Modal,
-    Popover,
+    Popover, Radio, RadioChangeEvent,
     Row,
     Select,
     Space,
-    Table, Tabs,
+    Table,
     Tag,
     Typography,
 } from "antd";
@@ -28,9 +28,9 @@ import {TooltipPlacement} from "antd/es/tooltip";
 import {NameServerGroup, NameServer} from "../store/nameservers/types";
 import NameServerGroupUpdate from "../components/NameServerGroupUpdate";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
-import {actions as ruleActions} from "../store/rule";
+import {useGetGroupTagHelpers} from "../utils/groups";
 
-const {Title, Paragraph, Text} = Typography;
+const {Title, Paragraph} = Typography;
 const {Column} = Table;
 const {confirm} = Modal;
 
@@ -44,6 +44,10 @@ export const DNS = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
+    const {
+        getGroupNamesFromIDs,
+    } = useGetGroupTagHelpers()
+
     const groups = useSelector((state: RootState) => state.group.data)
     const nsGroup = useSelector((state: RootState) => state.nameserverGroup.data);
     const failed = useSelector((state: RootState) => state.nameserverGroup.failed);
@@ -54,6 +58,7 @@ export const DNS = () => {
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
     const [nsGroupToAction, setNsGroupToAction] = useState(null as NameserverGroupDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
+    const [optionAllEnable, setOptionAllEnable] = useState('enabled');
     const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as NameserverGroupDataTable[]);
     const pageSizeOptions = [
@@ -61,6 +66,8 @@ export const DNS = () => {
         {label: "10", value: "10"},
         {label: "15", value: "15"}
     ]
+
+    const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
 
     // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
     const setUserAndView = (nsGroup: NameServerGroup) => {
@@ -87,18 +94,30 @@ export const DNS = () => {
     }, [])
 
     useEffect(() => {
-        setDataTable(transformDataTable(nsGroup))
+        setDataTable(transformDataTable(filterDataTable()))
     }, [nsGroup])
 
     useEffect(() => {
         setDataTable(transformDataTable(filterDataTable()))
-    }, [textToSearch])
+    }, [textToSearch, optionAllEnable])
 
     const filterDataTable = (): NameServerGroup[] => {
         const t = textToSearch.toLowerCase().trim()
-        return filter(nsGroup, (f: NameServerGroup) =>
-            ((f.name ).toLowerCase().includes(t) || f.name.includes(t) || t === "")
+        let f = filter(nsGroup, (f: NameServerGroup) =>
+            ((f.name ).toLowerCase().includes(t) ||
+                f.name.includes(t) || t === "" ||
+                getGroupNamesFromIDs(f.groups).find(u => u.toLowerCase().trim().includes(t) ||
+                f.domains.find(d => d.toLowerCase().trim().includes(t)) ||
+                f.nameservers.find(n => n.ip.includes(t))))
         ) as NameServerGroup[]
+        if (optionAllEnable !== "all") {
+            f = filter(f, (f) => f.enabled)
+        }
+        return f
+    }
+
+    const onChangeAllEnabled = ({target: {value}}: RadioChangeEvent) => {
+        setOptionAllEnable(value)
     }
 
     const onChangeTextToSearch = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -106,8 +125,7 @@ export const DNS = () => {
     };
 
     const searchDataTable = () => {
-        const data = filterDataTable()
-        setDataTable(transformDataTable(data))
+        setDataTable(transformDataTable(filterDataTable()))
     }
 
     const onChangePageSize = (value: string) => {
@@ -310,15 +328,8 @@ export const DNS = () => {
             <Container style={{paddingTop: "40px"}}>
                 <Row>
                     <Col span={24}>
-                        <Title level={4}>DNS</Title>
-                        <Paragraph><Text>Manage your DNS settings for your network. Your peers will be accessible via </Text><Text type="secondary">peer-name</Text><Text>.netbird.cloud</Text></Paragraph>
-                    </Col>
-                </Row>
-                <Tabs defaultActiveKey="1">
-                    <Tabs.TabPane tab={<Title level={5}>Nameservers</Title>} key="1">
-                <Row>
-                    <Col span={24}>
-                        <Paragraph>Add upstream nameservers servers for name resolution</Paragraph>
+                        <Title level={4}>Nameservers</Title>
+                        <Paragraph>Add nameservers for domain name resolution in your NetBird network</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -327,6 +338,13 @@ export const DNS = () => {
                                 </Col>
                                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                                     <Space size="middle">
+                                        <Radio.Group
+                                            options={optionsAllEnabled}
+                                            onChange={onChangeAllEnabled}
+                                            value={optionAllEnable}
+                                            optionType="button"
+                                            buttonStyle="solid"
+                                        />
                                         <Select value={pageSize.toString()} options={pageSizeOptions}
                                                 onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
@@ -360,7 +378,7 @@ export const DNS = () => {
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
-                                    <Column title="Name" dataIndex="name"
+                                    <Column title="Name" dataIndex="name" align="center"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                             defaultSortOrder='ascend'
@@ -370,13 +388,13 @@ export const DNS = () => {
                                                                className="tooltip-label">{(text && text.trim() !== "") ? text : (record as NameServerGroup).id}</Button>
                                             }}
                                     />
-                                    <Column title="Status" dataIndex="enabled"
+                                    <Column title="Status" dataIndex="enabled" align="center"
                                             render={(text: Boolean) => {
                                                 return text ? <Tag color="green">enabled</Tag> :
                                                     <Tag color="red">disabled</Tag>
                                             }}
                                     />
-                                    <Column title="Nameservers" dataIndex="nameservers"
+                                    <Column title="Nameservers" dataIndex="nameservers" align="center"
                                             render={(nameservers:NameServer[]) => (
                                                 <>
                                                     {nameservers.map(nameserver => (
@@ -387,13 +405,13 @@ export const DNS = () => {
                                                 </>
                                             )}
                                     />
-                                    <Column title="All domains" dataIndex="primary"
+                                    <Column title="All domains" dataIndex="primary" align="center"
                                             render={(text: Boolean) => {
                                                 return text ? <Tag color="blue">yes</Tag> :
                                                     <Tag>no</Tag>
                                             }}
                                     />
-                                    <Column title="Match domains" dataIndex="domains"
+                                    <Column title="Match domains" dataIndex="domains" align="center"
                                             render={(text, record: NameserverGroupDataTable) => {
                                                 return renderPopoverDomains(text, record.domains, record)
                                             }}
@@ -418,10 +436,6 @@ export const DNS = () => {
                         </Space>
                     </Col>
                 </Row>
-                    </Tabs.TabPane>
-                    <Tabs.TabPane tab={<Title level={5}>Other Settings</Title>} key="3">
-                    </Tabs.TabPane>
-                </Tabs>
          </Container>
             <NameServerGroupUpdate/>
         </>

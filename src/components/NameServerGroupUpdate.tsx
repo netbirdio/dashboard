@@ -48,6 +48,7 @@ const NameServerGroupUpdate = () => {
     const nsGroup = useSelector((state: RootState) => state.nameserverGroup.nameserverGroup)
     const setupNewNameServerGroupVisible = useSelector((state: RootState) => state.nameserverGroup.setupNewNameServerGroupVisible)
     const savedNSGroup = useSelector((state: RootState) => state.nameserverGroup.savedNameServerGroup)
+    const nsGroupData = useSelector((state: RootState) => state.nameserverGroup.data);
 
     const [formNSGroup, setFormNSGroup] = useState({} as formNSGroup)
     const [form] = Form.useForm()
@@ -96,6 +97,13 @@ const NameServerGroupUpdate = () => {
         setSelectCustom(false)
         setIsPrimary(false)
     }
+
+    const onChange = (changedValues:any) => {
+        if (changedValues.primary !== undefined) {
+            setIsPrimary(changedValues.primary)
+        }
+    }
+
     let googleChoice = 'Google DNS'
     let cloudflareChoice = 'Cloudflare DNS'
     let quad9Choice = 'Quad9 DNS'
@@ -163,8 +171,6 @@ const NameServerGroupUpdate = () => {
             enabled: true,
         },
     ]
-
-
 
     const handleSelectChange = (value: string) => {
         console.log(`selected ${value}`);
@@ -234,6 +240,15 @@ const NameServerGroupUpdate = () => {
             return Promise.resolve()
         }
         return Promise.reject(new Error("Please enter a valid domain, e.g. example.com or intra.example.com"))
+    }
+
+    const nameValidator = (_: RuleObject, value: string) => {
+        const found = nsGroupData.find(u => u.name == value && u.id !== formNSGroup.id)
+        if (found) {
+            return Promise.reject(new Error("Please enter a unique name for your nameserver configuration"))
+        }
+
+        return Promise.resolve()
     }
 
     const ipValidator = (_: RuleObject, value: string) => {
@@ -365,13 +380,6 @@ const NameServerGroupUpdate = () => {
         </>
     )
 
-    const onChange = (changedValues:any) => {
-        console.log(changedValues)
-        if (changedValues.primary !== undefined) {
-            setIsPrimary(changedValues.primary)
-        }
-    }
-
     return (
         <>
             {nsGroup &&
@@ -420,11 +428,16 @@ const NameServerGroupUpdate = () => {
                                                         name="name"
                                                         label="Name"
                                                         tooltip="Add a nameserver group name"
-                                                        rules={[{
+                                                        rules={[
+                                                            {
                                                             required: true,
                                                             message: 'Please add an identifier for this nameserver group',
                                                             whitespace: true
-                                                        }]}
+                                                        },
+                                                            {
+                                                            validator: nameValidator
+                                                        }
+                                                        ]}
                                                     >
                                                         <Input placeholder="e.g. Public DNS" ref={inputNameRef}
                                                                onPressEnter={() => toggleEditName(false)}
