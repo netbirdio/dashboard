@@ -203,6 +203,48 @@ export const DNS = () => {
         )
     }
 
+    const renderPopoverDomains = (_: string, inputDomains: string[] | null, userToAction: NameserverGroupDataTable) => {
+        var domains = [] as string[]
+        if (inputDomains?.length) {
+            domains = inputDomains
+        }
+
+        let btn = <Button type="link" onClick={() => setUserAndView(userToAction)}>{domains.length ? domains.length : 0}</Button>
+        if (!domains || domains!.length < 1) {
+            return btn
+        }
+
+        const content = domains?.map((d, i) => {
+            return (
+                <div key={i}>
+                    <Tag
+                        color="blue"
+                        style={{marginRight: 3}}
+                    >
+                        <strong>{d}</strong>
+                    </Tag>
+                </div>
+            )
+        })
+
+        const mainContent = (<Space direction="vertical">{content}</Space>)
+        let popoverPlacement = "top"
+        if (content && content.length > 5) {
+            popoverPlacement = "rightTop"
+        }
+
+        return (
+            <Popover placement={popoverPlacement as TooltipPlacement}
+                     key={userToAction.id}
+                     onOpenChange={onPopoverVisibleChange}
+                     open={groupPopupVisible}
+                     content={mainContent}
+                     title={null}>
+                {btn}
+            </Popover>
+        )
+    }
+
     useEffect(() => {
         if (updateNameServerGroupVisible) {
             setGroupPopupVisible(false)
@@ -345,13 +387,16 @@ export const DNS = () => {
                                                 </>
                                             )}
                                     />
-                                    <Column title="Primary" dataIndex="primary"
+                                    <Column title="All domains" dataIndex="primary"
                                             render={(text: Boolean) => {
-                                                return text ? <Tag color="green">yes</Tag> :
-                                                    <Tag color="red">no</Tag>
+                                                return text ? <Tag color="blue">yes</Tag> :
+                                                    <Tag>no</Tag>
                                             }}
                                     />
-                                    <Column title="Domains" dataIndex="domains"
+                                    <Column title="Match domains" dataIndex="domains"
+                                            render={(text, record: NameserverGroupDataTable) => {
+                                                return renderPopoverDomains(text, record.domains, record)
+                                            }}
                                     />
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
                                             render={(text, record: NameserverGroupDataTable) => {
