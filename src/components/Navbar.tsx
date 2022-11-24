@@ -74,10 +74,8 @@ const Navbar = () => {
             if (found) {
                 setCurrentUser(found)
             }
-        } else {
-            setCurrentUser({} as User)
         }
-    }, [users, user])
+    }, [users, oidcUser])
 
     const showTab = (key: string | undefined, user: User | undefined) => {
         if (!user) {
