@@ -3,6 +3,7 @@ import React, {useEffect, useState} from "react";
 import {Col, Divider, Row, Tag} from "antd";
 import {useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
+import {RuleObject} from "antd/lib/form";
 
 export const useGetGroupTagHelpers = () => {
     const groups = useSelector((state: RootState) => state.group.data)
@@ -93,6 +94,25 @@ export const useGetGroupTagHelpers = () => {
         return groups?.filter(g => groupIDList.includes(g.id!)).map(g => g.name || '') || []
     }
 
+    const selectValidator = (_: RuleObject, value: string[]) => {
+        let hasSpaceNamed = []
+        if (!value.length) {
+            return Promise.reject(new Error("Please enter at least one group"))
+        }
+
+        value.forEach(function (v: string) {
+            if (!v.trim().length) {
+                hasSpaceNamed.push(v)
+            }
+        })
+
+        if (hasSpaceNamed.length) {
+            return Promise.reject(new Error("Group names with just spaces are not allowed"))
+        }
+
+        return Promise.resolve()
+    }
+
     useEffect(() => {
         if (groupTagFilterAll) {
             setTagGroups(groups?.filter(g => g.name != "All").map(g => g.name) || [])
@@ -110,6 +130,7 @@ export const useGetGroupTagHelpers = () => {
         selectedTagGroups,
         setGroupTagFilterAll,
         getExistingAndToCreateGroupsLists,
-        getGroupNamesFromIDs
+        getGroupNamesFromIDs,
+        selectValidator
     }
 }
