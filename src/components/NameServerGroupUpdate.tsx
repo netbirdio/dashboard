@@ -15,9 +15,10 @@ import {
     Row,
     Select,
     Space,
+    Tooltip,
     Typography
 } from "antd";
-import {CloseOutlined, FlagFilled, MinusCircleOutlined, PlusOutlined, QuestionCircleFilled} from "@ant-design/icons";
+import {CloseOutlined, FlagFilled, MinusCircleOutlined, PlusOutlined, QuestionCircleFilled, QuestionCircleOutlined} from "@ant-design/icons";
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import cidrRegex from 'cidr-regex';
@@ -38,7 +39,8 @@ const NameServerGroupUpdate = () => {
         optionRender,
         tagGroups,
         getExistingAndToCreateGroupsLists,
-        getGroupNamesFromIDs
+        getGroupNamesFromIDs,
+        selectValidator
     } = useGetGroupTagHelpers()
     const dispatch = useDispatch()
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
@@ -50,6 +52,7 @@ const NameServerGroupUpdate = () => {
     const [formNSGroup, setFormNSGroup] = useState({} as formNSGroup)
     const [form] = Form.useForm()
     const [editName, setEditName] = useState(false)
+    const [isPrimary, setIsPrimary] = useState(false)
     const [editDescription, setEditDescription] = useState(false)
     const inputNameRef = useRef<any>(null)
     const inputDescriptionRef = useRef<any>(null)
@@ -70,6 +73,9 @@ const NameServerGroupUpdate = () => {
         if (nsGroup.id) {
             setSelectCustom(true)
         }
+        if (nsGroup.primary !== undefined) {
+            setIsPrimary(nsGroup.primary)
+        }
     }, [nsGroup])
 
     const onCancel = () => {
@@ -88,6 +94,7 @@ const NameServerGroupUpdate = () => {
         ))
         setEditName(false)
         setSelectCustom(false)
+        setIsPrimary(false)
     }
     let googleChoice = 'Google DNS'
     let cloudflareChoice = 'Cloudflare DNS'
@@ -180,61 +187,11 @@ const NameServerGroupUpdate = () => {
         setSelectCustom(true)
     };
 
-
-    const onChange = (data: formNSGroup) => {
-        if (data.nameservers) {
-            updateNameservers(data)
-        }
-        if (data.domains) {
-            updateFormDomains(data)
-        }
-        setFormNSGroup({...formNSGroup, ...data})
-    }
-
-    const updateFormDomains = (data: formNSGroup) => {
-        console.log(data.domains,formNSGroup.domains)
-        let newDomainList: string[]
-        newDomainList = formNSGroup.domains ? formNSGroup.domains : data.domains
-        data.domains.forEach((value: string, index: number) => {
-            if (value == null) {
-                newDomainList.splice(index,1)
-            }
-            newDomainList[index] = value
-        })
-        console.log(newDomainList)
-
-        setFormNSGroup({...formNSGroup, domains: newDomainList})
-    }
-
-    const updateNameservers = (data: formNSGroup) => {
-        let newNSList: NameServer[]
-        newNSList = formNSGroup.nameservers ? formNSGroup.nameservers : data.nameservers
-        data.nameservers.forEach((value: NameServer, index: number) => {
-            if (value) {
-                if (!newNSList[index]) {
-                    newNSList[index] = value
-                } else {
-                    if (typeof (value.ns_type) != 'undefined') {
-                        newNSList[index].ns_type = value.ns_type
-                    }
-                    if (typeof (value.ip) != 'undefined') {
-                        newNSList[index].ip = value.ip
-                    }
-                    if (typeof (value.port) != 'undefined') {
-                        newNSList[index].port = value.port
-                    }
-                }
-            }
-        })
-
-        setFormNSGroup({...formNSGroup, nameservers: newNSList})
-    }
-
     const handleFormSubmit = () => {
-        console.log("validating")
+
         form.validateFields()
-            .then(() => {
-                const nsGroupToSave = createNSGroupToSave()
+            .then((values) => {
+                const nsGroupToSave = createNSGroupToSave(values as NameServerGroup)
                 console.log(nsGroupToSave)
                 dispatch(nsGroupActions.saveNameServerGroup.request({
                     getAccessTokenSilently: getAccessTokenSilently,
@@ -246,19 +203,19 @@ const NameServerGroupUpdate = () => {
             });
     }
 
-    const createNSGroupToSave = (): NameServerGroupToSave => {
-        console.log(formNSGroup)
-        let [existingGroups, newGroups] = getExistingAndToCreateGroupsLists(formNSGroup.groups)
+    const createNSGroupToSave = (values:NameServerGroup): NameServerGroupToSave => {
+        console.log(formNSGroup.id,values)
+        let [existingGroups, newGroups] = getExistingAndToCreateGroupsLists(values.groups)
         return {
             id: formNSGroup.id || null,
-            name: formNSGroup.name,
-            description: formNSGroup.description,
-            primary: formNSGroup.primary,
-            domains: formNSGroup.domains,
-            nameservers: formNSGroup.nameservers,
+            name: values.name ? values.name : formNSGroup.name,
+            description: values.description ? values.description : formNSGroup.description,
+            primary: values.primary,
+            domains: values.domains,
+            nameservers: values.nameservers,
             groups: existingGroups,
             groupsToCreate: newGroups,
-            enabled: formNSGroup.enabled,
+            enabled: values.enabled,
         } as NameServerGroupToSave
     }
 
@@ -268,22 +225,6 @@ const NameServerGroupUpdate = () => {
 
     const toggleEditDescription = (b: boolean) => {
         setEditDescription(b)
-    }
-
-    const selectValidator = (_: RuleObject, value: string[]) => {
-        let hasSpaceNamed = []
-
-        value.forEach(function (v: string) {
-            if (!v.trim().length) {
-                hasSpaceNamed.push(v)
-            }
-        })
-
-        if (hasSpaceNamed.length) {
-            return Promise.reject(new Error("Group names with just spaces are not allowed"))
-        }
-
-        return Promise.resolve()
     }
 
     const ipValidator = (_: RuleObject, value: string) => {
@@ -365,7 +306,7 @@ const NameServerGroupUpdate = () => {
 
             <Form.Item>
                 <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined/>}>
-                    Add Nameserver
+                    Add nameserver
                 </Button>
             </Form.Item>
             <Form.ErrorList errors={errors}/>
@@ -375,34 +316,52 @@ const NameServerGroupUpdate = () => {
     // @ts-ignore
     const renderDomains = (fields: FormListFieldData[], {add, remove}, {errors}) => (
         <>
-            <Row>Domains</Row>
+            <Row>
+            <Space >
+                <Col>
+                    Match domains
+                </Col>
+                <Col>
+                    <Tooltip title="Only queries to domains specified here will be resolved by these nameservers." className={"ant-form-item-tooltip"}>
+                        <QuestionCircleOutlined style={{color: "rgba(0, 0, 0, 0.45)",cursor: "help"}}/>
+                    </Tooltip>
+                </Col>
+            </Space>
+            </Row>
             {fields.map((field, index) => {
                 return (
                     <Row key={index}>
                         <Col span={20} style={{margin: '1px'}}>
-                            <Form.Item style={{margin: '1px'}}
-                                       name={[field.name]}
-                                       // rules={[{validator: ipValidator}]}
+                            <Form.Item hidden={isPrimary} style={{margin: '1px'}}
+                                       {...field}
+                                       noStyle
                             >
                                 <Input placeholder="e.g. google.com" style={{width: '100%'}}
                                        autoComplete="off"/>
                             </Form.Item>
                         </Col>
                         <Col span={2} style={{textAlign: 'center'}}>
-                            <MinusCircleOutlined onClick={() => remove(field.name)}/>
+                            <MinusCircleOutlined hidden={isPrimary} className="dynamic-delete-button" onClick={() => remove(field.name)}/>
                         </Col>
                     </Row>
                 )
             })}
 
             <Form.Item>
-                <Button type="dashed" onClick={() => add()} block icon={<PlusOutlined/>}>
-                    Add Nameserver
+                <Button type="dashed" disabled={isPrimary} onClick={() => add()} block icon={<PlusOutlined/>}>
+                    Add domain
                 </Button>
             </Form.Item>
             <Form.ErrorList errors={errors}/>
         </>
     )
+
+    const onChange = (changedValues:any) => {
+        console.log(changedValues)
+        if (changedValues.primary !== undefined) {
+            setIsPrimary(changedValues.primary)
+        }
+    }
 
     return (
         <>
@@ -417,13 +376,15 @@ const NameServerGroupUpdate = () => {
                     footer={
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedNSGroup.loading}>Cancel</Button>
-                            <Button type="primary" disabled={savedNSGroup.loading}
-                                    onClick={handleFormSubmit}>{`${formNSGroup.id ? 'Save' : 'Create'}`}</Button>
+                            <Button type="primary" onClick={handleFormSubmit} disabled={savedNSGroup.loading}
+                                    >{`${formNSGroup.id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
                 >
                     {selectCustom ?
-                        (<Form layout="vertical" requiredMark={false} form={form} onValuesChange={onChange}>
+                        (<Form layout="vertical" requiredMark={false} form={form}
+                               onValuesChange={onChange}
+                            >
                             <Row gutter={16}>
                                 <Col span={24}>
                                     <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
@@ -505,20 +466,6 @@ const NameServerGroupUpdate = () => {
                                         />
                                     </Form.Item>
                                 </Col>
-
-                                <Col span={24}>
-                                    <Form.Item
-                                        name="primary"
-                                        label="Primary"
-                                    >
-                                        <Radio.Group
-                                            options={optionsPrimary}
-                                            optionType="button"
-                                            buttonStyle="solid"
-                                        />
-                                    </Form.Item>
-                                </Col>
-
                                 <Col span={24} flex="auto">
                                     <Form.List
                                         name="nameservers"
@@ -527,10 +474,22 @@ const NameServerGroupUpdate = () => {
                                         {renderNSList}
                                     </Form.List>
                                 </Col>
+                                <Col span={24}>
+                                    <Form.Item
+                                        name="primary"
+                                        label="Resolve all domains"
+                                        tooltip="Defines if the nameservers are resolvers for all domains"
+                                    >
+                                        <Radio.Group
+                                            options={optionsPrimary}
+                                            optionType="button"
+                                            buttonStyle="solid"
+                                        />
+                                    </Form.Item>
+                                </Col>
                                 <Col span={24} flex="auto">
                                     <Form.List
                                         name="domains"
-                                        // rules={[{validator: formListValidator}]}
                                     >
                                         {renderDomains}
                                     </Form.List>
@@ -539,7 +498,7 @@ const NameServerGroupUpdate = () => {
                                     <Form.Item
                                         name="groups"
                                         label="Distribution groups"
-                                        tooltip="Every peer enrolled with this user will be automatically added to these groups"
+                                        tooltip="Distribution groups define to which group of peers these settings will be distributed to"
                                         rules={[{validator: selectValidator}]}
                                     >
                                         <Select mode="tags"
