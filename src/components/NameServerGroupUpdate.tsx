@@ -298,7 +298,7 @@ const NameServerGroupUpdate = () => {
                                        rules={[{required: true, message: 'Missing first protocol'}]}
                                        initialValue={"udp"}
                             >
-                                <Select style={{width: '100%'}}>
+                                <Select disabled style={{width: '100%'}}>
                                     <Option value="udp">UDP</Option>
                                 </Select>
                             </Form.Item>
@@ -372,7 +372,7 @@ const NameServerGroupUpdate = () => {
             })}
 
             <Form.Item>
-                <Button type="dashed" disabled={isPrimary} onClick={() => add()} block icon={<PlusOutlined/>} style={{marginTop: '10px'}}>
+                <Button type="dashed" disabled={isPrimary} onClick={() => add()} block icon={<PlusOutlined/>}>
                     Add domain
                 </Button>
             </Form.Item>
