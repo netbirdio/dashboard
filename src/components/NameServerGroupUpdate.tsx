@@ -211,7 +211,7 @@ const NameServerGroupUpdate = () => {
             name: values.name ? values.name : formNSGroup.name,
             description: values.description ? values.description : formNSGroup.description,
             primary: values.primary,
-            domains: values.domains,
+            domains: values.primary ? [] : values.domains,
             nameservers: values.nameservers,
             groups: existingGroups,
             groupsToCreate: newGroups,
@@ -225,6 +225,15 @@ const NameServerGroupUpdate = () => {
 
     const toggleEditDescription = (b: boolean) => {
         setEditDescription(b)
+    }
+
+    const domainRegex = /(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/;
+
+    const domainValidator = (_: RuleObject, domain: string) => {
+        if (domainRegex.test(domain)) {
+            return Promise.resolve()
+        }
+        return Promise.reject(new Error("Please enter a valid domain, e.g. example.com or intra.example.com"))
     }
 
     const ipValidator = (_: RuleObject, value: string) => {
@@ -334,9 +343,9 @@ const NameServerGroupUpdate = () => {
                         <Col span={20} style={{margin: '1px'}}>
                             <Form.Item hidden={isPrimary} style={{margin: '1px'}}
                                        {...field}
-                                       noStyle
+                                       rules={[{validator: domainValidator}]}
                             >
-                                <Input placeholder="e.g. google.com" style={{width: '100%'}}
+                                <Input placeholder="e.g. example.com" style={{width: '100%'}}
                                        autoComplete="off"/>
                             </Form.Item>
                         </Col>
@@ -348,7 +357,7 @@ const NameServerGroupUpdate = () => {
             })}
 
             <Form.Item>
-                <Button type="dashed" disabled={isPrimary} onClick={() => add()} block icon={<PlusOutlined/>}>
+                <Button type="dashed" disabled={isPrimary} onClick={() => add()} block icon={<PlusOutlined/>} style={{marginTop: '10px'}}>
                     Add domain
                 </Button>
             </Form.Item>
@@ -525,9 +534,9 @@ const NameServerGroupUpdate = () => {
                                         </Col>
                                         <Col flex="auto">
                                             <Paragraph>
-                                                You can enable high-availability by assigning the same network
-                                                identifier
-                                                and network CIDR to multiple routes.
+                                                Nameservers let you define resolvers for your DNS queries.
+                                                Because not all operating systems support match-only domain resolution,
+                                                you should define at least one set of nameservers to resolve all domains per distribution group.
                                             </Paragraph>
                                         </Col>
                                     </Row>
@@ -535,9 +544,9 @@ const NameServerGroupUpdate = () => {
                                 <Col span={24}>
                                     <Divider></Divider>
                                     <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                            href="https://netbird.io/docs/how-to-guides/network-routes"
+                                            href="https://netbird.io/docs/how-to-guides/nameservers"
                                             style={{color: 'rgb(07, 114, 128)'}}>Learn
-                                        more about network routes</Button>
+                                        more about nameservers</Button>
                                 </Col>
                             </Row>
                         </Form>) :
