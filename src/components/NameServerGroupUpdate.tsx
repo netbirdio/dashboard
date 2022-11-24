@@ -198,19 +198,19 @@ const NameServerGroupUpdate = () => {
         form.validateFields()
             .then((values) => {
                 const nsGroupToSave = createNSGroupToSave(values as NameServerGroup)
-                console.log(nsGroupToSave)
                 dispatch(nsGroupActions.saveNameServerGroup.request({
                     getAccessTokenSilently: getAccessTokenSilently,
                     payload: nsGroupToSave
                 }))
+
             })
+            .then(() => onCancel())
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
             });
     }
 
     const createNSGroupToSave = (values:NameServerGroup): NameServerGroupToSave => {
-        console.log(formNSGroup.id,values)
         let [existingGroups, newGroups] = getExistingAndToCreateGroupsLists(values.groups)
         return {
             id: formNSGroup.id || null,
@@ -298,7 +298,7 @@ const NameServerGroupUpdate = () => {
                                        rules={[{required: true, message: 'Missing first protocol'}]}
                                        initialValue={"udp"}
                             >
-                                <Select defaultValue="udp" style={{width: '100%'}}>
+                                <Select style={{width: '100%'}}>
                                     <Option value="udp">UDP</Option>
                                 </Select>
                             </Form.Item>
@@ -318,7 +318,7 @@ const NameServerGroupUpdate = () => {
                                        rules={[{required: true, message: 'Missing port'}]}
                                        initialValue={53}
                             >
-                                <InputNumber defaultValue={53} placeholder="Port" style={{width: '100%'}}/>
+                                <InputNumber placeholder="Port" style={{width: '100%'}}/>
                             </Form.Item>
                         </Col>
                         <Col span={2} style={{textAlign: 'center'}}>
