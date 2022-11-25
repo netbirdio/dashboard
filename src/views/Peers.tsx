@@ -383,19 +383,22 @@ export const Peers = () => {
         }
 
         const body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-            <ButtonCopyMessage keyMessage={peer.dns_label}
-                               toCopy={peer.dns_label}
-                               body={peer.dns_label}
-                               messageText={'Peer domain copied'}
-                               styleNotification={{}}/>
-            <br/>
+            <Row>
+               <ButtonCopyMessage keyMessage={peer.dns_label}
+                                  toCopy={peer.dns_label}
+                                  body={peer.dns_label}
+                                  messageText={'Peer domain copied'}
+                                  styleNotification={{}}/>
+            </Row>
 
+        <Row>
             <ButtonCopyMessage keyMessage={peer.ip}
                                toCopy={peer.ip}
                                body={<Text type="secondary">{peer.ip}</Text>}
                                messageText={'Peer IP copied'}
+                               style={{marginTop:'-10px'}}
                                styleNotification={{}}/>
-
+  </Row>
         </span>
 
 
