@@ -18,7 +18,14 @@ import {
     Tooltip,
     Typography
 } from "antd";
-import {CloseOutlined, FlagFilled, MinusCircleOutlined, PlusOutlined, QuestionCircleFilled, QuestionCircleOutlined} from "@ant-design/icons";
+import {
+    CloseOutlined,
+    FlagFilled,
+    MinusCircleOutlined,
+    PlusOutlined,
+    QuestionCircleFilled,
+    QuestionCircleOutlined
+} from "@ant-design/icons";
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import cidrRegex from 'cidr-regex';
@@ -63,6 +70,18 @@ const NameServerGroupUpdate = () => {
     const optionsPrimary = [{label: 'Yes', value: true}, {label: 'No', value: false}]
 
     useEffect(() => {
+        if (editName) inputNameRef.current!.focus({
+            cursor: 'end',
+        });
+    }, [editName]);
+
+    useEffect(() => {
+        if (editDescription) inputDescriptionRef.current!.focus({
+            cursor: 'end',
+        });
+    }, [editDescription]);
+
+    useEffect(() => {
         if (!nsGroup) return
 
         let newFormGroup = {
@@ -98,10 +117,11 @@ const NameServerGroupUpdate = () => {
         setIsPrimary(false)
     }
 
-    const onChange = (changedValues:any) => {
+    const onChange = (changedValues: any) => {
         if (changedValues.primary !== undefined) {
             setIsPrimary(changedValues.primary)
         }
+        setFormNSGroup({...formNSGroup, ...changedValues})
     }
 
     let googleChoice = 'Google DNS'
@@ -210,7 +230,7 @@ const NameServerGroupUpdate = () => {
             });
     }
 
-    const createNSGroupToSave = (values:NameServerGroup): NameServerGroupToSave => {
+    const createNSGroupToSave = (values: NameServerGroup): NameServerGroupToSave => {
         let [existingGroups, newGroups] = getExistingAndToCreateGroupsLists(values.groups)
         return {
             id: formNSGroup.id || null,
@@ -225,12 +245,12 @@ const NameServerGroupUpdate = () => {
         } as NameServerGroupToSave
     }
 
-    const toggleEditName = (b: boolean) => {
-        setEditDescription(b)
+    const toggleEditName = (status: boolean) => {
+        setEditName(status)
     }
 
-    const toggleEditDescription = (b: boolean) => {
-        setEditDescription(b)
+    const toggleEditDescription = (status: boolean) => {
+        setEditDescription(status)
     }
 
     const domainRegex = /(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/;
@@ -341,16 +361,17 @@ const NameServerGroupUpdate = () => {
     const renderDomains = (fields: FormListFieldData[], {add, remove}, {errors}) => (
         <>
             <Row>
-            <Space >
-                <Col>
-                    Match domains
-                </Col>
-                <Col>
-                    <Tooltip title="Only queries to domains specified here will be resolved by these nameservers." className={"ant-form-item-tooltip"}>
-                        <QuestionCircleOutlined style={{color: "rgba(0, 0, 0, 0.45)",cursor: "help"}}/>
-                    </Tooltip>
-                </Col>
-            </Space>
+                <Space>
+                    <Col>
+                        Match domains
+                    </Col>
+                    <Col>
+                        <Tooltip title="Only queries to domains specified here will be resolved by these nameservers."
+                                 className={"ant-form-item-tooltip"}>
+                            <QuestionCircleOutlined style={{color: "rgba(0, 0, 0, 0.45)", cursor: "help"}}/>
+                        </Tooltip>
+                    </Col>
+                </Space>
             </Row>
             {fields.map((field, index) => {
                 return (
@@ -365,7 +386,8 @@ const NameServerGroupUpdate = () => {
                             </Form.Item>
                         </Col>
                         <Col span={2} style={{textAlign: 'center'}}>
-                            <MinusCircleOutlined hidden={isPrimary} className="dynamic-delete-button" onClick={() => remove(field.name)}/>
+                            <MinusCircleOutlined hidden={isPrimary} className="dynamic-delete-button"
+                                                 onClick={() => remove(field.name)}/>
                         </Col>
                     </Row>
                 )
@@ -394,22 +416,21 @@ const NameServerGroupUpdate = () => {
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedNSGroup.loading}>Cancel</Button>
                             <Button type="primary" onClick={handleFormSubmit} disabled={savedNSGroup.loading}
-                                    >{`${formNSGroup.id ? 'Save' : 'Create'}`}</Button>
+                            >{`${formNSGroup.id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
                 >
                     {selectCustom ?
                         (<Form layout="vertical" requiredMark={false} form={form}
                                onValuesChange={onChange}
-                            >
+                        >
                             <Row gutter={16}>
                                 <Col span={24}>
                                     <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
                                         <Row align="top">
                                             <Col flex="none" style={{display: "flex"}}>
                                                 {!editName && !editDescription && formNSGroup.id &&
-                                                    <button type="button" aria-label="Close"
-                                                            className="ant-drawer-close"
+                                                    <button type="button" aria-label="Close" className="ant-drawer-close"
                                                             style={{paddingTop: 3}}
                                                             onClick={onCancel}>
                                                     <span role="img" aria-label="close"
@@ -430,13 +451,13 @@ const NameServerGroupUpdate = () => {
                                                         tooltip="Add a nameserver group name"
                                                         rules={[
                                                             {
-                                                            required: true,
-                                                            message: 'Please add an identifier for this nameserver group',
-                                                            whitespace: true
-                                                        },
+                                                                required: true,
+                                                                message: 'Please add an identifier for this nameserver group',
+                                                                whitespace: true
+                                                            },
                                                             {
-                                                            validator: nameValidator
-                                                        }
+                                                                validator: nameValidator
+                                                            }
                                                         ]}
                                                     >
                                                         <Input placeholder="e.g. Public DNS" ref={inputNameRef}
@@ -447,21 +468,21 @@ const NameServerGroupUpdate = () => {
                                                 )}
                                                 {!editDescription ? (
                                                     <div className={"access-control input-text ant-drawer-subtitle"}
-                                                         onClick={() => toggleEditDescription(true)}>{formNSGroup.description && formNSGroup.description.trim() !== "" ? formNSGroup.description : 'Add description...'}</div>
+                                                         onClick={() => toggleEditDescription(true)}>
+                                                        {formNSGroup.description && formNSGroup.description.trim() !== "" ? formNSGroup.description : 'Add description...'}
+                                                    </div>
                                                 ) : (
                                                     <Form.Item
                                                         name="description"
                                                         label="Description"
                                                         style={{marginTop: 24}}
                                                     >
-                                                        <Input placeholder="Add description..."
-                                                               ref={inputDescriptionRef}
+                                                        <Input placeholder="Add description..." ref={inputDescriptionRef}
                                                                onPressEnter={() => toggleEditDescription(false)}
                                                                onBlur={() => toggleEditDescription(false)}
-                                                               autoComplete="off" maxLength={200}/>
+                                                               autoComplete="off"/>
                                                     </Form.Item>
                                                 )}
-
                                             </Col>
                                         </Row>
                                         <Row align="top">
@@ -549,7 +570,8 @@ const NameServerGroupUpdate = () => {
                                             <Paragraph>
                                                 Nameservers let you define resolvers for your DNS queries.
                                                 Because not all operating systems support match-only domain resolution,
-                                                you should define at least one set of nameservers to resolve all domains per distribution group.
+                                                you should define at least one set of nameservers to resolve all domains
+                                                per distribution group.
                                             </Paragraph>
                                         </Col>
                                     </Row>
@@ -564,42 +586,43 @@ const NameServerGroupUpdate = () => {
                             </Row>
                         </Form>) :
                         (
-                            <Space direction={"vertical"} style={{ width: '100%' }}>
-                            <Row align='middle'>
-                                <Col span={24} style={{textAlign: 'left'}}>
-                                    <span className="ant-form-item">Select a predefined nameserver</span>
-                                </Col>
-                            </Row>
-                            <Row align='middle'>
-                            <Col span={24} style={{textAlign: 'center'}}>
-                                <Select
-                                    style={{width: '100%'}}
-                                    onChange={handleSelectChange}
-                                    options={[
-                                        {
-                                            value: googleChoice,
-                                            label: googleChoice,
-                                        },
-                                        {
-                                            value: cloudflareChoice,
-                                            label: cloudflareChoice,
-                                        },
-                                        {
-                                            value: quad9Choice,
-                                            label: quad9Choice,
-                                        },
-                                        {
-                                            value: customChoice,
-                                            label: customChoice,
-                                        },
-                                    ]}
-                                />
-                            </Col>
-                            </Row>
+                            <Space direction={"vertical"} style={{width: '100%'}}>
+                                <Row align='middle'>
+                                    <Col span={24} style={{textAlign: 'left'}}>
+                                        <span className="ant-form-item">Select a predefined nameserver</span>
+                                    </Col>
+                                </Row>
+                                <Row align='middle'>
+                                    <Col span={24} style={{textAlign: 'center'}}>
+                                        <Select
+                                            style={{width: '100%'}}
+                                            onChange={handleSelectChange}
+                                            options={[
+                                                {
+                                                    value: googleChoice,
+                                                    label: googleChoice,
+                                                },
+                                                {
+                                                    value: cloudflareChoice,
+                                                    label: cloudflareChoice,
+                                                },
+                                                {
+                                                    value: quad9Choice,
+                                                    label: quad9Choice,
+                                                },
+                                                {
+                                                    value: customChoice,
+                                                    label: customChoice,
+                                                },
+                                            ]}
+                                        />
+                                    </Col>
+                                </Row>
                                 <Row align='middle'>
                                     <Col span={24} style={{textAlign: 'left'}}>
                                         <Col span={24} style={{textAlign: 'left'}}>
-                                            <span className="ant-form-item"><Typography.Link onClick={() => handleSelectChange(customChoice)}>Or add custom</Typography.Link></span>
+                                            <span className="ant-form-item"><Typography.Link
+                                                onClick={() => handleSelectChange(customChoice)}>Or add custom</Typography.Link></span>
                                         </Col>
                                     </Col>
                                 </Row>
