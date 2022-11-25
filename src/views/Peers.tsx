@@ -383,15 +383,26 @@ export const Peers = () => {
         }
 
         const body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-            <Text>{peer.dns_label}</Text>
-            <br/>
-            <Text type="secondary">{peer.ip}</Text>
-        </span>
-        return <ButtonCopyMessage keyMessage={peer.key}
+            <Row>
+               <ButtonCopyMessage keyMessage={peer.dns_label}
                                   toCopy={peer.dns_label}
-                                  body={body}
+                                  body={peer.dns_label}
                                   messageText={'Peer domain copied'}
                                   styleNotification={{}}/>
+            </Row>
+
+        <Row>
+            <ButtonCopyMessage keyMessage={peer.ip}
+                               toCopy={peer.ip}
+                               body={<Text type="secondary">{peer.ip}</Text>}
+                               messageText={'Peer IP copied'}
+                               style={{marginTop:'-10px'}}
+                               styleNotification={{}}/>
+  </Row>
+        </span>
+
+
+        return body
     }
 
     const renderName = (peer: PeerDataTable) => {
