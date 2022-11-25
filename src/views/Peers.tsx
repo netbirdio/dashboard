@@ -198,6 +198,7 @@ export const Peers = () => {
                 const u = users?.find(u => u.id === f.user_id)?.email
                 userEmail = u ? u : ""
                 return (f.name.toLowerCase().includes(t) || f.ip.includes(t) || f.os.includes(t) || t === "" ||
+                    f.groups?.find(u => u.name.toLowerCase().trim().includes(t)) ||
                     (userEmail && userEmail.toLowerCase().includes(t)))
             }
         ) as Peer[]
@@ -205,6 +206,14 @@ export const Peers = () => {
             f = filter(peers, (f: Peer) => f.connected)
         }
         return f
+    }
+
+    const getGroupNamesFromIDs = (groupIDList: string[] | undefined): string[] => {
+        if (!groupIDList) {
+            return []
+        }
+
+        return groups?.filter(g => groupIDList.includes(g.id!)).map(g => g.name || '') || []
     }
 
     const onChangeTextToSearch = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
