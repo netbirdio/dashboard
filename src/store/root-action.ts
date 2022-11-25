@@ -4,6 +4,7 @@ import { actions as UserActions } from './user';
 import { actions as GroupActions } from './group';
 import { actions as RuleActions } from './rule';
 import { actions as RouteActions } from './route';
+import { actions as NameServerGroupActions } from './nameservers';
 
 export default {
   peer: PeerActions,
@@ -11,5 +12,6 @@ export default {
   user: UserActions,
   group: GroupActions,
   rule: RuleActions,
-  route: RouteActions
+  route: RouteActions,
+  nameserverGroup: NameServerGroupActions
 };

@@ -212,7 +212,7 @@ export const AccessControl = () => {
                 {ruleToAction &&
                     <>
                         <Title level={5}>Delete rule "{ruleToAction ? ruleToAction.name : ''}"</Title>
-                        <Paragraph>Are you sure you want to delete peer from your account?</Paragraph>
+                        <Paragraph>Are you sure you want to delete this rule from your account?</Paragraph>
                     </>
                 }
             </Space>,
@@ -342,8 +342,8 @@ export const AccessControl = () => {
         })
         return (
             <Popover
-                onVisibleChange={onPopoverVisibleChange}
-                visible={groupPopupVisible}
+                onOpenChange={onPopoverVisibleChange}
+                open={groupPopupVisible}
                 content={content}
                 title={null}>
                 <Button type="link" onClick={() => setRuleAndView(rule)}>{label}</Button>
