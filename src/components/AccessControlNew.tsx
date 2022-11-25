@@ -302,7 +302,9 @@ const AccessControlNew = () => {
                                             )}
                                             {!editDescription ? (
                                                 <div className={"access-control input-text ant-drawer-subtitle"}
-                                                     onClick={() => toggleEditDescription(true)}>{formRule.description && formRule.description.trim() !== "" ? formRule.description : 'Add description...'}</div>
+                                                     onClick={() => toggleEditDescription(true)}>
+                                                    {formRule.description && formRule.description.trim() !== "" ? formRule.description : 'Add description...'}
+                                                </div>
                                             ) : (
                                                 <Form.Item
                                                     name="description"
