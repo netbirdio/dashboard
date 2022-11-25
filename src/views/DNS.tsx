@@ -106,9 +106,9 @@ export const DNS = () => {
         let f = filter(nsGroup, (f: NameServerGroup) =>
             ((f.name ).toLowerCase().includes(t) ||
                 f.name.includes(t) || t === "" ||
-                getGroupNamesFromIDs(f.groups).find(u => u.toLowerCase().trim().includes(t) ||
+                getGroupNamesFromIDs(f.groups).find(u => u.toLowerCase().trim().includes(t)) ||
                 f.domains.find(d => d.toLowerCase().trim().includes(t)) ||
-                f.nameservers.find(n => n.ip.includes(t))))
+                f.nameservers.find(n => n.ip.includes(t)))
         ) as NameServerGroup[]
         if (optionAllEnable !== "all") {
             f = filter(f, (f) => f.enabled)
