@@ -15,14 +15,14 @@ const Banner = () => {
 		localStorage.setItem(banner_closed_key,'true');
 	};
 
-	const announcement = "New Release! Add teammates to your NetBird network."
+	const announcement = "New Release! Manage DNS with NetBird."
 
 	const announcement_md5 = Md5.hashStr(announcement)
 
 	const linkLearnMore = () => {
 		return (
 			<a
-				href="https://netbird.io/docs/how-to-guides/adding-users-to-netbird"
+				href="https://netbird.io/docs/how-to-guides/nameservers"
 				className="font-bold underline"
 				target="_blank"
 				rel="noreferrer"
