@@ -15,6 +15,7 @@ import {timeAgo} from "../utils/common";
 const {Paragraph} = Typography;
 const {Option} = Select;
 const {Panel} = Collapse;
+const punycode = require('punycode/')
 
 const PeerUpdate = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
@@ -32,6 +33,7 @@ const PeerUpdate = () => {
     const [peerGroups, setPeerGroups] = useState([] as GroupPeer[])
     const inputNameRef = useRef<any>(null)
     const [editName, setEditName] = useState(false)
+    const [estimatedName, setEstimatedName] = useState("")
     const [callingPeerAPI, setCallingPeerAPI] = useState(false)
     const [callingGroupAPI, setCallingGroupAPI] = useState(false)
     const [isSubmitRunning, setSubmitRunning] = useState(false)
@@ -212,6 +214,20 @@ const PeerUpdate = () => {
         setSelectedTagGroups(validatedValues)
     };
 
+    const nameValidator = (_: RuleObject, value: string) => {
+        let punyName = punycode.toASCII(value.toLowerCase())
+        let domain = ""
+        if (formPeer.dns_label) {
+            let labelList = formPeer.dns_label.split(".")
+            if (labelList.length > 1) {
+                labelList.splice(0,1)
+                domain = "." + labelList.join(".")
+            }
+        }
+        setEstimatedName(punyName+domain)
+        return Promise.resolve()
+    }
+
     const createPeerToSave = (): Peer => {
         return {
             id: formPeer.id,
@@ -316,22 +332,42 @@ const PeerUpdate = () => {
                                                      onClick={() => toggleEditName(true)}>{formPeer.name ? formPeer.name : peer.name}
                                                     <EditOutlined/></div>
                                             ) : (
-                                                <Form.Item
-                                                    name="name"
-                                                    label="Name"
-                                                    rules={[{
-                                                        required: true,
-                                                        message: 'Please add a new name for this peer',
-                                                        whitespace: true
-                                                    }]}
-                                                >
-                                                    <Input
-                                                        placeholder={peer.name}
-                                                        ref={inputNameRef}
-                                                        onPressEnter={() => toggleEditName(false)}
-                                                        onBlur={() => toggleEditName(false)}
-                                                        autoComplete="off"/>
-                                                </Form.Item>)}
+                                                <Row>
+                                                    <Space direction={"vertical"} size="small">
+                                                        <Form.Item
+                                                            name="name"
+                                                            label="Name"
+                                                            style={{margin: '1px'}}
+                                                            rules={[{
+                                                                required: true,
+                                                                message: 'Please add a new name for this peer',
+                                                                whitespace: true
+                                                            },{validator:nameValidator}]}
+                                                        >
+                                                            <Input
+                                                                placeholder={peer.name}
+                                                                ref={inputNameRef}
+                                                                onPressEnter={() => toggleEditName(false)}
+                                                                onBlur={() => toggleEditName(false)}
+                                                                autoComplete="off"
+                                                                max={59}/>
+                                                        </Form.Item>
+                                                    <Form.Item
+                                                        label="Possible domain name after saving"
+                                                        tooltip="If the domain name already exists, we add an increment number suffix to it"
+                                                        style={{margin: '1px'}}
+                                                    >
+                                                        <Paragraph>
+                                                            <Tag>
+                                                                {estimatedName}
+                                                            </Tag>
+                                                        </Paragraph>
+                                                        </Form.Item>
+                                                    </Space>
+
+
+                                                </Row>
+                                            )}
                                         </Col>
                                     </Row>
 
@@ -365,6 +401,20 @@ const PeerUpdate = () => {
                                     <Input
                                         disabled={true}
                                         value={formPeer.last_seen}
+                                        style={{color: "#5a5c5a"}}
+                                        autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
+                        </Row>
+                        <Row gutter={16}>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="dns_label"
+                                    label="Domain name"
+                                >
+                                    <Input
+                                        disabled={true}
+                                        value={formPeer.userEmail}
                                         style={{color: "#5a5c5a"}}
                                         autoComplete="off"/>
                                 </Form.Item>

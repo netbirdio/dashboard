@@ -228,7 +228,7 @@ const AccessControlNew = () => {
     const selectValidator = (_: RuleObject, value: string[]) => {
         let hasSpaceNamed = []
         if (!value.length) {
-            return Promise.reject(new Error("Please enter ate least one group"))
+            return Promise.reject(new Error("Please enter at least one group"))
         }
 
         value.forEach(function (v: string) {
