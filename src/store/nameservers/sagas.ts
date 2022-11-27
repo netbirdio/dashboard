@@ -98,6 +98,10 @@ export function* saveNameServerGroup(action: ReturnType<typeof actions.saveNameS
     yield put(actions.getNameServerGroups.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
 
   } catch (err) {
+    yield put(groupActions.getGroups.request({
+      getAccessTokenSilently: action.payload.getAccessTokenSilently,
+      payload: null
+    }));
     yield put(actions.saveNameServerGroup.failure({
       loading: false,
       success: false,

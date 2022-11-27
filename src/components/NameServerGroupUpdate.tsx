@@ -11,6 +11,7 @@ import {
     FormListFieldData,
     Input,
     InputNumber,
+    message,
     Radio,
     Row,
     Select,
@@ -226,7 +227,14 @@ const NameServerGroupUpdate = () => {
             })
             .then(() => onCancel())
             .catch((errorInfo) => {
-                console.log('errorInfo', errorInfo)
+                let msg = "please check the fields and try again"
+                if (errorInfo.errorFields) {
+                    msg = errorInfo.errorFields[0].errors[0]
+                }
+                message.error({
+                    content: msg,
+                    duration: 1,
+                });
             });
     }
 
@@ -259,6 +267,7 @@ const NameServerGroupUpdate = () => {
         if (domainRegex.test(domain)) {
             return Promise.resolve()
         }
+        setIsPrimary(false)
         return Promise.reject(new Error("Please enter a valid domain, e.g. example.com or intra.example.com"))
     }
 
@@ -287,6 +296,18 @@ const NameServerGroupUpdate = () => {
         if (names.length < 1) {
             return Promise.reject(new Error("You should add at least 1 Nameserver"));
         }
+        return Promise.resolve()
+    }
+
+    const primaryValidator = (_: RuleObject, primary: boolean) => {
+        if (!primary && form.getFieldValue("domains").length === 0) {
+            return Promise.reject(new Error("You should select between Resolve all domains or add one Match domain"));
+        }
+
+        if (primary && form.getFieldValue("domains").length > 0) {
+            return Promise.reject(new Error("You should remove all match domains before setting this to yes"));
+        }
+
         return Promise.resolve()
     }
 
@@ -430,7 +451,8 @@ const NameServerGroupUpdate = () => {
                                         <Row align="top">
                                             <Col flex="none" style={{display: "flex"}}>
                                                 {!editName && !editDescription && formNSGroup.id &&
-                                                    <button type="button" aria-label="Close" className="ant-drawer-close"
+                                                    <button type="button" aria-label="Close"
+                                                            className="ant-drawer-close"
                                                             style={{paddingTop: 3}}
                                                             onClick={onCancel}>
                                                     <span role="img" aria-label="close"
@@ -477,7 +499,8 @@ const NameServerGroupUpdate = () => {
                                                         label="Description"
                                                         style={{marginTop: 24}}
                                                     >
-                                                        <Input placeholder="Add description..." ref={inputDescriptionRef}
+                                                        <Input placeholder="Add description..."
+                                                               ref={inputDescriptionRef}
                                                                onPressEnter={() => toggleEditDescription(false)}
                                                                onBlur={() => toggleEditDescription(false)}
                                                                autoComplete="off"/>
@@ -521,6 +544,8 @@ const NameServerGroupUpdate = () => {
                                     <Form.Item
                                         name="primary"
                                         label="Resolve all domains"
+                                        rules={[{validator: primaryValidator}]}
+                                        dependencies={['domains']} // trigger primaryValidation if domains is updated
                                         tooltip="Defines if the nameservers are resolvers for all domains"
                                     >
                                         <Radio.Group
