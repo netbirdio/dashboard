@@ -10,8 +10,12 @@ import {
     Col,
     Dropdown,
     Input,
-    Menu, message, Modal,
-    Popover, Radio, RadioChangeEvent,
+    Menu,
+    message,
+    Modal,
+    Popover,
+    Radio,
+    RadioChangeEvent,
     Row,
     Select,
     Space,
@@ -25,7 +29,7 @@ import {useGetAccessTokenSilently} from "../utils/token";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
-import {NameServerGroup, NameServer} from "../store/nameservers/types";
+import {NameServer, NameServerGroup} from "../store/nameservers/types";
 import NameServerGroupUpdate from "../components/NameServerGroupUpdate";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import {useGetGroupTagHelpers} from "../utils/groups";
@@ -61,6 +65,7 @@ export const DNS = () => {
     const [optionAllEnable, setOptionAllEnable] = useState('enabled');
     const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as NameserverGroupDataTable[]);
+    const [showTutorial, setShowTutorial] = useState(false)
     const pageSizeOptions = [
         {label: "5", value: "5"},
         {label: "10", value: "10"},
@@ -89,11 +94,19 @@ export const DNS = () => {
     }
 
     useEffect(() => {
-        dispatch(nsGroupActions.getNameServerGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(nsGroupActions.getNameServerGroups.request({
+            getAccessTokenSilently: getAccessTokenSilently,
+            payload: null
+        }));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
+        if (nsGroup.length > 0) {
+            setShowTutorial(false)
+        } else {
+            setShowTutorial(true)
+        }
         setDataTable(transformDataTable(filterDataTable()))
     }, [nsGroup])
 
@@ -104,7 +117,7 @@ export const DNS = () => {
     const filterDataTable = (): NameServerGroup[] => {
         const t = textToSearch.toLowerCase().trim()
         let f = filter(nsGroup, (f: NameServerGroup) =>
-            ((f.name ).toLowerCase().includes(t) ||
+            ((f.name).toLowerCase().includes(t) ||
                 f.name.includes(t) || t === "" ||
                 getGroupNamesFromIDs(f.groups).find(u => u.toLowerCase().trim().includes(t)) ||
                 f.domains.find(d => d.toLowerCase().trim().includes(t)) ||
@@ -227,7 +240,8 @@ export const DNS = () => {
             domains = inputDomains
         }
 
-        let btn = <Button type="link" onClick={() => setUserAndView(userToAction)}>{domains.length ? domains.length : 0}</Button>
+        let btn = <Button type="link"
+                          onClick={() => setUserAndView(userToAction)}>{domains.length ? domains.length : 0}</Button>
         if (!domains || domains!.length < 1) {
             return btn
         }
@@ -284,10 +298,19 @@ export const DNS = () => {
             dispatch(nsGroupActions.setSavedNameServerGroup({...savedNSGroup, success: false}));
             dispatch(nsGroupActions.resetSavedNameServerGroup(null))
         } else if (savedNSGroup.error) {
+            let errorMsg = "Failed to update nameserver group"
+            switch (savedNSGroup.error.statusCode) {
+                case 403:
+                    errorMsg = "Failed to update user. You might not have enough permissions."
+                    break
+                default:
+                    errorMsg = savedNSGroup.error.data.message ? savedNSGroup.error.data.message : errorMsg
+                    break
+            }
             message.error({
-                content: 'Failed to update user. You might not have enough permissions.',
+                content: errorMsg,
                 key: createKey,
-                duration: 2,
+                duration: 5,
                 style: styleNotification
             });
             dispatch(nsGroupActions.setSavedNameServerGroup({...savedNSGroup, error: null}));
@@ -320,6 +343,7 @@ export const DNS = () => {
         dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(true));
         dispatch(nsGroupActions.setNameServerGroup({
             enabled: true,
+            primary: true,
         } as NameServerGroup))
     }
 
@@ -357,7 +381,9 @@ export const DNS = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Button type="primary" onClick={onClickAddNewNSGroup}>Add Nameserver</Button>
+                                            {!showTutorial &&
+                                                <Button type="primary" onClick={onClickAddNewNSGroup}>Add
+                                                    Nameserver</Button>}
                                         </Col>
                                     </Row>
                                 </Col>
@@ -373,7 +399,8 @@ export const DNS = () => {
                                         showSizeChanger: false,
                                         showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)
                                     }}
-                                    className="card-table"
+                                    // className="card-table"
+                                    className={`access-control-table ${showTutorial ? "card-table card-table-no-placeholder" : "card-table"}`}
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
@@ -395,7 +422,7 @@ export const DNS = () => {
                                             }}
                                     />
                                     <Column title="Nameservers" dataIndex="nameservers" align="center"
-                                            render={(nameservers:NameServer[]) => (
+                                            render={(nameservers: NameServer[]) => (
                                                 <>
                                                     {nameservers.map(nameserver => (
                                                         <Tag key={nameserver.ip}>
@@ -432,11 +459,23 @@ export const DNS = () => {
                                             }}
                                     />
                                 </Table>
+                                {showTutorial &&
+                                    <Space direction="vertical" size="small" align="center"
+                                           style={{display: 'flex', padding: '45px 15px', justifyContent: 'center'}}>
+                                        <Paragraph type="secondary"
+                                                   style={{textAlign: "center", whiteSpace: "pre-line"}}>
+                                            It looks like you don't have any nameservers. {"\n"}
+                                            Get started by adding one to your network!
+                                        </Paragraph>
+                                        <Button type="primary" onClick={onClickAddNewNSGroup}>Add
+                                            Nameserver</Button>
+                                    </Space>
+                                }
                             </Card>
                         </Space>
                     </Col>
                 </Row>
-         </Container>
+            </Container>
             <NameServerGroupUpdate/>
         </>
     )
