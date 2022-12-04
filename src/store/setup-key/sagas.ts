@@ -62,7 +62,8 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
                     name: keyToSave.name,
                     auto_groups: newGroups,
                     type: keyToSave.type,
-                    expires_in: keyToSave.expires_in
+                    expires_in: keyToSave.expires_in,
+                    usage_limit: keyToSave.usage_limit
                 } as SetupKeyToSave
             });
         } else {
@@ -73,6 +74,7 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
                     name: keyToSave.name,
                     revoked: keyToSave.revoked,
                     auto_groups: newGroups,
+                    usage_limit: keyToSave.usage_limit
                 } as SetupKeyToSave
             });
         }

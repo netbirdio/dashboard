@@ -10,6 +10,7 @@ import {
     Drawer,
     Form,
     Input,
+    InputNumber,
     List,
     Radio,
     Row,
@@ -112,10 +113,11 @@ const SetupKeyNew = () => {
             auto_groups: autoGroups,
             revoked: formSetupKey.revoked,
             groupsToCreate: groupsToCreate,
-            expires_in: expiresIn
+            expires_in: expiresIn,
+            usage_limit: formSetupKey.usage_limit
         } as SetupKeyToSave
     }
-    const expiresInToSeconds = (expiresIn: ExpiresInValue) : number => {
+    const expiresInToSeconds = (expiresIn: ExpiresInValue): number => {
         if (!expiresIn.number || !expiresIn.interval) {
             return 0
         }
@@ -169,6 +171,7 @@ const SetupKeyNew = () => {
             expires: "",
             state: "valid",
             auto_groups: new Array(),
+            usage_limit: 0,
             expires_in: 0
         } as SetupKey))
         setFormSetupKey({} as FormSetupKey)
@@ -274,6 +277,7 @@ const SetupKeyNew = () => {
 
     const changesDetected = (): boolean => {
         return formSetupKey.name == null || formSetupKey.name !== setupKey.name || groupsChanged()
+            || formSetupKey.usage_limit !== setupKey.usage_limit
     }
 
     const groupsChanged = (): boolean => {
@@ -445,6 +449,14 @@ const SetupKeyNew = () => {
                                         <ExpiresInInput/>
                                     </Form.Item>
                                 </Col>}
+                            <Col span={24}>
+                                <Form.Item name="usage_limit"
+                                           label="Usage Limit"
+                                           tooltip="Limit the number of times this key can be used. Use 0 for an unlimited use."
+                                >
+                                    <InputNumber min={0} defaultValue={0}/>
+                                </Form.Item>
+                            </Col>
                             <Col span={24}>
                                 <Form.Item
                                     name="autoGroupNames"
