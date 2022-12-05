@@ -10,6 +10,7 @@ import {
     Drawer,
     Form,
     Input,
+    InputNumber,
     List,
     Radio,
     Row,
@@ -112,10 +113,11 @@ const SetupKeyNew = () => {
             auto_groups: autoGroups,
             revoked: formSetupKey.revoked,
             groupsToCreate: groupsToCreate,
-            expires_in: expiresIn
+            expires_in: expiresIn,
+            usage_limit: formSetupKey.usage_limit
         } as SetupKeyToSave
     }
-    const expiresInToSeconds = (expiresIn: ExpiresInValue) : number => {
+    const expiresInToSeconds = (expiresIn: ExpiresInValue): number => {
         if (!expiresIn.number || !expiresIn.interval) {
             return 0
         }
@@ -163,12 +165,14 @@ const SetupKeyNew = () => {
         if (savedSetupKey.loading) return
         dispatch(setupKeyActions.setSetupKey({
             name: "",
-            type: "reusable",
+            type: "one-off",
             key: "",
             last_used: "",
             expires: "",
             state: "valid",
             auto_groups: new Array(),
+            usage_limit: 0,
+            used_times: 0,
             expires_in: 0
         } as SetupKey))
         setFormSetupKey({} as FormSetupKey)
@@ -274,6 +278,7 @@ const SetupKeyNew = () => {
 
     const changesDetected = (): boolean => {
         return formSetupKey.name == null || formSetupKey.name !== setupKey.name || groupsChanged()
+            || formSetupKey.usage_limit !== setupKey.usage_limit
     }
 
     const groupsChanged = (): boolean => {
@@ -298,7 +303,7 @@ const SetupKeyNew = () => {
                 <Drawer
                     forceRender={true}
                     headerStyle={{display: "none"}}
-                    visible={setupNewKeyVisible}
+                    open={setupNewKeyVisible}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
                     footer={
@@ -415,19 +420,19 @@ const SetupKeyNew = () => {
                                                 bordered
                                             >
                                                 <List.Item>
+                                                    <Radio value={"one-off"}>
+                                                        <Space direction="vertical" size="small">
+                                                            <Text strong>One-off</Text>
+                                                            <Text>This key can be used only once</Text>
+                                                        </Space>
+                                                    </Radio>
+                                                </List.Item>
+                                                <List.Item>
                                                     <Radio value={"reusable"}>
                                                         <Space direction="vertical" size="small">
                                                             <Text strong>Reusable</Text>
                                                             <Text>This type of a setup key allows to enroll multiple
                                                                 machines</Text>
-                                                        </Space>
-                                                    </Radio>
-                                                </List.Item>
-                                                <List.Item>
-                                                    <Radio value={"one-off"}>
-                                                        <Space direction="vertical" size="small">
-                                                            <Text strong>One-off</Text>
-                                                            <Text>This key can be used only once</Text>
                                                         </Space>
                                                     </Radio>
                                                 </List.Item>
@@ -445,6 +450,25 @@ const SetupKeyNew = () => {
                                         <ExpiresInInput/>
                                     </Form.Item>
                                 </Col>}
+                            <Col span={12}>
+                                <Form.Item name="usage_limit"
+                                           label="Usage Limit"
+                                           tooltip="Limit the number of times this key can be used. Use 0 for unlimited use."
+                                >
+                                    <InputNumber min={0} defaultValue={0} disabled={setupKey.id || formSetupKey.type !== "reusable"}
+                                                 style={{width: "100%"}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item name="used_times"
+                                           label="Used Times"
+                                >
+                                    <InputNumber min={0} defaultValue={0} disabled={true}
+                                                 style={{width: "100%"}}
+                                    />
+                                </Form.Item>
+                            </Col>
                             <Col span={24}>
                                 <Form.Item
                                     name="autoGroupNames"
