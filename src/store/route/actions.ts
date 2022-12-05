@@ -1,5 +1,5 @@
 import { ActionType, createAction, createAsyncAction } from 'typesafe-actions';
-import {Route} from './types';
+import {Route, RouteToSave} from './types';
 import {ApiError, CreateResponse, DeleteResponse, RequestPayload} from '../../services/api-client/types';
 
 const actions = {
@@ -13,7 +13,7 @@ const actions = {
       'SAVE_ROUTE_REQUEST',
       'SAVE_ROUTE_SUCCESS',
       'SAVE_ROUTE_FAILURE',
-  )<RequestPayload<Route>, CreateResponse<Route | null>, CreateResponse<Route | null>>(),
+  )<RequestPayload<RouteToSave>, CreateResponse<Route | null>, CreateResponse<Route | null>>(),
   setSavedRoute: createAction('SET_CREATE_ROUTE')<CreateResponse<Route | null>>(),
   resetSavedRoute: createAction('RESET_CREATE_ROUTE')<null>(),
   

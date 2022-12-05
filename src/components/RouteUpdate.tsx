@@ -19,7 +19,7 @@ import {
     Typography
 } from "antd";
 import {CloseOutlined, FlagFilled, QuestionCircleFilled} from "@ant-design/icons";
-import {Route} from "../store/route/types";
+import {Route, RouteToSave} from "../store/route/types";
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import cidrRegex from 'cidr-regex';
@@ -31,6 +31,7 @@ import {
     transformGroupedDataTable
 } from '../utils/routes'
 import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetGroupTagHelpers} from "../utils/groups";
 
 const {Paragraph} = Typography;
 
@@ -38,6 +39,17 @@ interface FormRoute extends Route {
 }
 
 const RouteUpdate = () => {
+    const {
+        tagRender,
+        handleChangeTags,
+        dropDownRender,
+        optionRender,
+        tagGroups,
+        getExistingAndToCreateGroupsLists,
+        getGroupNamesFromIDs,
+        selectValidator
+    } = useGetGroupTagHelpers()
+    const {Option} = Select;
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const setupNewRouteVisible = useSelector((state: RootState) => state.route.setupNewRouteVisible)
@@ -46,7 +58,6 @@ const RouteUpdate = () => {
     const route = useSelector((state: RootState) => state.route.route)
     const routes = useSelector((state: RootState) => state.route.data)
     const savedRoute = useSelector((state: RootState) => state.route.savedRoute)
-    // const [groupedDataTable, setGroupedDataTable] = useState([] as GroupedDataTable[]);
     const [previousRouteKey, setPreviousRouteKey] = useState("")
     const [editName, setEditName] = useState(false)
     const [editDescription, setEditDescription] = useState(false)
@@ -96,6 +107,7 @@ const RouteUpdate = () => {
 
         const fRoute = {
             ...route,
+            groups: getGroupNamesFromIDs(route.groups)
         } as FormRoute
         setFormRoute(fRoute)
         setPreviousRouteKey(fRoute.network_id + fRoute.network)
@@ -114,7 +126,7 @@ const RouteUpdate = () => {
         }
     })
 
-    const createRouteToSave = (inputRoute: FormRoute): Route => {
+    const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
         let peerIDList = inputRoute.peer.split(routePeerSeparator)
         let peerID: string
         if (peerIDList[1]) {
@@ -122,6 +134,8 @@ const RouteUpdate = () => {
         } else {
             peerID = peerNameToIP[inputRoute.peer]
         }
+
+        let [ existingGroups, groupsToCreate ] = getExistingAndToCreateGroupsLists(inputRoute.groups)
 
         return {
             id: inputRoute.id,
@@ -131,8 +145,10 @@ const RouteUpdate = () => {
             peer: peerID,
             enabled: inputRoute.enabled,
             masquerade: inputRoute.masquerade,
-            metric: inputRoute.metric
-        } as Route
+            metric: inputRoute.metric,
+            groups: existingGroups,
+            groupsToCreate: groupsToCreate,
+        } as RouteToSave
     }
 
     const handleFormSubmit = () => {
@@ -201,7 +217,7 @@ const RouteUpdate = () => {
         setFormRoute({...formRoute, ...data})
     }
 
-    const dropDownRender = (menu: React.ReactElement) => (
+    const peerDropDownRender = (menu: React.ReactElement) => (
         <>
             {menu}
         </>
@@ -245,7 +261,7 @@ const RouteUpdate = () => {
                         </Space>
                     }
                 >
-                    <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}>
+                    <Form layout="vertical" form={form} onValuesChange={onChange}>
                         <Row gutter={16}>
                             <Col span={24}>
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
@@ -348,7 +364,7 @@ const RouteUpdate = () => {
                                         showSearch
                                         style={{width: '100%'}}
                                         placeholder="Select Peer"
-                                        dropdownRender={dropDownRender}
+                                        dropdownRender={peerDropDownRender}
                                         options={options}
                                         allowClear={true}
                                     />
@@ -370,6 +386,28 @@ const RouteUpdate = () => {
                                     tooltip="Choose from 1 to 9999. Lower number has higher priority"
                                 >
                                     <InputNumber min={1} max={9999} autoComplete="off"/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="groups"
+                                    label="Distribution groups"
+                                    tooltip="Distribution groups define to which group of peers this route will be distributed to"
+                                    rules={[{validator: selectValidator}]}
+                                >
+                                    <Select mode="tags"
+                                            style={{width: '100%'}}
+                                            placeholder="Associate groups with the network route"
+                                            tagRender={tagRender}
+                                            onChange={handleChangeTags}
+                                            dropdownRender={dropDownRender}
+                                    >
+                                        {
+                                            tagGroups.map(m =>
+                                                <Option key={m}>{optionRender(m)}</Option>
+                                            )
+                                        }
+                                    </Select>
                                 </Form.Item>
                             </Col>
                             <Col span={24}>

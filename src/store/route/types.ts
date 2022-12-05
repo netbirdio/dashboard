@@ -1,3 +1,4 @@
+
 export interface Route {
     id?: string
     description: string
@@ -8,4 +9,10 @@ export interface Route {
     network_type?: string
     metric?: number
     masquerade:	boolean
+    groups: string[]
+}
+
+export interface RouteToSave extends Route
+{
+    groupsToCreate: string[]
 }
