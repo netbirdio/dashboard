@@ -449,12 +449,23 @@ const SetupKeyNew = () => {
                                         <ExpiresInInput/>
                                     </Form.Item>
                                 </Col>}
-                            <Col span={24}>
+                            <Col span={12}>
                                 <Form.Item name="usage_limit"
                                            label="Usage Limit"
-                                           tooltip="Limit the number of times this key can be used. Use 0 for an unlimited use."
+                                           tooltip="Limit the number of times this key can be used. Use 0 for unlimited use."
                                 >
-                                    <InputNumber min={0} defaultValue={0}/>
+                                    <InputNumber min={0} defaultValue={0} disabled={setupKey.id || formSetupKey.type !== "reusable"}
+                                                 style={{width: "100%"}}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={12}>
+                                <Form.Item name="used_times"
+                                           label="Used Times"
+                                >
+                                    <InputNumber min={0} defaultValue={0} disabled={true}
+                                                 style={{width: "100%"}}
+                                    />
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
