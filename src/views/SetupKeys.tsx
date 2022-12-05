@@ -238,6 +238,7 @@ export const SetupKeys = () => {
             valid: key?.valid,
             auto_groups: key?.auto_groups,
             last_used: key?.last_used,
+            usage_limit: key?.usage_limit
         } as SetupKey))
     }
 
@@ -255,6 +256,7 @@ export const SetupKeys = () => {
             valid: setupKeyToAction?.valid,
             auto_groups: setupKeyToAction?.auto_groups,
             last_used: setupKeyToAction?.last_used,
+            usage_limit: setupKeyToAction?.usage_limit
         } as SetupKey))
     }
 
