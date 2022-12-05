@@ -243,13 +243,23 @@ const RouteUpdate = () => {
         return Promise.resolve()
     }
 
+    const selectPreValidator = (obj: RuleObject, value: string[]) => {
+       if (setupNewRouteHA && formRoute.peer == '') {
+           let [, newGroups ] = getExistingAndToCreateGroupsLists(value)
+           if (newGroups.length > 0) {
+               return Promise.reject(new Error("You can't add new Groups from the group update view, please remove:\"" + newGroups +"\""))
+           }
+       }
+       return selectValidator(obj, value)
+    }
+
     return (
         <>
             {route &&
                 <Drawer
                     headerStyle={{display: "none"}}
                     forceRender={true}
-                    visible={setupNewRouteVisible}
+                    open={setupNewRouteVisible}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
                     autoFocus={true}
@@ -393,7 +403,7 @@ const RouteUpdate = () => {
                                     name="groups"
                                     label="Distribution groups"
                                     tooltip="Distribution groups define to which group of peers this route will be distributed to"
-                                    rules={[{validator: selectValidator}]}
+                                    rules={[{validator: selectPreValidator}]}
                                 >
                                     <Select mode="tags"
                                             style={{width: '100%'}}

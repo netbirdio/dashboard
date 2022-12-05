@@ -532,8 +532,8 @@ export const Routes = () => {
                                                 if (count > 1) {
                                                     tag = <Tag color="green">on</Tag>
                                                 }
-                                                return <div>{tag}<Divider type="vertical"/><Button type="link"
-                                                                                                   onClick={() => setRouteAndView(record)}>Configure</Button>
+                                                return <div>{tag}<Divider type="vertical"/>
+                                                    <Button type="link" onClick={() => setRouteAndView(record)}>Configure</Button>
                                                 </div>
                                             }}
                                     />
