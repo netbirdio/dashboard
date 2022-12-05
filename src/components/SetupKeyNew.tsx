@@ -172,6 +172,7 @@ const SetupKeyNew = () => {
             state: "valid",
             auto_groups: new Array(),
             usage_limit: 0,
+            used_times: 0,
             expires_in: 0
         } as SetupKey))
         setFormSetupKey({} as FormSetupKey)
