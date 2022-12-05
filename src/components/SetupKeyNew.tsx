@@ -165,7 +165,7 @@ const SetupKeyNew = () => {
         if (savedSetupKey.loading) return
         dispatch(setupKeyActions.setSetupKey({
             name: "",
-            type: "reusable",
+            type: "one-off",
             key: "",
             last_used: "",
             expires: "",
@@ -302,7 +302,7 @@ const SetupKeyNew = () => {
                 <Drawer
                     forceRender={true}
                     headerStyle={{display: "none"}}
-                    visible={setupNewKeyVisible}
+                    open={setupNewKeyVisible}
                     bodyStyle={{paddingBottom: 80}}
                     onClose={onCancel}
                     footer={
@@ -419,19 +419,19 @@ const SetupKeyNew = () => {
                                                 bordered
                                             >
                                                 <List.Item>
+                                                    <Radio value={"one-off"}>
+                                                        <Space direction="vertical" size="small">
+                                                            <Text strong>One-off</Text>
+                                                            <Text>This key can be used only once</Text>
+                                                        </Space>
+                                                    </Radio>
+                                                </List.Item>
+                                                <List.Item>
                                                     <Radio value={"reusable"}>
                                                         <Space direction="vertical" size="small">
                                                             <Text strong>Reusable</Text>
                                                             <Text>This type of a setup key allows to enroll multiple
                                                                 machines</Text>
-                                                        </Space>
-                                                    </Radio>
-                                                </List.Item>
-                                                <List.Item>
-                                                    <Radio value={"one-off"}>
-                                                        <Space direction="vertical" size="small">
-                                                            <Text strong>One-off</Text>
-                                                            <Text>This key can be used only once</Text>
                                                         </Space>
                                                     </Radio>
                                                 </List.Item>
