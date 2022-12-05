@@ -219,7 +219,7 @@ export const SetupKeys = () => {
         dispatch(setupKeyActions.setSetupNewKeyVisible(true));
         dispatch(setupKeyActions.setSetupKey({
             name: "",
-            type: "reusable",
+            type: "one-off",
             auto_groups: autoGroups
         } as SetupKey))
     }
@@ -238,6 +238,7 @@ export const SetupKeys = () => {
             valid: key?.valid,
             auto_groups: key?.auto_groups,
             last_used: key?.last_used,
+            usage_limit: key?.usage_limit
         } as SetupKey))
     }
 
@@ -255,6 +256,7 @@ export const SetupKeys = () => {
             valid: setupKeyToAction?.valid,
             auto_groups: setupKeyToAction?.auto_groups,
             last_used: setupKeyToAction?.last_used,
+            usage_limit: setupKeyToAction?.usage_limit
         } as SetupKey))
     }
 
@@ -313,8 +315,8 @@ export const SetupKeys = () => {
         return (
             <Popover placement={popoverPlacement as TooltipPlacement}
                      key={setupKeyToAction.key}
-                     onVisibleChange={onPopoverVisibleChange}
-                     visible={groupPopupVisible}
+                     onOpenChange={onPopoverVisibleChange}
+                     open={groupPopupVisible}
                      content={mainContent}
                      title={null}>
                 {btn}
@@ -331,7 +333,7 @@ export const SetupKeys = () => {
         const autoGroups : string[] = []
         dispatch(setupKeyActions.setSetupKey({
             name: "",
-            type: "reusable",
+            type: "one-off",
             auto_groups: autoGroups
         } as SetupKey))
         dispatch(setupKeyActions.setSetupNewKeyVisible(false))
@@ -456,7 +458,7 @@ export const SetupKeys = () => {
                                                 return !(record as SetupKeyDataTable).revoked ? (
                                                     <Dropdown.Button type="text" overlay={actionsMenu}
                                                                      trigger={["click"]}
-                                                                     onVisibleChange={visible => {
+                                                                     onOpenChange={visible => {
                                                                          if (visible) setSetupKeyToAction(record as SetupKeyDataTable)
                                                                      }}></Dropdown.Button>) : <></>
                                             }}
