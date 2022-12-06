@@ -45,6 +45,7 @@ import {useGetAccessTokenSilently} from "../utils/token";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {actions as groupActions} from "../store/group";
+import {useGetGroupTagHelpers} from "../utils/groups";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -53,6 +54,9 @@ const {confirm} = Modal;
 export const Routes = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
+    const {
+        getGroupNamesFromIDs,
+    } = useGetGroupTagHelpers()
 
     const groups = useSelector((state: RootState) => state.group.data)
     const routes = useSelector((state: RootState) => state.route.data);
@@ -112,7 +116,9 @@ export const Routes = () => {
     const filterGroupedDataTable = (routes: GroupedDataTable[]): GroupedDataTable[] => {
         const t = textToSearch.toLowerCase().trim()
         let f: GroupedDataTable[] = filter(routes, (f) =>
-            (f.network_id.toLowerCase().includes(t) || f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
+            (f.network_id.toLowerCase().includes(t) || f.network.toLowerCase().includes(t) ||
+                f.description.toLowerCase().includes(t) || t === "" ||
+                getGroupNamesFromIDs(f.routesGroups).find(u => u.toLowerCase().trim().includes(t)) )
         ) as GroupedDataTable[]
         if (optionAllEnable !== "all") {
             f = filter(f, (f) => f.enabled)

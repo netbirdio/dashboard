@@ -34,6 +34,7 @@ export interface GroupedDataTable {
     description: string
     routesCount: number
     groupedRoutes: RouteDataTable[]
+    routesGroups: string[]
 }
 
 export const transformDataTable = (d:Route[],peerIPToName:PeerIPToName):RouteDataTable[] => {
@@ -52,10 +53,12 @@ export const transformGroupedDataTable = (routes:Route[],peerIPToName:PeerIPToNa
     }))
 
     let groupedRoutes:GroupedDataTable[] = []
+
     keySet.forEach((p) => {
         let hasEnabled = false
         let lastRoute:Route
         let listedRoutes:Route[] = []
+        let groupList:string[] = []
         routes.forEach((r) => {
             if ( p === r.network_id + r.network ) {
                 lastRoute = r
@@ -63,8 +66,10 @@ export const transformGroupedDataTable = (routes:Route[],peerIPToName:PeerIPToNa
                     hasEnabled = true
                 }
                 listedRoutes.push(r)
+                groupList = groupList.concat(r.groups)
             }
         })
+        groupList = groupList.filter((value,index,arrary) => arrary.indexOf(value) === index)
         let groupDataTableRoutes = transformDataTable(listedRoutes,peerIPToName)
         groupedRoutes.push({
             key: p.toString(),
@@ -75,6 +80,7 @@ export const transformGroupedDataTable = (routes:Route[],peerIPToName:PeerIPToNa
             enabled: hasEnabled,
             routesCount: groupDataTableRoutes.length,
             groupedRoutes: groupDataTableRoutes,
+            routesGroups: groupList,
         })
     })
     return groupedRoutes
