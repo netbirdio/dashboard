@@ -271,7 +271,7 @@ const RouteUpdate = () => {
                         </Space>
                     }
                 >
-                    <Form layout="vertical" form={form} onValuesChange={onChange}>
+                    <Form layout="vertical" form={form} requiredMark={false} onValuesChange={onChange}>
                         <Row gutter={16}>
                             <Col span={24}>
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
@@ -402,7 +402,7 @@ const RouteUpdate = () => {
                                 <Form.Item
                                     name="groups"
                                     label="Distribution groups"
-                                    tooltip="Distribution groups define to which group of peers this route will be distributed to"
+                                    tooltip="NetBird will advertise this route to peers that belong to the following groups"
                                     rules={[{validator: selectPreValidator}]}
                                 >
                                     <Select mode="tags"
