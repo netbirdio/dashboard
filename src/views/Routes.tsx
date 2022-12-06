@@ -160,10 +160,19 @@ export const Routes = () => {
             dispatch(routeActions.setSavedRoute({...savedRoute, success: false}))
             dispatch(routeActions.resetSavedRoute(null))
         } else if (savedRoute.error) {
+            let errorMsg = "Failed to update network route"
+            switch (savedRoute.error.statusCode) {
+                case 403:
+                    errorMsg = "Failed to update network route. You might not have enough permissions."
+                    break
+                default:
+                    errorMsg = savedRoute.error.data.message ? savedRoute.error.data.message : errorMsg
+                    break
+            }
             message.error({
-                content: savedRoute.error.data ? savedRoute.error.data : savedRoute.error.message,
+                content: errorMsg,
                 key: saveKey,
-                duration: 2,
+                duration: 5,
                 style: styleNotification
             });
             dispatch(routeActions.setSavedRoute({...savedRoute, error: null}))
@@ -402,7 +411,7 @@ export const Routes = () => {
                         return renderPopoverGroups(text, record.groups, record)
                     }}
             />
-            <Column title="Status" dataIndex="enabled" align="center"
+            <Column title="Routing peer status" dataIndex="enabled" align="center"
                     render={(text: Boolean) => {
                         return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
                     }}
@@ -513,7 +522,7 @@ export const Routes = () => {
                                             sorter={(a, b) => ((a as any).network.localeCompare((b as any).network))}
                                         // defaultSortOrder='ascend'
                                     />
-                                    <Column title="Status" dataIndex="enabled" align="center"
+                                    <Column title="Route status" dataIndex="enabled" align="center"
                                             render={(text: Boolean) => {
                                                 return text ? <Tag color="green">enabled</Tag> :
                                                     <Tag color="red">disabled</Tag>
