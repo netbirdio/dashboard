@@ -242,7 +242,6 @@ export const Routes = () => {
 
 
     const onClickAddNewRoute = () => {
-        dispatch(routeActions.setSetupNewRouteHA(true));
         dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             network: '',
