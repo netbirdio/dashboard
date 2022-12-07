@@ -20,6 +20,7 @@ import {useGetAccessTokenSilently} from "./utils/token";
 import {User} from "./store/user/types";
 import {SecureLoading} from "./components/Loading";
 import DNS from "./views/DNS";
+import Events from "./views/Events";
 
 
 
@@ -105,6 +106,7 @@ function App() {
                             <Route path="/routes" component={withOidcSecure(Routes)}/>
                             <Route path="/users" component={withOidcSecure(Users)}/>
                             <Route path="/dns" component={withOidcSecure(DNS)}/>
+                            <Route path="/events" component={withOidcSecure(Events)}/>
                         </Switch>
                     </Content>
                     <FooterComponent/>

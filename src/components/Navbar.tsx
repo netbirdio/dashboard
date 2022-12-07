@@ -39,7 +39,8 @@ const Navbar = () => {
         {label: (<Link to="/acls">Access Control</Link>), key: '/acls'},
         {label: (<Link to="/routes">Network Routes</Link>), key: '/routes'},
         { label: (<Link  to="/dns">DNS</Link>), key: '/dns' },
-        {label: (<Link to="/users">Users</Link>), key: '/users'}
+        {label: (<Link to="/users">Users</Link>), key: '/users'},
+        {label: (<Link to="/events">Events</Link>), key: '/events'}
     ] as ItemType[]
 
     const userEmailKey = 'user-email'
