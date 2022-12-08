@@ -3,6 +3,9 @@ import {ApiError, ApiResponse, CreateResponse, DeleteResponse} from '../../servi
 import {Route} from './types'
 import service from './service';
 import actions from './actions';
+import serviceGroup from "../group/service";
+import {Group} from "../group/types";
+import {actions as groupActions} from "../group";
 
 export function* getRoutes(action: ReturnType<typeof actions.getRoutes.request>): Generator {
   try {
@@ -40,6 +43,21 @@ export function* saveRoute(action: ReturnType<typeof actions.saveRoute.request>)
 
     const routeToSave = action.payload.payload
 
+    let groupsToCreate = routeToSave.groupsToCreate
+    if (!groupsToCreate) {
+      groupsToCreate = []
+    }
+
+    // first, create groups that were newly added by user
+    const responsesGroup = yield all(groupsToCreate.map(g => call(serviceGroup.createGroup, {
+          getAccessTokenSilently: action.payload.getAccessTokenSilently,
+          payload: {name: g}
+        })
+    ))
+
+    const resGroups = (responsesGroup as ApiResponse<Group>[]).filter(r => r.statusCode === 200).map(g => (g.body as Group)).map(g => g.id)
+    const newGroups = [...routeToSave.groups, ...resGroups]
+
     const payloadToSave = {
       getAccessTokenSilently: action.payload.getAccessTokenSilently,
       payload: {
@@ -50,7 +68,8 @@ export function* saveRoute(action: ReturnType<typeof actions.saveRoute.request>)
         metric: routeToSave.metric,
         network: routeToSave.network,
         network_id: routeToSave.network_id,
-        peer: routeToSave.peer
+        peer: routeToSave.peer,
+        groups: newGroups
       } as Route
     }
 
@@ -72,8 +91,19 @@ export function* saveRoute(action: ReturnType<typeof actions.saveRoute.request>)
       data: response.body
     } as CreateResponse<Route | null>));
 
+    yield put(groupActions.getGroups.request({
+      getAccessTokenSilently: action.payload.getAccessTokenSilently,
+      payload: null
+    }));
+
     yield put(actions.getRoutes.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: null }));
+
   } catch (err) {
+    yield put(groupActions.getGroups.request({
+      getAccessTokenSilently: action.payload.getAccessTokenSilently,
+      payload: null
+    }));
+
     yield put(actions.saveRoute.failure({
       loading: false,
       success: false,

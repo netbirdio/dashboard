@@ -301,7 +301,7 @@ export const DNS = () => {
             let errorMsg = "Failed to update nameserver group"
             switch (savedNSGroup.error.statusCode) {
                 case 403:
-                    errorMsg = "Failed to update user. You might not have enough permissions."
+                    errorMsg = "Failed to update nameserver group. You might not have enough permissions."
                     break
                 default:
                     errorMsg = savedNSGroup.error.data.message ? savedNSGroup.error.data.message : errorMsg

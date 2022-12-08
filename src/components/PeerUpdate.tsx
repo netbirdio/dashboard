@@ -353,7 +353,7 @@ const PeerUpdate = () => {
                                                                 max={59}/>
                                                         </Form.Item>
                                                     <Form.Item
-                                                        label="Possible domain name after saving"
+                                                        label="New peer domain name preview"
                                                         tooltip="If the domain name already exists, we add an increment number suffix to it"
                                                         style={{margin: '1px'}}
                                                     >
