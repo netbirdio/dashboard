@@ -9,7 +9,7 @@ import {
     Input,
     Menu,
     message,
-    Modal,
+    Modal, Popover,
     Radio,
     RadioChangeEvent,
     Row,
@@ -24,7 +24,7 @@ import {
 import {Container} from "../components/Container";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
-import {Route} from "../store/route/types";
+import {Route, RouteToSave} from "../store/route/types";
 import {actions as routeActions} from "../store/route";
 import {actions as peerActions} from "../store/peer";
 import {filter, sortBy} from "lodash";
@@ -42,6 +42,10 @@ import {
     transformGroupedDataTable
 } from '../utils/routes'
 import {useGetAccessTokenSilently} from "../utils/token";
+import {Group} from "../store/group/types";
+import {TooltipPlacement} from "antd/es/tooltip";
+import {actions as groupActions} from "../store/group";
+import {useGetGroupTagHelpers} from "../utils/groups";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -50,7 +54,11 @@ const {confirm} = Modal;
 export const Routes = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
+    const {
+        getGroupNamesFromIDs,
+    } = useGetGroupTagHelpers()
 
+    const groups = useSelector((state: RootState) => state.group.data)
     const routes = useSelector((state: RootState) => state.route.data);
     const failed = useSelector((state: RootState) => state.route.failed);
     const loading = useSelector((state: RootState) => state.route.loading);
@@ -58,6 +66,7 @@ export const Routes = () => {
     const savedRoute = useSelector((state: RootState) => state.route.savedRoute);
     const peers = useSelector((state: RootState) => state.peer.data)
     const loadingPeer = useSelector((state: RootState) => state.peer.loading);
+    const setupNewRouteVisible = useSelector((state: RootState) => state.route.setupNewRouteVisible)
     const [showTutorial, setShowTutorial] = useState(true)
     const [textToSearch, setTextToSearch] = useState('');
     const [optionAllEnable, setOptionAllEnable] = useState('enabled');
@@ -67,6 +76,7 @@ export const Routes = () => {
     const [routeToAction, setRouteToAction] = useState(null as RouteDataTable | null);
     const [groupedDataTable, setGroupedDataTable] = useState([] as GroupedDataTable[]);
     const [expandRowsOnClick, setExpandRowsOnClick] = useState(true)
+    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
 
     const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
 
@@ -83,10 +93,6 @@ export const Routes = () => {
             key: "view",
             label: (<Button type="text" block onClick={() => onClickViewRoute()}>View</Button>)
         },
-        // {
-        //     key: "delete",
-        //     label: (<Button type="text" block onClick={() => showConfirmDeactivate()}>Deactivate</Button>)
-        // },
         {
             key: "delete",
             label: (<Button type="text" block onClick={() => showConfirmDelete()}>Delete</Button>)
@@ -104,12 +110,15 @@ export const Routes = () => {
 
     useEffect(() => {
         dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
 
     const filterGroupedDataTable = (routes: GroupedDataTable[]): GroupedDataTable[] => {
         const t = textToSearch.toLowerCase().trim()
         let f: GroupedDataTable[] = filter(routes, (f) =>
-            (f.network_id.toLowerCase().includes(t) || f.network.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
+            (f.network_id.toLowerCase().includes(t) || f.network.toLowerCase().includes(t) ||
+                f.description.toLowerCase().includes(t) || t === "" ||
+                getGroupNamesFromIDs(f.routesGroups).find(u => u.toLowerCase().trim().includes(t)) )
         ) as GroupedDataTable[]
         if (optionAllEnable !== "all") {
             f = filter(f, (f) => f.enabled)
@@ -151,10 +160,19 @@ export const Routes = () => {
             dispatch(routeActions.setSavedRoute({...savedRoute, success: false}))
             dispatch(routeActions.resetSavedRoute(null))
         } else if (savedRoute.error) {
+            let errorMsg = "Failed to update network route"
+            switch (savedRoute.error.statusCode) {
+                case 403:
+                    errorMsg = "Failed to update network route. You might not have enough permissions."
+                    break
+                default:
+                    errorMsg = savedRoute.error.data.message ? savedRoute.error.data.message : errorMsg
+                    break
+            }
             message.error({
-                content: savedRoute.error.data ? savedRoute.error.data : savedRoute.error.message,
+                content: errorMsg,
                 key: saveKey,
-                duration: 2,
+                duration: 5,
                 style: styleNotification
             });
             dispatch(routeActions.setSavedRoute({...savedRoute, error: null}))
@@ -224,7 +242,6 @@ export const Routes = () => {
 
 
     const onClickAddNewRoute = () => {
-        dispatch(routeActions.setSetupNewRouteHA(true));
         dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             network: '',
@@ -264,7 +281,8 @@ export const Routes = () => {
             peer: route.peer ? peerToPeerIP(route.peer, peerNameToIP[route.peer]) : '',
             metric: route.metric ? route.metric : 9999,
             masquerade: route.masquerade,
-            enabled: route.enabled
+            enabled: route.enabled,
+            groups: route.groups
         } as Route))
         dispatch(routeActions.setSetupNewRouteVisible(true));
     }
@@ -293,15 +311,75 @@ export const Routes = () => {
         });
     }
 
+    const onPopoverVisibleChange = () => {
+        if (setupNewRouteVisible) {
+            setGroupPopupVisible(false)
+        } else {
+            setGroupPopupVisible(undefined)
+        }
+    }
+
     function handleSwitchMasquerade(routeGroup: GroupedDataTable, checked: boolean) {
         routeGroup.groupedRoutes.forEach((record) => {
             const route = {
                 ...record,
                 peer: peerNameToIP[record.peer],
                 masquerade: checked,
-            } as Route
+                groupsToCreate: []
+            } as RouteToSave
             dispatch(routeActions.saveRoute.request({getAccessTokenSilently: getAccessTokenSilently, payload: route}));
         })
+    }
+
+    const renderPopoverGroups = (label: string, rowGroups: string[] | null, userToAction: RouteDataTable) => {
+
+        let groupsMap = new Map<string, Group>();
+        groups.forEach(g => {
+            groupsMap.set(g.id!, g)
+        })
+
+        let displayGroups: Group[] = []
+        if (rowGroups) {
+            displayGroups = rowGroups.filter(g => groupsMap.get(g)).map(g => groupsMap.get(g)!)
+        }
+
+        let btn = <Button type="link" onClick={() => setRouteAndView(userToAction)}>{displayGroups.length}</Button>
+
+        if (!displayGroups || displayGroups!.length < 1) {
+            return btn
+        }
+
+        const content = displayGroups?.map((g, i) => {
+            const _g = g as Group
+            const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
+            return (
+                <div key={i}>
+                    <Tag
+                        color="blue"
+                        style={{marginRight: 3}}
+                    >
+                        <strong>{_g.name}</strong>
+                    </Tag>
+                    <span style={{fontSize: ".85em"}}>{peersCount}</span>
+                </div>
+            )
+        })
+        const mainContent = (<Space direction="vertical">{content}</Space>)
+        let popoverPlacement = "top"
+        if (content && content.length > 5) {
+            popoverPlacement = "rightTop"
+        }
+
+        return (
+            <Popover placement={popoverPlacement as TooltipPlacement}
+                     key={userToAction.id}
+                     onOpenChange={onPopoverVisibleChange}
+                     open={groupPopupVisible}
+                     content={mainContent}
+                     title={null}>
+                {btn}
+            </Popover>
+        )
     }
 
     const expandedRowRender = (record: GroupedDataTable) => {
@@ -327,7 +405,12 @@ export const Routes = () => {
                     onFilter={(value: string | number | boolean, record) => (record as any).metric.includes(value)}
                     sorter={(a, b) => ((a as any).metric - ((b as any).metric))}
             />
-            <Column title="Status" dataIndex="enabled" align="center"
+            <Column title="Groups" dataIndex="groupsCount" align="center"
+                    render={(text, record: RouteDataTable) => {
+                        return renderPopoverGroups(text, record.groups, record)
+                    }}
+            />
+            <Column title="Routing peer status" dataIndex="enabled" align="center"
                     render={(text: Boolean) => {
                         return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
                     }}
@@ -336,7 +419,7 @@ export const Routes = () => {
                     render={(text, record) => {
                         if (deletedRoute.loading || savedRoute.loading) return <></>
                         return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
-                                                onVisibleChange={visible => {
+                                                onOpenChange={visible => {
                                                     if (visible) setRouteToAction(record as RouteDataTable)
                                                 }}></Dropdown.Button>
                     }}
@@ -438,7 +521,7 @@ export const Routes = () => {
                                             sorter={(a, b) => ((a as any).network.localeCompare((b as any).network))}
                                         // defaultSortOrder='ascend'
                                     />
-                                    <Column title="Status" dataIndex="enabled" align="center"
+                                    <Column title="Route status" dataIndex="enabled" align="center"
                                             render={(text: Boolean) => {
                                                 return text ? <Tag color="green">enabled</Tag> :
                                                     <Tag color="red">disabled</Tag>
@@ -463,8 +546,8 @@ export const Routes = () => {
                                                 if (count > 1) {
                                                     tag = <Tag color="green">on</Tag>
                                                 }
-                                                return <div>{tag}<Divider type="vertical"/><Button type="link"
-                                                                                                   onClick={() => setRouteAndView(record)}>Configure</Button>
+                                                return <div>{tag}<Divider type="vertical"/>
+                                                    <Button type="link" onClick={() => setRouteAndView(record)}>Configure</Button>
                                                 </div>
                                             }}
                                     />
