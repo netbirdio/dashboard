@@ -5,20 +5,11 @@ import TabSteps from "./TabSteps";
 import { StepCommand } from "./types"
 import { getConfig } from "../../config";
 import Paragraph from 'antd/lib/skeleton/Paragraph';
-const { grpcApiOrigin } = getConfig();
+import { formatNetBirdUP } from "./common"
+
 
 
 export const UbuntuTab = () => {
-
-    const formatNetBirdUP = () => {
-        let cmd = "sudo netbird up"
-        if (grpcApiOrigin) {
-            cmd = "sudo netbird up --management-url " + grpcApiOrigin
-        }
-        return [
-            cmd
-        ].join('\n')
-    }
 
     const [steps, setSteps] = useState([
         {
