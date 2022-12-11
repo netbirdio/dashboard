@@ -3,6 +3,7 @@ import React, {useState} from 'react';
 import { Button } from "antd";
 import TabSteps from "./TabSteps";
 import { StepCommand } from "./types"
+import { formatNetBirdUP } from "./common"
 
 export const LinuxTab = () => {
 
@@ -30,9 +31,7 @@ export const LinuxTab = () => {
         {
             key: 3,
             title: 'Run NetBird and log in the browser:',
-            commands: [
-                `sudo netbird up`
-            ].join('\n'),
+            commands: formatNetBirdUP(),
             copied: false,
             showCopyButton: true
         } as StepCommand,
