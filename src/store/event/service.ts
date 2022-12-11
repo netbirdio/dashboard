@@ -5,7 +5,7 @@ import {Event} from './types';
 export default {
   async getEvents(payload:RequestPayload<null>): Promise<ApiResponse<Event[]>> {
     return apiClient.get<Event[]>(
-      `/api/users`,
+      `/api/events`,
         payload
     );
   }

@@ -17,6 +17,13 @@ export const formatDate = date => {
     return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: '2-digit', month: 'short', day: 'numeric' });
 }
 
+export const formatDateTime = date => {
+    if (new Date(date).getTime() > new Date("2099-12-31").getTime()) {
+        return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+    }
+    return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: '2-digit', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
+}
+
 export const classNames = (...classes) => {
     return classes.filter(Boolean).join(' ')
 }
