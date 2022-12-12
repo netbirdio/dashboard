@@ -28,6 +28,7 @@ export const Activity = () => {
     const loading = useSelector((state: RootState) => state.event.loading);
     const users = useSelector((state: RootState) => state.user.data);
     const peers = useSelector((state: RootState) => state.peer.data);
+    const setupKeys = useSelector((state: RootState) => state.setupKey.data);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [pageSize, setPageSize] = useState(10);
@@ -84,16 +85,30 @@ export const Activity = () => {
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
     const renderInitiator = (event: EventDataTable) => {
-        const user = users?.find(u => u.id === event.initiator_id)
-        if (user) {
-            let body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                <Row> <Text>{user.name}</Text> </Row>
-                <Row> <Text type="secondary">{user.email}</Text> </Row>
-            </span>
-            return body
+        let body = <></>
+        switch (event.activity_code) {
+            case "setupkey.peer.add":
+                const key = setupKeys?.find(k => k.id === event.initiator_id)
+                if (key) {
+                    body =  <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                                <Row> <Text>{key.name}</Text> </Row>
+                                <Row> <Text type="secondary">Setup Key</Text> </Row>
+                            </span>
+                }
+                break
+            default:
+                const user = users?.find(u => u.id === event.initiator_id)
+                if (user) {
+                    body =  <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                                <Row> <Text>{user.name}</Text> </Row>
+                                <Row> <Text type="secondary">{user.email}</Text> </Row>
+                            </span>
+                    return body
+                }
         }
 
-        return ""
+
+        return body
     }
 
     const renderActivity = (event: EventDataTable) => {
@@ -126,6 +141,7 @@ export const Activity = () => {
             case "account.create":
             case "user.join":
                 return "-"
+            case "setupkey.peer.add":
             case "user.peer.add":
                 const peer = peers?.find(p => p.ip === event.target_id)
                 if (peer) {
