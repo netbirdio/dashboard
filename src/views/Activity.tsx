@@ -3,7 +3,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as eventActions} from '../store/event';
 import {Container} from "../components/Container";
-import {Alert, Button, Card, Col, Input, Menu, Row, Select, Space, Table, Typography,} from "antd";
+import {Alert, Button, Card, Col, Input, Menu, Row, Select, Space, Table, Tag, Typography,} from "antd";
 import {Event} from "../store/event/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
@@ -96,6 +96,27 @@ export const Activity = () => {
         return ""
     }
 
+    const renderActivity = (event: EventDataTable) => {
+        let text = ""
+        let positive = true
+        switch (event.activity_code) {
+            case "account.create":
+                text = "account created"
+                break
+            case "user.join":
+                text = "user joined"
+                break
+            case "user.peer.add":
+                text = "peer added"
+                break
+            default:
+                text = event.activity
+        }
+        return <Tag key={event.id} color={positive ? "green" : "red"}>
+            {text}
+        </Tag>
+    }
+
     const renderTarget = (event: EventDataTable) => {
         if (event.activity_code === "account.create" || event.activity_code === "user.join") {
             return "-"
@@ -116,6 +137,16 @@ export const Activity = () => {
                     return body
                 }
                 return "-"
+            case "user.invite":
+                const user = users?.find(u => u.id === event.target_id)
+                if (user) {
+                    let body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                <Row> <Text>{user.name}</Text> </Row>
+                <Row> <Text type="secondary">{user.email}</Text> </Row>
+                </span>
+                    return body
+                }
+
         }
 
         return event.target_id
@@ -163,7 +194,12 @@ export const Activity = () => {
                                                 return formatDateTime(text)
                                             }}
                                     />
-                                    <Column title="Activity" dataIndex="activity"/>
+                                    <Column title="Activity" dataIndex="activity"
+                                            render={(text, record, index) => {
+                                                //return renderActivity(record as EventDataTable)
+                                                return text
+                                            }}
+                                    />
                                     <Column title="Initiated By" dataIndex="initiator_id"
                                             render={(text, record, index) => {
                                                 return renderInitiator(record as EventDataTable)
