@@ -551,7 +551,11 @@ export const Peers = () => {
 
                                     <Column title="LastSeen" dataIndex="last_seen"
                                             render={(text, record, index) => {
-                                                return (record as PeerDataTable).connected ? 'just now' : timeAgo(text)
+                                                console.log(text)
+                                                let dt = new Date(text)
+                                                return <Popover content={dt.toLocaleString()}>
+                                                           {(record as PeerDataTable).connected ? 'just now' : timeAgo(text)}
+                                                       </Popover>
                                             }}
                                     />
                                     <Column title="OS" dataIndex="os"
