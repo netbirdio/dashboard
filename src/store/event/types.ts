@@ -5,4 +5,5 @@ export interface Event {
     activity_code: string
     initiator_id: string
     target_id: string
+    meta: { [key: string]: string }
 }

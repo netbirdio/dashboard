@@ -3,7 +3,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as eventActions} from '../store/event';
 import {Container} from "../components/Container";
-import {Alert, Button, Card, Col, Input, Menu, Row, Select, Space, Table, Tag, Typography,} from "antd";
+import {Alert, Button, Card, Col, Input, Menu, Row, Select, Space, Table, Typography,} from "antd";
 import {Event} from "../store/event/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
@@ -31,7 +31,7 @@ export const Activity = () => {
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
 
     const [textToSearch, setTextToSearch] = useState('');
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize, setPageSize] = useState(15);
     const [dataTable, setDataTable] = useState([] as EventDataTable[]);
     const pageSizeOptions = [
         {label: "5", value: "5"},
@@ -90,7 +90,7 @@ export const Activity = () => {
             case "setupkey.peer.add":
                 const key = setupKeys?.find(k => k.id === event.initiator_id)
                 if (key) {
-                    body =  <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                    body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
                                 <Row> <Text>{key.name}</Text> </Row>
                                 <Row> <Text type="secondary">Setup Key</Text> </Row>
                             </span>
@@ -99,7 +99,7 @@ export const Activity = () => {
             default:
                 const user = users?.find(u => u.id === event.initiator_id)
                 if (user) {
-                    body =  <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                    body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
                                 <Row> <Text>{user.name}</Text> </Row>
                                 <Row> <Text type="secondary">{user.email}</Text> </Row>
                             </span>
@@ -111,27 +111,6 @@ export const Activity = () => {
         return body
     }
 
-    const renderActivity = (event: EventDataTable) => {
-        let text = ""
-        let positive = true
-        switch (event.activity_code) {
-            case "account.create":
-                text = "account created"
-                break
-            case "user.join":
-                text = "user joined"
-                break
-            case "user.peer.add":
-                text = "peer added"
-                break
-            default:
-                text = event.activity
-        }
-        return <Tag key={event.id} color={positive ? "green" : "red"}>
-            {text}
-        </Tag>
-    }
-
     const renderTarget = (event: EventDataTable) => {
         if (event.activity_code === "account.create" || event.activity_code === "user.join") {
             return "-"
@@ -141,26 +120,27 @@ export const Activity = () => {
             case "account.create":
             case "user.join":
                 return "-"
+            case "rule.add":
+            case "rule.delete":
+            case "rule.update":
+                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                            <Row> <Text>{event.meta.name}</Text> </Row>
+                            <Row> <Text type="secondary">Rule</Text> </Row>
+                        </span>
             case "setupkey.peer.add":
             case "user.peer.add":
-                const peer = peers?.find(p => p.ip === event.target_id)
-                if (peer) {
-                    let body =
-                        <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                                <Row> <Text>{peer.dns_label}</Text> </Row>
-                                <Row> <Text type="secondary">{peer.ip}</Text> </Row>
-                            </span>
-                    return body
-                }
-                return "-"
+            case "user.peer.delete":
+                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                        <Row> <Text>{event.meta.dns}</Text> </Row>
+                        <Row> <Text type="secondary">{event.meta.ip}</Text> </Row>
+                    </span>
             case "user.invite":
                 const user = users?.find(u => u.id === event.target_id)
                 if (user) {
-                    let body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                <Row> <Text>{user.name}</Text> </Row>
-                <Row> <Text type="secondary">{user.email}</Text> </Row>
-                </span>
-                    return body
+                    return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                                    <Row> <Text>{user.name}</Text> </Row>
+                                    <Row> <Text type="secondary">{user.email}</Text> </Row>
+                               </span>
                 }
 
         }
@@ -204,7 +184,9 @@ export const Activity = () => {
                                     showSorterTooltip={false}
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
-                                    dataSource={dataTable}>
+                                    dataSource={dataTable}
+                                    size="small"
+                                >
                                     <Column title="Timestamp" dataIndex="timestamp"
                                             render={(text, record, index) => {
                                                 return formatDateTime(text)
