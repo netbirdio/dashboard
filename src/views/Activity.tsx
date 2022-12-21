@@ -10,7 +10,7 @@ import tableSpin from "../components/Spin";
 import {useGetAccessTokenSilently} from "../utils/token";
 import UserUpdate from "../components/UserUpdate";
 import {useOidcUser} from "@axa-fr/react-oidc";
-import {formatDateTime} from "../utils/common";
+import {capitalize, formatDateTime} from "../utils/common";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -27,16 +27,16 @@ export const Activity = () => {
     const failed = useSelector((state: RootState) => state.event.failed);
     const loading = useSelector((state: RootState) => state.event.loading);
     const users = useSelector((state: RootState) => state.user.data);
-    const peers = useSelector((state: RootState) => state.peer.data);
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
 
     const [textToSearch, setTextToSearch] = useState('');
-    const [pageSize, setPageSize] = useState(15);
+    const [pageSize, setPageSize] = useState(25);
     const [dataTable, setDataTable] = useState([] as EventDataTable[]);
     const pageSizeOptions = [
         {label: "5", value: "5"},
         {label: "10", value: "10"},
-        {label: "15", value: "15"}
+        {label: "15", value: "15"},
+        {label: "25", value: "25"}
     ]
 
     const transformDataTable = (d: Event[]): EventDataTable[] => {
@@ -126,6 +126,14 @@ export const Activity = () => {
                 return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
                             <Row> <Text>{event.meta.name}</Text> </Row>
                             <Row> <Text type="secondary">Rule</Text> </Row>
+                        </span>
+            case "setupkey.add":
+            case "setupkey.revoke":
+            case "setupkey.update":
+            case "setupkey.overuse":
+                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                            <Row> <Text>{event.meta.name}</Text> </Row>
+                            <Row> <Text type="secondary">{capitalize(event.meta.type)} setup key ({event.meta.key})</Text> </Row>
                         </span>
             case "setupkey.peer.add":
             case "user.peer.add":

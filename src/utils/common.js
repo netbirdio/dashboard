@@ -17,6 +17,13 @@ export const formatDate = date => {
     return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: '2-digit', month: 'short', day: 'numeric' });
 }
 
+export const capitalize = text => {
+    if (!text) {
+        return text
+    }
+    return text.charAt(0).toUpperCase() + text.slice(1)
+}
+
 export const formatDateTime = date => {
     if (new Date(date).getTime() > new Date("2099-12-31").getTime()) {
         return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });
