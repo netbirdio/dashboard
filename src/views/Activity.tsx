@@ -135,6 +135,12 @@ export const Activity = () => {
                             <Row> <Text>{event.meta.name}</Text> </Row>
                             <Row> <Text type="secondary">{capitalize(event.meta.type)} setup key ({event.meta.key})</Text> </Row>
                         </span>
+            case "group.add":
+            case "group.update":
+                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                            <Row> <Text>{event.meta.name}</Text> </Row>
+                            <Row> <Text type="secondary">Group</Text> </Row>
+                        </span>
             case "setupkey.peer.add":
             case "user.peer.add":
             case "user.peer.delete":
