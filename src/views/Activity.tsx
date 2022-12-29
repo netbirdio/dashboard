@@ -84,6 +84,15 @@ export const Activity = () => {
     ]
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
+    const renderActivity = (event: EventDataTable) => {
+        let body = <Text>{event.activity}</Text>
+        switch (event.activity_code) {
+            case "peer.group.add":
+            case "peer.group.delete":
+                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> added to peer</Text> </Row>
+        }
+        return body
+    }
     const renderInitiator = (event: EventDataTable) => {
         let body = <></>
         switch (event.activity_code) {
@@ -133,7 +142,8 @@ export const Activity = () => {
             case "setupkey.overuse":
                 return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
                             <Row> <Text>{event.meta.name}</Text> </Row>
-                            <Row> <Text type="secondary">{capitalize(event.meta.type)} setup key ({event.meta.key})</Text> </Row>
+                            <Row> <Text
+                                type="secondary">{capitalize(event.meta.type)} setup key ({event.meta.key})</Text> </Row>
                         </span>
             case "group.add":
             case "group.update":
@@ -145,8 +155,14 @@ export const Activity = () => {
             case "user.peer.add":
             case "user.peer.delete":
                 return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                        <Row> <Text>{event.meta.dns}</Text> </Row>
+                        <Row> <Text>{event.meta.fqdn}</Text> </Row>
                         <Row> <Text type="secondary">{event.meta.ip}</Text> </Row>
+                    </span>
+            case "peer.group.add":
+            case "peer.group.delete":
+                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                        <Row> <Text>{event.meta.peer_fqdn}</Text> </Row>
+                        <Row> <Text type="secondary">{event.meta.peer_ip}</Text> </Row>
                     </span>
             case "user.invite":
                 const user = users?.find(u => u.id === event.target_id)
@@ -208,8 +224,7 @@ export const Activity = () => {
                                     />
                                     <Column title="Activity" dataIndex="activity"
                                             render={(text, record, index) => {
-                                                //return renderActivity(record as EventDataTable)
-                                                return text
+                                                return renderActivity(record as EventDataTable)
                                             }}
                                     />
                                     <Column title="Initiated By" dataIndex="initiator_id"
