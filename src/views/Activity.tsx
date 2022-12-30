@@ -83,11 +83,19 @@ export const Activity = () => {
             case "peer.group.add":
                 return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> added to peer</Text> </Row>
             case "peer.group.delete":
-                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed from peer</Text> </Row>
+                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed from peer</Text>
+                </Row>
             case "user.group.add":
                 return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> added to user</Text> </Row>
             case "user.group.delete":
-                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed from user</Text> </Row>
+                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed from user</Text>
+                </Row>
+            case "setupkey.group.add":
+                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> added to setup key</Text>
+                </Row>
+            case "setupkey.group.delete":
+                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed setup key</Text>
+                </Row>
         }
         return body
     }
@@ -122,7 +130,7 @@ export const Activity = () => {
         if (event.activity_code === "account.create" || event.activity_code === "user.join") {
             return "-"
         }
-
+        const user = users?.find(u => u.id === event.target_id)
         switch (event.activity_code) {
             case "account.create":
             case "user.join":
@@ -158,14 +166,20 @@ export const Activity = () => {
                     </span>
             case "user.group.add":
             case "user.group.delete":
-                const u = users?.find(u => u.id === event.target_id)
-                if (u) {
+                if (user) {
                     return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                                    <Row> <Text>{u.name}</Text> </Row>
-                                    <Row> <Text type="secondary">{u.email}</Text> </Row>
+                                    <Row> <Text>{user.name}</Text> </Row>
+                                    <Row> <Text type="secondary">{user.email}</Text> </Row>
                                </span>
                 }
                 return "n/a"
+            case "setupkey.group.add":
+            case "setupkey.group.delete":
+                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                                    <Row> <Text>{event.meta.setupkey}</Text> </Row>
+                                    <Row> <Text type="secondary">Setup Key</Text> </Row>
+                               </span>
+
             case "peer.group.add":
             case "peer.group.delete":
                 return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
@@ -173,7 +187,6 @@ export const Activity = () => {
                         <Row> <Text type="secondary">{event.meta.peer_ip}</Text> </Row>
                     </span>
             case "user.invite":
-                const user = users?.find(u => u.id === event.target_id)
                 if (user) {
                     return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
                                     <Row> <Text>{user.name}</Text> </Row>
