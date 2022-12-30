@@ -81,8 +81,13 @@ export const Activity = () => {
         let body = <Text>{event.activity}</Text>
         switch (event.activity_code) {
             case "peer.group.add":
-            case "peer.group.delete":
                 return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> added to peer</Text> </Row>
+            case "peer.group.delete":
+                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed from peer</Text> </Row>
+            case "user.group.add":
+                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> added to user</Text> </Row>
+            case "user.group.delete":
+                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed from user</Text> </Row>
         }
         return body
     }
@@ -151,6 +156,16 @@ export const Activity = () => {
                         <Row> <Text>{event.meta.fqdn}</Text> </Row>
                         <Row> <Text type="secondary">{event.meta.ip}</Text> </Row>
                     </span>
+            case "user.group.add":
+            case "user.group.delete":
+                const u = users?.find(u => u.id === event.target_id)
+                if (u) {
+                    return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                                    <Row> <Text>{u.name}</Text> </Row>
+                                    <Row> <Text type="secondary">{u.email}</Text> </Row>
+                               </span>
+                }
+                return "n/a"
             case "peer.group.add":
             case "peer.group.delete":
                 return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
