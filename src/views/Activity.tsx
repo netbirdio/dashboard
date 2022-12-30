@@ -3,7 +3,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as eventActions} from '../store/event';
 import {Container} from "../components/Container";
-import {Alert, Button, Card, Col, Input, Menu, Row, Select, Space, Table, Typography,} from "antd";
+import {Alert, Card, Col, Input, Row, Select, Space, Table, Typography,} from "antd";
 import {Event} from "../store/event/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
@@ -11,6 +11,7 @@ import {useGetAccessTokenSilently} from "../utils/token";
 import UserUpdate from "../components/UserUpdate";
 import {useOidcUser} from "@axa-fr/react-oidc";
 import {capitalize, formatDateTime} from "../utils/common";
+import {User} from "../store/user/types";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -30,13 +31,13 @@ export const Activity = () => {
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
 
     const [textToSearch, setTextToSearch] = useState('');
-    const [pageSize, setPageSize] = useState(25);
+    const [pageSize, setPageSize] = useState(20);
     const [dataTable, setDataTable] = useState([] as EventDataTable[]);
     const pageSizeOptions = [
         {label: "5", value: "5"},
         {label: "10", value: "10"},
         {label: "15", value: "15"},
-        {label: "25", value: "25"}
+        {label: "20", value: "20"}
     ]
 
     const transformDataTable = (d: Event[]): EventDataTable[] => {
@@ -56,8 +57,9 @@ export const Activity = () => {
 
     const filterDataTable = (): Event[] => {
         const t = textToSearch.toLowerCase().trim()
+        let usrsMatch: User[] = filter(users, (u: User) => (u.name)?.toLowerCase().includes(t) || (u.email)?.toLowerCase().includes(t)) as User[]
         let f: Event[] = filter(events, (f: Event) =>
-            ((f.activity || f.id).toLowerCase().includes(t) || t === "")
+            ((f.activity || f.id).toLowerCase().includes(t) || t === "" || usrsMatch.find(u => u.id === f.initiator_id))
         ) as Event[]
         return f
     }
@@ -74,15 +76,6 @@ export const Activity = () => {
     const onChangePageSize = (value: string) => {
         setPageSize(parseInt(value.toString()))
     }
-
-    const itemsMenuAction = [
-        {
-            key: "edit",
-            label: (<Button type="text">View</Button>)
-        },
-
-    ]
-    const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
     const renderActivity = (event: EventDataTable) => {
         let body = <Text>{event.activity}</Text>
