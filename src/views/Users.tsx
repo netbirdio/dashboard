@@ -110,7 +110,7 @@ export const Users = () => {
     const filterDataTable = (): User[] => {
         const t = textToSearch.toLowerCase().trim()
         let f: User[] = filter(users, (f: User) =>
-            ((f.email || f.id).toLowerCase().includes(t) || f.name.includes(t) || f.role.includes(t) || t === "")
+            ((f.email || f.id).toLowerCase().includes(t) || f.name.toLowerCase().includes(t) || f.role.includes(t) || t === "")
         ) as User[]
         return f
     }

@@ -39,13 +39,14 @@ const Navbar = () => {
         {label: (<Link to="/acls">Access Control</Link>), key: '/acls'},
         {label: (<Link to="/routes">Network Routes</Link>), key: '/routes'},
         { label: (<Link  to="/dns">DNS</Link>), key: '/dns' },
-        {label: (<Link to="/users">Users</Link>), key: '/users'}
+        {label: (<Link to="/users">Users</Link>), key: '/users'},
+        {label: (<Link to="/activity">Activity</Link>), key: '/activity'}
     ] as ItemType[]
 
     const userEmailKey = 'user-email'
     const userLogoutKey = 'user-logout'
     const userDividerKey = 'user-divider'
-    const adminOnlyTabs = ["/setup-keys", "/acls", "/routes", "/dns"]
+    const adminOnlyTabs = ["/setup-keys", "/acls", "/routes", "/dns", "/activity"]
     const [menuItems, setMenuItems] = useState(items)
     const logoutWithRedirect = () =>
         logout("/", {client_id: config.clientId});
