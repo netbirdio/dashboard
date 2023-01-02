@@ -101,6 +101,7 @@ export const Activity = () => {
     }
     const renderInitiator = (event: EventDataTable) => {
         let body = <></>
+        const user = users?.find(u => u.id === event.initiator_id)
         switch (event.activity_code) {
             case "setupkey.peer.add":
                 const key = setupKeys?.find(k => k.id === event.initiator_id)
@@ -112,11 +113,10 @@ export const Activity = () => {
                 }
                 break
             default:
-                const user = users?.find(u => u.id === event.initiator_id)
                 if (user) {
                     body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                                <Row> <Text>{user.name}</Text> </Row>
-                                <Row> <Text type="secondary">{user.email}</Text> </Row>
+                                    <Row> <Text>{user.name ? user.name : user.id}</Text> </Row>
+                                    <Row> <Text type="secondary">{user.email ? user.email : "User"}</Text> </Row>
                             </span>
                     return body
                 }
@@ -168,8 +168,8 @@ export const Activity = () => {
             case "user.group.delete":
                 if (user) {
                     return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                                    <Row> <Text>{user.name}</Text> </Row>
-                                    <Row> <Text type="secondary">{user.email}</Text> </Row>
+                                    <Row> <Text>{user.name ? user.name : user.id}</Text> </Row>
+                                    <Row> <Text type="secondary">{user.email ? user.email : "User"}</Text> </Row>
                                </span>
                 }
                 return "n/a"
@@ -189,8 +189,8 @@ export const Activity = () => {
             case "user.invite":
                 if (user) {
                     return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                                    <Row> <Text>{user.name}</Text> </Row>
-                                    <Row> <Text type="secondary">{user.email}</Text> </Row>
+                                    <Row> <Text>{user.name ? user.name : user.id}</Text> </Row>
+                                    <Row> <Text type="secondary">{user.email ? user.email : "User"}</Text> </Row>
                                </span>
                 }
 
