@@ -8,6 +8,7 @@ import { reducer as rule } from './rule';
 import { reducer as route } from './route';
 import { reducer as nameserverGroup } from './nameservers';
 import { reducer as event } from './event';
+import { reducer as dnsSettings } from './dns-settings';
 
 export default combineReducers({
   peer,
@@ -17,5 +18,6 @@ export default combineReducers({
   rule,
   route,
   nameserverGroup,
-  event
+  event,
+  dnsSettings
 });
