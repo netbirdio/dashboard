@@ -141,7 +141,6 @@ export const DNSSettingsForm = () => {
                                style={{ display: 'flex' }}>
                             <Card
                                 title="DNS Management"
-                                extra={<a href="#">Documentation</a>}
                                 loading={loading}
                             >
                                 <Form.Item
