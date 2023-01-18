@@ -10,6 +10,7 @@ import { sagas as groupSagas } from './group';
 import { sagas as routeSagas } from './route';
 import { sagas as nameserverGroupSagas } from './nameservers';
 import { sagas as eventSagas } from './event';
+import { sagas as dnsSettingsSagas } from './dns-settings';
 
 import rootReducer from './root-reducer';
 import { apiClient } from '../services/api-client';
@@ -29,5 +30,6 @@ sagaMiddleware.run(groupSagas);
 sagaMiddleware.run(routeSagas);
 sagaMiddleware.run(nameserverGroupSagas);
 sagaMiddleware.run(eventSagas);
+sagaMiddleware.run(dnsSettingsSagas);
 
 export { apiClient, rootReducer, store };
