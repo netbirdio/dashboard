@@ -61,7 +61,7 @@ export const DNS = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>DNS</Title>
-                        <Paragraph>Manage DNS for your NetBird account</Paragraph>
+                        <Paragraph>Manage DNS of your NetBird account</Paragraph>
                         <Tabs
                             defaultActiveKey={nsTabKey}
                             items={items}
