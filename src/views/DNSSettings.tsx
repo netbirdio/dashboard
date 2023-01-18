@@ -146,7 +146,7 @@ export const DNSSettingsForm = () => {
                                 <Form.Item
                                     label="Disable DNS management for these groups"
                                     name="disabled_management_groups"
-                                    tooltip="Peers in the groups will have their DNS management disabled and will require manual configuration for domain name resolution"
+                                    tooltip="Peers in these groups will have their DNS management disabled and require manual configuration for domain name resolution"
                                     rules={[{validator: selectValidatorEmptyStrings}]}
                                 >
                                     <Select mode="tags"

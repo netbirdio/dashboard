@@ -36,12 +36,12 @@ export const DNS = () => {
     const items: TabsProps['items'] = [
         {
             key: nsTabKey,
-            label: <Title level={5}>Nameservers</Title>,
+            label: 'Nameservers',
             children: <Nameservers/>,
         },
         {
             key: '2',
-            label: <Title level={5}>Settings</Title>,
+            label: 'Settings',
             children: <DNSSettingsForm/>,
         },
     ]
@@ -60,12 +60,12 @@ export const DNS = () => {
             <Container style={{paddingTop: "40px"}}>
                 <Row>
                     <Col span={24}>
-                        <Title level={4}>DNS</Title>
-                        <Paragraph>Manage DNS of your NetBird account</Paragraph>
                         <Tabs
                             defaultActiveKey={nsTabKey}
                             items={items}
                             onTabClick={onTabClick}
+                            animated={{ inkBar: true, tabPane: false }}
+                            tabPosition="top"
                         />
                     </Col>
                 </Row>
