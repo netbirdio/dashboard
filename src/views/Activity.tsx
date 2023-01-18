@@ -96,6 +96,10 @@ export const Activity = () => {
                 return getActivityRow(event.meta.group,"added to setup key")
             case "setupkey.group.delete":
                 return getActivityRow(event.meta.group,"removed setup key")
+            case "dns.setting.disabled.management.group.add":
+                return getActivityRow(event.meta.group,"added to disabled management DNS setting")
+            case "dns.setting.disabled.management.group.delete":
+                return getActivityRow(event.meta.group,"removed from disabled management DNS setting")
         }
         return body
     }
