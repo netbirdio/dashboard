@@ -1,10 +1,8 @@
 import React, {useEffect, useState} from 'react';
 import {Container} from "../components/Container";
 import {
-    Button, Card,
-    Checkbox,
-    Col, Form, Input, Radio, RadioChangeEvent,
-    Row, Space,
+    Col,
+    Row,
     Tabs,
     Typography,
 } from "antd";
@@ -13,37 +11,50 @@ import NameServerGroupUpdate from "../components/NameServerGroupUpdate";
 import Nameservers from "./Nameservers";
 import {actions as groupActions} from "../store/group";
 import {useGetAccessTokenSilently} from "../utils/token";
-import {useDispatch} from "react-redux";
-import DNSSettings from "./DNSSettings";
+import {useDispatch, useSelector} from "react-redux";
+import DNSSettingsForm from "./DNSSettings";
+import {RootState} from "typesafe-actions";
+import {actions as dnsSettingsActions} from '../store/dns-settings';
+import {useGetGroupTagHelpers} from "../utils/groups";
+
 const {Title, Paragraph} = Typography;
 
 export const DNS = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
-    const [optionAllEnable, setOptionAllEnable] = useState(true);
+    const {
+        getGroupNamesFromIDs,
+    } = useGetGroupTagHelpers()
+
+    const dnsSettingsData = useSelector((state: RootState) => state.dnsSettings.data)
 
     useEffect(() => {
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
     }, [])
 
-    const optionsDisabledEnabled = [{label: 'Enabled', value: true}, {label: 'Disabled', value: false}]
-
-    const onChangeAllEnabled = ({target: {value}}: RadioChangeEvent) => {
-        setOptionAllEnable(value)
-    }
-
+    const nsTabKey = '1'
     const items: TabsProps['items'] = [
         {
-            key: '1',
+            key: nsTabKey,
             label: <Title level={5}>Nameservers</Title>,
-            children: Nameservers(),
+            children: <Nameservers/>,
         },
         {
             key: '2',
             label: <Title level={5}>Settings</Title>,
-            children: DNSSettings(),
+            children: <DNSSettingsForm/>,
         },
     ]
+
+    const onTabClick = (key:string) => {
+        if (key == nsTabKey) {
+            if (!dnsSettingsData) return
+            dispatch(dnsSettingsActions.setDNSSettings({
+                disabled_management_groups: getGroupNamesFromIDs(dnsSettingsData.disabled_management_groups),
+            }))
+        }
+    }
+
     return (
         <>
             <Container style={{paddingTop: "40px"}}>
@@ -52,8 +63,9 @@ export const DNS = () => {
                         <Title level={4}>DNS</Title>
                         <Paragraph>Manage DNS for your NetBird account</Paragraph>
                         <Tabs
-                            defaultActiveKey="1"
+                            defaultActiveKey={nsTabKey}
                             items={items}
+                            onTabClick={onTabClick}
                         />
                     </Col>
                 </Row>

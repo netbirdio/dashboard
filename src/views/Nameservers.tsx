@@ -289,7 +289,7 @@ export const Nameservers = () => {
             message.loading({content: 'Saving...', key: createKey, duration: 0, style: styleNotification});
         } else if (savedNSGroup.success) {
             message.success({
-                content: 'User has been successfully saved.',
+                content: 'Nameserver has been successfully saved.',
                 key: createKey,
                 duration: 2,
                 style: styleNotification

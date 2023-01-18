@@ -94,12 +94,16 @@ export const useGetGroupTagHelpers = () => {
         return groups?.filter(g => groupIDList.includes(g.id!)).map(g => g.name || '') || []
     }
 
-    const selectValidator = (_: RuleObject, value: string[]) => {
-        let hasSpaceNamed = []
+    const selectValidator = (obj: RuleObject, value: string[]) => {
         if (!value.length) {
             return Promise.reject(new Error("Please enter at least one group"))
         }
 
+        return selectValidatorEmptyStrings(obj,value)
+    }
+
+    const selectValidatorEmptyStrings = (_: RuleObject, value: string[]) => {
+        let hasSpaceNamed = []
         value.forEach(function (v: string) {
             if (!v.trim().length) {
                 hasSpaceNamed.push(v)
@@ -131,6 +135,7 @@ export const useGetGroupTagHelpers = () => {
         setGroupTagFilterAll,
         getExistingAndToCreateGroupsLists,
         getGroupNamesFromIDs,
-        selectValidator
+        selectValidator,
+        selectValidatorEmptyStrings
     }
 }

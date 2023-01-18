@@ -33,7 +33,7 @@ const initialState: StateType = {
 };
 
 const data = createReducer<DNSSettings, ActionTypes>(initialState.data as DNSSettings)
-    .handleAction(actions.getDNSSettings.success,(settings, _) => settings)
+    .handleAction(actions.getDNSSettings.success,(settings, action) => action.payload)
     .handleAction(actions.getDNSSettings.failure,(settings, _) => settings);
 
 const dnsSettings = createReducer<DNSSettings, ActionTypes>(initialState.dnsSettings as DNSSettings)
