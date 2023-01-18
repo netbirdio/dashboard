@@ -151,7 +151,6 @@ export const DNSSettingsForm = () => {
                                 >
                                     <Select mode="tags"
                                             style={{width: '100%'}}
-                                            placeholder="Associate groups with the NS group"
                                             tagRender={tagRender}
                                             onChange={handleChangeTags}
                                             dropdownRender={dropDownRender}
