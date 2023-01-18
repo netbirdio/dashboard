@@ -77,25 +77,25 @@ export const Activity = () => {
         setPageSize(parseInt(value.toString()))
     }
 
+    const getActivityRow = (group:string,text:string) => {
+        return <Row> <Text>Group <Text type="secondary">{group}</Text> {text}</Text> </Row>
+    }
+
     const renderActivity = (event: EventDataTable) => {
         let body = <Text>{event.activity}</Text>
         switch (event.activity_code) {
             case "peer.group.add":
-                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> added to peer</Text> </Row>
+                return getActivityRow(event.meta.group,"added to peer")
             case "peer.group.delete":
-                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed from peer</Text>
-                </Row>
+                return getActivityRow(event.meta.group,"removed from peer")
             case "user.group.add":
-                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> added to user</Text> </Row>
+                return getActivityRow(event.meta.group,"added to user")
             case "user.group.delete":
-                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed from user</Text>
-                </Row>
+                return getActivityRow(event.meta.group,"removed from user")
             case "setupkey.group.add":
-                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> added to setup key</Text>
-                </Row>
+                return getActivityRow(event.meta.group,"added to setup key")
             case "setupkey.group.delete":
-                return <Row> <Text>Group <Text type="secondary">{event.meta.group}</Text> removed setup key</Text>
-                </Row>
+                return getActivityRow(event.meta.group,"removed setup key")
         }
         return body
     }
@@ -126,6 +126,13 @@ export const Activity = () => {
         return body
     }
 
+    const renderMultiRowSpan = (primaryRowText:string,secondaryRowText:string) => {
+        return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+                            <Row> <Text>{primaryRowText}</Text> </Row>
+                            <Row> <Text type="secondary">{secondaryRowText}</Text> </Row>
+               </span>
+    }
+
     const renderTarget = (event: EventDataTable) => {
         if (event.activity_code === "account.create" || event.activity_code === "user.join") {
             return "-"
@@ -138,62 +145,41 @@ export const Activity = () => {
             case "rule.add":
             case "rule.delete":
             case "rule.update":
-                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                            <Row> <Text>{event.meta.name}</Text> </Row>
-                            <Row> <Text type="secondary">Rule</Text> </Row>
-                        </span>
+                return renderMultiRowSpan(event.meta.name,"Rule")
             case "setupkey.add":
             case "setupkey.revoke":
             case "setupkey.update":
             case "setupkey.overuse":
-                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                            <Row> <Text>{event.meta.name}</Text> </Row>
-                            <Row> <Text
-                                type="secondary">{capitalize(event.meta.type)} setup key ({event.meta.key})</Text> </Row>
-                        </span>
+                let cType:string
+                cType = capitalize(event.meta.type)
+                return renderMultiRowSpan(event.meta.name,cType+" setup key "+event.meta.key)
             case "group.add":
             case "group.update":
-                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                            <Row> <Text>{event.meta.name}</Text> </Row>
-                            <Row> <Text type="secondary">Group</Text> </Row>
-                        </span>
+                return renderMultiRowSpan(event.meta.name,"Group")
             case "setupkey.peer.add":
             case "user.peer.add":
             case "user.peer.delete":
-                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                        <Row> <Text>{event.meta.fqdn}</Text> </Row>
-                        <Row> <Text type="secondary">{event.meta.ip}</Text> </Row>
-                    </span>
+                return renderMultiRowSpan(event.meta.fqdn,event.meta.ip)
             case "user.group.add":
             case "user.group.delete":
                 if (user) {
-                    return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                                    <Row> <Text>{user.name ? user.name : user.id}</Text> </Row>
-                                    <Row> <Text type="secondary">{user.email ? user.email : "User"}</Text> </Row>
-                               </span>
+                    return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
                 }
                 return "n/a"
             case "setupkey.group.add":
             case "setupkey.group.delete":
-                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                                    <Row> <Text>{event.meta.setupkey}</Text> </Row>
-                                    <Row> <Text type="secondary">Setup Key</Text> </Row>
-                               </span>
-
+                return renderMultiRowSpan(event.meta.setupkey,"Setup Key")
             case "peer.group.add":
             case "peer.group.delete":
-                return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                        <Row> <Text>{event.meta.peer_fqdn}</Text> </Row>
-                        <Row> <Text type="secondary">{event.meta.peer_ip}</Text> </Row>
-                    </span>
+                return renderMultiRowSpan(event.meta.peer_fqdn,event.meta.peer_ip)
+            case "dns.setting.disabled.management.group.add":
+                return "-"
+            case "dns.setting.disabled.management.group.delete":
+                return "-"
             case "user.invite":
                 if (user) {
-                    return <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
-                                    <Row> <Text>{user.name ? user.name : user.id}</Text> </Row>
-                                    <Row> <Text type="secondary">{user.email ? user.email : "User"}</Text> </Row>
-                               </span>
+                    return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
                 }
-
         }
 
         return event.target_id
