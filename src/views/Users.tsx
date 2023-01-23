@@ -28,7 +28,7 @@ import UserUpdate from "../components/UserUpdate";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
-import {useOidcUser} from "@axa-fr/react-oidc";
+import {useOidcIdToken, useOidcUser} from "@axa-fr/react-oidc";
 import {Link} from "react-router-dom";
 import {actions as setupKeyActions} from "../store/setup-key";
 import {SetupKey} from "../store/setup-key/types";
@@ -46,6 +46,7 @@ const styleNotification = {marginTop: 85}
 export const Users = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const {oidcUser} = useOidcUser();
+    const {idTokenPayload} = useOidcIdToken()
     const dispatch = useDispatch()
 
     const groups = useSelector((state: RootState) => state.group.data)
@@ -96,8 +97,12 @@ export const Users = () => {
     }, [textToSearch])
 
     useEffect(() => {
-        if (oidcUser && oidcUser.sub) {
-            const found = users.find(u => u.id == oidcUser.sub)
+        let runUser = oidcUser
+        if (!oidcUser) {
+            runUser = idTokenPayload
+        }
+        if (runUser && runUser.sub) {
+            const found = users.find(u => u.id == runUser.sub)
             if (found) {
                 setCurrentUser(found)
             }

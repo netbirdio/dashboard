@@ -5,7 +5,7 @@ import {Avatar, Button, Col, Dropdown, Grid, Menu, Row} from 'antd'
 import {ItemType} from "antd/lib/menu/hooks/useItems";
 import {AvatarSize} from "antd/es/avatar/SizeContext";
 import {UserOutlined} from '@ant-design/icons';
-import {useOidc, useOidcUser} from '@axa-fr/react-oidc';
+import {useOidc, useOidcIdToken, useOidcUser} from '@axa-fr/react-oidc';
 import {getConfig} from "../config";
 import {User} from "../store/user/types";
 import {useDispatch, useSelector} from "react-redux";
@@ -23,6 +23,7 @@ const Navbar = () => {
     const dispatch = useDispatch()
 
     const {oidcUser} = useOidcUser();
+    const {idTokenPayload} = useOidcIdToken()
     const user = oidcUser;
     const [currentUser, setCurrentUser] = useState({} as User)
 
@@ -85,9 +86,13 @@ const Navbar = () => {
         if (users.length === 0 && isRefreshingUserState) {
             return
         }
+        let runUser = oidcUser
+        if (!oidcUser) {
+            runUser = idTokenPayload
+        }
         setIsRefreshingUserState(false)
-        if (oidcUser && oidcUser.sub) {
-            const found = users.find(u => u.id == oidcUser.sub)
+        if (runUser && runUser.sub) {
+            const found = users.find(u => u.id == runUser.sub)
             if (found) {
                 setCurrentUser(found)
             }
