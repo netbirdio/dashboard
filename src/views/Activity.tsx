@@ -160,10 +160,21 @@ export const Activity = () => {
             case "group.add":
             case "group.update":
                 return renderMultiRowSpan(event.meta.name,"Group")
+            case "nameserver.group.add":
+            case "nameserver.group.update":
+            case "nameserver.group.delete":
+                return renderMultiRowSpan(event.meta.name,"Nameserver Group")
             case "setupkey.peer.add":
             case "user.peer.add":
             case "user.peer.delete":
+            case "peer.ssh.enable":
+            case "peer.ssh.disable":
+            case "peer.rename":
                 return renderMultiRowSpan(event.meta.fqdn,event.meta.ip)
+            case "route.add":
+            case "route.delete":
+            case "route.update":
+                return renderMultiRowSpan(event.meta.name, "Route for range " + event.meta.network_range)
             case "user.group.add":
             case "user.group.delete":
                 if (user) {
@@ -177,9 +188,8 @@ export const Activity = () => {
             case "peer.group.delete":
                 return renderMultiRowSpan(event.meta.peer_fqdn,event.meta.peer_ip)
             case "dns.setting.disabled.management.group.add":
-                return "-"
             case "dns.setting.disabled.management.group.delete":
-                return "-"
+                return renderMultiRowSpan("","System setting")
             case "user.invite":
                 if (user) {
                     return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
