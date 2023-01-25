@@ -163,7 +163,7 @@ export const Activity = () => {
             case "nameserver.group.add":
             case "nameserver.group.update":
             case "nameserver.group.delete":
-                return renderMultiRowSpan(event.meta.name,"Nameserver Group")
+                return renderMultiRowSpan(event.meta.name,"Nameserver group")
             case "setupkey.peer.add":
             case "user.peer.add":
             case "user.peer.delete":
