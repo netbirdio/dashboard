@@ -288,7 +288,7 @@ export const Peers = () => {
             onOk() {
                 dispatch(peerActions.deletedPeer.request({
                     getAccessTokenSilently: getAccessTokenSilently,
-                    payload: peerToAction ? peerToAction.ip : ''
+                    payload: (peerToAction && peerToAction.id) ? peerToAction.id! : ""
                 }));
             },
             onCancel() {
