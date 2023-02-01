@@ -73,14 +73,14 @@ const RouteUpdate = () => {
     const [masqueradeMSG, setMasqueradeMSG] = useState(defaultMasqueradeMSG)
     const defaultStatusMSG = "Status"
     const [statusMSG, setStatusMSG] = useState(defaultStatusMSG)
-    const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
+    const [peerNameToIP, peerIPToName, peerIPToID] = initPeerMaps(peers);
     const [newRoute, setNewRoute] = useState(false)
 
     const optionsDisabledEnabled = [{label: 'Enabled', value: true}, {label: 'Disabled', value: false}]
 
     useEffect(() => {
         if (!newRoute ) {
-            setRoutingPeerMSG("Add additional routing peer")
+            setRoutingPeerMSG(defaultRoutingPeerMSG)
             setMasqueradeMSG("Update Masquerade")
             setStatusMSG("Update Status")
         } else {
@@ -136,9 +136,9 @@ const RouteUpdate = () => {
         let peerIDList = inputRoute.peer.split(routePeerSeparator)
         let peerID: string
         if (peerIDList[1]) {
-            peerID = peerIDList[1]
+            peerID = peerIPToID[peerIDList[1]]
         } else {
-            peerID = peerNameToIP[inputRoute.peer]
+            peerID = peerIPToID[peerNameToIP[inputRoute.peer]]
         }
 
         let [ existingGroups, groupsToCreate ] = getExistingAndToCreateGroupsLists(inputRoute.groups)
@@ -167,7 +167,7 @@ const RouteUpdate = () => {
                         payload: routeToSave
                     }))
                 } else {
-                    let groupedDataTable = transformGroupedDataTable(routes, peerIPToName)
+                    let groupedDataTable = transformGroupedDataTable(routes, peers)
                     groupedDataTable.forEach((group) => {
                         if (group.key == previousRouteKey) {
                             group.groupedRoutes.forEach((route) => {
