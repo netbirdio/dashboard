@@ -5,7 +5,7 @@ export interface User {
     role: string;
     status: string;
     auto_groups: string[];
-    is_current: boolean;
+    is_current?: boolean;
 }
 
 export interface FormUser extends User {
