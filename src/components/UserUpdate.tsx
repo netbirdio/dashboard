@@ -233,7 +233,8 @@ const UserUpdate = () => {
             role: "",
             status: "",
             auto_groups: [],
-            name: user.name
+            name: user.name,
+            is_current: user.is_current,
         } as User));
         setFormUser({} as FormUser)
         toggleEditName(false)
