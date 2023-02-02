@@ -186,7 +186,7 @@ export const Routes = () => {
         if (deletedRoute.loading) {
             message.loading({content: 'Deleting...', key: deleteKey, style})
         } else if (deletedRoute.success) {
-            message.success({content: 'Route has been successfully disabled.', key: deleteKey, duration: 2, style})
+            message.success({content: 'Route has been successfully deleted.', key: deleteKey, duration: 2, style})
             dispatch(routeActions.resetDeletedRoute(null))
         } else if (deletedRoute.error) {
             message.error({
