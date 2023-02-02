@@ -93,7 +93,6 @@ const Navbar = () => {
         setIsRefreshingUserState(false)
         if (runUser) {
             const found = users.find(u => u.is_current ? u.is_current : runUser.sub ? u.id == runUser.sub : false)
-            console.log(found)
             if (found) {
                 setCurrentUser(found)
             }
