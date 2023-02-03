@@ -59,7 +59,7 @@ export function* deletePeer(action: ReturnType<typeof actions.deletedPeer.reques
     } as DeleteResponse<string | null>));
 
     const peers = (yield select(state => state.peer.data)) as Peer[]
-    yield put(actions.getPeers.success(peers.filter((p:Peer) => p.ip !== action.payload.payload)))
+    yield put(actions.getPeers.success(peers.filter((p:Peer) => p.id !== action.payload.payload)))
   } catch (err) {
     yield put(actions.deletedPeer.failure({
       loading: false,

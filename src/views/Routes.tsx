@@ -127,7 +127,7 @@ export const Routes = () => {
     }
 
     useEffect(() => {
-        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes, peerIPToName)))
+        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes, peers)))
     }, [dataTable])
 
     useEffect(() => {
@@ -135,12 +135,12 @@ export const Routes = () => {
             setShowTutorial(false)
         } else {
             setShowTutorial(isShowTutorial(routes))
-            setDataTable(sortBy(transformDataTable(routes, peerIPToName), "network_id"))
+            setDataTable(sortBy(transformDataTable(routes, peers), "network_id"))
         }
     }, [routes])
 
     useEffect(() => {
-        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes, peerIPToName)))
+        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes, peers)))
     }, [textToSearch, optionAllEnable])
 
     const styleNotification = {marginTop: 85}
@@ -186,7 +186,7 @@ export const Routes = () => {
         if (deletedRoute.loading) {
             message.loading({content: 'Deleting...', key: deleteKey, style})
         } else if (deletedRoute.success) {
-            message.success({content: 'Route has been successfully disabled.', key: deleteKey, duration: 2, style})
+            message.success({content: 'Route has been successfully deleted.', key: deleteKey, duration: 2, style})
             dispatch(routeActions.resetDeletedRoute(null))
         } else if (deletedRoute.error) {
             message.error({
@@ -204,7 +204,7 @@ export const Routes = () => {
     };
 
     const searchDataTable = () => {
-        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes, peerIPToName)))
+        setGroupedDataTable(filterGroupedDataTable(transformGroupedDataTable(routes, peers)))
     }
 
     const onChangeAllEnabled = ({target: {value}}: RadioChangeEvent) => {
@@ -278,7 +278,7 @@ export const Routes = () => {
             network: route.network,
             network_id: route.network_id,
             description: route.description,
-            peer: route.peer ? peerToPeerIP(route.peer, peerNameToIP[route.peer]) : '',
+            peer: route.peer ? peerToPeerIP(route.peer_name, route.peer_ip) : '',
             metric: route.metric ? route.metric : 9999,
             masquerade: route.masquerade,
             enabled: route.enabled,
@@ -393,7 +393,7 @@ export const Routes = () => {
             size="small"
             bordered={true}
         >
-            <Column title="Routing Peer" dataIndex="peer" align="center"
+            <Column title="Routing Peer" dataIndex="peer_name" align="center"
                     onFilter={(value: string | number | boolean, record) => (record as any).peer.includes(value)}
                     sorter={(a, b) => ((a as any).peer.localeCompare((b as any).peer))}
                     render={(text, record) => {
