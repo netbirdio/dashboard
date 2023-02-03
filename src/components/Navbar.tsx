@@ -91,8 +91,8 @@ const Navbar = () => {
             runUser = idTokenPayload
         }
         setIsRefreshingUserState(false)
-        if (runUser && runUser.sub) {
-            const found = users.find(u => u.id == runUser.sub)
+        if (runUser) {
+            const found = users.find(u => u.is_current ? u.is_current : runUser.sub ? u.id == runUser.sub : false)
             if (found) {
                 setCurrentUser(found)
             }
