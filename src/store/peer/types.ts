@@ -40,6 +40,10 @@ export interface PeerIPToName {
   [key: string]: string;
 }
 
+export interface PeerIPToID {
+  [key: string]: string;
+}
+
 export interface PeerDataTable extends Peer {
   key: string;
   groups: Group[];

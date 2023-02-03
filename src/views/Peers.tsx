@@ -237,7 +237,7 @@ export const Peers = () => {
     const showConfirmDelete = () => {
         let peerRoutes: string[] = []
         routes.forEach((r) => {
-            if (r.peer == peerToAction?.ip) {
+            if (r.peer == peerToAction?.id) {
                 peerRoutes.push(r.network_id)
             }
         })
@@ -288,7 +288,7 @@ export const Peers = () => {
             onOk() {
                 dispatch(peerActions.deletedPeer.request({
                     getAccessTokenSilently: getAccessTokenSilently,
-                    payload: peerToAction ? peerToAction.ip : ''
+                    payload: (peerToAction && peerToAction.id) ? peerToAction.id! : ""
                 }));
             },
             onCancel() {
