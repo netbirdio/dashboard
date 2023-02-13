@@ -405,7 +405,7 @@ export const Peers = () => {
                                toCopy={peer.ip}
                                body={<Text type="secondary">{peer.ip}</Text>}
                                messageText={'Peer IP copied'}
-                               style={{marginTop:'-10px'}}
+                               style={{marginTop: '-10px'}}
                                styleNotification={{}}/>
   </Row>
         </span>
@@ -512,9 +512,19 @@ export const Peers = () => {
                                             }}
                                     />
                                     <Column title="Status" dataIndex="connected" align="center"
-                                            render={(text, record, index) => {
-                                                return text ? <Tag color="green">online</Tag> :
+                                            render={(text, record: PeerDataTable, index) => {
+
+                                                let status = text ? <Tag color="green">online</Tag> :
                                                     <Tag color="red">offline</Tag>
+
+                                                if (record.login_expired) {
+                                                    return <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+                                                        <Tag color="orange">needs login</Tag>
+                                                    </Tooltip>
+
+                                                }
+
+                                                return status
                                             }}
                                     />
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
@@ -553,8 +563,8 @@ export const Peers = () => {
                                             render={(text, record, index) => {
                                                 let dt = new Date(text)
                                                 return <Popover content={dt.toLocaleString()}>
-                                                           {(record as PeerDataTable).connected ? 'just now' : timeAgo(text)}
-                                                       </Popover>
+                                                    {(record as PeerDataTable).connected ? 'just now' : timeAgo(text)}
+                                                </Popover>
                                             }}
                                     />
                                     <Column title="OS" dataIndex="os"
