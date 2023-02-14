@@ -416,8 +416,10 @@ export const Peers = () => {
 
     const renderName = (peer: PeerDataTable) => {
         const userEmail = users?.find(u => u.id === peer.user_id)?.email
+        let expiry =!peer.login_expiration_enabled ?  <Tag><Text type="secondary" style={{fontSize: 10}}>expiration disabled</Text></Tag> : null
         if (!userEmail) {
-            return <Button type="text" onClick={() => setUpdateGroupsVisible(peer, true)}>
+            return <Button type="text"  style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
+                           onClick={() => setUpdateGroupsVisible(peer, true)}>
                 <Text strong>{peer.name}</Text>
             </Button>
         }
@@ -427,6 +429,7 @@ export const Peers = () => {
                 <Text strong>{peer.name}</Text>
                 <br/>
                 <Text type="secondary">{userEmail}</Text>
+                {expiry}
             </Button>
         </div>
     }
