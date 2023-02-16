@@ -189,6 +189,9 @@ export const Activity = () => {
                 return renderMultiRowSpan(event.meta.peer_fqdn,event.meta.peer_ip)
             case "dns.setting.disabled.management.group.add":
             case "dns.setting.disabled.management.group.delete":
+            case "account.setting.peer.login.expiration.enable":
+            case "account.setting.peer.login.expiration.disable":
+            case "account.setting.peer.login.expiration.update":
                 return renderMultiRowSpan("","System setting")
             case "user.invite":
                 if (user) {
