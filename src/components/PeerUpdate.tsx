@@ -19,8 +19,6 @@ const punycode = require('punycode/')
 
 const PeerUpdate = () => {
 
-    const optionsDisabledEnabled = [{label: 'Enabled', value: true}, {label: 'Disabled', value: false}]
-
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const groups = useSelector((state: RootState) => state.group.data)
@@ -447,11 +445,13 @@ const PeerUpdate = () => {
                                 <Form.Item
                                     name="login_expiration_enabled"
                                     label="Login expiration"
+                                    tooltip="When login expires, the user has to re-authenticate this peer. This only applies to peers added with the SSO login."
                                 >
                                     <Radio.Group
-                                        options={optionsDisabledEnabled}
+                                        options={[{label: 'Enabled', value: true}, {label: 'Disabled', value: false}]}
                                         optionType="button"
                                         buttonStyle="solid"
+                                        disabled={!formPeer.user_id}
                                     />
                                 </Form.Item>
                             </Col>
