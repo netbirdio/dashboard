@@ -405,7 +405,7 @@ export const Peers = () => {
                                toCopy={peer.ip}
                                body={<Text type="secondary">{peer.ip}</Text>}
                                messageText={'Peer IP copied'}
-                               style={{marginTop:'-10px'}}
+                               style={{marginTop: '-10px'}}
                                styleNotification={{}}/>
   </Row>
         </span>
@@ -416,8 +416,10 @@ export const Peers = () => {
 
     const renderName = (peer: PeerDataTable) => {
         const userEmail = users?.find(u => u.id === peer.user_id)?.email
+        let expiry =!peer.login_expiration_enabled ?  <div><Tag><Text type="secondary" style={{fontSize: 10}}>expiration disabled</Text></Tag></div> : null
         if (!userEmail) {
-            return <Button type="text" onClick={() => setUpdateGroupsVisible(peer, true)}>
+            return <Button type="text"  style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
+                           onClick={() => setUpdateGroupsVisible(peer, true)}>
                 <Text strong>{peer.name}</Text>
             </Button>
         }
@@ -427,6 +429,7 @@ export const Peers = () => {
                 <Text strong>{peer.name}</Text>
                 <br/>
                 <Text type="secondary">{userEmail}</Text>
+                {expiry}
             </Button>
         </div>
     }
@@ -512,9 +515,19 @@ export const Peers = () => {
                                             }}
                                     />
                                     <Column title="Status" dataIndex="connected" align="center"
-                                            render={(text, record, index) => {
-                                                return text ? <Tag color="green">online</Tag> :
+                                            render={(text, record: PeerDataTable, index) => {
+
+                                                let status = text ? <Tag color="green">online</Tag> :
                                                     <Tag color="red">offline</Tag>
+
+                                                if (record.login_expired) {
+                                                    return <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+                                                        <Tag color="orange">needs login</Tag>
+                                                    </Tooltip>
+
+                                                }
+
+                                                return status
                                             }}
                                     />
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
@@ -553,8 +566,8 @@ export const Peers = () => {
                                             render={(text, record, index) => {
                                                 let dt = new Date(text)
                                                 return <Popover content={dt.toLocaleString()}>
-                                                           {(record as PeerDataTable).connected ? 'just now' : timeAgo(text)}
-                                                       </Popover>
+                                                    {(record as PeerDataTable).connected ? 'just now' : timeAgo(text)}
+                                                </Popover>
                                             }}
                                     />
                                     <Column title="OS" dataIndex="os"

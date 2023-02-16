@@ -2,7 +2,7 @@ import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as peerActions} from '../store/peer';
-import {Button, Col, Collapse, Divider, Drawer, Form, Input, Row, Select, Space, Tag, Typography} from "antd";
+import {Button, Col, Collapse, Divider, Drawer, Form, Input, Radio, Row, Select, Space, Tag, Typography} from "antd";
 import {Header} from "antd/es/layout/layout";
 import type {CustomTagProps} from 'rc-select/lib/BaseSelect'
 import {FormPeer, Peer, PeerGroupsToSave} from "../store/peer/types";
@@ -18,6 +18,9 @@ const {Panel} = Collapse;
 const punycode = require('punycode/')
 
 const PeerUpdate = () => {
+
+    const optionsDisabledEnabled = [{label: 'Enabled', value: true}, {label: 'Disabled', value: false}]
+
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const groups = useSelector((state: RootState) => state.group.data)
@@ -200,6 +203,10 @@ const PeerUpdate = () => {
         return !formPeer.name || formPeer.name === peer.name
     }
 
+    const noUpdateToLoginExpiration = (): Boolean => {
+        return formPeer.login_expiration_enabled === peer.login_expiration_enabled
+    }
+
     const onChange = (data: any) => {
         setFormPeer({...formPeer, ...data})
     }
@@ -232,7 +239,8 @@ const PeerUpdate = () => {
         return {
             id: formPeer.id,
             ssh_enabled: formPeer.ssh_enabled,
-            name: formPeer.name
+            name: formPeer.name,
+            login_expiration_enabled: formPeer.login_expiration_enabled
         } as Peer
     }
 
@@ -240,7 +248,7 @@ const PeerUpdate = () => {
         form.validateFields()
             .then((values) => {
                 setSubmitRunning(true)
-                if (!noUpdateToName()) {
+                if (!noUpdateToName() || !noUpdateToLoginExpiration()) {
                     const peerUpdate = createPeerToSave()
                     setCallingPeerAPI(true)
                     dispatch(peerActions.updatePeer.request({
@@ -248,7 +256,7 @@ const PeerUpdate = () => {
                         payload: peerUpdate
                     }))
                 }
-                if (peerGroupsToSave.groupsToRemove.length || peerGroupsToSave.groupsToAdd.length || peerGroupsToSave.groupsNoId.length) {
+                if (!noUpdateToGroups()) {
                     setCallingGroupAPI(true)
                     dispatch(peerActions.saveGroups.request({
                         getAccessTokenSilently: getAccessTokenSilently,
@@ -303,7 +311,7 @@ const PeerUpdate = () => {
                         <Space style={{display: 'flex', justifyContent: 'end'}}>
                             <Button onClick={onCancel} disabled={savedGroups.loading}>Cancel</Button>
                             <Button type="primary"
-                                    disabled={(savedGroups.loading || updatedPeers.loading) || (noUpdateToGroups() && noUpdateToName())}
+                                    disabled={(savedGroups.loading || updatedPeers.loading) || (noUpdateToGroups() && noUpdateToName() && noUpdateToLoginExpiration())}
                                     onClick={handleFormSubmit}>Save</Button>
                         </Space>
                     }
@@ -437,6 +445,18 @@ const PeerUpdate = () => {
                             )}
                             <Col span={24}>
                                 <Form.Item
+                                    name="login_expiration_enabled"
+                                    label="Login expiration"
+                                >
+                                    <Radio.Group
+                                        options={optionsDisabledEnabled}
+                                        optionType="button"
+                                        buttonStyle="solid"
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
                                     name="groupsNames"
                                     label="Select peer groups"
                                     rules={[{validator: selectValidator}]}
@@ -458,23 +478,6 @@ const PeerUpdate = () => {
                                     </Select>
                                 </Form.Item>
                             </Col>
-                            {/*<Col span={24}>
-                                <Row wrap={false} gutter={12}>
-                                    <Col flex="none">
-                                        <FlagFilled/>
-                                    </Col>
-                                    <Col flex="auto">
-                                        <Paragraph>
-                                            Every peer is part of the group All, thus you can't remove it.
-                                        </Paragraph>
-                                    </Col>
-                                </Row>
-                            </Col>*/}
-                            {/*<Col span={24}>
-                                <Divider orientation="left" plain style={{color: "#5a5c5a"}}>
-                                    System Info
-                                </Divider>
-                            </Col>*/}
                             <Col span={24}>
                                 <Collapse onChange={onChange} bordered={false} ghost={true}
                                           style={{color: "#5a5c5a"}}>
