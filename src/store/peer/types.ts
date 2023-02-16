@@ -14,6 +14,9 @@ export interface Peer {
   user_id?: string,
   ui_version?: string,
   dns_label: string,
+  last_login: string,
+  login_expired: boolean,
+  login_expiration_enabled: boolean
 }
 
 export interface FormPeer extends Peer {
