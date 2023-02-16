@@ -31,7 +31,7 @@ import {
 } from "antd";
 import {Peer, PeerDataTable} from "../store/peer/types";
 import {filter} from "lodash"
-import {formatOS, timeAgo} from "../utils/common";
+import {capitalize, formatOS, timeAgo} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerUpdate from "../components/PeerUpdate";
@@ -180,10 +180,11 @@ export const Peers = () => {
             dispatch(peerActions.setUpdatedPeer({...updatedPeer, success: false}))
             dispatch(peerActions.resetUpdatedPeer(null))
         } else if (updatedPeer.error) {
+            let msg = updatedPeer.error.data ? capitalize(updatedPeer.error.data.message) : updatedPeer.error.message
             message.error({
-                content: 'Failed to update peer. You might not have enough permissions.',
+                content: msg,
                 key: updatePeerKey,
-                duration: 2,
+                duration: 3,
                 style
             });
             dispatch(peerActions.setUpdatedPeer({...updatedPeer, error: null}))
