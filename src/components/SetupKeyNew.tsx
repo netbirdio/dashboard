@@ -418,7 +418,6 @@ const SetupKeyNew = () => {
                                         <ExpiresInInput options={
                                             Array.of(
                                                 {key: "day", title: "Days"},
-                                                {key: "week", title: "Weeks"},
                                                 {key: "month", title: "Months"},
                                                 {key: "year", title: "Years"})
                                         }/>

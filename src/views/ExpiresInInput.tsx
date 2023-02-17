@@ -19,14 +19,12 @@ interface ExpiresInInputProps {
     options: SelectOption[];
 }
 
-
 export const secondsToExpiresIn = (expiresIn: number, availableOptions: string[]): ExpiresInValue => {
 
     if (expiresIn == 0) {
         return {interval: "day", number: 0}
     }
-    console.log((expiresIn % 86400 === 0))
-    console.log(availableOptions)
+
     let result = {interval: "hour", number: expiresIn / 3600}
     availableOptions.forEach(opt => {
         if (opt === "year" && (expiresIn % 31104000 === 0)) {
