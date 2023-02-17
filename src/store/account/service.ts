@@ -8,5 +8,12 @@ export default {
       `/api/accounts`,
         payload
     );
+  },
+  async updateAccount(payload:RequestPayload<Account>): Promise<ApiResponse<Account>> {
+    const id = payload.payload.id
+    return apiClient.put<Account>(
+        `/api/accounts/${id}`,
+        payload
+    );
   }
 };

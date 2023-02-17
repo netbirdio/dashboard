@@ -1,8 +1,9 @@
-import {all, call, put, takeLatest} from 'redux-saga/effects';
-import {ApiError, ApiResponse} from '../../services/api-client/types';
+import {all, call, put, select, takeLatest} from 'redux-saga/effects';
+import {ApiError, ApiResponse, ChangeResponse} from '../../services/api-client/types';
 import {Account} from './types'
 import service from './service';
 import actions from './actions';
+import {Peer} from "../peer/types";
 
 export function* getAccounts(action: ReturnType<typeof actions.getAccounts.request>): Generator {
     try {
@@ -15,9 +16,51 @@ export function* getAccounts(action: ReturnType<typeof actions.getAccounts.reque
     }
 }
 
+export function* updateAccount(action: ReturnType<typeof actions.updateAccount.request>): Generator {
+    try {
+        yield put(actions.setUpdateAccount({
+            loading: true,
+            success: false,
+            failure: false,
+            error: null,
+            data: null
+        }))
+
+        const peer = action.payload.payload
+        const peerId = peer.id
+
+        const payloadToSave = {
+            getAccessTokenSilently: action.payload.getAccessTokenSilently,
+            payload: peer
+        }
+
+        const effect = yield call(service.updateAccount, payloadToSave)
+        const response = effect as ApiResponse<Account>;
+
+        yield put(actions.updateAccount.success({
+            loading: false,
+            success: true,
+            failure: false,
+            error: null,
+            data: response.body
+        } as ChangeResponse<Account | null>));
+
+    } catch (err) {
+        console.log(err)
+        yield put(actions.updateAccount.failure({
+            loading: false,
+            success: false,
+            failure: true,
+            error: err as ApiError,
+            data: null
+        } as ChangeResponse<Account | null>));
+    }
+}
+
 export default function* sagas(): Generator {
     yield all([
         takeLatest(actions.getAccounts.request, getAccounts),
+        takeLatest(actions.updateAccount.request, updateAccount),
     ]);
 }
 

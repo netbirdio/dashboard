@@ -8,7 +8,7 @@ import {actions as dnsSettingsActions} from '../store/dns-settings';
 import {DNSSettings, DNSSettingsToSave} from "../store/dns-settings/types";
 import {Container} from "../components/Container";
 import UserUpdate from "../components/UserUpdate";
-import ExpiresInInput, {secondsToExpiresIn} from "./ExpiresInInput";
+import ExpiresInInput, {expiresInToSeconds, secondsToExpiresIn} from "./ExpiresInInput";
 import {checkExpiresIn} from "../utils/common";
 import {actions as accountActions} from "../store/account";
 import {Account, FormAccount} from "../store/account/types";
@@ -20,7 +20,6 @@ export const Settings = () => {
     const dispatch = useDispatch()
 
     const {
-        getExistingAndToCreateGroupsLists,
         selectValidatorEmptyStrings
     } = useGetGroupTagHelpers()
 
@@ -45,12 +44,12 @@ export const Settings = () => {
         let account = accounts[0]
 
         let fAccount = {
-            ...account,
+            id: account.id,
+            settings: account.settings,
             peer_login_expiration_formatted: secondsToExpiresIn(account.settings.peer_login_expiration, ["hour", "day"]),
             peer_login_expiration_enabled: account.settings.peer_login_expiration_enabled
         } as FormAccount
         setFormAccount(fAccount)
-        console.log(fAccount)
         form.setFieldsValue(fAccount)
     }, [accounts])
 
@@ -91,10 +90,11 @@ export const Settings = () => {
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
-                let dnsSettingsToSave = createDNSSettingsToSave(values)
-                dispatch(dnsSettingsActions.saveDNSSettings.request({
+                let accountToSave = createAccountToSave(values)
+                console.log(accountToSave)
+                dispatch(accountActions.updateAccount.request({
                     getAccessTokenSilently: getAccessTokenSilently,
-                    payload: dnsSettingsToSave
+                    payload: accountToSave
                 }))
             })
             .then(() => {
@@ -112,12 +112,14 @@ export const Settings = () => {
             });
     }
 
-    const createDNSSettingsToSave = (values: DNSSettings): DNSSettingsToSave => {
-        let [existingGroups, newGroups] = getExistingAndToCreateGroupsLists(values.disabled_management_groups)
+    const createAccountToSave = (values: FormAccount): Account => {
         return {
-            disabled_management_groups: existingGroups,
-            groupsToCreate: newGroups
-        } as DNSSettingsToSave
+            id: formAccount.id,
+            settings: {
+                peer_login_expiration: expiresInToSeconds(values.peer_login_expiration_formatted),
+                peer_login_expiration_enabled: values.peer_login_expiration_enabled
+            }
+        } as Account
     }
 
     return (
@@ -147,7 +149,7 @@ export const Settings = () => {
                                                 label="Peer login expiration"
                                                 name="peer_login_expiration_enabled"
                                                 tooltip=" "
-                                                rules={[{validator: selectValidatorEmptyStrings}]}
+                                                //rules={[{validator: selectValidatorEmptyStrings}]}
                                             >
                                                 <Radio.Group
                                                     options={[{label: 'Enabled', value: true}, {
