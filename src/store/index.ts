@@ -11,6 +11,7 @@ import { sagas as routeSagas } from './route';
 import { sagas as nameserverGroupSagas } from './nameservers';
 import { sagas as eventSagas } from './event';
 import { sagas as dnsSettingsSagas } from './dns-settings';
+import { sagas as accountSagas } from './account';
 
 import rootReducer from './root-reducer';
 import { apiClient } from '../services/api-client';
@@ -31,5 +32,6 @@ sagaMiddleware.run(routeSagas);
 sagaMiddleware.run(nameserverGroupSagas);
 sagaMiddleware.run(eventSagas);
 sagaMiddleware.run(dnsSettingsSagas);
+sagaMiddleware.run(accountSagas);
 
 export { apiClient, rootReducer, store };

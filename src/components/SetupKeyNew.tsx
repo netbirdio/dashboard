@@ -28,7 +28,7 @@ import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
 import {useGetAccessTokenSilently} from "../utils/token";
-import ExpiresInInput, {ExpiresInValue} from "../views/ExpiresInInput";
+import ExpiresInInput, {expiresInToSeconds, ExpiresInValue} from "../views/ExpiresInInput";
 
 const {Option} = Select;
 
@@ -116,31 +116,6 @@ const SetupKeyNew = () => {
             expires_in: expiresIn,
             usage_limit: formSetupKey.usage_limit
         } as SetupKeyToSave
-    }
-    const expiresInToSeconds = (expiresIn: ExpiresInValue): number => {
-        if (!expiresIn.number || !expiresIn.interval) {
-            return 0
-        }
-        let multiplier = 0
-        switch (expiresIn.interval.toLowerCase()) {
-            case "day":
-                multiplier = 24 * 3600
-                break
-            case "week":
-                multiplier = 7 * 24 * 3600
-                break
-            case "month":
-                multiplier = 30 * 24 * 3600
-                break
-            case "year":
-                multiplier = 365 * 24 * 3600
-                break
-            default:
-                multiplier = 0
-        }
-
-        return expiresIn.number * multiplier
-
     }
 
     const handleFormSubmit = () => {

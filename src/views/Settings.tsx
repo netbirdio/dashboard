@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {Button, Card, Col, Form, message, Radio, Row, Space, Typography,} from "antd";
@@ -6,14 +6,14 @@ import {useGetAccessTokenSilently} from "../utils/token";
 import {useGetGroupTagHelpers} from "../utils/groups";
 import {actions as dnsSettingsActions} from '../store/dns-settings';
 import {DNSSettings, DNSSettingsToSave} from "../store/dns-settings/types";
-import {actions as nsGroupActions} from "../store/nameservers";
 import {Container} from "../components/Container";
 import UserUpdate from "../components/UserUpdate";
-import ExpiresInInput from "./ExpiresInInput";
+import ExpiresInInput, {secondsToExpiresIn} from "./ExpiresInInput";
 import {checkExpiresIn} from "../utils/common";
+import {actions as accountActions} from "../store/account";
+import {Account, FormAccount} from "../store/account/types";
 
 const {Title, Paragraph} = Typography;
-const styleNotification = {marginTop: 85}
 
 export const Settings = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
@@ -21,38 +21,41 @@ export const Settings = () => {
 
     const {
         getExistingAndToCreateGroupsLists,
-        getGroupNamesFromIDs,
         selectValidatorEmptyStrings
     } = useGetGroupTagHelpers()
 
-    const dnsSettings = useSelector((state: RootState) => state.dnsSettings.dnsSettings)
-    const dnsSettingsData = useSelector((state: RootState) => state.dnsSettings.data)
-    const savedDNSSettings = useSelector((state: RootState) => state.dnsSettings.savedDNSSettings)
-    const loading = useSelector((state: RootState) => state.dnsSettings.loading);
+    const accounts = useSelector((state: RootState) => state.account.data);
+    const failed = useSelector((state: RootState) => state.account.failed);
+    const loading = useSelector((state: RootState) => state.account.loading);
+    const users = useSelector((state: RootState) => state.user.data);
+    const [formAccount, setFormAccount] = useState({} as FormAccount);
 
 
     const [form] = Form.useForm()
 
     useEffect(() => {
-        dispatch(dnsSettingsActions.getDNSSettings.request({
-            getAccessTokenSilently: getAccessTokenSilently,
-            payload: null
-        }));
-    }, []);
+        dispatch(accountActions.getAccounts.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+    }, [])
 
     useEffect(() => {
-        if (!dnsSettingsData) return
-        dispatch(dnsSettingsActions.setDNSSettings({
-            disabled_management_groups: getGroupNamesFromIDs(dnsSettingsData.disabled_management_groups),
-        }))
-    }, [dnsSettingsData])
+        if (accounts.length < 1) {
+            console.error("invalid account data returned from the Management API", accounts)
+            return
+        }
+        let account = accounts[0]
 
-    useEffect(() => {
-        form.setFieldsValue(dnsSettings)
-    }, [dnsSettings])
+        let fAccount = {
+            ...account,
+            peer_login_expiration_formatted: secondsToExpiresIn(account.settings.peer_login_expiration, ["hour", "day"]),
+            peer_login_expiration_enabled: account.settings.peer_login_expiration_enabled
+        } as FormAccount
+        setFormAccount(fAccount)
+        console.log(fAccount)
+        form.setFieldsValue(fAccount)
+    }, [accounts])
 
     const createKey = 'saving';
-    useEffect(() => {
+    /*useEffect(() => {
         if (savedDNSSettings.loading) {
             message.loading({content: 'Saving...', key: createKey, duration: 0, style: styleNotification});
         } else if (savedDNSSettings.success) {
@@ -83,7 +86,7 @@ export const Settings = () => {
             dispatch(dnsSettingsActions.setSavedDNSSettings({...savedDNSSettings, error: null}));
             dispatch(nsGroupActions.resetSavedNameServerGroup(null))
         }
-    }, [savedDNSSettings])
+    }, [savedDNSSettings])*/
 
     const handleFormSubmit = () => {
         form.validateFields()
@@ -142,7 +145,7 @@ export const Settings = () => {
                                         >
                                             <Form.Item
                                                 label="Peer login expiration"
-                                                name="login_expiration_enabled"
+                                                name="peer_login_expiration_enabled"
                                                 tooltip=" "
                                                 rules={[{validator: selectValidatorEmptyStrings}]}
                                             >
@@ -155,7 +158,7 @@ export const Settings = () => {
                                                     buttonStyle="solid"
                                                 />
                                             </Form.Item>
-                                            <Form.Item name="expiresInFormatted" label="Peer login expires in"
+                                            <Form.Item name="peer_login_expiration_formatted" label="Peer login expires in"
                                                        tooltip=" "
                                                        rules={[{validator: checkExpiresIn}]}>
                                                 <ExpiresInInput options={
