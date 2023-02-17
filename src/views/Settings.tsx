@@ -4,8 +4,6 @@ import {RootState} from "typesafe-actions";
 import {Button, Card, Col, Form, message, Radio, Row, Space, Typography,} from "antd";
 import {useGetAccessTokenSilently} from "../utils/token";
 import {useGetGroupTagHelpers} from "../utils/groups";
-import {actions as dnsSettingsActions} from '../store/dns-settings';
-import {DNSSettings, DNSSettingsToSave} from "../store/dns-settings/types";
 import {Container} from "../components/Container";
 import UserUpdate from "../components/UserUpdate";
 import ExpiresInInput, {expiresInToSeconds, secondsToExpiresIn} from "./ExpiresInInput";
@@ -14,6 +12,8 @@ import {actions as accountActions} from "../store/account";
 import {Account, FormAccount} from "../store/account/types";
 
 const {Title, Paragraph} = Typography;
+
+const styleNotification = {marginTop: 85}
 
 export const Settings = () => {
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
@@ -26,6 +26,7 @@ export const Settings = () => {
     const accounts = useSelector((state: RootState) => state.account.data);
     const failed = useSelector((state: RootState) => state.account.failed);
     const loading = useSelector((state: RootState) => state.account.loading);
+    const updatedAccount = useSelector((state: RootState) => state.account.updatedAccount);
     const users = useSelector((state: RootState) => state.user.data);
     const [formAccount, setFormAccount] = useState({} as FormAccount);
 
@@ -54,26 +55,26 @@ export const Settings = () => {
     }, [accounts])
 
     const createKey = 'saving';
-    /*useEffect(() => {
-        if (savedDNSSettings.loading) {
+    useEffect(() => {
+        if (updatedAccount.loading) {
             message.loading({content: 'Saving...', key: createKey, duration: 0, style: styleNotification});
-        } else if (savedDNSSettings.success) {
+        } else if (updatedAccount.success) {
             message.success({
-                content: 'DNS settings has been successfully saved.',
+                content: 'Account settings has been successfully saved.',
                 key: createKey,
                 duration: 2,
                 style: styleNotification
             });
-            dispatch(dnsSettingsActions.setSavedDNSSettings({...savedDNSSettings, success: false}));
-            dispatch(dnsSettingsActions.resetSavedDNSSettings(null))
-        } else if (savedDNSSettings.error) {
-            let errorMsg = "Failed to update DNS settings"
-            switch (savedDNSSettings.error.statusCode) {
+           // dispatch(accountActions.setUpdateAccount({...updatedAccount, success: false}));
+            //dispatch(accountActions.setUpdateAccount({}))
+        } else if (updatedAccount.error) {
+            let errorMsg = "Failed to update account settings"
+            switch (updatedAccount.error.statusCode) {
                 case 403:
-                    errorMsg = "Failed to update DNS settings. You might not have enough permissions."
+                    errorMsg = "Failed to update account settings. You might not have enough permissions."
                     break
                 default:
-                    errorMsg = savedDNSSettings.error.data.message ? savedDNSSettings.error.data.message : errorMsg
+                    errorMsg = updatedAccount.error.data.message ? updatedAccount.error.data.message : errorMsg
                     break
             }
             message.error({
@@ -82,23 +83,17 @@ export const Settings = () => {
                 duration: 5,
                 style: styleNotification
             });
-            dispatch(dnsSettingsActions.setSavedDNSSettings({...savedDNSSettings, error: null}));
-            dispatch(nsGroupActions.resetSavedNameServerGroup(null))
         }
-    }, [savedDNSSettings])*/
+    }, [updatedAccount])
 
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
                 let accountToSave = createAccountToSave(values)
-                console.log(accountToSave)
                 dispatch(accountActions.updateAccount.request({
                     getAccessTokenSilently: getAccessTokenSilently,
                     payload: accountToSave
                 }))
-            })
-            .then(() => {
-                console.log("issued the request")
             })
             .catch((errorInfo) => {
                 let msg = "please check the fields and try again"
