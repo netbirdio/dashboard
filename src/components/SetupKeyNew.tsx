@@ -23,7 +23,7 @@ import {RootState} from "typesafe-actions";
 import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import {FormSetupKey, SetupKey, SetupKeyToSave} from "../store/setup-key/types";
 import {Header} from "antd/es/layout/layout";
-import {formatDate, timeAgo, checkExpiresIn} from "../utils/common";
+import {checkExpiresIn, formatDate, timeAgo} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
@@ -440,7 +440,13 @@ const SetupKeyNew = () => {
                                 <Col span={24}>
                                     <Form.Item name="expiresInFormatted" label="Expires In"
                                                rules={[{validator: checkExpiresIn}]}>
-                                        <ExpiresInInput/>
+                                        <ExpiresInInput options={
+                                            Array.of(
+                                                {key: "day", title: "Days"},
+                                                {key: "week", title: "Weeks"},
+                                                {key: "month", title: "Months"},
+                                                {key: "year", title: "Years"})
+                                        }/>
                                     </Form.Item>
                                 </Col>}
                             <Col span={12}>
@@ -448,7 +454,8 @@ const SetupKeyNew = () => {
                                            label="Usage Limit"
                                            tooltip="Limit the number of times this key can be used. Use 0 for unlimited use."
                                 >
-                                    <InputNumber min={0} defaultValue={0} disabled={setupKey.id || formSetupKey.type !== "reusable"}
+                                    <InputNumber min={0} defaultValue={0}
+                                                 disabled={setupKey.id || formSetupKey.type !== "reusable"}
                                                  style={{width: "100%"}}
                                     />
                                 </Form.Item>

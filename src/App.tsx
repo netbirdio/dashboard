@@ -21,6 +21,7 @@ import {User} from "./store/user/types";
 import {SecureLoading} from "./components/Loading";
 import DNS from "./views/DNS";
 import Activity from "./views/Activity";
+import Settings from "./views/Settings";
 
 
 
@@ -107,6 +108,7 @@ function App() {
                             <Route path="/users" component={withOidcSecure(Users)}/>
                             <Route path="/dns" component={withOidcSecure(DNS)}/>
                             <Route path="/activity" component={withOidcSecure(Activity)}/>
+                            <Route path="/settings" component={withOidcSecure(Settings)}/>
                         </Switch>
                     </Content>
                     <FooterComponent/>

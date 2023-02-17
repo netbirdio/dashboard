@@ -8,12 +8,22 @@ export interface ExpiresInValue {
     interval?: string;
 }
 
+export interface SelectOption {
+    key: string,
+    title: string
+}
+
 interface ExpiresInInputProps {
     value?: ExpiresInValue;
     onChange?: (value: ExpiresInValue) => void;
+    options: SelectOption[];
 }
 
-const ExpiresInInput: React.FC<ExpiresInInputProps> = ({value = {}, onChange}) => {
+const ExpiresInInput: React.FC<ExpiresInInputProps> = ({
+                                                           value = {},
+                                                           onChange,
+                                                           options
+                                                       }) => {
     const [number, setNumber] = useState(60);
     const [interval, setInterval] = useState("day");
 
@@ -39,15 +49,13 @@ const ExpiresInInput: React.FC<ExpiresInInputProps> = ({value = {}, onChange}) =
                 value={value.number || number}
                 onChange={onNumberChange}
             />
-             <Select style={{width: "100%"}}
-                     value={value?.interval || interval}
-                     onChange={onIntervalChange}>
-                <Option value="day">Days</Option>
-                <Option value="week">Weeks</Option>
-                <Option value="month">Months</Option>
-                <Option value="year">Years</Option>
+            <Select style={{width: "100%"}}
+                    value={value?.interval || interval}
+                    onChange={onIntervalChange}>
+                {options.map(m =>
+                    <Select.Option key={m.key}>{m.title}</Select.Option>)}
             </Select>
-    </Space>
+        </Space>
     );
 };
 
