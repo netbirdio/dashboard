@@ -15,7 +15,7 @@ interface ExpiresInInputProps {
 
 const ExpiresInInput: React.FC<ExpiresInInputProps> = ({value = {}, onChange}) => {
     const [number, setNumber] = useState(60);
-    const [interval, setInterval] = useState("Days");
+    const [interval, setInterval] = useState("day");
 
     const triggerChange = (changedValue: { number?: number; interval?: string }) => {
         onChange?.({number, interval, ...value, ...changedValue});

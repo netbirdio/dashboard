@@ -24,6 +24,13 @@ export const capitalize = text => {
     return text.charAt(0).toUpperCase() + text.slice(1)
 }
 
+export const checkExpiresIn = (_, value) => {
+    if (value.number > 0) {
+        return Promise.resolve();
+    }
+    return Promise.reject(new Error("Expiration must be greater than zero"));
+};
+
 export const formatDateTime = date => {
     if (new Date(date).getTime() > new Date("2099-12-31").getTime()) {
         return new Date(date).toLocaleDateString("en-GB", { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: 'numeric', second: 'numeric' });

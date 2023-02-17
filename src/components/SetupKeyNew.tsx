@@ -23,7 +23,7 @@ import {RootState} from "typesafe-actions";
 import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import {FormSetupKey, SetupKey, SetupKeyToSave} from "../store/setup-key/types";
 import {Header} from "antd/es/layout/layout";
-import {formatDate, timeAgo} from "../utils/common";
+import {formatDate, timeAgo, checkExpiresIn} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
@@ -34,7 +34,7 @@ const {Option} = Select;
 
 const {Text} = Typography;
 
-const ExpiresInDefault: ExpiresInValue = {number: 30, interval: "Days"}
+const ExpiresInDefault: ExpiresInValue = {number: 30, interval: "day"}
 
 const customExpiresFormat: DatePickerProps['format'] = value => {
     return formatDate(value)
@@ -289,13 +289,6 @@ const SetupKeyNew = () => {
 
         return setupKey.auto_groups?.filter(g => !formGroupIds.includes(g)).length > 0
     }
-
-    const checkExpiresIn = (_: any, value: { number: number }) => {
-        if (value.number > 0) {
-            return Promise.resolve();
-        }
-        return Promise.reject(new Error("Expiration must be greater than zero"));
-    };
 
     return (
         <>
