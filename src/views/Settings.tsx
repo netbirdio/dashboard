@@ -62,7 +62,7 @@ export const Settings = () => {
             message.loading({content: 'Saving...', key: updatingSettings, duration: 0, style: styleNotification});
         } else if (updatedAccount.success) {
             message.success({
-                content: 'Account settings has been successfully saved.',
+                content: 'Account settings have been successfully saved.',
                 key: updatingSettings,
                 duration: 2,
                 style: styleNotification
