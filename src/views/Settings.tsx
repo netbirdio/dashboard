@@ -145,7 +145,7 @@ export const Settings = () => {
                                             <Form.Item
                                                 label="Peer login expiration"
                                                 name="peer_login_expiration_enabled"
-                                                tooltip="Enabled peer expirations allows to periodically request authentication of peers that were added with the SSO login."
+                                                tooltip="Peer login expiration allows to periodically request re-authentication of peers that were added with the SSO login. You can disable the expiration per peer in the peers tab."
                                                 //rules={[{validator: selectValidatorEmptyStrings}]}
                                             >
                                                 <Radio.Group
