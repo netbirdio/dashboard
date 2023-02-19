@@ -10,6 +10,7 @@ import ExpiresInInput, {expiresInToSeconds, secondsToExpiresIn} from "./ExpiresI
 import {checkExpiresIn} from "../utils/common";
 import {actions as accountActions} from "../store/account";
 import {Account, FormAccount} from "../store/account/types";
+import {values} from "lodash";
 
 const {Title, Paragraph} = Typography;
 
@@ -20,7 +21,6 @@ export const Settings = () => {
     const dispatch = useDispatch()
 
     const {
-        selectValidatorEmptyStrings
     } = useGetGroupTagHelpers()
 
     const accounts = useSelector((state: RootState) => state.account.data);
@@ -29,6 +29,7 @@ export const Settings = () => {
     const updatedAccount = useSelector((state: RootState) => state.account.updatedAccount);
     const users = useSelector((state: RootState) => state.user.data);
     const [formAccount, setFormAccount] = useState({} as FormAccount);
+    const [formPeerExpirationEnabled, setFormPeerExpirationEnabled] = useState(true);
 
 
     const [form] = Form.useForm()
@@ -51,6 +52,7 @@ export const Settings = () => {
             peer_login_expiration_enabled: account.settings.peer_login_expiration_enabled
         } as FormAccount
         setFormAccount(fAccount)
+        setFormPeerExpirationEnabled(fAccount.peer_login_expiration_enabled)
         form.setFieldsValue(fAccount)
     }, [accounts])
 
@@ -65,7 +67,7 @@ export const Settings = () => {
                 duration: 2,
                 style: styleNotification
             });
-           // dispatch(accountActions.setUpdateAccount({...updatedAccount, success: false}));
+            // dispatch(accountActions.setUpdateAccount({...updatedAccount, success: false}));
             //dispatch(accountActions.setUpdateAccount({}))
         } else if (updatedAccount.error) {
             let errorMsg = "Failed to update account settings"
@@ -153,16 +155,23 @@ export const Settings = () => {
                                                     }]}
                                                     optionType="button"
                                                     buttonStyle="solid"
+                                                    onChange={function (e) {
+                                                        setFormPeerExpirationEnabled(e.target.value)
+                                                        console.log(e.target.value)
+                                                    }}
                                                 />
                                             </Form.Item>
-                                            <Form.Item name="peer_login_expiration_formatted" label="Peer login expires in"
+                                            <Form.Item name="peer_login_expiration_formatted"
+                                                       label="Peer login expires in"
                                                        tooltip=" "
                                                        rules={[{validator: checkExpiresIn}]}>
-                                                <ExpiresInInput options={
-                                                    Array.of(
-                                                        {key: "hour", title: "Hours"},
-                                                        {key: "day", title: "Days"})
-                                                }/>
+                                                <ExpiresInInput
+                                                    disabled={!formPeerExpirationEnabled}
+                                                    options={Array.of({key: "hour", title: "Hours"}, {
+                                                        key: "day",
+                                                        title: "Days"
+                                                    })
+                                                    }/>
                                             </Form.Item>
                                         </Card>
                                         <Form.Item style={{textAlign: 'center'}}>

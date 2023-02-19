@@ -1,8 +1,6 @@
 import {Input, Select, Space} from 'antd';
 import React, {useState} from 'react';
 
-const {Option} = Select;
-
 export interface ExpiresInValue {
     number?: number;
     interval?: string;
@@ -17,6 +15,7 @@ interface ExpiresInInputProps {
     value?: ExpiresInValue;
     onChange?: (value: ExpiresInValue) => void;
     options: SelectOption[];
+    disabled?: boolean;
 }
 
 export const secondsToExpiresIn = (expiresIn: number, availableOptions: string[]): ExpiresInValue => {
@@ -72,7 +71,8 @@ export const expiresInToSeconds = (expiresIn: ExpiresInValue): number => {
 const ExpiresInInput: React.FC<ExpiresInInputProps> = ({
                                                            value = {},
                                                            onChange,
-                                                           options
+                                                           options,
+                                                           disabled= false,
                                                        }) => {
     const [number, setNumber] = useState(60);
     const [interval, setInterval] = useState("day");
@@ -98,9 +98,11 @@ const ExpiresInInput: React.FC<ExpiresInInputProps> = ({
                 type="number"
                 value={value.number || number}
                 onChange={onNumberChange}
+                disabled={disabled}
             />
             <Select style={{width: "100%"}}
                     value={value?.interval || interval}
+                    disabled={disabled}
                     onChange={onIntervalChange}>
                 {options.map(m =>
                     <Select.Option key={m.key}>{m.title}</Select.Option>)}
