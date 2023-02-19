@@ -1,9 +1,8 @@
-import {all, call, put, select, takeLatest} from 'redux-saga/effects';
+import {all, call, put, takeLatest} from 'redux-saga/effects';
 import {ApiError, ApiResponse, ChangeResponse} from '../../services/api-client/types';
 import {Account} from './types'
 import service from './service';
 import actions from './actions';
-import {Peer} from "../peer/types";
 
 export function* getAccounts(action: ReturnType<typeof actions.getAccounts.request>): Generator {
     try {
@@ -26,12 +25,11 @@ export function* updateAccount(action: ReturnType<typeof actions.updateAccount.r
             data: null
         }))
 
-        const peer = action.payload.payload
-        const peerId = peer.id
+        const account = action.payload.payload
 
         const payloadToSave = {
             getAccessTokenSilently: action.payload.getAccessTokenSilently,
-            payload: peer
+            payload: account
         }
 
         const effect = yield call(service.updateAccount, payloadToSave)

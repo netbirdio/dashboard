@@ -56,19 +56,19 @@ export const Settings = () => {
         form.setFieldsValue(fAccount)
     }, [accounts])
 
-    const createKey = 'saving';
+    const updatingSettings = 'updating_settings';
     useEffect(() => {
         if (updatedAccount.loading) {
-            message.loading({content: 'Saving...', key: createKey, duration: 0, style: styleNotification});
+            message.loading({content: 'Saving...', key: updatingSettings, duration: 0, style: styleNotification});
         } else if (updatedAccount.success) {
             message.success({
                 content: 'Account settings has been successfully saved.',
-                key: createKey,
+                key: updatingSettings,
                 duration: 2,
                 style: styleNotification
             });
-            // dispatch(accountActions.setUpdateAccount({...updatedAccount, success: false}));
-            //dispatch(accountActions.setUpdateAccount({}))
+            dispatch(accountActions.setUpdateAccount({...updatedAccount, success: false}));
+            dispatch(accountActions.resetUpdateAccount(null))
         } else if (updatedAccount.error) {
             let errorMsg = "Failed to update account settings"
             switch (updatedAccount.error.statusCode) {
@@ -81,7 +81,7 @@ export const Settings = () => {
             }
             message.error({
                 content: errorMsg,
-                key: createKey,
+                key: updatingSettings,
                 duration: 5,
                 style: styleNotification
             });
@@ -157,7 +157,6 @@ export const Settings = () => {
                                                     buttonStyle="solid"
                                                     onChange={function (e) {
                                                         setFormPeerExpirationEnabled(e.target.value)
-                                                        console.log(e.target.value)
                                                     }}
                                                 />
                                             </Form.Item>
