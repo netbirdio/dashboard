@@ -3,12 +3,6 @@ import axios from 'axios';
 import {ApiError, ApiRequestParams, ApiResponse} from './types';
 import {headersFactory, RequestHeader} from './header-factory';
 
-/*axios.interceptors.response.use(undefined, err => {
-  let res = err.response;
-  if (res.status === 401) {
-  }
-})*/
-
 async function apiRequest<T>(params: ApiRequestParams): Promise<ApiResponse<T>> {
   const data = params.data ? (params.data as any).payload : undefined;
   const url = `${params.urlBase}${params.url}`;

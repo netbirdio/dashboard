@@ -104,9 +104,6 @@ export const DNSSettingsForm = () => {
                     payload: dnsSettingsToSave
                 }))
             })
-            .then(() => {
-                console.log("issued the request")
-            })
             .catch((errorInfo) => {
                 let msg = "please check the fields and try again"
                 if (errorInfo.errorFields) {

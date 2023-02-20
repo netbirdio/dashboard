@@ -7,6 +7,7 @@ import {actions as RouteActions} from './route';
 import {actions as NameServerGroupActions} from './nameservers';
 import {actions as EventActions} from './event';
 import {actions as DNSSettingsActions} from './dns-settings';
+import {actions as AccountActions} from './account';
 
 export default {
   peer: PeerActions,
@@ -17,5 +18,6 @@ export default {
   route: RouteActions,
   nameserverGroup: NameServerGroupActions,
   event: EventActions,
-  dnsSettings: DNSSettingsActions
+  dnsSettings: DNSSettingsActions,
+  account: AccountActions
 };
