@@ -23,12 +23,12 @@ import {RootState} from "typesafe-actions";
 import {CloseOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import {FormSetupKey, SetupKey, SetupKeyToSave} from "../store/setup-key/types";
 import {Header} from "antd/es/layout/layout";
-import {formatDate, timeAgo, checkExpiresIn} from "../utils/common";
+import {checkExpiresIn, formatDate, timeAgo} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
 import {useGetAccessTokenSilently} from "../utils/token";
-import ExpiresInInput, {ExpiresInValue} from "../views/ExpiresInInput";
+import ExpiresInInput, {expiresInToSeconds, ExpiresInValue} from "../views/ExpiresInInput";
 
 const {Option} = Select;
 
@@ -116,31 +116,6 @@ const SetupKeyNew = () => {
             expires_in: expiresIn,
             usage_limit: formSetupKey.usage_limit
         } as SetupKeyToSave
-    }
-    const expiresInToSeconds = (expiresIn: ExpiresInValue): number => {
-        if (!expiresIn.number || !expiresIn.interval) {
-            return 0
-        }
-        let multiplier = 0
-        switch (expiresIn.interval.toLowerCase()) {
-            case "day":
-                multiplier = 24 * 3600
-                break
-            case "week":
-                multiplier = 7 * 24 * 3600
-                break
-            case "month":
-                multiplier = 30 * 24 * 3600
-                break
-            case "year":
-                multiplier = 365 * 24 * 3600
-                break
-            default:
-                multiplier = 0
-        }
-
-        return expiresIn.number * multiplier
-
     }
 
     const handleFormSubmit = () => {
@@ -440,7 +415,12 @@ const SetupKeyNew = () => {
                                 <Col span={24}>
                                     <Form.Item name="expiresInFormatted" label="Expires In"
                                                rules={[{validator: checkExpiresIn}]}>
-                                        <ExpiresInInput/>
+                                        <ExpiresInInput options={
+                                            Array.of(
+                                                {key: "day", title: "Days"},
+                                                {key: "month", title: "Months"},
+                                                {key: "year", title: "Years"})
+                                        }/>
                                     </Form.Item>
                                 </Col>}
                             <Col span={12}>
@@ -448,7 +428,8 @@ const SetupKeyNew = () => {
                                            label="Usage Limit"
                                            tooltip="Limit the number of times this key can be used. Use 0 for unlimited use."
                                 >
-                                    <InputNumber min={0} defaultValue={0} disabled={setupKey.id || formSetupKey.type !== "reusable"}
+                                    <InputNumber min={0} defaultValue={0}
+                                                 disabled={setupKey.id || formSetupKey.type !== "reusable"}
                                                  style={{width: "100%"}}
                                     />
                                 </Form.Item>
