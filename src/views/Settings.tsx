@@ -125,8 +125,6 @@ export const Settings = () => {
     }
 
     const confirmSave = (newValues: FormAccount) => {
-        console.log(newValues.peer_login_expiration_enabled)
-        console.log(formAccount.peer_login_expiration_enabled)
         if (newValues.peer_login_expiration_enabled != formAccount.peer_login_expiration_enabled) {
             let content = newValues.peer_login_expiration_enabled ? "Enabling peer expiration will cause some peers added with the SSO login to disconnect, and re-authentication will be required. Do you want to enable peer login expiration?" : "Disabling peer expiration will cause peers added with the SSO login never to expire. For security reasons, keeping peers expiring periodically is usually better. Do you want to disable peer login expiration?"
             confirm({
