@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
-import {Button, Card, Col, Form, message, Radio, Row, Space, Typography,} from "antd";
+import {Button, Card, Col, Form, List, message, Modal, Radio, Row, Space, Typography,} from "antd";
 import {useGetAccessTokenSilently} from "../utils/token";
 import {useGetGroupTagHelpers} from "../utils/groups";
 import {Container} from "../components/Container";
@@ -10,7 +10,8 @@ import ExpiresInInput, {expiresInToSeconds, secondsToExpiresIn} from "./ExpiresI
 import {checkExpiresIn} from "../utils/common";
 import {actions as accountActions} from "../store/account";
 import {Account, FormAccount} from "../store/account/types";
-import {values} from "lodash";
+import {ExclamationCircleOutlined} from "@ant-design/icons";
+const {confirm} = Modal;
 
 const {Title, Paragraph} = Typography;
 
@@ -29,6 +30,7 @@ export const Settings = () => {
     const updatedAccount = useSelector((state: RootState) => state.account.updatedAccount);
     const users = useSelector((state: RootState) => state.user.data);
     const [formAccount, setFormAccount] = useState({} as FormAccount);
+    const [accountToAction, setAccountToAction] = useState({} as FormAccount);
     const [formPeerExpirationEnabled, setFormPeerExpirationEnabled] = useState(true);
 
 
@@ -69,6 +71,13 @@ export const Settings = () => {
             });
             dispatch(accountActions.setUpdateAccount({...updatedAccount, success: false}));
             dispatch(accountActions.resetUpdateAccount(null))
+            let fAccount = {
+                id: updatedAccount.data.id,
+                settings: updatedAccount.data.settings,
+                peer_login_expiration_formatted: secondsToExpiresIn(updatedAccount.data.settings.peer_login_expiration, ["hour", "day"]),
+                peer_login_expiration_enabled: updatedAccount.data.settings.peer_login_expiration_enabled
+            } as FormAccount
+            setFormAccount(fAccount)
         } else if (updatedAccount.error) {
             let errorMsg = "Failed to update account settings"
             switch (updatedAccount.error.statusCode) {
@@ -91,11 +100,7 @@ export const Settings = () => {
     const handleFormSubmit = () => {
         form.validateFields()
             .then((values) => {
-                let accountToSave = createAccountToSave(values)
-                dispatch(accountActions.updateAccount.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
-                    payload: accountToSave
-                }))
+                confirmSave(values)
             })
             .catch((errorInfo) => {
                 let msg = "please check the fields and try again"
@@ -117,6 +122,34 @@ export const Settings = () => {
                 peer_login_expiration_enabled: values.peer_login_expiration_enabled
             }
         } as Account
+    }
+
+    const confirmSave = (newValues: FormAccount) => {
+        if (newValues.peer_login_expiration_enabled != formAccount.peer_login_expiration_enabled) {
+            let content = newValues.peer_login_expiration_enabled ? "Enabling peer expiration will cause some peers added with the SSO login to disconnect, and re-authentication will be required. Do you want to enable peer login expiration?" : "Disabling peer expiration will cause peers added with the SSO login never to expire. For security reasons, keeping peers expiring periodically is usually better. Do you want to disable peer login expiration?"
+            confirm({
+                icon: <ExclamationCircleOutlined/>,
+                title: "Before you update your account settings.",
+                width: 600,
+                content: content,
+                okType: 'danger',
+                onOk() {
+                    saveAccount(newValues)
+                },
+                onCancel() {
+                },
+            });
+        } else {
+            saveAccount(newValues)
+        }
+    }
+
+    const saveAccount = (newValues: FormAccount) => {
+        let accountToSave = createAccountToSave(newValues)
+        dispatch(accountActions.updateAccount.request({
+            getAccessTokenSilently: getAccessTokenSilently,
+            payload: accountToSave
+        }))
     }
 
     return (
