@@ -170,6 +170,8 @@ export const Activity = () => {
             case "peer.ssh.enable":
             case "peer.ssh.disable":
             case "peer.rename":
+            case "peer.login.expiration.disable":
+            case "peer.login.expiration.enable":
                 return renderMultiRowSpan(event.meta.fqdn,event.meta.ip)
             case "route.add":
             case "route.delete":
@@ -186,8 +188,6 @@ export const Activity = () => {
                 return renderMultiRowSpan(event.meta.setupkey,"Setup Key")
             case "peer.group.add":
             case "peer.group.delete":
-            case "peer.login.expiration.disable":
-            case "peer.login.expiration.enable":
                 return renderMultiRowSpan(event.meta.peer_fqdn,event.meta.peer_ip)
             case "dns.setting.disabled.management.group.add":
             case "dns.setting.disabled.management.group.delete":
