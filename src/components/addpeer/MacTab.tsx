@@ -30,13 +30,23 @@ export const LinuxTab = () => {
         } as StepCommand,
         {
             key: 3,
+            title: 'Start NetBird daemon:',
+            commands: [
+                `sudo netbird service install`,
+                `sudo netbird service start`
+            ].join('\n'),
+            copied: false,
+            showCopyButton: true
+        } as StepCommand,
+        {
+            key: 4,
             title: 'Run NetBird and log in the browser:',
             commands: formatNetBirdUP(),
             copied: false,
             showCopyButton: true
         } as StepCommand,
         {
-            key: 4,
+            key: 5,
             title: 'Get your IP address:',
             commands: [
                 `sudo ifconfig utun100`
