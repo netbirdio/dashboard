@@ -170,6 +170,8 @@ export const Activity = () => {
             case "peer.ssh.enable":
             case "peer.ssh.disable":
             case "peer.rename":
+            case "peer.login.expiration.disable":
+            case "peer.login.expiration.enable":
                 return renderMultiRowSpan(event.meta.fqdn,event.meta.ip)
             case "route.add":
             case "route.delete":
