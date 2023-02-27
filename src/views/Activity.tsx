@@ -179,6 +179,7 @@ export const Activity = () => {
                 return renderMultiRowSpan(event.meta.name, "Route for range " + event.meta.network_range)
             case "user.group.add":
             case "user.group.delete":
+            case "user.role.update":
                 if (user) {
                     return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
                 }
