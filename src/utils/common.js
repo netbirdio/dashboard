@@ -6,7 +6,8 @@ export const formatOS = (os) => {
     if (os.startsWith("Darwin")) {
         return os.replace("Darwin", "MacOS");
     }
-
+    // capitalize first letter
+    os = os.charAt(0).toUpperCase() + os.slice(1);
     return os;
 };
 
