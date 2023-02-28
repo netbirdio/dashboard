@@ -46,12 +46,14 @@ import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {actions as groupActions} from "../store/group";
 import {useGetGroupTagHelpers} from "../utils/groups";
+import {usePageSizeHelpers} from "../utils/pageSize";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
 const {confirm} = Modal;
 
 export const Routes = () => {
+    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
     const {
@@ -70,7 +72,6 @@ export const Routes = () => {
     const [showTutorial, setShowTutorial] = useState(true)
     const [textToSearch, setTextToSearch] = useState('');
     const [optionAllEnable, setOptionAllEnable] = useState('enabled');
-    const [pageSize, setPageSize] = useState(5);
     const [currentPage, setCurrentPage] = useState(1);
     const [dataTable, setDataTable] = useState([] as RouteDataTable[]);
     const [routeToAction, setRouteToAction] = useState(null as RouteDataTable | null);
@@ -79,13 +80,6 @@ export const Routes = () => {
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
 
     const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
-
-    const pageSizeOptions = [
-        {label: "5", value: "5"},
-        {label: "10", value: "10"},
-        {label: "15", value: "15"}
-    ]
-
     const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
 
     const itemsMenuAction = [
@@ -209,10 +203,6 @@ export const Routes = () => {
 
     const onChangeAllEnabled = ({target: {value}}: RadioChangeEvent) => {
         setOptionAllEnable(value)
-    }
-
-    const onChangePageSize = (value: string) => {
-        setPageSize(parseInt(value.toString()))
     }
 
     const showConfirmDelete = () => {

@@ -40,6 +40,7 @@ import {TooltipPlacement} from "antd/es/tooltip";
 import {useGetAccessTokenSilently} from "../utils/token";
 import {actions as userActions} from "../store/user";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
+import {usePageSizeHelpers} from "../utils/pageSize";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -47,7 +48,8 @@ const {confirm} = Modal;
 
 export const Peers = () => {
 
-    //const {accessToken} = useOidcAccessToken()
+    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
+
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
@@ -65,17 +67,12 @@ export const Peers = () => {
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
-    const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
     const [showTutorial, setShowTutorial] = useState(false)
 
-    const pageSizeOptions = [
-        {label: "5", value: "5"},
-        {label: "10", value: "10"},
-        {label: "15", value: "15"}
-    ]
+
 
     const optionsOnOff = [{label: 'Online', value: 'on'}, {label: 'All', value: 'all'}]
 
@@ -229,11 +226,6 @@ export const Peers = () => {
     const onChangeOnOff = ({target: {value}}: RadioChangeEvent) => {
         setOptionOnOff(value)
     }
-
-    const onChangePageSize = (value: string) => {
-        setPageSize(parseInt(value.toString()))
-    }
-
 
     const showConfirmDelete = () => {
         let peerRoutes: string[] = []

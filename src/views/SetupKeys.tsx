@@ -34,6 +34,7 @@ import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {useGetAccessTokenSilently} from "../utils/token";
+import {usePageSizeHelpers} from "../utils/pageSize";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
@@ -45,7 +46,7 @@ interface SetupKeyDataTable extends SetupKey {
 }
 
 export const SetupKeys = () => {
-    //const {accessToken} = useOidcAccessToken()
+    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
@@ -58,7 +59,6 @@ export const SetupKeys = () => {
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionValidAll, setOptionValidAll] = useState('valid');
-    const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as SetupKeyDataTable[]);
     const [setupKeyToAction, setSetupKeyToAction] = useState(null as SetupKeyDataTable | null);
     const setupNewKeyVisible =   useSelector((state: RootState) => state.setupKey.setupNewKeyVisible)
@@ -66,11 +66,6 @@ export const SetupKeys = () => {
 
     const styleNotification = {marginTop: 85}
 
-    const pageSizeOptions = [
-        {label: "5", value: "5"},
-        {label: "10", value: "10"},
-        {label: "15", value: "15"}
-    ]
 
     const optionsValidAll = [{label: 'Valid', value: 'valid'}, {label: 'All', value: 'all'}]
 
@@ -178,10 +173,6 @@ export const SetupKeys = () => {
 
     const onChangeValidAll = ({target: {value}}: RadioChangeEvent) => {
         setOptionValidAll(value)
-    }
-
-    const onChangePageSize = (value: string) => {
-        setPageSize(parseInt(value.toString()))
     }
 
     const showConfirmRevoke = () => {
