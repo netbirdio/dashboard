@@ -183,7 +183,7 @@ export const Activity = () => {
                 if (user) {
                     return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
                 }
-                return "n/a"
+                return "-"
             case "setupkey.group.add":
             case "setupkey.group.delete":
                 return renderMultiRowSpan(event.meta.setupkey,"Setup Key")
@@ -200,6 +200,9 @@ export const Activity = () => {
                 if (user) {
                     return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
                 }
+                break
+            default:
+                console.error("unknown event - missing handling", event.activity_code)
         }
 
         return event.target_id
