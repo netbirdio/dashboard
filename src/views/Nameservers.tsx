@@ -33,6 +33,7 @@ import {NameServer, NameServerGroup} from "../store/nameservers/types";
 import NameServerGroupUpdate from "../components/NameServerGroupUpdate";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import {useGetGroupTagHelpers} from "../utils/groups";
+import {usePageSizeHelpers} from "../utils/pageSize";
 
 const {Title, Paragraph} = Typography;
 const {Column} = Table;
@@ -45,6 +46,7 @@ interface NameserverGroupDataTable extends NameServerGroup {
 const styleNotification = {marginTop: 85}
 
 export const Nameservers = () => {
+    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
@@ -63,14 +65,9 @@ export const Nameservers = () => {
     const [nsGroupToAction, setNsGroupToAction] = useState(null as NameserverGroupDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
     const [optionAllEnable, setOptionAllEnable] = useState('enabled');
-    const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as NameserverGroupDataTable[]);
     const [showTutorial, setShowTutorial] = useState(false)
-    const pageSizeOptions = [
-        {label: "5", value: "5"},
-        {label: "10", value: "10"},
-        {label: "15", value: "15"}
-    ]
+
 
     const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
 
@@ -139,10 +136,6 @@ export const Nameservers = () => {
 
     const searchDataTable = () => {
         setDataTable(transformDataTable(filterDataTable()))
-    }
-
-    const onChangePageSize = (value: string) => {
-        setPageSize(parseInt(value.toString()))
     }
 
     const onClickEdit = () => {

@@ -12,6 +12,7 @@ import UserUpdate from "../components/UserUpdate";
 import {useOidcUser} from "@axa-fr/react-oidc";
 import {capitalize, formatDateTime} from "../utils/common";
 import {User} from "../store/user/types";
+import {usePageSizeHelpers} from "../utils/pageSize";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -20,6 +21,7 @@ interface EventDataTable extends Event {
 }
 
 export const Activity = () => {
+    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const {oidcUser} = useOidcUser();
     const dispatch = useDispatch()
@@ -31,14 +33,8 @@ export const Activity = () => {
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
 
     const [textToSearch, setTextToSearch] = useState('');
-    const [pageSize, setPageSize] = useState(20);
     const [dataTable, setDataTable] = useState([] as EventDataTable[]);
-    const pageSizeOptions = [
-        {label: "5", value: "5"},
-        {label: "10", value: "10"},
-        {label: "15", value: "15"},
-        {label: "20", value: "20"}
-    ]
+
 
     const transformDataTable = (d: Event[]): EventDataTable[] => {
         return d.map(p => ({key: p.id, ...p} as EventDataTable))
@@ -71,10 +67,6 @@ export const Activity = () => {
     const searchDataTable = () => {
         const data = filterDataTable()
         setDataTable(transformDataTable(data))
-    }
-
-    const onChangePageSize = (value: string) => {
-        setPageSize(parseInt(value.toString()))
     }
 
     const getActivityRow = (group:string,text:string) => {
