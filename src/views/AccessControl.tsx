@@ -36,6 +36,7 @@ import {Group} from "../store/group/types";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
 import {useGetAccessTokenSilently} from "../utils/token";
+import {usePageSizeHelpers} from "../utils/pageSize";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -56,6 +57,7 @@ interface GroupsToShow {
 }
 
 export const AccessControl = () => {
+    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
 
@@ -68,7 +70,6 @@ export const AccessControl = () => {
     const [showTutorial, setShowTutorial] = useState(true)
     const [textToSearch, setTextToSearch] = useState('');
     const [optionAllEnable, setOptionAllEnable] = useState('enabled');
-    const [pageSize, setPageSize] = useState(5);
     const [currentPage, setCurrentPage] = useState(1);
     const [dataTable, setDataTable] = useState([] as RuleDataTable[]);
     const [ruleToAction, setRuleToAction] = useState(null as RuleDataTable | null);
@@ -76,11 +77,6 @@ export const AccessControl = () => {
     const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible);
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
 
-    const pageSizeOptions = [
-        {label: "5", value: "5"},
-        {label: "10", value: "10"},
-        {label: "15", value: "15"}
-    ]
 
     const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
 
@@ -198,10 +194,6 @@ export const AccessControl = () => {
 
     const onChangeAllEnabled = ({target: {value}}: RadioChangeEvent) => {
         setOptionAllEnable(value)
-    }
-
-    const onChangePageSize = (value: string) => {
-        setPageSize(parseInt(value.toString()))
     }
 
     const showConfirmDelete = () => {

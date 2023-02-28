@@ -33,6 +33,7 @@ import {Link} from "react-router-dom";
 import {actions as setupKeyActions} from "../store/setup-key";
 import {SetupKey} from "../store/setup-key/types";
 import {isLocalDev, isNetBirdHosted} from "../utils/common";
+import {usePageSizeHelpers} from "../utils/pageSize";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -44,6 +45,7 @@ interface UserDataTable extends User {
 const styleNotification = {marginTop: 85}
 
 export const Users = () => {
+    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const {oidcUser} = useOidcUser();
     const {idTokenPayload} = useOidcIdToken()
@@ -59,14 +61,9 @@ export const Users = () => {
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
     const [userToAction, setUserToAction] = useState(null as UserDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
-    const [pageSize, setPageSize] = useState(10);
     const [dataTable, setDataTable] = useState([] as UserDataTable[]);
     const [currentUser, setCurrentUser] = useState({} as User)
-    const pageSizeOptions = [
-        {label: "5", value: "5"},
-        {label: "10", value: "10"},
-        {label: "15", value: "15"}
-    ]
+
 
     // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
     const setUserAndView = (user: User) => {
@@ -127,10 +124,6 @@ export const Users = () => {
     const searchDataTable = () => {
         const data = filterDataTable()
         setDataTable(transformDataTable(data))
-    }
-
-    const onChangePageSize = (value: string) => {
-        setPageSize(parseInt(value.toString()))
     }
 
     const onClickEdit = () => {
