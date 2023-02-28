@@ -16,7 +16,7 @@ const AccessControlModalGroups:React.FC<Props> = ({data, title, visible, onCance
 
     return (
         <>
-            <Modal title={title} visible={isModalVisible} onCancel={() => onCancel()} footer={null}>
+            <Modal title={title} open={isModalVisible} onCancel={() => onCancel()} footer={null}>
                 <List
                     itemLayout="horizontal"
                     dataSource={data as Group[] | undefined}

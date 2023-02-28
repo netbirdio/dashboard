@@ -319,7 +319,6 @@ export const AccessControl = () => {
             const _g = g as Group
             const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
             return (
-                <Space direction="vertical">
                     <div key={i}>
                         <Tag
                             color="blue"
@@ -329,14 +328,14 @@ export const AccessControl = () => {
                         </Tag>
                         <span style={{fontSize: ".85em"}}>{peersCount}</span>
                     </div>
-                </Space>
             )
         })
+        const mainContent = (<Space direction="vertical">{content}</Space>)
         return (
             <Popover
                 onOpenChange={onPopoverVisibleChange}
                 open={groupPopupVisible}
-                content={content}
+                content={mainContent}
                 title={null}>
                 <Button type="link" onClick={() => setRuleAndView(rule)}>{label}</Button>
             </Popover>
@@ -451,7 +450,7 @@ export const AccessControl = () => {
                                                 if (deletedRule.loading || savedRule.loading) return <></>
                                                 return <Dropdown.Button type="text" overlay={actionsMenu}
                                                                         trigger={["click"]}
-                                                                        onVisibleChange={visible => {
+                                                                        onOpenChange={visible => {
                                                                             if (visible) setRuleToAction(record as RuleDataTable)
                                                                         }}></Dropdown.Button>
                                             }}
