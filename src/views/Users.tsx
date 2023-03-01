@@ -1,4 +1,4 @@
-import React, {useEffect, useRef, useState} from 'react';
+import React, {useEffect,  useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as userActions} from '../store/user';
@@ -28,10 +28,6 @@ import UserUpdate from "../components/UserUpdate";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
-import {useOidcIdToken, useOidcUser} from "@axa-fr/react-oidc";
-import {Link} from "react-router-dom";
-import {actions as setupKeyActions} from "../store/setup-key";
-import {SetupKey} from "../store/setup-key/types";
 import {isLocalDev, isNetBirdHosted} from "../utils/common";
 import {usePageSizeHelpers} from "../utils/pageSize";
 
@@ -47,8 +43,6 @@ const styleNotification = {marginTop: 85}
 export const Users = () => {
     const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
-    const {oidcUser} = useOidcUser();
-    const {idTokenPayload} = useOidcIdToken()
     const dispatch = useDispatch()
 
     const groups = useSelector((state: RootState) => state.group.data)
@@ -62,8 +56,6 @@ export const Users = () => {
     const [userToAction, setUserToAction] = useState(null as UserDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
     const [dataTable, setDataTable] = useState([] as UserDataTable[]);
-    const [currentUser, setCurrentUser] = useState({} as User)
-
 
     // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
     const setUserAndView = (user: User) => {
@@ -73,7 +65,8 @@ export const Users = () => {
             email: user.email,
             role: user.role,
             auto_groups: user.auto_groups ? user.auto_groups : [],
-            name: user.name
+            name: user.name,
+            is_current: user.is_current
         } as User));
     }
 
@@ -92,22 +85,6 @@ export const Users = () => {
     useEffect(() => {
         setDataTable(transformDataTable(filterDataTable()))
     }, [textToSearch])
-
-    useEffect(() => {
-        let runUser = oidcUser
-        if (!oidcUser) {
-            runUser = idTokenPayload
-        }
-        if (runUser && runUser.sub) {
-            const found = users.find(u => u.id == runUser.sub)
-            if (found) {
-                setCurrentUser(found)
-            }
-        } else {
-            setCurrentUser({} as User)
-        }
-
-    }, [oidcUser, users])
 
     const filterDataTable = (): User[] => {
         const t = textToSearch.toLowerCase().trim()
@@ -312,17 +289,19 @@ export const Users = () => {
                                             defaultSortOrder='ascend'
                                             render={(text, record, index) => {
                                                 const btn = <Button type="text"
-                                                                           onClick={() => setUserAndView(record as UserDataTable)}
-                                                                           className="tooltip-label">
-                                                    <Text strong>{(text && text.trim() !== "") ? text : (record as User).id}</Text>
+                                                                    onClick={() => setUserAndView(record as UserDataTable)}
+                                                                    className="tooltip-label">
+                                                    <Text
+                                                        strong>{(text && text.trim() !== "") ? text : (record as User).id}</Text>
                                                 </Button>
-                                                if ((record as User).id !== currentUser.id) {
-                                                    return btn
+
+                                                if ((record as User).is_current) {
+                                                    return <div>{btn}
+                                                        <Tag color="blue">me</Tag>
+                                                    </div>
                                                 }
 
-                                                return <div>{btn}
-                                                    <Tag color="blue">me</Tag>
-                                                </div>
+                                                return btn
                                             }}
                                     />
                                     <Column title="Name" dataIndex="name"

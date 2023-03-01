@@ -12,7 +12,7 @@ import {actions as userActions} from "../store/user";
 import {useGetAccessTokenSilently} from "../utils/token";
 import {useOidcUser} from "@axa-fr/react-oidc";
 
-const {Paragraph, Text} = Typography;
+const {Paragraph} = Typography;
 
 const {confirm} = Modal;
 
@@ -358,7 +358,7 @@ const UserUpdate = () => {
                                 >
                                     <Select
                                         style={{width: '100%'}}
-                                        disabled={currentUser.role != null && currentUser.role !== "admin"}>
+                                        disabled={(currentUser.role != null && currentUser.role !== "admin") || formUser.is_current}>
                                         <Option value="admin">admin</Option>
                                         <Option value="user">user</Option>
                                     </Select>
