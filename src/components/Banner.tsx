@@ -36,7 +36,7 @@ const Banner = () => {
 
 		if((!stored_banner_closed || stored_banner_closed !== 'true') ||
 			(!store_banner_md5 || store_banner_md5 !== announcement_md5)) {
-			setShow(true);
+			//setShow(true);
 			localStorage.setItem(banner_md5_key,announcement_md5);
 			localStorage.setItem(banner_closed_key,'false');
 		}
