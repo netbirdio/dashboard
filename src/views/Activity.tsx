@@ -142,6 +142,10 @@ export const Activity = () => {
             case "rule.delete":
             case "rule.update":
                 return renderMultiRowSpan(event.meta.name,"Rule")
+            case "policy.add":
+            case "policy.delete":
+            case "policy.update":
+                return renderMultiRowSpan(event.meta.name, "Policy")
             case "setupkey.add":
             case "setupkey.revoke":
             case "setupkey.update":
