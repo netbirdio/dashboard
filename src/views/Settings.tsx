@@ -10,7 +10,7 @@ import ExpiresInInput, {expiresInToSeconds, secondsToExpiresIn} from "./ExpiresI
 import {checkExpiresIn} from "../utils/common";
 import {actions as accountActions} from "../store/account";
 import {Account, FormAccount} from "../store/account/types";
-import {ExclamationCircleOutlined} from "@ant-design/icons";
+import {ExclamationCircleOutlined, QuestionCircleFilled} from "@ant-design/icons";
 const {confirm} = Modal;
 
 const {Title, Paragraph} = Typography;
@@ -204,6 +204,10 @@ export const Settings = () => {
                                                         title: "Days"
                                                     })
                                                     }/>
+                                            </Form.Item>
+                                            <Form.Item>
+                                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
+                                                        href="https://netbird.io/docs/how-to-guides/periodic-authentication">Learn more about login expiration</Button>
                                             </Form.Item>
                                         </Card>
                                         <Form.Item style={{textAlign: 'center'}}>
