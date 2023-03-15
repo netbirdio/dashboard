@@ -3,7 +3,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as eventActions} from '../store/event';
 import {Container} from "../components/Container";
-import {Alert, Card, Col, Input, Row, Select, Space, Table, Typography,} from "antd";
+import {Alert, Button, Card, Col, Input, Row, Select, Space, Table, Typography,} from "antd";
 import {Event} from "../store/event/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
@@ -13,6 +13,8 @@ import {useOidcUser} from "@axa-fr/react-oidc";
 import {capitalize, formatDateTime} from "../utils/common";
 import {User} from "../store/user/types";
 import {usePageSizeHelpers} from "../utils/pageSize";
+import {QuestionCircleFilled} from "@ant-design/icons";
+import {Link} from "react-router-dom";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -221,7 +223,21 @@ export const Activity = () => {
                                     <Space size="middle">
                                         <Select value={pageSize.toString()} options={pageSizeOptions}
                                                 onChange={onChangePageSize} className="select-rows-per-page-en"/>
+
                                     </Space>
+                                </Col>
+                                <Col xs={24}
+                                     sm={24}
+                                     md={5}
+                                     lg={5}
+                                     xl={5}
+                                     xxl={5} span={5}>
+                                    <Row justify="end">
+                                        <Col>
+                                            <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
+                                                    href="https://netbird.io/docs/overview/setup-keys">Learn more about activity tracking</Button>
+                                        </Col>
+                                    </Row>
                                 </Col>
                             </Row>
                             {failed &&

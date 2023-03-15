@@ -470,9 +470,7 @@ const SetupKeyNew = () => {
                             <Col span={24}>
                                 <Divider></Divider>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                        href="https://netbird.io/docs/overview/setup-keys"
-                                        style={{color: 'rgb(07, 114, 128)'}}>Learn
-                                    more about setup keys</Button>
+                                        href="https://netbird.io/docs/overview/setup-keys">Learn more about setup keys</Button>
                             </Col>
                         </Row>
                     </Form>
