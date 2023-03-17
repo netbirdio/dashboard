@@ -18,7 +18,7 @@
     "@types/react-redux": "^7.1.24",
     "@types/react-router-dom": "^5.3.3",
     "@types/styled-components": "^5.1.25",
-    "antd": "^4.20.6",
+    "antd": "^5.3.1",
     "autoprefixer": "^10.4.4",
     "axios": "^0.27.2",
     "cidr-regex": "^3.1.1",

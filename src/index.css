@@ -1,8 +1,4 @@
-@import '~antd/dist/antd.css';
-
-/*@tailwind base;*/
-/*@tailwind components;*/
-/*@tailwind utilities;*/
+@import 'antd/dist/reset.css';
 
 body {
   font-size: 16px;
