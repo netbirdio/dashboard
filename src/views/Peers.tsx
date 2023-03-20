@@ -103,17 +103,25 @@ export const Peers = () => {
         })
     }
 
-    useEffect(() => {
-        getLocalItem<boolean>(StorageKey.hadFirstRun).then(f => setHadFirstRun(f === null? false : f))
+    const refresh = () => {
         dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+    }
+
+    useEffect(() => {
+        getLocalItem<boolean>(StorageKey.hadFirstRun).then(f => setHadFirstRun(f === null? false : f))
+        refresh()
     }, [])
 
     useEffect(() => {
         if (peers.length) {
             setShowTutorial(false)
+            setAddPeerModalOpen(false)
+            if (!hadFirstRun) {
+                setLocalItem(StorageKey.hadFirstRun, true).then()
+            }
         } else {
             setShowTutorial(true)
             if (!hadFirstRun) {
@@ -617,7 +625,10 @@ export const Peers = () => {
             <Modal
                 open={addPeerModalOpen}
                 onOk={() => setAddPeerModalOpen(false)}
-                onCancel={() => setAddPeerModalOpen(false)}
+                onCancel={() => {
+                    refresh()
+                    setAddPeerModalOpen(false)
+                }}
                 footer={[]}
                 width={780}
             >
