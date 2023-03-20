@@ -45,16 +45,19 @@ export const UbuntuTab = () => {
 
     return (
         <div style={{marginTop: 10}}>
-            <Text style={{fontWeight: "bold"}}>
+            {/*<Text style={{fontWeight: "bold"}}>
                 Install with one command
             </Text>
             <div style={{fontSize: ".85em", marginTop: 5, marginBottom: 25}}>
                 <SyntaxHighlighter language="bash">
                     curl -fsSL https://netbird.io/install.sh | sh
                 </SyntaxHighlighter>
-            </div>
+            </div>*/}
+            {/*<Text style={{fontWeight: "bold"}}>*/}
+            {/*    Or install manually*/}
+            {/*</Text>*/}
             <Text style={{fontWeight: "bold"}}>
-                Or install manually
+                Install on Ubuntu
             </Text>
             <div style={{marginTop: 5}}>
                 <TabSteps stepsItems={steps}/>

@@ -79,7 +79,7 @@ export const LinuxTab = () => {
     ])
 
     return (
-        <div style={{marginTop: 10}}>
+        /*<div style={{marginTop: 10}}>
             <Text style={{fontWeight: "bold"}}>
                 Install on macOS
             </Text>
@@ -95,6 +95,14 @@ export const LinuxTab = () => {
                     </div>
                 </Panel>
             </Collapse>
+        </div>*/
+        <div style={{marginTop: 10}}>
+            <Text style={{fontWeight: "bold"}}>
+                Install on macOS with Homebrew
+            </Text>
+            <div style={{marginTop: 5}}>
+                <TabSteps stepsItems={steps}/>
+            </div>
         </div>
     )
 }
