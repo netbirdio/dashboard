@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "@ant-design/icons": "^4.7.0",
+    "@ant-design/icons": "^4.8.0",
     "@axa-fr/react-oidc": "^5.14.0",
     "@headlessui/react": "^1.5.0",
     "@heroicons/react": "^1.0.4",
@@ -32,6 +32,7 @@
     "punycode": "^2.1.1",
     "rc-overflow": "^1.2.8",
     "react": "^18.2.0",
+    "react-copy-to-clipboard": "^5.1.0",
     "react-dom": "^18.1.0",
     "react-hotjar": "^5.1.0",
     "react-redux": "^8.0.2",

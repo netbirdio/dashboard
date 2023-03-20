@@ -73,7 +73,8 @@ function App() {
             theme={{
                 token: {
                     borderRadius: 2,
-                    colorPrimary: "#1890ff"
+                    colorPrimary: "#1890ff",
+                    fontFamily: "Arial"
                 },
             }}
         >
@@ -108,7 +109,6 @@ function App() {
                                     }}
                                 />
                                 <Route path='/peers' exact component={withOidcSecure(Peers)}/>
-                                <Route path="/add-peer" component={withOidcSecure(AddPeer)}/>
                                 <Route path="/setup-keys" component={withOidcSecure(SetupKeys)}/>
                                 <Route path="/acls" component={withOidcSecure(AccessControl)}/>
                                 <Route path="/routes" component={withOidcSecure(Routes)}/>

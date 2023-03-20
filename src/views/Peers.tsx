@@ -6,6 +6,15 @@ import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
 import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
+import {ReactComponent as DockerSVG} from "../components/icons/docker_icon.svg";
+import {ReactComponent as LinuxSVG} from "../components/icons/terminal_icon.svg";
+import Icon, {
+    AndroidFilled,
+    AppleFilled,
+    ExclamationCircleOutlined,
+    RightSquareFilled,
+    WindowsFilled
+} from '@ant-design/icons';
 import {
     Alert,
     Button,
@@ -25,6 +34,7 @@ import {
     Space,
     Switch,
     Table,
+    Tabs,
     Tag,
     Tooltip,
     Typography
@@ -32,7 +42,6 @@ import {
 import {Peer, PeerDataTable} from "../store/peer/types";
 import {filter} from "lodash"
 import {capitalize, formatOS, timeAgo} from "../utils/common";
-import {ExclamationCircleOutlined} from "@ant-design/icons";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
@@ -41,6 +50,8 @@ import {useGetAccessTokenSilently} from "../utils/token";
 import {actions as userActions} from "../store/user";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {usePageSizeHelpers} from "../utils/pageSize";
+import TabPane from "antd/lib/tabs/TabPane";
+import UbuntuTab from "../components/addpeer/UbuntuTab";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -48,7 +59,7 @@ const {confirm} = Modal;
 
 export const Peers = () => {
 
-    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
+    const {onChangePageSize, pageSizeOptions, pageSize} = usePageSizeHelpers()
 
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
@@ -64,6 +75,7 @@ export const Peers = () => {
     const updatedPeer = useSelector((state: RootState) => state.peer.updatedPeer);
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
     const users = useSelector((state: RootState) => state.user.data);
+    const [modal2Open, setModal2Open] = useState(false);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
@@ -72,9 +84,15 @@ export const Peers = () => {
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
     const [showTutorial, setShowTutorial] = useState(false)
 
-
-
     const optionsOnOff = [{label: 'Online', value: 'on'}, {label: 'All', value: 'all'}]
+
+    const SVG = () => (
+        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
+            <rect height="256" width="256"/>
+            <path
+                d="M215.5,39.5H40.5a17,17,0,0,0-17,17v143a17,17,0,0,0,17,17h175a17,17,0,0,0,17-17V56.5A17,17,0,0,0,215.5,39.5ZM121,134.2l-40,32a7.9,7.9,0,0,1-5,1.8,7.8,7.8,0,0,1-6.2-3A7.9,7.9,0,0,1,71,153.8L103.2,128,71,102.2A8,8,0,1,1,81,89.8l40,32a7.9,7.9,0,0,1,0,12.4ZM180,168H140a8,8,0,0,1,0-16h40a8,8,0,0,1,0,16Z"/>
+        </svg>
+    )
 
     const itemsMenuAction = [
         {
@@ -384,7 +402,7 @@ export const Peers = () => {
                                       styleNotification={{}}/>
         }
 
-        const body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+        const body = <span style={{textAlign: "left"}}>
             <Row>
                <ButtonCopyMessage keyMessage={peer.dns_label}
                                   toCopy={peer.dns_label}
@@ -413,19 +431,32 @@ export const Peers = () => {
         if (!userEmail) {
             return <Button type="text"  style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
                            onClick={() => setUpdateGroupsVisible(peer, true)}>
-                <Text strong>{peer.name}</Text>
+                 <span style={{textAlign: "left"}}>
+                     <Row><Text strong>{peer.name}</Text></Row>
+                 </span>
             </Button>
         }
         return <div>
-            <Button type="text" style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
+            <Button type="text"
                     onClick={() => setUpdateGroupsVisible(peer, true)}>
-                <Text strong>{peer.name}</Text>
-                <br/>
-                <Text type="secondary">{userEmail}</Text>
-                {expiry}
+                <span style={{textAlign: "left"}}>
+                    <Row> <Text strong>{peer.name}</Text></Row>
+                    <Row><Text type="secondary">{userEmail}</Text></Row>
+                    <Row> {expiry}</Row>
+                </span>
             </Button>
         </div>
     }
+
+    const detectOS = () => {
+        let os = 1;
+        if (navigator.userAgent.indexOf("Win") !== -1) os = 2;
+        if (navigator.userAgent.indexOf("Mac") !== -1) os = 3;
+        if (navigator.userAgent.indexOf("X11") !== -1) os = 1;
+        if (navigator.userAgent.indexOf("Linux") !== -1) os = 1
+        return os
+    }
+    const [openTab, setOpenTab] = useState(detectOS);
 
     return (
         <>
@@ -433,8 +464,10 @@ export const Peers = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Peers</Title>
-                        <Paragraph>A list of all the machines in your account including their name, IP and
-                            status.</Paragraph>
+                        {showTutorial && <Paragraph type={"secondary"}>A list of all the machines in your account including their name, IP and
+                            status.</Paragraph>}
+                        {!showTutorial && <Paragraph>A list of all the machines in your account including their name, IP and
+                            status.</Paragraph>}
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -449,8 +482,10 @@ export const Peers = () => {
                                             value={optionOnOff}
                                             optionType="button"
                                             buttonStyle="solid"
+                                            disabled={showTutorial}
                                         />
                                         <Select value={pageSize.toString()} options={pageSizeOptions}
+                                                disabled={showTutorial}
                                                 onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
                                 </Col>
@@ -462,9 +497,7 @@ export const Peers = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            {!showTutorial &&
-                                                <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
-                                                    Peer</Link>}
+                                            {!showTutorial && <Button type="primary" onClick={() => setModal2Open(true)}>Add peer</Button>}
                                         </Col>
                                     </Row>
                                 </Col>
@@ -475,7 +508,7 @@ export const Peers = () => {
                                        closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
-                                <Table
+                                {!showTutorial && (<Table
                                     pagination={{
                                         pageSize,
                                         showSizeChanger: false,
@@ -514,7 +547,8 @@ export const Peers = () => {
                                                     <Tag color="red">offline</Tag>
 
                                                 if (record.login_expired) {
-                                                    return <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+                                                    return <Tooltip
+                                                        title="The peer is offline and needs to be re-authenticated because its login has expired ">
                                                         <Tag color="orange">needs login</Tag>
                                                     </Tooltip>
 
@@ -578,17 +612,23 @@ export const Peers = () => {
                                                                         }}></Dropdown.Button>
                                             }}
                                     />
-                                </Table>
+                                </Table>)}
                                 {showTutorial &&
                                     <Space direction="vertical" size="small" align="center"
                                            style={{display: 'flex', padding: '45px 15px', justifyContent: 'center'}}>
-                                        <Paragraph type="secondary"
+                                        <Title level={4}
+                                            style={{textAlign: "center"}}>
+                                            Get Started
+                                        </Title>
+                                        <Paragraph
                                                    style={{textAlign: "center", whiteSpace: "pre-line"}}>
                                             It looks like you don't have any connected machines. {"\n"}
-                                            Get started by adding one to your network!
+                                            Get started by adding one to your network.
                                         </Paragraph>
-                                        <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
-                                            Peer</Link>
+                                        <Button size={"middle"} type="primary" onClick={() => setModal2Open(true)}>
+                                            Add new peer
+                                        </Button>
+
                                     </Space>
                                 }
                             </Card>
@@ -597,6 +637,54 @@ export const Peers = () => {
                 </Row>
             </Container>
             <PeerUpdate/>
+
+            <Modal
+                title={<>
+
+                </>}
+                open={modal2Open}
+                onOk={() => setModal2Open(false)}
+                onCancel={() => setModal2Open(false)}
+                footer={[]}
+                width={780}
+                //bodyStyle={{height: 500}}
+            >
+                <Paragraph
+                    style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "2em", marginBottom: -10}}>
+                    Hi there!
+                </Paragraph>
+                <Paragraph
+                    style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "2em"}}>
+                    It's time to add your first device.
+                </Paragraph>
+                <Paragraph type={"secondary"}
+                           style={{
+                               marginTop: "-15px",
+                               textAlign: "center",
+                               whiteSpace: "pre-line",
+                               fontSize: ".85em"
+                           }}>
+                    To get started install NetBird and log in using your {"\n"} name@gmail.com account.
+                </Paragraph>
+                <Tabs
+                    centered
+                    defaultActiveKey={openTab.toString()} tabPosition="top" animated={{inkBar: true, tabPane: false}}>
+                    <TabPane tab={<span><Icon component={LinuxSVG}/>Linux</span>} key="1">
+                        <UbuntuTab/>
+                    </TabPane>
+                    <TabPane tab={<span><WindowsFilled/>Windows</span>} key="2">
+                    </TabPane>
+                    <TabPane tab={<span><AppleFilled/>MacOS</span>} key="3">
+
+                    </TabPane>
+                    <TabPane tab={<span><AndroidFilled/>Android</span>} key="5">
+
+                    </TabPane>
+                    <TabPane tab={<span><Icon component={DockerSVG}/>Docker</span>} key="4">
+
+                    </TabPane>
+                </Tabs>
+            </Modal>
         </>
     )
 }
