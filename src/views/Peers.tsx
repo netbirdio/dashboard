@@ -6,7 +6,7 @@ import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
 import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
-import {ExclamationCircleOutlined,} from '@ant-design/icons';
+import {ExclamationCircleOutlined, ReloadOutlined,} from '@ant-design/icons';
 import {
     Alert,
     Button,
@@ -116,18 +116,17 @@ export const Peers = () => {
     }, [])
 
     useEffect(() => {
+        if (!hadFirstRun) {
+            setLocalItem(StorageKey.hadFirstRun, true).then()
+            setAddPeerModalOpen(true)
+        }
+    }, [hadFirstRun])
+
+    useEffect(() => {
         if (peers.length) {
             setShowTutorial(false)
-            setAddPeerModalOpen(false)
-            if (!hadFirstRun) {
-                setLocalItem(StorageKey.hadFirstRun, true).then()
-            }
         } else {
             setShowTutorial(true)
-            if (!hadFirstRun) {
-                setAddPeerModalOpen(true)
-                setLocalItem(StorageKey.hadFirstRun, true).then()
-            }
         }
         setDataTable(transformDataTable(peers))
     }, [peers, groups, hadFirstRun])
@@ -626,13 +625,14 @@ export const Peers = () => {
                 open={addPeerModalOpen}
                 onOk={() => setAddPeerModalOpen(false)}
                 onCancel={() => {
-                    refresh()
                     setAddPeerModalOpen(false)
+                    setHadFirstRun(true)
                 }}
                 footer={[]}
                 width={780}
             >
-                <AddPeerPopup/>
+               {/* <AddPeerPopup greeting={"Hi there!"} headline={"It's time to add your first device."}/>*/}
+                <AddPeerPopup greeting={!hadFirstRun ? "Hi there!" : ""} headline={!hadFirstRun ? "It's time to add your first device." : "Add new peer"}/>
             </Modal>
         </>
     )

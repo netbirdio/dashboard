@@ -37,10 +37,10 @@ const TabSteps:React.FC<Props> = ({stepsItems}) => {
         }
     }
     return (
-        <Steps direction="vertical" size={"small"} progressDot>
+        <Steps direction="vertical" size={"small"}>
             {steps.map(c =>
                 <Step
-                    status={"finish"}
+                    status={"process"}
                     key={c.key}
                     title={<Text>{c.title}</Text>}
                     description={
