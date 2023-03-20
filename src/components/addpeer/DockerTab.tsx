@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 import {StepCommand} from "./types"
-import {formatNetBirdUP} from "./common"
+import {formatDockerCommand, formatNetBirdUP} from "./common"
 import SyntaxHighlighter from "react-syntax-highlighter";
 import TabSteps from "./TabSteps";
 import {Typography} from "antd";
@@ -50,12 +50,7 @@ export const DockerTab = () => {
             </Text>
             <div style={{fontSize: ".85em", marginTop: 5, marginBottom: 25}}>
                 <SyntaxHighlighter language="bash">
-                    {["docker run --rm -d \\",
-                        "  --name PEER_NAME  \\",
-                        "  --hostname PEER_NAME  \\",
-                        "  --cap-add=NET_ADMIN \\",
-                        "  -e NB_SETUP_KEY=SETUP_KEY \\",
-                        "  -v netbird-client:/etc/netbird netbirdio/netbird:latest"].join('\n')}
+                    {formatDockerCommand()}
                 </SyntaxHighlighter>
             </div>
         </div>
