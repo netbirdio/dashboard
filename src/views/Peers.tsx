@@ -119,17 +119,22 @@ export const Peers = () => {
         if (!hadFirstRun) {
             setLocalItem(StorageKey.hadFirstRun, true).then()
             setAddPeerModalOpen(true)
+        } else {
+            setAddPeerModalOpen(false)
         }
     }, [hadFirstRun])
 
     useEffect(() => {
         if (peers.length) {
             setShowTutorial(false)
+            if (!hadFirstRun) {
+                setHadFirstRun(true)
+            }
         } else {
             setShowTutorial(true)
         }
         setDataTable(transformDataTable(peers))
-    }, [peers, groups, hadFirstRun])
+    }, [peers, groups])
 
     useEffect(() => {
         setDataTable(transformDataTable(filterDataTable()))
