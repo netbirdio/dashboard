@@ -3,7 +3,8 @@ import {StepCommand} from "./types"
 import {formatDockerCommand, formatNetBirdUP} from "./common"
 import SyntaxHighlighter from "react-syntax-highlighter";
 import TabSteps from "./TabSteps";
-import {Typography} from "antd";
+import {Button, Typography} from "antd";
+import Link from "antd/lib/typography/Link";
 
 const {Title, Paragraph, Text} = Typography;
 
@@ -12,32 +13,26 @@ export const DockerTab = () => {
     const [steps, setSteps] = useState([
         {
             key: 1,
-            title: 'Add repository',
-            commands: [
-                `sudo apt install ca-certificates curl gnupg -y`,
-                `curl -L https://pkgs.wiretrustee.com/debian/public.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/wiretrustee.gpg`,
-                `echo 'deb https://pkgs.wiretrustee.com/debian stable main' | sudo tee /etc/apt/sources.list.d/wiretrustee.list`
-            ].join('\n'),
+            title: 'Install Docker',
+            commands: (
+                <Button style={{marginTop: "5px"}} type="primary" href="https://docs.docker.com/engine/install/" target="_blank">Official Docker website</Button>
+            ),
             copied: false,
             showCopyButton: false
         } as StepCommand,
         {
             key: 2,
-            title: 'Install NetBird',
-            commands: [
-                `sudo apt-get update`,
-                `# for CLI only`,
-                `sudo apt-get install netbird`,
-                `# for GUI package`,
-                `sudo apt-get install netbird-ui`
-            ].join('\n'),
+            title: 'Run NetBird container',
+            commands: formatDockerCommand(),
             copied: false,
             showCopyButton: false
         } as StepCommand,
         {
             key: 3,
-            title: 'Run NetBird and log in the browser',
-            commands: formatNetBirdUP(),
+            title: "Read docs",
+            commands: (
+                <Link href="https://netbird.io/docs/getting-started/installation#running-netbird-in-docker" target="_blank">Running NetBird in Docker</Link>
+            ),
             copied: false,
             showCopyButton: false
         } as StepCommand
@@ -45,15 +40,22 @@ export const DockerTab = () => {
 
     return (
         <div style={{marginTop: 10}}>
-            <Text style={{fontWeight: "bold"}}>
+            {/*<Text style={{fontWeight: "bold"}}>
                 Run in Docker
             </Text>
             <div style={{fontSize: ".85em", marginTop: 5, marginBottom: 25}}>
                 <SyntaxHighlighter language="bash">
                     {formatDockerCommand()}
                 </SyntaxHighlighter>
+            </div>*/}
+            <Text style={{fontWeight: "bold"}}>
+                Install on Ubuntu
+            </Text>
+            <div style={{marginTop: 5}}>
+                <TabSteps stepsItems={steps}/>
             </div>
         </div>
+
 
     )
 }
