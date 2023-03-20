@@ -1,20 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {Link} from 'react-router-dom';
+import {capitalize, formatOS, timeAgo} from "../utils/common";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
 import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
-import {ReactComponent as DockerSVG} from "../components/icons/docker_icon.svg";
-import {ReactComponent as LinuxSVG} from "../components/icons/terminal_icon.svg";
-import Icon, {
-    AndroidFilled,
-    AppleFilled,
-    ExclamationCircleOutlined,
-    RightSquareFilled,
-    WindowsFilled
-} from '@ant-design/icons';
+import {ExclamationCircleOutlined,} from '@ant-design/icons';
 import {
     Alert,
     Button,
@@ -34,14 +26,12 @@ import {
     Space,
     Switch,
     Table,
-    Tabs,
     Tag,
     Tooltip,
     Typography
 } from "antd";
 import {Peer, PeerDataTable} from "../store/peer/types";
 import {filter} from "lodash"
-import {capitalize, formatOS, timeAgo} from "../utils/common";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
@@ -50,8 +40,8 @@ import {useGetAccessTokenSilently} from "../utils/token";
 import {actions as userActions} from "../store/user";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {usePageSizeHelpers} from "../utils/pageSize";
-import TabPane from "antd/lib/tabs/TabPane";
-import UbuntuTab from "../components/addpeer/UbuntuTab";
+import AddPeerPopup from "../components/addpeer/AddPeerPopup";
+import {getLocalItem, setLocalItem, StorageKey} from "../services/local";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -75,7 +65,7 @@ export const Peers = () => {
     const updatedPeer = useSelector((state: RootState) => state.peer.updatedPeer);
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
     const users = useSelector((state: RootState) => state.user.data);
-    const [modal2Open, setModal2Open] = useState(false);
+    const [addPeerModalOpen, setAddPeerModalOpen] = useState(false);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
@@ -83,16 +73,9 @@ export const Peers = () => {
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
     const [showTutorial, setShowTutorial] = useState(false)
+    const [hadFirstRun, setHadFirstRun] = useState(true)
 
     const optionsOnOff = [{label: 'Online', value: 'on'}, {label: 'All', value: 'all'}]
-
-    const SVG = () => (
-        <svg viewBox="0 0 256 256" xmlns="http://www.w3.org/2000/svg">
-            <rect height="256" width="256"/>
-            <path
-                d="M215.5,39.5H40.5a17,17,0,0,0-17,17v143a17,17,0,0,0,17,17h175a17,17,0,0,0,17-17V56.5A17,17,0,0,0,215.5,39.5ZM121,134.2l-40,32a7.9,7.9,0,0,1-5,1.8,7.8,7.8,0,0,1-6.2-3A7.9,7.9,0,0,1,71,153.8L103.2,128,71,102.2A8,8,0,1,1,81,89.8l40,32a7.9,7.9,0,0,1,0,12.4ZM180,168H140a8,8,0,0,1,0-16h40a8,8,0,0,1,0,16Z"/>
-        </svg>
-    )
 
     const itemsMenuAction = [
         {
@@ -107,7 +90,6 @@ export const Peers = () => {
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
     const transformDataTable = (d: Peer[]): PeerDataTable[] => {
-        const peer_ids = d.map(_p => _p.id)
         return d.map((p) => {
             const gs = groups
                 .filter(g => g.peers?.find((_p: GroupPeer) => _p.id === p.id))
@@ -122,6 +104,7 @@ export const Peers = () => {
     }
 
     useEffect(() => {
+        getLocalItem<boolean>(StorageKey.hadFirstRun).then(f => setHadFirstRun(f === null? false : f))
         dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
@@ -133,9 +116,13 @@ export const Peers = () => {
             setShowTutorial(false)
         } else {
             setShowTutorial(true)
+            if (!hadFirstRun) {
+                setAddPeerModalOpen(true)
+                setLocalItem(StorageKey.hadFirstRun, true).then()
+            }
         }
         setDataTable(transformDataTable(peers))
-    }, [peers, groups])
+    }, [peers, groups, hadFirstRun])
 
     useEffect(() => {
         setDataTable(transformDataTable(filterDataTable()))
@@ -448,16 +435,6 @@ export const Peers = () => {
         </div>
     }
 
-    const detectOS = () => {
-        let os = 1;
-        if (navigator.userAgent.indexOf("Win") !== -1) os = 2;
-        if (navigator.userAgent.indexOf("Mac") !== -1) os = 3;
-        if (navigator.userAgent.indexOf("X11") !== -1) os = 1;
-        if (navigator.userAgent.indexOf("Linux") !== -1) os = 1
-        return os
-    }
-    const [openTab, setOpenTab] = useState(detectOS);
-
     return (
         <>
             <Container style={{paddingTop: "40px"}}>
@@ -497,7 +474,7 @@ export const Peers = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            {!showTutorial && <Button type="primary" onClick={() => setModal2Open(true)}>Add peer</Button>}
+                                            {!showTutorial && <Button type="primary" onClick={() => setAddPeerModalOpen(true)}>Add peer</Button>}
                                         </Col>
                                     </Row>
                                 </Col>
@@ -625,7 +602,7 @@ export const Peers = () => {
                                             It looks like you don't have any connected machines. {"\n"}
                                             Get started by adding one to your network.
                                         </Paragraph>
-                                        <Button size={"middle"} type="primary" onClick={() => setModal2Open(true)}>
+                                        <Button size={"middle"} type="primary" onClick={() => setAddPeerModalOpen(true)}>
                                             Add new peer
                                         </Button>
 
@@ -637,53 +614,14 @@ export const Peers = () => {
                 </Row>
             </Container>
             <PeerUpdate/>
-
             <Modal
-                title={<>
-
-                </>}
-                open={modal2Open}
-                onOk={() => setModal2Open(false)}
-                onCancel={() => setModal2Open(false)}
+                open={addPeerModalOpen}
+                onOk={() => setAddPeerModalOpen(false)}
+                onCancel={() => setAddPeerModalOpen(false)}
                 footer={[]}
                 width={780}
-                //bodyStyle={{height: 500}}
             >
-                <Paragraph
-                    style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "2em", marginBottom: -10}}>
-                    Hi there!
-                </Paragraph>
-                <Paragraph
-                    style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "2em"}}>
-                    It's time to add your first device.
-                </Paragraph>
-                <Paragraph type={"secondary"}
-                           style={{
-                               marginTop: "-15px",
-                               textAlign: "center",
-                               whiteSpace: "pre-line",
-                               fontSize: ".85em"
-                           }}>
-                    To get started install NetBird and log in using your {"\n"} name@gmail.com account.
-                </Paragraph>
-                <Tabs
-                    centered
-                    defaultActiveKey={openTab.toString()} tabPosition="top" animated={{inkBar: true, tabPane: false}}>
-                    <TabPane tab={<span><Icon component={LinuxSVG}/>Linux</span>} key="1">
-                        <UbuntuTab/>
-                    </TabPane>
-                    <TabPane tab={<span><WindowsFilled/>Windows</span>} key="2">
-                    </TabPane>
-                    <TabPane tab={<span><AppleFilled/>MacOS</span>} key="3">
-
-                    </TabPane>
-                    <TabPane tab={<span><AndroidFilled/>Android</span>} key="5">
-
-                    </TabPane>
-                    <TabPane tab={<span><Icon component={DockerSVG}/>Docker</span>} key="4">
-
-                    </TabPane>
-                </Tabs>
+                <AddPeerPopup/>
             </Modal>
         </>
     )

@@ -7,7 +7,7 @@ import {Typography} from "antd";
 
 const {Title, Paragraph, Text} = Typography;
 
-export const UbuntuTab = () => {
+export const DockerTab = () => {
 
     const [steps, setSteps] = useState([
         {
@@ -46,23 +46,21 @@ export const UbuntuTab = () => {
     return (
         <div style={{marginTop: 10}}>
             <Text style={{fontWeight: "bold"}}>
-                Install with one command
+                Run in Docker
             </Text>
             <div style={{fontSize: ".85em", marginTop: 5, marginBottom: 25}}>
                 <SyntaxHighlighter language="bash">
-                    curl -fsSL https://netbird.io/install.sh | sh
+                    {["docker run --rm -d \\",
+                        "  --name PEER_NAME  \\",
+                        "  --hostname PEER_NAME  \\",
+                        "  --cap-add=NET_ADMIN \\",
+                        "  -e NB_SETUP_KEY=SETUP_KEY \\",
+                        "  -v netbird-client:/etc/netbird netbirdio/netbird:latest"].join('\n')}
                 </SyntaxHighlighter>
             </div>
-            <Text style={{fontWeight: "bold"}}>
-                Or install manually
-            </Text>
-            <div style={{marginTop: 5}}>
-                <TabSteps stepsItems={steps}/>
-            </div>
-
         </div>
 
     )
 }
 
-export default UbuntuTab
+export default DockerTab
