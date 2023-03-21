@@ -29,6 +29,7 @@ import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
 import {useGetAccessTokenSilently} from "../utils/token";
 import ExpiresInInput, {expiresInToSeconds, ExpiresInValue} from "../views/ExpiresInInput";
+import moment from "moment";
 
 const {Option} = Select;
 
@@ -41,7 +42,8 @@ const customExpiresFormat: DatePickerProps['format'] = value => {
 }
 
 const customLastUsedFormat: DatePickerProps['format'] = value => {
-    if (value.toString().startsWith("0001")) {
+    if (value.year() == 1) {
+        // 1st of Jan 0001
         return "never"
     }
     let ago = timeAgo(value.toString())
@@ -93,7 +95,9 @@ const SetupKeyNew = () => {
         const fSetupKey = {
             ...setupKey,
             autoGroupNames: setupKey.auto_groups ? formKeyGroups : [],
-            expiresInFormatted: ExpiresInDefault
+            expiresInFormatted: ExpiresInDefault,
+            exp: moment(setupKey.expires),
+            last: moment(setupKey.last_used)
         } as FormSetupKey
         setFormSetupKey(fSetupKey)
         form.setFieldsValue(fSetupKey)
@@ -352,7 +356,7 @@ const SetupKeyNew = () => {
                             {setupKey.id && formSetupKey.name &&
                                 <Col span={12}>
                                     <Form.Item
-                                        name="expires"
+                                        name="exp"
                                         label="Expires"
                                         tooltip="The expiration date of the key"
                                     >
@@ -365,7 +369,7 @@ const SetupKeyNew = () => {
                             {setupKey.id && formSetupKey.name &&
                                 <Col span={12}>
                                     <Form.Item
-                                        name="last_used"
+                                        name="last"
                                         label="Last Used"
                                         tooltip="The last time the key was used"
                                     >

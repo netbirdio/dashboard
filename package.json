@@ -27,6 +27,7 @@
     "highlight.js": "^11.2.0",
     "history": "^5.0.1",
     "lodash": "^4.17.21",
+    "moment": "^2.29.4",
     "postcss": "^8.4.12",
     "prop-types": "^15.7.2",
     "punycode": "^2.1.1",
