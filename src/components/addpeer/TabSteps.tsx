@@ -2,16 +2,16 @@ import "highlight.js/styles/mono-blue.css";
 import "highlight.js/lib/languages/bash";
 import { StepCommand } from './types'
 import SyntaxHighlighter from 'react-syntax-highlighter';
-import { monoBlue } from 'react-syntax-highlighter/dist/esm/styles/hljs';
 import {
     Typography,
     Space,
-    Steps, Button
+    Steps, Button, Popover, StepsProps
 } from "antd";
 import {copyToClipboard} from "../../utils/common";
 import {CheckOutlined, CopyOutlined} from "@ant-design/icons";
 import React, {useEffect, useState} from "react";
 const { Step } = Steps;
+const {Text} = Typography;
 
 type Props = {
     stepsItems: Array<StepCommand>
@@ -36,35 +36,22 @@ const TabSteps:React.FC<Props> = ({stepsItems}) => {
             }, 2000)
         }
     }
-
     return (
-        <Steps direction="vertical" current={0}>
+        <Steps direction="vertical" size={"small"}>
             {steps.map(c =>
                 <Step
+                    status={"process"}
                     key={c.key}
-                    title={c.title}
+                    title={<Text>{c.title}</Text>}
                     description={
-                        <Space className="nb-code" direction="vertical" size="small" style={{display: "flex"}}>
+                        <Space className="nb-code" direction="vertical" size="small" style={{display: "flex", fontSize: ".85em"}}>
                             { (c.commands && (typeof c.commands === 'string')) ? (
-                            <SyntaxHighlighter language="bash" style={monoBlue}>
+                            <SyntaxHighlighter language="bash">
                                 {c.commands}
                             </SyntaxHighlighter>
                             ) : (
                                 c.commands
                             )}
-                            { c.showCopyButton &&
-                                <>
-                                { !c.copied ? (
-                                    <Button type="text" size="large" className="btn-copy-code" icon={<CopyOutlined/>}
-                                            style={{color: "rgb(107, 114, 128)"}}
-                                            onClick={() => onCopyClick(c.key, c.commands, true)}/>
-                                ): (
-                                    <Button type="text" size="large" className="btn-copy-code" icon={<CheckOutlined/>}
-                                            style={{color: "green"}}/>
-                                )}
-                                </>
-                            }
-
                         </Space>
                     }
                 />

@@ -81,6 +81,7 @@ export const SetupKeys = () => {
 
     ]
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
+    const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
     const transformDataTable = (d: SetupKey[]): SetupKeyDataTable[] => {
         return d.map(p => ({...p, groupsCount: p.auto_groups ? p.auto_groups.length : 0} as SetupKeyDataTable))
@@ -176,7 +177,7 @@ export const SetupKeys = () => {
     }
 
     const showConfirmRevoke = () => {
-        confirm({
+        confirmModal.confirm({
             icon: <ExclamationCircleOutlined/>,
             width: 600,
             content: <Space direction="vertical" size="small">
@@ -187,7 +188,6 @@ export const SetupKeys = () => {
                     </>
                 }
             </Space>,
-            okType: 'danger',
             onOk() {
                 dispatch(setupKeyActions.saveSetupKey.request({
                     getAccessTokenSilently: getAccessTokenSilently,
@@ -462,6 +462,7 @@ export const SetupKeys = () => {
 
             </Container>
             <SetupKeyNew/>
+            {confirmModalContextHolder}
         </>
     )
 }
