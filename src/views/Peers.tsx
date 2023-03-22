@@ -74,8 +74,7 @@ export const Peers = () => {
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
     const [showTutorial, setShowTutorial] = useState(false)
     const [hadFirstRun, setHadFirstRun] = useState(true)
-    const [confirmDeleteModal, confirmDeleteContextHolder] = Modal.useModal();
-    const [confirmSSHModal, confirmSSHContextHolder] = Modal.useModal();
+    const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
     const optionsOnOff = [{label: 'Online', value: 'on'}, {label: 'All', value: 'all'}]
 
@@ -291,7 +290,7 @@ export const Peers = () => {
             </div>
         }
         let name = peerToAction ? peerToAction.name : ''
-        confirmDeleteModal.confirm({
+        confirmModal.confirm({
             icon: <ExclamationCircleOutlined/>,
             title: "Delete peer \"" + name + "\"",
             width: 600,
@@ -309,7 +308,7 @@ export const Peers = () => {
     }
 
     const showConfirmEnableSSH = (record: PeerDataTable) => {
-        confirmSSHModal.confirm({
+        confirmModal.confirm({
             icon: <ExclamationCircleOutlined/>,
             title: "Enable SSH Server for \"" + record.name + "\"?",
             width: 600,
@@ -639,8 +638,7 @@ export const Peers = () => {
                {/* <AddPeerPopup greeting={"Hi there!"} headline={"It's time to add your first device."}/>*/}
                 <AddPeerPopup greeting={!hadFirstRun ? "Hi there!" : ""} headline={!hadFirstRun ? "It's time to add your first device." : "Add new peer"}/>
             </Modal>
-            {confirmDeleteContextHolder}
-            {confirmSSHContextHolder}
+            {confirmModalContextHolder}
         </>
     )
 }
