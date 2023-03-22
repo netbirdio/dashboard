@@ -72,7 +72,7 @@ function App() {
         <ConfigProvider
             theme={{
                 token: {
-                    borderRadius: 2,
+                    borderRadius: 4,
                     colorPrimary: "#1890ff",
                     fontFamily: "Arial"
                 },
