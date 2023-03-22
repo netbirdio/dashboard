@@ -11,7 +11,6 @@ import {checkExpiresIn} from "../utils/common";
 import {actions as accountActions} from "../store/account";
 import {Account, FormAccount} from "../store/account/types";
 import {ExclamationCircleOutlined, QuestionCircleFilled} from "@ant-design/icons";
-const {confirm} = Modal;
 
 const {Title, Paragraph} = Typography;
 
@@ -32,7 +31,7 @@ export const Settings = () => {
     const [formAccount, setFormAccount] = useState({} as FormAccount);
     const [accountToAction, setAccountToAction] = useState({} as FormAccount);
     const [formPeerExpirationEnabled, setFormPeerExpirationEnabled] = useState(true);
-
+    const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
     const [form] = Form.useForm()
 
@@ -127,12 +126,11 @@ export const Settings = () => {
     const confirmSave = (newValues: FormAccount) => {
         if (newValues.peer_login_expiration_enabled != formAccount.peer_login_expiration_enabled) {
             let content = newValues.peer_login_expiration_enabled ? "Enabling peer expiration will cause some peers added with the SSO login to disconnect, and re-authentication will be required. Do you want to enable peer login expiration?" : "Disabling peer expiration will cause peers added with the SSO login never to expire. For security reasons, keeping peers expiring periodically is usually better. Do you want to disable peer login expiration?"
-            confirm({
+            confirmModal.confirm({
                 icon: <ExclamationCircleOutlined/>,
                 title: "Before you update your account settings.",
                 width: 600,
                 content: content,
-                okType: 'danger',
                 onOk() {
                     saveAccount(newValues)
                 },
@@ -223,6 +221,7 @@ export const Settings = () => {
                 </Row>
             </Container>
             <UserUpdate/>
+            {confirmModalContextHolder}
         </>
     )
 }
