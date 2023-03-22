@@ -74,6 +74,8 @@ export const Peers = () => {
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
     const [showTutorial, setShowTutorial] = useState(false)
     const [hadFirstRun, setHadFirstRun] = useState(true)
+    const [confirmDeleteModal, confirmDeleteContextHolder] = Modal.useModal();
+    const [confirmSSHModal, confirmSSHContextHolder] = Modal.useModal();
 
     const optionsOnOff = [{label: 'Online', value: 'on'}, {label: 'All', value: 'all'}]
 
@@ -289,12 +291,11 @@ export const Peers = () => {
             </div>
         }
         let name = peerToAction ? peerToAction.name : ''
-        confirm({
+        confirmDeleteModal.confirm({
             icon: <ExclamationCircleOutlined/>,
             title: "Delete peer \"" + name + "\"",
             width: 600,
             content: contentModule,
-            okType: 'danger',
             onOk() {
                 dispatch(peerActions.deletedPeer.request({
                     getAccessTokenSilently: getAccessTokenSilently,
@@ -308,12 +309,11 @@ export const Peers = () => {
     }
 
     const showConfirmEnableSSH = (record: PeerDataTable) => {
-        confirm({
+        confirmSSHModal.confirm({
             icon: <ExclamationCircleOutlined/>,
             title: "Enable SSH Server for \"" + record.name + "\"?",
             width: 600,
             content: "Experimental feature. Enabling this option allows remote SSH access to this machine from other connected network participants.",
-            okType: 'danger',
             onOk() {
                 handleSwitchSSH(record, true)
             },
@@ -639,6 +639,8 @@ export const Peers = () => {
                {/* <AddPeerPopup greeting={"Hi there!"} headline={"It's time to add your first device."}/>*/}
                 <AddPeerPopup greeting={!hadFirstRun ? "Hi there!" : ""} headline={!hadFirstRun ? "It's time to add your first device." : "Add new peer"}/>
             </Modal>
+            {confirmDeleteContextHolder}
+            {confirmSSHContextHolder}
         </>
     )
 }
