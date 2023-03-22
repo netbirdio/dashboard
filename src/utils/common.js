@@ -1,3 +1,5 @@
+
+
 export const formatOS = (os) => {
     if (os.startsWith("windows 10")) {
         return "Windows 10";

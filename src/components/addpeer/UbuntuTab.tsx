@@ -1,31 +1,29 @@
-import React, { useState } from 'react';
-
-import { Button } from "antd";
+import React, {useState} from 'react';
+import {StepCommand} from "./types"
+import {formatNetBirdUP} from "./common"
+import SyntaxHighlighter from "react-syntax-highlighter";
 import TabSteps from "./TabSteps";
-import { StepCommand } from "./types"
-import { getConfig } from "../../config";
-import Paragraph from 'antd/lib/skeleton/Paragraph';
-import { formatNetBirdUP } from "./common"
+import {Typography} from "antd";
 
-
+const {Title, Paragraph, Text} = Typography;
 
 export const UbuntuTab = () => {
 
     const [steps, setSteps] = useState([
         {
             key: 1,
-            title: 'Add repository:',
+            title: 'Add repository',
             commands: [
                 `sudo apt install ca-certificates curl gnupg -y`,
                 `curl -L https://pkgs.wiretrustee.com/debian/public.key | sudo gpg --dearmor -o /etc/apt/trusted.gpg.d/wiretrustee.gpg`,
                 `echo 'deb https://pkgs.wiretrustee.com/debian stable main' | sudo tee /etc/apt/sources.list.d/wiretrustee.list`
             ].join('\n'),
             copied: false,
-            showCopyButton: true
+            showCopyButton: false
         } as StepCommand,
         {
             key: 2,
-            title: 'Install NetBird:',
+            title: 'Install NetBird',
             commands: [
                 `sudo apt-get update`,
                 `# for CLI only`,
@@ -34,39 +32,39 @@ export const UbuntuTab = () => {
                 `sudo apt-get install netbird-ui`
             ].join('\n'),
             copied: false,
-            showCopyButton: true
+            showCopyButton: false
         } as StepCommand,
         {
             key: 3,
-            title: 'Run NetBird and log in the browser:',
+            title: 'Run NetBird and log in the browser',
             commands: formatNetBirdUP(),
             copied: false,
-            showCopyButton: true
-        } as StepCommand,
-        {
-            key: 4,
-            title: 'Get your IP address:',
-            commands: [
-                `ip addr show wt0`
-            ].join('\n'),
-            copied: false,
-            showCopyButton: true
-        } as StepCommand,
+            showCopyButton: false
+        } as StepCommand
     ])
 
-    /*const clickTest = () => {
-        steps.push({
-            key: steps.length+1,
-            title: `Test ${steps.length+1}`,
-            commands: [`hi lorena!`].join('\n'),
-            copied: false
-        })
-        console.log(steps)
-        setSteps([...steps])
-    }*/
-
     return (
-        <TabSteps stepsItems={steps} />
+        <div style={{marginTop: 10}}>
+            {/*<Text style={{fontWeight: "bold"}}>
+                Install with one command
+            </Text>
+            <div style={{fontSize: ".85em", marginTop: 5, marginBottom: 25}}>
+                <SyntaxHighlighter language="bash">
+                    curl -fsSL https://netbird.io/install.sh | sh
+                </SyntaxHighlighter>
+            </div>*/}
+            {/*<Text style={{fontWeight: "bold"}}>*/}
+            {/*    Or install manually*/}
+            {/*</Text>*/}
+            <Text style={{fontWeight: "bold"}}>
+                Install on Ubuntu
+            </Text>
+            <div style={{marginTop: 5}}>
+                <TabSteps stepsItems={steps}/>
+            </div>
+
+        </div>
+
     )
 }
 

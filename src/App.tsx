@@ -4,7 +4,7 @@ import {apiClient, store} from "./store";
 import {hotjar} from 'react-hotjar';
 import {getConfig} from "./config";
 import Banner from "./components/Banner";
-import {Col, Layout, Row} from "antd";
+import {Col, ConfigProvider, Layout, Row} from "antd";
 import {Container} from "./components/Container";
 import Navbar from "./components/Navbar";
 import {Redirect, Route, Switch} from "react-router-dom";
@@ -22,7 +22,6 @@ import {SecureLoading} from "./components/Loading";
 import DNS from "./views/DNS";
 import Activity from "./views/Activity";
 import Settings from "./views/Settings";
-
 
 
 const {Header, Content} = Layout;
@@ -58,7 +57,7 @@ function App() {
             run.current = true
             apiClient.request<User[]>('GET', `/api/users`, {getAccessTokenSilently: getAccessTokenSilently})
                 .then(() => {
-                  setShow(true)
+                    setShow(true)
                 })
                 .catch(e => {
                     setShow(true)
@@ -70,51 +69,61 @@ function App() {
 
     return (
         <>
+        <ConfigProvider
+            theme={{
+                token: {
+                    borderRadius: 2,
+                    colorPrimary: "#1890ff",
+                    fontFamily: "Arial"
+                },
+            }}
+        >
             <Provider store={store}>
                 {!show && <SecureLoading padding="3em" width={50} height={50}/>}
                 {show &&
-                <Layout>
-                    <Banner/>
-                    <Header className="header" style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        justifyContent: "space-around",
-                        alignContent: "center"
-                    }}>
-                        <Row justify="space-around" align="middle">
-                            <Col span={24}>
-                                <Container>
-                                    <Navbar/>
-                                </Container>
-                            </Col>
-                        </Row>
-                    </Header>
-                    <Content style={{minHeight: "100vh"}}>
-                        <Switch>
-                            <Route
-                                exact
-                                path="/"
-                                render={() => {
-                                    return (
-                                        <Redirect to="/peers"/>
-                                    )
-                                }}
-                            />
-                            <Route path='/peers' exact component={withOidcSecure(Peers)}/>
-                            <Route path="/add-peer" component={withOidcSecure(AddPeer)}/>
-                            <Route path="/setup-keys" component={withOidcSecure(SetupKeys)}/>
-                            <Route path="/acls" component={withOidcSecure(AccessControl)}/>
-                            <Route path="/routes" component={withOidcSecure(Routes)}/>
-                            <Route path="/users" component={withOidcSecure(Users)}/>
-                            <Route path="/dns" component={withOidcSecure(DNS)}/>
-                            <Route path="/activity" component={withOidcSecure(Activity)}/>
-                            <Route path="/settings" component={withOidcSecure(Settings)}/>
-                        </Switch>
-                    </Content>
-                    <FooterComponent/>
-                </Layout>
+                    <Layout>
+                        <Banner/>
+                        <Header className="header" style={{
+                            display: "flex",
+                            flexDirection: "column",
+                            justifyContent: "space-around",
+                            alignContent: "center"
+                        }}>
+                            <Row justify="space-around" align="middle">
+                                <Col span={24}>
+                                    <Container>
+                                        <Navbar/>
+                                    </Container>
+                                </Col>
+                            </Row>
+                        </Header>
+                        <Content style={{minHeight: "100vh"}}>
+                            <Switch>
+                                <Route
+                                    exact
+                                    path="/"
+                                    render={() => {
+                                        return (
+                                            <Redirect to="/peers"/>
+                                        )
+                                    }}
+                                />
+                                <Route path='/peers' exact component={withOidcSecure(Peers)}/>
+                                <Route path="/setup-keys" component={withOidcSecure(SetupKeys)}/>
+                                <Route path="/acls" component={withOidcSecure(AccessControl)}/>
+                                <Route path="/routes" component={withOidcSecure(Routes)}/>
+                                <Route path="/users" component={withOidcSecure(Users)}/>
+                                <Route path="/dns" component={withOidcSecure(DNS)}/>
+                                <Route path="/activity" component={withOidcSecure(Activity)}/>
+                                <Route path="/settings" component={withOidcSecure(Settings)}/>
+                            </Switch>
+                        </Content>
+                        <FooterComponent/>
+                    </Layout>
                 }
             </Provider>
+
+        </ConfigProvider>
         </>
     )
 }

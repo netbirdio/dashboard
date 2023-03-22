@@ -1,11 +1,12 @@
 import React, {useEffect, useState} from 'react';
-import {Link} from 'react-router-dom';
+import {capitalize, formatOS, timeAgo} from "../utils/common";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
 import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
+import {ExclamationCircleOutlined, ReloadOutlined,} from '@ant-design/icons';
 import {
     Alert,
     Button,
@@ -31,8 +32,6 @@ import {
 } from "antd";
 import {Peer, PeerDataTable} from "../store/peer/types";
 import {filter} from "lodash"
-import {capitalize, formatOS, timeAgo} from "../utils/common";
-import {ExclamationCircleOutlined} from "@ant-design/icons";
 import {Group, GroupPeer} from "../store/group/types";
 import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
@@ -41,6 +40,8 @@ import {useGetAccessTokenSilently} from "../utils/token";
 import {actions as userActions} from "../store/user";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {usePageSizeHelpers} from "../utils/pageSize";
+import AddPeerPopup from "../components/addpeer/AddPeerPopup";
+import {getLocalItem, setLocalItem, StorageKey} from "../services/local";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -48,7 +49,7 @@ const {confirm} = Modal;
 
 export const Peers = () => {
 
-    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
+    const {onChangePageSize, pageSizeOptions, pageSize} = usePageSizeHelpers()
 
     const {getAccessTokenSilently} = useGetAccessTokenSilently()
     const dispatch = useDispatch()
@@ -64,6 +65,7 @@ export const Peers = () => {
     const updatedPeer = useSelector((state: RootState) => state.peer.updatedPeer);
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
     const users = useSelector((state: RootState) => state.user.data);
+    const [addPeerModalOpen, setAddPeerModalOpen] = useState(false);
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
@@ -71,8 +73,8 @@ export const Peers = () => {
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
     const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
     const [showTutorial, setShowTutorial] = useState(false)
-
-
+    const [hadFirstRun, setHadFirstRun] = useState(true)
+    const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
     const optionsOnOff = [{label: 'Online', value: 'on'}, {label: 'All', value: 'all'}]
 
@@ -89,7 +91,6 @@ export const Peers = () => {
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
     const transformDataTable = (d: Peer[]): PeerDataTable[] => {
-        const peer_ids = d.map(_p => _p.id)
         return d.map((p) => {
             const gs = groups
                 .filter(g => g.peers?.find((_p: GroupPeer) => _p.id === p.id))
@@ -103,16 +104,33 @@ export const Peers = () => {
         })
     }
 
-    useEffect(() => {
+    const refresh = () => {
         dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
         dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+    }
+
+    useEffect(() => {
+        getLocalItem<boolean>(StorageKey.hadFirstRun).then(f => setHadFirstRun(f === null? false : f))
+        refresh()
     }, [])
+
+    useEffect(() => {
+        if (!hadFirstRun) {
+            setLocalItem(StorageKey.hadFirstRun, true).then()
+            setAddPeerModalOpen(true)
+        } else {
+            setAddPeerModalOpen(false)
+        }
+    }, [hadFirstRun])
 
     useEffect(() => {
         if (peers.length) {
             setShowTutorial(false)
+            if (!hadFirstRun) {
+                setHadFirstRun(true)
+            }
         } else {
             setShowTutorial(true)
         }
@@ -272,12 +290,11 @@ export const Peers = () => {
             </div>
         }
         let name = peerToAction ? peerToAction.name : ''
-        confirm({
+        confirmModal.confirm({
             icon: <ExclamationCircleOutlined/>,
             title: "Delete peer \"" + name + "\"",
             width: 600,
             content: contentModule,
-            okType: 'danger',
             onOk() {
                 dispatch(peerActions.deletedPeer.request({
                     getAccessTokenSilently: getAccessTokenSilently,
@@ -291,12 +308,11 @@ export const Peers = () => {
     }
 
     const showConfirmEnableSSH = (record: PeerDataTable) => {
-        confirm({
+        confirmModal.confirm({
             icon: <ExclamationCircleOutlined/>,
             title: "Enable SSH Server for \"" + record.name + "\"?",
             width: 600,
             content: "Experimental feature. Enabling this option allows remote SSH access to this machine from other connected network participants.",
-            okType: 'danger',
             onOk() {
                 handleSwitchSSH(record, true)
             },
@@ -384,7 +400,7 @@ export const Peers = () => {
                                       styleNotification={{}}/>
         }
 
-        const body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
+        const body = <span style={{textAlign: "left"}}>
             <Row>
                <ButtonCopyMessage keyMessage={peer.dns_label}
                                   toCopy={peer.dns_label}
@@ -413,16 +429,19 @@ export const Peers = () => {
         if (!userEmail) {
             return <Button type="text"  style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
                            onClick={() => setUpdateGroupsVisible(peer, true)}>
-                <Text strong>{peer.name}</Text>
+                 <span style={{textAlign: "left"}}>
+                     <Row><Text strong>{peer.name}</Text></Row>
+                 </span>
             </Button>
         }
         return <div>
-            <Button type="text" style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}
+            <Button type="text"
                     onClick={() => setUpdateGroupsVisible(peer, true)}>
-                <Text strong>{peer.name}</Text>
-                <br/>
-                <Text type="secondary">{userEmail}</Text>
-                {expiry}
+                <span style={{textAlign: "left"}}>
+                    <Row> <Text strong>{peer.name}</Text></Row>
+                    <Row><Text type="secondary">{userEmail}</Text></Row>
+                    <Row> {expiry}</Row>
+                </span>
             </Button>
         </div>
     }
@@ -433,8 +452,10 @@ export const Peers = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Peers</Title>
-                        <Paragraph>A list of all the machines in your account including their name, IP and
-                            status.</Paragraph>
+                        {showTutorial && <Paragraph type={"secondary"}>A list of all the machines in your account including their name, IP and
+                            status.</Paragraph>}
+                        {!showTutorial && <Paragraph>A list of all the machines in your account including their name, IP and
+                            status.</Paragraph>}
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -449,8 +470,10 @@ export const Peers = () => {
                                             value={optionOnOff}
                                             optionType="button"
                                             buttonStyle="solid"
+                                            disabled={showTutorial}
                                         />
                                         <Select value={pageSize.toString()} options={pageSizeOptions}
+                                                disabled={showTutorial}
                                                 onChange={onChangePageSize} className="select-rows-per-page-en"/>
                                     </Space>
                                 </Col>
@@ -462,9 +485,7 @@ export const Peers = () => {
                                      xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            {!showTutorial &&
-                                                <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
-                                                    Peer</Link>}
+                                            {!showTutorial && <Button type="primary" onClick={() => setAddPeerModalOpen(true)}>Add peer</Button>}
                                         </Col>
                                     </Row>
                                 </Col>
@@ -475,7 +496,7 @@ export const Peers = () => {
                                        closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
-                                <Table
+                                {!showTutorial && (<Table
                                     pagination={{
                                         pageSize,
                                         showSizeChanger: false,
@@ -514,7 +535,8 @@ export const Peers = () => {
                                                     <Tag color="red">offline</Tag>
 
                                                 if (record.login_expired) {
-                                                    return <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+                                                    return <Tooltip
+                                                        title="The peer is offline and needs to be re-authenticated because its login has expired ">
                                                         <Tag color="orange">needs login</Tag>
                                                     </Tooltip>
 
@@ -578,17 +600,23 @@ export const Peers = () => {
                                                                         }}></Dropdown.Button>
                                             }}
                                     />
-                                </Table>
+                                </Table>)}
                                 {showTutorial &&
                                     <Space direction="vertical" size="small" align="center"
                                            style={{display: 'flex', padding: '45px 15px', justifyContent: 'center'}}>
-                                        <Paragraph type="secondary"
+                                        <Title level={4}
+                                            style={{textAlign: "center"}}>
+                                            Get Started
+                                        </Title>
+                                        <Paragraph
                                                    style={{textAlign: "center", whiteSpace: "pre-line"}}>
                                             It looks like you don't have any connected machines. {"\n"}
-                                            Get started by adding one to your network!
+                                            Get started by adding one to your network.
                                         </Paragraph>
-                                        <Link to="/add-peer" className="ant-btn ant-btn-primary ant-btn-block">Add
-                                            Peer</Link>
+                                        <Button size={"middle"} type="primary" onClick={() => setAddPeerModalOpen(true)}>
+                                            Add new peer
+                                        </Button>
+
                                     </Space>
                                 }
                             </Card>
@@ -597,6 +625,20 @@ export const Peers = () => {
                 </Row>
             </Container>
             <PeerUpdate/>
+            <Modal
+                open={addPeerModalOpen}
+                onOk={() => setAddPeerModalOpen(false)}
+                onCancel={() => {
+                    setAddPeerModalOpen(false)
+                    setHadFirstRun(true)
+                }}
+                footer={[]}
+                width={780}
+            >
+               {/* <AddPeerPopup greeting={"Hi there!"} headline={"It's time to add your first device."}/>*/}
+                <AddPeerPopup greeting={!hadFirstRun ? "Hi there!" : ""} headline={!hadFirstRun ? "It's time to add your first device." : "Add new peer"}/>
+            </Modal>
+            {confirmModalContextHolder}
         </>
     )
 }

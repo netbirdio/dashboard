@@ -1,8 +1,4 @@
-@import '~antd/dist/antd.css';
-
-/*@tailwind base;*/
-/*@tailwind components;*/
-/*@tailwind utilities;*/
+@import 'antd/dist/reset.css';
 
 body {
   font-size: 16px;
@@ -92,20 +88,6 @@ body {
   align-self: center;
 }
 
-.ant-steps-item-tail::after {
-  background-color: #1890ff !important;
-}
-
-.ant-steps-item-icon {
-  background: #1890ff !important;
-  color: #ffffff !important;
-  border: none;
-}
-
-.ant-steps-icon {
-  color: #ffffff !important;
-}
-
 .nb-code {
   margin-bottom: 1em;
 }
@@ -135,4 +117,26 @@ body {
 .access-control.ant-drawer-subtitle {
   line-height: 22px;
   margin: 24px 0;
+}
+
+.ant-steps-item-icon{
+  background: #EBEBEB !important;
+  border-color: #EBEBEB !important;
+}
+.ant-steps-icon-dot{
+  background: #EBEBEB !important;
+  border-color: #EBEBEB !important;
+}
+.ant-steps-icon  {
+  background: #EBEBEB !important;
+  border: none;
+  color: black !important;
+}
+
+.ant-steps-item-tail::after {
+  background: #EBEBEB !important;
+}
+
+.ant-steps-item-tail {
+  border: none;
 }

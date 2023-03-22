@@ -1,29 +1,30 @@
 export enum StorageKey {
-  token
+    token,
+    hadFirstRun
 }
 
 const setLocalItem = async <T>(key: StorageKey, value: T): Promise<void> => {
-  try {
-    localStorage.setItem(`@net-bird:${key}`, JSON.stringify(value));
-  } catch (err) {
-    console.log(err);
-  }
+    try {
+        localStorage.setItem(`@net-bird:${key}`, JSON.stringify(value));
+    } catch (err) {
+        console.log(err);
+    }
 };
 
 const getLocalItem = async <T>(key: StorageKey): Promise<T | null> => {
-  try {
-    const item = localStorage.getItem(`@net-bird:${key}`);
-    if (!item) {
-      return null;
+    try {
+        const item = localStorage.getItem(`@net-bird:${key}`);
+        if (!item) {
+            return null;
+        }
+        return JSON.parse(item) as T;
+    } catch (err) {
+        console.log(err);
     }
-    return JSON.parse(item) as T;
-  } catch (err) {
-    console.log(err);
-  }
-  return null;
+    return null;
 };
 
 export {
-  getLocalItem,
-  setLocalItem
+    getLocalItem,
+    setLocalItem
 }

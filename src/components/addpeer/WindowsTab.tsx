@@ -1,8 +1,9 @@
 import React, {useState} from 'react';
 
-import { Button } from "antd";
+import {Button, Typography} from "antd";
 import TabSteps from "./TabSteps";
 import { StepCommand } from "./types"
+const {Text} = Typography;
 
 export const WindowsTab = () => {
 
@@ -11,20 +12,20 @@ export const WindowsTab = () => {
             key: 1,
             title: 'Download and run Windows installer:',
             commands: (
-                <Button type="primary" href="https://pkgs.netbird.io/windows/x64" target="_blank">Download NetBird</Button>
+                <Button style={{marginTop: "5px"}} type="primary" href="https://pkgs.netbird.io/windows/x64" target="_blank">Download NetBird</Button>
             ),
             copied: false
         } as StepCommand,
         {
             key: 2,
-            title: 'Click on "Connect" from the NetBird icon in your system tray.',
+            title: 'Click on "Connect" from the NetBird icon in your system tray',
             commands: '',
             copied: false,
             showCopyButton: false
         },
         {
             key: 3,
-            title: 'Log in your browser.\n',
+            title: 'Sign up using your email address',
             commands: '',
             copied: false,
             showCopyButton: false
@@ -32,7 +33,15 @@ export const WindowsTab = () => {
     ])
 
     return (
-        <TabSteps stepsItems={steps}/>
+        <div style={{marginTop: 10}}>
+            <Text style={{fontWeight: "bold"}}>
+                Install on Windows
+            </Text>
+            <div style={{marginTop: 5}}>
+                <TabSteps stepsItems={steps}/>
+            </div>
+
+        </div>
     )
 }
 
