@@ -11,7 +11,7 @@ import {
     Form,
     Input,
     InputNumber,
-    List,
+    List, Modal,
     Radio,
     Row,
     Select,
