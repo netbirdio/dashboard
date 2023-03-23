@@ -32,6 +32,9 @@ export const AddPeerPopup: React.FC<Props> = ({
 
     const [openTab, setOpenTab] = useState(detectOSTab);
 
+    const [width, setWidth] = useState<number>(window.innerWidth);
+    const isMobile = width <= 768;
+
     const items: TabsProps['items'] = [
         {
             key: "1",
@@ -78,7 +81,7 @@ export const AddPeerPopup: React.FC<Props> = ({
             To get started install NetBird and log in using your {"\n"} email account.
         </Paragraph>
 
-        <Tabs centered
+        <Tabs centered={!isMobile}
               defaultActiveKey={openTab.toString()} tabPosition="top" animated={{inkBar: true, tabPane: false}}
               items={items}/>
         <Paragraph type={"secondary"}
