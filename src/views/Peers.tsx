@@ -635,7 +635,6 @@ export const Peers = () => {
                 footer={[]}
                 width={780}
             >
-               {/* <AddPeerPopup greeting={"Hi there!"} headline={"It's time to add your first device."}/>*/}
                 <AddPeerPopup greeting={!hadFirstRun ? "Hi there!" : ""} headline={!hadFirstRun ? "It's time to add your first device." : "Add new peer"}/>
             </Modal>
             {confirmModalContextHolder}
