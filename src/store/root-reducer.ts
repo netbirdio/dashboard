@@ -10,6 +10,7 @@ import { reducer as nameserverGroup } from './nameservers';
 import { reducer as event } from './event';
 import { reducer as dnsSettings } from './dns-settings';
 import { reducer as account } from './account';
+import { reducer as personalAccessToken } from './personal-access-token';
 
 export default combineReducers({
   peer,
@@ -21,5 +22,6 @@ export default combineReducers({
   nameserverGroup,
   event,
   dnsSettings,
-  account
+  account,
+  personalAccessToken
 });

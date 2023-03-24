@@ -93,7 +93,9 @@ export const timeAgo = (dateParam) => {
     const isThisYear = today.getFullYear() === date.getFullYear();
 
 
-    if (seconds < 5) {
+    if (seconds < -1) {
+        return getFormattedDate(date, false, true);
+    } else if (seconds < 5) {
         return 'just now';
     } else if (seconds < 60) {
         return `${ seconds } seconds ago`;
