@@ -41,7 +41,6 @@ const ExpiresInDefault = 7
 
 interface TokenDataTable extends PersonalAccessToken {
     key: string
-    user_name: String
     status: String
 }
 
@@ -177,7 +176,6 @@ export const SettingsPersonal = () => {
         }
         return d.map(p => ({
             key: p.id,
-            user_name: u.find(u => u.id === p.created_by)?.name ? (u.find(u => u.id === p.created_by)?.is_current ? "Me" : u.find(u => u.id === p.created_by)?.name ) : p.created_by,
             status: Date.parse(p.expiration_date) > Date.now() ? "valid" : "expired",
             ...p} as TokenDataTable))
     }
@@ -195,7 +193,7 @@ export const SettingsPersonal = () => {
                 break
         }
         f = filter(f, (_f: TokenDataTable) =>
-            (_f.name.toLowerCase().includes(t) || _f.status.toLowerCase().includes(t) || _f.user_name.toLowerCase().includes(t) || t === "")
+            (_f.name.toLowerCase().includes(t) || _f.status.toLowerCase().includes(t) || t === "")
         ) as TokenDataTable[]
         return f
     }
@@ -362,11 +360,6 @@ export const SettingsPersonal = () => {
                                             render={(text, record, index) => {
                                                 return <Text strong>{text}</Text>
                                             }}
-                                    />
-
-                                    <Column title="Created By" dataIndex="user_name"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).user_name.includes(value)}
-                                            sorter={(a, b) => ((a as any).user_name.localeCompare((b as any).user_name))}
                                     />
 
                                     <Column title="Last Used" dataIndex="last_used"
