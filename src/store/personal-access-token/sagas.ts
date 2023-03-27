@@ -31,7 +31,7 @@ export function* savePersonalAccessToken(action: ReturnType<typeof actions.saveP
                 getAccessTokenSilently: action.payload.getAccessTokenSilently,
                 payload: {
                     user_id: tokenToSave.user_id,
-                    description: tokenToSave.description,
+                    name: tokenToSave.name,
                     expires_in: tokenToSave.expires_in,
                 } as PersonalAccessTokenCreate
             });

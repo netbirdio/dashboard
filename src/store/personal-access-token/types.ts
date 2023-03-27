@@ -1,7 +1,7 @@
 
 export interface PersonalAccessToken {
   id: string;
-  description: string;
+  name: string;
   expiration_date: string;
   created_by: string;
   created_at: string;
@@ -9,13 +9,13 @@ export interface PersonalAccessToken {
 }
 
 export interface SpecificPAT {
-  description: string,
+  name: string,
   user_id: string,
   id: string,
 }
 
 export interface PersonalAccessTokenCreate {
   user_id: string,
-  description: string,
+  name: string,
   expires_in: number,
 }

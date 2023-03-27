@@ -172,6 +172,9 @@ export const SettingsPersonal = () => {
     }, [savedPersonalAccessToken])
 
     const transformTokenTable = (d: PersonalAccessToken[], u: User[]): TokenDataTable[] => {
+        if(!d) {
+            return []
+        }
         return d.map(p => ({
             key: p.id,
             user_name: u.find(u => u.id === p.created_by)?.name ? u.find(u => u.id === p.created_by)?.name : p.created_by,
@@ -192,7 +195,7 @@ export const SettingsPersonal = () => {
                 break
         }
         f = filter(f, (_f: TokenDataTable) =>
-            (_f.description.toLowerCase().includes(t) || _f.status.toLowerCase().includes(t) || _f.user_name.toLowerCase().includes(t) || t === "")
+            (_f.name.toLowerCase().includes(t) || _f.status.toLowerCase().includes(t) || _f.user_name.toLowerCase().includes(t) || t === "")
         ) as TokenDataTable[]
         return f
     }
@@ -212,7 +215,7 @@ export const SettingsPersonal = () => {
             content: <Space direction="vertical" size="small">
                 {personalAccessTokenToDelete &&
                     <>
-                        <Title level={5}>Delete token "{personalAccessTokenToDelete ? personalAccessTokenToDelete.description : ''}"</Title>
+                        <Title level={5}>Delete token "{personalAccessTokenToDelete ? personalAccessTokenToDelete.name : ''}"</Title>
                         <Paragraph>Are you sure you want to delete this token?</Paragraph>
                     </>
                 }
@@ -224,7 +227,7 @@ export const SettingsPersonal = () => {
                     payload: {
                         user_id: oidcUser.sub,
                         id: personalAccessTokenToDelete ? personalAccessTokenToDelete.id : null,
-                        description: personalAccessTokenToDelete ? personalAccessTokenToDelete.description : null,
+                        name: personalAccessTokenToDelete ? personalAccessTokenToDelete.name : null,
                     } as SpecificPAT
                 }));
             },
@@ -239,7 +242,7 @@ export const SettingsPersonal = () => {
         dispatch(personalAccessTokenActions.setNewPersonalAccessTokenVisible(true));
         dispatch(personalAccessTokenActions.setPersonalAccessToken({
             user_id: "",
-            description: "",
+            name: "",
             expires_in: 7
         } as PersonalAccessTokenCreate))
     }
@@ -251,7 +254,7 @@ export const SettingsPersonal = () => {
         if (savedPersonalAccessToken.loading) return
         dispatch(personalAccessTokenActions.setPersonalAccessToken({
             user_id: "",
-            description: "",
+            name: "",
             expires_in: 0
         } as PersonalAccessTokenCreate))
         setFormPersonalAccessToken({} as PersonalAccessTokenCreate)
@@ -266,9 +269,10 @@ export const SettingsPersonal = () => {
     }
 
     const createPersonalAccessTokenToSave = (): PersonalAccessTokenCreate => {
+        console.log(formPersonalAccessToken.name)
         return {
             user_id: oidcUser.sub,
-            description: formPersonalAccessToken.description,
+            name: formPersonalAccessToken.name,
             expires_in: formPersonalAccessToken.expires_in,
         } as PersonalAccessTokenCreate
     }
@@ -352,10 +356,9 @@ export const SettingsPersonal = () => {
                                     scroll={{x: true}}
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
-                                    <Column title="Description" dataIndex="description"
-
-                                            onFilter={(value: string | number | boolean, record) => (record as any).description.includes(value)}
-                                            sorter={(a, b) => ((a as any).description.localeCompare((b as any).description))}
+                                    <Column title="Name" dataIndex="name"
+                                            onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                            sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                             render={(text, record, index) => {
                                                 return <Text strong>{text}</Text>
                                             }}
@@ -450,13 +453,13 @@ export const SettingsPersonal = () => {
                                 <Row align="top">
                                     <Col flex="auto">
                                         <Form.Item
-                                            name="description"
+                                            name="name"
                                             label={
-                                            <Text style={{color: "gray"}}><b style={{color: "black"}}>Description</b> (Set a description to identify the token.)</Text>
+                                            <Text style={{color: "gray"}}><b style={{color: "black"}}>Name</b> (Set a name to identify the token.)</Text>
                                             }
                                             rules={[{
                                                 required: true,
-                                                message: 'Please add a description for this personal access token',
+                                                message: 'Please add a name for this personal access token',
                                                 whitespace: true
                                             }]}
                                         >
