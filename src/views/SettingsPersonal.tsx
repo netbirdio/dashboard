@@ -177,7 +177,7 @@ export const SettingsPersonal = () => {
         }
         return d.map(p => ({
             key: p.id,
-            user_name: u.find(u => u.id === p.created_by)?.name ? u.find(u => u.id === p.created_by)?.name : p.created_by,
+            user_name: u.find(u => u.id === p.created_by)?.name ? (u.find(u => u.id === p.created_by)?.is_current ? "Me" : u.find(u => u.id === p.created_by)?.name ) : p.created_by,
             status: Date.parse(p.expiration_date) > Date.now() ? "valid" : "expired",
             ...p} as TokenDataTable))
     }
