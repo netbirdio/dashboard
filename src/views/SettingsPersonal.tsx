@@ -432,7 +432,7 @@ export const SettingsPersonal = () => {
                                    marginTop: "-25px",
                                    paddingBottom: "35px",
                                }}>
-                        {showPlainToken ? "You will only see this token once so copy it and store it in a secure location." : "This token can be used to authenticate against our API."}
+                        {showPlainToken ? "You will only see this token once so copy it and store it in a secure location." : "This token can be used to authenticate against NetBird's Public API."}
                     </Paragraph>
                     {!showPlainToken && <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}
                                               initialValues={{
