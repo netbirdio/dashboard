@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as personalAccessTokenActions} from '../store/personal-access-token';
@@ -8,9 +8,9 @@ import {
     Alert,
     Button,
     Card,
-    Col,
-    Dropdown,
-    Input,
+    Col, Divider,
+    Dropdown, Form,
+    Input, InputNumber,
     Menu,
     message,
     Modal,
@@ -24,19 +24,20 @@ import {
     Typography
 } from "antd";
 import {filter} from "lodash"
-import {timeAgo} from "../utils/common";
-import {ExclamationCircleOutlined} from "@ant-design/icons";
+import {copyToClipboard, timeAgo} from "../utils/common";
+import {CheckOutlined, CopyOutlined, ExclamationCircleOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import tableSpin from "../components/Spin";
 import {useGetAccessTokenSilently} from "../utils/token";
 import {usePageSizeHelpers} from "../utils/pageSize";
 import {PersonalAccessToken, PersonalAccessTokenCreate, SpecificPAT} from "../store/personal-access-token/types";
-import PersonalAccessTokenNew from "../components/PersonalAccessTokenNew";
 import {User} from "../store/user/types";
 import {useOidcUser} from "@axa-fr/react-oidc";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
 const {confirm} = Modal;
+
+const ExpiresInDefault = 7
 
 interface TokenDataTable extends PersonalAccessToken {
     key: string
@@ -56,6 +57,9 @@ export const SettingsPersonal = () => {
     const deletedPersonalAccessToken = useSelector((state: RootState) => state.personalAccessToken.deletedPersonalAccessToken);
     const savedPersonalAccessToken = useSelector((state: RootState) => state.personalAccessToken.savedPersonalAccessToken);
 
+    const personalAccessToken = useSelector((state: RootState) => state.personalAccessToken.personalAccessToken)
+    const inputNameRef = useRef<any>(null)
+
     const [textToSearch, setTextToSearch] = useState('');
     const [dataTable, setDataTable] = useState([] as TokenDataTable[]);
 
@@ -65,9 +69,18 @@ export const SettingsPersonal = () => {
         setOptionValidAll(value)
     }
 
+    const [formPersonalAccessToken, setFormPersonalAccessToken] = useState({} as PersonalAccessTokenCreate)
+    const [form] = Form.useForm()
+
     const {oidcUser} = useOidcUser();
 
     const [personalAccessTokenToDelete, setPersonalAccessTokenToDelete] = useState(null as PersonalAccessToken | null);
+
+    const [addTokenModalOpen, setNewTokenModalOpen] = useState(false);
+    const [showPlainToken, setShowPlainToken] = useState(false);
+    const [tokenCopied, setTokenCopied] = useState(false);
+    const [plainToken, setPlainToken] = useState("")
+
 
     const styleNotification = {marginTop: 85}
 
@@ -81,6 +94,20 @@ export const SettingsPersonal = () => {
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
     useEffect(() => {
+        if (!personalAccessToken) return
+        setFormPersonalAccessToken(personalAccessToken)
+        form.setFieldsValue(personalAccessToken)
+    }, [personalAccessToken])
+
+    useEffect(() => {
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+    }, [])
+
+    const onChange = (data: any) => {
+        setFormPersonalAccessToken({...formPersonalAccessToken, ...data})
+    }
+
+    useEffect(() => {
         if(oidcUser) {
             dispatch(personalAccessTokenActions.getPersonalAccessTokens.request({
                 getAccessTokenSilently: getAccessTokenSilently,
@@ -90,7 +117,7 @@ export const SettingsPersonal = () => {
 
     useEffect(() => {
         dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-    })
+    }, [])
 
     useEffect(() => {
         setDataTable(filterDataTable(transformTokenTable(personalAccessTokens, users)))
@@ -126,32 +153,9 @@ export const SettingsPersonal = () => {
         if (savedPersonalAccessToken.loading) {
             message.loading({content: 'Saving...', key: createKey, duration: 0, style: styleNotification});
         } else if (savedPersonalAccessToken.success) {
-            if(savedPersonalAccessToken.data.plain_token) {
-                alert("Token created successfully\nYou will only see this token once so copy it before closing this window.\nToken: " + savedPersonalAccessToken.data.plain_token)
-                dispatch(personalAccessTokenActions.setNewPersonalAccessTokenVisible(false));
-                dispatch(personalAccessTokenActions.setSavedPersonalAccessToken({...savedPersonalAccessToken, success: false}));
-                dispatch(personalAccessTokenActions.resetSavedPersonalAccessToken(null))
-            }
-            // confirm({
-            //     icon: <ExclamationCircleOutlined/>,
-            //     width: 600,
-            //     content: <Space direction="vertical" size="small">
-            //         {savedPersonalAccessToken &&
-            //             <>
-            //                 <Title level={5}>Token created successfully</Title>
-            //                 <Paragraph>You will only see this token once so copy it before closing this window.</Paragraph>
-            //                 <Text>Token: {savedPersonalAccessToken.data.plain_token}</Text>
-            //             </>
-            //         }
-            //     </Space>,
-            //     okType: 'danger',
-            //     onOk() {
-            //
-            //     },
-            //     onCancel() {
-            //
-            //     },
-            // });
+            message.destroy(createKey)
+            setPlainToken(savedPersonalAccessToken.data)
+            setShowPlainToken(true)
         } else if (savedPersonalAccessToken.error) {
             message.error({
                 content: 'Failed to create personal access token. You might not have enough permissions.',
@@ -159,6 +163,9 @@ export const SettingsPersonal = () => {
                 duration: 2,
                 style: styleNotification
             });
+            setNewTokenModalOpen(false)
+            setShowPlainToken(false)
+            setTokenCopied(false)
             dispatch(personalAccessTokenActions.setSavedPersonalAccessToken({...savedPersonalAccessToken, error: null}));
             dispatch(personalAccessTokenActions.resetSavedPersonalAccessToken(null))
         }
@@ -206,7 +213,7 @@ export const SettingsPersonal = () => {
                 {personalAccessTokenToDelete &&
                     <>
                         <Title level={5}>Delete token "{personalAccessTokenToDelete ? personalAccessTokenToDelete.description : ''}"</Title>
-                        <Paragraph>Are you sure you want to delete token?</Paragraph>
+                        <Paragraph>Are you sure you want to delete this token?</Paragraph>
                     </>
                 }
             </Space>,
@@ -228,12 +235,66 @@ export const SettingsPersonal = () => {
     }
 
     const onClickAddNewPersonalAccessToken = () => {
+        setNewTokenModalOpen(true)
         dispatch(personalAccessTokenActions.setNewPersonalAccessTokenVisible(true));
         dispatch(personalAccessTokenActions.setPersonalAccessToken({
             user_id: "",
             description: "",
             expires_in: 7
         } as PersonalAccessTokenCreate))
+    }
+
+    const onCancel = () => {
+        setNewTokenModalOpen(false)
+        setShowPlainToken(false)
+        setTokenCopied(false)
+        if (savedPersonalAccessToken.loading) return
+        dispatch(personalAccessTokenActions.setPersonalAccessToken({
+            user_id: "",
+            description: "",
+            expires_in: 0
+        } as PersonalAccessTokenCreate))
+        setFormPersonalAccessToken({} as PersonalAccessTokenCreate)
+        setVisibleNewSetupKey(false)
+        dispatch(personalAccessTokenActions.setNewPersonalAccessTokenVisible(false));
+        dispatch(personalAccessTokenActions.setSavedPersonalAccessToken({...savedPersonalAccessToken, success: false}));
+        dispatch(personalAccessTokenActions.resetSavedPersonalAccessToken(null))
+    }
+
+    const setVisibleNewSetupKey = (status: boolean) => {
+        dispatch(personalAccessTokenActions.setNewPersonalAccessTokenVisible(status));
+    }
+
+    const createPersonalAccessTokenToSave = (): PersonalAccessTokenCreate => {
+        return {
+            user_id: oidcUser.sub,
+            description: formPersonalAccessToken.description,
+            expires_in: formPersonalAccessToken.expires_in,
+        } as PersonalAccessTokenCreate
+    }
+
+    const handleFormSubmit = () => {
+        form.validateFields()
+            .then((values) => {
+                let personalAccessTokenToSave = createPersonalAccessTokenToSave()
+                dispatch(personalAccessTokenActions.savePersonalAccessToken.request({
+                    getAccessTokenSilently: getAccessTokenSilently,
+                    payload: personalAccessTokenToSave
+                }))
+            })
+            .catch((errorInfo) => {
+                console.log('errorInfo', errorInfo)
+            });
+    };
+
+    const onCopyClick = (text: string, copied: boolean) => {
+        copyToClipboard(text)
+        setTokenCopied(true)
+        if (copied) {
+            setTimeout(() => {
+                onCopyClick(text, false)
+            }, 2000)
+        }
     }
 
     return (
@@ -246,7 +307,6 @@ export const SettingsPersonal = () => {
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                                    {/*<Input.Search allowClear value={textToSearch} onPressEnter={searchDataTable} onSearch={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />*/}
                                     <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
                                            placeholder="Search..." onChange={onChangeTextToSearch}/>
                                 </Col>
@@ -293,6 +353,7 @@ export const SettingsPersonal = () => {
                                     loading={tableSpin(loading)}
                                     dataSource={dataTable}>
                                     <Column title="Description" dataIndex="description"
+
                                             onFilter={(value: string | number | boolean, record) => (record as any).description.includes(value)}
                                             sorter={(a, b) => ((a as any).description.localeCompare((b as any).description))}
                                             render={(text, record, index) => {
@@ -305,8 +366,8 @@ export const SettingsPersonal = () => {
                                             sorter={(a, b) => ((a as any).user_name.localeCompare((b as any).user_name))}
                                     />
 
-                                    <Column title="Last Used" dataIndex="last_used_formatted"
-                                            sorter={(a, b) => ((a as any).last_used_formatted.localeCompare((b as any).last_used_formatted))}
+                                    <Column title="Last Used" dataIndex="last_used"
+                                            sorter={(a, b) => ((a as any).last_used.localeCompare((b as any).last_used))}
                                             render={(text, record, index) => {
                                                 return (record as TokenDataTable).last_used === (record as TokenDataTable).created_at ? "never" : timeAgo(text)
                                             }}
@@ -351,7 +412,102 @@ export const SettingsPersonal = () => {
                 </Row>
 
             </Container>
-            <PersonalAccessTokenNew/>
+            <Modal
+                open={addTokenModalOpen}
+                onCancel={onCancel}
+                footer={
+                    <Space style={{display: 'flex', justifyContent: 'end'}}>
+                        <Button disabled={savedPersonalAccessToken.loading} onClick={onCancel}>{showPlainToken ? "Close" : "Cancel"}</Button>
+                        <Button type="primary" disabled={showPlainToken}
+                                onClick={handleFormSubmit}>{"Create"}</Button>
+                    </Space>
+                }
+                width={780}
+            >
+                <Container style={{textAlign: "center"}}>
+                    <Paragraph
+                        style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "2em"}}>
+                        {showPlainToken ? "Token created successfully!" : "Create new Personal Access Token"}
+                    </Paragraph>
+                    <Paragraph type={"secondary"}
+                               style={{
+                                   textAlign: "center",
+                                   whiteSpace: "pre-line",
+                                   marginTop: "-25px",
+                                   paddingBottom: "35px",
+                               }}>
+                        {showPlainToken ? "You will only see this token once so copy it and store it in a secure location." : "This token can be used to authenticate against our API."}
+                    </Paragraph>
+                    {!showPlainToken && <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}
+                                              initialValues={{
+                                                  expires_in: ExpiresInDefault,
+                                              }}
+                                              style={{paddingLeft: "80px", paddingRight: "80px"}}
+                    >
+                        <Row gutter={16}>
+                            <Col span={24}>
+                                <Divider style={{marginTop: "0px"}}></Divider>
+                                <Row align="top">
+                                    <Col flex="auto">
+                                        <Form.Item
+                                            name="description"
+                                            label={
+                                            <Text style={{color: "gray"}}><b style={{color: "black"}}>Description</b> (Set a description to identify the token.)</Text>
+                                            }
+                                            rules={[{
+                                                required: true,
+                                                message: 'Please add a description for this personal access token',
+                                                whitespace: true
+                                            }]}
+                                        >
+                                            <Input
+                                                placeholder={""}
+                                                ref={inputNameRef}
+                                                autoComplete="off"/>
+                                        </Form.Item>
+                                    </Col>
+                                </Row>
+                                <Divider style={{marginTop: "0px"}}></Divider>
+                            </Col>
+                            <Col span={24} style={{textAlign: "left"}}>
+                                <Form.Item
+                                    name="expires_in"
+                                    label={
+                                        <Text style={{color: "gray"}}><b style={{color: "black"}}>Expires</b> (Set the amount of days the token should be valid.)</Text>
+                                    }
+                                    rules={[{
+                                        type: 'number',
+                                        min: 1,
+                                        max: 356,
+                                        message: 'The expiration should be set between 1 and 365 days'
+                                    }]}>
+                                    <InputNumber/>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24} style={{textAlign: "center"}}>
+                                <Divider style={{marginTop: "0px"}}></Divider>
+                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true}
+                                        href="https://netbird.io/docs/overview/personal-access-tokens">Learn more about personal access tokens</Button>
+                            </Col>
+                        </Row>
+                    </Form>}
+                    {showPlainToken && <Space className="nb-code" direction="vertical" size="middle">
+                        <Row>
+                            <>
+                                <Text style={{fontSize: "large", marginTop: "-4px", backgroundColor: "#ebeef3", padding: "10px", borderRadius: "5px", marginBottom: "20px"}}>{plainToken}</Text>
+                                { !tokenCopied ? (
+                                    <Button type="text" size="large" className="btn-copy-code" icon={<CopyOutlined/>}
+                                            style={{color: "rgb(107, 114, 128)"}}
+                                            onClick={() => onCopyClick(plainToken, true)}/>
+                                ): (
+                                    <Button type="text" size="large" className="btn-copy-code" icon={<CheckOutlined/>}
+                                            style={{color: "green"}}/>
+                                )}
+                            </>
+                        </Row>
+                    </Space>}
+                </Container>
+            </Modal>
         </>
     )
 }

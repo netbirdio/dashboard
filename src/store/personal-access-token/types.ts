@@ -1,6 +1,3 @@
-import {ExpiresInValue} from "../../views/ExpiresInInput";
-import moment from "moment/moment";
-import {SetupKey} from "../setup-key/types";
 
 export interface PersonalAccessToken {
   id: string;
@@ -9,10 +6,6 @@ export interface PersonalAccessToken {
   created_by: string;
   created_at: string;
   last_used: string;
-}
-
-export interface PersonalAccessTokenGenerated {
-  plain_token: string
 }
 
 export interface SpecificPAT {
