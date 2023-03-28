@@ -32,6 +32,7 @@ import {usePageSizeHelpers} from "../utils/pageSize";
 import {PersonalAccessToken, PersonalAccessTokenCreate, SpecificPAT} from "../store/personal-access-token/types";
 import {User} from "../store/user/types";
 import {useOidcUser} from "@axa-fr/react-oidc";
+import SyntaxHighlighter from "react-syntax-highlighter";
 
 const {Title, Text, Paragraph} = Typography;
 const {Column} = Table;
@@ -80,6 +81,7 @@ export const SettingsPersonal = () => {
     const [tokenCopied, setTokenCopied] = useState(false);
     const [plainToken, setPlainToken] = useState("")
 
+    const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
     const styleNotification = {marginTop: 85}
 
@@ -207,7 +209,7 @@ export const SettingsPersonal = () => {
     }
 
     const showConfirmDelete = () => {
-        confirm({
+        confirmModal.confirm({
             icon: <ExclamationCircleOutlined/>,
             width: 600,
             content: <Space direction="vertical" size="small">
@@ -218,7 +220,6 @@ export const SettingsPersonal = () => {
                     </>
                 }
             </Space>,
-            okType: 'danger',
             onOk() {
                 dispatch(personalAccessTokenActions.deletePersonalAccessToken.request({
                     getAccessTokenSilently: getAccessTokenSilently,
@@ -305,7 +306,7 @@ export const SettingsPersonal = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Personal Access Tokens</Title>
-                        <Paragraph>A list of all the personal access tokens for your user.</Paragraph>
+                        <Paragraph>Personal Access Tokens can be used to authenticate against NetBird's Public API.</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -429,10 +430,10 @@ export const SettingsPersonal = () => {
                                style={{
                                    textAlign: "center",
                                    whiteSpace: "pre-line",
-                                   marginTop: "-25px",
-                                   paddingBottom: "35px",
+                                   marginTop: "-15px",
+                                   paddingBottom: "25px",
                                }}>
-                        {showPlainToken ? "You will only see this token once so copy it and store it in a secure location." : "This token can be used to authenticate against NetBird's Public API."}
+                        {showPlainToken ? "You will only see this token once," + "\n" + "so copy it and store it in a secure location." : "This token can be used to authenticate against NetBird's Public API."}
                     </Paragraph>
                     {!showPlainToken && <Form layout="vertical" hideRequiredMark form={form} onValuesChange={onChange}
                                               initialValues={{
@@ -480,9 +481,9 @@ export const SettingsPersonal = () => {
                                     <InputNumber/>
                                 </Form.Item>
                             </Col>
-                            <Col span={24} style={{textAlign: "center"}}>
+                            <Col span={24}>
                                 <Divider style={{marginTop: "0px"}}></Divider>
-                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true}
+                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
                                         href="https://netbird.io/docs/overview/personal-access-tokens">Learn more about personal access tokens</Button>
                             </Col>
                         </Row>
@@ -490,7 +491,11 @@ export const SettingsPersonal = () => {
                     {showPlainToken && <Space className="nb-code" direction="vertical" size="middle">
                         <Row>
                             <>
-                                <Text style={{fontSize: "large", marginTop: "-4px", backgroundColor: "#ebeef3", padding: "10px", borderRadius: "5px", marginBottom: "20px"}}>{plainToken}</Text>
+                                <Space className="nb-code" direction="vertical" size="small" style={{display: "flex", fontSize: ".85em"}}>
+                                    <SyntaxHighlighter language="bash">
+                                        {plainToken}
+                                    </SyntaxHighlighter>
+                                </Space>
                                 { !tokenCopied ? (
                                     <Button type="text" size="large" className="btn-copy-code" icon={<CopyOutlined/>}
                                             style={{color: "rgb(107, 114, 128)"}}
@@ -504,6 +509,7 @@ export const SettingsPersonal = () => {
                     </Space>}
                 </Container>
             </Modal>
+            {confirmModalContextHolder}
         </>
     )
 }
