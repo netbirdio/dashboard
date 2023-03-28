@@ -14,6 +14,11 @@ export interface SpecificPAT {
   id: string,
 }
 
+export interface PersonalAccessTokenGenerated {
+  plain_token: string,
+  personal_access_token: PersonalAccessToken
+}
+
 export interface PersonalAccessTokenCreate {
   user_id: string,
   name: string,

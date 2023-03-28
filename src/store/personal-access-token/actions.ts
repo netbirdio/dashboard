@@ -1,5 +1,5 @@
 import { ActionType, createAction, createAsyncAction } from 'typesafe-actions';
-import {PersonalAccessToken, PersonalAccessTokenCreate, SpecificPAT} from './types';
+import {PersonalAccessToken, PersonalAccessTokenCreate, PersonalAccessTokenGenerated, SpecificPAT} from './types';
 import {
   ApiError,
   CreateResponse,
@@ -18,8 +18,8 @@ const actions = {
       'SAVE_PERSONAL_ACCESS_TOKEN_REQUEST',
       'SAVE_PERSONAL_ACCESS_TOKEN_SUCCESS',
       'SAVE_PERSONAL_ACCESS_TOKEN_FAILURE',
-  )<RequestPayload<PersonalAccessTokenCreate>, CreateResponse<string | null>, CreateResponse<string | null>>(),
-  setSavedPersonalAccessToken: createAction('SET_PERSONAL_ACCESS_TOKEN_KEY')<CreateResponse<string | null>>(),
+  )<RequestPayload<PersonalAccessTokenCreate>, CreateResponse<PersonalAccessTokenGenerated | null>, CreateResponse<PersonalAccessTokenGenerated | null>>(),
+  setSavedPersonalAccessToken: createAction('SET_PERSONAL_ACCESS_TOKEN_KEY')<CreateResponse<PersonalAccessTokenGenerated | null>>(),
   resetSavedPersonalAccessToken: createAction('RESET_PERSONAL_ACCESS_TOKEN_KEY')<null>(),
 
   deletePersonalAccessToken: createAsyncAction(

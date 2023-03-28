@@ -2,7 +2,7 @@ import {ApiResponse, RequestPayload} from '../../services/api-client/types';
 import { apiClient } from '../../services/api-client';
 import {
   PersonalAccessToken,
-  PersonalAccessTokenCreate,
+  PersonalAccessTokenCreate, PersonalAccessTokenGenerated,
   SpecificPAT
 } from './types';
 
@@ -25,8 +25,8 @@ export default {
         payload
     );
   },
-  async createPersonalAccessToken(payload:RequestPayload<PersonalAccessTokenCreate>): Promise<ApiResponse<string>> {
-    return apiClient.post<string>(
+  async createPersonalAccessToken(payload:RequestPayload<PersonalAccessTokenCreate>): Promise<ApiResponse<PersonalAccessTokenGenerated>> {
+    return apiClient.post<PersonalAccessTokenGenerated>(
         `/api/users/` + payload.payload.user_id + `/tokens`,
         payload
     );

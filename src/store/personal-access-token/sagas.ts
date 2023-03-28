@@ -1,6 +1,6 @@
 import {all, call, put, select, takeLatest} from 'redux-saga/effects';
 import {ApiError, ApiResponse, CreateResponse, DeleteResponse} from '../../services/api-client/types';
-import {PersonalAccessToken, PersonalAccessTokenCreate} from './types'
+import {PersonalAccessToken, PersonalAccessTokenCreate, PersonalAccessTokenGenerated} from './types'
 import service from './service';
 import actions from './actions';
 
@@ -23,7 +23,7 @@ export function* savePersonalAccessToken(action: ReturnType<typeof actions.saveP
             failure: false,
             error: null,
             data: null
-        } as CreateResponse<string | null>))
+        } as CreateResponse<PersonalAccessTokenGenerated | null>))
 
         const tokenToSave = action.payload.payload
 
@@ -35,7 +35,7 @@ export function* savePersonalAccessToken(action: ReturnType<typeof actions.saveP
                     expires_in: tokenToSave.expires_in,
                 } as PersonalAccessTokenCreate
             });
-        const response = effect as ApiResponse<string>;
+        const response = effect as ApiResponse<PersonalAccessTokenGenerated>;
 
         yield put(actions.savePersonalAccessToken.success({
             loading: false,
@@ -43,7 +43,7 @@ export function* savePersonalAccessToken(action: ReturnType<typeof actions.saveP
             failure: false,
             error: null,
             data: response.body
-        } as CreateResponse<string | null>));
+        } as CreateResponse<PersonalAccessTokenGenerated | null>));
 
         yield put(actions.getPersonalAccessTokens.request({ getAccessTokenSilently: action.payload.getAccessTokenSilently, payload: tokenToSave.user_id }));
     } catch (err) {
@@ -53,7 +53,7 @@ export function* savePersonalAccessToken(action: ReturnType<typeof actions.saveP
             failure: false,
             error: err as ApiError,
             data: null
-        } as CreateResponse<string | null>));
+        } as CreateResponse<PersonalAccessTokenGenerated | null>));
     }
 }
 

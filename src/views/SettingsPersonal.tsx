@@ -153,7 +153,7 @@ export const SettingsPersonal = () => {
             message.loading({content: 'Saving...', key: createKey, duration: 0, style: styleNotification});
         } else if (savedPersonalAccessToken.success) {
             message.destroy(createKey)
-            setPlainToken(savedPersonalAccessToken.data)
+            setPlainToken(savedPersonalAccessToken.data.plain_token)
             setShowPlainToken(true)
         } else if (savedPersonalAccessToken.error) {
             message.error({

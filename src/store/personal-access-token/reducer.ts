@@ -2,7 +2,7 @@ import { createReducer } from 'typesafe-actions';
 import { combineReducers } from 'redux';
 import actions, { ActionTypes } from './actions';
 import {ApiError, DeleteResponse, CreateResponse, ChangeResponse} from "../../services/api-client/types";
-import {PersonalAccessToken, PersonalAccessTokenCreate} from "./types";
+import {PersonalAccessToken, PersonalAccessTokenCreate, PersonalAccessTokenGenerated} from "./types";
 
 type StateType = Readonly<{
     data: PersonalAccessToken[] | null;
@@ -12,7 +12,7 @@ type StateType = Readonly<{
     saving: boolean;
     deletedPersonalAccessToken: DeleteResponse<string | null>;
     revokedPersonalAccessToken: ChangeResponse<string | null>;
-    savedPersonalAccessToken: CreateResponse<string | null>;
+    savedPersonalAccessToken: CreateResponse<PersonalAccessTokenGenerated | null>;
     newPersonalAccessTokenVisible: boolean
 }>;
 
@@ -36,7 +36,7 @@ const initialState: StateType = {
         error: null,
         data : null
     },
-    savedPersonalAccessToken: <CreateResponse<string | null>>{
+    savedPersonalAccessToken: <CreateResponse<PersonalAccessTokenGenerated | null>>{
         loading: false,
         success: false,
         failure: false,
@@ -75,7 +75,7 @@ const deletedPersonalAccessToken = createReducer<DeleteResponse<string | null>, 
     .handleAction(actions.setDeletePersonalAccessToken, (store, action) => action.payload)
     .handleAction(actions.resetDeletedPersonalAccessToken, (store, action) => initialState.deletedPersonalAccessToken);
 
-const savedPersonalAccessToken = createReducer<CreateResponse<string | null>, ActionTypes>(initialState.savedPersonalAccessToken)
+const savedPersonalAccessToken = createReducer<CreateResponse<PersonalAccessTokenGenerated | null>, ActionTypes>(initialState.savedPersonalAccessToken)
     .handleAction(actions.savePersonalAccessToken.request, () => initialState.savedPersonalAccessToken)
     .handleAction(actions.savePersonalAccessToken.success, (store, action) => action.payload)
     .handleAction(actions.savePersonalAccessToken.failure, (store, action) => action.payload)
