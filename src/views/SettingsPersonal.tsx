@@ -483,7 +483,7 @@ export const SettingsPersonal = () => {
                             </Col>
                             <Col span={24}>
                                 <Divider style={{marginTop: "0px"}}></Divider>
-                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
+                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true}
                                         href="https://netbird.io/docs/overview/personal-access-tokens">Learn more about personal access tokens</Button>
                             </Col>
                         </Row>
