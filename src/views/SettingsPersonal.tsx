@@ -209,16 +209,13 @@ export const SettingsPersonal = () => {
     }
 
     const showConfirmDelete = () => {
+        let name = personalAccessTokenToDelete ? personalAccessTokenToDelete.name : '';
         confirmModal.confirm({
             icon: <ExclamationCircleOutlined/>,
+            title: "Delete token \"" + name + "\"",
             width: 600,
             content: <Space direction="vertical" size="small">
-                {personalAccessTokenToDelete &&
-                    <>
-                        <Title level={5}>Delete token "{personalAccessTokenToDelete ? personalAccessTokenToDelete.name : ''}"</Title>
-                        <Paragraph>Are you sure you want to delete this token?</Paragraph>
-                    </>
-                }
+                <Paragraph>Are you sure you want to delete this token?</Paragraph>
             </Space>,
             onOk() {
                 dispatch(personalAccessTokenActions.deletePersonalAccessToken.request({

@@ -177,16 +177,13 @@ export const SetupKeys = () => {
     }
 
     const showConfirmRevoke = () => {
+        let name = setupKeyToAction ? setupKeyToAction.name : ''
         confirmModal.confirm({
             icon: <ExclamationCircleOutlined/>,
+            title: "Revoke setupKey \"" + name + "\"",
             width: 600,
             content: <Space direction="vertical" size="small">
-                {setupKeyToAction &&
-                    <>
-                        <Title level={5}>Revoke setupKey "{setupKeyToAction ? setupKeyToAction.name : ''}"</Title>
-                        <Paragraph>Are you sure you want to revoke key?</Paragraph>
-                    </>
-                }
+                <Paragraph>Are you sure you want to revoke key?</Paragraph>
             </Space>,
             onOk() {
                 dispatch(setupKeyActions.saveSetupKey.request({

@@ -153,16 +153,13 @@ export const Nameservers = () => {
     }
 
     const showConfirmDelete = () => {
+        let name = nsGroupToAction ? nsGroupToAction.name : '';
         confirm({
             icon: <ExclamationCircleOutlined/>,
+            title: "Delete Nameserver group \"" + name + "\"",
             width: 600,
             content: <Space direction="vertical" size="small">
-                {nsGroupToAction &&
-                    <>
-                        <Title level={5}>Delete Nameserver group "{nsGroupToAction ? nsGroupToAction.name : ''}"</Title>
-                        <Paragraph>Are you sure you want to delete this nameserver group from your account?</Paragraph>
-                    </>
-                }
+                <Paragraph>Are you sure you want to delete this nameserver group from your account?</Paragraph>
             </Space>,
             okType: 'danger',
             onOk() {
