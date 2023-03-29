@@ -23,7 +23,7 @@ import {
     Tag,
     Typography
 } from "antd";
-import {filter} from "lodash"
+import {filter, isNil} from "lodash"
 import {copyToClipboard, timeAgo} from "../utils/common";
 import {CheckOutlined, CopyOutlined, ExclamationCircleOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import tableSpin from "../components/Spin";
@@ -366,7 +366,7 @@ export const SettingsPersonal = () => {
                                     <Column title="Last Used" dataIndex="last_used"
                                             sorter={(a, b) => ((a as any).last_used.localeCompare((b as any).last_used))}
                                             render={(text, record, index) => {
-                                                return (record as TokenDataTable).last_used === (record as TokenDataTable).created_at ? "never" : timeAgo(text)
+                                                return isNil((record as TokenDataTable).last_used) ? "never" : timeAgo(text)
                                             }}
                                     />
                                     <Column title="Created" dataIndex="created_at"
