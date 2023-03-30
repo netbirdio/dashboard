@@ -194,6 +194,12 @@ export const Activity = () => {
             case "account.setting.peer.login.expiration.disable":
             case "account.setting.peer.login.expiration.update":
                 return renderMultiRowSpan("","System setting")
+            case "personal.access.token.create":
+            case "personal.access.token.delete":
+                if(user) {
+                    return renderMultiRowSpan(event.meta.name, user.name ? user.name : event.target_id)
+                }
+                return "-"
             case "user.invite":
                 if (user) {
                     return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
