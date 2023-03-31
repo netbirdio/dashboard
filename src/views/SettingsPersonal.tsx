@@ -494,12 +494,12 @@ export const SettingsPersonal = () => {
                                     </SyntaxHighlighter>
                                 </Space>
                                 { !tokenCopied ? (
-                                    <Button type="text" size="large" className="btn-copy-code" icon={<CopyOutlined/>}
-                                            style={{color: "rgb(107, 114, 128)"}}
+                                    <Button type="text" size="middle" className="btn-copy-code" icon={<CopyOutlined/>}
+                                            style={{color: "rgb(107, 114, 128)", marginTop: "-1px"}}
                                             onClick={() => onCopyClick(plainToken, true)}/>
                                 ): (
-                                    <Button type="text" size="large" className="btn-copy-code" icon={<CheckOutlined/>}
-                                            style={{color: "green"}}/>
+                                    <Button type="text" size="middle"  className="btn-copy-code" icon={<CheckOutlined/>}
+                                            style={{color: "green", marginTop: "-1px"}}/>
                                 )}
                             </>
                         </Row>
