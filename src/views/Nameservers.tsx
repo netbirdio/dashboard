@@ -383,7 +383,7 @@ export const Nameservers = () => {
                                     pagination={{
                                         pageSize,
                                         showSizeChanger: false,
-                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)
+                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} nameservers`)
                                     }}
                                     // className="card-table"
                                     className={`access-control-table ${showTutorial ? "card-table card-table-no-placeholder" : "card-table"}`}

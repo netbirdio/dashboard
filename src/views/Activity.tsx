@@ -256,7 +256,7 @@ export const Activity = () => {
                                     pagination={{
                                         pageSize,
                                         showSizeChanger: false,
-                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)
+                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} activity events`)
                                     }}
                                     className="card-table"
                                     showSorterTooltip={false}
