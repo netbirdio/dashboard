@@ -299,7 +299,7 @@ export const SettingsPersonal = () => {
 
     return (
         <>
-            <Container style={{paddingTop: "40px"}}>
+            <Container>
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Personal Access Tokens</Title>
