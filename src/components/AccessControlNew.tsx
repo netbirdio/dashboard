@@ -23,7 +23,7 @@ import {Rule, RuleToSave} from "../store/rule/types";
 import {uniq} from "lodash"
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 
 const {Paragraph} = Typography;
 const {Option} = Select;
@@ -34,7 +34,7 @@ interface FormRule extends Rule {
 }
 
 const AccessControlNew = () => {
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
     const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible)
     const groups = useSelector((state: RootState) => state.group.data)
@@ -103,7 +103,7 @@ const AccessControlNew = () => {
             .then((values) => {
                 const ruleToSave = createRuleToSave()
                 dispatch(ruleActions.saveRule.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: ruleToSave
                 }))
             })

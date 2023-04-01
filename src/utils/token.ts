@@ -1,5 +1,5 @@
-import {useOidcAccessToken} from "@axa-fr/react-oidc";
-import {useEffect} from "react";
+import {useOidcAccessToken, useOidcIdToken} from "@axa-fr/react-oidc";
+import {createRef, useEffect} from "react";
 
 function sleep(ms : number) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -32,10 +32,8 @@ let latestToken:string
 
 // hook that returns a getAccessTokenSilently function that returns an access token promise,
 // waiting for renewal if it was expired
-export const useGetAccessTokenSilently = () => {
-    const {accessToken} = useOidcAccessToken()
-    latestToken = accessToken
-    const getAccessTokenSilently = async (): Promise<string> => {
+export const useGetTokenSilently = () => {
+    const getTokenSilently = async (): Promise<string> => {
         let attempt = 0
         while (!isTokenValid(latestToken) && attempt < 15){
             attempt++
@@ -45,9 +43,29 @@ export const useGetAccessTokenSilently = () => {
         return latestToken
     };
 
-    useEffect(() => {
+    return {getTokenSilently}
+}
+
+export const useTokenSource = (source:string) => {
+    const {idToken} = useOidcIdToken()
+    const {accessToken} = useOidcAccessToken()
+
+    if (source.toLowerCase() == "idtoken") {
+        latestToken = idToken
+    } else {
         latestToken = accessToken
+    }
+
+    useEffect(() => {
+        // defaults to access token(current token) if no id token was specified
+        if (source.toLowerCase() != "idtoken") {
+            latestToken = accessToken
+        }
     }, [accessToken])
 
-    return {getAccessTokenSilently}
+    useEffect(() => {
+        if (source.toLowerCase() == "idtoken") {
+            latestToken = idToken
+        }
+    }, [idToken])
 }

@@ -11,7 +11,7 @@ import {
     Space,
     Typography,
 } from "antd";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {useGetGroupTagHelpers} from "../utils/groups";
 import {actions as dnsSettingsActions} from '../store/dns-settings';
 import {DNSSettings, DNSSettingsToSave} from "../store/dns-settings/types";
@@ -21,7 +21,7 @@ const {Paragraph} = Typography;
 const styleNotification = {marginTop: 85}
 
 export const DNSSettingsForm = () => {
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const {
@@ -45,7 +45,7 @@ export const DNSSettingsForm = () => {
 
     useEffect(() => {
         dispatch(dnsSettingsActions.getDNSSettings.request({
-            getAccessTokenSilently: getAccessTokenSilently,
+            getAccessTokenSilently: getTokenSilently,
             payload: null
         }));
     }, []);
@@ -100,7 +100,7 @@ export const DNSSettingsForm = () => {
             .then((values) => {
                 let dnsSettingsToSave = createDNSSettingsToSave(values)
                 dispatch(dnsSettingsActions.saveDNSSettings.request({
-                    getAccessTokenSilently:getAccessTokenSilently,
+                    getAccessTokenSilently:getTokenSilently,
                     payload: dnsSettingsToSave
                 }))
             })

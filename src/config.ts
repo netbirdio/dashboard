@@ -9,7 +9,7 @@ if (process.env.NODE_ENV !== 'production') {
 
 const defaultRedirectURI = '/#callback';
 const defaultSilentRedirectURI = '/#silent-callback'
-
+const defaultTokenSource = "accessToken"
 export function getConfig() {
   let redirectURI = defaultRedirectURI
   if (configJson.redirectURI) {
@@ -19,6 +19,11 @@ export function getConfig() {
   let silentRedirectURI = defaultSilentRedirectURI
   if (configJson.silentRedirectURI) {
     silentRedirectURI = configJson.silentRedirectURI
+  }
+
+  let tokenSource = defaultTokenSource
+  if (configJson.tokenSource) {
+    tokenSource = configJson.tokenSource
   }
 
   return {
@@ -32,5 +37,6 @@ export function getConfig() {
     hotjarTrackID: configJson.hotjarTrackID,
     redirectURI: redirectURI,
     silentRedirectURI: silentRedirectURI,
+    tokenSource: tokenSource,
   };
 }
