@@ -35,7 +35,7 @@ import AccessControlNew from "../components/AccessControlNew";
 import {Group} from "../store/group/types";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {usePageSizeHelpers} from "../utils/pageSize";
 
 const {Title, Paragraph, Text} = Typography;
@@ -58,7 +58,7 @@ interface GroupsToShow {
 
 export const AccessControl = () => {
     const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const rules = useSelector((state: RootState) => state.rule.data);
@@ -119,8 +119,8 @@ export const AccessControl = () => {
     }
 
     useEffect(() => {
-        dispatch(ruleActions.getRules.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(ruleActions.getRules.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -211,7 +211,7 @@ export const AccessControl = () => {
             okType: 'danger',
             onOk() {
                 dispatch(ruleActions.deleteRule.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: ruleToAction?.id || ''
                 }));
             },

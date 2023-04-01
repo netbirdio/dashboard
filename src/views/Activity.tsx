@@ -7,7 +7,7 @@ import {Alert, Button, Card, Col, Input, Row, Select, Space, Table, Typography,}
 import {Event} from "../store/event/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import UserUpdate from "../components/UserUpdate";
 import {useOidcUser} from "@axa-fr/react-oidc";
 import {capitalize, formatDateTime} from "../utils/common";
@@ -24,7 +24,7 @@ interface EventDataTable extends Event {
 
 export const Activity = () => {
     const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const {oidcUser} = useOidcUser();
     const dispatch = useDispatch()
 
@@ -43,7 +43,7 @@ export const Activity = () => {
     }
 
     useEffect(() => {
-        dispatch(eventActions.getEvents.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(eventActions.getEvents.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
     useEffect(() => {
         setDataTable(transformDataTable(events))
