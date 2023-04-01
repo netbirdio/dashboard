@@ -30,7 +30,7 @@ import {
     routePeerSeparator,
     transformGroupedDataTable
 } from '../utils/routes'
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {useGetGroupTagHelpers} from "../utils/groups";
 
 const {Paragraph} = Typography;
@@ -50,7 +50,7 @@ const RouteUpdate = () => {
         selectValidator
     } = useGetGroupTagHelpers()
     const {Option} = Select;
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
     const setupNewRouteVisible = useSelector((state: RootState) => state.route.setupNewRouteVisible)
     const setupNewRouteHA = useSelector((state: RootState) => state.route.setupNewRouteHA)
@@ -163,7 +163,7 @@ const RouteUpdate = () => {
                 if (!setupNewRouteHA || formRoute.peer != '') {
                     const routeToSave = createRouteToSave(formRoute)
                     dispatch(routeActions.saveRoute.request({
-                        getAccessTokenSilently: getAccessTokenSilently,
+                        getAccessTokenSilently: getTokenSilently,
                         payload: routeToSave
                     }))
                 } else {
@@ -180,7 +180,7 @@ const RouteUpdate = () => {
                                 }
                                 const routeToSave = createRouteToSave(updateRoute)
                                 dispatch(routeActions.saveRoute.request({
-                                    getAccessTokenSilently: getAccessTokenSilently,
+                                    getAccessTokenSilently: getTokenSilently,
                                     payload: routeToSave
                                 }))
                             })

@@ -27,7 +27,7 @@ import {checkExpiresIn, formatDate, timeAgo} from "../utils/common";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {Group} from "../store/group/types";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import ExpiresInInput, {expiresInToSeconds, ExpiresInValue} from "../views/ExpiresInInput";
 import moment from "moment";
 
@@ -54,7 +54,7 @@ const customLastUsedFormat: DatePickerProps['format'] = value => {
 }
 
 const SetupKeyNew = () => {
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
     const setupNewKeyVisible = useSelector((state: RootState) => state.setupKey.setupNewKeyVisible)
     const setupKey = useSelector((state: RootState) => state.setupKey.setupKey)
@@ -127,7 +127,7 @@ const SetupKeyNew = () => {
             .then((values) => {
                 let setupKeyToSave = createSetupKeyToSave()
                 dispatch(setupKeyActions.saveSetupKey.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: setupKeyToSave
                 }))
             })

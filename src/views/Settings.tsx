@@ -2,7 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {Button, Card, Col, Form, List, message, Modal, Radio, Row, Space, Typography,} from "antd";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {useGetGroupTagHelpers} from "../utils/groups";
 import {Container} from "../components/Container";
 import UserUpdate from "../components/UserUpdate";
@@ -17,7 +17,7 @@ const {Title, Paragraph} = Typography;
 const styleNotification = {marginTop: 85}
 
 export const Settings = () => {
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const {
@@ -36,7 +36,7 @@ export const Settings = () => {
     const [form] = Form.useForm()
 
     useEffect(() => {
-        dispatch(accountActions.getAccounts.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(accountActions.getAccounts.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -145,7 +145,7 @@ export const Settings = () => {
     const saveAccount = (newValues: FormAccount) => {
         let accountToSave = createAccountToSave(newValues)
         dispatch(accountActions.updateAccount.request({
-            getAccessTokenSilently: getAccessTokenSilently,
+            getAccessTokenSilently: getTokenSilently,
             payload: accountToSave
         }))
     }

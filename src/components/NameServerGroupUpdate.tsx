@@ -32,7 +32,7 @@ import {RuleObject} from "antd/lib/form";
 import cidrRegex from 'cidr-regex';
 import {NameServer, NameServerGroup, NameServerGroupToSave} from "../store/nameservers/types";
 import {useGetGroupTagHelpers} from "../utils/groups"
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 
 const {Paragraph} = Typography;
 
@@ -51,7 +51,7 @@ const NameServerGroupUpdate = () => {
         selectValidator
     } = useGetGroupTagHelpers()
     const dispatch = useDispatch()
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const {Option} = Select;
     const nsGroup = useSelector((state: RootState) => state.nameserverGroup.nameserverGroup)
     const setupNewNameServerGroupVisible = useSelector((state: RootState) => state.nameserverGroup.setupNewNameServerGroupVisible)
@@ -220,7 +220,7 @@ const NameServerGroupUpdate = () => {
             .then((values) => {
                 const nsGroupToSave = createNSGroupToSave(values as NameServerGroup)
                 dispatch(nsGroupActions.saveNameServerGroup.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: nsGroupToSave
                 }))
 

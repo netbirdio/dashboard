@@ -41,7 +41,7 @@ import {
     transformDataTable,
     transformGroupedDataTable
 } from '../utils/routes'
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {actions as groupActions} from "../store/group";
@@ -54,7 +54,7 @@ const {confirm} = Modal;
 
 export const Routes = () => {
     const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
     const {
         getGroupNamesFromIDs,
@@ -99,12 +99,12 @@ export const Routes = () => {
     }
 
     useEffect(() => {
-        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [peers])
 
     useEffect(() => {
-        dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(peerActions.getPeers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
 
     const filterGroupedDataTable = (routes: GroupedDataTable[]): GroupedDataTable[] => {
@@ -220,7 +220,7 @@ export const Routes = () => {
             okType: 'danger',
             onOk() {
                 dispatch(routeActions.deleteRoute.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: routeToAction?.id || ''
                 }));
             },
@@ -317,7 +317,7 @@ export const Routes = () => {
                 masquerade: checked,
                 groupsToCreate: []
             } as RouteToSave
-            dispatch(routeActions.saveRoute.request({getAccessTokenSilently: getAccessTokenSilently, payload: route}));
+            dispatch(routeActions.saveRoute.request({getAccessTokenSilently: getTokenSilently, payload: route}));
         })
     }
 
