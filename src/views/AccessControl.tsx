@@ -197,16 +197,13 @@ export const AccessControl = () => {
     }
 
     const showConfirmDelete = () => {
+        let name = ruleToAction ? ruleToAction.name : '';
         confirm({
             icon: <ExclamationCircleOutlined/>,
+            title: "Delete rule \"" + name + "\"",
             width: 600,
             content: <Space direction="vertical" size="small">
-                {ruleToAction &&
-                    <>
-                        <Title level={5}>Delete rule "{ruleToAction ? ruleToAction.name : ''}"</Title>
-                        <Paragraph>Are you sure you want to delete this rule from your account?</Paragraph>
-                    </>
-                }
+                <Paragraph>Are you sure you want to delete this rule from your account?</Paragraph>
             </Space>,
             okType: 'danger',
             onOk() {

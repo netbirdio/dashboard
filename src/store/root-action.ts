@@ -8,6 +8,7 @@ import {actions as NameServerGroupActions} from './nameservers';
 import {actions as EventActions} from './event';
 import {actions as DNSSettingsActions} from './dns-settings';
 import {actions as AccountActions} from './account';
+import {actions as PersonalAccessTokenActions} from './personal-access-token';
 
 export default {
   peer: PeerActions,
@@ -19,5 +20,6 @@ export default {
   nameserverGroup: NameServerGroupActions,
   event: EventActions,
   dnsSettings: DNSSettingsActions,
-  account: AccountActions
+  account: AccountActions,
+  personalAccessToken: PersonalAccessTokenActions
 };
