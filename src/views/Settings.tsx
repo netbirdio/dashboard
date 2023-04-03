@@ -6,7 +6,7 @@ import SettingsPersonal from "./SettingsPersonal";
 import SettingsAccount from "./SettingsAccount";
 import {useOidcUser} from "@axa-fr/react-oidc";
 import {actions as userActions} from "../store/user";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 
@@ -15,7 +15,7 @@ const {Title, Paragraph} = Typography;
 const styleNotification = {marginTop: 85}
 
 export const Settings = () => {
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const {oidcUser} = useOidcUser();
@@ -57,7 +57,7 @@ export const Settings = () => {
     }, [users, oidcUser])
 
     useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}))
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}))
     }, [])
 
     const onTabClick = (key:string) => {

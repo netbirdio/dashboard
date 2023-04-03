@@ -27,7 +27,7 @@ import {filter, isNil} from "lodash"
 import {copyToClipboard, timeAgo} from "../utils/common";
 import {CheckOutlined, CopyOutlined, ExclamationCircleOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import tableSpin from "../components/Spin";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {usePageSizeHelpers} from "../utils/pageSize";
 import {PersonalAccessToken, PersonalAccessTokenCreate, SpecificPAT} from "../store/personal-access-token/types";
 import {User} from "../store/user/types";
@@ -47,7 +47,7 @@ interface TokenDataTable extends PersonalAccessToken {
 
 export const SettingsPersonal = () => {
     const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const users = useSelector((state: RootState) => state.user.data);
@@ -101,7 +101,7 @@ export const SettingsPersonal = () => {
     }, [personalAccessToken])
 
     useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
 
     const onChange = (data: any) => {
@@ -111,13 +111,13 @@ export const SettingsPersonal = () => {
     useEffect(() => {
         if(oidcUser) {
             dispatch(personalAccessTokenActions.getPersonalAccessTokens.request({
-                getAccessTokenSilently: getAccessTokenSilently,
+                getAccessTokenSilently: getTokenSilently,
                 payload:  oidcUser.sub}));
         }
     }, [oidcUser])
 
     useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -219,7 +219,7 @@ export const SettingsPersonal = () => {
             </Space>,
             onOk() {
                 dispatch(personalAccessTokenActions.deletePersonalAccessToken.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: {
                         user_id: oidcUser.sub,
                         id: personalAccessTokenToDelete ? personalAccessTokenToDelete.id : null,
@@ -278,7 +278,7 @@ export const SettingsPersonal = () => {
             .then((values) => {
                 let personalAccessTokenToSave = createPersonalAccessTokenToSave()
                 dispatch(personalAccessTokenActions.savePersonalAccessToken.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: personalAccessTokenToSave
                 }))
             })
