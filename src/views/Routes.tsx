@@ -206,16 +206,13 @@ export const Routes = () => {
     }
 
     const showConfirmDelete = () => {
+        let name = routeToAction ? routeToAction.network_id : '';
         confirm({
             icon: <ExclamationCircleOutlined/>,
+            title: "Delete network route \"" + name + "\"",
             width: 600,
             content: <Space direction="vertical" size="small">
-                {routeToAction &&
-                    <>
-                        <Title level={5}>Delete netowork route "{routeToAction ? routeToAction.network_id : ''}"</Title>
-                        <Paragraph>Are you sure you want to delete this route from your account?</Paragraph>
-                    </>
-                }
+                <Paragraph>Are you sure you want to delete this route from your account?</Paragraph>
             </Space>,
             okType: 'danger',
             onOk() {

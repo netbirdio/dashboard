@@ -194,6 +194,12 @@ export const Activity = () => {
             case "account.setting.peer.login.expiration.disable":
             case "account.setting.peer.login.expiration.update":
                 return renderMultiRowSpan("","System setting")
+            case "personal.access.token.create":
+            case "personal.access.token.delete":
+                if(user) {
+                    return renderMultiRowSpan(event.meta.name, user.name ? user.name : event.target_id)
+                }
+                return "-"
             case "user.invite":
                 if (user) {
                     return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
@@ -250,7 +256,7 @@ export const Activity = () => {
                                     pagination={{
                                         pageSize,
                                         showSizeChanger: false,
-                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} users`)
+                                        showTotal: ((total, range) => `Showing ${range[0]} to ${range[1]} of ${total} activity events`)
                                     }}
                                     className="card-table"
                                     showSorterTooltip={false}
