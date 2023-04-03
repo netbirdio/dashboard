@@ -191,6 +191,7 @@ const PeerUpdate = () => {
         setCallingPeerAPI(false)
         setCallingPeerAPI(false)
         setSubmitRunning(false)
+        setEstimatedName("")
     }
 
     const noUpdateToGroups = (): Boolean => {
