@@ -10,7 +10,7 @@ import type { TabsProps } from 'antd';
 import NameServerGroupUpdate from "../components/NameServerGroupUpdate";
 import Nameservers from "./Nameservers";
 import {actions as groupActions} from "../store/group";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {useDispatch, useSelector} from "react-redux";
 import DNSSettingsForm from "./DNSSettings";
 import {RootState} from "typesafe-actions";
@@ -20,7 +20,7 @@ import {useGetGroupTagHelpers} from "../utils/groups";
 const {Title, Paragraph} = Typography;
 
 export const DNS = () => {
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
     const {
         getGroupNamesFromIDs,
@@ -29,7 +29,7 @@ export const DNS = () => {
     const dnsSettingsData = useSelector((state: RootState) => state.dnsSettings.data)
 
     useEffect(() => {
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
 
     const nsTabKey = '1'

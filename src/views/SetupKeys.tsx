@@ -33,7 +33,7 @@ import tableSpin from "../components/Spin";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {usePageSizeHelpers} from "../utils/pageSize";
 
 const {Title, Text, Paragraph} = Typography;
@@ -47,7 +47,7 @@ interface SetupKeyDataTable extends SetupKey {
 
 export const SetupKeys = () => {
     const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const setupKeys = useSelector((state: RootState) => state.setupKey.data);
@@ -88,8 +88,8 @@ export const SetupKeys = () => {
     }
 
     useEffect(() => {
-        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(setupKeyActions.getSetupKeys.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -187,7 +187,7 @@ export const SetupKeys = () => {
             </Space>,
             onOk() {
                 dispatch(setupKeyActions.saveSetupKey.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: {
                         id: setupKeyToAction ? setupKeyToAction.id : null,
                         revoked: true,

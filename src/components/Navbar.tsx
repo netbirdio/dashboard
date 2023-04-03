@@ -11,7 +11,7 @@ import {User} from "../store/user/types";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as userActions} from "../store/user";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 
 const {useBreakpoint} = Grid;
 
@@ -19,7 +19,7 @@ const Navbar = () => {
     let location = useLocation();
     const config = getConfig();
     const { logout } = useOidc();
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const {oidcUser} = useOidcUser();
@@ -80,7 +80,7 @@ const Navbar = () => {
         window.location.pathname !== '/peers' &&
         window.location.pathname !==  '/users') {
             setIsRefreshingUserState(true)
-            dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}))
+            dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}))
             return
         }
         if (users.length === 0 && isRefreshingUserState) {

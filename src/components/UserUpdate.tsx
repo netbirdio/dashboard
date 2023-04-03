@@ -9,7 +9,7 @@ import {FormUser, User, UserToSave} from "../store/user/types";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {actions as userActions} from "../store/user";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {useOidcUser} from "@axa-fr/react-oidc";
 
 const {Paragraph} = Typography;
@@ -20,7 +20,7 @@ const {Option} = Select;
 
 const UserUpdate = () => {
     const {oidcUser} = useOidcUser();
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
     const user = useSelector((state: RootState) => state.user.user)
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
@@ -193,7 +193,7 @@ const UserUpdate = () => {
             okType: 'danger',
             onOk() {
                 dispatch(userActions.saveUser.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: userToSave
                 }))
             },
@@ -215,7 +215,7 @@ const UserUpdate = () => {
                     showConfirmChangeRole(userToSave)
                 } else {
                     dispatch(userActions.saveUser.request({
-                        getAccessTokenSilently: getAccessTokenSilently,
+                        getAccessTokenSilently: getTokenSilently,
                         payload: userToSave
                     }))
                 }

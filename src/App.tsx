@@ -16,7 +16,7 @@ import SetupKeys from "./views/SetupKeys";
 import AccessControl from "./views/AccessControl";
 import Users from "./views/Users";
 import FooterComponent from "./components/FooterComponent";
-import {useGetAccessTokenSilently} from "./utils/token";
+import {useGetTokenSilently, useTokenSource} from "./utils/token";
 import {User} from "./store/user/types";
 import {SecureLoading} from "./components/Loading";
 import DNS from "./views/DNS";
@@ -29,8 +29,9 @@ const {Header, Content} = Layout;
 function App() {
     const run = useRef(false)
     const [show, setShow] = useState(false)
-    const {getAccessTokenSilently} = useGetAccessTokenSilently();
-    const {hotjarTrackID} = getConfig();
+    const {hotjarTrackID,tokenSource} = getConfig();
+    useTokenSource(tokenSource)
+    const {getTokenSilently} = useGetTokenSilently();
     // @ts-ignore
     if (hotjarTrackID && window._DATADOG_SYNTHETICS_BROWSER === undefined) {
         hotjar.initialize(hotjarTrackID, 6);
@@ -55,7 +56,7 @@ function App() {
     useEffect(() => {
         if (!run.current) {
             run.current = true
-            apiClient.request<User[]>('GET', `/api/users`, {getAccessTokenSilently: getAccessTokenSilently})
+            apiClient.request<User[]>('GET', `/api/users`, {getAccessTokenSilently: getTokenSilently})
                 .then(() => {
                     setShow(true)
                 })
@@ -65,14 +66,14 @@ function App() {
                 })
         }
 
-    }, [getAccessTokenSilently])
+    }, [getTokenSilently])
 
     return (
         <>
         <ConfigProvider
             theme={{
                 token: {
-                    borderRadius: 2,
+                    borderRadius: 4,
                     colorPrimary: "#1890ff",
                     fontFamily: "Arial"
                 },

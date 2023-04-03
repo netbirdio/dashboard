@@ -25,7 +25,7 @@ import {
 } from "antd";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
@@ -47,7 +47,7 @@ const styleNotification = {marginTop: 85}
 
 export const Nameservers = () => {
     const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const {
@@ -92,10 +92,10 @@ export const Nameservers = () => {
 
     useEffect(() => {
         dispatch(nsGroupActions.getNameServerGroups.request({
-            getAccessTokenSilently: getAccessTokenSilently,
+            getAccessTokenSilently: getTokenSilently,
             payload: null
         }));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
 
     useEffect(() => {
@@ -164,7 +164,7 @@ export const Nameservers = () => {
             okType: 'danger',
             onOk() {
                 dispatch(nsGroupActions.deleteNameServerGroup.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: nsGroupToAction?.id || ''
                 }));
             },

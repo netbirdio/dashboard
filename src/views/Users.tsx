@@ -23,7 +23,7 @@ import {
 import {User} from "../store/user/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import UserUpdate from "../components/UserUpdate";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
@@ -42,7 +42,7 @@ const styleNotification = {marginTop: 85}
 
 export const Users = () => {
     const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const groups = useSelector((state: RootState) => state.group.data)
@@ -75,8 +75,8 @@ export const Users = () => {
     }
 
     useEffect(() => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }, [])
     useEffect(() => {
         setDataTable(transformDataTable(users))

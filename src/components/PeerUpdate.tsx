@@ -9,7 +9,7 @@ import {FormPeer, Peer, PeerGroupsToSave} from "../store/peer/types";
 import {Group, GroupPeer} from "../store/group/types";
 import {CloseOutlined, EditOutlined} from "@ant-design/icons";
 import {RuleObject} from 'antd/lib/form';
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {timeAgo} from "../utils/common";
 
 const {Paragraph} = Typography;
@@ -19,7 +19,7 @@ const punycode = require('punycode/')
 
 const PeerUpdate = () => {
 
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
     const groups = useSelector((state: RootState) => state.group.data)
     const users = useSelector((state: RootState) => state.user.data)
@@ -191,6 +191,7 @@ const PeerUpdate = () => {
         setCallingPeerAPI(false)
         setCallingPeerAPI(false)
         setSubmitRunning(false)
+        setEstimatedName("")
     }
 
     const noUpdateToGroups = (): Boolean => {
@@ -250,14 +251,14 @@ const PeerUpdate = () => {
                     const peerUpdate = createPeerToSave()
                     setCallingPeerAPI(true)
                     dispatch(peerActions.updatePeer.request({
-                        getAccessTokenSilently: getAccessTokenSilently,
+                        getAccessTokenSilently: getTokenSilently,
                         payload: peerUpdate
                     }))
                 }
                 if (!noUpdateToGroups()) {
                     setCallingGroupAPI(true)
                     dispatch(peerActions.saveGroups.request({
-                        getAccessTokenSilently: getAccessTokenSilently,
+                        getAccessTokenSilently: getTokenSilently,
                         payload: peerGroupsToSave
                     }))
                 }

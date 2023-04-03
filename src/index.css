@@ -140,3 +140,7 @@ body {
 .ant-steps-item-tail {
   border: none;
 }
+
+.ant-table-thead .ant-table-cell {
+  font-weight: normal !important;
+}

@@ -36,7 +36,7 @@ import {Group, GroupPeer} from "../store/group/types";
 import PeerUpdate from "../components/PeerUpdate";
 import tableSpin from "../components/Spin";
 import {TooltipPlacement} from "antd/es/tooltip";
-import {useGetAccessTokenSilently} from "../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {actions as userActions} from "../store/user";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {usePageSizeHelpers} from "../utils/pageSize";
@@ -51,7 +51,7 @@ export const Peers = () => {
 
     const {onChangePageSize, pageSizeOptions, pageSize} = usePageSizeHelpers()
 
-    const {getAccessTokenSilently} = useGetAccessTokenSilently()
+    const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
     const peers = useSelector((state: RootState) => state.peer.data);
@@ -105,10 +105,10 @@ export const Peers = () => {
     }
 
     const refresh = () => {
-        dispatch(userActions.getUsers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-        dispatch(peerActions.getPeers.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
-        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getAccessTokenSilently, payload: null}));
+        dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+        dispatch(peerActions.getPeers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+        dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }
 
     useEffect(() => {
@@ -297,7 +297,7 @@ export const Peers = () => {
             content: contentModule,
             onOk() {
                 dispatch(peerActions.deletedPeer.request({
-                    getAccessTokenSilently: getAccessTokenSilently,
+                    getAccessTokenSilently: getTokenSilently,
                     payload: (peerToAction && peerToAction.id) ? peerToAction.id! : ""
                 }));
             },
@@ -327,7 +327,7 @@ export const Peers = () => {
             ssh_enabled: checked,
             name: record.name
         } as Peer
-        dispatch(peerActions.updatePeer.request({getAccessTokenSilently: getAccessTokenSilently, payload: peer}));
+        dispatch(peerActions.updatePeer.request({getAccessTokenSilently: getTokenSilently, payload: peer}));
 
     }
 
@@ -635,7 +635,6 @@ export const Peers = () => {
                 footer={[]}
                 width={780}
             >
-               {/* <AddPeerPopup greeting={"Hi there!"} headline={"It's time to add your first device."}/>*/}
                 <AddPeerPopup greeting={!hadFirstRun ? "Hi there!" : ""} headline={!hadFirstRun ? "It's time to add your first device." : "Add new peer"}/>
             </Modal>
             {confirmModalContextHolder}
