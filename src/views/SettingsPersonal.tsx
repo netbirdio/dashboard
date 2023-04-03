@@ -110,11 +110,12 @@ export const SettingsPersonal = () => {
 
     useEffect(() => {
         if(oidcUser) {
+            let currentUserId = users.find((user) => user.is_current) ? users.find((user) => user.is_current)?.id : oidcUser.sub;
             dispatch(personalAccessTokenActions.getPersonalAccessTokens.request({
                 getAccessTokenSilently: getTokenSilently,
-                payload:  oidcUser.sub}));
+                payload:  currentUserId}));
         }
-    }, [oidcUser])
+    }, [oidcUser, users])
 
     useEffect(() => {
         dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
@@ -218,10 +219,11 @@ export const SettingsPersonal = () => {
                 <Paragraph>Are you sure you want to delete this token?</Paragraph>
             </Space>,
             onOk() {
+                let currentUserId = users.find((user) => user.is_current) ? users.find((user) => user.is_current)?.id : oidcUser.sub;
                 dispatch(personalAccessTokenActions.deletePersonalAccessToken.request({
                     getAccessTokenSilently: getTokenSilently,
                     payload: {
-                        user_id: oidcUser.sub,
+                        user_id: currentUserId,
                         id: personalAccessTokenToDelete ? personalAccessTokenToDelete.id : null,
                         name: personalAccessTokenToDelete ? personalAccessTokenToDelete.name : null,
                     } as SpecificPAT
@@ -265,9 +267,9 @@ export const SettingsPersonal = () => {
     }
 
     const createPersonalAccessTokenToSave = (): PersonalAccessTokenCreate => {
-        console.log(formPersonalAccessToken.name)
+        let currentUserId = users.find((user) => user.is_current) ? users.find((user) => user.is_current)?.id : oidcUser.sub;
         return {
-            user_id: oidcUser.sub,
+            user_id: currentUserId,
             name: formPersonalAccessToken.name,
             expires_in: formPersonalAccessToken.expires_in,
         } as PersonalAccessTokenCreate
