@@ -49,7 +49,7 @@ export const Settings = () => {
 
     useEffect(() => {
         if(users && oidcUser) {
-            let currentUser = users.find((user) => user.id === oidcUser.sub)
+            let currentUser = users.find((user) => user.is_current)
             if(currentUser) {
                 setIsAdmin(currentUser.role === 'admin');
             }
