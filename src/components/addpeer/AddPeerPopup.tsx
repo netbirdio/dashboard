@@ -38,7 +38,7 @@ export const AddPeerPopup: React.FC<Props> = ({
     const items: TabsProps['items'] = [
         {
             key: "1",
-            label: <span><Icon component={LinuxSVG}/>Ubuntu</span>,
+            label: <span><Icon component={LinuxSVG}/>Linux</span>,
             children: <UbuntuTab/>,
         },
         {

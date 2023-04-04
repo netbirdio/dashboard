@@ -5,6 +5,7 @@ import TabSteps from "./TabSteps";
 import {StepCommand} from "./types"
 import {formatNetBirdUP} from "./common"
 import {Collapse} from "antd";
+import SyntaxHighlighter from "react-syntax-highlighter";
 const { Panel } = Collapse;
 
 const {Text} = Typography;
@@ -79,31 +80,33 @@ export const LinuxTab = () => {
     ])
 
     return (
-        /*<div style={{marginTop: 10}}>
+        <div style={{marginTop: 10}}>
             <Text style={{fontWeight: "bold"}}>
-                Install on macOS
+                Install with one command
+            </Text>
+            <div style={{fontSize: ".85em", marginTop: 5, marginBottom: 25}}>
+                <SyntaxHighlighter language="bash">
+                    curl -fsSL https://pkgs.netbird.io/install.sh | sh
+                </SyntaxHighlighter>
+            </div>
+            <Text style={{fontWeight: "bold"}}>
+                Or install manually with HomeBrew
             </Text>
             <div style={{marginTop: 5}}>
-                <TabSteps stepsItems={quickSteps}/>
+                <TabSteps stepsItems={steps}/>
             </div>
-            <Collapse style={{marginLeft: -15}} bordered={false}>
-                <Panel header={<Text style={{fontWeight: "bold"}}>
-                    Or install manually with Homebrew
-                </Text>} key="1">
-                    <div style={{marginTop: 5}}>
-                        <TabSteps stepsItems={steps}/>
-                    </div>
-                </Panel>
-            </Collapse>
-        </div>*/
-        <div style={{marginTop: 10}}>
+        </div>
+    /*<div style={{marginTop: 5}}>
+                <TabSteps stepsItems={quickSteps}/>
+            </div>*/
+        /*<div style={{marginTop: 10}}>
             <Text style={{fontWeight: "bold"}}>
                 Install on macOS with Homebrew
             </Text>
             <div style={{marginTop: 5}}>
                 <TabSteps stepsItems={steps}/>
             </div>
-        </div>
+        </div>*/
     )
 }
 
