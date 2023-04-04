@@ -26,7 +26,9 @@ export const UbuntuTab = () => {
             title: 'Install NetBird',
             commands: [
                 `sudo apt-get update`,
+                `# for CLI only`,
                 `sudo apt-get install netbird`,
+                `# for GUI package`,
                 `sudo apt-get install netbird-ui`
             ].join('\n'),
             copied: false,
