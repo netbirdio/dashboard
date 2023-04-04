@@ -1,4 +1,4 @@
-import {Group} from "../group/types";
+import { Group } from "../group/types";
 
 export interface Rule {
     id?: string
@@ -7,11 +7,16 @@ export interface Rule {
     sources: Group[] | string[] | null
     destinations: Group[] | string[] | null
     flow: string
+    protocol: string
+    ports: string[]
     disabled: boolean
 }
 
 export interface RuleToSave extends Rule {
     sourcesNoId: string[],
     destinationsNoId: string[],
-    groupsToSave: string[]
+    groupsToSave: string[],
+    flow: string,
+    protocol: string,
+    ports: string[]
 }
