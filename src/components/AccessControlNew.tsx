@@ -22,7 +22,7 @@ import {
 import { CloseOutlined, FlagFilled, QuestionCircleFilled } from "@ant-design/icons";
 import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
 import { Rule, RuleToSave } from "../store/rule/types";
-import { uniq, intersection } from "lodash"
+import { uniq } from "lodash";
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
@@ -38,7 +38,7 @@ interface FormRule extends Rule {
 const AccessControlNew = () => {
     const { getTokenSilently } = useGetTokenSilently()
     const dispatch = useDispatch()
-    const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible)
+    const setupNewPolicyVisible = useSelector((state: RootState) => state.policy.setupNewPolicyVisible)
     const groups = useSelector((state: RootState) => state.group.data)
     const flows: SelectProps['options'] = [
         { label: 'Bi-Direct', value: 'bidirect' },
@@ -57,7 +57,6 @@ const AccessControlNew = () => {
     const [editDescription, setEditDescription] = useState(false)
     const [tagGroups, setTagGroups] = useState([] as string[])
     const [formRule, setFormRule] = useState({} as FormRule)
-    const [flow, setFlow] = useState(false)
     const [form] = Form.useForm()
     const inputNameRef = useRef<any>(null)
     const inputDescriptionRef = useRef<any>(null)
@@ -295,7 +294,7 @@ const AccessControlNew = () => {
                     headerStyle={{ display: "none" }}
                     forceRender={true}
                     // width={512}
-                    visible={setupNewRuleVisible}
+                    visible={setupNewPolicyVisible}
                     bodyStyle={{ paddingBottom: 80 }}
                     onClose={onCancel}
                     autoFocus={true}
