@@ -15,8 +15,5 @@ export interface Rule {
 export interface RuleToSave extends Rule {
     sourcesNoId: string[],
     destinationsNoId: string[],
-    groupsToSave: string[],
-    flow: string,
-    protocol: string,
-    ports: string[]
+    groupsToSave: string[]
 }

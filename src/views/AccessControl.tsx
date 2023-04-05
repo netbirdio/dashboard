@@ -113,7 +113,8 @@ export const AccessControl = () => {
                 sourceCount: p.sources?.length,
                 sourceLabel,
                 destinationCount: p.destinations?.length,
-                destinationLabel
+                destinationLabel,
+                protocol: p.protocol || 'All',
             } as RuleDataTable
         })
     }
@@ -258,8 +259,8 @@ export const AccessControl = () => {
             description: '',
             sources: [],
             destinations: [],
-            flow: 'bidirect',
-            protocol: 'TCP',
+            flow: '',
+            protocol: 'all',
             ports: [],
             disabled: false
         } as Rule))
@@ -343,6 +344,15 @@ export const AccessControl = () => {
                 <Button type="link" onClick={() => setRuleAndView(rule)}>{label}</Button>
             </Popover>
         )
+    }
+
+    const renderPorts = (ports: string[]) => {
+        const content = ports?.map((p, i) => {
+            return (
+                <Tag key={i} color="blue" style={{ marginRight: 3 }}><strong>{p}</strong></Tag>
+            )
+        })
+        return (<div>{content}</div>)
     }
 
     return (
@@ -434,7 +444,7 @@ export const AccessControl = () => {
                                             const s = { minWidth: 50, textAlign: "center" } as React.CSSProperties
                                             if (text === "bidirect")
                                                 return <Tag color="processing" style={s}><img src={bidirect} /></Tag>
-                                            else if (text === "srcToDest") {
+                                            else if (text === "direct") {
                                                 return <Tag color="green" style={s}><img src={outbound} /></Tag>
                                             } else if (text === "destToSrc") {
                                                 return <Tag color="green" style={s}><img src={inbound} /></Tag>
@@ -446,6 +456,12 @@ export const AccessControl = () => {
                                         render={(text, record: RuleDataTable, index) => {
                                             //return <Button type="link" onClick={() => toggleModalGroups(`${record.name} - Destinations`, record.destinations, true)}>{text}</Button>
                                             return renderPopoverGroups(text, record.destinations, record as RuleDataTable)
+                                        }}
+                                    />
+                                    <Column title="Protocol" dataIndex="protocol" />
+                                    <Column title="Ports" dataIndex="ports"
+                                        render={(text, record: RuleDataTable, index) => {
+                                            return renderPorts(record.ports)
                                         }}
                                     />
                                     <Column title="" align="center"

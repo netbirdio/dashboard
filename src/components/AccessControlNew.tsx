@@ -13,14 +13,16 @@ import {
     RadioChangeEvent,
     Row,
     Select,
+    SelectProps,
     Space,
+    Switch,
     Tag,
     Typography
 } from "antd";
 import { CloseOutlined, FlagFilled, QuestionCircleFilled } from "@ant-design/icons";
 import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
 import { Rule, RuleToSave } from "../store/rule/types";
-import { uniq } from "lodash"
+import { uniq, intersection } from "lodash"
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
@@ -38,6 +40,16 @@ const AccessControlNew = () => {
     const dispatch = useDispatch()
     const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible)
     const groups = useSelector((state: RootState) => state.group.data)
+    const flows: SelectProps['options'] = [
+        { label: 'Bi-Direct', value: 'bidirect' },
+        { label: 'Direct', value: 'direct' },
+    ];
+    const protocols: SelectProps['options'] = [
+        { label: 'All', value: 'all' },
+        { label: 'TCP', value: 'tcp' },
+        { label: 'UDP', value: 'udp' },
+        { label: 'ICMP', value: 'icmp' },
+    ];
     const rule = useSelector((state: RootState) => state.rule.rule)
     const savedRule = useSelector((state: RootState) => state.rule.savedRule)
 
@@ -45,6 +57,7 @@ const AccessControlNew = () => {
     const [editDescription, setEditDescription] = useState(false)
     const [tagGroups, setTagGroups] = useState([] as string[])
     const [formRule, setFormRule] = useState({} as FormRule)
+    const [flow, setFlow] = useState(false)
     const [form] = Form.useForm()
     const inputNameRef = useRef<any>(null)
     const inputDescriptionRef = useRef<any>(null)
@@ -68,7 +81,7 @@ const AccessControlNew = () => {
         const fRule = {
             ...rule,
             tagSourceGroups: rule.sources ? rule.sources?.map(t => t.name) : [],
-            tagDestinationGroups: rule.destinations ? rule.destinations?.map(t => t.name) : []
+            tagDestinationGroups: rule.destinations ? rule.destinations?.map(t => t.name) : [],
         } as FormRule
         setFormRule(fRule)
         form.setFieldsValue(fRule)
@@ -94,13 +107,15 @@ const AccessControlNew = () => {
             destinationsNoId,
             groupsToSave,
             flow: formRule.flow,
-            disabled: formRule.disabled
+            disabled: formRule.disabled,
+            protocol: formRule.protocol,
+            ports: formRule.ports
         } as RuleToSave
     }
 
     const handleFormSubmit = () => {
         form.validateFields()
-            .then((values) => {
+            .then((_) => {
                 const ruleToSave = createRuleToSave()
                 dispatch(ruleActions.saveRule.request({
                     getAccessTokenSilently: getTokenSilently,
@@ -124,8 +139,8 @@ const AccessControlNew = () => {
             description: '',
             sources: [],
             destinations: [],
-            flow: 'bidirect',
-            protocol: 'TCP',
+            flow: '',
+            protocol: '',
             ports: [],
             disabled: false
         } as Rule))
@@ -157,8 +172,15 @@ const AccessControlNew = () => {
         })
     };
 
+    const handleChangeFlow = (checked: boolean) => {
+        setFormRule({
+            ...formRule,
+            flow: checked ? 'bidirect' : 'direct',
+        })
+    };
+
     const tagRender = (props: CustomTagProps) => {
-        const { label, value, closable, onClose } = props;
+        const { value, closable, onClose } = props;
         const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
             event.preventDefault();
             event.stopPropagation();
@@ -194,13 +216,32 @@ const AccessControlNew = () => {
         )
     }
 
-    const dropDownRender = (menu: React.ReactElement) => (
+    const dropDownRenderGroups = (menu: React.ReactElement) => (
         <>
             {menu}
             <Divider style={{ margin: '8px 0' }} />
             <Row style={{ padding: '0 8px 4px' }}>
                 <Col flex="auto">
                     <span style={{ color: "#9CA3AF" }}>Add new group by pressing "Enter"</span>
+                </Col>
+                <Col flex="none">
+                    <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M1.70455 7.19176V5.89915H10.3949C10.7727 5.89915 11.1174 5.80634 11.429 5.62074C11.7405 5.43513 11.9875 5.18655 12.1697 4.875C12.3554 4.56345 12.4482 4.21875 12.4482 3.84091C12.4482 3.46307 12.3554 3.12003 12.1697 2.81179C11.9841 2.50024 11.7356 2.25166 11.424 2.06605C11.1158 1.88044 10.7727 1.78764 10.3949 1.78764H9.83807V0.5H10.3949C11.0114 0.5 11.5715 0.650805 12.0753 0.952414C12.5791 1.25402 12.9818 1.65672 13.2834 2.16051C13.585 2.6643 13.7358 3.22443 13.7358 3.84091C13.7358 4.30161 13.648 4.73414 13.4723 5.13849C13.3 5.54285 13.0613 5.89915 12.7564 6.20739C12.4515 6.51562 12.0968 6.75758 11.6925 6.93324C11.2881 7.10559 10.8556 7.19176 10.3949 7.19176H1.70455ZM4.90128 11.0646L0.382102 6.54545L4.90128 2.02628L5.79119 2.91619L2.15696 6.54545L5.79119 10.1747L4.90128 11.0646Z"
+                            fill="#9CA3AF" />
+                    </svg>
+                </Col>
+            </Row>
+        </>
+    )
+
+    const dropDownRenderPorts = (menu: React.ReactElement) => (
+        <>
+            {menu}
+            <Divider style={{ margin: '8px 0' }} />
+            <Row style={{ padding: '0 8px 4px' }}>
+                <Col flex="auto">
+                    <span style={{ color: "#9CA3AF" }}>Add new ports or range by pressing "Enter"</span>
                 </Col>
                 <Col flex="none">
                     <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -357,7 +398,7 @@ const AccessControlNew = () => {
                                         placeholder="Tags Mode"
                                         tagRender={tagRender}
                                         onChange={handleChangeSource}
-                                        dropdownRender={dropDownRender}
+                                        dropdownRender={dropDownRenderGroups}
                                     >
                                         {
                                             tagGroups.map(m =>
@@ -378,7 +419,7 @@ const AccessControlNew = () => {
                                         placeholder="Tags Mode"
                                         tagRender={tagRender}
                                         onChange={handleChangeDestination}
-                                        dropdownRender={dropDownRender}
+                                        dropdownRender={dropDownRenderGroups}
                                     >
                                         {
                                             tagGroups.map(m =>
@@ -390,19 +431,42 @@ const AccessControlNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="tagDestinationGroups"
-                                    label="Destination groups"
-                                    rules={[{ validator: selectValidator }]}
+                                    name="flow"
+                                    label="Allow Bi-Direct traffic flow"
+                                >
+                                    <Switch
+                                        size={"small"}
+                                        checked={formRule.flow === 'bidirect'}
+                                        onChange={handleChangeFlow}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="protocol"
+                                    label="Protocol"
+                                >
+                                    <Select
+                                        style={{ width: '100%' }}
+                                        options={protocols}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="ports"
+                                    label="Ports"
                                 >
                                     <Select
                                         mode="tags" style={{ width: '100%' }}
                                         placeholder="Tags Mode"
                                         tagRender={tagRender}
                                         onChange={handleChangeDestination}
-                                        dropdownRender={dropDownRender}
+                                        dropdownRender={dropDownRenderPorts}
+                                        disabled={formRule.protocol === "all" || formRule.protocol === "icmp"}
                                     >
                                         {
-                                            tagGroups.map(m =>
+                                            formRule.ports?.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
                                             )
                                         }
