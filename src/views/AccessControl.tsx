@@ -23,8 +23,8 @@ import {
 import { Container } from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "typesafe-actions";
-import { Rule } from "../store/rule/types";
-import { actions as ruleActions } from "../store/rule";
+import { Policy } from "../store/policy/types";
+import { actions as policyActions } from "../store/policy";
 import { actions as groupActions } from "../store/group";
 import { filter, sortBy } from "lodash";
 import { CloseOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
@@ -42,7 +42,7 @@ const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
 
-interface RuleDataTable extends Rule {
+interface PolicyDataTable extends Policy {
     key: string;
     sourceCount: number;
     sourceLabel: '';
@@ -61,20 +61,20 @@ export const AccessControl = () => {
     const { getTokenSilently } = useGetTokenSilently()
     const dispatch = useDispatch()
 
-    const rules = useSelector((state: RootState) => state.rule.data);
-    const failed = useSelector((state: RootState) => state.rule.failed);
-    const loading = useSelector((state: RootState) => state.rule.loading);
-    const deletedRule = useSelector((state: RootState) => state.rule.deletedRule);
-    const savedRule = useSelector((state: RootState) => state.rule.savedRule);
+    const policies = useSelector((state: RootState) => state.policy.data);
+    const failed = useSelector((state: RootState) => state.policy.failed);
+    const loading = useSelector((state: RootState) => state.policy.loading);
+    const deletedPolicy = useSelector((state: RootState) => state.policy.deletedPolicy);
+    const savedPolicy = useSelector((state: RootState) => state.policy.savedPolicy);
 
     const [showTutorial, setShowTutorial] = useState(true)
     const [textToSearch, setTextToSearch] = useState('');
     const [optionAllEnable, setOptionAllEnable] = useState('enabled');
     const [currentPage, setCurrentPage] = useState(1);
-    const [dataTable, setDataTable] = useState([] as RuleDataTable[]);
-    const [ruleToAction, setRuleToAction] = useState(null as RuleDataTable | null);
+    const [dataTable, setDataTable] = useState([] as PolicyDataTable[]);
+    const [policyToAction, setPolicyToAction] = useState(null as PolicyDataTable | null);
     const [groupsToShow, setGroupsToShow] = useState({} as GroupsToShow)
-    const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible);
+    const setupNewPolicyVisible = useSelector((state: RootState) => state.policy.setupNewPolicyVisible);
     const [groupPopupVisible, setGroupPopupVisible] = useState("")
 
 
@@ -83,7 +83,7 @@ export const AccessControl = () => {
     const itemsMenuAction = [
         {
             key: "view",
-            label: (<Button type="text" block onClick={() => onClickViewRule()}>View</Button>)
+            label: (<Button type="text" block onClick={() => onClickViewPolicy()}>View</Button>)
         },
         // {
         //     key: "delete",
@@ -100,27 +100,26 @@ export const AccessControl = () => {
         return (!data) ? "No group" : (data.length > 1) ? `${data.length} Groups` : (data.length === 1) ? data[0].name : "No group"
     }
 
-    const isShowTutorial = (rules: Rule[]): boolean => {
-        return (!rules.length || (rules.length === 1 && rules[0].name === "Default"))
+    const isShowTutorial = (policy: Policy[]): boolean => {
+        return (!policy.length || (policy.length === 1 && policy[0].name === "Default"))
     }
 
-    const transformDataTable = (d: Rule[]): RuleDataTable[] => {
-        return d.map(p => {
-            const sourceLabel = getSourceDestinationLabel(p.sources as Group[])
-            const destinationLabel = getSourceDestinationLabel(p.destinations as Group[])
+    const transformDataTable = (d: Policy[]): PolicyDataTable[] => {
+        return d.map(policy => {
+            const sourceLabel = getSourceDestinationLabel(policy.rules[0].sources as Group[])
+            const destinationLabel = getSourceDestinationLabel(policy.rules[0].destinations as Group[])
             return {
-                key: p.id, ...p,
-                sourceCount: p.sources?.length,
+                key: policy.id, ...policy,
+                sourceCount: policy.rules[0].sources?.length,
                 sourceLabel,
-                destinationCount: p.destinations?.length,
+                destinationCount: policy.rules[0].destinations?.length,
                 destinationLabel,
-                protocol: p.protocol || 'All',
-            } as RuleDataTable
+            } as PolicyDataTable
         })
     }
 
     useEffect(() => {
-        dispatch(ruleActions.getRules.request({ getAccessTokenSilently: getTokenSilently, payload: null }));
+        dispatch(policyActions.getPolicies.request({ getAccessTokenSilently: getTokenSilently, payload: null }));
         dispatch(groupActions.getGroups.request({ getAccessTokenSilently: getTokenSilently, payload: null }));
     }, [])
 
@@ -128,10 +127,10 @@ export const AccessControl = () => {
         if (failed) {
             setShowTutorial(false)
         } else {
-            setShowTutorial(isShowTutorial(rules))
+            setShowTutorial(isShowTutorial(policies))
             setDataTable(sortBy(transformDataTable(filterDataTable()), "name"))
         }
-    }, [rules])
+    }, [policies])
 
     useEffect(() => {
         setDataTable(transformDataTable(filterDataTable()))
@@ -141,48 +140,48 @@ export const AccessControl = () => {
 
     const saveKey = 'saving';
     useEffect(() => {
-        if (savedRule.loading) {
+        if (savedPolicy.loading) {
             message.loading({ content: 'Saving...', key: saveKey, duration: 0, style: styleNotification })
-        } else if (savedRule.success) {
+        } else if (savedPolicy.success) {
             message.success({
                 content: 'Rule has been successfully saved.',
                 key: saveKey,
                 duration: 2,
                 style: styleNotification
             });
-            dispatch(ruleActions.setSetupNewRuleVisible(false))
-            dispatch(ruleActions.setSavedRule({ ...savedRule, success: false }))
-            dispatch(ruleActions.resetSavedRule(null))
-        } else if (savedRule.error) {
+            dispatch(policyActions.setSetupNewPolicyVisible(false))
+            dispatch(policyActions.setSavedPolicy({ ...savedPolicy, success: false }))
+            dispatch(policyActions.resetSavedPolicy(null))
+        } else if (savedPolicy.error) {
             message.error({
                 content: 'Failed to update rule. You might not have enough permissions.',
                 key: saveKey,
                 duration: 2,
                 style: styleNotification
             });
-            dispatch(ruleActions.setSavedRule({ ...savedRule, error: null }))
-            dispatch(ruleActions.resetSavedRule(null))
+            dispatch(policyActions.setSavedPolicy({ ...savedPolicy, error: null }))
+            dispatch(policyActions.resetSavedPolicy(null))
         }
-    }, [savedRule])
+    }, [savedPolicy])
 
     const deleteKey = 'deleting';
     useEffect(() => {
         const style = { marginTop: 85 }
-        if (deletedRule.loading) {
+        if (deletedPolicy.loading) {
             message.loading({ content: 'Deleting...', key: deleteKey, style })
-        } else if (deletedRule.success) {
+        } else if (deletedPolicy.success) {
             message.success({ content: 'Rule has been successfully disabled.', key: deleteKey, duration: 2, style })
-            dispatch(ruleActions.resetDeletedRule(null))
-        } else if (deletedRule.error) {
+            dispatch(policyActions.resetDeletedPolicy(null))
+        } else if (deletedPolicy.error) {
             message.error({
                 content: 'Failed to remove rule. You might not have enough permissions.',
                 key: deleteKey,
                 duration: 2,
                 style
             })
-            dispatch(ruleActions.resetDeletedRule(null))
+            dispatch(policyActions.resetDeletedPolicy(null))
         }
-    }, [deletedRule])
+    }, [deletedPolicy])
 
     const onChangeTextToSearch = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setTextToSearch(e.target.value)
@@ -198,7 +197,7 @@ export const AccessControl = () => {
     }
 
     const showConfirmDelete = () => {
-        let name = ruleToAction ? ruleToAction.name : '';
+        let name = policyToAction ? policyToAction.name : '';
         confirm({
             icon: <ExclamationCircleOutlined />,
             title: "Delete rule \"" + name + "\"",
@@ -208,13 +207,13 @@ export const AccessControl = () => {
             </Space>,
             okType: 'danger',
             onOk() {
-                dispatch(ruleActions.deleteRule.request({
+                dispatch(policyActions.deletePolicy.request({
                     getAccessTokenSilently: getTokenSilently,
-                    payload: ruleToAction?.id || ''
+                    payload: policyToAction?.id || ''
                 }));
             },
             onCancel() {
-                setRuleToAction(null);
+                setPolicyToAction(null);
             },
         });
     }
@@ -224,9 +223,9 @@ export const AccessControl = () => {
             icon: <ExclamationCircleOutlined />,
             width: 600,
             content: <Space direction="vertical" size="small">
-                {ruleToAction &&
+                {policyToAction &&
                     <>
-                        <Title level={5}>Deactivate rule "{ruleToAction ? ruleToAction.name : ''}"</Title>
+                        <Title level={5}>Deactivate rule "{policyToAction ? policyToAction.name : ''}"</Title>
                         <Paragraph>Are you sure you want to deactivate peer from your account?</Paragraph>
                     </>
                 }
@@ -236,60 +235,80 @@ export const AccessControl = () => {
                 //dispatch(ruleActions.deleteRule.request({getAccessTokenSilently, payload: ruleToAction?.id || ''}));
             },
             onCancel() {
-                setRuleToAction(null);
+                setPolicyToAction(null);
             },
         });
     }
 
-    const filterDataTable = (): Rule[] => {
+    const filterDataTable = (): Policy[] => {
         const t = textToSearch.toLowerCase().trim()
-        let f: Rule[] = filter(rules, (f: Rule) =>
+        let f: Policy[] = filter(policies, (f: Policy) =>
             (f.name.toLowerCase().includes(t) || f.description.toLowerCase().includes(t) || t === "")
-        ) as Rule[]
+        ) as Policy[]
         if (optionAllEnable !== "all") {
-            f = filter(f, (f: Rule) => !f.disabled)
+            f = filter(f, (f: Policy) => f.enabled)
         }
         return f
     }
 
-    const onClickAddNewRule = () => {
-        dispatch(ruleActions.setSetupNewRuleVisible(true));
-        dispatch(ruleActions.setRule({
+    const onClickAddNewPolicy = () => {
+        dispatch(policyActions.setSetupNewPolicyVisible(true));
+        dispatch(policyActions.setPolicy({
             name: '',
             description: '',
-            sources: [],
-            destinations: [],
-            flow: '',
-            protocol: 'all',
-            ports: [],
-            disabled: false
-        } as Rule))
+            enabled: true,
+            rules: [{
+                name: '',
+                description: '',
+                enabled: true,
+                flow: 'bidirect',
+                action: 'allow',
+                protocol: 'all',
+            }]
+        } as Policy))
     }
 
-    const onClickViewRule = () => {
-        dispatch(ruleActions.setSetupNewRuleVisible(true));
-        dispatch(ruleActions.setRule({
-            id: ruleToAction?.id || null,
-            name: ruleToAction?.name,
-            description: ruleToAction?.description,
-            sources: ruleToAction?.sources,
-            destinations: ruleToAction?.destinations,
-            flow: ruleToAction?.flow,
-            disabled: ruleToAction?.disabled
-        } as Rule))
+    const onClickViewPolicy = () => {
+        dispatch(policyActions.setSetupNewPolicyVisible(true));
+        dispatch(policyActions.setPolicy({
+            id: policyToAction?.id || null,
+            name: policyToAction?.name,
+            description: policyToAction?.description,
+            enabled: policyToAction?.enabled,
+            rules: [{
+                name: policyToAction?.rules[0].name,
+                description: policyToAction?.rules[0].description,
+                enabled: policyToAction?.rules[0].enabled,
+                sources: policyToAction?.rules[0].sources,
+                destinations: policyToAction?.rules[0].destinations,
+                flow: policyToAction?.rules[0].flow,
+                protocol: policyToAction?.rules[0].protocol,
+                action: policyToAction?.rules[0].action,
+                ports: policyToAction?.rules[0].ports,
+            }]
+        } as Policy))
     }
 
-    const setRuleAndView = (rule: RuleDataTable) => {
-        dispatch(ruleActions.setSetupNewRuleVisible(true));
-        dispatch(ruleActions.setRule({
-            id: rule.id || null,
-            name: rule.name,
-            description: rule.description,
-            sources: rule.sources,
-            destinations: rule.destinations,
-            flow: rule.flow,
-            disabled: rule.disabled
-        } as Rule))
+    const setPolicyAndView = (p: PolicyDataTable) => {
+        dispatch(policyActions.setSetupNewPolicyVisible(true));
+        dispatch(policyActions.setPolicy({
+            id: p.id || null,
+            name: p.name,
+            description: p.description,
+            enabled: p.enabled,
+            rules: [{
+                id: p.id || null,
+                name: p.name,
+                description: p.description,
+                enabled: p.rules[0].enabled,
+                sources: p.rules[0].sources,
+                destinations: p.rules[0].destinations,
+                flow: p.rules[0].flow,
+                protocol: p.rules[0].protocol,
+                action: p.rules[0].action,
+                ports: p.rules[0].ports,
+            }]
+        } as Policy))
     }
 
     const toggleModalGroups = (title: string, groups: Group[] | string[] | null, modalVisible: boolean) => {
@@ -301,13 +320,13 @@ export const AccessControl = () => {
     }
 
     useEffect(() => {
-        if (setupNewRuleVisible) {
+        if (setupNewPolicyVisible) {
             setGroupPopupVisible("")
         }
-    }, [setupNewRuleVisible])
+    }, [setupNewPolicyVisible])
 
     const onPopoverVisibleChange = (b: boolean, key: string) => {
-        if (setupNewRuleVisible) {
+        if (setupNewPolicyVisible) {
             setGroupPopupVisible("")
         } else {
             if (b) {
@@ -318,7 +337,7 @@ export const AccessControl = () => {
         }
     }
 
-    const renderPopoverGroups = (label: string, groups: Group[] | string[] | null, rule: RuleDataTable) => {
+    const renderPopoverGroups = (label: string, groups: Group[] | string[] | null, rule: PolicyDataTable) => {
         const content = groups?.map((g, i) => {
             const _g = g as Group
             const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
@@ -341,7 +360,7 @@ export const AccessControl = () => {
                 open={groupPopupVisible === rule.key}
                 content={mainContent}
                 title={null}>
-                <Button type="link" onClick={() => setRuleAndView(rule)}>{label}</Button>
+                <Button type="link" onClick={() => setPolicyAndView(rule)}>{label}</Button>
             </Popover>
         )
     }
@@ -389,8 +408,8 @@ export const AccessControl = () => {
                                     xxl={5} span={5}>
                                     <Row justify="end">
                                         <Col>
-                                            <Button type="primary" disabled={savedRule.loading}
-                                                onClick={onClickAddNewRule}>Add Rule</Button>
+                                            <Button type="primary" disabled={savedPolicy.loading}
+                                                onClick={onClickAddNewPolicy}>Add Rule</Button>
                                         </Col>
                                     </Row>
                                 </Col>
@@ -419,28 +438,28 @@ export const AccessControl = () => {
                                         sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                         defaultSortOrder='ascend'
                                         render={(text, record, index) => {
-                                            const desc = (record as RuleDataTable).description.trim()
+                                            const desc = (record as PolicyDataTable).description.trim()
                                             return <Tooltip title={desc !== "" ? desc : "no description"}
                                                 arrowPointAtCenter>
-                                                <span onClick={() => setRuleAndView(record as RuleDataTable)}
+                                                <span onClick={() => setPolicyAndView(record as PolicyDataTable)}
                                                     className="tooltip-label"><Text strong>{text}</Text></span>
                                             </Tooltip>
                                         }}
                                     />
                                     <Column title="Status" dataIndex="disabled"
-                                        render={(text: Boolean, record: RuleDataTable, index) => {
+                                        render={(text: Boolean, record: PolicyDataTable, index) => {
                                             return text ? <Tag color="red">disabled</Tag> :
                                                 <Tag color="green">enabled</Tag>
                                         }}
                                     />
                                     <Column title="Sources" dataIndex="sourceLabel"
-                                        render={(text, record: RuleDataTable, index) => {
+                                        render={(text, record: PolicyDataTable, index) => {
                                             //return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Sources`, record.Source, true)}>{text}</Button>
-                                            return renderPopoverGroups(text, record.sources, record as RuleDataTable)
+                                            return renderPopoverGroups(text, record.rules[0].sources, record as PolicyDataTable)
                                         }}
                                     />
                                     <Column title="Direction" dataIndex="flow"
-                                        render={(text, record: RuleDataTable, index) => {
+                                        render={(text, record: PolicyDataTable, index) => {
                                             const s = { minWidth: 50, textAlign: "center" } as React.CSSProperties
                                             if (text === "bidirect")
                                                 return <Tag color="processing" style={s}><img src={bidirect} /></Tag>
@@ -453,24 +472,24 @@ export const AccessControl = () => {
                                         }}
                                     />
                                     <Column title="Destinations" dataIndex="destinationLabel"
-                                        render={(text, record: RuleDataTable, index) => {
+                                        render={(text, record: PolicyDataTable, index) => {
                                             //return <Button type="link" onClick={() => toggleModalGroups(`${record.name} - Destinations`, record.destinations, true)}>{text}</Button>
-                                            return renderPopoverGroups(text, record.destinations, record as RuleDataTable)
+                                            return renderPopoverGroups(text, record.rules[0].destinations, record as PolicyDataTable)
                                         }}
                                     />
                                     <Column title="Protocol" dataIndex="protocol" />
                                     <Column title="Ports" dataIndex="ports"
-                                        render={(text, record: RuleDataTable, index) => {
-                                            return renderPorts(record.ports)
+                                        render={(text, record: PolicyDataTable, index) => {
+                                            return renderPorts(record.rules[0].ports)
                                         }}
                                     />
                                     <Column title="" align="center"
                                         render={(text, record, index) => {
-                                            if (deletedRule.loading || savedRule.loading) return <></>
+                                            if (deletedPolicy.loading || savedPolicy.loading) return <></>
                                             return <Dropdown.Button type="text" overlay={actionsMenu}
                                                 trigger={["click"]}
                                                 onOpenChange={visible => {
-                                                    if (visible) setRuleToAction(record as RuleDataTable)
+                                                    if (visible) setPolicyToAction(record as PolicyDataTable)
                                                 }}></Dropdown.Button>
                                         }}
                                     />
@@ -478,7 +497,7 @@ export const AccessControl = () => {
                                 {showTutorial &&
                                     <Space direction="vertical" size="small" align="center"
                                         style={{ display: 'flex', padding: '45px 15px' }}>
-                                        <Button type="link" onClick={onClickAddNewRule}>Add new access rule</Button>
+                                        <Button type="link" onClick={onClickAddNewPolicy}>Add new access rule</Button>
                                     </Space>
                                 }
                             </Card>

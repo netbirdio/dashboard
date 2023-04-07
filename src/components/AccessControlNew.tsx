@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "typesafe-actions";
-import { actions as ruleActions } from '../store/rule';
+import { actions as policyActions } from '../store/policy';
 import {
     Button,
     Col,
@@ -21,7 +21,7 @@ import {
 } from "antd";
 import { CloseOutlined, FlagFilled, QuestionCircleFilled } from "@ant-design/icons";
 import type { CustomTagProps } from 'rc-select/lib/BaseSelect'
-import { Rule, RuleToSave } from "../store/rule/types";
+import { Policy, PolicyToSave } from "../store/policy/types";
 import { uniq } from "lodash";
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
@@ -30,7 +30,7 @@ import { useGetTokenSilently } from "../utils/token";
 const { Paragraph } = Typography;
 const { Option } = Select;
 
-interface FormRule extends Rule {
+interface FormPolicy extends Policy {
     tagSourceGroups: string[]
     tagDestinationGroups: string[]
 }
@@ -40,23 +40,23 @@ const AccessControlNew = () => {
     const dispatch = useDispatch()
     const setupNewPolicyVisible = useSelector((state: RootState) => state.policy.setupNewPolicyVisible)
     const groups = useSelector((state: RootState) => state.group.data)
-    const flows: SelectProps['options'] = [
-        { label: 'Bi-Direct', value: 'bidirect' },
-        { label: 'Direct', value: 'direct' },
-    ];
+    // const flows: SelectProps['options'] = [
+    //     { label: 'Bi-Direct', value: 'bidirect' },
+    //     { label: 'Direct', value: 'direct' },
+    // ];
     const protocols: SelectProps['options'] = [
         { label: 'All', value: 'all' },
         { label: 'TCP', value: 'tcp' },
         { label: 'UDP', value: 'udp' },
         { label: 'ICMP', value: 'icmp' },
     ];
-    const rule = useSelector((state: RootState) => state.rule.rule)
-    const savedRule = useSelector((state: RootState) => state.rule.savedRule)
+    const policy = useSelector((state: RootState) => state.policy.policy)
+    const savedPolicy = useSelector((state: RootState) => state.policy.savedPolicy)
 
     const [editName, setEditName] = useState(false)
     const [editDescription, setEditDescription] = useState(false)
     const [tagGroups, setTagGroups] = useState([] as string[])
-    const [formRule, setFormRule] = useState({} as FormRule)
+    const [formPolicy, setFormPolicy] = useState({} as FormPolicy)
     const [form] = Form.useForm()
     const inputNameRef = useRef<any>(null)
     const inputDescriptionRef = useRef<any>(null)
@@ -76,49 +76,60 @@ const AccessControlNew = () => {
     }, [editDescription]);
 
     useEffect(() => {
-        if (!rule) return
-        const fRule = {
-            ...rule,
-            tagSourceGroups: rule.sources ? rule.sources?.map(t => t.name) : [],
-            tagDestinationGroups: rule.destinations ? rule.destinations?.map(t => t.name) : [],
-        } as FormRule
-        setFormRule(fRule)
-        form.setFieldsValue(fRule)
-    }, [rule])
+        if (!policy) return
+        const fPolicy = {
+            id: policy.id,
+            name: policy.name,
+            description: policy.description,
+            enabled: policy.enabled,
+            query: '',
+            rules: [{ ...policy.rules[0] }],
+            tagSourceGroups: policy.rules[0].sources ? policy.rules[0].sources?.map(t => t.name) : [],
+            tagDestinationGroups: policy.rules[0].destinations ? policy.rules[0].destinations?.map(t => t.name) : [],
+        } as FormPolicy
+        setFormPolicy(fPolicy)
+        form.setFieldsValue(fPolicy)
+    }, [policy, form])
 
     useEffect(() => {
         setTagGroups(groups?.map(g => g.name) || [])
     }, [groups])
 
-    const createRuleToSave = (): RuleToSave => {
-        const sources = groups?.filter(g => formRule.tagSourceGroups.includes(g.name)).map(g => g.id || '') || []
-        const destinations = groups?.filter(g => formRule.tagDestinationGroups.includes(g.name)).map(g => g.id || '') || []
-        const sourcesNoId = formRule.tagSourceGroups.filter(s => !tagGroups.includes(s))
-        const destinationsNoId = formRule.tagDestinationGroups.filter(s => !tagGroups.includes(s))
+    const createPolicyToSave = (): PolicyToSave => {
+        const sources = groups?.filter(g => formPolicy.tagSourceGroups.includes(g.name)).map(g => g.id || '') || []
+        const destinations = groups?.filter(g => formPolicy.tagDestinationGroups.includes(g.name)).map(g => g.id || '') || []
+        const sourcesNoId = formPolicy.tagSourceGroups.filter(s => !tagGroups.includes(s))
+        const destinationsNoId = formPolicy.tagDestinationGroups.filter(s => !tagGroups.includes(s))
         const groupsToSave = uniq([...sourcesNoId, ...destinationsNoId])
         return {
-            id: formRule.id,
-            name: formRule.name,
-            description: formRule.description,
-            sources,
-            destinations,
+            id: formPolicy.id,
+            name: formPolicy.name,
+            description: formPolicy.description,
+            enabled: formPolicy.enabled,
             sourcesNoId,
             destinationsNoId,
             groupsToSave,
-            flow: formRule.flow,
-            disabled: formRule.disabled,
-            protocol: formRule.protocol,
-            ports: formRule.ports
-        } as RuleToSave
+            rules: [{
+                id: formPolicy.id,
+                name: formPolicy.name,
+                description: formPolicy.description,
+                enabled: formPolicy.enabled,
+                sources,
+                destinations,
+                flow: formPolicy.rules[0].flow,
+                protocol: formPolicy.rules[0].protocol,
+                ports: formPolicy.rules[0].ports
+            }],
+        } as PolicyToSave
     }
 
     const handleFormSubmit = () => {
         form.validateFields()
             .then((_) => {
-                const ruleToSave = createRuleToSave()
-                dispatch(ruleActions.saveRule.request({
+                const policyToSave = createPolicyToSave()
+                dispatch(policyActions.savePolicy.request({
                     getAccessTokenSilently: getTokenSilently,
-                    payload: ruleToSave
+                    payload: policyToSave
                 }))
             })
             .catch((errorInfo) => {
@@ -127,54 +138,68 @@ const AccessControlNew = () => {
     };
 
     const setVisibleNewRule = (status: boolean) => {
-        dispatch(ruleActions.setSetupNewRuleVisible(status));
+        dispatch(policyActions.setSetupNewPolicyVisible(status));
     }
 
     const onCancel = () => {
-        if (savedRule.loading) return
+        if (savedPolicy.loading) return
         setEditName(false)
-        dispatch(ruleActions.setRule({
+        dispatch(policyActions.setPolicy({
             name: '',
             description: '',
-            sources: [],
-            destinations: [],
-            flow: '',
-            protocol: '',
-            ports: [],
-            disabled: false
-        } as Rule))
+            enabled: true,
+            query: '',
+            rules: [{
+                name: '',
+                description: '',
+                enabled: true,
+                sources: [],
+                destinations: [],
+                flow: '',
+                protocol: '',
+                action: 'allow',
+                ports: [],
+            }],
+        } as Policy))
         setVisibleNewRule(false)
     }
 
     const onChange = (data: any) => {
-        setFormRule({ ...formRule, ...data })
+        setFormPolicy({ ...formPolicy, ...data })
     }
 
     const handleChangeSource = (value: string[]) => {
-        setFormRule({
-            ...formRule,
+        setFormPolicy({
+            ...formPolicy,
             tagSourceGroups: value
         })
     };
 
     const handleChangeDestination = (value: string[]) => {
-        setFormRule({
-            ...formRule,
+        setFormPolicy({
+            ...formPolicy,
             tagDestinationGroups: value
         })
     };
 
     const handleChangeDisabled = ({ target: { value } }: RadioChangeEvent) => {
-        setFormRule({
-            ...formRule,
-            disabled: value
+        setFormPolicy({
+            ...formPolicy,
+            rules: [{
+                ...formPolicy.rules[0],
+                enabled: value
+            }],
+            enabled: value
         })
     };
 
     const handleChangeFlow = (checked: boolean) => {
-        setFormRule({
-            ...formRule,
-            flow: checked ? 'bidirect' : 'direct',
+        setFormPolicy({
+            ...formPolicy,
+            rules: [{
+                ...formPolicy.rules[0],
+                flow: checked ? 'bidirect' : 'direct',
+            }],
         })
     };
 
@@ -288,7 +313,7 @@ const AccessControlNew = () => {
 
     return (
         <>
-            {rule &&
+            {policy &&
                 <Drawer
                     //title={`${formRule.ID ? 'Edit Rule' : 'New Rule'}`}
                     headerStyle={{ display: "none" }}
@@ -300,9 +325,9 @@ const AccessControlNew = () => {
                     autoFocus={true}
                     footer={
                         <Space style={{ display: 'flex', justifyContent: 'end' }}>
-                            <Button onClick={onCancel} disabled={savedRule.loading}>Cancel</Button>
-                            <Button type="primary" disabled={savedRule.loading}
-                                onClick={handleFormSubmit}>{`${formRule.id ? 'Save' : 'Create'}`}</Button>
+                            <Button onClick={onCancel} disabled={savedPolicy.loading}>Cancel</Button>
+                            <Button type="primary" disabled={savedPolicy.loading}
+                                onClick={handleFormSubmit}>{`${formPolicy.id ? 'Save' : 'Create'}`}</Button>
                         </Space>
                     }
                 >
@@ -312,7 +337,7 @@ const AccessControlNew = () => {
                                 <Header style={{ margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px" }}>
                                     <Row align="top">
                                         <Col flex="none" style={{ display: "flex" }}>
-                                            {!editName && !editDescription && formRule.id &&
+                                            {!editName && !editDescription && formPolicy.id &&
                                                 <button type="button" aria-label="Close" className="ant-drawer-close"
                                                     style={{ paddingTop: 3 }}
                                                     onClick={onCancel}>
@@ -324,9 +349,9 @@ const AccessControlNew = () => {
                                             }
                                         </Col>
                                         <Col flex="auto">
-                                            {!editName && formRule.id ? (
+                                            {!editName && formPolicy.id ? (
                                                 <div className={"access-control input-text ant-drawer-title"}
-                                                    onClick={() => toggleEditName(true)}>{formRule.id ? formRule.name : 'New Rule'}</div>
+                                                    onClick={() => toggleEditName(true)}>{formPolicy.id ? formPolicy.name : 'New Rule'}</div>
                                             ) : (
                                                 <Form.Item
                                                     name="name"
@@ -345,7 +370,7 @@ const AccessControlNew = () => {
                                             {!editDescription ? (
                                                 <div className={"access-control input-text ant-drawer-subtitle"}
                                                     onClick={() => toggleEditDescription(true)}>
-                                                    {formRule.description && formRule.description.trim() !== "" ? formRule.description : 'Add description...'}
+                                                    {formPolicy.description && formPolicy.description.trim() !== "" ? formPolicy.description : 'Add description...'}
                                                 </div>
                                             ) : (
                                                 <Form.Item
@@ -435,7 +460,7 @@ const AccessControlNew = () => {
                                 >
                                     <Switch
                                         size={"small"}
-                                        checked={formRule.flow === 'bidirect'}
+                                        checked={formPolicy.rules[0].flow === 'bidirect'}
                                         onChange={handleChangeFlow}
                                     />
                                 </Form.Item>
@@ -462,10 +487,10 @@ const AccessControlNew = () => {
                                         tagRender={tagRender}
                                         onChange={handleChangeDestination}
                                         dropdownRender={dropDownRenderPorts}
-                                        disabled={formRule.protocol === "all" || formRule.protocol === "icmp"}
+                                        disabled={formPolicy.rules[0].protocol === "all" || formPolicy.rules[0].protocol === "icmp"}
                                     >
                                         {
-                                            formRule.ports?.map(m =>
+                                            formPolicy.rules[0].ports?.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
                                             )
                                         }

@@ -42,7 +42,7 @@ const data = createReducer<Policy[], ActionTypes>(initialState.data as Policy[])
     .handleAction(actions.getPolicies.success, (_, action) => action.payload)
     .handleAction(actions.getPolicies.failure, () => []);
 
-const rule = createReducer<Policy, ActionTypes>(initialState.policy as Policy)
+const policy = createReducer<Policy, ActionTypes>(initialState.policy as Policy)
     .handleAction(actions.setPolicy, (store, action) => action.payload);
 
 const loading = createReducer<boolean, ActionTypes>(initialState.loading)
@@ -79,7 +79,7 @@ const setupNewPolicyVisible = createReducer<boolean, ActionTypes>(initialState.s
 
 export default combineReducers({
     data,
-    rule,
+    policy,
     loading,
     failed,
     saving,
