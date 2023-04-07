@@ -32,7 +32,8 @@ const actions = {
 
   removePersonalAccessToken:  createAction('REMOVE_PERSONAL_ACCESS_TOKEN')<string>(),
   setPersonalAccessToken: createAction('SET_SETUP_KEY')<PersonalAccessTokenCreate>(),
-  setNewPersonalAccessTokenVisible: createAction('SET_NEW_PERSONAL_ACCESS_TOKEN_VISIBLE')<boolean>()
+  setNewPersonalAccessTokenVisible: createAction('SET_NEW_PERSONAL_ACCESS_TOKEN_VISIBLE')<boolean>(),
+  setNewPersonalAccessTokenPopupVisible: createAction('SET_NEW_PERSONAL_ACCESS_TOKEN_POPUP_VISIBLE')<boolean>()
 };
 
 export type ActionTypes = ActionType<typeof actions>;

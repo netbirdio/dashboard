@@ -2,6 +2,7 @@ import { Method } from 'axios';
 
 export interface RequestPayload<T> {
   getAccessTokenSilently: any | null;
+  queryParams?: any | null;
   payload:T;
 }
 
@@ -27,6 +28,7 @@ export interface RequestConfig {
 export interface ApiRequestParams extends RequestConfig {
   method: Method;
   url: string;
+  params?: any,
   data: unknown;
   urlBase: string;
 }
