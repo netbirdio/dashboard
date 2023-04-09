@@ -460,7 +460,7 @@ const AccessControlNew = () => {
                                 >
                                     <Switch
                                         size={"small"}
-                                        checked={formPolicy.rules[0].flow === 'bidirect'}
+                                        checked={formPolicy.rules && formPolicy.rules[0].flow === 'bidirect'}
                                         onChange={handleChangeFlow}
                                     />
                                 </Form.Item>
@@ -487,10 +487,10 @@ const AccessControlNew = () => {
                                         tagRender={tagRender}
                                         onChange={handleChangeDestination}
                                         dropdownRender={dropDownRenderPorts}
-                                        disabled={formPolicy.rules[0].protocol === "all" || formPolicy.rules[0].protocol === "icmp"}
+                                        disabled={formPolicy.rules && (formPolicy.rules[0].protocol === "all" || formPolicy.rules[0].protocol === "icmp")}
                                     >
                                         {
-                                            formPolicy.rules[0].ports?.map(m =>
+                                            formPolicy.rules && formPolicy.rules[0].ports?.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
                                             )
                                         }
