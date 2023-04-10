@@ -71,6 +71,9 @@ export function* savePolicy(action: ReturnType<typeof actions.savePolicy.request
                 query: policyToSave.query
             } as Policy
         }
+        if (policyToSave.rules.length > 0) {
+            payloadToSave.payload.rules = []
+        }
         policyToSave.rules.forEach((r) => {
             payloadToSave.payload.rules.push({
                 name: r.name,

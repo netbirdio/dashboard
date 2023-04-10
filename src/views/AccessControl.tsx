@@ -262,7 +262,7 @@ export const AccessControl = () => {
                 description: '',
                 enabled: true,
                 flow: 'bidirect',
-                action: 'allow',
+                action: 'accept',
                 protocol: 'all',
             }]
         } as Policy))

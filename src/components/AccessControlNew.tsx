@@ -116,6 +116,7 @@ const AccessControlNew = () => {
                 enabled: formPolicy.enabled,
                 sources,
                 destinations,
+                action: formPolicy.rules[0].action,
                 flow: formPolicy.rules[0].flow,
                 protocol: formPolicy.rules[0].protocol,
                 ports: formPolicy.rules[0].ports
@@ -157,7 +158,7 @@ const AccessControlNew = () => {
                 destinations: [],
                 flow: '',
                 protocol: '',
-                action: 'allow',
+                action: 'accept',
                 ports: [],
             }],
         } as Policy))
@@ -187,9 +188,19 @@ const AccessControlNew = () => {
             ...formPolicy,
             rules: [{
                 ...formPolicy.rules[0],
-                enabled: value
+                enabled: !value
             }],
-            enabled: value
+            enabled: !value
+        })
+    };
+
+    const handleChangeAction = (checked: boolean) => {
+        setFormPolicy({
+            ...formPolicy,
+            rules: [{
+                ...formPolicy.rules[0],
+                action: checked ? 'accept' : 'drop',
+            }],
         })
     };
 
@@ -455,13 +466,26 @@ const AccessControlNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
+                                    name="action"
+                                    label="Accept traffic"
+                                >
+                                    <Switch
+                                        size={"small"}
+                                        checked={formPolicy.rules && formPolicy.rules[0].action === 'accept'}
+                                        onChange={handleChangeAction}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
                                     name="flow"
-                                    label="Allow Bi-Direct traffic flow"
+                                    label="Allow Bi-Direct flow"
                                 >
                                     <Switch
                                         size={"small"}
                                         checked={formPolicy.rules && formPolicy.rules[0].flow === 'bidirect'}
                                         onChange={handleChangeFlow}
+                                        disabled={formPolicy.rules && formPolicy.rules[0].action === "drop"}
                                     />
                                 </Form.Item>
                             </Col>
@@ -473,6 +497,7 @@ const AccessControlNew = () => {
                                     <Select
                                         style={{ width: '100%' }}
                                         options={protocols}
+                                        defaultActiveFirstOption={true}
                                     />
                                 </Form.Item>
                             </Col>
