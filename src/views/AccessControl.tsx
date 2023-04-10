@@ -42,17 +42,28 @@ const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
 
-interface PolicyDataTable extends Policy {
+interface PolicyDataTable {
+    id?: string
     key: string;
-    sourceCount: number;
-    sourceLabel: '';
-    destinationCount: number;
-    destinationLabel: '';
+    name: string
+    description: string
+    enabled: boolean
+    query: string
+    sources: string[]
+    destinations: string[]
+    bidirect: boolean
+    protocol: string
+    ports: string[]
+    action: string
+    sourceCount: number
+    sourceLabel: ''
+    destinationCount: number
+    destinationLabel: ''
 }
 
 interface GroupsToShow {
-    title: string,
-    groups: Group[] | string[] | null,
+    title: string
+    groups: Group[] | string[] | null
     modalVisible: boolean
 }
 
@@ -109,11 +120,21 @@ export const AccessControl = () => {
             const sourceLabel = getSourceDestinationLabel(policy.rules[0].sources as Group[])
             const destinationLabel = getSourceDestinationLabel(policy.rules[0].destinations as Group[])
             return {
-                key: policy.id, ...policy,
+                id: policy.id,
+                key: policy.id,
+                name: policy.name,
+                description: policy.description,
+                enabled: policy.enabled,
+                sources: policy.rules[0].sources,
+                destinations: policy.rules[0].destinations,
+                bidirect: policy.rules[0].bidirect,
                 sourceCount: policy.rules[0].sources?.length,
                 sourceLabel,
                 destinationCount: policy.rules[0].destinations?.length,
                 destinationLabel,
+                protocol: policy.rules[0].protocol,
+                ports: policy.rules[0].ports,
+                action: policy.rules[0].action,
             } as PolicyDataTable
         })
     }
@@ -261,7 +282,7 @@ export const AccessControl = () => {
                 name: '',
                 description: '',
                 enabled: true,
-                flow: 'bidirect',
+                bidirect: false,
                 action: 'accept',
                 protocol: 'all',
             }]
@@ -276,15 +297,15 @@ export const AccessControl = () => {
             description: policyToAction?.description,
             enabled: policyToAction?.enabled,
             rules: [{
-                name: policyToAction?.rules[0].name,
-                description: policyToAction?.rules[0].description,
-                enabled: policyToAction?.rules[0].enabled,
-                sources: policyToAction?.rules[0].sources,
-                destinations: policyToAction?.rules[0].destinations,
-                flow: policyToAction?.rules[0].flow,
-                protocol: policyToAction?.rules[0].protocol,
-                action: policyToAction?.rules[0].action,
-                ports: policyToAction?.rules[0].ports,
+                name: policyToAction?.name,
+                description: policyToAction?.description,
+                enabled: policyToAction?.enabled,
+                sources: policyToAction?.sources,
+                destinations: policyToAction?.destinations,
+                bidirect: policyToAction?.bidirect,
+                protocol: policyToAction?.protocol,
+                ports: policyToAction?.ports,
+                action: policyToAction?.action,
             }]
         } as Policy))
     }
@@ -300,13 +321,13 @@ export const AccessControl = () => {
                 id: p.id || null,
                 name: p.name,
                 description: p.description,
-                enabled: p.rules[0].enabled,
-                sources: p.rules[0].sources,
-                destinations: p.rules[0].destinations,
-                flow: p.rules[0].flow,
-                protocol: p.rules[0].protocol,
-                action: p.rules[0].action,
-                ports: p.rules[0].ports,
+                enabled: p.enabled,
+                sources: p.sources,
+                destinations: p.destinations,
+                bidirect: p.bidirect,
+                protocol: p.protocol,
+                ports: p.ports,
+                action: p.action,
             }]
         } as Policy))
     }
@@ -455,32 +476,45 @@ export const AccessControl = () => {
                                     <Column title="Sources" dataIndex="sourceLabel"
                                         render={(text, record: PolicyDataTable, index) => {
                                             //return <Button type="link" onClick={() => toggleModalGroups(`${record.Name} - Sources`, record.Source, true)}>{text}</Button>
-                                            return renderPopoverGroups(text, record.rules[0].sources, record as PolicyDataTable)
+                                            return renderPopoverGroups(text, record.sources, record as PolicyDataTable)
                                         }}
                                     />
-                                    <Column title="Direction" dataIndex="flow"
+                                    <Column title="Direction" dataIndex="bidirect"
                                         render={(text, record: PolicyDataTable, index) => {
                                             const s = { minWidth: 50, textAlign: "center" } as React.CSSProperties
-                                            if (!text || text === "bidirect")
+                                            if (record.bidirect) {
                                                 return <Tag color="processing" style={s}><img src={bidirect} /></Tag>
-                                            else if (text === "direct") {
-                                                return <Tag color="green" style={s}><img src={outbound} /></Tag>
-                                            } else if (text === "destToSrc") {
-                                                return <Tag color="green" style={s}><img src={inbound} /></Tag>
                                             }
-                                            return <Tag color="red" style={s}><CloseOutlined /></Tag>
+                                            return <Tag color="green" style={s}><img src={outbound} /></Tag>
                                         }}
                                     />
                                     <Column title="Destinations" dataIndex="destinationLabel"
                                         render={(text, record: PolicyDataTable, index) => {
                                             //return <Button type="link" onClick={() => toggleModalGroups(`${record.name} - Destinations`, record.destinations, true)}>{text}</Button>
-                                            return renderPopoverGroups(text, record.rules[0].destinations, record as PolicyDataTable)
+                                            return renderPopoverGroups(text, record.destinations, record as PolicyDataTable)
                                         }}
                                     />
-                                    <Column title="Protocol" dataIndex="protocol" />
+                                    <Column title="Protocol" dataIndex="protocol"
+                                        render={(text, record: PolicyDataTable, index) => {
+                                            return <Tag
+                                                color="blue"
+                                                style={{ marginRight: "3", textTransform: "uppercase" }}>
+                                                {record.protocol}
+                                            </Tag>
+                                        }}
+                                    />
                                     <Column title="Ports" dataIndex="ports"
                                         render={(text, record: PolicyDataTable, index) => {
-                                            return renderPorts(record.rules[0].ports)
+                                            return renderPorts(record.ports)
+                                        }}
+                                    />
+                                    <Column title="Action" dataIndex="action"
+                                        render={(text, record: PolicyDataTable, index) => {
+                                            const s = { minWidth: 50, textAlign: "center" } as React.CSSProperties
+                                            if (!text || text === "accept") {
+                                                return <Tag color="green" style={s}>accept</Tag>
+                                            }
+                                            return <Tag color="red" style={s}>drop</Tag>
                                         }}
                                     />
                                     <Column title="" align="center"

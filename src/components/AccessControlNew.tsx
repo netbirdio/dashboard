@@ -30,7 +30,16 @@ import { useGetTokenSilently } from "../utils/token";
 const { Paragraph } = Typography;
 const { Option } = Select;
 
-interface FormPolicy extends Policy {
+interface FormPolicy {
+    id?: string
+    name: string
+    description: string
+    enabled: boolean
+    query: string
+    bidirect: boolean
+    protocol: string
+    ports: string[]
+    action: string
     tagSourceGroups: string[]
     tagDestinationGroups: string[]
 }
@@ -40,16 +49,16 @@ const AccessControlNew = () => {
     const dispatch = useDispatch()
     const setupNewPolicyVisible = useSelector((state: RootState) => state.policy.setupNewPolicyVisible)
     const groups = useSelector((state: RootState) => state.group.data)
-    // const flows: SelectProps['options'] = [
-    //     { label: 'Bi-Direct', value: 'bidirect' },
-    //     { label: 'Direct', value: 'direct' },
-    // ];
+    const actions: SelectProps['options'] = [
+        { label: 'Accept', value: 'accept' },
+        { label: 'Drop', value: 'drop' },
+    ]
     const protocols: SelectProps['options'] = [
         { label: 'All', value: 'all' },
         { label: 'TCP', value: 'tcp' },
         { label: 'UDP', value: 'udp' },
         { label: 'ICMP', value: 'icmp' },
-    ];
+    ]
     const policy = useSelector((state: RootState) => state.policy.policy)
     const savedPolicy = useSelector((state: RootState) => state.policy.savedPolicy)
 
@@ -63,18 +72,9 @@ const AccessControlNew = () => {
 
     const optionsDisabledEnabled = [{ label: 'Enabled', value: false }, { label: 'Disabled', value: true }]
 
-    useEffect(() => {
-        if (editName) inputNameRef.current!.focus({
-            cursor: 'end',
-        });
-    }, [editName]);
-
-    useEffect(() => {
-        if (editDescription) inputDescriptionRef.current!.focus({
-            cursor: 'end',
-        });
-    }, [editDescription]);
-
+    useEffect(() => { if (editName) inputNameRef.current!.focus({ cursor: 'end' }) }, [editName])
+    useEffect(() => { if (editDescription) inputDescriptionRef.current!.focus({ cursor: 'end' }) }, [editDescription])
+    useEffect(() => { setTagGroups(groups?.map(g => g.name) || []) }, [groups])
     useEffect(() => {
         if (!policy) return
         const fPolicy = {
@@ -83,17 +83,16 @@ const AccessControlNew = () => {
             description: policy.description,
             enabled: policy.enabled,
             query: '',
-            rules: [{ ...policy.rules[0] }],
+            bidirect: policy.rules[0].bidirect,
+            protocol: policy.rules[0].protocol,
+            ports: policy.rules[0].ports,
+            action: policy.rules[0].action,
             tagSourceGroups: policy.rules[0].sources ? policy.rules[0].sources?.map(t => t.name) : [],
             tagDestinationGroups: policy.rules[0].destinations ? policy.rules[0].destinations?.map(t => t.name) : [],
         } as FormPolicy
         setFormPolicy(fPolicy)
         form.setFieldsValue(fPolicy)
     }, [policy, form])
-
-    useEffect(() => {
-        setTagGroups(groups?.map(g => g.name) || [])
-    }, [groups])
 
     const createPolicyToSave = (): PolicyToSave => {
         const sources = groups?.filter(g => formPolicy.tagSourceGroups.includes(g.name)).map(g => g.id || '') || []
@@ -116,10 +115,10 @@ const AccessControlNew = () => {
                 enabled: formPolicy.enabled,
                 sources,
                 destinations,
-                action: formPolicy.rules[0].action,
-                flow: formPolicy.rules[0].flow,
-                protocol: formPolicy.rules[0].protocol,
-                ports: formPolicy.rules[0].ports
+                bidirect: formPolicy.bidirect,
+                protocol: formPolicy.protocol,
+                ports: formPolicy.ports,
+                action: formPolicy.action,
             }],
         } as PolicyToSave
     }
@@ -156,10 +155,10 @@ const AccessControlNew = () => {
                 enabled: true,
                 sources: [],
                 destinations: [],
-                flow: '',
-                protocol: '',
-                action: 'accept',
+                bidirect: false,
+                protocol: 'all',
                 ports: [],
+                action: 'accept',
             }],
         } as Policy))
         setVisibleNewRule(false)
@@ -174,43 +173,40 @@ const AccessControlNew = () => {
             ...formPolicy,
             tagSourceGroups: value
         })
-    };
+    }
 
     const handleChangeDestination = (value: string[]) => {
         setFormPolicy({
             ...formPolicy,
             tagDestinationGroups: value
         })
-    };
+    }
+
+    const handleChangeProtocol = (value: string) => {
+        setFormPolicy({
+            ...formPolicy,
+            protocol: value
+        })
+    }
+
+    const handleChangePorts = (value: string[]) => {
+        setFormPolicy({
+            ...formPolicy,
+            ports: value
+        })
+    }
 
     const handleChangeDisabled = ({ target: { value } }: RadioChangeEvent) => {
         setFormPolicy({
             ...formPolicy,
-            rules: [{
-                ...formPolicy.rules[0],
-                enabled: !value
-            }],
             enabled: !value
         })
-    };
+    }
 
-    const handleChangeAction = (checked: boolean) => {
+    const handleChangeBidirect = (checked: boolean) => {
         setFormPolicy({
             ...formPolicy,
-            rules: [{
-                ...formPolicy.rules[0],
-                action: checked ? 'accept' : 'drop',
-            }],
-        })
-    };
-
-    const handleChangeFlow = (checked: boolean) => {
-        setFormPolicy({
-            ...formPolicy,
-            rules: [{
-                ...formPolicy.rules[0],
-                flow: checked ? 'bidirect' : 'direct',
-            }],
+            bidirect: checked,
         })
     };
 
@@ -326,10 +322,8 @@ const AccessControlNew = () => {
         <>
             {policy &&
                 <Drawer
-                    //title={`${formRule.ID ? 'Edit Rule' : 'New Rule'}`}
                     headerStyle={{ display: "none" }}
                     forceRender={true}
-                    // width={512}
                     visible={setupNewPolicyVisible}
                     bodyStyle={{ paddingBottom: 80 }}
                     onClose={onCancel}
@@ -419,6 +413,7 @@ const AccessControlNew = () => {
                                         onChange={handleChangeDisabled}
                                         optionType="button"
                                         buttonStyle="solid"
+                                        defaultValue={false}
                                     />
                                 </Form.Item>
                             </Col>
@@ -445,6 +440,19 @@ const AccessControlNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
+                                    name="bidirect"
+                                    label="Bi-Direct traffic flow"
+                                >
+                                    <Switch
+                                        size={"small"}
+                                        checked={formPolicy.bidirect}
+                                        onChange={handleChangeBidirect}
+                                        disabled={formPolicy.action === "drop"}
+                                    />
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
                                     name="tagDestinationGroups"
                                     label="Destination groups"
                                     rules={[{ validator: selectValidator }]}
@@ -466,38 +474,14 @@ const AccessControlNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="action"
-                                    label="Accept traffic"
-                                >
-                                    <Switch
-                                        size={"small"}
-                                        checked={formPolicy.rules && formPolicy.rules[0].action === 'accept'}
-                                        onChange={handleChangeAction}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={24}>
-                                <Form.Item
-                                    name="flow"
-                                    label="Allow Bi-Direct flow"
-                                >
-                                    <Switch
-                                        size={"small"}
-                                        checked={formPolicy.rules && formPolicy.rules[0].flow === 'bidirect'}
-                                        onChange={handleChangeFlow}
-                                        disabled={formPolicy.rules && formPolicy.rules[0].action === "drop"}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={24}>
-                                <Form.Item
                                     name="protocol"
                                     label="Protocol"
                                 >
                                     <Select
                                         style={{ width: '100%' }}
                                         options={protocols}
-                                        defaultActiveFirstOption={true}
+                                        onChange={handleChangeProtocol}
+                                        defaultValue={'all'}
                                     />
                                 </Form.Item>
                             </Col>
@@ -510,16 +494,28 @@ const AccessControlNew = () => {
                                         mode="tags" style={{ width: '100%' }}
                                         placeholder="Tags Mode"
                                         tagRender={tagRender}
-                                        onChange={handleChangeDestination}
+                                        onChange={handleChangePorts}
                                         dropdownRender={dropDownRenderPorts}
-                                        disabled={formPolicy.rules && (formPolicy.rules[0].protocol === "all" || formPolicy.rules[0].protocol === "icmp")}
+                                        disabled={formPolicy.protocol === "all" || formPolicy.protocol === "icmp"}
                                     >
                                         {
-                                            formPolicy.rules && formPolicy.rules[0].ports?.map(m =>
+                                            formPolicy && formPolicy.ports?.map(m =>
                                                 <Option key={m}>{optionRender(m)}</Option>
                                             )
                                         }
                                     </Select>
+                                </Form.Item>
+                            </Col>
+                            <Col span={24}>
+                                <Form.Item
+                                    name="action"
+                                    label="Action"
+                                >
+                                    <Select
+                                        style={{ width: '100%' }}
+                                        options={actions}
+                                        defaultValue={'accept'}
+                                    />
                                 </Form.Item>
                             </Col>
                             <Col span={24}>

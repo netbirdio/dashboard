@@ -81,9 +81,10 @@ export function* savePolicy(action: ReturnType<typeof actions.savePolicy.request
                 enabled: r.enabled,
                 sources: [...r.sources as string[], ...newSources],
                 destinations: [...r.destinations as string[], ...newDestinations],
-                flow: r.flow,
-                action: r.action,
-                ports: r.ports
+                bidirect: r.bidirect,
+                protocol: r.protocol,
+                ports: r.ports,
+                action: r.action
             } as PolicyRule)
         })
 
