@@ -185,6 +185,7 @@ const AccessControlNew = () => {
     const handleChangeProtocol = (value: string) => {
         setFormPolicy({
             ...formPolicy,
+            ports: (value === 'all' || value === 'icmp') ? [] : formPolicy.ports,
             protocol: value
         })
     }
@@ -499,8 +500,16 @@ const AccessControlNew = () => {
                                         disabled={formPolicy.protocol === "all" || formPolicy.protocol === "icmp"}
                                     >
                                         {
-                                            formPolicy && formPolicy.ports?.map(m =>
-                                                <Option key={m}>{optionRender(m)}</Option>
+                                            formPolicy &&
+                                            formPolicy.ports?.map(m =>
+                                                <Option key={m}>
+                                                    <Tag
+                                                        color="blue"
+                                                        style={{ marginRight: 3 }}
+                                                    >
+                                                        <strong>{m}</strong>
+                                                    </Tag>
+                                                </Option>
                                             )
                                         }
                                     </Select>
