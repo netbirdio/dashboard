@@ -323,7 +323,8 @@ const UserEdit = () => {
                                     label={<text style={{fontSize: "16px", fontWeight: "500"}}>Role</text>}
                                     style={{marginRight: "50px"}}
                                 >
-                                    <Select style={{width: '100%'}}>
+                                    <Select style={{width: '100%'}}
+                                            disabled={user.is_current}>
                                         <Option value="admin">admin</Option>
                                         <Option value="user">user</Option>
                                     </Select>

@@ -112,15 +112,7 @@ export const ServiceUsers = () => {
     }
 
     const onClickCreateServiceUser = () => {
-        const autoGroups : string[] = []
-        dispatch(userActions.setUser({
-            id: "",
-            email: "",
-            auto_groups: autoGroups,
-            name: "",
-            role: "user",
-            is_service_user: true
-        } as User));
+        dispatch(userActions.setUser(null as unknown as User));
         dispatch(userActions.setAddServiceUserPopupVisible(true));
     }
 
