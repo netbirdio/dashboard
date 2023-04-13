@@ -36,7 +36,7 @@ interface FormPolicy {
     description: string
     enabled: boolean
     query: string
-    bidirect: boolean
+    bidirectional: boolean
     protocol: string
     ports: string[]
     action: string
@@ -83,7 +83,7 @@ const AccessControlNew = () => {
             description: policy.description,
             enabled: policy.enabled,
             query: '',
-            bidirect: policy.rules[0].bidirect,
+            bidirectional: policy.rules[0].bidirectional,
             protocol: policy.rules[0].protocol,
             ports: policy.rules[0].ports,
             action: policy.rules[0].action,
@@ -115,7 +115,7 @@ const AccessControlNew = () => {
                 enabled: formPolicy.enabled,
                 sources,
                 destinations,
-                bidirect: formPolicy.bidirect,
+                bidirectional: formPolicy.bidirectional,
                 protocol: formPolicy.protocol,
                 ports: formPolicy.ports,
                 action: formPolicy.action,
@@ -155,7 +155,7 @@ const AccessControlNew = () => {
                 enabled: true,
                 sources: [],
                 destinations: [],
-                bidirect: false,
+                bidirectional: false,
                 protocol: 'all',
                 ports: [],
                 action: 'accept',
@@ -207,7 +207,7 @@ const AccessControlNew = () => {
     const handleChangeBidirect = (checked: boolean) => {
         setFormPolicy({
             ...formPolicy,
-            bidirect: checked,
+            bidirectional: checked,
         })
     };
 
@@ -441,14 +441,13 @@ const AccessControlNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="bidirect"
+                                    name="bidirectional"
                                     label="Bi-Direct traffic flow"
                                 >
                                     <Switch
                                         size={"small"}
-                                        checked={formPolicy.bidirect}
+                                        checked={formPolicy.bidirectional}
                                         onChange={handleChangeBidirect}
-                                        disabled={formPolicy.action === "drop"}
                                     />
                                 </Form.Item>
                             </Col>

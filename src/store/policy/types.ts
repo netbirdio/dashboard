@@ -7,7 +7,7 @@ export interface PolicyRule {
     enabled: boolean
     sources: Group[] | string[] | null
     destinations: Group[] | string[] | null
-    bidirect: boolean
+    bidirectional: boolean
     action: string
     protocol: string
     ports: string[]

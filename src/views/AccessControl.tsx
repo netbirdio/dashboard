@@ -51,7 +51,7 @@ interface PolicyDataTable {
     query: string
     sources: string[]
     destinations: string[]
-    bidirect: boolean
+    bidirectional: boolean
     protocol: string
     ports: string[]
     action: string
@@ -127,7 +127,7 @@ export const AccessControl = () => {
                 enabled: policy.enabled,
                 sources: policy.rules[0].sources,
                 destinations: policy.rules[0].destinations,
-                bidirect: policy.rules[0].bidirect,
+                bidirectional: policy.rules[0].bidirectional,
                 sourceCount: policy.rules[0].sources?.length,
                 sourceLabel,
                 destinationCount: policy.rules[0].destinations?.length,
@@ -282,7 +282,7 @@ export const AccessControl = () => {
                 name: '',
                 description: '',
                 enabled: true,
-                bidirect: false,
+                bidirectional: false,
                 action: 'accept',
                 protocol: 'all',
             }]
@@ -302,7 +302,7 @@ export const AccessControl = () => {
                 enabled: policyToAction?.enabled,
                 sources: policyToAction?.sources,
                 destinations: policyToAction?.destinations,
-                bidirect: policyToAction?.bidirect,
+                bidirectional: policyToAction?.bidirectional,
                 protocol: policyToAction?.protocol,
                 ports: policyToAction?.ports,
                 action: policyToAction?.action,
@@ -324,7 +324,7 @@ export const AccessControl = () => {
                 enabled: p.enabled,
                 sources: p.sources,
                 destinations: p.destinations,
-                bidirect: p.bidirect,
+                bidirectional: p.bidirectional,
                 protocol: p.protocol,
                 ports: p.ports,
                 action: p.action,
@@ -479,10 +479,10 @@ export const AccessControl = () => {
                                             return renderPopoverGroups(text, record.sources, record as PolicyDataTable)
                                         }}
                                     />
-                                    <Column title="Direction" dataIndex="bidirect"
+                                    <Column title="Direction" dataIndex="bidirectional"
                                         render={(text, record: PolicyDataTable, index) => {
                                             const s = { minWidth: 50, textAlign: "center" } as React.CSSProperties
-                                            if (record.bidirect) {
+                                            if (record.bidirectional) {
                                                 return <Tag color="processing" style={s}><img src={bidirect} /></Tag>
                                             }
                                             return <Tag color="green" style={s}><img src={outbound} /></Tag>
