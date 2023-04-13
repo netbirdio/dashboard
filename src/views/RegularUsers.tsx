@@ -235,6 +235,19 @@ export const RegularUsers = () => {
     ]
     const actionsMenu = (<Menu items={itemsMenuAction}></Menu>)
 
+    const handleEditUser = (user: UserDataTable) => {
+        dispatch(userActions.setUser({
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            auto_groups: user.auto_groups ? user.auto_groups : [],
+            name: user.name,
+            is_current: user.is_current,
+            is_service_user: user.is_service_user,
+        } as User));
+        dispatch(userActions.setEditUserPopupVisible(true));
+    }
+
     return (
         <>
             <Container style={{paddingTop: "40px"}}>
@@ -290,7 +303,7 @@ export const RegularUsers = () => {
                                             defaultSortOrder='ascend'
                                             render={(text, record, index) => {
                                                 const btn = <Button type="text"
-                                                                    onClick={() => setUserAndView(record as UserDataTable)}
+                                                                    onClick={() => handleEditUser(record as UserDataTable)}
                                                                     className="tooltip-label">
                                                     <Text
                                                         strong>{(text && text.trim() !== "") ? text : (record as User).id}</Text>
@@ -329,16 +342,16 @@ export const RegularUsers = () => {
                                     <Column title="Role" dataIndex="role"
                                             onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
                                             sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}/>
-                                    <Column title="" align="center" width="30px"
-                                            render={(text, record, index) => {
-                                                return (
-                                                    <Dropdown.Button type="text" overlay={actionsMenu}
-                                                                     trigger={["click"]}
-                                                                     onVisibleChange={visible => {
-                                                                         if (visible) setUserToAction(record as UserDataTable)
-                                                                     }}></Dropdown.Button>)
-                                            }}
-                                    />
+                                    {/*<Column title="" align="center" width="30px"*/}
+                                    {/*        render={(text, record, index) => {*/}
+                                    {/*            return (*/}
+                                    {/*                <Dropdown.Button type="text" overlay={actionsMenu}*/}
+                                    {/*                                 trigger={["click"]}*/}
+                                    {/*                                 onVisibleChange={visible => {*/}
+                                    {/*                                     if (visible) setUserToAction(record as UserDataTable)*/}
+                                    {/*                                 }}></Dropdown.Button>)*/}
+                                    {/*        }}*/}
+                                    {/*/>*/}
                                 </Table>
                             </Card>
                         </Space>

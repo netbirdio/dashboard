@@ -12,6 +12,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as userActions} from "../store/user";
 import {useGetTokenSilently} from "../utils/token";
+import {actions as personalAccessTokenActions} from "../store/personal-access-token";
 
 const {useBreakpoint} = Grid;
 
@@ -148,6 +149,10 @@ const Navbar = () => {
                 <Col flex="1 1 auto">
                     <div>
                         <Menu mode="horizontal" selectable={true} selectedKeys={[location.pathname]}
+                              onSelect={(e) => {
+                                  dispatch(userActions.setUser(null as unknown as User));
+                                  dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null))
+                              }}
                               defaultSelectedKeys={[location.pathname]} items={menuItems}/>
                     </div>
                 </Col>

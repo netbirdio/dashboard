@@ -13,6 +13,7 @@ const actions = {
       'GET_PERSONAL_ACCESS_TOKEN_SUCCESS',
       'GET_PERSONAL_ACCESS_TOKEN_FAILURE',
   )<RequestPayload<string>, PersonalAccessToken[], ApiError>(),
+  resetPersonalAccessTokens: createAction('RESET_PERSONAL_ACCESS_TOKENS')<null>(),
 
   savePersonalAccessToken: createAsyncAction(
       'SAVE_PERSONAL_ACCESS_TOKEN_REQUEST',
@@ -31,7 +32,7 @@ const actions = {
   resetDeletedPersonalAccessToken: createAction('RESET_DELETE_PERSONAL_ACCESS_TOKEN')<null>(),
 
   removePersonalAccessToken:  createAction('REMOVE_PERSONAL_ACCESS_TOKEN')<string>(),
-  setPersonalAccessToken: createAction('SET_SETUP_KEY')<PersonalAccessTokenCreate>(),
+  setPersonalAccessToken: createAction('SET_PERSONAL_ACCESS_TOKEN')<PersonalAccessTokenCreate>(),
   setNewPersonalAccessTokenVisible: createAction('SET_NEW_PERSONAL_ACCESS_TOKEN_VISIBLE')<boolean>(),
   setNewPersonalAccessTokenPopupVisible: createAction('SET_NEW_PERSONAL_ACCESS_TOKEN_POPUP_VISIBLE')<boolean>()
 };

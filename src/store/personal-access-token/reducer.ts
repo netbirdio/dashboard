@@ -50,7 +50,8 @@ const initialState: StateType = {
 
 const data = createReducer<PersonalAccessToken[], ActionTypes>(initialState.data as PersonalAccessToken[])
     .handleAction(actions.getPersonalAccessTokens.success,(_, action) => action.payload)
-    .handleAction(actions.getPersonalAccessTokens.failure, () => []);
+    .handleAction(actions.getPersonalAccessTokens.failure, () => [])
+    .handleAction(actions.resetPersonalAccessTokens, () => []);
 
 const personalAccessToken = createReducer<PersonalAccessTokenCreate, ActionTypes>(initialState.personalAccessToken as PersonalAccessTokenCreate)
     .handleAction(actions.setPersonalAccessToken, (store, action) => action.payload);

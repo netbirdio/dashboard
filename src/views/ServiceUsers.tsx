@@ -33,6 +33,8 @@ import EditUserPopup from "../components/users/EditUserPopup";
 import ViewUserPopup from "../components/users/ViewUserPopup";
 import AddServiceUserPopup from "../components/users/AddServiceUserPopup";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
+import SelectedUser from "../components/UserEdit";
+import UserEdit from "../components/UserEdit";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -49,6 +51,7 @@ export const ServiceUsers = () => {
     const dispatch = useDispatch()
 
     const groups = useSelector((state: RootState) => state.group.data)
+    const user = useSelector((state: RootState) => state.user.user)
     const users = useSelector((state: RootState) => state.user.serviceUsers);
     const failed = useSelector((state: RootState) => state.user.failed);
     const loading = useSelector((state: RootState) => state.user.loading);
@@ -269,7 +272,7 @@ export const ServiceUsers = () => {
 
     return (
         <>
-            <Container style={{paddingTop: "40px"}}>
+            {!user && <Container style={{paddingTop: "40px"}}>
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Service Users</Title>
@@ -321,7 +324,10 @@ export const ServiceUsers = () => {
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
                                             defaultSortOrder='ascend'
                                             render={(text, record, index) => {
-                                                        return <Text strong>{(text && text.trim() !== "") ? text : (record as User).name}</Text>
+                                                return <Button type="text"
+                                                        onClick={() => handleEditUser(record as UserDataTable)}>
+                                                    <Text strong>{(text && text.trim() !== "") ? text : (record as User).name}</Text>
+                                                </Button>
                                             }}/>
                                     <Column title="Status" dataIndex="status"
                                             align="center"
@@ -347,27 +353,12 @@ export const ServiceUsers = () => {
                                     <Column title="" align="center" width="250px"
                                             render={(text, record, index) => {
                                                 return (
-                                                    <Row>
-                                                        <Button style={{marginLeft: "3px", marginRight: "3px"}}
-                                                            onClick={() => {
-                                                                let userRecord = (record as UserDataTable)
-                                                                handleViewUser(userRecord)
-                                                            }}
-                                                        >View</Button>
-                                                        <Button style={{marginLeft: "3px", marginRight: "3px"}}
-                                                            onClick={() => {
-                                                                let userRecord = (record as UserDataTable)
-                                                                handleEditUser(userRecord)
-                                                            }}
-                                                        >Edit</Button>
-                                                        <Button danger={true} style={{marginLeft: "3px", marginRight: "3px"}}
+                                                        <Button danger={true} type={"text"} style={{marginLeft: "3px", marginRight: "3px"}}
                                                                 onClick={() => {
                                                                     let userRecord = (record as UserDataTable)
                                                                     handleDeleteUser(userRecord)
                                                                 }}
                                                         >Delete</Button>
-                                                    </Row>
-
                                                 )
                                             }}
                                     />
@@ -376,10 +367,8 @@ export const ServiceUsers = () => {
                         </Space>
                     </Col>
                 </Row>
-            </Container>
+            </Container>}
             <AddServiceUserPopup/>
-            <ViewUserPopup/>
-            <EditUserPopup/>
             {confirmModalContextHolder}
         </>
     )

@@ -9,6 +9,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import RegularUsers from "./RegularUsers";
 import ServiceUsers from "./ServiceUsers";
+import UserEdit from "../components/UserEdit";
 
 export const Users = () => {
     const {getTokenSilently} = useGetTokenSilently()
@@ -17,8 +18,9 @@ export const Users = () => {
     const {oidcUser} = useOidcUser();
     const [isAdmin, setIsAdmin] = useState(false);
     const users = useSelector((state: RootState) => state.user.data)
+    const user = useSelector((state: RootState) => state.user.user)
 
-    const nsTabKey = '1'
+    const [nsTabKey, setTabKey] = useState('1')
     const userItems: TabsProps['items'] = [
         {
             key: nsTabKey,
@@ -57,13 +59,13 @@ export const Users = () => {
     }, [])
 
     const onTabClick = (key:string) => {
-
+        setTabKey(key)
     }
 
     return (
         <>
             <Container style={{paddingTop: "40px"}}>
-                <Row>
+                {!user && <Row>
                     <Col span={24}>
                         <Tabs
                             defaultActiveKey={nsTabKey}
@@ -74,7 +76,8 @@ export const Users = () => {
                             // destroyInactiveTabPane={true}
                         />
                     </Col>
-                </Row>
+                </Row>}
+                {user && <UserEdit/>}
             </Container>
         </>
     )
