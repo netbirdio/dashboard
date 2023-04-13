@@ -293,7 +293,7 @@ const UserEdit = () => {
                 ]}
             />
             <Container style={{backgroundColor: "white", padding: "20px", borderRadius: "4px", boxSizing: "border-box", border: "0.5px solid #D9D9D9", marginBottom: "7px"}}>
-                <div style={{paddingRight: "25%"}}>
+                <div style={{maxWidth: "800px"}}>
                     <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>{user.name}</Paragraph>
                     <Form layout="vertical" hideRequiredMark form={form}
                           initialValues={{
@@ -364,7 +364,7 @@ const UserEdit = () => {
                 </div>
             </Container>
             <Container style={{backgroundColor: "white", padding: "20px", borderRadius: "4px", boxSizing: "border-box", border: "0.5px solid #D9D9D9"}}>
-                <div style={{paddingRight: "25%"}}>
+                <div style={{maxWidth: "800px"}}>
                     <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>Access tokens</Paragraph>
                     <Row gutter={21} style={{marginTop: "-22px", marginBottom: "10px"}}>
                         <Col span={20}>
