@@ -77,15 +77,7 @@ const AddServiceUserPopup = () => {
 
     const onCancel = () => {
         if (savedUser.loading) return
-        dispatch(userActions.setUser({
-            id: "",
-            email: "",
-            role: "",
-            status: "",
-            auto_groups: [],
-            name: "",
-            is_current: false,
-        } as User));
+        dispatch(userActions.setUser(null as unknown as User));
         form.resetFields();
         dispatch(userActions.setAddServiceUserPopupVisible(false));
     }
