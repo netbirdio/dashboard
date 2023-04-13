@@ -389,7 +389,7 @@ const UserEdit = () => {
                               >
                                   <Skeleton avatar title={false} loading={false} active style={{verticalAlign: "center"}}>
                                       <List.Item.Meta style={{paddingRight: "20px"}}
-                                                      avatar={<Badge status="success" />}
+                                                      avatar={<Badge status={item.status === "valid" ? "success" : "error"} />}
                                                       title={<text style={{fontSize: "16px", fontWeight: "500"}}>{item.name}</text>}
                                                       description={<text style={{fontSize: "13px", fontWeight: "400"}}>{"Created"  + (item.created_by_email ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</text>}
                                       />
