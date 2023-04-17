@@ -24,7 +24,6 @@ import {User} from "../store/user/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
 import {useGetTokenSilently} from "../utils/token";
-import UserUpdate from "../components/UserUpdate";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
@@ -358,7 +357,6 @@ export const RegularUsers = () => {
                     </Col>
                 </Row>
             </Container>
-            <UserUpdate/>
         </>
     )
 }

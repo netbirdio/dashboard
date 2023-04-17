@@ -5,7 +5,6 @@ import {Button, Card, Col, Form, List, message, Modal, Radio, Row, Space, Typogr
 import {useGetTokenSilently} from "../utils/token";
 import {useGetGroupTagHelpers} from "../utils/groups";
 import {Container} from "../components/Container";
-import UserUpdate from "../components/UserUpdate";
 import ExpiresInInput, {expiresInToSeconds, secondsToExpiresIn} from "./ExpiresInInput";
 import {checkExpiresIn} from "../utils/common";
 import {actions as accountActions} from "../store/account";
@@ -220,7 +219,6 @@ export const Settings = () => {
                     </Col>
                 </Row>
             </Container>
-            <UserUpdate/>
             {confirmModalContextHolder}
         </>
     )

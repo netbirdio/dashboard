@@ -8,13 +8,11 @@ import {Event} from "../store/event/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
 import {useGetTokenSilently} from "../utils/token";
-import UserUpdate from "../components/UserUpdate";
 import {useOidcUser} from "@axa-fr/react-oidc";
 import {capitalize, formatDateTime} from "../utils/common";
 import {User} from "../store/user/types";
 import {usePageSizeHelpers} from "../utils/pageSize";
 import {QuestionCircleFilled} from "@ant-design/icons";
-import {Link} from "react-router-dom";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -304,7 +302,6 @@ export const Activity = () => {
                     </Col>
                 </Row>
             </Container>
-            <UserUpdate/>
         </>
     )
 }

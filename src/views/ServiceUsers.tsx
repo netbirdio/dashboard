@@ -10,7 +10,6 @@ import {
     Col,
     Input,
     message, Modal,
-    Popover,
     Row,
     Select,
     Space,
@@ -23,8 +22,6 @@ import {filter} from "lodash";
 import tableSpin from "../components/Spin";
 import {useGetTokenSilently} from "../utils/token";
 import {actions as groupActions} from "../store/group";
-import {Group} from "../store/group/types";
-import {TooltipPlacement} from "antd/es/tooltip";
 import {isLocalDev, isNetBirdHosted} from "../utils/common";
 import {usePageSizeHelpers} from "../utils/pageSize";
 import AddServiceUserPopup from "../components/AddServiceUserPopup";
@@ -57,19 +54,6 @@ export const ServiceUsers = () => {
     const [confirmModal, confirmModalContextHolder] = Modal.useModal();
     const [textToSearch, setTextToSearch] = useState('');
     const [dataTable, setDataTable] = useState([] as UserDataTable[]);
-
-    // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
-    const setUserAndView = (user: User) => {
-        dispatch(userActions.setEditUserPopupVisible(true));
-        dispatch(userActions.setUser({
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            auto_groups: user.auto_groups ? user.auto_groups : [],
-            name: user.name,
-            is_current: user.is_current
-        } as User));
-    }
 
     const transformDataTable = (d: User[]): UserDataTable[] => {
         return d.map(p => ({key: p.id, ...p} as UserDataTable))
@@ -108,56 +92,6 @@ export const ServiceUsers = () => {
     const onClickCreateServiceUser = () => {
         dispatch(userActions.setUser(null as unknown as User));
         dispatch(userActions.setAddServiceUserPopupVisible(true));
-    }
-
-    const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, userToAction: UserDataTable) => {
-
-        let groupsMap = new Map<string, Group>();
-        groups.forEach(g => {
-            groupsMap.set(g.id!, g)
-        })
-
-        let displayGroups: Group[] = []
-        if (rowGroups) {
-            displayGroups = rowGroups.filter(g => groupsMap.get(g)).map(g => groupsMap.get(g)!)
-        }
-
-        let btn = <Button type="link" onClick={() => setUserAndView(userToAction)}>{displayGroups.length}</Button>
-        if (!displayGroups || displayGroups!.length < 1) {
-            return btn
-        }
-
-        const content = displayGroups?.map((g, i) => {
-            const _g = g as Group
-            const peersCount = ` - ${_g.peers_count || 0} ${(!_g.peers_count || parseInt(_g.peers_count) !== 1) ? 'peers' : 'peer'} `
-            return (
-                <div key={i}>
-                    <Tag
-                        color="blue"
-                        style={{marginRight: 3}}
-                    >
-                        <strong>{_g.name}</strong>
-                    </Tag>
-                    <span style={{fontSize: ".85em"}}>{peersCount}</span>
-                </div>
-            )
-        })
-        const mainContent = (<Space direction="vertical">{content}</Space>)
-        let popoverPlacement = "top"
-        if (content && content.length > 5) {
-            popoverPlacement = "rightTop"
-        }
-
-        return (
-            <Popover placement={popoverPlacement as TooltipPlacement}
-                     key={userToAction.id}
-                     onOpenChange={onPopoverVisibleChange}
-                     open={groupPopupVisible}
-                     content={mainContent}
-                     title={null}>
-                {btn}
-            </Popover>
-        )
     }
 
     useEffect(() => {
