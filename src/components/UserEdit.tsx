@@ -409,7 +409,7 @@ const UserEdit = () => {
                         {(personalAccessTokens === null || personalAccessTokens.length === 0) && <Space direction="vertical" size="small" align="center"
                                                                      style={{display: 'flex', padding: '45px 15px', marginTop: "-40px", justifyContent: 'center'}}>
                             <Paragraph
-                                style={{textAlign: "center", whiteSpace: "pre-line"}}>
+                                style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "16px"}}>
                                 You don’t have any access tokens yet.{"\n"}
                                 Generate the first one using the button “Create token”
                             </Paragraph>
