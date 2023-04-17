@@ -192,11 +192,10 @@ export const ServiceUsers = () => {
 
     return (
         <>
-            {!user && <Container style={{paddingTop: "40px"}}>
+            {!user && <Container style={{padding: "0px"}}>
                 <Row>
                     <Col span={24}>
-                        <Title level={4}>Service Users</Title>
-                        <Paragraph>A list of all service users{(window.location.hostname == "app.netbird.io") ? ". RegularUsers with an email from the same private organization domain will automatically join when they sign in for the first time." : ""}</Paragraph>
+                        <Paragraph>Manage service accounts and their permissions.</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>

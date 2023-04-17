@@ -48,7 +48,7 @@ const Navbar = () => {
     const userEmailKey = 'user-email'
     const userLogoutKey = 'user-logout'
     const userDividerKey = 'user-divider'
-    const adminOnlyTabs = ["/setup-keys", "/acls", "/routes", "/dns", "/activity"]
+    const adminOnlyTabs = ["/setup-keys", "/acls", "/routes", "/dns", "/activity", "/settings"]
     const [menuItems, setMenuItems] = useState(items)
     const logoutWithRedirect = () =>
         logout("/", {client_id: config.clientId});
