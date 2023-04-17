@@ -3,7 +3,7 @@ import {
     Breadcrumb,
     Button,
     Col,
-    Divider, Empty,
+    Divider,
     Form,
     Input,
     List, Modal,
@@ -25,7 +25,7 @@ import {actions as groupActions} from "../store/group";
 import {actions as personalAccessTokenActions} from "../store/personal-access-token";
 import {PersonalAccessToken, PersonalAccessTokenCreate, SpecificPAT} from "../store/personal-access-token/types";
 import tableSpin from "./Spin";
-import AddPATPopup from "./personalaccesstokens/AddPATPopup";
+import AddPATPopup from "./AddPATPopup";
 import {fullDate} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import {Container} from "./Container";

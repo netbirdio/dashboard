@@ -8,9 +8,7 @@ import {
     Button,
     Card,
     Col,
-    Dropdown,
     Input,
-    Menu,
     message, Modal,
     Popover,
     Row,
@@ -29,12 +27,8 @@ import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {isLocalDev, isNetBirdHosted} from "../utils/common";
 import {usePageSizeHelpers} from "../utils/pageSize";
-import EditUserPopup from "../components/users/EditUserPopup";
-import ViewUserPopup from "../components/users/ViewUserPopup";
-import AddServiceUserPopup from "../components/users/AddServiceUserPopup";
+import AddServiceUserPopup from "../components/AddServiceUserPopup";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
-import SelectedUser from "../components/UserEdit";
-import UserEdit from "../components/UserEdit";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;

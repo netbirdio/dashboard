@@ -1,41 +1,30 @@
 import {
-    Alert,
     Button,
-    Card,
     Col,
-    Divider, Dropdown,
+    Divider,
     Form,
     Input,
-    InputNumber,
     Modal,
-    Radio,
     Row,
     Select,
     Space,
-    Table, Tag,
+    Tag,
     Typography
 } from "antd";
-import {Container} from "../Container";
-import {CheckOutlined, CloseOutlined, CopyOutlined, EditOutlined, QuestionCircleFilled} from "@ant-design/icons";
-import SyntaxHighlighter from "react-syntax-highlighter";
+import {Container} from "./Container";
+import {CloseOutlined} from "@ant-design/icons";
 import React, {useEffect, useRef, useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
-import {actions as personalAccessTokenActions} from "../../store/personal-access-token";
-import {PersonalAccessToken, PersonalAccessTokenCreate} from "../../store/personal-access-token/types";
-import {useGetTokenSilently} from "../../utils/token";
-import {actions as userActions} from "../../store/user";
-import {actions as groupActions} from "../../store/group";
-import {FormUser, User, UserToSave} from "../../store/user/types";
+import {useGetTokenSilently} from "../utils/token";
+import {actions as userActions} from "../store/user";
+import {actions as groupActions} from "../store/group";
+import {User, UserToSave} from "../store/user/types";
 import {Header} from "antd/es/layout/layout";
-import tableSpin from "../Spin";
-import Column from "antd/lib/table/Column";
-import {isNil} from "lodash";
-import {timeAgo} from "../../utils/common";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
-const {Title, Text, Paragraph} = Typography;
 
+const {Title, Text, Paragraph} = Typography;
 const {Option} = Select;
 
 const AddServiceUserPopup = () => {

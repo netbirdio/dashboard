@@ -1,14 +1,14 @@
-import {useGetTokenSilently} from "../../utils/token";
+import {useGetTokenSilently} from "../utils/token";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {Button, Col, Divider, Form, Input, InputNumber, message, Modal, Row, Space, Typography} from "antd";
-import {Container} from "../Container";
+import {Container} from "./Container";
 import {CheckOutlined, CopyOutlined, QuestionCircleFilled} from "@ant-design/icons";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import React, {useEffect, useRef, useState} from "react";
-import {actions as personalAccessTokenActions} from "../../store/personal-access-token";
-import {PersonalAccessTokenCreate} from "../../store/personal-access-token/types";
-import {copyToClipboard} from "../../utils/common";
+import {actions as personalAccessTokenActions} from "../store/personal-access-token";
+import {PersonalAccessTokenCreate} from "../store/personal-access-token/types";
+import {copyToClipboard} from "../utils/common";
 
 const {Title, Text, Paragraph} = Typography;
 
