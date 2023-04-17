@@ -19,11 +19,11 @@ export const Users = () => {
     const [isAdmin, setIsAdmin] = useState(false);
     const users = useSelector((state: RootState) => state.user.data)
     const user = useSelector((state: RootState) => state.user.user)
+    const tab = useSelector((state: RootState) => state.user.userTabOpen)
 
-    const [nsTabKey, setTabKey] = useState('1')
     const userItems: TabsProps['items'] = [
         {
-            key: nsTabKey,
+            key: 'Users',
             label: 'Users',
             children: <RegularUsers/>,
         },
@@ -31,7 +31,7 @@ export const Users = () => {
 
     const adminOnlyItems: TabsProps['items'] = [
         {
-            key: '2',
+            key: 'Service Users',
             label: 'Service Users',
             children: <ServiceUsers/>,
         },
@@ -59,7 +59,7 @@ export const Users = () => {
     }, [])
 
     const onTabClick = (key:string) => {
-        setTabKey(key)
+        dispatch(userActions.setUserTabOpen(key))
     }
 
     return (
@@ -68,7 +68,7 @@ export const Users = () => {
                 {!user && <Row>
                     <Col span={24}>
                         <Tabs
-                            defaultActiveKey={nsTabKey}
+                            defaultActiveKey={tab}
                             items={tabItems}
                             onTabClick={onTabClick}
                             animated={{ inkBar: true, tabPane: false }}

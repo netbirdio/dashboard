@@ -39,6 +39,8 @@ const actions = {
   setEditUserPopupVisible: createAction('SET_EDIT_USER_VISIBLE')<boolean>(),
   // used to make the AddServiceUserPopup visible in the UI.
   setAddServiceUserPopupVisible: createAction('SET_ADD_SERVICE_USER_VISIBLE')<boolean>(),
+  // used to remember what tab was open on users page
+  setUserTabOpen: createAction('SET_USER_TAB_OPEN')<string>(),
 
   saveUser: createAsyncAction(
       'SAVE_USER_REQUEST',

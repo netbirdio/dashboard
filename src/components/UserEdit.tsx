@@ -48,6 +48,7 @@ const UserEdit = () => {
     const user = useSelector((state: RootState) => state.user.user)
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
     const personalAccessTokens = useSelector((state: RootState) => state.personalAccessToken.data);
+    const tab = useSelector((state: RootState) => state.user.userTabOpen)
 
     const loading = useSelector((state: RootState) => state.user.loading);
 
@@ -124,10 +125,11 @@ const UserEdit = () => {
         dispatch(personalAccessTokenActions.setNewPersonalAccessTokenPopupVisible(true));
     }
 
-    const onBreadcrumbUsersClick = () => {
+    const onBreadcrumbUsersClick = (key: string) => {
         if (savedUser.loading) return
         dispatch(userActions.setUser(null as unknown as User));
         dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null))
+        dispatch(userActions.setUserTabOpen(key))
     }
 
     const selectValidator = (_: RuleObject, value: string[]) => {
@@ -282,16 +284,37 @@ const UserEdit = () => {
         }
     }, [form, user, currentGroups])
 
+    const menuItems = [
+        {
+            key: '1',
+            label: (
+                <text onClick={() => onBreadcrumbUsersClick("Users")}>
+                    Users
+                </text>
+            ),
+        },
+        {
+            key: '2',
+            label: (
+                <text onClick={() => onBreadcrumbUsersClick("Service Users")}>
+                    Service Users
+                </text>
+            ),
+        },
+    ];
+
+
     return (
         <>
             <div>
                 <Breadcrumb style={{marginBottom: "30px"}}
                             items={[
                                 {
-                                    title: 'Home',
+                                    title: 'All Users',
                                 },
                                 {
-                                    title: <text onClick={onBreadcrumbUsersClick}>Users</text>,
+                                    title: <text onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</text>,
+                                    menu: { items: menuItems },
                                 },
                                 {
                                     title: user.name,

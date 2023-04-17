@@ -63,6 +63,7 @@ const Navbar = () => {
             is_current: currentUser.is_current,
             is_service_user: currentUser.is_service_user,
         } as User));
+        dispatch(userActions.setUserTabOpen("Users"));
         dispatch(userActions.setEditUserPopupVisible(true));
     }
 

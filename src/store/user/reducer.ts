@@ -17,6 +17,7 @@ type StateType = Readonly<{
   viewUserPopupVisible: boolean
   editUserPopupVisible: boolean
   addServiceUserPopupVisible: boolean
+  usersTabOpen: string
 }>;
 
 const initialState: StateType = {
@@ -38,6 +39,7 @@ const initialState: StateType = {
   viewUserPopupVisible: false,
   editUserPopupVisible: false,
   addServiceUserPopupVisible: false,
+  usersTabOpen: 'Users',
   savedUser: <CreateResponse<User | null>>{
     loading: false,
     success: false,
@@ -91,6 +93,9 @@ const editUserPopupVisible = createReducer<boolean, ActionTypes>(initialState.ed
 const addServiceUserPopupVisible = createReducer<boolean, ActionTypes>(initialState.addServiceUserPopupVisible)
     .handleAction(actions.setAddServiceUserPopupVisible, (store, action) => action.payload);
 
+const userTabOpen = createReducer<string, ActionTypes>(initialState.usersTabOpen)
+    .handleAction(actions.setUserTabOpen, (store, action) => action.payload);
+
 const savedUser = createReducer<CreateResponse<User | null>, ActionTypes>(initialState.savedUser)
     .handleAction(actions.saveUser.request, () => initialState.savedUser)
     .handleAction(actions.saveUser.success, (store, action) => action.payload)
@@ -110,5 +115,6 @@ export default combineReducers({
   updateUserDrawerVisible,
   viewUserPopupVisible,
   editUserPopupVisible,
-  addServiceUserPopupVisible
+  addServiceUserPopupVisible,
+  userTabOpen
 });
