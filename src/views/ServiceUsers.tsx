@@ -334,11 +334,6 @@ export const ServiceUsers = () => {
                                                 return <Tag color="red">{text}</Tag>
                                             }}
                                     />
-                                    <Column title="Groups" dataIndex="groupsCount" align="center"
-                                            render={(text, record: UserDataTable, index) => {
-                                                return renderPopoverGroups(text, record.auto_groups, record)
-                                            }}
-                                    />
                                     <Column title="Role" dataIndex="role"
                                             onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
                                             sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}/>

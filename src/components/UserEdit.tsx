@@ -3,7 +3,7 @@ import {
     Breadcrumb,
     Button,
     Col,
-    Divider,
+    Divider, Empty,
     Form,
     Input,
     List, Modal,
@@ -11,7 +11,7 @@ import {
     Select,
     Skeleton,
     Space,
-    Tag
+    Tag, Typography
 } from "antd";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
@@ -22,7 +22,6 @@ import React, {useEffect, useState} from "react";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {actions as groupActions} from "../store/group";
-import Paragraph from "antd/lib/typography/Paragraph";
 import {actions as personalAccessTokenActions} from "../store/personal-access-token";
 import {PersonalAccessToken, PersonalAccessTokenCreate, SpecificPAT} from "../store/personal-access-token/types";
 import tableSpin from "./Spin";
@@ -32,6 +31,7 @@ import {ExclamationCircleOutlined} from "@ant-design/icons";
 import {Container} from "./Container";
 
 const {Option} = Select;
+const {Title, Paragraph, Text} = Typography;
 
 interface TokenDataTable extends PersonalAccessToken {
     key: string
@@ -210,7 +210,7 @@ const UserEdit = () => {
             key: p.id,
             status: Date.parse(p.expiration_date) > Date.now() ? "valid" : "expired",
             created_by_email: getEmail(p),
-            ...p} as TokenDataTable))
+            ...p} as TokenDataTable)).sort((a, b) => -1 * ((a as TokenDataTable).created_at.localeCompare((b as TokenDataTable).created_at)))
     }
 
     const getEmail = (token: PersonalAccessToken): string => {
@@ -279,134 +279,144 @@ const UserEdit = () => {
 
     return (
         <>
-            <Breadcrumb style={{marginBottom: "30px"}}
-                items={[
-                    {
-                        title: 'Home',
-                    },
-                    {
-                        title: <text onClick={onBreadcrumbUsersClick}>Users</text>,
-                    },
-                    {
-                        title: user.name,
-                    },
-                ]}
-            />
-            <Container style={{backgroundColor: "white", padding: "20px", borderRadius: "4px", boxSizing: "border-box", border: "0.5px solid #D9D9D9", marginBottom: "7px"}}>
-                <div style={{maxWidth: "800px"}}>
-                    <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>{user.name}</Paragraph>
-                    <Form layout="vertical" hideRequiredMark form={form}
-                          initialValues={{
-                              name: formUser.name,
-                              role: formUser.role,
-                              email: formUser.email,
-                              autoGroupsNames: formUser.autoGroupsNames,
-                          }}
-                    >
-                        <Row gutter={32} style={{ paddingBottom: "15px"}}>
-                            <Col span={10}>
-                                <Form.Item
-                                    name="email"
-                                    label={<text style={{fontSize: "16px", fontWeight: "500"}}>Email</text>}
-                                    style={{marginRight: "70px"}}
-                                >
-                                    <Input
-                                        disabled={user.id}
-                                        value={formUser.email}
-                                        style={{color: "#5a5c5a"}}
-                                        autoComplete="off"/>
-                                </Form.Item>
-                            </Col>
-                            <Col span={6}>
-                                <Form.Item
-                                    name="role"
-                                    label={<text style={{fontSize: "16px", fontWeight: "500"}}>Role</text>}
-                                    style={{marginRight: "50px"}}
-                                >
-                                    <Select style={{width: '100%'}}
-                                            disabled={user.is_current}>
-                                        <Option value="admin">admin</Option>
-                                        <Option value="user">user</Option>
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                        <Row style={{ paddingBottom: "15px"}}>
-                            <Col span={12}>
-                                <Form.Item
-                                    name="autoGroupsNames"
-                                    label={<text style={{fontSize: "16px", fontWeight: "500"}}>Auto-assigned groups</text>}
-                                    style={{marginRight: "50px"}}
-                                    tooltip="Every peer enrolled with this user will be automatically added to these groups"
-                                    rules={[{validator: selectValidator}]}
-                                >
-                                    <Select mode="tags"
-                                            style={{width: '100%'}}
-                                            placeholder="Associate groups with the user"
-                                            tagRender={tagRender}
-                                            dropdownRender={dropDownRender}
+            <div>
+                <Breadcrumb style={{marginBottom: "30px"}}
+                            items={[
+                                {
+                                    title: 'Home',
+                                },
+                                {
+                                    title: <text onClick={onBreadcrumbUsersClick}>Users</text>,
+                                },
+                                {
+                                    title: user.name,
+                                },
+                            ]}
+                />
+                <Container style={{backgroundColor: "white", padding: "20px", borderRadius: "4px", boxSizing: "border-box", border: "0.5px solid #D9D9D9", marginBottom: "7px"}}>
+                    <div style={{maxWidth: "800px"}}>
+                        <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>{user.name}</Paragraph>
+                        <Form layout="vertical" hideRequiredMark form={form}
+                              initialValues={{
+                                  name: formUser.name,
+                                  role: formUser.role,
+                                  email: formUser.email,
+                                  autoGroupsNames: formUser.autoGroupsNames,
+                              }}
+                        >
+                            <Row style={{ paddingBottom: "15px"}}>
+                                {!user.is_service_user && <Col span={11}>
+                                    <Form.Item
+                                        name="email"
+                                        label={<text style={{fontSize: "16px", fontWeight: "500"}}>Email</text>}
+                                        style={{marginRight: "70px"}}
                                     >
-                                        {
-                                            tagGroups.map(m =>
-                                                <Option key={m}>{optionRender(m)}</Option>
-                                            )
-                                        }
-                                    </Select>
-                                </Form.Item>
+                                        <Input
+                                            disabled={user.id}
+                                            value={formUser.email}
+                                            style={{color: "#5a5c5a"}}
+                                            autoComplete="off"/>
+                                    </Form.Item>
+                                </Col>}
+                                <Col span={5}>
+                                    <Form.Item
+                                        name="role"
+                                        label={<text style={{fontSize: "16px", fontWeight: "500"}}>Role</text>}
+                                        style={{marginRight: "50px"}}
+                                    >
+                                        <Select style={{width: '100%'}}
+                                                disabled={user.is_current}>
+                                            <Option value="admin">admin</Option>
+                                            <Option value="user">user</Option>
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                            {!user.is_service_user &&  <Row style={{ paddingBottom: "15px"}}>
+                                <Col span={9}>
+                                    <Form.Item
+                                        name="autoGroupsNames"
+                                        label={<text style={{fontSize: "16px", fontWeight: "500"}}>Auto-assigned groups</text>}
+                                        tooltip="Every peer enrolled with this user will be automatically added to these groups"
+                                        rules={[{validator: selectValidator}]}
+                                    >
+                                        <Select mode="tags"
+                                                style={{width: '100%'}}
+                                                placeholder="Associate groups with the user"
+                                                tagRender={tagRender}
+                                                dropdownRender={dropDownRender}
+                                        >
+                                            {
+                                                tagGroups.map(m =>
+                                                    <Option key={m}>{optionRender(m)}</Option>
+                                                )
+                                            }
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
+                            </Row>}
+                            <Space style={{display: 'flex', justifyContent: 'start'}}>
+                                <Button disabled={loading} onClick={onCancel}>Cancel</Button>
+                                <Button type="primary"
+                                        onClick={handleFormSubmit}>Save</Button>
+                            </Space>
+                        </Form>
+                    </div>
+                </Container>
+                {user && (user.is_current || user.is_service_user) && <Container style={{backgroundColor: "white", padding: "20px", borderRadius: "4px", boxSizing: "border-box", border: "0.5px solid #D9D9D9"}}>
+                    <div style={{maxWidth: "800px"}}>
+                        <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>Access tokens</Paragraph>
+                        <Row gutter={21} style={{marginTop: "-22px", marginBottom: "10px"}}>
+                            <Col span={20}>
+                                <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "16px"}}>Access token give access to the Netbird API</Paragraph>
+                            </Col>
+                            <Col span={1} style={{marginTop: "-8px"}}>
+                                <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>
                             </Col>
                         </Row>
-                        <Space style={{display: 'flex', justifyContent: 'start'}}>
-                            <Button disabled={loading} onClick={onCancel}>Cancel</Button>
-                            <Button type="primary"
-                                    onClick={handleFormSubmit}>Save</Button>
-                        </Space>
-                    </Form>
-                </div>
-            </Container>
-            <Container style={{backgroundColor: "white", padding: "20px", borderRadius: "4px", boxSizing: "border-box", border: "0.5px solid #D9D9D9"}}>
-                <div style={{maxWidth: "800px"}}>
-                    <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>Access tokens</Paragraph>
-                    <Row gutter={21} style={{marginTop: "-22px", marginBottom: "10px"}}>
-                        <Col span={20}>
-                            <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "16px"}}>Access token give access to the Netbird API</Paragraph>
-                        </Col>
-                        <Col span={1}>
-                            <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>
-                        </Col>
-                    </Row>
-                    <List bordered={false}
-                          dataSource={tokenTable}
-                          loading={tableSpin(loading)}
-                          itemLayout="horizontal"
-                          renderItem={(item) => (
-                              <List.Item
-                                  actions={[<Button danger={true} type={"text"}
-                                                    onClick={() => {
-                                                        showConfirmDelete(item)
-                                                    }}
-                                  >Delete</Button>]}
-                                  style={{backgroundColor: "white"}}
-                              >
-                                  <Skeleton avatar title={false} loading={false} active style={{verticalAlign: "center"}}>
-                                      <List.Item.Meta style={{paddingRight: "20px"}}
-                                                      avatar={<Badge status={item.status === "valid" ? "success" : "error"} />}
-                                                      title={<text style={{fontSize: "16px", fontWeight: "500"}}>{item.name}</text>}
-                                                      description={<text style={{fontSize: "13px", fontWeight: "400"}}>{"Created"  + (item.created_by_email ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</text>}
-                                      />
-                                      <Col span={4}>
-                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Expires on</Paragraph>
-                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{fullDate(item.expiration_date)}</Paragraph>
-                                      </Col>
-                                      <Col span={4}>
-                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Last used</Paragraph>
-                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{item.last_used ? fullDate(item.last_used) : "Never"}</Paragraph>
-                                      </Col>
-                                  </Skeleton>
-                              </List.Item>
-                          )}>
-                    </List>
-                </div>
-            </Container>
+                        {personalAccessTokens && personalAccessTokens.length > 0 && <List bordered={false}
+                              dataSource={tokenTable}
+                              loading={tableSpin(loading)}
+                              itemLayout="horizontal"
+                              renderItem={(item) => (
+                                  <List.Item
+                                      actions={[<Button danger={true} type={"text"}
+                                                        onClick={() => {
+                                                            showConfirmDelete(item)
+                                                        }}
+                                      >Delete</Button>]}
+                                      style={{backgroundColor: "white"}}
+                                  >
+                                      <Skeleton avatar title={false} loading={false} active style={{verticalAlign: "center"}}>
+                                          <List.Item.Meta style={{paddingRight: "20px"}}
+                                                          avatar={<Badge status={item.status === "valid" ? "success" : "error"} />}
+                                                          title={<text style={{fontSize: "16px", fontWeight: "500"}}>{item.name}</text>}
+                                                          description={<text style={{fontSize: "13px", fontWeight: "400"}}>{"Created"  + (item.created_by_email ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</text>}
+                                          />
+                                          <Col span={4}>
+                                              <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Expires on</Paragraph>
+                                              <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{fullDate(item.expiration_date)}</Paragraph>
+                                          </Col>
+                                          <Col span={4}>
+                                              <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Last used</Paragraph>
+                                              <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{item.last_used ? fullDate(item.last_used) : "Never"}</Paragraph>
+                                          </Col>
+                                      </Skeleton>
+                                  </List.Item>
+                              )}>
+                        </List>}
+                        <Divider style={{marginTop: "-15px"}}></Divider>
+                        {(personalAccessTokens === null || personalAccessTokens.length === 0) && <Space direction="vertical" size="small" align="center"
+                                                                     style={{display: 'flex', padding: '45px 15px', marginTop: "-40px", justifyContent: 'center'}}>
+                            <Paragraph
+                                style={{textAlign: "center", whiteSpace: "pre-line"}}>
+                                You don’t have any access tokens yet.{"\n"}
+                                Generate the first one using the button “Create token”
+                            </Paragraph>
+                        </Space>}
+                    </div>
+                </Container>}
+            </div>
             <AddPATPopup/>
             {confirmModalContextHolder}
         </>
