@@ -53,6 +53,19 @@ const Navbar = () => {
     const logoutWithRedirect = () =>
         logout("/", {client_id: config.clientId});
 
+    const openPersonalUserPage = () => {
+        dispatch(userActions.setUser({
+            id: currentUser.id,
+            email: currentUser.email,
+            role: currentUser.role,
+            auto_groups: currentUser.auto_groups ? currentUser.auto_groups : [],
+            name: currentUser.name,
+            is_current: currentUser.is_current,
+            is_service_user: currentUser.is_service_user,
+        } as User));
+        dispatch(userActions.setEditUserPopupVisible(true));
+    }
+
     useEffect(() => {
         const fs = items.filter(m => showTab(m?.key?.toString(), currentUser) && m?.key !== userEmailKey && m?.key !== userLogoutKey && m?.key !== userDividerKey)
         if (screens.xs === true) {
@@ -115,7 +128,7 @@ const Navbar = () => {
         <Menu
             items={[
                 {
-                    label: <>{user?.email}</>,
+                    label: (<Link to="/users" onClick={openPersonalUserPage}>{user?.email}</Link>),
                     key: '0',
                 },
                 {
