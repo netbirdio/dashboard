@@ -252,7 +252,7 @@ export const RegularUsers = () => {
             <Container style={{padding: "0px"}}>
                 <Row>
                     <Col span={24}>
-                        <Paragraph>Manage the users and their permissions.{(window.location.hostname == "app.netbird.io") ? "Same-domain email users are added automatically on first sign-in." : ""}</Paragraph>
+                        <Paragraph>Manage users and their permissions.{(window.location.hostname == "app.netbird.io") ? "Same-domain email users are added automatically on first sign-in." : ""}</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>

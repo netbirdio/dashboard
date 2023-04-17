@@ -195,7 +195,7 @@ export const ServiceUsers = () => {
             {!user && <Container style={{padding: "0px"}}>
                 <Row>
                     <Col span={24}>
-                        <Paragraph>Manage service accounts and their permissions.</Paragraph>
+                        <Paragraph>Manage service users and their permissions.</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>

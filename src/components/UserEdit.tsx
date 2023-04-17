@@ -262,9 +262,14 @@ const UserEdit = () => {
             getAccessTokenSilently: getTokenSilently,
             payload: null
         }))
-        dispatch(personalAccessTokenActions.getPersonalAccessTokens.request({getAccessTokenSilently: getTokenSilently,
-            payload: user.id}))
     }, [])
+
+    useEffect(() => {
+        if (user.is_current || user.is_service_user) {
+            dispatch(personalAccessTokenActions.getPersonalAccessTokens.request({getAccessTokenSilently: getTokenSilently,
+                payload: user.id}))
+        }
+    }, [user])
 
     useEffect(() => {
         if (user && currentGroups) {
@@ -391,7 +396,7 @@ const UserEdit = () => {
                                           <List.Item.Meta style={{paddingRight: "20px"}}
                                                           avatar={<Badge status={item.status === "valid" ? "success" : "error"} />}
                                                           title={<text style={{fontSize: "16px", fontWeight: "500"}}>{item.name}</text>}
-                                                          description={<text style={{fontSize: "13px", fontWeight: "400"}}>{"Created"  + (item.created_by_email ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</text>}
+                                                          description={<text style={{fontSize: "13px", fontWeight: "400"}}>{"Created"  + (item.created_by_email && user.is_service_user ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</text>}
                                           />
                                           <Col span={4}>
                                               <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Expires on</Paragraph>
