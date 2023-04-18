@@ -314,7 +314,7 @@ const UserEdit = () => {
                                 },
                                 {
                                     title: <text onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</text>,
-                                    menu: { items: menuItems },
+                                    // menu: { items: menuItems },
                                 },
                                 {
                                     title: user.name,
@@ -396,7 +396,7 @@ const UserEdit = () => {
                         <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>Access tokens</Paragraph>
                         <Row gutter={21} style={{marginTop: "-22px", marginBottom: "10px"}}>
                             <Col span={20}>
-                                <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "16px"}}>Access token give access to the Netbird API</Paragraph>
+                                <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "16px"}}>Access tokens give access to the Netbird API</Paragraph>
                             </Col>
                             <Col span={1} style={{marginTop: "-8px"}}>
                                 <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>
