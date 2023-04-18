@@ -105,43 +105,49 @@ const AddPATPopup = () => {
                 onCancel={onCancel}
                 footer={
                     <Space style={{display: 'flex', justifyContent: 'end'}}>
-                        <Button disabled={savedPersonalAccessToken.loading} onClick={onCancel}>{showPlainToken ? "Close" : "Cancel"}</Button>
-                        <Button type="primary" disabled={showPlainToken}
-                                onClick={handleFormSubmit}>{"Create"}</Button>
+                        {!showPlainToken && <Button disabled={savedPersonalAccessToken.loading} onClick={onCancel}>{"Cancel"}</Button>}
+                        {!showPlainToken && <Button type="primary" disabled={showPlainToken}
+                                onClick={handleFormSubmit}>{"Create token"}</Button>}
+                        {showPlainToken && <Button type="primary" disabled={!showPlainToken} onClick={onCancel}>Done</Button>}
                     </Space>
                 }
-                width={780}
+                width={460}
             >
-                <Container style={{textAlign: "center"}}>
+                <Container style={{textAlign: "start"}}>
                     <Paragraph
-                        style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "2em"}}>
-                        {showPlainToken ? "Token created successfully!" : "Create new Personal Access Token"}
+                        style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "18px", fontWeight: "500"}}>
+                        {showPlainToken ? "Token created successfully!" : "Create a Personal Access Token"}
                     </Paragraph>
-                    <Paragraph type={"secondary"}
+                    {!showPlainToken && <Paragraph type={"secondary"}
                                style={{
-                                   textAlign: "center",
+                                   textAlign: "start",
+                                   fontSize: "14px",
                                    whiteSpace: "pre-line",
                                    marginTop: "-15px",
                                    paddingBottom: "25px",
                                }}>
-                        {showPlainToken ? "You will only see this token once," + "\n" + "so copy it and store it in a secure location." : "This token can be used to authenticate against NetBird's Public API."}
-                    </Paragraph>
+                        {"This token can be used to authenticate against" + "\n" + "NetBird's Public API."}
+                    </Paragraph>}
+                    {showPlainToken && <Paragraph type={"secondary"} style={{
+                        textAlign: "start",
+                        fontSize: "14px",
+                        whiteSpace: "pre-line",
+                        marginTop: "40px",
+                    }}>{"This token will not be shown again, so be sure to copy it and" + "\n" + "store in a secure location."}</Paragraph>}
                     {!showPlainToken && <Form layout="vertical" hideRequiredMark form={form}
                                               initialValues={{
                                                   expires_in: ExpiresInDefault,
                                               }}
-                                              style={{paddingLeft: "80px", paddingRight: "80px"}}
                     >
                         <Row gutter={16}>
                             <Col span={24}>
-                                <Divider style={{marginTop: "0px"}}></Divider>
                                 <Row align="top">
                                     <Col flex="auto">
+                                        <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "-8px"}}>Token name</Paragraph>
+                                        <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Create a name to identify the token easily</Paragraph>
                                         <Form.Item
                                             name="name"
-                                            label={
-                                                <Text style={{color: "gray"}}><b style={{color: "black"}}>Name</b> (Set a name to identify the token.)</Text>
-                                            }
+                                            style={{marginTop: "-10px"}}
                                             rules={[{
                                                 required: true,
                                                 message: 'Please add a name for this personal access token',
@@ -149,55 +155,46 @@ const AddPATPopup = () => {
                                             }]}
                                         >
                                             <Input
-                                                placeholder={""}
+                                                placeholder={"for example \"Berlin office\""}
                                                 ref={inputNameRef}
                                                 autoComplete="off"/>
                                         </Form.Item>
                                     </Col>
                                 </Row>
-                                <Divider style={{marginTop: "0px"}}></Divider>
                             </Col>
                             <Col span={24} style={{textAlign: "left"}}>
+                                <Paragraph style={{fontSize: "16px", fontWeight: "500"}}>Expires in</Paragraph>
+                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Number of days this token ins valid for</Paragraph>
                                 <Form.Item
                                     name="expires_in"
-                                    label={
-                                        <Text style={{color: "gray"}}><b style={{color: "black"}}>Expires</b> (Set the amount of days the token should be valid.)</Text>
-                                    }
+                                    style={{marginTop: "-10px"}}
                                     rules={[{
                                         type: 'number',
                                         min: 1,
-                                        max: 356,
+                                        max: 365,
                                         message: 'The expiration should be set between 1 and 365 days'
                                     }]}>
-                                    <InputNumber/>
+                                    <InputNumber addonAfter=" Days" style={{maxWidth: "150px"}}/>
                                 </Form.Item>
+                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Should be between 1 and 365 days</Paragraph>
                             </Col>
                             <Col span={24}>
-                                <Divider style={{marginTop: "0px"}}></Divider>
-                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true}
+                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true} style={{marginTop: "20px", marginBottom: "20px"}}
                                         href="https://netbird.io/docs/overview/personal-access-tokens">Learn more about personal access tokens</Button>
                             </Col>
                         </Row>
                     </Form>}
-                    {showPlainToken && <Space className="nb-code" direction="vertical" size="middle">
-                        <Row>
-                            <>
-                                <Space className="nb-code" direction="vertical" size="small" style={{display: "flex", fontSize: ".85em"}}>
-                                    <SyntaxHighlighter language="bash">
-                                        {plainToken}
-                                    </SyntaxHighlighter>
-                                </Space>
-                                { !tokenCopied ? (
-                                    <Button type="text" size="middle" className="btn-copy-code" icon={<CopyOutlined/>}
-                                            style={{color: "rgb(107, 114, 128)", marginTop: "-1px"}}
-                                            onClick={() => onCopyClick(plainToken, true)}/>
-                                ): (
-                                    <Button type="text" size="middle"  className="btn-copy-code" icon={<CheckOutlined/>}
-                                            style={{color: "green", marginTop: "-1px"}}/>
-                                )}
-                            </>
-                        </Row>
-                    </Space>}
+                    {showPlainToken &&
+                                <Input style={{fontSize: "16px", marginTop: "-15px", marginBottom: "25px"}} suffix={
+                                    !tokenCopied ? <Button type="text" size="middle" className="btn-copy-code" icon={<CopyOutlined/>}
+                                    style={{color: "rgb(107, 114, 128)", marginTop: "-1px"}}
+                                    onClick={() => onCopyClick(plainToken, true)}/>
+                                    : <Button type="text" size="middle"  className="btn-copy-code" icon={<CheckOutlined/>}
+                                              style={{color: "green", marginTop: "-1px"}}/>
+                                }
+                                       defaultValue={plainToken}
+                                       readOnly={true}
+                                ></Input>}
                 </Container>
             </Modal>
             {confirmModalContextHolder}
