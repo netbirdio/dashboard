@@ -141,6 +141,14 @@ body {
   border: none;
 }
 
+td.non-highlighted-table-column {
+  background-color: #FFFFFF !important;
+}
+
+.ant-table-tbody > tr.ant-table-row:hover > td {
+  background: #FAFAFA !important;
+}
+
 .ant-table-thead .ant-table-cell {
   font-weight: normal !important;
 }
