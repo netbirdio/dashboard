@@ -310,7 +310,7 @@ const UserEdit = () => {
                 <Breadcrumb style={{marginBottom: "30px"}}
                             items={[
                                 {
-                                    title: 'All Users',
+                                    title: <text onClick={() => onBreadcrumbUsersClick("Users")}>All Users</text>,
                                 },
                                 {
                                     title: <text onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</text>,
@@ -408,28 +408,31 @@ const UserEdit = () => {
                               itemLayout="horizontal"
                               renderItem={(item) => (
                                   <List.Item
-                                      actions={[<Button danger={true} type={"text"}
-                                                        onClick={() => {
-                                                            showConfirmDelete(item)
-                                                        }}
-                                      >Delete</Button>]}
-                                      style={{backgroundColor: "white"}}
+                                      style={{backgroundColor: "white", paddingTop: "5px", paddingBottom: "5px"}}
                                   >
-                                      <Skeleton avatar title={false} loading={false} active style={{verticalAlign: "center"}}>
-                                          <List.Item.Meta style={{paddingRight: "20px"}}
-                                                          avatar={<Badge status={item.status === "valid" ? "success" : "error"} />}
-                                                          title={<text style={{fontSize: "16px", fontWeight: "500", paddingBottom: "-20px"}}>{item.name}</text>}
-                                                          description={<text style={{fontSize: "13px", fontWeight: "400", paddingTop: "-40px"}}>{"Created"  + (item.created_by_email && user.is_service_user ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</text>}
-                                          />
-                                          <Col span={4}>
-                                              <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Expires on</Paragraph>
-                                              <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{fullDate(item.expiration_date)}</Paragraph>
-                                          </Col>
-                                          <Col span={4}>
-                                              <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Last used</Paragraph>
-                                              <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{item.last_used ? fullDate(item.last_used) : "Never"}</Paragraph>
-                                          </Col>
-                                      </Skeleton>
+                                      <Col span={1} style={{marginTop: "-18px", marginRight: "-10px"}}>
+                                          <Badge status={item.status === "valid" ? "success" : "error"} style={{marginTop: "0px", marginLeft: "10px"}}/>
+                                      </Col>
+                                      <Col span={11} style={{marginLeft: "-30px"}} >
+                                          <Paragraph style={{fontSize: "16px", fontWeight: "500", margin: "0px", padding: "0px"}}>{item.name}</Paragraph>
+                                          <Paragraph type={"secondary"} style={{fontSize: "13px", fontWeight: "400", margin: "0px", marginTop: "-2px", padding: "0px"}}>{"Created"  + (item.created_by_email && user.is_service_user ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</Paragraph>
+                                      </Col>
+                                      <Col span={4} style={{paddingTop: "3px"}}>
+                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Expires on</Paragraph>
+                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{fullDate(item.expiration_date)}</Paragraph>
+                                      </Col>
+                                      <Col span={4} style={{paddingTop: "3px"}}>
+                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Last used</Paragraph>
+                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{item.last_used ? fullDate(item.last_used) : "Never"}</Paragraph>
+                                      </Col>
+                                      <Col span={1} >
+                                          <Button danger={true} type={"text"} style={{marginLeft: "-40px"}}
+                                                  onClick={() => {
+                                                      showConfirmDelete(item)
+                                                  }}
+                                          >Delete</Button>
+                                      </Col>
+                                      {/*</Skeleton>*/}
                                   </List.Item>
                               )}>
                         </List>}
