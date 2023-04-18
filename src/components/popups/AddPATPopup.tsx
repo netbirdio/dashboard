@@ -12,7 +12,7 @@ import {copyToClipboard} from "../../utils/common";
 
 const {Title, Text, Paragraph} = Typography;
 
-const ExpiresInDefault = 7
+const ExpiresInDefault = 30
 const styleNotification = {marginTop: 85}
 
 const AddPATPopup = () => {
