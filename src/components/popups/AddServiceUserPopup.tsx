@@ -79,14 +79,13 @@ const AddServiceUserPopup = () => {
                     getAccessTokenSilently: getTokenSilently,
                     payload: userToSave
                 }))
-            })
-            .catch((errorInfo) => {
-                console.log('errorInfo', errorInfo)
-            }).finally(() => {
                 form.resetFields();
                 dispatch(userActions.getServiceUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
                 dispatch(userActions.setAddServiceUserPopupVisible(false));
-        });
+            })
+            .catch((errorInfo) => {
+                console.log('errorInfo', errorInfo)
+            });
     };
 
     const selectValidator = (_: RuleObject, value: string[]) => {
@@ -228,7 +227,7 @@ const AddServiceUserPopup = () => {
                                                 name="name"
                                                 label="Name"
                                                 rules={[{
-                                                    required: false,
+                                                    required: true,
                                                     message: 'Please add a new name for this user',
                                                     whitespace: true
                                                 }]}
@@ -246,6 +245,11 @@ const AddServiceUserPopup = () => {
                                 <Form.Item
                                     name="role"
                                     label="Role"
+                                    rules={[{
+                                        required: true,
+                                        message: 'Please select a role for this user',
+                                        whitespace: true
+                                    }]}
                                 >
                                     <Select style={{width: '100%'}}>
                                         <Option value="admin">admin</Option>

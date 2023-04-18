@@ -80,14 +80,13 @@ const InviteUserPopup = () => {
                     getAccessTokenSilently: getTokenSilently,
                     payload: userToSave
                 }))
+                form.resetFields();
+                dispatch(userActions.getRegularUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+                dispatch(userActions.setInviteUserPopupVisible(false));
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
-            }).finally(() => {
-            form.resetFields();
-            dispatch(userActions.getRegularUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
-            dispatch(userActions.setInviteUserPopupVisible(false));
-        });
+            });
     };
 
     const selectValidator = (_: RuleObject, value: string[]) => {
@@ -229,7 +228,7 @@ const InviteUserPopup = () => {
                                                 name="name"
                                                 label="Name"
                                                 rules={[{
-                                                    required: false,
+                                                    required: true,
                                                     message: 'Please add a name for this user',
                                                     whitespace: true
                                                 }]}
@@ -248,9 +247,10 @@ const InviteUserPopup = () => {
                                     name="email"
                                     label="Email"
                                     rules={[{
-                                        required: false,
-                                        message: 'Please add the email address of this user',
-                                        whitespace: true
+                                        required: true,
+                                        message: 'Please add a valid email address for this user',
+                                        whitespace: false,
+                                        pattern: new RegExp(/^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i)
                                     }]}
                                 >
                                     <Input
@@ -263,6 +263,11 @@ const InviteUserPopup = () => {
                                 <Form.Item
                                     name="role"
                                     label="Role"
+                                    rules={[{
+                                        required: true,
+                                        message: 'Please select a role for this user',
+                                        whitespace: true
+                                    }]}
                                 >
                                     <Select style={{width: '100%'}}>
                                         <Option value="admin">admin</Option>
