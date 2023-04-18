@@ -223,20 +223,6 @@ const AddServiceUserPopup = () => {
                             <Col span={24}>
                                 <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
                                     <Row align="top">
-                                        {/*Close Icon*/}
-                                        <Col flex="none" style={{display: "flex"}}>
-                                            {user && user.id &&
-                                                <button type="button" aria-label="Close" className="ant-drawer-close"
-                                                        style={{paddingTop: 3}}
-                                                        onClick={onCancel}>
-                                                    <span role="img" aria-label="close"
-                                                          className="anticon anticon-close">
-                                                        <CloseOutlined size={16}/>
-                                                    </span>
-                                                </button>
-                                            }
-                                        </Col>
-                                        {/* Name Label*/}
                                         <Col flex="auto">
                                             <Form.Item
                                                 name="name"

@@ -399,12 +399,13 @@ const UserEdit = () => {
                             <Col xs={24} sm={24} md={20} lg={20} xl={20} xxl={20} span={20}>
                                 <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line"}}>Access tokens give access to the Netbird API</Paragraph>
                             </Col>
-                            <Col xs={24} sm={24} md={1} lg={1} xl={1} xxl={1} span={1} style={{marginTop: "-8px"}}>
+                            <Col xs={24} sm={24} md={1} lg={1} xl={1} xxl={1} span={1} style={{marginTop: "-16px"}}>
                                 {personalAccessTokens && personalAccessTokens.length > 0 && <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>}
                             </Col>
                         </Row>
                         {personalAccessTokens && personalAccessTokens.length > 0 &&
                             <Table
+                                style={{marginTop: "-15px"}}
                                 showHeader={false}
                                 scroll={{x: 800}}
                                 pagination={false}
@@ -451,7 +452,7 @@ const UserEdit = () => {
                                         }}
                                 />
                             </Table>}
-                        <Divider style={{marginTop: "-15px"}}></Divider>
+                        <Divider style={{marginTop: "-12px"}}></Divider>
                         {(personalAccessTokens === null || personalAccessTokens.length === 0) && <Space direction="vertical" size="small" align="start"
                                                                      style={{display: 'flex', padding: '45px 0px', marginTop: "-40px", justifyContent: 'center'}}>
                             <Paragraph
