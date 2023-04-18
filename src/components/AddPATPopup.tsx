@@ -185,7 +185,7 @@ const AddPATPopup = () => {
                         </Row>
                     </Form>}
                     {showPlainToken &&
-                                <Input style={{fontSize: "16px", marginTop: "-15px", marginBottom: "25px"}} suffix={
+                                <Input style={{marginTop: "-15px", marginBottom: "25px"}} suffix={
                                     !tokenCopied ? <Button type="text" size="middle" className="btn-copy-code" icon={<CopyOutlined/>}
                                     style={{color: "rgb(107, 114, 128)", marginTop: "-1px"}}
                                     onClick={() => onCopyClick(plainToken, true)}/>

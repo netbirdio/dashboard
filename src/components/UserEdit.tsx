@@ -306,7 +306,7 @@ const UserEdit = () => {
 
     return (
         <>
-            <div>
+            <div style={{paddingTop: "13px"}}>
                 <Breadcrumb style={{marginBottom: "30px"}}
                             items={[
                                 {
@@ -418,8 +418,8 @@ const UserEdit = () => {
                                       <Skeleton avatar title={false} loading={false} active style={{verticalAlign: "center"}}>
                                           <List.Item.Meta style={{paddingRight: "20px"}}
                                                           avatar={<Badge status={item.status === "valid" ? "success" : "error"} />}
-                                                          title={<text style={{fontSize: "16px", fontWeight: "500"}}>{item.name}</text>}
-                                                          description={<text style={{fontSize: "13px", fontWeight: "400"}}>{"Created"  + (item.created_by_email && user.is_service_user ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</text>}
+                                                          title={<text style={{fontSize: "16px", fontWeight: "500", paddingBottom: "-20px"}}>{item.name}</text>}
+                                                          description={<text style={{fontSize: "13px", fontWeight: "400", paddingTop: "-40px"}}>{"Created"  + (item.created_by_email && user.is_service_user ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</text>}
                                           />
                                           <Col span={4}>
                                               <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Expires on</Paragraph>
