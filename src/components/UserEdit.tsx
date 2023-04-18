@@ -324,7 +324,7 @@ const UserEdit = () => {
                 />
                 <Container style={{backgroundColor: "white", padding: "20px", borderRadius: "4px", boxSizing: "border-box", border: "0.5px solid #D9D9D9", marginBottom: "7px"}}>
                     <div style={{maxWidth: "800px"}}>
-                        <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>{user.name}</Paragraph>
+                        <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "1.5em"}}>{user.name}</Paragraph>
                         <Form layout="vertical" hideRequiredMark form={form}
                               initialValues={{
                                   name: formUser.name,
@@ -394,10 +394,10 @@ const UserEdit = () => {
                 </Container>
                 {user && (user.is_current || user.is_service_user) && <Container style={{backgroundColor: "white", padding: "20px", borderRadius: "4px", boxSizing: "border-box", border: "0.5px solid #D9D9D9"}}>
                     <div style={{maxWidth: "800px"}}>
-                        <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>Access tokens</Paragraph>
+                        <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "1.5em"}}>Access tokens</Paragraph>
                         <Row gutter={21} style={{marginTop: "-22px", marginBottom: "10px"}}>
                             <Col xs={24} sm={24} md={20} lg={20} xl={20} xxl={20} span={20}>
-                                <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "16px"}}>Access tokens give access to the Netbird API</Paragraph>
+                                <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line"}}>Access tokens give access to the Netbird API</Paragraph>
                             </Col>
                             <Col xs={24} sm={24} md={1} lg={1} xl={1} xxl={1} span={1} style={{marginTop: "-8px"}}>
                                 {personalAccessTokens && personalAccessTokens.length > 0 && <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>}
