@@ -155,7 +155,7 @@ const AddPATPopup = () => {
                                             }]}
                                         >
                                             <Input
-                                                placeholder={"for example \"Berlin Office\""}
+                                                placeholder={"for example \"Infra token\""}
                                                 ref={inputNameRef}
                                                 autoComplete="off"/>
                                         </Form.Item>
