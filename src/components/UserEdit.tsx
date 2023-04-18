@@ -399,7 +399,7 @@ const UserEdit = () => {
                                 <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "16px"}}>Access tokens give access to the Netbird API</Paragraph>
                             </Col>
                             <Col span={1} style={{marginTop: "-8px"}}>
-                                <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>
+                                {personalAccessTokens && personalAccessTokens.length > 0 && <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>}
                             </Col>
                         </Row>
                         {personalAccessTokens && personalAccessTokens.length > 0 && <List bordered={false}
@@ -437,13 +437,13 @@ const UserEdit = () => {
                               )}>
                         </List>}
                         <Divider style={{marginTop: "-15px"}}></Divider>
-                        {(personalAccessTokens === null || personalAccessTokens.length === 0) && <Space direction="vertical" size="small" align="center"
-                                                                     style={{display: 'flex', padding: '45px 15px', marginTop: "-40px", justifyContent: 'center'}}>
+                        {(personalAccessTokens === null || personalAccessTokens.length === 0) && <Space direction="vertical" size="small" align="start"
+                                                                     style={{display: 'flex', padding: '45px 0px', marginTop: "-40px", justifyContent: 'center'}}>
                             <Paragraph
-                                style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "16px"}}>
-                                You don’t have any access tokens yet.{"\n"}
-                                Generate the first one using the button “Create token”
+                                style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "16px"}}>
+                                You don’t have any access tokens yet.
                             </Paragraph>
+                            <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>
                         </Space>}
                     </div>
                 </Container>}
