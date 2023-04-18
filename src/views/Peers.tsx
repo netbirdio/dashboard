@@ -40,7 +40,7 @@ import {useGetTokenSilently} from "../utils/token";
 import {actions as userActions} from "../store/user";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {usePageSizeHelpers} from "../utils/pageSize";
-import AddPeerPopup from "../components/addpeer/AddPeerPopup";
+import AddPeerPopup from "../components/popups/addpeer/addpeer/AddPeerPopup";
 import {getLocalItem, setLocalItem, StorageKey} from "../services/local";
 
 const {Title, Paragraph, Text} = Typography;

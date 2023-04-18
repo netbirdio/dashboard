@@ -24,7 +24,7 @@ import {useGetTokenSilently} from "../utils/token";
 import {actions as groupActions} from "../store/group";
 import {isLocalDev, isNetBirdHosted} from "../utils/common";
 import {usePageSizeHelpers} from "../utils/pageSize";
-import AddServiceUserPopup from "../components/AddServiceUserPopup";
+import AddServiceUserPopup from "../components/popups/AddServiceUserPopup";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 
 const {Title, Paragraph, Text} = Typography;

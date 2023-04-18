@@ -11,15 +11,15 @@ import {
     Tag,
     Typography
 } from "antd";
-import {Container} from "./Container";
+import {Container} from "../Container";
 import {CloseOutlined} from "@ant-design/icons";
 import React, {useEffect, useRef, useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
-import {useGetTokenSilently} from "../utils/token";
-import {actions as userActions} from "../store/user";
-import {actions as groupActions} from "../store/group";
-import {User, UserToSave} from "../store/user/types";
+import {useGetTokenSilently} from "../../utils/token";
+import {actions as userActions} from "../../store/user";
+import {actions as groupActions} from "../../store/group";
+import {User, UserToSave} from "../../store/user/types";
 import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
@@ -27,7 +27,7 @@ import {CustomTagProps} from "rc-select/lib/BaseSelect";
 const {Title, Text, Paragraph} = Typography;
 const {Option} = Select;
 
-const InviteUserPopup = () => {
+const AddServiceUserPopup = () => {
     const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
@@ -37,7 +37,7 @@ const InviteUserPopup = () => {
     const user = useSelector((state: RootState) => state.user.user)
     const failed = useSelector((state: RootState) => state.user.failed);
     const loading = useSelector((state: RootState) => state.user.loading);
-    const inviteUserModalOpen = useSelector((state: RootState) => state.user.inviteUserPopupVisible)
+    const addServiceUserModalOpen = useSelector((state: RootState) => state.user.addServiceUserPopupVisible)
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
 
     const [confirmModal, confirmModalContextHolder] = Modal.useModal();
@@ -57,11 +57,10 @@ const InviteUserPopup = () => {
         return {
             id: values.id,
             role: values.role,
-            email: values.email,
             name: values.name,
             groupsToCreate: groupsToCreate,
             auto_groups: autoGroups,
-            is_service_user: false
+            is_service_user: true
         } as UserToSave
     }
 
@@ -69,7 +68,7 @@ const InviteUserPopup = () => {
         if (savedUser.loading) return
         dispatch(userActions.setUser(null as unknown as User));
         form.resetFields();
-        dispatch(userActions.setInviteUserPopupVisible(false));
+        dispatch(userActions.setAddServiceUserPopupVisible(false));
     }
 
     const handleFormSubmit = () => {
@@ -84,9 +83,9 @@ const InviteUserPopup = () => {
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
             }).finally(() => {
-            form.resetFields();
-            dispatch(userActions.getRegularUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
-            dispatch(userActions.setInviteUserPopupVisible(false));
+                form.resetFields();
+                dispatch(userActions.getServiceUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+                dispatch(userActions.setAddServiceUserPopupVisible(false));
         });
     };
 
@@ -181,30 +180,30 @@ const InviteUserPopup = () => {
     }, [groups])
 
     useEffect(() => {
-        dispatch(groupActions.getGroups.request({
-            getAccessTokenSilently: getTokenSilently,
-            payload: null
-        }))
+       dispatch(groupActions.getGroups.request({
+           getAccessTokenSilently: getTokenSilently,
+           payload: null
+       }))
     }, [])
 
     return (
         <>
             <Modal
-                open={inviteUserModalOpen}
+                open={addServiceUserModalOpen}
                 onCancel={onCancel}
                 footer={
                     <Space style={{display: 'flex', justifyContent: 'end'}}>
                         <Button disabled={loading} onClick={onCancel}>Cancel</Button>
                         <Button type="primary"
-                                onClick={handleFormSubmit}>Invite</Button>
+                                onClick={handleFormSubmit}>Create</Button>
                     </Space>
                 }
-                width={780}
+                width={460}
             >
                 <Container style={{textAlign: "center"}}>
                     <Paragraph
                         style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "2em"}}>
-                        {"Invite User"}
+                        {"Add Service User"}
                     </Paragraph>
                     <Paragraph type={"secondary"}
                                style={{
@@ -213,12 +212,12 @@ const InviteUserPopup = () => {
                                    marginTop: "-15px",
                                    paddingBottom: "25px",
                                }}>
-                        {"Invite a new user to your organization"}
+                        {"Service Users are users that are can not login and do not relate to any person."}
                     </Paragraph>
                     <Form layout="vertical" hideRequiredMark form={form}
-                        // initialValues={{
-                        //     ["role"]: formUser.role
-                        // }}
+                          // initialValues={{
+                          //     ["role"]: formUser.role
+                          // }}
                     >
                         <Row gutter={16}>
                             <Col span={24}>
@@ -244,7 +243,7 @@ const InviteUserPopup = () => {
                                                 label="Name"
                                                 rules={[{
                                                     required: false,
-                                                    message: 'Please add a name for this user',
+                                                    message: 'Please add a new name for this user',
                                                     whitespace: true
                                                 }]}
                                             >
@@ -256,22 +255,6 @@ const InviteUserPopup = () => {
                                         </Col>
                                     </Row>
                                 </Header>
-                            </Col>
-                            <Col span={24}>
-                                <Form.Item
-                                    name="email"
-                                    label="Email"
-                                    rules={[{
-                                        required: false,
-                                        message: 'Please add the email address of this user',
-                                        whitespace: true
-                                    }]}
-                                >
-                                    <Input
-                                        placeholder={""}
-                                        ref={inputNameRef}
-                                        autoComplete="off"/>
-                                </Form.Item>
                             </Col>
                             <Col span={24}>
                                 <Form.Item
@@ -316,4 +299,4 @@ const InviteUserPopup = () => {
 
 }
 
-export default InviteUserPopup
+export default AddServiceUserPopup

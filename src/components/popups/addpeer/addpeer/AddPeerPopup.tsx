@@ -2,9 +2,9 @@ import React, {useState} from 'react';
 
 import {Tabs, TabsProps} from "antd";
 import Icon, {AndroidFilled, AppleFilled, WindowsFilled} from "@ant-design/icons";
-import {ReactComponent as LinuxSVG} from "../icons/terminal_icon.svg";
+import {ReactComponent as LinuxSVG} from "../../../icons/terminal_icon.svg";
 import UbuntuTab from "./UbuntuTab";
-import {ReactComponent as DockerSVG} from "../icons/docker_icon.svg";
+import {ReactComponent as DockerSVG} from "../../../icons/docker_icon.svg";
 import Paragraph from "antd/lib/typography/Paragraph";
 import WindowsTab from "./WindowsTab";
 import MacTab from "./MacTab";

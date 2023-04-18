@@ -29,8 +29,8 @@ import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {isLocalDev, isNetBirdHosted} from "../utils/common";
 import {usePageSizeHelpers} from "../utils/pageSize";
-import AddServiceUserPopup from "../components/AddServiceUserPopup";
-import InviteUserPopup from "../components/InviteUserPopup";
+import AddServiceUserPopup from "../components/popups/AddServiceUserPopup";
+import InviteUserPopup from "../components/popups/InviteUserPopup";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
