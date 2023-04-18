@@ -213,7 +213,7 @@ const UserEdit = () => {
             key: p.id,
             status: Date.parse(p.expiration_date) > Date.now() ? "valid" : "expired",
             created_by_email: getEmail(p),
-            ...p} as TokenDataTable)).sort((a, b) => -1 * ((a as TokenDataTable).created_at.localeCompare((b as TokenDataTable).created_at)))
+            ...p} as TokenDataTable))
     }
 
     const getEmail = (token: PersonalAccessToken): string => {
@@ -405,17 +405,13 @@ const UserEdit = () => {
                         </Row>
                         {personalAccessTokens && personalAccessTokens.length > 0 &&
                             <Table
-                                className="card-table"
-                                showSorterTooltip={false}
                                 showHeader={false}
-                                scroll={{x: true}}
+                                scroll={{x: 800}}
                                 pagination={false}
                                 loading={tableSpin(loading)}
                                 dataSource={tokenTable}>
-                                <Column title="Name" dataIndex="name" width={"600px"}
-                                        onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
-                                        sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
-                                        defaultSortOrder='ascend'
+                                <Column className={"non-highlighted-table-column"} sorter={(a, b) => ((a as TokenDataTable).created_at.localeCompare((b as TokenDataTable).created_at))}
+                                        defaultSortOrder='descend'
                                         render={(text, record, index) => {
                                             return (<>
                                                 <Row>
@@ -429,31 +425,24 @@ const UserEdit = () => {
                                                 </Row>
                                                 </>)
                                         }}/>
-                                <Column title="Expires" dataIndex="expires_at" width={"200px"}
-                                        align="center"
-                                        onFilter={(value: string | number | boolean, record) => (record as any).status.includes(value)}
-                                        sorter={(a, b) => ((a as any).status.localeCompare((b as any).status))}
-                                        render={(text, record, index) => {
+                                <Column render={(text, record, index) => {
                                            return <>
-                                               <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Expires on</Paragraph>
-                                               <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{fullDate((record as TokenDataTable).expiration_date)}</Paragraph>
+                                               <Paragraph type={"secondary"} style={{textAlign: "left", fontSize: "11px"}}>Expires on</Paragraph>
+                                               <Paragraph type={"secondary"} style={{textAlign: "left", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{fullDate((record as TokenDataTable).expiration_date)}</Paragraph>
                                            </>
                                         }}
                                 />
-                                <Column title="Last Used" dataIndex="last_used_at" width={"200px"}
-                                        onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
-                                        sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}
-                                        render={(text, record, index) => {
+                                <Column render={(text, record, index) => {
                                             return <>
-                                                <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Last used</Paragraph>
-                                                <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{(record as TokenDataTable).last_used ? fullDate((record as TokenDataTable).last_used) : "Never"}</Paragraph>
+                                                <Paragraph type={"secondary"} style={{textAlign: "left", fontSize: "11px"}}>Last used</Paragraph>
+                                                <Paragraph type={"secondary"} style={{textAlign: "left",  marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{(record as TokenDataTable).last_used ? fullDate((record as TokenDataTable).last_used) : "Never"}</Paragraph>
                                             </>
                                         }}
                                 />
-                                <Column title="" align="center" width={"50px"}
+                                <Column align="right"
                                         render={(text, record, index) => {
                                             return (
-                                                <Button danger={true} type={"text"} style={{marginLeft: "-40px"}}
+                                                <Button danger={true} type={"text"}
                                                         onClick={() => {
                                                             showConfirmDelete(record as TokenDataTable)
                                                         }}
