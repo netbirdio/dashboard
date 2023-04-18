@@ -11,7 +11,7 @@ import {
     Dropdown,
     Input,
     Menu,
-    message,
+    message, Modal,
     Popover,
     Row,
     Select,
@@ -29,6 +29,8 @@ import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {isLocalDev, isNetBirdHosted} from "../utils/common";
 import {usePageSizeHelpers} from "../utils/pageSize";
+import AddServiceUserPopup from "../components/AddServiceUserPopup";
+import InviteUserPopup from "../components/InviteUserPopup";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -55,6 +57,7 @@ export const RegularUsers = () => {
     const [userToAction, setUserToAction] = useState(null as UserDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
     const [dataTable, setDataTable] = useState([] as UserDataTable[]);
+    const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
     // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
     const setUserAndView = (user: User) => {
@@ -76,7 +79,7 @@ export const RegularUsers = () => {
     useEffect(() => {
         dispatch(userActions.getRegularUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
-    }, [])
+    }, [savedUser])
 
     useEffect(() => {
         setDataTable(transformDataTable(users))
@@ -115,15 +118,8 @@ export const RegularUsers = () => {
     }
 
     const onClickInviteUser = () => {
-        const autoGroups : string[] = []
-        dispatch(userActions.setUpdateUserDrawerVisible(true));
-        dispatch(userActions.setUser({
-            id: "",
-            email: "",
-            auto_groups: autoGroups,
-            name: "",
-            role: "user",
-        } as User));
+        dispatch(userActions.setInviteUserPopupVisible(true));
+        dispatch(userActions.setUser(null as unknown as User));
     }
 
     const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, userToAction: UserDataTable) => {
@@ -356,6 +352,8 @@ export const RegularUsers = () => {
                     </Col>
                 </Row>
             </Container>
+            <InviteUserPopup/>
+            {confirmModalContextHolder}
         </>
     )
 }
