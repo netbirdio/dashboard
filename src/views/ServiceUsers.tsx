@@ -143,19 +143,6 @@ export const ServiceUsers = () => {
         }
     }
 
-    const handleViewUser = (user: UserDataTable) => {
-        dispatch(userActions.setUser({
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            auto_groups: user.auto_groups ? user.auto_groups : [],
-            name: user.name,
-            is_current: user.is_current,
-            is_service_user: user.is_service_user,
-        } as User));
-        dispatch(userActions.setViewUserPopupVisible(true));
-    }
-
     const handleEditUser = (user: UserDataTable) => {
         dispatch(userActions.setUser({
             id: user.id,

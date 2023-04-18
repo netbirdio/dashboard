@@ -14,8 +14,8 @@ type StateType = Readonly<{
   deletedUser: DeleteResponse<string | null>;
   savedUser: CreateResponse<User | null>;
   updateUserDrawerVisible: boolean
-  viewUserPopupVisible: boolean
   editUserPopupVisible: boolean
+  inviteUserPopupVisible: boolean
   addServiceUserPopupVisible: boolean
   usersTabOpen: string
 }>;
@@ -36,8 +36,8 @@ const initialState: StateType = {
   },
   // right-sided user update drawer
   updateUserDrawerVisible: false,
-  viewUserPopupVisible: false,
   editUserPopupVisible: false,
+  inviteUserPopupVisible: false,
   addServiceUserPopupVisible: false,
   usersTabOpen: 'Users',
   savedUser: <CreateResponse<User | null>>{
@@ -84,8 +84,8 @@ const deletedUser = createReducer<DeleteResponse<string | null>, ActionTypes>(in
 const updateUserDrawerVisible = createReducer<boolean, ActionTypes>(initialState.updateUserDrawerVisible)
     .handleAction(actions.setUpdateUserDrawerVisible, (store, action) => action.payload);
 
-const viewUserPopupVisible = createReducer<boolean, ActionTypes>(initialState.viewUserPopupVisible)
-    .handleAction(actions.setViewUserPopupVisible, (store, action) => action.payload);
+const inviteUserPopupVisible = createReducer<boolean, ActionTypes>(initialState.inviteUserPopupVisible)
+    .handleAction(actions.setInviteUserPopupVisible, (store, action) => action.payload);
 
 const editUserPopupVisible = createReducer<boolean, ActionTypes>(initialState.editUserPopupVisible)
     .handleAction(actions.setEditUserPopupVisible, (store, action) => action.payload);
@@ -113,7 +113,7 @@ export default combineReducers({
   savedUser,
   deletedUser,
   updateUserDrawerVisible,
-  viewUserPopupVisible,
+  inviteUserPopupVisible,
   editUserPopupVisible,
   addServiceUserPopupVisible,
   userTabOpen

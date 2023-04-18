@@ -34,7 +34,7 @@ const actions = {
   // used to make the UserUpdate drawer visible in the UI.
   setUpdateUserDrawerVisible: createAction('SET_UPDATE_USER_VISIBLE')<boolean>(),
   // used to make the ViewUserPopup visible in the UI.
-  setViewUserPopupVisible: createAction('SET_VIEW_USER_VISIBLE')<boolean>(),
+  setInviteUserPopupVisible: createAction('SET_INVITE_USER_VISIBLE')<boolean>(),
   // used to make the EditUserPopup visible in the UI.
   setEditUserPopupVisible: createAction('SET_EDIT_USER_VISIBLE')<boolean>(),
   // used to make the AddServiceUserPopup visible in the UI.

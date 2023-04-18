@@ -10,7 +10,7 @@ import {
     Row,
     Select,
     Skeleton,
-    Space,
+    Space, Table,
     Tag, Typography
 } from "antd";
 import {useDispatch, useSelector} from "react-redux";
@@ -29,13 +29,14 @@ import AddPATPopup from "./AddPATPopup";
 import {fullDate} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import {Container} from "./Container";
+import Column from "antd/lib/table/Column";
 
 const {Option} = Select;
 const {Title, Paragraph, Text} = Typography;
 
 interface TokenDataTable extends PersonalAccessToken {
     key: string
-    status: String
+    status: string
     created_by_email: string
 }
 
@@ -333,7 +334,7 @@ const UserEdit = () => {
                               }}
                         >
                             <Row style={{ paddingBottom: "15px"}}>
-                                {!user.is_service_user && <Col span={11}>
+                                {!user.is_service_user && <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                                     <Form.Item
                                         name="email"
                                         label={<text style={{fontSize: "16px", fontWeight: "500"}}>Email</text>}
@@ -346,7 +347,7 @@ const UserEdit = () => {
                                             autoComplete="off"/>
                                     </Form.Item>
                                 </Col>}
-                                <Col span={5}>
+                                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                                     <Form.Item
                                         name="role"
                                         label={<text style={{fontSize: "16px", fontWeight: "500"}}>Role</text>}
@@ -395,47 +396,72 @@ const UserEdit = () => {
                     <div style={{maxWidth: "800px"}}>
                         <Paragraph style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "22px"}}>Access tokens</Paragraph>
                         <Row gutter={21} style={{marginTop: "-22px", marginBottom: "10px"}}>
-                            <Col span={20}>
+                            <Col xs={24} sm={24} md={20} lg={20} xl={20} xxl={20} span={20}>
                                 <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "16px"}}>Access tokens give access to the Netbird API</Paragraph>
                             </Col>
-                            <Col span={1} style={{marginTop: "-8px"}}>
+                            <Col xs={24} sm={24} md={1} lg={1} xl={1} xxl={1} span={1} style={{marginTop: "-8px"}}>
                                 {personalAccessTokens && personalAccessTokens.length > 0 && <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>}
                             </Col>
                         </Row>
-                        {personalAccessTokens && personalAccessTokens.length > 0 && <List bordered={false}
-                              dataSource={tokenTable}
-                              loading={tableSpin(loading)}
-                              itemLayout="horizontal"
-                              renderItem={(item) => (
-                                  <List.Item
-                                      style={{backgroundColor: "white", paddingTop: "5px", paddingBottom: "5px"}}
-                                  >
-                                      <Col span={1} style={{marginTop: "-18px", marginRight: "-10px"}}>
-                                          <Badge status={item.status === "valid" ? "success" : "error"} style={{marginTop: "0px", marginLeft: "10px"}}/>
-                                      </Col>
-                                      <Col span={11} style={{marginLeft: "-30px"}} >
-                                          <Paragraph style={{fontSize: "16px", fontWeight: "500", margin: "0px", padding: "0px"}}>{item.name}</Paragraph>
-                                          <Paragraph type={"secondary"} style={{fontSize: "13px", fontWeight: "400", margin: "0px", marginTop: "-2px", padding: "0px"}}>{"Created"  + (item.created_by_email && user.is_service_user ? " by " + item.created_by_email : "") + " on " + fullDate(item.created_at)}</Paragraph>
-                                      </Col>
-                                      <Col span={4} style={{paddingTop: "3px"}}>
-                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Expires on</Paragraph>
-                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{fullDate(item.expiration_date)}</Paragraph>
-                                      </Col>
-                                      <Col span={4} style={{paddingTop: "3px"}}>
-                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Last used</Paragraph>
-                                          <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{item.last_used ? fullDate(item.last_used) : "Never"}</Paragraph>
-                                      </Col>
-                                      <Col span={1} >
-                                          <Button danger={true} type={"text"} style={{marginLeft: "-40px"}}
-                                                  onClick={() => {
-                                                      showConfirmDelete(item)
-                                                  }}
-                                          >Delete</Button>
-                                      </Col>
-                                      {/*</Skeleton>*/}
-                                  </List.Item>
-                              )}>
-                        </List>}
+                        {personalAccessTokens && personalAccessTokens.length > 0 &&
+                            <Table
+                                className="card-table"
+                                showSorterTooltip={false}
+                                showHeader={false}
+                                scroll={{x: true}}
+                                pagination={false}
+                                loading={tableSpin(loading)}
+                                dataSource={tokenTable}>
+                                <Column title="Name" dataIndex="name" width={"600px"}
+                                        onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
+                                        sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}
+                                        defaultSortOrder='ascend'
+                                        render={(text, record, index) => {
+                                            return (<>
+                                                <Row>
+                                                    <Col>
+                                                        <Badge status={(record as TokenDataTable).status === "valid" ? "success" : "error"} style={{marginTop: "1px", marginRight: "5px", marginLeft: "0px"}}/>
+                                                    </Col>
+                                                    <Col>
+                                                        <Paragraph style={{fontSize: "16px", fontWeight: "500", margin: "0px", padding: "0px"}}>{(record as TokenDataTable).name}</Paragraph>
+                                                        <Paragraph type={"secondary"} style={{fontSize: "13px", fontWeight: "400", margin: "0px", marginTop: "-2px", padding: "0px"}}>{"Created"  + ((record as TokenDataTable).created_by_email && user.is_service_user ? " by " + (record as TokenDataTable).created_by_email : "") + " on " + fullDate((record as TokenDataTable).created_at)}</Paragraph>
+                                                    </Col>
+                                                </Row>
+                                                </>)
+                                        }}/>
+                                <Column title="Expires" dataIndex="expires_at" width={"200px"}
+                                        align="center"
+                                        onFilter={(value: string | number | boolean, record) => (record as any).status.includes(value)}
+                                        sorter={(a, b) => ((a as any).status.localeCompare((b as any).status))}
+                                        render={(text, record, index) => {
+                                           return <>
+                                               <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Expires on</Paragraph>
+                                               <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{fullDate((record as TokenDataTable).expiration_date)}</Paragraph>
+                                           </>
+                                        }}
+                                />
+                                <Column title="Last Used" dataIndex="last_used_at" width={"200px"}
+                                        onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
+                                        sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}
+                                        render={(text, record, index) => {
+                                            return <>
+                                                <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "11px"}}>Last used</Paragraph>
+                                                <Paragraph type={"secondary"} style={{textAlign: "left", whiteSpace: "pre-line", marginTop: "-10px", marginBottom: "0", fontSize: "15px"}}>{(record as TokenDataTable).last_used ? fullDate((record as TokenDataTable).last_used) : "Never"}</Paragraph>
+                                            </>
+                                        }}
+                                />
+                                <Column title="" align="center" width={"50px"}
+                                        render={(text, record, index) => {
+                                            return (
+                                                <Button danger={true} type={"text"} style={{marginLeft: "-40px"}}
+                                                        onClick={() => {
+                                                            showConfirmDelete(record as TokenDataTable)
+                                                        }}
+                                                >Delete</Button>
+                                            )
+                                        }}
+                                />
+                            </Table>}
                         <Divider style={{marginTop: "-15px"}}></Divider>
                         {(personalAccessTokens === null || personalAccessTokens.length === 0) && <Space direction="vertical" size="small" align="start"
                                                                      style={{display: 'flex', padding: '45px 0px', marginTop: "-40px", justifyContent: 'center'}}>
