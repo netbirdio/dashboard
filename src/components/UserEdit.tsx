@@ -405,7 +405,8 @@ const UserEdit = () => {
                         </Row>
                         {personalAccessTokens && personalAccessTokens.length > 0 &&
                             <Table
-                                style={{marginTop: "-15px"}}
+                                size={"small"}
+                                style={{marginTop: "-10px"}}
                                 showHeader={false}
                                 scroll={{x: 800}}
                                 pagination={false}
