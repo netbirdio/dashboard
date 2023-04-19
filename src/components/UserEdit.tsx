@@ -30,6 +30,7 @@ import {fullDate} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
 import {Container} from "./Container";
 import Column from "antd/lib/table/Column";
+import {useOidcUser} from "@axa-fr/react-oidc";
 
 const {Option} = Select;
 const {Title, Paragraph, Text} = Typography;
@@ -53,6 +54,7 @@ const UserEdit = () => {
 
     const loading = useSelector((state: RootState) => state.user.loading);
 
+    const {oidcUser} = useOidcUser();
     const [tokenTable, setTokenTable] = useState([] as TokenDataTable[]);
 
     const [tagGroups, setTagGroups] = useState([] as string[])
@@ -289,21 +291,24 @@ const UserEdit = () => {
         {
             key: '1',
             label: (
-                <text onClick={() => onBreadcrumbUsersClick("Users")}>
+                <Text onClick={() => onBreadcrumbUsersClick("Users")}>
                     Users
-                </text>
+                </Text>
             ),
         },
         {
             key: '2',
             label: (
-                <text onClick={() => onBreadcrumbUsersClick("Service Users")}>
+                <Text onClick={() => onBreadcrumbUsersClick("Service Users")}>
                     Service Users
-                </text>
+                </Text>
             ),
         },
     ];
 
+    const isUserAdmin = (userId: string): boolean => {
+        return users.find(u => u.id === userId)?.role === "admin"
+    }
 
     return (
         <>
@@ -311,10 +316,10 @@ const UserEdit = () => {
                 <Breadcrumb style={{marginBottom: "30px"}}
                             items={[
                                 {
-                                    title: <text onClick={() => onBreadcrumbUsersClick("Users")}>All Users</text>,
+                                    title: <Text onClick={() => onBreadcrumbUsersClick("Users")}>All Users</Text>,
                                 },
                                 {
-                                    title: <text onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</text>,
+                                    title: <Text onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</Text>,
                                     // menu: { items: menuItems },
                                 },
                                 {
@@ -337,7 +342,7 @@ const UserEdit = () => {
                                 {!user.is_service_user && <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                                     <Form.Item
                                         name="email"
-                                        label={<text style={{fontSize: "16px", fontWeight: "500"}}>Email</text>}
+                                        label={<Text style={{fontSize: "16px", fontWeight: "500"}}>Email</Text>}
                                         style={{marginRight: "70px"}}
                                     >
                                         <Input
@@ -350,7 +355,7 @@ const UserEdit = () => {
                                 <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                                     <Form.Item
                                         name="role"
-                                        label={<text style={{fontSize: "16px", fontWeight: "500"}}>Role</text>}
+                                        label={<Text style={{fontSize: "16px", fontWeight: "500"}}>Role</Text>}
                                         style={{marginRight: "50px"}}
                                     >
                                         <Select style={{width: '100%'}}
@@ -365,7 +370,7 @@ const UserEdit = () => {
                                 <Col span={9}>
                                     <Form.Item
                                         name="autoGroupsNames"
-                                        label={<text style={{fontSize: "16px", fontWeight: "500"}}>Auto-assigned groups</text>}
+                                        label={<Text style={{fontSize: "16px", fontWeight: "500"}}>Auto-assigned groups</Text>}
                                         tooltip="Every peer enrolled with this user will be automatically added to these groups"
                                         rules={[{validator: selectValidator}]}
                                     >
@@ -374,6 +379,7 @@ const UserEdit = () => {
                                                 placeholder="Associate groups with the user"
                                                 tagRender={tagRender}
                                                 dropdownRender={dropDownRender}
+                                                disabled={oidcUser && !isUserAdmin(oidcUser.sub)}
                                         >
                                             {
                                                 tagGroups.map(m =>
