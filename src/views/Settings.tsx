@@ -40,7 +40,7 @@ export const Settings = () => {
 
     useEffect(() => {
         if (accounts.length < 1) {
-            console.error("invalid account data returned from the Management API", accounts)
+            console.debug("invalid account data returned from the Management API", accounts)
             return
         }
         let account = accounts[0]
