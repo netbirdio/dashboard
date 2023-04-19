@@ -132,7 +132,7 @@ const AddPATPopup = () => {
             >
                 <Container style={{textAlign: "start"}}>
                     <Paragraph
-                        style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "18px", fontWeight: "500"}}>
+                        style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "22px", fontWeight: "500"}}>
                         {showPlainToken ? "Token created successfully!" : "Create a Personal Access Token"}
                     </Paragraph>
                     {!showPlainToken && <Paragraph type={"secondary"}
@@ -140,7 +140,7 @@ const AddPATPopup = () => {
                                    textAlign: "start",
                                    fontSize: "14px",
                                    whiteSpace: "pre-line",
-                                   marginTop: "-15px",
+                                   marginTop: "-23px",
                                    paddingBottom: "25px",
                                }}>
                         {"This token can be used to authenticate against" + "\n" + "NetBird's Public API."}
@@ -181,7 +181,7 @@ const AddPATPopup = () => {
                             </Col>
                             <Col span={24} style={{textAlign: "left"}}>
                                 <Paragraph style={{fontSize: "16px", fontWeight: "500"}}>Expires in</Paragraph>
-                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Number of days this token ins valid for</Paragraph>
+                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Number of days this token is valid for</Paragraph>
                                 <Form.Item
                                     name="expires_in"
                                     style={{marginTop: "-10px"}}

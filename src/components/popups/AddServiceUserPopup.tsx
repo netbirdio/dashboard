@@ -194,91 +194,91 @@ const AddServiceUserPopup = () => {
                     <Space style={{display: 'flex', justifyContent: 'end'}}>
                         <Button disabled={loading} onClick={onCancel}>Cancel</Button>
                         <Button type="primary"
-                                onClick={handleFormSubmit}>Create</Button>
+                                onClick={handleFormSubmit}>Create user</Button>
                     </Space>
                 }
                 width={460}
             >
-                <Container style={{textAlign: "center"}}>
+                <Container style={{textAlign: "start"}}>
                     <Paragraph
-                        style={{textAlign: "center", whiteSpace: "pre-line", fontSize: "2em"}}>
+                        style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "22px", fontWeight: "500"}}>
                         {"Add Service User"}
                     </Paragraph>
                     <Paragraph type={"secondary"}
                                style={{
-                                   textAlign: "center",
+                                   textAlign: "start",
                                    whiteSpace: "pre-line",
-                                   marginTop: "-15px",
+                                   marginTop: "-23px",
                                    paddingBottom: "25px",
                                }}>
-                        {"Service Users are users that are can not login and do not relate to any person."}
+                        {"Service Users are non-login users that are not associated with any specific person."}
                     </Paragraph>
                     <Form layout="vertical" hideRequiredMark form={form}
-                          // initialValues={{
-                          //     ["role"]: formUser.role
-                          // }}
+                          initialValues={{
+                              ["role"]: "user"
+                          }}
                     >
                         <Row gutter={16}>
                             <Col span={24}>
-                                <Header style={{margin: "-32px -24px 20px -24px", padding: "24px 24px 0 24px"}}>
-                                    <Row align="top">
-                                        <Col flex="auto">
-                                            <Form.Item
-                                                name="name"
-                                                label="Name"
-                                                rules={[{
-                                                    required: true,
-                                                    message: 'Please add a new name for this user',
-                                                    whitespace: true
-                                                }]}
-                                            >
-                                                <Input
-                                                    placeholder={""}
-                                                    ref={inputNameRef}
-                                                    autoComplete="off"/>
-                                            </Form.Item>
-                                        </Col>
-                                    </Row>
-                                </Header>
+                                <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "-10px"}}>Name</Paragraph>
+                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Set a name to identify the user easily</Paragraph>
+                                <Form.Item
+                                    name="name"
+                                    rules={[{
+                                        required: true,
+                                        message: 'Please add a new name for this user',
+                                        whitespace: true
+                                    }]}
+                                    style={{marginTop: "-8px"}}
+                                >
+                                    <Input
+                                        placeholder={'for example "Ansible User"'}
+                                        ref={inputNameRef}
+                                        autoComplete="off"/>
+                                </Form.Item>
                             </Col>
                             <Col span={24}>
+                                <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "0px"}}>Role</Paragraph>
+                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Set a role for the user to assign permissions</Paragraph>
                                 <Form.Item
                                     name="role"
-                                    label="Role"
                                     rules={[{
                                         required: true,
                                         message: 'Please select a role for this user',
                                         whitespace: true
                                     }]}
+                                    style={{marginTop: "-8px"}}
                                 >
-                                    <Select style={{width: '100%'}}>
+                                    <Select style={{width: "120px"}}>
                                         <Option value="admin">admin</Option>
                                         <Option value="user">user</Option>
                                     </Select>
                                 </Form.Item>
                             </Col>
-                            <Col span={24}>
-                                <Form.Item
-                                    name="autoGroupsNames"
-                                    label="Auto-assigned groups"
-                                    tooltip="Every peer enrolled with this user will be automatically added to these groups"
-                                    rules={[{validator: selectValidator}]}
-                                >
-                                    <Select mode="tags"
-                                            style={{width: '100%'}}
-                                            placeholder="Associate groups with the user"
-                                            tagRender={tagRender}
-                                            onChange={handleChangeTags}
-                                            dropdownRender={dropDownRender}
-                                    >
-                                        {
-                                            tagGroups.map(m =>
-                                                <Option key={m}>{optionRender(m)}</Option>
-                                            )
-                                        }
-                                    </Select>
-                                </Form.Item>
-                            </Col>
+                            {/*<Col span={24}>*/}
+                            {/*    <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "0px"}}>Auto-assigned groups</Paragraph>*/}
+                            {/*    <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Add groups, that will be assigned to peers added by this user</Paragraph>*/}
+                            {/*    <Form.Item*/}
+                            {/*        name="autoGroupsNames"*/}
+                            {/*        label="Auto-assigned groups"*/}
+                            {/*        tooltip="Every peer enrolled with this user will be automatically added to these groups"*/}
+                            {/*        rules={[{validator: selectValidator}]}*/}
+                            {/*    >*/}
+                            {/*        <Select mode="tags"*/}
+                            {/*                style={{width: '100%'}}*/}
+                            {/*                placeholder="Associate groups with the user"*/}
+                            {/*                tagRender={tagRender}*/}
+                            {/*                onChange={handleChangeTags}*/}
+                            {/*                dropdownRender={dropDownRender}*/}
+                            {/*        >*/}
+                            {/*            {*/}
+                            {/*                tagGroups.map(m =>*/}
+                            {/*                    <Option key={m}>{optionRender(m)}</Option>*/}
+                            {/*                )*/}
+                            {/*            }*/}
+                            {/*        </Select>*/}
+                            {/*    </Form.Item>*/}
+                            {/*</Col>*/}
                         </Row>
                     </Form>
                 </Container>
