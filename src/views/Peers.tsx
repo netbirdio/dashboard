@@ -42,6 +42,7 @@ import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {usePageSizeHelpers} from "../utils/pageSize";
 import AddPeerPopup from "../components/popups/addpeer/addpeer/AddPeerPopup";
 import {getLocalItem, setLocalItem, StorageKey} from "../services/local";
+import {useOidcUser} from "@axa-fr/react-oidc";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -66,6 +67,8 @@ export const Peers = () => {
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
     const users = useSelector((state: RootState) => state.user.data);
     const [addPeerModalOpen, setAddPeerModalOpen] = useState(false);
+    const {oidcUser} = useOidcUser();
+
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
@@ -104,11 +107,16 @@ export const Peers = () => {
         })
     }
 
+    const isUserAdmin = (userId: string): boolean => {
+        return users.find(u => u.id === userId)?.role === "admin"
+    }
+
     const refresh = () => {
         dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
         dispatch(peerActions.getPeers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
-        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+        if(oidcUser && isUserAdmin(oidcUser.sub))
+            dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }
 
     useEffect(() => {
