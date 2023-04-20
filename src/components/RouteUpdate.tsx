@@ -123,7 +123,8 @@ const RouteUpdate = () => {
     peers.forEach((p) => {
         let os: string
         os = p.os
-        if (!os.toLowerCase().startsWith("darwin") && !os.toLowerCase().startsWith("windows") && route && !routes.filter(r => r.network_id === route.network_id).find(r => r.peer === p.id)) {
+        if (!os.toLowerCase().startsWith("darwin") && !os.toLowerCase().startsWith("windows") && !os.toLowerCase().startsWith("android")
+            && route && !routes.filter(r => r.network_id === route.network_id).find(r => r.peer === p.id)) {
             options?.push({
                 label: peerToPeerIP(p.name, p.ip),
                 value: peerToPeerIP(p.name, p.ip),
