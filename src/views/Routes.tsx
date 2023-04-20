@@ -284,6 +284,7 @@ export const Routes = () => {
             content = masqueradeEnabledMSG
         }
 
+        console.log("Asking")
         confirm({
             icon: <ExclamationCircleOutlined/>,
             title: tittle,
@@ -310,7 +311,7 @@ export const Routes = () => {
         routeGroup.groupedRoutes.forEach((record) => {
             const route = {
                 ...record,
-                peer: peerNameToIP[record.peer],
+                peer: record.peer,
                 masquerade: checked,
                 groupsToCreate: []
             } as RouteToSave
