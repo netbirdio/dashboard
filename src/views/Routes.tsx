@@ -284,7 +284,6 @@ export const Routes = () => {
             content = masqueradeEnabledMSG
         }
 
-        console.log("Asking")
         confirm({
             icon: <ExclamationCircleOutlined/>,
             title: tittle,
