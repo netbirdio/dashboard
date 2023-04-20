@@ -388,6 +388,12 @@ export const Peers = () => {
                 </div>
             )
         })
+
+        let btn = <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
+        if (!content || content!.length < 1) {
+            return btn
+        }
+
         const mainContent = (<Space direction="vertical">{content}</Space>)
         let popoverPlacement = "top"
         if (content && content.length > 5) {
