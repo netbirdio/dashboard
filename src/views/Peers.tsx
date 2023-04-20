@@ -74,7 +74,7 @@ export const Peers = () => {
     const [optionOnOff, setOptionOnOff] = useState('all');
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
+    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
     const [showTutorial, setShowTutorial] = useState(false)
     const [hadFirstRun, setHadFirstRun] = useState(true)
     const [confirmModal, confirmModalContextHolder] = Modal.useModal();
@@ -354,7 +354,7 @@ export const Peers = () => {
         if (updateGroupsVisible) {
             setGroupPopupVisible(false)
         } else {
-            setGroupPopupVisible(undefined)
+            setGroupPopupVisible(b)
         }
     }
 

@@ -61,7 +61,7 @@ export const Nameservers = () => {
     const updateNameServerGroupVisible = useSelector((state: RootState) => state.nameserverGroup.setupNewNameServerGroupVisible)
     const savedNSGroup = useSelector((state: RootState) => state.nameserverGroup.savedNameServerGroup)
 
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
+    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
     const [nsGroupToAction, setNsGroupToAction] = useState(null as NameserverGroupDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
     const [optionAllEnable, setOptionAllEnable] = useState('enabled');
@@ -308,11 +308,11 @@ export const Nameservers = () => {
         }
     }, [savedNSGroup])
 
-    const onPopoverVisibleChange = () => {
+    const onPopoverVisibleChange = (b:boolean) => {
         if (updateNameServerGroupVisible) {
             setGroupPopupVisible(false)
         } else {
-            setGroupPopupVisible(undefined)
+            setGroupPopupVisible(b)
         }
     }
 

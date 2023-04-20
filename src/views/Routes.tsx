@@ -77,7 +77,7 @@ export const Routes = () => {
     const [routeToAction, setRouteToAction] = useState(null as RouteDataTable | null);
     const [groupedDataTable, setGroupedDataTable] = useState([] as GroupedDataTable[]);
     const [expandRowsOnClick, setExpandRowsOnClick] = useState(true)
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
+    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
 
     const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
     const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
@@ -298,11 +298,11 @@ export const Routes = () => {
         });
     }
 
-    const onPopoverVisibleChange = () => {
+    const onPopoverVisibleChange = (b:boolean) => {
         if (setupNewRouteVisible) {
             setGroupPopupVisible(false)
         } else {
-            setGroupPopupVisible(undefined)
+            setGroupPopupVisible(b)
         }
     }
 

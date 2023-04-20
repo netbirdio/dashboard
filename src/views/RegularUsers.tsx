@@ -53,7 +53,7 @@ export const RegularUsers = () => {
     const updateUserDrawerVisible = useSelector((state: RootState) => state.user.updateUserDrawerVisible)
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
 
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
+    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
     const [userToAction, setUserToAction] = useState(null as UserDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
     const [dataTable, setDataTable] = useState([] as UserDataTable[]);
@@ -217,7 +217,7 @@ export const RegularUsers = () => {
         if (updateUserDrawerVisible) {
             setGroupPopupVisible(false)
         } else {
-            setGroupPopupVisible(undefined)
+            setGroupPopupVisible(b)
         }
     }
 

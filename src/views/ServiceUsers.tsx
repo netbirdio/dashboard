@@ -50,7 +50,7 @@ export const ServiceUsers = () => {
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
     const deletedUser = useSelector((state: RootState) => state.user.deletedUser)
 
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
+    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
     const [confirmModal, confirmModalContextHolder] = Modal.useModal();
     const [textToSearch, setTextToSearch] = useState('');
     const [dataTable, setDataTable] = useState([] as UserDataTable[]);
@@ -139,7 +139,7 @@ export const ServiceUsers = () => {
         if (updateUserDrawerVisible) {
             setGroupPopupVisible(false)
         } else {
-            setGroupPopupVisible(undefined)
+            setGroupPopupVisible(b)
         }
     }
 

@@ -75,7 +75,7 @@ export const AccessControl = () => {
     const [ruleToAction, setRuleToAction] = useState(null as RuleDataTable | null);
     const [groupsToShow, setGroupsToShow] = useState({} as GroupsToShow)
     const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible);
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
+    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
 
 
     const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
@@ -307,7 +307,7 @@ export const AccessControl = () => {
         if (setupNewRuleVisible) {
             setGroupPopupVisible(false)
         } else {
-            setGroupPopupVisible(undefined)
+            setGroupPopupVisible(b)
         }
     }
 

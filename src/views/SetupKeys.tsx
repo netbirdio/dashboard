@@ -258,7 +258,7 @@ export const SetupKeys = () => {
         if (setupNewKeyVisible) {
             setGroupPopupVisible(false)
         } else {
-            setGroupPopupVisible(undefined)
+            setGroupPopupVisible(b)
         }
     }
 
