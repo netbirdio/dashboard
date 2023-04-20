@@ -77,7 +77,7 @@ export const Routes = () => {
     const [routeToAction, setRouteToAction] = useState(null as RouteDataTable | null);
     const [groupedDataTable, setGroupedDataTable] = useState([] as GroupedDataTable[]);
     const [expandRowsOnClick, setExpandRowsOnClick] = useState(true)
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
+    const [groupPopupVisible, setGroupPopupVisible] = useState("")
 
     const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
     const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
@@ -298,11 +298,15 @@ export const Routes = () => {
         });
     }
 
-    const onPopoverVisibleChange = (b:boolean) => {
+    const onPopoverVisibleChange = (b:boolean, key: string) => {
         if (setupNewRouteVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         } else {
-            setGroupPopupVisible(b)
+            if(b) {
+                setGroupPopupVisible(key)
+            } else {
+                setGroupPopupVisible("")
+            }
         }
     }
 
@@ -360,8 +364,8 @@ export const Routes = () => {
         return (
             <Popover placement={popoverPlacement as TooltipPlacement}
                      key={userToAction.id}
-                     onOpenChange={onPopoverVisibleChange}
-                     open={groupPopupVisible}
+                     onOpenChange={(b: boolean) => onPopoverVisibleChange(b, userToAction.key)}
+                     open={groupPopupVisible === userToAction.key}
                      content={mainContent}
                      title={null}>
                 {btn}

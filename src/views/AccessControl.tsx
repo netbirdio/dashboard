@@ -75,7 +75,7 @@ export const AccessControl = () => {
     const [ruleToAction, setRuleToAction] = useState(null as RuleDataTable | null);
     const [groupsToShow, setGroupsToShow] = useState({} as GroupsToShow)
     const setupNewRuleVisible = useSelector((state: RootState) => state.rule.setupNewRuleVisible);
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
+    const [groupPopupVisible, setGroupPopupVisible] = useState("")
 
 
     const optionsAllEnabled = [{label: 'Enabled', value: 'enabled'}, {label: 'All', value: 'all'}]
@@ -299,15 +299,19 @@ export const AccessControl = () => {
 
     useEffect(() => {
         if (setupNewRuleVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         }
     }, [setupNewRuleVisible])
 
-    const onPopoverVisibleChange = (b: boolean) => {
+    const onPopoverVisibleChange = (b: boolean, key: string) => {
         if (setupNewRuleVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         } else {
-            setGroupPopupVisible(b)
+            if (b) {
+                setGroupPopupVisible(key)
+            } else {
+                setGroupPopupVisible("")
+            }
         }
     }
 
@@ -330,8 +334,8 @@ export const AccessControl = () => {
         const mainContent = (<Space direction="vertical">{content}</Space>)
         return (
             <Popover
-                onOpenChange={onPopoverVisibleChange}
-                open={groupPopupVisible}
+                onOpenChange={(b: boolean) => onPopoverVisibleChange(b, rule.key)}
+                open={groupPopupVisible === rule.key}
                 content={mainContent}
                 title={null}>
                 <Button type="link" onClick={() => setRuleAndView(rule)}>{label}</Button>

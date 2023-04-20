@@ -74,7 +74,7 @@ export const Peers = () => {
     const [optionOnOff, setOptionOnOff] = useState('all');
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
+    const [groupPopupVisible, setGroupPopupVisible] = useState("")
     const [showTutorial, setShowTutorial] = useState(false)
     const [hadFirstRun, setHadFirstRun] = useState(true)
     const [confirmModal, confirmModalContextHolder] = Modal.useModal();
@@ -346,15 +346,19 @@ export const Peers = () => {
 
     useEffect(() => {
         if (updateGroupsVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         }
     }, [updateGroupsVisible])
 
-    const onPopoverVisibleChange = (b: boolean) => {
+    const onPopoverVisibleChange = (b: boolean, key: string) => {
         if (updateGroupsVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         } else {
-            setGroupPopupVisible(b)
+            if(b) {
+                setGroupPopupVisible(key)
+            } else {
+                setGroupPopupVisible("")
+            }
         }
     }
 
@@ -392,7 +396,7 @@ export const Peers = () => {
 
         return (
             <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent}
-                     onOpenChange={onPopoverVisibleChange} open={groupPopupVisible}
+                     onOpenChange={(b:boolean) => onPopoverVisibleChange(b, peerToAction.key)} open={groupPopupVisible === peerToAction.key}
                      title={null}>
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>

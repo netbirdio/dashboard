@@ -50,7 +50,6 @@ export const ServiceUsers = () => {
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
     const deletedUser = useSelector((state: RootState) => state.user.deletedUser)
 
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
     const [confirmModal, confirmModalContextHolder] = Modal.useModal();
     const [textToSearch, setTextToSearch] = useState('');
     const [dataTable, setDataTable] = useState([] as UserDataTable[]);
@@ -94,12 +93,6 @@ export const ServiceUsers = () => {
         dispatch(userActions.setAddServiceUserPopupVisible(true));
     }
 
-    useEffect(() => {
-        if (updateUserDrawerVisible) {
-            setGroupPopupVisible(false)
-        }
-    }, [updateUserDrawerVisible])
-
     const createKey = 'saving';
     useEffect(() => {
         if (savedUser.loading) {
@@ -134,14 +127,6 @@ export const ServiceUsers = () => {
             dispatch(userActions.resetSavedUser(null))
         }
     }, [savedUser])
-
-    const onPopoverVisibleChange = (b: boolean) => {
-        if (updateUserDrawerVisible) {
-            setGroupPopupVisible(false)
-        } else {
-            setGroupPopupVisible(b)
-        }
-    }
 
     const handleEditUser = (user: UserDataTable) => {
         dispatch(userActions.setUser({

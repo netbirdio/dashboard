@@ -53,7 +53,7 @@ export const RegularUsers = () => {
     const updateUserDrawerVisible = useSelector((state: RootState) => state.user.updateUserDrawerVisible)
     const savedUser = useSelector((state: RootState) => state.user.savedUser)
 
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
+    const [groupPopupVisible, setGroupPopupVisible] = useState("");
     const [userToAction, setUserToAction] = useState(null as UserDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
     const [dataTable, setDataTable] = useState([] as UserDataTable[]);
@@ -163,8 +163,8 @@ export const RegularUsers = () => {
         return (
             <Popover placement={popoverPlacement as TooltipPlacement}
                      key={userToAction.id}
-                     onOpenChange={onPopoverVisibleChange}
-                     open={groupPopupVisible}
+                     onOpenChange={(b: boolean) => onPopoverVisibleChange(b, userToAction.key)}
+                     open={groupPopupVisible === userToAction.key}
                      content={mainContent}
                      title={null}>
                 {btn}
@@ -174,7 +174,7 @@ export const RegularUsers = () => {
 
     useEffect(() => {
         if (updateUserDrawerVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         }
     }, [updateUserDrawerVisible])
 
@@ -213,11 +213,15 @@ export const RegularUsers = () => {
         }
     }, [savedUser])
 
-    const onPopoverVisibleChange = (b: boolean) => {
+    const onPopoverVisibleChange = (b: boolean, key: string) => {
         if (updateUserDrawerVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         } else {
-            setGroupPopupVisible(b)
+            if (b) {
+                setGroupPopupVisible(key)
+            } else {
+                setGroupPopupVisible("")
+            }
         }
     }
 

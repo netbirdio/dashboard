@@ -61,7 +61,7 @@ export const Nameservers = () => {
     const updateNameServerGroupVisible = useSelector((state: RootState) => state.nameserverGroup.setupNewNameServerGroupVisible)
     const savedNSGroup = useSelector((state: RootState) => state.nameserverGroup.savedNameServerGroup)
 
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false)
+    const [groupPopupVisible, setGroupPopupVisible] = useState("")
     const [nsGroupToAction, setNsGroupToAction] = useState(null as NameserverGroupDataTable | null);
     const [textToSearch, setTextToSearch] = useState('');
     const [optionAllEnable, setOptionAllEnable] = useState('enabled');
@@ -215,8 +215,8 @@ export const Nameservers = () => {
         return (
             <Popover placement={popoverPlacement as TooltipPlacement}
                      key={userToAction.id}
-                     onOpenChange={onPopoverVisibleChange}
-                     open={groupPopupVisible}
+                     onOpenChange={(b: boolean) => onPopoverVisibleChange(b, userToAction.key)}
+                     open={groupPopupVisible === userToAction.key}
                      content={mainContent}
                      title={null}>
                 {btn}
@@ -258,8 +258,8 @@ export const Nameservers = () => {
         return (
             <Popover placement={popoverPlacement as TooltipPlacement}
                      key={userToAction.id}
-                     onOpenChange={onPopoverVisibleChange}
-                     open={groupPopupVisible}
+                     onOpenChange={(b: boolean) => onPopoverVisibleChange(b, userToAction.key)}
+                     open={groupPopupVisible === userToAction.key}
                      content={mainContent}
                      title={null}>
                 {btn}
@@ -269,7 +269,7 @@ export const Nameservers = () => {
 
     useEffect(() => {
         if (updateNameServerGroupVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         }
     }, [updateNameServerGroupVisible])
 
@@ -308,11 +308,15 @@ export const Nameservers = () => {
         }
     }, [savedNSGroup])
 
-    const onPopoverVisibleChange = (b:boolean) => {
+    const onPopoverVisibleChange = (b:boolean, key: string) => {
         if (updateNameServerGroupVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         } else {
-            setGroupPopupVisible(b)
+            if (b) {
+                setGroupPopupVisible(key)
+            } else {
+                setGroupPopupVisible("")
+            }
         }
     }
 
