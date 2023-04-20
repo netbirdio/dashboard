@@ -215,8 +215,8 @@ export const Nameservers = () => {
         return (
             <Popover placement={popoverPlacement as TooltipPlacement}
                      key={userToAction.id}
-                     onOpenChange={(b: boolean) => onPopoverVisibleChange(b, userToAction.key)}
-                     open={groupPopupVisible === userToAction.key}
+                     onOpenChange={(b: boolean) => onPopoverVisibleChange(b, userToAction.key+"group")}
+                     open={groupPopupVisible === userToAction.key+"group"}
                      content={mainContent}
                      title={null}>
                 {btn}
@@ -258,8 +258,8 @@ export const Nameservers = () => {
         return (
             <Popover placement={popoverPlacement as TooltipPlacement}
                      key={userToAction.id}
-                     onOpenChange={(b: boolean) => onPopoverVisibleChange(b, userToAction.key)}
-                     open={groupPopupVisible === userToAction.key}
+                     onOpenChange={(b: boolean) => onPopoverVisibleChange(b, userToAction.key+"domain")}
+                     open={groupPopupVisible === userToAction.key+"domain"}
                      content={mainContent}
                      title={null}>
                 {btn}
