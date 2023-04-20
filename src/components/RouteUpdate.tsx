@@ -123,7 +123,7 @@ const RouteUpdate = () => {
     peers.forEach((p) => {
         let os: string
         os = p.os
-        if (!os.toLowerCase().startsWith("darwin") && !os.toLowerCase().startsWith("windows")) {
+        if (!os.toLowerCase().startsWith("darwin") && !os.toLowerCase().startsWith("windows") && route && !routes.filter(r => r.network_id === route.network_id).find(r => r.peer === p.id)) {
             options?.push({
                 label: peerToPeerIP(p.name, p.ip),
                 value: peerToPeerIP(p.name, p.ip),
@@ -135,10 +135,14 @@ const RouteUpdate = () => {
     const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
         let peerIDList = inputRoute.peer.split(routePeerSeparator)
         let peerID: string
-        if (peerIDList[1]) {
-            peerID = peerIPToID[peerIDList[1]]
+        if (peerIDList.length === 1) {
+            peerID = inputRoute.peer
         } else {
-            peerID = peerIPToID[peerNameToIP[inputRoute.peer]]
+            if (peerIDList[1]) {
+                peerID = peerIPToID[peerIDList[1]]
+            } else {
+                peerID = peerIPToID[peerNameToIP[inputRoute.peer]]
+            }
         }
 
         let [ existingGroups, groupsToCreate ] = getExistingAndToCreateGroupsLists(inputRoute.groups)
