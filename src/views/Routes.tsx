@@ -310,7 +310,7 @@ export const Routes = () => {
         routeGroup.groupedRoutes.forEach((record) => {
             const route = {
                 ...record,
-                peer: peerNameToIP[record.peer],
+                peer: record.peer,
                 masquerade: checked,
                 groupsToCreate: []
             } as RouteToSave
