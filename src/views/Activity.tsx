@@ -93,9 +93,9 @@ export const Activity = () => {
             case "dns.setting.disabled.management.group.delete":
                 return getActivityRow("Group", event.meta.group,"removed from disabled management DNS setting")
             case "personal.access.token.create":
-                return getActivityRow("Personal Access Token", event.meta.name,"added to user")
+                return getActivityRow("Personal access token", event.meta.name,"added to user")
             case "personal.access.token.delete":
-                return getActivityRow("Personal Access Token", event.meta.name,"removed from user")
+                return getActivityRow("Personal access token", event.meta.name,"removed from user")
         }
         return body
     }

@@ -167,7 +167,8 @@ export const ServiceUsers = () => {
             {!user && <Container style={{padding: "0px"}}>
                 <Row>
                     <Col span={24}>
-                        <Paragraph>Manage service users and their permissions.</Paragraph>
+                        <Paragraph style={{maxWidth: "70%"}}>Service users are non-login users that are not associated with any specific person. Network administrators {'\n'}
+                            usually use them to create tokens for API access to avoid losing automated access to critical systems when employees leave the company.</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>

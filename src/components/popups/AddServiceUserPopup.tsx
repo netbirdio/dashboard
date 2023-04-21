@@ -221,7 +221,7 @@ const AddServiceUserPopup = () => {
                         <Row gutter={16}>
                             <Col span={24}>
                                 <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "-10px"}}>Name</Paragraph>
-                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Set a name to identify the user easily</Paragraph>
+                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Set a name to easily identify the user</Paragraph>
                                 <Form.Item
                                     name="name"
                                     rules={[{
@@ -239,7 +239,7 @@ const AddServiceUserPopup = () => {
                             </Col>
                             <Col span={24}>
                                 <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "0px"}}>Role</Paragraph>
-                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Set a role for the user to assign permissions</Paragraph>
+                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Set a role for the user to assign dashboard access permissions</Paragraph>
                                 <Form.Item
                                     name="role"
                                     rules={[{
