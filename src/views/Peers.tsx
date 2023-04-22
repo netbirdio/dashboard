@@ -40,8 +40,9 @@ import {useGetTokenSilently} from "../utils/token";
 import {actions as userActions} from "../store/user";
 import ButtonCopyMessage from "../components/ButtonCopyMessage";
 import {usePageSizeHelpers} from "../utils/pageSize";
-import AddPeerPopup from "../components/addpeer/AddPeerPopup";
+import AddPeerPopup from "../components/popups/addpeer/addpeer/AddPeerPopup";
 import {getLocalItem, setLocalItem, StorageKey} from "../services/local";
+import {useOidcUser} from "@axa-fr/react-oidc";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -66,12 +67,14 @@ export const Peers = () => {
     const updateGroupsVisible = useSelector((state: RootState) => state.peer.updateGroupsVisible)
     const users = useSelector((state: RootState) => state.user.data);
     const [addPeerModalOpen, setAddPeerModalOpen] = useState(false);
+    const {oidcUser} = useOidcUser();
+
 
     const [textToSearch, setTextToSearch] = useState('');
     const [optionOnOff, setOptionOnOff] = useState('all');
     const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
     const [peerToAction, setPeerToAction] = useState(null as PeerDataTable | null);
-    const [groupPopupVisible, setGroupPopupVisible] = useState(false as boolean | undefined)
+    const [groupPopupVisible, setGroupPopupVisible] = useState("")
     const [showTutorial, setShowTutorial] = useState(false)
     const [hadFirstRun, setHadFirstRun] = useState(true)
     const [confirmModal, confirmModalContextHolder] = Modal.useModal();
@@ -104,11 +107,16 @@ export const Peers = () => {
         })
     }
 
+    const isUserAdmin = (userId: string): boolean => {
+        return users.find(u => u.id === userId)?.role === "admin"
+    }
+
     const refresh = () => {
         dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
         dispatch(peerActions.getPeers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
         dispatch(groupActions.getGroups.request({getAccessTokenSilently: getTokenSilently, payload: null}));
-        dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getTokenSilently, payload: null}));
+        if(oidcUser && isUserAdmin(oidcUser.sub))
+            dispatch(routeActions.getRoutes.request({getAccessTokenSilently: getTokenSilently, payload: null}));
     }
 
     useEffect(() => {
@@ -338,15 +346,19 @@ export const Peers = () => {
 
     useEffect(() => {
         if (updateGroupsVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         }
     }, [updateGroupsVisible])
 
-    const onPopoverVisibleChange = (b: boolean) => {
+    const onPopoverVisibleChange = (b: boolean, key: string) => {
         if (updateGroupsVisible) {
-            setGroupPopupVisible(false)
+            setGroupPopupVisible("")
         } else {
-            setGroupPopupVisible(undefined)
+            if(b) {
+                setGroupPopupVisible(key)
+            } else {
+                setGroupPopupVisible("")
+            }
         }
     }
 
@@ -376,6 +388,12 @@ export const Peers = () => {
                 </div>
             )
         })
+
+        let btn = <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
+        if (!content || content!.length < 1) {
+            return btn
+        }
+
         const mainContent = (<Space direction="vertical">{content}</Space>)
         let popoverPlacement = "top"
         if (content && content.length > 5) {
@@ -384,7 +402,7 @@ export const Peers = () => {
 
         return (
             <Popover placement={popoverPlacement as TooltipPlacement} key={peerToAction.key} content={mainContent}
-                     onOpenChange={onPopoverVisibleChange} open={groupPopupVisible}
+                     onOpenChange={(b:boolean) => onPopoverVisibleChange(b, peerToAction.key)} open={groupPopupVisible === peerToAction.key}
                      title={null}>
                 <Button type="link" onClick={() => setUpdateGroupsVisible(peerToAction, true)}>{label}</Button>
             </Popover>

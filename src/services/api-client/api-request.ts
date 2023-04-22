@@ -20,8 +20,10 @@ async function apiRequest<T>(params: ApiRequestParams): Promise<ApiResponse<T>> 
     statusCode: -1
   };
 
+  let queryParams = (params.data as any).queryParams ? (params.data as any).queryParams : {};
+
   try {
-    response = await axios.request({url, data, method: params.method, headers: builtHeader as any});
+    response = await axios.request({url, data, method: params.method, headers: builtHeader as any, params: queryParams});
   } catch (err: any) {
     error = <ApiError>{
       code: err ? err.code : '-1',

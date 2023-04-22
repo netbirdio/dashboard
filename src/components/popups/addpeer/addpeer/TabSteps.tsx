@@ -7,7 +7,7 @@ import {
     Space,
     Steps, Button, Popover, StepsProps
 } from "antd";
-import {copyToClipboard} from "../../utils/common";
+import {copyToClipboard} from "../../../../utils/common";
 import {CheckOutlined, CopyOutlined} from "@ant-design/icons";
 import React, {useEffect, useState} from "react";
 const { Step } = Steps;

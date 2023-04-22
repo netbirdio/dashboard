@@ -14,6 +14,7 @@ type StateType = Readonly<{
     revokedPersonalAccessToken: ChangeResponse<string | null>;
     savedPersonalAccessToken: CreateResponse<PersonalAccessTokenGenerated | null>;
     newPersonalAccessTokenVisible: boolean
+    newPersonalAccessTokenPopupVisible: boolean
 }>;
 
 const initialState: StateType = {
@@ -43,12 +44,14 @@ const initialState: StateType = {
         error: null,
         data : null
     },
-    newPersonalAccessTokenVisible: false
+    newPersonalAccessTokenVisible: false,
+    newPersonalAccessTokenPopupVisible: false
 };
 
 const data = createReducer<PersonalAccessToken[], ActionTypes>(initialState.data as PersonalAccessToken[])
     .handleAction(actions.getPersonalAccessTokens.success,(_, action) => action.payload)
-    .handleAction(actions.getPersonalAccessTokens.failure, () => []);
+    .handleAction(actions.getPersonalAccessTokens.failure, () => [])
+    .handleAction(actions.resetPersonalAccessTokens, () => []);
 
 const personalAccessToken = createReducer<PersonalAccessTokenCreate, ActionTypes>(initialState.personalAccessToken as PersonalAccessTokenCreate)
     .handleAction(actions.setPersonalAccessToken, (store, action) => action.payload);
@@ -85,6 +88,9 @@ const savedPersonalAccessToken = createReducer<CreateResponse<PersonalAccessToke
 const newPersonalAccessTokenVisible = createReducer<boolean, ActionTypes>(initialState.newPersonalAccessTokenVisible)
     .handleAction(actions.setNewPersonalAccessTokenVisible, (store, action) => action.payload)
 
+const newPersonalAccessTokenPopupVisible = createReducer<boolean, ActionTypes>(initialState.newPersonalAccessTokenPopupVisible)
+    .handleAction(actions.setNewPersonalAccessTokenPopupVisible, (store, action) => action.payload)
+
 export default combineReducers({
     data,
     personalAccessToken: personalAccessToken,
@@ -93,5 +99,6 @@ export default combineReducers({
     saving,
     deletedPersonalAccessToken: deletedPersonalAccessToken,
     savedPersonalAccessToken: savedPersonalAccessToken,
-    newPersonalAccessTokenVisible: newPersonalAccessTokenVisible
+    newPersonalAccessTokenVisible: newPersonalAccessTokenVisible,
+    newPersonalAccessTokenPopupVisible: newPersonalAccessTokenPopupVisible
 });

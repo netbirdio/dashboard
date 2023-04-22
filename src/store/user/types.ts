@@ -6,6 +6,7 @@ export interface User {
     status: string;
     auto_groups: string[];
     is_current?: boolean;
+    is_service_user?: boolean;
 }
 
 export interface FormUser extends User {

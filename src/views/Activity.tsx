@@ -8,13 +8,11 @@ import {Event} from "../store/event/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
 import {useGetTokenSilently} from "../utils/token";
-import UserUpdate from "../components/UserUpdate";
 import {useOidcUser} from "@axa-fr/react-oidc";
 import {capitalize, formatDateTime} from "../utils/common";
 import {User} from "../store/user/types";
 import {usePageSizeHelpers} from "../utils/pageSize";
 import {QuestionCircleFilled} from "@ant-design/icons";
-import {Link} from "react-router-dom";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -71,29 +69,33 @@ export const Activity = () => {
         setDataTable(transformDataTable(data))
     }
 
-    const getActivityRow = (group:string,text:string) => {
-        return <Row> <Text>Group <Text type="secondary">{group}</Text> {text}</Text> </Row>
+    const getActivityRow = (objectType: string, name:string,text:string) => {
+        return <Row> <Text>{objectType} <Text type="secondary">{name}</Text> {text}</Text> </Row>
     }
 
     const renderActivity = (event: EventDataTable) => {
         let body = <Text>{event.activity}</Text>
         switch (event.activity_code) {
             case "peer.group.add":
-                return getActivityRow(event.meta.group,"added to peer")
+                return getActivityRow("Group", event.meta.group,"added to peer")
             case "peer.group.delete":
-                return getActivityRow(event.meta.group,"removed from peer")
+                return getActivityRow("Group", event.meta.group,"removed from peer")
             case "user.group.add":
-                return getActivityRow(event.meta.group,"added to user")
+                return getActivityRow("Group", event.meta.group,"added to user")
             case "user.group.delete":
-                return getActivityRow(event.meta.group,"removed from user")
+                return getActivityRow("Group", event.meta.group,"removed from user")
             case "setupkey.group.add":
-                return getActivityRow(event.meta.group,"added to setup key")
+                return getActivityRow("Group", event.meta.group,"added to setup key")
             case "setupkey.group.delete":
-                return getActivityRow(event.meta.group,"removed setup key")
+                return getActivityRow("Group", event.meta.group,"removed setup key")
             case "dns.setting.disabled.management.group.add":
-                return getActivityRow(event.meta.group,"added to disabled management DNS setting")
+                return getActivityRow("Group", event.meta.group,"added to disabled management DNS setting")
             case "dns.setting.disabled.management.group.delete":
-                return getActivityRow(event.meta.group,"removed from disabled management DNS setting")
+                return getActivityRow("Group", event.meta.group,"removed from disabled management DNS setting")
+            case "personal.access.token.create":
+                return getActivityRow("Personal access token", event.meta.name,"added to user")
+            case "personal.access.token.delete":
+                return getActivityRow("Personal access token", event.meta.name,"removed from user")
         }
         return body
     }
@@ -114,7 +116,7 @@ export const Activity = () => {
                 if (user) {
                     body = <span style={{height: "auto", whiteSpace: "normal", textAlign: "left"}}>
                                     <Row> <Text>{user.name ? user.name : user.id}</Text> </Row>
-                                    <Row> <Text type="secondary">{user.email ? user.email : "User"}</Text> </Row>
+                                    <Row> <Text type="secondary">{user.email ? user.email : user.is_service_user ? "Service User" : "User"}</Text> </Row>
                             </span>
                     return body
                 }
@@ -179,7 +181,10 @@ export const Activity = () => {
             case "user.group.delete":
             case "user.role.update":
                 if (user) {
-                    return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
+                    return renderMultiRowSpan((user.name ? user.name : user.id),user.email ? user.email : user.is_service_user ? "Service User" : "User")
+                }
+                if (event.meta.user_name) {
+                    return renderMultiRowSpan(event.meta.user_name, event.meta.is_service_user ? "Service User" : "User")
                 }
                 return "-"
             case "setupkey.group.add":
@@ -197,9 +202,15 @@ export const Activity = () => {
             case "personal.access.token.create":
             case "personal.access.token.delete":
                 if(user) {
-                    return renderMultiRowSpan(event.meta.name, user.name ? user.name : event.target_id)
+                    return renderMultiRowSpan((user.name ? user.name : user.id), user.email ? user.email : user.is_service_user ? "Service User" : "User")
+                }
+                if (event.meta.user_name) {
+                    return renderMultiRowSpan(event.meta.user_name,event.meta.is_service_user ? "Service User" : "User")
                 }
                 return "-"
+            case "service.user.create":
+            case "service.user.delete":
+                return renderMultiRowSpan(event.meta.name,"Service User")
             case "user.invite":
                 if (user) {
                     return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
@@ -291,7 +302,6 @@ export const Activity = () => {
                     </Col>
                 </Row>
             </Container>
-            <UserUpdate/>
         </>
     )
 }
