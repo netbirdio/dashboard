@@ -77,6 +77,7 @@ function App() {
                     colorPrimary: "#1890ff",
                     fontFamily: "Arial"
                 },
+                components: {Badge: {fontSizeSM: 20}},
             }}
         >
             <Provider store={store}>

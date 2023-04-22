@@ -12,6 +12,7 @@ import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as userActions} from "../store/user";
 import {useGetTokenSilently} from "../utils/token";
+import {actions as personalAccessTokenActions} from "../store/personal-access-token";
 
 const {useBreakpoint} = Grid;
 
@@ -47,10 +48,24 @@ const Navbar = () => {
     const userEmailKey = 'user-email'
     const userLogoutKey = 'user-logout'
     const userDividerKey = 'user-divider'
-    const adminOnlyTabs = ["/setup-keys", "/acls", "/routes", "/dns", "/activity"]
+    const adminOnlyTabs = ["/setup-keys", "/acls", "/routes", "/dns", "/activity", "/settings"]
     const [menuItems, setMenuItems] = useState(items)
     const logoutWithRedirect = () =>
         logout("/", {client_id: config.clientId});
+
+    const openPersonalUserPage = () => {
+        dispatch(userActions.setUser({
+            id: currentUser.id,
+            email: currentUser.email,
+            role: currentUser.role,
+            auto_groups: currentUser.auto_groups ? currentUser.auto_groups : [],
+            name: currentUser.name,
+            is_current: currentUser.is_current,
+            is_service_user: currentUser.is_service_user,
+        } as User));
+        dispatch(userActions.setUserTabOpen("Users"));
+        dispatch(userActions.setEditUserPopupVisible(true));
+    }
 
     useEffect(() => {
         const fs = items.filter(m => showTab(m?.key?.toString(), currentUser) && m?.key !== userEmailKey && m?.key !== userLogoutKey && m?.key !== userDividerKey)
@@ -114,7 +129,7 @@ const Navbar = () => {
         <Menu
             items={[
                 {
-                    label: <>{user?.email}</>,
+                    label: (<Link to="/users" onClick={openPersonalUserPage}>{user?.email}</Link>),
                     key: '0',
                 },
                 {
@@ -148,6 +163,10 @@ const Navbar = () => {
                 <Col flex="1 1 auto">
                     <div>
                         <Menu mode="horizontal" selectable={true} selectedKeys={[location.pathname]}
+                              onSelect={(e) => {
+                                  dispatch(userActions.setUser(null as unknown as User));
+                                  dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null))
+                              }}
                               defaultSelectedKeys={[location.pathname]} items={menuItems}/>
                     </div>
                 </Col>

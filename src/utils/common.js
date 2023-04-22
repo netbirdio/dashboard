@@ -77,6 +77,15 @@ function getFormattedDate(date, preformattedDate = false, hideYear = false) {
     return `${ day }. ${ month } ${ year }`;
 }
 
+export const fullDate = (dateParam) => {
+    if (!dateParam) {
+        return null;
+    }
+
+    const date = typeof dateParam === 'object' ? dateParam : new Date(dateParam);
+    return getFormattedDate(date);
+}
+
 export const timeAgo = (dateParam) => {
     if (!dateParam) {
         return null;

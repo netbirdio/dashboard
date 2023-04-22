@@ -261,7 +261,7 @@ const SetupKeyNew = () => {
     }
 
     const groupsChanged = (): boolean => {
-        if (formSetupKey.autoGroupNames.length != setupKey.auto_groups.length) {
+        if (setupKey && setupKey.auto_groups && formSetupKey.autoGroupNames.length != setupKey.auto_groups.length) {
             return true
         }
         const formGroupIds = groups?.filter(g => formSetupKey.autoGroupNames.includes(g.name)).map(g => g.id || '') || []

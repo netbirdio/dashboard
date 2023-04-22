@@ -1,6 +1,6 @@
 import {ActionType, createAction, createAsyncAction} from 'typesafe-actions';
 import {User, UserToSave} from './types';
-import {ApiError, CreateResponse, RequestPayload} from '../../services/api-client/types';
+import {ApiError, CreateResponse, DeleteResponse, RequestPayload} from '../../services/api-client/types';
 
 const actions = {
   getUsers: createAsyncAction(
@@ -9,10 +9,38 @@ const actions = {
       'GET_USERS_FAILURE',
   )<RequestPayload<null>, User[], ApiError>(),
 
+  getServiceUsers: createAsyncAction(
+      'GET_SERVICE_USERS_REQUEST',
+      'GET_SERVICE_USERS_SUCCESS',
+      'GET_SERVICE_USERS_FAILURE',
+  )<RequestPayload<null>, User[], ApiError>(),
+
+  getRegularUsers: createAsyncAction(
+      'GET_REGULAR_USERS_REQUEST',
+      'GET_REGULAR_USERS_SUCCESS',
+      'GET_REGULAR_USERS_FAILURE',
+  )<RequestPayload<null>, User[], ApiError>(),
+
+  deleteUser: createAsyncAction(
+        'DELETE_USER_REQUEST',
+       'DELETE_USER_SUCCESS',
+         'DELETE_USER_FAILURE',
+    )<RequestPayload<string>, DeleteResponse<string | null>, DeleteResponse<string | null>>(),
+  setDeletedUser: createAction('SET_DELETED_USER')<DeleteResponse<string | null>>(),
+  resetDeletedUser: createAction('RESET_DELETED_USER')<null>(),
+
   // used to set a user object that was picked in the user table in the UserUpdate drawer (user update window on right-side).
   setUser: createAction('SET_USER')<User>(),
   // used to make the UserUpdate drawer visible in the UI.
   setUpdateUserDrawerVisible: createAction('SET_UPDATE_USER_VISIBLE')<boolean>(),
+  // used to make the ViewUserPopup visible in the UI.
+  setInviteUserPopupVisible: createAction('SET_INVITE_USER_VISIBLE')<boolean>(),
+  // used to make the EditUserPopup visible in the UI.
+  setEditUserPopupVisible: createAction('SET_EDIT_USER_VISIBLE')<boolean>(),
+  // used to make the AddServiceUserPopup visible in the UI.
+  setAddServiceUserPopupVisible: createAction('SET_ADD_SERVICE_USER_VISIBLE')<boolean>(),
+  // used to remember what tab was open on users page
+  setUserTabOpen: createAction('SET_USER_TAB_OPEN')<string>(),
 
   saveUser: createAsyncAction(
       'SAVE_USER_REQUEST',

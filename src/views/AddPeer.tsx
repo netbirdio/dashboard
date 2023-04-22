@@ -9,10 +9,10 @@ import {
     Tabs
 } from "antd";
 
-import OtherTab from "../components/addpeer/LinuxTab";
-import UbuntuTab from "../components/addpeer/UbuntuTab";
-import MacTab from "../components/addpeer/MacTab";
-import WindowsTab from "../components/addpeer/WindowsTab";
+import OtherTab from "../components/popups/addpeer/addpeer/LinuxTab";
+import UbuntuTab from "../components/popups/addpeer/addpeer/UbuntuTab";
+import MacTab from "../components/popups/addpeer/addpeer/MacTab";
+import WindowsTab from "../components/popups/addpeer/addpeer/WindowsTab";
 const { Title, Paragraph } = Typography;
 const { TabPane } = Tabs;
 
