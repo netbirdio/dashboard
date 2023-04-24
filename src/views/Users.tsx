@@ -15,7 +15,6 @@ export const Users = () => {
     const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
-    const {oidcUser} = useOidcUser();
     const [isAdmin, setIsAdmin] = useState(false);
     const users = useSelector((state: RootState) => state.user.data)
     const user = useSelector((state: RootState) => state.user.user)
@@ -46,13 +45,13 @@ export const Users = () => {
     }, [isAdmin])
 
     useEffect(() => {
-        if(users && oidcUser) {
+        if(users) {
             let currentUser = users.find((user) => user.is_current)
             if(currentUser) {
                 setIsAdmin(currentUser.role === 'admin');
             }
         }
-    }, [users, oidcUser])
+    }, [users])
 
     useEffect(() => {
         dispatch(userActions.getUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}))
