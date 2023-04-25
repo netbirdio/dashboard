@@ -118,7 +118,7 @@ const AccessControlNew = () => {
                 bidirectional: formPolicy.bidirectional,
                 protocol: formPolicy.protocol,
                 ports: formPolicy.ports,
-                action: formPolicy.action,
+                action: 'accept',
             }],
         } as PolicyToSave
     }
@@ -528,18 +528,6 @@ const AccessControlNew = () => {
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
-                                <Form.Item
-                                    name="action"
-                                    label="Action"
-                                >
-                                    <Select
-                                        style={{ width: '100%' }}
-                                        options={actions}
-                                        defaultValue={'accept'}
-                                    />
-                                </Form.Item>
-                            </Col>
-                            <Col span={24}>
                                 <Row wrap={false} gutter={12}>
                                     <Col flex="none">
                                         <FlagFilled />
@@ -547,8 +535,6 @@ const AccessControlNew = () => {
                                     <Col flex="auto">
                                         <Paragraph>
                                             The default behavior is to drop all traffic that doesn't match an Access control rule.
-                                            Rules are enforced in the top-to-bottom order you see in the dashboard,
-                                            with the first match taking precedence over the other rules.
                                         </Paragraph>
                                         <Paragraph>
                                             If you want to enable all peers of the same group to talk to each other -

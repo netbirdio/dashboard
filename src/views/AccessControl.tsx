@@ -54,7 +54,6 @@ interface PolicyDataTable {
     bidirectional: boolean
     protocol: string
     ports: string[]
-    action: string
     sourceCount: number
     sourceLabel: ''
     destinationCount: number
@@ -134,7 +133,6 @@ export const AccessControl = () => {
                 destinationLabel,
                 protocol: policy.rules[0].protocol,
                 ports: policy.rules[0].ports,
-                action: policy.rules[0].action,
             } as PolicyDataTable
         })
     }
@@ -305,7 +303,6 @@ export const AccessControl = () => {
                 bidirectional: policyToAction?.bidirectional,
                 protocol: policyToAction?.protocol,
                 ports: policyToAction?.ports,
-                action: policyToAction?.action,
             }]
         } as Policy))
     }
@@ -327,7 +324,6 @@ export const AccessControl = () => {
                 bidirectional: p.bidirectional,
                 protocol: p.protocol,
                 ports: p.ports,
-                action: p.action,
             }]
         } as Policy))
     }
@@ -505,15 +501,6 @@ export const AccessControl = () => {
                                     <Column title="Ports" dataIndex="ports"
                                         render={(text, record: PolicyDataTable, index) => {
                                             return renderPorts(record.ports)
-                                        }}
-                                    />
-                                    <Column title="Action" dataIndex="action"
-                                        render={(text, record: PolicyDataTable, index) => {
-                                            const s = { minWidth: 50, textAlign: "center" } as React.CSSProperties
-                                            if (!text || text === "accept") {
-                                                return <Tag color="green" style={s}>accept</Tag>
-                                            }
-                                            return <Tag color="red" style={s}>drop</Tag>
                                         }}
                                     />
                                     <Column title="" align="center"
