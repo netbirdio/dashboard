@@ -467,10 +467,9 @@ export const AccessControl = () => {
                                             </Tooltip>
                                         }}
                                     />
-                                    <Column title="Status" dataIndex="disabled"
+                                    <Column title="Status" dataIndex="enabled"
                                         render={(text: Boolean, record: PolicyDataTable, index) => {
-                                            return text ? <Tag color="red">disabled</Tag> :
-                                                <Tag color="green">enabled</Tag>
+                                            return text ? <Tag color="green">enabled</Tag> : <Tag color="red">disabled</Tag>
                                         }}
                                     />
                                     <Column title="Sources" dataIndex="sourceLabel"

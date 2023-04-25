@@ -70,7 +70,7 @@ const AccessControlNew = () => {
     const inputNameRef = useRef<any>(null)
     const inputDescriptionRef = useRef<any>(null)
 
-    const optionsDisabledEnabled = [{ label: 'Enabled', value: false }, { label: 'Disabled', value: true }]
+    const optionsStatusEnabled = [{ label: 'Enabled', value: true }, { label: 'Disabled', value: false }]
 
     useEffect(() => { if (editName) inputNameRef.current!.focus({ cursor: 'end' }) }, [editName])
     useEffect(() => { if (editDescription) inputDescriptionRef.current!.focus({ cursor: 'end' }) }, [editDescription])
@@ -200,7 +200,7 @@ const AccessControlNew = () => {
     const handleChangeDisabled = ({ target: { value } }: RadioChangeEvent) => {
         setFormPolicy({
             ...formPolicy,
-            enabled: !value
+            enabled: value
         })
     }
 
@@ -319,6 +319,18 @@ const AccessControlNew = () => {
         return Promise.resolve()
     }
 
+    const selectPortValidator = (_: RuleObject, value: string[], setErr: (error?: string) => void) => {
+        if (value) {
+            value.forEach(function(v: string) {
+                let p = Number(v)
+                if (Number.isNaN(p) || p < 1 || p > 65535) {
+                    setErr("Port value must be in 1..65535 range")
+                }
+            })
+        }
+        setErr()
+    }
+
     return (
         <>
             {policy &&
@@ -405,12 +417,12 @@ const AccessControlNew = () => {
                             </Col>
                             <Col span={24}>
                                 <Form.Item
-                                    name="disabled"
+                                    name="enabled"
                                     label="Status"
                                 >
 
                                     <Radio.Group
-                                        options={optionsDisabledEnabled}
+                                        options={optionsStatusEnabled}
                                         onChange={handleChangeDisabled}
                                         optionType="button"
                                         buttonStyle="solid"
@@ -489,6 +501,7 @@ const AccessControlNew = () => {
                                 <Form.Item
                                     name="ports"
                                     label="Ports"
+                                    rules={[{ validator: selectPortValidator, required: false }]}
                                 >
                                     <Select
                                         mode="tags" style={{ width: '100%' }}
@@ -533,10 +546,9 @@ const AccessControlNew = () => {
                                     </Col>
                                     <Col flex="auto">
                                         <Paragraph>
-                                            At the moment access rules are bi-directional by default, this means both
-                                            source and destination can talk to each-other in both directions. However
-                                            destination peers will not be able to communicate with each other, nor will
-                                            the source peers.
+                                            The default behavior is to drop all traffic that doesn't match an Access control rule.
+                                            Rules are enforced in the top-to-bottom order you see in the dashboard,
+                                            with the first match taking precedence over the other rules.
                                         </Paragraph>
                                         <Paragraph>
                                             If you want to enable all peers of the same group to talk to each other -
