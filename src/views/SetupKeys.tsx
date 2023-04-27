@@ -36,11 +36,9 @@ import { Group } from "../store/group/types";
 import { TooltipPlacement } from "antd/es/tooltip";
 import { useGetTokenSilently } from "../utils/token";
 import { usePageSizeHelpers } from "../utils/pageSize";
-import { Header } from "antd/es/layout/layout";
 
 const { Title, Text, Paragraph } = Typography;
 const { Column } = Table;
-const { confirm } = Modal;
 
 interface SetupKeyDataTable extends SetupKey {
     key: string;
@@ -174,7 +172,6 @@ export const SetupKeys = () => {
     };
 
     const showConfirmRevoke = (setupKeyToAction: SetupKeyDataTable) => {
-        console.log("wtf bro", setupKeyToAction);
         let name = setupKeyToAction ? setupKeyToAction.name : "";
         confirmModal.confirm({
             icon: <ExclamationCircleOutlined />,
@@ -450,7 +447,7 @@ export const SetupKeys = () => {
                                                     >
                                                         Manage Setup Keys to register new machines in your network. The
                                                         key links the machine to an account during initial setup.
-                                                        <a> Learn more</a>
+                                                        <a target="_blank" href="https://netbird.io/docs/overview/setup-keys"> Learn more</a>
                                                     </Text>
                                                 </Col>
                                                 <Col
@@ -578,7 +575,6 @@ export const SetupKeys = () => {
                                             title=""
                                             align="center"
                                             render={(text, record, index) => {
-                                                // console.log(record);
                                                 return (
                                                     <Button
                                                         style={{
@@ -597,7 +593,9 @@ export const SetupKeys = () => {
                     </Col>
                 </Row>
             </Container>
-            <SetupKeyNew />
+            {
+                setupNewKeyVisible && <SetupKeyNew />
+            }
             {confirmModalContextHolder}
         </>
     );

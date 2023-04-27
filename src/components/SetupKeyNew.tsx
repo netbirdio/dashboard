@@ -28,6 +28,7 @@ import moment from "moment";
 import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
 import Icon, { EditOutlined, LockOutlined } from "@ant-design/icons";
+import Loading from "./Loading";
 
 const { Option } = Select;
 
@@ -265,13 +266,11 @@ const SetupKeyNew = () => {
         return setupKey.auto_groups?.filter((g) => !formGroupIds.includes(g)).length > 0;
     };
 
-    console.log("gggg", formSetupKey, customLastUsedFormat(new Date(formSetupKey.last_used)));
-
-    if (!setupKey) return <>Loading</>;
-
     return (
         <Modal
-            style={{ maxWidth: "414px" }}
+            style={{
+                ...{ maxWidth: (window.screen.availWidth <= 425 ? "90%" : "414px")},
+            }}
             open={setupNewKeyVisible}
             onCancel={onCancel}
             title={
@@ -295,9 +294,10 @@ const SetupKeyNew = () => {
                         justifyContent: "end",
                         padding: 0,
                     }}
+                    key={0}
                 >
                     <Button
-                        type="primary"
+                        type="text"
                         style={{
                             backgroundColor: "#F5F5F5",
                             color: "rgba(0, 0, 0, 0.25)",
@@ -330,6 +330,7 @@ const SetupKeyNew = () => {
                 onValuesChange={onChange}
                 initialValues={{
                     expiresIn: ExpiresInDefault,
+                    usage_limit: 1,
                 }}
             >
                 <Container
@@ -357,13 +358,14 @@ const SetupKeyNew = () => {
                             >
                                 {isEditMode ? (
                                     <Input
+                                        key={Math.random()}
                                         readOnly={!editName}
                                         placeholder={setupKey.name}
-                                        suffix={<EditOutlined onClick={() => toggleEditName(true)} />}
+                                        autoComplete="off"
                                         ref={inputNameRef}
+                                        suffix={<EditOutlined onClick={() => toggleEditName(true)} />}
                                         onPressEnter={() => toggleEditName(false)}
                                         onBlur={() => toggleEditName(false)}
-                                        autoComplete="off"
                                     />
                                 ) : (
                                     <Input placeholder={`e.g. "AWS servers"`} />
@@ -414,6 +416,7 @@ const SetupKeyNew = () => {
                                 </Col>
                                 <Form.Item
                                     name="reusable"
+                                    valuePropName="checked"
                                     style={{
                                         display: "flex",
                                         flexDirection: "column",
@@ -456,9 +459,7 @@ const SetupKeyNew = () => {
                                     <InputNumber
                                         disabled={setupKey.id || formSetupKey.type !== "reusable"}
                                         controls={false}
-                                        defaultValue={0}
                                         min={0}
-                                        placeholder={`e.g. 30`}
                                     />
                                 </Form.Item>
                             )}
