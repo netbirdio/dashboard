@@ -385,7 +385,7 @@ export const AccessControl = () => {
     const renderPorts = (ports: string[]) => {
         const content = ports?.map((p, i) => {
             return (
-                <Tag key={i} color="blue" style={{ marginRight: 3 }}><strong>{p}</strong></Tag>
+                <Tag key={i} style={{ marginRight: 3 }}><strong>{p}</strong></Tag>
             )
         })
         return (<div>{content}</div>)
@@ -492,7 +492,6 @@ export const AccessControl = () => {
                                     <Column title="Protocol" dataIndex="protocol"
                                         render={(text, record: PolicyDataTable, index) => {
                                             return <Tag
-                                                color="blue"
                                                 style={{ marginRight: "3", textTransform: "uppercase" }}>
                                                 {record.protocol}
                                             </Tag>
