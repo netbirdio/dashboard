@@ -278,7 +278,7 @@ const SetupKeyNew = () => {
                     style={{
                         whiteSpace: "pre-line",
                         fontSize: "18px",
-                        fontWeight: "500",
+                        fontWeight: "600",
                         lineHeight: "26px",
                         color: "#252526",
                     }}
@@ -343,7 +343,7 @@ const SetupKeyNew = () => {
                             <></>
                         ) : (
                             <Col span={24}>
-                                <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0 }}>
+                                <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", fontWeight: "600", margin: 0 }}>
                                     Key name
                                 </Paragraph>
                                 <Text style={{ color: "#818183" }}>Name the key to identify it easily</Text>
@@ -352,7 +352,7 @@ const SetupKeyNew = () => {
 
                         <Col span={24}>
                             <Form.Item
-                                style={{ marginTop: "5px" }}
+                                style={{ marginTop: "5px", marginBottom: "0px" }}
                                 name="name"
                                 rules={[{ required: true, message: "Please enter key name." }]}
                             >
@@ -377,7 +377,7 @@ const SetupKeyNew = () => {
                     {isEditMode && (
                         <Row>
                             <Col span={24}>
-                                <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0 }}>
+                                <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", fontWeight: "600", margin: 0 }}>
                                     Key
                                     <Tag
                                         color={`${formSetupKey.state === "valid" ? "green" : "red"}`}
@@ -399,7 +399,7 @@ const SetupKeyNew = () => {
                     <Row style={{ marginTop: "20px" }}>
                         {isEditMode ? (
                             <Row style={{ fontSize: "16px" }}>
-                                <Paragraph style={{ whiteSpace: "pre-line", margin: 0 }}>
+                                <Paragraph style={{ whiteSpace: "pre-line", margin: 0, fontWeight: "600" }}>
                                     {formSetupKey.type === "one-off" ? "One-off" : "Reusable"}
                                 </Paragraph>
                                 <Text style={{ marginLeft: "5px", color: "#818183" }}>type</Text>
@@ -407,7 +407,7 @@ const SetupKeyNew = () => {
                         ) : (
                             <Row>
                                 <Col style={{ width: "80%" }}>
-                                    <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0 }}>
+                                    <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}>
                                         Reusable
                                     </Paragraph>
                                     <Text style={{ color: "#818183" }}>
@@ -439,7 +439,7 @@ const SetupKeyNew = () => {
 
                     <Row style={{ marginTop: "20px" }}>
                         <Col span={24}>
-                            <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0 }}>
+                            <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}>
                                 {isEditMode ? "Available uses" : "Usage limit"}
                             </Paragraph>
                         </Col>
@@ -480,7 +480,7 @@ const SetupKeyNew = () => {
                             <Container style={{ width: "100%", padding: 0, margin: 0 }}>
                                 <Row>
                                     <Col span={11}>
-                                        <Paragraph style={{ fontSize: "16px", margin: 0 }}>Expires</Paragraph>
+                                        <Paragraph style={{ fontSize: "16px", margin: 0, fontWeight: "600" }}>Expires</Paragraph>
                                         <Row>
                                             <Input
                                                 disabled
@@ -490,7 +490,7 @@ const SetupKeyNew = () => {
                                         </Row>
                                     </Col>
                                     <Col span={11} offset={1}>
-                                        <Paragraph style={{ fontSize: "16px", margin: 0 }}>Last used</Paragraph>
+                                        <Paragraph style={{ fontSize: "16px", margin: 0, fontWeight: "600" }}>Last used</Paragraph>
                                         <Row>
                                             <Input
                                                 disabled
@@ -504,7 +504,7 @@ const SetupKeyNew = () => {
                         ) : (
                             <>
                                 <Col span={24}>
-                                    <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0 }}>
+                                    <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}>
                                         Expires in
                                     </Paragraph>
                                 </Col>
@@ -554,7 +554,7 @@ const SetupKeyNew = () => {
 
                     <Row style={{ marginTop: "20px" }}>
                         <Col span={24}>
-                            <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0 }}>
+                            <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}>
                                 Auto-assigned groups
                             </Paragraph>
                             {isEditMode ? (
