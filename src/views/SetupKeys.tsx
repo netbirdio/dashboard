@@ -64,6 +64,7 @@ export const SetupKeys = () => {
     const [groupPopupVisible, setGroupPopupVisible] = useState("");
 
     const styleNotification = { marginTop: 85 };
+    const showTutorial = !dataTable.length;
 
     const optionsValidAll = [
         { label: "Valid", value: "valid" },
@@ -377,6 +378,7 @@ export const SetupKeys = () => {
                                             disabled={!dataTable?.length}
                                         />
                                         <Select
+                                            disabled={!dataTable?.length}
                                             value={pageSize.toString()}
                                             options={pageSizeOptions}
                                             onChange={onChangePageSize}
@@ -407,72 +409,79 @@ export const SetupKeys = () => {
                                     closable
                                 />
                             )}
-                            <Card bodyStyle={{ padding: 0 }}>
-                                <ConfigProvider
-                                    renderEmpty={() => {
-                                        return (
-                                            <Container
+                            {showTutorial ? (
+                                <Space style={{
+                                    width: "100%",
+                                    backgroundColor: "white",
+                                    display: "flex",
+                                    flexDirection: "row",
+                                    justifyContent: "center"
+                                }}>
+                                    <Container
+                                        style={{
+                                            textAlign: "center",
+                                            width: "615px",
+                                        }}
+                                    >
+                                        <Col
+                                            style={{
+                                                marginTop: "41px",
+                                            }}
+                                        >
+                                            <Text
                                                 style={{
-                                                    textAlign: "center",
-                                                    width: "615px",
+                                                    fontWeight: "600",
+                                                    fontSize: "22px",
+                                                    lineHeight: "26px",
+                                                    color: "#252526",
                                                 }}
                                             >
-                                                <Col
-                                                    style={{
-                                                        marginTop: "41px",
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={{
-                                                            fontWeight: "500",
-                                                            fontSize: "22px",
-                                                            lineHeight: "26px",
-                                                            color: "#252526",
-                                                        }}
-                                                    >
-                                                        Create Setup Key
-                                                    </Text>
-                                                </Col>
-                                                <Col
-                                                    style={{
-                                                        marginTop: "17px",
-                                                    }}
-                                                >
-                                                    <Text
-                                                        style={{
-                                                            fontWeight: "400",
-                                                            fontSize: "16px",
-                                                            lineHeight: "22px",
-                                                        }}
-                                                    >
-                                                        Manage Setup Keys to register new machines in your network. The
-                                                        key links the machine to an account during initial setup.
-                                                        <a target="_blank" href="https://netbird.io/docs/overview/setup-keys"> Learn more</a>
-                                                    </Text>
-                                                </Col>
-                                                <Col
-                                                    style={{
-                                                        marginTop: "12px",
-                                                        marginBottom: "112px",
-                                                    }}
-                                                >
-                                                    <Button
-                                                        type="primary"
-                                                        style={{
-                                                            fontSize: "16px",
-                                                            padding: "6.4px, 15px",
-                                                            gap: "10px",
-                                                            textAlign: "center",
-                                                        }}
-                                                        onClick={onClickAddNewSetupKey}
-                                                    >
-                                                        Add Key
-                                                    </Button>
-                                                </Col>
-                                            </Container>
-                                        );
-                                    }}
-                                >
+                                                Create Setup Key
+                                            </Text>
+                                        </Col>
+                                        <Col
+                                            style={{
+                                                marginTop: "17px",
+                                            }}
+                                        >
+                                            <Text
+                                                style={{
+                                                    fontWeight: "400",
+                                                    fontSize: "14px",
+                                                    lineHeight: "22px",
+                                                }}
+                                            >
+                                                Manage Setup Keys to register new machines in your network. The key
+                                                links the machine to an account during initial setup.
+                                                <a target="_blank" href="https://netbird.io/docs/overview/setup-keys">
+                                                    {" "}
+                                                    Learn more
+                                                </a>
+                                            </Text>
+                                        </Col>
+                                        <Col
+                                            style={{
+                                                marginTop: "16px",
+                                                marginBottom: "112px",
+                                            }}
+                                        >
+                                            <Button
+                                                type="primary"
+                                                style={{
+                                                    fontSize: "14px",
+                                                    padding: "6.4px, 15px",
+                                                    gap: "10px",
+                                                    textAlign: "center",
+                                                }}
+                                                onClick={onClickAddNewSetupKey}
+                                            >
+                                                Add Key
+                                            </Button>
+                                        </Col>
+                                    </Container>
+                                </Space>
+                            ) : (
+                                <Card bodyStyle={{ padding: 0 }}>
                                     <Table
                                         pagination={{
                                             pageSize,
@@ -582,20 +591,20 @@ export const SetupKeys = () => {
                                                         }}
                                                         type="text"
                                                         onClick={() => showConfirmRevoke(record as SetupKeyDataTable)}
-                                                    >Revoke</Button>
-                                                )
+                                                    >
+                                                        Revoke
+                                                    </Button>
+                                                );
                                             }}
                                         />
                                     </Table>
-                                </ConfigProvider>
-                            </Card>
+                                </Card>
+                            )}
                         </Space>
                     </Col>
                 </Row>
             </Container>
-            {
-                setupNewKeyVisible && <SetupKeyNew />
-            }
+            {setupNewKeyVisible && <SetupKeyNew />}
             {confirmModalContextHolder}
         </>
     );

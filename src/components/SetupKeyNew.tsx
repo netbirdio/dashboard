@@ -338,7 +338,7 @@ const SetupKeyNew = () => {
                         padding: 0,
                     }}
                 >
-                    <Row style={{ marginTop: "20px" }}>
+                    <Row style={{ marginTop: "28px" }}>
                         {isEditMode ? (
                             <></>
                         ) : (
@@ -352,7 +352,7 @@ const SetupKeyNew = () => {
 
                         <Col span={24}>
                             <Form.Item
-                                style={{ marginTop: "5px", marginBottom: "0px" }}
+                                style={{ marginBottom: "0px" }}
                                 name="name"
                                 rules={[{ required: true, message: "Please enter key name." }]}
                             >
@@ -375,7 +375,7 @@ const SetupKeyNew = () => {
                     </Row>
 
                     {isEditMode && (
-                        <Row>
+                        <Row style={{ marginTop: "28px" }}>
                             <Col span={24}>
                                 <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", fontWeight: "600", margin: 0 }}>
                                     Key
@@ -387,7 +387,7 @@ const SetupKeyNew = () => {
                                     </Tag>
                                 </Paragraph>
                                 <Input
-                                    style={{ marginTop: "5px" }}
+                                    style={{ marginTop: "10px" }}
                                     disabled
                                     value={formSetupKey.key}
                                     suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
@@ -396,7 +396,7 @@ const SetupKeyNew = () => {
                         </Row>
                     )}
 
-                    <Row style={{ marginTop: "20px" }}>
+                    <Row style={{ marginTop: "28px" }}>
                         {isEditMode ? (
                             <Row style={{ fontSize: "16px" }}>
                                 <Paragraph style={{ whiteSpace: "pre-line", margin: 0, fontWeight: "600" }}>
@@ -437,7 +437,7 @@ const SetupKeyNew = () => {
                         )}
                     </Row>
 
-                    <Row style={{ marginTop: "20px" }}>
+                    <Row style={{ marginTop: "28px" }}>
                         <Col span={24}>
                             <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}>
                                 {isEditMode ? "Available uses" : "Usage limit"}
@@ -567,7 +567,7 @@ const SetupKeyNew = () => {
                         </Col>
                         <Col span={24}>
                             <Form.Item
-                                style={{ marginTop: "5px" }}
+                                style={{ marginTop: "5px", marginBottom: 0 }}
                                 name="autoGroupNames"
                                 rules={[{ validator: selectValidator }]}
                             >
@@ -587,8 +587,8 @@ const SetupKeyNew = () => {
                             </Form.Item>
                         </Col>
                     </Row>
-                    <Row>
-                        <Text style={{ color: "#818183" }}>
+                    <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
+                        <Text style={{  color: "#818183" }}>
                             Learn more about
                             <a target="_blank" href="https://netbird.io/docs/overview/setup-keys">
                                 {" "}
