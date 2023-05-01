@@ -1,20 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { actions as setupKeyActions } from "../store/setup-key";
-import {
-    Button,
-    Col,
-    Divider,
-    Form,
-    Input,
-    InputNumber,
-    Modal,
-    Row,
-    Select,
-    Switch,
-    Tag,
-    Typography,
-} from "antd";
+import { Button, Col, Divider, Form, Input, InputNumber, Modal, Row, Select, Switch, Tag, Typography } from "antd";
 import { RootState } from "typesafe-actions";
 import { FormSetupKey, SetupKey, SetupKeyToSave } from "../store/setup-key/types";
 import { formatDate, timeAgo } from "../utils/common";
@@ -265,7 +252,7 @@ const SetupKeyNew = () => {
     return (
         <Modal
             style={{
-                ...{ maxWidth: (window.screen.availWidth <= 425 ? "90%" : "414px")},
+                ...{ maxWidth: window.screen.availWidth <= 425 ? "90%" : "414px" },
             }}
             open={setupNewKeyVisible}
             onCancel={onCancel}
@@ -292,18 +279,7 @@ const SetupKeyNew = () => {
                     }}
                     key={0}
                 >
-                    <Button
-                        type="text"
-                        style={{
-                            backgroundColor: "#F5F5F5",
-                            color: "rgba(0, 0, 0, 0.25)",
-                            border: "1px solid #D9D9D9",
-                            borderRadius: "2px",
-                        }}
-                        onClick={onCancel}
-                    >
-                        Cancel
-                    </Button>
+                    <Button onClick={onCancel}>Cancel</Button>
                     <Button
                         type="primary"
                         style={{
@@ -339,7 +315,9 @@ const SetupKeyNew = () => {
                             <></>
                         ) : (
                             <Col span={24}>
-                                <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", fontWeight: "600", margin: 0 }}>
+                                <Paragraph
+                                    style={{ whiteSpace: "pre-line", fontSize: "16px", fontWeight: "600", margin: 0 }}
+                                >
                                     Key name
                                 </Paragraph>
                                 <Text style={{ color: "#818183" }}>Name the key to identify it easily</Text>
@@ -373,7 +351,9 @@ const SetupKeyNew = () => {
                     {isEditMode && (
                         <Row style={{ marginTop: "28px" }}>
                             <Col span={24}>
-                                <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", fontWeight: "600", margin: 0 }}>
+                                <Paragraph
+                                    style={{ whiteSpace: "pre-line", fontSize: "16px", fontWeight: "600", margin: 0 }}
+                                >
                                     Key
                                     <Tag
                                         color={`${formSetupKey.state === "valid" ? "green" : "red"}`}
@@ -403,7 +383,14 @@ const SetupKeyNew = () => {
                         ) : (
                             <Row>
                                 <Col style={{ width: "80%" }}>
-                                    <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}>
+                                    <Paragraph
+                                        style={{
+                                            whiteSpace: "pre-line",
+                                            fontSize: "16px",
+                                            margin: 0,
+                                            fontWeight: "600",
+                                        }}
+                                    >
                                         Reusable
                                     </Paragraph>
                                     <Text style={{ color: "#818183" }}>
@@ -435,7 +422,9 @@ const SetupKeyNew = () => {
 
                     <Row style={{ marginTop: "28px" }}>
                         <Col span={24}>
-                            <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}>
+                            <Paragraph
+                                style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}
+                            >
                                 {isEditMode ? "Available uses" : "Usage limit"}
                             </Paragraph>
                         </Col>
@@ -476,7 +465,9 @@ const SetupKeyNew = () => {
                             <Container style={{ width: "100%", padding: 0, margin: 0 }}>
                                 <Row>
                                     <Col span={11}>
-                                        <Paragraph style={{ fontSize: "16px", margin: 0, fontWeight: "600" }}>Expires</Paragraph>
+                                        <Paragraph style={{ fontSize: "16px", margin: 0, fontWeight: "600" }}>
+                                            Expires
+                                        </Paragraph>
                                         <Row>
                                             <Input
                                                 disabled
@@ -486,7 +477,9 @@ const SetupKeyNew = () => {
                                         </Row>
                                     </Col>
                                     <Col span={11} offset={1}>
-                                        <Paragraph style={{ fontSize: "16px", margin: 0, fontWeight: "600" }}>Last used</Paragraph>
+                                        <Paragraph style={{ fontSize: "16px", margin: 0, fontWeight: "600" }}>
+                                            Last used
+                                        </Paragraph>
                                         <Row>
                                             <Input
                                                 disabled
@@ -500,7 +493,14 @@ const SetupKeyNew = () => {
                         ) : (
                             <>
                                 <Col span={24}>
-                                    <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}>
+                                    <Paragraph
+                                        style={{
+                                            whiteSpace: "pre-line",
+                                            fontSize: "16px",
+                                            margin: 0,
+                                            fontWeight: "600",
+                                        }}
+                                    >
                                         Expires in
                                     </Paragraph>
                                 </Col>
@@ -550,7 +550,9 @@ const SetupKeyNew = () => {
 
                     <Row style={{ marginTop: "20px" }}>
                         <Col span={24}>
-                            <Paragraph style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}>
+                            <Paragraph
+                                style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}
+                            >
                                 Auto-assigned groups
                             </Paragraph>
                             {isEditMode ? (
@@ -584,7 +586,7 @@ const SetupKeyNew = () => {
                         </Col>
                     </Row>
                     <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
-                        <Text style={{  color: "#818183" }}>
+                        <Text style={{ color: "#818183" }}>
                             Learn more about
                             <a target="_blank" rel="noreferrer" href="https://netbird.io/docs/overview/setup-keys">
                                 {" "}

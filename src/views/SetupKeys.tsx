@@ -77,7 +77,7 @@ export const SetupKeys = () => {
     useEffect(() => {
         dispatch(setupKeyActions.getSetupKeys.request({ getAccessTokenSilently: getTokenSilently, payload: null }));
         dispatch(groupActions.getGroups.request({ getAccessTokenSilently: getTokenSilently, payload: null }));
-    }, [dispatch, getTokenSilently,]);
+    }, []);
 
     useEffect(() => {
         setDataTable(transformDataTable(filterDataTable()));
@@ -110,7 +110,7 @@ export const SetupKeys = () => {
             dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, error: null }));
             dispatch(setupKeyActions.resetDeletedSetupKey(null));
         }
-    }, [dispatch, deletedSetupKey]);
+    }, [deletedSetupKey]);
 
     const createKey = "saving";
     useEffect(() => {
@@ -136,7 +136,7 @@ export const SetupKeys = () => {
             dispatch(setupKeyActions.setSavedSetupKey({ ...savedSetupKey, error: null }));
             dispatch(setupKeyActions.resetSavedSetupKey(null));
         }
-    }, [dispatch, savedSetupKey]);
+    }, [savedSetupKey]);
 
     const filterDataTable = (): SetupKey[] => {
         const t = textToSearch.toLowerCase().trim();
@@ -328,9 +328,11 @@ export const SetupKeys = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Setup Keys</Title>
-                        <Paragraph style={{
-                            color: dataTable.length ? "black" : "#818183" 
-                        }}>
+                        <Paragraph
+                            style={{
+                                color: dataTable.length ? "black" : "#818183",
+                            }}
+                        >
                             A list of all the setup keys in your account including their name, state, type and
                             expiration.
                         </Paragraph>
@@ -389,27 +391,25 @@ export const SetupKeys = () => {
                                 />
                             )}
                             {showTutorial ? (
-                                <Space style={{
-                                    width: "100%",
-                                    backgroundColor: "white",
-                                    display: "flex",
-                                    flexDirection: "row",
-                                    justifyContent: "center",
-                                    border: "1px solid #f0f0f0",
-                                    borderRadius: "4px",
-                                    gap: "8px",
-                                }}>
+                                <Space
+                                    style={{
+                                        width: "100%",
+                                        backgroundColor: "white",
+                                        display: "flex",
+                                        flexDirection: "row",
+                                        justifyContent: "center",
+                                        border: "1px solid #f0f0f0",
+                                        borderRadius: "4px",
+                                        gap: "8px",
+                                    }}
+                                >
                                     <Container
                                         style={{
                                             textAlign: "center",
                                             width: "615px",
                                         }}
                                     >
-                                        <Col
-                                            style={{
-                                                marginTop: "41px",
-                                            }}
-                                        >
+                                        <Col style={{ marginTop: "41px" }}>
                                             <Text
                                                 style={{
                                                     fontWeight: "600",
@@ -421,11 +421,7 @@ export const SetupKeys = () => {
                                                 Create Setup Key
                                             </Text>
                                         </Col>
-                                        <Col
-                                            style={{
-                                                marginTop: "17px",
-                                            }}
-                                        >
+                                        <Col style={{ marginTop: "17px" }}>
                                             <Text
                                                 style={{
                                                     fontWeight: "400",
@@ -435,7 +431,11 @@ export const SetupKeys = () => {
                                             >
                                                 Manage Setup Keys to register new machines in your network. The key
                                                 links the machine to an account during initial setup.
-                                                <a target="_blank" rel="noreferrer" href="https://netbird.io/docs/overview/setup-keys">
+                                                <a
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    href="https://netbird.io/docs/overview/setup-keys"
+                                                >
                                                     {" "}
                                                     Learn more
                                                 </a>
