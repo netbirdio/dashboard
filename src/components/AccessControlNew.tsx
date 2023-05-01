@@ -155,7 +155,7 @@ const AccessControlNew = () => {
                 enabled: true,
                 sources: [],
                 destinations: [],
-                bidirectional: false,
+                bidirectional: true,
                 protocol: 'all',
                 ports: [],
                 action: 'accept',

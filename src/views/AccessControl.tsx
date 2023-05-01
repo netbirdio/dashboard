@@ -280,7 +280,7 @@ export const AccessControl = () => {
                 name: '',
                 description: '',
                 enabled: true,
-                bidirectional: false,
+                bidirectional: true,
                 action: 'accept',
                 protocol: 'all',
             }]
