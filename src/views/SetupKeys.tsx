@@ -8,10 +8,7 @@ import {
     Button,
     Card,
     Col,
-    ConfigProvider,
-    Dropdown,
     Input,
-    Menu,
     message,
     Modal,
     Popover,
@@ -80,7 +77,7 @@ export const SetupKeys = () => {
     useEffect(() => {
         dispatch(setupKeyActions.getSetupKeys.request({ getAccessTokenSilently: getTokenSilently, payload: null }));
         dispatch(groupActions.getGroups.request({ getAccessTokenSilently: getTokenSilently, payload: null }));
-    }, []);
+    }, [dispatch, getTokenSilently,]);
 
     useEffect(() => {
         setDataTable(transformDataTable(filterDataTable()));
@@ -113,7 +110,7 @@ export const SetupKeys = () => {
             dispatch(setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, error: null }));
             dispatch(setupKeyActions.resetDeletedSetupKey(null));
         }
-    }, [deletedSetupKey]);
+    }, [dispatch, deletedSetupKey]);
 
     const createKey = "saving";
     useEffect(() => {
@@ -139,7 +136,7 @@ export const SetupKeys = () => {
             dispatch(setupKeyActions.setSavedSetupKey({ ...savedSetupKey, error: null }));
             dispatch(setupKeyActions.resetSavedSetupKey(null));
         }
-    }, [savedSetupKey]);
+    }, [dispatch, savedSetupKey]);
 
     const filterDataTable = (): SetupKey[] => {
         const t = textToSearch.toLowerCase().trim();
@@ -228,26 +225,6 @@ export const SetupKeys = () => {
                 auto_groups: key?.auto_groups,
                 last_used: key?.last_used,
                 usage_limit: key?.usage_limit,
-            } as SetupKey)
-        );
-    };
-
-    const onClickEditSetupKey = (setupKeyToAction: SetupKeyDataTable) => {
-        dispatch(setupKeyActions.setSetupNewKeyVisible(true));
-        dispatch(
-            setupKeyActions.setSetupKey({
-                id: setupKeyToAction?.id || null,
-                key: setupKeyToAction?.key,
-                name: setupKeyToAction?.name,
-                revoked: setupKeyToAction?.revoked,
-                expires: setupKeyToAction?.expires,
-                state: setupKeyToAction?.state,
-                type: setupKeyToAction?.type,
-                used_times: setupKeyToAction?.used_times,
-                valid: setupKeyToAction?.valid,
-                auto_groups: setupKeyToAction?.auto_groups,
-                last_used: setupKeyToAction?.last_used,
-                usage_limit: setupKeyToAction?.usage_limit,
             } as SetupKey)
         );
     };
@@ -351,7 +328,9 @@ export const SetupKeys = () => {
                 <Row>
                     <Col span={24}>
                         <Title level={4}>Setup Keys</Title>
-                        <Paragraph>
+                        <Paragraph style={{
+                            color: dataTable.length ? "black" : "#818183" 
+                        }}>
                             A list of all the setup keys in your account including their name, state, type and
                             expiration.
                         </Paragraph>
@@ -415,7 +394,10 @@ export const SetupKeys = () => {
                                     backgroundColor: "white",
                                     display: "flex",
                                     flexDirection: "row",
-                                    justifyContent: "center"
+                                    justifyContent: "center",
+                                    border: "1px solid #f0f0f0",
+                                    borderRadius: "4px",
+                                    gap: "8px",
                                 }}>
                                     <Container
                                         style={{
@@ -453,7 +435,7 @@ export const SetupKeys = () => {
                                             >
                                                 Manage Setup Keys to register new machines in your network. The key
                                                 links the machine to an account during initial setup.
-                                                <a target="_blank" href="https://netbird.io/docs/overview/setup-keys">
+                                                <a target="_blank" rel="noreferrer" href="https://netbird.io/docs/overview/setup-keys">
                                                     {" "}
                                                     Learn more
                                                 </a>

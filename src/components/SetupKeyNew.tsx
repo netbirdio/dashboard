@@ -4,7 +4,6 @@ import { actions as setupKeyActions } from "../store/setup-key";
 import {
     Button,
     Col,
-    DatePickerProps,
     Divider,
     Form,
     Input,
@@ -27,13 +26,10 @@ import { expiresInToSeconds, ExpiresInValue } from "../views/ExpiresInInput";
 import moment from "moment";
 import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
-import Icon, { EditOutlined, LockOutlined } from "@ant-design/icons";
-import Loading from "./Loading";
+import { EditOutlined, LockOutlined } from "@ant-design/icons";
 
 const { Option } = Select;
-
 const { Text } = Typography;
-
 const ExpiresInDefault: ExpiresInValue = { number: 30, interval: "day" };
 
 const customExpiresFormat = (value: Date): string | null => {
@@ -74,7 +70,7 @@ const SetupKeyNew = () => {
     }, [editName]);
 
     useEffect(() => {
-        setTagGroups(groups?.filter((g) => g.name != "All").map((g) => g.name) || []);
+        setTagGroups(groups?.filter((g) => g.name !== "All").map((g) => g.name) || []);
     }, [groups]);
 
     useEffect(() => {
@@ -153,7 +149,7 @@ const SetupKeyNew = () => {
                 last_used: "",
                 expires: "",
                 state: "valid",
-                auto_groups: new Array(),
+                auto_groups: [] as string[],
                 usage_limit: 0,
                 used_times: 0,
                 expires_in: 0,
@@ -188,7 +184,7 @@ const SetupKeyNew = () => {
     };
 
     const tagRender = (props: CustomTagProps) => {
-        const { label, value, closable, onClose } = props;
+        const { value, closable, onClose } = props;
         const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
             event.preventDefault();
             event.stopPropagation();
@@ -257,7 +253,7 @@ const SetupKeyNew = () => {
     };
 
     const groupsChanged = (): boolean => {
-        if (setupKey && setupKey.auto_groups && formSetupKey.autoGroupNames.length != setupKey.auto_groups.length) {
+        if (setupKey && setupKey.auto_groups && formSetupKey.autoGroupNames.length !== setupKey.auto_groups.length) {
             return true;
         }
         const formGroupIds =
@@ -381,7 +377,7 @@ const SetupKeyNew = () => {
                                     Key
                                     <Tag
                                         color={`${formSetupKey.state === "valid" ? "green" : "red"}`}
-                                        style={{ marginLeft: "10px", borderRadius: "2px" }}
+                                        style={{ marginLeft: "10px", borderRadius: "2px", fontWeight: "500" }}
                                     >
                                         {formSetupKey.state}
                                     </Tag>
@@ -590,7 +586,7 @@ const SetupKeyNew = () => {
                     <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
                         <Text style={{  color: "#818183" }}>
                             Learn more about
-                            <a target="_blank" href="https://netbird.io/docs/overview/setup-keys">
+                            <a target="_blank" rel="noreferrer" href="https://netbird.io/docs/overview/setup-keys">
                                 {" "}
                                 Setup Keys
                             </a>
