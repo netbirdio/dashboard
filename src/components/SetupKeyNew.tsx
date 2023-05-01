@@ -332,7 +332,7 @@ const SetupKeyNew = () => {
                             >
                                 {isEditMode ? (
                                     <Input
-                                        key={Math.random()}
+                                        key={"edit-name-input"}
                                         readOnly={!editName}
                                         placeholder={setupKey.name}
                                         autoComplete="off"
