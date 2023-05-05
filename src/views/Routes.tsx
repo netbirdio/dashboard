@@ -243,17 +243,18 @@ export const Routes = () => {
 
     const onClickViewRoute = () => {
         dispatch(routeActions.setSetupNewRouteHA(false));
-        dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             id: routeToAction?.id || null,
             network: routeToAction?.network,
             network_id: routeToAction?.network_id,
             description: routeToAction?.description,
-            peer: peerToPeerIP(routeToAction!.peer, peerNameToIP[routeToAction!.peer]),
+            peer: peerToPeerIP(routeToAction!.peer_name, routeToAction!.peer_ip),
             metric: routeToAction?.metric,
             masquerade: routeToAction?.masquerade,
-            enabled: routeToAction?.enabled
+            enabled: routeToAction?.enabled,
+            groups: routeToAction?.groups
         } as Route))
+        dispatch(routeActions.setSetupNewRouteVisible(true));
     }
 
     const setRouteAndView = (route: RouteDataTable) => {
