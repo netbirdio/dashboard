@@ -130,27 +130,25 @@ const AddPATPopup = () => {
                 }
                 width={460}
             >
-                <Container style={{textAlign: "start"}}>
+                <Container style={{textAlign: "start", marginLeft: "-15px", marginRight: "-15px"}}>
                     <Paragraph
-                        style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "22px", fontWeight: "500"}}>
-                        {showPlainToken ? "Token created successfully!" : "Create a Personal Access Token"}
+                        style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "22px"}}>
+                        {showPlainToken ? "Token created successfully!" : "Create token"}
                     </Paragraph>
                     {!showPlainToken && <Paragraph type={"secondary"}
                                style={{
                                    textAlign: "start",
-                                   fontSize: "14px",
                                    whiteSpace: "pre-line",
                                    marginTop: "-23px",
                                    paddingBottom: "25px",
                                }}>
-                        {"This token can be used to authenticate against" + "\n" + "NetBird's Public API."}
+                        {"Use this token to access NetBird's public API."}
                     </Paragraph>}
                     {showPlainToken && <Paragraph type={"secondary"} style={{
                         textAlign: "start",
-                        fontSize: "14px",
                         whiteSpace: "pre-line",
-                        marginTop: "40px",
-                    }}>{"This token will not be shown again, so be sure to copy it and" + "\n" + "store in a secure location."}</Paragraph>}
+                        marginTop: "25px",
+                    }}>{"This token won't be shown again, so be sure to copy and store it in a secure location"}</Paragraph>}
                     {!showPlainToken && <Form layout="vertical" hideRequiredMark form={form}
                                               initialValues={{
                                                   expires_in: ExpiresInDefault,
@@ -160,8 +158,8 @@ const AddPATPopup = () => {
                             <Col span={24}>
                                 <Row align="top">
                                     <Col flex="auto">
-                                        <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "-8px"}}>Token name</Paragraph>
-                                        <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Create a name to identify the token easily</Paragraph>
+                                        <Paragraph style={{fontWeight: "bold", marginTop: "-10px"}}>Name</Paragraph>
+                                        <Paragraph type={"secondary"} style={{marginTop: "-15px"}}>Set an easily identifiable name for your token</Paragraph>
                                         <Form.Item
                                             name="name"
                                             style={{marginTop: "-10px"}}
@@ -179,9 +177,9 @@ const AddPATPopup = () => {
                                     </Col>
                                 </Row>
                             </Col>
-                            <Col span={24} style={{textAlign: "left"}}>
-                                <Paragraph style={{fontSize: "16px", fontWeight: "500"}}>Expires in</Paragraph>
-                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Number of days this token is valid for</Paragraph>
+                            <Col span={24} style={{textAlign: "left", marginTop: "10px"}}>
+                                <Paragraph style={{fontWeight: "bold", marginTop: "-10px"}}>Expires in</Paragraph>
+                                <Paragraph type={"secondary"} style={{marginTop: "-15px"}}>Number of days this token will be valid for</Paragraph>
                                 <Form.Item
                                     name="expires_in"
                                     style={{marginTop: "-10px"}}
