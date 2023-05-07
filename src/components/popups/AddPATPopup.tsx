@@ -142,7 +142,7 @@ const AddPATPopup = () => {
                                    marginTop: "-23px",
                                    paddingBottom: "25px",
                                }}>
-                        {"Use this token to access NetBird's public API."}
+                        {"Use this token to access NetBird's public API"}
                     </Paragraph>}
                     {showPlainToken && <Paragraph type={"secondary"} style={{
                         textAlign: "start",
@@ -165,7 +165,7 @@ const AddPATPopup = () => {
                                             style={{marginTop: "-10px"}}
                                             rules={[{
                                                 required: true,
-                                                message: 'Please add a name for this personal access token',
+                                                message: 'Please add a name for this token',
                                                 whitespace: true
                                             }]}
                                         >

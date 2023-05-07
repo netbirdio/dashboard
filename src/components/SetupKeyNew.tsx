@@ -1,23 +1,23 @@
-import React, { useEffect, useRef, useState } from "react";
-import { useDispatch, useSelector } from "react-redux";
-import { actions as setupKeyActions } from "../store/setup-key";
-import { Button, Col, Divider, Form, Input, InputNumber, Modal, Row, Select, Switch, Tag, Typography } from "antd";
-import { RootState } from "typesafe-actions";
-import { FormSetupKey, SetupKey, SetupKeyToSave } from "../store/setup-key/types";
-import { formatDate, timeAgo } from "../utils/common";
-import { RuleObject } from "antd/lib/form";
-import { CustomTagProps } from "rc-select/lib/BaseSelect";
-import { Group } from "../store/group/types";
-import { useGetTokenSilently } from "../utils/token";
-import { expiresInToSeconds, ExpiresInValue } from "../views/ExpiresInInput";
+import React, {useEffect, useRef, useState} from "react";
+import {useDispatch, useSelector} from "react-redux";
+import {actions as setupKeyActions} from "../store/setup-key";
+import {Button, Col, Divider, Form, Input, InputNumber, Modal, Row, Select, Space, Switch, Tag, Typography} from "antd";
+import {RootState} from "typesafe-actions";
+import {FormSetupKey, SetupKey, SetupKeyToSave} from "../store/setup-key/types";
+import {formatDate, timeAgo} from "../utils/common";
+import {RuleObject} from "antd/lib/form";
+import {CustomTagProps} from "rc-select/lib/BaseSelect";
+import {Group} from "../store/group/types";
+import {useGetTokenSilently} from "../utils/token";
+import {expiresInToSeconds, ExpiresInValue} from "../views/ExpiresInInput";
 import moment from "moment";
-import { Container } from "./Container";
+import {Container} from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
-import { EditOutlined, LockOutlined } from "@ant-design/icons";
+import {EditOutlined, LockOutlined} from "@ant-design/icons";
 
-const { Option } = Select;
-const { Text } = Typography;
-const ExpiresInDefault: ExpiresInValue = { number: 30, interval: "day" };
+const {Option} = Select;
+const {Text} = Typography;
+const ExpiresInDefault: ExpiresInValue = {number: 30, interval: "day"};
 
 const customExpiresFormat = (value: Date): string | null => {
     return formatDate(value);
@@ -36,7 +36,7 @@ const customLastUsedFormat = (value: Date): string | null => {
 };
 
 const SetupKeyNew = () => {
-    const { getTokenSilently } = useGetTokenSilently();
+    const {getTokenSilently} = useGetTokenSilently();
     const dispatch = useDispatch();
     const setupNewKeyVisible = useSelector((state: RootState) => state.setupKey.setupNewKeyVisible);
     const setupKey = useSelector((state: RootState) => state.setupKey.setupKey);
@@ -53,7 +53,7 @@ const SetupKeyNew = () => {
     useEffect(() => {
         if (!editName) return;
 
-        inputNameRef.current!.focus({ cursor: "end" });
+        inputNameRef.current!.focus({cursor: "end"});
     }, [editName]);
 
     useEffect(() => {
@@ -147,7 +147,7 @@ const SetupKeyNew = () => {
     };
 
     const onChange = (data: any) => {
-        setFormSetupKey({ ...formSetupKey, ...data });
+        setFormSetupKey({...formSetupKey, ...data});
     };
 
     const toggleEditName = (status: boolean) => {
@@ -171,7 +171,7 @@ const SetupKeyNew = () => {
     };
 
     const tagRender = (props: CustomTagProps) => {
-        const { value, closable, onClose } = props;
+        const {value, closable, onClose} = props;
         const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
             event.preventDefault();
             event.stopPropagation();
@@ -183,7 +183,7 @@ const SetupKeyNew = () => {
                 onMouseDown={onPreventMouseDown}
                 closable={closable}
                 onClose={onClose}
-                style={{ marginRight: 3 }}
+                style={{marginRight: 3}}
             >
                 <strong>{value}</strong>
             </Tag>
@@ -202,10 +202,10 @@ const SetupKeyNew = () => {
 
         return (
             <>
-                <Tag color="blue" style={{ marginRight: 3 }}>
+                <Tag color="blue" style={{marginRight: 3}}>
                     <strong>{label}</strong>
                 </Tag>
-                <span style={{ fontSize: ".85em" }}>{peersCount}</span>
+                <span style={{fontSize: ".85em"}}>{peersCount}</span>
             </>
         );
     };
@@ -213,10 +213,10 @@ const SetupKeyNew = () => {
     const dropDownRender = (menu: React.ReactElement) => (
         <>
             {menu}
-            <Divider style={{ margin: "8px 0" }} />
-            <Row style={{ padding: "0 8px 4px" }}>
+            <Divider style={{margin: "8px 0"}}/>
+            <Row style={{padding: "0 8px 4px"}}>
                 <Col flex="auto">
-                    <span style={{ color: "#9CA3AF" }}>Add new group by pressing "Enter"</span>
+                    <span style={{color: "#9CA3AF"}}>Add new group by pressing "Enter"</span>
                 </Col>
                 <Col flex="none">
                     <svg width="14" height="12" viewBox="0 0 14 12" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -252,23 +252,10 @@ const SetupKeyNew = () => {
     return (
         <Modal
             style={{
-                ...{ maxWidth: window.screen.availWidth <= 425 ? "90%" : "414px" },
+                ...{maxWidth: window.screen.availWidth <= 425 ? "90%" : "414px"},
             }}
             open={setupNewKeyVisible}
             onCancel={onCancel}
-            title={
-                <Paragraph
-                    style={{
-                        whiteSpace: "pre-line",
-                        fontSize: "18px",
-                        fontWeight: "600",
-                        lineHeight: "26px",
-                        color: "#252526",
-                    }}
-                >
-                    {isEditMode ? "Setup Key overview" : "Create Setup Key"}
-                </Paragraph>
-            }
             footer={[
                 <Container
                     style={{
@@ -290,45 +277,55 @@ const SetupKeyNew = () => {
                         disabled={savedSetupKey.loading || !changesDetected()}
                         onClick={handleFormSubmit}
                     >
-                        {`${formSetupKey.id ? "Save" : "Create"} Key`}
+                        {`${formSetupKey.id ? "Save" : "Create"} key`}
                     </Button>
                 </Container>,
             ]}
         >
-            <Form
-                layout="vertical"
-                hideRequiredMark
-                form={form}
-                onValuesChange={onChange}
-                initialValues={{
-                    expiresIn: ExpiresInDefault,
-                    usage_limit: 1,
-                }}
-            >
-                <Container
-                    style={{
-                        padding: 0,
+            <Container style={{textAlign: "start", marginLeft: "-15px", marginRight: "-15px"}}>
+                <Paragraph
+                    style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "22px"}}>
+                    {isEditMode ? "Setup key overview" : "Create setup key"}
+                </Paragraph>
+                <Paragraph type={"secondary"}
+                           style={{
+                               textAlign: "start",
+                               whiteSpace: "pre-line",
+                               marginTop: "-23px",
+                               paddingBottom: "25px",
+                           }}>
+                    {"Use this key to register new machines in your network"}
+                </Paragraph>
+                <Form
+                    layout="vertical"
+                    requiredMark={false}
+                    form={form}
+                    onValuesChange={onChange}
+                    initialValues={{
+                        expiresIn: ExpiresInDefault,
+                        usage_limit: 1,
                     }}
                 >
-                    <Row style={{ marginTop: "28px" }}>
+
+                    <Row>
                         {isEditMode ? (
                             <></>
                         ) : (
                             <Col span={24}>
-                                <Paragraph
-                                    style={{ whiteSpace: "pre-line", fontSize: "16px", fontWeight: "600", margin: 0 }}
-                                >
-                                    Key name
+                                <Paragraph style={{fontWeight: "bold"}}>
+                                    Name
                                 </Paragraph>
-                                <Text style={{ color: "#818183" }}>Name the key to identify it easily</Text>
+                                <Paragraph type={"secondary"} style={{marginTop: "-15px"}}>
+                                    Set an easily identifiable name for your key
+                                </Paragraph>
                             </Col>
                         )}
 
                         <Col span={24}>
                             <Form.Item
-                                style={{ marginBottom: "0px" }}
+                                style={{marginBottom: "0px", marginTop: "-10px"}}
                                 name="name"
-                                rules={[{ required: true, message: "Please enter key name." }]}
+                                rules={[{required: true, message: "Please enter key name."}]}
                             >
                                 {isEditMode ? (
                                     <Input
@@ -337,93 +334,89 @@ const SetupKeyNew = () => {
                                         placeholder={setupKey.name}
                                         autoComplete="off"
                                         ref={inputNameRef}
-                                        suffix={<EditOutlined onClick={() => toggleEditName(true)} />}
+                                        suffix={<EditOutlined onClick={() => toggleEditName(true)}/>}
                                         onPressEnter={() => toggleEditName(false)}
                                         onBlur={() => toggleEditName(false)}
                                     />
                                 ) : (
-                                    <Input placeholder={`e.g. "AWS servers"`} />
+                                    <Input placeholder={`e.g. "AWS servers"`}/>
                                 )}
                             </Form.Item>
                         </Col>
                     </Row>
 
                     {isEditMode && (
-                        <Row style={{ marginTop: "28px" }}>
+                        <Row style={{marginTop: "20px"}}>
                             <Col span={24}>
                                 <Paragraph
-                                    style={{ whiteSpace: "pre-line", fontSize: "16px", fontWeight: "600", margin: 0 }}
+                                    style={{whiteSpace: "pre-line", fontWeight: "bold", margin: 0}}
                                 >
                                     Key
                                     <Tag
                                         color={`${formSetupKey.state === "valid" ? "green" : "red"}`}
-                                        style={{ marginLeft: "10px", borderRadius: "2px", fontWeight: "500" }}
+                                        style={{marginLeft: "10px", borderRadius: "2px", fontWeight: "500"}}
                                     >
                                         {formSetupKey.state}
                                     </Tag>
                                 </Paragraph>
                                 <Input
-                                    style={{ marginTop: "10px" }}
+                                    style={{marginTop: "10px"}}
                                     disabled
                                     value={formSetupKey.key}
-                                    suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                                    suffix={<LockOutlined style={{color: "#BFBFBF"}}/>}
                                 />
                             </Col>
                         </Row>
                     )}
-
-                    <Row style={{ marginTop: "28px" }}>
-                        {isEditMode ? (
-                            <Row style={{ fontSize: "16px" }}>
-                                <Paragraph style={{ whiteSpace: "pre-line", margin: 0, fontWeight: "600" }}>
-                                    {formSetupKey.type === "one-off" ? "One-off" : "Reusable"}
-                                </Paragraph>
-                                <Text style={{ marginLeft: "5px", color: "#818183" }}>type</Text>
-                            </Row>
-                        ) : (
-                            <Row>
-                                <Col style={{ width: "80%" }}>
-                                    <Paragraph
-                                        style={{
-                                            whiteSpace: "pre-line",
-                                            fontSize: "16px",
-                                            margin: 0,
-                                            fontWeight: "600",
-                                        }}
-                                    >
-                                        Reusable
-                                    </Paragraph>
-                                    <Text style={{ color: "#818183" }}>
-                                        This type of a setup key allows to enroll multiple peers
-                                    </Text>
-                                </Col>
-                                <Form.Item
-                                    name="reusable"
-                                    valuePropName="checked"
+                    {!isEditMode && (
+                        <Row
+                            style={{marginTop: "20px"}}
+                            justify={"space-between"}>
+                            <Col span={18}>
+                                <Paragraph
                                     style={{
-                                        display: "flex",
-                                        flexDirection: "column",
-                                        alignItems: "end",
-                                        flexGrow: 1,
+                                        whiteSpace: "pre-line",
+                                        margin: 0,
+                                        fontWeight: "bold",
                                     }}
                                 >
-                                    <Switch
-                                        onChange={(checked) => {
-                                            setFormSetupKey({
-                                                ...formSetupKey,
-                                                type: checked ? "reusable" : "one-off",
-                                            });
-                                        }}
-                                    />
-                                </Form.Item>
-                            </Row>
-                        )}
-                    </Row>
+                                    Reusable
+                                </Paragraph>
+                                <Text type={"secondary"}>
+                                    Use this type to enroll multiple peers
+                                </Text>
+                            </Col>
+                            <Col span={6}>
+                                <Row justify={"end"}>
+                                    <Form.Item
+                                        name="reusable"
+                                        valuePropName="checked"
+                                    >
+                                        <Switch
+                                            onChange={(checked) => {
+                                                setFormSetupKey({
+                                                    ...formSetupKey,
+                                                    type: checked ? "reusable" : "one-off",
+                                                });
+                                            }}
+                                        />
+                                    </Form.Item>
+                                </Row>
+                            </Col>
+                        </Row>)}
 
-                    <Row style={{ marginTop: "28px" }}>
+                    {isEditMode && (
+                        <Row style={{marginTop: "20px"}}>
+                            <Paragraph style={{whiteSpace: "pre-line", margin: 0, fontWeight: "bold"}}>
+                                {formSetupKey.type === "one-off" ? "One-off" : "Reusable"}
+                            </Paragraph>
+                            <Text type={"secondary"} style={{marginLeft: "5px"}}>type</Text>
+                        </Row>)}
+
+                    <Row style={{marginTop: "10px"}}>
                         <Col span={24}>
                             <Paragraph
-                                style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}
+                                style={{whiteSpace: "pre-line", margin: 0, fontWeight: "bold"}}
                             >
                                 {isEditMode ? "Available uses" : "Usage limit"}
                             </Paragraph>
@@ -433,12 +426,12 @@ const SetupKeyNew = () => {
                                 <Input
                                     disabled
                                     value={formSetupKey.usage_limit}
-                                    suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                                    style={{ width: "104px" }}
+                                    suffix={<LockOutlined style={{color: "#BFBFBF"}}/>}
+                                    style={{width: "104px"}}
                                 />
                             ) : (
                                 <Form.Item
-                                    style={{ marginTop: "5px", width: "112px", marginBottom: "5px" }}
+                                    style={{marginTop: "5px", width: "112px", marginBottom: "5px"}}
                                     name="usage_limit"
                                 >
                                     <InputNumber
@@ -453,37 +446,37 @@ const SetupKeyNew = () => {
                             <></>
                         ) : (
                             <Col span={24}>
-                                <Text style={{ color: "#818183" }}>
-                                    1 usage = 1 peer. E.g., set to 30 if you want to enroll 30 peers
+                                <Text type={"secondary"}>
+                                    For example, set to 30 if you want to enroll 30 peers
                                 </Text>
                             </Col>
                         )}
                     </Row>
 
-                    <Row style={{ marginTop: "20px" }}>
+                    <Row style={{marginTop: "15px"}}>
                         {isEditMode ? (
-                            <Container style={{ width: "100%", padding: 0, margin: 0 }}>
+                            <Container style={{width: "100%", padding: 0, margin: 0}}>
                                 <Row>
                                     <Col span={11}>
-                                        <Paragraph style={{ fontSize: "16px", margin: 0, fontWeight: "600" }}>
+                                        <Paragraph style={{margin: 0, fontWeight: "bold"}}>
                                             Expires
                                         </Paragraph>
                                         <Row>
                                             <Input
                                                 disabled
-                                                suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                                                suffix={<LockOutlined style={{color: "#BFBFBF"}}/>}
                                                 value={customExpiresFormat(new Date(formSetupKey.expires))!}
                                             />
                                         </Row>
                                     </Col>
                                     <Col span={11} offset={1}>
-                                        <Paragraph style={{ fontSize: "16px", margin: 0, fontWeight: "600" }}>
+                                        <Paragraph style={{margin: 0, fontWeight: "bold"}}>
                                             Last used
                                         </Paragraph>
                                         <Row>
                                             <Input
                                                 disabled
-                                                suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                                                suffix={<LockOutlined style={{color: "#BFBFBF"}}/>}
                                                 value={customLastUsedFormat(new Date(formSetupKey.last_used))!}
                                             />
                                         </Row>
@@ -496,9 +489,8 @@ const SetupKeyNew = () => {
                                     <Paragraph
                                         style={{
                                             whiteSpace: "pre-line",
-                                            fontSize: "16px",
                                             margin: 0,
-                                            fontWeight: "600",
+                                            fontWeight: "bold",
                                         }}
                                     >
                                         Expires in
@@ -512,7 +504,7 @@ const SetupKeyNew = () => {
                                             marginBottom: "0px",
                                         }}
                                         name="expiresIn"
-                                        rules={[{ required: true, message: "Please enter expiration date." }]}
+                                        rules={[{required: true, message: "Please enter expiration date."}]}
                                     >
                                         <Col
                                             style={{
@@ -541,37 +533,37 @@ const SetupKeyNew = () => {
                                     </Form.Item>
                                 </Col>
 
-                                <Col span={24} style={{ marginTop: "5px" }}>
-                                    <Text style={{ color: "#818183" }}>Should be between 1 and 180 days</Text>
+                                <Col span={24} style={{marginTop: "5px"}}>
+                                    <Text type={"secondary"}>Should be between 1 and 180 days</Text>
                                 </Col>
                             </>
                         )}
                     </Row>
 
-                    <Row style={{ marginTop: "20px" }}>
+                    <Row style={{marginTop: "20px"}}>
                         <Col span={24}>
                             <Paragraph
-                                style={{ whiteSpace: "pre-line", fontSize: "16px", margin: 0, fontWeight: "600" }}
+                                style={{whiteSpace: "pre-line", margin: 0, fontWeight: "bold"}}
                             >
                                 Auto-assigned groups
                             </Paragraph>
                             {isEditMode ? (
                                 <></>
                             ) : (
-                                <Text style={{ color: "#818183" }}>
+                                <Text type={"secondary"}>
                                     These groups will be automatically assigned to peers enrolled with this key
                                 </Text>
                             )}
                         </Col>
                         <Col span={24}>
                             <Form.Item
-                                style={{ marginTop: "5px", marginBottom: 0 }}
+                                style={{marginTop: "5px", marginBottom: 0}}
                                 name="autoGroupNames"
-                                rules={[{ validator: selectValidator }]}
+                                rules={[{validator: selectValidator}]}
                             >
                                 <Select
                                     mode="tags"
-                                    style={{ width: "100%" }}
+                                    style={{width: "100%"}}
                                     placeholder="Associate groups with the key"
                                     tagRender={tagRender}
                                     dropdownRender={dropDownRender}
@@ -585,17 +577,17 @@ const SetupKeyNew = () => {
                             </Form.Item>
                         </Col>
                     </Row>
-                    <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
-                        <Text style={{ color: "#818183" }}>
+                    <Row style={{marginTop: "40px", marginBottom: "28px"}}>
+                        <Text type={"secondary"}>
                             Learn more about
                             <a target="_blank" rel="noreferrer" href="https://netbird.io/docs/overview/setup-keys">
                                 {" "}
-                                Setup Keys
+                                setup keys
                             </a>
                         </Text>
                     </Row>
-                </Container>
-            </Form>
+                </Form>
+            </Container>
         </Modal>
     );
 };

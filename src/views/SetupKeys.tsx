@@ -372,7 +372,7 @@ export const SetupKeys = () => {
                                         <Row justify="end">
                                             <Col>
                                                 <Button type="primary" onClick={onClickAddNewSetupKey}>
-                                                    Add Key
+                                                    Add key
                                                 </Button>
                                             </Col>
                                         </Row>
@@ -418,7 +418,7 @@ export const SetupKeys = () => {
                                                     color: "#252526",
                                                 }}
                                             >
-                                                Create Setup Key
+                                                Create setup key
                                             </Text>
                                         </Col>
                                         <Col style={{ marginTop: "17px" }}>
@@ -429,8 +429,8 @@ export const SetupKeys = () => {
                                                     lineHeight: "22px",
                                                 }}
                                             >
-                                                Manage Setup Keys to register new machines in your network. The key
-                                                links the machine to an account during initial setup.
+                                                Manage setup keys to register new machines in your network. The key
+                                                links machines to your account during initial setup.
                                                 <a
                                                     target="_blank"
                                                     rel="noreferrer"
@@ -457,7 +457,7 @@ export const SetupKeys = () => {
                                                 }}
                                                 onClick={onClickAddNewSetupKey}
                                             >
-                                                Add Key
+                                                Add key
                                             </Button>
                                         </Col>
                                     </Container>
