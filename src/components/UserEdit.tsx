@@ -338,73 +338,75 @@ const UserEdit = () => {
                     loading={loading}
                     style={{marginBottom: "7px"}}
                 >
-
-                    <Form layout="vertical" hideRequiredMark form={form}
-                          initialValues={{
-                              name: formUser.name,
-                              role: formUser.role,
-                              email: formUser.email,
-                              autoGroupsNames: formUser.autoGroupsNames,
-                          }}
-                    >
-                        <Row style={{paddingBottom: "15px"}}>
-                            {!user.is_service_user && <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
-                                <Form.Item
-                                    name="email"
-                                    label={<Text style={{}}>Email</Text>}
-                                    style={{marginRight: "70px"}}
-                                >
-                                    <Input
-                                        disabled={user.id}
-                                        value={formUser.email}
-                                        style={{color: "#5a5c5a"}}
-                                        autoComplete="off"/>
-                                </Form.Item>
-                            </Col>}
-                            <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                                <Form.Item
-                                    name="role"
-                                    label={<Text style={{}}>Role</Text>}
-                                    style={{marginRight: "50px"}}
-                                >
-                                    <Select style={{width: '100%'}}
-                                            disabled={user.is_current}>
-                                        <Option value="admin">admin</Option>
-                                        <Option value="user">user</Option>
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        </Row>
-                        {!user.is_service_user && <Row style={{paddingBottom: "15px"}}>
-                            <Col span={9}>
-                                <Form.Item
-                                    name="autoGroupsNames"
-                                    label={<Text style={{}}>Auto-assigned groups</Text>}
-                                    tooltip="Every peer enrolled with this user will be automatically added to these groups"
-                                    rules={[{validator: selectValidator}]}
-                                >
-                                    <Select mode="tags"
-                                            style={{width: '100%'}}
-                                            placeholder="Associate groups with the user"
-                                            tagRender={tagRender}
-                                            dropdownRender={dropDownRender}
-                                            disabled={oidcUser && !isUserAdmin(oidcUser.sub)}
+                    <div style={{maxWidth: "800px"}}>
+                        <Form layout="vertical" hideRequiredMark form={form}
+                              initialValues={{
+                                  name: formUser.name,
+                                  role: formUser.role,
+                                  email: formUser.email,
+                                  autoGroupsNames: formUser.autoGroupsNames,
+                              }}
+                        >
+                            <Row style={{paddingBottom: "15px"}}>
+                                {!user.is_service_user &&
+                                    <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
+                                        <Form.Item
+                                            name="email"
+                                            label={<Text style={{}}>Email</Text>}
+                                            style={{marginRight: "70px"}}
+                                        >
+                                            <Input
+                                                disabled={user.id}
+                                                value={formUser.email}
+                                                style={{color: "#5a5c5a"}}
+                                                autoComplete="off"/>
+                                        </Form.Item>
+                                    </Col>}
+                                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                                    <Form.Item
+                                        name="role"
+                                        label={<Text style={{}}>Role</Text>}
+                                        style={{marginRight: "50px"}}
                                     >
-                                        {
-                                            tagGroups.map(m =>
-                                                <Option key={m}>{optionRender(m)}</Option>
-                                            )
-                                        }
-                                    </Select>
-                                </Form.Item>
-                            </Col>
-                        </Row>}
-                        <Space style={{display: 'flex', justifyContent: 'start'}}>
-                            <Button disabled={loading} onClick={onCancel}>Cancel</Button>
-                            <Button type="primary"
-                                    onClick={handleFormSubmit}>Save</Button>
-                        </Space>
-                    </Form>
+                                        <Select style={{width: '100%'}}
+                                                disabled={user.is_current}>
+                                            <Option value="admin">admin</Option>
+                                            <Option value="user">user</Option>
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
+                            </Row>
+                            {!user.is_service_user && <Row style={{paddingBottom: "15px"}}>
+                                <Col span={9}>
+                                    <Form.Item
+                                        name="autoGroupsNames"
+                                        label={<Text style={{}}>Auto-assigned groups</Text>}
+                                        tooltip="Every peer enrolled with this user will be automatically added to these groups"
+                                        rules={[{validator: selectValidator}]}
+                                    >
+                                        <Select mode="tags"
+                                                style={{width: '100%'}}
+                                                placeholder="Associate groups with the user"
+                                                tagRender={tagRender}
+                                                dropdownRender={dropDownRender}
+                                                disabled={oidcUser && !isUserAdmin(oidcUser.sub)}
+                                        >
+                                            {
+                                                tagGroups.map(m =>
+                                                    <Option key={m}>{optionRender(m)}</Option>
+                                                )
+                                            }
+                                        </Select>
+                                    </Form.Item>
+                                </Col>
+                            </Row>}
+                            <Space style={{display: 'flex', justifyContent: 'start'}}>
+                                <Button disabled={loading} onClick={onCancel}>Cancel</Button>
+                                <Button type="primary"
+                                        onClick={handleFormSubmit}>Save</Button>
+                            </Space>
+                        </Form>
+                    </div>
                 </Card>
 
                 {user && (user.is_current || user.is_service_user) && <Card
@@ -419,13 +421,13 @@ const UserEdit = () => {
                         <Row gutter={21} style={{marginTop: "-16px", marginBottom: "10px"}}>
                             <Col xs={24} sm={24} md={20} lg={20} xl={20} xxl={20} span={20}>
                                 <Paragraph type={"secondary"}
-                                           style={{textAlign: "left", fontSize: "16px", whiteSpace: "pre-line"}}>
+                                           style={{textAlign: "left", whiteSpace: "pre-line"}}>
                                     Access tokens give access to NetBird API</Paragraph>
                             </Col>
                             <Col xs={24} sm={24} md={1} lg={1} xl={1} xxl={1} span={1} style={{marginTop: "-16px"}}>
                                 {personalAccessTokens && personalAccessTokens.length > 0 &&
                                     <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create
-                                        Token</Button>}
+                                        token</Button>}
                             </Col>
                         </Row>
                         {personalAccessTokens && personalAccessTokens.length > 0 &&
@@ -511,15 +513,15 @@ const UserEdit = () => {
                             <Space direction="vertical" size="small" align="start"
                                    style={{
                                        display: 'flex',
-                                       padding: '45px 0px',
+                                       padding: '35px 0px',
                                        marginTop: "-40px",
                                        justifyContent: 'center'
                                    }}>
                                 <Paragraph
-                                    style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "16px"}}>
-                                    You don’t have any access tokens yet.
+                                    style={{textAlign: "start", whiteSpace: "pre-line"}}>
+                                    You don’t have any access tokens yet
                                 </Paragraph>
-                                <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create Token</Button>
+                                <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create token</Button>
                             </Space>}
                     </div>
 
