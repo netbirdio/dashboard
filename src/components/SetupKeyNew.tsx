@@ -292,7 +292,7 @@ const SetupKeyNew = () => {
                                textAlign: "start",
                                whiteSpace: "pre-line",
                                marginTop: "-23px",
-                               paddingBottom: "25px",
+                               paddingBottom: "15px",
                            }}>
                     {"Use this key to register new machines in your network"}
                 </Paragraph>
@@ -323,7 +323,7 @@ const SetupKeyNew = () => {
 
                         <Col span={24}>
                             <Form.Item
-                                style={{marginBottom: "0px", marginTop: "-10px"}}
+                                style={{marginBottom: "0px", marginTop: "10px"}}
                                 name="name"
                                 rules={[{required: true, message: "Please enter key name."}]}
                             >
@@ -382,9 +382,9 @@ const SetupKeyNew = () => {
                                 >
                                     Reusable
                                 </Paragraph>
-                                <Text type={"secondary"}>
+                                <Paragraph type={"secondary"} style={{whiteSpace: "pre-line", margin: 0}}>
                                     Use this type to enroll multiple peers
-                                </Text>
+                                </Paragraph>
                             </Col>
                             <Col span={6}>
                                 <Row justify={"end"}>
@@ -410,10 +410,10 @@ const SetupKeyNew = () => {
                             <Paragraph style={{whiteSpace: "pre-line", margin: 0, fontWeight: "bold"}}>
                                 {formSetupKey.type === "one-off" ? "One-off" : "Reusable"}
                             </Paragraph>
-                            <Text type={"secondary"} style={{marginLeft: "5px"}}>type</Text>
+                            <Text type={"secondary"} style={{marginLeft: "5px"}}>key</Text>
                         </Row>)}
 
-                    <Row style={{marginTop: "10px"}}>
+                    <Row style={{marginTop: "20px"}}>
                         <Col span={24}>
                             <Paragraph
                                 style={{whiteSpace: "pre-line", margin: 0, fontWeight: "bold"}}
@@ -448,7 +448,7 @@ const SetupKeyNew = () => {
                                         min={0}
                                     />
                                 </Form.Item>
-                                <Paragraph type={"secondary"} style={{marginTop: "-18px"}}>
+                                <Paragraph type={"secondary"} style={{marginTop: "-18px", marginBottom: 0}}>
                                     For example, set to 30 if you want to enroll 30 peers
                                 </Paragraph>
 
@@ -457,7 +457,7 @@ const SetupKeyNew = () => {
                     </Row>
 
                     {!isEditMode && (
-                    <Row style={{marginTop: "10px"}}>
+                    <Row style={{marginTop: "20px"}}>
                         <Col span={24}>
                             <Paragraph
                                 style={{whiteSpace: "pre-line", margin: 0, fontWeight: "bold"}}
@@ -473,14 +473,14 @@ const SetupKeyNew = () => {
                                 <InputNumber defaultValue={7} placeholder={`2`} type="number" addonAfter=" Days"
                                              style={{width: "160px", marginTop: "5px"}}/>
                             </Form.Item>
-                            <Paragraph type={"secondary"} style={{marginTop: "-18px"}}>
+                            <Paragraph type={"secondary"} style={{marginTop: "-18px", marginBottom: 0}}>
                                 Should be between 1 and 180 days
                             </Paragraph>
                         </Col>
                     </Row>)}
 
                     {isEditMode && (
-                    <Row style={{marginTop: "10px"}}>
+                    <Row style={{marginTop: "20px"}}>
 
                             <Container style={{width: "100%", padding: 0, margin: 0}}>
                                 <Row>
@@ -515,7 +515,7 @@ const SetupKeyNew = () => {
 
                     </Row>)}
 
-                    <Row style={{marginTop: "10px"}}>
+                    <Row style={{marginTop: "20px"}}>
                         <Col span={24}>
                             <Paragraph
                                 style={{whiteSpace: "pre-line", margin: 0, fontWeight: "bold"}}
