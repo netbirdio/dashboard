@@ -413,7 +413,7 @@ const SetupKeyNew = () => {
                             <Text type={"secondary"} style={{marginLeft: "5px"}}>key</Text>
                         </Row>)}
 
-                    <Row style={{marginTop: "20px"}}>
+                    <Row style={{marginTop: isEditMode? "20px" : "10px"}}>
                         <Col span={24}>
                             <Paragraph
                                 style={{whiteSpace: "pre-line", margin: 0, fontWeight: "bold"}}
