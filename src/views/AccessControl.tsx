@@ -27,7 +27,7 @@ import {Rule} from "../store/rule/types";
 import {actions as ruleActions} from "../store/rule";
 import {actions as groupActions} from "../store/group";
 import {filter, sortBy} from "lodash";
-import {CloseOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
+import {CloseOutlined, EllipsisOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
 import bidirect from '../assets/direct_bi.svg';
 import inbound from '../assets/direct_in.svg';
 import outbound from '../assets/direct_out.svg';
@@ -37,6 +37,7 @@ import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
 import {useGetTokenSilently} from "../utils/token";
 import {usePageSizeHelpers} from "../utils/pageSize";
+import {PeerDataTable} from "../store/peer/types";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -449,11 +450,17 @@ export const AccessControl = () => {
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
                                                 if (deletedRule.loading || savedRule.loading) return <></>
-                                                return <Dropdown.Button type="text" overlay={actionsMenu}
-                                                                        trigger={["click"]}
-                                                                        onOpenChange={visible => {
-                                                                            if (visible) setRuleToAction(record as RuleDataTable)
-                                                                        }}></Dropdown.Button>
+                                                return (
+                                                        <Dropdown trigger={["click"]} overlay={actionsMenu} onOpenChange={visible => {
+                                                            if (visible) setRuleToAction(record as RuleDataTable)
+                                                        }}>
+                                                            <Button type="text">
+                                                                <Space>
+                                                                    <EllipsisOutlined />
+                                                                </Space>
+                                                            </Button>
+                                                        </Dropdown>
+                                                    )
                                             }}
                                     />
                                 </Table>
