@@ -99,15 +99,6 @@ export function* saveUser(action: ReturnType<typeof actions.saveUser.request>): 
             error: null,
             data: response.body
         } as CreateResponse<User | null>));
-
-        yield put(groupActions.getGroups.request({
-            getAccessTokenSilently: action.payload.getAccessTokenSilently,
-            payload: null
-        }));
-        yield put(actions.getUsers.request({
-            getAccessTokenSilently: action.payload.getAccessTokenSilently,
-            payload: null
-        }));
     } catch (err) {
         yield put(actions.saveUser.failure({
             loading: false,
