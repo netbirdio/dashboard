@@ -102,18 +102,6 @@ const UserEdit = () => {
                 dispatch(userActions.setEditUserPopupVisible(false));
                 dispatch(userActions.setUser(null as unknown as User))
                 dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null))
-                dispatch(groupActions.getGroups.request({
-                    getAccessTokenSilently: getTokenSilently,
-                    payload: null
-                }));
-                dispatch(userActions.getServiceUsers.request({
-                    getAccessTokenSilently: getTokenSilently,
-                    payload: null
-                }))
-                dispatch(userActions.getUsers.request({
-                    getAccessTokenSilently: getTokenSilently,
-                    payload: null
-                }))
             })
             .catch((errorInfo) => {
                 console.log('errorInfo', errorInfo)
