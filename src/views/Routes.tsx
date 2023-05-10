@@ -28,7 +28,7 @@ import {Route, RouteToSave} from "../store/route/types";
 import {actions as routeActions} from "../store/route";
 import {actions as peerActions} from "../store/peer";
 import {filter, sortBy} from "lodash";
-import {ExclamationCircleOutlined, QuestionCircleOutlined} from "@ant-design/icons";
+import {EllipsisOutlined, ExclamationCircleOutlined, QuestionCircleOutlined} from "@ant-design/icons";
 import RouteUpdate from "../components/RouteUpdate";
 import tableSpin from "../components/Spin";
 import {
@@ -410,10 +410,17 @@ export const Routes = () => {
             <Column title="" align="center"
                     render={(text, record) => {
                         if (deletedRoute.loading || savedRoute.loading) return <></>
-                        return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
-                                                onOpenChange={visible => {
-                                                    if (visible) setRouteToAction(record as RouteDataTable)
-                                                }}></Dropdown.Button>
+                        return (
+                                <Dropdown trigger={["click"]} overlay={actionsMenu} onOpenChange={visible => {
+                                    if (visible) setRouteToAction(record as RouteDataTable)
+                                }}>
+                                    <Button type="text">
+                                        <Space>
+                                            <EllipsisOutlined />
+                                        </Space>
+                                    </Button>
+                                </Dropdown>
+                            )
                     }}
             />
         </Table>
