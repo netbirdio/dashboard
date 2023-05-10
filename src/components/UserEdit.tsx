@@ -308,10 +308,10 @@ const UserEdit = () => {
                 <Breadcrumb style={{marginBottom: "30px"}}
                             items={[
                                 {
-                                    title: <Text onClick={() => onBreadcrumbUsersClick("Users")}>All Users</Text>,
+                                    title: <a href = "" onClick={() => onBreadcrumbUsersClick("Users")}>All Users</a>,
                                 },
                                 {
-                                    title: <Text onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</Text>,
+                                    title: <a href= "" onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</a>,
                                     // menu: { items: menuItems },
                                 },
                                 {
