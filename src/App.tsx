@@ -22,7 +22,7 @@ import {SecureLoading} from "./components/Loading";
 import DNS from "./views/DNS";
 import Activity from "./views/Activity";
 import Settings from "./views/Settings";
-
+import './styles/tailwind.css'
 
 const {Header, Content} = Layout;
 

@@ -13,6 +13,7 @@ import {RootState} from "typesafe-actions";
 import {actions as userActions} from "../store/user";
 import {useGetTokenSilently} from "../utils/token";
 import {actions as personalAccessTokenActions} from "../store/personal-access-token";
+import {ModeToggle} from "./ModeToggle";
 
 const {useBreakpoint} = Grid;
 
@@ -169,6 +170,9 @@ const Navbar = () => {
                               }}
                               defaultSelectedKeys={[location.pathname]} items={menuItems}/>
                     </div>
+                </Col>
+                <Col style={{width: "3%"}}>
+                    <ModeToggle />
                 </Col>
                 {hideMenuUser &&
                     <Col>

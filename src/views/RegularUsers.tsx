@@ -254,7 +254,7 @@ export const RegularUsers = () => {
                     <Col span={24}>
                         <Paragraph>Manage users and their permissions.{(window.location.hostname == "app.netbird.io") ? "Same-domain email users are added automatically on first sign-in." : ""}</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
-                            <Row gutter={[16, 24]}>
+                            <Row gutter={[16, 24]} style={{paddingBottom: "0px"}}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
                                     <Input allowClear value={textToSearch} onPressEnter={searchDataTable}
                                            placeholder="Search..." onChange={onChangeTextToSearch}/>
