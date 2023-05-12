@@ -6,7 +6,7 @@ import {actions as peerActions} from '../store/peer';
 import {actions as groupActions} from '../store/group';
 import {actions as routeActions} from '../store/route';
 import {Container} from "../components/Container";
-import {ExclamationCircleOutlined, ReloadOutlined,} from '@ant-design/icons';
+import {EllipsisOutlined, ExclamationCircleOutlined, ReloadOutlined,} from '@ant-design/icons';
 import {
     Alert,
     Button,
@@ -611,11 +611,17 @@ export const Peers = () => {
                                     <Column title="Version" dataIndex="version"/>
                                     <Column title="" align="center"
                                             render={(text, record, index) => {
-                                                return <Dropdown.Button type="text" overlay={actionsMenu}
-                                                                        trigger={["click"]}
-                                                                        onOpenChange={visible => {
-                                                                            if (visible) setPeerToAction(record as PeerDataTable)
-                                                                        }}></Dropdown.Button>
+                                                return (
+                                                    <Dropdown trigger={["click"]} overlay={actionsMenu} onOpenChange={visible => {
+                                                        if (visible) setPeerToAction(record as PeerDataTable)
+                                                    }}>
+                                                        <Button type="text">
+                                                            <Space>
+                                                                <EllipsisOutlined />
+                                                            </Space>
+                                                        </Button>
+                                                    </Dropdown>
+                                                    )
                                             }}
                                     />
                                 </Table>)}
