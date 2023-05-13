@@ -329,9 +329,9 @@ export const SetupKeys = () => {
                     <Col span={24}>
                         <Title level={4}>Setup Keys</Title>
                         <Paragraph
-                            style={{
-                                color: dataTable.length ? "black" : "#818183",
-                            }}
+                            // style={{
+                            //     color: dataTable.length ? "black" : "#818183",
+                            // }}
                         >
                             A list of all the setup keys in your account including their name, state, type and
                             expiration.

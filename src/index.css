@@ -119,29 +119,56 @@
 /* Light mode styles */
 :root {
   --accent-color: #f97316;
-  --accent-hover: #FFAC1C;
+  --accent-hover: #ff9142;
   --primary-color: #1f2937;
   --secondary-color: rgba(107, 114, 128, 1);
   --bg-color-main: rgba(249, 250, 251, 1);
   --bg-color-components: #fff;
+  --bg-color-menu: #fff;
+  --text-color-components: #1f2937;
   --border-color: #e0e0e0;
   --divider-color: #f1f5f9;
   --text-color: #1f2937;
-  --decent-select: #e0e0e0;
+  --decent-select: #FAFAFA;
+}
+
+/* Use system default*/
+@media (prefers-color-scheme: dark) {
+  :root:not([data-dark-mode="false"]) {
+    --accent-color: #f97316;
+    --accent-hover: #ff9142;
+    --primary-color: #f1f5f9;
+    --secondary-color: #a1a1aa;
+    --bg-color-main: #18181b;
+    --bg-color-components: rgba(36, 36, 39, 1);
+    --bg-color-menu: rgba(70, 75, 83, 1);
+    --text-color-components: rgba(186, 190, 196, 1);
+    --border-color: rgba(70, 75, 83, 1);
+    --divider-color: rgba(39, 42, 47, 1);
+    --text-color: #f1f5f9;
+    --decent-select: rgba(38, 40, 44, 1);
+  }
 }
 
 /* Dark mode styles */
-[data-dark-mode='true'] {
+:root[data-theme="dark"] {
   --accent-color: #f97316;
-  --accent-hover: #FFAC1C;
+  --accent-hover: #ff9142;
   --primary-color: #f1f5f9;
   --secondary-color: #a1a1aa;
   --bg-color-main: #18181b;
   --bg-color-components: rgba(36, 36, 39, 1);
+  --bg-color-menu: rgba(70, 75, 83, 1);
+  --text-color-components: rgba(186, 190, 196, 1);
   --border-color: rgba(70, 75, 83, 1);
   --divider-color: rgba(39, 42, 47, 1);
   --text-color: #f1f5f9;
-  --decent-select: rgba(70, 75, 83, 1);
+  --decent-select: rgba(38, 40, 44, 1);
+}
+
+body {
+  background-color: var(--bg-color-main);
+  color: var(--text-color);
 }
 
 
@@ -179,6 +206,11 @@
 :where(.css-dev-only-do-not-override-1430lv7).ant-menu-light.ant-menu-horizontal >.ant-menu-item-selected::after, :where(.css-dev-only-do-not-override-1430lv7).ant-menu-light.ant-menu-horizontal >.ant-menu-submenu-selected::after {
   border-bottom-color: var(--accent-color);
 }
+
+.ant-menu-light.ant-menu-horizontal >.ant-menu-item-active::after, .ant-menu-light.ant-menu-horizontal >.ant-menu-item-active::after {
+  background-color: var(--accent-color);
+}
+
 
 /*Tabs*/
 .ant-tabs-nav {
@@ -227,7 +259,23 @@ h4:where(.css-dev-only-do-not-override-1430lv7).ant-typography, div:where(.css-d
 
 /*Paragraph*/
 :where(.css-dev-only-do-not-override-1430lv7).ant-typography{
-  color: var(--secondary-color);
+  color: var(--text-color-components);
+}
+
+  /*Secondary*/
+.ant-typography-secondary {
+    color: var(--secondary-color) !important;
+}
+
+.tooltip-label .ant-typography {
+  color: var(--text-color);
+}
+.ant-empty-normal .ant-empty-description {
+  color: rgba(207, 207, 211, 1);
+}
+
+td.ant-table-cell {
+    color: var(--text-color);
 }
 
   /*Searchbar*/
@@ -272,6 +320,7 @@ input::-webkit-input-placeholder,
 textarea::-webkit-input-placeholder {
   color: var(--border-color) !important;
 }
+
 input:-moz-placeholder,
 textarea:-moz-placeholder {
   color: var(--border-color) !important;
@@ -285,30 +334,82 @@ textarea:-ms-input-placeholder {
   color: var(--border-color) !important;
 }
 
-  /*Radio Button*/
-.ant-radio-button-checked {
-    background-color: var(--accent-color);
-    color: var(--primary-color);
+  /* Textbox */
+.ant-form-item .ant-form-item-control-input .ant-input {
+    background-color: var(--bg-color-components);
+    border-color: var(--border-color);
+    color: var(--text-color);
 }
-.ant-radio-button-checked:hover {
-    background-color: var(--accent-color);
-    color: var(--primary-color);
-    border-color: var(--accent-color) ;
+.ant-form-item .ant-form-item-control-input .ant-input {
+  background-color: unset;
 }
 
+/* Number input */
+.ant-input-number {
+  background-color: var(--bg-color-components);
+  border-color: var(--border-color);
+}
+
+.ant-input-number .ant-input-number-input {
+  color: var(--text-color);
+}
+
+.ant-input-number .ant-input-number-handler-wrap .ant-input-number-handler {
+ background-color: var(--bg-color-menu);
+}
+
+:where(.css-dev-only-do-not-override-1430lv7).ant-select-single.ant-select-show-arrow .ant-select-selection-item, :where(.css-dev-only-do-not-override-1430lv7).ant-select-single.ant-select-show-arrow .ant-select-selection-placeholder {
+  color: var(--secondary-color);
+}
+
+
+.anticon-flag > svg, .anticon-close > svg, .ant-form-item-tooltip > svg, .anticon-minus-circle > svg, .anticon-left > svg {
+  fill: var(--text-color-components);
+}
+
+.ant-select-multiple .ant-select-selection-placeholder {
+    color: var(--text-color-components);
+}
+
+  /*Radio Button*/
 .ant-radio-group-solid :where(.css-dev-only-do-not-override-1430lv7).ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-  border-color: var(--accent-color);
+  background: rgba(255, 145, 66, 0.1) none;
+  color: rgba(255, 145, 66, 1);
+  border-color: rgba(255, 145, 66, 1);
+  border-left-color: rgba(255, 145, 66, 1);
+  border-right-color: rgba(255, 145, 66, 1);
+  border-left-width: 1px;
+  border-right-width: 1px;
 }
 .ant-radio-group-solid :where(.css-dev-only-do-not-override-1430lv7).ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover {
-  border-color: var(--accent-color);
+  background: rgba(251, 146, 60, 0.1) none;
+  color: rgba(253, 186, 116, 1);
+  border-color: rgba(253, 186, 116, 1);
 }
+
+/*.ant-radio-button-checked {*/
+/*    background-color: var(--accent-color);*/
+/*    color: var(--primary-color);*/
+/*}*/
+/*.ant-radio-button-checked:hover {*/
+/*    background-color: var(--accent-color);*/
+/*    color: var(--primary-color);*/
+/*    border-color: var(--accent-color) ;*/
+/*}*/
+
+/*.ant-radio-group-solid :where(.css-dev-only-do-not-override-1430lv7).ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {*/
+/*  border-color: var(--accent-color);*/
+/*}*/
+/*.ant-radio-group-solid :where(.css-dev-only-do-not-override-1430lv7).ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled):hover {*/
+/*  border-color: var(--accent-color);*/
+/*}*/
 
 .ant-radio-button-wrapper:hover {
   color: var(--accent-color);
 }
 
 .ant-radio-button-wrapper {
-  color: var(--text-color);
+  color: var(--text-color-components);
   background-color: var(--bg-color-components);
   border-color: var(--border-color);
 }
@@ -317,9 +418,6 @@ textarea:-ms-input-placeholder {
   border-color: var(--border-color);
 }
 
-.ant-radio-group-solid :where(.css-dev-only-do-not-override-1430lv7).ant-radio-button-wrapper-checked:not(.ant-radio-button-wrapper-disabled) {
-
-}
 
   /*Table*/
 /*table header soring colum*/
@@ -351,9 +449,25 @@ textarea:-ms-input-placeholder {
   border-start-end-radius: 0;
 }
 
+.ant-table-expanded-row {
+  background-color: var(--bg-color-components);
+}
+
 /*table border*/
 .ant-card-bordered {
   border: 1px solid var(--border-color)
+}
+
+:where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-content >table, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-header >table {
+  border: 1px solid var(--border-color)
+}
+
+:where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-content >table >thead>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-header >table >thead>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-body >table >thead>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-summary >table >thead>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-content >table >tbody>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-header >table >tbody>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-body >table >tbody>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-summary >table >tbody>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-content >table >tbody>tr>td, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-header >table >tbody>tr>td, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-body >table >tbody>tr>td, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-summary >table >tbody>tr>td, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-content >table >tfoot>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-header >table >tfoot>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-body >table >tfoot>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-summary >table >tfoot>tr>th, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-content >table >tfoot>tr>td, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-header >table >tfoot>tr>td, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-body >table >tfoot>tr>td, :where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container >.ant-table-summary >table >tfoot>tr>td {
+  border: 1px solid var(--divider-color)
+}
+
+:where(.css-dev-only-do-not-override-1430lv7).ant-table-wrapper .ant-table.ant-table-bordered >.ant-table-container{
+  border-inline-start: none;
 }
 
 /*Row border*/
@@ -362,15 +476,11 @@ textarea:-ms-input-placeholder {
 }
 
 /*Sorting arrows*/
-.ant-btn-link {
+.ant-table-wrapper .ant-table-column-sorter-up.active {
   color: var(--accent-color);
 }
 
-.ant-btn-link a:hover {
-  color: var(--accent-hover);
-}
-
-.ant-table-wrapper .ant-table-column-sorter-up.active {
+.ant-table-wrapper .ant-table-column-sorter-down.active {
   color: var(--accent-color);
 }
 
@@ -382,22 +492,95 @@ textarea:-ms-input-placeholder {
   color: var(--border-color);
 }
 
-/*.ant-table-row {*/
-/*  border: 1px solid #222222*/
-/*}*/
+/*buttons*/
+.ant-btn-link {
+  color: var(--accent-color);
+}
+.ant-btn-link:not(:disabled):hover {
+  color: var(--accent-hover);
+}
+
+.ant-btn-link:hover a {
+  color: var(--accent-hover);
+}
+.ant-btn-link:hover span {
+  color: var(--accent-hover);
+}
+.ant-btn-text:not([style]) span{
+  color: var(--text-color);
+}
+
+.ant-table-cell.ant-dropdown-trigger:hover {
+  background-color: red;
+  color: red;
+}
+
+.ant-btn-primary:not(:disabled) {
+  background-color: rgba(255, 145, 66, 0.1);
+  color: rgba(255, 145, 66, 1);
+  border-color: rgba(255, 145, 66, 1);
+}
+
+.ant-btn-primary:not(:disabled):hover {
+  background-color: rgba(251, 146, 60, 0.1);
+  color: rgba(253, 186, 116, 1);
+  border-color: rgba(253, 186, 116, 1);
+}
+
+.ant-btn-default:not(:disabled) {
+  color: var(--text-color-components);
+  border-color: var(--border-color);
+}
+.ant-btn-default:not(:disabled):hover {
+  color: var(--accent-color);
+  border-color: var(--accent-color);
+}
+
+.ant-btn.ant-btn-block {
+  color: var(--text-color-components);
+  border-color: var(--border-color);
+}
+
+.ant-btn-text.ant-btn-dangerous > span{
+    color: rgba(239, 68, 68, 1);
+}
+
+/* Dropdown Menu*/
+:where(.css-dev-only-do-not-override-1430lv7).ant-dropdown .ant-dropdown-menu, :where(.css-dev-only-do-not-override-1430lv7).ant-dropdown-menu-submenu .ant-dropdown-menu{
+    background-color: var(--bg-color-menu);
+    color: var(--text-color);
+}
+
+/* Select Dropdown */
+.ant-select-dropdown {
+  background-color: var(--bg-color-menu);
+}
+.ant-select-item-option-content {
+    color: var(--text-color);
+}
+:where(.css-dev-only-do-not-override-1430lv7).ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
+    background-color: rgba(255, 145, 66, 0.6);
+}
+
 .ant-table-wrapper td.ant-table-column-sort{
-  background-color: var(--bg-color-components);
+  background-color: var(--decent-select);
   /*color: var(--primary-color);*/
 }
+
+th.ant-table-cell:hover {
+  background-color: red;
+  /*color: var(--primary-color);*/
+}
+
 .ant-table-cell {
   background-color: var(--bg-color-components);
   color: var(--bg-color-components);
   /*border-bottom: #222222;*/
 }
 
-/*.ant-table-wrapper .ant-table-thead:hover {*/
-/*  color: rgb(255, 117, 24);*/
-/*}*/
+th.ant-table-column-has-sorters:hover {
+  background-color: rgb(255, 117, 24);
+}
 /*.ant-table-column-sorter .ant-table-column-sorter-full {*/
 /*  color: rgb(255, 117, 24);*/
 /*}*/
@@ -419,8 +602,27 @@ textarea:-ms-input-placeholder {
     background-color: var(--bg-color-components);
 }
 
+.ant-card .ant-card-bordered {
+  border: 1px solid var(--border-color);
+}
+
+/*.ant-card .ant-card-head {*/
+/*  background-color: var(--bg-color-components);*/
+/*  border-bottom: 1px solid var(--border-color);*/
+/*}*/
+
+.ant-card .ant-card-head-title {
+  color: var(--text-color);
+}
+
 .ant-table-thead .ant-table-cell {
   font-weight: normal !important;
+}
+
+  /*popup*/
+.ant-modal .ant-modal-content {
+    background-color: var(--bg-color-components);
+    color: var(--text-color);
 }
 
   /*Pagination*/
@@ -429,10 +631,10 @@ textarea:-ms-input-placeholder {
 }
 
 .ant-pagination .ant-pagination-disabled .ant-pagination-item-link {
-  color: var(--text-color);
+  color: var(--text-color-components);
 }
 .ant-pagination.ant-pagination-mini .ant-pagination-next .ant-pagination-item-link {
-    color: var(--text-color);
+    color: var(--text-color-components);
 }
 .ant-pagination .ant-pagination-item-active {
   background-color: var(--bg-color-main);
@@ -447,263 +649,168 @@ textarea:-ms-input-placeholder {
   color: var(--accent-hover);
 }
 
+.ant-pagination .ant-pagination-item-active:hover a {
+  border-color: var(--accent-hover);
+  color: var(--accent-hover);
+}
+
 .ant-pagination .ant-pagination-item-active a {
   color: var(--accent-color);
 }
 
 .ant-pagination .ant-pagination-total-text {
-    color: var(--text-color);
+    color: var(--text-color-components);
 }
 
 /*Pagination pages selector*/
 :where(.css-dev-only-do-not-override-1430lv7).ant-pagination.ant-pagination-mini .ant-pagination-item a {
-  color: var(--text-color);
+  color: var(--text-color-components);
 }
 
 :where(.css-dev-only-do-not-override-1430lv7).ant-pagination.ant-pagination-mini .ant-pagination-item-active a {
   color: var(--accent-color);
 }
 
+  /*Switch*/
+.ant-switch .ant-switch-handle::before {
+    background-color: var(--decent-select);
+}
 
+.ant-switch.ant-switch-checked .ant-switch-inner {
+  background: var(--accent-color);
+}
+.ant-switch.ant-switch-checked:hover .ant-switch-inner {
+  background: var(--accent-hover);
+}
 
+/* Hover color of the Switch component */
+.ant-switch.ant-switch:hover {
+  background-color: var(--secondary-color); /* Change to your desired color */
+}
+.ant-switch.ant-switch {
+  background-color: var(--border-color); /* Change to your desired color */
+}
 
+/* Checked (on) color of the Switch component */
+.ant-switch.ant-switch-checked:hover {
+  background-color: red; /* Change to your desired color */
+}
 
-
-
-
-
-
-
-
-  /*.ant-menu-horizontal > .ant-select-selector {*/
-/*  color: rgb(255, 117, 24);*/
-/*}*/
-
-
-/*.ant-menu-horizontal > .ant-menu-item > :after {*/
-/*  color: rgb(255, 117, 24);*/
-/*}*/
-
-
-
-
-/*Navbar*/
-/*.ant-menu-horizontal > .ant-menu-item a:hover {*/
-/*  color: var(--primary-color);*/
-/*  font-weight: 500;*/
-/*}*/
-
-
-
-
-
-
-/*.ant-pagination-item-active {*/
-/*  background-color: var(--primary-color);*/
-/*  border-color: var(--primary-color);*/
-/*  color: #fff;*/
-/*}*/
-
-/*.ant-pagination-item-active:hover,*/
-/*.ant-pagination-item-active:focus {*/
-/*  background-color: #d97706;*/
-/*  border-color: #d97706;*/
-/*}*/
-
-/*.ant-pagination-item-link:focus,*/
-/*.ant-pagination-item-link:hover {*/
-/*  border-color: var(--primary-color);*/
-/*}*/
-
-/*.ant-table-thead > tr > th {*/
-/*  background-color: var(--bg-color);*/
-/*  border-color: var(--bg-color);*/
-/*  color: var(--text-color);*/
-/*  font-weight: bold;*/
-/*}*/
-
-/*.ant-table-tbody > tr > td {*/
-/*  background-color: #fff;*/
-/*  border-color: var(--bg-color);*/
-/*  color: var(--text-color);*/
-/*}*/
-
-/*.ant-table-tbody > tr > td.ant-table-cell-expand,*/
-/*.ant-table-tbody > tr > td.ant-table-cell-expand > .ant-table-row-expand-icon {*/
-/*  background-color: var(--bg-color);*/
-/*  border-color: var(--bg-color);*/
-/*}*/
-
-/*.ant-table-tbody > tr.ant-table-row:hover > td {*/
-/*  background-color: #edf2f7;*/
-/*}*/
-
-/*.ant-table-tbody > tr.ant-table-row-selected > td {*/
-/*  background-color: var(--accent-color);*/
-/*  color: #fff;*/
-/*}*/
-
-/*.ant-form-item-label > label {*/
-/*  color: var(--text-color);*/
-/*  font-weight: bold;*/
-/*}*/
-
-/*.ant-form-item-has-error .ant-form-item-explain,*/
-/*.ant-form-item-has-error .ant-form-item-extra {*/
-/*  color: #f5222d;*/
-/*}*/
-
-/*.ant-form-item-has-error .ant-input,*/
-/*.ant-form-item-has-error .ant-input-affix-wrapper {*/
-/*  border-color: #f5222d;*/
-/*}*/
-
-/*.ant-form-item-has-error .ant-select:not(.ant-select-disabled).ant-select:not(.ant-select-customize-input) .ant-select-selector {*/
-/*  border-color: #f5222d;*/
-/*}*/
-
-
-
-
-/*!* Checkbox *!*/
-/*.ant-checkbox-inner {*/
-/*  !* Use the accent color for the checkbox fill *!*/
-/*  background-color: var(--accent-color);*/
-/*  border-color: var(--accent-color);*/
-
-/*!* Use a darker shade of the accent color when the checkbox is checked *!*/
-/*&:after {*/
-/*   color: var(--accent-color);*/
-/* }*/
-/*}*/
-
-/*!* Radio *!*/
-/*.ant-radio-inner {*/
-/*  !* Use the accent color for the radio button fill *!*/
-/*  background-color: var(--accent-color);*/
-/*  border-color: var(--accent-color);*/
-
-/*!* Use a darker shade of the accent color when the radio button is checked *!*/
-/*&:after {*/
-/*   background-color: var(--accent-color);*/
-/* }*/
-/*}*/
-
-
-/*!* Table *!*/
-/*.ant-table-thead > tr > th {*/
-/*  !* Use the accent color for the table header background *!*/
-/*  background-color: var(--accent-color);*/
-/*  color: #fff;*/
-/*}*/
-
-/*.ant-table-tbody > tr > td {*/
-/*  !* Use a light gray for the table row border *!*/
-/*  border-color: #ccc;*/
-/*}*/
-
-/*!* Modal *!*/
-/*.ant-modal-header {*/
-/*  !* Use the accent color for the modal header background *!*/
-/*  background-color: var(--accent-color);*/
-/*  color: #fff;*/
-/*}*/
-
-/*.ant-modal-footer {*/
-/*  !* Use a light gray for the modal footer border *!*/
-/*  border-color: #ccc;*/
-/*}*/
-
-/*!* Tooltip *!*/
-/*.ant-tooltip-inner {*/
-/*  !* Use the accent color for the tooltip background *!*/
-/*  background-color: var(--accent-color);*/
-/*  color: #fff;*/
-/*  border-color: var(--accent-color);*/
-/*}*/
-
-
-
-
-
+/* Disabled color of the Switch component */
+.ant-switch.ant-switch-disabled {
+  opacity: 0.5; /* Change to your desired opacity */
+}
 
 /*Rows per page*/
 :where(.css-dev-only-do-not-override-1430lv7).ant-select:not(.ant-select-customize-input) .ant-select-selector {
   background-color: var(--bg-color-components);
-  color: var(--text-color);
+  color: var(--text-color-components);
   border: 1px solid var(--border-color);
 }
-:where(.css-dev-only-do-not-override-1430lv7).ant-select:not(.ant-select-customize-input) .ant-select-selector:hover {
+
+.ant-select-suffix {
+  color: var(--text-color-components);
+}
+
+:where(.css-dev-only-do-not-override-1430lv7).ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer):hover .ant-select-selector{
   border-color: var(--accent-color);
 }
 
-/*.ant-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {*/
-/*  color: var(--accent-color);*/
-/*}*/
+.ant-select-focused:where(.css-dev-only-do-not-override-1430lv7).ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer) .ant-select-selector {
+  border-color: var(--accent-color);
+  color: var(--text-color-components);
+}
+
+.ant-select-focused:where(.css-dev-only-do-not-override-1430lv7).ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer) .ant-select-selection-item {
+  color: var(--text-color-components);
+}
+
+/* Tags */
+
+.ant-tag {
+  background-color: rgba(212, 212, 216, 0.3);
+  color: var(--text-color-components);
+  border-color: rgba(212, 212, 216, 1);
+}
+
+.ant-tag-green {
+  background-color: rgba(52, 211, 153, 0.1);
+  color: rgba(52, 211, 153, 1);
+  border-color: rgba(52, 211, 153, 1);
+}
+
+.ant-tag-blue {
+  background-color: rgba(56, 189, 248, 0.1);
+  color: rgba(56, 189, 248, 1);
+  border-color: rgba(56, 189, 248, 1);
+}
+
+.ant-tag-orange {
+  background-color: rgba(255, 145, 66, 0.1);
+  color: rgba(255, 145, 66, 1);
+  border-color: rgba(255, 145, 66, 1);
+}
+
+.ant-tag-red {
+  background-color: rgba(239, 68, 68, 0.1);
+  color: rgba(239, 68, 68, 1);
+  border-color: rgba(239, 68, 68, 1);
+}
+
+.ant-tag-processing {
+  height: 20px;
+  background-color: rgba(123, 191, 252, 0.1);
+  color: rgba(56, 189, 248, 1);
+  border-color: rgba(56, 189, 248, 1);
+}
+
+.ant-tag-processing > img {
+  margin-top: 4px;
+  height: 10px;
+}
+
+.ant-drawer-wrapper-body {
+  background-color: var(--bg-color-components);
+}
+
+.ant-drawer .ant-drawer-title {
+  color: var(--text-color);
+}
+
+.ant-form-vertical .ant-form-item-label>label {
+  color: var(--primary-color);
+}
+
+.ant-form-item-label > label > span {
+    color: var(--primary-color);
+}
+
+label {
+  color: var(--primary-color);
+}
+
+.ant-form-item .ant-form-item-label >label {
+  color: var(--primary-color);
+}
 
 
+/* breadcrumbs */
+.ant-breadcrumb-link > a {
+    color: var(--secondary-color);
+}
 
-/*:where(.css-dev-only-do-not-override-1430lv7).ant-tag {*/
-/*  border: none;*/
-/*}*/
+.ant-breadcrumb .ant-breadcrumb-separator {
+    color: var(--secondary-color);
+}
 
-/*.ant-select-selection-placeholder {*/
-/*  color: rgba(70, 75, 83, 1);*/
-/*}*/
+.ant-breadcrumb-link {
+    color: var(--text-color);
+}
 
-/*:where(.css-dev-only-do-not-override-1430lv7).ant-menu-light.ant-menu-horizontal >.ant-menu-item-selected::after, :where(.css-dev-only-do-not-override-1430lv7).ant-menu-light.ant-menu-horizontal >.ant-menu-submenu-selected::after {*/
-/*  border-bottom-color: rgb(255, 117, 24);*/
-/*}*/
+:where(.css-dev-only-do-not-override-1430lv7).ant-input-number-group >.ant-input-number:last-child, :where(.css-dev-only-do-not-override-1430lv7).ant-input-number-group .ant-input-number-group-addon:last-child {
+  color: var(--text-color-components);
+}
 
-/*!*.ant-input:focus, .ant-input-focused {*!*/
-/*!*  border-color: brown;*!*/
-/*!*}*!*/
-
-/*.ant-input:hover{*/
-/*  border-color: rgb(255, 117, 24);*/
-/*}*/
-
-
-/*.ant-input {*/
-/*  background-color: rgba(36, 36, 39, 1);*/
-/*  color: rgb(255, 255, 255);*/
-/*}*/
-
-
-
-
-
-/*.ant-select-selection {*/
-/*  background-color: red;*/
-/*}*/
-
-/*.ant-typography {*/
-/*  color: #a1a1aa;*/
-/*}*/
-
-/*!* Button *!*/
-/*.ant-btn-primary {*/
-/*  background-color: var(--primary-color);*/
-/*  border-color: var(--primary-color);*/
-/*  color: #fff;*/
-/*}*/
-
-/*.ant-btn-primary:hover,*/
-/*.ant-btn-primary:focus,*/
-/*.ant-btn-primary.active {*/
-/*  background-color: #d97706;*/
-/*  border-color: #d97706;*/
-/*}*/
-
-/*.ant-btn {*/
-/*  !* Use the accent color for button backgrounds and borders *!*/
-/*  background-color: var(--accent-color);*/
-/*  border-color: var(--accent-color);*/
-/*  color: #fff;*/
-
-/*!* Use a darker shade of the accent color when the button is hovered or active *!*/
-/*&:hover, &:active {*/
-/*            background-color: darken(var(--accent-color), 5%);*/
-/*            border-color: darken(var(--accent-color), 5%);*/
-/*          }*/
-/*}*/
+:where(.css-dev-only-do-not-override-1430lv7).ant-input-number-group .ant-input-number-group-addon:last-child {
+  border-color: var(--border-color);
+}

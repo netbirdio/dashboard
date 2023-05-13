@@ -314,7 +314,7 @@ const NameServerGroupUpdate = () => {
     // @ts-ignore
     const renderNSList = (fields: FormListFieldData[], {add, remove}, {errors}) => (
         <>
-            <Row>Nameservers</Row>
+            <Row><label>Nameservers</label></Row>
             {!!fields.length && (
 
                 <Row align='middle'>
@@ -384,7 +384,7 @@ const NameServerGroupUpdate = () => {
             <Row>
                 <Space>
                     <Col>
-                        Match domains
+                        <label>Match domains</label>
                     </Col>
                     <Col>
                         <Tooltip title="Only queries to domains specified here will be resolved by these nameservers."
