@@ -606,6 +606,12 @@ th.ant-table-column-has-sorters:hover {
   border: 1px solid var(--border-color);
 }
 
+:where(.css-dev-only-do-not-override-1430lv7).ant-card {
+    background-color: var(--bg-color-components);
+    color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
+}
+
 /*.ant-card .ant-card-head {*/
 /*  background-color: var(--bg-color-components);*/
 /*  border-bottom: 1px solid var(--border-color);*/

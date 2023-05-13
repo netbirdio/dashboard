@@ -29,18 +29,15 @@ export function ModeToggle() {
   function toggleMode() {
     disableTransitionsTemporarily()
 
-    let darkModeMediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    let isSystemDarkMode = darkModeMediaQuery.matches
     let isDarkMode = document.documentElement.classList.toggle('dark')
 
-    if (isDarkMode === isSystemDarkMode) {
+    if (document.documentElement.getAttribute("data-dark-mode") !== "false") {
       delete window.localStorage.isDarkMode
-      document.documentElement.setAttribute('data-dark-mode', 'true');
+      document.documentElement.setAttribute('data-dark-mode', 'false');
     } else {
       window.localStorage.isDarkMode = isDarkMode
-      document.documentElement.setAttribute('data-dark-mode', 'false');
+      document.documentElement.setAttribute('data-dark-mode', 'true');
     }
-
   }
 
   return (
@@ -50,8 +47,8 @@ export function ModeToggle() {
       aria-label="Toggle dark mode"
       onClick={toggleMode}
     >
-      <SunIcon className="h-5 w-5 stroke-zinc-900 dark:hidden" />
-      <MoonIcon className="hidden h-5 w-5 stroke-white dark:block" />
+      <SunIcon className="h-5 w-5 stroke-zinc-900 hidden dark:block" />
+      <MoonIcon className="dark:hidden h-5 w-5 stroke-white dark:block" />
     </button>
   )
 }
