@@ -593,7 +593,14 @@ textarea:-ms-input-placeholder {
 .ant-popover .ant-popover-inner {
     background-color: var(--bg-color-menu);
     border-color: var(--border-color);
+    color: var(--text-color);
 }
+
+.ant-popover .ant-popover-inner .ant-popover-inner-content {
+
+  color: var(--text-color);
+}
+
 
 :where(.css-dev-only-do-not-override-1430lv7)[class^="ant-popover"] [class^="ant-popover"]::before, :where(.css-dev-only-do-not-override-1430lv7)[class*=" ant-popover"] [class^="ant-popover"]::before, :where(.css-dev-only-do-not-override-1430lv7)[class^="ant-popover"] [class*=" ant-popover"]::before, :where(.css-dev-only-do-not-override-1430lv7)[class*=" ant-popover"] [class*=" ant-popover"]::before, :where(.css-dev-only-do-not-override-1430lv7)[class^="ant-popover"] [class^="ant-popover"]::after, :where(.css-dev-only-do-not-override-1430lv7)[class*=" ant-popover"] [class^="ant-popover"]::after, :where(.css-dev-only-do-not-override-1430lv7)[class^="ant-popover"] [class*=" ant-popover"]::after, :where(.css-dev-only-do-not-override-1430lv7)[class*=" ant-popover"] [class*=" ant-popover"]::after {
   background-color: var(--bg-color-menu);
@@ -708,6 +715,10 @@ span.ant-typography {
 }
 :where(.css-dev-only-do-not-override-1430lv7).ant-select-dropdown .ant-select-item-option-selected:not(.ant-select-item-option-disabled) {
     background-color: rgba(255, 145, 66, 0.6);
+}
+
+.ant-dropdown-menu-title-content{
+  color: var(--text-color);
 }
 
 .ant-table-wrapper td.ant-table-column-sort{
