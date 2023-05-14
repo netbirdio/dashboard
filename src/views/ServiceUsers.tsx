@@ -187,12 +187,11 @@ export const ServiceUsers = () => {
                                      lg={5}
                                      xl={5}
                                      xxl={5} span={5}>
-                                    {(isNetBirdHosted() || isLocalDev()) &&
                                         <Row justify="end">
                                             <Col>
                                                 <Button type="primary" onClick={onClickCreateServiceUser}>Create Service User</Button>
                                             </Col>
-                                        </Row>}
+                                        </Row>
                                 </Col>
                             </Row>
                             {failed &&
