@@ -2,7 +2,6 @@ import React, {useEffect, useState} from 'react';
 
 import {Col, Row, Tabs, TabsProps} from "antd";
 import {Container} from "../components/Container";
-import {useOidcUser} from "@axa-fr/react-oidc";
 import {actions as userActions} from "../store/user";
 import {useGetTokenSilently} from "../utils/token";
 import {useDispatch, useSelector} from "react-redux";
