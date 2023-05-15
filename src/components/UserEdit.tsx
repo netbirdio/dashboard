@@ -87,7 +87,8 @@ const UserEdit = () => {
             name: values.name,
             groupsToCreate: groupsToCreate,
             auto_groups: autoGroups,
-            is_service_user: isServiceUser
+            is_service_user: isServiceUser,
+            is_blocked: values.is_blocked
         } as UserToSave
     }
 
@@ -274,6 +275,7 @@ const UserEdit = () => {
                 name: user.name,
                 role: user.role,
                 email: user.email,
+                is_blocked: user.is_blocked,
                 autoGroupsNames: currentGroups,
             })
         }
@@ -332,6 +334,7 @@ const UserEdit = () => {
                                   name: formUser.name,
                                   role: formUser.role,
                                   email: formUser.email,
+                                  is_blocked: formUser.is_blocked,
                                   autoGroupsNames: formUser.autoGroupsNames,
                               }}
                         >

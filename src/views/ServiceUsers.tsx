@@ -22,7 +22,7 @@ import {filter} from "lodash";
 import tableSpin from "../components/Spin";
 import {useGetTokenSilently} from "../utils/token";
 import {actions as groupActions} from "../store/group";
-import {isLocalDev, isNetBirdHosted} from "../utils/common";
+import {capitalize, isLocalDev, isNetBirdHosted} from "../utils/common";
 import {usePageSizeHelpers} from "../utils/pageSize";
 import AddServiceUserPopup from "../components/popups/AddServiceUserPopup";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
@@ -111,10 +111,10 @@ export const ServiceUsers = () => {
             let errorMsg = "Failed to update user"
             switch (savedUser.error.statusCode) {
                 case 412:
-                    errorMsg = savedUser.error.data
-                    break
                 case 403:
-                    errorMsg = "Failed to update user. You might not have enough permissions."
+                    if (savedUser.error.data) {
+                        errorMsg = capitalize(savedUser.error.data.message)
+                    }
                     break
             }
             message.error({
