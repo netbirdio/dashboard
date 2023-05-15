@@ -940,6 +940,12 @@ th.ant-table-column-has-sorters:hover {
   border-color: rgba(239, 68, 68, 1);
 }
 
+.ant-tag-gold {
+  background-color: rgba(240, 173, 5, 0.1);
+  color: rgba(240, 173, 5, 1);
+  border-color: rgba(240, 173, 5, 1);
+}
+
 .ant-tag-processing {
   height: 20px;
   background-color: rgba(123, 191, 252, 0.1);
