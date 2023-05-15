@@ -12,6 +12,7 @@ export interface User {
 
 export interface FormUser extends User {
     autoGroupsNames: string[]
+    is_active?: boolean
 }
 
 export interface UserToSave extends User {
