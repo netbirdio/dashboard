@@ -279,24 +279,6 @@ const UserEdit = () => {
         }
     }, [form, user, currentGroups])
 
-    const menuItems = [
-        {
-            key: '1',
-            label: (
-                <Text onClick={() => onBreadcrumbUsersClick("Users")}>
-                    Users
-                </Text>
-            ),
-        },
-        {
-            key: '2',
-            label: (
-                <Text onClick={() => onBreadcrumbUsersClick("Service Users")}>
-                    Service Users
-                </Text>
-            ),
-        },
-    ];
 
     const isUserAdmin = (userId: string): boolean => {
         return users.find(u => u.id === userId)?.role === "admin"
@@ -308,10 +290,10 @@ const UserEdit = () => {
                 <Breadcrumb style={{marginBottom: "30px"}}
                             items={[
                                 {
-                                    title: <a href = "" onClick={() => onBreadcrumbUsersClick("Users")}>All Users</a>,
+                                    title: <a onClick={() => onBreadcrumbUsersClick("Users")}>All Users</a>,
                                 },
                                 {
-                                    title: <a href= "" onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</a>,
+                                    title: <a onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</a>,
                                     // menu: { items: menuItems },
                                 },
                                 {
