@@ -127,7 +127,8 @@
   --text-color-components: #1f2937;
   --border-color: #e0e0e0;
   --card-border-color: #f0f0f0;
-  --divider-color: #f1f5f9;
+  /*--divider-color: #f1f5f9;*/
+  --divider-color: rgba(5, 5, 5, 0.06);
   --text-color: #1f2937;
   --decent-select: #F6F6F6;
   --tooltip-bg-color: rgba(0, 0, 0, 0.85);
@@ -267,7 +268,7 @@ pre {
 
 
 /*Tabs*/
-.ant-tabs-nav {
+.ant-tabs-top >.ant-tabs-nav::before {
   border-bottom: 1px solid var(--divider-color);
 }
 
@@ -316,7 +317,7 @@ h4:where(.css-dev-only-do-not-override-1430lv7).ant-typography, div:where(.css-d
 /*  color: var(--text-color-components);*/
 /*}*/
 
-[class^="ant-typography"], [class*=" ant-typography"] {
+[class^="ant-typography"]:not(a), [class*=" ant-typography"]:not(a) {
   color: var(--text-color) !important;
 }
   /*Secondary*/
@@ -408,8 +409,8 @@ textarea:-ms-input-placeholder {
     border-color: var(--border-color);
     color: var(--text-color);
 }
-.ant-form-item .ant-form-item-control-input .ant-input {
-  background-color: unset;
+.ant-form-item .ant-form-item-control-input .ant-input:hover {
+  border-color: var(--accent-color);
 }
 
 .ant-input-disabled {
@@ -427,7 +428,7 @@ textarea:-ms-input-placeholder {
   border-color: var(--border-color);
 }
 
-.ant-input-number .ant-input-number-input {
+.ant-input-number .ant-input-number-input:not(:disabled) {
   color: var(--text-color);
 }
 
@@ -440,7 +441,7 @@ textarea:-ms-input-placeholder {
 }
 
 .ant-select-single.ant-select-show-arrow .ant-select-selection-item:not(:disabled), .ant-select-single.ant-select-show-arrow .ant-select-selection-placeholder:not(:disabled) {
-  color: var(--secondary-color);
+  color: var(--text-color-components);
 }
 
 .anticon-flag > svg, .anticon-close > svg, .ant-form-item-tooltip > svg, .anticon-minus-circle > svg, .anticon-edit > svg {
@@ -656,7 +657,23 @@ span.ant-typography {
 }
 
 .ant-typography-secondary a:hover {
-    color: var(--accent-hover);
+  color: var(--accent-hover);
+}
+
+.ant-typography a {
+    color: var(--accent-color) !important;
+}
+
+.ant-typography:hover {
+    color: var(--accent-hover) !important;
+}
+
+a.ant-typography {
+    color: var(--accent-color) !important;
+}
+
+a.ant-typography:hover {
+    color: var(--accent-hover) !important;
 }
 
 .ant-btn-primary:disabled {
