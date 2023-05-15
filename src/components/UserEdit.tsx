@@ -76,7 +76,6 @@ const UserEdit = () => {
     }
 
     const createUserToSave = (values: any): UserToSave => {
-        console.log(values)
         const autoGroups = groups?.filter(g => values.autoGroupsNames.includes(g.name)).map(g => g.id || '') || []
         // find groups that do not yet exist (newly added by the user)
         const allGroupsNames: string[] = groups?.map(g => g.name);

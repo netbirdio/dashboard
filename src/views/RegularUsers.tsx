@@ -210,7 +210,6 @@ export const RegularUsers = () => {
             dispatch(userActions.resetSavedUser(null))
         } else if (savedUser.error) {
             let errorMsg = "Failed to update user"
-            console.log()
             switch (savedUser.error.statusCode) {
                 case 412:
                 case 403:
@@ -280,7 +279,6 @@ export const RegularUsers = () => {
                         getAccessTokenSilently: getTokenSilently,
                         payload: userToSave
                     }));
-                    dispatch(userActions.getServiceUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
                 },
                 onCancel() {
                     // noop
@@ -292,7 +290,6 @@ export const RegularUsers = () => {
                 getAccessTokenSilently: getTokenSilently,
                 payload: userToSave
             }));
-            dispatch(userActions.getServiceUsers.request({getAccessTokenSilently: getTokenSilently, payload: null}));
         }
     }
 
