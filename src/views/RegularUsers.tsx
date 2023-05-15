@@ -1,4 +1,4 @@
-import React, {useEffect,  useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
 import {actions as userActions} from '../store/user';
@@ -8,29 +8,33 @@ import {
     Button,
     Card,
     Col,
-    Dropdown,
+    Dropdown, Empty,
     Input,
     Menu,
     message, Modal,
     Popover,
     Row,
     Select,
-    Space,
+    Space, Switch,
     Table,
-    Tag,
+    Tag, Tooltip,
     Typography,
 } from "antd";
-import {User} from "../store/user/types";
+import {User, UserToSave} from "../store/user/types";
 import {filter} from "lodash";
 import tableSpin from "../components/Spin";
 import {useGetTokenSilently} from "../utils/token";
 import {actions as groupActions} from "../store/group";
 import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
-import {isLocalDev, isNetBirdHosted} from "../utils/common";
+import {capitalize, isLocalDev, isNetBirdHosted} from "../utils/common";
 import {usePageSizeHelpers} from "../utils/pageSize";
 import AddServiceUserPopup from "../components/popups/AddServiceUserPopup";
 import InviteUserPopup from "../components/popups/InviteUserPopup";
+import {Peer, PeerDataTable} from "../store/peer/types";
+import {ExclamationCircleOutlined, MinusOutlined} from "@ant-design/icons";
+import {actions as peerActions} from "../store/peer";
+import {useOidcUser} from "@axa-fr/react-oidc";
 
 const {Title, Paragraph, Text} = Typography;
 const {Column} = Table;
@@ -42,9 +46,11 @@ interface UserDataTable extends User {
 const styleNotification = {marginTop: 85}
 
 export const RegularUsers = () => {
-    const {onChangePageSize,pageSizeOptions,pageSize} = usePageSizeHelpers()
+    const {onChangePageSize, pageSizeOptions, pageSize} = usePageSizeHelpers()
     const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
+
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const groups = useSelector((state: RootState) => state.group.data)
     const users = useSelector((state: RootState) => state.user.regularUsers);
@@ -114,6 +120,7 @@ export const RegularUsers = () => {
             auto_groups: userToAction?.auto_groups ? userToAction?.auto_groups : [],
             name: userToAction?.name,
             role: userToAction?.role,
+            is_blocked: userToAction?.is_blocked,
         } as User));
     }
 
@@ -121,6 +128,15 @@ export const RegularUsers = () => {
         dispatch(userActions.setInviteUserPopupVisible(true));
         dispatch(userActions.setUser(null as unknown as User));
     }
+
+    useEffect(() => {
+        if(users) {
+            let currentUser = users.find((user) => user.is_current)
+            if(currentUser) {
+                setIsAdmin(currentUser.role === "admin");
+            }
+        }
+    }, [users])
 
     const renderPopoverGroups = (label: string, rowGroups: string[] | string[] | null, userToAction: UserDataTable) => {
 
@@ -196,10 +212,10 @@ export const RegularUsers = () => {
             let errorMsg = "Failed to update user"
             switch (savedUser.error.statusCode) {
                 case 412:
-                    errorMsg = savedUser.error.data
-                    break
                 case 403:
-                    errorMsg = "Failed to update user. You might not have enough permissions."
+                    if (savedUser.error.data) {
+                       errorMsg = capitalize(savedUser.error.data.message)
+                    }
                     break
             }
             message.error({
@@ -243,8 +259,50 @@ export const RegularUsers = () => {
             name: user.name,
             is_current: user.is_current,
             is_service_user: user.is_service_user,
+            is_blocked: user.is_blocked
         } as User));
         dispatch(userActions.setEditUserPopupVisible(true));
+    }
+
+    const handleBlockUser = (block: boolean, user: UserDataTable) => {
+        if (block) {
+            confirmModal.confirm({
+                icon: <ExclamationCircleOutlined/>,
+                title: "Are you sure you want to deactivate \"" + user.name + "\"?",
+                width: 600,
+                content: <Space direction="vertical" size="small">
+                    <Paragraph>Disabling this user will disconnect their devices and block dashboard access.</Paragraph>
+                </Space>,
+                onOk() {
+                    let userToSave = createUserToSave(user, block)
+                    dispatch(userActions.saveUser.request({
+                        getAccessTokenSilently: getTokenSilently,
+                        payload: userToSave
+                    }));
+                },
+                onCancel() {
+                    // noop
+                },
+            });
+        } else {
+            let userToSave = createUserToSave(user, block)
+            dispatch(userActions.saveUser.request({
+                getAccessTokenSilently: getTokenSilently,
+                payload: userToSave
+            }));
+        }
+    }
+
+    const createUserToSave = (values: UserDataTable, block: boolean): UserToSave => {
+        return {
+            id: values.id,
+            role: values.role,
+            name: values.name,
+            groupsToCreate: Array.of(),
+            auto_groups: values.auto_groups,
+            is_service_user: values.is_service_user,
+            is_blocked: block
+        } as UserToSave
     }
 
     return (
@@ -252,7 +310,8 @@ export const RegularUsers = () => {
             <Container style={{padding: "0px"}}>
                 <Row>
                     <Col span={24}>
-                        <Paragraph>Manage users and their permissions.{(window.location.hostname == "app.netbird.io") ? "Same-domain email users are added automatically on first sign-in." : ""}</Paragraph>
+                        <Paragraph>Manage users and their
+                            permissions.{(window.location.hostname == "app.netbird.io") ? "Same-domain email users are added automatically on first sign-in." : ""}</Paragraph>
                         <Space direction="vertical" size="large" style={{display: 'flex'}}>
                             <Row gutter={[16, 24]}>
                                 <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -272,15 +331,16 @@ export const RegularUsers = () => {
                                      xl={5}
                                      xxl={5} span={5}>
                                     {(isNetBirdHosted() || isLocalDev()) &&
-                                    <Row justify="end">
-                                        <Col>
-                                            <Button type="primary" onClick={onClickInviteUser}>Invite User</Button>
-                                        </Col>
-                                    </Row>}
+                                        <Row justify="end">
+                                            <Col>
+                                                <Button type="primary" onClick={onClickInviteUser}>Invite user</Button>
+                                            </Col>
+                                        </Row>}
                                 </Col>
                             </Row>
                             {failed &&
-                                <Alert message={failed.message} description={failed.data ? failed.data.message : " "} type="error" showIcon
+                                <Alert message={failed.message} description={failed.data ? failed.data.message : " "}
+                                       type="error" showIcon
                                        closable/>
                             }
                             <Card bodyStyle={{padding: 0}}>
@@ -305,11 +365,18 @@ export const RegularUsers = () => {
                                                                     className="tooltip-label">
                                                     <Text
                                                         strong>{(text && text.trim() !== "") ? text : (record as User).id}</Text>
+
                                                 </Button>
 
                                                 if ((record as User).is_current) {
                                                     return <div>{btn}
                                                         <Tag color="blue">me</Tag>
+                                                    </div>
+                                                }
+
+                                                if ((record as User).status === "invited") {
+                                                    return <div>{btn}
+                                                        <Tag color="gold">invited</Tag>
                                                     </div>
                                                 }
 
@@ -319,19 +386,6 @@ export const RegularUsers = () => {
                                     <Column title="Name" dataIndex="name"
                                             onFilter={(value: string | number | boolean, record) => (record as any).name.includes(value)}
                                             sorter={(a, b) => ((a as any).name.localeCompare((b as any).name))}/>
-                                    <Column title="Status" dataIndex="status"
-                                            align="center"
-                                            onFilter={(value: string | number | boolean, record) => (record as any).status.includes(value)}
-                                            sorter={(a, b) => ((a as any).status.localeCompare((b as any).status))}
-                                            render={(text, record, index) => {
-                                                if (text == "active") {
-                                                    return <Tag color="green">{text}</Tag>
-                                                } else if (text === "invited"){
-                                                    return <Tag color="gold">{text}</Tag>
-                                                }
-                                                return <Tag color="red">{text}</Tag>
-                                            }}
-                                    />
                                     <Column title="Groups" dataIndex="groupsCount" align="center"
                                             render={(text, record: UserDataTable, index) => {
                                                 return renderPopoverGroups(text, record.auto_groups, record)
@@ -340,16 +394,27 @@ export const RegularUsers = () => {
                                     <Column title="Role" dataIndex="role"
                                             onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
                                             sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}/>
-                                    {/*<Column title="" align="center" width="30px"*/}
-                                    {/*        render={(text, record, index) => {*/}
-                                    {/*            return (*/}
-                                    {/*                <Dropdown.Button type="text" overlay={actionsMenu}*/}
-                                    {/*                                 trigger={["click"]}*/}
-                                    {/*                                 onVisibleChange={visible => {*/}
-                                    {/*                                     if (visible) setUserToAction(record as UserDataTable)*/}
-                                    {/*                                 }}></Dropdown.Button>)*/}
-                                    {/*        }}*/}
-                                    {/*/>*/}
+                                    {isAdmin && (
+                                        <Column title="Active" align="center" width="150px" dataIndex="is_blocked"
+                                                render={(e, record: UserDataTable, index) => {
+                                                    let witch = <Switch size={"small"} checked={!e}
+                                                                        disabled={record.is_current}
+                                                                        onClick={(active: boolean) => {
+                                                                            handleBlockUser(!active, record)
+                                                                        }}
+                                                    />
+
+                                                    if (record.is_current) {
+                                                        return <Tooltip
+                                                            title="You can't block or unblock yourself">
+                                                            <Empty image={""} description={""} style={{height: "1px", width: "auto"}}/>
+                                                        </Tooltip>
+                                                    }
+
+                                                    return witch
+                                                }}
+                                        />
+                                    )}
                                 </Table>
                             </Card>
                         </Space>

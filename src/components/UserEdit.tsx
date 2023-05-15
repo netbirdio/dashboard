@@ -10,7 +10,7 @@ import {
     Row,
     Select,
     Skeleton,
-    Space, Table,
+    Space, Switch, Table,
     Tag, Typography
 } from "antd";
 import {useDispatch, useSelector} from "react-redux";
@@ -63,6 +63,7 @@ const UserEdit = () => {
 
     const [formUser, setFormUser] = useState({} as FormUser)
     const [form] = Form.useForm()
+    const [isAdmin, setIsAdmin] = useState(false);
 
     const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
@@ -87,9 +88,19 @@ const UserEdit = () => {
             name: values.name,
             groupsToCreate: groupsToCreate,
             auto_groups: autoGroups,
-            is_service_user: isServiceUser
+            is_service_user: isServiceUser,
+            is_blocked: !values.is_active
         } as UserToSave
     }
+
+    useEffect(() => {
+        if(users) {
+            let currentUser = users.find((user) => user.is_current)
+            if(currentUser) {
+                setIsAdmin(currentUser.role === "admin");
+            }
+        }
+    }, [users])
 
     const handleFormSubmit = () => {
         form.validateFields()
@@ -274,6 +285,8 @@ const UserEdit = () => {
                 name: user.name,
                 role: user.role,
                 email: user.email,
+                is_blocked: user.is_blocked,
+                is_active: !user.is_blocked,
                 autoGroupsNames: currentGroups,
             })
         }
@@ -314,6 +327,8 @@ const UserEdit = () => {
                                   name: formUser.name,
                                   role: formUser.role,
                                   email: formUser.email,
+                                  is_blocked: formUser.is_blocked,
+                                  is_active:  !formUser.is_blocked,
                                   autoGroupsNames: formUser.autoGroupsNames,
                               }}
                         >
@@ -346,30 +361,45 @@ const UserEdit = () => {
                                     </Form.Item>
                                 </Col>
                             </Row>
+
                             {!user.is_service_user && <Row style={{paddingBottom: "15px"}}>
-                                <Col span={9}>
-                                    <Form.Item
-                                        name="autoGroupsNames"
-                                        label={<Text style={{}}>Auto-assigned groups</Text>}
-                                        tooltip="Every peer enrolled with this user will be automatically added to these groups"
-                                        rules={[{validator: selectValidator}]}
-                                    >
-                                        <Select mode="tags"
-                                                style={{width: '100%'}}
-                                                placeholder="Associate groups with the user"
-                                                tagRender={tagRender}
-                                                dropdownRender={dropDownRender}
-                                                disabled={oidcUser && !isUserAdmin(oidcUser.sub)}
+
+                                <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
+                                        <Form.Item
+                                            name="autoGroupsNames"
+                                            label={<Text style={{}}>Auto-assigned groups</Text>}
+                                            tooltip="Every peer enrolled with this user will be automatically added to these groups"
+                                            rules={[{validator: selectValidator}]}
+                                            style={{marginRight: "70px"}}
                                         >
-                                            {
-                                                tagGroups.map(m =>
-                                                    <Option key={m}>{optionRender(m)}</Option>
-                                                )
-                                            }
-                                        </Select>
+                                            <Select mode="tags"
+                                                    placeholder="Associate groups with the user"
+                                                    tagRender={tagRender}
+                                                    dropdownRender={dropDownRender}
+                                                    disabled={oidcUser && !isUserAdmin(oidcUser.sub)}
+                                            >
+                                                {
+                                                    tagGroups.map(m =>
+                                                        <Option key={m}>{optionRender(m)}</Option>
+                                                    )
+                                                }
+                                            </Select>
+                                        </Form.Item>
+                                    </Col>
+
+                                {!user.is_current && isAdmin && (
+                                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                                    <Form.Item
+                                        valuePropName="checked"
+                                        name="is_active"
+                                        label="Active"
+                                        style={{marginRight: "50px"}}
+                                    >
+                                        <Switch/>
                                     </Form.Item>
-                                </Col>
+                                </Col>)}
                             </Row>}
+
                             <Space style={{display: 'flex', justifyContent: 'start'}}>
                                 <Button disabled={loading} onClick={onCancel}>Cancel</Button>
                                 <Button type="primary"
