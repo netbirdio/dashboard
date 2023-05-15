@@ -137,6 +137,7 @@
   --border-disabled: #d9d9d9;
   --text-code: #1f2937;
   --bg-code: rgba(240, 240, 240, 1);
+  --paginator-select: rgba(0, 0, 0, 0.1);
 }
 
 /* Use system default*/
@@ -158,9 +159,10 @@
     --tooltip-bg-color: rgba(70, 75, 83, 0.85);
     --text-disabled: rgba(255, 255, 255, 0.25);
     --bg-disabled: rgba(255, 255, 255, 0.04);
-    --border-disabled: rgba(255, 255, 255, 0.25);
+    --border-disabled: rgba(255, 255, 255, 0.1);
     --text-code: #f1f5f9;
     --bg-code: rgba(70, 75, 83, 1);
+    --paginator-select: rgba(255, 255, 255, 0.15);
   }
 }
 
@@ -185,6 +187,7 @@
   --border-disabled: rgba(255, 255, 255, 0.25);
   --text-code: #f1f5f9;
   --bg-code: rgba(70, 75, 83, 1);
+  --paginator-select: rgba(255, 255, 255, 0.1);
 }
 
 body {
@@ -798,12 +801,13 @@ th.ant-table-column-has-sorters:hover {
 }
 
   /*Pagination*/
-.ant-pagination .ant-pagination-disabled:hover .ant-pagination-item-link {
-  color: var(--accent-color);
+/*arrows*/
+.ant-pagination .ant-pagination-disabled .ant-pagination-item-link, .ant-pagination .ant-pagination-disabled:hover .ant-pagination-item-link  {
+  color: var(--text-disabled);
 }
 
-.ant-pagination .ant-pagination-disabled .ant-pagination-item-link {
-  color: var(--text-color-components);
+.ant-pagination.ant-pagination-mini .ant-pagination-next:not(.ant-pagination-disabled) .ant-pagination-item-link, .ant-pagination.ant-pagination-mini .ant-pagination-prev:not(.ant-pagination-disabled) .ant-pagination-item-link {
+    color: var(--text-color-components);
 }
 /*.ant-pagination.ant-pagination-mini .ant-pagination-next:hover .ant-pagination-item-link {*/
 /*    color: var(--accent-hover);*/
@@ -812,10 +816,12 @@ th.ant-table-column-has-sorters:hover {
   background-color: var(--bg-color-main);
   border-color: var(--accent-color);
 }
+
 .ant-pagination .ant-pagination-item-active:hover {
   border-color: var(--accent-hover);
   color: var(--accent-hover);
 }
+
 .ant-pagination.ant-pagination-mini .ant-pagination-item-active a:hover {
   border-color: var(--accent-hover);
   color: var(--accent-hover);
@@ -830,8 +836,13 @@ th.ant-table-column-has-sorters:hover {
   color: var(--accent-color);
 }
 
+/* other numbers */
 .ant-pagination .ant-pagination-total-text {
     color: var(--text-color-components);
+}
+
+.ant-pagination-item:not(.ant-pagination-item-active):hover {
+    background-color: var(--paginator-select) !important;
 }
 
 /*Pagination pages selector*/
