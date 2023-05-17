@@ -21,6 +21,7 @@ import {actions as groupActions} from "../../store/group";
 import {User, UserToSave} from "../../store/user/types";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
+import {QuestionCircleFilled} from "@ant-design/icons";
 
 const {Title, Text, Paragraph} = Typography;
 const {Option} = Select;
@@ -298,10 +299,10 @@ const InviteUserPopup = () => {
                                     </Select>
                                 </Form.Item>
                             </Col>
-                            {/*<Col span={24}>*/}
-                            {/*    <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true} style={{marginTop: "20px", marginBottom: "20px"}}*/}
-                            {/*            href="https://netbird.io/docs/overview/personal-access-tokens">Learn more about user</Button>*/}
-                            {/*</Col>*/}
+                            <Col span={24}>
+                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true} style={{marginTop: "20px", marginBottom: "20px"}}
+                                        href="https://netbird.io/docs/how-to/access-netbird-public-api">Learn more about user</Button>
+                            </Col>
                         </Row>
                     </Form>
                 </Container>

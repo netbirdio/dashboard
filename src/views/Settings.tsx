@@ -204,7 +204,7 @@ export const Settings = () => {
                                             </Form.Item>
                                             <Form.Item>
                                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                                        href="https://netbird.io/docs/how-to-guides/periodic-authentication">Learn more about login expiration</Button>
+                                                        href="https://netbird.io/docs/how-to/configure-periodic-user-authentication">Learn more about login expiration</Button>
                                             </Form.Item>
                                         </Card>
                                         <Form.Item style={{textAlign: 'center'}}>

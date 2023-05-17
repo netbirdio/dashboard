@@ -31,7 +31,7 @@ export const DockerTab = () => {
             key: 3,
             title: "Read docs",
             commands: (
-                <Link href="https://netbird.io/docs/getting-started/installation#running-netbird-in-docker" target="_blank">Running NetBird in Docker</Link>
+                <Link href="https://netbird.io/docs/how-to/getting-started#running-net-bird-in-docker" target="_blank">Running NetBird in Docker</Link>
             ),
             copied: false,
             showCopyButton: false
