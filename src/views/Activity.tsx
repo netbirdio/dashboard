@@ -212,6 +212,8 @@ export const Activity = () => {
             case "service.user.delete":
                 return renderMultiRowSpan(event.meta.name,"Service User")
             case "user.invite":
+            case "user.block":
+            case "user.unblock":
                 if (user) {
                     return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
                 }
