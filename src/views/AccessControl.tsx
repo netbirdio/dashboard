@@ -430,9 +430,9 @@ export const AccessControl = () => {
                                     />
                                     <Column title="Direction" dataIndex="flow"
                                             render={(text, record: RuleDataTable, index) => {
-                                                const s = {minWidth: 50, textAlign: "center"} as React.CSSProperties
+                                                const s = {minWidth: 50, textAlign: "center", fontSize: "20pt", paddingBottom: "23px"} as React.CSSProperties
                                                 if (text === "bidirect")
-                                                    return <Tag color="processing" style={s}><img src={bidirect}/></Tag>
+                                                    return <Tag color="processing" style={s}>&harr;</Tag>
                                                 else if (text === "srcToDest") {
                                                     return <Tag color="green" style={s}><img src={outbound}/></Tag>
                                                 } else if (text === "destToSrc") {
