@@ -268,10 +268,10 @@ export const RegularUsers = () => {
         if (block) {
             confirmModal.confirm({
                 icon: <ExclamationCircleOutlined/>,
-                title: "Are you sure you want to deactivate \"" + user.name + "\"?",
+                title: "Are you sure you want to block " + user.name + "?",
                 width: 600,
                 content: <Space direction="vertical" size="small">
-                    <Paragraph>Disabling this user will disconnect their devices and block dashboard access.</Paragraph>
+                    <Paragraph>Blocking this user will disconnect their devices and disable dashboard access.</Paragraph>
                 </Space>,
                 onOk() {
                     let userToSave = createUserToSave(user, block)
@@ -380,6 +380,12 @@ export const RegularUsers = () => {
                                                     </div>
                                                 }
 
+                                                if ((record as User).status === "blocked") {
+                                                    return <div>{btn}
+                                                        <Tag color="red">blocked</Tag>
+                                                    </div>
+                                                }
+
                                                 return btn
                                             }}
                                     />
@@ -395,12 +401,12 @@ export const RegularUsers = () => {
                                             onFilter={(value: string | number | boolean, record) => (record as any).role.includes(value)}
                                             sorter={(a, b) => ((a as any).role.localeCompare((b as any).role))}/>
                                     {isAdmin && (
-                                        <Column title="Active" align="center" width="150px" dataIndex="is_blocked"
+                                        <Column title="Block user" align="center" width="150px" dataIndex="is_blocked"
                                                 render={(e, record: UserDataTable, index) => {
-                                                    let witch = <Switch size={"small"} checked={!e}
+                                                    let witch = <Switch size={"small"} checked={e}
                                                                         disabled={record.is_current}
                                                                         onClick={(active: boolean) => {
-                                                                            handleBlockUser(!active, record)
+                                                                            handleBlockUser(active, record)
                                                                         }}
                                                     />
 
