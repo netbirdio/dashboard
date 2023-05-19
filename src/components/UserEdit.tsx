@@ -89,7 +89,7 @@ const UserEdit = () => {
             groupsToCreate: groupsToCreate,
             auto_groups: autoGroups,
             is_service_user: isServiceUser,
-            is_blocked: !values.is_active
+            is_blocked: values.is_blocked
         } as UserToSave
     }
 
@@ -286,7 +286,6 @@ const UserEdit = () => {
                 role: user.role,
                 email: user.email,
                 is_blocked: user.is_blocked,
-                is_active: !user.is_blocked,
                 autoGroupsNames: currentGroups,
             })
         }
@@ -328,7 +327,6 @@ const UserEdit = () => {
                                   role: formUser.role,
                                   email: formUser.email,
                                   is_blocked: formUser.is_blocked,
-                                  is_active:  !formUser.is_blocked,
                                   autoGroupsNames: formUser.autoGroupsNames,
                               }}
                         >
@@ -391,8 +389,8 @@ const UserEdit = () => {
                                 <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                                     <Form.Item
                                         valuePropName="checked"
-                                        name="is_active"
-                                        label="Active"
+                                        name="is_blocked"
+                                        label="Block user"
                                         style={{marginRight: "50px"}}
                                     >
                                         <Switch/>
