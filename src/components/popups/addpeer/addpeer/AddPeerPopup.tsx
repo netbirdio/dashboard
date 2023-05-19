@@ -10,6 +10,7 @@ import WindowsTab from "./WindowsTab";
 import MacTab from "./MacTab";
 import Link from "antd/lib/typography/Link";
 import DockerTab from "./DockerTab";
+import AndroidTab from "./AndroidTab";
 
 type Props = {
     greeting?: string;
@@ -51,11 +52,11 @@ export const AddPeerPopup: React.FC<Props> = ({
             label: <span><AppleFilled/>macOS</span>,
             children: <MacTab/>,
         },
-        /*{
+        {
             key: "4",
             label: <span><AndroidFilled/>Android</span>,
-            children: <></>,
-        },*/
+            children: <AndroidTab/>,
+        },
         {
             key: "5",
             label: <span><Icon component={DockerSVG}/>Docker</span>,
