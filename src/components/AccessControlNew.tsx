@@ -185,6 +185,7 @@ const AccessControlNew = () => {
     const handleChangeProtocol = (value: string) => {
         setFormPolicy({
             ...formPolicy,
+            bidirectional: (value === 'all' || value === 'icmp') ? true : formPolicy.bidirectional,
             ports: (value === 'all' || value === 'icmp') ? [] : formPolicy.ports,
             protocol: value
         })
@@ -319,16 +320,28 @@ const AccessControlNew = () => {
         return Promise.resolve()
     }
 
-    const selectPortValidator = (_: RuleObject, value: string[], setErr: (error?: string) => void) => {
+    const selectPortRangeValidator = (_: RuleObject, value: string[]) => {
         if (value) {
+            var failed = false
             value.forEach(function(v: string) {
                 let p = Number(v)
                 if (Number.isNaN(p) || p < 1 || p > 65535) {
-                    setErr("Port value must be in 1..65535 range")
+                    failed = true
+                    return
                 }
             })
+            if (failed) {
+              return Promise.reject(new Error("Port value must be in 1..65535 range"))
+            }
         }
-        setErr()
+        return Promise.resolve()
+    }
+
+    const selectPortProtocolValidator = (_: RuleObject, value: string[]) => {
+        if (!formPolicy.bidirectional && value.length === 0) {
+          return Promise.reject(new Error("Directional traffic require ports"))
+        }
+        return Promise.resolve()
     }
 
     return (
@@ -455,9 +468,11 @@ const AccessControlNew = () => {
                                 <Form.Item
                                     name="bidirectional"
                                     label="Bi-Direct traffic flow"
+                                    tooltip="Protocol type 'All' or 'ICMP' must be bi-directional. Directional traffic for TCP and UDP protocol requires at least one port to be defined."
                                 >
                                     <Switch
                                         size={"small"}
+                                        disabled={formPolicy.protocol === "all" || formPolicy.protocol === "icmp"}
                                         checked={formPolicy.bidirectional}
                                         onChange={handleChangeBidirect}
                                     />
@@ -501,7 +516,12 @@ const AccessControlNew = () => {
                                 <Form.Item
                                     name="ports"
                                     label="Ports"
-                                    rules={[{ validator: selectPortValidator, required: false }]}
+                                    rules={[
+                                      { message: "Directional traffic requires at least one port",
+                                        validator: selectPortProtocolValidator, required: false },
+                                      { message: "Port value must be in 1..65535 range",
+                                        validator: selectPortRangeValidator, required: false },
+                                    ]}
                                 >
                                     <Select
                                         mode="tags" style={{ width: '100%' }}
@@ -539,6 +559,10 @@ const AccessControlNew = () => {
                                         <Paragraph>
                                             If you want to enable all peers of the same group to talk to each other -
                                             you can add that group both as a receiver and as a destination.
+                                        </Paragraph>
+                                        <Paragraph>
+                                            Protocol type <strong>All</strong> or <strong>ICMP</strong> must be bi-directional.
+                                            Directional traffic for <strong>TCP</strong> and <strong>UDP</strong> protocol requires at least one port to be defined.
                                         </Paragraph>
                                     </Col>
                                 </Row>
