@@ -604,7 +604,7 @@ const NameServerGroupUpdate = () => {
                                 <Col span={24}>
                                     <Divider></Divider>
                                     <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                            href="https://netbird.io/docs/how-to/manage-dns-in-your-network">Learn more about nameservers</Button>
+                                            href="https://docs.netbird.io/how-to/manage-dns-in-your-network">Learn more about nameservers</Button>
                                 </Col>
                             </Row>
                         </Form>) :

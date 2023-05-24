@@ -22,7 +22,7 @@ const Banner = () => {
 	const linkLearnMore = () => {
 		return (
 			<a
-				href="https://netbird.io/docs/how-to/manage-dns-in-your-network"
+				href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
 				className="font-bold underline"
 				target="_blank"
 				rel="noreferrer"

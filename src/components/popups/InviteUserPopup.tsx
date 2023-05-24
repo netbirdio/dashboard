@@ -301,7 +301,7 @@ const InviteUserPopup = () => {
                             </Col>
                             <Col span={24}>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true} style={{marginTop: "20px", marginBottom: "20px"}}
-                                        href="https://netbird.io/docs/how-to/access-netbird-public-api">Learn more about user</Button>
+                                        href="https://docs.netbird.io/how-to/access-netbird-public-api">Learn more about user</Button>
                             </Col>
                         </Row>
                     </Form>

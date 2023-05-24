@@ -434,7 +434,7 @@ export const SetupKeys = () => {
                                                 <a
                                                     target="_blank"
                                                     rel="noreferrer"
-                                                    href="https://netbird.io/docs/how-to/register-machines-using-setup-keys"
+                                                    href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
                                                 >
                                                     {" "}
                                                     Learn more
