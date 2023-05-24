@@ -555,7 +555,7 @@ const SetupKeyNew = () => {
                     <Row style={{marginTop: "40px", marginBottom: "28px"}}>
                         <Text type={"secondary"}>
                             Learn more about
-                            <a target="_blank" rel="noreferrer" href="https://netbird.io/docs/overview/setup-keys">
+                            <a target="_blank" rel="noreferrer" href="https://docs.netbird.io/how-to/register-machines-using-setup-keys">
                                 {" "}
                                 setup keys
                             </a>

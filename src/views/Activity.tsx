@@ -254,7 +254,7 @@ export const Activity = () => {
                                     <Row justify="end">
                                         <Col>
                                             <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                                    href="https://netbird.io/docs/how-to-guides/activity-monitoring">Learn more about activity tracking</Button>
+                                                    href="https://docs.netbird.io/how-to/monitor-system-and-network-activity">Learn more about activity tracking</Button>
                                         </Col>
                                     </Row>
                                 </Col>

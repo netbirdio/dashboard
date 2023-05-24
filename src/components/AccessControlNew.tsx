@@ -408,7 +408,7 @@ const AccessControlNew = () => {
                             <Col span={24}>
                                 <Divider></Divider>
                                 <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                        href="https://docs.netbird.io/docs/overview/acls">Learn more about access controls</Button>
+                                        href="https://docs.netbird.io/how-to/manage-network-access">Learn more about access controls</Button>
                             </Col>
                         </Row>
                     </Form>
