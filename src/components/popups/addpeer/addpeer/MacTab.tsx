@@ -7,7 +7,8 @@ import {formatNetBirdUP} from "./common"
 import {Collapse} from "antd";
 import SyntaxHighlighter from "react-syntax-highlighter";
 import {QuestionCircleOutlined} from "@ant-design/icons";
-const { Panel } = Collapse;
+
+const {Panel} = Collapse;
 
 const {Text} = Typography;
 
@@ -20,18 +21,23 @@ export const LinuxTab = () => {
                 <Row>
                     <Text>Download and run MacOS installer: </Text>
                     <Tooltip title={
-                        <text>If you don't know what chip your Mac has, you can find out by clicking on the Apple logo in the top left corner of your screen and selecting 'About This Mac'. For more information click <a href="https://support.apple.com/en-us/HT211814" target="_blank">here</a></text>
+                        <text>If you don't know what chip your Mac has, you can find out by clicking on the Apple logo
+                            in the top left corner of your screen and selecting 'About This Mac'. For more information
+                            click <a href="https://support.apple.com/en-us/HT211814" target="_blank">here</a></text>
                     }
                              className={"ant-form-item-tooltip"}>
-                        <QuestionCircleOutlined style={{color: "rgba(0, 0, 0, 0.45)", cursor: "help", marginLeft: "3px"}}/>
+                        <QuestionCircleOutlined
+                            style={{color: "rgba(0, 0, 0, 0.45)", cursor: "help", marginLeft: "3px"}}/>
                     </Tooltip>
                 </Row>
 
             ),
             commands: (
                 <Row style={{paddingTop: "5px"}}>
-                    <Button style={{marginRight: "10px"}} type="primary" href="https://pkgs.netbird.io/macos/amd64">Download for Intel</Button>
-                    <Button style={{marginRight: "10px"}} type="default" href="https://pkgs.netbird.io/macos/arm64">Download for M1 & M2</Button>
+                    <Button style={{marginRight: "10px"}} type="primary" href="https://pkgs.netbird.io/macos/amd64">Download
+                        for Intel</Button>
+                    <Button style={{marginRight: "10px"}} type="default" href="https://pkgs.netbird.io/macos/arm64">Download
+                        for M1 & M2</Button>
                 </Row>
             ),
             copied: false
@@ -97,27 +103,29 @@ export const LinuxTab = () => {
             <Text style={{fontWeight: "bold"}}>
                 Install on MacOS
             </Text>
-            <div style={{marginTop: 5}}>
+            <div style={{marginTop: 5, marginBottom: 5}}>
                 <TabSteps stepsItems={quickSteps}/>
             </div>
-            <Divider style={{marginTop: "5px"}} />
+            <div style={{marginTop: 0}}/>
+            {/*<Divider style={{marginTop: "5px"}} />*/}
             <Collapse bordered={false} style={{backgroundColor: "unset"}}>
-                <Panel className="CustomPopupCollapse"  header={
-                    <b>Or install via command line</b>
-                } key="1">
-                    <Text style={{fontWeight: "bold"}}>
-                        Install with one command
-                    </Text>
-                    <div style={{fontSize: ".85em", marginTop: 5, marginBottom: 25}}>
-                        <SyntaxHighlighter language="bash">
-                            curl -fsSL https://pkgs.netbird.io/install.sh | sh
-                        </SyntaxHighlighter>
-                    </div>
-                    <Text style={{fontWeight: "bold"}}>
-                        Or install manually with HomeBrew
-                    </Text>
-                    <div style={{marginTop: 5}}>
-                        <TabSteps stepsItems={steps}/>
+                <Panel className="CustomPopupCollapse" header={<Text strong={true}>Or install via command line</Text>}
+                       key="1">
+                    <div style={{marginLeft: "25px"}}>
+                        <Text style={{fontWeight: "bold"}}>
+                            Install with one command
+                        </Text>
+                        <div style={{fontSize: ".85em", marginTop: 5, marginBottom: 25}}>
+                            <SyntaxHighlighter language="bash">
+                                curl -fsSL https://pkgs.netbird.io/install.sh | sh
+                            </SyntaxHighlighter>
+                        </div>
+                        <Text style={{fontWeight: "bold"}}>
+                            Or install manually with HomeBrew
+                        </Text>
+                        <div style={{marginTop: 5}}>
+                            <TabSteps stepsItems={steps}/>
+                        </div>
                     </div>
                 </Panel>
             </Collapse>
