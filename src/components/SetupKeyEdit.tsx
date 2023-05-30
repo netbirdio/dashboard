@@ -8,13 +8,13 @@ import {
   Form,
   Input,
   InputNumber,
-  Modal,
   Row,
   Select,
-  Space,
+  Breadcrumb,
   Switch,
   Tag,
   Typography,
+  Card,
 } from "antd";
 import { RootState } from "typesafe-actions";
 import {
@@ -22,6 +22,7 @@ import {
   SetupKey,
   SetupKeyToSave,
 } from "../store/setup-key/types";
+import { formatDate, timeAgo } from "../utils/common";
 import { RuleObject } from "antd/lib/form";
 import { CustomTagProps } from "rc-select/lib/BaseSelect";
 import { Group } from "../store/group/types";
@@ -30,17 +31,23 @@ import { expiresInToSeconds, ExpiresInValue } from "../views/ExpiresInInput";
 import moment from "moment";
 import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
+import { EditOutlined, LockOutlined } from "@ant-design/icons";
+import { actions as personalAccessTokenActions } from "../store/personal-access-token";
 
 const { Option } = Select;
 const { Text } = Typography;
 const ExpiresInDefault: ExpiresInValue = { number: 30, interval: "day" };
 
+const customExpiresFormat = (value: Date): string | null => {
+  return formatDate(value);
+};
+
+ 
+
 const SetupKeyNew = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
-  const setupNewKeyVisible = useSelector(
-    (state: RootState) => state.setupKey.setupNewKeyVisible
-  );
+
   const setupKey = useSelector((state: RootState) => state.setupKey.setupKey);
   const savedSetupKey = useSelector(
     (state: RootState) => state.setupKey.savedSetupKey
@@ -52,7 +59,14 @@ const SetupKeyNew = () => {
   const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formSetupKey, setFormSetupKey] = useState({} as FormSetupKey);
   const inputNameRef = useRef<any>(null);
-
+ 
+   useEffect(() => {
+     //Unmounting component clean
+     return () => {
+       setVisibleNewSetupKey(false)
+     };
+   }, []);
+  
   useEffect(() => {
     if (!editName) return;
 
@@ -133,7 +147,7 @@ const SetupKeyNew = () => {
 
   const setVisibleNewSetupKey = (status: boolean) => {
     form.resetFields();
-    dispatch(setupKeyActions.setSetupNewKeyVisible(status));
+    dispatch(setupKeyActions.setSetupEditKeyVisible(status));
   };
 
   const onCancel = () => {
@@ -278,66 +292,37 @@ const SetupKeyNew = () => {
     );
   };
 
+  const getFormKey = (key: string) => {
+    if (key) return key.split("-")[0].concat("*****");
+  };
+
+  const onBreadcrumbUsersClick = () => {
+    if (savedSetupKey.loading) return;
+    // dispatch(userActions.setUser(null as unknown as User));
+    dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null));
+    setVisibleNewSetupKey(false);
+  };
+
   return (
-    <Modal
-      style={{
-        ...{ maxWidth: window.screen.availWidth <= 425 ? "90%" : "414px" },
-      }}
-      open={setupNewKeyVisible}
-      onCancel={onCancel}
-      footer={[
-        <Container
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            justifyContent: "end",
-            padding: 0,
-          }}
-          key={0}
-        >
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button
-            type="primary"
-            style={{
-              height: "100%",
-              fontSize: "14px",
-              borderRadius: "2px",
-            }}
-            disabled={savedSetupKey.loading || !changesDetected()}
-            onClick={handleFormSubmit}
-          >
-            Create Key
-          </Button>
-        </Container>,
-      ]}
-    >
-      <Container
-        style={{
-          textAlign: "start",
-          marginLeft: "-15px",
-          marginRight: "-15px",
-        }}
+    <>
+      <Breadcrumb
+        style={{ marginBottom: "30px" }}
+        items={[
+          {
+            title: <a onClick={onBreadcrumbUsersClick}>Setup Keys</a>,
+          },
+          {
+            title: setupKey.name,
+          },
+        ]}
+      />
+      <Card
+        bordered={true}
+        // loading={loading}
+        title={setupKey.name}
+        style={{ marginBottom: "7px" }}
       >
-        <Paragraph
-          style={{
-            textAlign: "start",
-            whiteSpace: "pre-line",
-            fontSize: "22px",
-          }}
-        >
-          Create setup key
-        </Paragraph>
-        <Paragraph
-          type={"secondary"}
-          style={{
-            textAlign: "start",
-            whiteSpace: "pre-line",
-            marginTop: "-23px",
-            paddingBottom: "15px",
-          }}
-        >
-          {"Use this key to register new machines in your network"}
-        </Paragraph>
+         
         <Form
           layout="vertical"
           requiredMark={false}
@@ -348,60 +333,37 @@ const SetupKeyNew = () => {
             usage_limit: 1,
           }}
         >
-          <Row>
-            <Col span={24}>
-              <Paragraph style={{ fontWeight: "bold" }}>Name</Paragraph>
-              <Paragraph type={"secondary"} style={{ marginTop: "-15px" }}>
-                Set an easily identifiable name for your key
-              </Paragraph>
-            </Col>
-
-            <Col span={24}>
-              <Form.Item
-                style={{ marginBottom: "0px", marginTop: "10px" }}
-                name="name"
-                rules={[{ required: true, message: "Please enter key name." }]}
-              >
-                <Input placeholder={`e.g. "AWS servers"`} />
-              </Form.Item>
-            </Col>
-          </Row>
-
-          <Row style={{ marginTop: "20px" }} justify={"space-between"}>
-            <Col span={18}>
-              <Paragraph
-                style={{
-                  whiteSpace: "pre-line",
-                  margin: 0,
-                  fontWeight: "bold",
-                }}
-              >
-                Reusable
-              </Paragraph>
-              <Paragraph
-                type={"secondary"}
-                style={{ whiteSpace: "pre-line", margin: 0 }}
-              >
-                Use this type to enroll multiple peers
-              </Paragraph>
-            </Col>
-            <Col span={6}>
-              <Row justify={"end"}>
-                <Form.Item name="reusable" valuePropName="checked">
-                  <Switch
-                    onChange={(checked) => {
-                      setFormSetupKey({
-                        ...formSetupKey,
-                        type: checked ? "reusable" : "one-off",
-                      });
-                    }}
-                  />
-                </Form.Item>
-              </Row>
-            </Col>
-          </Row>
 
           <Row style={{ marginTop: "10px" }}>
+            <Col span={4}>
+              <Paragraph
+                style={{
+                  whiteSpace: "pre-line",
+                  fontWeight: "bold",
+                  margin: 0,
+                }}
+              >
+                Key
+                <Tag
+                  color={`${formSetupKey.state === "valid" ? "green" : "red"}`}
+                  style={{
+                    marginLeft: "10px",
+                    borderRadius: "2px",
+                    fontWeight: "500",
+                  }}
+                >
+                  {formSetupKey.state}
+                </Tag>
+              </Paragraph>
+              <Input
+                style={{ marginTop: "10px" }}
+                disabled
+                value={getFormKey(formSetupKey.key)}
+                suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+              />
+            </Col>
+          </Row>
+          <Row style={{ marginTop: "30px" }}>
             <Col span={24}>
               <Paragraph
                 style={{
@@ -410,66 +372,51 @@ const SetupKeyNew = () => {
                   fontWeight: "bold",
                 }}
               >
-                Usage limit
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                    margin: 0,
+                    fontWeight: "bold",
+                  }}
+                ></Paragraph>
+                {formSetupKey.type === "one-off" ? "One-off" : "Reusable"},
+                Available uses
               </Paragraph>
             </Col>
 
             <Col>
-              <Form.Item name="usage_limit">
-                <InputNumber
-                  type={"number"}
-                  style={{ marginTop: "5px", width: "112px" }}
-                  disabled={setupKey.id || formSetupKey.type !== "reusable"}
-                  controls={false}
-                  min={0}
-                />
-              </Form.Item>
-              <Paragraph
-                type={"secondary"}
-                style={{ marginTop: "-18px", marginBottom: 0 }}
-              >
-                For example, set to 30 if you want to enroll 30 peers
-              </Paragraph>
+              <Input
+                disabled
+                value={formSetupKey.usage_limit - formSetupKey.used_times}
+                suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                style={{ width: "104px", marginTop: "5px" }}
+              />
             </Col>
           </Row>
 
-          <Row style={{ marginTop: "20px" }}>
-            <Col span={24}>
-              <Paragraph
-                style={{
-                  whiteSpace: "pre-line",
-                  margin: 0,
-                  fontWeight: "bold",
-                }}
-              >
-                Expires in
-              </Paragraph>
-            </Col>
-            <Col>
-              <Form.Item
-                name="expiresIn"
-                rules={[
-                  { required: true, message: "Please enter expiration date" },
-                ]}
-              >
-                <InputNumber
-                  defaultValue={7}
-                  placeholder={`2`}
-                  type="number"
-                  addonAfter=" Days"
-                  style={{ width: "160px", marginTop: "5px" }}
-                />
-              </Form.Item>
-              <Paragraph
-                type={"secondary"}
-                style={{ marginTop: "-18px", marginBottom: 0 }}
-              >
-                Should be between 1 and 180 days
-              </Paragraph>
-            </Col>
+          <Row style={{ marginTop: "30px" }}>
+            <Container style={{ width: "100%", padding: 0, margin: 0 }}>
+              <Row>
+                <Col span={4}>
+                  <Paragraph style={{ margin: 0, fontWeight: "bold" }}>
+                    Expires
+                  </Paragraph>
+                  <Row>
+                    <Input
+                      style={{ marginTop: "5px" }}
+                      disabled
+                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                      value={
+                        customExpiresFormat(new Date(formSetupKey.expires))!
+                      }
+                    />
+                  </Row>
+                </Col>
+              </Row>
+            </Container>
           </Row>
 
-          <Row style={{ marginTop: "20px" }}>
+          <Row style={{ marginTop: "30px" }}>
             <Col span={24}>
               <Paragraph
                 style={{
@@ -480,12 +427,8 @@ const SetupKeyNew = () => {
               >
                 Auto-assigned groups
               </Paragraph>
-              <Text type={"secondary"}>
-                These groups will be automatically assigned to peers enrolled
-                with this key
-              </Text>
             </Col>
-            <Col span={24}>
+            <Col span={6}>
               <Form.Item
                 style={{ marginTop: "5px", marginBottom: 0 }}
                 name="autoGroupNames"
@@ -521,8 +464,32 @@ const SetupKeyNew = () => {
             </Text>
           </Row>
         </Form>
-      </Container>
-    </Modal>
+        <Container
+          style={{
+            display: "flex",
+            flexDirection: "row",
+            justifyContent: "start",
+            padding: 0,
+            gap: "10px",
+          }}
+          key={0}
+        >
+          <Button onClick={onCancel}>Cancel</Button>
+          <Button
+            type="primary"
+            style={{
+              height: "100%",
+              fontSize: "14px",
+              borderRadius: "2px",
+            }}
+            disabled={savedSetupKey.loading || !changesDetected()}
+            onClick={handleFormSubmit}
+          >
+            {`${formSetupKey.id ? "Save" : "Create"} key`}
+          </Button>
+        </Container>
+      </Card>
+    </>
   );
 };
 

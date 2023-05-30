@@ -5,15 +5,16 @@ import actions, { ActionTypes } from './actions';
 import {ApiError, DeleteResponse, CreateResponse, ChangeResponse} from "../../services/api-client/types";
 
 type StateType = Readonly<{
-    data: SetupKey[] | null;
-    setupKey: SetupKey | null;
-    loading: boolean;
-    failed: ApiError | null;
-    saving: boolean;
-    deletedSetupKey: DeleteResponse<string | null>;
-    revokedSetupKey: ChangeResponse<SetupKey | null>;
-    savedSetupKey: CreateResponse<SetupKey | null>;
-    setupNewKeyVisible: boolean
+  data: SetupKey[] | null;
+  setupKey: SetupKey | null;
+  loading: boolean;
+  failed: ApiError | null;
+  saving: boolean;
+  deletedSetupKey: DeleteResponse<string | null>;
+  revokedSetupKey: ChangeResponse<SetupKey | null>;
+  savedSetupKey: CreateResponse<SetupKey | null>;
+  setupNewKeyVisible: boolean;
+  setupEditKeyVisible: boolean;
 }>;
 
 const initialState: StateType = {
@@ -43,7 +44,8 @@ const initialState: StateType = {
         error: null,
         data : null
     },
-    setupNewKeyVisible: false
+    setupNewKeyVisible: false,
+    setupEditKeyVisible: false
 };
 
 const data = createReducer<SetupKey[], ActionTypes>(initialState.data as SetupKey[])
@@ -85,13 +87,17 @@ const savedSetupKey = createReducer<CreateResponse<SetupKey | null>, ActionTypes
 const setupNewKeyVisible = createReducer<boolean, ActionTypes>(initialState.setupNewKeyVisible)
     .handleAction(actions.setSetupNewKeyVisible, (store, action) => action.payload)
 
+    const setupEditKeyVisible = createReducer<boolean, ActionTypes>(initialState.setupEditKeyVisible)
+    .handleAction(actions.setSetupEditKeyVisible, (store, action) => action.payload)
+
 export default combineReducers({
-    data,
-    setupKey,
-    loading,
-    failed,
-    saving,
-    deletedSetupKey,
-    savedSetupKey: savedSetupKey,
-    setupNewKeyVisible
+  data,
+  setupKey,
+  loading,
+  failed,
+  saving,
+  deletedSetupKey,
+  savedSetupKey: savedSetupKey,
+  setupNewKeyVisible,
+  setupEditKeyVisible,
 });

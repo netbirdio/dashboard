@@ -32,7 +32,8 @@ const actions = {
 
   removeSetupKey:  createAction('REMOVE_SETUP_KEY')<string>(),
   setSetupKey: createAction('SET_SETUP_KEY')<SetupKey>(),
-  setSetupNewKeyVisible: createAction('SET_SETUP_NEW_KEY_VISIBLE')<boolean>()
+  setSetupNewKeyVisible: createAction('SET_SETUP_NEW_KEY_VISIBLE')<boolean>(),
+  setSetupEditKeyVisible: createAction('SET_SETUP_EDIT_KEY_VISIBLE')<boolean>()
 };
 
 export type ActionTypes = ActionType<typeof actions>;
