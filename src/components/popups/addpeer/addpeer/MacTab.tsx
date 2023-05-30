@@ -1,6 +1,6 @@
 import React, {useState} from 'react';
 
-import {Button, Row, Tooltip, Typography} from "antd";
+import {Button, Divider, Row, Tooltip, Typography} from "antd";
 import TabSteps from "./TabSteps";
 import {StepCommand} from "./types"
 import {formatNetBirdUP} from "./common"
@@ -100,8 +100,9 @@ export const LinuxTab = () => {
             <div style={{marginTop: 5}}>
                 <TabSteps stepsItems={quickSteps}/>
             </div>
-            <Collapse bordered={false} defaultActiveKey={['1']}>
-                <Panel header={
+            <Divider></Divider>
+            <Collapse bordered={false} style={{backgroundColor: "unset"}}>
+                <Panel className="CustomPopupCollapse"  header={
                     <b>Or install via command line</b>
                 } key="1">
                     <Text style={{fontWeight: "bold"}}>
@@ -120,39 +121,7 @@ export const LinuxTab = () => {
                     </div>
                 </Panel>
             </Collapse>
-            {/*<Text style={{fontWeight: "bold"}}>*/}
-            {/*    Install using installer pkg*/}
-            {/*</Text>*/}
-            {/*<Row style={{paddingTop: "5px", paddingBottom: "20px"}}>*/}
-            {/*    <Button style={{marginRight: "10px"}} type="primary" href="https://pkgs.netbird.io/macos/amd64">Download for Intel</Button>*/}
-            {/*    <Button style={{marginRight: "10px"}} type="default" href="https://pkgs.netbird.io/macos/arm64">Download for M1 & M2</Button>*/}
-            {/*</Row>*/}
-            {/*<Text style={{fontWeight: "bold"}}>*/}
-            {/*    Install with one command*/}
-            {/*</Text>*/}
-            {/*<div style={{fontSize: ".85em", marginTop: 5, marginBottom: 25}}>*/}
-            {/*    <SyntaxHighlighter language="bash">*/}
-            {/*        curl -fsSL https://pkgs.netbird.io/install.sh | sh*/}
-            {/*    </SyntaxHighlighter>*/}
-            {/*</div>*/}
-            {/*<Text style={{fontWeight: "bold"}}>*/}
-            {/*    Or install manually with HomeBrew*/}
-            {/*</Text>*/}
-            {/*<div style={{marginTop: 5}}>*/}
-            {/*    <TabSteps stepsItems={steps}/>*/}
-            {/*</div>*/}
         </div>
-    /*<div style={{marginTop: 5}}>
-                <TabSteps stepsItems={quickSteps}/>
-            </div>*/
-        /*<div style={{marginTop: 10}}>
-            <Text style={{fontWeight: "bold"}}>
-                Install on macOS with Homebrew
-            </Text>
-            <div style={{marginTop: 5}}>
-                <TabSteps stepsItems={steps}/>
-            </div>
-        </div>*/
     )
 }
 
