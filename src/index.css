@@ -152,3 +152,8 @@ td.non-highlighted-table-column {
 .ant-table-thead .ant-table-cell {
   font-weight: normal !important;
 }
+
+.CustomPopupCollapse .ant-collapse-content-box, .CustomPopupCollapse .ant-collapse-header {
+  padding-left: 0 !important;
+  padding-top: 0 !important;
+}
