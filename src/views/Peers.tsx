@@ -453,12 +453,12 @@ export const Peers = () => {
             </Button>
         }
         return <div>
-            <Button type="text"
+            <Button type="text" style={{height: "auto", textAlign: "left"}}
                     onClick={() => setUpdateGroupsVisible(peer, true)}>
                 <span style={{textAlign: "left"}}>
-                    <Row> <Text strong>{peer.name}</Text></Row>
+                    <Row><Text strong>{peer.name}</Text></Row>
                     <Row><Text type="secondary">{userEmail}</Text></Row>
-                    <Row> {expiry}</Row>
+                    <Row>{expiry}</Row>
                 </span>
             </Button>
         </div>
