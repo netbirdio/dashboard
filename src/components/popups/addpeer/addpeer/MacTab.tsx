@@ -100,7 +100,7 @@ export const LinuxTab = () => {
             <div style={{marginTop: 5}}>
                 <TabSteps stepsItems={quickSteps}/>
             </div>
-            <Divider></Divider>
+            <Divider style={{marginTop: "5px"}} />
             <Collapse bordered={false} style={{backgroundColor: "unset"}}>
                 <Panel className="CustomPopupCollapse"  header={
                     <b>Or install via command line</b>
