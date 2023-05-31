@@ -11,7 +11,6 @@ import {
   Modal,
   Row,
   Select,
-  Space,
   Switch,
   Tag,
   Typography,
@@ -30,6 +29,8 @@ import { expiresInToSeconds, ExpiresInValue } from "../views/ExpiresInInput";
 import moment from "moment";
 import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
+import { CheckOutlined, CopyOutlined } from "@ant-design/icons";
+import { copyToClipboard } from "../utils/common";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -48,7 +49,10 @@ const SetupKeyNew = () => {
   const groups = useSelector((state: RootState) => state.group.data);
 
   const [form] = Form.useForm();
-  const [editName, setEditName] = useState(false);
+  const [editName] = useState(false);
+  const [showPlainToken, setShowPlainToken] = useState(false);
+  const [plainToken, setPlainToken] = useState("");
+  const [tokenCopied, setTokenCopied] = useState(false);
   const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formSetupKey, setFormSetupKey] = useState({} as FormSetupKey);
   const inputNameRef = useRef<any>(null);
@@ -133,8 +137,20 @@ const SetupKeyNew = () => {
 
   const setVisibleNewSetupKey = (status: boolean) => {
     form.resetFields();
+    setPlainToken("");
+    setShowPlainToken(false);
     dispatch(setupKeyActions.setSetupNewKeyVisible(status));
   };
+
+  useEffect(() => {
+    if (savedSetupKey.success) {
+      setPlainToken(savedSetupKey.data.key);
+      setShowPlainToken(true);
+    } else if (savedSetupKey.error) { 
+      setPlainToken('');
+      setShowPlainToken(false);
+    }
+  }, [savedSetupKey]);
 
   const onCancel = () => {
     if (savedSetupKey.loading) return;
@@ -159,10 +175,6 @@ const SetupKeyNew = () => {
 
   const onChange = (data: any) => {
     setFormSetupKey({ ...formSetupKey, ...data });
-  };
-
-  const toggleEditName = (status: boolean) => {
-    setEditName(status);
   };
 
   const selectValidator = (_: RuleObject, value: string[]) => {
@@ -278,6 +290,16 @@ const SetupKeyNew = () => {
     );
   };
 
+  const onCopyClick = (text: string, copied: boolean) => {
+    copyToClipboard(text);
+    setTokenCopied(true);
+    if (copied) {
+      setTimeout(() => {
+        onCopyClick(text, false);
+      }, 2000);
+    }
+  };
+
   return (
     <Modal
       style={{
@@ -295,19 +317,32 @@ const SetupKeyNew = () => {
           }}
           key={0}
         >
-          <Button onClick={onCancel}>Cancel</Button>
-          <Button
-            type="primary"
-            style={{
-              height: "100%",
-              fontSize: "14px",
-              borderRadius: "2px",
-            }}
-            disabled={savedSetupKey.loading || !changesDetected()}
-            onClick={handleFormSubmit}
-          >
-            Create Key
-          </Button>
+          {!showPlainToken && (
+            <>
+              <Button onClick={onCancel}>Cancel</Button>
+              <Button
+                type="primary"
+                style={{
+                  height: "100%",
+                  fontSize: "14px",
+                  borderRadius: "2px",
+                }}
+                disabled={savedSetupKey.loading || !changesDetected()}
+                onClick={handleFormSubmit}
+              >
+                Create Key
+              </Button>
+            </>
+          )}
+          {showPlainToken && (
+            <Button
+              type="primary"
+              disabled={!showPlainToken}
+              onClick={onCancel}
+            >
+              Done
+            </Button>
+          )}
         </Container>,
       ]}
     >
@@ -323,204 +358,238 @@ const SetupKeyNew = () => {
             textAlign: "start",
             whiteSpace: "pre-line",
             fontSize: "22px",
+            marginBottom: showPlainToken ? "30px" : "0",
           }}
         >
-          Create setup key
+          {showPlainToken ? "Key created successfully!" : "Create setup key"}
         </Paragraph>
+
         <Paragraph
           type={"secondary"}
           style={{
             textAlign: "start",
             whiteSpace: "pre-line",
-            marginTop: "-23px",
             paddingBottom: "15px",
           }}
         >
-          {"Use this key to register new machines in your network"}
+          {showPlainToken
+            ? "This key will not be shown again, so be sure to copy it and store in a secure location"
+            : "Use this key to register new machines in your network"}
         </Paragraph>
-        <Form
-          layout="vertical"
-          requiredMark={false}
-          form={form}
-          onValuesChange={onChange}
-          initialValues={{
-            expiresIn: ExpiresInDefault,
-            usage_limit: 1,
-          }}
-        >
-          <Row>
-            <Col span={24}>
-              <Paragraph style={{ fontWeight: "bold" }}>Name</Paragraph>
-              <Paragraph type={"secondary"} style={{ marginTop: "-15px" }}>
-                Set an easily identifiable name for your key
-              </Paragraph>
-            </Col>
+        {!showPlainToken && (
+          <Form
+            layout="vertical"
+            requiredMark={false}
+            form={form}
+            onValuesChange={onChange}
+            initialValues={{
+              expiresIn: ExpiresInDefault,
+              usage_limit: 1,
+            }}
+          >
+            <Row>
+              <Col span={24}>
+                <Paragraph style={{ fontWeight: "bold" }}>Name</Paragraph>
+                <Paragraph type={"secondary"} style={{ marginTop: "-15px" }}>
+                  Set an easily identifiable name for your key
+                </Paragraph>
+              </Col>
 
-            <Col span={24}>
-              <Form.Item
-                style={{ marginBottom: "0px", marginTop: "10px" }}
-                name="name"
-                rules={[{ required: true, message: "Please enter key name." }]}
-              >
-                <Input placeholder={`e.g. "AWS servers"`} />
-              </Form.Item>
-            </Col>
-          </Row>
+              <Col span={24}>
+                <Form.Item
+                  style={{ marginBottom: "0px", marginTop: "10px" }}
+                  name="name"
+                  rules={[
+                    { required: true, message: "Please enter key name." },
+                  ]}
+                >
+                  <Input placeholder={`e.g. "AWS servers"`} />
+                </Form.Item>
+              </Col>
+            </Row>
 
-          <Row style={{ marginTop: "20px" }} justify={"space-between"}>
-            <Col span={18}>
-              <Paragraph
-                style={{
-                  whiteSpace: "pre-line",
-                  margin: 0,
-                  fontWeight: "bold",
-                }}
-              >
-                Reusable
-              </Paragraph>
-              <Paragraph
-                type={"secondary"}
-                style={{ whiteSpace: "pre-line", margin: 0 }}
-              >
-                Use this type to enroll multiple peers
-              </Paragraph>
-            </Col>
-            <Col span={6}>
-              <Row justify={"end"}>
-                <Form.Item name="reusable" valuePropName="checked">
-                  <Switch
-                    onChange={(checked) => {
-                      setFormSetupKey({
-                        ...formSetupKey,
-                        type: checked ? "reusable" : "one-off",
-                      });
-                    }}
+            <Row style={{ marginTop: "20px" }} justify={"space-between"}>
+              <Col span={18}>
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                    margin: 0,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Reusable
+                </Paragraph>
+                <Paragraph
+                  type={"secondary"}
+                  style={{ whiteSpace: "pre-line", margin: 0 }}
+                >
+                  Use this type to enroll multiple peers
+                </Paragraph>
+              </Col>
+              <Col span={6}>
+                <Row justify={"end"}>
+                  <Form.Item name="reusable" valuePropName="checked">
+                    <Switch
+                      onChange={(checked) => {
+                        setFormSetupKey({
+                          ...formSetupKey,
+                          type: checked ? "reusable" : "one-off",
+                        });
+                      }}
+                    />
+                  </Form.Item>
+                </Row>
+              </Col>
+            </Row>
+
+            <Row style={{ marginTop: "10px" }}>
+              <Col span={24}>
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                    margin: 0,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Usage limit
+                </Paragraph>
+              </Col>
+
+              <Col>
+                <Form.Item name="usage_limit">
+                  <InputNumber
+                    type={"number"}
+                    style={{ marginTop: "5px", width: "112px" }}
+                    disabled={setupKey.id || formSetupKey.type !== "reusable"}
+                    controls={false}
+                    min={0}
                   />
                 </Form.Item>
-              </Row>
-            </Col>
-          </Row>
-
-          <Row style={{ marginTop: "10px" }}>
-            <Col span={24}>
-              <Paragraph
-                style={{
-                  whiteSpace: "pre-line",
-                  margin: 0,
-                  fontWeight: "bold",
-                }}
-              >
-                Usage limit
-              </Paragraph>
-            </Col>
-
-            <Col>
-              <Form.Item name="usage_limit">
-                <InputNumber
-                  type={"number"}
-                  style={{ marginTop: "5px", width: "112px" }}
-                  disabled={setupKey.id || formSetupKey.type !== "reusable"}
-                  controls={false}
-                  min={0}
-                />
-              </Form.Item>
-              <Paragraph
-                type={"secondary"}
-                style={{ marginTop: "-18px", marginBottom: 0 }}
-              >
-                For example, set to 30 if you want to enroll 30 peers
-              </Paragraph>
-            </Col>
-          </Row>
-
-          <Row style={{ marginTop: "20px" }}>
-            <Col span={24}>
-              <Paragraph
-                style={{
-                  whiteSpace: "pre-line",
-                  margin: 0,
-                  fontWeight: "bold",
-                }}
-              >
-                Expires in
-              </Paragraph>
-            </Col>
-            <Col>
-              <Form.Item
-                name="expiresIn"
-                rules={[
-                  { required: true, message: "Please enter expiration date" },
-                ]}
-              >
-                <InputNumber
-                  defaultValue={7}
-                  placeholder={`2`}
-                  type="number"
-                  addonAfter=" Days"
-                  style={{ width: "160px", marginTop: "5px" }}
-                />
-              </Form.Item>
-              <Paragraph
-                type={"secondary"}
-                style={{ marginTop: "-18px", marginBottom: 0 }}
-              >
-                Should be between 1 and 180 days
-              </Paragraph>
-            </Col>
-          </Row>
-
-          <Row style={{ marginTop: "20px" }}>
-            <Col span={24}>
-              <Paragraph
-                style={{
-                  whiteSpace: "pre-line",
-                  margin: 0,
-                  fontWeight: "bold",
-                }}
-              >
-                Auto-assigned groups
-              </Paragraph>
-              <Text type={"secondary"}>
-                These groups will be automatically assigned to peers enrolled
-                with this key
-              </Text>
-            </Col>
-            <Col span={24}>
-              <Form.Item
-                style={{ marginTop: "5px", marginBottom: 0 }}
-                name="autoGroupNames"
-                rules={[{ validator: selectValidator }]}
-              >
-                <Select
-                  mode="tags"
-                  style={{ width: "100%" }}
-                  placeholder="Associate groups with the key"
-                  tagRender={tagRender}
-                  dropdownRender={dropDownRender}
-                  // enabled only when we have a new key !setupkey.id or when the key is valid
-                  disabled={!(!setupKey.id || setupKey.valid)}
+                <Paragraph
+                  type={"secondary"}
+                  style={{ marginTop: "-18px", marginBottom: 0 }}
                 >
-                  {tagGroups.map((m) => (
-                    <Option key={m}>{optionRender(m)}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
-            <Text type={"secondary"}>
-              Learn more about
-              <a
-                target="_blank"
-                rel="noreferrer"
-                href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
-              >
-                {" "}
-                setup keys
-              </a>
-            </Text>
-          </Row>
-        </Form>
+                  For example, set to 30 if you want to enroll 30 peers
+                </Paragraph>
+              </Col>
+            </Row>
+
+            <Row style={{ marginTop: "20px" }}>
+              <Col span={24}>
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                    margin: 0,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Expires in
+                </Paragraph>
+              </Col>
+              <Col>
+                <Form.Item
+                  name="expiresIn"
+                  rules={[
+                    { required: true, message: "Please enter expiration date" },
+                  ]}
+                >
+                  <InputNumber
+                    defaultValue={7}
+                    placeholder={`2`}
+                    type="number"
+                    addonAfter=" Days"
+                    style={{ width: "160px", marginTop: "5px" }}
+                  />
+                </Form.Item>
+                <Paragraph
+                  type={"secondary"}
+                  style={{ marginTop: "-18px", marginBottom: 0 }}
+                >
+                  Should be between 1 and 180 days
+                </Paragraph>
+              </Col>
+            </Row>
+
+            <Row style={{ marginTop: "20px" }}>
+              <Col span={24}>
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                    margin: 0,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Auto-assigned groups
+                </Paragraph>
+                <Text type={"secondary"}>
+                  These groups will be automatically assigned to peers enrolled
+                  with this key
+                </Text>
+              </Col>
+              <Col span={24}>
+                <Form.Item
+                  style={{ marginTop: "5px", marginBottom: 0 }}
+                  name="autoGroupNames"
+                  rules={[{ validator: selectValidator }]}
+                >
+                  <Select
+                    mode="tags"
+                    style={{ width: "100%" }}
+                    placeholder="Associate groups with the key"
+                    tagRender={tagRender}
+                    dropdownRender={dropDownRender}
+                    // enabled only when we have a new key !setupkey.id or when the key is valid
+                    disabled={!(!setupKey.id || setupKey.valid)}
+                  >
+                    {tagGroups.map((m) => (
+                      <Option key={m}>{optionRender(m)}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
+              <Text type={"secondary"}>
+                Learn more about
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                >
+                  {" "}
+                  setup keys
+                </a>
+              </Text>
+            </Row>
+          </Form>
+        )}
+        {showPlainToken && (
+          <Input
+            style={{ marginTop: "-15px", marginBottom: "25px" }}
+            suffix={
+              !tokenCopied ? (
+                <Button
+                  type="text"
+                  size="middle"
+                  className="btn-copy-code"
+                  icon={<CopyOutlined />}
+                  style={{ color: "rgb(107, 114, 128)", marginTop: "-1px" }}
+                  onClick={() => onCopyClick(plainToken, true)}
+                />
+              ) : (
+                <Button
+                  type="text"
+                  size="middle"
+                  className="btn-copy-code"
+                  icon={<CheckOutlined />}
+                  style={{ color: "green", marginTop: "-1px" }}
+                />
+              )
+            }
+            defaultValue={plainToken}
+            readOnly={true}
+          ></Input>
+        )}
       </Container>
     </Modal>
   );

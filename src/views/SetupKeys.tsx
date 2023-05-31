@@ -166,8 +166,7 @@ export const SetupKeys = () => {
         duration: 2,
         style: styleNotification,
       });
-      dispatch(setupKeyActions.setSetupNewKeyVisible(false));
-      dispatch(
+       dispatch(
         setupKeyActions.setSavedSetupKey({ ...savedSetupKey, success: false })
       );
       dispatch(setupKeyActions.resetSavedSetupKey(null));
