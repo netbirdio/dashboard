@@ -170,7 +170,8 @@ export const SetupKeys = () => {
       dispatch(
         setupKeyActions.setSavedSetupKey({ ...savedSetupKey, success: false })
       );
-      dispatch(setupKeyActions.resetSavedSetupKey(null));
+        dispatch(setupKeyActions.resetSavedSetupKey(null));
+        dispatch(setupKeyActions.setSetupEditKeyVisible(false));
     } else if (savedSetupKey.error) {
       message.error({
         content:

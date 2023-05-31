@@ -122,7 +122,26 @@ const SetupKeyNew = () => {
       return console.log("errorInfo", errorFields);
     }
 
-    const setupKeyToSave = createSetupKeyToSave();
+    let setupKeyToSave = createSetupKeyToSave();
+    if (setupKeyToSave.type === "reusable") {
+      const updateUsageLimit =
+        setupKeyToSave.usage_limit === "unlimited" ||
+        setupKeyToSave.usage_limit === undefined ||
+        setupKeyToSave.usage_limit === " "
+          ? 0
+          : Number(setupKeyToSave.usage_limit);
+
+      setupKeyToSave = {
+        ...setupKeyToSave,
+        usage_limit: updateUsageLimit,
+      };
+    } else {
+      setupKeyToSave = {
+        ...setupKeyToSave,
+        usage_limit: 1,
+      };
+    }
+
     dispatch(
       setupKeyActions.saveSetupKey.request({
         getAccessTokenSilently: getTokenSilently,
@@ -298,11 +317,6 @@ const SetupKeyNew = () => {
           <Button onClick={onCancel}>Cancel</Button>
           <Button
             type="primary"
-            style={{
-              height: "100%",
-              fontSize: "14px",
-              borderRadius: "2px",
-            }}
             disabled={savedSetupKey.loading || !changesDetected()}
             onClick={handleFormSubmit}
           >
@@ -323,6 +337,7 @@ const SetupKeyNew = () => {
             textAlign: "start",
             whiteSpace: "pre-line",
             fontSize: "22px",
+            margin: "0px",
           }}
         >
           Create setup key
@@ -332,7 +347,6 @@ const SetupKeyNew = () => {
           style={{
             textAlign: "start",
             whiteSpace: "pre-line",
-            marginTop: "-23px",
             paddingBottom: "15px",
           }}
         >
@@ -345,13 +359,15 @@ const SetupKeyNew = () => {
           onValuesChange={onChange}
           initialValues={{
             expiresIn: ExpiresInDefault,
-            usage_limit: 1,
+            usage_limit: "unlimited",
           }}
         >
           <Row>
             <Col span={24}>
-              <Paragraph style={{ fontWeight: "bold" }}>Name</Paragraph>
-              <Paragraph type={"secondary"} style={{ marginTop: "-15px" }}>
+              <Paragraph style={{ fontWeight: "bold", margin: "0px" }}>
+                Name
+              </Paragraph>
+              <Paragraph type={"secondary"} style={{ margin: "0" }}>
                 Set an easily identifiable name for your key
               </Paragraph>
             </Col>
@@ -415,13 +431,19 @@ const SetupKeyNew = () => {
             </Col>
 
             <Col>
-              <Form.Item name="usage_limit">
-                <InputNumber
-                  type={"number"}
+              <Form.Item
+                name="usage_limit"
+                rules={[
+                  {
+                    pattern: new RegExp(/(^unlimited$|[0-9])/),
+                    message: "Please enter correct usage limit.",
+                  },
+                ]}
+              >
+                <Input
+                  type={"text"}
                   style={{ marginTop: "5px", width: "112px" }}
                   disabled={setupKey.id || formSetupKey.type !== "reusable"}
-                  controls={false}
-                  min={0}
                 />
               </Form.Item>
               <Paragraph

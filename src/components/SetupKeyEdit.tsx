@@ -42,8 +42,6 @@ const customExpiresFormat = (value: Date): string | null => {
   return formatDate(value);
 };
 
- 
-
 const SetupKeyNew = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
@@ -59,14 +57,14 @@ const SetupKeyNew = () => {
   const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formSetupKey, setFormSetupKey] = useState({} as FormSetupKey);
   const inputNameRef = useRef<any>(null);
- 
-   useEffect(() => {
-     //Unmounting component clean
-     return () => {
-       setVisibleNewSetupKey(false)
-     };
-   }, []);
-  
+
+  useEffect(() => {
+    //Unmounting component clean
+    return () => {
+      setVisibleNewSetupKey(false);
+    };
+  }, []);
+
   useEffect(() => {
     if (!editName) return;
 
@@ -318,11 +316,9 @@ const SetupKeyNew = () => {
       />
       <Card
         bordered={true}
-        // loading={loading}
         title={setupKey.name}
         style={{ marginBottom: "7px" }}
       >
-         
         <Form
           layout="vertical"
           requiredMark={false}
@@ -333,7 +329,6 @@ const SetupKeyNew = () => {
             usage_limit: 1,
           }}
         >
-
           <Row style={{ marginTop: "10px" }}>
             <Col span={4}>
               <Paragraph
@@ -380,14 +375,19 @@ const SetupKeyNew = () => {
                   }}
                 ></Paragraph>
                 {formSetupKey.type === "one-off" ? "One-off" : "Reusable"},
-                Available uses
+                available uses
               </Paragraph>
             </Col>
 
             <Col>
               <Input
                 disabled
-                value={formSetupKey.usage_limit - formSetupKey.used_times}
+                value={
+                  formSetupKey.type === "reusable" &&
+                  formSetupKey.usage_limit === 0
+                    ? "unlimited"
+                    : formSetupKey.usage_limit - formSetupKey.used_times
+                }
                 suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
                 style={{ width: "104px", marginTop: "5px" }}
               />
@@ -477,11 +477,6 @@ const SetupKeyNew = () => {
           <Button onClick={onCancel}>Cancel</Button>
           <Button
             type="primary"
-            style={{
-              height: "100%",
-              fontSize: "14px",
-              borderRadius: "2px",
-            }}
             disabled={savedSetupKey.loading || !changesDetected()}
             onClick={handleFormSubmit}
           >
