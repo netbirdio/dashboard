@@ -14,7 +14,7 @@ export interface SetupKey {
   valid: boolean;
   auto_groups: string[]
   expires_in: number;
-  usage_limit: number;
+  usage_limit: any;
 }
 
 export interface FormSetupKey extends SetupKey {

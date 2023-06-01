@@ -297,238 +297,395 @@ const UserEdit = () => {
     }
 
     return (
-        <>
-            <div style={{paddingTop: "13px"}}>
-                <Breadcrumb style={{marginBottom: "30px"}}
-                            items={[
-                                {
-                                    title: <a onClick={() => onBreadcrumbUsersClick("Users")}>All Users</a>,
-                                },
-                                {
-                                    title: <a onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</a>,
-                                    // menu: { items: menuItems },
-                                },
-                                {
-                                    title: user.name,
-                                },
-                            ]}
-                />
+      <>
+        <div style={{ paddingTop: "13px" }}>
+          <Breadcrumb
+            style={{ marginBottom: "30px" }}
+            items={[
+              {
+                title: (
+                  <a onClick={() => onBreadcrumbUsersClick("Users")}>
+                    All Users
+                  </a>
+                ),
+              },
+              {
+                title: <a onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</a>,
+                // menu: { items: menuItems },
+              },
+              {
+                title: user.name,
+              },
+            ]}
+          />
 
-                <Card
-                    bordered={true}
-                    title={user.name}
-                    loading={loading}
-                    style={{marginBottom: "7px"}}
-                >
-                    <div style={{maxWidth: "800px"}}>
-                        <Form layout="vertical" hideRequiredMark form={form}
-                              initialValues={{
-                                  name: formUser.name,
-                                  role: formUser.role,
-                                  email: formUser.email,
-                                  is_blocked: formUser.is_blocked,
-                                  autoGroupsNames: formUser.autoGroupsNames,
-                              }}
+          <Card
+            bordered={true}
+            title={user.name}
+            loading={loading}
+            style={{ marginBottom: "7px" }}
+          >
+            <div style={{ maxWidth: "800px" }}>
+              <Form
+                layout="vertical"
+                hideRequiredMark
+                form={form}
+                initialValues={{
+                  name: formUser.name,
+                  role: formUser.role,
+                  email: formUser.email,
+                  is_blocked: formUser.is_blocked,
+                  autoGroupsNames: formUser.autoGroupsNames,
+                }}
+              >
+                <Row style={{ paddingBottom: "15px" }}>
+                  {!user.is_service_user && (
+                    <Col
+                      xs={24}
+                      sm={24}
+                      md={11}
+                      lg={11}
+                      xl={11}
+                      xxl={11}
+                      span={11}
+                    >
+                      <Form.Item
+                        name="email"
+                        label={<Text style={{}}>Email</Text>}
+                        style={{ marginRight: "70px", fontWeight: "bold" }}
+                      >
+                        <Input
+                          disabled={user.id}
+                          value={formUser.email}
+                          style={{ color: "#5a5c5a" }}
+                          autoComplete="off"
+                        />
+                      </Form.Item>
+                    </Col>
+                  )}
+                  <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                    <Form.Item
+                      name="role"
+                      label={<Text style={{}}>Role</Text>}
+                      style={{ marginRight: "50px", fontWeight: "bold" }}
+                    >
+                      <Select
+                        style={{ width: "100%" }}
+                        disabled={user.is_current}
+                      >
+                        <Option value="admin">admin</Option>
+                        <Option value="user">user</Option>
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+
+                {!user.is_service_user && (
+                  <Row style={{ paddingBottom: "15px" }}>
+                    <Col
+                      xs={24}
+                      sm={24}
+                      md={11}
+                      lg={11}
+                      xl={11}
+                      xxl={11}
+                      span={11}
+                    >
+                      <Form.Item
+                        name="autoGroupsNames"
+                        label={<Text style={{}}>Auto-assigned groups</Text>}
+                        tooltip="Every peer enrolled with this user will be automatically added to these groups"
+                        rules={[{ validator: selectValidator }]}
+                        style={{ marginRight: "70px", fontWeight: "bold" }}
+                      >
+                        <Select
+                          mode="tags"
+                          placeholder="Associate groups with the user"
+                          tagRender={tagRender}
+                          dropdownRender={dropDownRender}
+                          disabled={oidcUser && !isUserAdmin(oidcUser.sub)}
                         >
-                            <Row style={{paddingBottom: "15px"}}>
-                                {!user.is_service_user &&
-                                    <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
-                                        <Form.Item
-                                            name="email"
-                                            label={<Text style={{}}>Email</Text>}
-                                            style={{marginRight: "70px"}}
-                                        >
-                                            <Input
-                                                disabled={user.id}
-                                                value={formUser.email}
-                                                style={{color: "#5a5c5a"}}
-                                                autoComplete="off"/>
-                                        </Form.Item>
-                                    </Col>}
-                                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                                    <Form.Item
-                                        name="role"
-                                        label={<Text style={{}}>Role</Text>}
-                                        style={{marginRight: "50px"}}
-                                    >
-                                        <Select style={{width: '100%'}}
-                                                disabled={user.is_current}>
-                                            <Option value="admin">admin</Option>
-                                            <Option value="user">user</Option>
-                                        </Select>
-                                    </Form.Item>
-                                </Col>
-                            </Row>
+                          {tagGroups.map((m) => (
+                            <Option key={m}>{optionRender(m)}</Option>
+                          ))}
+                        </Select>
+                      </Form.Item>
+                    </Col>
 
-                            {!user.is_service_user && <Row style={{paddingBottom: "15px"}}>
+                    {!user.is_current && isAdmin && (
+                      <Col
+                        xs={24}
+                        sm={24}
+                        md={5}
+                        lg={5}
+                        xl={5}
+                        xxl={5}
+                        span={5}
+                      >
+                        <Form.Item
+                          valuePropName="checked"
+                          name="is_blocked"
+                          label="Block user"
+                          style={{ marginRight: "50px", fontWeight: "bold" }}
+                        >
+                          <Switch />
+                        </Form.Item>
+                      </Col>
+                    )}
+                  </Row>
+                )}
 
-                                <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
-                                        <Form.Item
-                                            name="autoGroupsNames"
-                                            label={<Text style={{}}>Auto-assigned groups</Text>}
-                                            tooltip="Every peer enrolled with this user will be automatically added to these groups"
-                                            rules={[{validator: selectValidator}]}
-                                            style={{marginRight: "70px"}}
-                                        >
-                                            <Select mode="tags"
-                                                    placeholder="Associate groups with the user"
-                                                    tagRender={tagRender}
-                                                    dropdownRender={dropDownRender}
-                                                    disabled={oidcUser && !isUserAdmin(oidcUser.sub)}
-                                            >
-                                                {
-                                                    tagGroups.map(m =>
-                                                        <Option key={m}>{optionRender(m)}</Option>
-                                                    )
-                                                }
-                                            </Select>
-                                        </Form.Item>
-                                    </Col>
-
-                                {!user.is_current && isAdmin && (
-                                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                                    <Form.Item
-                                        valuePropName="checked"
-                                        name="is_blocked"
-                                        label="Block user"
-                                        style={{marginRight: "50px"}}
-                                    >
-                                        <Switch/>
-                                    </Form.Item>
-                                </Col>)}
-                            </Row>}
-
-                            <Space style={{display: 'flex', justifyContent: 'start'}}>
-                                <Button disabled={loading} onClick={onCancel}>Cancel</Button>
-                                <Button type="primary"
-                                        onClick={handleFormSubmit}>Save</Button>
-                            </Space>
-                        </Form>
-                    </div>
-                </Card>
-
-                {user && (user.is_current || user.is_service_user) && <Card
-                    bordered={true}
-                    loading={loading}
-                    style={{marginBottom: "7px"}}
-                >
-                    <div style={{maxWidth: "800px"}}>
-                        <Paragraph
-                            style={{textAlign: "left", whiteSpace: "pre-line", fontSize: "16px", fontWeight: "bold"}}>Access
-                            tokens</Paragraph>
-                        <Row gutter={21} style={{marginTop: "-16px", marginBottom: "10px"}}>
-                            <Col xs={24} sm={24} md={20} lg={20} xl={20} xxl={20} span={20}>
-                                <Paragraph type={"secondary"}
-                                           style={{textAlign: "left", whiteSpace: "pre-line"}}>
-                                    Access tokens give access to NetBird API</Paragraph>
-                            </Col>
-                            <Col xs={24} sm={24} md={1} lg={1} xl={1} xxl={1} span={1} style={{marginTop: "-16px"}}>
-                                {personalAccessTokens && personalAccessTokens.length > 0 &&
-                                    <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create
-                                        token</Button>}
-                            </Col>
-                        </Row>
-                        {personalAccessTokens && personalAccessTokens.length > 0 &&
-                            <Table
-                                size={"small"}
-                                style={{marginTop: "-10px"}}
-                                showHeader={false}
-                                scroll={{x: 800}}
-                                pagination={false}
-                                loading={tableSpin(loading)}
-                                dataSource={tokenTable}>
-                                <Column className={"non-highlighted-table-column"}
-                                        sorter={(a, b) => ((a as TokenDataTable).created_at.localeCompare((b as TokenDataTable).created_at))}
-                                        defaultSortOrder='descend'
-                                        render={(text, record, index) => {
-                                            return (<>
-                                                <Row>
-                                                    <Col>
-                                                        <Badge
-                                                            status={(record as TokenDataTable).status === "valid" ? "success" : "error"}
-                                                            style={{
-                                                                marginTop: "1px",
-                                                                marginRight: "5px",
-                                                                marginLeft: "0px"
-                                                            }}/>
-                                                    </Col>
-                                                    <Col>
-                                                        <Paragraph style={{
-                                                            margin: "0px",
-                                                            padding: "0px"
-                                                        }}>{(record as TokenDataTable).name}</Paragraph>
-                                                        <Paragraph type={"secondary"} style={{
-                                                            fontSize: "13px",
-                                                            fontWeight: "400",
-                                                            margin: "0px",
-                                                            marginTop: "-2px",
-                                                            padding: "0px"
-                                                        }}>{"Created" + ((record as TokenDataTable).created_by_email && user.is_service_user ? " by " + (record as TokenDataTable).created_by_email : "") + " on " + fullDate((record as TokenDataTable).created_at)}</Paragraph>
-                                                    </Col>
-                                                </Row>
-                                            </>)
-                                        }}/>
-                                <Column render={(text, record, index) => {
-                                    return <>
-                                        <Paragraph type={"secondary"} style={{textAlign: "left", fontSize: "11px"}}>Expires
-                                            on</Paragraph>
-                                        <Paragraph type={"secondary"} style={{
-                                            textAlign: "left",
-                                            marginTop: "-10px",
-                                            marginBottom: "0",
-                                            fontSize: "15px"
-                                        }}>{fullDate((record as TokenDataTable).expiration_date)}</Paragraph>
-                                    </>
-                                }}
-                                />
-                                <Column render={(text, record, index) => {
-                                    return <>
-                                        <Paragraph type={"secondary"} style={{textAlign: "left", fontSize: "11px"}}>Last
-                                            used</Paragraph>
-                                        <Paragraph type={"secondary"} style={{
-                                            textAlign: "left",
-                                            marginTop: "-10px",
-                                            marginBottom: "0",
-                                            fontSize: "15px"
-                                        }}>{(record as TokenDataTable).last_used ? fullDate((record as TokenDataTable).last_used) : "Never"}</Paragraph>
-                                    </>
-                                }}
-                                />
-                                <Column align="right"
-                                        render={(text, record, index) => {
-                                            return (
-                                                <Button danger={true} type={"text"}
-                                                        onClick={() => {
-                                                            showConfirmDelete(record as TokenDataTable)
-                                                        }}
-                                                >Delete</Button>
-                                            )
-                                        }}
-                                />
-                            </Table>}
-                        <Divider style={{marginTop: "-12px"}}></Divider>
-                        {(personalAccessTokens === null || personalAccessTokens.length === 0) &&
-                            <Space direction="vertical" size="small" align="start"
-                                   style={{
-                                       display: 'flex',
-                                       padding: '35px 0px',
-                                       marginTop: "-40px",
-                                       justifyContent: 'center'
-                                   }}>
-                                <Paragraph
-                                    style={{textAlign: "start", whiteSpace: "pre-line"}}>
-                                    You don’t have any access tokens yet
-                                </Paragraph>
-                                <Button type="primary" onClick={onClickAddNewPersonalAccessToken}>Create token</Button>
-                            </Space>}
-                    </div>
-
-                </Card>}
+                <Space style={{ display: "flex", justifyContent: "start" }}>
+                  <Button disabled={loading} onClick={onCancel}>
+                    Cancel
+                  </Button>
+                  <Button type="primary" onClick={handleFormSubmit}>
+                    Save
+                  </Button>
+                </Space>
+              </Form>
             </div>
-            <AddPATPopup/>
-            {confirmModalContextHolder}
-        </>
-    )
+          </Card>
+
+          {user && (user.is_current || user.is_service_user) && (
+            <Card
+              bordered={true}
+              loading={loading}
+              style={{ marginBottom: "7px" }}
+            >
+              <div style={{ maxWidth: "800px" }}>
+                <Paragraph
+                  style={{
+                    textAlign: "left",
+                    whiteSpace: "pre-line",
+                    fontSize: "16px",
+                    fontWeight: "bold",
+                  }}
+                >
+                  Access tokens
+                </Paragraph>
+                <Row
+                  gutter={21}
+                  style={{ marginTop: "-16px", marginBottom: "10px" }}
+                >
+                  <Col
+                    xs={24}
+                    sm={24}
+                    md={20}
+                    lg={20}
+                    xl={20}
+                    xxl={20}
+                    span={20}
+                  >
+                    <Paragraph
+                      type={"secondary"}
+                      style={{ textAlign: "left", whiteSpace: "pre-line" }}
+                    >
+                      Access tokens give access to NetBird API
+                    </Paragraph>
+                  </Col>
+                  <Col
+                    xs={24}
+                    sm={24}
+                    md={1}
+                    lg={1}
+                    xl={1}
+                    xxl={1}
+                    span={1}
+                    style={{ marginTop: "-16px" }}
+                  >
+                    {personalAccessTokens &&
+                      personalAccessTokens.length > 0 && (
+                        <Button
+                          type="primary"
+                          onClick={onClickAddNewPersonalAccessToken}
+                        >
+                          Create token
+                        </Button>
+                      )}
+                  </Col>
+                </Row>
+                {personalAccessTokens && personalAccessTokens.length > 0 && (
+                  <Table
+                    size={"small"}
+                    style={{ marginTop: "-10px" }}
+                    showHeader={false}
+                    scroll={{ x: 800 }}
+                    pagination={false}
+                    loading={tableSpin(loading)}
+                    dataSource={tokenTable}
+                  >
+                    <Column
+                      className={"non-highlighted-table-column"}
+                      sorter={(a, b) =>
+                        (a as TokenDataTable).created_at.localeCompare(
+                          (b as TokenDataTable).created_at
+                        )
+                      }
+                      defaultSortOrder="descend"
+                      render={(text, record, index) => {
+                        return (
+                          <>
+                            <Row>
+                              <Col>
+                                <Badge
+                                  status={
+                                    (record as TokenDataTable).status ===
+                                    "valid"
+                                      ? "success"
+                                      : "error"
+                                  }
+                                  style={{
+                                    marginTop: "1px",
+                                    marginRight: "5px",
+                                    marginLeft: "0px",
+                                  }}
+                                />
+                              </Col>
+                              <Col>
+                                <Paragraph
+                                  style={{
+                                    margin: "0px",
+                                    padding: "0px",
+                                  }}
+                                >
+                                  {(record as TokenDataTable).name}
+                                </Paragraph>
+                                <Paragraph
+                                  type={"secondary"}
+                                  style={{
+                                    fontSize: "13px",
+                                    fontWeight: "400",
+                                    margin: "0px",
+                                    marginTop: "-2px",
+                                    padding: "0px",
+                                  }}
+                                >
+                                  {"Created" +
+                                    ((record as TokenDataTable)
+                                      .created_by_email && user.is_service_user
+                                      ? " by " +
+                                        (record as TokenDataTable)
+                                          .created_by_email
+                                      : "") +
+                                    " on " +
+                                    fullDate(
+                                      (record as TokenDataTable).created_at
+                                    )}
+                                </Paragraph>
+                              </Col>
+                            </Row>
+                          </>
+                        );
+                      }}
+                    />
+                    <Column
+                      render={(text, record, index) => {
+                        return (
+                          <>
+                            <Paragraph
+                              type={"secondary"}
+                              style={{ textAlign: "left", fontSize: "11px" }}
+                            >
+                              Expires on
+                            </Paragraph>
+                            <Paragraph
+                              type={"secondary"}
+                              style={{
+                                textAlign: "left",
+                                marginTop: "-10px",
+                                marginBottom: "0",
+                                fontSize: "15px",
+                              }}
+                            >
+                              {fullDate(
+                                (record as TokenDataTable).expiration_date
+                              )}
+                            </Paragraph>
+                          </>
+                        );
+                      }}
+                    />
+                    <Column
+                      render={(text, record, index) => {
+                        return (
+                          <>
+                            <Paragraph
+                              type={"secondary"}
+                              style={{ textAlign: "left", fontSize: "11px" }}
+                            >
+                              Last used
+                            </Paragraph>
+                            <Paragraph
+                              type={"secondary"}
+                              style={{
+                                textAlign: "left",
+                                marginTop: "-10px",
+                                marginBottom: "0",
+                                fontSize: "15px",
+                              }}
+                            >
+                              {(record as TokenDataTable).last_used
+                                ? fullDate((record as TokenDataTable).last_used)
+                                : "Never"}
+                            </Paragraph>
+                          </>
+                        );
+                      }}
+                    />
+                    <Column
+                      align="right"
+                      render={(text, record, index) => {
+                        return (
+                          <Button
+                            danger={true}
+                            type={"text"}
+                            onClick={() => {
+                              showConfirmDelete(record as TokenDataTable);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        );
+                      }}
+                    />
+                  </Table>
+                )}
+                <Divider style={{ marginTop: "-12px" }}></Divider>
+                {(personalAccessTokens === null ||
+                  personalAccessTokens.length === 0) && (
+                  <Space
+                    direction="vertical"
+                    size="small"
+                    align="start"
+                    style={{
+                      display: "flex",
+                      padding: "35px 0px",
+                      marginTop: "-40px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Paragraph
+                      style={{ textAlign: "start", whiteSpace: "pre-line" }}
+                    >
+                      You don’t have any access tokens yet
+                    </Paragraph>
+                    <Button
+                      type="primary"
+                      onClick={onClickAddNewPersonalAccessToken}
+                    >
+                      Create token
+                    </Button>
+                  </Space>
+                )}
+              </div>
+            </Card>
+          )}
+        </div>
+        <AddPATPopup />
+        {confirmModalContextHolder}
+      </>
+    );
 
 }
 
