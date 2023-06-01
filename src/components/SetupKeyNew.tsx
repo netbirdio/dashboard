@@ -177,8 +177,6 @@ const SetupKeyNew = () => {
   };
 
   const onChange = (data: any) => {
-    // unlimited;
-    console.log(data.reusable);
     if (data.reusable) {
       form.setFieldValue("usage_limit", "unlimited");
     } else {
