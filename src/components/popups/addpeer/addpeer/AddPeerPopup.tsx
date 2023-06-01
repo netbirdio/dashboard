@@ -49,7 +49,7 @@ export const AddPeerPopup: React.FC<Props> = ({
         },
         {
             key: "3",
-            label: <span><AppleFilled/>macOS</span>,
+            label: <span><AppleFilled/>MacOS</span>,
             children: <MacTab/>,
         },
         {

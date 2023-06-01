@@ -42,8 +42,6 @@ const customExpiresFormat = (value: Date): string | null => {
   return formatDate(value);
 };
 
- 
-
 const SetupKeyNew = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
@@ -318,59 +316,104 @@ const SetupKeyNew = () => {
       />
       <Card
         bordered={true}
-        // loading={loading}
         title={setupKey.name}
         style={{ marginBottom: "7px" }}
       >
-         
-        <Form
-          layout="vertical"
-          requiredMark={false}
-          form={form}
-          onValuesChange={onChange}
-          initialValues={{
-            expiresIn: ExpiresInDefault,
-            usage_limit: 1,
-          }}
-        >
-
-          <Row style={{ marginTop: "10px" }}>
-            <Col span={4}>
-              <Paragraph
-                style={{
-                  whiteSpace: "pre-line",
-                  fontWeight: "bold",
-                  margin: 0,
-                }}
+        <div style={{ maxWidth: "800px" }}>
+          <Form
+            layout="vertical"
+            requiredMark={false}
+            form={form}
+            onValuesChange={onChange}
+            initialValues={{
+              expiresIn: ExpiresInDefault,
+              usage_limit: 1,
+            }}
+          >
+            <Row style={{ marginTop: "10px" }}>
+              <Col
+                xs={24}
+                sm={24}
+                md={11}
+                lg={11}
+                xl={11}
+                xxl={11}
+                span={11}
+                style={{ paddingRight: "70px" }}
               >
-                Key
-                <Tag
-                  color={`${formSetupKey.state === "valid" ? "green" : "red"}`}
+                <Paragraph
                   style={{
-                    marginLeft: "10px",
-                    borderRadius: "2px",
-                    fontWeight: "500",
+                    whiteSpace: "pre-line",
+                    fontWeight: "bold",
+                    margin: 0,
                   }}
                 >
-                  {formSetupKey.state}
-                </Tag>
-              </Paragraph>
-              <Input
-                style={{ marginTop: "10px" }}
-                disabled
-                value={getFormKey(formSetupKey.key)}
-                suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-              />
-            </Col>
-          </Row>
-          <Row style={{ marginTop: "30px" }}>
-            <Col span={24}>
-              <Paragraph
-                style={{
-                  whiteSpace: "pre-line",
-                  margin: 0,
-                  fontWeight: "bold",
-                }}
+                  Key
+                  <Tag
+                    color={`${
+                      formSetupKey.state === "valid" ? "green" : "red"
+                    }`}
+                    style={{
+                      marginLeft: "10px",
+                      borderRadius: "2px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    {formSetupKey.state}
+                  </Tag>
+                </Paragraph>
+                <Input
+                  style={{ marginTop: "8px" }}
+                  disabled
+                  value={getFormKey(formSetupKey.key)}
+                  suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                />
+              </Col>
+
+              <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                    margin: 0,
+                    fontWeight: "bold",
+                  }}
+                >
+                  <Paragraph
+                    style={{
+                      whiteSpace: "pre-line",
+                      margin: 0,
+                      fontWeight: "bold",
+                    }}
+                  ></Paragraph>
+                  {formSetupKey.type === "one-off" ? "One-off" : "Reusable"},
+                  available uses
+                </Paragraph>
+                <Col>
+                  <Input
+                    disabled
+                    value={
+                      formSetupKey.type === "reusable" &&
+                      formSetupKey.usage_limit === 0
+                        ? "unlimited"
+                        : formSetupKey.usage_limit - formSetupKey.used_times
+                    }
+                    suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                    style={{ marginTop: "8px" }}
+                  />
+                </Col>
+              </Col>
+            </Row>
+
+            <Row style={{ marginTop: "30px" }}>
+              <Col
+                xs={24}
+                sm={24}
+                md={11}
+                lg={11}
+                xl={11}
+                xxl={11}
+                span={11}
+                style={{ paddingRight: "70px" }}
               >
                 <Paragraph
                   style={{
@@ -378,92 +421,63 @@ const SetupKeyNew = () => {
                     margin: 0,
                     fontWeight: "bold",
                   }}
-                ></Paragraph>
-                {formSetupKey.type === "one-off" ? "One-off" : "Reusable"},
-                Available uses
-              </Paragraph>
-            </Col>
-
-            <Col>
-              <Input
-                disabled
-                value={formSetupKey.usage_limit - formSetupKey.used_times}
-                suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                style={{ width: "104px", marginTop: "5px" }}
-              />
-            </Col>
-          </Row>
-
-          <Row style={{ marginTop: "30px" }}>
-            <Container style={{ width: "100%", padding: 0, margin: 0 }}>
-              <Row>
-                <Col span={4}>
-                  <Paragraph style={{ margin: 0, fontWeight: "bold" }}>
-                    Expires
-                  </Paragraph>
-                  <Row>
-                    <Input
-                      style={{ marginTop: "5px" }}
-                      disabled
-                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                      value={
-                        customExpiresFormat(new Date(formSetupKey.expires))!
-                      }
-                    />
-                  </Row>
-                </Col>
-              </Row>
-            </Container>
-          </Row>
-
-          <Row style={{ marginTop: "30px" }}>
-            <Col span={24}>
-              <Paragraph
-                style={{
-                  whiteSpace: "pre-line",
-                  margin: 0,
-                  fontWeight: "bold",
-                }}
-              >
-                Auto-assigned groups
-              </Paragraph>
-            </Col>
-            <Col span={6}>
-              <Form.Item
-                style={{ marginTop: "5px", marginBottom: 0 }}
-                name="autoGroupNames"
-                rules={[{ validator: selectValidator }]}
-              >
-                <Select
-                  mode="tags"
-                  style={{ width: "100%" }}
-                  placeholder="Associate groups with the key"
-                  tagRender={tagRender}
-                  dropdownRender={dropDownRender}
-                  // enabled only when we have a new key !setupkey.id or when the key is valid
-                  disabled={!(!setupKey.id || setupKey.valid)}
                 >
-                  {tagGroups.map((m) => (
-                    <Option key={m}>{optionRender(m)}</Option>
-                  ))}
-                </Select>
-              </Form.Item>
-            </Col>
-          </Row>
-          <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
-            <Text type={"secondary"}>
-              Learn more about
-              <a
-                target="_blank"
-                rel="noreferrer"
-                href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
-              >
-                {" "}
-                setup keys
-              </a>
-            </Text>
-          </Row>
-        </Form>
+                  Auto-assigned groups
+                </Paragraph>
+
+                <Col span={24}>
+                  <Form.Item
+                    style={{ marginTop: "8px", marginBottom: 0 }}
+                    name="autoGroupNames"
+                    rules={[{ validator: selectValidator }]}
+                  >
+                    <Select
+                      mode="tags"
+                      style={{ width: "100%" }}
+                      placeholder="Associate groups with the key"
+                      tagRender={tagRender}
+                      dropdownRender={dropDownRender}
+                      // enabled only when we have a new key !setupkey.id or when the key is valid
+                      disabled={!(!setupKey.id || setupKey.valid)}
+                    >
+                      {tagGroups.map((m) => (
+                        <Option key={m}>{optionRender(m)}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Col>
+
+              <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                <Paragraph style={{ margin: 0, fontWeight: "bold" }}>
+                  Expires
+                </Paragraph>
+                <Row>
+                  <Input
+                    style={{ marginTop: "8px" }}
+                    disabled
+                    suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                    value={customExpiresFormat(new Date(formSetupKey.expires))!}
+                  />
+                </Row>
+              </Col>
+            </Row>
+
+            <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
+              <Text type={"secondary"}>
+                Learn more about
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                >
+                  {" "}
+                  setup keys
+                </a>
+              </Text>
+            </Row>
+          </Form>
+        </div>
         <Container
           style={{
             display: "flex",
@@ -477,11 +491,6 @@ const SetupKeyNew = () => {
           <Button onClick={onCancel}>Cancel</Button>
           <Button
             type="primary"
-            style={{
-              height: "100%",
-              fontSize: "14px",
-              borderRadius: "2px",
-            }}
             disabled={savedSetupKey.loading || !changesDetected()}
             onClick={handleFormSubmit}
           >

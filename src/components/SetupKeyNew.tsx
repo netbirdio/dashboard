@@ -11,6 +11,7 @@ import {
   Modal,
   Row,
   Select,
+  Space,
   Switch,
   Tag,
   Typography,
@@ -126,7 +127,26 @@ const SetupKeyNew = () => {
       return console.log("errorInfo", errorFields);
     }
 
-    const setupKeyToSave = createSetupKeyToSave();
+    let setupKeyToSave = createSetupKeyToSave();
+    if (setupKeyToSave.type === "reusable") {
+      const updateUsageLimit =
+        setupKeyToSave.usage_limit === "unlimited" ||
+        setupKeyToSave.usage_limit === undefined ||
+        setupKeyToSave.usage_limit === " "
+          ? 0
+          : Number(setupKeyToSave.usage_limit);
+
+      setupKeyToSave = {
+        ...setupKeyToSave,
+        usage_limit: updateUsageLimit,
+      };
+    } else {
+      setupKeyToSave = {
+        ...setupKeyToSave,
+        usage_limit: 1,
+      };
+    }
+
     dispatch(
       setupKeyActions.saveSetupKey.request({
         getAccessTokenSilently: getTokenSilently,
@@ -146,8 +166,8 @@ const SetupKeyNew = () => {
     if (savedSetupKey.success) {
       setPlainToken(savedSetupKey.data.key);
       setShowPlainToken(true);
-    } else if (savedSetupKey.error) { 
-      setPlainToken('');
+    } else if (savedSetupKey.error) {
+      setPlainToken("");
       setShowPlainToken(false);
     }
   }, [savedSetupKey]);
@@ -174,6 +194,14 @@ const SetupKeyNew = () => {
   };
 
   const onChange = (data: any) => {
+    let ifReusbaleEdit = Object.keys(data).includes("reusable");
+
+    if (ifReusbaleEdit && data.reusable) {
+      form.setFieldValue("usage_limit", "unlimited");
+    }
+    if (ifReusbaleEdit && !data.reusable) {
+      form.setFieldValue("usage_limit", "1");
+    }
     setFormSetupKey({ ...formSetupKey, ...data });
   };
 
@@ -358,12 +386,11 @@ const SetupKeyNew = () => {
             textAlign: "start",
             whiteSpace: "pre-line",
             fontSize: "22px",
-            marginBottom: showPlainToken ? "30px" : "0",
+            margin: "0px",
           }}
         >
-          {showPlainToken ? "Key created successfully!" : "Create setup key"}
+          Create setup key
         </Paragraph>
-
         <Paragraph
           type={"secondary"}
           style={{
@@ -456,13 +483,19 @@ const SetupKeyNew = () => {
               </Col>
 
               <Col>
-                <Form.Item name="usage_limit">
-                  <InputNumber
-                    type={"number"}
+                <Form.Item
+                  name="usage_limit"
+                  rules={[
+                    {
+                      pattern: new RegExp(/(^unlimited$|[0-9])/),
+                      message: "Please enter correct usage limit.",
+                    },
+                  ]}
+                >
+                  <Input
+                    type={"text"}
                     style={{ marginTop: "5px", width: "112px" }}
                     disabled={setupKey.id || formSetupKey.type !== "reusable"}
-                    controls={false}
-                    min={0}
                   />
                 </Form.Item>
                 <Paragraph
