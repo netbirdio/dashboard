@@ -5,6 +5,7 @@ import { reducer as setupKey } from './setup-key';
 import { reducer as user } from './user';
 import { reducer as group } from './group';
 import { reducer as rule } from './rule';
+import { reducer as policy } from './policy';
 import { reducer as route } from './route';
 import { reducer as nameserverGroup } from './nameservers';
 import { reducer as event } from './event';
@@ -13,15 +14,16 @@ import { reducer as account } from './account';
 import { reducer as personalAccessToken } from './personal-access-token';
 
 export default combineReducers({
-  peer,
-  setupKey,
-  user,
-  group,
-  rule,
-  route,
-  nameserverGroup,
-  event,
-  dnsSettings,
-  account,
-  personalAccessToken
+    peer,
+    setupKey,
+    user,
+    group,
+    rule,
+    policy,
+    route,
+    nameserverGroup,
+    event,
+    dnsSettings,
+    account,
+    personalAccessToken
 });
