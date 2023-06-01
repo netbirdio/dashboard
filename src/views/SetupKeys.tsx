@@ -313,7 +313,7 @@ export const SetupKeys = () => {
     let btn = (
       <Button
         type="link"
-        onClick={() => setUpdateGroupsVisible(setupKeyToAction, true)}
+        onClick={() => setKeyAndView(setupKeyToAction as SetupKeyDataTable)}
       >
         {displayGroups.length}
       </Button>
