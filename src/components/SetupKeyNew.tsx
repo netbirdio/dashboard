@@ -389,7 +389,9 @@ const SetupKeyNew = () => {
             margin: "0px",
           }}
         >
-          Create setup key
+          {showPlainToken
+            ? "Setup key created successfully!"
+            : " Create setup key"}
         </Paragraph>
         <Paragraph
           type={"secondary"}
