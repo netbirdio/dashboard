@@ -156,17 +156,10 @@ export const SetupKeys = () => {
       message.loading({
         content: "Saving...",
         key: createKey,
-        duration: 0,
+        duration: 1,
         style: styleNotification,
       });
     } else if (savedSetupKey.success) {
-      message.success({
-        content: "Setup key has been successfully saved.",
-        key: createKey,
-        duration: 2,
-        style: styleNotification,
-      });
-      dispatch(setupKeyActions.setSetupNewKeyVisible(false));
       dispatch(
         setupKeyActions.setSavedSetupKey({ ...savedSetupKey, success: false })
       );

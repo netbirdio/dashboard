@@ -57,14 +57,14 @@ const SetupKeyNew = () => {
   const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formSetupKey, setFormSetupKey] = useState({} as FormSetupKey);
   const inputNameRef = useRef<any>(null);
-
-  useEffect(() => {
-    //Unmounting component clean
-    return () => {
-      setVisibleNewSetupKey(false);
-    };
-  }, []);
-
+ 
+   useEffect(() => {
+     //Unmounting component clean
+     return () => {
+       setVisibleNewSetupKey(false)
+     };
+   }, []);
+  
   useEffect(() => {
     if (!editName) return;
 
