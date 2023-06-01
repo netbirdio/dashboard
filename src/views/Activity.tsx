@@ -212,6 +212,8 @@ export const Activity = () => {
             case "service.user.delete":
                 return renderMultiRowSpan(event.meta.name,"Service User")
             case "user.invite":
+            case "user.block":
+            case "user.unblock":
                 if (user) {
                     return renderMultiRowSpan(user.name ? user.name : user.id,user.email ? user.email : "User")
                 }
@@ -252,7 +254,7 @@ export const Activity = () => {
                                     <Row justify="end">
                                         <Col>
                                             <Button icon={<QuestionCircleFilled/>} type="link" target="_blank"
-                                                    href="https://netbird.io/docs/how-to-guides/activity-monitoring">Learn more about activity tracking</Button>
+                                                    href="https://docs.netbird.io/how-to/monitor-system-and-network-activity">Learn more about activity tracking</Button>
                                         </Col>
                                     </Row>
                                 </Col>

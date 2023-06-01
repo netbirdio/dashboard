@@ -20,14 +20,14 @@ import {
     Tooltip,
     Typography
 } from "antd";
-import { Container } from "../components/Container";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "typesafe-actions";
-import { Policy } from "../store/policy/types";
-import { actions as policyActions } from "../store/policy";
-import { actions as groupActions } from "../store/group";
-import { filter, sortBy } from "lodash";
-import { CloseOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import {Container} from "../components/Container";
+import {useDispatch, useSelector} from "react-redux";
+import {RootState} from "typesafe-actions";
+import {Policy} from "../store/policy/types";
+import {actions as policyActions} from "../store/policy";
+import {actions as groupActions} from "../store/group";
+import {filter, sortBy} from "lodash";
+import {EllipsisOutlined ExclamationCircleOutlined } from "@ant-design/icons";
 import bidirect from '../assets/direct_bi.svg';
 import inbound from '../assets/direct_in.svg';
 import outbound from '../assets/direct_out.svg';
@@ -35,8 +35,8 @@ import AccessControlNew from "../components/AccessControlNew";
 import { Group } from "../store/group/types";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
-import { useGetTokenSilently } from "../utils/token";
-import { usePageSizeHelpers } from "../utils/pageSize";
+import {useGetTokenSilently} from "../utils/token";
+import {usePageSizeHelpers} from "../utils/pageSize";
 
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
@@ -505,11 +505,17 @@ export const AccessControl = () => {
                                     <Column title="" align="center"
                                         render={(text, record, index) => {
                                             if (deletedPolicy.loading || savedPolicy.loading) return <></>
-                                            return <Dropdown.Button type="text" overlay={actionsMenu}
-                                                trigger={["click"]}
-                                                onOpenChange={visible => {
+                                            return (
+                                                <Dropdown trigger={["click"]} overlay={actionsMenu} onOpenChange={visible => {
                                                     if (visible) setPolicyToAction(record as PolicyDataTable)
-                                                }}></Dropdown.Button>
+                                                }}>
+                                                    <Button type="text">
+                                                        <Space>
+                                                            <EllipsisOutlined />
+                                                        </Space>
+                                                    </Button>
+                                                </Dropdown>
+                                            )
                                         }}
                                     />
                                 </Table>

@@ -12,7 +12,6 @@ import {
     Typography
 } from "antd";
 import {Container} from "../Container";
-import {CloseOutlined} from "@ant-design/icons";
 import React, {useEffect, useRef, useState} from "react";
 import {useDispatch, useSelector} from "react-redux";
 import {RootState} from "typesafe-actions";
@@ -20,9 +19,9 @@ import {useGetTokenSilently} from "../../utils/token";
 import {actions as userActions} from "../../store/user";
 import {actions as groupActions} from "../../store/group";
 import {User, UserToSave} from "../../store/user/types";
-import {Header} from "antd/es/layout/layout";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
+import {QuestionCircleFilled} from "@ant-design/icons";
 
 const {Title, Text, Paragraph} = Typography;
 const {Option} = Select;
@@ -200,10 +199,10 @@ const InviteUserPopup = () => {
                 }
                 width={460}
             >
-                <Container style={{textAlign: "start"}}>
+                <Container style={{textAlign: "start", marginLeft: "-15px", marginRight: "-15px"}}>
                     <Paragraph
                         style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "22px", fontWeight: "500"}}>
-                        {"Invite User"}
+                        {"Invite user"}
                     </Paragraph>
                     <Paragraph type={"secondary"}
                                style={{
@@ -222,8 +221,8 @@ const InviteUserPopup = () => {
                     >
                         <Row gutter={16}>
                             <Col span={24}>
-                                <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "-10px"}}>Name</Paragraph>
-                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Set a name to easily identify the user</Paragraph>
+                                <Paragraph style={{fontWeight: "bold", marginTop: "-10px"}}>Name</Paragraph>
+                                <Paragraph type={"secondary"} style={{marginTop: "-15px"}}>Set a name to easily identify the user</Paragraph>
                                 <Form.Item
                                     name="name"
                                     rules={[{
@@ -240,8 +239,8 @@ const InviteUserPopup = () => {
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
-                                <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "0px"}}>Email</Paragraph>
-                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Provide the email address of the user</Paragraph>
+                                <Paragraph style={{ fontWeight: "bold", marginTop: "0px"}}>Email</Paragraph>
+                                <Paragraph type={"secondary"} style={{marginTop: "-15px"}}>Provide the email address of the user</Paragraph>
                                 <Form.Item
                                     name="email"
                                     rules={[{
@@ -259,8 +258,8 @@ const InviteUserPopup = () => {
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
-                                <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "0px"}}>Role</Paragraph>
-                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Set a role for the user to assign dashboard access permissions</Paragraph>
+                                <Paragraph style={{ fontWeight: "bold", marginTop: "0px"}}>Role</Paragraph>
+                                <Paragraph type={"secondary"} style={{marginTop: "-15px"}}>Set a role for the user to assign access permissions</Paragraph>
                                 <Form.Item
                                     name="role"
                                     rules={[{
@@ -277,8 +276,8 @@ const InviteUserPopup = () => {
                                 </Form.Item>
                             </Col>
                             <Col span={24}>
-                                <Paragraph style={{fontSize: "16px", fontWeight: "500", marginTop: "0px"}}>Auto-assigned groups</Paragraph>
-                                <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Add groups, that will be assigned to peers added by this user</Paragraph>
+                                <Paragraph style={{fontWeight: "bold", marginTop: "0px"}}>Auto-assigned groups</Paragraph>
+                                <Paragraph type={"secondary"} style={{marginTop: "-15px"}}>Add groups, that will be assigned to peers added by this user</Paragraph>
                                 <Form.Item
                                     name="autoGroupsNames"
                                     tooltip="Every peer enrolled with this user will be automatically added to these groups"
@@ -300,10 +299,10 @@ const InviteUserPopup = () => {
                                     </Select>
                                 </Form.Item>
                             </Col>
-                            {/*<Col span={24}>*/}
-                            {/*    <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true} style={{marginTop: "20px", marginBottom: "20px"}}*/}
-                            {/*            href="https://netbird.io/docs/overview/personal-access-tokens">Learn more about user</Button>*/}
-                            {/*</Col>*/}
+                            <Col span={24}>
+                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true} style={{marginTop: "20px", marginBottom: "20px"}}
+                                        href="https://docs.netbird.io/how-to/access-netbird-public-api">Learn more about user</Button>
+                            </Col>
                         </Row>
                     </Form>
                 </Container>

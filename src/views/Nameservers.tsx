@@ -31,7 +31,7 @@ import {Group} from "../store/group/types";
 import {TooltipPlacement} from "antd/es/tooltip";
 import {NameServer, NameServerGroup} from "../store/nameservers/types";
 import NameServerGroupUpdate from "../components/NameServerGroupUpdate";
-import {ExclamationCircleOutlined} from "@ant-design/icons";
+import {EllipsisOutlined, ExclamationCircleOutlined} from "@ant-design/icons";
 import {useGetGroupTagHelpers} from "../utils/groups";
 import {usePageSizeHelpers} from "../utils/pageSize";
 
@@ -441,11 +441,16 @@ export const Nameservers = () => {
                                     <Column title="" align="center" width="30px"
                                             render={(text, record) => {
                                                 return (
-                                                    <Dropdown.Button type="text" overlay={actionsMenu}
-                                                                     trigger={["click"]}
-                                                                     onOpenChange={visible => {
-                                                                         if (visible) setNsGroupToAction(record as NameserverGroupDataTable)
-                                                                     }}></Dropdown.Button>)
+                                                    <Dropdown trigger={["click"]} overlay={actionsMenu} onOpenChange={visible => {
+                                                        if (visible) setNsGroupToAction(record as NameserverGroupDataTable)
+                                                    }}>
+                                                        <Button type="text">
+                                                            <Space>
+                                                                <EllipsisOutlined />
+                                                            </Space>
+                                                        </Button>
+                                                    </Dropdown>
+                                                )
                                             }}
                                     />
                                 </Table>

@@ -5,8 +5,6 @@ import service from './service';
 import actions from './actions';
 import serviceGroup from "../group/service";
 import {Group} from "../group/types";
-import {actions as groupActions} from "../group";
-import {PersonalAccessToken} from "../personal-access-token/types";
 
 export function* getUsers(action: ReturnType<typeof actions.getUsers.request>): Generator {
     try {
@@ -74,7 +72,8 @@ export function* saveUser(action: ReturnType<typeof actions.saveUser.request>): 
             email: userToSave.email,
             role: userToSave.role,
             auto_groups: newGroups,
-            is_service_user: userToSave.is_service_user
+            is_service_user: userToSave.is_service_user,
+            is_blocked: userToSave.is_blocked
         } as UserToSave
 
         let effect
@@ -99,15 +98,6 @@ export function* saveUser(action: ReturnType<typeof actions.saveUser.request>): 
             error: null,
             data: response.body
         } as CreateResponse<User | null>));
-
-        yield put(groupActions.getGroups.request({
-            getAccessTokenSilently: action.payload.getAccessTokenSilently,
-            payload: null
-        }));
-        yield put(actions.getUsers.request({
-            getAccessTokenSilently: action.payload.getAccessTokenSilently,
-            payload: null
-        }));
     } catch (err) {
         yield put(actions.saveUser.failure({
             loading: false,

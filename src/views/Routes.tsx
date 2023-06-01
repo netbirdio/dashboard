@@ -28,7 +28,7 @@ import {Route, RouteToSave} from "../store/route/types";
 import {actions as routeActions} from "../store/route";
 import {actions as peerActions} from "../store/peer";
 import {filter, sortBy} from "lodash";
-import {ExclamationCircleOutlined, QuestionCircleOutlined} from "@ant-design/icons";
+import {EllipsisOutlined, ExclamationCircleOutlined, QuestionCircleOutlined} from "@ant-design/icons";
 import RouteUpdate from "../components/RouteUpdate";
 import tableSpin from "../components/Spin";
 import {
@@ -243,17 +243,18 @@ export const Routes = () => {
 
     const onClickViewRoute = () => {
         dispatch(routeActions.setSetupNewRouteHA(false));
-        dispatch(routeActions.setSetupNewRouteVisible(true));
         dispatch(routeActions.setRoute({
             id: routeToAction?.id || null,
             network: routeToAction?.network,
             network_id: routeToAction?.network_id,
             description: routeToAction?.description,
-            peer: peerToPeerIP(routeToAction!.peer, peerNameToIP[routeToAction!.peer]),
+            peer: peerToPeerIP(routeToAction!.peer_name, routeToAction!.peer_ip),
             metric: routeToAction?.metric,
             masquerade: routeToAction?.masquerade,
-            enabled: routeToAction?.enabled
+            enabled: routeToAction?.enabled,
+            groups: routeToAction?.groups
         } as Route))
+        dispatch(routeActions.setSetupNewRouteVisible(true));
     }
 
     const setRouteAndView = (route: RouteDataTable) => {
@@ -409,10 +410,17 @@ export const Routes = () => {
             <Column title="" align="center"
                     render={(text, record) => {
                         if (deletedRoute.loading || savedRoute.loading) return <></>
-                        return <Dropdown.Button type="text" overlay={actionsMenu} trigger={["click"]}
-                                                onOpenChange={visible => {
-                                                    if (visible) setRouteToAction(record as RouteDataTable)
-                                                }}></Dropdown.Button>
+                        return (
+                                <Dropdown trigger={["click"]} overlay={actionsMenu} onOpenChange={visible => {
+                                    if (visible) setRouteToAction(record as RouteDataTable)
+                                }}>
+                                    <Button type="text">
+                                        <Space>
+                                            <EllipsisOutlined />
+                                        </Space>
+                                    </Button>
+                                </Dropdown>
+                            )
                     }}
             />
         </Table>
