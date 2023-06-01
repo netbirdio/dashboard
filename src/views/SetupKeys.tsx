@@ -170,8 +170,8 @@ export const SetupKeys = () => {
       dispatch(
         setupKeyActions.setSavedSetupKey({ ...savedSetupKey, success: false })
       );
-        dispatch(setupKeyActions.resetSavedSetupKey(null));
-        dispatch(setupKeyActions.setSetupEditKeyVisible(false));
+      dispatch(setupKeyActions.resetSavedSetupKey(null));
+      dispatch(setupKeyActions.setSetupEditKeyVisible(false));
     } else if (savedSetupKey.error) {
       message.error({
         content:
@@ -602,15 +602,8 @@ export const SetupKeys = () => {
                           (a as any).key.localeCompare((b as any).key)
                         }
                         render={(text, record, index) => {
-                          const body = <Text>{text}</Text>;
                           return (
-                            <ButtonCopyMessage
-                              keyMessage={(record as SetupKeyDataTable).key}
-                              toCopy={text}
-                              body={body}
-                              messageText={"Key copied"}
-                              styleNotification={{}}
-                            />
+                            <Text>{text.split("-")[0].concat("*****")}</Text>
                           );
                         }}
                       />

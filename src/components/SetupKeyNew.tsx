@@ -177,11 +177,14 @@ const SetupKeyNew = () => {
   };
 
   const onChange = (data: any) => {
+    // unlimited;
+    console.log(data.reusable);
+    if (data.reusable) {
+      form.setFieldValue("usage_limit", "unlimited");
+    } else {
+      form.setFieldValue("usage_limit", "1");
+    }
     setFormSetupKey({ ...formSetupKey, ...data });
-  };
-
-  const toggleEditName = (status: boolean) => {
-    setEditName(status);
   };
 
   const selectValidator = (_: RuleObject, value: string[]) => {
@@ -359,7 +362,7 @@ const SetupKeyNew = () => {
           onValuesChange={onChange}
           initialValues={{
             expiresIn: ExpiresInDefault,
-            usage_limit: "unlimited",
+            usage_limit: "1",
           }}
         >
           <Row>
