@@ -1,19 +1,29 @@
 import { Group } from "../group/types";
 
-export interface Rule {
+export interface PolicyRule {
     id?: string
     name: string
     description: string
+    enabled: boolean
     sources: Group[] | string[] | null
     destinations: Group[] | string[] | null
-    flow: string
+    bidirectional: boolean
+    action: string
     protocol: string
     ports: string[]
-    disabled: boolean
 }
 
-export interface RuleToSave extends Rule {
+export interface Policy {
+    id?: string
+    name: string
+    description: string
+    enabled: boolean
+    query: string
+    rules: PolicyRule[]
+};
+
+export interface PolicyToSave extends Policy {
     sourcesNoId: string[],
     destinationsNoId: string[],
     groupsToSave: string[]
-}
+};
