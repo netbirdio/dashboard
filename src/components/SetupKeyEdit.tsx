@@ -291,7 +291,7 @@ const SetupKeyNew = () => {
   };
 
   const getFormKey = (key: string) => {
-    if (key) return key.split("-")[0].concat("*****");
+    if (key) return key.substring(0, 4).concat("****");
   };
 
   const onBreadcrumbUsersClick = () => {
