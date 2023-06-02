@@ -358,7 +358,7 @@ const SetupKeyNew = () => {
                 disabled={savedSetupKey.loading || !changesDetected()}
                 onClick={handleFormSubmit}
               >
-                Create Key
+                Create key
               </Button>
             </>
           )}
