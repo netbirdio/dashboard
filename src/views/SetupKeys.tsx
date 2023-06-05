@@ -596,7 +596,7 @@ export const SetupKeys = () => {
                         }
                         render={(text, record, index) => {
                           return (
-                            <Text>{text.split("-")[0].concat("*****")}</Text>
+                            <Text>{text.substring(0, 4).concat("****")}</Text>
                           );
                         }}
                       />
