@@ -30,6 +30,7 @@ export function getConfig() {
     auth0Auth: configJson.auth0Auth == "true", //due to substitution we can't use boolean in the config
     authority: configJson.authAuthority,
     clientId: configJson.authClientId,
+    clientSecret: configJson.authClientSecret,
     scopesSupported: configJson.authScopesSupported,
     apiOrigin: configJson.apiOrigin,
     grpcApiOrigin: configJson.grpcApiOrigin,
