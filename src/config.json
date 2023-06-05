@@ -2,6 +2,7 @@
   "auth0Auth": "$USE_AUTH0",
   "authAuthority": "$AUTH_AUTHORITY",
   "authClientId": "$AUTH_CLIENT_ID",
+  "authClientSecret": "$AUTH_CLIENT_SECRET",
   "authScopesSupported": "$AUTH_SUPPORTED_SCOPES",
   "authAudience": "$AUTH_AUDIENCE",
 
