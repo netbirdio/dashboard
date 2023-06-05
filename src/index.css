@@ -5,7 +5,7 @@ body {
   background-color: #f0f2f5;
 }
 
-  
+
 .ant-layout-header {
   background: #fff;
   padding: 0;
@@ -163,4 +163,21 @@ td.non-highlighted-table-column {
 .CustomPopupCollapse .ant-collapse-header {
   padding-left: 0 !important;
   padding-top: 0 !important;
+}
+
+.system-info-panel .ant-collapse-header {
+  padding: 0 !important;
+}
+
+.system-info-panel .ant-collapse-content-box {
+  padding-left: 0 !important;
+  padding-right: 0 !important;
+}
+
+.peers-form .ant-layout-header {
+  line-height: 25px;
+  height: auto;
+  min-height: auto;
+  padding-bottom: 15px;
+  cursor: pointer;
 }
