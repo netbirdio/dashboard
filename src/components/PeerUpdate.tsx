@@ -473,7 +473,6 @@ const PeerUpdate = () => {
             >
               <Row gutter={16}>
                 <Col span={24}>
-                  <Header>
                     <Row align="top">
                       <Col flex="auto">
                         {!editName && peer.id && formPeer.name ? (
@@ -539,7 +538,6 @@ const PeerUpdate = () => {
                         )}
                       </Col>
                     </Row>
-                  </Header>
                 </Col>
               </Row>
               <Row gutter={30} style={{ marginTop: "25px" }}>
