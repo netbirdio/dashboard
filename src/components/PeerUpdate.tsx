@@ -488,16 +488,16 @@ const PeerUpdate = () => {
                             {formPeer.name ? formPeer.name : peer.name}
                             <EditOutlined style={{ marginLeft: "10px" }} />
 
-                            <span
+                            <Paragraph
+                              type={"secondary"}
                               style={{
-                                display: "block",
-                                color: "#6C727F",
+                                textAlign: "left",
+                                whiteSpace: "pre-line",
                                 fontWeight: "400",
-                                fontSize: "13px",
                               }}
                             >
-                              {formPeer.userEmail}
-                            </span>
+                              {formPeer.userEmail}{" "}
+                            </Paragraph>
                           </div>
                         ) : (
                           <Row>
