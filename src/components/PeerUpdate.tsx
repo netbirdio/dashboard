@@ -586,22 +586,21 @@ const PeerUpdate = () => {
                     />
                   </Form.Item>
                 </Col>
-                {formPeer.user_id && (
-                  <Col span={4}>
-                    <Form.Item
-                      name="userEmail"
-                      label="User"
-                      style={{ fontWeight: "bold" }}
-                    >
-                      <Input
-                        disabled={true}
-                        value={formPeer.userEmail}
-                        style={{ color: "#5a5c5a" }}
-                        autoComplete="off"
-                      />
-                    </Form.Item>
-                  </Col>
-                )}
+                <Col span={5}>
+                  <Form.Item
+                    name="dns_label"
+                    label="Domain name"
+                    style={{ fontWeight: "bold" }}
+                  >
+                    <Input
+                      disabled={true}
+                      value={formPeer.userEmail}
+                      style={{ color: "#5a5c5a" }}
+                      autoComplete="off"
+                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                    />
+                  </Form.Item>
+                </Col>
               </Row>
 
               <Row gutter={16}>
