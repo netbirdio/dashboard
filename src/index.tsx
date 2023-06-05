@@ -34,7 +34,8 @@ const providerConfig = {
     // service_worker_relative_url:'/OidcServiceWorker.js',
     service_worker_only: false,
     authority_configuration: config.auth0Auth ? auth0AuthorityConfig : undefined,
-    ...(config.audience ? {extras: {audience: config.audience}} : null)
+    ...(config.audience ? {extras: {audience: config.audience}} : null),
+    ...(config.clientSecret ? {token_request_extras: {client_secret: config.clientSecret}} : null)
 };
 
 const root = ReactDOM.createRoot(
