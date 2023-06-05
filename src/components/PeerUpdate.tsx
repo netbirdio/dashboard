@@ -57,7 +57,7 @@ const PeerUpdate = () => {
     (state: RootState) => state.peer.updateGroupsVisible
   );
 
-   const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
+  const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
   const updatedPeers = useSelector(
     (state: RootState) => state.peer.updatedPeer
   );
@@ -81,6 +81,13 @@ const PeerUpdate = () => {
   } as PeerGroupsToSave);
   const routes = useSelector((state: RootState) => state.route.data);
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    //Unmounting component clean
+    return () => {
+      onCancel();
+    };
+  }, []);
 
   // wait peer update to succeed
   useEffect(() => {
@@ -155,8 +162,21 @@ const PeerUpdate = () => {
 
   useEffect(() => {}, [users]);
 
-  const toggleEditName = (status: boolean) => {
+  const toggleEditName = (status: boolean, value?: string) => {
     setEditName(status);
+
+    if (value) {
+      let punyName = punycode.toASCII(value.toLowerCase());
+      let domain = "";
+      if (formPeer.dns_label) {
+        let labelList = formPeer.dns_label.split(".");
+        if (labelList.length > 1) {
+          labelList.splice(0, 1);
+          domain = "." + labelList.join(".");
+        }
+      }
+      setEstimatedName(punyName + domain);
+    }
   };
 
   useEffect(() => {
@@ -385,31 +405,6 @@ const PeerUpdate = () => {
     onCancel();
   };
 
-  const renderNetworkTitle = () => {
-    return (
-      <div style={{ maxWidth: "800px", width: "100%" }}>
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-          }}
-        >
-          <div style={{ margin: "10px 0" }}>
-            Network routes
-            <h4 style={{ color: "#6C727F", fontSize: "14px" }}>
-              Access other networks without installing NetBird on every
-              resource.
-            </h4>
-          </div>
-          {peerRoutes && peerRoutes.length > 0 && (
-            <Button type="primary"> Add route</Button>
-          )}
-        </div>
-      </div>
-    );
-  };
-
   const showConfirmDelete = (routeId: string, name: string) => {
     confirm({
       icon: <ExclamationCircleOutlined />,
@@ -461,7 +456,7 @@ const PeerUpdate = () => {
                 title: <a onClick={onBreadcrumbUsersClick}>Peers</a>,
               },
               {
-                title: formPeer.name,
+                title: formPeer.ip,
               },
             ]}
           />
@@ -488,10 +483,10 @@ const PeerUpdate = () => {
                               fontWeight: "600",
                               fontSize: "16px",
                             }}
-                            onClick={() => toggleEditName(true)}
+                            onClick={() => toggleEditName(true, peer.name)}
                           >
                             {formPeer.name ? formPeer.name : peer.name}
-                            <EditOutlined />
+                            <EditOutlined style={{ marginLeft: "10px" }} />
 
                             <span
                               style={{
@@ -531,7 +526,7 @@ const PeerUpdate = () => {
                                 />
                               </Form.Item>
                               <Form.Item
-                                label="New peer domain name preview"
+                                label="Domain name preview"
                                 tooltip="If the domain name already exists, we add an increment number suffix to it"
                                 style={{ margin: "1px" }}
                               >
@@ -570,21 +565,6 @@ const PeerUpdate = () => {
                     <Input
                       disabled={true}
                       value={formPeer.ip}
-                      style={{ color: "#5a5c5a" }}
-                      autoComplete="off"
-                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={5}>
-                  <Form.Item
-                    name="dns_label"
-                    label="Domain name"
-                    style={{ fontWeight: "bold" }}
-                  >
-                    <Input
-                      disabled={true}
-                      value={formPeer.userEmail}
                       style={{ color: "#5a5c5a" }}
                       autoComplete="off"
                       suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
@@ -644,16 +624,17 @@ const PeerUpdate = () => {
                       />
                       <div style={{ margin: "30px 0" }}>
                         <strong>Login expiration</strong>
-                        <p
+                        <Paragraph
+                          type={"secondary"}
                           style={{
-                            fontWeight: "500",
-                            color: "#6C727F",
-                            margin: "0",
+                            textAlign: "left",
+                            whiteSpace: "pre-line",
+                            fontWeight: "400",
                           }}
                         >
                           Login expiration SSO login peers require
                           re-authentication when their login expires
-                        </p>
+                        </Paragraph>
                       </div>
                     </div>
                   </Form.Item>
@@ -707,18 +688,60 @@ const PeerUpdate = () => {
               </Row>
             </Form>
           </Card>
+
+          {/* --- */}
+
           <Card
             bordered={true}
-            title={renderNetworkTitle()}
+            // loading={loading}ƒ
             style={{ marginBottom: "7px" }}
           >
-            <div style={{ maxWidth: "800px", width: "100%" }}>
-              {peerRoutes && peerRoutes.length > 0 ? (
+            <div style={{ maxWidth: "800px" }}>
+              <Paragraph
+                style={{
+                  textAlign: "left",
+                  whiteSpace: "pre-line",
+                  fontSize: "16px",
+                  fontWeight: "bold",
+                }}
+              >
+                Network routes
+              </Paragraph>
+              <Row
+                gutter={21}
+                style={{ marginTop: "-16px", marginBottom: "10px" }}
+              >
+                <Col xs={24} sm={24} md={20} lg={20} xl={20} xxl={20} span={20}>
+                  <Paragraph
+                    type={"secondary"}
+                    style={{ textAlign: "left", whiteSpace: "pre-line" }}
+                  >
+                    Access other networks without installing NetBird on every
+                    resource.
+                  </Paragraph>
+                </Col>
+                <Col
+                  xs={24}
+                  sm={24}
+                  md={1}
+                  lg={1}
+                  xl={1}
+                  xxl={1}
+                  span={1}
+                  style={{ marginTop: "-16px" }}
+                >
+                  {peerRoutes && peerRoutes.length > 0 && (
+                    <Button type="primary">Add route</Button>
+                  )}
+                </Col>
+              </Row>
+              {peerRoutes && peerRoutes.length > 0 && (
                 <Table
-                  pagination={false}
+                  size={"small"}
+                  style={{ marginTop: "-10px" }}
                   showHeader={false}
-                  showSorterTooltip={false}
-                  scroll={{ x: true }}
+                  scroll={{ x: 800 }}
+                  pagination={false}
                   //   loading={tableSpin(loading)}
                   dataSource={peerRoutes}
                 >
@@ -740,33 +763,45 @@ const PeerUpdate = () => {
                       );
                     }}
                   />
+
                   <Column
-                    title="delete"
-                    dataIndex="delete"
-                    render={(e, record: any, index) => {
+                    align="right"
+                    render={(text, record: any, index) => {
                       return (
-                        <>
-                          <Button
-                            type="text"
-                            block
-                            style={{ color: "rgba(210, 64, 64, 0.85)" }}
-                            onClick={() =>
-                              showConfirmDelete(record.id, record.network_id)
-                            }
-                          >
-                            Delete
-                          </Button>
-                        </>
+                        <Button
+                          danger={true}
+                          type={"text"}
+                          onClick={() => {
+                            showConfirmDelete(record.id, record.network_id);
+                          }}
+                        >
+                          Delete
+                        </Button>
                       );
                     }}
                   />
                 </Table>
-              ) : (
-                <p>
-                  {" "}
-                  <p>You don't have any routes yet.</p>
-                  <Button type="primary"> Add route</Button>
-                </p>
+              )}
+              <Divider style={{ marginTop: "-12px" }}></Divider>
+              {(peerRoutes === null || peerRoutes.length === 0) && (
+                <Space
+                  direction="vertical"
+                  size="small"
+                  align="start"
+                  style={{
+                    display: "flex",
+                    padding: "35px 0px",
+                    marginTop: "-40px",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Paragraph
+                    style={{ textAlign: "start", whiteSpace: "pre-line" }}
+                  >
+                    You don't have any routes yet
+                  </Paragraph>
+                  <Button type="primary">Create token</Button>
+                </Space>
               )}
             </div>
           </Card>
@@ -850,7 +885,7 @@ const PeerUpdate = () => {
                       >
                         Agent version:
                       </Text>
-                      <Text style={{ color: "#6C727F" }}> {formPeer.os}</Text>
+                      <Text style={{ color: "#6C727F" }}>{formPeer.version}</Text>
                     </Col>
                     {formPeer.ui_version && (
                       <Col
