@@ -800,7 +800,7 @@ const PeerUpdate = () => {
                   >
                     You don't have any routes yet
                   </Paragraph>
-                  <Button type="primary">Create token</Button>
+                  <Button type="primary">Create route</Button>
                 </Space>
               )}
             </div>
@@ -885,7 +885,9 @@ const PeerUpdate = () => {
                       >
                         Agent version:
                       </Text>
-                      <Text style={{ color: "#6C727F" }}>{formPeer.version}</Text>
+                      <Text style={{ color: "#6C727F" }}>
+                        {formPeer.version}
+                      </Text>
                     </Col>
                     {formPeer.ui_version && (
                       <Col
