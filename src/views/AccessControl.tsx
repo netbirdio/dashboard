@@ -265,7 +265,7 @@ export const AccessControl = () => {
         dispatch(
           policyActions.deletePolicy.request({
             getAccessTokenSilently: getTokenSilently,
-            payload: policyToAction?.id || "",
+            payload: record?.id || "",
           })
         );
       },
