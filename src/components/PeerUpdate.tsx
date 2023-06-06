@@ -473,7 +473,6 @@ const PeerUpdate = () => {
             >
               <Row gutter={16}>
                 <Col span={24}>
-                  <Header>
                     <Row align="top">
                       <Col flex="auto">
                         {!editName && peer.id && formPeer.name ? (
@@ -539,7 +538,6 @@ const PeerUpdate = () => {
                         )}
                       </Col>
                     </Row>
-                  </Header>
                 </Col>
               </Row>
               <Row gutter={30} style={{ marginTop: "25px" }}>
@@ -565,9 +563,24 @@ const PeerUpdate = () => {
                     <Input
                       disabled={true}
                       value={formPeer.ip}
-                      style={{ color: "#5a5c5a" }}
+                      style={{ color: "#8c8c8c" }}
                       autoComplete="off"
                       suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={5}>
+                  <Form.Item
+                      name="dns_label"
+                      label="Domain name"
+                      style={{ fontWeight: "bold" }}
+                  >
+                    <Input
+                        disabled={true}
+                        value={formPeer.userEmail}
+                        style={{ color: "#8c8c8c" }}
+                        autoComplete="off"
+                        suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
                     />
                   </Form.Item>
                 </Col>
@@ -580,22 +593,7 @@ const PeerUpdate = () => {
                     <Input
                       disabled={true}
                       value={formPeer.last_seen}
-                      style={{ color: "#5a5c5a" }}
-                      autoComplete="off"
-                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col span={5}>
-                  <Form.Item
-                    name="dns_label"
-                    label="Domain name"
-                    style={{ fontWeight: "bold" }}
-                  >
-                    <Input
-                      disabled={true}
-                      value={formPeer.userEmail}
-                      style={{ color: "#5a5c5a" }}
+                      style={{ color: "#8c8c8c" }}
                       autoComplete="off"
                       suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
                     />
@@ -815,21 +813,22 @@ const PeerUpdate = () => {
               >
                 <Panel
                   key="0"
-                  header="System Info"
+                  header={<Paragraph
+                      style={{
+                        textAlign: "left",
+                        whiteSpace: "pre-line",
+                        fontSize: "16px",
+                        fontWeight: "bold",
+                      }}
+                  >
+                    System info
+                  </Paragraph>}
                   className="system-info-panel"
-                  style={{
-                    fontSize: "16px",
-                    fontWeight: "600",
-                    marginBottom: "0",
-                  }}
                 >
                   <Row gutter={16}>
                     <Col
                       span={24}
                       style={{
-                        fontSize: "14px",
-                        color: "#000000",
-                        fontWeight: "400",
                         marginBottom: "2px",
                       }}
                     >
@@ -842,16 +841,13 @@ const PeerUpdate = () => {
                       >
                         Hostname:
                       </Text>
-                      <Text style={{ color: "#6C727F" }}>
+                      <Text type="secondary">
                         {formPeer.hostname}
                       </Text>
                     </Col>
                     <Col
                       span={24}
                       style={{
-                        fontSize: "14px",
-                        color: "#000000",
-                        fontWeight: "400",
                         marginBottom: "2px",
                       }}
                     >
@@ -864,27 +860,24 @@ const PeerUpdate = () => {
                       >
                         Operating system:
                       </Text>
-                      <Text style={{ color: "#6C727F" }}>{formPeer.os}</Text>
+                      <Text type={"secondary"}>{formPeer.os}</Text>
                     </Col>
                     <Col
                       span={24}
                       style={{
-                        fontSize: "14px",
-                        color: "#000000",
-                        fontWeight: "400",
                         marginBottom: "2px",
                       }}
                     >
                       <Text
-                        style={{
-                          width: "100%",
-                          maxWidth: "130px",
-                          display: "inline-block",
-                        }}
+                          style={{
+                            width: "100%",
+                            maxWidth: "130px",
+                            display: "inline-block",
+                          }}
                       >
                         Agent version:
                       </Text>
-                      <Text style={{ color: "#6C727F" }}>
+                      <Text type="secondary">
                         {formPeer.version}
                       </Text>
                     </Col>
@@ -892,8 +885,6 @@ const PeerUpdate = () => {
                       <Col
                         span={24}
                         style={{
-                          fontSize: "14px",
-                          color: "#000000",
                           marginBottom: "2px",
                         }}
                       >
@@ -906,8 +897,7 @@ const PeerUpdate = () => {
                         >
                           UI version:
                         </Text>
-                        <Text style={{ color: "#6C727F" }}>
-                          {" "}
+                        <Text type={"secondary"}>
                           {formPeer.ui_version}
                         </Text>
                       </Col>

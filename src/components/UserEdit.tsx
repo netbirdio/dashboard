@@ -357,7 +357,7 @@ const UserEdit = () => {
                         <Input
                           disabled={user.id}
                           value={formUser.email}
-                          style={{ color: "#5a5c5a" }}
+                          style={{ color: "#8c8c8c"}}
                           autoComplete="off"
                         />
                       </Form.Item>
@@ -371,10 +371,11 @@ const UserEdit = () => {
                     >
                       <Select
                         style={{ width: "100%" }}
+
                         disabled={user.is_current}
                       >
-                        <Option value="admin">admin</Option>
-                        <Option value="user">user</Option>
+                        <Option value="admin"><Text type={"secondary"}>admin</Text></Option>
+                        <Option value="user"><Text type={"secondary"}>user</Text></Option>
                       </Select>
                     </Form.Item>
                   </Col>
