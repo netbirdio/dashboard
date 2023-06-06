@@ -455,7 +455,7 @@ export const AccessControl = () => {
   const renderPorts = (ports: string[]) => {
     const content = ports?.map((p, i) => {
       return (
-        <Tag key={i} style={{ marginRight: 3, marginBottom: 3 }}>
+        <Tag key={i} style={{ marginRight: 3 }}>
           <span>{p}</span>
         </Tag>
       );
@@ -474,7 +474,7 @@ export const AccessControl = () => {
               textAlign: "center",
             }}
           >
-            <Button size="small" type="link">
+            <Button size="small" type="link" style={{marginLeft: -3}}>
               +{content.length - 2}
             </Button>
           </Popover>
