@@ -247,11 +247,11 @@ export const AccessControl = () => {
     setOptionAllEnable(value);
   };
 
-  const showConfirmDelete = () => {
-    let name = policyToAction ? policyToAction.name : "";
-    confirm({
+  const showConfirmDelete = (record: PolicyDataTable) => {
+    setPolicyToAction(record as PolicyDataTable);
+     confirm({
       icon: <ExclamationCircleOutlined />,
-      title: 'Delete rule "' + name + '"',
+      title: 'Delete rule "' + record.name + '"',
       width: 600,
       content: (
         <Space direction="vertical" size="small">
@@ -470,11 +470,10 @@ export const AccessControl = () => {
             content={newContent}
             title={null}
             overlayStyle={{
-              minWidth: "125px",
               maxWidth: "200px",
             }}
           >
-            <Button type="link">+{content.length - 2}</Button>
+            <Button size="small" type="link">+{content.length - 2}</Button>
           </Popover>
         </>
       );
@@ -727,14 +726,14 @@ export const AccessControl = () => {
                   <Column
                     title=""
                     align="center"
-                    render={(text, record, index) => {
+                    render={(text, record: PolicyDataTable, index) => {
                       if (deletedPolicy.loading || savedPolicy.loading)
                         return <></>;
                       return (
                         <Button
                           type="text"
                           danger={true}
-                          onClick={() => showConfirmDelete()}
+                          onClick={() => showConfirmDelete(record)}
                         >
                           Delete
                         </Button>
