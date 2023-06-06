@@ -470,7 +470,8 @@ export const AccessControl = () => {
             content={newContent}
             title={null}
             overlayStyle={{
-              maxWidth: "200px",
+                maxWidth: "200px",
+                textAlign:"center"
             }}
           >
             <Button size="small" type="link">+{content.length - 2}</Button>
