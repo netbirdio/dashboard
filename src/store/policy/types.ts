@@ -23,7 +23,7 @@ export interface Policy {
 };
 
 export interface PolicyToSave extends Policy {
-    sourcesNoId: string[],
-    destinationsNoId: string[],
-    groupsToSave: string[]
+    sourcesNoId?: string[],
+    destinationsNoId?: string[],
+    groupsToSave?: string[]
 };
