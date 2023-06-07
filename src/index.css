@@ -181,3 +181,6 @@ td.non-highlighted-table-column {
   padding-bottom: 15px;
   cursor: pointer;
 }
+.ant-modal-content {
+  border-radius: 0px !important;
+}

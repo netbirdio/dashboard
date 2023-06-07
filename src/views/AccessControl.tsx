@@ -768,7 +768,7 @@ export const AccessControl = () => {
         visible={groupsToShow.modalVisible}
         onCancel={() => toggleModalGroups("", [], false)}
       />
-      <AccessControlNew />
+      {setupNewPolicyVisible && <AccessControlNew />}
     </>
   );
 };
