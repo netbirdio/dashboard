@@ -387,14 +387,14 @@ const AccessControlNew = () => {
       var failed = false;
       value.forEach(function (v: string) {
         let p = Number(v);
-        if (Number.isNaN(p) || p < 1 || p > 65535) {
+        if (Number.isNaN(p) || !Number.isInteger(p) || p < 1 || p > 65535) {
           failed = true;
           return;
         }
       });
       if (failed) {
         return Promise.reject(
-          new Error("Port value must be in 1..65535 range")
+          new Error("Port value must be in 1..65535 integers range")
         );
       }
     }
@@ -403,7 +403,7 @@ const AccessControlNew = () => {
 
   const selectPortProtocolValidator = (_: RuleObject, value: string[]) => {
     if (!formPolicy.bidirectional && value.length === 0) {
-      return Promise.reject(new Error("Directional traffic require ports"));
+      return Promise.reject(new Error("Directional traffic requires ports"));
     }
     return Promise.resolve();
   };
@@ -620,7 +620,7 @@ const AccessControlNew = () => {
                       required: false,
                     },
                     {
-                      message: "Port value must be in 1..65535 range",
+                      message: "Port value must be in 1..65535 integers range",
                       validator: selectPortRangeValidator,
                       required: false,
                     },
