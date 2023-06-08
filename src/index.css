@@ -184,3 +184,6 @@ td.non-highlighted-table-column {
 .ant-modal-content {
   border-radius: 0px !important;
 }
+.ant-form-item-explain-error {
+  font-weight: 500;
+}

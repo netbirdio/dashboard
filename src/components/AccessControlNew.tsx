@@ -69,8 +69,8 @@ const AccessControlNew = () => {
   const [editName, setEditName] = useState(false);
   const [editDescription, setEditDescription] = useState(false);
   const [direction, setDirection] = useState<any>({
-    biDirectional: false,
-    reverseDirectional: false,
+    biDirectional: true,
+    reverseDirectional: true,
   });
   const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formPolicy, setFormPolicy] = useState({} as FormPolicy);
@@ -148,7 +148,7 @@ const AccessControlNew = () => {
             direction.reverseDirectional && !direction.biDirectional
               ? sources
               : destinations,
-          bidirectional: direction.biDirectional,
+          bidirectional: formPolicy.bidirectional,
           protocol: formPolicy.protocol,
           ports: formPolicy.ports,
           action: "accept",
@@ -381,7 +381,7 @@ const AccessControlNew = () => {
       var failed = false;
       value.forEach(function (v: string) {
         let p = Number(v);
-        if (Number.isNaN(p) || p < 1 || p > 65535) {
+        if (Number.isNaN(p) || p < 1 || p > 65535 || !Number.isInteger(p)) {
           failed = true;
           return;
         }
@@ -437,8 +437,16 @@ const AccessControlNew = () => {
       });
     }
   };
-  console.log("direction.biDirectional", direction);
-  return (
+  useEffect(() => {
+    if (Object.keys(formPolicy).length > 0) {
+      setFormPolicy({
+        ...formPolicy,
+        bidirectional: direction.biDirectional,
+      });
+    }
+  }, [direction]);
+
+   return (
     <>
       {policy && (
         <Modal
@@ -453,7 +461,10 @@ const AccessControlNew = () => {
                 type="primary"
                 disabled={savedPolicy.loading}
                 onClick={handleFormSubmit}
-              >{`${formPolicy.id ? "Save" : "Create"}`}</Button>
+              >
+                {" "}
+                Create Rule
+              </Button>
             </Space>
           }
         >
@@ -490,7 +501,7 @@ const AccessControlNew = () => {
                           fontWeight: "bold",
                         }}
                       >
-                        Name
+                        Rule name
                       </Paragraph>
                       <Paragraph
                         type={"secondary"}
@@ -501,6 +512,7 @@ const AccessControlNew = () => {
                       <Form.Item
                         name="name"
                         label=""
+                        style={{ margin: "0" }}
                         rules={[
                           {
                             required: true,
@@ -517,15 +529,21 @@ const AccessControlNew = () => {
 
                       {!editDescription ? (
                         <div
-                          className={
-                            "access-control input-text ant-drawer-subtitle"
-                          }
                           onClick={() => toggleEditDescription(true)}
+                          style={{
+                            margin: "12px 0 30px",
+                            lineHeight: "22px",
+                            cursor: "pointer",
+                          }}
                         >
                           {formPolicy.description &&
-                          formPolicy.description.trim() !== ""
-                            ? formPolicy.description
-                            : "Add description"}
+                          formPolicy.description.trim() !== "" ? (
+                            formPolicy.description
+                          ) : (
+                            <span style={{ textDecoration: "underline" }}>
+                              Add description
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <Form.Item
@@ -551,11 +569,13 @@ const AccessControlNew = () => {
                   <div
                     style={{
                       display: "flex",
-                      alignItems: "center",
                       gap: "15px",
                     }}
                   >
-                    <Switch onChange={handleChangeDisabled} />
+                    <Switch
+                      onChange={handleChangeDisabled}
+                      defaultChecked={true}
+                    />
                     <div>
                       <label
                         style={{
@@ -582,7 +602,7 @@ const AccessControlNew = () => {
               </Col>
               <Col span={24}>
                 <Row gutter={15}>
-                  <Col span={9}>
+                  <Col span={10}>
                     <Form.Item
                       name="tagSourceGroups"
                       label="Source groups"
@@ -603,7 +623,7 @@ const AccessControlNew = () => {
                       </Select>
                     </Form.Item>
                   </Col>
-                  <Col span={6}>
+                  <Col span={4}>
                     <Button
                       type={"ghost"}
                       disabled={
@@ -614,8 +634,8 @@ const AccessControlNew = () => {
                       style={{
                         padding: "0",
                         width: "100%",
-                        height: "25px",
-                        marginTop: "10px",
+                        marginTop: "27px",
+                        height: "13px",
                       }}
                     >
                       <Tag
@@ -623,6 +643,8 @@ const AccessControlNew = () => {
                           marginInlineEnd: "0",
                           width: "100%",
                           textAlign: "center",
+                          height: "13px",
+                          display: "flex",
                         }}
                         color={
                           !direction.biDirectional &&
@@ -675,8 +697,8 @@ const AccessControlNew = () => {
                         padding: "0",
                         width: "100%",
                         textAlign: "center",
-                        height: "25px",
-                        marginTop: "5px",
+                        height: "13px",
+                        marginTop: "0",
                       }}
                     >
                       <Tag
@@ -684,9 +706,16 @@ const AccessControlNew = () => {
                           marginInlineEnd: "0",
                           width: "100%",
                           textAlign: "center",
+                          height: "13px",
+                          display: "flex",
                         }}
                         color={
-                          direction.reverseDirectional ? "green" : "default"
+                          direction.reverseDirectional &&
+                          direction.biDirectional
+                            ? "green"
+                            : direction.reverseDirectional
+                            ? "processing"
+                            : "default"
                         }
                       >
                         <img
@@ -700,7 +729,7 @@ const AccessControlNew = () => {
                       </Tag>
                     </Button>
                   </Col>
-                  <Col span={9}>
+                  <Col span={10}>
                     <Form.Item
                       name="tagDestinationGroups"
                       label="Destination groups"
@@ -745,9 +774,26 @@ const AccessControlNew = () => {
                 </Form.Item>
               </Col>
               <Col span={24}>
+                <div>
+                  <label
+                    style={{
+                      color: "rgba(0, 0, 0, 0.88)",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Port
+                  </label>
+                  <Paragraph
+                    type={"secondary"}
+                    style={{ marginTop: "-5px", fontWeight: "500" }}
+                  >
+                    Restrict incoming and outgoing network traffic using ports
+                  </Paragraph>
+                </div>
                 <Form.Item
                   name="ports"
-                  label="Ports"
+                  label=""
                   style={{ fontWeight: "600" }}
                   rules={[
                     {
@@ -762,12 +808,6 @@ const AccessControlNew = () => {
                     },
                   ]}
                 >
-                  <Paragraph
-                    type={"secondary"}
-                    style={{ marginTop: "-10px", fontWeight: "500" }}
-                  >
-                    Restrict incoming and outgoing network traffic using ports
-                  </Paragraph>
                   <Select
                     mode="tags"
                     style={{
@@ -808,7 +848,7 @@ const AccessControlNew = () => {
                     href="https://docs.netbird.io/how-to/manage-network-access"
                   >
                     {" "}
-                    setup keys
+                    Access Controls
                   </a>
                 </Text>
               </Col>
