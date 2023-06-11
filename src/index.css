@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500&display=swap');
 @import 'antd/dist/reset.css';
 
 body {
@@ -181,9 +182,41 @@ td.non-highlighted-table-column {
   padding-bottom: 15px;
   cursor: pointer;
 }
+
 .ant-modal-content {
   border-radius: 0px !important;
 }
+
 .ant-form-item-explain-error {
   font-weight: 500;
+}
+
+.inconsolata-font,
+.inconsolata-font * {
+  font-family: 'Inconsolata', monospace !important;
+}
+
+.tag-box .ant-select-selector {
+  padding: 0 5px;
+}
+
+.tag-box .ant-select-selection-item {
+  width: 100%;
+  line-height: 20px;
+  justify-content: center;
+  list-style: none;
+  display: flex;
+  white-space: nowrap;
+  background: rgba(0, 0, 0, 0.02);
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  opacity: 1;
+  transition: all 0.2s;
+  text-align: start;
+  max-width: 40px;
+  height: 25px;
+  padding: 0 4px !important;
+  align-items: center;
+  margin-top: 3px;
+  text-align: center;
 }

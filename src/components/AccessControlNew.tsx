@@ -258,7 +258,7 @@ const AccessControlNew = () => {
     });
   };
 
-  const tagRender = (props: CustomTagProps) => {
+  const blueTagRender = (props: CustomTagProps) => {
     const { value, closable, onClose } = props;
     const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
       event.preventDefault();
@@ -273,7 +273,27 @@ const AccessControlNew = () => {
         onClose={onClose}
         style={{ marginRight: 3 }}
       >
-        <strong>{value}</strong>
+        {value}
+      </Tag>
+    );
+  };
+
+  const tagRender = (props: CustomTagProps) => {
+    const { value, closable, onClose } = props;
+    const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    return (
+      <Tag
+        color="default"
+        onMouseDown={onPreventMouseDown}
+        closable={closable}
+        onClose={onClose}
+        style={{ marginRight: 3 }}
+      >
+        {value} 
       </Tag>
     );
   };
@@ -288,7 +308,7 @@ const AccessControlNew = () => {
     return (
       <>
         <Tag color="blue" style={{ marginRight: 3 }}>
-          <strong>{label}</strong>
+         {label} 
         </Tag>
         <span style={{ fontSize: ".85em" }}>{peersCount}</span>
       </>
@@ -446,7 +466,7 @@ const AccessControlNew = () => {
     }
   }, [direction]);
 
-   return (
+  return (
     <>
       {policy && (
         <Modal
@@ -485,7 +505,7 @@ const AccessControlNew = () => {
                     style={{
                       textAlign: "start",
                       whiteSpace: "pre-line",
-                      fontSize: "18px",
+                      fontSize: "22px",
                       margin: "0px",
                       marginBottom: "15px",
                     }}
@@ -505,7 +525,7 @@ const AccessControlNew = () => {
                       </Paragraph>
                       <Paragraph
                         type={"secondary"}
-                        style={{ marginTop: "-2px" }}
+                        style={{ marginTop: "-2px", marginBottom: "8px" }}
                       >
                         Create a name to define the rule
                       </Paragraph>
@@ -565,6 +585,263 @@ const AccessControlNew = () => {
                 </Header>
               </Col>
               <Col span={24}>
+                <Row gutter={15}>
+                  <Col span={10}>
+                    <Form.Item
+                      name="tagSourceGroups"
+                      label="Source groups"
+                      rules={[{ validator: selectValidator }]}
+                      style={{ fontWeight: "600" }}
+                    >
+                      <Select
+                        mode="tags"
+                        style={{ width: "100%", fontWeight: "500" }}
+                        placeholder="Tags Mode"
+                        tagRender={blueTagRender}
+                        onChange={handleChangeSource}
+                        dropdownRender={dropDownRenderGroups}
+                        maxTagCount="responsive"
+                      >
+                        {tagGroups.map((m) => (
+                          <Option key={m}>{optionRender(m)}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col
+                    span={4}
+                    style={{ padding: "0 2.5px", lineHeight: "16px" }}
+                  >
+                    <Button
+                      type={"ghost"}
+                      disabled={
+                        formPolicy.protocol === "all" ||
+                        formPolicy.protocol === "icmp"
+                      }
+                      onClick={() => handleDirection("forwardDirectional")}
+                      style={{
+                        padding: "0",
+                        width: "100%",
+                        marginTop: "30px",
+                        height: "13px",
+                      }}
+                    >
+                      <Tag
+                        style={{
+                          marginInlineEnd: "0",
+                          width: "100%",
+                          textAlign: "center",
+                          height: "13px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                        color={
+                          !direction.biDirectional &&
+                          !direction.reverseDirectional
+                            ? "processing"
+                            : direction.biDirectional
+                            ? "green"
+                            : "default"
+                        }
+                      >
+                        {!direction.biDirectional &&
+                        !direction.reverseDirectional ? (
+                          <img
+                            src={outBoundGreen}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        ) : direction.biDirectional ? (
+                          <img
+                            src={outBoundGreen}
+                            alt="out icon"
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src={outBoundGreen}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        )}
+                      </Tag>
+                    </Button>
+                    <Button
+                      type="ghost"
+                      disabled={
+                        formPolicy.protocol === "all" ||
+                        formPolicy.protocol === "icmp"
+                      }
+                      onClick={() => handleDirection("reverseDirectional")}
+                      style={{
+                        padding: "0",
+                        width: "100%",
+                        textAlign: "center",
+                        height: "13px",
+                        marginTop: "0",
+                      }}
+                    >
+                      <Tag
+                        style={{
+                          marginInlineEnd: "0",
+                          width: "100%",
+                          textAlign: "center",
+                          height: "13px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                        color={
+                          direction.reverseDirectional &&
+                          direction.biDirectional
+                            ? "green"
+                            : direction.reverseDirectional
+                            ? "processing"
+                            : "default"
+                        }
+                      >
+                        <img
+                          src={inbound}
+                          style={{
+                            width: "100%",
+                            maxWidth: "45px",
+                          }}
+                          alt="out icon"
+                        />
+                      </Tag>
+                    </Button>
+                  </Col>
+                  <Col span={10}>
+                    <Form.Item
+                      name="tagDestinationGroups"
+                      label="Destination groups"
+                      rules={[{ validator: selectValidator }]}
+                      style={{ fontWeight: "600" }}
+                    >
+                      <Select
+                        mode="tags"
+                        style={{ width: "100%", fontWeight: "500" }}
+                        placeholder="Tags Mode"
+                        tagRender={blueTagRender}
+                        onChange={handleChangeDestination}
+                        dropdownRender={dropDownRenderGroups}
+                        maxTagCount="responsive"
+                      >
+                        {tagGroups.map((m) => (
+                          <Option key={m}>{optionRender(m)}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </Col>
+              <Col span={24}>
+                <Form.Item
+                  name="protocol"
+                  label="Protocol"
+                  style={{ fontWeight: "600" }}
+                  className="tag-box"
+                >
+                  <Paragraph
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-10px",
+                      fontWeight: "500",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Add protocol to ensure controlled and secure access to
+                    resources
+                  </Paragraph>
+                  <Select
+                    className="inconsolata-font"
+                    style={{
+                      width: "100%",
+                      maxWidth: "187px",
+                    }}
+                    options={protocols}
+                    onChange={handleChangeProtocol}
+                    defaultValue={"all"}
+                  />
+                </Form.Item>
+              </Col>
+              <Col span={24}>
+                <div>
+                  <label
+                    style={{
+                      color: "rgba(0, 0, 0, 0.88)",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Port
+                  </label>
+                  <Paragraph
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-5px",
+                      fontWeight: "500",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Restrict incoming and outgoing network traffic using ports
+                  </Paragraph>
+                </div>
+                <Form.Item
+                  name="ports"
+                  label=""
+                  style={{ fontWeight: "600" }}
+                  rules={[
+                    {
+                      message: "Directional traffic requires at least one port",
+                      validator: selectPortProtocolValidator,
+                      required: false,
+                    },
+                    {
+                      message: "Port value must be in 1..65535 range",
+                      validator: selectPortRangeValidator,
+                      required: false,
+                    },
+                  ]}
+                >
+                  <Select
+                    mode="tags"
+                    style={{
+                      width: "100%",
+                      maxWidth: "260px",
+                      fontWeight: "500",
+                    }}
+                    className="inconsolata-font"
+                    placeholder="Tags Mode"
+                    tagRender={tagRender}
+                    maxTagCount="responsive"
+                    onChange={handleChangePorts}
+                    dropdownRender={dropDownRenderPorts}
+                    disabled={
+                      formPolicy.protocol === "all" ||
+                      formPolicy.protocol === "icmp"
+                    }
+                  >
+                    {formPolicy &&
+                      formPolicy.ports?.map((m) => (
+                        <Option key={m}>
+                          <Tag color="blue" style={{ marginRight: 3 }}>
+                            {m}
+                          </Tag>
+                        </Option>
+                      ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={24}>
                 <Form.Item name="enabled" label="">
                   <div
                     style={{
@@ -594,248 +871,14 @@ const AccessControlNew = () => {
                           marginBottom: "0",
                         }}
                       >
-                        You can enable or disable the rule
+                        {formPolicy.enabled
+                          ? "Disable this rule to apply it later"
+                          : "Enable this rule to apply it immediately"}
                       </Paragraph>
                     </div>
                   </div>
                 </Form.Item>
               </Col>
-              <Col span={24}>
-                <Row gutter={15}>
-                  <Col span={10}>
-                    <Form.Item
-                      name="tagSourceGroups"
-                      label="Source groups"
-                      rules={[{ validator: selectValidator }]}
-                      style={{ fontWeight: "600" }}
-                    >
-                      <Select
-                        mode="tags"
-                        style={{ width: "100%", fontWeight: "500" }}
-                        placeholder="Tags Mode"
-                        tagRender={tagRender}
-                        onChange={handleChangeSource}
-                        dropdownRender={dropDownRenderGroups}
-                      >
-                        {tagGroups.map((m) => (
-                          <Option key={m}>{optionRender(m)}</Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                  <Col span={4}>
-                    <Button
-                      type={"ghost"}
-                      disabled={
-                        formPolicy.protocol === "all" ||
-                        formPolicy.protocol === "icmp"
-                      }
-                      onClick={() => handleDirection("forwardDirectional")}
-                      style={{
-                        padding: "0",
-                        width: "100%",
-                        marginTop: "27px",
-                        height: "13px",
-                      }}
-                    >
-                      <Tag
-                        style={{
-                          marginInlineEnd: "0",
-                          width: "100%",
-                          textAlign: "center",
-                          height: "13px",
-                          display: "flex",
-                        }}
-                        color={
-                          !direction.biDirectional &&
-                          !direction.reverseDirectional
-                            ? "processing"
-                            : direction.biDirectional
-                            ? "green"
-                            : "default"
-                        }
-                      >
-                        {!direction.biDirectional &&
-                        !direction.reverseDirectional ? (
-                          <img
-                            src={outBoundGreen}
-                            style={{
-                              width: "100%",
-                              maxWidth: "60px",
-                            }}
-                            alt="out icon"
-                          />
-                        ) : direction.biDirectional ? (
-                          <img
-                            src={outBoundGreen}
-                            alt="out icon"
-                            style={{
-                              width: "100%",
-                              maxWidth: "60px",
-                            }}
-                          />
-                        ) : (
-                          <img
-                            src={outBoundGreen}
-                            style={{
-                              width: "100%",
-                              maxWidth: "60px",
-                            }}
-                            alt="out icon"
-                          />
-                        )}
-                      </Tag>
-                    </Button>
-                    <Button
-                      type="ghost"
-                      disabled={
-                        formPolicy.protocol === "all" ||
-                        formPolicy.protocol === "icmp"
-                      }
-                      onClick={() => handleDirection("reverseDirectional")}
-                      style={{
-                        padding: "0",
-                        width: "100%",
-                        textAlign: "center",
-                        height: "13px",
-                        marginTop: "0",
-                      }}
-                    >
-                      <Tag
-                        style={{
-                          marginInlineEnd: "0",
-                          width: "100%",
-                          textAlign: "center",
-                          height: "13px",
-                          display: "flex",
-                        }}
-                        color={
-                          direction.reverseDirectional &&
-                          direction.biDirectional
-                            ? "green"
-                            : direction.reverseDirectional
-                            ? "processing"
-                            : "default"
-                        }
-                      >
-                        <img
-                          src={inbound}
-                          style={{
-                            width: "100%",
-                            maxWidth: "60px",
-                          }}
-                          alt="out icon"
-                        />
-                      </Tag>
-                    </Button>
-                  </Col>
-                  <Col span={10}>
-                    <Form.Item
-                      name="tagDestinationGroups"
-                      label="Destination groups"
-                      rules={[{ validator: selectValidator }]}
-                      style={{ fontWeight: "600" }}
-                    >
-                      <Select
-                        mode="tags"
-                        style={{ width: "100%", fontWeight: "500" }}
-                        placeholder="Tags Mode"
-                        tagRender={tagRender}
-                        onChange={handleChangeDestination}
-                        dropdownRender={dropDownRenderGroups}
-                      >
-                        {tagGroups.map((m) => (
-                          <Option key={m}>{optionRender(m)}</Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </Col>
-              <Col span={24}>
-                <Form.Item
-                  name="protocol"
-                  label="Protocol"
-                  style={{ fontWeight: "600" }}
-                >
-                  <Paragraph
-                    type={"secondary"}
-                    style={{ marginTop: "-10px", fontWeight: "500" }}
-                  >
-                    Add protocol to ensure controlled and secure access to
-                    resources
-                  </Paragraph>
-                  <Select
-                    style={{ width: "100%", maxWidth: "260px" }}
-                    options={protocols}
-                    onChange={handleChangeProtocol}
-                    defaultValue={"all"}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <div>
-                  <label
-                    style={{
-                      color: "rgba(0, 0, 0, 0.88)",
-                      fontSize: "14px",
-                      fontWeight: "600",
-                    }}
-                  >
-                    Port
-                  </label>
-                  <Paragraph
-                    type={"secondary"}
-                    style={{ marginTop: "-5px", fontWeight: "500" }}
-                  >
-                    Restrict incoming and outgoing network traffic using ports
-                  </Paragraph>
-                </div>
-                <Form.Item
-                  name="ports"
-                  label=""
-                  style={{ fontWeight: "600" }}
-                  rules={[
-                    {
-                      message: "Directional traffic requires at least one port",
-                      validator: selectPortProtocolValidator,
-                      required: false,
-                    },
-                    {
-                      message: "Port value must be in 1..65535 range",
-                      validator: selectPortRangeValidator,
-                      required: false,
-                    },
-                  ]}
-                >
-                  <Select
-                    mode="tags"
-                    style={{
-                      width: "100%",
-                      maxWidth: "260px",
-                      fontWeight: "500",
-                    }}
-                    placeholder="Tags Mode"
-                    tagRender={tagRender}
-                    onChange={handleChangePorts}
-                    dropdownRender={dropDownRenderPorts}
-                    disabled={
-                      formPolicy.protocol === "all" ||
-                      formPolicy.protocol === "icmp"
-                    }
-                  >
-                    {formPolicy &&
-                      formPolicy.ports?.map((m) => (
-                        <Option key={m}>
-                          <Tag color="blue" style={{ marginRight: 3 }}>
-                            <strong>{m}</strong>
-                          </Tag>
-                        </Option>
-                      ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-
               <Col
                 span={24}
                 style={{ marginTop: "20px", marginBottom: "25px" }}

@@ -105,13 +105,7 @@ export const AccessControl = () => {
   ];
 
   const getSourceDestinationLabel = (data: Group[]): string => {
-    return !data
-      ? "No group"
-      : data.length > 1
-      ? `${data.length} Groups`
-      : data.length === 1
-      ? data[0].name
-      : "No group";
+    return !data ? "No group" : data[0].name;
   };
 
   const isShowTutorial = (policy: Policy[]): boolean => {
@@ -456,9 +450,20 @@ export const AccessControl = () => {
         content={mainContent}
         title={null}
       >
-        <Button type="link" onClick={() => setPolicyAndView(rule)}>
+        <>
           {label}
-        </Button>
+          <Button type="ghost" onClick={() => setPolicyAndView(rule)}>
+            {groups && groups?.length > 1 && (
+              <Button
+                size="small"
+                type="link"
+                style={{ marginLeft: -3, padding: "0" }}
+              >
+                +{groups.length - 1}
+              </Button>
+            )}
+          </Button>
+        </>
       </Popover>
     );
   };

@@ -83,7 +83,7 @@ const AccessControlEdit = () => {
       onCancel();
     };
   }, []);
- 
+
   useEffect(() => {
     if (editName) inputNameRef.current!.focus({ cursor: "end" });
   }, [editName]);
@@ -94,7 +94,7 @@ const AccessControlEdit = () => {
     setTagGroups(groups?.map((g) => g.name) || []);
   }, [groups]);
   useEffect(() => {
-     if (!policy) return;
+    if (!policy) return;
     const fPolicy = {
       id: policy.id,
       name: policy.name,
@@ -275,7 +275,7 @@ const AccessControlEdit = () => {
     });
   };
 
-  const tagRender = (props: CustomTagProps) => {
+  const blueTagRender = (props: CustomTagProps) => {
     const { value, closable, onClose } = props;
     const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
       event.preventDefault();
@@ -290,7 +290,27 @@ const AccessControlEdit = () => {
         onClose={onClose}
         style={{ marginRight: 3 }}
       >
-        <strong>{value}</strong>
+        {value}
+      </Tag>
+    );
+  };
+
+  const tagRender = (props: CustomTagProps) => {
+    const { value, closable, onClose } = props;
+    const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    return (
+      <Tag
+        color="default"
+        onMouseDown={onPreventMouseDown}
+        closable={closable}
+        onClose={onClose}
+        style={{ marginRight: 3 }}
+      >
+        {value}
       </Tag>
     );
   };
@@ -305,7 +325,7 @@ const AccessControlEdit = () => {
     return (
       <>
         <Tag color="blue" style={{ marginRight: 3 }}>
-          <strong>{label}</strong>
+          {label}
         </Tag>
         <span style={{ fontSize: ".85em" }}>{peersCount}</span>
       </>
@@ -510,9 +530,9 @@ const AccessControlEdit = () => {
                           style={{
                             textAlign: "start",
                             whiteSpace: "pre-line",
-                            fontSize: "18px",
+                            fontSize: "22px",
                             margin: "0px",
-                            marginBottom: "15px",
+                            marginBottom: "10px",
                             cursor: "pointer",
                           }}
                           onDoubleClick={() => toggleEditName(true)}
@@ -626,7 +646,9 @@ const AccessControlEdit = () => {
                               marginBottom: "0",
                             }}
                           >
-                            You can enable or disable the rule
+                            {formPolicy.enabled
+                              ? "Disable this rule to apply it later"
+                              : "Enable this rule to apply it immediately"}
                           </Paragraph>
                         </div>
                       </div>
@@ -645,9 +667,10 @@ const AccessControlEdit = () => {
                             mode="tags"
                             style={{ width: "100%", fontWeight: "500" }}
                             placeholder="Tags Mode"
-                            tagRender={tagRender}
+                            tagRender={blueTagRender}
                             onChange={handleChangeSource}
                             dropdownRender={dropDownRenderGroups}
+                            maxTagCount="responsive"
                           >
                             {tagGroups.map((m) => (
                               <Option key={m}>{optionRender(m)}</Option>
@@ -655,7 +678,10 @@ const AccessControlEdit = () => {
                           </Select>
                         </Form.Item>
                       </Col>
-                      <Col span={4}>
+                      <Col
+                        span={4}
+                        style={{ padding: "0 2.5px", lineHeight: "16px" }}
+                      >
                         <Button
                           type={"ghost"}
                           disabled={
@@ -666,7 +692,7 @@ const AccessControlEdit = () => {
                           style={{
                             padding: "0",
                             width: "100%",
-                            marginTop: "27px",
+                            marginTop: "30px",
                             height: "13px",
                           }}
                         >
@@ -694,7 +720,7 @@ const AccessControlEdit = () => {
                                 src={outBoundGreen}
                                 style={{
                                   width: "100%",
-                                  maxWidth: "60px",
+                                  maxWidth: "45px",
                                 }}
                                 alt="out icon"
                               />
@@ -704,7 +730,7 @@ const AccessControlEdit = () => {
                                 alt="out icon"
                                 style={{
                                   width: "100%",
-                                  maxWidth: "60px",
+                                  maxWidth: "45px",
                                 }}
                               />
                             ) : (
@@ -712,7 +738,7 @@ const AccessControlEdit = () => {
                                 src={outBoundGreen}
                                 style={{
                                   width: "100%",
-                                  maxWidth: "60px",
+                                  maxWidth: "45px",
                                 }}
                                 alt="out icon"
                               />
@@ -756,7 +782,7 @@ const AccessControlEdit = () => {
                               src={inbound}
                               style={{
                                 width: "100%",
-                                maxWidth: "60px",
+                                maxWidth: "45px",
                               }}
                               alt="out icon"
                             />
@@ -774,9 +800,10 @@ const AccessControlEdit = () => {
                             mode="tags"
                             style={{ width: "100%", fontWeight: "500" }}
                             placeholder="Tags Mode"
-                            tagRender={tagRender}
+                            tagRender={blueTagRender}
                             onChange={handleChangeDestination}
                             dropdownRender={dropDownRenderGroups}
+                            maxTagCount="responsive"
                           >
                             {tagGroups.map((m) => (
                               <Option key={m}>{optionRender(m)}</Option>
@@ -786,17 +813,20 @@ const AccessControlEdit = () => {
                       </Col>
                     </Row>
                   </Col>
-                  <Col span={4}>
+                  <Col span={10}>
                     <Form.Item
                       name="protocol"
                       label="Protocol"
                       style={{ fontWeight: "600" }}
+                      className="tag-box"
                     >
                       <Select
                         style={{ width: "100%", maxWidth: "260px" }}
                         options={protocols}
                         onChange={handleChangeProtocol}
+                        className="inconsolata-font"
                         defaultValue={"all"}
+                        maxTagCount="responsive"
                       />
                     </Form.Item>
                   </Col>
@@ -829,7 +859,9 @@ const AccessControlEdit = () => {
                         placeholder="Tags Mode"
                         tagRender={tagRender}
                         onChange={handleChangePorts}
+                        className="inconsolata-font"
                         dropdownRender={dropDownRenderPorts}
+                        maxTagCount="responsive"
                         disabled={
                           formPolicy.protocol === "all" ||
                           formPolicy.protocol === "icmp"
@@ -839,7 +871,7 @@ const AccessControlEdit = () => {
                           formPolicy.ports?.map((m) => (
                             <Option key={m}>
                               <Tag color="blue" style={{ marginRight: 3 }}>
-                                <strong>{m}</strong>
+                                {m}
                               </Tag>
                             </Option>
                           ))}
