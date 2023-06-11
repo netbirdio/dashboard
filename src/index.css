@@ -197,7 +197,7 @@ td.non-highlighted-table-column {
 }
 
 .tag-box .ant-select-selector {
-  padding: 0 5px;
+  padding: 0 5px!important;
 }
 
 .tag-box .ant-select-selection-item {

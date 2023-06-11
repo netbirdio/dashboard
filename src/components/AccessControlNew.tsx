@@ -19,6 +19,10 @@ import {
 } from "antd";
 import inbound from "../assets/in_bound.svg";
 import outBoundGreen from "../assets/out_bound_green.svg";
+import outBoundblue from "../assets/out_bound_blue.svg";
+import reverseDefault from "../assets/reverse_default.svg";
+import forwardDefault from "../assets/forward_default.svg";
+import reverseGreen from "../assets/reverse_green.svg";
 import type { CustomTagProps } from "rc-select/lib/BaseSelect";
 import { Policy, PolicyToSave } from "../store/policy/types";
 import { uniq } from "lodash";
@@ -293,7 +297,7 @@ const AccessControlNew = () => {
         onClose={onClose}
         style={{ marginRight: 3 }}
       >
-        {value} 
+        {value}
       </Tag>
     );
   };
@@ -308,7 +312,7 @@ const AccessControlNew = () => {
     return (
       <>
         <Tag color="blue" style={{ marginRight: 3 }}>
-         {label} 
+          {label}
         </Tag>
         <span style={{ fontSize: ".85em" }}>{peersCount}</span>
       </>
@@ -647,7 +651,7 @@ const AccessControlNew = () => {
                         {!direction.biDirectional &&
                         !direction.reverseDirectional ? (
                           <img
-                            src={outBoundGreen}
+                            src={outBoundblue}
                             style={{
                               width: "100%",
                               maxWidth: "45px",
@@ -665,7 +669,7 @@ const AccessControlNew = () => {
                           />
                         ) : (
                           <img
-                            src={outBoundGreen}
+                            src={forwardDefault}
                             style={{
                               width: "100%",
                               maxWidth: "45px",
@@ -708,14 +712,35 @@ const AccessControlNew = () => {
                             : "default"
                         }
                       >
-                        <img
-                          src={inbound}
-                          style={{
-                            width: "100%",
-                            maxWidth: "45px",
-                          }}
-                          alt="out icon"
-                        />
+                        {direction.reverseDirectional &&
+                        direction.biDirectional ? (
+                          <img
+                            src={reverseGreen}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        ) : direction.reverseDirectional ? (
+                          <img
+                            src={inbound}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        ) : (
+                          <img
+                            src={reverseDefault}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        )}
                       </Tag>
                     </Button>
                   </Col>

@@ -442,8 +442,12 @@ export const AccessControl = () => {
         </div>
       );
     });
-    const mainContent = <Space direction="vertical">{content}</Space>;
-    return (
+    const updateContent =
+      groups && groups.length > 1 ? content && content?.slice(1) : content;
+    const mainContent = <Space direction="vertical">{updateContent}</Space>;
+    return groups && groups.length === 1 ? (
+      <> {label}</>
+    ) : (
       <Popover
         onOpenChange={(b: boolean) => onPopoverVisibleChange(b, rule.key)}
         open={groupPopupVisible === rule.key}
@@ -452,16 +456,12 @@ export const AccessControl = () => {
       >
         <>
           {label}
-          <Button type="ghost" onClick={() => setPolicyAndView(rule)}>
-            {groups && groups?.length > 1 && (
-              <Button
-                size="small"
-                type="link"
-                style={{ marginLeft: -3, padding: "0" }}
-              >
-                +{groups.length - 1}
-              </Button>
-            )}
+          <Button
+            type="link"
+            onClick={() => setPolicyAndView(rule)}
+            style={{ padding: "0 5px" }}
+          >
+            +{groups && groups.length - 1}
           </Button>
         </>
       </Popover>
