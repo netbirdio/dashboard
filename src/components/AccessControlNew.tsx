@@ -604,7 +604,6 @@ const AccessControlNew = () => {
                         tagRender={blueTagRender}
                         onChange={handleChangeSource}
                         dropdownRender={dropDownRenderGroups}
-                        maxTagCount="responsive"
                       >
                         {tagGroups.map((m) => (
                           <Option key={m}>{optionRender(m)}</Option>
@@ -758,7 +757,6 @@ const AccessControlNew = () => {
                         tagRender={blueTagRender}
                         onChange={handleChangeDestination}
                         dropdownRender={dropDownRenderGroups}
-                        maxTagCount="responsive"
                       >
                         {tagGroups.map((m) => (
                           <Option key={m}>{optionRender(m)}</Option>
@@ -847,7 +845,6 @@ const AccessControlNew = () => {
                     className="inconsolata-font"
                     placeholder="Tags Mode"
                     tagRender={tagRender}
-                    maxTagCount="responsive"
                     onChange={handleChangePorts}
                     dropdownRender={dropDownRenderPorts}
                     disabled={

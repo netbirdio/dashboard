@@ -674,7 +674,6 @@ const AccessControlEdit = () => {
                             tagRender={blueTagRender}
                             onChange={handleChangeSource}
                             dropdownRender={dropDownRenderGroups}
-                            maxTagCount="responsive"
                           >
                             {tagGroups.map((m) => (
                               <Option key={m}>{optionRender(m)}</Option>
@@ -828,7 +827,6 @@ const AccessControlEdit = () => {
                             tagRender={blueTagRender}
                             onChange={handleChangeDestination}
                             dropdownRender={dropDownRenderGroups}
-                            maxTagCount="responsive"
                           >
                             {tagGroups.map((m) => (
                               <Option key={m}>{optionRender(m)}</Option>
@@ -851,7 +849,6 @@ const AccessControlEdit = () => {
                         onChange={handleChangeProtocol}
                         className="inconsolata-font"
                         defaultValue={"all"}
-                        maxTagCount="responsive"
                       />
                     </Form.Item>
                   </Col>
@@ -886,7 +883,6 @@ const AccessControlEdit = () => {
                         onChange={handleChangePorts}
                         className="inconsolata-font"
                         dropdownRender={dropDownRenderPorts}
-                        maxTagCount="responsive"
                         disabled={
                           formPolicy.protocol === "all" ||
                           formPolicy.protocol === "icmp"
