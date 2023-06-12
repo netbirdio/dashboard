@@ -27,7 +27,8 @@ const actions = {
     removePolicy: createAction('REMOVE_POLICY')<string>(),
 
     setPolicy: createAction('SET_POLICY')<Policy>(),
-    setSetupNewPolicyVisible: createAction('SET_SETUP_NEW_POLICY_VISIBLE')<boolean>()
+    setSetupNewPolicyVisible: createAction('SET_SETUP_NEW_POLICY_VISIBLE')<boolean>(),
+    setSetupEditPolicyVisible: createAction('SET_SETUP_EDIT_POLICY_VISIBLE')<boolean>()
 };
 
 export type ActionTypes = ActionType<typeof actions>;

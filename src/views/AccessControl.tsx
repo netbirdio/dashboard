@@ -32,6 +32,7 @@ import { EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import bidirect from "../assets/direct_bi.svg";
 import outbound from "../assets/direct_out.svg";
 import AccessControlNew from "../components/AccessControlNew";
+import AccessControlEdit from "../components/AccessControlEdit";
 import { Group } from "../store/group/types";
 import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
@@ -93,6 +94,9 @@ export const AccessControl = () => {
   const setupNewPolicyVisible = useSelector(
     (state: RootState) => state.policy.setupNewPolicyVisible
   );
+  const setupEditPolicyVisible = useSelector(
+    (state: RootState) => state.policy.setupEditPolicyVisible
+  );
   const [groupPopupVisible, setGroupPopupVisible] = useState("");
 
   const optionsAllEnabled = [
@@ -101,13 +105,7 @@ export const AccessControl = () => {
   ];
 
   const getSourceDestinationLabel = (data: Group[]): string => {
-    return !data
-      ? "No group"
-      : data.length > 1
-      ? `${data.length} Groups`
-      : data.length === 1
-      ? data[0].name
-      : "No group";
+    return !data ? "No group" : data[0].name;
   };
 
   const isShowTutorial = (policy: Policy[]): boolean => {
@@ -115,6 +113,12 @@ export const AccessControl = () => {
       !policy.length || (policy.length === 1 && policy[0].name === "Default")
     );
   };
+
+  useEffect(() => {
+    return () => {
+      dispatch(policyActions.setSetupNewPolicyVisible(false));
+    };
+  }, []);
 
   const transformDataTable = (d: Policy[]): PolicyDataTable[] => {
     return d.map((policy) => {
@@ -189,6 +193,7 @@ export const AccessControl = () => {
         duration: 2,
         style: styleNotification,
       });
+      dispatch(policyActions.setSetupEditPolicyVisible(false));
       dispatch(policyActions.setSetupNewPolicyVisible(false));
       dispatch(
         policyActions.setSavedPolicy({ ...savedPolicy, success: false })
@@ -364,7 +369,7 @@ export const AccessControl = () => {
   };
 
   const setPolicyAndView = (p: PolicyDataTable) => {
-    dispatch(policyActions.setSetupNewPolicyVisible(true));
+    dispatch(policyActions.setSetupEditPolicyVisible(true));
     dispatch(
       policyActions.setPolicy({
         id: p.id || null,
@@ -437,17 +442,28 @@ export const AccessControl = () => {
         </div>
       );
     });
-    const mainContent = <Space direction="vertical">{content}</Space>;
-    return (
+    const updateContent =
+      groups && groups.length > 1 ? content && content?.slice(1) : content;
+    const mainContent = <Space direction="vertical">{updateContent}</Space>;
+    return groups && groups.length === 1 ? (
+      <> {label}</>
+    ) : (
       <Popover
         onOpenChange={(b: boolean) => onPopoverVisibleChange(b, rule.key)}
         open={groupPopupVisible === rule.key}
         content={mainContent}
         title={null}
       >
-        <Button type="link" onClick={() => setPolicyAndView(rule)}>
+        <>
           {label}
-        </Button>
+          <Button
+            type="link"
+            onClick={() => setPolicyAndView(rule)}
+            style={{ padding: "0 5px" }}
+          >
+            +{groups && groups.length - 1}
+          </Button>
+        </>
       </Popover>
     );
   };
@@ -474,7 +490,7 @@ export const AccessControl = () => {
               textAlign: "center",
             }}
           >
-            <Button size="small" type="link" style={{marginLeft: -3}}>
+            <Button size="small" type="link" style={{ marginLeft: -3 }}>
               +{content.length - 2}
             </Button>
           </Popover>
@@ -525,250 +541,268 @@ export const AccessControl = () => {
 
   return (
     <>
-      <Container className="container-main">
-        <Row>
-          <Col span={24}>
-            <Title level={4}>Access Control</Title>
-            <Paragraph>
-              Access rules help you manage access permissions in your
-              organisation.
-            </Paragraph>
-            <Space
-              direction="vertical"
-              size="large"
-              style={{ display: "flex" }}
-            >
-              <Row gutter={[16, 24]}>
-                <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                  <Input
-                    allowClear
-                    value={textToSearch}
-                    onPressEnter={searchDataTable}
-                    placeholder="Search..."
-                    onChange={onChangeTextToSearch}
-                  />
-                </Col>
-                <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
-                  <Space size="middle">
-                    <Radio.Group
-                      options={optionsAllEnabled}
-                      onChange={onChangeAllEnabled}
-                      value={optionAllEnable}
-                      optionType="button"
-                      buttonStyle="solid"
-                    />
-                    <Select
-                      value={pageSize.toString()}
-                      options={pageSizeOptions}
-                      onChange={onChangePageSize}
-                      className="select-rows-per-page-en"
-                    />
-                  </Space>
-                </Col>
-                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                  <Row justify="end">
-                    <Col>
-                      <Button
-                        type="primary"
-                        disabled={savedPolicy.loading}
-                        onClick={onClickAddNewPolicy}
-                      >
-                        Add Rule
-                      </Button>
+      {!setupEditPolicyVisible && (
+        <>
+          <Container className="container-main">
+            <Row>
+              <Col span={24}>
+                <Title level={4}>Access Control</Title>
+                <Paragraph>
+                  Access rules help you manage access permissions in your
+                  organisation.
+                </Paragraph>
+                <Space
+                  direction="vertical"
+                  size="large"
+                  style={{ display: "flex" }}
+                >
+                  <Row gutter={[16, 24]}>
+                    <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
+                      <Input
+                        allowClear
+                        value={textToSearch}
+                        onPressEnter={searchDataTable}
+                        placeholder="Search..."
+                        onChange={onChangeTextToSearch}
+                      />
+                    </Col>
+                    <Col
+                      xs={24}
+                      sm={24}
+                      md={11}
+                      lg={11}
+                      xl={11}
+                      xxl={11}
+                      span={11}
+                    >
+                      <Space size="middle">
+                        <Radio.Group
+                          options={optionsAllEnabled}
+                          onChange={onChangeAllEnabled}
+                          value={optionAllEnable}
+                          optionType="button"
+                          buttonStyle="solid"
+                        />
+                        <Select
+                          value={pageSize.toString()}
+                          options={pageSizeOptions}
+                          onChange={onChangePageSize}
+                          className="select-rows-per-page-en"
+                        />
+                      </Space>
+                    </Col>
+                    <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                      <Row justify="end">
+                        <Col>
+                          <Button
+                            type="primary"
+                            disabled={savedPolicy.loading}
+                            onClick={onClickAddNewPolicy}
+                          >
+                            Add Rule
+                          </Button>
+                        </Col>
+                      </Row>
                     </Col>
                   </Row>
-                </Col>
-              </Row>
-              {failed && (
-                <Alert
-                  message={failed.message}
-                  description={failed.data ? failed.data.message : " "}
-                  type="error"
-                  showIcon
-                  closable
-                />
-              )}
-              <Card bodyStyle={{ padding: 0 }}>
-                <Table
-                  pagination={{
-                    current: currentPage,
-                    hideOnSinglePage: showTutorial,
-                    disabled: showTutorial,
-                    pageSize,
-                    responsive: true,
-                    showSizeChanger: false,
-                    showTotal: (total, range) =>
-                      `Showing ${range[0]} to ${range[1]} of ${total} rules`,
-                    onChange: (page, pageSize) => {
-                      setCurrentPage(page);
-                    },
-                  }}
-                  className={`access-control-table ${
-                    showTutorial
-                      ? "card-table card-table-no-placeholder"
-                      : "card-table"
-                  }`}
-                  showSorterTooltip={false}
-                  scroll={{ x: true }}
-                  loading={tableSpin(loading)}
-                  dataSource={dataTable}
-                >
-                  <Column
-                    title="Name"
-                    dataIndex="name"
-                    onFilter={(value: string | number | boolean, record) =>
-                      (record as any).name.includes(value)
-                    }
-                    sorter={(a, b) =>
-                      (a as any).name.localeCompare((b as any).name)
-                    }
-                    defaultSortOrder="ascend"
-                    render={(text, record, index) => {
-                      const desc = (
-                        record as PolicyDataTable
-                      ).description.trim();
-                      return (
-                        <Tooltip
-                          title={desc !== "" ? desc : "no description"}
-                          arrowPointAtCenter
-                        >
-                          <span
-                            onClick={() =>
-                              setPolicyAndView(record as PolicyDataTable)
-                            }
-                            className="tooltip-label"
-                          >
-                            <Text strong>{text}</Text>
-                          </span>
-                        </Tooltip>
-                      );
-                    }}
-                  />
-                  <Column
-                    title="Enabled"
-                    dataIndex="enabled"
-                    render={(text: Boolean, record: PolicyDataTable, index) => {
-                      return (
-                        <Switch
-                          size={"small"}
-                          checked={record.enabled}
-                          onChange={(isOpen: boolean) => {
-                            onEnableChange(isOpen, record);
-                          }}
-                        />
-                      );
-                    }}
-                  />
-                  <Column
-                    title="Sources"
-                    dataIndex="sourceLabel"
-                    render={(text, record: PolicyDataTable, index) => {
-                      return renderPopoverGroups(
-                        text,
-                        record.sources,
-                        record as PolicyDataTable
-                      );
-                    }}
-                  />
-                  <Column
-                    title="Direction"
-                    dataIndex="bidirectional"
-                    render={(text, record: PolicyDataTable, index) => {
-                      const s = {
-                        minWidth: 62,
-                        textAlign: "center",
-                      } as React.CSSProperties;
-                      if (record.bidirectional) {
-                        return (
-                          <Tag color="green" style={s}>
-                            <img src={bidirect} alt="bi icon" />
-                          </Tag>
-                        );
-                      }
-                      return (
-                        <Tag color="processing" style={s}>
-                          <img src={outbound} alt="out icon" />
-                        </Tag>
-                      );
-                    }}
-                  />
-                  <Column
-                    title="Destinations"
-                    dataIndex="destinationLabel"
-                    render={(text, record: PolicyDataTable, index) => {
-                      return renderPopoverGroups(
-                        text,
-                        record.destinations,
-                        record as PolicyDataTable
-                      );
-                    }}
-                  />
-                  <Column
-                    title="Protocol"
-                    dataIndex="protocol"
-                    render={(text, record: PolicyDataTable, index) => {
-                      return (
-                        <Tag
-                          style={{
-                            marginRight: "3",
-                            textTransform: "uppercase",
-                          }}
-                        >
-                          {record.protocol}
-                        </Tag>
-                      );
-                    }}
-                  />
-                  <Column
-                    title="Ports"
-                    dataIndex="ports"
-                    render={(text, record: PolicyDataTable, index) => {
-                      return renderPorts(record.ports);
-                    }}
-                  />
-                  <Column
-                    title=""
-                    align="center"
-                    render={(text, record: PolicyDataTable, index) => {
-                      return (
-                        <Button
-                          type="text"
-                          danger={true}
-                          disabled={
-                            deletedPolicy.loading || savedPolicy.loading
+                  {failed && (
+                    <Alert
+                      message={failed.message}
+                      description={failed.data ? failed.data.message : " "}
+                      type="error"
+                      showIcon
+                      closable
+                    />
+                  )}
+                  <Card bodyStyle={{ padding: 0 }}>
+                    <Table
+                      pagination={{
+                        current: currentPage,
+                        hideOnSinglePage: showTutorial,
+                        disabled: showTutorial,
+                        pageSize,
+                        responsive: true,
+                        showSizeChanger: false,
+                        showTotal: (total, range) =>
+                          `Showing ${range[0]} to ${range[1]} of ${total} rules`,
+                        onChange: (page, pageSize) => {
+                          setCurrentPage(page);
+                        },
+                      }}
+                      className={`access-control-table ${
+                        showTutorial
+                          ? "card-table card-table-no-placeholder"
+                          : "card-table"
+                      }`}
+                      showSorterTooltip={false}
+                      scroll={{ x: true }}
+                      loading={tableSpin(loading)}
+                      dataSource={dataTable}
+                    >
+                      <Column
+                        title="Name"
+                        dataIndex="name"
+                        onFilter={(value: string | number | boolean, record) =>
+                          (record as any).name.includes(value)
+                        }
+                        sorter={(a, b) =>
+                          (a as any).name.localeCompare((b as any).name)
+                        }
+                        defaultSortOrder="ascend"
+                        render={(text, record, index) => {
+                          const desc = (
+                            record as PolicyDataTable
+                          ).description.trim();
+                          return (
+                            <Tooltip
+                              title={desc !== "" ? desc : "no description"}
+                              arrowPointAtCenter
+                            >
+                              <span
+                                onClick={() =>
+                                  setPolicyAndView(record as PolicyDataTable)
+                                }
+                                className="tooltip-label"
+                              >
+                                <Text strong>{text}</Text>
+                              </span>
+                            </Tooltip>
+                          );
+                        }}
+                      />
+                      <Column
+                        title="Enabled"
+                        dataIndex="enabled"
+                        render={(
+                          text: Boolean,
+                          record: PolicyDataTable,
+                          index
+                        ) => {
+                          return (
+                            <Switch
+                              size={"small"}
+                              checked={record.enabled}
+                              onChange={(isOpen: boolean) => {
+                                onEnableChange(isOpen, record);
+                              }}
+                            />
+                          );
+                        }}
+                      />
+                      <Column
+                        title="Sources"
+                        dataIndex="sourceLabel"
+                        render={(text, record: PolicyDataTable, index) => {
+                          return renderPopoverGroups(
+                            text,
+                            record.sources,
+                            record as PolicyDataTable
+                          );
+                        }}
+                      />
+                      <Column
+                        title="Direction"
+                        dataIndex="bidirectional"
+                        render={(text, record: PolicyDataTable, index) => {
+                          const s = {
+                            minWidth: 62,
+                            textAlign: "center",
+                          } as React.CSSProperties;
+                          if (record.bidirectional) {
+                            return (
+                              <Tag color="green" style={s}>
+                                <img src={bidirect} alt="bi icon" />
+                              </Tag>
+                            );
                           }
-                          onClick={() => showConfirmDelete(record)}
-                        >
-                          Delete
+                          return (
+                            <Tag color="processing" style={s}>
+                              <img src={outbound} alt="out icon" />
+                            </Tag>
+                          );
+                        }}
+                      />
+                      <Column
+                        title="Destinations"
+                        dataIndex="destinationLabel"
+                        render={(text, record: PolicyDataTable, index) => {
+                          return renderPopoverGroups(
+                            text,
+                            record.destinations,
+                            record as PolicyDataTable
+                          );
+                        }}
+                      />
+                      <Column
+                        title="Protocol"
+                        dataIndex="protocol"
+                        render={(text, record: PolicyDataTable, index) => {
+                          return (
+                            <Tag
+                              style={{
+                                marginRight: "3",
+                                textTransform: "uppercase",
+                              }}
+                            >
+                              {record.protocol}
+                            </Tag>
+                          );
+                        }}
+                      />
+                      <Column
+                        title="Ports"
+                        dataIndex="ports"
+                        render={(text, record: PolicyDataTable, index) => {
+                          return renderPorts(record.ports);
+                        }}
+                      />
+                      <Column
+                        title=""
+                        align="center"
+                        render={(text, record: PolicyDataTable, index) => {
+                          return (
+                            <Button
+                              type="text"
+                              danger={true}
+                              disabled={
+                                deletedPolicy.loading || savedPolicy.loading
+                              }
+                              onClick={() => showConfirmDelete(record)}
+                            >
+                              Delete
+                            </Button>
+                          );
+                        }}
+                      />
+                    </Table>
+                    {showTutorial && (
+                      <Space
+                        direction="vertical"
+                        size="small"
+                        align="center"
+                        style={{ display: "flex", padding: "45px 15px" }}
+                      >
+                        <Button type="link" onClick={onClickAddNewPolicy}>
+                          Add new access rule
                         </Button>
-                      );
-                    }}
-                  />
-                </Table>
-                {showTutorial && (
-                  <Space
-                    direction="vertical"
-                    size="small"
-                    align="center"
-                    style={{ display: "flex", padding: "45px 15px" }}
-                  >
-                    <Button type="link" onClick={onClickAddNewPolicy}>
-                      Add new access rule
-                    </Button>
-                  </Space>
-                )}
-              </Card>
-            </Space>
-          </Col>
-        </Row>
-      </Container>
-      <AccessControlModalGroups
-        data={groupsToShow.groups}
-        title={groupsToShow.title}
-        visible={groupsToShow.modalVisible}
-        onCancel={() => toggleModalGroups("", [], false)}
-      />
-      <AccessControlNew />
+                      </Space>
+                    )}
+                  </Card>
+                </Space>
+              </Col>
+            </Row>
+          </Container>
+          <AccessControlModalGroups
+            data={groupsToShow.groups}
+            title={groupsToShow.title}
+            visible={groupsToShow.modalVisible}
+            onCancel={() => toggleModalGroups("", [], false)}
+          />
+          {setupNewPolicyVisible && <AccessControlNew />}
+        </>
+      )}
+
+      {setupEditPolicyVisible && <AccessControlEdit />}
     </>
   );
 };
