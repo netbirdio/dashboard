@@ -5,37 +5,39 @@ import actions, { ActionTypes } from './actions';
 import { ApiError, DeleteResponse, CreateResponse } from "../../services/api-client/types";
 
 type StateType = Readonly<{
-    data: Policy[] | null;
-    policy: Policy | null;
-    loading: boolean;
-    failed: ApiError | null;
-    saving: boolean;
-    deletePolicy: DeleteResponse<string | null>;
-    savedPolicy: CreateResponse<Policy | null>;
-    setupNewPolicyVisible: boolean
+  data: Policy[] | null;
+  policy: Policy | null;
+  loading: boolean;
+  failed: ApiError | null;
+  saving: boolean;
+  deletePolicy: DeleteResponse<string | null>;
+  savedPolicy: CreateResponse<Policy | null>;
+  setupNewPolicyVisible: boolean;
+  setupEditPolicyVisible: boolean;
 }>;
 
 const initialState: StateType = {
-    data: [],
-    policy: null,
+  data: [],
+  policy: null,
+  loading: false,
+  failed: null,
+  saving: false,
+  deletePolicy: <DeleteResponse<string | null>>{
     loading: false,
-    failed: null,
-    saving: false,
-    deletePolicy: <DeleteResponse<string | null>>{
-        loading: false,
-        success: false,
-        failure: false,
-        error: null,
-        data: null
-    },
-    savedPolicy: <CreateResponse<Policy | null>>{
-        loading: false,
-        success: false,
-        failure: false,
-        error: null,
-        data: null
-    },
-    setupNewPolicyVisible: false
+    success: false,
+    failure: false,
+    error: null,
+    data: null,
+  },
+  savedPolicy: <CreateResponse<Policy | null>>{
+    loading: false,
+    success: false,
+    failure: false,
+    error: null,
+    data: null,
+  },
+  setupNewPolicyVisible: false,
+  setupEditPolicyVisible: false,
 };
 
 const data = createReducer<Policy[], ActionTypes>(initialState.data as Policy[])
@@ -77,13 +79,17 @@ const savedPolicy = createReducer<CreateResponse<Policy | null>, ActionTypes>(in
 const setupNewPolicyVisible = createReducer<boolean, ActionTypes>(initialState.setupNewPolicyVisible)
     .handleAction(actions.setSetupNewPolicyVisible, (store, action) => action.payload)
 
+const setupEditPolicyVisible = createReducer<boolean, ActionTypes>(initialState.setupEditPolicyVisible)
+    .handleAction(actions.setSetupEditPolicyVisible, (store, action) => action.payload)
+
 export default combineReducers({
-    data,
-    policy,
-    loading,
-    failed,
-    saving,
-    deletedPolicy,
-    savedPolicy,
-    setupNewPolicyVisible
+  data,
+  policy,
+  loading,
+  failed,
+  saving,
+  deletedPolicy,
+  savedPolicy,
+  setupNewPolicyVisible,
+  setupEditPolicyVisible,
 });

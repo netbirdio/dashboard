@@ -6,11 +6,9 @@ import {
   Button,
   Col,
   Divider,
-  Drawer,
   Form,
   Input,
-  Radio,
-  RadioChangeEvent,
+  Modal,
   Row,
   Select,
   SelectProps,
@@ -19,11 +17,12 @@ import {
   Tag,
   Typography,
 } from "antd";
-import {
-  CloseOutlined,
-  FlagFilled,
-  QuestionCircleFilled,
-} from "@ant-design/icons";
+import inbound from "../assets/in_bound.svg";
+import outBoundGreen from "../assets/out_bound_green.svg";
+import outBoundblue from "../assets/out_bound_blue.svg";
+import reverseDefault from "../assets/reverse_default.svg";
+import forwardDefault from "../assets/forward_default.svg";
+import reverseGreen from "../assets/reverse_green.svg";
 import type { CustomTagProps } from "rc-select/lib/BaseSelect";
 import { Policy, PolicyToSave } from "../store/policy/types";
 import { uniq } from "lodash";
@@ -33,6 +32,7 @@ import { useGetTokenSilently } from "../utils/token";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
+const { Text } = Typography;
 
 interface FormPolicy {
   id?: string;
@@ -72,16 +72,15 @@ const AccessControlNew = () => {
 
   const [editName, setEditName] = useState(false);
   const [editDescription, setEditDescription] = useState(false);
+  const [direction, setDirection] = useState<any>({
+    biDirectional: true,
+    reverseDirectional: true,
+  });
   const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formPolicy, setFormPolicy] = useState({} as FormPolicy);
   const [form] = Form.useForm();
   const inputNameRef = useRef<any>(null);
   const inputDescriptionRef = useRef<any>(null);
-
-  const optionsStatusEnabled = [
-    { label: "Enabled", value: true },
-    { label: "Disabled", value: false },
-  ];
 
   useEffect(() => {
     if (editName) inputNameRef.current!.focus({ cursor: "end" });
@@ -119,8 +118,7 @@ const AccessControlNew = () => {
     const sources =
       groups
         ?.filter((g) => formPolicy.tagSourceGroups.includes(g.name))
-            .map((g) => g.id || "") || [];
-      console.log("sources", sources);
+        .map((g) => g.id || "") || [];
     const destinations =
       groups
         ?.filter((g) => formPolicy.tagDestinationGroups.includes(g.name))
@@ -146,8 +144,14 @@ const AccessControlNew = () => {
           name: formPolicy.name,
           description: formPolicy.description,
           enabled: formPolicy.enabled,
-          sources,
-          destinations,
+          sources:
+            direction.reverseDirectional && !direction.biDirectional
+              ? destinations
+              : sources,
+          destinations:
+            direction.reverseDirectional && !direction.biDirectional
+              ? sources
+              : destinations,
           bidirectional: formPolicy.bidirectional,
           protocol: formPolicy.protocol,
           ports: formPolicy.ports,
@@ -224,10 +228,14 @@ const AccessControlNew = () => {
   };
 
   const handleChangeProtocol = (value: string) => {
+    if (value === "all" || value === "icmp") {
+      setDirection({
+        biDirectional: true,
+        reverseDirectional: true,
+      });
+    }
     setFormPolicy({
       ...formPolicy,
-      bidirectional:
-        value === "all" || value === "icmp" ? true : formPolicy.bidirectional,
       ports: value === "all" || value === "icmp" ? [] : formPolicy.ports,
       protocol: value,
     });
@@ -240,10 +248,10 @@ const AccessControlNew = () => {
     });
   };
 
-  const handleChangeDisabled = ({ target: { value } }: RadioChangeEvent) => {
+  const handleChangeDisabled = (checked: boolean) => {
     setFormPolicy({
       ...formPolicy,
-      enabled: value,
+      enabled: checked,
     });
   };
 
@@ -254,7 +262,7 @@ const AccessControlNew = () => {
     });
   };
 
-  const tagRender = (props: CustomTagProps) => {
+  const blueTagRender = (props: CustomTagProps) => {
     const { value, closable, onClose } = props;
     const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
       event.preventDefault();
@@ -269,7 +277,27 @@ const AccessControlNew = () => {
         onClose={onClose}
         style={{ marginRight: 3 }}
       >
-        <strong>{value}</strong>
+        {value}
+      </Tag>
+    );
+  };
+
+  const tagRender = (props: CustomTagProps) => {
+    const { value, closable, onClose } = props;
+    const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
+      event.preventDefault();
+      event.stopPropagation();
+    };
+
+    return (
+      <Tag
+        color="default"
+        onMouseDown={onPreventMouseDown}
+        closable={closable}
+        onClose={onClose}
+        style={{ marginRight: 3 }}
+      >
+        {value}
       </Tag>
     );
   };
@@ -284,7 +312,7 @@ const AccessControlNew = () => {
     return (
       <>
         <Tag color="blue" style={{ marginRight: 3 }}>
-          <strong>{label}</strong>
+          {label}
         </Tag>
         <span style={{ fontSize: ".85em" }}>{peersCount}</span>
       </>
@@ -347,19 +375,9 @@ const AccessControlNew = () => {
     </>
   );
 
-  const toggleEditName = (status: boolean) => {
-    setEditName(status);
-  };
-
   const toggleEditDescription = (status: boolean) => {
     setEditDescription(status);
   };
-
-  // const testDeleteGroup = () => {
-  //     groups.forEach(g => {
-  //         dispatch(groupsActions.deleteGroup.request({getAccessTokenSilently, payload: g.ID || ''}))
-  //     })
-  // }
 
   const selectValidator = (_: RuleObject, value: string[]) => {
     let hasSpaceNamed = [];
@@ -387,7 +405,7 @@ const AccessControlNew = () => {
       var failed = false;
       value.forEach(function (v: string) {
         let p = Number(v);
-        if (Number.isNaN(p) || p < 1 || p > 65535) {
+        if (Number.isNaN(p) || p < 1 || p > 65535 || !Number.isInteger(p)) {
           failed = true;
           return;
         }
@@ -408,16 +426,56 @@ const AccessControlNew = () => {
     return Promise.resolve();
   };
 
+  const handleDirection = (directionValue: string) => {
+    if (
+      directionValue === "forwardDirectional" &&
+      !direction.reverseDirectional
+    ) {
+      setDirection({
+        biDirectional: false,
+        reverseDirectional: false,
+      });
+    }
+
+    if (
+      directionValue === "forwardDirectional" &&
+      direction.reverseDirectional
+    ) {
+      setDirection({
+        ...direction,
+        biDirectional: !direction.biDirectional,
+      });
+    }
+
+    if (directionValue === "reverseDirectional" && direction.biDirectional) {
+      setDirection({
+        biDirectional: false,
+        reverseDirectional: !direction.reverseDirectional,
+      });
+    }
+
+    if (directionValue === "reverseDirectional" && !direction.biDirectional) {
+      setDirection({
+        biDirectional: true,
+        reverseDirectional: true,
+      });
+    }
+  };
+  useEffect(() => {
+    if (Object.keys(formPolicy).length > 0) {
+      setFormPolicy({
+        ...formPolicy,
+        bidirectional: direction.biDirectional,
+      });
+    }
+  }, [direction]);
+
   return (
     <>
       {policy && (
-        <Drawer
-          headerStyle={{ display: "none" }}
-          forceRender={true}
-          visible={setupNewPolicyVisible}
-          bodyStyle={{ paddingBottom: 80 }}
-          onClose={onCancel}
-          autoFocus={true}
+        <Modal
+          open={setupNewPolicyVisible}
+          onCancel={onCancel}
           footer={
             <Space style={{ display: "flex", justifyContent: "end" }}>
               <Button onClick={onCancel} disabled={savedPolicy.loading}>
@@ -427,13 +485,16 @@ const AccessControlNew = () => {
                 type="primary"
                 disabled={savedPolicy.loading}
                 onClick={handleFormSubmit}
-              >{`${formPolicy.id ? "Save" : "Create"}`}</Button>
+              >
+                {" "}
+                Create Rule
+              </Button>
             </Space>
           }
         >
           <Form
             layout="vertical"
-            hideRequiredMark
+            requiredMark={false}
             form={form}
             onValuesChange={onChange}
           >
@@ -441,78 +502,78 @@ const AccessControlNew = () => {
               <Col span={24}>
                 <Header
                   style={{
-                    margin: "-32px -24px 20px -24px",
-                    padding: "24px 24px 0 24px",
+                    border: "none",
                   }}
                 >
+                  <Paragraph
+                    style={{
+                      textAlign: "start",
+                      whiteSpace: "pre-line",
+                      fontSize: "22px",
+                      margin: "0px",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    Create Rule
+                  </Paragraph>
                   <Row align="top">
-                    <Col flex="none" style={{ display: "flex" }}>
-                      {!editName && !editDescription && formPolicy.id && (
-                        <button
-                          type="button"
-                          aria-label="Close"
-                          className="ant-drawer-close"
-                          style={{ paddingTop: 3 }}
-                          onClick={onCancel}
-                        >
-                          <span
-                            role="img"
-                            aria-label="close"
-                            className="anticon anticon-close"
-                          >
-                            <CloseOutlined size={16} />
-                          </span>
-                        </button>
-                      )}
-                    </Col>
                     <Col flex="auto">
-                      {!editName && formPolicy.id ? (
-                        <div
-                          className={
-                            "access-control input-text ant-drawer-title"
-                          }
-                          onClick={() => toggleEditName(true)}
-                        >
-                          {formPolicy.id ? formPolicy.name : "New Rule"}
-                        </div>
-                      ) : (
-                        <Form.Item
-                          name="name"
-                          label="Name"
-                          rules={[
-                            {
-                              required: true,
-                              message: "Please add a name for this access rule",
-                              whitespace: true,
-                            },
-                          ]}
-                        >
-                          <Input
-                            placeholder="Add rule name..."
-                            ref={inputNameRef}
-                            onPressEnter={() => toggleEditName(false)}
-                            onBlur={() => toggleEditName(false)}
-                            autoComplete="off"
-                          />
-                        </Form.Item>
-                      )}
+                      <Paragraph
+                        style={{
+                          whiteSpace: "pre-line",
+                          margin: 0,
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Rule name
+                      </Paragraph>
+                      <Paragraph
+                        type={"secondary"}
+                        style={{ marginTop: "-2px", marginBottom: "8px" }}
+                      >
+                        Create a name to define the rule
+                      </Paragraph>
+                      <Form.Item
+                        name="name"
+                        label=""
+                        style={{ margin: "0" }}
+                        rules={[
+                          {
+                            required: true,
+                            message: "Please add a name for this access rule",
+                            whitespace: true,
+                          },
+                        ]}
+                      >
+                        <Input
+                          placeholder={'for example "UserAccessRule"'}
+                          autoComplete="off"
+                        />
+                      </Form.Item>
+
                       {!editDescription ? (
                         <div
-                          className={
-                            "access-control input-text ant-drawer-subtitle"
-                          }
                           onClick={() => toggleEditDescription(true)}
+                          style={{
+                            margin: "12px 0 30px",
+                            lineHeight: "22px",
+                            cursor: "pointer",
+                          }}
                         >
                           {formPolicy.description &&
-                          formPolicy.description.trim() !== ""
-                            ? formPolicy.description
-                            : "Add description..."}
+                          formPolicy.description.trim() !== "" ? (
+                            formPolicy.description
+                          ) : (
+                            <span style={{ textDecoration: "underline" }}>
+                              Add description
+                            </span>
+                          )}
                         </div>
                       ) : (
                         <Form.Item
                           name="description"
                           label="Description"
-                          style={{ marginTop: 24 }}
+                          style={{ marginTop: 24, fontWeight: "600" }}
                         >
                           <Input
                             placeholder="Add description..."
@@ -525,84 +586,210 @@ const AccessControlNew = () => {
                       )}
                     </Col>
                   </Row>
-                  <Row align="top">
-                    <Col flex="auto"></Col>
-                  </Row>
                 </Header>
               </Col>
-              <Col span={24}></Col>
               <Col span={24}>
-                <Form.Item name="enabled" label="Status">
-                  <Radio.Group
-                    options={optionsStatusEnabled}
-                    onChange={handleChangeDisabled}
-                    optionType="button"
-                    buttonStyle="solid"
-                    defaultValue={false}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <Form.Item
-                  name="tagSourceGroups"
-                  label="Source groups"
-                  rules={[{ validator: selectValidator }]}
-                >
-                  <Select
-                    mode="tags"
-                    style={{ width: "100%" }}
-                    placeholder="Tags Mode"
-                    tagRender={tagRender}
-                    onChange={handleChangeSource}
-                    dropdownRender={dropDownRenderGroups}
+                <Row gutter={15}>
+                  <Col span={10}>
+                    <Form.Item
+                      name="tagSourceGroups"
+                      label="Source groups"
+                      rules={[{ validator: selectValidator }]}
+                      style={{ fontWeight: "600" }}
+                    >
+                      <Select
+                        mode="tags"
+                        style={{ width: "100%", fontWeight: "500" }}
+                        placeholder="Tags Mode"
+                        tagRender={blueTagRender}
+                        onChange={handleChangeSource}
+                        dropdownRender={dropDownRenderGroups}
+                      >
+                        {tagGroups.map((m) => (
+                          <Option key={m}>{optionRender(m)}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                  <Col
+                    span={4}
+                    style={{ padding: "0 2.5px", lineHeight: "16px" }}
                   >
-                    {tagGroups.map((m) => (
-                      <Option key={m}>{optionRender(m)}</Option>
-                    ))}
-                  </Select>
-                </Form.Item>
+                    <Button
+                      type={"ghost"}
+                      disabled={
+                        formPolicy.protocol === "all" ||
+                        formPolicy.protocol === "icmp"
+                      }
+                      onClick={() => handleDirection("forwardDirectional")}
+                      style={{
+                        padding: "0",
+                        width: "100%",
+                        marginTop: "30px",
+                        height: "13px",
+                      }}
+                    >
+                      <Tag
+                        style={{
+                          marginInlineEnd: "0",
+                          width: "100%",
+                          textAlign: "center",
+                          height: "13px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                        color={
+                          !direction.biDirectional &&
+                          !direction.reverseDirectional
+                            ? "processing"
+                            : direction.biDirectional
+                            ? "green"
+                            : "default"
+                        }
+                      >
+                        {!direction.biDirectional &&
+                        !direction.reverseDirectional ? (
+                          <img
+                            src={outBoundblue}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        ) : direction.biDirectional ? (
+                          <img
+                            src={outBoundGreen}
+                            alt="out icon"
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                          />
+                        ) : (
+                          <img
+                            src={forwardDefault}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        )}
+                      </Tag>
+                    </Button>
+                    <Button
+                      type="ghost"
+                      disabled={
+                        formPolicy.protocol === "all" ||
+                        formPolicy.protocol === "icmp"
+                      }
+                      onClick={() => handleDirection("reverseDirectional")}
+                      style={{
+                        padding: "0",
+                        width: "100%",
+                        textAlign: "center",
+                        height: "13px",
+                        marginTop: "0",
+                      }}
+                    >
+                      <Tag
+                        style={{
+                          marginInlineEnd: "0",
+                          width: "100%",
+                          textAlign: "center",
+                          height: "13px",
+                          display: "flex",
+                          justifyContent: "center",
+                        }}
+                        color={
+                          direction.reverseDirectional &&
+                          direction.biDirectional
+                            ? "green"
+                            : direction.reverseDirectional
+                            ? "processing"
+                            : "default"
+                        }
+                      >
+                        {direction.reverseDirectional &&
+                        direction.biDirectional ? (
+                          <img
+                            src={reverseGreen}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        ) : direction.reverseDirectional ? (
+                          <img
+                            src={inbound}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        ) : (
+                          <img
+                            src={reverseDefault}
+                            style={{
+                              width: "100%",
+                              maxWidth: "45px",
+                            }}
+                            alt="out icon"
+                          />
+                        )}
+                      </Tag>
+                    </Button>
+                  </Col>
+                  <Col span={10}>
+                    <Form.Item
+                      name="tagDestinationGroups"
+                      label="Destination groups"
+                      rules={[{ validator: selectValidator }]}
+                      style={{ fontWeight: "600" }}
+                    >
+                      <Select
+                        mode="tags"
+                        style={{ width: "100%", fontWeight: "500" }}
+                        placeholder="Tags Mode"
+                        tagRender={blueTagRender}
+                        onChange={handleChangeDestination}
+                        dropdownRender={dropDownRenderGroups}
+                      >
+                        {tagGroups.map((m) => (
+                          <Option key={m}>{optionRender(m)}</Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </Col>
+                </Row>
               </Col>
               <Col span={24}>
                 <Form.Item
-                  name="bidirectional"
-                  label="Bi-Direct traffic flow"
-                  tooltip="Protocol type 'All' or 'ICMP' must be bi-directional. Directional traffic for TCP and UDP protocol requires at least one port to be defined."
+                  name="protocol"
+                  label="Protocol"
+                  style={{ fontWeight: "600" }}
+                  className="tag-box"
                 >
-                  <Switch
-                    size={"small"}
-                    disabled={
-                      formPolicy.protocol === "all" ||
-                      formPolicy.protocol === "icmp"
-                    }
-                    checked={formPolicy.bidirectional}
-                    onChange={handleChangeBidirect}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <Form.Item
-                  name="tagDestinationGroups"
-                  label="Destination groups"
-                  rules={[{ validator: selectValidator }]}
-                >
-                  <Select
-                    mode="tags"
-                    style={{ width: "100%" }}
-                    placeholder="Tags Mode"
-                    tagRender={tagRender}
-                    onChange={handleChangeDestination}
-                    dropdownRender={dropDownRenderGroups}
+                  <Paragraph
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-10px",
+                      fontWeight: "500",
+                      marginBottom: "8px",
+                    }}
                   >
-                    {tagGroups.map((m) => (
-                      <Option key={m}>{optionRender(m)}</Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <Form.Item name="protocol" label="Protocol">
+                    Add protocol to ensure controlled and secure access to
+                    resources
+                  </Paragraph>
                   <Select
-                    style={{ width: "100%" }}
+                    className="inconsolata-font"
+                    style={{
+                      width: "100%",
+                      maxWidth: "187px",
+                    }}
                     options={protocols}
                     onChange={handleChangeProtocol}
                     defaultValue={"all"}
@@ -610,9 +797,31 @@ const AccessControlNew = () => {
                 </Form.Item>
               </Col>
               <Col span={24}>
+                <div>
+                  <label
+                    style={{
+                      color: "rgba(0, 0, 0, 0.88)",
+                      fontSize: "14px",
+                      fontWeight: "600",
+                    }}
+                  >
+                    Port
+                  </label>
+                  <Paragraph
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-5px",
+                      fontWeight: "500",
+                      marginBottom: "8px",
+                    }}
+                  >
+                    Restrict incoming and outgoing network traffic using ports
+                  </Paragraph>
+                </div>
                 <Form.Item
                   name="ports"
-                  label="Ports"
+                  label=""
+                  style={{ fontWeight: "600" }}
                   rules={[
                     {
                       message: "Directional traffic requires at least one port",
@@ -628,7 +837,12 @@ const AccessControlNew = () => {
                 >
                   <Select
                     mode="tags"
-                    style={{ width: "100%" }}
+                    style={{
+                      width: "100%",
+                      maxWidth: "260px",
+                      fontWeight: "500",
+                    }}
+                    className="inconsolata-font"
                     placeholder="Tags Mode"
                     tagRender={tagRender}
                     onChange={handleChangePorts}
@@ -642,7 +856,7 @@ const AccessControlNew = () => {
                       formPolicy.ports?.map((m) => (
                         <Option key={m}>
                           <Tag color="blue" style={{ marginRight: 3 }}>
-                            <strong>{m}</strong>
+                            {m}
                           </Tag>
                         </Option>
                       ))}
@@ -650,43 +864,62 @@ const AccessControlNew = () => {
                 </Form.Item>
               </Col>
               <Col span={24}>
-                <Row wrap={false} gutter={12}>
-                  <Col flex="none">
-                    <FlagFilled />
-                  </Col>
-                  <Col flex="auto">
-                    <Paragraph>
-                      The default behavior is to drop all traffic that doesn't
-                      match an Access control rule.
-                    </Paragraph>
-                    <Paragraph>
-                      If you want to enable all peers of the same group to talk
-                      to each other - you can add that group both as a receiver
-                      and as a destination.
-                    </Paragraph>
-                    <Paragraph>
-                      Protocol type <strong>All</strong> or{" "}
-                      <strong>ICMP</strong> must be bi-directional. Directional
-                      traffic for <strong>TCP</strong> and <strong>UDP</strong>{" "}
-                      protocol requires at least one port to be defined.
-                    </Paragraph>
-                  </Col>
-                </Row>
+                <Form.Item name="enabled" label="">
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "15px",
+                    }}
+                  >
+                    <Switch
+                      onChange={handleChangeDisabled}
+                      defaultChecked={true}
+                    />
+                    <div>
+                      <label
+                        style={{
+                          color: "rgba(0, 0, 0, 0.88)",
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Enabled
+                      </label>
+                      <Paragraph
+                        type={"secondary"}
+                        style={{
+                          marginTop: "-2",
+                          fontWeight: "500",
+                          marginBottom: "0",
+                        }}
+                      >
+                        {formPolicy.enabled
+                          ? "Disable this rule to apply it later"
+                          : "Enable this rule to apply it immediately"}
+                      </Paragraph>
+                    </div>
+                  </div>
+                </Form.Item>
               </Col>
-              <Col span={24}>
-                <Divider></Divider>
-                <Button
-                  icon={<QuestionCircleFilled />}
-                  type="link"
-                  target="_blank"
-                  href="https://docs.netbird.io/how-to/manage-network-access"
-                >
-                  Learn more about access controls
-                </Button>
+              <Col
+                span={24}
+                style={{ marginTop: "20px", marginBottom: "25px" }}
+              >
+                <Text type={"secondary"}>
+                  Learn more about
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/manage-network-access"
+                  >
+                    {" "}
+                    Access Controls
+                  </a>
+                </Text>
               </Col>
             </Row>
           </Form>
-        </Drawer>
+        </Modal>
       )}
     </>
   );
