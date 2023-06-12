@@ -197,7 +197,7 @@ td.non-highlighted-table-column {
 }
 
 .tag-box .ant-select-selector {
-  padding: 0 5px!important;
+  padding: 0 5px !important;
 }
 
 .tag-box .ant-select-selection-item {
@@ -219,4 +219,8 @@ td.non-highlighted-table-column {
   align-items: center;
   margin-top: 3px;
   text-align: center;
+}
+
+.w-100 {
+  width: 100%;
 }

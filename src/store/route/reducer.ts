@@ -13,7 +13,8 @@ type StateType = Readonly<{
   deleteRoute: DeleteResponse<string | null>;
   savedRoute: CreateResponse<Route | null>;
   setupNewRouteVisible: boolean;
-  setupNewRouteHA: boolean
+  setupNewRouteHA: boolean;
+  setupEditRouteVisible: boolean;
 }>;
 
 const initialState: StateType = {
@@ -27,17 +28,18 @@ const initialState: StateType = {
     success: false,
     failure: false,
     error: null,
-    data : null
+    data: null,
   },
   savedRoute: <CreateResponse<Route | null>>{
     loading: false,
     success: false,
     failure: false,
     error: null,
-    data : null
+    data: null,
   },
   setupNewRouteVisible: false,
-  setupNewRouteHA: false
+  setupNewRouteHA: false,
+  setupEditRouteVisible: false,
 };
 
 const data = createReducer<Route[], ActionTypes>(initialState.data as Route[])
@@ -79,6 +81,13 @@ const savedRoute = createReducer<CreateResponse<Route | null>, ActionTypes>(init
 const setupNewRouteVisible = createReducer<boolean, ActionTypes>(initialState.setupNewRouteVisible)
     .handleAction(actions.setSetupNewRouteVisible, (store, action) => action.payload)
 
+const setupEditRouteVisible = createReducer<boolean, ActionTypes>(
+  initialState.setupEditRouteVisible
+).handleAction(
+  actions.setSetupEditRouteVisible,
+  (store, action) => action.payload
+);
+
 const setupNewRouteHA = createReducer<boolean, ActionTypes>(initialState.setupNewRouteHA)
     .handleAction(actions.setSetupNewRouteHA, (store, action) => action.payload)
 
@@ -91,5 +100,6 @@ export default combineReducers({
   deletedRoute,
   savedRoute,
   setupNewRouteVisible,
-  setupNewRouteHA
+  setupNewRouteHA,
+  setupEditRouteVisible,
 });

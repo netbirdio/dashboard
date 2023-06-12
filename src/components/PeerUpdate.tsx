@@ -7,7 +7,7 @@ import {
   Col,
   Collapse,
   Divider,
-  Drawer,
+  message,
   Form,
   Input,
   Radio,
@@ -36,6 +36,8 @@ import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
 import { timeAgo } from "../utils/common";
 import { actions as routeActions } from "../store/route";
+import RouteAddNew from "./RouteAddNew";
+import { Route } from "../store/route/types";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -61,7 +63,13 @@ const PeerUpdate = () => {
   const updatedPeers = useSelector(
     (state: RootState) => state.peer.updatedPeer
   );
-
+  const savedRoute = useSelector((state: RootState) => state.route.savedRoute);
+  const deletedRoute = useSelector(
+    (state: RootState) => state.route.deletedRoute
+  );
+   const setupNewRouteVisible = useSelector(
+     (state: RootState) => state.route.setupNewRouteVisible
+   );
   const [tagGroups, setTagGroups] = useState([] as string[]);
   const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[]);
   const [peerGroups, setPeerGroups] = useState([] as GroupPeer[]);
@@ -81,6 +89,8 @@ const PeerUpdate = () => {
   } as PeerGroupsToSave);
   const routes = useSelector((state: RootState) => state.route.data);
   const [form] = Form.useForm();
+  const styleNotification = { marginTop: 85 };
+  
 
   useEffect(() => {
     //Unmounting component clean
@@ -287,6 +297,20 @@ const PeerUpdate = () => {
     setCallingPeerAPI(false);
     setSubmitRunning(false);
     setEstimatedName("");
+
+    dispatch(routeActions.setSetupNewRouteVisible(false));
+    dispatch(
+      routeActions.setRoute({
+        network: "",
+        network_id: "",
+        description: "",
+        peer: "",
+        masquerade: true,
+        metric: 9999,
+        enabled: true,
+        groups: [],
+      } as Route)
+    );
   };
 
   const noUpdateToGroups = (): Boolean => {
@@ -445,6 +469,90 @@ const PeerUpdate = () => {
     setFormPeer({ ...formPeer, login_expiration_enabled: checked });
   };
 
+  const onClickAddNewRoute = () => {
+    dispatch(routeActions.setSetupNewRouteVisible(true));
+    dispatch(
+      routeActions.setRoute({
+        network: "",
+        network_id: "",
+        description: "",
+        peer: "",
+        masquerade: true,
+        metric: 9999,
+        enabled: true,
+        groups: [],
+      } as Route)
+    );
+  };
+
+  const saveKey = "saving";
+  useEffect(() => {
+    if (savedRoute.loading) {
+      message.loading({
+        content: "Saving...",
+        key: saveKey,
+        duration: 0,
+        style: styleNotification,
+      });
+    } else if (savedRoute.success) {
+      message.success({
+        content: "Route has been successfully updated.",
+        key: saveKey,
+        duration: 2,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSetupNewRouteVisible(false));
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
+      dispatch(routeActions.resetSavedRoute(null));
+    } else if (savedRoute.error) {
+      let errorMsg = "Failed to update network route";
+      switch (savedRoute.error.statusCode) {
+        case 403:
+          errorMsg =
+            "Failed to update network route. You might not have enough permissions.";
+          break;
+        default:
+          errorMsg = savedRoute.error.data.message
+            ? savedRoute.error.data.message
+            : errorMsg;
+          break;
+      }
+      message.error({
+        content: errorMsg,
+        key: saveKey,
+        duration: 5,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
+      dispatch(routeActions.resetSavedRoute(null));
+    }
+  }, [savedRoute]);
+
+  const deleteKey = "deleting";
+  useEffect(() => {
+    const style = { marginTop: 85 };
+    if (deletedRoute.loading) {
+      message.loading({ content: "Deleting...", key: deleteKey, style });
+    } else if (deletedRoute.success) {
+      message.success({
+        content: "Route has been successfully deleted.",
+        key: deleteKey,
+        duration: 2,
+        style,
+      });
+      dispatch(routeActions.resetDeletedRoute(null));
+    } else if (deletedRoute.error) {
+      message.error({
+        content:
+          "Failed to remove route. You might not have enough permissions.",
+        key: deleteKey,
+        duration: 2,
+        style,
+      });
+      dispatch(routeActions.resetDeletedRoute(null));
+    }
+  }, [deletedRoute]);
+
   return (
     <>
       {peer && (
@@ -473,71 +581,71 @@ const PeerUpdate = () => {
             >
               <Row gutter={16}>
                 <Col span={24}>
-                    <Row align="top">
-                      <Col flex="auto">
-                        {!editName && peer.id && formPeer.name ? (
-                          <div
-                            style={{
-                              color: "rgba(0, 0, 0, 0.88)",
-                              fontWeight: "600",
-                              fontSize: "16px",
-                            }}
-                            onClick={() => toggleEditName(true, peer.name)}
-                          >
-                            {formPeer.name ? formPeer.name : peer.name}
-                            <EditOutlined style={{ marginLeft: "10px" }} />
+                  <Row align="top">
+                    <Col flex="auto">
+                      {!editName && peer.id && formPeer.name ? (
+                        <div
+                          style={{
+                            color: "rgba(0, 0, 0, 0.88)",
+                            fontWeight: "600",
+                            fontSize: "16px",
+                          }}
+                          onClick={() => toggleEditName(true, peer.name)}
+                        >
+                          {formPeer.name ? formPeer.name : peer.name}
+                          <EditOutlined style={{ marginLeft: "10px" }} />
 
-                            <Paragraph
-                              type={"secondary"}
-                              style={{
-                                textAlign: "left",
-                                whiteSpace: "pre-line",
-                                fontWeight: "400",
-                              }}
+                          <Paragraph
+                            type={"secondary"}
+                            style={{
+                              textAlign: "left",
+                              whiteSpace: "pre-line",
+                              fontWeight: "400",
+                            }}
+                          >
+                            {formPeer.userEmail}{" "}
+                          </Paragraph>
+                        </div>
+                      ) : (
+                        <Row>
+                          <Space direction={"vertical"} size="small">
+                            <Form.Item
+                              name="name"
+                              label="Name"
+                              style={{ margin: "1px" }}
+                              rules={[
+                                {
+                                  required: true,
+                                  message:
+                                    "Please add a new name for this peer",
+                                  whitespace: true,
+                                },
+                                { validator: nameValidator },
+                              ]}
                             >
-                              {formPeer.userEmail}{" "}
-                            </Paragraph>
-                          </div>
-                        ) : (
-                          <Row>
-                            <Space direction={"vertical"} size="small">
-                              <Form.Item
-                                name="name"
-                                label="Name"
-                                style={{ margin: "1px" }}
-                                rules={[
-                                  {
-                                    required: true,
-                                    message:
-                                      "Please add a new name for this peer",
-                                    whitespace: true,
-                                  },
-                                  { validator: nameValidator },
-                                ]}
-                              >
-                                <Input
-                                  placeholder={peer.name}
-                                  ref={inputNameRef}
-                                  onPressEnter={() => toggleEditName(false)}
-                                  onBlur={() => toggleEditName(false)}
-                                  autoComplete="off"
-                                  max={59}
-                                />
-                              </Form.Item>
-                              <Form.Item
-                                label="Domain name preview"
-                                tooltip="If the domain name already exists, we add an increment number suffix to it"
-                                style={{ margin: "1px" }}
-                              >
-                                <Paragraph>
-                                  <Tag>{estimatedName}</Tag>
-                                </Paragraph>
-                              </Form.Item>
-                            </Space>
-                          </Row>
-                        )}
-                      </Col>
-                    </Row>
+                              <Input
+                                placeholder={peer.name}
+                                ref={inputNameRef}
+                                onPressEnter={() => toggleEditName(false)}
+                                onBlur={() => toggleEditName(false)}
+                                autoComplete="off"
+                                max={59}
+                              />
+                            </Form.Item>
+                            <Form.Item
+                              label="Domain name preview"
+                              tooltip="If the domain name already exists, we add an increment number suffix to it"
+                              style={{ margin: "1px" }}
+                            >
+                              <Paragraph>
+                                <Tag>{estimatedName}</Tag>
+                              </Paragraph>
+                            </Form.Item>
+                          </Space>
+                        </Row>
+                      )}
+                    </Col>
+                  </Row>
                 </Col>
               </Row>
               <Row gutter={30} style={{ marginTop: "25px" }}>
@@ -571,16 +679,16 @@ const PeerUpdate = () => {
                 </Col>
                 <Col span={5}>
                   <Form.Item
-                      name="dns_label"
-                      label="Domain name"
-                      style={{ fontWeight: "bold" }}
+                    name="dns_label"
+                    label="Domain name"
+                    style={{ fontWeight: "bold" }}
                   >
                     <Input
-                        disabled={true}
-                        value={formPeer.userEmail}
-                        style={{ color: "#8c8c8c" }}
-                        autoComplete="off"
-                        suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                      disabled={true}
+                      value={formPeer.userEmail}
+                      style={{ color: "#8c8c8c" }}
+                      autoComplete="off"
+                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
                     />
                   </Form.Item>
                 </Col>
@@ -728,7 +836,9 @@ const PeerUpdate = () => {
                   style={{ marginTop: "-16px" }}
                 >
                   {peerRoutes && peerRoutes.length > 0 && (
-                    <Button type="primary">Add route</Button>
+                    <Button type="primary" onClick={onClickAddNewRoute}>
+                      Add route
+                    </Button>
                   )}
                 </Col>
               </Row>
@@ -797,7 +907,9 @@ const PeerUpdate = () => {
                   >
                     You don't have any routes yet
                   </Paragraph>
-                  <Button type="primary">Create route</Button>
+                  <Button type="primary" onClick={onClickAddNewRoute}>
+                    Add route
+                  </Button>
                 </Space>
               )}
             </div>
@@ -813,16 +925,19 @@ const PeerUpdate = () => {
               >
                 <Panel
                   key="0"
-                  header={<Paragraph
+                  header={
+                    <Paragraph
                       style={{
                         textAlign: "left",
                         whiteSpace: "pre-line",
                         fontSize: "16px",
                         fontWeight: "bold",
+                        margin: "0",
                       }}
-                  >
-                    System info
-                  </Paragraph>}
+                    >
+                      System info
+                    </Paragraph>
+                  }
                   className="system-info-panel"
                 >
                   <Row gutter={16}>
@@ -841,9 +956,7 @@ const PeerUpdate = () => {
                       >
                         Hostname:
                       </Text>
-                      <Text type="secondary">
-                        {formPeer.hostname}
-                      </Text>
+                      <Text type="secondary">{formPeer.hostname}</Text>
                     </Col>
                     <Col
                       span={24}
@@ -869,17 +982,15 @@ const PeerUpdate = () => {
                       }}
                     >
                       <Text
-                          style={{
-                            width: "100%",
-                            maxWidth: "130px",
-                            display: "inline-block",
-                          }}
+                        style={{
+                          width: "100%",
+                          maxWidth: "130px",
+                          display: "inline-block",
+                        }}
                       >
                         Agent version:
                       </Text>
-                      <Text type="secondary">
-                        {formPeer.version}
-                      </Text>
+                      <Text type="secondary">{formPeer.version}</Text>
                     </Col>
                     {formPeer.ui_version && (
                       <Col
@@ -897,9 +1008,7 @@ const PeerUpdate = () => {
                         >
                           UI version:
                         </Text>
-                        <Text type={"secondary"}>
-                          {formPeer.ui_version}
-                        </Text>
+                        <Text type={"secondary"}>{formPeer.ui_version}</Text>
                       </Col>
                     )}
                   </Row>
@@ -909,6 +1018,7 @@ const PeerUpdate = () => {
           </Card>
         </Container>
       )}
+      {setupNewRouteVisible && <RouteAddNew peer={peer} />}
     </>
   );
 };
