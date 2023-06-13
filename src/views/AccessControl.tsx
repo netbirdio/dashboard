@@ -436,7 +436,7 @@ export const AccessControl = () => {
       return (
         <div key={i}>
           <Tag color="blue" style={{ marginRight: 3 }}>
-            <strong>{_g.name}</strong>
+            {_g.name}
           </Tag>
           <span style={{ fontSize: ".85em" }}>{peersCount}</span>
         </div>
@@ -472,7 +472,7 @@ export const AccessControl = () => {
     const content = ports?.map((p, i) => {
       return (
         <Tag key={i} style={{ marginRight: 3 }}>
-          <span>{p}</span>
+          <span className="inconsolata-font">{p}</span>
         </Tag>
       );
     });
@@ -599,7 +599,7 @@ export const AccessControl = () => {
                             disabled={savedPolicy.loading}
                             onClick={onClickAddNewPolicy}
                           >
-                            Add Rule
+                            Add rule
                           </Button>
                         </Col>
                       </Row>
@@ -739,7 +739,8 @@ export const AccessControl = () => {
                         render={(text, record: PolicyDataTable, index) => {
                           return (
                             <Tag
-                              style={{
+                                className="inconsolata-font"
+                                style={{
                                 marginRight: "3",
                                 textTransform: "uppercase",
                               }}
