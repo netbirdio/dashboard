@@ -518,7 +518,7 @@ const RouteAddNew = (selectedPeer: any) => {
                   </Row>
                 </Header>
               </Col>
-              {!!!selectedPeer.peer && (
+              {/* {!!!selectedPeer.peer && (
                 <Col span={24}>
                   <Form.Item name="enabled" label="">
                     <div
@@ -556,7 +556,7 @@ const RouteAddNew = (selectedPeer: any) => {
                     </div>
                   </Form.Item>
                 </Col>
-              )}
+              )} */}
               <Col span={24}>
                 <label
                   style={{
@@ -591,7 +591,40 @@ const RouteAddNew = (selectedPeer: any) => {
                   />
                 </Form.Item>
               </Col>
-
+              {!!!selectedPeer.peer && (
+                <Col span={24}>
+                  <label
+                    style={{
+                      color: "rgba(0, 0, 0, 0.88)",
+                      fontSize: "14px",
+                      fontWeight: "bold",
+                    }}
+                  >
+                    Routing Peer
+                  </label>
+                  <Paragraph
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-2",
+                      fontWeight: "500",
+                      marginBottom: "5px",
+                    }}
+                  >
+                    Assign a peer as a routing peer for the Network CIDR
+                  </Paragraph>
+                  <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
+                    <Select
+                      showSearch
+                      style={{ width: "100%" }}
+                      placeholder="Select Peer"
+                      dropdownRender={peerDropDownRender}
+                      options={options}
+                      allowClear={true}
+                      disabled={!!selectedPeer.peer}
+                    />
+                  </Form.Item>
+                </Col>
+              )}
               <Col span={24}>
                 <label
                   style={{
@@ -633,79 +666,43 @@ const RouteAddNew = (selectedPeer: any) => {
                 </Form.Item>
               </Col>
 
-              {!!selectedPeer.peer && (
-                <Col span={24}>
-                  <Form.Item name="enabled" label="">
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "15px",
-                      }}
-                    >
-                      <Switch
-                        size={"small"}
-                        checked={formRoute.enabled}
-                        onChange={handleEnableChange}
-                      />
-                      <div>
-                        <label
-                          style={{
-                            color: "rgba(0, 0, 0, 0.88)",
-                            fontSize: "14px",
-                            fontWeight: "bold",
-                          }}
-                        >
-                          Enabled
-                        </label>
-                        <Paragraph
-                          type={"secondary"}
-                          style={{
-                            marginTop: "-2",
-                            fontWeight: "500",
-                            marginBottom: "0",
-                          }}
-                        >
-                          You can enable or disable the route
-                        </Paragraph>
-                      </div>
-                    </div>
-                  </Form.Item>
-                </Col>
-              )}
-              {!!!selectedPeer.peer && (
-                <Col span={24}>
-                  <label
+              <Col span={24}>
+                <Form.Item name="enabled" label="">
+                  <div
                     style={{
-                      color: "rgba(0, 0, 0, 0.88)",
-                      fontSize: "14px",
-                      fontWeight: "bold",
+                      display: "flex",
+                      gap: "15px",
                     }}
                   >
-                    Routing Peer
-                  </label>
-                  <Paragraph
-                    type={"secondary"}
-                    style={{
-                      marginTop: "-2",
-                      fontWeight: "500",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    Assign a peer as a routing peer for the Network CIDR
-                  </Paragraph>
-                  <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
-                    <Select
-                      showSearch
-                      style={{ width: "100%" }}
-                      placeholder="Select Peer"
-                      dropdownRender={peerDropDownRender}
-                      options={options}
-                      allowClear={true}
-                      disabled={!!selectedPeer.peer}
+                    <Switch
+                      size={"small"}
+                      checked={formRoute.enabled}
+                      onChange={handleEnableChange}
                     />
-                  </Form.Item>
-                </Col>
-              )}
+                    <div>
+                      <label
+                        style={{
+                          color: "rgba(0, 0, 0, 0.88)",
+                          fontSize: "14px",
+                          fontWeight: "bold",
+                        }}
+                      >
+                        Enabled
+                      </label>
+                      <Paragraph
+                        type={"secondary"}
+                        style={{
+                          marginTop: "-2",
+                          fontWeight: "500",
+                          marginBottom: "0",
+                        }}
+                      >
+                        You can enable or disable the route
+                      </Paragraph>
+                    </div>
+                  </div>
+                </Form.Item>
+              </Col>
 
               <Col span={24}>
                 <Collapse
