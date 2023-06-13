@@ -191,9 +191,9 @@ td.non-highlighted-table-column {
   font-weight: 500;
 }
 
-.inconsolata-font,
-.inconsolata-font * {
-  font-family: 'Inconsolata', monospace !important;
+.menlo-font,
+.menlo-font * {
+  font-family: 'Menlo', monospace !important;
 }
 
 .tag-box .ant-select-selector {

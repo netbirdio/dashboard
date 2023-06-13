@@ -43,7 +43,7 @@ interface FormRoute extends Route {}
 
 const RouteUpdate = () => {
   const {
-    tagRender,
+    blueTagRender,
     handleChangeTags,
     dropDownRender,
     optionRender,
@@ -515,7 +515,7 @@ const RouteUpdate = () => {
                     mode="tags"
                     style={{ width: "100%" }}
                     placeholder="Associate groups with the network route"
-                    tagRender={tagRender}
+                    tagRender={blueTagRender}
                     onChange={handleChangeTags}
                     dropdownRender={dropDownRender}
                   >

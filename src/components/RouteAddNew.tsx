@@ -45,15 +45,18 @@ interface FormRoute extends Route {}
 
 const RouteAddNew = (selectedPeer: any) => {
    const {
-    tagRender,
-    handleChangeTags,
-    dropDownRender,
-    optionRender,
-    tagGroups,
-    getExistingAndToCreateGroupsLists,
-    getGroupNamesFromIDs,
-    selectValidator,
-  } = useGetGroupTagHelpers();
+     blueTagRender,
+     handleChangeTags,
+     dropDownRender,
+     optionRender,
+     tagGroups,
+     getExistingAndToCreateGroupsLists,
+     getGroupNamesFromIDs,
+     selectValidator,
+   } = useGetGroupTagHelpers();
+  //  const { optionRender, blueTagRender, grayTagRender } =
+  //    useGetGroupTagHelpers();
+  
   const { Option } = Select;
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
@@ -454,7 +457,9 @@ const RouteAddNew = (selectedPeer: any) => {
                           </Paragraph>
                           <Form.Item
                             name="network_id"
-                            label=""
+                              label=""
+                              
+                              style={{marginBottom:"10px"}}
                             rules={[
                               {
                                 required: true,
@@ -480,7 +485,7 @@ const RouteAddNew = (selectedPeer: any) => {
                         <div
                           onClick={() => toggleEditDescription(true)}
                           style={{
-                            margin: "12px 0 30px",
+                            margin: "0 0 30px",
                             lineHeight: "22px",
                             cursor: "pointer",
                           }}
@@ -655,7 +660,7 @@ const RouteAddNew = (selectedPeer: any) => {
                     mode="tags"
                     style={{ width: "100%" }}
                     placeholder="Associate groups with the network route"
-                    tagRender={tagRender}
+                    tagRender={blueTagRender}
                     onChange={handleChangeTags}
                     dropdownRender={dropDownRender}
                   >
@@ -729,7 +734,7 @@ const RouteAddNew = (selectedPeer: any) => {
                     }
                     className="system-info-panel"
                   >
-                    <Row gutter={16}>
+                    <Row gutter={16} style={{padding:"15px 0 0"}}>
                       <Col span={22}>
                         <Form.Item name="masquerade" label="">
                           <div

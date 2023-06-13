@@ -33,6 +33,7 @@ import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
 import { EditOutlined, LockOutlined } from "@ant-design/icons";
 import { actions as personalAccessTokenActions } from "../store/personal-access-token";
+import {useGetGroupTagHelpers} from "../utils/groups";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -43,6 +44,10 @@ const customExpiresFormat = (value: Date): string | null => {
 };
 
 const SetupKeyNew = () => {
+  const {
+    optionRender,
+      blueTagRender
+  } = useGetGroupTagHelpers()
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
 
@@ -193,46 +198,6 @@ const SetupKeyNew = () => {
     }
 
     return Promise.resolve();
-  };
-
-  const tagRender = (props: CustomTagProps) => {
-    const { value, closable, onClose } = props;
-    const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-    };
-
-    return (
-      <Tag
-        color="blue"
-        onMouseDown={onPreventMouseDown}
-        closable={closable}
-        onClose={onClose}
-        style={{ marginRight: 3 }}
-      >
-        <strong>{value}</strong>
-      </Tag>
-    );
-  };
-
-  const optionRender = (label: string) => {
-    let peersCount = "";
-    const g = groups.find((_g) => _g.name === label);
-
-    if (g) {
-      peersCount = ` - ${g.peers_count || 0} ${
-        !g.peers_count || parseInt(g.peers_count) !== 1 ? "peers" : "peer"
-      } `;
-    }
-
-    return (
-      <>
-        <Tag color="blue" style={{ marginRight: 3 }}>
-          <strong>{label}</strong>
-        </Tag>
-        <span style={{ fontSize: ".85em" }}>{peersCount}</span>
-      </>
-    );
   };
 
   const dropDownRender = (menu: React.ReactElement) => (
@@ -435,7 +400,7 @@ const SetupKeyNew = () => {
                       mode="tags"
                       style={{ width: "100%" }}
                       placeholder="Associate groups with the key"
-                      tagRender={tagRender}
+                      tagRender={blueTagRender}
                       dropdownRender={dropDownRender}
                       // enabled only when we have a new key !setupkey.id or when the key is valid
                       disabled={!(!setupKey.id || setupKey.valid)}
