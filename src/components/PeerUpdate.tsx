@@ -36,6 +36,7 @@ import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
 import { timeAgo } from "../utils/common";
 import { actions as routeActions } from "../store/route";
+import {useGetGroupTagHelpers} from "../utils/groups";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -47,6 +48,9 @@ const PeerUpdate = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const { Column } = Table;
   const { confirm } = Modal;
+  const {
+    optionRender,
+  } = useGetGroupTagHelpers()
 
   const dispatch = useDispatch();
   const groups = useSelector((state: RootState) => state.group.data);
@@ -223,25 +227,8 @@ const PeerUpdate = () => {
         onClose={onClose}
         style={{ marginRight: 3 }}
       >
-        <strong>{value}</strong>
+        {value}
       </Tag>
-    );
-  };
-
-  const optionRender = (label: string) => {
-    let peersCount = "";
-    const g = groups.find((_g) => _g.name === label);
-    if (g)
-      peersCount = ` - ${g.peers_count || 0} ${
-        !g.peers_count || parseInt(g.peers_count) !== 1 ? "peers" : "peer"
-      } `;
-    return (
-      <>
-        <Tag color="blue" style={{ marginRight: 3 }}>
-          <strong>{label}</strong>
-        </Tag>
-        <span style={{ fontSize: ".85em" }}>{peersCount}</span>
-      </>
     );
   };
 
@@ -640,7 +627,6 @@ const PeerUpdate = () => {
                   <Form.Item
                     name="groupsNames"
                     label="Select peer groups"
-                    style={{ fontWeight: "bold" }}
                     rules={[{ validator: selectValidator }]}
                   >
                     <Select

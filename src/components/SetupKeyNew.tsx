@@ -32,12 +32,16 @@ import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
 import { CheckOutlined, CopyOutlined } from "@ant-design/icons";
 import { copyToClipboard } from "../utils/common";
+import {useGetGroupTagHelpers} from "../utils/groups";
 
 const { Option } = Select;
 const { Text } = Typography;
 const ExpiresInDefault: ExpiresInValue = { number: 30, interval: "day" };
 
 const SetupKeyNew = () => {
+  const {
+    optionRender,
+  } = useGetGroupTagHelpers()
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const setupNewKeyVisible = useSelector(
@@ -240,26 +244,6 @@ const SetupKeyNew = () => {
       >
         <strong>{value}</strong>
       </Tag>
-    );
-  };
-
-  const optionRender = (label: string) => {
-    let peersCount = "";
-    const g = groups.find((_g) => _g.name === label);
-
-    if (g) {
-      peersCount = ` - ${g.peers_count || 0} ${
-        !g.peers_count || parseInt(g.peers_count) !== 1 ? "peers" : "peer"
-      } `;
-    }
-
-    return (
-      <>
-        <Tag color="blue" style={{ marginRight: 3 }}>
-          <strong>{label}</strong>
-        </Tag>
-        <span style={{ fontSize: ".85em" }}>{peersCount}</span>
-      </>
     );
   };
 
@@ -551,7 +535,6 @@ const SetupKeyNew = () => {
                   style={{
                     whiteSpace: "pre-line",
                     margin: 0,
-                    fontWeight: "bold",
                   }}
                 >
                   Auto-assigned groups

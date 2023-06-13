@@ -435,7 +435,7 @@ export const AccessControl = () => {
       } `;
       return (
         <div key={i}>
-          <Tag color="blue" style={{ marginRight: 3 }}>
+          <Tag color="blue" style={{ marginRight: 3}}>
             {_g.name}
           </Tag>
           <span style={{ fontSize: ".85em" }}>{peersCount}</span>

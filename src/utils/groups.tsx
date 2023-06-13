@@ -12,7 +12,14 @@ export const useGetGroupTagHelpers = () => {
     const [groupTagFilterAll, setGroupTagFilterAll] = useState(false)
     const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[])
 
-    const tagRender = (props: CustomTagProps) => {
+    const blueTagRender = (props: CustomTagProps) => {
+        return tagRender(props, "blue")
+    }
+    const grayTagRender = (props: CustomTagProps) => {
+        return tagRender(props, "")
+    }
+
+    const tagRender = (props: CustomTagProps, color: string) => {
         const {value, closable, onClose} = props;
         const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
             event.preventDefault();
@@ -21,13 +28,13 @@ export const useGetGroupTagHelpers = () => {
 
         return (
             <Tag
-                color="blue"
+                color={color}
                 onMouseDown={onPreventMouseDown}
                 closable={closable}
                 onClose={onClose}
                 style={{marginRight: 3}}
             >
-                <strong>{value}</strong>
+                {value}
             </Tag>
         );
     }
@@ -62,21 +69,21 @@ export const useGetGroupTagHelpers = () => {
     )
 
     const optionRender = (label: string) => {
-        let peersCount = ''
-        const g = groups.find(_g => _g.name === label)
-        if (g) peersCount = ` - ${g.peers_count || 0} ${(!g.peers_count || parseInt(g.peers_count) !== 1) ? 'peers' : 'peer'} `
+        let peersCount = "";
+        const g = groups.find((_g) => _g.name === label);
+        if (g)
+            peersCount = ` - ${g.peers_count || 0} ${
+                !g.peers_count || parseInt(g.peers_count) !== 1 ? "peers" : "peer"
+            } `;
         return (
-            <>
-                <Tag
-                    color="blue"
-                    style={{marginRight: 3}}
-                >
-                    <strong>{label}</strong>
+            <div>
+                <Tag color="blue" style={{ marginRight: 3}}>
+                    {label}
                 </Tag>
-                <span style={{fontSize: ".85em"}}>{peersCount}</span>
-            </>
-        )
-    }
+                <span style={{ fontSize: ".85em" }}>{peersCount}</span>
+            </div>
+        );
+    };
 
     const getExistingAndToCreateGroupsLists = (groupNameList: string[]): [string[], string[]] => {
         const groupIDList = groups?.filter(g => groupNameList.includes(g.name)).map(g => g.id || '') || []
@@ -127,6 +134,8 @@ export const useGetGroupTagHelpers = () => {
 
     return {
         tagRender,
+        blueTagRender,
+        grayTagRender,
         handleChangeTags,
         dropDownRender,
         optionRender,

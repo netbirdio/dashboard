@@ -25,7 +25,7 @@ export const DNSSettingsForm = () => {
     const dispatch = useDispatch()
 
     const {
-        tagRender,
+        blueTagRender,
         handleChangeTags,
         dropDownRender,
         optionRender,
@@ -148,7 +148,7 @@ export const DNSSettingsForm = () => {
                                 >
                                     <Select mode="tags"
                                             style={{width: '100%'}}
-                                            tagRender={tagRender}
+                                            tagRender={blueTagRender}
                                             onChange={handleChangeTags}
                                             dropdownRender={dropDownRender}
                                     >
