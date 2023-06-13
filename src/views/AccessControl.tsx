@@ -84,7 +84,7 @@ export const AccessControl = () => {
 
   const [showTutorial, setShowTutorial] = useState(true);
   const [textToSearch, setTextToSearch] = useState("");
-  const [optionAllEnable, setOptionAllEnable] = useState("enabled");
+  const [optionAllEnable, setOptionAllEnable] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [dataTable, setDataTable] = useState([] as PolicyDataTable[]);
   const [policyToAction, setPolicyToAction] = useState(
@@ -100,8 +100,9 @@ export const AccessControl = () => {
   const [groupPopupVisible, setGroupPopupVisible] = useState("");
 
   const optionsAllEnabled = [
-    { label: "Enabled", value: "enabled" },
     { label: "All", value: "all" },
+    { label: "Enabled", value: "enabled" },
+    { label: "Disabled", value: "disabled" },
   ];
 
   const getSourceDestinationLabel = (data: Group[]): string => {
@@ -317,8 +318,10 @@ export const AccessControl = () => {
         f.description.toLowerCase().includes(t) ||
         t === ""
     ) as Policy[];
-    if (optionAllEnable !== "all") {
+    if (optionAllEnable == "enabled") {
       f = filter(f, (f: Policy) => f.enabled);
+    } else  if (optionAllEnable == "disabled") {
+      f = filter(f, (f: Policy) => !f.enabled);
     }
     return f;
   };
@@ -562,7 +565,7 @@ export const AccessControl = () => {
                         allowClear
                         value={textToSearch}
                         onPressEnter={searchDataTable}
-                        placeholder="Search..."
+                        placeholder="Search by name and description..."
                         onChange={onChangeTextToSearch}
                       />
                     </Col>
