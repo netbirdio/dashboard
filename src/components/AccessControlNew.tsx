@@ -750,7 +750,7 @@ const AccessControlNew = () => {
                     Allow only specified network protocols
                   </Paragraph>
                   <Select
-                    className="inconsolata-font"
+                    className="menlo-font"
                     style={{
                       width: "100%",
                       maxWidth: "80px",
@@ -807,7 +807,7 @@ const AccessControlNew = () => {
                       maxWidth: "280px",
                       fontWeight: "500",
                     }}
-                    className="inconsolata-font"
+                    className="menlo-font"
                     placeholder={ (formPolicy.protocol === "all" || formPolicy.protocol === "icmp") ? "Change protocol to add ports" : "Add ports"}
                     tagRender={grayTagRender}
                     onChange={handleChangePorts}

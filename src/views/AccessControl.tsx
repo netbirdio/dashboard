@@ -472,7 +472,7 @@ export const AccessControl = () => {
     const content = ports?.map((p, i) => {
       return (
         <Tag key={i} style={{ marginRight: 3 }}>
-          <span className="inconsolata-font">{p}</span>
+          <span className="menlo-font">{p}</span>
         </Tag>
       );
     });
@@ -739,7 +739,7 @@ export const AccessControl = () => {
                         render={(text, record: PolicyDataTable, index) => {
                           return (
                             <Tag
-                                className="inconsolata-font"
+                                className="menlo-font"
                                 style={{
                                 marginRight: "3",
                                 textTransform: "uppercase",

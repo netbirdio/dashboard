@@ -805,7 +805,7 @@ const AccessControlEdit = () => {
                                                 style={{width: "100%", maxWidth: "260px"}}
                                                 options={protocols}
                                                 onChange={handleChangeProtocol}
-                                                className="inconsolata-font"
+                                                className="menlo-font"
                                                 defaultValue={"all"}
                                             />
                                         </Form.Item>
@@ -839,7 +839,7 @@ const AccessControlEdit = () => {
                                                 placeholder={(formPolicy.protocol === "all" || formPolicy.protocol === "icmp") ? "Change protocol to add ports" : "Add ports"}
                                                 tagRender={grayTagRender}
                                                 onChange={handleChangePorts}
-                                                className="inconsolata-font"
+                                                className="menlo-font"
                                                 dropdownRender={dropDownRenderPorts}
                                                 disabled={
                                                     formPolicy.protocol === "all" ||
