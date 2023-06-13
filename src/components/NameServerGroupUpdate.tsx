@@ -41,7 +41,7 @@ interface formNSGroup extends NameServerGroup {
 
 const NameServerGroupUpdate = () => {
     const {
-        tagRender,
+        blueTagRender,
         handleChangeTags,
         dropDownRender,
         optionRender,
@@ -572,7 +572,7 @@ const NameServerGroupUpdate = () => {
                                         <Select mode="tags"
                                                 style={{width: '100%'}}
                                                 placeholder="Associate groups with the NS group"
-                                                tagRender={tagRender}
+                                                tagRender={blueTagRender}
                                                 onChange={handleChangeTags}
                                                 dropdownRender={dropDownRender}
                                         >

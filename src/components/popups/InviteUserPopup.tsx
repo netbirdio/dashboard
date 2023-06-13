@@ -22,11 +22,16 @@ import {User, UserToSave} from "../../store/user/types";
 import {RuleObject} from "antd/lib/form";
 import {CustomTagProps} from "rc-select/lib/BaseSelect";
 import {QuestionCircleFilled} from "@ant-design/icons";
+import {useGetGroupTagHelpers} from "../../utils/groups";
 
 const {Title, Text, Paragraph} = Typography;
 const {Option} = Select;
 
 const InviteUserPopup = () => {
+    const {
+        optionRender,
+        blueTagRender
+    } = useGetGroupTagHelpers()
     const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
 
@@ -108,26 +113,6 @@ const InviteUserPopup = () => {
         return Promise.resolve()
     }
 
-    const tagRender = (props: CustomTagProps) => {
-        const {label, value, closable, onClose} = props;
-        const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
-            event.preventDefault();
-            event.stopPropagation();
-        };
-
-        return (
-            <Tag
-                color="blue"
-                onMouseDown={onPreventMouseDown}
-                closable={closable}
-                onClose={onClose}
-                style={{marginRight: 3}}
-            >
-                <strong>{value}</strong>
-            </Tag>
-        );
-    }
-
     const handleChangeTags = (value: string[]) => {
         let validatedValues: string[] = []
         value.forEach(function (v) {
@@ -156,23 +141,6 @@ const InviteUserPopup = () => {
             </Row>
         </>
     )
-
-    const optionRender = (label: string) => {
-        let peersCount = ''
-        const g = groups.find(_g => _g.name === label)
-        if (g) peersCount = ` - ${g.peers_count || 0} ${(!g.peers_count || parseInt(g.peers_count) !== 1) ? 'peers' : 'peer'} `
-        return (
-            <>
-                <Tag
-                    color="blue"
-                    style={{marginRight: 3}}
-                >
-                    <strong>{label}</strong>
-                </Tag>
-                <span style={{fontSize: ".85em"}}>{peersCount}</span>
-            </>
-        )
-    }
 
     useEffect(() => {
         setTagGroups(groups?.filter(g => g.name != "All").map(g => g.name) || [])
@@ -287,7 +255,7 @@ const InviteUserPopup = () => {
                                     <Select mode="tags"
                                             style={{width: '100%'}}
                                             placeholder="Associate groups with the user"
-                                            tagRender={tagRender}
+                                            tagRender={blueTagRender}
                                             onChange={handleChangeTags}
                                             dropdownRender={dropDownRender}
                                     >

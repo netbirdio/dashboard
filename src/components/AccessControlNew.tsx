@@ -29,6 +29,7 @@ import { uniq } from "lodash";
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
+import {useGetGroupTagHelpers} from "../utils/groups";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -49,6 +50,11 @@ interface FormPolicy {
 }
 
 const AccessControlNew = () => {
+  const {
+    optionRender,
+      grayTagRender,
+      blueTagRender
+  } = useGetGroupTagHelpers()
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const setupNewPolicyVisible = useSelector(
@@ -260,63 +266,6 @@ const AccessControlNew = () => {
       ...formPolicy,
       bidirectional: checked,
     });
-  };
-
-  const blueTagRender = (props: CustomTagProps) => {
-    const { value, closable, onClose } = props;
-    const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-    };
-
-    return (
-      <Tag
-        color="blue"
-        onMouseDown={onPreventMouseDown}
-        closable={closable}
-        onClose={onClose}
-        style={{ marginRight: 3 }}
-      >
-        {value}
-      </Tag>
-    );
-  };
-
-  const tagRender = (props: CustomTagProps) => {
-    const { value, closable, onClose } = props;
-    const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-    };
-
-    return (
-      <Tag
-        color="default"
-        onMouseDown={onPreventMouseDown}
-        closable={closable}
-        onClose={onClose}
-        style={{ marginRight: 3 }}
-      >
-        {value}
-      </Tag>
-    );
-  };
-
-  const optionRender = (label: string) => {
-    let peersCount = "";
-    const g = groups.find((_g) => _g.name === label);
-    if (g)
-      peersCount = ` - ${g.peers_count || 0} ${
-        !g.peers_count || parseInt(g.peers_count) !== 1 ? "peers" : "peer"
-      } `;
-    return (
-      <>
-        <Tag color="blue" style={{ marginRight: 3 }}>
-          {label}
-        </Tag>
-        <span style={{ fontSize: ".85em" }}>{peersCount}</span>
-      </>
-    );
   };
 
   const dropDownRenderGroups = (menu: React.ReactElement) => (
@@ -801,7 +750,7 @@ const AccessControlNew = () => {
                     Allow only specified network protocols
                   </Paragraph>
                   <Select
-                    className="inconsolata-font"
+                    className="menlo-font"
                     style={{
                       width: "100%",
                       maxWidth: "80px",
@@ -858,9 +807,9 @@ const AccessControlNew = () => {
                       maxWidth: "280px",
                       fontWeight: "500",
                     }}
-                    className="inconsolata-font"
+                    className="menlo-font"
                     placeholder={ (formPolicy.protocol === "all" || formPolicy.protocol === "icmp") ? "Change protocol to add ports" : "Add ports"}
-                    tagRender={tagRender}
+                    tagRender={grayTagRender}
                     onChange={handleChangePorts}
                     dropdownRender={dropDownRenderPorts}
                     disabled={
@@ -871,7 +820,7 @@ const AccessControlNew = () => {
                     {formPolicy &&
                       formPolicy.ports?.map((m) => (
                         <Option key={m}>
-                          <Tag color="blue" style={{ marginRight: 3 }}>
+                          <Tag style={{ marginRight: 3 }}>
                             {m}
                           </Tag>
                         </Option>
