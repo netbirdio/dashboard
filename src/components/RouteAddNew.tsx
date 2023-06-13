@@ -44,8 +44,7 @@ const { Panel } = Collapse;
 interface FormRoute extends Route {}
 
 const RouteAddNew = (selectedPeer: any) => {
-  console.log("selectedPeer", !!selectedPeer.peer);
-  const {
+   const {
     tagRender,
     handleChangeTags,
     dropDownRender,
@@ -322,8 +321,6 @@ const RouteAddNew = (selectedPeer: any) => {
     return selectValidator(obj, value);
   };
 
-  console.log("formRoute", formRoute);
-
   const handleMasqueradeChange = (checked: boolean) => {
     setFormRoute({
       ...formRoute,
@@ -353,7 +350,9 @@ const RouteAddNew = (selectedPeer: any) => {
                 type="primary"
                 disabled={savedRoute.loading}
                 onClick={handleFormSubmit}
-              >{`${newRoute ? "Create" : "Save"}`}</Button>
+              >
+                Add Route
+              </Button>
             </Space>
           }
         >
