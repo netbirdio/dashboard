@@ -28,9 +28,9 @@ import tableSpin from "./Spin";
 import AddPATPopup from "./popups/AddPATPopup";
 import {fullDate} from "../utils/common";
 import {ExclamationCircleOutlined} from "@ant-design/icons";
-import {Container} from "./Container";
 import Column from "antd/lib/table/Column";
 import {useOidcUser} from "@axa-fr/react-oidc";
+import {useGetGroupTagHelpers} from "../utils/groups";
 
 const {Option} = Select;
 const {Meta} = Card;
@@ -45,6 +45,10 @@ interface TokenDataTable extends PersonalAccessToken {
 const UserEdit = () => {
     const {getTokenSilently} = useGetTokenSilently()
     const dispatch = useDispatch()
+    const {
+        optionRender,
+        blueTagRender
+    } = useGetGroupTagHelpers()
 
     const groups = useSelector((state: RootState) => state.group.data)
     const users = useSelector((state: RootState) => state.user.data)
@@ -151,26 +155,6 @@ const UserEdit = () => {
         return Promise.resolve()
     }
 
-    const tagRender = (props: CustomTagProps) => {
-        const {label, value, closable, onClose} = props;
-        const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
-            event.preventDefault();
-            event.stopPropagation();
-        };
-
-        return (
-            <Tag
-                color="blue"
-                onMouseDown={onPreventMouseDown}
-                closable={closable}
-                onClose={onClose}
-                style={{marginRight: 3}}
-            >
-                <strong>{value}</strong>
-            </Tag>
-        );
-    }
-
     const dropDownRender = (menu: React.ReactElement) => (
         <>
             {menu}
@@ -189,23 +173,6 @@ const UserEdit = () => {
             </Row>
         </>
     )
-
-    const optionRender = (label: string) => {
-        let peersCount = ''
-        const g = groups.find(_g => _g.name === label)
-        if (g) peersCount = ` - ${g.peers_count || 0} ${(!g.peers_count || parseInt(g.peers_count) !== 1) ? 'peers' : 'peer'} `
-        return (
-            <>
-                <Tag
-                    color="blue"
-                    style={{marginRight: 3}}
-                >
-                    <strong>{label}</strong>
-                </Tag>
-                <span style={{fontSize: ".85em"}}>{peersCount}</span>
-            </>
-        )
-    }
 
     const transformTokenTable = (d: PersonalAccessToken[]): TokenDataTable[] => {
         if (!d) {
@@ -397,12 +364,12 @@ const UserEdit = () => {
                         label={<Text style={{}}>Auto-assigned groups</Text>}
                         tooltip="Every peer enrolled with this user will be automatically added to these groups"
                         rules={[{ validator: selectValidator }]}
-                        style={{ marginRight: "70px", fontWeight: "bold" }}
+                        style={{ marginRight: "70px" }}
                       >
                         <Select
                           mode="tags"
                           placeholder="Associate groups with the user"
-                          tagRender={tagRender}
+                          tagRender={blueTagRender}
                           dropdownRender={dropDownRender}
                           disabled={oidcUser && !isUserAdmin(oidcUser.sub)}
                         >
