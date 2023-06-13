@@ -354,7 +354,7 @@ const AccessControlNew = () => {
       <Row style={{ padding: "0 8px 4px" }}>
         <Col flex="auto">
           <span style={{ color: "#9CA3AF" }}>
-            Add new ports or range by pressing "Enter"
+            Add new ports by pressing "Enter"
           </span>
         </Col>
         <Col flex="none">
@@ -382,7 +382,7 @@ const AccessControlNew = () => {
   const selectValidator = (_: RuleObject, value: string[]) => {
     let hasSpaceNamed = [];
     if (!value.length) {
-      return Promise.reject(new Error("Please enter at least one group"));
+      return Promise.reject(new Error("Enter at least one group"));
     }
 
     value.forEach(function (v: string) {
@@ -487,7 +487,7 @@ const AccessControlNew = () => {
                 onClick={handleFormSubmit}
               >
                 {" "}
-                Create Rule
+                Create rule
               </Button>
             </Space>
           }
@@ -511,10 +511,19 @@ const AccessControlNew = () => {
                       whiteSpace: "pre-line",
                       fontSize: "22px",
                       margin: "0px",
-                      marginBottom: "15px",
                     }}
                   >
                     Create Rule
+                  </Paragraph>
+                  <Paragraph
+                      type={"secondary"}
+                      style={{
+                        textAlign: "start",
+                        whiteSpace: "pre-line",
+                        paddingBottom: "15px",
+                      }}
+                  >
+                    Use this rule to restrict access to groups of resources
                   </Paragraph>
                   <Row align="top">
                     <Col flex="auto">
@@ -531,7 +540,7 @@ const AccessControlNew = () => {
                         type={"secondary"}
                         style={{ marginTop: "-2px", marginBottom: "8px" }}
                       >
-                        Create a name to define the rule
+                        Set an easily identifiable name for your rule
                       </Paragraph>
                       <Form.Item
                         name="name"
@@ -546,7 +555,7 @@ const AccessControlNew = () => {
                         ]}
                       >
                         <Input
-                          placeholder={'for example "UserAccessRule"'}
+                          placeholder={'e.g., "Devs to Servers"'}
                           autoComplete="off"
                         />
                       </Form.Item>
@@ -593,14 +602,14 @@ const AccessControlNew = () => {
                   <Col span={10}>
                     <Form.Item
                       name="tagSourceGroups"
-                      label="Source groups"
+                      label="Source"
                       rules={[{ validator: selectValidator }]}
                       style={{ fontWeight: "600" }}
                     >
                       <Select
                         mode="tags"
                         style={{ width: "100%", fontWeight: "500" }}
-                        placeholder="Tags Mode"
+                        placeholder="Select groups"
                         tagRender={blueTagRender}
                         onChange={handleChangeSource}
                         dropdownRender={dropDownRenderGroups}
@@ -746,14 +755,14 @@ const AccessControlNew = () => {
                   <Col span={10}>
                     <Form.Item
                       name="tagDestinationGroups"
-                      label="Destination groups"
+                      label="Destination"
                       rules={[{ validator: selectValidator }]}
                       style={{ fontWeight: "600" }}
                     >
                       <Select
                         mode="tags"
                         style={{ width: "100%", fontWeight: "500" }}
-                        placeholder="Tags Mode"
+                        placeholder="Select groups"
                         tagRender={blueTagRender}
                         onChange={handleChangeDestination}
                         dropdownRender={dropDownRenderGroups}
@@ -765,6 +774,14 @@ const AccessControlNew = () => {
                     </Form.Item>
                   </Col>
                 </Row>
+              </Col>
+              <Col span={24}>
+                <Paragraph
+                    type={"secondary"}
+                    style={{  marginTop: "-15px", marginBottom: "30px" }}
+                >
+                  To change traffic direction and ports, select TCP or UDP protocol below
+                </Paragraph>
               </Col>
               <Col span={24}>
                 <Form.Item
@@ -781,14 +798,13 @@ const AccessControlNew = () => {
                       marginBottom: "8px",
                     }}
                   >
-                    Add protocol to ensure controlled and secure access to
-                    resources
+                    Allow only specified network protocols
                   </Paragraph>
                   <Select
                     className="inconsolata-font"
                     style={{
                       width: "100%",
-                      maxWidth: "187px",
+                      maxWidth: "80px",
                     }}
                     options={protocols}
                     onChange={handleChangeProtocol}
@@ -805,7 +821,7 @@ const AccessControlNew = () => {
                       fontWeight: "600",
                     }}
                   >
-                    Port
+                    Ports
                   </label>
                   <Paragraph
                     type={"secondary"}
@@ -815,7 +831,7 @@ const AccessControlNew = () => {
                       marginBottom: "8px",
                     }}
                   >
-                    Restrict incoming and outgoing network traffic using ports
+                    Allow network traffic and access only to specified ports
                   </Paragraph>
                 </div>
                 <Form.Item
@@ -839,11 +855,11 @@ const AccessControlNew = () => {
                     mode="tags"
                     style={{
                       width: "100%",
-                      maxWidth: "260px",
+                      maxWidth: "280px",
                       fontWeight: "500",
                     }}
                     className="inconsolata-font"
-                    placeholder="Tags Mode"
+                    placeholder={ (formPolicy.protocol === "all" || formPolicy.protocol === "icmp") ? "Change protocol to add ports" : "Add ports"}
                     tagRender={tagRender}
                     onChange={handleChangePorts}
                     dropdownRender={dropDownRenderPorts}
@@ -913,7 +929,7 @@ const AccessControlNew = () => {
                     href="https://docs.netbird.io/how-to/manage-network-access"
                   >
                     {" "}
-                    Access Controls
+                    access controls
                   </a>
                 </Text>
               </Col>

@@ -670,7 +670,7 @@ const AccessControlEdit = () => {
                           <Select
                             mode="tags"
                             style={{ width: "100%", fontWeight: "500" }}
-                            placeholder="Tags Mode"
+                            placeholder="Select groups"
                             tagRender={blueTagRender}
                             onChange={handleChangeSource}
                             dropdownRender={dropDownRenderGroups}
@@ -823,7 +823,7 @@ const AccessControlEdit = () => {
                           <Select
                             mode="tags"
                             style={{ width: "100%", fontWeight: "500" }}
-                            placeholder="Tags Mode"
+                            placeholder="Select groups"
                             tagRender={blueTagRender}
                             onChange={handleChangeDestination}
                             dropdownRender={dropDownRenderGroups}
@@ -835,6 +835,14 @@ const AccessControlEdit = () => {
                         </Form.Item>
                       </Col>
                     </Row>
+                  </Col>
+                  <Col span={24}>
+                    <Paragraph
+                        type={"secondary"}
+                        style={{  marginTop: "-15px", marginBottom: "30px" }}
+                    >
+                      To change traffic direction and ports, select TCP or UDP protocol below
+                    </Paragraph>
                   </Col>
                   <Col span={10}>
                     <Form.Item
@@ -878,7 +886,7 @@ const AccessControlEdit = () => {
                           maxWidth: "260px",
                           fontWeight: "500",
                         }}
-                        placeholder="Tags Mode"
+                        placeholder={ (formPolicy.protocol === "all" || formPolicy.protocol === "icmp") ? "Change protocol to add ports" : "Add ports"}
                         tagRender={tagRender}
                         onChange={handleChangePorts}
                         className="inconsolata-font"
