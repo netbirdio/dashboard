@@ -74,6 +74,7 @@ export const Peers = () => {
   const users = useSelector((state: RootState) => state.user.data);
   const [addPeerModalOpen, setAddPeerModalOpen] = useState(false);
   const { oidcUser } = useOidcUser();
+  const [isAdmin, setIsAdmin] = useState(false);
 
   const [textToSearch, setTextToSearch] = useState("");
   const [optionOnOff, setOptionOnOff] = useState("all");
@@ -130,9 +131,14 @@ export const Peers = () => {
     });
   };
 
-  const isUserAdmin = (userId: string): boolean => {
-    return users.find((u) => u.id === userId)?.role === "admin";
-  };
+  useEffect(() => {
+    if(users) {
+      let currentUser = users.find((user) => user.is_current)
+      if(currentUser) {
+        setIsAdmin(currentUser.role === "admin");
+      }
+    }
+  }, [users])
 
   const refresh = () => {
     dispatch(
@@ -153,7 +159,7 @@ export const Peers = () => {
         payload: null,
       })
     );
-    if (oidcUser && isUserAdmin(oidcUser.sub))
+    if (isAdmin)
       dispatch(
         routeActions.getRoutes.request({
           getAccessTokenSilently: getTokenSilently,
