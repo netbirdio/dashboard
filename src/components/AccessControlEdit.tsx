@@ -450,7 +450,7 @@ const AccessControlEdit = () => {
             {policy && (
                 <Container style={{paddingTop: "40px"}}>
                     <Breadcrumb
-                        style={{marginBottom: "30px"}}
+                        style={{marginBottom: "25px"}}
                         items={[
                             {
                                 title: <a onClick={onBreadcrumbUsersClick}>Access Control</a>,
@@ -488,6 +488,7 @@ const AccessControlEdit = () => {
                                                         margin: "0px",
                                                         marginBottom: "10px",
                                                         cursor: "pointer",
+                                                        fontWeight:"500"
                                                     }}
                                                     onDoubleClick={() => toggleEditName(true)}
                                                 >
@@ -502,7 +503,7 @@ const AccessControlEdit = () => {
                                                                 style={{
                                                                     whiteSpace: "pre-line",
                                                                     margin: 0,
-                                                                    fontWeight: "bold",
+                                                                    fontWeight: "500",
                                                                 }}
                                                             >
                                                                 Rule name
@@ -553,7 +554,7 @@ const AccessControlEdit = () => {
                                                         <Form.Item
                                                             name="description"
                                                             label="Description"
-                                                            style={{marginTop: 24, fontWeight: "600"}}
+                                                            style={{marginTop: 24, fontWeight: "500"}}
                                                         >
                                                             <Input
                                                                 placeholder="Add description..."
@@ -587,7 +588,7 @@ const AccessControlEdit = () => {
                                                         style={{
                                                             color: "rgba(0, 0, 0, 0.88)",
                                                             fontSize: "14px",
-                                                            fontWeight: "bold",
+                                                            fontWeight: "500",
                                                         }}
                                                     >
                                                         Enabled
@@ -596,7 +597,7 @@ const AccessControlEdit = () => {
                                                         type={"secondary"}
                                                         style={{
                                                             marginTop: "-2",
-                                                            fontWeight: "500",
+                                                            fontWeight: "400",
                                                             marginBottom: "0",
                                                         }}
                                                     >
@@ -615,7 +616,7 @@ const AccessControlEdit = () => {
                                                     name="tagSourceGroups"
                                                     label="Source groups"
                                                     rules={[{validator: selectValidator}]}
-                                                    style={{fontWeight: "600"}}
+                                                    style={{fontWeight: "500"}}
                                                 >
                                                     <Select
                                                         mode="tags"
@@ -768,7 +769,7 @@ const AccessControlEdit = () => {
                                                     name="tagDestinationGroups"
                                                     label="Destination groups"
                                                     rules={[{validator: selectValidator}]}
-                                                    style={{fontWeight: "600"}}
+                                                    style={{fontWeight: "500"}}
                                                 >
                                                     <Select
                                                         mode="tags"
@@ -798,7 +799,7 @@ const AccessControlEdit = () => {
                                         <Form.Item
                                             name="protocol"
                                             label="Protocol"
-                                            style={{fontWeight: "600"}}
+                                            style={{fontWeight: "500"}}
                                             className="tag-box"
                                         >
                                             <Select
@@ -814,7 +815,7 @@ const AccessControlEdit = () => {
                                         <Form.Item
                                             name="ports"
                                             label="Ports"
-                                            style={{fontWeight: "600"}}
+                                            style={{fontWeight: "500"}}
                                             rules={[
                                                 {
                                                     message:

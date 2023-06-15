@@ -419,7 +419,7 @@ const PeerUpdate = () => {
   const showConfirmDelete = (routeId: string, name: string) => {
     confirm({
       icon: <ExclamationCircleOutlined />,
-      title: 'Delete network route "' + name + '"',
+      title: <span className="font-500">Delete network route {name }</span>,
       width: 600,
       content: (
         <Space direction="vertical" size="small">
@@ -545,7 +545,7 @@ const PeerUpdate = () => {
       {peer && (
         <Container style={{ paddingTop: "40px" }}>
           <Breadcrumb
-            style={{ marginBottom: "30px" }}
+            style={{ marginBottom: "25px" }}
             items={[
               {
                 title: <a onClick={onBreadcrumbUsersClick}>Peers</a>,
@@ -574,8 +574,8 @@ const PeerUpdate = () => {
                         <div
                           style={{
                             color: "rgba(0, 0, 0, 0.88)",
-                            fontWeight: "600",
-                            fontSize: "16px",
+                            fontWeight: "500",
+                            fontSize: "22px",
                           }}
                           onClick={() => toggleEditName(true, peer.name)}
                         >
@@ -644,7 +644,7 @@ const PeerUpdate = () => {
                         <span
                           style={{
                             marginRight: "5px",
-                            fontWeight: "bold",
+                            fontWeight: "500",
                           }}
                         >
                           NetBird IP
@@ -668,7 +668,7 @@ const PeerUpdate = () => {
                   <Form.Item
                     name="dns_label"
                     label="Domain name"
-                    style={{ fontWeight: "bold" }}
+                    style={{ fontWeight: "500" }}
                   >
                     <Input
                       disabled={true}
@@ -683,7 +683,7 @@ const PeerUpdate = () => {
                   <Form.Item
                     name="last_seen"
                     label="Last seen"
-                    style={{ fontWeight: "bold" }}
+                    style={{ fontWeight: "500" }}
                   >
                     <Input
                       disabled={true}
@@ -700,28 +700,31 @@ const PeerUpdate = () => {
                 <Col span={24}>
                   <Form.Item
                     name="login_expiration_enabled"
-                    style={{ fontWeight: "bold" }}
+                    style={{ fontWeight: "500" }}
                   >
                     <div
                       style={{
                         display: "flex",
-                        alignItems: "center",
-                        gap: "10px",
+                        gap: "15px",
+                        margin: "25px 0",
+                        lineHeight:"16px"
                       }}
                     >
                       <Switch
                         checked={formPeer.login_expiration_enabled}
                         onChange={onLoginExpirationChange}
                         disabled={!formPeer.user_id}
+                        size="small"
                       />
-                      <div style={{ margin: "30px 0" }}>
-                        <strong>Login expiration</strong>
+                      <div>
+                        <span className="font-500">Login expiration</span>
                         <Paragraph
                           type={"secondary"}
                           style={{
                             textAlign: "left",
                             whiteSpace: "pre-line",
                             fontWeight: "400",
+                            margin:"0"
                           }}
                         >
                           Login expiration SSO login peers require
@@ -736,6 +739,7 @@ const PeerUpdate = () => {
                     name="groupsNames"
                     label="Select peer groups"
                     rules={[{ validator: selectValidator }]}
+                    style={{fontWeight:"500"}}
                   >
                     <Select
                       mode="tags"
@@ -757,6 +761,7 @@ const PeerUpdate = () => {
                     display: "flex",
                     justifyContent: "start",
                     gap: "10px",
+                    marginTop:"20px"
                   }}
                 >
                   <Button onClick={onCancel} disabled={savedGroups.loading}>
@@ -793,7 +798,7 @@ const PeerUpdate = () => {
                   textAlign: "left",
                   whiteSpace: "pre-line",
                   fontSize: "16px",
-                  fontWeight: "bold",
+                  fontWeight: "500",
                 }}
               >
                 Network routes
@@ -835,7 +840,6 @@ const PeerUpdate = () => {
                   showHeader={false}
                   scroll={{ x: 800 }}
                   pagination={false}
-                  //   loading={tableSpin(loading)}
                   dataSource={peerRoutes}
                 >
                   <Column title="Name" dataIndex="network_id" />
@@ -848,6 +852,7 @@ const PeerUpdate = () => {
                         <>
                           <Switch
                             defaultChecked={record.enabled}
+                            size="small"
                             onChange={(checked) =>
                               onRouteEnableChange(checked, record)
                             }
@@ -917,7 +922,7 @@ const PeerUpdate = () => {
                         textAlign: "left",
                         whiteSpace: "pre-line",
                         fontSize: "16px",
-                        fontWeight: "bold",
+                        fontWeight: "500",
                         margin: "0",
                       }}
                     >

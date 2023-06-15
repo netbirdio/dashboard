@@ -1,5 +1,12 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500&display=swap');
 @import 'antd/dist/reset.css';
+
+html,
+body,
+* {
+  font-family: 'Roboto', sans-serif !important;
+}
 
 body {
   font-size: 16px;
@@ -223,4 +230,14 @@ td.non-highlighted-table-column {
 
 .w-100 {
   width: 100%;
+}
+
+.font-500 {
+  font-weight: 500;
+}
+
+.page-heading {
+  font-weight: 700!important;
+  font-size: 22px!important;
+  margin: 0!important;
 }

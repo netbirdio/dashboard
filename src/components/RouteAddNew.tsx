@@ -378,6 +378,7 @@ const RouteAddNew = (selectedPeer: any) => {
                       whiteSpace: "pre-line",
                       fontSize: "18px",
                       margin: "0px",
+                      fontWeight:500,
                       marginBottom: "15px",
                     }}
                   >
@@ -390,7 +391,7 @@ const RouteAddNew = (selectedPeer: any) => {
                         style={{
                           color: "rgba(0, 0, 0, 0.88)",
                           fontSize: "14px",
-                          fontWeight: "bold",
+                          fontWeight: "500",
                         }}
                       >
                         Routing Peer
@@ -439,7 +440,7 @@ const RouteAddNew = (selectedPeer: any) => {
                             style={{
                               color: "rgba(0, 0, 0, 0.88)",
                               fontSize: "14px",
-                              fontWeight: "bold",
+                              fontWeight: "500",
                             }}
                           >
                             Network Identifier
@@ -448,7 +449,7 @@ const RouteAddNew = (selectedPeer: any) => {
                             type={"secondary"}
                             style={{
                               marginTop: "-2",
-                              fontWeight: "500",
+                              fontWeight: "400",
                               marginBottom: "5px",
                             }}
                           >
@@ -503,7 +504,7 @@ const RouteAddNew = (selectedPeer: any) => {
                         <Form.Item
                           name="description"
                           label="Description"
-                          style={{ marginTop: 24 }}
+                          style={{ marginTop: 24 ,fontWeight:500}}
                         >
                           <Input
                             placeholder="Add description..."
@@ -542,7 +543,7 @@ const RouteAddNew = (selectedPeer: any) => {
                           style={{
                             color: "rgba(0, 0, 0, 0.88)",
                             fontSize: "14px",
-                            fontWeight: "bold",
+                            fontWeight: "500",
                           }}
                         >
                           Enabled
@@ -567,7 +568,7 @@ const RouteAddNew = (selectedPeer: any) => {
                   style={{
                     color: "rgba(0, 0, 0, 0.88)",
                     fontSize: "14px",
-                    fontWeight: "bold",
+                    fontWeight: "500",
                   }}
                 >
                   Network Range
@@ -576,7 +577,7 @@ const RouteAddNew = (selectedPeer: any) => {
                   type={"secondary"}
                   style={{
                     marginTop: "-2",
-                    fontWeight: "500",
+                    fontWeight: "400",
                     marginBottom: "5px",
                   }}
                 >
@@ -602,7 +603,7 @@ const RouteAddNew = (selectedPeer: any) => {
                     style={{
                       color: "rgba(0, 0, 0, 0.88)",
                       fontSize: "14px",
-                      fontWeight: "bold",
+                      fontWeight: "500",
                     }}
                   >
                     Routing Peer
@@ -611,7 +612,7 @@ const RouteAddNew = (selectedPeer: any) => {
                     type={"secondary"}
                     style={{
                       marginTop: "-2",
-                      fontWeight: "500",
+                      fontWeight: "400",
                       marginBottom: "5px",
                     }}
                   >
@@ -635,7 +636,7 @@ const RouteAddNew = (selectedPeer: any) => {
                   style={{
                     color: "rgba(0, 0, 0, 0.88)",
                     fontSize: "14px",
-                    fontWeight: "bold",
+                    fontWeight: "500",
                   }}
                 >
                   Distribution groups
@@ -644,7 +645,7 @@ const RouteAddNew = (selectedPeer: any) => {
                   type={"secondary"}
                   style={{
                     marginTop: "-2",
-                    fontWeight: "500",
+                    fontWeight: "400",
                     marginBottom: "5px",
                   }}
                 >
@@ -689,7 +690,7 @@ const RouteAddNew = (selectedPeer: any) => {
                         style={{
                           color: "rgba(0, 0, 0, 0.88)",
                           fontSize: "14px",
-                          fontWeight: "bold",
+                          fontWeight: "500",
                         }}
                       >
                         Enabled
@@ -698,7 +699,7 @@ const RouteAddNew = (selectedPeer: any) => {
                         type={"secondary"}
                         style={{
                           marginTop: "-2",
-                          fontWeight: "500",
+                          fontWeight: "400",
                           marginBottom: "0",
                         }}
                       >
@@ -754,7 +755,7 @@ const RouteAddNew = (selectedPeer: any) => {
                                 style={{
                                   color: "rgba(0, 0, 0, 0.88)",
                                   fontSize: "14px",
-                                  fontWeight: "bold",
+                                  fontWeight: "500",
                                 }}
                               >
                                 Masquerade
@@ -763,7 +764,7 @@ const RouteAddNew = (selectedPeer: any) => {
                                 type={"secondary"}
                                 style={{
                                   marginTop: "-2",
-                                  fontWeight: "500",
+                                  fontWeight: "400",
                                   marginBottom: "0",
                                 }}
                               >
@@ -781,7 +782,7 @@ const RouteAddNew = (selectedPeer: any) => {
                           style={{
                             color: "rgba(0, 0, 0, 0.88)",
                             fontSize: "14px",
-                            fontWeight: "bold",
+                            fontWeight: "500",
                           }}
                         >
                           Metric
@@ -790,7 +791,7 @@ const RouteAddNew = (selectedPeer: any) => {
                           type={"secondary"}
                           style={{
                             marginTop: "-2",
-                            fontWeight: "500",
+                            fontWeight: "400",
                             marginBottom: "5px",
                           }}
                         >

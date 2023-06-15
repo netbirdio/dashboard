@@ -116,7 +116,7 @@ const AddPATPopup = () => {
             >
                 <Container style={{textAlign: "start", marginLeft: "-15px", marginRight: "-15px"}}>
                     <Paragraph
-                        style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "22px"}}>
+                        style={{textAlign: "start", whiteSpace: "pre-line", fontSize: "18px",fontWeight:"500"}}>
                         {showPlainToken ? "Token created successfully!" : "Create token"}
                     </Paragraph>
                     {!showPlainToken && <Paragraph type={"secondary"}
@@ -142,7 +142,7 @@ const AddPATPopup = () => {
                             <Col span={24}>
                                 <Row align="top">
                                     <Col flex="auto">
-                                        <Paragraph style={{fontWeight: "bold", marginTop: "-10px"}}>Name</Paragraph>
+                                        <Paragraph style={{fontWeight: "500", marginTop: "-10px"}}>Name</Paragraph>
                                         <Paragraph type={"secondary"} style={{marginTop: "-15px"}}>Set an easily identifiable name for your token</Paragraph>
                                         <Form.Item
                                             name="name"
@@ -162,7 +162,7 @@ const AddPATPopup = () => {
                                 </Row>
                             </Col>
                             <Col span={24} style={{textAlign: "left", marginTop: "10px"}}>
-                                <Paragraph style={{fontWeight: "bold", marginTop: "-10px"}}>Expires in</Paragraph>
+                                <Paragraph style={{fontWeight: "500", marginTop: "-10px"}}>Expires in</Paragraph>
                                 <Paragraph type={"secondary"} style={{marginTop: "-15px"}}>Number of days this token will be valid for</Paragraph>
                                 <Form.Item
                                     name="expires_in"

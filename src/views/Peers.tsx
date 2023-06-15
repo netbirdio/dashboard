@@ -394,7 +394,7 @@ export const Peers = () => {
     let name = peerToAction ? peerToAction.name : "";
     confirmModal.confirm({
       icon: <ExclamationCircleOutlined />,
-      title: 'Delete peer "' + name + '"',
+      title: <span className="font-500">Delete peer {name}</span>,
       width: 600,
       content: contentModule,
       onOk() {
@@ -414,7 +414,9 @@ export const Peers = () => {
   const showConfirmEnableSSH = (record: PeerDataTable) => {
     confirmModal.confirm({
       icon: <ExclamationCircleOutlined />,
-      title: 'Enable SSH Server for "' + record.name + '"?',
+      title: (
+        <span className="font-500">Enable SSH Server for {record.name} ?</span>
+      ),
       width: 600,
       content:
         "Experimental feature. Enabling this option allows remote SSH access to this machine from other connected network participants.",
@@ -592,7 +594,7 @@ export const Peers = () => {
         >
           <span style={{ textAlign: "left" }}>
             <Row>
-              <Text strong>{peer.name}</Text>
+              <Text className="font-500">{peer.name}</Text>
             </Row>
           </span>
         </Button>
@@ -607,7 +609,7 @@ export const Peers = () => {
         >
           <span style={{ textAlign: "left" }}>
             <Row>
-              <Text strong>{peer.name}</Text>
+              <Text className="font-500">{peer.name}</Text>
             </Row>
             <Row>
               <Text type="secondary">{userEmail}</Text>
@@ -626,19 +628,12 @@ export const Peers = () => {
           <Container style={{ paddingTop: "40px" }}>
             <Row>
               <Col span={24}>
-                <Title level={4}>Peers</Title>
-                {showTutorial && (
-                  <Paragraph type={"secondary"}>
-                    A list of all the machines in your account including their
-                    name, IP and status.
-                  </Paragraph>
-                )}
-                {!showTutorial && (
-                  <Paragraph>
-                    A list of all the machines in your account including their
-                    name, IP and status.
-                  </Paragraph>
-                )}
+                <Title className="page-heading">Peers</Title>
+                <Paragraph type={"secondary"}>
+                  A list of all the machines in your account including their
+                  name, IP and status.
+                </Paragraph>
+
                 <Space
                   direction="vertical"
                   size="large"
@@ -689,7 +684,7 @@ export const Peers = () => {
                               type="primary"
                               onClick={() => setAddPeerModalOpen(true)}
                             >
-                              Add peer
+                              Add Peer
                             </Button>
                           )}
                         </Col>
