@@ -400,7 +400,7 @@ const RouteAddNew = (selectedPeer: any) => {
                         type={"secondary"}
                         style={{
                           marginTop: "-2",
-                          fontWeight: "500",
+                          fontWeight: "400",
                           marginBottom: "5px",
                         }}
                       >

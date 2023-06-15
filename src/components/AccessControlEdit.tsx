@@ -320,9 +320,9 @@ const AccessControlEdit = () => {
             <Divider style={{margin: "8px 0"}}/>
             <Row style={{padding: "0 8px 4px"}}>
                 <Col flex="auto">
-          <span style={{color: "#9CA3AF"}}>
-            Add new ports or range by pressing "Enter"
-          </span>
+          <Text type={"secondary"}>
+            Add new ports by pressing "Enter"
+          </Text>
                 </Col>
                 <Col flex="none">
                     <svg

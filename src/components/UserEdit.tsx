@@ -262,11 +262,6 @@ const UserEdit = () => {
         }
     }, [form, user, currentGroups])
 
-
-    const isUserAdmin = (userId: string): boolean => {
-        return users.find(u => u.id === userId)?.role === "admin"
-    }
-
     return (
       <>
         <div style={{ paddingTop: "13px" }}>
@@ -382,7 +377,7 @@ const UserEdit = () => {
                           placeholder="Associate groups with the user"
                           tagRender={blueTagRender}
                           dropdownRender={dropDownRender}
-                          disabled={oidcUser && !isUserAdmin(oidcUser.sub)}
+                          disabled={!isAdmin}
                         >
                           {tagGroups.map((m) => (
                             <Option key={m}>{optionRender(m)}</Option>
