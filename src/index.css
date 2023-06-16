@@ -1,11 +1,11 @@
-@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500&display=swap');
 @import 'antd/dist/reset.css';
 
 html,
 body,
 * {
-  font-family: 'Roboto', sans-serif !important;
+  font-family: 'Arimo', sans-serif !important;
 }
 
 body {

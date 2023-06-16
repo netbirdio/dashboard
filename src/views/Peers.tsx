@@ -13,6 +13,7 @@ import {
 } from "@ant-design/icons";
 import {
   Alert,
+  Badge,
   Button,
   Card,
   Col,
@@ -132,13 +133,13 @@ export const Peers = () => {
   };
 
   useEffect(() => {
-    if(users) {
-      let currentUser = users.find((user) => user.is_current)
-      if(currentUser) {
+    if (users) {
+      let currentUser = users.find((user) => user.is_current);
+      if (currentUser) {
         setIsAdmin(currentUser.role === "admin");
       }
     }
-  }, [users])
+  }, [users]);
 
   const refresh = () => {
     dispatch(
@@ -581,6 +582,34 @@ export const Peers = () => {
   };
 
   const renderName = (peer: PeerDataTable) => {
+    let status = peer.connected ? (
+      <Badge
+        status="success"
+        style={{
+          marginTop: "1px",
+          marginRight: "5px",
+          marginLeft: "0px",
+        }}
+      ></Badge>
+    ) : (
+      <Badge
+        status="error"
+        style={{
+          marginTop: "1px",
+          marginRight: "5px",
+          marginLeft: "0px",
+        }}
+      ></Badge>
+    );
+
+    let loginExpire = peer.login_expired ? (
+      <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+        <Tag color="orange">needs login</Tag>
+      </Tooltip>
+    ) : (
+      ""
+    );
+
     const userEmail = users?.find((u) => u.id === peer.user_id)?.email;
     let expiry = !peer.login_expiration_enabled ? (
       <div>
@@ -593,17 +622,24 @@ export const Peers = () => {
     ) : null;
     if (!userEmail) {
       return (
-        <Button
-          type="text"
-          style={{ height: "auto", whiteSpace: "normal", textAlign: "left" }}
-          onClick={() => setUpdateGroupsVisible(peer, true)}
-        >
-          <span style={{ textAlign: "left" }}>
-            <Row>
-              <Text className="font-500">{peer.name}</Text>
-            </Row>
-          </span>
-        </Button>
+        <>
+          <Button
+            type="text"
+            style={{ height: "auto", whiteSpace: "normal", textAlign: "left" }}
+            onClick={() => setUpdateGroupsVisible(peer, true)}
+          >
+            <span style={{ textAlign: "left" }}>
+              <Row>
+                <Text className="font-500">
+                  {" "}
+                  {status}
+                  {peer.name}
+                </Text>
+              </Row>
+              <Row>{loginExpire}</Row>
+            </span>
+          </Button>
+        </>
       );
     }
     return (
@@ -615,12 +651,18 @@ export const Peers = () => {
         >
           <span style={{ textAlign: "left" }}>
             <Row>
-              <Text className="font-500">{peer.name}</Text>
+              <Text className="font-500">
+                {" "}
+                {status}
+                {peer.name}
+              </Text>
             </Row>
             <Row>
               <Text type="secondary">{userEmail}</Text>
             </Row>
-            <Row>{expiry}</Row>
+            <Row style={{ minWidth: "195px" }}>
+              {expiry} {loginExpire}
+            </Row>
           </span>
         </Button>
       </div>
@@ -761,28 +803,6 @@ export const Peers = () => {
                             index: number
                           ) => {
                             return renderAddress(record);
-                          }}
-                        />
-                        <Column
-                          title="Status"
-                          dataIndex="connected"
-                          align="center"
-                          render={(text, record: PeerDataTable, index) => {
-                            let status = text ? (
-                              <Tag color="green">online</Tag>
-                            ) : (
-                              <Tag color="red">offline</Tag>
-                            );
-
-                            if (record.login_expired) {
-                              return (
-                                <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
-                                  <Tag color="orange">needs login</Tag>
-                                </Tooltip>
-                              );
-                            }
-
-                            return status;
                           }}
                         />
                         <Column
