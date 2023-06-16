@@ -1,6 +1,6 @@
 
 export interface Route {
-    id?: string
+    id?: string | null
     description: string
     enabled: boolean
     peer: string

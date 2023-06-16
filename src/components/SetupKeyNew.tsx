@@ -369,8 +369,9 @@ const SetupKeyNew = () => {
           style={{
             textAlign: "start",
             whiteSpace: "pre-line",
-            fontSize: "22px",
+            fontSize: "18px",
             margin: "0px",
+            fontWeight:"500"
           }}
         >
           {showPlainToken
@@ -382,7 +383,6 @@ const SetupKeyNew = () => {
           style={{
             textAlign: "start",
             whiteSpace: "pre-line",
-            paddingBottom: "15px",
           }}
         >
           {showPlainToken
@@ -402,8 +402,11 @@ const SetupKeyNew = () => {
           >
             <Row>
               <Col span={24}>
-                <Paragraph style={{ fontWeight: "bold" }}>Name</Paragraph>
-                <Paragraph type={"secondary"} style={{ marginTop: "-15px" }}>
+                <Paragraph style={{ fontWeight: "500" }}>Name</Paragraph>
+                <Paragraph
+                  type={"secondary"}
+                  style={{ marginTop: "-15px", marginBottom: "-5px" }}
+                >
                   Set an easily identifiable name for your key
                 </Paragraph>
               </Col>
@@ -427,7 +430,7 @@ const SetupKeyNew = () => {
                   style={{
                     whiteSpace: "pre-line",
                     margin: 0,
-                    fontWeight: "bold",
+                    fontWeight: "500",
                   }}
                 >
                   Reusable
@@ -461,7 +464,7 @@ const SetupKeyNew = () => {
                   style={{
                     whiteSpace: "pre-line",
                     margin: 0,
-                    fontWeight: "bold",
+                    fontWeight: "500",
                   }}
                 >
                   Usage limit
@@ -499,7 +502,7 @@ const SetupKeyNew = () => {
                   style={{
                     whiteSpace: "pre-line",
                     margin: 0,
-                    fontWeight: "bold",
+                    fontWeight: "500",
                   }}
                 >
                   Expires in
@@ -535,6 +538,7 @@ const SetupKeyNew = () => {
                   style={{
                     whiteSpace: "pre-line",
                     margin: 0,
+                    fontWeight: "500",
                   }}
                 >
                   Auto-assigned groups

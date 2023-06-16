@@ -217,8 +217,8 @@ export const SetupKeys = () => {
     let name = setupKeyToAction ? setupKeyToAction.name : "";
     confirmModal.confirm({
       icon: <ExclamationCircleOutlined />,
-      title: 'Revoke setupKey "' + name + '"',
-      width: 600,
+      title: <span className="font-500">Revoke setupKey {name}</span>,
+      width: 500,
       content: (
         <Space direction="vertical" size="small">
           <Paragraph>Are you sure you want to revoke key?</Paragraph>
@@ -384,12 +384,8 @@ export const SetupKeys = () => {
         {!setupEditKeyVisible && (
           <Row>
             <Col span={24}>
-              <Title level={4}>Setup Keys</Title>
-              <Paragraph
-                style={{
-                  color: dataTable.length ? "black" : "#818183",
-                }}
-              >
+              <Title className="page-heading">Setup Keys</Title>
+              <Paragraph type="secondary">
                 A list of all the setup keys in your account including their
                 name, state, type and expiration.
               </Paragraph>
@@ -444,7 +440,7 @@ export const SetupKeys = () => {
                             type="primary"
                             onClick={onClickAddNewSetupKey}
                           >
-                            Add key
+                            Add Key
                           </Button>
                         </Col>
                       </Row>
@@ -569,7 +565,7 @@ export const SetupKeys = () => {
                               className="tooltip-label"
                             >
                               {" "}
-                              <Text strong>{text}</Text>
+                              <Text className="font-500">{text}</Text>
                             </Button>
                           );
                         }}

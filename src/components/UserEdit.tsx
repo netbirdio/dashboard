@@ -192,25 +192,29 @@ const UserEdit = () => {
 
     const showConfirmDelete = (token: TokenDataTable) => {
         confirmModal.confirm({
-            icon: <ExclamationCircleOutlined/>,
-            title: "Delete token \"" + token.name + "\"",
-            width: 600,
-            content: <Space direction="vertical" size="small">
-                <Paragraph>Are you sure you want to delete this token?</Paragraph>
-            </Space>,
-            onOk() {
-                dispatch(personalAccessTokenActions.deletePersonalAccessToken.request({
-                    getAccessTokenSilently: getTokenSilently,
-                    payload: {
-                        user_id: user.id,
-                        id: token.id,
-                        name: token.name,
-                    } as SpecificPAT
-                }));
-            },
-            onCancel() {
-                // noop
-            },
+          icon: <ExclamationCircleOutlined />,
+          title: <span className="font-500">Delete token {token.name}</span>,
+          width: 600,
+          content: (
+            <Space direction="vertical" size="small">
+              <Paragraph>Are you sure you want to delete this token?</Paragraph>
+            </Space>
+          ),
+          onOk() {
+            dispatch(
+              personalAccessTokenActions.deletePersonalAccessToken.request({
+                getAccessTokenSilently: getTokenSilently,
+                payload: {
+                  user_id: user.id,
+                  id: token.id,
+                  name: token.name,
+                } as SpecificPAT,
+              })
+            );
+          },
+          onCancel() {
+            // noop
+          },
         });
     }
 
@@ -283,10 +287,10 @@ const UserEdit = () => {
 
           <Card
             bordered={true}
-            title={user.name}
             loading={loading}
             style={{ marginBottom: "7px" }}
           >
+            <h3 style={{fontSize:"22px",fontWeight:"500",marginBottom:"25px"}}>{user.name}</h3>
             <div style={{ maxWidth: "800px" }}>
               <Form
                 layout="vertical"
@@ -314,12 +318,12 @@ const UserEdit = () => {
                       <Form.Item
                         name="email"
                         label={<Text style={{}}>Email</Text>}
-                        style={{ marginRight: "70px", fontWeight: "bold" }}
+                        style={{ marginRight: "70px", fontWeight: "500" }}
                       >
                         <Input
                           disabled={user.id}
                           value={formUser.email}
-                          style={{ color: "#8c8c8c"}}
+                          style={{ color: "#8c8c8c" }}
                           autoComplete="off"
                         />
                       </Form.Item>
@@ -328,16 +332,19 @@ const UserEdit = () => {
                   <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                     <Form.Item
                       name="role"
-                      label={<Text style={{}}>Role</Text>}
-                      style={{ marginRight: "50px", fontWeight: "bold" }}
+                      label={<Text style={{fontWeight:"500"}}>Role</Text>}
+                      style={{ marginRight: "50px", fontWeight: "500" }}
                     >
                       <Select
                         style={{ width: "100%" }}
-
                         disabled={user.is_current}
                       >
-                        <Option value="admin"><Text type={"secondary"}>admin</Text></Option>
-                        <Option value="user"><Text type={"secondary"}>user</Text></Option>
+                        <Option value="admin">
+                          <Text type={"secondary"}>admin</Text>
+                        </Option>
+                        <Option value="user">
+                          <Text type={"secondary"}>user</Text>
+                        </Option>
                       </Select>
                     </Form.Item>
                   </Col>
@@ -356,7 +363,11 @@ const UserEdit = () => {
                     >
                       <Form.Item
                         name="autoGroupsNames"
-                        label={<Text style={{}}>Auto-assigned groups</Text>}
+                        label={
+                          <Text style={{ fontWeight: "500" }}>
+                            Auto-assigned groups
+                          </Text>
+                        }
                         tooltip="Every peer enrolled with this user will be automatically added to these groups"
                         rules={[{ validator: selectValidator }]}
                         style={{ marginRight: "70px" }}
@@ -389,7 +400,7 @@ const UserEdit = () => {
                           valuePropName="checked"
                           name="is_blocked"
                           label="Block user"
-                          style={{ marginRight: "50px", fontWeight: "bold" }}
+                          style={{ marginRight: "50px", fontWeight: "500" }}
                         >
                           <Switch />
                         </Form.Item>
@@ -421,8 +432,8 @@ const UserEdit = () => {
                   style={{
                     textAlign: "left",
                     whiteSpace: "pre-line",
-                    fontSize: "16px",
-                    fontWeight: "bold",
+                    fontSize: "18px",
+                    fontWeight: "500",
                   }}
                 >
                   Access tokens

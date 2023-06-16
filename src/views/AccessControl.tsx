@@ -257,8 +257,8 @@ export const AccessControl = () => {
     setPolicyToAction(record as PolicyDataTable);
     confirm({
       icon: <ExclamationCircleOutlined />,
-      title: 'Delete rule "' + record.name + '"',
-      width: 600,
+      title: <span className="font-500">Delete rule {record.name}</span>,
+      width: 500,
       content: (
         <Space direction="vertical" size="small">
           <Paragraph>
@@ -320,7 +320,7 @@ export const AccessControl = () => {
     ) as Policy[];
     if (optionAllEnable == "enabled") {
       f = filter(f, (f: Policy) => f.enabled);
-    } else  if (optionAllEnable == "disabled") {
+    } else if (optionAllEnable == "disabled") {
       f = filter(f, (f: Policy) => !f.enabled);
     }
     return f;
@@ -438,7 +438,7 @@ export const AccessControl = () => {
       } `;
       return (
         <div key={i}>
-          <Tag color="blue" style={{ marginRight: 3}}>
+          <Tag color="blue" style={{ marginRight: 3 }}>
             {_g.name}
           </Tag>
           <span style={{ fontSize: ".85em" }}>{peersCount}</span>
@@ -549,8 +549,8 @@ export const AccessControl = () => {
           <Container className="container-main">
             <Row>
               <Col span={24}>
-                <Title level={4}>Access Control</Title>
-                <Paragraph>
+                <Title className="page-heading">Access Control</Title>
+                <Paragraph type="secondary">
                   Access rules help you manage access permissions in your
                   organisation.
                 </Paragraph>
@@ -602,7 +602,7 @@ export const AccessControl = () => {
                             disabled={savedPolicy.loading}
                             onClick={onClickAddNewPolicy}
                           >
-                            Add rule
+                            Add Rule
                           </Button>
                         </Col>
                       </Row>
@@ -667,7 +667,7 @@ export const AccessControl = () => {
                                 }
                                 className="tooltip-label"
                               >
-                                <Text strong>{text}</Text>
+                                <Text className="font-500">{text}</Text>
                               </span>
                             </Tooltip>
                           );
@@ -742,8 +742,8 @@ export const AccessControl = () => {
                         render={(text, record: PolicyDataTable, index) => {
                           return (
                             <Tag
-                                className="menlo-font"
-                                style={{
+                              className="menlo-font"
+                              style={{
                                 marginRight: "3",
                                 textTransform: "uppercase",
                               }}

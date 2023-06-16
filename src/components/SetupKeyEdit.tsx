@@ -33,7 +33,7 @@ import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
 import { EditOutlined, LockOutlined } from "@ant-design/icons";
 import { actions as personalAccessTokenActions } from "../store/personal-access-token";
-import {useGetGroupTagHelpers} from "../utils/groups";
+import { useGetGroupTagHelpers } from "../utils/groups";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -44,10 +44,7 @@ const customExpiresFormat = (value: Date): string | null => {
 };
 
 const SetupKeyNew = () => {
-  const {
-    optionRender,
-      blueTagRender
-  } = useGetGroupTagHelpers()
+  const { optionRender, blueTagRender } = useGetGroupTagHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
 
@@ -62,14 +59,14 @@ const SetupKeyNew = () => {
   const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formSetupKey, setFormSetupKey] = useState({} as FormSetupKey);
   const inputNameRef = useRef<any>(null);
- 
-   useEffect(() => {
-     //Unmounting component clean
-     return () => {
-       setVisibleNewSetupKey(false)
-     };
-   }, []);
-  
+
+  useEffect(() => {
+    //Unmounting component clean
+    return () => {
+      setVisibleNewSetupKey(false);
+    };
+  }, []);
+
   useEffect(() => {
     if (!editName) return;
 
@@ -269,7 +266,7 @@ const SetupKeyNew = () => {
   return (
     <>
       <Breadcrumb
-        style={{ marginBottom: "30px" }}
+        style={{ marginBottom: "25px" }}
         items={[
           {
             title: <a onClick={onBreadcrumbUsersClick}>Setup Keys</a>,
@@ -279,12 +276,11 @@ const SetupKeyNew = () => {
           },
         ]}
       />
-      <Card
-        bordered={true}
-        title={setupKey.name}
-        style={{ marginBottom: "7px" }}
-      >
+      <Card bordered={true} style={{ marginBottom: "7px", border: "none" }}>
         <div style={{ maxWidth: "800px" }}>
+          <h3 style={{ fontSize: "22px", fontWeight: "500",marginBottom:"30px" }}>
+            {setupKey.name}
+          </h3>
           <Form
             layout="vertical"
             requiredMark={false}
@@ -309,7 +305,7 @@ const SetupKeyNew = () => {
                 <Paragraph
                   style={{
                     whiteSpace: "pre-line",
-                    fontWeight: "bold",
+                    fontWeight: "500",
                     margin: 0,
                   }}
                 >
@@ -340,14 +336,14 @@ const SetupKeyNew = () => {
                   style={{
                     whiteSpace: "pre-line",
                     margin: 0,
-                    fontWeight: "bold",
+                    fontWeight: "500",
                   }}
                 >
                   <Paragraph
                     style={{
                       whiteSpace: "pre-line",
                       margin: 0,
-                      fontWeight: "bold",
+                      fontWeight: "500",
                     }}
                   ></Paragraph>
                   {formSetupKey.type === "one-off" ? "One-off" : "Reusable"},
@@ -384,7 +380,7 @@ const SetupKeyNew = () => {
                   style={{
                     whiteSpace: "pre-line",
                     margin: 0,
-                    fontWeight: "bold",
+                    fontWeight: "500",
                   }}
                 >
                   Auto-assigned groups
@@ -414,7 +410,7 @@ const SetupKeyNew = () => {
               </Col>
 
               <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                <Paragraph style={{ margin: 0, fontWeight: "bold" }}>
+                <Paragraph style={{ margin: 0, fontWeight: "500" }}>
                   Expires
                 </Paragraph>
                 <Row>
@@ -437,7 +433,7 @@ const SetupKeyNew = () => {
                   href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
                 >
                   {" "}
-                  setup keys
+                  Setup Keys
                 </a>
               </Text>
             </Row>
