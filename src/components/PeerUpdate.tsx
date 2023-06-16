@@ -20,6 +20,7 @@ import {
   Switch,
   Breadcrumb,
   Table,
+  SelectProps,
   Modal,
 } from "antd";
 import { Container } from "./Container";
@@ -38,7 +39,7 @@ import { timeAgo } from "../utils/common";
 import { actions as routeActions } from "../store/route";
 import RouteAddNew from "./RouteAddNew";
 import { Route } from "../store/route/types";
-import {useGetGroupTagHelpers} from "../utils/groups";
+import { useGetGroupTagHelpers } from "../utils/groups";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -50,9 +51,7 @@ const PeerUpdate = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const { Column } = Table;
   const { confirm } = Modal;
-  const {
-    optionRender,
-  } = useGetGroupTagHelpers()
+  const { optionRender } = useGetGroupTagHelpers();
 
   const dispatch = useDispatch();
   const groups = useSelector((state: RootState) => state.group.data);
@@ -71,19 +70,21 @@ const PeerUpdate = () => {
   const deletedRoute = useSelector(
     (state: RootState) => state.route.deletedRoute
   );
-   const setupNewRouteVisible = useSelector(
-     (state: RootState) => state.route.setupNewRouteVisible
-   );
+  const setupNewRouteVisible = useSelector(
+    (state: RootState) => state.route.setupNewRouteVisible
+  );
   const [tagGroups, setTagGroups] = useState([] as string[]);
   const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[]);
   const [peerGroups, setPeerGroups] = useState([] as GroupPeer[]);
   const inputNameRef = useRef<any>(null);
   const [editName, setEditName] = useState(false);
+   const options: SelectProps["options"] = [];
   const [estimatedName, setEstimatedName] = useState("");
   const [callingPeerAPI, setCallingPeerAPI] = useState(false);
   const [callingGroupAPI, setCallingGroupAPI] = useState(false);
   const [isSubmitRunning, setSubmitRunning] = useState(false);
   const [peerRoutes, setPeerRoutes] = useState([]);
+  const [notPeerRoutes, setNotPeerRoutes] = useState([]);
   const [peerGroupsToSave, setPeerGroupsToSave] = useState({
     ID: "",
     groupsNoId: [],
@@ -94,7 +95,6 @@ const PeerUpdate = () => {
   const routes = useSelector((state: RootState) => state.route.data);
   const [form] = Form.useForm();
   const styleNotification = { marginTop: 85 };
-  
 
   useEffect(() => {
     //Unmounting component clean
@@ -146,7 +146,11 @@ const PeerUpdate = () => {
       (route) => route.peer === peer.id
     );
     setPeerRoutes(filterPeerRoutes);
-  }, [routes]);
+    const filterNotPeerRoutes: any = routes.filter(
+      (route) => route.peer !== peer.id
+    );
+    setNotPeerRoutes(filterNotPeerRoutes);
+    }, [routes]);
 
   useEffect(() => {
     if (!peer) return;
@@ -419,7 +423,7 @@ const PeerUpdate = () => {
   const showConfirmDelete = (routeId: string, name: string) => {
     confirm({
       icon: <ExclamationCircleOutlined />,
-      title: <span className="font-500">Delete network route {name }</span>,
+      title: <span className="font-500">Delete network route {name}</span>,
       width: 600,
       content: (
         <Space direction="vertical" size="small">
@@ -707,7 +711,7 @@ const PeerUpdate = () => {
                         display: "flex",
                         gap: "15px",
                         margin: "25px 0",
-                        lineHeight:"16px"
+                        lineHeight: "16px",
                       }}
                     >
                       <Switch
@@ -724,7 +728,7 @@ const PeerUpdate = () => {
                             textAlign: "left",
                             whiteSpace: "pre-line",
                             fontWeight: "400",
-                            margin:"0"
+                            margin: "0",
                           }}
                         >
                           Login expiration SSO login peers require
@@ -739,7 +743,7 @@ const PeerUpdate = () => {
                     name="groupsNames"
                     label="Select peer groups"
                     rules={[{ validator: selectValidator }]}
-                    style={{fontWeight:"500"}}
+                    style={{ fontWeight: "500" }}
                   >
                     <Select
                       mode="tags"
@@ -761,7 +765,7 @@ const PeerUpdate = () => {
                     display: "flex",
                     justifyContent: "start",
                     gap: "10px",
-                    marginTop:"20px"
+                    marginTop: "20px",
                   }}
                 >
                   <Button onClick={onCancel} disabled={savedGroups.loading}>
@@ -1009,7 +1013,9 @@ const PeerUpdate = () => {
           </Card>
         </Container>
       )}
-      {setupNewRouteVisible && <RouteAddNew peer={peer} />}
+      {setupNewRouteVisible && (
+        <RouteAddNew selectedPeer={peer} notPeerRoutes={notPeerRoutes} />
+      )}
     </>
   );
 };

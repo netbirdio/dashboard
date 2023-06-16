@@ -24,6 +24,7 @@ import {
   FlagFilled,
   QuestionCircleFilled,
 } from "@ant-design/icons";
+import CreatableSelect from "react-select/creatable";
 import { Route, RouteToSave } from "../store/route/types";
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
@@ -44,19 +45,18 @@ const { Panel } = Collapse;
 interface FormRoute extends Route {}
 
 const RouteAddNew = (selectedPeer: any) => {
-   const {
-     blueTagRender,
-     handleChangeTags,
-     dropDownRender,
-     optionRender,
-     tagGroups,
-     getExistingAndToCreateGroupsLists,
-     getGroupNamesFromIDs,
-     selectValidator,
-   } = useGetGroupTagHelpers();
+  const {
+    blueTagRender,
+    handleChangeTags,
+    dropDownRender,
+    optionRender,
+    tagGroups,
+    getExistingAndToCreateGroupsLists,
+    getGroupNamesFromIDs,
+    selectValidator,
+  } = useGetGroupTagHelpers();
   //  const { optionRender, blueTagRender, grayTagRender } =
   //    useGetGroupTagHelpers();
-  
   const { Option } = Select;
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
@@ -74,6 +74,7 @@ const RouteAddNew = (selectedPeer: any) => {
   const [editName, setEditName] = useState(false);
   const [editDescription, setEditDescription] = useState(false);
   const options: SelectProps["options"] = [];
+  const testOptions: SelectProps["options"] = [];
   const [formRoute, setFormRoute] = useState({} as FormRoute);
   const [form] = Form.useForm();
   const inputNameRef = useRef<any>(null);
@@ -84,6 +85,7 @@ const RouteAddNew = (selectedPeer: any) => {
   const [masqueradeMSG, setMasqueradeMSG] = useState(defaultMasqueradeMSG);
   const defaultStatusMSG = "Status";
   const [statusMSG, setStatusMSG] = useState(defaultStatusMSG);
+  const [enableNetwork, setEnableNetwork] = useState(false);
   const [peerNameToIP, peerIPToName, peerIPToID] = initPeerMaps(peers);
   const [newRoute, setNewRoute] = useState(false);
 
@@ -117,10 +119,16 @@ const RouteAddNew = (selectedPeer: any) => {
   useEffect(() => {
     if (!route) return;
 
-    if (selectedPeer && selectedPeer.peer) {
+    if (selectedPeer && selectedPeer.selectedPeer) {
       options?.push({
-        label: peerToPeerIP(selectedPeer.peer.name, selectedPeer.peer.ip),
-        value: peerToPeerIP(selectedPeer.peer.name, selectedPeer.peer.ip),
+        label: peerToPeerIP(
+          selectedPeer.selectedPeer.name,
+          selectedPeer.selectedPeer.ip
+        ),
+        value: peerToPeerIP(
+          selectedPeer.selectedPeer.name,
+          selectedPeer.selectedPeer.ip
+        ),
         disabled: false,
       });
       const udpateRoute = { ...route, peer: options[0].value } as FormRoute;
@@ -142,9 +150,22 @@ const RouteAddNew = (selectedPeer: any) => {
     } else {
       setNewRoute(false);
     }
+
+    // let options = [];
   }, [route]);
 
-  if (!selectedPeer.peer) {
+  selectedPeer &&
+    selectedPeer.notPeerRoutes &&
+    selectedPeer.notPeerRoutes.forEach((element: any, index: number) => {
+      testOptions?.push({
+        label: element.network_id + " - " + element.network,
+        value: element.network_id + "+" + index,
+        network: element.network,
+        disabled: false,
+        key: index,
+      });
+    });
+  if (!selectedPeer.selectedPeer) {
     peers.forEach((p) => {
       let os: string;
       os = p.os;
@@ -338,6 +359,37 @@ const RouteAddNew = (selectedPeer: any) => {
     });
   };
 
+  const onNetworkChange = (selectedOption: any) => {
+    if (selectedOption === null) {
+      const updateNetwork = {
+        ...formRoute,
+        network: "",
+        network_id: "",
+      };
+      form.setFieldsValue(updateNetwork);
+      setFormRoute(updateNetwork);
+      setEnableNetwork(false)
+    } else if (!!selectedOption.__isNew__) {
+      const updateNetwork = {
+        ...formRoute,
+        network: "",
+        network_id: selectedOption.value.split("+")[0],
+      };
+      form.setFieldsValue(updateNetwork);
+      setFormRoute(updateNetwork);
+      setEnableNetwork(false);
+    } else {
+      const updateNetwork = {
+        ...formRoute,
+        network: selectedOption.network,
+        network_id: selectedOption.value.split("+")[0],
+      };
+      form.setFieldsValue(updateNetwork);
+      setFormRoute(updateNetwork);
+      setEnableNetwork(true);
+    }
+  };
+
   return (
     <>
       {route && (
@@ -378,14 +430,14 @@ const RouteAddNew = (selectedPeer: any) => {
                       whiteSpace: "pre-line",
                       fontSize: "18px",
                       margin: "0px",
-                      fontWeight:500,
+                      fontWeight: 500,
                       marginBottom: "15px",
                     }}
                   >
                     Add Route
                   </Paragraph>
 
-                  {!!selectedPeer.peer && (
+                  {!!selectedPeer.selectedPeer && (
                     <div style={{ lineHeight: "20px" }}>
                       <label
                         style={{
@@ -417,7 +469,7 @@ const RouteAddNew = (selectedPeer: any) => {
                           dropdownRender={peerDropDownRender}
                           options={options}
                           allowClear={true}
-                          disabled={!!selectedPeer.peer}
+                          disabled={!!selectedPeer.selectedPeer}
                         />
                       </Form.Item>
                     </div>
@@ -435,52 +487,87 @@ const RouteAddNew = (selectedPeer: any) => {
                           {formRoute.id ? formRoute.network_id : "New Route"}
                         </div>
                       ) : (
-                        <>
-                          <label
-                            style={{
-                              color: "rgba(0, 0, 0, 0.88)",
-                              fontSize: "14px",
-                              fontWeight: "500",
-                            }}
-                          >
-                            Network Identifier
-                          </label>
-                          <Paragraph
-                            type={"secondary"}
-                            style={{
-                              marginTop: "-2",
-                              fontWeight: "400",
-                              marginBottom: "5px",
-                            }}
-                          >
-                            Add a unique cryptographic key that is assigned to
-                            each device
-                          </Paragraph>
-                          <Form.Item
-                            name="network_id"
-                              label=""
-                              
-                              style={{marginBottom:"10px"}}
-                            rules={[
-                              {
-                                required: true,
-                                message:
-                                  "Please add an identifier for this access route",
-                                whitespace: true,
-                              },
-                            ]}
-                          >
-                            <Input
-                              placeholder="for example “e.g. aws-eu-central-1-vpc”"
-                              ref={inputNameRef}
-                              disabled={!setupNewRouteHA && !newRoute}
-                              onPressEnter={() => toggleEditName(false)}
-                              onBlur={() => toggleEditName(false)}
-                              autoComplete="off"
-                              maxLength={40}
-                            />
-                          </Form.Item>
-                        </>
+                        <div style={{ marginBottom: "15px" }}>
+                          {!!selectedPeer.selectedPeer && (
+                            <>
+                              <label
+                                style={{
+                                  color: "rgba(0, 0, 0, 0.88)",
+                                  fontSize: "14px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                Network Identifier
+                              </label>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  marginTop: "-2",
+                                  fontWeight: "400",
+                                  marginBottom: "5px",
+                                }}
+                              >
+                                Add a unique cryptographic key that is assigned
+                                to each device
+                              </Paragraph>
+                              <CreatableSelect
+                                isClearable
+                                className="ant-select-selector-custom"
+                                options={testOptions}
+                                onChange={onNetworkChange}
+                                placeholder="Select an existing network or add a new one"
+                                classNamePrefix="react-select"
+                              />
+                            </>
+                          )}
+                          {!!!selectedPeer.selectedPeer && (
+                            <>
+                              <label
+                                style={{
+                                  color: "rgba(0, 0, 0, 0.88)",
+                                  fontSize: "14px",
+                                  fontWeight: "500",
+                                }}
+                              >
+                                Network Identifier
+                              </label>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  marginTop: "-2",
+                                  fontWeight: "400",
+                                  marginBottom: "5px",
+                                }}
+                              >
+                                Add a unique cryptographic key that is assigned
+                                to each device
+                              </Paragraph>
+                              <Form.Item
+                                name="network_id"
+                                label=""
+                                style={{ marginBottom: "10px" }}
+                                rules={[
+                                  {
+                                    required: true,
+                                    message:
+                                      "Please add an identifier for this access route",
+                                    whitespace: true,
+                                  },
+                                ]}
+                              >
+                                <Input
+                                  placeholder="for example “e.g. aws-eu-central-1-vpc”"
+                                  ref={inputNameRef}
+                                  disabled={!setupNewRouteHA && !newRoute}
+                                  onPressEnter={() => toggleEditName(false)}
+                                  onBlur={() => toggleEditName(false)}
+                                  autoComplete="off"
+                                  maxLength={40}
+                                />
+                              </Form.Item>
+                            </>
+                          )}
+                        </div>
                       )}
                       {!editDescription ? (
                         <div
@@ -504,7 +591,7 @@ const RouteAddNew = (selectedPeer: any) => {
                         <Form.Item
                           name="description"
                           label="Description"
-                          style={{ marginTop: 24 ,fontWeight:500}}
+                          style={{ marginTop: 24, fontWeight: 500 }}
                         >
                           <Input
                             placeholder="Add description..."
@@ -524,7 +611,7 @@ const RouteAddNew = (selectedPeer: any) => {
                   </Row>
                 </Header>
               </Col>
-              {/* {!!!selectedPeer.peer && (
+              {/* {!!!selectedPeer.selectedPeer && (
                 <Col span={24}>
                   <Form.Item name="enabled" label="">
                     <div
@@ -590,14 +677,15 @@ const RouteAddNew = (selectedPeer: any) => {
                 >
                   <Input
                     placeholder="for example “172.16.0.0/16”"
-                    disabled={!setupNewRouteHA && !newRoute}
+                    disabled={(!setupNewRouteHA && !newRoute) || enableNetwork}
                     autoComplete="off"
                     minLength={9}
                     maxLength={43}
                   />
                 </Form.Item>
               </Col>
-              {!!!selectedPeer.peer && (
+
+              {!!!selectedPeer.selectedPeer && (
                 <Col span={24}>
                   <label
                     style={{
@@ -626,7 +714,7 @@ const RouteAddNew = (selectedPeer: any) => {
                       dropdownRender={peerDropDownRender}
                       options={options}
                       allowClear={true}
-                      disabled={!!selectedPeer.peer}
+                      disabled={!!selectedPeer.selectedPeer}
                     />
                   </Form.Item>
                 </Col>
@@ -735,7 +823,7 @@ const RouteAddNew = (selectedPeer: any) => {
                     }
                     className="system-info-panel"
                   >
-                    <Row gutter={16} style={{padding:"15px 0 0"}}>
+                    <Row gutter={16} style={{ padding: "15px 0 0" }}>
                       <Col span={22}>
                         <Form.Item name="masquerade" label="">
                           <div

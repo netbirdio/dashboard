@@ -34,11 +34,12 @@ body {
 
 .ant-menu-horizontal>.ant-menu-item a {
   color: rgba(107, 114, 128, 1);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .ant-menu-horizontal>.ant-menu-item-selected a {
   color: rgba(17, 24, 39, 1);
+  font-weight: 500;
 }
 
 
@@ -237,7 +238,32 @@ td.non-highlighted-table-column {
 }
 
 .page-heading {
-  font-weight: 700!important;
-  font-size: 22px!important;
-  margin: 0!important;
+  font-weight: 500 !important;
+  font-size: 22px !important;
+  margin: 0 !important;
+}
+
+.ant-tag {
+  font-weight: 400 !important;
+}
+
+.react-select__indicator-separator {
+  display: none !important;
+}
+
+.react-select__control,
+.react-select__value-container,
+.react-select__input-container {
+  min-height: 32px !important;
+  padding: 0 5px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+}
+
+.react-select__value-container {
+  align-items: center !important;
+}
+
+.react-select__indicator {
+  padding: 0 5px !important;
 }
