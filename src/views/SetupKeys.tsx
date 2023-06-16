@@ -16,6 +16,7 @@ import {
   RadioChangeEvent,
   Row,
   Select,
+  Badge,
   Space,
   Table,
   Tag,
@@ -555,7 +556,7 @@ export const SetupKeys = () => {
                         sorter={(a, b) =>
                           (a as any).name.localeCompare((b as any).name)
                         }
-                        render={(text, record, index) => {
+                        render={(text, record:any, index) => {
                           return (
                             <Button
                               type="text"
@@ -565,7 +566,28 @@ export const SetupKeys = () => {
                               className="tooltip-label"
                             >
                               {" "}
-                              <Text className="font-500">{text}</Text>
+                              <Text className="font-500">
+                                {record.state === "valid" ? (
+                                  <Badge
+                                    status="success"
+                                    style={{
+                                      marginTop: "1px",
+                                      marginRight: "5px",
+                                      marginLeft: "0px",
+                                    }}
+                                  ></Badge>
+                                ) : (
+                                  <Badge
+                                    status="error"
+                                    style={{
+                                      marginTop: "1px",
+                                      marginRight: "5px",
+                                      marginLeft: "0px",
+                                    }}
+                                  ></Badge>
+                                )}
+                                {text}
+                              </Text>
                             </Button>
                           );
                         }}
@@ -629,20 +651,6 @@ export const SetupKeys = () => {
                         render={(text, record, index) => {
                           return formatDate(text);
                         }}
-                      />
-                      <Column
-                        title="State"
-                        dataIndex="state"
-                        render={(text, record, index) => {
-                          return text === "valid" ? (
-                            <Tag color="green">{text}</Tag>
-                          ) : (
-                            <Tag color="red">{text}</Tag>
-                          );
-                        }}
-                        sorter={(a, b) =>
-                          (a as any).state.localeCompare((b as any).state)
-                        }
                       />
                       <Column
                         title=""
