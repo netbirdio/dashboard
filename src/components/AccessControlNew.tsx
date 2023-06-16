@@ -458,8 +458,9 @@ const AccessControlNew = () => {
                     style={{
                       textAlign: "start",
                       whiteSpace: "pre-line",
-                      fontSize: "22px",
+                      fontSize: "18px",
                       margin: "0px",
+                      fontWeight:"500"
                     }}
                   >
                     Create Rule
@@ -480,7 +481,7 @@ const AccessControlNew = () => {
                         style={{
                           whiteSpace: "pre-line",
                           margin: 0,
-                          fontWeight: "bold",
+                          fontWeight: "500",
                         }}
                       >
                         Rule name
@@ -531,7 +532,7 @@ const AccessControlNew = () => {
                         <Form.Item
                           name="description"
                           label="Description"
-                          style={{ marginTop: 24, fontWeight: "600" }}
+                          style={{ marginTop: 24, fontWeight: "500" }}
                         >
                           <Input
                             placeholder="Add description..."
@@ -553,7 +554,7 @@ const AccessControlNew = () => {
                       name="tagSourceGroups"
                       label="Source"
                       rules={[{ validator: selectValidator }]}
-                      style={{ fontWeight: "600" }}
+                      style={{ fontWeight: "500" }}
                     >
                       <Select
                         mode="tags"
@@ -706,7 +707,7 @@ const AccessControlNew = () => {
                       name="tagDestinationGroups"
                       label="Destination"
                       rules={[{ validator: selectValidator }]}
-                      style={{ fontWeight: "600" }}
+                      style={{ fontWeight: "500" }}
                     >
                       <Select
                         mode="tags"
@@ -736,14 +737,14 @@ const AccessControlNew = () => {
                 <Form.Item
                   name="protocol"
                   label="Protocol"
-                  style={{ fontWeight: "600" }}
+                  style={{ fontWeight: "500" }}
                   className="tag-box"
                 >
                   <Paragraph
                     type={"secondary"}
                     style={{
                       marginTop: "-10px",
-                      fontWeight: "500",
+                      fontWeight: "400",
                       marginBottom: "8px",
                     }}
                   >
@@ -767,7 +768,7 @@ const AccessControlNew = () => {
                     style={{
                       color: "rgba(0, 0, 0, 0.88)",
                       fontSize: "14px",
-                      fontWeight: "600",
+                      fontWeight: "500",
                     }}
                   >
                     Ports
@@ -776,7 +777,7 @@ const AccessControlNew = () => {
                     type={"secondary"}
                     style={{
                       marginTop: "-5px",
-                      fontWeight: "500",
+                      fontWeight: "400",
                       marginBottom: "8px",
                     }}
                   >
@@ -786,7 +787,7 @@ const AccessControlNew = () => {
                 <Form.Item
                   name="ports"
                   label=""
-                  style={{ fontWeight: "600" }}
+                  style={{ fontWeight: "500" }}
                   rules={[
                     {
                       message: "Directional traffic requires at least one port",
@@ -845,7 +846,7 @@ const AccessControlNew = () => {
                         style={{
                           color: "rgba(0, 0, 0, 0.88)",
                           fontSize: "14px",
-                          fontWeight: "bold",
+                          fontWeight: "500",
                         }}
                       >
                         Enabled
@@ -854,7 +855,7 @@ const AccessControlNew = () => {
                         type={"secondary"}
                         style={{
                           marginTop: "-2",
-                          fontWeight: "500",
+                          fontWeight: "400",
                           marginBottom: "0",
                         }}
                       >
@@ -878,7 +879,7 @@ const AccessControlNew = () => {
                     href="https://docs.netbird.io/how-to/manage-network-access"
                   >
                     {" "}
-                    access controls
+                    Access Controls
                   </a>
                 </Text>
               </Col>

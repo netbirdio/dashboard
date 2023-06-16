@@ -280,7 +280,7 @@ export const Routes = () => {
     let name = routeToAction ? routeToAction.network_id : "";
     confirm({
       icon: <ExclamationCircleOutlined />,
-      title: 'Delete network route "' + name + '"',
+      title: <span className="font-500">Delete network route {name}</span>,
       width: 600,
       content: (
         <Space direction="vertical" size="small">
@@ -319,8 +319,6 @@ export const Routes = () => {
       } as Route)
     );
   };
-
- 
 
   const onClickViewRoute = () => {
     dispatch(routeActions.setSetupNewRouteHA(false));
@@ -365,11 +363,15 @@ export const Routes = () => {
     checked: boolean
   ) => {
     let label = record.network_id ? record.network_id : record.network;
-    let tittle = 'Enable Masquerade for "' + label + '"?';
+    let tittle = (
+      <span className="font-500">Enable Masquerade for {label} ?</span>
+    );
     let content = masqueradeDisabledMSG;
 
     if (!checked) {
-      tittle = 'Disable Masquerade for "' + label + '"?';
+      tittle = (
+        <span className="font-500">Disable Masquerade for {label} ?</span>
+      );
       content = masqueradeEnabledMSG;
     }
 
@@ -571,8 +573,8 @@ export const Routes = () => {
       <Container className="container-main">
         <Row>
           <Col span={24}>
-            <Title level={4}>Network Routes</Title>
-            <Paragraph>
+            <Title className="page-heading">Network Routes</Title>
+            <Paragraph type="secondary">
               Network routes allow you to create routes to access other networks
               without installing NetBird on every resource.
             </Paragraph>
@@ -692,7 +694,7 @@ export const Routes = () => {
                           title={desc !== "" ? desc : "no description"}
                           arrowPointAtCenter
                         >
-                          <Text strong>{text}</Text>
+                          <Text className="font-500">{text}</Text>
                         </Tooltip>
                       );
                     }}
