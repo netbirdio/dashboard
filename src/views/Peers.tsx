@@ -93,26 +93,6 @@ export const Peers = () => {
     { label: "All", value: "all" },
   ];
 
-  const itemsMenuAction = [
-    {
-      key: "view",
-      label: (
-        <Button type="text" block onClick={() => onClickViewPeer()}>
-          View
-        </Button>
-      ),
-    },
-    {
-      key: "delete",
-      label: (
-        <Button type="text" onClick={() => showConfirmDelete()}>
-          Delete
-        </Button>
-      ),
-    },
-  ];
-  const actionsMenu = <Menu items={itemsMenuAction}></Menu>;
-
   const transformDataTable = (d: Peer[]): PeerDataTable[] => {
     return d.map((p) => {
       const gs = groups
@@ -340,10 +320,11 @@ export const Peers = () => {
     setOptionOnOff(value);
   };
 
-  const showConfirmDelete = () => {
+  const showConfirmDelete = (record: PeerDataTable) => {
+    setPeerToAction(record);
     let peerRoutes: string[] = [];
     routes.forEach((r) => {
-      if (r.peer == peerToAction?.id) {
+      if (r.peer == record?.id) {
         peerRoutes.push(r.network_id);
       }
     });
@@ -398,7 +379,7 @@ export const Peers = () => {
         </div>
       );
     }
-    let name = peerToAction ? peerToAction.name : "";
+    let name = record ? record.name : "";
     confirmModal.confirm({
       icon: <ExclamationCircleOutlined />,
       title: <span className="font-500">Delete peer {name}</span>,
@@ -408,7 +389,7 @@ export const Peers = () => {
         dispatch(
           peerActions.deletedPeer.request({
             getAccessTokenSilently: getTokenSilently,
-            payload: peerToAction && peerToAction.id ? peerToAction.id! : "",
+            payload: record && record.id ? record.id! : "",
           })
         );
       },
@@ -582,23 +563,15 @@ export const Peers = () => {
   };
 
   const renderName = (peer: PeerDataTable) => {
-    let status = peer.connected ? (
+    let status = (
       <Badge
-        status="success"
+        size={"small"}
+        status={peer.connected ? "success" : "error"}
         style={{
-          marginTop: "1px",
-          marginRight: "5px",
-          marginLeft: "0px",
+          margin: "0",
+          minWidth: "max-content",
         }}
-      ></Badge>
-    ) : (
-      <Badge
-        status="error"
-        style={{
-          marginTop: "1px",
-          marginRight: "5px",
-          marginLeft: "0px",
-        }}
+        text={peer.name}
       ></Badge>
     );
 
@@ -630,11 +603,7 @@ export const Peers = () => {
           >
             <span style={{ textAlign: "left" }}>
               <Row>
-                <Text className="font-500">
-                  {" "}
-                  {status}
-                  {peer.name}
-                </Text>
+                <Text className="font-500"> {status}</Text>
               </Row>
               <Row>{loginExpire}</Row>
             </span>
@@ -651,11 +620,7 @@ export const Peers = () => {
         >
           <span style={{ textAlign: "left" }}>
             <Row>
-              <Text className="font-500">
-                {" "}
-                {status}
-                {peer.name}
-              </Text>
+              <Text className="font-500"> {status}</Text>
             </Row>
             <Row>
               <Text type="secondary">{userEmail}</Text>
@@ -677,10 +642,17 @@ export const Peers = () => {
             <Row>
               <Col span={24}>
                 <Title className="page-heading">Peers</Title>
-                <Paragraph type={"secondary"}>
-                  A list of all the machines in your account including their
-                  name, IP and status.
-                </Paragraph>
+                {peers.length ? (
+                  <Paragraph>
+                    A list of all the machines in your account including their
+                    name, IP and status.
+                  </Paragraph>
+                ) : (
+                  <Paragraph type={"secondary"}>
+                    A list of all the machines in your account including their
+                    name, IP and status.
+                  </Paragraph>
+                )}
 
                 <Space
                   direction="vertical"
@@ -873,26 +845,32 @@ export const Peers = () => {
                             return formatOS(text);
                           }}
                         />
-                        <Column title="Version" dataIndex="version" />
+                        <Column
+                          title="Version"
+                          dataIndex="version"
+                          render={(text, record, index) => {
+                            if (text === "development") {
+                              return "dev";
+                            }
+                            return text;
+                          }}
+                        />
                         <Column
                           title=""
                           align="center"
                           render={(text, record, index) => {
                             return (
-                              <Dropdown
-                                trigger={["click"]}
-                                overlay={actionsMenu}
-                                onOpenChange={(visible) => {
-                                  if (visible)
-                                    setPeerToAction(record as PeerDataTable);
+                              <Button
+                                type="text"
+                                style={{
+                                  color: "rgba(210, 64, 64, 0.85)",
                                 }}
+                                onClick={() =>
+                                  showConfirmDelete(record as PeerDataTable)
+                                }
                               >
-                                <Button type="text">
-                                  <Space>
-                                    <EllipsisOutlined />
-                                  </Space>
-                                </Button>
-                              </Dropdown>
+                                Delete
+                              </Button>
                             );
                           }}
                         />

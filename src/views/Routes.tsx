@@ -574,10 +574,19 @@ export const Routes = () => {
         <Row>
           <Col span={24}>
             <Title className="page-heading">Network Routes</Title>
-            <Paragraph type="secondary">
-              Network routes allow you to create routes to access other networks
-              without installing NetBird on every resource.
-            </Paragraph>
+
+            {routes.length ? (
+              <Paragraph>
+                Network routes allow you to create routes to access other
+                networks without installing NetBird on every resource.
+              </Paragraph>
+            ) : (
+              <Paragraph type={"secondary"}>
+                Network routes allow you to create routes to access other
+                networks without installing NetBird on every resource.
+              </Paragraph>
+            )}
+
             <Space
               direction="vertical"
               size="large"
