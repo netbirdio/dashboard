@@ -387,14 +387,28 @@ export const SetupKeys = () => {
             <Col span={24}>
               <Title className="page-heading">Setup Keys</Title>
               {setupKeys.length ? (
-                <Paragraph>
-                  A list of all the setup keys in your account including their
-                  name, state, type and expiration.
+                <Paragraph style={{marginTop: "5px"}}>
+                  Setup keys are pre-authentication keys that allow to register new machines in your network.
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                >
+                  {" "}
+                  Learn more
+                </a>
                 </Paragraph>
               ) : (
-                <Paragraph type={"secondary"}>
-                  A list of all the setup keys in your account including their
-                  name, state, type and expiration.
+                <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
+                  Setup key is a pre-authentication key that allows to register new machines in your network
+                  <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                  >
+                    {" "}
+                    Learn more
+                  </a>
                 </Paragraph>
               )}
               <Space
@@ -409,7 +423,7 @@ export const SetupKeys = () => {
                       allowClear
                       value={textToSearch}
                       onPressEnter={searchDataTable}
-                      placeholder="Search..."
+                      placeholder="Search by name, type or key prefix..."
                       onChange={onChangeTextToSearch}
                     />
                   </Col>
@@ -467,78 +481,46 @@ export const SetupKeys = () => {
                   />
                 )}
                 {showTutorial ? (
-                  <Space
-                    style={{
-                      width: "100%",
-                      backgroundColor: "white",
-                      display: "flex",
-                      flexDirection: "row",
-                      justifyContent: "center",
-                      border: "1px solid #f0f0f0",
-                      borderRadius: "4px",
-                      gap: "8px",
-                    }}
-                  >
-                    <Container
-                      style={{
-                        textAlign: "center",
-                        width: "615px",
-                      }}
-                    >
-                      <Col style={{ marginTop: "41px" }}>
-                        <Text
-                          style={{
-                            fontWeight: "600",
-                            fontSize: "22px",
-                            lineHeight: "26px",
-                            color: "#252526",
-                          }}
+                    <Card bodyStyle={{ padding: 0 }}>
+                        <Space
+                            direction="vertical"
+                            size="small"
+                            align="center"
+                            style={{
+                              display: "flex",
+                              padding: "45px 15px",
+                              justifyContent: "center",
+                            }}
                         >
-                          Create setup key
-                        </Text>
-                      </Col>
-                      <Col style={{ marginTop: "17px" }}>
-                        <Text
-                          style={{
-                            fontWeight: "400",
-                            fontSize: "14px",
-                            lineHeight: "22px",
-                          }}
-                        >
-                          Manage setup keys to register new machines in your
-                          network. The key links machines to your account during
-                          initial setup.
-                          <a
-                            target="_blank"
-                            rel="noreferrer"
-                            href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                          <Title level={4} style={{ textAlign: "center" }}>
+                            Create Setup Key
+                          </Title>
+                          <Paragraph
+                              style={{
+                                textAlign: "center",
+                                whiteSpace: "pre-line",
+                              }}
+                          >
+                            Add a setup key to register new machines in your
+                            network. {"\n"} The key links machines to your account during
+                            initial setup. <a
+                              target="_blank"
+                              rel="noreferrer"
+                              href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
                           >
                             {" "}
                             Learn more
                           </a>
-                        </Text>
-                      </Col>
-                      <Col
-                        style={{
-                          marginTop: "16px",
-                          marginBottom: "112px",
-                        }}
-                      >
-                        <Button
-                          type="primary"
-                          style={{
-                            fontSize: "14px",
-                            padding: "6.4px, 15px",
-                            gap: "10px",
-                            textAlign: "center",
-                          }}
-                          onClick={onClickAddNewSetupKey}
-                        >
-                          Add key
-                        </Button>
-                      </Col>
-                    </Container>
-                  </Space>
+                          </Paragraph>
+                          <Button
+                              size={"middle"}
+                              type="primary"
+                              onClick={() => onClickAddNewSetupKey()}
+                          >
+                            Add setup key
+                          </Button>
+                        </Space>
+                    </Card>
                 ) : (
                   <Card bodyStyle={{ padding: 0 }}>
                     <Table

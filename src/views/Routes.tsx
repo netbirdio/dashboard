@@ -576,14 +576,28 @@ export const Routes = () => {
             <Title className="page-heading">Network Routes</Title>
 
             {routes.length ? (
-              <Paragraph>
-                Network routes allow you to create routes to access other
-                networks without installing NetBird on every resource.
+              <Paragraph style={{marginTop: "5px"}}>
+                Network routes allow you to access other networks like LANs and VPCs without installing NetBird on every resource.
+                <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                >
+                  {" "}
+                  Learn more
+                </a>
               </Paragraph>
             ) : (
-              <Paragraph type={"secondary"}>
-                Network routes allow you to create routes to access other
-                networks without installing NetBird on every resource.
+              <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
+                Network routes allow you to access other networks like LANs and VPCs without installing NetBird on every resource.
+                <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                >
+                  {" "}
+                  Learn more
+                </a>
               </Paragraph>
             )}
 
@@ -598,7 +612,7 @@ export const Routes = () => {
                     allowClear
                     value={textToSearch}
                     onPressEnter={searchDataTable}
-                    placeholder="Search..."
+                    placeholder="Search by network, range or name..."
                     onChange={onChangeTextToSearch}
                   />
                 </Col>
@@ -610,16 +624,18 @@ export const Routes = () => {
                       value={optionAllEnable}
                       optionType="button"
                       buttonStyle="solid"
+                      disabled={showTutorial}
                     />
                     <Select
                       value={pageSize.toString()}
                       options={pageSizeOptions}
                       onChange={onChangePageSize}
                       className="select-rows-per-page-en"
+                      disabled={showTutorial}
                     />
                   </Space>
                 </Col>
-                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                {!showTutorial && (<Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                   <Row justify="end">
                     <Col>
                       <Button
@@ -631,7 +647,7 @@ export const Routes = () => {
                       </Button>
                     </Col>
                   </Row>
-                </Col>
+                </Col>)}
               </Row>
               {failed && (
                 <Alert
@@ -643,6 +659,8 @@ export const Routes = () => {
                 />
               )}
               <Card bodyStyle={{ padding: 0 }}>
+              {!showTutorial && (
+
                 <Table
                   pagination={{
                     current: currentPage,
@@ -776,18 +794,46 @@ export const Routes = () => {
                       );
                     }}
                   />
-                </Table>
+                </Table>)}
                 {showTutorial && (
-                  <Space
-                    direction="vertical"
-                    size="small"
-                    align="center"
-                    style={{ display: "flex", padding: "45px 15px" }}
-                  >
-                    <Button type="link" onClick={onClickAddNewRoute}>
-                      Add new route
-                    </Button>
-                  </Space>
+                      <Space
+                          direction="vertical"
+                          size="small"
+                          align="center"
+                          style={{
+                            display: "flex",
+                            padding: "45px 15px",
+                            justifyContent: "center",
+                          }}
+                      >
+                        <Title level={4} style={{ textAlign: "center" }}>
+                          Create New Route
+                        </Title>
+                        <Paragraph
+                            style={{
+                              textAlign: "center",
+                              whiteSpace: "pre-line",
+                            }}
+                        >
+                          It looks like you don't have any routes. {"\n"}
+                          Access LANs and VPC by adding a network route.
+                          <a
+                              target="_blank"
+                              rel="noreferrer"
+                              href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                          >
+                            {" "}
+                            Learn more
+                          </a>
+                        </Paragraph>
+                        <Button
+                            size={"middle"}
+                            type="primary"
+                            onClick={() => onClickAddNewRoute()}
+                        >
+                          Add route
+                        </Button>
+                      </Space>
                 )}
               </Card>
             </Space>

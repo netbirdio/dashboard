@@ -79,7 +79,7 @@ export const AddPeerPopup: React.FC<Props> = ({
                        textAlign: "center",
                        whiteSpace: "pre-line",
                    }}>
-            To get started install NetBird and log in using your {"\n"} email account.
+            To get started, install NetBird and log in using your {"\n"} email account.
         </Paragraph>
 
         <Tabs centered={!isMobile}

@@ -595,15 +595,14 @@ const PeerUpdate = () => {
                               fontWeight: "400",
                             }}
                           >
-                          <div style={{marginBottom:"2px"}}> {formPeer.userEmail} </div>
+                            <div style={{marginBottom:"2px"}}> {formPeer.userEmail} </div>
                             <div>
-                              {
-                                !formPeer.connected &&
-                                formPeer.login_expired && (
-                                <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
-                                  <Tag color="orange">needs login</Tag>
-                                </Tooltip>)
-                            }
+                              {!formPeer.connected &&
+                              formPeer.login_expired ? (
+                                  <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+                                    <Tag color="red"><Text style={{fontSize: "12px", color: "rgba(210, 64, 64, 0.85)"}} type={"secondary"}>needs login</Text></Tag>
+                                  </Tooltip>
+                              ) : (<></>)}
                             </div>
                           </Paragraph>
                         </div>
@@ -666,7 +665,7 @@ const PeerUpdate = () => {
 
                         {formPeer.connected ? (
                           <Badge
-                            status="success"
+                            color="green"
                             style={{
                               marginTop: "1px",
                               marginRight: "5px",
@@ -675,7 +674,7 @@ const PeerUpdate = () => {
                           ></Badge>
                         ) : (
                           <Badge
-                            status="error"
+                            color="rgb(211,211,211)"
                             style={{
                               marginTop: "1px",
                               marginRight: "5px",

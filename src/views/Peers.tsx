@@ -577,7 +577,7 @@ export const Peers = () => {
 
     let loginExpire = peer.login_expired ? (
       <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
-        <Tag color="orange">needs login</Tag>
+        <Tag color="red"><Text style={{fontSize: "10px", color: "rgba(210, 64, 64, 0.85)"}} type={"secondary"}>needs login</Text></Tag>
       </Tooltip>
     ) : (
       ""
@@ -585,13 +585,9 @@ export const Peers = () => {
 
     const userEmail = users?.find((u) => u.id === peer.user_id)?.email;
     let expiry = !peer.login_expiration_enabled ? (
-      <div>
         <Tag>
-          <Text type="secondary" style={{ fontSize: 10 }}>
-            expiration disabled
-          </Text>
+          <Text type="secondary" style={{ fontSize: 10 }}>expiration disabled</Text>
         </Tag>
-      </div>
     ) : null;
     if (!userEmail) {
       return (
@@ -643,14 +639,12 @@ export const Peers = () => {
               <Col span={24}>
                 <Title className="page-heading">Peers</Title>
                 {peers.length ? (
-                  <Paragraph>
-                    A list of all the machines in your account including their
-                    name, IP and status.
+                  <Paragraph style={{marginTop: "5px"}}>
+                    A list of all machines and devices connected to your private network. Use this view to manage peers
                   </Paragraph>
                 ) : (
-                  <Paragraph type={"secondary"}>
-                    A list of all the machines in your account including their
-                    name, IP and status.
+                  <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
+                    A list of all machines and devices connected to your private network. Use this view to manage peers
                   </Paragraph>
                 )}
 
@@ -665,7 +659,7 @@ export const Peers = () => {
                         allowClear
                         value={textToSearch}
                         onPressEnter={searchDataTable}
-                        placeholder="Search..."
+                        placeholder="Search by name, IP or owner..."
                         onChange={onChangeTextToSearch}
                       />
                     </Col>
