@@ -425,9 +425,31 @@ export const Nameservers = () => {
 
   return (
     <>
-      <Paragraph>
-        Add nameservers for domain name resolution in your NetBird network
-      </Paragraph>
+      {nsGroup.length ? (
+          <Paragraph style={{marginTop: "5px"}}>
+            Add nameservers for domain name resolution in your NetBird network.
+            <a
+                target="_blank"
+                rel="noreferrer"
+                href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
+            >
+              {" "}
+              Learn more
+            </a>
+          </Paragraph>
+      ) : (
+          <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
+            Add nameservers for domain name resolution in your NetBird network.
+            <a
+                target="_blank"
+                rel="noreferrer"
+                href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
+            >
+              {" "}
+              Learn more
+            </a>
+          </Paragraph>
+      )}
       <Space direction="vertical" size="large" style={{ display: "flex" }}>
         <Row gutter={[16, 24]}>
           <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
@@ -435,7 +457,7 @@ export const Nameservers = () => {
               allowClear
               value={textToSearch}
               onPressEnter={searchDataTable}
-              placeholder="Search..."
+              placeholder="Search by name, domain or nameservers..."
               onChange={onChangeTextToSearch}
             />
           </Col>
@@ -447,12 +469,14 @@ export const Nameservers = () => {
                 value={optionAllEnable}
                 optionType="button"
                 buttonStyle="solid"
+                disabled={showTutorial}
               />
               <Select
                 value={pageSize.toString()}
                 options={pageSizeOptions}
                 onChange={onChangePageSize}
                 className="select-rows-per-page-en"
+                disabled={showTutorial}
               />
             </Space>
           </Col>
@@ -478,7 +502,7 @@ export const Nameservers = () => {
           />
         )}
         <Card bodyStyle={{ padding: 0 }}>
-          <Table
+          {!showTutorial && ( <Table
             pagination={{
               pageSize,
               showSizeChanger: false,
@@ -592,30 +616,47 @@ export const Nameservers = () => {
                 );
               }}
             />
-          </Table>
+          </Table>)}
           {showTutorial && (
-            <Space
-              direction="vertical"
-              size="small"
-              align="center"
-              style={{
-                display: "flex",
-                padding: "45px 15px",
-                justifyContent: "center",
-              }}
-            >
-              <Paragraph
-                type="secondary"
-                style={{ textAlign: "center", whiteSpace: "pre-line" }}
-              >
-                It looks like you don't have any nameservers. {"\n"}
-                Get started by adding one to your network!
-              </Paragraph>
-              <Button type="primary" onClick={onClickAddNewNSGroup}>
-                Add Nameserver
-              </Button>
-            </Space>
-          )}
+                  <Space
+                      direction="vertical"
+                      size="small"
+                      align="center"
+                      style={{
+                        display: "flex",
+                        padding: "45px 15px",
+                        justifyContent: "center",
+                      }}
+                  >
+                    <Title level={4} style={{ textAlign: "center" }}>
+                      Create Nameserver
+                    </Title>
+                    <Paragraph
+                        style={{
+                          textAlign: "center",
+                          whiteSpace: "pre-line",
+                        }}
+                    >
+                      It looks like you don't have any nameservers. {"\n"}
+                      Get started by adding one to your network.
+                      <a
+                          target="_blank"
+                          rel="noreferrer"
+                          href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
+                      >
+                        {" "}
+                        Learn more
+                      </a>
+                    </Paragraph>
+                    <Button
+                        size={"middle"}
+                        type="primary"
+                        onClick={() => onClickAddNewNSGroup()}
+                    >
+                      Add nameserver
+                    </Button>
+                  </Space>
+              )}
         </Card>
       </Space>
     </>
