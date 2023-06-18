@@ -550,14 +550,28 @@ export const AccessControl = () => {
               <Col span={24}>
                 <Title className="page-heading">Access Control</Title>
                 {policies.length ? (
-                  <Paragraph>
-                    Access rules help you manage access permissions in your
-                    organisation.
+                  <Paragraph style={{marginTop: "5px"}}>
+                    Create rules to manage access in your network and define what peers can connect.
+                    <a
+                        target="_blank"
+                        rel="noreferrer"
+                        href="https://docs.netbird.io/how-to/manage-network-access"
+                    >
+                      {" "}
+                      Learn more
+                    </a>
                   </Paragraph>
                 ) : (
-                  <Paragraph type={"secondary"}>
-                    Access rules help you manage access permissions in your
-                    organisation.
+                  <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
+                    Create rules to manage access in your network and define what peers can connect.
+                    <a
+                        target="_blank"
+                        rel="noreferrer"
+                        href="https://docs.netbird.io/how-to/manage-network-access"
+                    >
+                      {" "}
+                      Learn more
+                    </a>
                   </Paragraph>
                 )}
 
@@ -592,16 +606,18 @@ export const AccessControl = () => {
                           value={optionAllEnable}
                           optionType="button"
                           buttonStyle="solid"
+                          disabled={showTutorial}
                         />
                         <Select
                           value={pageSize.toString()}
                           options={pageSizeOptions}
                           onChange={onChangePageSize}
                           className="select-rows-per-page-en"
+                          disabled={showTutorial}
                         />
                       </Space>
                     </Col>
-                    <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                    {!showTutorial && (<Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                       <Row justify="end">
                         <Col>
                           <Button
@@ -613,7 +629,7 @@ export const AccessControl = () => {
                           </Button>
                         </Col>
                       </Row>
-                    </Col>
+                    </Col>)}
                   </Row>
                   {failed && (
                     <Alert
@@ -625,6 +641,7 @@ export const AccessControl = () => {
                     />
                   )}
                   <Card bodyStyle={{ padding: 0 }}>
+                  {!showTutorial && (
                     <Table
                       pagination={{
                         current: currentPage,
@@ -785,18 +802,46 @@ export const AccessControl = () => {
                           );
                         }}
                       />
-                    </Table>
+                    </Table>)}
                     {showTutorial && (
-                      <Space
-                        direction="vertical"
-                        size="small"
-                        align="center"
-                        style={{ display: "flex", padding: "45px 15px" }}
-                      >
-                        <Button type="link" onClick={onClickAddNewPolicy}>
-                          Add new access rule
-                        </Button>
-                      </Space>
+                          <Space
+                              direction="vertical"
+                              size="small"
+                              align="center"
+                              style={{
+                                display: "flex",
+                                padding: "45px 15px",
+                                justifyContent: "center",
+                              }}
+                          >
+                            <Title level={4} style={{ textAlign: "center" }}>
+                              Create New Rule
+                            </Title>
+                            <Paragraph
+                                style={{
+                                  textAlign: "center",
+                                  whiteSpace: "pre-line",
+                                }}
+                            >
+                              It looks like you don't have any rules. {"\n"}
+                              Get started with access control by adding a new one.
+                              <a
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  href="https://docs.netbird.io/how-to/manage-network-access"
+                              >
+                                {" "}
+                                Learn more
+                              </a>
+                            </Paragraph>
+                            <Button
+                                size={"middle"}
+                                type="primary"
+                                onClick={() => onClickAddNewPolicy()}
+                            >
+                              Add rule
+                            </Button>
+                          </Space>
                     )}
                   </Card>
                 </Space>

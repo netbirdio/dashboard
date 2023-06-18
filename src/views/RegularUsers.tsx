@@ -379,9 +379,17 @@ export const RegularUsers = () => {
           <Col span={24}>
             <Paragraph>
               Manage users and their permissions.
-              {window.location.hostname == "app.netbird.io"
+              {isNetBirdHosted()
                 ? "Same-domain email users are added automatically on first sign-in."
                 : ""}
+              <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://docs.netbird.io/how-to/add-users-to-your-network"
+              >
+                {" "}
+                Learn more
+              </a>
             </Paragraph>
             <Space
               direction="vertical"
@@ -394,7 +402,7 @@ export const RegularUsers = () => {
                     allowClear
                     value={textToSearch}
                     onPressEnter={searchDataTable}
-                    placeholder="Search..."
+                    placeholder="Search by name, email, groups or role..."
                     onChange={onChangeTextToSearch}
                   />
                 </Col>

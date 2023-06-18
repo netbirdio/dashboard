@@ -635,14 +635,12 @@ export const Peers = () => {
               <Col span={24}>
                 <Title className="page-heading">Peers</Title>
                 {peers.length ? (
-                  <Paragraph>
-                    A list of all the machines in your account including their
-                    name, IP and status.
+                  <Paragraph style={{marginTop: "5px"}}>
+                    A list of all machines and devices connected to your private network. Use this view to manage peers
                   </Paragraph>
                 ) : (
-                  <Paragraph type={"secondary"}>
-                    A list of all the machines in your account including their
-                    name, IP and status.
+                  <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
+                    A list of all machines and devices connected to your private network. Use this view to manage peers
                   </Paragraph>
                 )}
 
@@ -657,7 +655,7 @@ export const Peers = () => {
                         allowClear
                         value={textToSearch}
                         onPressEnter={searchDataTable}
-                        placeholder="Search..."
+                        placeholder="Search by name, IP or owner..."
                         onChange={onChangeTextToSearch}
                       />
                     </Col>

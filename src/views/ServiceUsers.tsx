@@ -52,6 +52,7 @@ export const ServiceUsers = () => {
   );
   const savedUser = useSelector((state: RootState) => state.user.savedUser);
   const deletedUser = useSelector((state: RootState) => state.user.deletedUser);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
   const [textToSearch, setTextToSearch] = useState("");
@@ -200,18 +201,44 @@ export const ServiceUsers = () => {
     });
   };
 
+  useEffect(() => {
+    if (users.length > 0) {
+      setShowTutorial(false);
+    } else {
+      setShowTutorial(true);
+    }
+    setDataTable(transformDataTable(filterDataTable()));
+  }, [users]);
+
   return (
     <>
       {!user && (
         <Container style={{ padding: "0px" }}>
           <Row>
             <Col span={24}>
-              <Paragraph style={{ maxWidth: "70%" }}>
-                Service users are non-login users that are not associated with
-                any specific person. Network administrators use them to create
-                tokens for API access to avoid losing automated access to
-                critical systems when employees leave the company.
-              </Paragraph>
+              {users.length ? (
+                  <Paragraph style={{marginTop: "5px"}}>
+                    Use service users to create API tokens and avoid losing automated access. <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/access-netbird-public-api"
+                  >
+                    {" "}
+                    Learn more
+                  </a>
+                  </Paragraph>
+              ) : (
+                  <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
+                    Use service users to create API tokens and avoid losing automated access. <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/access-netbird-public-api"
+                  >
+                    {" "}
+                    Learn more
+                  </a>
+                  </Paragraph>
+              )}
               <Space
                 direction="vertical"
                 size="large"
@@ -223,8 +250,9 @@ export const ServiceUsers = () => {
                       allowClear
                       value={textToSearch}
                       onPressEnter={searchDataTable}
-                      placeholder="Search..."
+                      placeholder="Search by name or role..."
                       onChange={onChangeTextToSearch}
+                      disabled={showTutorial}
                     />
                   </Col>
                   <Col
@@ -242,9 +270,11 @@ export const ServiceUsers = () => {
                         options={pageSizeOptions}
                         onChange={onChangePageSize}
                         className="select-rows-per-page-en"
+                        disabled={showTutorial}
                       />
                     </Space>
                   </Col>
+                  {!showTutorial && (
                   <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                     <Row justify="end">
                       <Col>
@@ -252,11 +282,11 @@ export const ServiceUsers = () => {
                           type="primary"
                           onClick={onClickCreateServiceUser}
                         >
-                          Create Service User
+                          Add Service User
                         </Button>
                       </Col>
                     </Row>
-                  </Col>
+                  </Col>)}
                 </Row>
                 {failed && (
                   <Alert
@@ -268,7 +298,7 @@ export const ServiceUsers = () => {
                   />
                 )}
                 <Card bodyStyle={{ padding: 0 }}>
-                  <Table
+                  {!showTutorial && ( <Table
                     pagination={{
                       pageSize,
                       showSizeChanger: false,
@@ -357,7 +387,47 @@ export const ServiceUsers = () => {
                         );
                       }}
                     />
-                  </Table>
+                  </Table> )}
+                  {showTutorial && (
+                      <Space
+                          direction="vertical"
+                          size="small"
+                          align="center"
+                          style={{
+                            display: "flex",
+                            padding: "45px 15px",
+                            justifyContent: "center",
+                          }}
+                      >
+                        <Title level={4} style={{ textAlign: "center" }}>
+                          Create Service User
+                        </Title>
+                        <Paragraph
+                            style={{
+                              textAlign: "center",
+                              whiteSpace: "pre-line",
+                            }}
+                        >
+                          It looks like you don't have any service users. {"\n"}
+                          Get started by adding one to your network.
+                          <a
+                              target="_blank"
+                              rel="noreferrer"
+                              href="https://docs.netbird.io/how-to/access-netbird-public-api"
+                          >
+                            {" "}
+                            Learn more
+                          </a>
+                        </Paragraph>
+                        <Button
+                            size={"middle"}
+                            type="primary"
+                            onClick={() => onClickCreateServiceUser()}
+                        >
+                          Add service user
+                        </Button>
+                      </Space>
+                  )}
                 </Card>
               </Space>
             </Col>
