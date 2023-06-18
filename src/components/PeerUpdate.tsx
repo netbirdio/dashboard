@@ -666,7 +666,7 @@ const PeerUpdate = () => {
 
                         {formPeer.connected ? (
                           <Badge
-                            status="success"
+                            color="green"
                             style={{
                               marginTop: "1px",
                               marginRight: "5px",
@@ -675,7 +675,7 @@ const PeerUpdate = () => {
                           ></Badge>
                         ) : (
                           <Badge
-                            status="error"
+                            color="rgb(211,211,211)"
                             style={{
                               marginTop: "1px",
                               marginRight: "5px",
