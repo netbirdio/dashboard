@@ -16,6 +16,7 @@ import {
   RadioChangeEvent,
   Row,
   Select,
+  Badge,
   Space,
   Table,
   Tag,
@@ -385,10 +386,17 @@ export const SetupKeys = () => {
           <Row>
             <Col span={24}>
               <Title className="page-heading">Setup Keys</Title>
-              <Paragraph type="secondary">
-                A list of all the setup keys in your account including their
-                name, state, type and expiration.
-              </Paragraph>
+              {setupKeys.length ? (
+                <Paragraph>
+                  A list of all the setup keys in your account including their
+                  name, state, type and expiration.
+                </Paragraph>
+              ) : (
+                <Paragraph type={"secondary"}>
+                  A list of all the setup keys in your account including their
+                  name, state, type and expiration.
+                </Paragraph>
+              )}
               <Space
                 direction="vertical"
                 size="large"
@@ -555,7 +563,7 @@ export const SetupKeys = () => {
                         sorter={(a, b) =>
                           (a as any).name.localeCompare((b as any).name)
                         }
-                        render={(text, record, index) => {
+                        render={(text, record: any, index) => {
                           return (
                             <Button
                               type="text"
@@ -565,7 +573,21 @@ export const SetupKeys = () => {
                               className="tooltip-label"
                             >
                               {" "}
-                              <Text className="font-500">{text}</Text>
+                              <Text className="font-500">
+                                <Badge
+                                  size={"small"}
+                                  status={
+                                    record.state === "valid"
+                                      ? "success"
+                                      : "error"
+                                  }
+                                  style={{
+                                    margin: "0",
+                                    minWidth: "max-content",
+                                  }}
+                                  text={text}
+                                ></Badge>
+                              </Text>
                             </Button>
                           );
                         }}
@@ -629,20 +651,6 @@ export const SetupKeys = () => {
                         render={(text, record, index) => {
                           return formatDate(text);
                         }}
-                      />
-                      <Column
-                        title="State"
-                        dataIndex="state"
-                        render={(text, record, index) => {
-                          return text === "valid" ? (
-                            <Tag color="green">{text}</Tag>
-                          ) : (
-                            <Tag color="red">{text}</Tag>
-                          );
-                        }}
-                        sorter={(a, b) =>
-                          (a as any).state.localeCompare((b as any).state)
-                        }
                       />
                       <Column
                         title=""

@@ -541,7 +541,6 @@ export const AccessControl = () => {
       })
     );
   };
-
   return (
     <>
       {!setupEditPolicyVisible && (
@@ -550,10 +549,18 @@ export const AccessControl = () => {
             <Row>
               <Col span={24}>
                 <Title className="page-heading">Access Control</Title>
-                <Paragraph type="secondary">
-                  Access rules help you manage access permissions in your
-                  organisation.
-                </Paragraph>
+                {policies.length ? (
+                  <Paragraph>
+                    Access rules help you manage access permissions in your
+                    organisation.
+                  </Paragraph>
+                ) : (
+                  <Paragraph type={"secondary"}>
+                    Access rules help you manage access permissions in your
+                    organisation.
+                  </Paragraph>
+                )}
+
                 <Space
                   direction="vertical"
                   size="large"
