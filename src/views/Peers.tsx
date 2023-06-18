@@ -573,7 +573,7 @@ export const Peers = () => {
 
     let loginExpire = peer.login_expired ? (
       <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
-        <Tag style={{fontSize: "10px"}} color="red">needs login</Tag>
+        <Tag color="red"><Text style={{fontSize: "10px", color: "rgba(210, 64, 64, 0.85)"}} type={"secondary"}>needs login</Text></Tag>
       </Tooltip>
     ) : (
       ""
