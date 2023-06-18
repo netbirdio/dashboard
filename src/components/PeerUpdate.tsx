@@ -63,7 +63,6 @@ const PeerUpdate = () => {
   const updateGroupsVisible = useSelector(
     (state: RootState) => state.peer.updateGroupsVisible
   );
-
   const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
   const updatedPeers = useSelector(
     (state: RootState) => state.peer.updatedPeer
@@ -117,8 +116,8 @@ const PeerUpdate = () => {
     if (callingGroupAPI && savedGroups.success) {
       setCallingGroupAPI(false);
     }
-  }, [savedGroups]);
 
+  }, [savedGroups]);
   // clean temp state and close
   useEffect(() => {
     if (isSubmitRunning && !callingGroupAPI && !callingPeerAPI) {
@@ -478,7 +477,7 @@ const PeerUpdate = () => {
     );
   };
 
-  const saveKey = "saving";
+   const saveKey = "saving";
   useEffect(() => {
     if (savedRoute.loading) {
       message.loading({
@@ -596,9 +595,15 @@ const PeerUpdate = () => {
                               fontWeight: "400",
                             }}
                           >
-                            <div style={{ marginBottom: "2px" }}>
-                              {" "}
-                              {formPeer.userEmail}{" "}
+                          <div style={{marginBottom:"2px"}}> {formPeer.userEmail} </div>
+                            <div>
+                              {
+                                !formPeer.connected &&
+                                formPeer.login_expired && (
+                                <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+                                  <Tag color="orange">needs login</Tag>
+                                </Tooltip>)
+                            }
                             </div>
                           </Paragraph>
                         </div>
