@@ -13,6 +13,7 @@ import {
 } from "@ant-design/icons";
 import {
   Alert,
+  Badge,
   Button,
   Card,
   Col,
@@ -92,26 +93,6 @@ export const Peers = () => {
     { label: "All", value: "all" },
   ];
 
-  const itemsMenuAction = [
-    {
-      key: "view",
-      label: (
-        <Button type="text" block onClick={() => onClickViewPeer()}>
-          View
-        </Button>
-      ),
-    },
-    {
-      key: "delete",
-      label: (
-        <Button type="text" onClick={() => showConfirmDelete()}>
-          Delete
-        </Button>
-      ),
-    },
-  ];
-  const actionsMenu = <Menu items={itemsMenuAction}></Menu>;
-
   const transformDataTable = (d: Peer[]): PeerDataTable[] => {
     return d.map((p) => {
       const gs = groups
@@ -132,13 +113,13 @@ export const Peers = () => {
   };
 
   useEffect(() => {
-    if(users) {
-      let currentUser = users.find((user) => user.is_current)
-      if(currentUser) {
+    if (users) {
+      let currentUser = users.find((user) => user.is_current);
+      if (currentUser) {
         setIsAdmin(currentUser.role === "admin");
       }
     }
-  }, [users])
+  }, [users]);
 
   const refresh = () => {
     dispatch(
@@ -339,10 +320,11 @@ export const Peers = () => {
     setOptionOnOff(value);
   };
 
-  const showConfirmDelete = () => {
+  const showConfirmDelete = (record: PeerDataTable) => {
+    setPeerToAction(record);
     let peerRoutes: string[] = [];
     routes.forEach((r) => {
-      if (r.peer == peerToAction?.id) {
+      if (r.peer == record?.id) {
         peerRoutes.push(r.network_id);
       }
     });
@@ -397,7 +379,7 @@ export const Peers = () => {
         </div>
       );
     }
-    let name = peerToAction ? peerToAction.name : "";
+    let name = record ? record.name : "";
     confirmModal.confirm({
       icon: <ExclamationCircleOutlined />,
       title: <span className="font-500">Delete peer {name}</span>,
@@ -407,7 +389,7 @@ export const Peers = () => {
         dispatch(
           peerActions.deletedPeer.request({
             getAccessTokenSilently: getTokenSilently,
-            payload: peerToAction && peerToAction.id ? peerToAction.id! : "",
+            payload: record && record.id ? record.id! : "",
           })
         );
       },
@@ -581,6 +563,26 @@ export const Peers = () => {
   };
 
   const renderName = (peer: PeerDataTable) => {
+    let status = (
+      <Badge
+        size={"small"}
+        status={peer.connected ? "success" : "error"}
+        style={{
+          margin: "0",
+          minWidth: "max-content",
+        }}
+        text={peer.name}
+      ></Badge>
+    );
+
+    let loginExpire = peer.login_expired ? (
+      <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+        <Tag color="orange">needs login</Tag>
+      </Tooltip>
+    ) : (
+      ""
+    );
+
     const userEmail = users?.find((u) => u.id === peer.user_id)?.email;
     let expiry = !peer.login_expiration_enabled ? (
       <div>
@@ -593,17 +595,20 @@ export const Peers = () => {
     ) : null;
     if (!userEmail) {
       return (
-        <Button
-          type="text"
-          style={{ height: "auto", whiteSpace: "normal", textAlign: "left" }}
-          onClick={() => setUpdateGroupsVisible(peer, true)}
-        >
-          <span style={{ textAlign: "left" }}>
-            <Row>
-              <Text className="font-500">{peer.name}</Text>
-            </Row>
-          </span>
-        </Button>
+        <>
+          <Button
+            type="text"
+            style={{ height: "auto", whiteSpace: "normal", textAlign: "left" }}
+            onClick={() => setUpdateGroupsVisible(peer, true)}
+          >
+            <span style={{ textAlign: "left" }}>
+              <Row>
+                <Text className="font-500"> {status}</Text>
+              </Row>
+              <Row>{loginExpire}</Row>
+            </span>
+          </Button>
+        </>
       );
     }
     return (
@@ -615,12 +620,14 @@ export const Peers = () => {
         >
           <span style={{ textAlign: "left" }}>
             <Row>
-              <Text className="font-500">{peer.name}</Text>
+              <Text className="font-500"> {status}</Text>
             </Row>
             <Row>
               <Text type="secondary">{userEmail}</Text>
             </Row>
-            <Row>{expiry}</Row>
+            <Row style={{ minWidth: "195px" }}>
+              {expiry} {loginExpire}
+            </Row>
           </span>
         </Button>
       </div>
@@ -635,10 +642,17 @@ export const Peers = () => {
             <Row>
               <Col span={24}>
                 <Title className="page-heading">Peers</Title>
-                <Paragraph type={"secondary"}>
-                  A list of all the machines in your account including their
-                  name, IP and status.
-                </Paragraph>
+                {peers.length ? (
+                  <Paragraph>
+                    A list of all the machines in your account including their
+                    name, IP and status.
+                  </Paragraph>
+                ) : (
+                  <Paragraph type={"secondary"}>
+                    A list of all the machines in your account including their
+                    name, IP and status.
+                  </Paragraph>
+                )}
 
                 <Space
                   direction="vertical"
@@ -764,28 +778,6 @@ export const Peers = () => {
                           }}
                         />
                         <Column
-                          title="Status"
-                          dataIndex="connected"
-                          align="center"
-                          render={(text, record: PeerDataTable, index) => {
-                            let status = text ? (
-                              <Tag color="green">online</Tag>
-                            ) : (
-                              <Tag color="red">offline</Tag>
-                            );
-
-                            if (record.login_expired) {
-                              return (
-                                <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
-                                  <Tag color="orange">needs login</Tag>
-                                </Tooltip>
-                              );
-                            }
-
-                            return status;
-                          }}
-                        />
-                        <Column
                           title="Groups"
                           dataIndex="groupsCount"
                           align="center"
@@ -853,26 +845,32 @@ export const Peers = () => {
                             return formatOS(text);
                           }}
                         />
-                        <Column title="Version" dataIndex="version" />
+                        <Column
+                          title="Version"
+                          dataIndex="version"
+                          render={(text, record, index) => {
+                            if (text === "development") {
+                              return "dev";
+                            }
+                            return text;
+                          }}
+                        />
                         <Column
                           title=""
                           align="center"
                           render={(text, record, index) => {
                             return (
-                              <Dropdown
-                                trigger={["click"]}
-                                overlay={actionsMenu}
-                                onOpenChange={(visible) => {
-                                  if (visible)
-                                    setPeerToAction(record as PeerDataTable);
+                              <Button
+                                type="text"
+                                style={{
+                                  color: "rgba(210, 64, 64, 0.85)",
                                 }}
+                                onClick={() =>
+                                  showConfirmDelete(record as PeerDataTable)
+                                }
                               >
-                                <Button type="text">
-                                  <Space>
-                                    <EllipsisOutlined />
-                                  </Space>
-                                </Button>
-                              </Dropdown>
+                                Delete
+                              </Button>
                             );
                           }}
                         />

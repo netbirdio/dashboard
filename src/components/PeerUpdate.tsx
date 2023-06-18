@@ -20,8 +20,10 @@ import {
   Switch,
   Breadcrumb,
   Table,
+  Badge,
   SelectProps,
   Modal,
+  Tooltip,
 } from "antd";
 import { Container } from "./Container";
 import { Header } from "antd/es/layout/layout";
@@ -78,7 +80,7 @@ const PeerUpdate = () => {
   const [peerGroups, setPeerGroups] = useState([] as GroupPeer[]);
   const inputNameRef = useRef<any>(null);
   const [editName, setEditName] = useState(false);
-   const options: SelectProps["options"] = [];
+  const options: SelectProps["options"] = [];
   const [estimatedName, setEstimatedName] = useState("");
   const [callingPeerAPI, setCallingPeerAPI] = useState(false);
   const [callingGroupAPI, setCallingGroupAPI] = useState(false);
@@ -150,7 +152,7 @@ const PeerUpdate = () => {
       (route) => route.peer !== peer.id
     );
     setNotPeerRoutes(filterNotPeerRoutes);
-    }, [routes]);
+  }, [routes]);
 
   useEffect(() => {
     if (!peer) return;
@@ -594,7 +596,10 @@ const PeerUpdate = () => {
                               fontWeight: "400",
                             }}
                           >
-                            {formPeer.userEmail}{" "}
+                            <div style={{ marginBottom: "2px" }}>
+                              {" "}
+                              {formPeer.userEmail}{" "}
+                            </div>
                           </Paragraph>
                         </div>
                       ) : (
@@ -653,9 +658,26 @@ const PeerUpdate = () => {
                         >
                           NetBird IP
                         </span>
-                        <Tag color={formPeer.connected ? "green" : "red"}>
-                          {formPeer.connected ? "online" : "offline"}
-                        </Tag>
+
+                        {formPeer.connected ? (
+                          <Badge
+                            status="success"
+                            style={{
+                              marginTop: "1px",
+                              marginRight: "5px",
+                              marginLeft: "0px",
+                            }}
+                          ></Badge>
+                        ) : (
+                          <Badge
+                            status="error"
+                            style={{
+                              marginTop: "1px",
+                              marginRight: "5px",
+                              marginLeft: "0px",
+                            }}
+                          ></Badge>
+                        )}
                       </>
                     }
                   >
