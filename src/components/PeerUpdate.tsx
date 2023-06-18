@@ -596,9 +596,14 @@ const PeerUpdate = () => {
                               fontWeight: "400",
                             }}
                           >
-                            <div style={{ marginBottom: "2px" }}>
-                              {" "}
-                              {formPeer.userEmail}{" "}
+                            <div style={{marginBottom:"2px"}}> {formPeer.userEmail} </div>
+                            <div>
+                              {!formPeer.connected &&
+                              formPeer.login_expired ? (
+                                  <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+                                    <Tag color="orange">needs login</Tag>
+                                  </Tooltip>
+                              ) : (<></>)}
                             </div>
                           </Paragraph>
                         </div>

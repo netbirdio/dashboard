@@ -566,18 +566,14 @@ export const Peers = () => {
     let status = (
       <Badge
         size={"small"}
-        status={peer.connected ? "success" : "error"}
-        style={{
-          margin: "0",
-          minWidth: "max-content",
-        }}
+        color={peer.connected ? "green" : "rgb(211,211,211)"}
         text={peer.name}
       ></Badge>
     );
 
     let loginExpire = peer.login_expired ? (
       <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
-        <Tag color="orange">needs login</Tag>
+        <Tag style={{fontSize: "10px"}} color="red">needs login</Tag>
       </Tooltip>
     ) : (
       ""
@@ -585,13 +581,9 @@ export const Peers = () => {
 
     const userEmail = users?.find((u) => u.id === peer.user_id)?.email;
     let expiry = !peer.login_expiration_enabled ? (
-      <div>
         <Tag>
-          <Text type="secondary" style={{ fontSize: 10 }}>
-            expiration disabled
-          </Text>
+          <Text type="secondary" style={{ fontSize: 10 }}>expiration disabled</Text>
         </Tag>
-      </div>
     ) : null;
     if (!userEmail) {
       return (
