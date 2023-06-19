@@ -26,6 +26,6 @@ yarn-error.log*
 src/auth_config.json
 .idea
 .eslintcache
-src/.local-config.json
+src/.local-config*.json
 /public/OidcServiceWorker.js
 /public/OidcTrustedDomains.js
