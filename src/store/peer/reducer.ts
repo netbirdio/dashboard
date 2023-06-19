@@ -79,11 +79,14 @@ const deletedPeer = createReducer<DeleteResponse<string | null>, ActionTypes>(in
 const updateGroupsVisible = createReducer<boolean, ActionTypes>(initialState.setUpdateGroupsVisible)
     .handleAction(actions.setUpdateGroupsVisible, (store, action) => action.payload)
 
-const savedGroups = createReducer<ChangeResponse<Group[] | null>, ActionTypes>(initialState.savedGroups)
-    .handleAction(actions.saveGroups.request, () => initialState.savedGroups)
-    .handleAction(actions.saveGroups.success, (store, action) => action.payload)
-    .handleAction(actions.saveGroups.failure, (store, action) => action.payload)
-    .handleAction(actions.resetSavedGroups, () => initialState.savedGroups)
+const savedGroups = createReducer<ChangeResponse<Group[] | null>, ActionTypes>(
+  initialState.savedGroups
+)
+  .handleAction(actions.saveGroups.request, () => initialState.savedGroups)
+  .handleAction(actions.saveGroups.success, (store, action) => action.payload)
+  .handleAction(actions.saveGroups.failure, (store, action) => action.payload)
+  .handleAction(actions.setSavedGroups, (store, action) => action.payload)
+  .handleAction(actions.resetSavedGroups, () => initialState.savedGroups);
 
 const updatedPeer = createReducer<CreateResponse<Peer | null>, ActionTypes>(initialState.updatedPeer)
     .handleAction(actions.updatePeer.request, () => initialState.updatedPeer)
