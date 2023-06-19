@@ -206,69 +206,7 @@ export const Peers = () => {
     }
   }, [deletedPeer]);
 
-  const saveGroupsKey = "saving_groups";
-  useEffect(() => {
-    const style = { marginTop: 85 };
-    if (savedGroups.loading) {
-      message.loading({
-        content: "Updating peer groups...",
-        key: saveGroupsKey,
-        style,
-      });
-    } else if (savedGroups.success) {
-      message.success({
-        content: "Peer groups have been successfully updated.",
-        key: saveGroupsKey,
-        duration: 2,
-        style,
-      });
-      // setUpdateGroupsVisible({} as Peer, false)
-      dispatch(peerActions.resetSavedGroups(null));
-    } else if (savedGroups.error) {
-      message.error({
-        content:
-          "Failed to update peer groups. You might not have enough permissions.",
-        key: saveGroupsKey,
-        duration: 2,
-        style,
-      });
-      dispatch(peerActions.resetSavedGroups(null));
-    }
-  }, [savedGroups]);
 
-  const updatePeerKey = "updating_peer";
-  useEffect(() => {
-    const style = { marginTop: 85 };
-    if (updatedPeer.loading) {
-      message.loading({
-        content: "Updating peer...",
-        key: updatePeerKey,
-        duration: 0,
-        style,
-      });
-    } else if (updatedPeer.success) {
-      message.success({
-        content: "Peer has been successfully updated.",
-        key: updatePeerKey,
-        duration: 2,
-        style,
-      });
-      dispatch(peerActions.setUpdatedPeer({ ...updatedPeer, success: false }));
-      dispatch(peerActions.resetUpdatedPeer(null));
-    } else if (updatedPeer.error) {
-      let msg = updatedPeer.error.data
-        ? capitalize(updatedPeer.error.data.message)
-        : updatedPeer.error.message;
-      message.error({
-        content: msg,
-        key: updatePeerKey,
-        duration: 3,
-        style,
-      });
-      dispatch(peerActions.setUpdatedPeer({ ...updatedPeer, error: null }));
-      dispatch(peerActions.resetUpdatedPeer(null));
-    }
-  }, [updatedPeer]);
 
   const filterDataTable = (): Peer[] => {
     const t = textToSearch.toLowerCase().trim();

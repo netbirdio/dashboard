@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "typesafe-actions";
+import { capitalize } from "../utils/common";
 import { actions as peerActions } from "../store/peer";
 import {
   Button,
@@ -358,6 +359,88 @@ const PeerUpdate = () => {
     } as Peer;
   };
 
+  const saveGroupsKey = "saving_groups";
+  useEffect(() => {
+    if (
+      !noUpdateToGroups() &&
+      noUpdateToName() &&
+      noUpdateToLoginExpiration()
+    ) {
+      console.log("no group update==<");
+      const style = { marginTop: 85 };
+      if (savedGroups.loading) {
+        message.loading({
+          content: "Updating peer groups...",
+          key: saveGroupsKey,
+          style,
+        });
+      } else if (savedGroups.success) {
+        message.success({
+          content: "Peer groups have been successfully updated.",
+          key: saveGroupsKey,
+          duration: 2,
+          style,
+        });
+        // setUpdateGroupsVisible({} as Peer, false)
+        dispatch(peerActions.resetSavedGroups(null));
+      } else if (savedGroups.error) {
+        message.error({
+          content:
+            "Failed to update peer groups. You might not have enough permissions.",
+          key: saveGroupsKey,
+          duration: 2,
+          style,
+        });
+        dispatch(peerActions.resetSavedGroups(null));
+      }
+    }
+  }, [savedGroups]);
+
+  const updatePeerKey = "updating_peer";
+  useEffect(() => {
+    const style = { marginTop: 85 };
+    if (updatedPeers.loading) {
+      message.loading({
+        content: "Updating peer...",
+        key: updatePeerKey,
+        duration: 0,
+        style,
+      });
+    } else if (
+      savedGroups.loading &&
+      !noUpdateToGroups() &&
+      (!noUpdateToName() || !noUpdateToLoginExpiration())
+    ) {
+      message.loading({
+        content: "Updating peer...",
+        key: updatePeerKey,
+        duration: 0,
+        style,
+      });
+    } else if (updatedPeers.success) {
+      message.success({
+        content: "Peer has been successfully updated.",
+        key: updatePeerKey,
+        duration: 2,
+        style,
+      });
+      dispatch(peerActions.setUpdatedPeer({ ...updatedPeers, success: false }));
+      dispatch(peerActions.resetUpdatedPeer(null));
+    } else if (updatedPeers.error) {
+      let msg = updatedPeers.error.data
+        ? capitalize(updatedPeers.error.data.message)
+        : updatedPeers.error.message;
+      message.error({
+        content: msg,
+        key: updatePeerKey,
+        duration: 3,
+        style,
+      });
+      dispatch(peerActions.setUpdatedPeer({ ...updatedPeers, error: null }));
+      dispatch(peerActions.resetUpdatedPeer(null));
+    }
+  }, [updatedPeers, savedGroups]);
+
   const handleFormSubmit = () => {
     form
       .validateFields()
@@ -596,14 +679,28 @@ const PeerUpdate = () => {
                               fontWeight: "400",
                             }}
                           >
-                            <div style={{marginBottom:"2px"}}> {formPeer.userEmail} </div>
+                            <div style={{ marginBottom: "2px" }}>
+                              {" "}
+                              {formPeer.userEmail}{" "}
+                            </div>
                             <div>
-                              {!formPeer.connected &&
-                              formPeer.login_expired ? (
-                                  <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
-                                    <Tag color="red"><Text style={{fontSize: "12px", color: "rgba(210, 64, 64, 0.85)"}} type={"secondary"}>needs login</Text></Tag>
-                                  </Tooltip>
-                              ) : (<></>)}
+                              {!formPeer.connected && formPeer.login_expired ? (
+                                <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+                                  <Tag color="red">
+                                    <Text
+                                      style={{
+                                        fontSize: "12px",
+                                        color: "rgba(210, 64, 64, 0.85)",
+                                      }}
+                                      type={"secondary"}
+                                    >
+                                      needs login
+                                    </Text>
+                                  </Tag>
+                                </Tooltip>
+                              ) : (
+                                <></>
+                              )}
                             </div>
                           </Paragraph>
                         </div>
