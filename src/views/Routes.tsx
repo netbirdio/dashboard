@@ -472,7 +472,7 @@ export const Routes = () => {
       return (
         <div key={i}>
           <Tag color="blue" style={{ marginRight: 3 }}>
-            <strong>{_g.name}</strong>
+             {_g.name} 
           </Tag>
           <span style={{ fontSize: ".85em" }}>{peersCount}</span>
         </div>
