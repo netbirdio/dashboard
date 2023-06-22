@@ -1033,7 +1033,7 @@ export const Routes = () => {
                             >
                               <p>
                                 <span
-                                  className="font-500 cursor-pointer"
+                                  className="cursor-pointer"
                                   onClick={() => {
                                     onClickViewRoute(route);
                                   }}

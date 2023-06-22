@@ -289,11 +289,12 @@ td.non-highlighted-table-column {
 
 .ant-collapse-content-box {
   background: #FAFAFA;
+  padding: 5px 16px !important;
 }
 
 .accordian-header p {
-  font-weight: 500;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 14px;
   display: flex;
   align-items: center;
   color: rgba(0, 0, 0, 0.85);
@@ -320,11 +321,12 @@ td.non-highlighted-table-column {
 .accordian-inner-header {
   display: flex;
   padding: 10px 40px;
+  margin-bottom:10px;
 }
 
 .accordian-inner-header p {
-  font-weight: 500;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 14px;
   display: flex;
   align-items: center;
   color: rgba(0, 0, 0, 0.85);
@@ -333,7 +335,7 @@ td.non-highlighted-table-column {
 }
 
 .accordian-inner-listing {
-  padding: 5px 40px;
+  padding: 3px 40px;
   display: flex;
   align-items: center;
 }
