@@ -21,7 +21,7 @@ const actions = {
       'DELETE_ROUTE_REQUEST',
       'DELETE_ROUTE_SUCCESS',
       'DELETE_ROUTE_FAILURE'
-  )<RequestPayload<string>, DeleteResponse<string | null>, DeleteResponse<string | null>>(),
+  )<RequestPayload<any>, DeleteResponse<string | null>, DeleteResponse<string | null>>(),
   setDeletedRoute: createAction('SET_DELETED_ROUTE')<DeleteResponse<string | null>>(),
   resetDeletedRoute: createAction('RESET_DELETED_ROUTE')<null>(),
   removeRoute:  createAction('REMOVE_ROUTE')<string>(),
