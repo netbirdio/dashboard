@@ -181,6 +181,13 @@ export function* deleteRoute(
           data: response.body,
         } as DeleteResponse<string | null>)
       );
+      const routes = (yield select((state) => state.route.data)) as Route[];
+
+      yield put(
+        actions.getRoutes.success(
+          routes.filter((p: Route) => p.id !== action.payload.payload)
+        )
+      );
     } else {
       const effect = yield all(
         action.payload.payload.map((g: string) =>
@@ -201,14 +208,15 @@ export function* deleteRoute(
           data: response[0].body,
         } as DeleteResponse<string | null>)
       );
-    }
 
-    const routes = (yield select((state) => state.route.data)) as Route[];
-    yield put(
-      actions.getRoutes.success(
-        routes.filter((p: Route) => p.id !== action.payload.payload)
-      )
-    );
+      const routes = (yield select((state) => state.route.data)) as Route[];
+
+      yield put(
+        actions.getRoutes.success(
+          routes.filter((p: Route) => !action.payload.payload.includes(p.id))
+        )
+      );
+    }
   } catch (err) {
     yield put(
       actions.deleteRoute.failure({
