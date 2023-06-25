@@ -5,12 +5,10 @@ import { actions as routeActions } from "../store/route";
 import {
   Button,
   Col,
-  Divider,
   Collapse,
   Form,
   Input,
   InputNumber,
-  Radio,
   Row,
   Select,
   SelectProps,
@@ -19,11 +17,6 @@ import {
   Modal,
   Typography,
 } from "antd";
-import {
-  CloseOutlined,
-  FlagFilled,
-  QuestionCircleFilled,
-} from "@ant-design/icons";
 import CreatableSelect from "react-select/creatable";
 import { Route, RouteToSave } from "../store/route/types";
 import { Header } from "antd/es/layout/layout";
@@ -31,7 +24,6 @@ import { RuleObject } from "antd/lib/form";
 import cidrRegex from "cidr-regex";
 import {
   initPeerMaps,
-  masqueradeDisabledMSG,
   peerToPeerIP,
   routePeerSeparator,
   transformGroupedDataTable,
@@ -55,8 +47,7 @@ const RouteAddNew = (selectedPeer: any) => {
     getGroupNamesFromIDs,
     selectValidator,
   } = useGetGroupTagHelpers();
-  //  const { optionRender, blueTagRender, grayTagRender } =
-  //    useGetGroupTagHelpers();
+
   const { Option } = Select;
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
@@ -79,28 +70,9 @@ const RouteAddNew = (selectedPeer: any) => {
   const [form] = Form.useForm();
   const inputNameRef = useRef<any>(null);
   const inputDescriptionRef = useRef<any>(null);
-  const defaultRoutingPeerMSG = "Routing Peer";
-  const [routingPeerMSG, setRoutingPeerMSG] = useState(defaultRoutingPeerMSG);
-  const defaultMasqueradeMSG = "Masquerade";
-  const [masqueradeMSG, setMasqueradeMSG] = useState(defaultMasqueradeMSG);
-  const defaultStatusMSG = "Status";
-  const [statusMSG, setStatusMSG] = useState(defaultStatusMSG);
   const [enableNetwork, setEnableNetwork] = useState(false);
   const [peerNameToIP, peerIPToName, peerIPToID] = initPeerMaps(peers);
   const [newRoute, setNewRoute] = useState(false);
-
-  useEffect(() => {
-    if (!newRoute) {
-      setRoutingPeerMSG(defaultRoutingPeerMSG);
-      setMasqueradeMSG("Update Masquerade");
-      setStatusMSG("Update Status");
-    } else {
-      setRoutingPeerMSG(defaultRoutingPeerMSG);
-      setMasqueradeMSG(defaultMasqueradeMSG);
-      setStatusMSG(defaultStatusMSG);
-      setPreviousRouteKey("");
-    }
-  }, [newRoute]);
 
   useEffect(() => {
     if (editName)
@@ -151,8 +123,7 @@ const RouteAddNew = (selectedPeer: any) => {
       setNewRoute(false);
     }
 
-    // let options = [];
-  }, [route]);
+   }, [route]);
 
   selectedPeer &&
     selectedPeer.notPeerRoutes &&
@@ -368,7 +339,7 @@ const RouteAddNew = (selectedPeer: any) => {
       };
       form.setFieldsValue(updateNetwork);
       setFormRoute(updateNetwork);
-      setEnableNetwork(false)
+      setEnableNetwork(false);
     } else if (!!selectedOption.__isNew__) {
       const updateNetwork = {
         ...formRoute,
@@ -611,45 +582,6 @@ const RouteAddNew = (selectedPeer: any) => {
                   </Row>
                 </Header>
               </Col>
-              {/* {!!!selectedPeer.selectedPeer && (
-                <Col span={24}>
-                  <Form.Item name="enabled" label="">
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "15px",
-                      }}
-                    >
-                      <Switch
-                        size={"small"}
-                        checked={formRoute.enabled}
-                        onChange={handleEnableChange}
-                      />
-                      <div>
-                        <label
-                          style={{
-                            color: "rgba(0, 0, 0, 0.88)",
-                            fontSize: "14px",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Enabled
-                        </label>
-                        <Paragraph
-                          type={"secondary"}
-                          style={{
-                            marginTop: "-2",
-                            fontWeight: "500",
-                            marginBottom: "0",
-                          }}
-                        >
-                          You can enable or disable the route
-                        </Paragraph>
-                      </div>
-                    </div>
-                  </Form.Item>
-                </Col>
-              )} */}
               <Col span={24}>
                 <label
                   style={{

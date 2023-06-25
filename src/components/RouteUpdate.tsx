@@ -5,31 +5,20 @@ import { actions as routeActions } from "../store/route";
 import {
   Button,
   Col,
-  Divider,
-  Drawer,
   Form,
   Input,
-  InputNumber,
-  Radio,
   Row,
   Select,
   SelectProps,
   Space,
-  Switch,
+  Modal,
   Typography,
 } from "antd";
-import {
-  CloseOutlined,
-  FlagFilled,
-  QuestionCircleFilled,
-} from "@ant-design/icons";
 import { Route, RouteToSave } from "../store/route/types";
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
-import cidrRegex from "cidr-regex";
 import {
   initPeerMaps,
-  masqueradeDisabledMSG,
   peerToPeerIP,
   routePeerSeparator,
   transformGroupedDataTable,
@@ -41,7 +30,7 @@ const { Paragraph } = Typography;
 
 interface FormRoute extends Route {}
 
-const RouteUpdate = () => {
+const RouteAddNew = () => {
   const {
     blueTagRender,
     handleChangeTags,
@@ -52,6 +41,7 @@ const RouteUpdate = () => {
     getGroupNamesFromIDs,
     selectValidator,
   } = useGetGroupTagHelpers();
+
   const { Option } = Select;
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
@@ -67,39 +57,12 @@ const RouteUpdate = () => {
   const savedRoute = useSelector((state: RootState) => state.route.savedRoute);
   const [previousRouteKey, setPreviousRouteKey] = useState("");
   const [editName, setEditName] = useState(false);
-  const [editDescription, setEditDescription] = useState(false);
   const options: SelectProps["options"] = [];
   const [formRoute, setFormRoute] = useState({} as FormRoute);
   const [form] = Form.useForm();
   const inputNameRef = useRef<any>(null);
-  const inputDescriptionRef = useRef<any>(null);
-
-  const defaultRoutingPeerMSG = "Routing Peer";
-  const [routingPeerMSG, setRoutingPeerMSG] = useState(defaultRoutingPeerMSG);
-  const defaultMasqueradeMSG = "Masquerade";
-  const [masqueradeMSG, setMasqueradeMSG] = useState(defaultMasqueradeMSG);
-  const defaultStatusMSG = "Status";
-  const [statusMSG, setStatusMSG] = useState(defaultStatusMSG);
   const [peerNameToIP, peerIPToName, peerIPToID] = initPeerMaps(peers);
   const [newRoute, setNewRoute] = useState(false);
-
-  const optionsDisabledEnabled = [
-    { label: "Enabled", value: true },
-    { label: "Disabled", value: false },
-  ];
-
-  useEffect(() => {
-    if (!newRoute) {
-      setRoutingPeerMSG(defaultRoutingPeerMSG);
-      setMasqueradeMSG("Update Masquerade");
-      setStatusMSG("Update Status");
-    } else {
-      setRoutingPeerMSG(defaultRoutingPeerMSG);
-      setMasqueradeMSG(defaultMasqueradeMSG);
-      setStatusMSG(defaultStatusMSG);
-      setPreviousRouteKey("");
-    }
-  }, [newRoute]);
 
   useEffect(() => {
     if (editName)
@@ -109,27 +72,20 @@ const RouteUpdate = () => {
   }, [editName]);
 
   useEffect(() => {
-    if (editDescription)
-      inputDescriptionRef.current!.focus({
-        cursor: "end",
-      });
-  }, [editDescription]);
-
-  useEffect(() => {
     if (!route) return;
-
     const fRoute = {
       ...route,
       groups: getGroupNamesFromIDs(route.groups),
     } as FormRoute;
     setFormRoute(fRoute);
     setPreviousRouteKey(fRoute.network_id + fRoute.network);
+    form.setFieldsValue(fRoute);
+
     if (!route.network_id) {
       setNewRoute(true);
     } else {
       setNewRoute(false);
     }
-    form.setFieldsValue(fRoute);
   }, [route]);
 
   peers.forEach((p) => {
@@ -266,26 +222,6 @@ const RouteUpdate = () => {
     setEditName(status);
   };
 
-  const toggleEditDescription = (status: boolean) => {
-    setEditDescription(status);
-  };
-
-  const networkRangeValidator = (_: RuleObject, value: string) => {
-    if (!cidrRegex().test(value)) {
-      return Promise.reject(
-        new Error("Please enter a valid CIDR, e.g. 192.168.1.0/24")
-      );
-    }
-
-    if (Number(value.split("/")[1]) < 7) {
-      return Promise.reject(
-        new Error("Please enter a network mask larger than /7")
-      );
-    }
-
-    return Promise.resolve();
-  };
-
   const peerValidator = (_: RuleObject, value: string) => {
     if (value == "" && newRoute) {
       return Promise.reject(new Error("Please select routing one peer"));
@@ -313,13 +249,9 @@ const RouteUpdate = () => {
   return (
     <>
       {route && (
-        <Drawer
-          headerStyle={{ display: "none" }}
-          forceRender={true}
+        <Modal
           open={setupEditRouteVisible}
-          bodyStyle={{ paddingBottom: 80 }}
-          onClose={onCancel}
-          autoFocus={true}
+          onCancel={onCancel}
           footer={
             <Space style={{ display: "flex", justifyContent: "end" }}>
               <Button onClick={onCancel} disabled={savedRoute.loading}>
@@ -329,7 +261,9 @@ const RouteUpdate = () => {
                 type="primary"
                 disabled={savedRoute.loading}
                 onClick={handleFormSubmit}
-              >{`${newRoute ? "Create" : "Save"}`}</Button>
+              >
+                Save
+              </Button>
             </Space>
           }
         >
@@ -343,45 +277,59 @@ const RouteUpdate = () => {
               <Col span={24}>
                 <Header
                   style={{
-                    margin: "-32px -24px 20px -24px",
-                    padding: "24px 24px 0 24px",
+                    border: "none",
                   }}
                 >
+                  <Paragraph
+                    style={{
+                      textAlign: "start",
+                      whiteSpace: "pre-line",
+                      fontSize: "18px",
+                      margin: "0px",
+                      fontWeight: 500,
+                      marginBottom: "0",
+                    }}
+                  >
+                    Add new routing peer
+                  </Paragraph>
+                  <Paragraph
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-2",
+                      fontWeight: "400",
+                      marginBottom: "15px",
+                    }}
+                  >
+                    When you add multiple routing peers it enables High
+                    Avialability
+                  </Paragraph>
+
                   <Row align="top">
-                    <Col flex="none" style={{ display: "flex" }}>
-                      {!editName && !editDescription && formRoute.id && (
-                        <button
-                          type="button"
-                          aria-label="Close"
-                          className="ant-drawer-close"
-                          style={{ paddingTop: 3 }}
-                          onClick={onCancel}
+                    <Col span={24} style={{ lineHeight: "20px" }}>
+                      <>
+                        <label
+                          style={{
+                            color: "rgba(0, 0, 0, 0.88)",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          }}
                         >
-                          <span
-                            role="img"
-                            aria-label="close"
-                            className="anticon anticon-close"
-                          >
-                            <CloseOutlined size={16} />
-                          </span>
-                        </button>
-                      )}
-                    </Col>
-                    <Col flex="auto">
-                      {!editName && formRoute.id ? (
-                        <div
-                          className={
-                            "access-control input-text ant-drawer-title"
-                          }
-                          onClick={() => toggleEditName(true)}
+                          Network Identifier
+                        </label>
+                        <Paragraph
+                          type={"secondary"}
+                          style={{
+                            marginTop: "-2",
+                            fontWeight: "400",
+                            marginBottom: "5px",
+                          }}
                         >
-                          {formRoute.id ? formRoute.network_id : "New Route"}
-                        </div>
-                      ) : (
+                          Add a unique cryptographic key that is assigned to
+                          each device
+                        </Paragraph>
                         <Form.Item
-                          name="network_id"
-                          label="Network Identifier"
-                          tooltip="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes"
+                          // name="network_id"
+                          label=""
                           rules={[
                             {
                               required: true,
@@ -392,45 +340,19 @@ const RouteUpdate = () => {
                           ]}
                         >
                           <Input
-                            placeholder="e.g. aws-eu-central-1-vpc"
+                            placeholder="for example “e.g. aws-eu-central-1-vpc”"
                             ref={inputNameRef}
-                            disabled={!setupNewRouteHA && !newRoute}
+                            disabled={true}
                             onPressEnter={() => toggleEditName(false)}
                             onBlur={() => toggleEditName(false)}
                             autoComplete="off"
                             maxLength={40}
+                            value={
+                              formRoute.network_id + "-" + formRoute.network
+                            }
                           />
                         </Form.Item>
-                      )}
-                      {!editDescription ? (
-                        <div
-                          className={
-                            "access-control input-text ant-drawer-subtitle"
-                          }
-                          onClick={() => toggleEditDescription(true)}
-                        >
-                          {formRoute.description &&
-                          formRoute.description.trim() !== ""
-                            ? formRoute.description
-                            : "Add description..."}
-                        </div>
-                      ) : (
-                        <Form.Item
-                          name="description"
-                          label="Description"
-                          style={{ marginTop: 24 }}
-                        >
-                          <Input
-                            placeholder="Add description..."
-                            ref={inputDescriptionRef}
-                            disabled={!setupNewRouteHA && !newRoute}
-                            onPressEnter={() => toggleEditDescription(false)}
-                            onBlur={() => toggleEditDescription(false)}
-                            autoComplete="off"
-                            maxLength={200}
-                          />
-                        </Form.Item>
-                      )}
+                      </>
                     </Col>
                   </Row>
                   <Row align="top">
@@ -438,40 +360,28 @@ const RouteUpdate = () => {
                   </Row>
                 </Header>
               </Col>
-              <Col span={24}></Col>
-              <Col span={24}>
-                <Form.Item
-                  name="network"
-                  label="Network Range"
-                  tooltip="Use CIDR notation. e.g. 192.168.10.0/24 or 172.16.0.0/16"
-                  rules={[{ validator: networkRangeValidator }]}
-                >
-                  <Input
-                    placeholder="e.g. 172.16.0.0/16"
-                    disabled={!setupNewRouteHA && !newRoute}
-                    autoComplete="off"
-                    minLength={9}
-                    maxLength={43}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <Form.Item name="enabled" label={statusMSG}>
-                  <Radio.Group
-                    options={optionsDisabledEnabled}
-                    optionType="button"
-                    buttonStyle="solid"
-                  />
-                </Form.Item>
-              </Col>
 
               <Col span={24}>
-                <Form.Item
-                  name="peer"
-                  label={routingPeerMSG}
-                  tooltip="Assign a peer as a routing peer for the Network CIDR"
-                  rules={[{ validator: peerValidator }]}
+                <label
+                  style={{
+                    color: "rgba(0, 0, 0, 0.88)",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
                 >
+                  Routing Peer
+                </label>
+                <Paragraph
+                  type={"secondary"}
+                  style={{
+                    marginTop: "-2",
+                    fontWeight: "400",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Assign a peer as a routing peer for the Network CIDR
+                </Paragraph>
+                <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
                   <Select
                     showSearch
                     style={{ width: "100%" }}
@@ -483,32 +393,29 @@ const RouteUpdate = () => {
                 </Form.Item>
               </Col>
               <Col span={24}>
-                <Form.Item
-                  name="masquerade"
-                  label={masqueradeMSG}
-                  tooltip={masqueradeDisabledMSG}
+                <label
+                  style={{
+                    color: "rgba(0, 0, 0, 0.88)",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
                 >
-                  <Switch
-                    size={"small"}
-                    disabled={!setupNewRouteHA && !newRoute}
-                    checked={formRoute.masquerade}
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <Form.Item
-                  name="metric"
-                  label="Metric"
-                  tooltip="Choose from 1 to 9999. Lower number has higher priority"
+                  Distribution groups
+                </label>
+                <Paragraph
+                  type={"secondary"}
+                  style={{
+                    marginTop: "-2",
+                    fontWeight: "400",
+                    marginBottom: "5px",
+                  }}
                 >
-                  <InputNumber min={1} max={9999} autoComplete="off" />
-                </Form.Item>
-              </Col>
-              <Col span={24}>
+                  Advertise this route to peers that belong to the following
+                  groups
+                </Paragraph>
                 <Form.Item
                   name="groups"
-                  label="Distribution groups"
-                  tooltip="NetBird will advertise this route to peers that belong to the following groups"
+                  label=""
                   rules={[{ validator: selectPreValidator }]}
                 >
                   <Select
@@ -525,36 +432,12 @@ const RouteUpdate = () => {
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={24}>
-                <Row wrap={false} gutter={12}>
-                  <Col flex="none">
-                    <FlagFilled />
-                  </Col>
-                  <Col flex="auto">
-                    <Paragraph>
-                      You can enable high-availability by assigning the same
-                      network identifier and network CIDR to multiple routes.
-                    </Paragraph>
-                  </Col>
-                </Row>
-              </Col>
-              <Col span={24}>
-                <Divider></Divider>
-                <Button
-                  icon={<QuestionCircleFilled />}
-                  type="link"
-                  target="_blank"
-                  href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-                >
-                  Learn more about network routes
-                </Button>
-              </Col>
             </Row>
           </Form>
-        </Drawer>
+        </Modal>
       )}
     </>
   );
 };
 
-export default RouteUpdate;
+export default RouteAddNew;

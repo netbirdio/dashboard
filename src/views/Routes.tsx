@@ -57,6 +57,7 @@ import { actions as groupActions } from "../store/group";
 import { useGetGroupTagHelpers } from "../utils/groups";
 import { usePageSizeHelpers } from "../utils/pageSize";
 import RouteUpdate from "../components/RouteUpdate";
+import RoutePeerUpdate from "../components/RoutePeerUpdate";
 
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
@@ -75,6 +76,9 @@ export const Routes = () => {
   const loading = useSelector((state: RootState) => state.route.loading);
   const deletedRoute = useSelector(
     (state: RootState) => state.route.deletedRoute
+  );
+  const setEditRoutePeerVisible = useSelector(
+    (state: RootState) => state.route.setEditRoutePeerVisible
   );
   const savedRoute = useSelector((state: RootState) => state.route.savedRoute);
   const peers = useSelector((state: RootState) => state.peer.data);
@@ -127,6 +131,12 @@ export const Routes = () => {
       !routes.length || (routes.length === 1 && routes[0].network === "Default")
     );
   };
+
+  useEffect(() => {
+    return () => {
+      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
+    };
+  }, []);
 
   useEffect(() => {
     dispatch(
@@ -214,6 +224,7 @@ export const Routes = () => {
       });
       dispatch(routeActions.setSetupNewRouteVisible(false));
       dispatch(routeActions.setSetupEditRouteVisible(false));
+      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
       dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
       dispatch(routeActions.resetSavedRoute(null));
     } else if (savedRoute.error) {
@@ -347,7 +358,7 @@ export const Routes = () => {
         groups: selectedRoute?.groups,
       } as Route)
     );
-    dispatch(routeActions.setSetupNewRouteVisible(true));
+    dispatch(routeActions.setSetupEditRoutePeerVisible(true));
   };
 
   const setRouteAndView = (route: RouteDataTable, event: any) => {
@@ -472,7 +483,7 @@ export const Routes = () => {
       return (
         <div key={i}>
           <Tag color="blue" style={{ marginRight: 3 }}>
-             {_g.name} 
+            {_g.name}
           </Tag>
           <span style={{ fontSize: ".85em" }}>{peersCount}</span>
         </div>
@@ -716,102 +727,113 @@ export const Routes = () => {
       })
     );
   };
- 
+
   return (
     <>
-      <Container className="container-main">
-        <Row>
-          <Col span={24} style={{ marginBottom: "20px" }}>
-            <Title className="page-heading">Network Routes</Title>
+      {!setEditRoutePeerVisible ? (
+        <>
+          <Container className="container-main">
+            <Row>
+              <Col span={24} style={{ marginBottom: "20px" }}>
+                <Title className="page-heading">Network Routes</Title>
 
-            {routes.length ? (
-              <Paragraph style={{ marginTop: "5px" }}>
-                Network routes allow you to access other networks like LANs and
-                VPCs without installing NetBird on every resource.
-                <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-                >
-                  {" "}
-                  Learn more
-                </a>
-              </Paragraph>
-            ) : (
-              <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
-                Network routes allow you to access other networks like LANs and
-                VPCs without installing NetBird on every resource.
-                <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-                >
-                  {" "}
-                  Learn more
-                </a>
-              </Paragraph>
-            )}
-
-            <Space
-              direction="vertical"
-              size="large"
-              style={{ display: "flex" }}
-            >
-              <Row gutter={[16, 24]}>
-                <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                  <Input
-                    allowClear
-                    value={textToSearch}
-                    onPressEnter={searchDataTable}
-                    placeholder="Search by network, range or name..."
-                    onChange={onChangeTextToSearch}
-                  />
-                </Col>
-                <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
-                  <Space size="middle">
-                    <Radio.Group
-                      options={optionsAllEnabled}
-                      onChange={onChangeAllEnabled}
-                      value={optionAllEnable}
-                      optionType="button"
-                      buttonStyle="solid"
-                      disabled={showTutorial}
-                    />
-                    <Select
-                      value={pageSize.toString()}
-                      options={pageSizeOptions}
-                      onChange={onChangePageSize}
-                      className="select-rows-per-page-en"
-                      disabled={showTutorial}
-                    />
-                  </Space>
-                </Col>
-                {!showTutorial && (
-                  <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                    <Row justify="end">
-                      <Col>
-                        <Button
-                          type="primary"
-                          disabled={savedRoute.loading}
-                          onClick={onClickAddNewRoute}
-                        >
-                          Add Route
-                        </Button>
-                      </Col>
-                    </Row>
-                  </Col>
+                {routes.length ? (
+                  <Paragraph style={{ marginTop: "5px" }}>
+                    Network routes allow you to access other networks like LANs
+                    and VPCs without installing NetBird on every resource.
+                    <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                    >
+                      {" "}
+                      Learn more
+                    </a>
+                  </Paragraph>
+                ) : (
+                  <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
+                    Network routes allow you to access other networks like LANs
+                    and VPCs without installing NetBird on every resource.
+                    <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                    >
+                      {" "}
+                      Learn more
+                    </a>
+                  </Paragraph>
                 )}
-              </Row>
-              {failed && (
-                <Alert
-                  message={failed.message}
-                  description={failed.data ? failed.data.message : " "}
-                  type="error"
-                  showIcon
-                  closable
-                />
-              )}
-              {/* <Card bodyStyle={{ padding: 0 }}>
+
+                <Space
+                  direction="vertical"
+                  size="large"
+                  style={{ display: "flex" }}
+                >
+                  <Row gutter={[16, 24]}>
+                    <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
+                      <Input
+                        allowClear
+                        value={textToSearch}
+                        onPressEnter={searchDataTable}
+                        placeholder="Search by network, range or name..."
+                        onChange={onChangeTextToSearch}
+                      />
+                    </Col>
+                    <Col
+                      xs={24}
+                      sm={24}
+                      md={11}
+                      lg={11}
+                      xl={11}
+                      xxl={11}
+                      span={11}
+                    >
+                      <Space size="middle">
+                        <Radio.Group
+                          options={optionsAllEnabled}
+                          onChange={onChangeAllEnabled}
+                          value={optionAllEnable}
+                          optionType="button"
+                          buttonStyle="solid"
+                          disabled={showTutorial}
+                        />
+                      </Space>
+                    </Col>
+                    {!showTutorial && (
+                      <Col
+                        xs={24}
+                        sm={24}
+                        md={5}
+                        lg={5}
+                        xl={5}
+                        xxl={5}
+                        span={5}
+                      >
+                        <Row justify="end">
+                          <Col>
+                            <Button
+                              type="primary"
+                              disabled={savedRoute.loading}
+                              onClick={onClickAddNewRoute}
+                            >
+                              Add Route
+                            </Button>
+                          </Col>
+                        </Row>
+                      </Col>
+                    )}
+                  </Row>
+                  {failed && (
+                    <Alert
+                      message={failed.message}
+                      description={failed.data ? failed.data.message : " "}
+                      type="error"
+                      showIcon
+                      closable
+                    />
+                  )}
+                  {/* <Card bodyStyle={{ padding: 0 }}>
                 {!showTutorial && (
                   <Table
                     pagination={{
@@ -954,136 +976,146 @@ export const Routes = () => {
                 )}
                 
               </Card> */}
-            </Space>
-          </Col>
-        </Row>
+                </Space>
+              </Col>
+            </Row>
 
-        {showTutorial ? (
-          <Card bodyStyle={{ padding: 0 }}>
-            <Space
-              direction="vertical"
-              size="small"
-              align="center"
-              style={{
-                display: "flex",
-                padding: "45px 15px",
-                justifyContent: "center",
-              }}
-            >
-              <Title level={4} style={{ textAlign: "center" }}>
-                Create New Route
-              </Title>
-              <Paragraph
-                style={{
-                  textAlign: "center",
-                  whiteSpace: "pre-line",
-                }}
-              >
-                It looks like you don't have any routes. {"\n"}
-                Access LANs and VPC by adding a network route.
-                <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+            {showTutorial ? (
+              <Card bodyStyle={{ padding: 0 }}>
+                <Space
+                  direction="vertical"
+                  size="small"
+                  align="center"
+                  style={{
+                    display: "flex",
+                    padding: "45px 15px",
+                    justifyContent: "center",
+                  }}
                 >
-                  {" "}
-                  Learn more
-                </a>
-              </Paragraph>
-              <Button
-                size={"middle"}
-                type="primary"
-                onClick={() => onClickAddNewRoute()}
-              >
-                Add route
-              </Button>
-            </Space>
-          </Card>
-        ) : loading || loadingPeer ? (
-          <div className="container-spinner">
-            <Spin />
-          </div>
-        ) : (
-          <div className="routes-accordian">
-            <Collapse onChange={callback}>
-              <div className="accordian-header">
-                <p>Network Identifier</p>
-                <p>Network Range</p>
-                <p>High Availability</p>
+                  <Title level={4} style={{ textAlign: "center" }}>
+                    Create New Route
+                  </Title>
+                  <Paragraph
+                    style={{
+                      textAlign: "center",
+                      whiteSpace: "pre-line",
+                    }}
+                  >
+                    It looks like you don't have any routes. {"\n"}
+                    Access LANs and VPC by adding a network route.
+                    <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                    >
+                      {" "}
+                      Learn more
+                    </a>
+                  </Paragraph>
+                  <Button
+                    size={"middle"}
+                    type="primary"
+                    onClick={() => onClickAddNewRoute()}
+                  >
+                    Add route
+                  </Button>
+                </Space>
+              </Card>
+            ) : loading || loadingPeer ? (
+              <div className="container-spinner">
+                <Spin />
               </div>
+            ) : (
+              <div className="routes-accordian">
+                <Collapse onChange={callback}>
+                  <div className="accordian-header">
+                    <p>Network Identifier</p>
+                    <p>Network Range</p>
+                    <p>High Availability</p>
+                  </div>
 
-              {groupedDataTable &&
-                groupedDataTable.length &&
-                groupedDataTable.map((record, index) => {
-                  return (
-                    <Panel header={getAccordianHeader(record)} key={index}>
-                      <div className="accordian-inner-header">
-                        <p>Routing Peer</p>
-                        <p>Metric</p>
-                        <p>Enabled</p>
-                        <p>Groups</p>
-                      </div>
-                      {record.groupedRoutes &&
-                        record.groupedRoutes.length &&
-                        record.groupedRoutes.map((route, index2) => {
-                          return (
-                            <div
-                              className="accordian-inner-listing"
-                              key={index2}
-                            >
-                              <p>
-                                <span
-                                  className="cursor-pointer"
-                                  onClick={() => {
-                                    onClickViewRoute(route);
-                                  }}
+                  {groupedDataTable &&
+                    groupedDataTable.length &&
+                    groupedDataTable.map((record, index) => {
+                      return (
+                        <Panel header={getAccordianHeader(record)} key={index}>
+                          <div className="accordian-inner-header">
+                            <p>Routing Peer</p>
+                            <p>Metric</p>
+                            <p>Enabled</p>
+                            <p>Groups</p>
+                          </div>
+                          {record.groupedRoutes &&
+                            record.groupedRoutes.length &&
+                            record.groupedRoutes.map((route, index2) => {
+                              return (
+                                <div
+                                  className="accordian-inner-listing"
+                                  key={index2}
                                 >
-                                  {route.peer_name}
-                                </span>
-                                <Badge
-                                  size={"small"}
-                                  style={{ marginLeft: "5px" }}
-                                  color={
-                                    route.enabled ? "green" : "rgb(211,211,211)"
-                                  }
-                                ></Badge>
-                              </p>
-                              <p>{route.metric}</p>
-                              <p>
-                                <Switch
-                                  size={"small"}
-                                  defaultChecked={route.enabled}
-                                  onClick={(checked: boolean) => {
-                                    changeRouteStatus(route, checked);
-                                  }}
-                                />
-                              </p>
-                              <p>{renderPopoverGroups(route.groups, route)}</p>
-                              <p>
-                                <Button
-                                  type="text"
-                                  style={{
-                                    color: "rgba(210, 64, 64, 0.85)",
-                                  }}
-                                  onClick={() =>
-                                    showConfirmDelete(route as RouteDataTable)
-                                  }
-                                >
-                                  Delete
-                                </Button>
-                              </p>
-                            </div>
-                          );
-                        })}
-                    </Panel>
-                  );
-                })}
-            </Collapse>
-          </div>
-        )}
-      </Container>
-      <RouteAddNew />
-      <RouteUpdate />
+                                  <p>
+                                    <span
+                                      className="cursor-pointer"
+                                      onClick={() => {
+                                        onClickViewRoute(route);
+                                      }}
+                                    >
+                                      {route.peer_name}
+                                    </span>
+                                    <Badge
+                                      size={"small"}
+                                      style={{ marginLeft: "5px" }}
+                                      color={
+                                        route.enabled
+                                          ? "green"
+                                          : "rgb(211,211,211)"
+                                      }
+                                    ></Badge>
+                                  </p>
+                                  <p>{route.metric}</p>
+                                  <p>
+                                    <Switch
+                                      size={"small"}
+                                      defaultChecked={route.enabled}
+                                      onClick={(checked: boolean) => {
+                                        changeRouteStatus(route, checked);
+                                      }}
+                                    />
+                                  </p>
+                                  <p>
+                                    {renderPopoverGroups(route.groups, route)}
+                                  </p>
+                                  <p>
+                                    <Button
+                                      type="text"
+                                      style={{
+                                        color: "rgba(210, 64, 64, 0.85)",
+                                      }}
+                                      onClick={() =>
+                                        showConfirmDelete(
+                                          route as RouteDataTable
+                                        )
+                                      }
+                                    >
+                                      Delete
+                                    </Button>
+                                  </p>
+                                </div>
+                              );
+                            })}
+                        </Panel>
+                      );
+                    })}
+                </Collapse>
+              </div>
+            )}
+          </Container>
+          <RouteAddNew />
+          <RouteUpdate />
+        </>
+      ) : (
+        <RoutePeerUpdate />
+      )}
     </>
   );
 };

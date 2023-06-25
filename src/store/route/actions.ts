@@ -29,6 +29,7 @@ const actions = {
   setRoute: createAction('SET_ROUTE')<Route>(),
   setSetupNewRouteVisible: createAction('SET_SETUP_NEW_ROUTE_VISIBLE')<boolean>(),
   setSetupEditRouteVisible: createAction('SET_SETUP_EDIT_ROUTE_VISIBLE')<boolean>(),
+  setSetupEditRoutePeerVisible: createAction('SET_SETUP_EDIT_ROUTE_PEER_VISIBLE')<boolean>(),
   setSetupNewRouteHA: createAction('SET_SETUP_NEW_ROUTE_HA')<boolean>()
 };
 

@@ -409,3 +409,6 @@ ul.ant-list-items {
   justify-content: center;
   height: 300px;
 }
+.remove-bg .ant-collapse-content-box{
+  background-color: transparent;
+}

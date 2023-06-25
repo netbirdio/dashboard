@@ -15,6 +15,7 @@ type StateType = Readonly<{
   setupNewRouteVisible: boolean;
   setupNewRouteHA: boolean;
   setupEditRouteVisible: boolean;
+  setEditRoutePeerVisible: boolean;
 }>;
 
 const initialState: StateType = {
@@ -40,6 +41,7 @@ const initialState: StateType = {
   setupNewRouteVisible: false,
   setupNewRouteHA: false,
   setupEditRouteVisible: false,
+  setEditRoutePeerVisible: false,
 };
 
 const data = createReducer<Route[], ActionTypes>(initialState.data as Route[])
@@ -88,6 +90,14 @@ const setupEditRouteVisible = createReducer<boolean, ActionTypes>(
   (store, action) => action.payload
 );
 
+
+const setEditRoutePeerVisible = createReducer<boolean, ActionTypes>(
+  initialState.setEditRoutePeerVisible
+).handleAction(
+  actions.setSetupEditRoutePeerVisible,
+  (store, action) => action.payload
+);
+
 const setupNewRouteHA = createReducer<boolean, ActionTypes>(initialState.setupNewRouteHA)
     .handleAction(actions.setSetupNewRouteHA, (store, action) => action.payload)
 
@@ -102,4 +112,5 @@ export default combineReducers({
   setupNewRouteVisible,
   setupNewRouteHA,
   setupEditRouteVisible,
+  setEditRoutePeerVisible,
 });
