@@ -19,7 +19,6 @@ body {
   padding: 0;
   height: auto;
   min-height: 64px;
-
   border-bottom: 1px solid #e0e0e0;
 }
 
@@ -283,7 +282,6 @@ td.non-highlighted-table-column {
 
 .routes-accordian .ant-collapse-header {
   background: #fff;
-  border-bottom: 1px solid #f0f0f0;
   align-items: center !important;
 }
 

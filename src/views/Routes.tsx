@@ -236,7 +236,7 @@ export const Routes = () => {
     } else if (deletedRoute.error) {
       message.error({
         content:
-          "Failed to remove route. You might not have enough permissions.",
+          "Failed to delete route. You might not have enough permissions.",
         key: deleteKey,
         duration: 2,
         style,
@@ -463,7 +463,9 @@ export const Routes = () => {
             </>
           ) : (
             <>
-              <Tag color="default">off</Tag>
+            <Tag color="default">
+              <Text type="secondary" style={{ fontSize: 12 }}>off</Text>
+            </Tag>
               <Button
                 type="link"
                 style={{ padding: "0" }}
@@ -497,14 +499,14 @@ export const Routes = () => {
       icon: <ExclamationCircleOutlined />,
       title: (
         <span className="font-500">
-          Delete network routes to network {name}
+          Delete routes to network {name}
         </span>
       ),
       width: 600,
       content: (
         <Space direction="vertical" size="small">
           <Paragraph>
-            This operation will remove all network routes to the network {name}?
+            This operation will delete all routes to the network {name}. Are you sure?
           </Paragraph>
           <Alert
             message={
