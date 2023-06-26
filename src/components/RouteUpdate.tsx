@@ -346,7 +346,7 @@ const RouteAddNew = () => {
                     style={{
                       marginTop: "-2",
                       fontWeight: "400",
-                      marginBottom: "35px",
+                      marginBottom: "15px",
                     }}
                   >
                     When you add multiple routing peers, NetBird enables high availability
