@@ -475,7 +475,7 @@ export const AccessControl = () => {
      if (!ports) {
       return (
         <Tag style={{ marginRight: 3 }}>
-          <span className="menlo-font">All</span>
+          <span className="menlo-font">ALL</span>
         </Tag>
       );
     }

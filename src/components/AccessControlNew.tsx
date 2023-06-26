@@ -809,7 +809,7 @@ const AccessControlNew = () => {
                       fontWeight: "500",
                     }}
                     className="menlo-font"
-                    placeholder={ (formPolicy.protocol === "all" || formPolicy.protocol === "icmp") ? "Change protocol to add ports" : "Add ports"}
+                    placeholder={ (formPolicy.protocol === "all" || formPolicy.protocol === "icmp") ? "All" : "Add ports"}
                     tagRender={grayTagRender}
                     onChange={handleChangePorts}
                     dropdownRender={dropDownRenderPorts}
