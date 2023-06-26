@@ -472,6 +472,13 @@ export const AccessControl = () => {
   };
 
   const renderPorts = (ports: string[]) => {
+     if (!ports) {
+      return (
+        <Tag style={{ marginRight: 3 }}>
+          <span className="menlo-font">All</span>
+        </Tag>
+      );
+    }
     const content = ports?.map((p, i) => {
       return (
         <Tag key={i} style={{ marginRight: 3 }}>
