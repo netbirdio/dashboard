@@ -412,3 +412,6 @@ ul.ant-list-items {
 .remove-bg .ant-collapse-content-box {
   background-color: transparent;
 }
+.route-form .ant-form-item {
+  margin-bottom: 20px;
+}

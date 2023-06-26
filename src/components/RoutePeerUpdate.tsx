@@ -292,6 +292,7 @@ const RoutePeerUpdate = () => {
               requiredMark={false}
               onValuesChange={onChange}
               style={{ width: "100%", maxWidth: "600px" }}
+              className="route-form"
             >
               <Row gutter={16}>
                 <Col span={24}>
@@ -358,7 +359,7 @@ const RoutePeerUpdate = () => {
                               onPressEnter={() => toggleEditDescription(false)}
                               onBlur={() => toggleEditDescription(false)}
                               autoComplete="off"
-                             style={{maxWidth:"400px"}}
+                              style={{ maxWidth: "400px" }}
                             />
                           </Form.Item>
                         )}

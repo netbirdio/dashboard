@@ -247,54 +247,54 @@ const RouteAddNew = () => {
     return selectValidator(obj, value);
   };
 
+  const styleNotification = { marginTop: 85 };
 
-    const styleNotification = { marginTop: 85 };
-
-    const saveKey = "saving";
-    useEffect(() => {
-      if (savedRoute.loading) {
-        message.loading({
-          content: "Saving...",
-          key: saveKey,
-          duration: 0,
-          style: styleNotification,
-        });
-      } else if (savedRoute.success) {
-        console.log("savedRoute", savedRoute);
-        message.success({
-          content: "Route has been successfully added.",
-          key: saveKey,
-          duration: 2,
-          style: styleNotification,
-        });
-        dispatch(routeActions.setSetupNewRouteVisible(false));
-        dispatch(routeActions.setSetupEditRouteVisible(false));
-        dispatch(routeActions.setSetupEditRoutePeerVisible(false));
-        dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
-        dispatch(routeActions.resetSavedRoute(null));
-      } else if (savedRoute.error) {
-        let errorMsg = "Failed to update network route";
-        switch (savedRoute.error.statusCode) {
-          case 403:
-            errorMsg =
-              "Failed to update network route. You might not have enough permissions.";
-            break;
-          default:
-            errorMsg = savedRoute.error.data.message
-              ? savedRoute.error.data.message
-              : errorMsg;
-            break;
-        }
-        message.error({
-          content: errorMsg,
-          key: saveKey,
-          duration: 5,
-          style: styleNotification,
-        });
-        dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
-        dispatch(routeActions.resetSavedRoute(null));
+  const saveKey = "saving";
+  useEffect(() => {
+    if (savedRoute.loading) {
+      message.loading({
+        content: "Saving...",
+        key: saveKey,
+        duration: 0,
+        style: styleNotification,
+      });
+    } else if (savedRoute.success) {
+      console.log("savedRoute", savedRoute);
+      message.success({
+        content: "Route has been successfully added.",
+        key: saveKey,
+        duration: 2,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSetupNewRouteVisible(false));
+      dispatch(routeActions.setSetupEditRouteVisible(false));
+      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
+      dispatch(routeActions.resetSavedRoute(null));
+    } else if (savedRoute.error) {
+      let errorMsg = "Failed to update network route";
+      switch (savedRoute.error.statusCode) {
+        case 403:
+          errorMsg =
+            "Failed to update network route. You might not have enough permissions.";
+          break;
+        default:
+          errorMsg = savedRoute.error.data.message
+            ? savedRoute.error.data.message
+            : errorMsg;
+          break;
       }
-    }, [savedRoute]);
+      message.error({
+        content: errorMsg,
+        key: saveKey,
+        duration: 5,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
+      dispatch(routeActions.resetSavedRoute(null));
+    }
+  }, [savedRoute]);
+
   return (
     <>
       {route && (
@@ -321,6 +321,7 @@ const RouteAddNew = () => {
             form={form}
             requiredMark={false}
             onValuesChange={onChange}
+            className="route-form"
           >
             <Row gutter={16}>
               <Col span={24}>
@@ -346,10 +347,11 @@ const RouteAddNew = () => {
                     style={{
                       marginTop: "-2",
                       fontWeight: "400",
-                      marginBottom: "15px",
+                      marginBottom: "25px",
                     }}
                   >
-                    When you add multiple routing peers, NetBird enables high availability
+                    When you add multiple routing peers, NetBird enables high
+                    availability
                   </Paragraph>
 
                   <Row align="top">
@@ -426,7 +428,8 @@ const RouteAddNew = () => {
                     marginBottom: "5px",
                   }}
                 >
-                  Assign a routing peer to the network. This peer has to reside in the network
+                  Assign a routing peer to the network. This peer has to reside
+                  in the network
                 </Paragraph>
                 <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
                   <Select

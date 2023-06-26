@@ -436,6 +436,7 @@ const RouteAddNew = (selectedPeer: any) => {
             form={form}
             requiredMark={false}
             onValuesChange={onChange}
+            className="route-form"
           >
             <Row gutter={16}>
               <Col span={24}>
@@ -451,7 +452,7 @@ const RouteAddNew = (selectedPeer: any) => {
                       fontSize: "18px",
                       margin: "0px",
                       fontWeight: 500,
-                      marginBottom: "15px",
+                      marginBottom: "25px",
                     }}
                   >
                     Add Route
@@ -593,7 +594,7 @@ const RouteAddNew = (selectedPeer: any) => {
                         <div
                           onClick={() => toggleEditDescription(true)}
                           style={{
-                            margin: "0 0 30px",
+                            margin: "0 0 15px",
                             lineHeight: "22px",
                             cursor: "pointer",
                           }}
