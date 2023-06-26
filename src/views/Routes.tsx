@@ -168,7 +168,6 @@ export const Routes = () => {
     if (optionAllEnable !== "all") {
       f = filter(f, (f) => f.enabled);
     }
-    console.log("ffff-ff>>", f);
 
     f.sort(function (a, b) {
       if (a.network_id < b.network_id) {
@@ -493,7 +492,6 @@ export const Routes = () => {
   const showConfirmationDeleteAllRoutes = (selectedGroup: any, event: any) => {
     event.preventDefault();
     event.stopPropagation();
-    console.log("record", selectedGroup);
     let name = selectedGroup ? selectedGroup.network_id : "";
     confirm({
       icon: <ExclamationCircleOutlined />,
