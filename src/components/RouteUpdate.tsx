@@ -311,7 +311,7 @@ const RouteAddNew = () => {
                 disabled={savedRoute.loading}
                 onClick={handleFormSubmit}
               >
-                Save
+                Add Route
               </Button>
             </Space>
           }
@@ -346,11 +346,10 @@ const RouteAddNew = () => {
                     style={{
                       marginTop: "-2",
                       fontWeight: "400",
-                      marginBottom: "15px",
+                      marginBottom: "35px",
                     }}
                   >
-                    When you add multiple routing peers it enables High
-                    Avialability
+                    When you add multiple routing peers, NetBird enables high availability
                   </Paragraph>
 
                   <Row align="top">
@@ -373,8 +372,7 @@ const RouteAddNew = () => {
                             marginBottom: "5px",
                           }}
                         >
-                          Add a unique cryptographic key that is assigned to
-                          each device
+                          Network name and CIDR that you are adding the route to
                         </Paragraph>
                         <Form.Item
                           // name="network_id"
@@ -428,7 +426,7 @@ const RouteAddNew = () => {
                     marginBottom: "5px",
                   }}
                 >
-                  Assign a peer as a routing peer for the Network CIDR
+                  Assign a routing peer to the network. This peer has to reside in the network
                 </Paragraph>
                 <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
                   <Select
