@@ -68,7 +68,7 @@ const AccessControlNew = () => {
     { label: "UDP", value: "udp" },
     { label: "ICMP", value: "icmp" },
   ];
-  const formPolicyCopy: any = ["All"];
+  const formPolicyCopy: any = ["ALL"];
 
   const policy = useSelector((state: RootState) => state.policy.policy);
   const savedPolicy = useSelector(
