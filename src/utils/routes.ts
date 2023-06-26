@@ -31,7 +31,7 @@ export interface RouteDataTable extends Route {
 
 export interface GroupedDataTable {
     key: string
-    network_id: string
+    network_id: any
     network: string
     enabled: boolean
     masquerade: boolean

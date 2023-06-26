@@ -8,6 +8,7 @@ import {
   Collapse,
   Form,
   Input,
+  message,
   InputNumber,
   Row,
   Select,
@@ -361,6 +362,55 @@ const RouteAddNew = (selectedPeer: any) => {
     }
   };
 
+
+    const styleNotification = { marginTop: 85 };
+
+    const saveKey = "saving";
+    useEffect(() => {
+      if (savedRoute.loading) {
+        message.loading({
+          content: "Saving...",
+          key: saveKey,
+          duration: 0,
+          style: styleNotification,
+        });
+      } else if (savedRoute.success) {
+        console.log("savedRoute", savedRoute);
+        message.success({
+          content: "Route has been successfully added.",
+          key: saveKey,
+          duration: 2,
+          style: styleNotification,
+        });
+        dispatch(routeActions.setSetupNewRouteVisible(false));
+        dispatch(routeActions.setSetupEditRouteVisible(false));
+        dispatch(routeActions.setSetupEditRoutePeerVisible(false));
+        dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
+        dispatch(routeActions.resetSavedRoute(null));
+      } else if (savedRoute.error) {
+        let errorMsg = "Failed to update network route";
+        switch (savedRoute.error.statusCode) {
+          case 403:
+            errorMsg =
+              "Failed to update network route. You might not have enough permissions.";
+            break;
+          default:
+            errorMsg = savedRoute.error.data.message
+              ? savedRoute.error.data.message
+              : errorMsg;
+            break;
+        }
+        message.error({
+          content: errorMsg,
+          key: saveKey,
+          duration: 5,
+          style: styleNotification,
+        });
+        dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
+        dispatch(routeActions.resetSavedRoute(null));
+      }
+    }, [savedRoute]);
+  
   return (
     <>
       {route && (
@@ -736,6 +786,7 @@ const RouteAddNew = (selectedPeer: any) => {
                   bordered={false}
                   ghost={true}
                   style={{ padding: "0" }}
+                  className="remove-bg"
                 >
                   <Panel
                     key="0"
