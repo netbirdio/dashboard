@@ -29,7 +29,7 @@ import { uniq } from "lodash";
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
-import {useGetGroupTagHelpers} from "../utils/groups";
+import { useGetGroupTagHelpers } from "../utils/groups";
 
 const { Paragraph } = Typography;
 const { Option } = Select;
@@ -50,11 +50,8 @@ interface FormPolicy {
 }
 
 const AccessControlNew = () => {
-  const {
-    optionRender,
-      grayTagRender,
-      blueTagRender
-  } = useGetGroupTagHelpers()
+  const { optionRender, grayTagRender, blueTagRender } =
+    useGetGroupTagHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const setupNewPolicyVisible = useSelector(
@@ -71,6 +68,8 @@ const AccessControlNew = () => {
     { label: "UDP", value: "udp" },
     { label: "ICMP", value: "icmp" },
   ];
+  const formPolicyCopy: any = ["All"];
+
   const policy = useSelector((state: RootState) => state.policy.policy);
   const savedPolicy = useSelector(
     (state: RootState) => state.policy.savedPolicy
@@ -274,9 +273,7 @@ const AccessControlNew = () => {
       <Divider style={{ margin: "8px 0" }} />
       <Row style={{ padding: "0 8px 4px" }}>
         <Col flex="auto">
-          <Text type={"secondary"}>
-            Add new ports by pressing "Enter"
-          </Text>
+          <Text type={"secondary"}>Add new ports by pressing "Enter"</Text>
         </Col>
         <Col flex="none">
           <svg
@@ -460,18 +457,18 @@ const AccessControlNew = () => {
                       whiteSpace: "pre-line",
                       fontSize: "18px",
                       margin: "0px",
-                      fontWeight:"500"
+                      fontWeight: "500",
                     }}
                   >
                     Create Rule
                   </Paragraph>
                   <Paragraph
-                      type={"secondary"}
-                      style={{
-                        textAlign: "start",
-                        whiteSpace: "pre-line",
-                        paddingBottom: "15px",
-                      }}
+                    type={"secondary"}
+                    style={{
+                      textAlign: "start",
+                      whiteSpace: "pre-line",
+                      paddingBottom: "15px",
+                    }}
                   >
                     Use this rule to restrict access to groups of resources
                   </Paragraph>
@@ -727,10 +724,11 @@ const AccessControlNew = () => {
               </Col>
               <Col span={24}>
                 <Paragraph
-                    type={"secondary"}
-                    style={{  marginTop: "-15px", marginBottom: "30px" }}
+                  type={"secondary"}
+                  style={{ marginTop: "-15px", marginBottom: "30px" }}
                 >
-                  To change traffic direction and ports, select TCP or UDP protocol below
+                  To change traffic direction and ports, select TCP or UDP
+                  protocol below
                 </Paragraph>
               </Col>
               <Col span={24}>
@@ -784,50 +782,73 @@ const AccessControlNew = () => {
                     Allow network traffic and access only to specified ports
                   </Paragraph>
                 </div>
-                <Form.Item
-                  name="ports"
-                  label=""
-                  style={{ fontWeight: "500" }}
-                  rules={[
-                    {
-                      message: "Directional traffic requires at least one port",
-                      validator: selectPortProtocolValidator,
-                      required: false,
-                    },
-                    {
-                      message: "Port value must be in 1..65535 range",
-                      validator: selectPortRangeValidator,
-                      required: false,
-                    },
-                  ]}
-                >
-                  <Select
-                    mode="tags"
-                    style={{
-                      width: "100%",
-                      maxWidth: "280px",
-                      fontWeight: "500",
-                    }}
-                    className="menlo-font"
-                    placeholder={ (formPolicy.protocol === "all" || formPolicy.protocol === "icmp") ? "All" : "Add ports"}
-                    tagRender={grayTagRender}
-                    onChange={handleChangePorts}
-                    dropdownRender={dropDownRenderPorts}
-                    disabled={
-                      formPolicy.protocol === "all" ||
-                      formPolicy.protocol === "icmp"
-                    }
+
+                {formPolicy.protocol === "all" ||
+                formPolicy.protocol === "icmp" ? (
+                  <Form.Item label="Ports" style={{ fontWeight: "500" }}>
+                    <Select
+                      mode="tags"
+                      style={{
+                        width: "100%",
+                        maxWidth: "260px",
+                        fontWeight: "500",
+                      }}
+                      placeholder="Add ports"
+                      className="menlo-font"
+                      value={formPolicyCopy}
+                      disabled={true}
+                    ></Select>
+                  </Form.Item>
+                ) : (
+                  <Form.Item
+                    name="ports"
+                    label=""
+                    style={{ fontWeight: "500" }}
+                    rules={[
+                      {
+                        message:
+                          "Directional traffic requires at least one port",
+                        validator: selectPortProtocolValidator,
+                        required: false,
+                      },
+                      {
+                        message: "Port value must be in 1..65535 range",
+                        validator: selectPortRangeValidator,
+                        required: false,
+                      },
+                    ]}
                   >
-                    {formPolicy &&
-                      formPolicy.ports?.map((m) => (
-                        <Option key={m}>
-                          <Tag style={{ marginRight: 3 }}>
-                            {m}
-                          </Tag>
-                        </Option>
-                      ))}
-                  </Select>
-                </Form.Item>
+                    <Select
+                      mode="tags"
+                      style={{
+                        width: "100%",
+                        maxWidth: "280px",
+                        fontWeight: "500",
+                      }}
+                      className="menlo-font"
+                      placeholder={
+                        formPolicy.protocol === "all" ||
+                        formPolicy.protocol === "icmp"
+                          ? "All"
+                          : "Add ports"
+                      }
+                      tagRender={grayTagRender}
+                      onChange={handleChangePorts}
+                      dropdownRender={dropDownRenderPorts}
+                      disabled={
+                        formPolicy.protocol === "all" ||
+                        formPolicy.protocol === "icmp"
+                      }
+                    >
+                      {formPolicy &&
+                        formPolicy.ports?.map((m) => (
+                          <Option key={m}>
+                            <Tag style={{ marginRight: 3 }}>{m}</Tag>
+                          </Option>
+                        ))}
+                    </Select>
+                  </Form.Item>
+                )}
               </Col>
               <Col span={24}>
                 <Form.Item name="enabled" label="">

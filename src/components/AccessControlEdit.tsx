@@ -23,7 +23,6 @@ import outBoundblue from "../assets/out_bound_blue.svg";
 import reverseDefault from "../assets/reverse_default.svg";
 import forwardDefault from "../assets/forward_default.svg";
 import reverseGreen from "../assets/reverse_green.svg";
-import type { CustomTagProps } from "rc-select/lib/BaseSelect";
 import { Policy, PolicyToSave } from "../store/policy/types";
 import { uniq } from "lodash";
 import { Header } from "antd/es/layout/layout";
@@ -70,6 +69,8 @@ const AccessControlEdit = () => {
     { label: "UDP", value: "udp" },
     { label: "ICMP", value: "icmp" },
   ];
+  const formPolicyCopy: any = ["All"];
+
   const policy = useSelector((state: RootState) => state.policy.policy);
   const savedPolicy = useSelector(
     (state: RootState) => state.policy.savedPolicy
@@ -440,6 +441,7 @@ const AccessControlEdit = () => {
       });
     }
   }, [direction]);
+
   return (
     <>
       {policy && (
@@ -815,54 +817,66 @@ const AccessControlEdit = () => {
                   <Col span={24}>
                     <Row>
                       <Col span={10}>
-                        <Form.Item
-                          name="ports"
-                          label="Ports"
-                          style={{ fontWeight: "500" }}
-                          rules={[
-                            {
-                              message:
-                                "Directional traffic requires at least one port",
-                              validator: selectPortProtocolValidator,
-                              required: false,
-                            },
-                            {
-                              message: "Port value must be in 1..65535 range",
-                              validator: selectPortRangeValidator,
-                              required: false,
-                            },
-                          ]}
-                        >
-                          <Select
-                            mode="tags"
-                            style={{
-                              width: "100%",
-                              maxWidth: "260px",
-                              fontWeight: "500",
-                            }}
-                            placeholder={
-                              formPolicy.protocol === "all" ||
-                              formPolicy.protocol === "icmp"
-                                ? "All"
-                                : "Add ports"
-                            }
-                            tagRender={grayTagRender}
-                            onChange={handleChangePorts}
-                            className="menlo-font"
-                            dropdownRender={dropDownRenderPorts}
-                            disabled={
-                              formPolicy.protocol === "all" ||
-                              formPolicy.protocol === "icmp"
-                            }
+                        {formPolicy.protocol === "all" ||
+                        formPolicy.protocol === "icmp" ? (
+                          <Form.Item
+                            label="Ports"
+                            style={{ fontWeight: "500" }}
                           >
-                            {formPolicy &&
-                              formPolicy.ports?.map((m) => (
-                                <Option key={m}>
-                                  <Tag style={{ marginRight: 3 }}>{m}</Tag>
-                                </Option>
-                              ))}
-                          </Select>
-                        </Form.Item>
+                            <Select
+                              mode="tags"
+                              style={{
+                                width: "100%",
+                                maxWidth: "260px",
+                                fontWeight: "500",
+                              }}
+                              placeholder="Add ports"
+                              className="menlo-font"
+                              value={formPolicyCopy}
+                              disabled={true}
+                            ></Select>
+                          </Form.Item>
+                        ) : (
+                          <Form.Item
+                            name="ports"
+                            label="Ports"
+                            style={{ fontWeight: "500" }}
+                            rules={[
+                              {
+                                message:
+                                  "Directional traffic requires at least one port",
+                                validator: selectPortProtocolValidator,
+                                required: false,
+                              },
+                              {
+                                message: "Port value must be in 1..65535 range",
+                                validator: selectPortRangeValidator,
+                                required: false,
+                              },
+                            ]}
+                          >
+                            <Select
+                              mode="tags"
+                              style={{
+                                width: "100%",
+                                maxWidth: "260px",
+                                fontWeight: "500",
+                              }}
+                              placeholder="Add ports"
+                              tagRender={grayTagRender}
+                              onChange={handleChangePorts}
+                              className="menlo-font"
+                              dropdownRender={dropDownRenderPorts}
+                            >
+                              {formPolicy &&
+                                formPolicy.ports?.map((m) => (
+                                  <Option key={m}>
+                                    <Tag style={{ marginRight: 3 }}>{m}</Tag>
+                                  </Option>
+                                ))}
+                            </Select>
+                          </Form.Item>
+                        )}
                       </Col>
                     </Row>
                   </Col>
