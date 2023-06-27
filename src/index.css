@@ -414,8 +414,8 @@ ul.ant-list-items {
 }
 .route-form .ant-form-item {
   margin-bottom: 20px;
-  width: 8px!important;
-  height: 8px!important;
+  /* width: 8px!important;
+  height: 8px!important; */
 }
 .nb-code{
   position: relative;
