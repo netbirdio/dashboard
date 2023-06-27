@@ -272,3 +272,11 @@ td.non-highlighted-table-column {
   width: 8px!important;
   height: 8px!important;
 }
+.nb-code{
+  position: relative;
+}
+.btn-copy-code.peer {
+  position: absolute;
+  top: 10px;
+  right: 2px;
+}
