@@ -11,32 +11,45 @@ const {Title, Paragraph, Text} = Typography;
 export const DockerTab = () => {
 
     const [steps, setSteps] = useState([
-        {
-            key: 1,
-            title: 'Install Docker',
-            commands: (
-                <Button style={{marginTop: "5px"}} type="primary" href="https://docs.docker.com/engine/install/" target="_blank">Official Docker website</Button>
-            ),
-            copied: false,
-            showCopyButton: false
-        } as StepCommand,
-        {
-            key: 2,
-            title: 'Run NetBird container',
-            commands: formatDockerCommand(),
-            copied: false,
-            showCopyButton: false
-        } as StepCommand,
-        {
-            key: 3,
-            title: "Read docs",
-            commands: (
-                <Link href="https://docs.netbird.io/how-to/getting-started#running-net-bird-in-docker" target="_blank">Running NetBird in Docker</Link>
-            ),
-            copied: false,
-            showCopyButton: false
-        } as StepCommand
-    ])
+      {
+        key: 1,
+        title: "Install Docker",
+        commands: (
+          <Button
+            style={{ marginTop: "5px" }}
+            type="primary"
+            href="https://docs.docker.com/engine/install/"
+            target="_blank"
+          >
+            Official Docker website
+          </Button>
+        ),
+        copied: false,
+        showCopyButton: false,
+      } as StepCommand,
+      {
+        key: 2,
+        title: "Run NetBird container",
+        commands: formatDockerCommand(),
+        commandsForCopy: formatDockerCommand(),
+        copied: false,
+        showCopyButton: false,
+      } as StepCommand,
+      {
+        key: 3,
+        title: "Read docs",
+        commands: (
+          <Link
+            href="https://docs.netbird.io/how-to/getting-started#running-net-bird-in-docker"
+            target="_blank"
+          >
+            Running NetBird in Docker
+          </Link>
+        ),
+        copied: false,
+        showCopyButton: false,
+      } as StepCommand,
+    ]);
 
     return (
         <div style={{marginTop: 10}}>
