@@ -111,7 +111,8 @@ export const AccessControl = () => {
 
   const isShowTutorial = (policy: Policy[]): boolean => {
     return (
-      !policy.length || (policy.length === 1 && policy[0].name === "Default")
+      // !policy.length || (policy.length === 1 && policy[0].name === "Default")
+      !policy.length
     );
   };
 
@@ -548,6 +549,7 @@ export const AccessControl = () => {
       })
     );
   };
+  console.log("dataTable", dataTable);
   return (
     <>
       {!setupEditPolicyVisible && (
@@ -557,24 +559,26 @@ export const AccessControl = () => {
               <Col span={24}>
                 <Title className="page-heading">Access Control</Title>
                 {policies.length ? (
-                  <Paragraph style={{marginTop: "5px"}}>
-                    Create rules to manage access in your network and define what peers can connect.
+                  <Paragraph style={{ marginTop: "5px" }}>
+                    Create rules to manage access in your network and define
+                    what peers can connect.
                     <a
-                        target="_blank"
-                        rel="noreferrer"
-                        href="https://docs.netbird.io/how-to/manage-network-access"
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/manage-network-access"
                     >
                       {" "}
                       Learn more
                     </a>
                   </Paragraph>
                 ) : (
-                  <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
-                    Create rules to manage access in your network and define what peers can connect.
+                  <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
+                    Create rules to manage access in your network and define
+                    what peers can connect.
                     <a
-                        target="_blank"
-                        rel="noreferrer"
-                        href="https://docs.netbird.io/how-to/manage-network-access"
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/manage-network-access"
                     >
                       {" "}
                       Learn more
@@ -624,19 +628,29 @@ export const AccessControl = () => {
                         />
                       </Space>
                     </Col>
-                    {!showTutorial && (<Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                      <Row justify="end">
-                        <Col>
-                          <Button
-                            type="primary"
-                            disabled={savedPolicy.loading}
-                            onClick={onClickAddNewPolicy}
-                          >
-                            Add Rule
-                          </Button>
-                        </Col>
-                      </Row>
-                    </Col>)}
+                    {!showTutorial && (
+                      <Col
+                        xs={24}
+                        sm={24}
+                        md={5}
+                        lg={5}
+                        xl={5}
+                        xxl={5}
+                        span={5}
+                      >
+                        <Row justify="end">
+                          <Col>
+                            <Button
+                              type="primary"
+                              disabled={savedPolicy.loading}
+                              onClick={onClickAddNewPolicy}
+                            >
+                              Add Rule
+                            </Button>
+                          </Col>
+                        </Row>
+                      </Col>
+                    )}
                   </Row>
                   {failed && (
                     <Alert
@@ -648,207 +662,209 @@ export const AccessControl = () => {
                     />
                   )}
                   <Card bodyStyle={{ padding: 0 }}>
-                  {!showTutorial && (
-                    <Table
-                      pagination={{
-                        current: currentPage,
-                        hideOnSinglePage: showTutorial,
-                        disabled: showTutorial,
-                        pageSize,
-                        responsive: true,
-                        showSizeChanger: false,
-                        showTotal: (total, range) =>
-                          `Showing ${range[0]} to ${range[1]} of ${total} rules`,
-                        onChange: (page, pageSize) => {
-                          setCurrentPage(page);
-                        },
-                      }}
-                      className={`access-control-table ${
-                        showTutorial
-                          ? "card-table card-table-no-placeholder"
-                          : "card-table"
-                      }`}
-                      showSorterTooltip={false}
-                      scroll={{ x: true }}
-                      loading={tableSpin(loading)}
-                      dataSource={dataTable}
-                    >
-                      <Column
-                        title="Name"
-                        dataIndex="name"
-                        onFilter={(value: string | number | boolean, record) =>
-                          (record as any).name.includes(value)
-                        }
-                        sorter={(a, b) =>
-                          (a as any).name.localeCompare((b as any).name)
-                        }
-                        defaultSortOrder="ascend"
-                        render={(text, record, index) => {
-                          const desc = (
-                            record as PolicyDataTable
-                          ).description.trim();
-                          return (
-                            <Tooltip
-                              title={desc !== "" ? desc : "no description"}
-                              arrowPointAtCenter
-                            >
-                              <span
-                                onClick={() =>
-                                  setPolicyAndView(record as PolicyDataTable)
-                                }
-                                className="tooltip-label"
-                              >
-                                <Text className="font-500">{text}</Text>
-                              </span>
-                            </Tooltip>
-                          );
+                    {!showTutorial && (
+                      <Table
+                        pagination={{
+                          current: currentPage,
+                          hideOnSinglePage: showTutorial,
+                          disabled: showTutorial,
+                          pageSize,
+                          responsive: true,
+                          showSizeChanger: false,
+                          showTotal: (total, range) =>
+                            `Showing ${range[0]} to ${range[1]} of ${total} rules`,
+                          onChange: (page, pageSize) => {
+                            setCurrentPage(page);
+                          },
                         }}
-                      />
-                      <Column
-                        title="Enabled"
-                        dataIndex="enabled"
-                        render={(
-                          text: Boolean,
-                          record: PolicyDataTable,
-                          index
-                        ) => {
-                          return (
-                            <Switch
-                              size={"small"}
-                              checked={record.enabled}
-                              onChange={(isOpen: boolean) => {
-                                onEnableChange(isOpen, record);
-                              }}
-                            />
-                          );
-                        }}
-                      />
-                      <Column
-                        title="Sources"
-                        dataIndex="sourceLabel"
-                        render={(text, record: PolicyDataTable, index) => {
-                          return renderPopoverGroups(
-                            text,
-                            record.sources,
-                            record as PolicyDataTable
-                          );
-                        }}
-                      />
-                      <Column
-                        title="Direction"
-                        dataIndex="bidirectional"
-                        render={(text, record: PolicyDataTable, index) => {
-                          const s = {
-                            minWidth: 62,
-                            textAlign: "center",
-                          } as React.CSSProperties;
-                          if (record.bidirectional) {
+                        className={`access-control-table ${
+                          showTutorial
+                            ? "card-table card-table-no-placeholder"
+                            : "card-table"
+                        }`}
+                        showSorterTooltip={false}
+                        scroll={{ x: true }}
+                        loading={tableSpin(loading)}
+                        dataSource={dataTable}
+                      >
+                        <Column
+                          title="Name"
+                          dataIndex="name"
+                          onFilter={(
+                            value: string | number | boolean,
+                            record
+                          ) => (record as any).name.includes(value)}
+                          sorter={(a, b) =>
+                            (a as any).name.localeCompare((b as any).name)
+                          }
+                          defaultSortOrder="ascend"
+                          render={(text, record, index) => {
+                            const desc = (
+                              record as PolicyDataTable
+                            ).description.trim();
                             return (
-                              <Tag color="green" style={s}>
-                                <img src={bidirect} alt="bi icon" />
+                              <Tooltip
+                                title={desc !== "" ? desc : "no description"}
+                                arrowPointAtCenter
+                              >
+                                <span
+                                  onClick={() =>
+                                    setPolicyAndView(record as PolicyDataTable)
+                                  }
+                                  className="tooltip-label"
+                                >
+                                  <Text className="font-500">{text}</Text>
+                                </span>
+                              </Tooltip>
+                            );
+                          }}
+                        />
+                        <Column
+                          title="Enabled"
+                          dataIndex="enabled"
+                          render={(
+                            text: Boolean,
+                            record: PolicyDataTable,
+                            index
+                          ) => {
+                            return (
+                              <Switch
+                                size={"small"}
+                                checked={record.enabled}
+                                onChange={(isOpen: boolean) => {
+                                  onEnableChange(isOpen, record);
+                                }}
+                              />
+                            );
+                          }}
+                        />
+                        <Column
+                          title="Sources"
+                          dataIndex="sourceLabel"
+                          render={(text, record: PolicyDataTable, index) => {
+                            return renderPopoverGroups(
+                              text,
+                              record.sources,
+                              record as PolicyDataTable
+                            );
+                          }}
+                        />
+                        <Column
+                          title="Direction"
+                          dataIndex="bidirectional"
+                          render={(text, record: PolicyDataTable, index) => {
+                            const s = {
+                              minWidth: 62,
+                              textAlign: "center",
+                            } as React.CSSProperties;
+                            if (record.bidirectional) {
+                              return (
+                                <Tag color="green" style={s}>
+                                  <img src={bidirect} alt="bi icon" />
+                                </Tag>
+                              );
+                            }
+                            return (
+                              <Tag color="processing" style={s}>
+                                <img src={outbound} alt="out icon" />
                               </Tag>
                             );
-                          }
-                          return (
-                            <Tag color="processing" style={s}>
-                              <img src={outbound} alt="out icon" />
-                            </Tag>
-                          );
-                        }}
-                      />
-                      <Column
-                        title="Destinations"
-                        dataIndex="destinationLabel"
-                        render={(text, record: PolicyDataTable, index) => {
-                          return renderPopoverGroups(
-                            text,
-                            record.destinations,
-                            record as PolicyDataTable
-                          );
-                        }}
-                      />
-                      <Column
-                        title="Protocol"
-                        dataIndex="protocol"
-                        render={(text, record: PolicyDataTable, index) => {
-                          return (
-                            <Tag
-                              className="menlo-font"
-                              style={{
-                                marginRight: "3",
-                                textTransform: "uppercase",
-                              }}
-                            >
-                              {record.protocol}
-                            </Tag>
-                          );
-                        }}
-                      />
-                      <Column
-                        title="Ports"
-                        dataIndex="ports"
-                        render={(text, record: PolicyDataTable, index) => {
-                          return renderPorts(record.ports);
-                        }}
-                      />
-                      <Column
-                        title=""
-                        align="center"
-                        render={(text, record: PolicyDataTable, index) => {
-                          return (
-                            <Button
-                              type="text"
-                              danger={true}
-                              disabled={
-                                deletedPolicy.loading || savedPolicy.loading
-                              }
-                              onClick={() => showConfirmDelete(record)}
-                            >
-                              Delete
-                            </Button>
-                          );
-                        }}
-                      />
-                    </Table>)}
-                    {showTutorial && (
-                          <Space
-                              direction="vertical"
-                              size="small"
-                              align="center"
-                              style={{
-                                display: "flex",
-                                padding: "45px 15px",
-                                justifyContent: "center",
-                              }}
-                          >
-                            <Title level={4} style={{ textAlign: "center" }}>
-                              Create New Rule
-                            </Title>
-                            <Paragraph
+                          }}
+                        />
+                        <Column
+                          title="Destinations"
+                          dataIndex="destinationLabel"
+                          render={(text, record: PolicyDataTable, index) => {
+                            return renderPopoverGroups(
+                              text,
+                              record.destinations,
+                              record as PolicyDataTable
+                            );
+                          }}
+                        />
+                        <Column
+                          title="Protocol"
+                          dataIndex="protocol"
+                          render={(text, record: PolicyDataTable, index) => {
+                            return (
+                              <Tag
+                                className="menlo-font"
                                 style={{
-                                  textAlign: "center",
-                                  whiteSpace: "pre-line",
+                                  marginRight: "3",
+                                  textTransform: "uppercase",
                                 }}
-                            >
-                              It looks like you don't have any rules. {"\n"}
-                              Get started with access control by adding a new one.
-                              <a
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  href="https://docs.netbird.io/how-to/manage-network-access"
                               >
-                                {" "}
-                                Learn more
-                              </a>
-                            </Paragraph>
-                            <Button
-                                size={"middle"}
-                                type="primary"
-                                onClick={() => onClickAddNewPolicy()}
-                            >
-                              Add rule
-                            </Button>
-                          </Space>
+                                {record.protocol}
+                              </Tag>
+                            );
+                          }}
+                        />
+                        <Column
+                          title="Ports"
+                          dataIndex="ports"
+                          render={(text, record: PolicyDataTable, index) => {
+                            return renderPorts(record.ports);
+                          }}
+                        />
+                        <Column
+                          title=""
+                          align="center"
+                          render={(text, record: PolicyDataTable, index) => {
+                            return (
+                              <Button
+                                type="text"
+                                danger={true}
+                                disabled={
+                                  deletedPolicy.loading || savedPolicy.loading
+                                }
+                                onClick={() => showConfirmDelete(record)}
+                              >
+                                Delete
+                              </Button>
+                            );
+                          }}
+                        />
+                      </Table>
+                    )}
+                    {showTutorial && (
+                      <Space
+                        direction="vertical"
+                        size="small"
+                        align="center"
+                        style={{
+                          display: "flex",
+                          padding: "45px 15px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Title level={4} style={{ textAlign: "center" }}>
+                          Create New Rule
+                        </Title>
+                        <Paragraph
+                          style={{
+                            textAlign: "center",
+                            whiteSpace: "pre-line",
+                          }}
+                        >
+                          It looks like you don't have any rules. {"\n"}
+                          Get started with access control by adding a new one.
+                          <a
+                            target="_blank"
+                            rel="noreferrer"
+                            href="https://docs.netbird.io/how-to/manage-network-access"
+                          >
+                            {" "}
+                            Learn more
+                          </a>
+                        </Paragraph>
+                        <Button
+                          size={"middle"}
+                          type="primary"
+                          onClick={() => onClickAddNewPolicy()}
+                        >
+                          Add rule
+                        </Button>
+                      </Space>
                     )}
                   </Card>
                 </Space>

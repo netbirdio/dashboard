@@ -5,12 +5,11 @@ import { actions as routeActions } from "../store/route";
 import {
   Button,
   Col,
-  Divider,
   Collapse,
   Form,
   Input,
+  message,
   InputNumber,
-  Radio,
   Row,
   Select,
   SelectProps,
@@ -19,11 +18,6 @@ import {
   Modal,
   Typography,
 } from "antd";
-import {
-  CloseOutlined,
-  FlagFilled,
-  QuestionCircleFilled,
-} from "@ant-design/icons";
 import CreatableSelect from "react-select/creatable";
 import { Route, RouteToSave } from "../store/route/types";
 import { Header } from "antd/es/layout/layout";
@@ -31,7 +25,6 @@ import { RuleObject } from "antd/lib/form";
 import cidrRegex from "cidr-regex";
 import {
   initPeerMaps,
-  masqueradeDisabledMSG,
   peerToPeerIP,
   routePeerSeparator,
   transformGroupedDataTable,
@@ -55,8 +48,7 @@ const RouteAddNew = (selectedPeer: any) => {
     getGroupNamesFromIDs,
     selectValidator,
   } = useGetGroupTagHelpers();
-  //  const { optionRender, blueTagRender, grayTagRender } =
-  //    useGetGroupTagHelpers();
+
   const { Option } = Select;
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
@@ -79,28 +71,9 @@ const RouteAddNew = (selectedPeer: any) => {
   const [form] = Form.useForm();
   const inputNameRef = useRef<any>(null);
   const inputDescriptionRef = useRef<any>(null);
-  const defaultRoutingPeerMSG = "Routing Peer";
-  const [routingPeerMSG, setRoutingPeerMSG] = useState(defaultRoutingPeerMSG);
-  const defaultMasqueradeMSG = "Masquerade";
-  const [masqueradeMSG, setMasqueradeMSG] = useState(defaultMasqueradeMSG);
-  const defaultStatusMSG = "Status";
-  const [statusMSG, setStatusMSG] = useState(defaultStatusMSG);
   const [enableNetwork, setEnableNetwork] = useState(false);
   const [peerNameToIP, peerIPToName, peerIPToID] = initPeerMaps(peers);
   const [newRoute, setNewRoute] = useState(false);
-
-  useEffect(() => {
-    if (!newRoute) {
-      setRoutingPeerMSG(defaultRoutingPeerMSG);
-      setMasqueradeMSG("Update Masquerade");
-      setStatusMSG("Update Status");
-    } else {
-      setRoutingPeerMSG(defaultRoutingPeerMSG);
-      setMasqueradeMSG(defaultMasqueradeMSG);
-      setStatusMSG(defaultStatusMSG);
-      setPreviousRouteKey("");
-    }
-  }, [newRoute]);
 
   useEffect(() => {
     if (editName)
@@ -151,8 +124,7 @@ const RouteAddNew = (selectedPeer: any) => {
       setNewRoute(false);
     }
 
-    // let options = [];
-  }, [route]);
+   }, [route]);
 
   selectedPeer &&
     selectedPeer.notPeerRoutes &&
@@ -368,7 +340,7 @@ const RouteAddNew = (selectedPeer: any) => {
       };
       form.setFieldsValue(updateNetwork);
       setFormRoute(updateNetwork);
-      setEnableNetwork(false)
+      setEnableNetwork(false);
     } else if (!!selectedOption.__isNew__) {
       const updateNetwork = {
         ...formRoute,
@@ -390,6 +362,54 @@ const RouteAddNew = (selectedPeer: any) => {
     }
   };
 
+
+    const styleNotification = { marginTop: 85 };
+
+    const saveKey = "saving";
+    useEffect(() => {
+      if (savedRoute.loading) {
+        message.loading({
+          content: "Saving...",
+          key: saveKey,
+          duration: 0,
+          style: styleNotification,
+        });
+      } else if (savedRoute.success) {
+        message.success({
+          content: "Route has been successfully added.",
+          key: saveKey,
+          duration: 2,
+          style: styleNotification,
+        });
+        dispatch(routeActions.setSetupNewRouteVisible(false));
+        dispatch(routeActions.setSetupEditRouteVisible(false));
+        dispatch(routeActions.setSetupEditRoutePeerVisible(false));
+        dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
+        dispatch(routeActions.resetSavedRoute(null));
+      } else if (savedRoute.error) {
+        let errorMsg = "Failed to update network route";
+        switch (savedRoute.error.statusCode) {
+          case 403:
+            errorMsg =
+              "Failed to update network route. You might not have enough permissions.";
+            break;
+          default:
+            errorMsg = savedRoute.error.data.message
+              ? savedRoute.error.data.message
+              : errorMsg;
+            break;
+        }
+        message.error({
+          content: errorMsg,
+          key: saveKey,
+          duration: 5,
+          style: styleNotification,
+        });
+        dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
+        dispatch(routeActions.resetSavedRoute(null));
+      }
+    }, [savedRoute]);
+  
   return (
     <>
       {route && (
@@ -416,6 +436,7 @@ const RouteAddNew = (selectedPeer: any) => {
             form={form}
             requiredMark={false}
             onValuesChange={onChange}
+            className="route-form"
           >
             <Row gutter={16}>
               <Col span={24}>
@@ -431,7 +452,7 @@ const RouteAddNew = (selectedPeer: any) => {
                       fontSize: "18px",
                       margin: "0px",
                       fontWeight: 500,
-                      marginBottom: "15px",
+                      marginBottom: "25px",
                     }}
                   >
                     Add Route
@@ -573,7 +594,7 @@ const RouteAddNew = (selectedPeer: any) => {
                         <div
                           onClick={() => toggleEditDescription(true)}
                           style={{
-                            margin: "0 0 30px",
+                            margin: "0 0 15px",
                             lineHeight: "22px",
                             cursor: "pointer",
                           }}
@@ -611,45 +632,6 @@ const RouteAddNew = (selectedPeer: any) => {
                   </Row>
                 </Header>
               </Col>
-              {/* {!!!selectedPeer.selectedPeer && (
-                <Col span={24}>
-                  <Form.Item name="enabled" label="">
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "15px",
-                      }}
-                    >
-                      <Switch
-                        size={"small"}
-                        checked={formRoute.enabled}
-                        onChange={handleEnableChange}
-                      />
-                      <div>
-                        <label
-                          style={{
-                            color: "rgba(0, 0, 0, 0.88)",
-                            fontSize: "14px",
-                            fontWeight: "500",
-                          }}
-                        >
-                          Enabled
-                        </label>
-                        <Paragraph
-                          type={"secondary"}
-                          style={{
-                            marginTop: "-2",
-                            fontWeight: "500",
-                            marginBottom: "0",
-                          }}
-                        >
-                          You can enable or disable the route
-                        </Paragraph>
-                      </div>
-                    </div>
-                  </Form.Item>
-                </Col>
-              )} */}
               <Col span={24}>
                 <label
                   style={{
@@ -804,6 +786,7 @@ const RouteAddNew = (selectedPeer: any) => {
                   bordered={false}
                   ghost={true}
                   style={{ padding: "0" }}
+                  className="remove-bg"
                 >
                   <Panel
                     key="0"
