@@ -4,7 +4,11 @@
 pre,
 code,
 kbd,
-samp {
+samp,
+pre *,
+code *,
+kbd *,
+samp * {
   font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace!important;
 }
 html,
