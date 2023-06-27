@@ -851,7 +851,7 @@ export const Routes = () => {
               </Card>
             ) : loading || loadingPeer ? (
               <div className="container-spinner">
-                <Spin />
+                <Spin size={"large"} />
               </div>
             ) : (
               <div className="routes-accordian">
