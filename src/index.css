@@ -1,7 +1,12 @@
 @import url('https://fonts.googleapis.com/css2?family=Arimo:wght@400;500;600&display=swap');
 @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500&display=swap');
 @import 'antd/dist/reset.css';
-
+pre,
+code,
+kbd,
+samp {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace!important;
+}
 html,
 body,
 * {
