@@ -1,13 +1,13 @@
-import { Method } from 'axios';
+import { Method } from "axios";
 
 export interface RequestPayload<T> {
   getAccessTokenSilently: any | null;
   queryParams?: any | null;
-  payload:T;
+  payload: T;
 }
 
 export interface RequestHeader {
-  'content-type': string;
+  "content-type": string;
   [key: string]: string;
 }
 
@@ -28,16 +28,16 @@ export interface RequestConfig {
 export interface ApiRequestParams extends RequestConfig {
   method: Method;
   url: string;
-  params?: any,
+  params?: any;
   data: unknown;
   urlBase: string;
 }
 
 export interface ApiError {
-  code:string;
-  message:string;
-  data?:any;
-  statusCode:number;
+  code: string;
+  message: string;
+  data?: any;
+  statusCode: number;
 }
 
 export interface DeleteResponse<T> {
@@ -45,7 +45,7 @@ export interface DeleteResponse<T> {
   success: boolean;
   failure: boolean;
   error: ApiError | null;
-  data : T;
+  data: T;
 }
 
 export interface CreateResponse<T> {
@@ -53,7 +53,7 @@ export interface CreateResponse<T> {
   success: boolean;
   failure: boolean;
   error: ApiError | null;
-  data : T;
+  data: T;
 }
 
 export interface ChangeResponse<T> {
@@ -61,5 +61,5 @@ export interface ChangeResponse<T> {
   success: boolean;
   failure: boolean;
   error: ApiError | null;
-  data : T;
+  data: T;
 }
