@@ -2,6 +2,17 @@
 @import url('https://fonts.googleapis.com/css2?family=Inconsolata:wght@400;500&display=swap');
 @import 'antd/dist/reset.css';
 
+pre,
+code,
+kbd,
+samp,
+pre *,
+code *,
+kbd *,
+samp * {
+  font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace !important;
+}
+
 html,
 body,
 * {
@@ -412,14 +423,15 @@ ul.ant-list-items {
 .remove-bg .ant-collapse-content-box {
   background-color: transparent;
 }
+
 .route-form .ant-form-item {
   margin-bottom: 20px;
-  /* width: 8px!important;
-  height: 8px!important; */
 }
-.nb-code{
+
+.nb-code {
   position: relative;
 }
+
 .btn-copy-code.peer {
   position: absolute;
   top: 10px;
