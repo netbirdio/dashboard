@@ -39,9 +39,7 @@ const { Text } = Typography;
 const ExpiresInDefault: ExpiresInValue = { number: 30, interval: "day" };
 
 const SetupKeyNew = () => {
-  const {
-    optionRender,
-  } = useGetGroupTagHelpers()
+  const { optionRender, blueTagRender } = useGetGroupTagHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const setupNewKeyVisible = useSelector(
@@ -225,26 +223,6 @@ const SetupKeyNew = () => {
     }
 
     return Promise.resolve();
-  };
-
-  const tagRender = (props: CustomTagProps) => {
-    const { value, closable, onClose } = props;
-    const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
-      event.preventDefault();
-      event.stopPropagation();
-    };
-
-    return (
-      <Tag
-        color="blue"
-        onMouseDown={onPreventMouseDown}
-        closable={closable}
-        onClose={onClose}
-        style={{ marginRight: 3 }}
-      >
-        <strong>{value}</strong>
-      </Tag>
-    );
   };
 
   const dropDownRender = (menu: React.ReactElement) => (
@@ -556,9 +534,9 @@ const SetupKeyNew = () => {
                 >
                   <Select
                     mode="tags"
-                    style={{ width: "100%" }}
+                    style={{ width: "100%"}}
                     placeholder="Associate groups with the key"
-                    tagRender={tagRender}
+                    tagRender={blueTagRender}
                     dropdownRender={dropDownRender}
                     // enabled only when we have a new key !setupkey.id or when the key is valid
                     disabled={!(!setupKey.id || setupKey.valid)}
