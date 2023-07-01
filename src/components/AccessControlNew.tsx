@@ -785,7 +785,7 @@ const AccessControlNew = () => {
 
                 {formPolicy.protocol === "all" ||
                 formPolicy.protocol === "icmp" ? (
-                  <Form.Item label="Ports" style={{ fontWeight: "500" }}>
+                  <Form.Item>
                     <Select
                       mode="tags"
                       style={{
@@ -793,7 +793,7 @@ const AccessControlNew = () => {
                         maxWidth: "260px",
                         fontWeight: "500",
                       }}
-                      placeholder="Add ports"
+                      placeholder={<Text>Select ports</Text>}
                       className="menlo-font"
                       value={formPolicyCopy}
                       disabled={true}
@@ -830,7 +830,7 @@ const AccessControlNew = () => {
                         formPolicy.protocol === "all" ||
                         formPolicy.protocol === "icmp"
                           ? "All"
-                          : "Add ports"
+                          : (<div color={"rgba(0,0,0,0.25)"} className="arimo-font">Select ports</div>)
                       }
                       tagRender={grayTagRender}
                       onChange={handleChangePorts}

@@ -218,6 +218,11 @@ td.non-highlighted-table-column {
   font-family: 'Menlo', monospace !important;
 }
 
+.arimo-font,
+.arimo-font * {
+  font-family: 'Arimo', sans-serif !important;
+}
+
 .tag-box .ant-select-selector {
   padding: 0 5px !important;
 }

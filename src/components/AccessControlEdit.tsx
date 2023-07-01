@@ -830,7 +830,7 @@ const AccessControlEdit = () => {
                                 maxWidth: "260px",
                                 fontWeight: "500",
                               }}
-                              placeholder="Add ports"
+                              placeholder={<div color={"rgba(0,0,0,0.25)"} className="arimo-font">Select ports</div>}
                               className="menlo-font"
                               value={formPolicyCopy}
                               disabled={true}
@@ -862,7 +862,7 @@ const AccessControlEdit = () => {
                                 maxWidth: "260px",
                                 fontWeight: "500",
                               }}
-                              placeholder="Add ports"
+                              placeholder={<div color={"rgba(0,0,0,0.25)"} className="arimo-font">Select ports</div>}
                               tagRender={grayTagRender}
                               onChange={handleChangePorts}
                               className="menlo-font"
