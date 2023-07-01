@@ -863,15 +863,26 @@ const PeerUpdate = () => {
                   </Form.Item>
                 </Col>
                 <Col span={8}>
+                  <Paragraph
+                      style={{
+                        whiteSpace: "pre-line",
+                        margin: 0,
+                        fontWeight: "500",
+                      }}
+                  >
+                    Groups
+                  </Paragraph>
+                  <Text type={"secondary"}>
+                    Use groups to control what this peer can access
+                  </Text>
                   <Form.Item
                     name="groupsNames"
-                    label="Select peer groups"
                     rules={[{ validator: selectValidator }]}
                     style={{ fontWeight: "500" }}
                   >
                     <Select
                       mode="tags"
-                      style={{ width: "100%" }}
+                      style={{ width: "100%", marginTop: 5 }}
                       placeholder="Select groups..."
                       tagRender={tagRender}
                       dropdownRender={dropDownRender}
