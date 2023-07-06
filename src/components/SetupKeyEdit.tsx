@@ -27,7 +27,6 @@ import { RuleObject } from "antd/lib/form";
 import { CustomTagProps } from "rc-select/lib/BaseSelect";
 import { Group } from "../store/group/types";
 import { useGetTokenSilently } from "../utils/token";
-import { expiresInToSeconds, ExpiresInValue } from "../views/ExpiresInInput";
 import moment from "moment";
 import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
@@ -37,7 +36,6 @@ import { useGetGroupTagHelpers } from "../utils/groups";
 
 const { Option } = Select;
 const { Text } = Typography;
-const ExpiresInDefault: ExpiresInValue = { number: 30, interval: "day" };
 
 const customExpiresFormat = (value: Date): string | null => {
   return formatDate(value);
@@ -95,7 +93,6 @@ const SetupKeyNew = () => {
     const fSetupKey = {
       ...setupKey,
       autoGroupNames: setupKey.auto_groups ? formKeyGroups : [],
-      expiresInFormatted: ExpiresInDefault,
       exp: moment(setupKey.expires),
       last: moment(setupKey.last_used),
     } as FormSetupKey;
@@ -115,7 +112,7 @@ const SetupKeyNew = () => {
       (s) => !allGroupsNames.includes(s)
     );
 
-    const expiresIn = expiresInToSeconds(formSetupKey.expiresInFormatted);
+    const expiresIn = formSetupKey.expires_in * 24 * 3600 // the api expects seconds while the form returns days
     return {
       id: formSetupKey.id,
       name: formSetupKey.name,
@@ -287,7 +284,6 @@ const SetupKeyNew = () => {
             form={form}
             onValuesChange={onChange}
             initialValues={{
-              expiresIn: ExpiresInDefault,
               usage_limit: 1,
             }}
           >

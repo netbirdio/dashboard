@@ -1,4 +1,3 @@
-import {ExpiresInValue} from "../../views/ExpiresInInput";
 import moment from "moment";
 
 export interface SetupKey {
@@ -19,7 +18,6 @@ export interface SetupKey {
 
 export interface FormSetupKey extends SetupKey {
   autoGroupNames: string[]
-  expiresInFormatted: ExpiresInValue
   exp: moment.Moment
   last: moment.Moment
 }
