@@ -19,10 +19,15 @@ import {
   Space,
   Tooltip,
   Typography,
-  Card,
-  Breadcrumb,
 } from "antd";
-import { MinusCircleOutlined, PlusOutlined } from "@ant-design/icons";
+import {
+  CloseOutlined,
+  FlagFilled,
+  MinusCircleOutlined,
+  PlusOutlined,
+  QuestionCircleFilled,
+  QuestionCircleOutlined,
+} from "@ant-design/icons";
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
 import cidrRegex from "cidr-regex";
@@ -33,13 +38,12 @@ import {
 } from "../store/nameservers/types";
 import { useGetGroupTagHelpers } from "../utils/groups";
 import { useGetTokenSilently } from "../utils/token";
-import { Container } from "./Container";
 
 const { Paragraph, Text } = Typography;
 
 interface formNSGroup extends NameServerGroup {}
 
-const NameServerGroupUpdate = () => {
+const NameServerGroupAdd = () => {
   const {
     blueTagRender,
     handleChangeTags,
@@ -56,8 +60,8 @@ const NameServerGroupUpdate = () => {
   const nsGroup = useSelector(
     (state: RootState) => state.nameserverGroup.nameserverGroup
   );
-  const setupEditNameServerGroupVisible = useSelector(
-    (state: RootState) => state.nameserverGroup.setupEditNameServerGroupVisible
+  const setupNewNameServerGroupVisible = useSelector(
+    (state: RootState) => state.nameserverGroup.setupNewNameServerGroupVisible
   );
   const savedNSGroup = useSelector(
     (state: RootState) => state.nameserverGroup.savedNameServerGroup
@@ -73,7 +77,8 @@ const NameServerGroupUpdate = () => {
   const [editDescription, setEditDescription] = useState(false);
   const inputNameRef = useRef<any>(null);
   const inputDescriptionRef = useRef<any>(null);
- 
+  const [selectCustom, setSelectCustom] = useState(false);
+
   const optionsDisabledEnabled = [
     { label: "Enabled", value: true },
     { label: "Disabled", value: false },
@@ -89,13 +94,6 @@ const NameServerGroupUpdate = () => {
         cursor: "end",
       });
   }, [editName]);
-
-    useEffect(() => {
-      //Unmounting component clean
-      return () => {
-        onCancel();
-      };
-    }, []);
 
   useEffect(() => {
     if (editDescription)
@@ -113,14 +111,16 @@ const NameServerGroupUpdate = () => {
     } as formNSGroup;
     setFormNSGroup(newFormGroup);
     form.setFieldsValue(newFormGroup);
- 
+    if (nsGroup.id) {
+      setSelectCustom(true);
+    }
     if (nsGroup.primary !== undefined) {
       setIsPrimary(nsGroup.primary);
     }
   }, [nsGroup]);
 
   const onCancel = () => {
-    dispatch(nsGroupActions.setSetupEditNameServerGroupVisible(false));
+    dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(false));
     dispatch(
       nsGroupActions.setNameServerGroup({
         id: "",
@@ -134,7 +134,8 @@ const NameServerGroupUpdate = () => {
       } as NameServerGroup)
     );
     setEditName(false);
-     setIsPrimary(false);
+    setSelectCustom(false);
+    setIsPrimary(false);
   };
 
   const onChange = (changedValues: any) => {
@@ -230,14 +231,15 @@ const NameServerGroupUpdate = () => {
     } as formNSGroup;
     setFormNSGroup(newFormGroup);
     form.setFieldsValue(newFormGroup);
-   };
+    setSelectCustom(true);
+  };
 
   const handleFormSubmit = () => {
     form
       .validateFields()
       .then((values) => {
-        let nsGroupToSave = createNSGroupToSave(values as NameServerGroup);
-        nsGroupToSave = { ...nsGroupToSave, enabled: formNSGroup.enabled };
+        const nsGroupToSave = createNSGroupToSave(values as NameServerGroup);
+        console.log("nsGroupToSave", nsGroupToSave);
         dispatch(
           nsGroupActions.saveNameServerGroup.request({
             getAccessTokenSilently: getTokenSilently,
@@ -261,7 +263,6 @@ const NameServerGroupUpdate = () => {
   const createNSGroupToSave = (
     values: NameServerGroup
   ): NameServerGroupToSave => {
-    console.log("values", values);
     let [existingGroups, newGroups] = getExistingAndToCreateGroupsLists(
       values.groups
     );
@@ -490,7 +491,7 @@ const NameServerGroupUpdate = () => {
     { add, remove }: any,
     { errors }: any
   ) => (
-    <div style={{ width: "100%", maxWidth: "305px" }}>
+    <>
       <Row>
         <Space>
           <Col>
@@ -571,7 +572,7 @@ const NameServerGroupUpdate = () => {
               onClick={() => add()}
               block
               icon={<PlusOutlined />}
-              style={{ marginTop: "5px", maxWidth: "280px" }}
+              style={{ marginTop: "5px" }}
             >
               Add Domain
             </Button>
@@ -579,7 +580,7 @@ const NameServerGroupUpdate = () => {
         </Col>
       </Row>
       <Form.ErrorList errors={errors} />
-    </div>
+    </>
   );
 
   const handleChangeDisabled = (checked: boolean) => {
@@ -589,290 +590,374 @@ const NameServerGroupUpdate = () => {
     });
   };
 
-  const onBreadcrumbUsersClick = () => {
-    onCancel();
-  };
-
   return (
     <>
-      <Container style={{ paddingTop: "40px" }}>
-        <Breadcrumb
-          style={{ marginBottom: "25px" }}
-          items={[
-            {
-              title: <a onClick={onBreadcrumbUsersClick}>DNS</a>,
-            },
-            {
-              title: formNSGroup.name,
-            },
-          ]}
-        />
-        <Card>
-          <Form
-            layout="vertical"
-            requiredMark={false}
-            form={form}
-            onValuesChange={onChange}
-          >
-            <Row gutter={16}>
-              <Col span={24}>
-                <Header
-                  style={{
-                    border: "none",
-                  }}
-                >
-                  <Row align="top">
-                    <Col flex="auto">
-                      {!editName && formNSGroup.id ? (
-                        <div
-                          className={
-                            "access-control input-text ant-drawer-title"
-                          }
-                          onClick={() => toggleEditName(true)}
-                          style={{
-                            fontSize: "22px",
-                            margin: " 0px 0px 10px",
-                            cursor: "pointer",
-                            fontWeight: "500",
-                            lineHeight: "24px",
-                          }}
-                        >
-                          {formNSGroup.id
-                            ? formNSGroup.name
-                            : "New nameserver group"}
-                        </div>
-                      ) : (
-                        <Row>
-                          <Col span={8}>
-                            <div style={{ lineHeight: "15px" }}>
-                              <label
-                                style={{
-                                  color: "rgba(0, 0, 0, 0.88)",
-                                  fontSize: "14px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                Name
-                              </label>
-                              <Form.Item
-                                name="name"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message:
-                                      "Please add an identifier for this nameserver group",
-                                    whitespace: true,
-                                  },
-                                  {
-                                    validator: nameValidator,
-                                  },
-                                ]}
-                                style={{
-                                  marginBottom: "10px",
-                                  marginTop: "10px",
-                                }}
-                              >
-                                <Input
-                                  placeholder="e.g. Public DNS"
-                                  ref={inputNameRef}
-                                  onPressEnter={() => toggleEditName(false)}
-                                  onBlur={() => toggleEditName(false)}
-                                  autoComplete="off"
-                                  maxLength={40}
-                                />
-                              </Form.Item>
-                            </div>
-                          </Col>
-                        </Row>
-                      )}
-                      {!editDescription ? (
-                        <div
-                          className={
-                            "access-control input-text ant-drawer-subtitle"
-                          }
-                          style={{ marginTop: "0" }}
-                          onClick={() => toggleEditDescription(true)}
-                        >
-                          {formNSGroup.description &&
-                          formNSGroup.description.trim() !== ""
-                            ? formNSGroup.description
-                            : "Add description"}
-                        </div>
-                      ) : (
-                        <Row>
-                          <Col span={8}>
-                            <div
-                              style={{ lineHeight: "15px", marginTop: "24px" }}
-                            >
-                              <label
-                                style={{
-                                  color: "rgba(0, 0, 0, 0.88)",
-                                  fontSize: "14px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                Description
-                              </label>
-                              <Form.Item
-                                name="description"
-                                style={{ marginTop: "8px" }}
-                              >
-                                <Input
-                                  placeholder="Add description..."
-                                  ref={inputDescriptionRef}
-                                  onPressEnter={() =>
-                                    toggleEditDescription(false)
-                                  }
-                                  onBlur={() => toggleEditDescription(false)}
-                                  autoComplete="off"
-                                />
-                              </Form.Item>
-                            </div>
-                          </Col>
-                        </Row>
-                      )}
-                    </Col>
-                  </Row>
-                </Header>
-              </Col>
-              <Col span={24}>
-                <Form.Item name="enabled" label="">
-                  <div
+      {nsGroup && (
+        <Modal
+          forceRender={true}
+          footer={false}
+          onCancel={onCancel}
+          open={setupNewNameServerGroupVisible}
+        >
+          {selectCustom ? (
+            <Form
+              layout="vertical"
+              requiredMark={false}
+              form={form}
+              onValuesChange={onChange}
+            >
+              <Row gutter={16}>
+                <Col span={24}>
+                  <Header
                     style={{
-                      display: "flex",
-                      gap: "15px",
+                      border: "none",
                     }}
                   >
-                    <Switch
-                      onChange={handleChangeDisabled}
-                      defaultChecked={formNSGroup.enabled}
-                      size="small"
-                      checked={formNSGroup.enabled}
-                    />
-                    <div>
-                      <label
-                        style={{
-                          color: "rgba(0, 0, 0, 0.88)",
-                          fontSize: "14px",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Enabled
-                      </label>
-                      <Paragraph
-                        type={"secondary"}
-                        style={{
-                          marginTop: "-2",
-                          fontWeight: "400",
-                          marginBottom: "0",
-                        }}
-                      >
-                        Disable this server if you don't want it to apply
-                        immediately
-                      </Paragraph>
-                    </div>
-                  </div>
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <Form.List
-                  name="nameservers"
-                  rules={[{ validator: formListValidator }]}
-                >
-                  {renderNSList}
-                </Form.List>
-              </Col>
-
-              <Col span={24}>
-                <Form.List name="domains">{renderDomains}</Form.List>
-              </Col>
-              <Col span={24}>
-                <label
-                  style={{
-                    color: "rgba(0, 0, 0, 0.88)",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                  }}
-                >
-                  Distribution groups
-                </label>
-                {/* <Paragraph
-                      type={"secondary"}
+                    <Row align="top">
+                      <Col flex="none" style={{ display: "flex" }}>
+                        {!editName && !editDescription && formNSGroup.id && (
+                          <button
+                            type="button"
+                            aria-label="Close"
+                            className="ant-drawer-close"
+                            style={{ paddingTop: 3 }}
+                            onClick={onCancel}
+                          >
+                            <span
+                              role="img"
+                              aria-label="close"
+                              className="anticon anticon-close"
+                            >
+                              <CloseOutlined size={16} />
+                            </span>
+                          </button>
+                        )}
+                      </Col>
+                      <Col flex="auto">
+                        {!editName && formNSGroup.id ? (
+                          <div
+                            className={
+                              "access-control input-text ant-drawer-title"
+                            }
+                            onClick={() => toggleEditName(true)}
+                          >
+                            {formNSGroup.id
+                              ? formNSGroup.name
+                              : "New nameserver group"}
+                          </div>
+                        ) : (
+                          <div style={{ lineHeight: "15px" }}>
+                            <label
+                              style={{
+                                color: "rgba(0, 0, 0, 0.88)",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                              }}
+                            >
+                              Name
+                            </label>
+                            <Form.Item
+                              name="name"
+                              rules={[
+                                {
+                                  required: true,
+                                  message:
+                                    "Please add an identifier for this nameserver group",
+                                  whitespace: true,
+                                },
+                                {
+                                  validator: nameValidator,
+                                },
+                              ]}
+                              style={{
+                                marginBottom: "10px",
+                                marginTop: "10px",
+                              }}
+                            >
+                              <Input
+                                placeholder="e.g. Public DNS"
+                                ref={inputNameRef}
+                                onPressEnter={() => toggleEditName(false)}
+                                onBlur={() => toggleEditName(false)}
+                                autoComplete="off"
+                                maxLength={40}
+                              />
+                            </Form.Item>
+                          </div>
+                        )}
+                        {!editDescription ? (
+                          <div
+                            className={
+                              "access-control input-text ant-drawer-subtitle"
+                            }
+                            style={{ marginTop: "0" }}
+                            onClick={() => toggleEditDescription(true)}
+                          >
+                            {formNSGroup.description &&
+                            formNSGroup.description.trim() !== ""
+                              ? formNSGroup.description
+                              : "Add description"}
+                          </div>
+                        ) : (
+                          <div
+                            style={{ lineHeight: "15px", marginTop: "24px" }}
+                          >
+                            <label
+                              style={{
+                                color: "rgba(0, 0, 0, 0.88)",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                              }}
+                            >
+                              Description
+                            </label>
+                            <Form.Item
+                              name="description"
+                              style={{ marginTop: "8px" }}
+                            >
+                              <Input
+                                placeholder="Add description..."
+                                ref={inputDescriptionRef}
+                                onPressEnter={() =>
+                                  toggleEditDescription(false)
+                                }
+                                onBlur={() => toggleEditDescription(false)}
+                                autoComplete="off"
+                              />
+                            </Form.Item>
+                          </div>
+                        )}
+                      </Col>
+                    </Row>
+                  </Header>
+                </Col>
+                <Col span={24}>
+                  <Form.Item name="enabled" label="">
+                    <div
                       style={{
-                        marginTop: "-2",
-                        fontWeight: "400",
-                        marginBottom: "0",
+                        display: "flex",
+                        gap: "15px",
                       }}
                     >
-                      Advertise this route to peers that belong to the following
-                      groups
-                    </Paragraph> */}
-                <Form.Item
-                  name="groups"
-                  // label="Distribution groups"
-                  // tooltip="Distribution groups define to which group of peers these settings will be distributed to"
-                  rules={[{ validator: selectValidator }]}
-                  style={{ maxWidth: "380px" }}
+                      <Switch
+                        onChange={handleChangeDisabled}
+                        defaultChecked={formNSGroup.enabled}
+                        size="small"
+                      />
+                      <div>
+                        <label
+                          style={{
+                            color: "rgba(0, 0, 0, 0.88)",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          }}
+                        >
+                          Enabled
+                        </label>
+                        <Paragraph
+                          type={"secondary"}
+                          style={{
+                            marginTop: "-2",
+                            fontWeight: "400",
+                            marginBottom: "0",
+                          }}
+                        >
+                          Disable this server if you don't want it to apply
+                          immediately
+                        </Paragraph>
+                      </div>
+                    </div>
+                  </Form.Item>
+                </Col>
+                <Col span={24} flex="auto">
+                  <Form.List
+                    name="nameservers"
+                    rules={[{ validator: formListValidator }]}
+                  >
+                    {renderNSList}
+                  </Form.List>
+                </Col>
+                {/* <Col span={24}>
+                  <Form.Item
+                    name="primary"
+                    label="Resolve all domains REMOVE IT"
+                    rules={[{ validator: primaryValidator }]}
+                    dependencies={["domains"]} // trigger primaryValidation if domains is updated
+                  >
+                    <Radio.Group
+                      options={optionsPrimary}
+                      optionType="button"
+                      buttonStyle="solid"
+                    />
+                  </Form.Item>
+                </Col> */}
+                <Col span={24} flex="auto">
+                  <Form.List name="domains">{renderDomains}</Form.List>
+                </Col>
+                <Col span={24}>
+                  <label
+                    style={{
+                      color: "rgba(0, 0, 0, 0.88)",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    Distribution groups
+                  </label>
+                  <Paragraph
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-2",
+                      fontWeight: "400",
+                      marginBottom: "0",
+                    }}
+                  >
+                    Advertise this route to peers that belong to the following
+                    groups
+                  </Paragraph>
+                  <Form.Item
+                    name="groups"
+                    // label="Distribution groups"
+                    // tooltip="Distribution groups define to which group of peers these settings will be distributed to"
+                    rules={[{ validator: selectValidator }]}
+                  >
+                    <Select
+                      mode="tags"
+                      style={{ width: "100%" }}
+                      placeholder="Associate groups with the NS group"
+                      tagRender={blueTagRender}
+                      onChange={handleChangeTags}
+                      dropdownRender={dropDownRender}
+                    >
+                      {tagGroups.map((m) => (
+                        <Option key={m}>{optionRender(m)}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+
+                <Col
+                  span={24}
+                  style={{ marginTop: "10px", marginBottom: "20px" }}
                 >
-                  <Select
-                    mode="tags"
-                    style={{ width: "100%" }}
-                    placeholder="Associate groups with the NS group"
-                    tagRender={blueTagRender}
-                    onChange={handleChangeTags}
-                    dropdownRender={dropDownRender}
-                  >
-                    {tagGroups.map((m) => (
-                      <Option key={m}>{optionRender(m)}</Option>
-                    ))}
-                  </Select>
-                </Form.Item>
-              </Col>
-              {/* 
-                  <Col
-                    span={24}
-                    style={{ marginTop: "10px", marginBottom: "20px" }}
-                  >
-                    <Text type={"secondary"}>
-                      Learn more about
-                      <a
-                        target="_blank"
-                        rel="noreferrer"
-                        href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
-                      >
-                        {" "}
-                        DNS
-                      </a>
-                    </Text>
-                  </Col> */}
-              <Col
-                style={{
-                  width: "100%",
-                }}
-              >
-                <Space
+                  <Text type={"secondary"}>
+                    Learn more about
+                    <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
+                    >
+                      {" "}
+                      DNS
+                    </a>
+                  </Text>
+                </Col>
+                <Col
                   style={{
-                    display: "flex",
-                    justifyContent: "start",
                     width: "100%",
                   }}
                 >
-                  <Button onClick={onCancel} disabled={savedNSGroup.loading}>
-                    Cancel
-                  </Button>
-                  <Button
-                    type="primary"
-                    onClick={handleFormSubmit}
-                    disabled={savedNSGroup.loading}
-                  >{`${formNSGroup.id ? "Save" : "Create"}`}</Button>
-                </Space>
-              </Col>
-            </Row>
-          </Form>
-        </Card>
-      </Container>
+                  <Space
+                    style={{
+                      display: "flex",
+                      justifyContent: "end",
+                      width: "100%",
+                    }}
+                  >
+                    <Button onClick={onCancel} disabled={savedNSGroup.loading}>
+                      Cancel
+                    </Button>
+                    <Button
+                      type="primary"
+                      onClick={handleFormSubmit}
+                      disabled={savedNSGroup.loading}
+                    >{`${formNSGroup.id ? "Save" : "Create"}`}</Button>
+                  </Space>
+                </Col>
+              </Row>
+            </Form>
+          ) : (
+            <>
+              <Space direction={"vertical"} style={{ width: "100%" }}>
+                <Row gutter={16}>
+                  <Col span={24}>
+                    <Paragraph
+                      style={{
+                        textAlign: "start",
+                        whiteSpace: "pre-line",
+                        fontSize: "18px",
+                        margin: "0px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Add Nameserver
+                    </Paragraph>
+                  </Col>
+                </Row>
+                <Row align="middle">
+                  <Col span={24} style={{ textAlign: "left" }}>
+                    <span className="ant-form-item font-500">
+                      Select a predefined one
+                    </span>
+                  </Col>
+                </Row>
+                <Row align="middle">
+                  <Col span={24} style={{ textAlign: "center" }}>
+                    <Select
+                      style={{ width: "100%" }}
+                      onChange={handleSelectChange}
+                      options={[
+                        {
+                          value: googleChoice,
+                          label: googleChoice,
+                        },
+                        {
+                          value: cloudflareChoice,
+                          label: cloudflareChoice,
+                        },
+                        {
+                          value: quad9Choice,
+                          label: quad9Choice,
+                        },
+                        {
+                          value: customChoice,
+                          label: customChoice,
+                        },
+                      ]}
+                    />
+                  </Col>
+                </Row>
+                <Row align="middle">
+                  <Col span={24} style={{ textAlign: "left" }}>
+                    <Col span={24} style={{ textAlign: "left" }}>
+                      <span className="ant-form-item blue-color">
+                        <Typography.Link
+                          onClick={() => handleSelectChange(customChoice)}
+                        >
+                          or create custom
+                        </Typography.Link>
+                      </span>
+                    </Col>
+                  </Col>
+                </Row>
+              </Space>
+              <Space
+                style={{
+                  display: "flex",
+                  justifyContent: "end",
+                  marginTop: "25px",
+                }}
+              >
+                <Button onClick={onCancel} type="primary">
+                  Cancel
+                </Button>
+              </Space>
+            </>
+          )}
+        </Modal>
+      )}
     </>
   );
 };
 
-export default NameServerGroupUpdate;
+export default NameServerGroupAdd;

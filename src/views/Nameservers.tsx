@@ -8,9 +8,8 @@ import {
   Button,
   Card,
   Col,
-  Dropdown,
   Input,
-  Menu,
+  Switch,
   message,
   Modal,
   Popover,
@@ -60,7 +59,7 @@ export const Nameservers = () => {
   const loading = useSelector(
     (state: RootState) => state.nameserverGroup.loading
   );
-  const updateNameServerGroupVisible = useSelector(
+  const addNewNameServerGroupVisible = useSelector(
     (state: RootState) => state.nameserverGroup.setupNewNameServerGroupVisible
   );
   const savedNSGroup = useSelector(
@@ -71,6 +70,7 @@ export const Nameservers = () => {
   const [nsGroupToAction, setNsGroupToAction] = useState(
     null as NameserverGroupDataTable | null
   );
+
   const [textToSearch, setTextToSearch] = useState("");
   const [optionAllEnable, setOptionAllEnable] = useState("enabled");
   const [dataTable, setDataTable] = useState([] as NameserverGroupDataTable[]);
@@ -83,7 +83,7 @@ export const Nameservers = () => {
 
   // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
   const setUserAndView = (nsGroup: NameServerGroup) => {
-    dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(true));
+    dispatch(nsGroupActions.setSetupEditNameServerGroupVisible(true));
     dispatch(
       nsGroupActions.setNameServerGroup({
         id: nsGroup.id,
@@ -167,7 +167,7 @@ export const Nameservers = () => {
   };
 
   const onClickEdit = () => {
-    dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(true));
+    dispatch(nsGroupActions.setSetupEditNameServerGroupVisible(true));
     dispatch(
       nsGroupActions.setNameServerGroup({
         id: nsGroupToAction?.id,
@@ -182,8 +182,9 @@ export const Nameservers = () => {
     );
   };
 
-  const showConfirmDelete = () => {
-    let name = nsGroupToAction ? nsGroupToAction.name : "";
+  const showConfirmDelete = (record: NameserverGroupDataTable) => {
+    setNsGroupToAction(record as NameserverGroupDataTable);
+    let name = record ? record.name : "";
     confirm({
       icon: <ExclamationCircleOutlined />,
       title: 'Delete Nameserver group "' + name + '"',
@@ -201,7 +202,7 @@ export const Nameservers = () => {
         dispatch(
           nsGroupActions.deleteNameServerGroup.request({
             getAccessTokenSilently: getTokenSilently,
-            payload: nsGroupToAction?.id || "",
+            payload: record?.id || "",
           })
         );
       },
@@ -227,10 +228,14 @@ export const Nameservers = () => {
         .filter((g) => groupsMap.get(g))
         .map((g) => groupsMap.get(g)!);
     }
-
+    console.log("displayGroups", displayGroups);
     let btn = (
-      <Button type="link" onClick={() => setUserAndView(userToAction)}>
-        {displayGroups.length}
+      <Button
+        type="link"
+        onClick={() => setUserAndView(userToAction)}
+        style={{ padding: "0" }}
+      >
+        +{displayGroups && displayGroups.length - 1}
       </Button>
     );
     if (!displayGroups || displayGroups!.length < 1) {
@@ -251,13 +256,18 @@ export const Nameservers = () => {
         </div>
       );
     });
-    const mainContent = <Space direction="vertical">{content}</Space>;
+    const updateContent =
+      displayGroups && displayGroups.length > 1
+        ? content && content?.slice(1)
+        : content;
+    const mainContent = <Space direction="vertical">{updateContent}</Space>;
     let popoverPlacement = "top";
     if (content && content.length > 5) {
       popoverPlacement = "rightTop";
     }
-
-    return (
+    return displayGroups && displayGroups.length === 1 ? (
+      <> {displayGroups && displayGroups.length && displayGroups[0].name}</>
+    ) : (
       <Popover
         placement={popoverPlacement as TooltipPlacement}
         key={userToAction.id}
@@ -268,7 +278,9 @@ export const Nameservers = () => {
         content={mainContent}
         title={null}
       >
-        {btn}
+        <span className="d-flex">
+          {displayGroups && displayGroups.length && displayGroups[0].name} {btn}
+        </span>
       </Popover>
     );
   };
@@ -283,10 +295,12 @@ export const Nameservers = () => {
       domains = inputDomains;
     }
 
-    let btn = (
+    let btn = domains.length ? (
       <Button type="link" onClick={() => setUserAndView(userToAction)}>
-        {domains.length ? domains.length : 0}
+        {domains.length}
       </Button>
+    ) : (
+      <Tag>ALL</Tag>
     );
     if (!domains || domains!.length < 1) {
       return btn;
@@ -325,10 +339,10 @@ export const Nameservers = () => {
   };
 
   useEffect(() => {
-    if (updateNameServerGroupVisible) {
+    if (addNewNameServerGroupVisible) {
       setGroupPopupVisible("");
     }
-  }, [updateNameServerGroupVisible]);
+  }, [addNewNameServerGroupVisible]);
 
   const createKey = "saving";
   useEffect(() => {
@@ -381,7 +395,7 @@ export const Nameservers = () => {
   }, [savedNSGroup]);
 
   const onPopoverVisibleChange = (b: boolean, key: string) => {
-    if (updateNameServerGroupVisible) {
+    if (addNewNameServerGroupVisible) {
       setGroupPopupVisible("");
     } else {
       if (b) {
@@ -391,27 +405,6 @@ export const Nameservers = () => {
       }
     }
   };
-
-  const itemsMenuAction = [
-    {
-      key: "edit",
-      label: (
-        <Button type="text" onClick={() => onClickEdit()}>
-          View
-        </Button>
-      ),
-    },
-    {
-      key: "delete",
-      label: (
-        <Button type="text" onClick={() => showConfirmDelete()}>
-          Delete
-        </Button>
-      ),
-    },
-  ];
-
-  const actionsMenu = <Menu items={itemsMenuAction}></Menu>;
 
   const onClickAddNewNSGroup = () => {
     dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(true));
@@ -423,32 +416,41 @@ export const Nameservers = () => {
     );
   };
 
+  const handleChangeDisabled = (checked: boolean, record: any) => {
+    dispatch(
+      nsGroupActions.saveNameServerGroup.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: { ...record, enabled: checked },
+      })
+    );
+  };
+
   return (
     <>
       {nsGroup.length ? (
-          <Paragraph style={{marginTop: "5px"}}>
-            Add nameservers for domain name resolution in your NetBird network.
-            <a
-                target="_blank"
-                rel="noreferrer"
-                href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
-            >
-              {" "}
-              Learn more
-            </a>
-          </Paragraph>
+        <Paragraph style={{ marginTop: "5px" }}>
+          Add nameservers for domain name resolution in your NetBird network.
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
+          >
+            {" "}
+            Learn more
+          </a>
+        </Paragraph>
       ) : (
-          <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
-            Add nameservers for domain name resolution in your NetBird network.
-            <a
-                target="_blank"
-                rel="noreferrer"
-                href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
-            >
-              {" "}
-              Learn more
-            </a>
-          </Paragraph>
+        <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
+          Add nameservers for domain name resolution in your NetBird network.
+          <a
+            target="_blank"
+            rel="noreferrer"
+            href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
+          >
+            {" "}
+            Learn more
+          </a>
+        </Paragraph>
       )}
       <Space direction="vertical" size="large" style={{ display: "flex" }}>
         <Row gutter={[16, 24]}>
@@ -502,161 +504,178 @@ export const Nameservers = () => {
           />
         )}
         <Card bodyStyle={{ padding: 0 }}>
-          {!showTutorial && ( <Table
-            pagination={{
-              pageSize,
-              showSizeChanger: false,
-              showTotal: (total, range) =>
-                `Showing ${range[0]} to ${range[1]} of ${total} nameservers`,
-            }}
-            // className="card-table"
-            className={`access-control-table ${
-              showTutorial
-                ? "card-table card-table-no-placeholder"
-                : "card-table"
-            }`}
-            showSorterTooltip={false}
-            scroll={{ x: true }}
-            loading={tableSpin(loading)}
-            dataSource={dataTable}
-          >
-            <Column
-              title="Name"
-              dataIndex="name"
-              align="center"
-              onFilter={(value: string | number | boolean, record) =>
-                (record as any).name.includes(value)
-              }
-              sorter={(a, b) => (a as any).name.localeCompare((b as any).name)}
-              defaultSortOrder="ascend"
-              render={(text, record) => {
-                return (
-                  <Button
-                    type="text"
-                    onClick={() =>
-                      setUserAndView(record as NameserverGroupDataTable)
-                    }
-                    className="tooltip-label"
-                  >
-                    {text && text.trim() !== ""
-                      ? text
-                      : (record as NameServerGroup).id}
-                  </Button>
-                );
+          {!showTutorial && (
+            <Table
+              pagination={{
+                pageSize,
+                showSizeChanger: false,
+                showTotal: (total, range) =>
+                  `Showing ${range[0]} to ${range[1]} of ${total} nameservers`,
               }}
-            />
-            <Column
-              title="Status"
-              dataIndex="enabled"
-              align="center"
-              render={(text: Boolean) => {
-                return text ? (
-                  <Tag color="green">enabled</Tag>
-                ) : (
-                  <Tag color="red">disabled</Tag>
-                );
-              }}
-            />
-            <Column
-              title="Nameservers"
-              dataIndex="nameservers"
-              align="center"
-              render={(nameservers: NameServer[]) => (
-                <>
-                  {nameservers.map((nameserver) => (
-                    <Tag key={nameserver.ip}>{nameserver.ip}</Tag>
-                  ))}
-                </>
-              )}
-            />
-            <Column
-              title="All domains"
-              dataIndex="primary"
-              align="center"
-              render={(text: Boolean) => {
-                return text ? <Tag color="blue">yes</Tag> : <Tag>no</Tag>;
-              }}
-            />
-            <Column
-              title="Match domains"
-              dataIndex="domains"
-              align="center"
-              render={(text, record: NameserverGroupDataTable) => {
-                return renderPopoverDomains(text, record.domains, record);
-              }}
-            />
-            <Column
-              title="Groups"
-              dataIndex="groupsCount"
-              align="center"
-              render={(text, record: NameserverGroupDataTable) => {
-                return renderPopoverGroups(text, record.groups, record);
-              }}
-            />
-            <Column
-              title=""
-              align="center"
-              width="30px"
-              render={(text, record) => {
-                return (
-                  <Dropdown
-                    trigger={["click"]}
-                    overlay={actionsMenu}
-                    onOpenChange={(visible) => {
-                      if (visible)
-                        setNsGroupToAction(record as NameserverGroupDataTable);
-                    }}
-                  >
-                    <Button type="text">
-                      <Space>
-                        <EllipsisOutlined />
-                      </Space>
-                    </Button>
-                  </Dropdown>
-                );
-              }}
-            />
-          </Table>)}
-          {showTutorial && (
-                  <Space
-                      direction="vertical"
-                      size="small"
-                      align="center"
-                      style={{
-                        display: "flex",
-                        padding: "45px 15px",
-                        justifyContent: "center",
-                      }}
-                  >
-                    <Title level={4} style={{ textAlign: "center" }}>
-                      Create Nameserver
-                    </Title>
-                    <Paragraph
-                        style={{
-                          textAlign: "center",
-                          whiteSpace: "pre-line",
-                        }}
-                    >
-                      It looks like you don't have any nameservers. {"\n"}
-                      Get started by adding one to your network.
-                      <a
-                          target="_blank"
-                          rel="noreferrer"
-                          href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
-                      >
-                        {" "}
-                        Learn more
-                      </a>
-                    </Paragraph>
+              // className="card-table"
+              className={`access-control-table ${
+                showTutorial
+                  ? "card-table card-table-no-placeholder"
+                  : "card-table"
+              }`}
+              showSorterTooltip={false}
+              scroll={{ x: true }}
+              loading={tableSpin(loading)}
+              dataSource={dataTable}
+            >
+              <Column
+                title="Name"
+                dataIndex="name"
+                align="center"
+                onFilter={(value: string | number | boolean, record) =>
+                  (record as any).name.includes(value)
+                }
+                sorter={(a, b) =>
+                  (a as any).name.localeCompare((b as any).name)
+                }
+                defaultSortOrder="ascend"
+                render={(text, record) => {
+                  return (
                     <Button
-                        size={"middle"}
-                        type="primary"
-                        onClick={() => onClickAddNewNSGroup()}
+                      type="text"
+                      onClick={() =>
+                        setUserAndView(record as NameserverGroupDataTable)
+                      }
+                      className="tooltip-label"
                     >
-                      Add nameserver
+                      {text && text.trim() !== ""
+                        ? text
+                        : (record as NameServerGroup).id}
                     </Button>
-                  </Space>
-              )}
+                  );
+                }}
+              />
+              <Column
+                title="Status"
+                dataIndex="enabled"
+                align="center"
+                render={(text: Boolean, record) => {
+                  return (
+                    <Switch
+                      onChange={(isChecked) =>
+                        handleChangeDisabled(isChecked, record)
+                      }
+                      disabled={savedNSGroup.loading}
+                      defaultChecked={!!text}
+                      size="small"
+                    />
+                  );
+                }}
+              />
+
+              {/* <Column
+                title="Status"
+                dataIndex="enabled"
+                align="center"
+                render={(text: Boolean) => {
+                  return text ? (
+                    <Tag color="green">enabled</Tag>
+                  ) : (
+                    <Tag color="red">disabled</Tag>
+                  );
+                }}
+              /> */}
+              <Column
+                title="Nameservers"
+                dataIndex="nameservers"
+                align="center"
+                render={(nameservers: NameServer[]) => (
+                  <>
+                    {nameservers.map((nameserver) => (
+                      <Tag key={nameserver.ip}>{nameserver.ip}</Tag>
+                    ))}
+                  </>
+                )}
+              />
+              {/* <Column
+                title="All domains"
+                dataIndex="primary"
+                align="center"
+                render={(text: Boolean) => {
+                  return text ? <Tag color="blue">yes</Tag> : <Tag>no</Tag>;
+                }}
+              /> */}
+              <Column
+                title="Match domains"
+                dataIndex="domains"
+                align="center"
+                render={(text, record: NameserverGroupDataTable) => {
+                  return renderPopoverDomains(text, record.domains, record);
+                }}
+              />
+              <Column
+                title="Distribution groups"
+                dataIndex="groupsCount"
+                align="center"
+                render={(text, record: NameserverGroupDataTable) => {
+                  return renderPopoverGroups(text, record.groups, record);
+                }}
+              />
+              <Column
+                title=""
+                align="center"
+                width="30px"
+                render={(text, record) => {
+                  return (
+                    <Button
+                      type="text"
+                      onClick={() =>
+                        showConfirmDelete(record as NameserverGroupDataTable)
+                      }
+                      danger={true}
+                    >
+                      Delete
+                    </Button>
+                  );
+                }}
+              />
+            </Table>
+          )}
+          {showTutorial && (
+            <Space
+              direction="vertical"
+              size="small"
+              align="center"
+              style={{
+                display: "flex",
+                padding: "45px 15px",
+                justifyContent: "center",
+              }}
+            >
+              <Title level={4} style={{ textAlign: "center" }}>
+                Create Nameserver
+              </Title>
+              <Paragraph
+                style={{
+                  textAlign: "center",
+                  whiteSpace: "pre-line",
+                }}
+              >
+                It looks like you don't have any nameservers. {"\n"}
+                Get started by adding one to your network.
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
+                >
+                  {" "}
+                  Learn more
+                </a>
+              </Paragraph>
+              <Button
+                size={"middle"}
+                type="primary"
+                onClick={() => onClickAddNewNSGroup()}
+              >
+                Add nameserver
+              </Button>
+            </Space>
+          )}
         </Card>
       </Space>
     </>
