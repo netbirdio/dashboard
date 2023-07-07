@@ -104,7 +104,6 @@ const SetupKeyNew = () => {
     const groupsToCreate = formSetupKey.autoGroupNames.filter(
       (s) => !allGroupsNames.includes(s)
     );
-
     const expiresIn = formSetupKey.expires_in * 24 * 3600 // the api expects seconds we have days
     return {
       id: formSetupKey.id,
@@ -371,7 +370,6 @@ const SetupKeyNew = () => {
             form={form}
             onValuesChange={onChange}
             initialValues={{
-              expires_in: 7,
               usage_limit: 1,
             }}
           >
