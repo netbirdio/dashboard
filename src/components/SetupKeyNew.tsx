@@ -371,7 +371,6 @@ const SetupKeyNew = () => {
             form={form}
             onValuesChange={onChange}
             initialValues={{
-              expires_in: 7,
               usage_limit: 1,
             }}
           >
