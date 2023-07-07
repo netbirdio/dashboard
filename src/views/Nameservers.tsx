@@ -70,8 +70,6 @@ export const Nameservers = () => {
     (state: RootState) => state.nameserverGroup.deletedNameServerGroup
   );
 
-  console.log("deleteNSGroup", deleteNSGroup);
-
   const [groupPopupVisible, setGroupPopupVisible] = useState("");
   const [nsGroupToAction, setNsGroupToAction] = useState(
     null as NameserverGroupDataTable | null
@@ -410,25 +408,18 @@ export const Nameservers = () => {
         });
       } else if (deleteNSGroup.success) {
         message.success({
-          content: "Nameserver has been delete successfully.",
+          content: "Nameserver has been deleted successfully.",
           key: createDeleteKey,
           duration: 2,
           style: styleNotification,
         });
-        dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(false));
-        dispatch(
-          nsGroupActions.setSavedNameServerGroup({
-            ...deleteNSGroup,
-            success: false,
-          })
-        );
-        dispatch(nsGroupActions.resetSavedNameServerGroup(null));
+        dispatch(nsGroupActions.resetDeletedNameServerGroup(null));
       } else if (deleteNSGroup.error) {
-        let errorMsg = "Failed to update nameserver group";
+        let errorMsg = "Failed to delete nameserver group";
         switch (deleteNSGroup.error.statusCode) {
           case 403:
             errorMsg =
-              "Failed to update nameserver group. You might not have enough permissions.";
+              "Failed to delete nameserver group. You might not have enough permissions.";
             break;
           default:
             errorMsg = deleteNSGroup.error.data.message
@@ -448,7 +439,7 @@ export const Nameservers = () => {
             error: null,
           })
         );
-        dispatch(nsGroupActions.resetSavedNameServerGroup(null));
+        dispatch(nsGroupActions.resetDeletedNameServerGroup(null));
       }
     }, [deleteNSGroup]);
 
