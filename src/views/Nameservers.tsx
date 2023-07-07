@@ -66,6 +66,12 @@ export const Nameservers = () => {
     (state: RootState) => state.nameserverGroup.savedNameServerGroup
   );
 
+  const deleteNSGroup = useSelector(
+    (state: RootState) => state.nameserverGroup.deletedNameServerGroup
+  );
+
+  console.log("deleteNSGroup", deleteNSGroup);
+
   const [groupPopupVisible, setGroupPopupVisible] = useState("");
   const [nsGroupToAction, setNsGroupToAction] = useState(
     null as NameserverGroupDataTable | null
@@ -228,7 +234,6 @@ export const Nameservers = () => {
         .filter((g) => groupsMap.get(g))
         .map((g) => groupsMap.get(g)!);
     }
-    console.log("displayGroups", displayGroups);
     let btn = (
       <Button
         type="link"
@@ -393,6 +398,59 @@ export const Nameservers = () => {
       dispatch(nsGroupActions.resetSavedNameServerGroup(null));
     }
   }, [savedNSGroup]);
+
+    const createDeleteKey = "Delete";
+    useEffect(() => {
+      if (deleteNSGroup.loading) {
+        message.loading({
+          content: "Deleting...",
+          key: createDeleteKey,
+          duration: 0,
+          style: styleNotification,
+        });
+      } else if (deleteNSGroup.success) {
+        message.success({
+          content: "Nameserver has been delete successfully.",
+          key: createDeleteKey,
+          duration: 2,
+          style: styleNotification,
+        });
+        dispatch(nsGroupActions.setSetupNewNameServerGroupVisible(false));
+        dispatch(
+          nsGroupActions.setSavedNameServerGroup({
+            ...deleteNSGroup,
+            success: false,
+          })
+        );
+        dispatch(nsGroupActions.resetSavedNameServerGroup(null));
+      } else if (deleteNSGroup.error) {
+        let errorMsg = "Failed to update nameserver group";
+        switch (deleteNSGroup.error.statusCode) {
+          case 403:
+            errorMsg =
+              "Failed to update nameserver group. You might not have enough permissions.";
+            break;
+          default:
+            errorMsg = deleteNSGroup.error.data.message
+              ? deleteNSGroup.error.data.message
+              : errorMsg;
+            break;
+        }
+        message.error({
+          content: errorMsg,
+          key: createDeleteKey,
+          duration: 5,
+          style: styleNotification,
+        });
+        dispatch(
+          nsGroupActions.setSavedNameServerGroup({
+            ...deleteNSGroup,
+            error: null,
+          })
+        );
+        dispatch(nsGroupActions.resetSavedNameServerGroup(null));
+      }
+    }, [deleteNSGroup]);
 
   const onPopoverVisibleChange = (b: boolean, key: string) => {
     if (addNewNameServerGroupVisible) {
