@@ -28,6 +28,7 @@ const actions = {
 
   setNameServerGroup: createAction('SET_NameServerGroup')<NameServerGroup>(),
   setSetupNewNameServerGroupVisible: createAction('SET_SETUP_NEW_NameServerGroup_VISIBLE')<boolean>(),
+  setSetupEditNameServerGroupVisible: createAction('SET_SETUP_EDIT_NameServerGroup_VISIBLE')<boolean>(),
   setSetupNewNameServerGroupHA: createAction('SET_SETUP_NEW_NameServerGroup_HA')<boolean>()
 };
 

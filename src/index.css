@@ -211,6 +211,9 @@ td.non-highlighted-table-column {
 
 .ant-form-item-explain-error {
   font-weight: 500;
+  font-size: 12px;
+  line-height: 14px;
+  margin-top: 2px;
 }
 
 .menlo-font,
@@ -441,4 +444,27 @@ ul.ant-list-items {
   position: absolute;
   top: 10px;
   right: 2px;
+}
+
+.blue-color {
+  color: #1890FF;
+}
+
+.style-like-text .ant-select-selector {
+  background: transparent !important;
+  border: none !important;
+  padding: 0 !important;
+  color: rgba(0, 0, 0, 1) !important;
+}
+
+.style-like-text .ant-select-selection-search::after {
+  display: none !important;
+}
+
+.style-like-text .ant-select-selection-item {
+  padding-inline-end: 0 !important;
+}
+
+.style-like-text .ant-select-arrow {
+  display: none !important;
 }
