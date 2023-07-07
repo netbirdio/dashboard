@@ -213,7 +213,6 @@ const NameServerGroupUpdate = () => {
   ];
 
   const handleSelectChange = (value: string) => {
-    console.log(`selected ${value}`);
     let nsGroupLocal = {} as NameServerGroup;
     if (value === customChoice) {
       nsGroupLocal = nsGroup;
@@ -261,7 +260,6 @@ const NameServerGroupUpdate = () => {
   const createNSGroupToSave = (
     values: NameServerGroup
   ): NameServerGroupToSave => {
-    console.log("values", values);
     let [existingGroups, newGroups] = getExistingAndToCreateGroupsLists(
       values.groups
     );

@@ -214,7 +214,6 @@ const NameServerGroupAdd = () => {
   ];
 
   const handleSelectChange = (value: string) => {
-    console.log(`selected ${value}`);
     let nsGroupLocal = {} as NameServerGroup;
     if (value === customChoice) {
       nsGroupLocal = nsGroup;
@@ -239,7 +238,6 @@ const NameServerGroupAdd = () => {
       .validateFields()
       .then((values) => {
         const nsGroupToSave = createNSGroupToSave(values as NameServerGroup);
-        console.log("nsGroupToSave", nsGroupToSave);
         dispatch(
           nsGroupActions.saveNameServerGroup.request({
             getAccessTokenSilently: getTokenSilently,
