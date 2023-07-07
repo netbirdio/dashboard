@@ -252,6 +252,7 @@ export const SetupKeys = () => {
         name: "",
         type: "one-off",
         auto_groups: autoGroups,
+        expires_in: 7,
       } as SetupKey)
     );
   };
