@@ -76,13 +76,13 @@ export const Nameservers = () => {
   );
 
   const [textToSearch, setTextToSearch] = useState("");
-  const [optionAllEnable, setOptionAllEnable] = useState("enabled");
+  const [optionAllEnable, setOptionAllEnable] = useState("all");
   const [dataTable, setDataTable] = useState([] as NameserverGroupDataTable[]);
   const [showTutorial, setShowTutorial] = useState(false);
 
   const optionsAllEnabled = [
-    { label: "Enabled", value: "enabled" },
     { label: "All", value: "all" },
+    { label: "Enabled", value: "enabled" },
   ];
 
   // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
