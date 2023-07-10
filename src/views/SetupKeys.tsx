@@ -359,26 +359,6 @@ export const SetupKeys = () => {
     );
   };
 
-  const setUpdateGroupsVisible = (
-    setupKeyToAction: SetupKey,
-    status: boolean
-  ) => {
-    if (status) {
-      dispatch(setupKeyActions.setSetupKey({ ...setupKeyToAction }));
-      dispatch(setupKeyActions.setSetupNewKeyVisible(true));
-      return;
-    }
-    const autoGroups: string[] = [];
-    dispatch(
-      setupKeyActions.setSetupKey({
-        name: "",
-        type: "one-off",
-        auto_groups: autoGroups,
-      } as SetupKey)
-    );
-    dispatch(setupKeyActions.setSetupNewKeyVisible(false));
-  };
-
   return (
     <>
       <Container style={{ paddingTop: "40px" }}>
@@ -387,24 +367,26 @@ export const SetupKeys = () => {
             <Col span={24}>
               <Title className="page-heading">Setup Keys</Title>
               {setupKeys.length ? (
-                <Paragraph style={{marginTop: "5px"}}>
-                  Setup keys are pre-authentication keys that allow to register new machines in your network.
+                <Paragraph style={{ marginTop: "5px" }}>
+                  Setup keys are pre-authentication keys that allow to register
+                  new machines in your network.
                   <a
                     target="_blank"
                     rel="noreferrer"
                     href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
-                >
-                  {" "}
-                  Learn more
-                </a>
+                  >
+                    {" "}
+                    Learn more
+                  </a>
                 </Paragraph>
               ) : (
-                <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
-                  Setup key is a pre-authentication key that allows to register new machines in your network
+                <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
+                  Setup key is a pre-authentication key that allows to register
+                  new machines in your network
                   <a
-                      target="_blank"
-                      rel="noreferrer"
-                      href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
                   >
                     {" "}
                     Learn more
@@ -480,47 +462,48 @@ export const SetupKeys = () => {
                     closable
                   />
                 )}
-                {showTutorial ? (
-                    <Card bodyStyle={{ padding: 0 }}>
-                        <Space
-                            direction="vertical"
-                            size="small"
-                            align="center"
-                            style={{
-                              display: "flex",
-                              padding: "45px 15px",
-                              justifyContent: "center",
-                            }}
+                {showTutorial && !loading ? (
+                  <Card bodyStyle={{ padding: 0 }}>
+                    <Space
+                      direction="vertical"
+                      size="small"
+                      align="center"
+                      style={{
+                        display: "flex",
+                        padding: "45px 15px",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Title level={4} style={{ textAlign: "center" }}>
+                        Create Setup Key
+                      </Title>
+                      <Paragraph
+                        style={{
+                          textAlign: "center",
+                          whiteSpace: "pre-line",
+                        }}
+                      >
+                        Add a setup key to register new machines in your
+                        network. {"\n"} The key links machines to your account
+                        during initial setup.{" "}
+                        <a
+                          target="_blank"
+                          rel="noreferrer"
+                          href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
                         >
-                          <Title level={4} style={{ textAlign: "center" }}>
-                            Create Setup Key
-                          </Title>
-                          <Paragraph
-                              style={{
-                                textAlign: "center",
-                                whiteSpace: "pre-line",
-                              }}
-                          >
-                            Add a setup key to register new machines in your
-                            network. {"\n"} The key links machines to your account during
-                            initial setup. <a
-                              target="_blank"
-                              rel="noreferrer"
-                              href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
-                          >
-                            {" "}
-                            Learn more
-                          </a>
-                          </Paragraph>
-                          <Button
-                              size={"middle"}
-                              type="primary"
-                              onClick={() => onClickAddNewSetupKey()}
-                          >
-                            Add setup key
-                          </Button>
-                        </Space>
-                    </Card>
+                          {" "}
+                          Learn more
+                        </a>
+                      </Paragraph>
+                      <Button
+                        size={"middle"}
+                        type="primary"
+                        onClick={() => onClickAddNewSetupKey()}
+                      >
+                        Add setup key
+                      </Button>
+                    </Space>
+                  </Card>
                 ) : (
                   <Card bodyStyle={{ padding: 0 }}>
                     <Table

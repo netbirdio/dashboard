@@ -540,7 +540,47 @@ export const Nameservers = () => {
           />
         )}
         <Card bodyStyle={{ padding: 0 }}>
-          {!showTutorial && (
+        {showTutorial && !loading ? (
+            <Space
+              direction="vertical"
+              size="small"
+              align="center"
+              style={{
+                display: "flex",
+                padding: "45px 15px",
+                justifyContent: "center",
+              }}
+            >
+              <Title level={4} style={{ textAlign: "center" }}>
+                Create Nameserver
+              </Title>
+              <Paragraph
+                style={{
+                  textAlign: "center",
+                  whiteSpace: "pre-line",
+                }}
+              >
+                It looks like you don't have any nameservers. {"\n"}
+                Get started by adding one to your network.
+                <a
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
+                >
+                  {" "}
+                  Learn more
+                </a>
+              </Paragraph>
+              <Button
+                size={"middle"}
+                type="primary"
+                onClick={() => onClickAddNewNSGroup()}
+              >
+                Add nameserver
+              </Button>
+            </Space>
+          )
+         : (
             <Table
               pagination={{
                 pageSize,
@@ -650,46 +690,6 @@ export const Nameservers = () => {
                 }}
               />
             </Table>
-          )}
-          {showTutorial && (
-            <Space
-              direction="vertical"
-              size="small"
-              align="center"
-              style={{
-                display: "flex",
-                padding: "45px 15px",
-                justifyContent: "center",
-              }}
-            >
-              <Title level={4} style={{ textAlign: "center" }}>
-                Create Nameserver
-              </Title>
-              <Paragraph
-                style={{
-                  textAlign: "center",
-                  whiteSpace: "pre-line",
-                }}
-              >
-                It looks like you don't have any nameservers. {"\n"}
-                Get started by adding one to your network.
-                <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
-                >
-                  {" "}
-                  Learn more
-                </a>
-              </Paragraph>
-              <Button
-                size={"middle"}
-                type="primary"
-                onClick={() => onClickAddNewNSGroup()}
-              >
-                Add nameserver
-              </Button>
-            </Space>
           )}
         </Card>
       </Space>
