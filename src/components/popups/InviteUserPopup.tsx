@@ -343,16 +343,17 @@ const InviteUserPopup = () => {
                 </Form.Item>
               </Col>
               <Col span={24}>
-                <Button
-                  icon={<QuestionCircleFilled />}
-                  type="link"
-                  target="_blank"
-                  disabled={true}
-                  style={{ marginTop: "20px", marginBottom: "20px" }}
-                  href="https://docs.netbird.io/how-to/access-netbird-public-api"
-                >
-                  Learn more about user
-                </Button>
+                <Text type={"secondary"}>
+                  Learn more about
+                  <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href="https://docs.netbird.io/how-to/add-users-to-your-network"
+                  >
+                    {" "}
+                    user management
+                  </a>
+                </Text>
               </Col>
             </Row>
           </Form>

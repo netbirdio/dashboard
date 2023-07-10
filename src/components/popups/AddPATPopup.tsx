@@ -177,9 +177,18 @@ const AddPATPopup = () => {
                                 </Form.Item>
                                 <Paragraph type={"secondary"} style={{fontSize: "14px", marginTop: "-18px"}}>Should be between 1 and 365 days</Paragraph>
                             </Col>
-                            <Col span={24}>
-                                <Button icon={<QuestionCircleFilled/>} type="link" target="_blank" disabled={true} style={{marginTop: "20px", marginBottom: "20px"}}
-                                        href="https://docs.netbird.io/how-to/access-netbird-public-api">Learn more about personal access tokens</Button>
+                            <Col span={24} style={{marginTop: "15px"}}>
+                                <Text type={"secondary"}>
+                                    Learn more about
+                                    <a
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        href="https://docs.netbird.io/how-to/access-netbird-public-api"
+                                    >
+                                        {" "}
+                                        access tokens
+                                    </a>
+                                </Text>
                             </Col>
                         </Row>
                     </Form>}
