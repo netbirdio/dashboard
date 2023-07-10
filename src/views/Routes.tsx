@@ -517,6 +517,7 @@ export const SetupKeys = () => {
                       className="card-table"
                       showSorterTooltip={false}
                       scroll={{ x: true }}
+                      style={{ minHeight: "300px" }}
                       loading={tableSpin(loading)}
                       dataSource={dataTable}
                     >

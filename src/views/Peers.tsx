@@ -707,6 +707,7 @@ export const Peers = () => {
                         scroll={{ x: true }}
                         loading={tableSpin(loading)}
                         dataSource={dataTable}
+                        style={{ minHeight: "300px" }}
                       >
                         <Column
                           title="Name"

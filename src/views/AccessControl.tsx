@@ -722,6 +722,7 @@ export const AccessControl = () => {
                         }`}
                         showSorterTooltip={false}
                         scroll={{ x: true }}
+                        style={{ minHeight: "300px" }}
                         loading={tableSpin(loading)}
                         dataSource={dataTable}
                       >
