@@ -1,143 +1,99 @@
 import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { RootState } from "typesafe-actions";
+import { actions as setupKeyActions } from "../store/setup-key";
+import { Container } from "../components/Container";
 import {
   Alert,
   Button,
   Card,
   Col,
   Input,
-  Menu,
   message,
   Modal,
-  List,
-  Spin,
   Popover,
   Radio,
   RadioChangeEvent,
   Row,
+  Select,
+  Badge,
   Space,
-  Switch,
   Table,
   Tag,
-  Collapse,
   Typography,
-  Badge,
 } from "antd";
-import { Container } from "../components/Container";
-import { useDispatch, useSelector } from "react-redux";
-import { RootState } from "typesafe-actions";
-import { Route, RouteToSave } from "../store/route/types";
-import { actions as routeActions } from "../store/route";
-import { actions as peerActions } from "../store/peer";
-import { filter, sortBy } from "lodash";
-import { EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
-import RouteAddNew from "../components/RouteAddNew";
-import {
-  GroupedDataTable,
-  initPeerMaps,
-  masqueradeDisabledMSG,
-  masqueradeEnabledMSG,
-  peerToPeerIP,
-  RouteDataTable,
-  transformDataTable,
-  transformGroupedDataTable,
-} from "../utils/routes";
-import { useGetTokenSilently } from "../utils/token";
+import { SetupKey, SetupKeyToSave } from "../store/setup-key/types";
+import { filter } from "lodash";
+import { formatDate, timeAgo } from "../utils/common";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
+import SetupKeyNew from "../components/SetupKeyNew";
+import SetupKeyEdit from "../components/SetupKeyEdit";
+import ButtonCopyMessage from "../components/ButtonCopyMessage";
+import tableSpin from "../components/Spin";
+import { actions as groupActions } from "../store/group";
 import { Group } from "../store/group/types";
 import { TooltipPlacement } from "antd/es/tooltip";
-import { actions as groupActions } from "../store/group";
-import { useGetGroupTagHelpers } from "../utils/groups";
-import RouteUpdate from "../components/RouteUpdate";
-import RoutePeerUpdate from "../components/RoutePeerUpdate";
+import { useGetTokenSilently } from "../utils/token";
+import { usePageSizeHelpers } from "../utils/pageSize";
 
-const { Title, Paragraph, Text } = Typography;
+const { Title, Text, Paragraph } = Typography;
 const { Column } = Table;
-const { confirm } = Modal;
-const { Panel } = Collapse;
 
-export const Routes = () => {
+interface SetupKeyDataTable extends SetupKey {
+  key: string;
+  groupsCount: number;
+}
+
+export const SetupKeys = () => {
+  const { onChangePageSize, pageSizeOptions, pageSize } = usePageSizeHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
-  const { getGroupNamesFromIDs } = useGetGroupTagHelpers();
 
+  const setupKeys = useSelector((state: RootState) => state.setupKey.data);
+  const failed = useSelector((state: RootState) => state.setupKey.failed);
+  const loading = useSelector((state: RootState) => state.setupKey.loading);
+  const deletedSetupKey = useSelector(
+    (state: RootState) => state.setupKey.deletedSetupKey
+  );
+  const savedSetupKey = useSelector(
+    (state: RootState) => state.setupKey.savedSetupKey
+  );
   const groups = useSelector((state: RootState) => state.group.data);
-  const routes = useSelector((state: RootState) => state.route.data);
-  const failed = useSelector((state: RootState) => state.route.failed);
-  const loading = useSelector((state: RootState) => state.route.loading);
-  const deletedRoute = useSelector(
-    (state: RootState) => state.route.deletedRoute
-  );
-  const setEditRoutePeerVisible = useSelector(
-    (state: RootState) => state.route.setEditRoutePeerVisible
-  );
-  const savedRoute = useSelector((state: RootState) => state.route.savedRoute);
-  const peers = useSelector((state: RootState) => state.peer.data);
-  const loadingPeer = useSelector((state: RootState) => state.peer.loading);
-  const setupNewRouteVisible = useSelector(
-    (state: RootState) => state.route.setupNewRouteVisible
-  );
-  const [showTutorial, setShowTutorial] = useState(true);
+
   const [textToSearch, setTextToSearch] = useState("");
-  const [optionAllEnable, setOptionAllEnable] = useState("enabled");
-  const [dataTable, setDataTable] = useState([] as RouteDataTable[]);
-  const [routeToAction, setRouteToAction] = useState(
-    null as RouteDataTable | null
+  const [optionValidAll, setOptionValidAll] = useState("valid");
+  const [dataTable, setDataTable] = useState([] as SetupKeyDataTable[]);
+  const setupNewKeyVisible = useSelector(
+    (state: RootState) => state.setupKey.setupNewKeyVisible
   );
-  const [groupedDataTable, setGroupedDataTable] = useState(
-    [] as GroupedDataTable[]
+  const setupEditKeyVisible = useSelector(
+    (state: RootState) => state.setupKey.setupEditKeyVisible
   );
-  const [expandRowsOnClick, setExpandRowsOnClick] = useState(true);
   const [groupPopupVisible, setGroupPopupVisible] = useState("");
 
-  const [peerNameToIP, peerIPToName] = initPeerMaps(peers);
-  const optionsAllEnabled = [
-    { label: "Enabled", value: "enabled" },
+  const styleNotification = { marginTop: 85 };
+  const showTutorial = !dataTable.length;
+
+  const optionsValidAll = [
+    { label: "Valid", value: "valid" },
     { label: "All", value: "all" },
   ];
 
-  const itemsMenuAction = [
-    {
-      key: "view",
-      label: (
-        <Button type="text" block onClick={() => onClickViewRoute("test")}>
-          View
-        </Button>
-      ),
-    },
-    {
-      key: "delete",
-      label: (
-        <Button type="text" block onClick={() => showConfirmDelete("test")}>
-          Delete
-        </Button>
-      ),
-    },
-  ];
-  const actionsMenu = <Menu items={itemsMenuAction}></Menu>;
+  const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
-  const isShowTutorial = (routes: Route[]): boolean => {
-    return (
-      !routes.length || (routes.length === 1 && routes[0].network === "Default")
+  const transformDataTable = (d: SetupKey[]): SetupKeyDataTable[] => {
+    return d.map(
+      (p) =>
+        ({
+          ...p,
+          groupsCount: p.auto_groups ? p.auto_groups.length : 0,
+        } as SetupKeyDataTable)
     );
   };
 
   useEffect(() => {
-    return () => {
-      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
-    };
-  }, []);
-
-  useEffect(() => {
     dispatch(
-      routeActions.getRoutes.request({
-        getAccessTokenSilently: getTokenSilently,
-        payload: null,
-      })
-    );
-  }, [peers]);
-
-  useEffect(() => {
-    dispatch(
-      peerActions.getPeers.request({
+      setupKeyActions.getSetupKeys.request({
         getAccessTokenSilently: getTokenSilently,
         payload: null,
       })
@@ -150,100 +106,98 @@ export const Routes = () => {
     );
   }, []);
 
-  const filterGroupedDataTable = (
-    routes: GroupedDataTable[]
-  ): GroupedDataTable[] => {
-    const t = textToSearch.toLowerCase().trim();
-    let f: GroupedDataTable[] = filter(
-      routes,
-      (f) =>
-        f.network_id.toLowerCase().includes(t) ||
-        f.network.toLowerCase().includes(t) ||
-        f.description.toLowerCase().includes(t) ||
-        t === "" ||
-        getGroupNamesFromIDs(f.routesGroups).find((u) =>
-          u.toLowerCase().trim().includes(t)
-        )
-    ) as GroupedDataTable[];
-    if (optionAllEnable !== "all") {
-      f = filter(f, (f) => f.enabled);
-    }
-
-    f.sort(function (a, b) {
-      if (a.network_id < b.network_id) {
-        return -1;
-      }
-      if (a.network_id > b.network_id) {
-        return 1;
-      }
-      return 0;
-    });
-
-    f.forEach((item) => {
-      item.groupedRoutes.sort(function (a, b) {
-        if (a.peer_name < b.peer_name) {
-          return -1;
-        }
-        if (a.peer_name > b.peer_name) {
-          return 1;
-        }
-        return 0;
-      });
-    });
-
-    return f;
-  };
+  useEffect(() => {
+    setDataTable(transformDataTable(filterDataTable()));
+  }, [setupKeys]);
 
   useEffect(() => {
-    setGroupedDataTable(
-      filterGroupedDataTable(transformGroupedDataTable(routes, peers))
-    );
-  }, [dataTable]);
-
-  useEffect(() => {
-    if (failed) {
-      setShowTutorial(false);
-    } else {
-      setShowTutorial(isShowTutorial(routes));
-      setDataTable(sortBy(transformDataTable(routes, peers), "network_id"));
-    }
-  }, [routes]);
-
-  useEffect(() => {
-    setGroupedDataTable(
-      filterGroupedDataTable(transformGroupedDataTable(routes, peers))
-    );
-  }, [textToSearch, optionAllEnable]);
+    setDataTable(transformDataTable(filterDataTable()));
+  }, [textToSearch, optionValidAll]);
 
   const deleteKey = "deleting";
   useEffect(() => {
-    const style = { marginTop: 85 };
-    if (deletedRoute.loading) {
+    if (deletedSetupKey.loading) {
       message.loading({
         content: "Deleting...",
-        duration: 0,
         key: deleteKey,
-        style,
+        style: styleNotification,
       });
-    } else if (deletedRoute.success) {
+    } else if (deletedSetupKey.success) {
       message.success({
-        content: "Route has been successfully deleted.",
+        content: "Setup key has been successfully removed.",
         key: deleteKey,
         duration: 2,
-        style,
+        style: styleNotification,
       });
-      dispatch(routeActions.resetDeletedRoute(null));
-    } else if (deletedRoute.error) {
+      dispatch(
+        setupKeyActions.setDeleteSetupKey({
+          ...deletedSetupKey,
+          success: false,
+        })
+      );
+      dispatch(setupKeyActions.resetDeletedSetupKey(null));
+    } else if (deletedSetupKey.error) {
       message.error({
         content:
-          "Failed to delete route. You might not have enough permissions.",
+          "Failed to delete setup key. You might not have enough permissions.",
         key: deleteKey,
         duration: 2,
-        style,
+        style: styleNotification,
       });
-      dispatch(routeActions.resetDeletedRoute(null));
+      dispatch(
+        setupKeyActions.setDeleteSetupKey({ ...deletedSetupKey, error: null })
+      );
+      dispatch(setupKeyActions.resetDeletedSetupKey(null));
     }
-  }, [deletedRoute]);
+  }, [deletedSetupKey]);
+
+  const createKey = "saving";
+  useEffect(() => {
+    if (savedSetupKey.loading) {
+      message.loading({
+        content: "Saving...",
+        key: createKey,
+        duration: 1,
+        style: styleNotification,
+      });
+    } else if (savedSetupKey.success) {
+      dispatch(
+        setupKeyActions.setSavedSetupKey({ ...savedSetupKey, success: false })
+      );
+      dispatch(setupKeyActions.resetSavedSetupKey(null));
+      dispatch(setupKeyActions.setSetupEditKeyVisible(false));
+    } else if (savedSetupKey.error) {
+      message.error({
+        content:
+          "Failed to update setup key. You might not have enough permissions.",
+        key: createKey,
+        duration: 2,
+        style: styleNotification,
+      });
+      dispatch(
+        setupKeyActions.setSavedSetupKey({ ...savedSetupKey, error: null })
+      );
+      dispatch(setupKeyActions.resetSavedSetupKey(null));
+    }
+  }, [savedSetupKey]);
+
+  const filterDataTable = (): SetupKey[] => {
+    const t = textToSearch.toLowerCase().trim();
+    let f: SetupKey[] = [...setupKeys];
+    if (optionValidAll === "valid") {
+      f = filter(setupKeys, (_f: SetupKey) => _f.valid && !_f.revoked);
+    }
+    f = filter(
+      f,
+      (_f: SetupKey) =>
+        _f.name.toLowerCase().includes(t) ||
+        _f.state.includes(t) ||
+        _f.type.toLowerCase().includes(t) ||
+        _f.key.toLowerCase().includes(t) ||
+        t === ""
+    ) as SetupKey[];
+    return f;
+  };
 
   const onChangeTextToSearch = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -252,103 +206,85 @@ export const Routes = () => {
   };
 
   const searchDataTable = () => {
-    setGroupedDataTable(
-      filterGroupedDataTable(transformGroupedDataTable(routes, peers))
-    );
+    const data = filterDataTable();
+    setDataTable(transformDataTable(data));
   };
 
-  const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
-    setOptionAllEnable(value);
+  const onChangeValidAll = ({ target: { value } }: RadioChangeEvent) => {
+    setOptionValidAll(value);
   };
 
-  const showConfirmDelete = (selectedRoute: any) => {
-    setRouteToAction(selectedRoute as RouteDataTable);
-    let name = selectedRoute ? selectedRoute.network_id : "";
-    confirm({
+  const showConfirmRevoke = (setupKeyToAction: SetupKeyDataTable) => {
+    let name = setupKeyToAction ? setupKeyToAction.name : "";
+    confirmModal.confirm({
       icon: <ExclamationCircleOutlined />,
-      title: <span className="font-500">Delete network route {name}</span>,
-      width: 600,
+      title: <span className="font-500">Revoke setupKey {name}</span>,
+      width: 500,
       content: (
         <Space direction="vertical" size="small">
-          <Paragraph>
-            Are you sure you want to delete this route from your account?
-          </Paragraph>
+          <Paragraph>Are you sure you want to revoke key?</Paragraph>
         </Space>
       ),
-      okType: "danger",
       onOk() {
         dispatch(
-          routeActions.deleteRoute.request({
+          setupKeyActions.saveSetupKey.request({
             getAccessTokenSilently: getTokenSilently,
-            payload: selectedRoute?.id || "",
+            payload: {
+              id: setupKeyToAction ? setupKeyToAction.id : null,
+              revoked: true,
+              name: setupKeyToAction ? setupKeyToAction.name : null,
+              auto_groups:
+                setupKeyToAction && setupKeyToAction.auto_groups
+                  ? setupKeyToAction.auto_groups
+                  : [],
+            } as SetupKeyToSave,
           })
         );
-      },
-      onCancel() {
-        setRouteToAction(null);
       },
     });
   };
 
-  const onClickAddNewRoute = () => {
-    dispatch(routeActions.setSetupNewRouteVisible(true));
+  const onClickAddNewSetupKey = () => {
+    const autoGroups: string[] = [];
+    dispatch(setupKeyActions.setSetupNewKeyVisible(true));
     dispatch(
-      routeActions.setRoute({
-        network: "",
-        network_id: "",
-        description: "",
-        peer: "",
-        masquerade: true,
-        metric: 9999,
-        enabled: true,
-        groups: [],
-      } as Route)
+      setupKeyActions.setSetupKey({
+        name: "",
+        type: "one-off",
+        auto_groups: autoGroups,
+        expires_in: 7,
+      } as SetupKey)
     );
   };
 
-  const onClickViewRoute = (selectedRoute: any) => {
-    setRouteToAction(selectedRoute as RouteDataTable);
-    dispatch(routeActions.setSetupNewRouteHA(false));
+  const setKeyAndView = (key: SetupKeyDataTable) => {
+    dispatch(setupKeyActions.setSetupEditKeyVisible(true));
     dispatch(
-      routeActions.setRoute({
-        id: selectedRoute?.id || null,
-        network: selectedRoute?.network,
-        network_id: selectedRoute?.network_id,
-        description: selectedRoute?.description,
-        peer: peerToPeerIP(selectedRoute!.peer_name, selectedRoute!.peer_ip),
-        metric: selectedRoute?.metric,
-        masquerade: selectedRoute?.masquerade,
-        enabled: selectedRoute?.enabled,
-        groups: selectedRoute?.groups,
-      } as Route)
+      setupKeyActions.setSetupKey({
+        id: key?.id || null,
+        key: key?.key,
+        name: key?.name,
+        revoked: key?.revoked,
+        expires: key?.expires,
+        state: key?.state,
+        type: key?.type,
+        used_times: key?.used_times,
+        valid: key?.valid,
+        auto_groups: key?.auto_groups,
+        last_used: key?.last_used,
+        usage_limit: key?.usage_limit,
+      } as SetupKey)
     );
-    dispatch(routeActions.setSetupEditRoutePeerVisible(true));
   };
 
-  const setRouteAndView = (route: RouteDataTable, event: any) => {
-    event.preventDefault();
-    event.stopPropagation();
-    if (!route.id) {
-      dispatch(routeActions.setSetupNewRouteHA(true));
+  useEffect(() => {
+    if (setupNewKeyVisible) {
+      setGroupPopupVisible("");
     }
-    dispatch(
-      routeActions.setRoute({
-        id: route.id || null,
-        network: route.network,
-        network_id: route.network_id,
-        description: route.description,
-        peer: route.peer ? peerToPeerIP(route.peer_name, route.peer_ip) : "",
-        metric: route.metric ? route.metric : 9999,
-        masquerade: route.masquerade,
-        enabled: route.enabled,
-        groups: route.groups,
-      } as Route)
-    );
-    dispatch(routeActions.setSetupEditRouteVisible(true));
-  };
+  }, [setupNewKeyVisible]);
 
   const onPopoverVisibleChange = (b: boolean, key: string) => {
-    if (setupNewRouteVisible) {
+    if (setupNewKeyVisible) {
       setGroupPopupVisible("");
     } else {
       if (b) {
@@ -360,8 +296,9 @@ export const Routes = () => {
   };
 
   const renderPopoverGroups = (
-    rowGroups: string[] | null,
-    userToAction: RouteDataTable
+    label: string,
+    rowGroups: string[] | string[] | null,
+    setupKeyToAction: SetupKeyDataTable
   ) => {
     let groupsMap = new Map<string, Group>();
     groups.forEach((g) => {
@@ -378,13 +315,11 @@ export const Routes = () => {
     let btn = (
       <Button
         type="link"
-        onClick={(event) => setRouteAndView(userToAction, event)}
-        style={{ padding: "0 3px" }}
+        onClick={() => setKeyAndView(setupKeyToAction as SetupKeyDataTable)}
       >
-        +{displayGroups.length - 1}
+        {displayGroups.length}
       </Button>
     );
-
     if (!displayGroups || displayGroups!.length < 1) {
       return btn;
     }
@@ -403,549 +338,314 @@ export const Routes = () => {
         </div>
       );
     });
-    const updateContent =
-      displayGroups && displayGroups.length > 1
-        ? content && content?.slice(1)
-        : content;
-    const mainContent = <Space direction="vertical">{updateContent}</Space>;
+    const mainContent = <Space direction="vertical">{content}</Space>;
     let popoverPlacement = "top";
     if (content && content.length > 5) {
       popoverPlacement = "rightTop";
     }
 
     return (
-      <>
-        {displayGroups.length === 1 ? (
-          <>{displayGroups[0].name}</>
-        ) : (
-          <Popover
-            placement={popoverPlacement as TooltipPlacement}
-            key={userToAction.id}
-            onOpenChange={(b: boolean) =>
-              onPopoverVisibleChange(b, userToAction.key)
-            }
-            open={groupPopupVisible === userToAction.key}
-            content={mainContent}
-            title={null}
-          >
-            {displayGroups[0].name} {btn}
-          </Popover>
-        )}
-      </>
-    );
-  };
-
-  const callback = (key: any) => {};
-
-  const getAccordianHeader = (record: any) => {
-    return (
-      <div className="headerInner">
-        <p className="font-500">
-          {record.network_id}
-          <Badge
-            size={"small"}
-            style={{ marginLeft: "5px" }}
-            color={record.enabled ? "green" : "rgb(211,211,211)"}
-          ></Badge>
-        </p>
-        <p>{record.network}</p>
-        <p>
-          {record.routesCount > 1 ? (
-            <>
-              <Tag color="green">on</Tag>
-              <Button
-                type="link"
-                style={{ padding: "0" }}
-                onClick={(event) => setRouteAndView(record, event)}
-              >
-                Add Routing Peer
-              </Button>
-            </>
-          ) : (
-            <>
-            <Tag color="default">
-              <Text type="secondary" style={{ fontSize: 12 }}>off</Text>
-            </Tag>
-              <Button
-                type="link"
-                style={{ padding: "0" }}
-                onClick={(event) => setRouteAndView(record, event)}
-              >
-                Configure
-              </Button>
-            </>
-          )}
-        </p>
-        <p className="text-right">
-          <Button
-            type="text"
-            style={{
-              color: "rgba(210, 64, 64, 0.85)",
-            }}
-            onClick={(event) => showConfirmationDeleteAllRoutes(record, event)}
-          >
-            Delete
-          </Button>
-        </p>
-      </div>
-    );
-  };
-
-  const showConfirmationDeleteAllRoutes = (selectedGroup: any, event: any) => {
-    event.preventDefault();
-    event.stopPropagation();
-    let name = selectedGroup ? selectedGroup.network_id : "";
-    confirm({
-      icon: <ExclamationCircleOutlined />,
-      title: (
-        <span className="font-500">
-          Delete routes to network {name}
-        </span>
-      ),
-      width: 600,
-      content: (
-        <Space direction="vertical" size="small">
-          <Paragraph>
-            This operation will delete all routes to the network {name}. Are you sure?
-          </Paragraph>
-          <Alert
-            message={
-              <>
-                <List
-                  dataSource={selectedGroup.groupedRoutes}
-                  renderItem={(item: any) => (
-                    <List.Item>
-                      <Text strong>- {item.peer_name}</Text>
-                    </List.Item>
-                  )}
-                  bordered={false}
-                  split={false}
-                  itemLayout={"vertical"}
-                />
-              </>
-            }
-            type="warning"
-            showIcon={false}
-            closable={false}
-          />
-        </Space>
-      ),
-      okType: "danger",
-      onOk() {
-        dispatch(
-          routeActions.deleteRoute.request({
-            getAccessTokenSilently: getTokenSilently,
-            payload:
-              selectedGroup.groupedRoutes.map((element: any) => {
-                return element?.id;
-              }) || "",
-          })
-        );
-      },
-      onCancel() {},
-    });
-  };
-
-  const changeRouteStatus = (record: any, checked: boolean) => {
-    const updateReponse = { ...record, enabled: checked };
-    dispatch(
-      routeActions.saveRoute.request({
-        getAccessTokenSilently: getTokenSilently,
-        payload: updateReponse,
-      })
+      <Popover
+        placement={popoverPlacement as TooltipPlacement}
+        key={setupKeyToAction.key}
+        onOpenChange={(b: boolean) =>
+          onPopoverVisibleChange(b, setupKeyToAction.key)
+        }
+        open={groupPopupVisible === setupKeyToAction.key}
+        content={mainContent}
+        title={null}
+      >
+        {btn}
+      </Popover>
     );
   };
 
   return (
     <>
-      {!setEditRoutePeerVisible ? (
-        <>
-          <Container className="container-main">
-            <Row>
-              <Col span={24} style={{ marginBottom: "20px" }}>
-                <Title className="page-heading">Network Routes</Title>
-
-                {routes.length ? (
-                  <Paragraph style={{ marginTop: "5px" }}>
-                    Network routes allow you to access other networks like LANs
-                    and VPCs without installing NetBird on every resource.
-                    <a
-                      target="_blank"
-                      rel="noreferrer"
-                      href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-                    >
-                      {" "}
-                      Learn more
-                    </a>
-                  </Paragraph>
-                ) : (
-                  <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
-                    Network routes allow you to access other networks like LANs
-                    and VPCs without installing NetBird on every resource.
-                    <a
-                      target="_blank"
-                      rel="noreferrer"
-                      href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-                    >
-                      {" "}
-                      Learn more
-                    </a>
-                  </Paragraph>
-                )}
-
-                <Space
-                  direction="vertical"
-                  size="large"
-                  style={{ display: "flex" }}
-                >
-                  <Row gutter={[16, 24]}>
-                    <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
-                      <Input
-                        allowClear
-                        value={textToSearch}
-                        onPressEnter={searchDataTable}
-                        placeholder="Search by network, range or name..."
-                        onChange={onChangeTextToSearch}
-                      />
-                    </Col>
-                    <Col
-                      xs={24}
-                      sm={24}
-                      md={11}
-                      lg={11}
-                      xl={11}
-                      xxl={11}
-                      span={11}
-                    >
-                      <Space size="middle">
-                        <Radio.Group
-                          options={optionsAllEnabled}
-                          onChange={onChangeAllEnabled}
-                          value={optionAllEnable}
-                          optionType="button"
-                          buttonStyle="solid"
-                          disabled={showTutorial}
-                        />
-                      </Space>
-                    </Col>
-                    {!showTutorial && (
-                      <Col
-                        xs={24}
-                        sm={24}
-                        md={5}
-                        lg={5}
-                        xl={5}
-                        xxl={5}
-                        span={5}
-                      >
-                        <Row justify="end">
-                          <Col>
-                            <Button
-                              type="primary"
-                              disabled={savedRoute.loading}
-                              onClick={onClickAddNewRoute}
-                            >
-                              Add Route
-                            </Button>
-                          </Col>
-                        </Row>
-                      </Col>
-                    )}
-                  </Row>
-                  {failed && (
-                    <Alert
-                      message={failed.message}
-                      description={failed.data ? failed.data.message : " "}
-                      type="error"
-                      showIcon
-                      closable
-                    />
-                  )}
-                  {/* <Card bodyStyle={{ padding: 0 }}>
-                {!showTutorial && (
-                  <Table
-                    pagination={{
-                      current: currentPage,
-                      hideOnSinglePage: showTutorial,
-                      disabled: showTutorial,
-                      pageSize,
-                      responsive: true,
-                      showSizeChanger: false,
-                      showTotal: (total, range) =>
-                        `Showing ${range[0]} to ${range[1]} of ${total} routes`,
-                      onChange: (page) => {
-                        setCurrentPage(page);
-                      },
-                    }}
-                    className={`access-control-table ${
-                      showTutorial
-                        ? "card-table card-table-no-placeholder"
-                        : "card-table"
-                    }`}
-                    showSorterTooltip={false}
-                    scroll={{ x: true }}
-                    loading={tableSpin(loading || loadingPeer)}
-                    dataSource={groupedDataTable}
-                    expandable={{
-                      expandedRowRender,
-                      expandRowByClick: expandRowsOnClick,
-                      onExpandedRowsChange: (r) => {
-                        setExpandRowsOnClick(!r.length);
-                      },
-                    }}
+      <Container style={{ paddingTop: "40px" }}>
+        {!setupEditKeyVisible && (
+          <Row>
+            <Col span={24}>
+              <Title className="page-heading">Setup Keys</Title>
+              {setupKeys.length ? (
+                <Paragraph style={{ marginTop: "5px" }}>
+                  Setup keys are pre-authentication keys that allow to register
+                  new machines in your network.
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
                   >
-                    <Column
-                      title={() => (
-                        <span>
-                          Network Identifier
-                          <Tooltip title="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes">
-                            <QuestionCircleOutlined
-                              style={{ marginLeft: "0.25em", color: "gray" }}
-                            />
-                          </Tooltip>
-                        </span>
-                      )}
-                      dataIndex="network_id"
-                      onFilter={(value: string | number | boolean, record) =>
-                        (record as any).name.includes(value)
-                      }
-                      defaultSortOrder="ascend"
-                      align="center"
-                      sorter={(a, b) =>
-                        (a as any).network_id.localeCompare(
-                          (b as any).network_id
-                        )
-                      }
-                      render={(text, record) => {
-                        const desc = (
-                          record as RouteDataTable
-                        ).description.trim();
-                        return (
-                          <Tooltip
-                            title={desc !== "" ? desc : "no description"}
-                            arrowPointAtCenter
+                    {" "}
+                    Learn more
+                  </a>
+                </Paragraph>
+              ) : (
+                <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
+                  Setup key is a pre-authentication key that allows to register
+                  new machines in your network
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                  >
+                    {" "}
+                    Learn more
+                  </a>
+                </Paragraph>
+              )}
+              <Space
+                direction="vertical"
+                size="large"
+                style={{ display: "flex" }}
+              >
+                <Row gutter={[16, 24]}>
+                  <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
+                    {/*<Input.Search allowClear value={textToSearch} onPressEnter={searchDataTable} onSearch={searchDataTable} placeholder="Search..." onChange={onChangeTextToSearch} />*/}
+                    <Input
+                      allowClear
+                      value={textToSearch}
+                      onPressEnter={searchDataTable}
+                      placeholder="Search by name, type or key prefix..."
+                      onChange={onChangeTextToSearch}
+                    />
+                  </Col>
+                  <Col
+                    xs={24}
+                    sm={24}
+                    md={11}
+                    lg={11}
+                    xl={11}
+                    xxl={11}
+                    span={11}
+                  >
+                    <Space size="middle">
+                      <Radio.Group
+                        options={optionsValidAll}
+                        onChange={onChangeValidAll}
+                        value={optionValidAll}
+                        optionType="button"
+                        buttonStyle="solid"
+                        disabled={!dataTable?.length}
+                      />
+                      <Select
+                        disabled={!dataTable?.length}
+                        value={pageSize.toString()}
+                        options={pageSizeOptions}
+                        onChange={onChangePageSize}
+                        className="select-rows-per-page-en"
+                      />
+                    </Space>
+                  </Col>
+                  {dataTable.length ? (
+                    <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                      <Row justify="end">
+                        <Col>
+                          <Button
+                            type="primary"
+                            onClick={onClickAddNewSetupKey}
                           >
-                            <Text className="font-500">{text}</Text>
-                          </Tooltip>
-                        );
+                            Add Key
+                          </Button>
+                        </Col>
+                      </Row>
+                    </Col>
+                  ) : (
+                    <></>
+                  )}
+                </Row>
+                {failed && (
+                  <Alert
+                    message={failed.message}
+                    description={failed.data ? failed.data.message : " "}
+                    type="error"
+                    showIcon
+                    closable
+                  />
+                )}
+                {showTutorial && !loading ? (
+                  <Card bodyStyle={{ padding: 0 }}>
+                    <Space
+                      direction="vertical"
+                      size="small"
+                      align="center"
+                      style={{
+                        display: "flex",
+                        padding: "45px 15px",
+                        justifyContent: "center",
                       }}
-                    />
-                    <Column
-                      title="Network Range"
-                      dataIndex="network"
-                      align="center"
-                      onFilter={(value: string | number | boolean, record) =>
-                        (record as any).network.includes(value)
-                      }
-                      sorter={(a, b) =>
-                        (a as any).network.localeCompare((b as any).network)
-                      }
-                      // defaultSortOrder='ascend'
-                    />
-                    <Column
-                      title="Route status"
-                      dataIndex="enabled"
-                      align="center"
-                      render={(text: Boolean) => {
-                        return text ? (
-                          <Tag color="green">enabled</Tag>
-                        ) : (
-                          <Tag color="red">disabled</Tag>
-                        );
+                    >
+                      <Title level={4} style={{ textAlign: "center" }}>
+                        Create Setup Key
+                      </Title>
+                      <Paragraph
+                        style={{
+                          textAlign: "center",
+                          whiteSpace: "pre-line",
+                        }}
+                      >
+                        Add a setup key to register new machines in your
+                        network. {"\n"} The key links machines to your account
+                        during initial setup.{" "}
+                        <a
+                          target="_blank"
+                          rel="noreferrer"
+                          href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                        >
+                          {" "}
+                          Learn more
+                        </a>
+                      </Paragraph>
+                      <Button
+                        size={"middle"}
+                        type="primary"
+                        onClick={() => onClickAddNewSetupKey()}
+                      >
+                        Add setup key
+                      </Button>
+                    </Space>
+                  </Card>
+                ) : (
+                  <Card bodyStyle={{ padding: 0 }}>
+                    <Table
+                      pagination={{
+                        pageSize,
+                        showSizeChanger: false,
+                        showTotal: (total, range) =>
+                          `Showing ${range[0]} to ${range[1]} of ${total} setup keys`,
                       }}
-                    />
-                    <Column
-                      title="Masquerade Traffic"
-                      dataIndex="masquerade"
-                      align="center"
-                      render={(e, record: GroupedDataTable) => {
-                        let toggle = (
-                          <Switch
-                            size={"small"}
-                            checked={e}
-                            onClick={(checked: boolean) => {
-                              showConfirmEnableMasquerade(record, checked);
-                            }}
-                          />
-                        );
-                        return (
-                          <Tooltip title="Hides the traffic with the routing peer address">
-                            {toggle}
-                          </Tooltip>
-                        );
-                      }}
-                    />
-                    <Column
-                      title="High Availability"
-                      align="center"
-                      dataIndex="routesCount"
-                      render={(count, record: RouteDataTable) => {
-                        let tag = <Tag color="red">off</Tag>;
-                        if (count > 1) {
-                          tag = <Tag color="green">on</Tag>;
+                      className="card-table"
+                      showSorterTooltip={false}
+                      scroll={{ x: true }}
+                      loading={tableSpin(loading)}
+                      dataSource={dataTable}
+                    >
+                      <Column
+                        title="Name"
+                        dataIndex="name"
+                        onFilter={(value: string | number | boolean, record) =>
+                          (record as any).name.includes(value)
                         }
-                        return (
-                          <div>
-                            {tag}
-                            <Divider type="vertical" />
+                        sorter={(a, b) =>
+                          (a as any).name.localeCompare((b as any).name)
+                        }
+                        render={(text, record: any, index) => {
+                          return (
                             <Button
-                              type="link"
-                              onClick={(event) =>
-                                setRouteAndView(record, event)
+                              type="text"
+                              onClick={() =>
+                                setKeyAndView(record as SetupKeyDataTable)
+                              }
+                              className="tooltip-label"
+                            >
+                              {" "}
+                              <Text className="font-500">
+                                <Badge
+                                  size={"small"}
+                                  status={
+                                    record.state === "valid"
+                                      ? "success"
+                                      : "error"
+                                  }
+                                  text={text}
+                                ></Badge>
+                              </Text>
+                            </Button>
+                          );
+                        }}
+                        defaultSortOrder="ascend"
+                      />
+                      <Column
+                        title="Type"
+                        dataIndex="type"
+                        onFilter={(value: string | number | boolean, record) =>
+                          (record as any).type.includes(value)
+                        }
+                        sorter={(a, b) =>
+                          (a as any).type.localeCompare((b as any).type)
+                        }
+                      />
+                      <Column
+                        title="Key"
+                        dataIndex="key"
+                        onFilter={(value: string | number | boolean, record) =>
+                          (record as any).key.includes(value)
+                        }
+                        sorter={(a, b) =>
+                          (a as any).key.localeCompare((b as any).key)
+                        }
+                        render={(text, record, index) => {
+                          return (
+                            <Text>{text.substring(0, 4).concat("****")}</Text>
+                          );
+                        }}
+                      />
+
+                      <Column
+                        title="Last Used"
+                        dataIndex="last_used"
+                        sorter={(a, b) =>
+                          (a as any).last_used.localeCompare(
+                            (b as any).last_used
+                          )
+                        }
+                        render={(text, record, index) => {
+                          return !(record as SetupKey).used_times
+                            ? "never"
+                            : timeAgo(text);
+                        }}
+                      />
+                      <Column
+                        title="Groups"
+                        dataIndex="groupsCount"
+                        align="center"
+                        render={(text, record: SetupKeyDataTable, index) => {
+                          return renderPopoverGroups(
+                            text,
+                            record.auto_groups,
+                            record
+                          );
+                        }}
+                      />
+                      <Column
+                        title="Expires"
+                        dataIndex="expires"
+                        render={(text, record, index) => {
+                          return formatDate(text);
+                        }}
+                      />
+                      <Column
+                        title=""
+                        align="center"
+                        render={(text, record, index) => {
+                          return (
+                            <Button
+                              style={{
+                                color: "rgba(210, 64, 64, 0.85)",
+                              }}
+                              type="text"
+                              onClick={() =>
+                                showConfirmRevoke(record as SetupKeyDataTable)
                               }
                             >
-                              Configure
+                              Revoke
                             </Button>
-                          </div>
-                        );
-                      }}
-                    />
-                  </Table>
+                          );
+                        }}
+                      />
+                    </Table>
+                  </Card>
                 )}
-                
-              </Card> */}
-                </Space>
-              </Col>
-            </Row>
-
-            {showTutorial ? (
-              <Card bodyStyle={{ padding: 0 }}>
-                <Space
-                  direction="vertical"
-                  size="small"
-                  align="center"
-                  style={{
-                    display: "flex",
-                    padding: "45px 15px",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Title level={4} style={{ textAlign: "center" }}>
-                    Create New Route
-                  </Title>
-                  <Paragraph
-                    style={{
-                      textAlign: "center",
-                      whiteSpace: "pre-line",
-                    }}
-                  >
-                    It looks like you don't have any routes. {"\n"}
-                    Access LANs and VPC by adding a network route.
-                    <a
-                      target="_blank"
-                      rel="noreferrer"
-                      href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-                    >
-                      {" "}
-                      Learn more
-                    </a>
-                  </Paragraph>
-                  <Button
-                    size={"middle"}
-                    type="primary"
-                    onClick={() => onClickAddNewRoute()}
-                  >
-                    Add route
-                  </Button>
-                </Space>
-              </Card>
-            ) : loading || loadingPeer ? (
-              <div className="container-spinner">
-                <Spin size={"large"} />
-              </div>
-            ) : (
-              <div className="routes-accordian">
-                <Collapse onChange={callback}>
-                  <div className="accordian-header">
-                    <p>Network Identifier</p>
-                    <p>Network Range</p>
-                    <p>High Availability</p>
-                  </div>
-
-                  {groupedDataTable &&
-                    groupedDataTable.length &&
-                    groupedDataTable.map((record, index) => {
-                      return (
-                        <Panel header={getAccordianHeader(record)} key={index}>
-                          <div className="accordian-inner-header">
-                            <p>Routing Peer</p>
-                            <p>Metric</p>
-                            <p>Enabled</p>
-                            <p>Groups</p>
-                          </div>
-                          {record.groupedRoutes &&
-                            record.groupedRoutes.length &&
-                            record.groupedRoutes.map((route, index2) => {
-                              return (
-                                <div
-                                  className="accordian-inner-listing"
-                                  key={index2}
-                                >
-                                  <p>
-                                    <span
-                                      className="cursor-pointer"
-                                      onClick={() => {
-                                        onClickViewRoute(route);
-                                      }}
-                                    >
-                                      {route.peer_name}
-                                    </span>
-                                    <Badge
-                                      size={"small"}
-                                      style={{ marginLeft: "5px" }}
-                                      color={
-                                        route.enabled
-                                          ? "green"
-                                          : "rgb(211,211,211)"
-                                      }
-                                    ></Badge>
-                                  </p>
-                                  <p>{route.metric}</p>
-                                  <p>
-                                    <Switch
-                                      size={"small"}
-                                      defaultChecked={route.enabled}
-                                      onClick={(checked: boolean) => {
-                                        changeRouteStatus(route, checked);
-                                      }}
-                                    />
-                                  </p>
-                                  <p>
-                                    {renderPopoverGroups(route.groups, route)}
-                                  </p>
-                                  <p>
-                                    <Button
-                                      type="text"
-                                      style={{
-                                        color: "rgba(210, 64, 64, 0.85)",
-                                      }}
-                                      onClick={() =>
-                                        showConfirmDelete(
-                                          route as RouteDataTable
-                                        )
-                                      }
-                                    >
-                                      Delete
-                                    </Button>
-                                  </p>
-                                </div>
-                              );
-                            })}
-                        </Panel>
-                      );
-                    })}
-                </Collapse>
-              </div>
-            )}
-          </Container>
-          <RouteAddNew />
-          <RouteUpdate />
-        </>
-      ) : (
-        <RoutePeerUpdate />
-      )}
+              </Space>
+            </Col>
+          </Row>
+        )}
+        {setupEditKeyVisible && <SetupKeyEdit />}
+      </Container>
+      {setupNewKeyVisible && <SetupKeyNew />}
+      {confirmModalContextHolder}
     </>
   );
 };
 
-export default Routes;
+export default SetupKeys;

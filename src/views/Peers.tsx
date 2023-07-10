@@ -206,8 +206,6 @@ export const Peers = () => {
     }
   }, [deletedPeer]);
 
-
-
   const filterDataTable = (): Peer[] => {
     const t = textToSearch.toLowerCase().trim();
     let f: Peer[] = filter(peers, (f: Peer) => {
@@ -511,7 +509,14 @@ export const Peers = () => {
 
     let loginExpire = peer.login_expired ? (
       <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
-        <Tag color="red"><Text style={{fontSize: "10px", color: "rgba(210, 64, 64, 0.85)"}} type={"secondary"}>needs login</Text></Tag>
+        <Tag color="red">
+          <Text
+            style={{ fontSize: "10px", color: "rgba(210, 64, 64, 0.85)" }}
+            type={"secondary"}
+          >
+            needs login
+          </Text>
+        </Tag>
       </Tooltip>
     ) : (
       ""
@@ -519,9 +524,11 @@ export const Peers = () => {
 
     const userEmail = users?.find((u) => u.id === peer.user_id)?.email;
     let expiry = !peer.login_expiration_enabled ? (
-        <Tag>
-          <Text type="secondary" style={{ fontSize: 10 }}>expiration disabled</Text>
-        </Tag>
+      <Tag>
+        <Text type="secondary" style={{ fontSize: 10 }}>
+          expiration disabled
+        </Text>
+      </Tag>
     ) : null;
     if (!userEmail) {
       return (
@@ -573,12 +580,14 @@ export const Peers = () => {
               <Col span={24}>
                 <Title className="page-heading">Peers</Title>
                 {peers.length ? (
-                  <Paragraph style={{marginTop: "5px"}}>
-                    A list of all machines and devices connected to your private network. Use this view to manage peers
+                  <Paragraph style={{ marginTop: "5px" }}>
+                    A list of all machines and devices connected to your private
+                    network. Use this view to manage peers
                   </Paragraph>
                 ) : (
-                  <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
-                    A list of all machines and devices connected to your private network. Use this view to manage peers
+                  <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
+                    A list of all machines and devices connected to your private
+                    network. Use this view to manage peers
                   </Paragraph>
                 )}
 
@@ -649,7 +658,39 @@ export const Peers = () => {
                     />
                   )}
                   <Card bodyStyle={{ padding: 0 }}>
-                    {!showTutorial && (
+                    {showTutorial && !loading ? (
+                      <Space
+                        direction="vertical"
+                        size="small"
+                        align="center"
+                        style={{
+                          display: "flex",
+                          padding: "45px 15px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Title level={4} style={{ textAlign: "center" }}>
+                          Get Started
+                        </Title>
+                        <Paragraph
+                          style={{
+                            textAlign: "center",
+                            whiteSpace: "pre-line",
+                          }}
+                        >
+                          It looks like you don't have any connected machines.{" "}
+                          {"\n"}
+                          Get started by adding one to your network.
+                        </Paragraph>
+                        <Button
+                          size={"middle"}
+                          type="primary"
+                          onClick={() => setAddPeerModalOpen(true)}
+                        >
+                          Add new peer
+                        </Button>
+                      </Space>
+                    ) : (
                       <Table
                         pagination={{
                           pageSize,
@@ -803,39 +844,6 @@ export const Peers = () => {
                           }}
                         />
                       </Table>
-                    )}
-                    {showTutorial && (
-                      <Space
-                        direction="vertical"
-                        size="small"
-                        align="center"
-                        style={{
-                          display: "flex",
-                          padding: "45px 15px",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Title level={4} style={{ textAlign: "center" }}>
-                          Get Started
-                        </Title>
-                        <Paragraph
-                          style={{
-                            textAlign: "center",
-                            whiteSpace: "pre-line",
-                          }}
-                        >
-                          It looks like you don't have any connected machines.{" "}
-                          {"\n"}
-                          Get started by adding one to your network.
-                        </Paragraph>
-                        <Button
-                          size={"middle"}
-                          type="primary"
-                          onClick={() => setAddPeerModalOpen(true)}
-                        >
-                          Add new peer
-                        </Button>
-                      </Space>
                     )}
                   </Card>
                 </Space>
