@@ -174,13 +174,15 @@ export function* deletePolicy(
   action: ReturnType<typeof actions.deletePolicy.request>
 ): Generator {
   try {
-    yield call(actions.setDeletedPolicy, {
-      loading: true,
-      success: false,
-      failure: false,
-      error: null,
-      data: null,
-    } as DeleteResponse<string | null>);
+    yield put(
+      actions.setDeletedPolicy({
+        loading: true,
+        success: false,
+        failure: false,
+        error: null,
+        data: null,
+      })
+    );
 
     const effect = yield call(service.deletedPolicy, action.payload);
     const response = effect as ApiResponse<any>;

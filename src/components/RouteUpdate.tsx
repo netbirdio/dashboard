@@ -259,7 +259,6 @@ const RouteAddNew = () => {
         style: styleNotification,
       });
     } else if (savedRoute.success) {
-      console.log("savedRoute", savedRoute);
       message.success({
         content: "Route has been successfully added.",
         key: saveKey,

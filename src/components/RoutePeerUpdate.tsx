@@ -234,7 +234,6 @@ const RoutePeerUpdate = () => {
           style: styleNotification,
         });
       } else if (savedRoute.success) {
-        console.log("savedRoute", savedRoute);
         message.success({
           content: "Route has been successfully updated.",
           key: saveKey,
