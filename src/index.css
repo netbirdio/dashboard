@@ -468,3 +468,8 @@ ul.ant-list-items {
 .style-like-text .ant-select-arrow {
   display: none !important;
 }
+
+
+.ant-spin-nested-loading .ant-spin-spinning {
+  min-height: 300px;
+}

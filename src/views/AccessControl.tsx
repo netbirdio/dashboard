@@ -473,7 +473,7 @@ export const AccessControl = () => {
   };
 
   const renderPorts = (ports: string[]) => {
-     if (!ports) {
+    if (!ports) {
       return (
         <Tag style={{ marginRight: 3 }}>
           <span className="menlo-font">ALL</span>
@@ -661,7 +661,46 @@ export const AccessControl = () => {
                     />
                   )}
                   <Card bodyStyle={{ padding: 0 }}>
-                    {!showTutorial && (
+                    {showTutorial && !loading ? (
+                      <Space
+                        direction="vertical"
+                        size="small"
+                        align="center"
+                        style={{
+                          display: "flex",
+                          padding: "45px 15px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Title level={4} style={{ textAlign: "center" }}>
+                          Create New Rule
+                        </Title>
+                        <Paragraph
+                          style={{
+                            textAlign: "center",
+                            whiteSpace: "pre-line",
+                          }}
+                        >
+                          It looks like you don't have any rules. {"\n"}
+                          Get started with access control by adding a new one.
+                          <a
+                            target="_blank"
+                            rel="noreferrer"
+                            href="https://docs.netbird.io/how-to/manage-network-access"
+                          >
+                            {" "}
+                            Learn more
+                          </a>
+                        </Paragraph>
+                        <Button
+                          size={"middle"}
+                          type="primary"
+                          onClick={() => onClickAddNewPolicy()}
+                        >
+                          Add rule
+                        </Button>
+                      </Space>
+                    ) : (
                       <Table
                         pagination={{
                           current: currentPage,
@@ -683,6 +722,7 @@ export const AccessControl = () => {
                         }`}
                         showSorterTooltip={false}
                         scroll={{ x: true }}
+                        style={{ minHeight: "300px" }}
                         loading={tableSpin(loading)}
                         dataSource={dataTable}
                       >
@@ -824,46 +864,6 @@ export const AccessControl = () => {
                           }}
                         />
                       </Table>
-                    )}
-                    {showTutorial && (
-                      <Space
-                        direction="vertical"
-                        size="small"
-                        align="center"
-                        style={{
-                          display: "flex",
-                          padding: "45px 15px",
-                          justifyContent: "center",
-                        }}
-                      >
-                        <Title level={4} style={{ textAlign: "center" }}>
-                          Create New Rule
-                        </Title>
-                        <Paragraph
-                          style={{
-                            textAlign: "center",
-                            whiteSpace: "pre-line",
-                          }}
-                        >
-                          It looks like you don't have any rules. {"\n"}
-                          Get started with access control by adding a new one.
-                          <a
-                            target="_blank"
-                            rel="noreferrer"
-                            href="https://docs.netbird.io/how-to/manage-network-access"
-                          >
-                            {" "}
-                            Learn more
-                          </a>
-                        </Paragraph>
-                        <Button
-                          size={"middle"}
-                          type="primary"
-                          onClick={() => onClickAddNewPolicy()}
-                        >
-                          Add rule
-                        </Button>
-                      </Space>
                     )}
                   </Card>
                 </Space>
