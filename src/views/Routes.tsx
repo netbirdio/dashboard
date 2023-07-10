@@ -463,9 +463,11 @@ export const Routes = () => {
             </>
           ) : (
             <>
-            <Tag color="default">
-              <Text type="secondary" style={{ fontSize: 12 }}>off</Text>
-            </Tag>
+              <Tag color="default">
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  off
+                </Text>
+              </Tag>
               <Button
                 type="link"
                 style={{ padding: "0" }}
@@ -497,16 +499,13 @@ export const Routes = () => {
     let name = selectedGroup ? selectedGroup.network_id : "";
     confirm({
       icon: <ExclamationCircleOutlined />,
-      title: (
-        <span className="font-500">
-          Delete routes to network {name}
-        </span>
-      ),
+      title: <span className="font-500">Delete routes to network {name}</span>,
       width: 600,
       content: (
         <Space direction="vertical" size="small">
           <Paragraph>
-            This operation will delete all routes to the network {name}. Are you sure?
+            This operation will delete all routes to the network {name}. Are you
+            sure?
           </Paragraph>
           <Alert
             message={
@@ -808,7 +807,11 @@ export const Routes = () => {
               </Col>
             </Row>
 
-            {showTutorial ? (
+            {loading || loadingPeer ? (
+              <div className="container-spinner">
+                <Spin size={"large"} />
+              </div>
+            ) : showTutorial ? (
               <Card bodyStyle={{ padding: 0 }}>
                 <Space
                   direction="vertical"
@@ -849,10 +852,6 @@ export const Routes = () => {
                   </Button>
                 </Space>
               </Card>
-            ) : loading || loadingPeer ? (
-              <div className="container-spinner">
-                <Spin size={"large"} />
-              </div>
             ) : (
               <div className="routes-accordian">
                 <Collapse onChange={callback}>
