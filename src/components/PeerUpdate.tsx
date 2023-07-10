@@ -366,7 +366,6 @@ const PeerUpdate = () => {
       noUpdateToName() &&
       noUpdateToLoginExpiration()
     ) {
-      console.log("no group update==<");
       const style = { marginTop: 85 };
       if (savedGroups.loading) {
         message.loading({

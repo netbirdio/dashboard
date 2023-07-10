@@ -13,6 +13,7 @@ type StateType = Readonly<{
   deleteNameServerGroup: DeleteResponse<string | null>;
   savedNameServerGroup: CreateResponse<NameServerGroup | null>;
   setupNewNameServerGroupVisible: boolean;
+  setupEditNameServerGroupVisible: boolean;
   setupNewNameServerGroupHA: boolean
 }>;
 
@@ -27,17 +28,18 @@ const initialState: StateType = {
     success: false,
     failure: false,
     error: null,
-    data : null
+    data: null,
   },
   savedNameServerGroup: <CreateResponse<NameServerGroup | null>>{
     loading: false,
     success: false,
     failure: false,
     error: null,
-    data : null
+    data: null,
   },
   setupNewNameServerGroupVisible: false,
-  setupNewNameServerGroupHA: false
+  setupEditNameServerGroupVisible: false,
+  setupNewNameServerGroupHA: false,
 };
 
 const data = createReducer<NameServerGroup[], ActionTypes>(initialState.data as NameServerGroup[])
@@ -79,6 +81,9 @@ const savedNameServerGroup = createReducer<CreateResponse<NameServerGroup | null
 const setupNewNameServerGroupVisible = createReducer<boolean, ActionTypes>(initialState.setupNewNameServerGroupVisible)
     .handleAction(actions.setSetupNewNameServerGroupVisible, (store, action) => action.payload)
 
+const setupEditNameServerGroupVisible = createReducer<boolean, ActionTypes>(initialState.setupEditNameServerGroupVisible)
+    .handleAction(actions.setSetupEditNameServerGroupVisible, (store, action) => action.payload)
+
 const setupNewNameServerGroupHA = createReducer<boolean, ActionTypes>(initialState.setupNewNameServerGroupHA)
     .handleAction(actions.setSetupNewNameServerGroupHA, (store, action) => action.payload)
 
@@ -91,5 +96,6 @@ export default combineReducers({
   deletedNameServerGroup,
   savedNameServerGroup,
   setupNewNameServerGroupVisible,
-  setupNewNameServerGroupHA
+  setupEditNameServerGroupVisible,
+  setupNewNameServerGroupHA,
 });

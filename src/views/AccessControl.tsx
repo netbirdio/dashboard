@@ -549,7 +549,6 @@ export const AccessControl = () => {
       })
     );
   };
-  console.log("dataTable", dataTable);
   return (
     <>
       {!setupEditPolicyVisible && (

@@ -118,13 +118,13 @@ export function* setDeleteNameServerGroup(action: ReturnType<typeof  actions.set
 
 export function* deleteNameServerGroup(action: ReturnType<typeof actions.deleteNameServerGroup.request>): Generator {
   try {
-    yield call(actions.setDeletedNameServerGroup,{
+    yield put(actions.setDeletedNameServerGroup({
       loading: true,
       success: false,
       failure: false,
       error: null,
       data: null
-    } as DeleteResponse<string | null>)
+     }))
 
     const effect = yield call(service.deletedNameServerGroup, action.payload);
     const response = effect as ApiResponse<any>;
