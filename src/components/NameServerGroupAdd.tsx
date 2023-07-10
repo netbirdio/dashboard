@@ -5,7 +5,6 @@ import { actions as nsGroupActions } from "../store/nameservers";
 import {
   Button,
   Col,
-  Divider,
   Switch,
   Form,
   FormListFieldData,
@@ -13,20 +12,15 @@ import {
   InputNumber,
   message,
   Modal,
-  Radio,
   Row,
   Select,
   Space,
-  Tooltip,
   Typography,
 } from "antd";
 import {
   CloseOutlined,
-  FlagFilled,
   MinusCircleOutlined,
   PlusOutlined,
-  QuestionCircleFilled,
-  QuestionCircleOutlined,
 } from "@ant-design/icons";
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
@@ -78,15 +72,6 @@ const NameServerGroupAdd = () => {
   const inputNameRef = useRef<any>(null);
   const inputDescriptionRef = useRef<any>(null);
   const [selectCustom, setSelectCustom] = useState(false);
-
-  const optionsDisabledEnabled = [
-    { label: "Enabled", value: true },
-    { label: "Disabled", value: false },
-  ];
-  const optionsPrimary = [
-    { label: "Yes", value: true },
-    { label: "No", value: false },
-  ];
 
   useEffect(() => {
     if (editName)
@@ -340,26 +325,6 @@ const NameServerGroupAdd = () => {
     return Promise.resolve();
   };
 
-  const primaryValidator = (_: RuleObject, primary: boolean) => {
-    if (!primary && form.getFieldValue("domains").length === 0) {
-      return Promise.reject(
-        new Error(
-          "You should select between Resolve all domains or add one Match domain"
-        )
-      );
-    }
-
-    if (primary && form.getFieldValue("domains").length > 0) {
-      return Promise.reject(
-        new Error(
-          "You should remove all match domains before setting this to yes"
-        )
-      );
-    }
-
-    return Promise.resolve();
-  };
-
   // @ts-ignore
   const renderNSList = (
     fields: FormListFieldData[],
@@ -513,16 +478,6 @@ const NameServerGroupAdd = () => {
               Add domain if you want to have a specific one
             </Paragraph>
           </Col>
-          {/* <Col>
-            <Tooltip
-              title="Only queries to domains specified here will be resolved by these nameservers."
-              className={"ant-form-item-tooltip"}
-            >
-              <QuestionCircleOutlined
-                style={{ color: "rgba(0, 0, 0, 0.45)", cursor: "help" }}
-              />
-            </Tooltip>
-          </Col> */}
         </Space>
       </Row>
       {fields.map((field, index) => {
@@ -531,7 +486,6 @@ const NameServerGroupAdd = () => {
             <Col span={22}>
               <Form.Item
                 style={{ margin: "0" }}
-                // hidden={isPrimary}
                 {...field}
                 rules={[{ validator: domainValidator }]}
               >
@@ -552,7 +506,6 @@ const NameServerGroupAdd = () => {
               }}
             >
               <MinusCircleOutlined
-                // hidden={isPrimary}
                 className="dynamic-delete-button"
                 onClick={() => remove(field.name)}
               />
@@ -566,7 +519,6 @@ const NameServerGroupAdd = () => {
           <Form.Item>
             <Button
               type="dashed"
-              //   disabled={isPrimary}
               onClick={() => add()}
               block
               icon={<PlusOutlined />}
@@ -597,6 +549,31 @@ const NameServerGroupAdd = () => {
           onCancel={onCancel}
           open={setupNewNameServerGroupVisible}
         >
+          <Row gutter={16}>
+            <Col span={24}>
+              <Paragraph
+                style={{
+                  textAlign: "start",
+                  whiteSpace: "pre-line",
+                  fontSize: "18px",
+                  margin: "0px",
+                  fontWeight: "500",
+                }}
+              >
+                Add Nameserver
+              </Paragraph>
+              <Paragraph
+                type={"secondary"}
+                style={{
+                  textAlign: "start",
+                  whiteSpace: "pre-line",
+                  paddingBottom: "0",
+                }}
+              >
+                Use this nameserver to resolve domains in your network
+              </Paragraph>
+            </Col>
+          </Row>
           {selectCustom ? (
             <Form
               layout="vertical"
@@ -729,6 +706,56 @@ const NameServerGroupAdd = () => {
                     </Row>
                   </Header>
                 </Col>
+                <Col span={24} flex="auto">
+                  <Form.List
+                    name="nameservers"
+                    rules={[{ validator: formListValidator }]}
+                  >
+                    {renderNSList}
+                  </Form.List>
+                </Col>
+                <Col span={24} flex="auto">
+                  <Form.List name="domains">{renderDomains}</Form.List>
+                </Col>
+                <Col span={24}>
+                  <label
+                    style={{
+                      color: "rgba(0, 0, 0, 0.88)",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                    }}
+                  >
+                    Distribution groups
+                  </label>
+                  <Paragraph
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-2",
+                      fontWeight: "400",
+                      marginBottom: "0",
+                    }}
+                  >
+                    Advertise this route to peers that belong to the following
+                    groups
+                  </Paragraph>
+                  <Form.Item
+                    name="groups"
+                    rules={[{ validator: selectValidator }]}
+                  >
+                    <Select
+                      mode="tags"
+                      style={{ width: "100%" }}
+                      placeholder="Associate groups with the NS group"
+                      tagRender={blueTagRender}
+                      onChange={handleChangeTags}
+                      dropdownRender={dropDownRender}
+                    >
+                      {tagGroups.map((m) => (
+                        <Option key={m}>{optionRender(m)}</Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
                 <Col span={24}>
                   <Form.Item name="enabled" label="">
                     <div
@@ -767,73 +794,6 @@ const NameServerGroupAdd = () => {
                     </div>
                   </Form.Item>
                 </Col>
-                <Col span={24} flex="auto">
-                  <Form.List
-                    name="nameservers"
-                    rules={[{ validator: formListValidator }]}
-                  >
-                    {renderNSList}
-                  </Form.List>
-                </Col>
-                {/* <Col span={24}>
-                  <Form.Item
-                    name="primary"
-                    label="Resolve all domains REMOVE IT"
-                    rules={[{ validator: primaryValidator }]}
-                    dependencies={["domains"]} // trigger primaryValidation if domains is updated
-                  >
-                    <Radio.Group
-                      options={optionsPrimary}
-                      optionType="button"
-                      buttonStyle="solid"
-                    />
-                  </Form.Item>
-                </Col> */}
-                <Col span={24} flex="auto">
-                  <Form.List name="domains">{renderDomains}</Form.List>
-                </Col>
-                <Col span={24}>
-                  <label
-                    style={{
-                      color: "rgba(0, 0, 0, 0.88)",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Distribution groups
-                  </label>
-                  <Paragraph
-                    type={"secondary"}
-                    style={{
-                      marginTop: "-2",
-                      fontWeight: "400",
-                      marginBottom: "0",
-                    }}
-                  >
-                    Advertise this route to peers that belong to the following
-                    groups
-                  </Paragraph>
-                  <Form.Item
-                    name="groups"
-                    // label="Distribution groups"
-                    // tooltip="Distribution groups define to which group of peers these settings will be distributed to"
-                    rules={[{ validator: selectValidator }]}
-                  >
-                    <Select
-                      mode="tags"
-                      style={{ width: "100%" }}
-                      placeholder="Associate groups with the NS group"
-                      tagRender={blueTagRender}
-                      onChange={handleChangeTags}
-                      dropdownRender={dropDownRender}
-                    >
-                      {tagGroups.map((m) => (
-                        <Option key={m}>{optionRender(m)}</Option>
-                      ))}
-                    </Select>
-                  </Form.Item>
-                </Col>
-
                 <Col
                   span={24}
                   style={{ marginTop: "10px", marginBottom: "20px" }}
@@ -869,7 +829,9 @@ const NameServerGroupAdd = () => {
                       type="primary"
                       onClick={handleFormSubmit}
                       disabled={savedNSGroup.loading}
-                    >{`${formNSGroup.id ? "Save" : "Create"}`}</Button>
+                    >
+                      Create Nameserver
+                    </Button>
                   </Space>
                 </Col>
               </Row>
@@ -877,21 +839,6 @@ const NameServerGroupAdd = () => {
           ) : (
             <>
               <Space direction={"vertical"} style={{ width: "100%" }}>
-                <Row gutter={16}>
-                  <Col span={24}>
-                    <Paragraph
-                      style={{
-                        textAlign: "start",
-                        whiteSpace: "pre-line",
-                        fontSize: "18px",
-                        margin: "0px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      Add Nameserver
-                    </Paragraph>
-                  </Col>
-                </Row>
                 <Row align="middle">
                   <Col span={24} style={{ textAlign: "left" }}>
                     <span className="ant-form-item font-500">

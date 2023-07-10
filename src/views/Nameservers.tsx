@@ -29,8 +29,7 @@ import { actions as groupActions } from "../store/group";
 import { Group } from "../store/group/types";
 import { TooltipPlacement } from "antd/es/tooltip";
 import { NameServer, NameServerGroup } from "../store/nameservers/types";
-import NameServerGroupUpdate from "../components/NameServerGroupUpdate";
-import { EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { ExclamationCircleOutlined } from "@ant-design/icons";
 import { useGetGroupTagHelpers } from "../utils/groups";
 import { usePageSizeHelpers } from "../utils/pageSize";
 
@@ -168,22 +167,6 @@ export const Nameservers = () => {
 
   const searchDataTable = () => {
     setDataTable(transformDataTable(filterDataTable()));
-  };
-
-  const onClickEdit = () => {
-    dispatch(nsGroupActions.setSetupEditNameServerGroupVisible(true));
-    dispatch(
-      nsGroupActions.setNameServerGroup({
-        id: nsGroupToAction?.id,
-        name: nsGroupToAction?.name,
-        primary: nsGroupToAction?.primary,
-        domains: nsGroupToAction?.domains,
-        description: nsGroupToAction?.description,
-        groups: nsGroupToAction?.groups,
-        enabled: nsGroupToAction?.enabled,
-        nameservers: nsGroupToAction?.nameservers,
-      } as NameServerGroup)
-    );
   };
 
   const showConfirmDelete = (record: NameserverGroupDataTable) => {
@@ -397,51 +380,51 @@ export const Nameservers = () => {
     }
   }, [savedNSGroup]);
 
-    const createDeleteKey = "Delete";
-    useEffect(() => {
-      if (deleteNSGroup.loading) {
-        message.loading({
-          content: "Deleting...",
-          key: createDeleteKey,
-          duration: 0,
-          style: styleNotification,
-        });
-      } else if (deleteNSGroup.success) {
-        message.success({
-          content: "Nameserver has been deleted successfully.",
-          key: createDeleteKey,
-          duration: 2,
-          style: styleNotification,
-        });
-        dispatch(nsGroupActions.resetDeletedNameServerGroup(null));
-      } else if (deleteNSGroup.error) {
-        let errorMsg = "Failed to delete nameserver group";
-        switch (deleteNSGroup.error.statusCode) {
-          case 403:
-            errorMsg =
-              "Failed to delete nameserver group. You might not have enough permissions.";
-            break;
-          default:
-            errorMsg = deleteNSGroup.error.data.message
-              ? deleteNSGroup.error.data.message
-              : errorMsg;
-            break;
-        }
-        message.error({
-          content: errorMsg,
-          key: createDeleteKey,
-          duration: 5,
-          style: styleNotification,
-        });
-        dispatch(
-          nsGroupActions.setSavedNameServerGroup({
-            ...deleteNSGroup,
-            error: null,
-          })
-        );
-        dispatch(nsGroupActions.resetDeletedNameServerGroup(null));
+  const createDeleteKey = "Delete";
+  useEffect(() => {
+    if (deleteNSGroup.loading) {
+      message.loading({
+        content: "Deleting...",
+        key: createDeleteKey,
+        duration: 0,
+        style: styleNotification,
+      });
+    } else if (deleteNSGroup.success) {
+      message.success({
+        content: "Nameserver has been deleted successfully.",
+        key: createDeleteKey,
+        duration: 2,
+        style: styleNotification,
+      });
+      dispatch(nsGroupActions.resetDeletedNameServerGroup(null));
+    } else if (deleteNSGroup.error) {
+      let errorMsg = "Failed to delete nameserver group";
+      switch (deleteNSGroup.error.statusCode) {
+        case 403:
+          errorMsg =
+            "Failed to delete nameserver group. You might not have enough permissions.";
+          break;
+        default:
+          errorMsg = deleteNSGroup.error.data.message
+            ? deleteNSGroup.error.data.message
+            : errorMsg;
+          break;
       }
-    }, [deleteNSGroup]);
+      message.error({
+        content: errorMsg,
+        key: createDeleteKey,
+        duration: 5,
+        style: styleNotification,
+      });
+      dispatch(
+        nsGroupActions.setSavedNameServerGroup({
+          ...deleteNSGroup,
+          error: null,
+        })
+      );
+      dispatch(nsGroupActions.resetDeletedNameServerGroup(null));
+    }
+  }, [deleteNSGroup]);
 
   const onPopoverVisibleChange = (b: boolean, key: string) => {
     if (addNewNameServerGroupVisible) {
@@ -535,7 +518,11 @@ export const Nameservers = () => {
             <Row justify="end">
               <Col>
                 {!showTutorial && (
-                  <Button type="primary" onClick={onClickAddNewNSGroup}>
+                  <Button
+                    type="primary"
+                    onClick={onClickAddNewNSGroup}
+                    disabled={savedNSGroup.loading}
+                  >
                     Add Nameserver
                   </Button>
                 )}
@@ -561,7 +548,6 @@ export const Nameservers = () => {
                 showTotal: (total, range) =>
                   `Showing ${range[0]} to ${range[1]} of ${total} nameservers`,
               }}
-              // className="card-table"
               className={`access-control-table ${
                 showTutorial
                   ? "card-table card-table-no-placeholder"
@@ -600,7 +586,7 @@ export const Nameservers = () => {
                 }}
               />
               <Column
-                title="Status"
+                title="Enabled"
                 dataIndex="enabled"
                 align="center"
                 render={(text: Boolean, record) => {
@@ -616,19 +602,6 @@ export const Nameservers = () => {
                   );
                 }}
               />
-
-              {/* <Column
-                title="Status"
-                dataIndex="enabled"
-                align="center"
-                render={(text: Boolean) => {
-                  return text ? (
-                    <Tag color="green">enabled</Tag>
-                  ) : (
-                    <Tag color="red">disabled</Tag>
-                  );
-                }}
-              /> */}
               <Column
                 title="Nameservers"
                 dataIndex="nameservers"
@@ -641,14 +614,6 @@ export const Nameservers = () => {
                   </>
                 )}
               />
-              {/* <Column
-                title="All domains"
-                dataIndex="primary"
-                align="center"
-                render={(text: Boolean) => {
-                  return text ? <Tag color="blue">yes</Tag> : <Tag>no</Tag>;
-                }}
-              /> */}
               <Column
                 title="Match domains"
                 dataIndex="domains"
@@ -673,6 +638,7 @@ export const Nameservers = () => {
                   return (
                     <Button
                       type="text"
+                      disabled={savedNSGroup.loading}
                       onClick={() =>
                         showConfirmDelete(record as NameserverGroupDataTable)
                       }

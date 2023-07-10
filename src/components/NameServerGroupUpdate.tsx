@@ -5,19 +5,15 @@ import { actions as nsGroupActions } from "../store/nameservers";
 import {
   Button,
   Col,
-  Divider,
   Switch,
   Form,
   FormListFieldData,
   Input,
   InputNumber,
   message,
-  Modal,
-  Radio,
   Row,
   Select,
   Space,
-  Tooltip,
   Typography,
   Card,
   Breadcrumb,
@@ -73,15 +69,6 @@ const NameServerGroupUpdate = () => {
   const [editDescription, setEditDescription] = useState(false);
   const inputNameRef = useRef<any>(null);
   const inputDescriptionRef = useRef<any>(null);
- 
-  const optionsDisabledEnabled = [
-    { label: "Enabled", value: true },
-    { label: "Disabled", value: false },
-  ];
-  const optionsPrimary = [
-    { label: "Yes", value: true },
-    { label: "No", value: false },
-  ];
 
   useEffect(() => {
     if (editName)
@@ -90,12 +77,12 @@ const NameServerGroupUpdate = () => {
       });
   }, [editName]);
 
-    useEffect(() => {
-      //Unmounting component clean
-      return () => {
-        onCancel();
-      };
-    }, []);
+  useEffect(() => {
+    //Unmounting component clean
+    return () => {
+      onCancel();
+    };
+  }, []);
 
   useEffect(() => {
     if (editDescription)
@@ -113,7 +100,7 @@ const NameServerGroupUpdate = () => {
     } as formNSGroup;
     setFormNSGroup(newFormGroup);
     form.setFieldsValue(newFormGroup);
- 
+
     if (nsGroup.primary !== undefined) {
       setIsPrimary(nsGroup.primary);
     }
@@ -134,7 +121,7 @@ const NameServerGroupUpdate = () => {
       } as NameServerGroup)
     );
     setEditName(false);
-     setIsPrimary(false);
+    setIsPrimary(false);
   };
 
   const onChange = (changedValues: any) => {
@@ -211,25 +198,6 @@ const NameServerGroupUpdate = () => {
       enabled: true,
     },
   ];
-
-  const handleSelectChange = (value: string) => {
-    let nsGroupLocal = {} as NameServerGroup;
-    if (value === customChoice) {
-      nsGroupLocal = nsGroup;
-    } else {
-      defaultDNSOptions.forEach((nsg) => {
-        if (value === nsg.name) {
-          nsGroupLocal = nsg;
-        }
-      });
-    }
-    let newFormGroup = {
-      ...nsGroupLocal,
-      groups: getGroupNamesFromIDs(nsGroupLocal.groups),
-    } as formNSGroup;
-    setFormNSGroup(newFormGroup);
-    form.setFieldsValue(newFormGroup);
-   };
 
   const handleFormSubmit = () => {
     form
@@ -339,26 +307,6 @@ const NameServerGroupUpdate = () => {
     return Promise.resolve();
   };
 
-  const primaryValidator = (_: RuleObject, primary: boolean) => {
-    if (!primary && form.getFieldValue("domains").length === 0) {
-      return Promise.reject(
-        new Error(
-          "You should select between Resolve all domains or add one Match domain"
-        )
-      );
-    }
-
-    if (primary && form.getFieldValue("domains").length > 0) {
-      return Promise.reject(
-        new Error(
-          "You should remove all match domains before setting this to yes"
-        )
-      );
-    }
-
-    return Promise.resolve();
-  };
-
   // @ts-ignore
   const renderNSList = (
     fields: FormListFieldData[],
@@ -382,19 +330,15 @@ const NameServerGroupUpdate = () => {
         {!!fields.length && (
           <Row align="middle">
             <Col span={4} style={{ textAlign: "left" }}>
-              <Typography.Text
-                style={{ color: "#818183", paddingLeft: "5px" }}
-              ></Typography.Text>
+              <Text style={{ color: "#818183", paddingLeft: "5px" }}></Text>
             </Col>
             <Col span={10} style={{ textAlign: "left" }}>
-              <Typography.Text style={{ color: "#818183", paddingLeft: "5px" }}>
+              <Text style={{ color: "#818183", paddingLeft: "5px" }}>
                 Nameserver IP
-              </Typography.Text>
+              </Text>
             </Col>
             <Col span={4} style={{ textAlign: "left" }}>
-              <Typography.Text style={{ color: "#818183", paddingLeft: "5px" }}>
-                Port
-              </Typography.Text>
+              <Text style={{ color: "#818183", paddingLeft: "5px" }}>Port</Text>
             </Col>
             <Col span={4} />
           </Row>
@@ -565,7 +509,6 @@ const NameServerGroupUpdate = () => {
           <Form.Item>
             <Button
               type="dashed"
-              //   disabled={isPrimary}
               onClick={() => add()}
               block
               icon={<PlusOutlined />}
@@ -794,21 +737,8 @@ const NameServerGroupUpdate = () => {
                 >
                   Distribution groups
                 </label>
-                {/* <Paragraph
-                      type={"secondary"}
-                      style={{
-                        marginTop: "-2",
-                        fontWeight: "400",
-                        marginBottom: "0",
-                      }}
-                    >
-                      Advertise this route to peers that belong to the following
-                      groups
-                    </Paragraph> */}
                 <Form.Item
                   name="groups"
-                  // label="Distribution groups"
-                  // tooltip="Distribution groups define to which group of peers these settings will be distributed to"
                   rules={[{ validator: selectValidator }]}
                   style={{ maxWidth: "380px" }}
                 >
@@ -826,23 +756,6 @@ const NameServerGroupUpdate = () => {
                   </Select>
                 </Form.Item>
               </Col>
-              {/* 
-                  <Col
-                    span={24}
-                    style={{ marginTop: "10px", marginBottom: "20px" }}
-                  >
-                    <Text type={"secondary"}>
-                      Learn more about
-                      <a
-                        target="_blank"
-                        rel="noreferrer"
-                        href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
-                      >
-                        {" "}
-                        DNS
-                      </a>
-                    </Text>
-                  </Col> */}
               <Col
                 style={{
                   width: "100%",
@@ -862,7 +775,9 @@ const NameServerGroupUpdate = () => {
                     type="primary"
                     onClick={handleFormSubmit}
                     disabled={savedNSGroup.loading}
-                  >{`${formNSGroup.id ? "Save" : "Create"}`}</Button>
+                  >
+                    Save
+                  </Button>
                 </Space>
               </Col>
             </Row>
