@@ -459,14 +459,14 @@ const AccessControlNew = () => {
                       fontWeight: "500",
                     }}
                   >
-                    Create Rule
+                    Create rule
                   </Paragraph>
                   <Paragraph
                     type={"secondary"}
                     style={{
                       textAlign: "start",
                       whiteSpace: "pre-line",
-                      marginTop: "-23px",
+                      marginTop: "-20px",
                       fontSize: "14px",
                       paddingBottom: "25px",
                       marginBottom: "4px",
@@ -769,6 +769,8 @@ const AccessControlNew = () => {
                       color: "rgba(0, 0, 0, 0.88)",
                       fontSize: "14px",
                       fontWeight: "500",
+                      padding: "0 0 2px",
+                      display: "inline-block",
                     }}
                   >
                     Ports

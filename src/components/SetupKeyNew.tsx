@@ -357,7 +357,7 @@ const SetupKeyNew = () => {
           style={{
             textAlign: "start",
             whiteSpace: "pre-line",
-            marginTop: "-23px",
+            marginTop: "-20px",
             fontSize: "14px",
             paddingBottom: "25px",
             marginBottom: "4px",
