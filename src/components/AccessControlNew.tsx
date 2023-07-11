@@ -456,7 +456,6 @@ const AccessControlNew = () => {
                       textAlign: "start",
                       whiteSpace: "pre-line",
                       fontSize: "18px",
-                      margin: "0px",
                       fontWeight: "500",
                     }}
                   >
@@ -467,7 +466,10 @@ const AccessControlNew = () => {
                     style={{
                       textAlign: "start",
                       whiteSpace: "pre-line",
-                      paddingBottom: "15px",
+                      marginTop: "-23px",
+                      fontSize: "14px",
+                      paddingBottom: "25px",
+                      marginBottom: "4px",
                     }}
                   >
                     Use this rule to restrict access to groups of resources
@@ -828,9 +830,16 @@ const AccessControlNew = () => {
                       className="menlo-font"
                       placeholder={
                         formPolicy.protocol === "all" ||
-                        formPolicy.protocol === "icmp"
-                          ? "All"
-                          : (<div color={"rgba(0,0,0,0.25)"} className="arimo-font">Select ports</div>)
+                        formPolicy.protocol === "icmp" ? (
+                          "All"
+                        ) : (
+                          <div
+                            color={"rgba(0,0,0,0.25)"}
+                            className="arimo-font"
+                          >
+                            Select ports
+                          </div>
+                        )
                       }
                       tagRender={grayTagRender}
                       onChange={handleChangePorts}
@@ -859,6 +868,7 @@ const AccessControlNew = () => {
                     }}
                   >
                     <Switch
+                      size="small"
                       onChange={handleChangeDisabled}
                       defaultChecked={true}
                     />
@@ -890,7 +900,7 @@ const AccessControlNew = () => {
               </Col>
               <Col
                 span={24}
-                style={{ marginTop: "20px", marginBottom: "25px" }}
+                style={{ marginTop: "10px", marginBottom: "24px" }}
               >
                 <Text type={"secondary"}>
                   Learn more about
@@ -900,7 +910,7 @@ const AccessControlNew = () => {
                     href="https://docs.netbird.io/how-to/manage-network-access"
                   >
                     {" "}
-                    Access Controls
+                    access controls
                   </a>
                 </Text>
               </Col>

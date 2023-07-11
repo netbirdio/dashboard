@@ -331,121 +331,117 @@ const NameServerGroupAdd = () => {
     { add, remove }: any,
     { errors }: any
   ) => (
-    <Col>
-      <div style={{ width: "100%", maxWidth: "360px" }}>
-        <label
-          style={{
-            color: "rgba(0, 0, 0, 0.88)",
-            fontSize: "14px",
-            fontWeight: "500",
-            marginBottom: "10px",
-            display: "block",
-          }}
-        >
-          Nameservers
-        </label>
+    <div style={{ width: "100%", maxWidth: "360px" }}>
+      <label
+        style={{
+          color: "rgba(0, 0, 0, 0.88)",
+          fontSize: "14px",
+          fontWeight: "500",
+          marginBottom: "10px",
+          display: "block",
+        }}
+      >
+        Nameservers
+      </label>
 
-        {!!fields.length && (
-          <Row align="middle">
-            <Col span={4} style={{ textAlign: "left" }}>
-              <Typography.Text
-                style={{ color: "#818183", paddingLeft: "5px" }}
-              ></Typography.Text>
-            </Col>
-            <Col span={10} style={{ textAlign: "left" }}>
-              <Typography.Text style={{ color: "#818183", paddingLeft: "5px" }}>
-                Nameserver IP
-              </Typography.Text>
-            </Col>
-            <Col span={4} style={{ textAlign: "left" }}>
-              <Typography.Text style={{ color: "#818183", paddingLeft: "5px" }}>
-                Port
-              </Typography.Text>
-            </Col>
-            <Col span={4} />
-          </Row>
-        )}
-        {fields.map((field, index) => {
-          return (
-            <Row key={index}>
-              <Col span={4} style={{ textAlign: "left" }}>
-                <Form.Item
-                  style={{ margin: "3px" }}
-                  name={[field.name, "ns_type"]}
-                  rules={[
-                    { required: true, message: "Missing first protocol" },
-                  ]}
-                  initialValue={"udp"}
-                >
-                  <Select
-                    disabled
-                    style={{ width: "100%" }}
-                    className="style-like-text"
-                  >
-                    <Option value="udp">UDP</Option>
-                  </Select>
-                </Form.Item>
-              </Col>
-              <Col span={10} style={{ margin: "1px" }}>
-                <Form.Item
-                  style={{ margin: "1px" }}
-                  name={[field.name, "ip"]}
-                  rules={[{ validator: ipValidator }]}
-                >
-                  <Input
-                    placeholder="e.g. X.X.X.X"
-                    style={{ width: "100%" }}
-                    autoComplete="off"
-                  />
-                </Form.Item>
-              </Col>
-              <Col span={4} style={{ textAlign: "center" }}>
-                <Form.Item
-                  style={{ margin: "1px" }}
-                  name={[field.name, "port"]}
-                  rules={[{ required: true, message: "Missing port" }]}
-                  initialValue={53}
-                >
-                  <InputNumber placeholder="Port" style={{ width: "100%" }} />
-                </Form.Item>
-              </Col>
-              <Col
-                span={2}
-                style={{
-                  textAlign: "center",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <MinusCircleOutlined onClick={() => remove(field.name)} />
-              </Col>
-            </Row>
-          );
-        })}
-
-        <Row>
-          <Col span={20}>
-            <Form.Item>
-              <Button
-                type="dashed"
-                onClick={() => add()}
-                block
-                style={{
-                  maxWidth: "270px",
-                  marginTop: "5px",
-                }}
-                disabled={fields.length > 1}
-                icon={<PlusOutlined />}
-              >
-                Add Nameserver
-              </Button>
-              <Form.ErrorList errors={errors} />
-            </Form.Item>
+      {!!fields.length && (
+        <Row align="middle">
+          <Col span={4} style={{ textAlign: "left" }}>
+            <Typography.Text
+              style={{ color: "#818183", paddingLeft: "5px" }}
+            ></Typography.Text>
           </Col>
+          <Col span={10} style={{ textAlign: "left" }}>
+            <Typography.Text style={{ color: "#818183", paddingLeft: "5px" }}>
+              Nameserver IP
+            </Typography.Text>
+          </Col>
+          <Col span={4} style={{ textAlign: "left" }}>
+            <Typography.Text style={{ color: "#818183", paddingLeft: "5px" }}>
+              Port
+            </Typography.Text>
+          </Col>
+          <Col span={4} />
         </Row>
-      </div>
-    </Col>
+      )}
+      {fields.map((field, index) => {
+        return (
+          <Row key={index}>
+            <Col span={4} style={{ textAlign: "left" }}>
+              <Form.Item
+                style={{ margin: "3px" }}
+                name={[field.name, "ns_type"]}
+                rules={[{ required: true, message: "Missing first protocol" }]}
+                initialValue={"udp"}
+              >
+                <Select
+                  disabled
+                  style={{ width: "100%" }}
+                  className="style-like-text"
+                >
+                  <Option value="udp">UDP</Option>
+                </Select>
+              </Form.Item>
+            </Col>
+            <Col span={10} style={{ margin: "1px" }}>
+              <Form.Item
+                style={{ margin: "1px" }}
+                name={[field.name, "ip"]}
+                rules={[{ validator: ipValidator }]}
+              >
+                <Input
+                  placeholder="e.g. X.X.X.X"
+                  style={{ width: "100%" }}
+                  autoComplete="off"
+                />
+              </Form.Item>
+            </Col>
+            <Col span={4} style={{ textAlign: "center" }}>
+              <Form.Item
+                style={{ margin: "1px" }}
+                name={[field.name, "port"]}
+                rules={[{ required: true, message: "Missing port" }]}
+                initialValue={53}
+              >
+                <InputNumber placeholder="Port" style={{ width: "100%" }} />
+              </Form.Item>
+            </Col>
+            <Col
+              span={2}
+              style={{
+                textAlign: "center",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              <MinusCircleOutlined onClick={() => remove(field.name)} />
+            </Col>
+          </Row>
+        );
+      })}
+
+      <Row>
+        <Col span={20}>
+          <Form.Item>
+            <Button
+              type="dashed"
+              onClick={() => add()}
+              block
+              style={{
+                maxWidth: "270px",
+                marginTop: "5px",
+              }}
+              disabled={fields.length > 1}
+              icon={<PlusOutlined />}
+            >
+              Add nameserver
+            </Button>
+            <Form.ErrorList errors={errors} />
+          </Form.Item>
+        </Col>
+      </Row>
+    </div>
   );
 
   // @ts-ignore
@@ -470,9 +466,9 @@ const NameServerGroupAdd = () => {
             <Paragraph
               type={"secondary"}
               style={{
-                marginTop: "-2",
+                marginTop: "-4px",
                 fontWeight: "400",
-                marginBottom: "0",
+                marginBottom: "4px",
               }}
             >
               Add domain if you want to have a specific one
@@ -556,18 +552,20 @@ const NameServerGroupAdd = () => {
                   textAlign: "start",
                   whiteSpace: "pre-line",
                   fontSize: "18px",
-                  margin: "0px",
                   fontWeight: "500",
                 }}
               >
-                Add Nameserver
+                Add nameserver
               </Paragraph>
               <Paragraph
                 type={"secondary"}
                 style={{
                   textAlign: "start",
                   whiteSpace: "pre-line",
-                  paddingBottom: "0",
+                  marginTop: "-23px",
+                  fontSize: "14px",
+                  paddingBottom: "25px",
+                  marginBottom: "4px",
                 }}
               >
                 Use this nameserver to resolve domains in your network
@@ -706,7 +704,7 @@ const NameServerGroupAdd = () => {
                     </Row>
                   </Header>
                 </Col>
-                <Col span={24} flex="auto">
+                <Col span={24}>
                   <Form.List
                     name="nameservers"
                     rules={[{ validator: formListValidator }]}
@@ -714,7 +712,7 @@ const NameServerGroupAdd = () => {
                     {renderNSList}
                   </Form.List>
                 </Col>
-                <Col span={24} flex="auto">
+                <Col span={24}>
                   <Form.List name="domains">{renderDomains}</Form.List>
                 </Col>
                 <Col span={24}>
@@ -730,9 +728,9 @@ const NameServerGroupAdd = () => {
                   <Paragraph
                     type={"secondary"}
                     style={{
-                      marginTop: "-2",
+                      marginTop: "-4px",
                       fontWeight: "400",
-                      marginBottom: "0",
+                      marginBottom: "4px",
                     }}
                   >
                     Advertise this route to peers that belong to the following
@@ -796,7 +794,7 @@ const NameServerGroupAdd = () => {
                 </Col>
                 <Col
                   span={24}
-                  style={{ marginTop: "10px", marginBottom: "20px" }}
+                  style={{ marginTop: "10px", marginBottom: "24px" }}
                 >
                   <Text type={"secondary"}>
                     Learn more about
@@ -830,7 +828,7 @@ const NameServerGroupAdd = () => {
                       onClick={handleFormSubmit}
                       disabled={savedNSGroup.loading}
                     >
-                      Create Nameserver
+                      Create nameserver
                     </Button>
                   </Space>
                 </Col>
