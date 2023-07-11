@@ -579,6 +579,7 @@ const AccessControlEdit = () => {
                         <Switch
                           onChange={handleChangeDisabled}
                           defaultChecked={policy.enabled}
+                          size="small"
                         />
                         <div>
                           <label
@@ -890,7 +891,7 @@ const AccessControlEdit = () => {
                 justifyContent: "start",
                 padding: 0,
                 gap: "10px",
-                marginTop: "30px",
+                marginTop: "12px",
               }}
               key={0}
             >

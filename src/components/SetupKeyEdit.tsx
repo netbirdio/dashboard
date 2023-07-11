@@ -275,7 +275,13 @@ const SetupKeyNew = () => {
       />
       <Card bordered={true} style={{ marginBottom: "7px", border: "none" }}>
         <div style={{ maxWidth: "800px" }}>
-          <h3 style={{ fontSize: "22px", fontWeight: "500",marginBottom:"30px" }}>
+          <h3
+            style={{
+              fontSize: "22px",
+              fontWeight: "500",
+              marginBottom: "30px",
+            }}
+          >
             {setupKey.name}
           </h3>
           <Form
@@ -361,7 +367,7 @@ const SetupKeyNew = () => {
               </Col>
             </Row>
 
-            <Row style={{ marginTop: "30px" }}>
+            <Row style={{ marginTop: "24px" }}>
               <Col
                 xs={24}
                 sm={24}
@@ -419,20 +425,6 @@ const SetupKeyNew = () => {
                 </Row>
               </Col>
             </Row>
-
-            <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
-              <Text type={"secondary"}>
-                Learn more about
-                <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://docs.netbird.io/how-to/register-machines-using-setup-keys"
-                >
-                  {" "}
-                  Setup Keys
-                </a>
-              </Text>
-            </Row>
           </Form>
         </div>
         <Container
@@ -442,6 +434,7 @@ const SetupKeyNew = () => {
             justifyContent: "start",
             padding: 0,
             gap: "10px",
+            marginTop: "24px",
           }}
           key={0}
         >
