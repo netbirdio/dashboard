@@ -523,7 +523,7 @@ export const Nameservers = () => {
                     onClick={onClickAddNewNSGroup}
                     disabled={savedNSGroup.loading}
                   >
-                    Add Nameserver
+                    Add nameserver
                   </Button>
                 )}
               </Col>

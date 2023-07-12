@@ -457,11 +457,7 @@ const AccessControlEdit = () => {
               },
             ]}
           />
-          <Card
-            bordered={true}
-            // title={setupKey.name}
-            style={{ marginBottom: "7px" }}
-          >
+          <Card bordered={true} style={{ marginBottom: "7px" }}>
             <div style={{ maxWidth: "550px" }}>
               <Form
                 layout="vertical"
@@ -508,7 +504,6 @@ const AccessControlEdit = () => {
                               <Form.Item
                                 name="name"
                                 label=""
-                                style={{ margin: "0" }}
                                 rules={[
                                   {
                                     required: true,
@@ -532,7 +527,7 @@ const AccessControlEdit = () => {
                           {!editDescription ? (
                             <div
                               style={{
-                                margin: "12px 0 30px",
+                                margin: "0 0 39px",
                                 lineHeight: "22px",
                                 cursor: "pointer",
                               }}
@@ -551,7 +546,7 @@ const AccessControlEdit = () => {
                             <Form.Item
                               name="description"
                               label="Description"
-                              style={{ marginTop: 24, fontWeight: "500" }}
+                              style={{ marginTop: 10, fontWeight: "500" }}
                             >
                               <Input
                                 placeholder="Add description..."
@@ -568,7 +563,7 @@ const AccessControlEdit = () => {
                       </Row>
                     </Header>
                   </Col>
-                  <Col span={24}>
+                  <Col span={24} style={{ marginBottom: "15px" }}>
                     <Form.Item name="enabled" label="">
                       <div
                         style={{
@@ -579,6 +574,7 @@ const AccessControlEdit = () => {
                         <Switch
                           onChange={handleChangeDisabled}
                           defaultChecked={policy.enabled}
+                          size="small"
                         />
                         <div>
                           <label
@@ -784,7 +780,7 @@ const AccessControlEdit = () => {
                       </Col>
                     </Row>
                   </Col>
-                  <Col span={24}>
+                  <Col span={24} style={{ marginBottom: "15px" }}>
                     <Paragraph
                       type={"secondary"}
                       style={{ marginTop: "-15px", marginBottom: "30px" }}
@@ -793,7 +789,7 @@ const AccessControlEdit = () => {
                       protocol below
                     </Paragraph>
                   </Col>
-                  <Col span={24}>
+                  <Col span={24} style={{ marginBottom: "15px" }}>
                     <Row>
                       <Col span={10}>
                         <Form.Item
@@ -830,7 +826,14 @@ const AccessControlEdit = () => {
                                 maxWidth: "260px",
                                 fontWeight: "500",
                               }}
-                              placeholder={<div color={"rgba(0,0,0,0.25)"} className="arimo-font">Select ports</div>}
+                              placeholder={
+                                <div
+                                  color={"rgba(0,0,0,0.25)"}
+                                  className="arimo-font"
+                                >
+                                  Select ports
+                                </div>
+                              }
                               className="menlo-font"
                               value={formPolicyCopy}
                               disabled={true}
@@ -862,7 +865,14 @@ const AccessControlEdit = () => {
                                 maxWidth: "260px",
                                 fontWeight: "500",
                               }}
-                              placeholder={<div color={"rgba(0,0,0,0.25)"} className="arimo-font">Select ports</div>}
+                              placeholder={
+                                <div
+                                  color={"rgba(0,0,0,0.25)"}
+                                  className="arimo-font"
+                                >
+                                  Select ports
+                                </div>
+                              }
                               tagRender={grayTagRender}
                               onChange={handleChangePorts}
                               className="menlo-font"
@@ -890,7 +900,7 @@ const AccessControlEdit = () => {
                 justifyContent: "start",
                 padding: 0,
                 gap: "10px",
-                marginTop: "30px",
+                marginTop: "12px",
               }}
               key={0}
             >

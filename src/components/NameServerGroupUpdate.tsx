@@ -313,117 +313,121 @@ const NameServerGroupUpdate = () => {
     { add, remove }: any,
     { errors }: any
   ) => (
-    <Col>
-      <div style={{ width: "100%", maxWidth: "360px" }}>
-        <label
-          style={{
-            color: "rgba(0, 0, 0, 0.88)",
-            fontSize: "14px",
-            fontWeight: "500",
-            marginBottom: "10px",
-            display: "block",
-          }}
-        >
-          Nameservers
-        </label>
+    <Row>
+      <Col>
+        <div style={{ width: "100%", maxWidth: "360px" }}>
+          <label
+            style={{
+              color: "rgba(0, 0, 0, 0.88)",
+              fontSize: "14px",
+              fontWeight: "500",
+              marginBottom: "10px",
+              display: "block",
+            }}
+          >
+            Nameservers
+          </label>
 
-        {!!fields.length && (
-          <Row align="middle">
-            <Col span={4} style={{ textAlign: "left" }}>
-              <Text style={{ color: "#818183", paddingLeft: "5px" }}></Text>
-            </Col>
-            <Col span={10} style={{ textAlign: "left" }}>
-              <Text style={{ color: "#818183", paddingLeft: "5px" }}>
-                Nameserver IP
-              </Text>
-            </Col>
-            <Col span={4} style={{ textAlign: "left" }}>
-              <Text style={{ color: "#818183", paddingLeft: "5px" }}>Port</Text>
-            </Col>
-            <Col span={4} />
-          </Row>
-        )}
-        {fields.map((field, index) => {
-          return (
-            <Row key={index}>
+          {!!fields.length && (
+            <Row align="middle">
               <Col span={4} style={{ textAlign: "left" }}>
-                <Form.Item
-                  style={{ margin: "3px" }}
-                  name={[field.name, "ns_type"]}
-                  rules={[
-                    { required: true, message: "Missing first protocol" },
-                  ]}
-                  initialValue={"udp"}
-                >
-                  <Select
-                    disabled
-                    style={{ width: "100%" }}
-                    className="style-like-text"
-                  >
-                    <Option value="udp">UDP</Option>
-                  </Select>
-                </Form.Item>
+                <Text style={{ color: "#818183", paddingLeft: "5px" }}></Text>
               </Col>
-              <Col span={10} style={{ margin: "1px" }}>
-                <Form.Item
-                  style={{ margin: "1px" }}
-                  name={[field.name, "ip"]}
-                  rules={[{ validator: ipValidator }]}
-                >
-                  <Input
-                    placeholder="e.g. X.X.X.X"
-                    style={{ width: "100%" }}
-                    autoComplete="off"
-                  />
-                </Form.Item>
+              <Col span={10} style={{ textAlign: "left" }}>
+                <Text style={{ color: "#818183", paddingLeft: "5px" }}>
+                  Nameserver IP
+                </Text>
               </Col>
-              <Col span={4} style={{ textAlign: "center" }}>
-                <Form.Item
-                  style={{ margin: "1px" }}
-                  name={[field.name, "port"]}
-                  rules={[{ required: true, message: "Missing port" }]}
-                  initialValue={53}
-                >
-                  <InputNumber placeholder="Port" style={{ width: "100%" }} />
-                </Form.Item>
+              <Col span={4} style={{ textAlign: "left" }}>
+                <Text style={{ color: "#818183", paddingLeft: "5px" }}>
+                  Port
+                </Text>
               </Col>
-              <Col
-                span={2}
-                style={{
-                  textAlign: "center",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}
-              >
-                <MinusCircleOutlined onClick={() => remove(field.name)} />
-              </Col>
+              <Col span={4} />
             </Row>
-          );
-        })}
+          )}
+          {fields.map((field, index) => {
+            return (
+              <Row key={index}>
+                <Col span={4} style={{ textAlign: "left" }}>
+                  <Form.Item
+                    style={{ margin: "3px" }}
+                    name={[field.name, "ns_type"]}
+                    rules={[
+                      { required: true, message: "Missing first protocol" },
+                    ]}
+                    initialValue={"udp"}
+                  >
+                    <Select
+                      disabled
+                      style={{ width: "100%" }}
+                      className="style-like-text"
+                    >
+                      <Option value="udp">UDP</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={10} style={{ margin: "1px" }}>
+                  <Form.Item
+                    style={{ margin: "1px" }}
+                    name={[field.name, "ip"]}
+                    rules={[{ validator: ipValidator }]}
+                  >
+                    <Input
+                      placeholder="e.g. X.X.X.X"
+                      style={{ width: "100%" }}
+                      autoComplete="off"
+                    />
+                  </Form.Item>
+                </Col>
+                <Col span={4} style={{ textAlign: "center" }}>
+                  <Form.Item
+                    style={{ margin: "1px" }}
+                    name={[field.name, "port"]}
+                    rules={[{ required: true, message: "Missing port" }]}
+                    initialValue={53}
+                  >
+                    <InputNumber placeholder="Port" style={{ width: "100%" }} />
+                  </Form.Item>
+                </Col>
+                <Col
+                  span={2}
+                  style={{
+                    textAlign: "center",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <MinusCircleOutlined onClick={() => remove(field.name)} />
+                </Col>
+              </Row>
+            );
+          })}
 
-        <Row>
-          <Col span={20}>
-            <Form.Item>
-              <Button
-                type="dashed"
-                onClick={() => add()}
-                block
-                style={{
-                  maxWidth: "270px",
-                  marginTop: "5px",
-                }}
-                disabled={fields.length > 1}
-                icon={<PlusOutlined />}
-              >
-                Add Nameserver
-              </Button>
-              <Form.ErrorList errors={errors} />
-            </Form.Item>
-          </Col>
-        </Row>
-      </div>
-    </Col>
+          <Row>
+            <Col span={20}>
+              <Form.Item>
+                <Button
+                  type="dashed"
+                  onClick={() => add()}
+                  block
+                  style={{
+                    maxWidth: "270px",
+                    marginTop: "5px",
+                  }}
+                  disabled={fields.length > 1}
+                  icon={<PlusOutlined />}
+                >
+                  Add Nameserver
+                </Button>
+                <Form.ErrorList errors={errors} />
+              </Form.Item>
+            </Col>
+          </Row>
+        </div>
+      </Col>
+    </Row>
   );
 
   // @ts-ignore
@@ -448,24 +452,13 @@ const NameServerGroupUpdate = () => {
             <Paragraph
               type={"secondary"}
               style={{
-                marginTop: "-2",
                 fontWeight: "400",
-                marginBottom: "0",
+                marginBottom: "10px",
               }}
             >
               Add domain if you want to have a specific one
             </Paragraph>
           </Col>
-          {/* <Col>
-            <Tooltip
-              title="Only queries to domains specified here will be resolved by these nameservers."
-              className={"ant-form-item-tooltip"}
-            >
-              <QuestionCircleOutlined
-                style={{ color: "rgba(0, 0, 0, 0.45)", cursor: "help" }}
-              />
-            </Tooltip>
-          </Col> */}
         </Space>
       </Row>
       {fields.map((field, index) => {
@@ -631,7 +624,7 @@ const NameServerGroupUpdate = () => {
                           className={
                             "access-control input-text ant-drawer-subtitle"
                           }
-                          style={{ marginTop: "0" }}
+                          style={{ margin: "0 0 39px 0px" }}
                           onClick={() => toggleEditDescription(true)}
                         >
                           {formNSGroup.description &&
@@ -641,7 +634,7 @@ const NameServerGroupUpdate = () => {
                         </div>
                       ) : (
                         <Row>
-                          <Col span={8}>
+                          <Col span={8} style={{ marginBottom: "15px" }}>
                             <div
                               style={{ lineHeight: "15px", marginTop: "24px" }}
                             >
@@ -676,7 +669,51 @@ const NameServerGroupUpdate = () => {
                   </Row>
                 </Header>
               </Col>
-              <Col span={24}>
+
+              <Col span={24} style={{ marginBottom: "15px" }}>
+                <Form.List
+                  name="nameservers"
+                  rules={[{ validator: formListValidator }]}
+                >
+                  {renderNSList}
+                </Form.List>
+              </Col>
+
+              <Col span={24} style={{ marginBottom: "15px" }}>
+                <Form.List name="domains">{renderDomains}</Form.List>
+              </Col>
+              <Col span={24} style={{ marginBottom: "15px" }}>
+                <label
+                  style={{
+                    color: "rgba(0, 0, 0, 0.88)",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                    marginBottom: "5px",
+                    display: "block",
+                  }}
+                >
+                  Distribution groups
+                </label>
+                <Form.Item
+                  name="groups"
+                  rules={[{ validator: selectValidator }]}
+                  style={{ maxWidth: "380px" }}
+                >
+                  <Select
+                    mode="tags"
+                    style={{ width: "100%" }}
+                    placeholder="Associate groups with the NS group"
+                    tagRender={blueTagRender}
+                    onChange={handleChangeTags}
+                    dropdownRender={dropDownRender}
+                  >
+                    {tagGroups.map((m) => (
+                      <Option key={m}>{optionRender(m)}</Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+              </Col>
+              <Col span={24} style={{ marginBottom: "15px" }}>
                 <Form.Item name="enabled" label="">
                   <div
                     style={{
@@ -708,52 +745,12 @@ const NameServerGroupUpdate = () => {
                           marginBottom: "0",
                         }}
                       >
-                        Disable this server if you don't want it to apply
-                        immediately
+                        {formNSGroup.enabled
+                          ? "Disable this server if you don't want it to apply immediately"
+                          : " Enable this server if you want it to apply immediately"}
                       </Paragraph>
                     </div>
                   </div>
-                </Form.Item>
-              </Col>
-              <Col span={24}>
-                <Form.List
-                  name="nameservers"
-                  rules={[{ validator: formListValidator }]}
-                >
-                  {renderNSList}
-                </Form.List>
-              </Col>
-
-              <Col span={24}>
-                <Form.List name="domains">{renderDomains}</Form.List>
-              </Col>
-              <Col span={24}>
-                <label
-                  style={{
-                    color: "rgba(0, 0, 0, 0.88)",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                  }}
-                >
-                  Distribution groups
-                </label>
-                <Form.Item
-                  name="groups"
-                  rules={[{ validator: selectValidator }]}
-                  style={{ maxWidth: "380px" }}
-                >
-                  <Select
-                    mode="tags"
-                    style={{ width: "100%" }}
-                    placeholder="Associate groups with the NS group"
-                    tagRender={blueTagRender}
-                    onChange={handleChangeTags}
-                    dropdownRender={dropDownRender}
-                  >
-                    {tagGroups.map((m) => (
-                      <Option key={m}>{optionRender(m)}</Option>
-                    ))}
-                  </Select>
                 </Form.Item>
               </Col>
               <Col

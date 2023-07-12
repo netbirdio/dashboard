@@ -31,7 +31,7 @@ import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
 import { CheckOutlined, CopyOutlined } from "@ant-design/icons";
 import { copyToClipboard } from "../utils/common";
-import {useGetGroupTagHelpers} from "../utils/groups";
+import { useGetGroupTagHelpers } from "../utils/groups";
 
 const { Option } = Select;
 const { Text } = Typography;
@@ -105,7 +105,7 @@ const SetupKeyNew = () => {
       (s) => !allGroupsNames.includes(s)
     );
 
-    const expiresIn = formSetupKey.expires_in * 24 * 3600 // the api expects seconds we have days
+    const expiresIn = formSetupKey.expires_in * 24 * 3600; // the api expects seconds we have days
     return {
       id: formSetupKey.id,
       name: formSetupKey.name,
@@ -345,8 +345,7 @@ const SetupKeyNew = () => {
             textAlign: "start",
             whiteSpace: "pre-line",
             fontSize: "18px",
-            margin: "0px",
-            fontWeight:"500"
+            fontWeight: "500",
           }}
         >
           {showPlainToken
@@ -358,6 +357,10 @@ const SetupKeyNew = () => {
           style={{
             textAlign: "start",
             whiteSpace: "pre-line",
+            marginTop: "-20px",
+            fontSize: "14px",
+            paddingBottom: "25px",
+            marginBottom: "4px",
           }}
         >
           {showPlainToken
@@ -398,7 +401,7 @@ const SetupKeyNew = () => {
               </Col>
             </Row>
 
-            <Row style={{ marginTop: "20px" }} justify={"space-between"}>
+            <Row style={{ marginTop: "24px" }} justify={"space-between"}>
               <Col span={18}>
                 <Paragraph
                   style={{
@@ -420,6 +423,7 @@ const SetupKeyNew = () => {
                 <Row justify={"end"}>
                   <Form.Item name="reusable" valuePropName="checked">
                     <Switch
+                      size="small"
                       onChange={(checked) => {
                         setFormSetupKey({
                           ...formSetupKey,
@@ -432,7 +436,7 @@ const SetupKeyNew = () => {
               </Col>
             </Row>
 
-            <Row style={{ marginTop: "10px" }}>
+            <Row style={{ marginTop: "16px" }}>
               <Col span={24}>
                 <Paragraph
                   style={{
@@ -470,7 +474,7 @@ const SetupKeyNew = () => {
               </Col>
             </Row>
 
-            <Row style={{ marginTop: "20px" }}>
+            <Row style={{ marginTop: "24px" }}>
               <Col span={24}>
                 <Paragraph
                   style={{
@@ -505,7 +509,7 @@ const SetupKeyNew = () => {
               </Col>
             </Row>
 
-            <Row style={{ marginTop: "20px" }}>
+            <Row style={{ marginTop: "24px" }}>
               <Col span={24}>
                 <Paragraph
                   style={{
@@ -529,7 +533,7 @@ const SetupKeyNew = () => {
                 >
                   <Select
                     mode="tags"
-                    style={{ width: "100%"}}
+                    style={{ width: "100%" }}
                     placeholder="Associate groups with the key"
                     tagRender={blueTagRender}
                     dropdownRender={dropDownRender}
@@ -543,7 +547,7 @@ const SetupKeyNew = () => {
                 </Form.Item>
               </Col>
             </Row>
-            <Row style={{ marginTop: "40px", marginBottom: "28px" }}>
+            <Row style={{ marginTop: "24px", marginBottom: "24px" }}>
               <Text type={"secondary"}>
                 Learn more about
                 <a

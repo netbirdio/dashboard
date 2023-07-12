@@ -426,7 +426,7 @@ const RouteAddNew = (selectedPeer: any) => {
                 disabled={savedRoute.loading}
                 onClick={handleFormSubmit}
               >
-                Add Route
+                Add route
               </Button>
             </Space>
           }
@@ -455,7 +455,7 @@ const RouteAddNew = (selectedPeer: any) => {
                       marginBottom: "25px",
                     }}
                   >
-                    Add Route
+                    Add route
                   </Paragraph>
 
                   {!!selectedPeer.selectedPeer && (
@@ -887,7 +887,7 @@ const RouteAddNew = (selectedPeer: any) => {
               </Col>
               <Col
                 span={24}
-                style={{ marginTop: "20px", marginBottom: "25px" }}
+                style={{ marginTop: "24px", marginBottom: "12px" }}
               >
                 <Text type={"secondary"}>
                   Learn more about
@@ -897,7 +897,7 @@ const RouteAddNew = (selectedPeer: any) => {
                     href="https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                   >
                     {" "}
-                    Network Routes
+                    network routes
                   </a>
                 </Text>
               </Col>
