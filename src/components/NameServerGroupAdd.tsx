@@ -785,8 +785,9 @@ const NameServerGroupAdd = () => {
                             marginBottom: "0",
                           }}
                         >
-                          Disable this server if you don't want it to apply
-                          immediately
+                          {formNSGroup.enabled
+                            ? "Disable this server if you don't want it to apply immediately"
+                            : " Enable this server if you want it to apply immediately"}
                         </Paragraph>
                       </div>
                     </div>
