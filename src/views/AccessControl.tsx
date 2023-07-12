@@ -644,7 +644,7 @@ export const AccessControl = () => {
                               disabled={savedPolicy.loading}
                               onClick={onClickAddNewPolicy}
                             >
-                              Add Rule
+                              Add rule
                             </Button>
                           </Col>
                         </Row>

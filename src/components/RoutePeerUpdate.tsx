@@ -291,7 +291,7 @@ const RoutePeerUpdate = () => {
               requiredMark={false}
               onValuesChange={onChange}
               style={{ width: "100%", maxWidth: "600px" }}
-              className="route-form"
+              className="route-form  edit-form-wrapper"
             >
               <Row gutter={16}>
                 <Col span={24}>

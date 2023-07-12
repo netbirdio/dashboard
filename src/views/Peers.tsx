@@ -641,7 +641,7 @@ export const Peers = () => {
                               type="primary"
                               onClick={() => setAddPeerModalOpen(true)}
                             >
-                              Add Peer
+                              Add peer
                             </Button>
                           )}
                         </Col>

@@ -310,7 +310,7 @@ const RouteAddNew = () => {
                 disabled={savedRoute.loading}
                 onClick={handleFormSubmit}
               >
-                Add Route
+                Add route
               </Button>
             </Space>
           }
@@ -334,9 +334,7 @@ const RouteAddNew = () => {
                       textAlign: "start",
                       whiteSpace: "pre-line",
                       fontSize: "18px",
-                      margin: "0px",
                       fontWeight: 500,
-                      marginBottom: "0",
                     }}
                   >
                     Add new routing peer
@@ -344,9 +342,12 @@ const RouteAddNew = () => {
                   <Paragraph
                     type={"secondary"}
                     style={{
-                      marginTop: "-2",
-                      fontWeight: "400",
-                      marginBottom: "25px",
+                      textAlign: "start",
+                      whiteSpace: "pre-line",
+                      marginTop: "-23px",
+                      fontSize: "14px",
+                      paddingBottom: "25px",
+                      marginBottom: "4px",
                     }}
                   >
                     When you add multiple routing peers, NetBird enables high

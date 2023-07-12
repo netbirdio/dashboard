@@ -644,7 +644,7 @@ export const Routes = () => {
                               disabled={savedRoute.loading}
                               onClick={onClickAddNewRoute}
                             >
-                              Add Route
+                              Add route
                             </Button>
                           </Col>
                         </Row>

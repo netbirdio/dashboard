@@ -445,7 +445,7 @@ export const SetupKeys = () => {
                             type="primary"
                             onClick={onClickAddNewSetupKey}
                           >
-                            Add Key
+                            Add key
                           </Button>
                         </Col>
                       </Row>
