@@ -452,9 +452,8 @@ const NameServerGroupUpdate = () => {
             <Paragraph
               type={"secondary"}
               style={{
-                marginTop: "-4px",
                 fontWeight: "400",
-                marginBottom: "4px",
+                marginBottom: "10px",
               }}
             >
               Add domain if you want to have a specific one
@@ -727,6 +726,8 @@ const NameServerGroupUpdate = () => {
                     color: "rgba(0, 0, 0, 0.88)",
                     fontSize: "14px",
                     fontWeight: "500",
+                    marginBottom: "5px",
+                    display: "block",
                   }}
                 >
                   Distribution groups
