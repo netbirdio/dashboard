@@ -625,7 +625,7 @@ const NameServerGroupUpdate = () => {
                           className={
                             "access-control input-text ant-drawer-subtitle"
                           }
-                          style={{ marginTop: "0" }}
+                          style={{ margin: "0 0 39px 0px" }}
                           onClick={() => toggleEditDescription(true)}
                         >
                           {formNSGroup.description &&
@@ -635,7 +635,7 @@ const NameServerGroupUpdate = () => {
                         </div>
                       ) : (
                         <Row>
-                          <Col span={8}>
+                          <Col span={8} style={{ marginBottom: "15px" }}>
                             <div
                               style={{ lineHeight: "15px", marginTop: "24px" }}
                             >
@@ -670,7 +670,7 @@ const NameServerGroupUpdate = () => {
                   </Row>
                 </Header>
               </Col>
-              <Col span={24}>
+              <Col span={24} style={{ marginBottom: "15px" }}>
                 <Form.Item name="enabled" label="">
                   <div
                     style={{
@@ -709,7 +709,7 @@ const NameServerGroupUpdate = () => {
                   </div>
                 </Form.Item>
               </Col>
-              <Col span={24}>
+              <Col span={24} style={{ marginBottom: "15px" }}>
                 <Form.List
                   name="nameservers"
                   rules={[{ validator: formListValidator }]}
@@ -718,10 +718,10 @@ const NameServerGroupUpdate = () => {
                 </Form.List>
               </Col>
 
-              <Col span={24}>
+              <Col span={24} style={{ marginBottom: "15px" }}>
                 <Form.List name="domains">{renderDomains}</Form.List>
               </Col>
-              <Col span={24}>
+              <Col span={24} style={{ marginBottom: "15px" }}>
                 <label
                   style={{
                     color: "rgba(0, 0, 0, 0.88)",

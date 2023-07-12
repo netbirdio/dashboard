@@ -367,7 +367,7 @@ const SetupKeyNew = () => {
               </Col>
             </Row>
 
-            <Row style={{ marginTop: "24px" }}>
+            <Row style={{ marginTop: "39px" }}>
               <Col
                 xs={24}
                 sm={24}

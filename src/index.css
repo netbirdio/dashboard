@@ -473,3 +473,7 @@ ul.ant-list-items {
 .ant-spin-nested-loading .ant-spin-spinning {
   min-height: 300px;
 }
+
+.route-form.edit-form-wrapper .ant-form-item{
+      margin-bottom: 39px;
+}
