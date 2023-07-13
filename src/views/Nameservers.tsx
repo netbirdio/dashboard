@@ -601,7 +601,6 @@ export const Nameservers = () => {
               <Column
                 title="Name"
                 dataIndex="name"
-                align="center"
                 onFilter={(value: string | number | boolean, record) =>
                   (record as any).name.includes(value)
                 }
@@ -643,9 +642,16 @@ export const Nameservers = () => {
                 }}
               />
               <Column
+                  title="Match domains"
+                  dataIndex="domains"
+                  align="center"
+                  render={(text, record: NameserverGroupDataTable) => {
+                    return renderPopoverDomains(text, record.domains, record);
+                  }}
+              />
+              <Column
                 title="Nameservers"
                 dataIndex="nameservers"
-                align="center"
                 render={(nameservers: NameServer[]) => (
                   <>
                     {nameservers.map((nameserver) => (
@@ -655,17 +661,8 @@ export const Nameservers = () => {
                 )}
               />
               <Column
-                title="Match domains"
-                dataIndex="domains"
-                align="center"
-                render={(text, record: NameserverGroupDataTable) => {
-                  return renderPopoverDomains(text, record.domains, record);
-                }}
-              />
-              <Column
                 title="Distribution groups"
                 dataIndex="groupsCount"
-                align="center"
                 render={(text, record: NameserverGroupDataTable) => {
                   return renderPopoverGroups(text, record.groups, record);
                 }}
