@@ -355,7 +355,14 @@ export const Activity = () => {
           <Col span={24}>
             <Title className="page-heading">Activity</Title>
             <Paragraph type="secondary">
-              Here you can see all the account and network activity events
+              Here you can see all the account and network activity events.{" "}
+              <a
+                rel="noreferrer"
+                target="_blank"
+                href="https://docs.netbird.io/how-to/monitor-system-and-network-activity"
+              >
+                Learn more
+              </a>
             </Paragraph>
             <Space
               direction="vertical"
@@ -382,20 +389,6 @@ export const Activity = () => {
                     />
                   </Space>
                 </Col>
-                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                  <Row justify="end">
-                    <Col>
-                      <Button
-                        icon={<QuestionCircleFilled />}
-                        type="link"
-                        target="_blank"
-                        href="https://docs.netbird.io/how-to/monitor-system-and-network-activity"
-                      >
-                        Learn more about activity tracking
-                      </Button>
-                    </Col>
-                  </Row>
-                </Col>
               </Row>
               {failed && (
                 <Alert
@@ -419,7 +412,6 @@ export const Activity = () => {
                   scroll={{ x: true }}
                   loading={tableSpin(loading)}
                   dataSource={dataTable}
-                  size="small"
                 >
                   <Column
                     title="Timestamp"
