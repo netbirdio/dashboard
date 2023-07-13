@@ -314,6 +314,46 @@ const NameServerGroupUpdate = () => {
     { errors }: any
   ) => (
     <Row>
+      <Col span={24} style={{ marginBottom: "15px" }}>
+        <Form.Item name="enabled" label="">
+          <div
+              style={{
+                display: "flex",
+                gap: "15px",
+              }}
+          >
+            <Switch
+                onChange={handleChangeDisabled}
+                defaultChecked={formNSGroup.enabled}
+                size="small"
+                checked={formNSGroup.enabled}
+            />
+            <div>
+              <label
+                  style={{
+                    color: "rgba(0, 0, 0, 0.88)",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+              >
+                Enabled
+              </label>
+              <Paragraph
+                  type={"secondary"}
+                  style={{
+                    marginTop: "-2",
+                    fontWeight: "400",
+                    marginBottom: "0",
+                  }}
+              >
+                {formNSGroup.enabled
+                    ? "Disable this server if you don't want the configuration to apply immediately"
+                    : " Enable this server if you want the configuration to apply immediately"}
+              </Paragraph>
+            </div>
+          </div>
+        </Form.Item>
+      </Col>
       <Col>
         <div style={{ width: "100%", maxWidth: "360px" }}>
           <label
@@ -713,46 +753,7 @@ const NameServerGroupUpdate = () => {
                   </Select>
                 </Form.Item>
               </Col>
-              <Col span={24} style={{ marginBottom: "15px" }}>
-                <Form.Item name="enabled" label="">
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "15px",
-                    }}
-                  >
-                    <Switch
-                      onChange={handleChangeDisabled}
-                      defaultChecked={formNSGroup.enabled}
-                      size="small"
-                      checked={formNSGroup.enabled}
-                    />
-                    <div>
-                      <label
-                        style={{
-                          color: "rgba(0, 0, 0, 0.88)",
-                          fontSize: "14px",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Enabled
-                      </label>
-                      <Paragraph
-                        type={"secondary"}
-                        style={{
-                          marginTop: "-2",
-                          fontWeight: "400",
-                          marginBottom: "0",
-                        }}
-                      >
-                        {formNSGroup.enabled
-                          ? "Disable this server if you don't want it to apply immediately"
-                          : " Enable this server if you want it to apply immediately"}
-                      </Paragraph>
-                    </div>
-                  </div>
-                </Form.Item>
-              </Col>
+
               <Col
                 style={{
                   width: "100%",
