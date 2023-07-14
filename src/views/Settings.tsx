@@ -6,10 +6,10 @@ import {
   Card,
   Col,
   Form,
-  List,
+  Switch,
   message,
   Modal,
-  Radio,
+  Tooltip,
   Row,
   Space,
   Typography,
@@ -29,7 +29,7 @@ import {
   QuestionCircleFilled,
 } from "@ant-design/icons";
 
-const { Title, Paragraph } = Typography;
+const { Title, Paragraph, Text } = Typography;
 
 const styleNotification = { marginTop: 85 };
 
@@ -53,7 +53,6 @@ export const Settings = () => {
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
   const [form] = Form.useForm();
-
   useEffect(() => {
     dispatch(
       accountActions.getAccounts.request({
@@ -145,7 +144,10 @@ export const Settings = () => {
     form
       .validateFields()
       .then((values) => {
-        confirmSave(values);
+        confirmSave({
+          ...values,
+          peer_login_expiration_enabled: formPeerExpirationEnabled,
+        });
       })
       .catch((errorInfo) => {
         let msg = "please check the fields and try again";
@@ -173,7 +175,7 @@ export const Settings = () => {
 
   const confirmSave = (newValues: FormAccount) => {
     if (
-      newValues.peer_login_expiration_enabled !=
+      newValues.peer_login_expiration_enabled !==
       formAccount.peer_login_expiration_enabled
     ) {
       let content = newValues.peer_login_expiration_enabled
@@ -183,6 +185,7 @@ export const Settings = () => {
         icon: <ExclamationCircleOutlined />,
         title: "Before you update your account settings.",
         width: 600,
+        okText: newValues.peer_login_expiration_enabled ? "Enable" : "Disable",
         content: content,
         onOk() {
           saveAccount(newValues);
@@ -210,82 +213,154 @@ export const Settings = () => {
         <Row>
           <Col span={24}>
             <Title className="page-heading">Settings</Title>
-            <Paragraph type="secondary">Manage your account's settings</Paragraph>
+            <Paragraph type="secondary">
+              Manage your account's settings
+            </Paragraph>
             <Space
               direction="vertical"
               size="large"
               style={{ display: "flex" }}
             >
-              <Card bodyStyle={{ padding: 0 }}>
-                <Form
-                  name="basic"
-                  autoComplete="off"
-                  form={form}
-                  onFinish={handleFormSubmit}
-                >
-                  <Space direction={"vertical"} style={{ display: "flex" }}>
-                    <Card
-                      title="Authentication"
-                      loading={loading}
-                      defaultValue={"Enabled"}
-                    >
-                      <Form.Item
-                        label="Peer login expiration"
-                        name="peer_login_expiration_enabled"
-                        tooltip="Peer login expiration allows to periodically request re-authentication of peers that were added with the SSO login. You can disable the expiration per peer in the peers tab."
-                        //rules={[{validator: selectValidatorEmptyStrings}]}
-                      >
-                        <Radio.Group
-                          options={[
-                            { label: "Enabled", value: true },
-                            {
-                              label: "Disabled",
-                              value: false,
-                            },
-                          ]}
-                          optionType="button"
-                          buttonStyle="solid"
-                          onChange={function (e) {
-                            setFormPeerExpirationEnabled(e.target.value);
+              <Form
+                name="basic"
+                autoComplete="off"
+                form={form}
+                onFinish={handleFormSubmit}
+              >
+                <Card loading={loading} defaultValue={"Enabled"}>
+                  <div
+                    style={{
+                      color: "rgba(0, 0, 0, 0.88)",
+                      fontWeight: "500",
+                      fontSize: "22px",
+                      marginBottom: "20px",
+                    }}
+                  >
+                    Authentication
+                  </div>
+                  <Row>
+                    <Col span={12}>
+                      <Form.Item name="peer_login_expiration_enabled" label="">
+                        <div
+                          style={{
+                            display: "flex",
+                            gap: "15px",
                           }}
-                        />
-                      </Form.Item>
-                      <Form.Item
-                        name="peer_login_expiration_formatted"
-                        label="Peer login expires in"
-                        tooltip="Time after which every peer added with SSO login will require re-authentication."
-                        rules={[{ validator: checkExpiresIn }]}
-                      >
-                        <ExpiresInInput
-                          disabled={!formPeerExpirationEnabled}
-                          options={Array.of(
-                            { key: "hour", title: "Hours" },
-                            {
-                              key: "day",
-                              title: "Days",
-                            }
-                          )}
-                        />
-                      </Form.Item>
-                      <Form.Item>
-                        <Button
-                          icon={<QuestionCircleFilled />}
-                          type="link"
-                          target="_blank"
-                          href="https://docs.netbird.io/how-to/enforce-periodic-user-authentication"
                         >
-                          Learn more about login expiration
-                        </Button>
+                          <Switch
+                            onChange={(checked) => {
+                              setFormPeerExpirationEnabled(checked);
+                            }}
+                            size="small"
+                            checked={formPeerExpirationEnabled}
+                          />
+                          <div>
+                            <label
+                              style={{
+                                color: "rgba(0, 0, 0, 0.88)",
+                                fontSize: "14px",
+                                fontWeight: "500",
+                              }}
+                            >
+                              Peer login expiration{" "}
+                              <Tooltip
+                                title="Peer login expiration allows to periodically
+                                request re-authentication of peers that were
+                                added with the SSO login. You can disable the
+                                expiration per peer in the peers tab."
+                              >
+                                <Text
+                                  style={{
+                                    marginLeft: "5px",
+                                    fontSize: "14px",
+                                    color: "#bdbdbe",
+                                  }}
+                                  type={"secondary"}
+                                >
+                                  <QuestionCircleFilled />
+                                </Text>
+                              </Tooltip>
+                            </label>
+                            <Paragraph
+                              type={"secondary"}
+                              style={{
+                                marginTop: "-2",
+                                fontWeight: "400",
+                                marginBottom: "0",
+                              }}
+                            >
+                              Request periodic re-authentication of peers
+                              registered with SSO
+                            </Paragraph>
+                          </div>
+                        </div>
                       </Form.Item>
-                    </Card>
-                    <Form.Item style={{ textAlign: "center" }}>
-                      <Button type="primary" htmlType="submit">
-                        Save
-                      </Button>
-                    </Form.Item>
-                  </Space>
-                </Form>
-              </Card>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col span={12}>
+                      <label
+                        style={{
+                          color: "rgba(0, 0, 0, 0.88)",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                        }}
+                      >
+                        Peer login expires in
+                      </label>
+                      <Paragraph
+                        type={"secondary"}
+                        style={{
+                          marginTop: "-2",
+                          fontWeight: "400",
+                          marginBottom: "5px",
+                        }}
+                      >
+                        Time after which every peer added with SSO login will
+                        require re-authentication
+                      </Paragraph>
+                    </Col>
+                  </Row>
+
+                  <Form.Item
+                    name="peer_login_expiration_formatted"
+                    rules={[{ validator: checkExpiresIn }]}
+                  >
+                    <ExpiresInInput
+                      disabled={!formPeerExpirationEnabled}
+                      options={Array.of(
+                        { key: "hour", title: "Hours" },
+                        {
+                          key: "day",
+                          title: "Days",
+                        }
+                      )}
+                    />
+                  </Form.Item>
+
+                  <Col
+                    span={24}
+                    style={{ marginTop: "10px", marginBottom: "24px" }}
+                  >
+                    <Text type={"secondary"}>
+                      Learn more about
+                      <a
+                        target="_blank"
+                        rel="noreferrer"
+                        href="https://docs.netbird.io/how-to/enforce-periodic-user-authentication"
+                      >
+                        {" "}
+                        login expiration
+                      </a>
+                    </Text>
+                  </Col>
+                  <Form.Item style={{ marginBottom: "0" }}>
+                    <Button type="primary" htmlType="submit">
+                      Save
+                    </Button>
+                  </Form.Item>
+                </Card>
+              </Form>
             </Space>
           </Col>
         </Row>
