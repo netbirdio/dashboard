@@ -271,8 +271,9 @@ export const Settings = () => {
                               >
                                 <Text
                                   style={{
-                                    fontSize: "12px",
-                                    color: "#1677ff",
+                                    marginLeft: "5px",
+                                    fontSize: "14px",
+                                    color: "#bdbdbe",
                                   }}
                                   type={"secondary"}
                                 >
