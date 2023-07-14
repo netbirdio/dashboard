@@ -220,7 +220,7 @@ export const Settings = () => {
               size="large"
               style={{ display: "flex" }}
             >
-              <Card bodyStyle={{ padding: 0 }}>
+              
                 <Form
                   name="basic"
                   autoComplete="off"
@@ -292,7 +292,7 @@ export const Settings = () => {
                                 }}
                               >
                                 Request periodic re-authentication of peers
-                                registered with SSO.
+                                registered with SSO
                               </Paragraph>
                             </div>
                           </div>
@@ -319,7 +319,7 @@ export const Settings = () => {
                           }}
                         >
                           Time after which every peer added with SSO login will
-                          require re-authentication.
+                          require re-authentication
                         </Paragraph>
                       </Col>
                     </Row>
@@ -363,7 +363,7 @@ export const Settings = () => {
                     </Form.Item>
                   </Card>
                 </Form>
-              </Card>
+               
             </Space>
           </Col>
         </Row>
