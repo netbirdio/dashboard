@@ -256,6 +256,7 @@ export const Activity = () => {
         );
       case "group.add":
       case "group.update":
+      case "group.delete":
         return renderMultiRowSpan(event.meta.name, "Group");
       case "nameserver.group.add":
       case "nameserver.group.update":
