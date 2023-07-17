@@ -39,6 +39,7 @@ import { Peer, PeerDataTable } from "../store/peer/types";
 import { ExclamationCircleOutlined, MinusOutlined } from "@ant-design/icons";
 import { actions as peerActions } from "../store/peer";
 import { useOidcUser } from "@axa-fr/react-oidc";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
@@ -108,6 +109,22 @@ export const RegularUsers = () => {
   }, [savedUser]);
 
   useEffect(() => {
+    if (!loading && groups.length) {
+      const searchText = getFilterState("userFilter", "search");
+      if (searchText) setTextToSearch(searchText);
+
+      const pageSize = getFilterState("userFilter", "pageSize");
+      if (pageSize) onChangePageSize(pageSize, "userFilter");
+
+      if (searchText || searchText) {
+        setTimeout(() => {
+          setDataTable(transformDataTable(filterDataTable()));
+        }, 800);
+      }
+    }
+  }, [loading, groups]);
+
+  useEffect(() => {
     setDataTable(transformDataTable(users));
   }, [users]);
 
@@ -132,6 +149,7 @@ export const RegularUsers = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("userFilter", "search", e.target.value);
   };
 
   const searchDataTable = () => {
@@ -383,9 +401,9 @@ export const RegularUsers = () => {
                 ? "Same-domain email users are added automatically on first sign-in."
                 : ""}
               <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://docs.netbird.io/how-to/add-users-to-your-network"
+                target="_blank"
+                rel="noreferrer"
+                href="https://docs.netbird.io/how-to/add-users-to-your-network"
               >
                 {" "}
                 Learn more
@@ -411,7 +429,9 @@ export const RegularUsers = () => {
                     <Select
                       value={pageSize.toString()}
                       options={pageSizeOptions}
-                      onChange={onChangePageSize}
+                      onChange={(value) => {
+                        onChangePageSize(value, "userFilter");
+                      }}
                       className="select-rows-per-page-en"
                     />
                   </Space>

@@ -23,6 +23,7 @@ import {
 } from "antd";
 import { Container } from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 import { RootState } from "typesafe-actions";
 import { Policy } from "../store/policy/types";
 import { actions as policyActions } from "../store/policy";
@@ -121,6 +122,30 @@ export const AccessControl = () => {
       dispatch(policyActions.setSetupNewPolicyVisible(false));
     };
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        const quickFilter = getFilterState(
+          "accessControlFilter",
+          "quickFilter"
+        );
+        if (quickFilter) setOptionAllEnable(quickFilter);
+
+        const searchText = getFilterState("accessControlFilter", "search");
+        if (searchText) setTextToSearch(searchText);
+
+        const pageSize = getFilterState("accessControlFilter", "pageSize");
+        if (pageSize) onChangePageSize(pageSize, "accessControlFilter");
+
+        if (quickFilter || searchText || pageSize) {
+          setTimeout(() => {
+            setDataTable(transformDataTable(filterDataTable()));
+          }, 200);
+        }
+      }, 500);
+    }
+  }, [loading]);
 
   const transformDataTable = (d: Policy[]): PolicyDataTable[] => {
     return d.map((policy) => {
@@ -243,6 +268,7 @@ export const AccessControl = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("accessControlFilter", "search", e.target.value);
   };
 
   const searchDataTable = () => {
@@ -252,6 +278,7 @@ export const AccessControl = () => {
 
   const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
     setOptionAllEnable(value);
+    storeFilterState("accessControlFilter", "quickFilter", value);
   };
 
   const showConfirmDelete = (record: PolicyDataTable) => {
@@ -621,7 +648,9 @@ export const AccessControl = () => {
                         <Select
                           value={pageSize.toString()}
                           options={pageSizeOptions}
-                          onChange={onChangePageSize}
+                          onChange={(value) => {
+                            onChangePageSize(value, "accessControlFilter");
+                          }}
                           className="select-rows-per-page-en"
                           disabled={showTutorial}
                         />

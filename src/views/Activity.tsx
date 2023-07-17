@@ -24,6 +24,7 @@ import { capitalize, formatDateTime } from "../utils/common";
 import { User } from "../store/user/types";
 import { usePageSizeHelpers } from "../utils/pageSize";
 import { QuestionCircleFilled } from "@ant-design/icons";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
@@ -82,10 +83,28 @@ export const Activity = () => {
     return f;
   };
 
+    useEffect(() => {
+      if (!loading) {
+        setTimeout(() => {
+          const searchText = getFilterState("activityFilter", "search");
+          if (searchText) setTextToSearch(searchText);
+
+          const pageSize = getFilterState("activityFilter", "pageSize");
+          if (pageSize) onChangePageSize(pageSize, "activityFilter");
+          
+          if (searchText || pageSize) {
+            setDataTable(transformDataTable(filterDataTable()));
+          }
+        }, 500);
+      }
+    }, [loading]);
+  
   const onChangeTextToSearch = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("activityFilter", "search", e.target.value);
+
   };
 
   const searchDataTable = () => {
@@ -385,7 +404,9 @@ export const Activity = () => {
                     <Select
                       value={pageSize.toString()}
                       options={pageSizeOptions}
-                      onChange={onChangePageSize}
+                      onChange={(value) => {
+                        onChangePageSize(value, "activityFilter");
+                      }}
                       className="select-rows-per-page-en"
                     />
                   </Space>

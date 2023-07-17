@@ -24,6 +24,7 @@ import {
 } from "antd";
 import { SetupKey, SetupKeyToSave } from "../store/setup-key/types";
 import { filter } from "lodash";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 import { formatDate, timeAgo } from "../utils/common";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
@@ -114,6 +115,27 @@ export const SetupKeys = () => {
     setDataTable(transformDataTable(filterDataTable()));
   }, [textToSearch, optionValidAll]);
 
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        const quickFilter = getFilterState("setupKeysFilter", "quickFilter");
+        if (quickFilter) setOptionValidAll(quickFilter);
+
+        const searchText = getFilterState("setupKeysFilter", "search");
+        if (searchText) setTextToSearch(searchText);
+
+        const pageSize = getFilterState("setupKeysFilter", "pageSize");
+        if (pageSize) onChangePageSize(pageSize, "setupKeysFilter");
+
+        if (quickFilter || searchText || pageSize) {
+          setTimeout(() => {
+            setDataTable(transformDataTable(filterDataTable()));
+          }, 200);
+        }
+      }, 500);
+    }
+  }, [loading]);
+
   const deleteKey = "deleting";
   useEffect(() => {
     if (deletedSetupKey.loading) {
@@ -203,6 +225,7 @@ export const SetupKeys = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("setupKeysFilter", "search", e.target.value);
   };
 
   const searchDataTable = () => {
@@ -212,6 +235,7 @@ export const SetupKeys = () => {
 
   const onChangeValidAll = ({ target: { value } }: RadioChangeEvent) => {
     setOptionValidAll(value);
+    storeFilterState("setupKeysFilter", "quickFilter", value);
   };
 
   const showConfirmRevoke = (setupKeyToAction: SetupKeyDataTable) => {
@@ -432,7 +456,9 @@ export const SetupKeys = () => {
                         disabled={!dataTable?.length}
                         value={pageSize.toString()}
                         options={pageSizeOptions}
-                        onChange={onChangePageSize}
+                        onChange={(value) => {
+                          onChangePageSize(value, "setupKeysFilter");
+                        }}
                         className="select-rows-per-page-en"
                       />
                     </Space>

@@ -27,6 +27,7 @@ import { capitalize, isLocalDev, isNetBirdHosted } from "../utils/common";
 import { usePageSizeHelpers } from "../utils/pageSize";
 import AddServiceUserPopup from "../components/popups/AddServiceUserPopup";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
@@ -82,6 +83,19 @@ export const ServiceUsers = () => {
   }, [users, groups]);
 
   useEffect(() => {
+    if (!loading && groups.length) {
+      const searchText = getFilterState("serviceUserFilter", "search");
+      if (searchText) setTextToSearch(searchText);
+
+      const pageSize = getFilterState("serviceUserFilter", "pageSize");
+      if (pageSize) onChangePageSize(pageSize, "serviceUserFilter");
+      setTimeout(() => {
+        setDataTable(transformDataTable(filterDataTable()));
+      }, 600);
+    }
+  }, [loading, groups]);
+
+  useEffect(() => {
     setDataTable(transformDataTable(filterDataTable()));
   }, [textToSearch]);
 
@@ -102,6 +116,7 @@ export const ServiceUsers = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("serviceUserFilter", "search", e.target.value);
   };
 
   const searchDataTable = () => {
@@ -217,27 +232,31 @@ export const ServiceUsers = () => {
           <Row>
             <Col span={24}>
               {users.length ? (
-                  <Paragraph style={{marginTop: "5px"}}>
-                    Use service users to create API tokens and avoid losing automated access. <a
-                      target="_blank"
-                      rel="noreferrer"
-                      href="https://docs.netbird.io/how-to/access-netbird-public-api"
+                <Paragraph style={{ marginTop: "5px" }}>
+                  Use service users to create API tokens and avoid losing
+                  automated access.{" "}
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/access-netbird-public-api"
                   >
                     {" "}
                     Learn more
                   </a>
-                  </Paragraph>
+                </Paragraph>
               ) : (
-                  <Paragraph style={{marginTop: "5px"}} type={"secondary"}>
-                    Use service users to create API tokens and avoid losing automated access. <a
-                      target="_blank"
-                      rel="noreferrer"
-                      href="https://docs.netbird.io/how-to/access-netbird-public-api"
+                <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
+                  Use service users to create API tokens and avoid losing
+                  automated access.{" "}
+                  <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/access-netbird-public-api"
                   >
                     {" "}
                     Learn more
                   </a>
-                  </Paragraph>
+                </Paragraph>
               )}
               <Space
                 direction="vertical"
@@ -268,25 +287,28 @@ export const ServiceUsers = () => {
                       <Select
                         value={pageSize.toString()}
                         options={pageSizeOptions}
-                        onChange={onChangePageSize}
+                        onChange={(value) => {
+                          onChangePageSize(value, "serviceUserFilter");
+                        }}
                         className="select-rows-per-page-en"
                         disabled={showTutorial}
                       />
                     </Space>
                   </Col>
                   {!showTutorial && (
-                  <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                    <Row justify="end">
-                      <Col>
-                        <Button
-                          type="primary"
-                          onClick={onClickCreateServiceUser}
-                        >
-                          Add Service User
-                        </Button>
-                      </Col>
-                    </Row>
-                  </Col>)}
+                    <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                      <Row justify="end">
+                        <Col>
+                          <Button
+                            type="primary"
+                            onClick={onClickCreateServiceUser}
+                          >
+                            Add Service User
+                          </Button>
+                        </Col>
+                      </Row>
+                    </Col>
+                  )}
                 </Row>
                 {failed && (
                   <Alert
@@ -298,135 +320,137 @@ export const ServiceUsers = () => {
                   />
                 )}
                 <Card bodyStyle={{ padding: 0 }}>
-                  {!showTutorial && ( <Table
-                    pagination={{
-                      pageSize,
-                      showSizeChanger: false,
-                      showTotal: (total, range) =>
-                        `Showing ${range[0]} to ${range[1]} of ${total} service users`,
-                    }}
-                    className="card-table"
-                    showSorterTooltip={false}
-                    scroll={{ x: true }}
-                    loading={tableSpin(loading)}
-                    dataSource={dataTable}
-                  >
-                    <Column
-                      title="Name"
-                      dataIndex="name"
-                      onFilter={(value: string | number | boolean, record) =>
-                        (record as any).name.includes(value)
-                      }
-                      sorter={(a, b) =>
-                        (a as any).name.localeCompare((b as any).name)
-                      }
-                      defaultSortOrder="ascend"
-                      render={(text, record, index) => {
-                        return (
-                          <Button
-                            type="text"
-                            onClick={() =>
-                              handleEditUser(record as UserDataTable)
-                            }
-                          >
-                            <Text className="font-500">
-                              {text && text.trim() !== ""
-                                ? text
-                                : (record as User).name}
-                            </Text>
-                          </Button>
-                        );
+                  {!showTutorial && (
+                    <Table
+                      pagination={{
+                        pageSize,
+                        showSizeChanger: false,
+                        showTotal: (total, range) =>
+                          `Showing ${range[0]} to ${range[1]} of ${total} service users`,
                       }}
-                    />
-                    <Column
-                      title="Status"
-                      dataIndex="status"
-                      align="center"
-                      onFilter={(value: string | number | boolean, record) =>
-                        (record as any).status.includes(value)
-                      }
-                      sorter={(a, b) =>
-                        (a as any).status.localeCompare((b as any).status)
-                      }
-                      render={(text, record, index) => {
-                        if (text == "active") {
-                          return <Tag color="green">{text}</Tag>;
-                        } else if (text === "invited") {
-                          return <Tag color="gold">{text}</Tag>;
+                      className="card-table"
+                      showSorterTooltip={false}
+                      scroll={{ x: true }}
+                      loading={tableSpin(loading)}
+                      dataSource={dataTable}
+                    >
+                      <Column
+                        title="Name"
+                        dataIndex="name"
+                        onFilter={(value: string | number | boolean, record) =>
+                          (record as any).name.includes(value)
                         }
-                        return <Tag color="red">{text}</Tag>;
-                      }}
-                    />
-                    <Column
-                      title="Role"
-                      dataIndex="role"
-                      onFilter={(value: string | number | boolean, record) =>
-                        (record as any).role.includes(value)
-                      }
-                      sorter={(a, b) =>
-                        (a as any).role.localeCompare((b as any).role)
-                      }
-                    />
-                    <Column
-                      title=""
-                      align="center"
-                      width="250px"
-                      render={(text, record, index) => {
-                        return (
-                          <Button
-                            danger={true}
-                            type={"text"}
-                            style={{ marginLeft: "3px", marginRight: "3px" }}
-                            onClick={() => {
-                              let userRecord = record as UserDataTable;
-                              handleDeleteUser(userRecord);
-                            }}
-                          >
-                            Delete
-                          </Button>
-                        );
-                      }}
-                    />
-                  </Table> )}
+                        sorter={(a, b) =>
+                          (a as any).name.localeCompare((b as any).name)
+                        }
+                        defaultSortOrder="ascend"
+                        render={(text, record, index) => {
+                          return (
+                            <Button
+                              type="text"
+                              onClick={() =>
+                                handleEditUser(record as UserDataTable)
+                              }
+                            >
+                              <Text className="font-500">
+                                {text && text.trim() !== ""
+                                  ? text
+                                  : (record as User).name}
+                              </Text>
+                            </Button>
+                          );
+                        }}
+                      />
+                      <Column
+                        title="Status"
+                        dataIndex="status"
+                        align="center"
+                        onFilter={(value: string | number | boolean, record) =>
+                          (record as any).status.includes(value)
+                        }
+                        sorter={(a, b) =>
+                          (a as any).status.localeCompare((b as any).status)
+                        }
+                        render={(text, record, index) => {
+                          if (text == "active") {
+                            return <Tag color="green">{text}</Tag>;
+                          } else if (text === "invited") {
+                            return <Tag color="gold">{text}</Tag>;
+                          }
+                          return <Tag color="red">{text}</Tag>;
+                        }}
+                      />
+                      <Column
+                        title="Role"
+                        dataIndex="role"
+                        onFilter={(value: string | number | boolean, record) =>
+                          (record as any).role.includes(value)
+                        }
+                        sorter={(a, b) =>
+                          (a as any).role.localeCompare((b as any).role)
+                        }
+                      />
+                      <Column
+                        title=""
+                        align="center"
+                        width="250px"
+                        render={(text, record, index) => {
+                          return (
+                            <Button
+                              danger={true}
+                              type={"text"}
+                              style={{ marginLeft: "3px", marginRight: "3px" }}
+                              onClick={() => {
+                                let userRecord = record as UserDataTable;
+                                handleDeleteUser(userRecord);
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          );
+                        }}
+                      />
+                    </Table>
+                  )}
                   {showTutorial && (
-                      <Space
-                          direction="vertical"
-                          size="small"
-                          align="center"
-                          style={{
-                            display: "flex",
-                            padding: "45px 15px",
-                            justifyContent: "center",
-                          }}
+                    <Space
+                      direction="vertical"
+                      size="small"
+                      align="center"
+                      style={{
+                        display: "flex",
+                        padding: "45px 15px",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <Title level={4} style={{ textAlign: "center" }}>
+                        Create Service User
+                      </Title>
+                      <Paragraph
+                        style={{
+                          textAlign: "center",
+                          whiteSpace: "pre-line",
+                        }}
                       >
-                        <Title level={4} style={{ textAlign: "center" }}>
-                          Create Service User
-                        </Title>
-                        <Paragraph
-                            style={{
-                              textAlign: "center",
-                              whiteSpace: "pre-line",
-                            }}
+                        It looks like you don't have any service users. {"\n"}
+                        Get started by adding one to your network.
+                        <a
+                          target="_blank"
+                          rel="noreferrer"
+                          href="https://docs.netbird.io/how-to/access-netbird-public-api"
                         >
-                          It looks like you don't have any service users. {"\n"}
-                          Get started by adding one to your network.
-                          <a
-                              target="_blank"
-                              rel="noreferrer"
-                              href="https://docs.netbird.io/how-to/access-netbird-public-api"
-                          >
-                            {" "}
-                            Learn more
-                          </a>
-                        </Paragraph>
-                        <Button
-                            size={"middle"}
-                            type="primary"
-                            onClick={() => onClickCreateServiceUser()}
-                        >
-                          Add service user
-                        </Button>
-                      </Space>
+                          {" "}
+                          Learn more
+                        </a>
+                      </Paragraph>
+                      <Button
+                        size={"middle"}
+                        type="primary"
+                        onClick={() => onClickCreateServiceUser()}
+                      >
+                        Add service user
+                      </Button>
+                    </Space>
                   )}
                 </Card>
               </Space>

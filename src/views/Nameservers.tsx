@@ -24,6 +24,7 @@ import {
 } from "antd";
 import { filter } from "lodash";
 import tableSpin from "../components/Spin";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 import { useGetTokenSilently } from "../utils/token";
 import { actions as groupActions } from "../store/group";
 import { Group } from "../store/group/types";
@@ -83,6 +84,26 @@ export const Nameservers = () => {
     { label: "All", value: "all" },
     { label: "Enabled", value: "enabled" },
   ];
+
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        const quickFilter = getFilterState("nameServerFilter", "quickFilter");
+        if (quickFilter) setOptionAllEnable(quickFilter);
+
+        const searchText = getFilterState("nameServerFilter", "search");
+        if (searchText) setTextToSearch(searchText);
+
+        const pageSize = getFilterState("nameServerFilter", "pageSize");
+        if (pageSize) onChangePageSize(pageSize, "nameServerFilter");
+        if (quickFilter || searchText) {
+          setTimeout(() => {
+            setDataTable(transformDataTable(filterDataTable()));
+          }, 200);
+        }
+      }, 500);
+    }
+  }, [loading]);
 
   // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
   const setUserAndView = (nsGroup: NameServerGroup) => {
@@ -157,12 +178,14 @@ export const Nameservers = () => {
 
   const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
     setOptionAllEnable(value);
+    storeFilterState("nameServerFilter", "quickFilter", value);
   };
 
   const onChangeTextToSearch = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("nameServerFilter", "search", e.target.value);
   };
 
   const searchDataTable = () => {
@@ -508,7 +531,9 @@ export const Nameservers = () => {
               <Select
                 value={pageSize.toString()}
                 options={pageSizeOptions}
-                onChange={onChangePageSize}
+                onChange={(value) => {
+                  onChangePageSize(value, "nameServerFilter");
+                }}
                 className="select-rows-per-page-en"
                 disabled={showTutorial}
               />
@@ -642,12 +667,12 @@ export const Nameservers = () => {
                 }}
               />
               <Column
-                  title="Match domains"
-                  dataIndex="domains"
-                  align="center"
-                  render={(text, record: NameserverGroupDataTable) => {
-                    return renderPopoverDomains(text, record.domains, record);
-                  }}
+                title="Match domains"
+                dataIndex="domains"
+                align="center"
+                render={(text, record: NameserverGroupDataTable) => {
+                  return renderPopoverDomains(text, record.domains, record);
+                }}
               />
               <Column
                 title="Nameservers"

@@ -35,6 +35,7 @@ import {
   Tooltip,
   Typography,
 } from "antd";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 import { Peer, PeerDataTable } from "../store/peer/types";
 import { filter } from "lodash";
 import { Group, GroupPeer } from "../store/group/types";
@@ -103,6 +104,7 @@ export const Peers = () => {
           peers_count: g.peers?.length,
           peers: g.peers || [],
         }));
+
       return {
         key: p.id,
         ...p,
@@ -120,6 +122,27 @@ export const Peers = () => {
       }
     }
   }, [users]);
+
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        const quickFilter = getFilterState("peerFilter", "quickFilter");
+        if (quickFilter) setOptionOnOff(quickFilter);
+
+        const searchText = getFilterState("peerFilter", "search");
+        if (searchText) setTextToSearch(searchText);
+
+        const pageSize = getFilterState("peerFilter", "pageSize");
+        if (pageSize) onChangePageSize(pageSize, "peerFilter");
+
+        if (quickFilter || searchText || pageSize) {
+          setTimeout(() => {
+            setDataTable(transformDataTable(filterDataTable()));
+          }, 200);
+        }
+      }, 500);
+    }
+  }, [loading]);
 
   const refresh = () => {
     dispatch(
@@ -245,6 +268,7 @@ export const Peers = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("peerFilter", "search", e.target.value);
   };
 
   const searchDataTable = () => {
@@ -254,6 +278,7 @@ export const Peers = () => {
 
   const onChangeOnOff = ({ target: { value } }: RadioChangeEvent) => {
     setOptionOnOff(value);
+    storeFilterState("peerFilter", "quickFilter", value);
   };
 
   const showConfirmDelete = (record: PeerDataTable) => {
@@ -628,7 +653,9 @@ export const Peers = () => {
                           value={pageSize.toString()}
                           options={pageSizeOptions}
                           disabled={showTutorial}
-                          onChange={onChangePageSize}
+                          onChange={(value) => {
+                            onChangePageSize(value, "peerFilter");
+                          }}
                           className="select-rows-per-page-en"
                         />
                       </Space>

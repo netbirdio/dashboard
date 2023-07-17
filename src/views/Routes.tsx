@@ -30,6 +30,7 @@ import { actions as routeActions } from "../store/route";
 import { actions as peerActions } from "../store/peer";
 import { filter, sortBy } from "lodash";
 import { EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 import RouteAddNew from "../components/RouteAddNew";
 import {
   GroupedDataTable,
@@ -125,6 +126,26 @@ export const Routes = () => {
       dispatch(routeActions.setSetupEditRoutePeerVisible(false));
     };
   }, []);
+
+  useEffect(() => {
+    if (!loading) {
+      setTimeout(() => {
+        const quickFilter = getFilterState("routesFilter", "quickFilter");
+        if (quickFilter) setOptionAllEnable(quickFilter);
+
+        const searchText = getFilterState("routesFilter", "search");
+        if (searchText) setTextToSearch(searchText);
+
+        if (quickFilter || searchText) {
+          setTimeout(() => {
+            setDataTable(
+              sortBy(transformDataTable(routes, peers), "network_id")
+            );
+          }, 200);
+        }
+      }, 500);
+    }
+  }, [loading]);
 
   useEffect(() => {
     dispatch(
@@ -249,6 +270,7 @@ export const Routes = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("routesFilter", "search", e.target.value);
   };
 
   const searchDataTable = () => {
@@ -259,6 +281,7 @@ export const Routes = () => {
 
   const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
     setOptionAllEnable(value);
+    storeFilterState("routesFilter", "quickFilter", value);
   };
 
   const showConfirmDelete = (selectedRoute: any) => {
