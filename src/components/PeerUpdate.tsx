@@ -746,7 +746,7 @@ const PeerUpdate = () => {
                 </Col>
               </Row>
               <Row gutter={30} style={{ marginTop: "25px" }}>
-                <Col span={4}>
+                <Col lg={4} md={24}>
                   <Form.Item
                     name="ip"
                     label={
@@ -791,7 +791,7 @@ const PeerUpdate = () => {
                     />
                   </Form.Item>
                 </Col>
-                <Col span={5}>
+                <Col lg={5} md={24}>
                   <Form.Item
                     name="dns_label"
                     label="Domain name"
@@ -806,7 +806,7 @@ const PeerUpdate = () => {
                     />
                   </Form.Item>
                 </Col>
-                <Col span={4}>
+                <Col lg={4} md={24}>
                   <Form.Item
                     name="last_seen"
                     label="Last seen"
@@ -861,13 +861,13 @@ const PeerUpdate = () => {
                     </div>
                   </Form.Item>
                 </Col>
-                <Col span={8}>
+                <Col md={24}  lg={8}>
                   <Paragraph
-                      style={{
-                        whiteSpace: "pre-line",
-                        margin: 0,
-                        fontWeight: "500",
-                      }}
+                    style={{
+                      whiteSpace: "pre-line",
+                      margin: 0,
+                      fontWeight: "500",
+                    }}
                   >
                     Groups
                   </Paragraph>
