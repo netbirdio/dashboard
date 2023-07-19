@@ -50,7 +50,7 @@ interface FormPolicy {
 }
 
 const AccessControlEdit = () => {
-  const { optionRender, blueTagRender, grayTagRender } =
+  const { optionRender, blueTagRender, tagGroups, grayTagRender } =
     useGetGroupTagHelpers();
 
   const { getTokenSilently } = useGetTokenSilently();
@@ -81,7 +81,7 @@ const AccessControlEdit = () => {
     biDirectional: false,
     reverseDirectional: false,
   });
-  const [tagGroups, setTagGroups] = useState([] as string[]);
+  // const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formPolicy, setFormPolicy] = useState({} as FormPolicy);
   const [form] = Form.useForm();
   const inputNameRef = useRef<any>(null);
@@ -99,9 +99,9 @@ const AccessControlEdit = () => {
   useEffect(() => {
     if (editDescription) inputDescriptionRef.current!.focus({ cursor: "end" });
   }, [editDescription]);
-  useEffect(() => {
-    setTagGroups(groups?.map((g) => g.name) || []);
-  }, [groups]);
+  // useEffect(() => {
+  //   setTagGroups(groups?.map((g) => g.name) || []);
+  // }, [groups]);
   useEffect(() => {
     if (!policy) return;
     const fPolicy = {
@@ -115,10 +115,10 @@ const AccessControlEdit = () => {
       ports: policy.rules[0].ports,
       action: policy.rules[0].action,
       tagSourceGroups: policy.rules[0].sources
-        ? policy.rules[0].sources?.map((t) => t.name)
+        ? policy.rules[0].sources?.map((t) => t.id || "")
         : [],
       tagDestinationGroups: policy.rules[0].destinations
-        ? policy.rules[0].destinations?.map((t) => t.name)
+        ? policy.rules[0].destinations?.map((t) => t.id || "")
         : [],
     } as FormPolicy;
     setFormPolicy(fPolicy);
@@ -139,17 +139,21 @@ const AccessControlEdit = () => {
   const createPolicyToSave = (): PolicyToSave => {
     const sources =
       groups
-        ?.filter((g) => formPolicy.tagSourceGroups.includes(g.name))
+        ?.filter((g) => formPolicy.tagSourceGroups.includes(g.id || ""))
         .map((g) => g.id || "") || [];
+
     const destinations =
       groups
-        ?.filter((g) => formPolicy.tagDestinationGroups.includes(g.name))
+        ?.filter((g) => formPolicy.tagDestinationGroups.includes(g.id || ""))
         .map((g) => g.id || "") || [];
+
+    const existingGroupsNames: any[] = groups?.map((g) => g.id);
     const sourcesNoId = formPolicy.tagSourceGroups.filter(
-      (s) => !tagGroups.includes(s)
+      (s) => !existingGroupsNames.includes(s)
     );
+
     const destinationsNoId = formPolicy.tagDestinationGroups.filter(
-      (s) => !tagGroups.includes(s)
+      (s) => !existingGroupsNames.includes(s)
     );
     const groupsToSave = uniq([...sourcesNoId, ...destinationsNoId]);
     return {
@@ -618,9 +622,16 @@ const AccessControlEdit = () => {
                             tagRender={blueTagRender}
                             onChange={handleChangeSource}
                             dropdownRender={dropDownRenderGroups}
+                            optionFilterProp="serchValue"
                           >
-                            {tagGroups.map((m) => (
-                              <Option key={m}>{optionRender(m)}</Option>
+                            {tagGroups.map((m, index) => (
+                              <Option
+                                key={index}
+                                value={m.id}
+                                serchValue={m.name}
+                              >
+                                {optionRender(m.name)}
+                              </Option>
                             ))}
                           </Select>
                         </Form.Item>
@@ -771,9 +782,16 @@ const AccessControlEdit = () => {
                             tagRender={blueTagRender}
                             onChange={handleChangeDestination}
                             dropdownRender={dropDownRenderGroups}
+                            optionFilterProp="serchValue"
                           >
-                            {tagGroups.map((m) => (
-                              <Option key={m}>{optionRender(m)}</Option>
+                            {tagGroups.map((m, index) => (
+                              <Option
+                                key={index}
+                                value={m.id}
+                                serchValue={m.name}
+                              >
+                                {optionRender(m.name)}
+                              </Option>
                             ))}
                           </Select>
                         </Form.Item>

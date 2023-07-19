@@ -73,7 +73,7 @@ const RoutePeerUpdate = () => {
     if (!route) return;
     const fRoute = {
       ...route,
-      groups: getGroupNamesFromIDs(route.groups),
+      groups: route.groups,
     } as FormRoute;
     setFormRoute(fRoute);
     form.setFieldsValue(fRoute);
@@ -222,53 +222,53 @@ const RoutePeerUpdate = () => {
     onCancel();
   };
 
-    const styleNotification = { marginTop: 85 };
+  const styleNotification = { marginTop: 85 };
 
-    const saveKey = "saving";
-    useEffect(() => {
-      if (savedRoute.loading) {
-        message.loading({
-          content: "Saving...",
-          key: saveKey,
-          duration: 0,
-          style: styleNotification,
-        });
-      } else if (savedRoute.success) {
-        message.success({
-          content: "Route has been successfully updated.",
-          key: saveKey,
-          duration: 2,
-          style: styleNotification,
-        });
-        dispatch(routeActions.setSetupNewRouteVisible(false));
-        dispatch(routeActions.setSetupEditRouteVisible(false));
-        dispatch(routeActions.setSetupEditRoutePeerVisible(false));
-        dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
-        dispatch(routeActions.resetSavedRoute(null));
-      } else if (savedRoute.error) {
-        let errorMsg = "Failed to update network route";
-        switch (savedRoute.error.statusCode) {
-          case 403:
-            errorMsg =
-              "Failed to update network route. You might not have enough permissions.";
-            break;
-          default:
-            errorMsg = savedRoute.error.data.message
-              ? savedRoute.error.data.message
-              : errorMsg;
-            break;
-        }
-        message.error({
-          content: errorMsg,
-          key: saveKey,
-          duration: 5,
-          style: styleNotification,
-        });
-        dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
-        dispatch(routeActions.resetSavedRoute(null));
+  const saveKey = "saving";
+  useEffect(() => {
+    if (savedRoute.loading) {
+      message.loading({
+        content: "Saving...",
+        key: saveKey,
+        duration: 0,
+        style: styleNotification,
+      });
+    } else if (savedRoute.success) {
+      message.success({
+        content: "Route has been successfully updated.",
+        key: saveKey,
+        duration: 2,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSetupNewRouteVisible(false));
+      dispatch(routeActions.setSetupEditRouteVisible(false));
+      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
+      dispatch(routeActions.resetSavedRoute(null));
+    } else if (savedRoute.error) {
+      let errorMsg = "Failed to update network route";
+      switch (savedRoute.error.statusCode) {
+        case 403:
+          errorMsg =
+            "Failed to update network route. You might not have enough permissions.";
+          break;
+        default:
+          errorMsg = savedRoute.error.data.message
+            ? savedRoute.error.data.message
+            : errorMsg;
+          break;
       }
-    }, [savedRoute]);
-  
+      message.error({
+        content: errorMsg,
+        key: saveKey,
+        duration: 5,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
+      dispatch(routeActions.resetSavedRoute(null));
+    }
+  }, [savedRoute]);
+
   return (
     <>
       <Container style={{ paddingTop: "40px", paddingBottom: "50px" }}>
@@ -477,9 +477,12 @@ const RoutePeerUpdate = () => {
                       tagRender={blueTagRender}
                       onChange={handleChangeTags}
                       dropdownRender={dropDownRender}
+                      optionFilterProp="serchValue"
                     >
-                      {tagGroups.map((m) => (
-                        <Option key={m}>{optionRender(m)}</Option>
+                      {tagGroups.map((m, index) => (
+                        <Option key={index} value={m.id} serchValue={m.name}>
+                          {optionRender(m.name)}
+                        </Option>
                       ))}
                     </Select>
                   </Form.Item>
