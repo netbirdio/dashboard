@@ -124,25 +124,23 @@ export const Peers = () => {
   }, [users]);
 
   useEffect(() => {
-    if (!loading) {
-      setTimeout(() => {
-        const quickFilter = getFilterState("peerFilter", "quickFilter");
-        if (quickFilter) setOptionOnOff(quickFilter);
+    if ((!loading && peers && groups)) {
+      const quickFilter = getFilterState("peerFilter", "quickFilter");
+      if (quickFilter) setOptionOnOff(quickFilter);
 
-        const searchText = getFilterState("peerFilter", "search");
-        if (searchText) setTextToSearch(searchText);
+      const searchText = getFilterState("peerFilter", "search");
+      if (searchText) setTextToSearch(searchText);
 
-        const pageSize = getFilterState("peerFilter", "pageSize");
-        if (pageSize) onChangePageSize(pageSize, "peerFilter");
+      const pageSize = getFilterState("peerFilter", "pageSize");
+      if (pageSize) onChangePageSize(pageSize, "peerFilter");
 
-        if (quickFilter || searchText || pageSize) {
-          setTimeout(() => {
-            setDataTable(transformDataTable(filterDataTable()));
-          }, 200);
-        }
-      }, 500);
+      if (quickFilter || searchText || pageSize) {
+        setDataTable(transformDataTable(filterDataTable(searchText)));
+      } else {
+        setDataTable(transformDataTable(peers));
+      }
     }
-  }, [loading]);
+  }, [loading, peers, groups]);
 
   const refresh = () => {
     dispatch(
@@ -197,11 +195,10 @@ export const Peers = () => {
     } else {
       setShowTutorial(true);
     }
-    setDataTable(transformDataTable(peers));
   }, [peers, groups]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
+    setDataTable(transformDataTable(filterDataTable("")));
   }, [textToSearch, optionOnOff]);
 
   const deleteKey = "deleting";
@@ -229,8 +226,10 @@ export const Peers = () => {
     }
   }, [deletedPeer]);
 
-  const filterDataTable = (): Peer[] => {
-    const t = textToSearch.toLowerCase().trim();
+  const filterDataTable = (searchText: string): Peer[] => {
+        const t = searchText
+          ? searchText.toLowerCase().trim()
+          : textToSearch.toLowerCase().trim();
     let f: Peer[] = filter(peers, (f: Peer) => {
       let userEmail: string | null;
       const u = users?.find((u) => u.id === f.user_id)?.email;
@@ -271,10 +270,10 @@ export const Peers = () => {
     storeFilterState("peerFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    const data = filterDataTable();
-    setDataTable(transformDataTable(data));
-  };
+  // const searchDataTable = () => {
+  //   const data = filterDataTable();
+  //   setDataTable(transformDataTable(data));
+  // };
 
   const onChangeOnOff = ({ target: { value } }: RadioChangeEvent) => {
     setOptionOnOff(value);
@@ -626,7 +625,7 @@ export const Peers = () => {
                       <Input
                         allowClear
                         value={textToSearch}
-                        onPressEnter={searchDataTable}
+                        // onPressEnter={searchDataTable}
                         placeholder="Search by name, IP or owner..."
                         onChange={onChangeTextToSearch}
                       />

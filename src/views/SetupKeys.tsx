@@ -107,18 +107,14 @@ export const SetupKeys = () => {
     );
   }, []);
 
-  useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
-  }, [setupKeys]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
+    setDataTable(transformDataTable(filterDataTable("")));
   }, [textToSearch, optionValidAll]);
 
   useEffect(() => {
     if (!loading) {
-      setTimeout(() => {
-        const quickFilter = getFilterState("setupKeysFilter", "quickFilter");
+         const quickFilter = getFilterState("setupKeysFilter", "quickFilter");
         if (quickFilter) setOptionValidAll(quickFilter);
 
         const searchText = getFilterState("setupKeysFilter", "search");
@@ -128,12 +124,11 @@ export const SetupKeys = () => {
         if (pageSize) onChangePageSize(pageSize, "setupKeysFilter");
 
         if (quickFilter || searchText || pageSize) {
-          setTimeout(() => {
-            setDataTable(transformDataTable(filterDataTable()));
-          }, 200);
-        }
-      }, 500);
-    }
+             setDataTable(transformDataTable(filterDataTable(searchText)));
+        } else {
+           setDataTable(transformDataTable(filterDataTable("")));
+         }
+     }
   }, [loading]);
 
   const deleteKey = "deleting";
@@ -203,8 +198,10 @@ export const SetupKeys = () => {
     }
   }, [savedSetupKey]);
 
-  const filterDataTable = (): SetupKey[] => {
-    const t = textToSearch.toLowerCase().trim();
+  const filterDataTable = (searchText: string): SetupKey[] => {
+     const t = searchText
+       ? searchText.toLowerCase().trim()
+       : textToSearch.toLowerCase().trim();
     let f: SetupKey[] = [...setupKeys];
     if (optionValidAll === "valid") {
       f = filter(setupKeys, (_f: SetupKey) => _f.valid && !_f.revoked);
@@ -228,10 +225,10 @@ export const SetupKeys = () => {
     storeFilterState("setupKeysFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    const data = filterDataTable();
-    setDataTable(transformDataTable(data));
-  };
+  // const searchDataTable = () => {
+  //   const data = filterDataTable();
+  //   setDataTable(transformDataTable(data));
+  // };
 
   const onChangeValidAll = ({ target: { value } }: RadioChangeEvent) => {
     setOptionValidAll(value);
@@ -429,7 +426,7 @@ export const SetupKeys = () => {
                     <Input
                       allowClear
                       value={textToSearch}
-                      onPressEnter={searchDataTable}
+                      // onPressEnter={searchDataTable}
                       placeholder="Search by name, type or key prefix..."
                       onChange={onChangeTextToSearch}
                     />

@@ -86,24 +86,57 @@ export const Nameservers = () => {
   ];
 
   useEffect(() => {
-    if (!loading) {
-      setTimeout(() => {
-        const quickFilter = getFilterState("nameServerFilter", "quickFilter");
-        if (quickFilter) setOptionAllEnable(quickFilter);
-
-        const searchText = getFilterState("nameServerFilter", "search");
-        if (searchText) setTextToSearch(searchText);
-
-        const pageSize = getFilterState("nameServerFilter", "pageSize");
-        if (pageSize) onChangePageSize(pageSize, "nameServerFilter");
-        if (quickFilter || searchText) {
-          setTimeout(() => {
-            setDataTable(transformDataTable(filterDataTable()));
-          }, 200);
-        }
-      }, 500);
+    if (nsGroup.length > 0) {
+      setShowTutorial(false);
+    } else {
+      setShowTutorial(true);
     }
-  }, [loading]);
+  }, [nsGroup]);
+
+  useEffect(() => {
+    if (!loading && nsGroup) {
+      const quickFilter = getFilterState("nameServerFilter", "quickFilter");
+      if (quickFilter) setOptionAllEnable(quickFilter);
+
+      const searchText = getFilterState("nameServerFilter", "search");
+      if (searchText) setTextToSearch(searchText);
+
+      const pageSize = getFilterState("nameServerFilter", "pageSize");
+      if (pageSize) onChangePageSize(pageSize, "nameServerFilter");
+      if (quickFilter || searchText) {
+        setDataTable(transformDataTable(filterDataTable(searchText)));
+      } else {
+        setDataTable(transformDataTable(nsGroup));
+      }
+    }
+  }, [loading, nsGroup]);
+
+  useEffect(() => {
+    setDataTable(transformDataTable(filterDataTable("")));
+  }, [textToSearch, optionAllEnable]);
+
+  const filterDataTable = (searchText: string): NameServerGroup[] => {
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
+    let f = filter(
+      nsGroup,
+      (f: NameServerGroup) =>
+        f.name.toLowerCase().includes(t) ||
+        f.name.includes(t) ||
+        t === "" ||
+        getGroupNamesFromIDs(f.groups).find((u) =>
+          u.toLowerCase().trim().includes(t)
+        ) ||
+        f.domains.find((d) => d.toLowerCase().trim().includes(t)) ||
+        f.nameservers.find((n) => n.ip.includes(t))
+    ) as NameServerGroup[];
+    if (optionAllEnable !== "all") {
+      f = filter(f, (f) => f.enabled);
+    }
+    return f;
+  };
+
 
   // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
   const setUserAndView = (nsGroup: NameServerGroup) => {
@@ -143,39 +176,6 @@ export const Nameservers = () => {
     );
   }, []);
 
-  useEffect(() => {
-    if (nsGroup.length > 0) {
-      setShowTutorial(false);
-    } else {
-      setShowTutorial(true);
-    }
-    setDataTable(transformDataTable(filterDataTable()));
-  }, [nsGroup]);
-
-  useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
-  }, [textToSearch, optionAllEnable]);
-
-  const filterDataTable = (): NameServerGroup[] => {
-    const t = textToSearch.toLowerCase().trim();
-    let f = filter(
-      nsGroup,
-      (f: NameServerGroup) =>
-        f.name.toLowerCase().includes(t) ||
-        f.name.includes(t) ||
-        t === "" ||
-        getGroupNamesFromIDs(f.groups).find((u) =>
-          u.toLowerCase().trim().includes(t)
-        ) ||
-        f.domains.find((d) => d.toLowerCase().trim().includes(t)) ||
-        f.nameservers.find((n) => n.ip.includes(t))
-    ) as NameServerGroup[];
-    if (optionAllEnable !== "all") {
-      f = filter(f, (f) => f.enabled);
-    }
-    return f;
-  };
-
   const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
     setOptionAllEnable(value);
     storeFilterState("nameServerFilter", "quickFilter", value);
@@ -188,9 +188,9 @@ export const Nameservers = () => {
     storeFilterState("nameServerFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    setDataTable(transformDataTable(filterDataTable()));
-  };
+  // const searchDataTable = () => {
+  //   setDataTable(transformDataTable(filterDataTable()));
+  // };
 
   const showConfirmDelete = (record: NameserverGroupDataTable) => {
     setNsGroupToAction(record as NameserverGroupDataTable);
@@ -513,7 +513,7 @@ export const Nameservers = () => {
             <Input
               allowClear
               value={textToSearch}
-              onPressEnter={searchDataTable}
+              // onPressEnter={searchDataTable}
               placeholder="Search by name, domain or nameservers..."
               onChange={onChangeTextToSearch}
             />

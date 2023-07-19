@@ -109,31 +109,30 @@ export const RegularUsers = () => {
   }, [savedUser]);
 
   useEffect(() => {
-    if (!loading && groups.length) {
+    console.log("here");
+    if (!loading && groups.length && users) {
       const searchText = getFilterState("userFilter", "search");
       if (searchText) setTextToSearch(searchText);
 
       const pageSize = getFilterState("userFilter", "pageSize");
       if (pageSize) onChangePageSize(pageSize, "userFilter");
 
-      if (searchText || searchText) {
-        setTimeout(() => {
-          setDataTable(transformDataTable(filterDataTable()));
-        }, 800);
+      if (searchText || pageSize) {
+        setDataTable(transformDataTable(filterDataTable(searchText)));
+      } else {
+        setDataTable(transformDataTable(users));
       }
     }
-  }, [loading, groups]);
+  }, [loading, groups, users]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(users));
-  }, [users]);
-
-  useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
+    setDataTable(transformDataTable(filterDataTable("")));
   }, [textToSearch]);
 
-  const filterDataTable = (): User[] => {
-    const t = textToSearch.toLowerCase().trim();
+  const filterDataTable = (searchText: string): User[] => {
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
     let f: User[] = filter(
       users,
       (f: User) =>
@@ -152,10 +151,10 @@ export const RegularUsers = () => {
     storeFilterState("userFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    const data = filterDataTable();
-    setDataTable(transformDataTable(data));
-  };
+  // const searchDataTable = () => {
+  //   const data = filterDataTable();
+  //   setDataTable(transformDataTable(data));
+  // };
 
   const onClickEdit = () => {
     dispatch(userActions.setUpdateUserDrawerVisible(true));
@@ -419,9 +418,10 @@ export const RegularUsers = () => {
                   <Input
                     allowClear
                     value={textToSearch}
-                    onPressEnter={searchDataTable}
+                    // onPressEnter={searchDataTable}
                     placeholder="Search by name, email, groups or role..."
                     onChange={onChangeTextToSearch}
+                    className="input-search"
                   />
                 </Col>
                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>

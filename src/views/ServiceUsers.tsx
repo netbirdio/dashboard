@@ -78,9 +78,18 @@ export const ServiceUsers = () => {
     );
   }, [savedUser, deletedUser]);
 
-  useEffect(() => {
-    setDataTable(transformDataTable(users));
-  }, [users, groups]);
+  // useEffect(() => {
+  //   setDataTable(transformDataTable(users));
+  // }, [users, groups]);
+
+    useEffect(() => {
+      if (users.length > 0) {
+        setShowTutorial(false);
+      } else {
+        setShowTutorial(true);
+      }
+      // setDataTable(transformDataTable(filterDataTable()));
+    }, [users]);
 
   useEffect(() => {
     if (!loading && groups.length) {
@@ -89,18 +98,20 @@ export const ServiceUsers = () => {
 
       const pageSize = getFilterState("serviceUserFilter", "pageSize");
       if (pageSize) onChangePageSize(pageSize, "serviceUserFilter");
-      setTimeout(() => {
-        setDataTable(transformDataTable(filterDataTable()));
-      }, 600);
+      setDataTable(transformDataTable(filterDataTable(searchText)));
+    } else {
+      setDataTable(transformDataTable(users));
     }
-  }, [loading, groups]);
+  }, [loading, groups, users]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
+    setDataTable(transformDataTable(filterDataTable("")));
   }, [textToSearch]);
 
-  const filterDataTable = (): User[] => {
-    const t = textToSearch.toLowerCase().trim();
+  const filterDataTable = (searchText: string): User[] => {
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
     let f: User[] = filter(
       users,
       (f: User) =>
@@ -119,10 +130,10 @@ export const ServiceUsers = () => {
     storeFilterState("serviceUserFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    const data = filterDataTable();
-    setDataTable(transformDataTable(data));
-  };
+  // const searchDataTable = () => {
+  //   const data = filterDataTable();
+  //   setDataTable(transformDataTable(data));
+  // };
 
   const onClickCreateServiceUser = () => {
     dispatch(userActions.setUser(null as unknown as User));
@@ -216,14 +227,7 @@ export const ServiceUsers = () => {
     });
   };
 
-  useEffect(() => {
-    if (users.length > 0) {
-      setShowTutorial(false);
-    } else {
-      setShowTutorial(true);
-    }
-    setDataTable(transformDataTable(filterDataTable()));
-  }, [users]);
+
 
   return (
     <>
@@ -268,7 +272,7 @@ export const ServiceUsers = () => {
                     <Input
                       allowClear
                       value={textToSearch}
-                      onPressEnter={searchDataTable}
+                      // onPressEnter={searchDataTable}
                       placeholder="Search by name or role..."
                       onChange={onChangeTextToSearch}
                       disabled={showTutorial}

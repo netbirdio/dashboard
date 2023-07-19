@@ -128,24 +128,27 @@ export const Routes = () => {
   }, []);
 
   useEffect(() => {
-    if (!loading) {
-      setTimeout(() => {
-        const quickFilter = getFilterState("routesFilter", "quickFilter");
-        if (quickFilter) setOptionAllEnable(quickFilter);
+    if (!loading && dataTable) {
+      const quickFilter = getFilterState("routesFilter", "quickFilter");
+      if (quickFilter) setOptionAllEnable(quickFilter);
 
-        const searchText = getFilterState("routesFilter", "search");
-        if (searchText) setTextToSearch(searchText);
+      const searchText = getFilterState("routesFilter", "search");
+      if (searchText) setTextToSearch(searchText);
 
-        if (quickFilter || searchText) {
-          setTimeout(() => {
-            setDataTable(
-              sortBy(transformDataTable(routes, peers), "network_id")
-            );
-          }, 200);
-        }
-      }, 500);
+      if (quickFilter || searchText) {
+        setGroupedDataTable(
+          filterGroupedDataTable(
+            transformGroupedDataTable(routes, peers),
+            searchText
+          )
+        );
+      } else {
+        setGroupedDataTable(
+          filterGroupedDataTable(transformGroupedDataTable(routes, peers), "")
+        );
+      }
     }
-  }, [loading]);
+  }, [loading, dataTable]);
 
   useEffect(() => {
     dispatch(
@@ -172,9 +175,12 @@ export const Routes = () => {
   }, []);
 
   const filterGroupedDataTable = (
-    routes: GroupedDataTable[]
+    routes: GroupedDataTable[],
+    searchText: string
   ): GroupedDataTable[] => {
-    const t = textToSearch.toLowerCase().trim();
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
     let f: GroupedDataTable[] = filter(
       routes,
       (f) =>
@@ -215,11 +221,17 @@ export const Routes = () => {
     return f;
   };
 
+  // useEffect(() => {
+  //   setGroupedDataTable(
+  //     filterGroupedDataTable(transformGroupedDataTable(routes, peers))
+  //   );
+  // }, [dataTable]);
+
   useEffect(() => {
     setGroupedDataTable(
-      filterGroupedDataTable(transformGroupedDataTable(routes, peers))
+      filterGroupedDataTable(transformGroupedDataTable(routes, peers),"")
     );
-  }, [dataTable]);
+  }, [textToSearch, optionAllEnable]);
 
   useEffect(() => {
     if (failed) {
@@ -229,12 +241,6 @@ export const Routes = () => {
       setDataTable(sortBy(transformDataTable(routes, peers), "network_id"));
     }
   }, [routes]);
-
-  useEffect(() => {
-    setGroupedDataTable(
-      filterGroupedDataTable(transformGroupedDataTable(routes, peers))
-    );
-  }, [textToSearch, optionAllEnable]);
 
   const deleteKey = "deleting";
   useEffect(() => {
@@ -273,11 +279,11 @@ export const Routes = () => {
     storeFilterState("routesFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    setGroupedDataTable(
-      filterGroupedDataTable(transformGroupedDataTable(routes, peers))
-    );
-  };
+  // const searchDataTable = () => {
+  //   setGroupedDataTable(
+  //     filterGroupedDataTable(transformGroupedDataTable(routes, peers))
+  //   );
+  // };
 
   const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
     setOptionAllEnable(value);
@@ -625,7 +631,7 @@ export const Routes = () => {
                       <Input
                         allowClear
                         value={textToSearch}
-                        onPressEnter={searchDataTable}
+                        // onPressEnter={searchDataTable}
                         placeholder="Search by network, range or name..."
                         onChange={onChangeTextToSearch}
                       />

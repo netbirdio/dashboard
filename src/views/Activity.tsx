@@ -58,16 +58,18 @@ export const Activity = () => {
       })
     );
   }, []);
-  useEffect(() => {
-    setDataTable(transformDataTable(events));
-  }, [events]);
+  // useEffect(() => {
+  //   setDataTable(transformDataTable(events));
+  // }, [events]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
+    setDataTable(transformDataTable(filterDataTable("")));
   }, [textToSearch]);
 
-  const filterDataTable = (): Event[] => {
-    const t = textToSearch.toLowerCase().trim();
+  const filterDataTable = (searchText: string): Event[] => {
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
     let usrsMatch: User[] = filter(
       users,
       (u: User) =>
@@ -83,34 +85,33 @@ export const Activity = () => {
     return f;
   };
 
-    useEffect(() => {
-      if (!loading) {
-        setTimeout(() => {
-          const searchText = getFilterState("activityFilter", "search");
-          if (searchText) setTextToSearch(searchText);
+  useEffect(() => {
+    if (!loading && events) {
+      const searchText = getFilterState("activityFilter", "search");
+      if (searchText) setTextToSearch(searchText);
 
-          const pageSize = getFilterState("activityFilter", "pageSize");
-          if (pageSize) onChangePageSize(pageSize, "activityFilter");
-          
-          if (searchText || pageSize) {
-            setDataTable(transformDataTable(filterDataTable()));
-          }
-        }, 500);
+      const pageSize = getFilterState("activityFilter", "pageSize");
+      if (pageSize) onChangePageSize(pageSize, "activityFilter");
+
+      if (searchText || pageSize) {
+        setDataTable(transformDataTable(filterDataTable(searchText)));
+      } else {
+        setDataTable(transformDataTable(events));
       }
-    }, [loading]);
-  
+    }
+  }, [loading, events]);
+
   const onChangeTextToSearch = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
     storeFilterState("activityFilter", "search", e.target.value);
-
   };
 
-  const searchDataTable = () => {
-    const data = filterDataTable();
-    setDataTable(transformDataTable(data));
-  };
+  // const searchDataTable = () => {
+  //   const data = filterDataTable();
+  //   setDataTable(transformDataTable(data));
+  // };
 
   const getActivityRow = (objectType: string, name: string, text: string) => {
     return (
@@ -394,7 +395,7 @@ export const Activity = () => {
                   <Input
                     allowClear
                     value={textToSearch}
-                    onPressEnter={searchDataTable}
+                    // onPressEnter={searchDataTable}
                     placeholder="Search..."
                     onChange={onChangeTextToSearch}
                   />
