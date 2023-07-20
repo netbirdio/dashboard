@@ -50,8 +50,12 @@ interface FormPolicy {
 }
 
 const AccessControlNew = () => {
-  const { optionRender, grayTagRender, blueTagRender } =
-    useGetGroupTagHelpers();
+  const {
+    optionRender,
+    blueTagRender,
+    tagGroups,
+    grayTagRender,
+  } = useGetGroupTagHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const setupNewPolicyVisible = useSelector(
@@ -81,7 +85,7 @@ const AccessControlNew = () => {
     biDirectional: true,
     reverseDirectional: true,
   });
-  const [tagGroups, setTagGroups] = useState([] as string[]);
+  // const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formPolicy, setFormPolicy] = useState({} as FormPolicy);
   const [form] = Form.useForm();
   const inputNameRef = useRef<any>(null);
@@ -93,9 +97,9 @@ const AccessControlNew = () => {
   useEffect(() => {
     if (editDescription) inputDescriptionRef.current!.focus({ cursor: "end" });
   }, [editDescription]);
-  useEffect(() => {
-    setTagGroups(groups?.map((g) => g.name) || []);
-  }, [groups]);
+  // useEffect(() => {
+  //   setTagGroups(groups?.map((g) => g.name) || []);
+  // }, [groups]);
   useEffect(() => {
     if (!policy) return;
     const fPolicy = {
@@ -122,19 +126,26 @@ const AccessControlNew = () => {
   const createPolicyToSave = (): PolicyToSave => {
     const sources =
       groups
-        ?.filter((g) => formPolicy.tagSourceGroups.includes(g.name))
+        ?.filter((g) => formPolicy.tagSourceGroups.includes(g.id || ""))
         .map((g) => g.id || "") || [];
+
     const destinations =
       groups
-        ?.filter((g) => formPolicy.tagDestinationGroups.includes(g.name))
+        ?.filter((g) => formPolicy.tagDestinationGroups.includes(g.id || ""))
         .map((g) => g.id || "") || [];
+
+
+    const existingGroupsNames: any[] = groups?.map((g) => g.id);
     const sourcesNoId = formPolicy.tagSourceGroups.filter(
-      (s) => !tagGroups.includes(s)
+      (s) => !existingGroupsNames.includes(s)
     );
+
     const destinationsNoId = formPolicy.tagDestinationGroups.filter(
-      (s) => !tagGroups.includes(s)
+      (s) => !existingGroupsNames.includes(s)
     );
+
     const groupsToSave = uniq([...sourcesNoId, ...destinationsNoId]);
+
     return {
       id: formPolicy.id,
       name: formPolicy.name,
@@ -562,9 +573,12 @@ const AccessControlNew = () => {
                         tagRender={blueTagRender}
                         onChange={handleChangeSource}
                         dropdownRender={dropDownRenderGroups}
+                        optionFilterProp="serchValue"
                       >
-                        {tagGroups.map((m) => (
-                          <Option key={m}>{optionRender(m)}</Option>
+                        {tagGroups.map((m, index) => (
+                          <Option key={index} value={m.id} serchValue={m.name}>
+                            {optionRender(m.name)}
+                          </Option>
                         ))}
                       </Select>
                     </Form.Item>
@@ -715,9 +729,12 @@ const AccessControlNew = () => {
                         tagRender={blueTagRender}
                         onChange={handleChangeDestination}
                         dropdownRender={dropDownRenderGroups}
+                        optionFilterProp="serchValue"
                       >
-                        {tagGroups.map((m) => (
-                          <Option key={m}>{optionRender(m)}</Option>
+                        {tagGroups.map((m, index) => (
+                          <Option key={index} value={m.id} serchValue={m.name}>
+                            {optionRender(m.name)}
+                          </Option>
                         ))}
                       </Select>
                     </Form.Item>

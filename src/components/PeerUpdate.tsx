@@ -54,7 +54,7 @@ const PeerUpdate = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const { Column } = Table;
   const { confirm } = Modal;
-  const { optionRender } = useGetGroupTagHelpers();
+  const { optionRender, tagGroups, blueTagRender } = useGetGroupTagHelpers();
 
   const dispatch = useDispatch();
   const groups = useSelector((state: RootState) => state.group.data);
@@ -76,7 +76,6 @@ const PeerUpdate = () => {
   const setupNewRouteVisible = useSelector(
     (state: RootState) => state.route.setupNewRouteVisible
   );
-  const [tagGroups, setTagGroups] = useState([] as string[]);
   const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[]);
   const [peerGroups, setPeerGroups] = useState([] as GroupPeer[]);
   const inputNameRef = useRef<any>(null);
@@ -160,10 +159,10 @@ const PeerUpdate = () => {
     const gs = peer?.groups?.map(
       (g) => ({ id: g?.id || "", name: g.name } as GroupPeer)
     ) as GroupPeer[];
-    const gs_name = gs?.map((g) => g.name) as string[];
+     const gs_name = gs?.map((g) => g.id) as string[];
     setPeerGroups(gs);
     setSelectedTagGroups(gs_name);
-    const fPeer = {
+     const fPeer = {
       ...peer,
       name: formPeer.name ? formPeer.name : peer.name,
       groupsNames: gs_name,
@@ -177,9 +176,6 @@ const PeerUpdate = () => {
     form.setFieldsValue(fPeer);
   }, [peer]);
 
-  useEffect(() => {
-    setTagGroups(groups?.map((g) => g.name) || []);
-  }, [groups]);
 
   useEffect(() => {}, [users]);
 
@@ -202,18 +198,19 @@ const PeerUpdate = () => {
 
   useEffect(() => {
     const groupsToRemove = peerGroups
-      .filter((pg) => !selectedTagGroups.includes(pg.name))
+      .filter((pg) => !selectedTagGroups.includes(pg.id))
       .map((g) => g.id);
     const groupsToAdd = (groups as Group[])
       .filter(
         (g) =>
-          selectedTagGroups.includes(g.name) &&
+          selectedTagGroups.includes(g.id || "") &&
           !groupsToRemove.includes(g.id || "") &&
           !peerGroups.find((pg) => pg.id === g.id)
       )
       .map((g) => g.id) as string[];
+
     const groupsNoId = selectedTagGroups.filter(
-      (stg) => !groups.find((g) => g.name === stg)
+      (stg) => !groups.find((g) => g.id === stg)
     );
     setPeerGroupsToSave({
       ...peerGroupsToSave,
@@ -230,9 +227,9 @@ const PeerUpdate = () => {
       event.preventDefault();
       event.stopPropagation();
     };
-
+    const groupName = getGroupNameFromID(value);
     let tagClosable = true;
-    if (value === "All") {
+    if (groupName[0] === "All") {
       tagClosable = false;
     }
 
@@ -244,8 +241,17 @@ const PeerUpdate = () => {
         onClose={onClose}
         style={{ marginRight: 3 }}
       >
-        {value}
+        {groupName && groupName.length ? groupName[0] : value}
       </Tag>
+    );
+  };
+
+  const getGroupNameFromID = (groupID: string) => {
+    if (!groupID) {
+      return "";
+    }
+    return (
+      groups?.filter((g) => groupID === g.id).map((g) => g.name || "") || []
     );
   };
 
@@ -328,12 +334,23 @@ const PeerUpdate = () => {
 
   const handleChangeTags = (value: string[]) => {
     let validatedValues: string[] = [];
-    value.forEach(function (v) {
+    value.forEach(function (v: any) {
       if (v.trim().length) {
         validatedValues.push(v);
       }
     });
     setSelectedTagGroups(validatedValues);
+  };
+
+  const getGroupNamesFromIDs = (groupIDList: string[]): string[] => {
+    if (!groupIDList) {
+      return [];
+    }
+    return (
+      groups
+        ?.filter((g) => groupIDList.includes(g.id!))
+        .map((g) => g.name || "") || []
+    );
   };
 
   const nameValidator = (_: RuleObject, value: string) => {
@@ -478,7 +495,8 @@ const PeerUpdate = () => {
       return Promise.reject(new Error("Please enter ate least one group"));
     }
 
-    value.forEach(function (v: string) {
+    const val = getGroupNamesFromIDs(value);
+    val.forEach(function (v: string) {
       if (!v.trim().length) {
         hasSpaceNamed.push(v);
       }
@@ -861,7 +879,7 @@ const PeerUpdate = () => {
                     </div>
                   </Form.Item>
                 </Col>
-                <Col md={24}  lg={8}>
+                <Col md={24} lg={8}>
                   <Paragraph
                     style={{
                       whiteSpace: "pre-line",
@@ -886,9 +904,12 @@ const PeerUpdate = () => {
                       tagRender={tagRender}
                       dropdownRender={dropDownRender}
                       onChange={handleChangeTags}
+                      optionFilterProp="serchValue"
                     >
-                      {tagGroups.map((m) => (
-                        <Option key={m}>{optionRender(m)}</Option>
+                      {tagGroups.map((m, index) => (
+                        <Option key={index} value={m.id} serchValue={m.name}>
+                          {optionRender(m.name)}
+                        </Option>
                       ))}
                     </Select>
                   </Form.Item>
