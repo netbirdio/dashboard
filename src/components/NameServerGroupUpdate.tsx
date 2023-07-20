@@ -43,7 +43,6 @@ const NameServerGroupUpdate = () => {
     optionRender,
     tagGroups,
     getExistingAndToCreateGroupsLists,
-    getGroupNamesFromIDs,
     selectValidator,
   } = useGetGroupTagHelpers();
   const dispatch = useDispatch();
@@ -96,7 +95,7 @@ const NameServerGroupUpdate = () => {
 
     let newFormGroup = {
       ...nsGroup,
-      groups: getGroupNamesFromIDs(nsGroup.groups),
+      groups: nsGroup.groups,
     } as formNSGroup;
     setFormNSGroup(newFormGroup);
     form.setFieldsValue(newFormGroup);
@@ -746,9 +745,12 @@ const NameServerGroupUpdate = () => {
                     tagRender={blueTagRender}
                     onChange={handleChangeTags}
                     dropdownRender={dropDownRender}
+                    optionFilterProp="serchValue"
                   >
-                    {tagGroups.map((m) => (
-                      <Option key={m}>{optionRender(m)}</Option>
+                    {tagGroups.map((m, index) => (
+                      <Option key={index} value={m.id} serchValue={m.name}>
+                        {optionRender(m.name)}
+                      </Option>
                     ))}
                   </Select>
                 </Form.Item>

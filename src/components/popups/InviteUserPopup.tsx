@@ -8,11 +8,10 @@ import {
   Row,
   Select,
   Space,
-  Tag,
   Typography,
 } from "antd";
 import { Container } from "../Container";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "typesafe-actions";
 import { useGetTokenSilently } from "../../utils/token";
@@ -28,7 +27,8 @@ const { Title, Text, Paragraph } = Typography;
 const { Option } = Select;
 
 const InviteUserPopup = () => {
-  const { optionRender, blueTagRender } = useGetGroupTagHelpers();
+  const { optionRender, blueTagRender, tagGroups, handleChangeTags } =
+    useGetGroupTagHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
 
@@ -48,19 +48,16 @@ const InviteUserPopup = () => {
   const [form] = Form.useForm();
   const inputNameRef = useRef<any>(null);
 
-  const [tagGroups, setTagGroups] = useState([] as string[]);
-  const [selectedTagGroups, setSelectedTagGroups] = useState([] as string[]);
-
   const createUserToSave = (values: any): UserToSave => {
     const autoGroups =
       groups
         ?.filter(
           (g) =>
-            values.autoGroupsNames && values.autoGroupsNames.includes(g.name)
+            values.autoGroupsNames && values.autoGroupsNames.includes(g.id)
         )
         .map((g) => g.id || "") || [];
     // find groups that do not yet exist (newly added by the user)
-    const allGroupsNames: string[] = groups?.map((g) => g.name);
+    const allGroupsNames: string[] = groups?.map((g) => g.id || "");
     const groupsToCreate =
       values.autoGroupsNames?.filter(
         (s: string) => !allGroupsNames.includes(s)
@@ -130,15 +127,15 @@ const InviteUserPopup = () => {
     return Promise.resolve();
   };
 
-  const handleChangeTags = (value: string[]) => {
-    let validatedValues: string[] = [];
-    value.forEach(function (v) {
-      if (v.trim().length) {
-        validatedValues.push(v);
-      }
-    });
-    setSelectedTagGroups(validatedValues);
-  };
+  // const handleChangeTags = (value: string[]) => {
+  //   let validatedValues: string[] = [];
+  //   value.forEach(function (v) {
+  //     if (v.trim().length) {
+  //       validatedValues.push(v);
+  //     }
+  //   });
+  //   setSelectedTagGroups(validatedValues);
+  // };
 
   const dropDownRender = (menu: React.ReactElement) => (
     <>
@@ -168,11 +165,11 @@ const InviteUserPopup = () => {
     </>
   );
 
-  useEffect(() => {
-    setTagGroups(
-      groups?.filter((g) => g.name != "All").map((g) => g.name) || []
-    );
-  }, [groups]);
+  // useEffect(() => {
+  //   setTagGroups(
+  //     groups?.filter((g) => g.name != "All").map((g) => g.name) || []
+  //   );
+  // }, [groups]);
 
   useEffect(() => {
     dispatch(
@@ -334,10 +331,13 @@ const InviteUserPopup = () => {
                     placeholder="Associate groups with the user"
                     tagRender={blueTagRender}
                     onChange={handleChangeTags}
+                    optionFilterProp="serchValue"
                     dropdownRender={dropDownRender}
                   >
-                    {tagGroups.map((m) => (
-                      <Option key={m}>{optionRender(m)}</Option>
+                    {tagGroups.map((m, index) => (
+                      <Option key={index} value={m.id} serchValue={m.name}>
+                        {optionRender(m.name)}
+                      </Option>
                     ))}
                   </Select>
                 </Form.Item>
@@ -346,9 +346,9 @@ const InviteUserPopup = () => {
                 <Text type={"secondary"}>
                   Learn more about
                   <a
-                      target="_blank"
-                      rel="noreferrer"
-                      href="https://docs.netbird.io/how-to/add-users-to-your-network"
+                    target="_blank"
+                    rel="noreferrer"
+                    href="https://docs.netbird.io/how-to/add-users-to-your-network"
                   >
                     {" "}
                     user management

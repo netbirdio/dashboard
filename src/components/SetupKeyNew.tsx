@@ -11,9 +11,7 @@ import {
   Modal,
   Row,
   Select,
-  Space,
   Switch,
-  Tag,
   Typography,
 } from "antd";
 import { RootState } from "typesafe-actions";
@@ -23,10 +21,7 @@ import {
   SetupKeyToSave,
 } from "../store/setup-key/types";
 import { RuleObject } from "antd/lib/form";
-import { CustomTagProps } from "rc-select/lib/BaseSelect";
-import { Group } from "../store/group/types";
 import { useGetTokenSilently } from "../utils/token";
-import moment from "moment";
 import { Container } from "./Container";
 import Paragraph from "antd/es/typography/Paragraph";
 import { CheckOutlined, CopyOutlined } from "@ant-design/icons";
@@ -37,7 +32,13 @@ const { Option } = Select;
 const { Text } = Typography;
 
 const SetupKeyNew = () => {
-  const { optionRender, blueTagRender } = useGetGroupTagHelpers();
+  const {
+    optionRender,
+    blueTagRender,
+    tagGroups,
+    getExistingAndToCreateGroupsLists,
+    setGroupTagFilterAll,
+  } = useGetGroupTagHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const setupNewKeyVisible = useSelector(
@@ -54,7 +55,6 @@ const SetupKeyNew = () => {
   const [showPlainToken, setShowPlainToken] = useState(false);
   const [plainToken, setPlainToken] = useState("");
   const [tokenCopied, setTokenCopied] = useState(false);
-  const [tagGroups, setTagGroups] = useState([] as string[]);
   const [formSetupKey, setFormSetupKey] = useState({} as FormSetupKey);
   const inputNameRef = useRef<any>(null);
 
@@ -65,52 +65,19 @@ const SetupKeyNew = () => {
   }, [editName]);
 
   useEffect(() => {
-    setTagGroups(
-      groups?.filter((g) => g.name !== "All").map((g) => g.name) || []
-    );
-  }, [groups]);
-
-  useEffect(() => {
-    if (!setupKey) return;
-
-    const allGroups = new Map<string, Group>();
-    let formKeyGroups: string[] = [];
-    groups.forEach((g) => allGroups.set(g.id!, g));
-
-    if (setupKey.auto_groups) {
-      formKeyGroups = setupKey.auto_groups
-        .filter((g) => allGroups.get(g))
-        .map((g) => allGroups.get(g)!.name);
-    }
-
-    const fSetupKey = {
-      ...setupKey,
-      autoGroupNames: setupKey.auto_groups ? formKeyGroups : [],
-      exp: moment(setupKey.expires),
-      last: moment(setupKey.last_used),
-    } as FormSetupKey;
-
-    form.setFieldsValue(fSetupKey);
-    setFormSetupKey(fSetupKey);
-  }, [setupKey]);
+    setGroupTagFilterAll(true);
+  }, []);
 
   const createSetupKeyToSave = (): SetupKeyToSave => {
-    const autoGroups =
-      groups
-        ?.filter((g) => formSetupKey.autoGroupNames.includes(g.name))
-        .map((g) => g.id || "") || [];
-    // find groups that do not yet exist (newly added by the user)
-    const allGroupsNames: string[] = groups?.map((g) => g.name);
-    const groupsToCreate = formSetupKey.autoGroupNames.filter(
-      (s) => !allGroupsNames.includes(s)
+    let [existingGroups, groupsToCreate] = getExistingAndToCreateGroupsLists(
+      formSetupKey.autoGroupNames
     );
-
     const expiresIn = formSetupKey.expires_in * 24 * 3600; // the api expects seconds we have days
     return {
       id: formSetupKey.id,
       name: formSetupKey.name,
       type: formSetupKey.type,
-      auto_groups: autoGroups,
+      auto_groups: existingGroups,
       revoked: formSetupKey.revoked,
       groupsToCreate: groupsToCreate,
       expires_in: expiresIn,
@@ -539,9 +506,12 @@ const SetupKeyNew = () => {
                     dropdownRender={dropDownRender}
                     // enabled only when we have a new key !setupkey.id or when the key is valid
                     disabled={!(!setupKey.id || setupKey.valid)}
+                    optionFilterProp="serchValue"
                   >
-                    {tagGroups.map((m) => (
-                      <Option key={m}>{optionRender(m)}</Option>
+                    {tagGroups.map((m, index) => (
+                      <Option key={index} value={m.id} serchValue={m.name}>
+                        {optionRender(m.name)}
+                      </Option>
                     ))}
                   </Select>
                 </Form.Item>

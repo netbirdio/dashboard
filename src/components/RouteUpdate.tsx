@@ -76,7 +76,7 @@ const RouteAddNew = () => {
     if (!route) return;
     const fRoute = {
       ...route,
-      groups: getGroupNamesFromIDs(route.groups),
+      groups: route.groups,
     } as FormRoute;
     setFormRoute(fRoute);
     setPreviousRouteKey(fRoute.network_id + fRoute.network);
@@ -475,9 +475,12 @@ const RouteAddNew = () => {
                     tagRender={blueTagRender}
                     onChange={handleChangeTags}
                     dropdownRender={dropDownRender}
+                    optionFilterProp="serchValue"
                   >
-                    {tagGroups.map((m) => (
-                      <Option key={m}>{optionRender(m)}</Option>
+                    {tagGroups.map((m, index) => (
+                      <Option key={index} value={m.id} serchValue={m.name}>
+                        {optionRender(m.name)}
+                      </Option>
                     ))}
                   </Select>
                 </Form.Item>

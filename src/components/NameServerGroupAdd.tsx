@@ -747,9 +747,12 @@ const NameServerGroupAdd = () => {
                       tagRender={blueTagRender}
                       onChange={handleChangeTags}
                       dropdownRender={dropDownRender}
+                      optionFilterProp="serchValue"
                     >
-                      {tagGroups.map((m) => (
-                        <Option key={m}>{optionRender(m)}</Option>
+                      {tagGroups.map((m, index) => (
+                        <Option key={index} value={m.id} serchValue={m.name}>
+                          {optionRender(m.name)}
+                        </Option>
                       ))}
                     </Select>
                   </Form.Item>
