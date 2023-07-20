@@ -24,6 +24,7 @@ import {
 } from "antd";
 import { SetupKey, SetupKeyToSave } from "../store/setup-key/types";
 import { filter } from "lodash";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 import { formatDate, timeAgo } from "../utils/common";
 import { ExclamationCircleOutlined } from "@ant-design/icons";
 import SetupKeyNew from "../components/SetupKeyNew";
@@ -106,13 +107,29 @@ export const SetupKeys = () => {
     );
   }, []);
 
-  useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
-  }, [setupKeys]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
+    setDataTable(transformDataTable(filterDataTable("")));
   }, [textToSearch, optionValidAll]);
+
+  useEffect(() => {
+    if (!loading) {
+         const quickFilter = getFilterState("setupKeysFilter", "quickFilter");
+        if (quickFilter) setOptionValidAll(quickFilter);
+
+        const searchText = getFilterState("setupKeysFilter", "search");
+        if (searchText) setTextToSearch(searchText);
+
+        const pageSize = getFilterState("setupKeysFilter", "pageSize");
+        if (pageSize) onChangePageSize(pageSize, "setupKeysFilter");
+
+        if (quickFilter || searchText || pageSize) {
+             setDataTable(transformDataTable(filterDataTable(searchText)));
+        } else {
+           setDataTable(transformDataTable(filterDataTable("")));
+         }
+     }
+  }, [loading]);
 
   const deleteKey = "deleting";
   useEffect(() => {
@@ -181,8 +198,10 @@ export const SetupKeys = () => {
     }
   }, [savedSetupKey]);
 
-  const filterDataTable = (): SetupKey[] => {
-    const t = textToSearch.toLowerCase().trim();
+  const filterDataTable = (searchText: string): SetupKey[] => {
+     const t = searchText
+       ? searchText.toLowerCase().trim()
+       : textToSearch.toLowerCase().trim();
     let f: SetupKey[] = [...setupKeys];
     if (optionValidAll === "valid") {
       f = filter(setupKeys, (_f: SetupKey) => _f.valid && !_f.revoked);
@@ -203,15 +222,17 @@ export const SetupKeys = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("setupKeysFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    const data = filterDataTable();
-    setDataTable(transformDataTable(data));
-  };
+  // const searchDataTable = () => {
+  //   const data = filterDataTable();
+  //   setDataTable(transformDataTable(data));
+  // };
 
   const onChangeValidAll = ({ target: { value } }: RadioChangeEvent) => {
     setOptionValidAll(value);
+    storeFilterState("setupKeysFilter", "quickFilter", value);
   };
 
   const showConfirmRevoke = (setupKeyToAction: SetupKeyDataTable) => {
@@ -405,7 +426,7 @@ export const SetupKeys = () => {
                     <Input
                       allowClear
                       value={textToSearch}
-                      onPressEnter={searchDataTable}
+                      // onPressEnter={searchDataTable}
                       placeholder="Search by name, type or key prefix..."
                       onChange={onChangeTextToSearch}
                     />
@@ -432,7 +453,9 @@ export const SetupKeys = () => {
                         disabled={!dataTable?.length}
                         value={pageSize.toString()}
                         options={pageSizeOptions}
-                        onChange={onChangePageSize}
+                        onChange={(value) => {
+                          onChangePageSize(value, "setupKeysFilter");
+                        }}
                         className="select-rows-per-page-en"
                       />
                     </Space>

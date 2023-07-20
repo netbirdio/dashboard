@@ -23,6 +23,7 @@ import {
 } from "antd";
 import { Container } from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 import { RootState } from "typesafe-actions";
 import { Policy } from "../store/policy/types";
 import { actions as policyActions } from "../store/policy";
@@ -122,6 +123,25 @@ export const AccessControl = () => {
     };
   }, []);
 
+  useEffect(() => {
+    if (!loading) {
+      const quickFilter = getFilterState("accessControlFilter", "quickFilter");
+      if (quickFilter) setOptionAllEnable(quickFilter);
+
+      const searchText = getFilterState("accessControlFilter", "search");
+      if (searchText) setTextToSearch(searchText);
+
+      const pageSize = getFilterState("accessControlFilter", "pageSize");
+      if (pageSize) onChangePageSize(pageSize, "accessControlFilter");
+
+      if (quickFilter || searchText || pageSize) {
+        setDataTable(transformDataTable(filterDataTable(searchText)));
+      } else {
+        setDataTable(sortBy(transformDataTable(filterDataTable("")), "name"));
+      }
+    }
+  }, [loading, policies]);
+
   const transformDataTable = (d: Policy[]): PolicyDataTable[] => {
     return d.map((policy) => {
       const sourceLabel = getSourceDestinationLabel(
@@ -169,13 +189,31 @@ export const AccessControl = () => {
       setShowTutorial(false);
     } else {
       setShowTutorial(isShowTutorial(policies));
-      setDataTable(sortBy(transformDataTable(filterDataTable()), "name"));
     }
   }, [policies]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
+    setDataTable(transformDataTable(filterDataTable("")));
   }, [textToSearch, optionAllEnable]);
+
+  const filterDataTable = (searchText: string): Policy[] => {
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
+    let f: Policy[] = filter(
+      policies,
+      (f: Policy) =>
+        f.name.toLowerCase().includes(t) ||
+        f.description.toLowerCase().includes(t) ||
+        t === ""
+    ) as Policy[];
+    if (optionAllEnable == "enabled") {
+      f = filter(f, (f: Policy) => f.enabled);
+    } else if (optionAllEnable == "disabled") {
+      f = filter(f, (f: Policy) => !f.enabled);
+    }
+    return f;
+  };
 
   const styleNotification = { marginTop: 85 };
 
@@ -243,15 +281,17 @@ export const AccessControl = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("accessControlFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    const data = filterDataTable();
-    setDataTable(transformDataTable(data));
-  };
+  // const searchDataTable = () => {
+  //   const data = filterDataTable();
+  //   setDataTable(transformDataTable(data));
+  // };
 
   const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
     setOptionAllEnable(value);
+    storeFilterState("accessControlFilter", "quickFilter", value);
   };
 
   const showConfirmDelete = (record: PolicyDataTable) => {
@@ -308,23 +348,6 @@ export const AccessControl = () => {
         setPolicyToAction(null);
       },
     });
-  };
-
-  const filterDataTable = (): Policy[] => {
-    const t = textToSearch.toLowerCase().trim();
-    let f: Policy[] = filter(
-      policies,
-      (f: Policy) =>
-        f.name.toLowerCase().includes(t) ||
-        f.description.toLowerCase().includes(t) ||
-        t === ""
-    ) as Policy[];
-    if (optionAllEnable == "enabled") {
-      f = filter(f, (f: Policy) => f.enabled);
-    } else if (optionAllEnable == "disabled") {
-      f = filter(f, (f: Policy) => !f.enabled);
-    }
-    return f;
   };
 
   const onClickAddNewPolicy = () => {
@@ -595,7 +618,7 @@ export const AccessControl = () => {
                       <Input
                         allowClear
                         value={textToSearch}
-                        onPressEnter={searchDataTable}
+                        // onPressEnter={searchDataTable}
                         placeholder="Search by name and description..."
                         onChange={onChangeTextToSearch}
                       />
@@ -621,7 +644,9 @@ export const AccessControl = () => {
                         <Select
                           value={pageSize.toString()}
                           options={pageSizeOptions}
-                          onChange={onChangePageSize}
+                          onChange={(value) => {
+                            onChangePageSize(value, "accessControlFilter");
+                          }}
                           className="select-rows-per-page-en"
                           disabled={showTutorial}
                         />
