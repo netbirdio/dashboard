@@ -24,6 +24,7 @@ import {
 } from "antd";
 import { filter } from "lodash";
 import tableSpin from "../components/Spin";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 import { useGetTokenSilently } from "../utils/token";
 import { actions as groupActions } from "../store/group";
 import { Group } from "../store/group/types";
@@ -84,6 +85,59 @@ export const Nameservers = () => {
     { label: "Enabled", value: "enabled" },
   ];
 
+  useEffect(() => {
+    if (nsGroup.length > 0) {
+      setShowTutorial(false);
+    } else {
+      setShowTutorial(true);
+    }
+  }, [nsGroup]);
+
+  useEffect(() => {
+    if (!loading && nsGroup) {
+      const quickFilter = getFilterState("nameServerFilter", "quickFilter");
+      if (quickFilter) setOptionAllEnable(quickFilter);
+
+      const searchText = getFilterState("nameServerFilter", "search");
+      if (searchText) setTextToSearch(searchText);
+
+      const pageSize = getFilterState("nameServerFilter", "pageSize");
+      if (pageSize) onChangePageSize(pageSize, "nameServerFilter");
+      if (quickFilter || searchText) {
+        setDataTable(transformDataTable(filterDataTable(searchText)));
+      } else {
+        setDataTable(transformDataTable(nsGroup));
+      }
+    }
+  }, [loading, nsGroup]);
+
+  useEffect(() => {
+    setDataTable(transformDataTable(filterDataTable("")));
+  }, [textToSearch, optionAllEnable]);
+
+  const filterDataTable = (searchText: string): NameServerGroup[] => {
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
+    let f = filter(
+      nsGroup,
+      (f: NameServerGroup) =>
+        f.name.toLowerCase().includes(t) ||
+        f.name.includes(t) ||
+        t === "" ||
+        getGroupNamesFromIDs(f.groups).find((u) =>
+          u.toLowerCase().trim().includes(t)
+        ) ||
+        f.domains.find((d) => d.toLowerCase().trim().includes(t)) ||
+        f.nameservers.find((n) => n.ip.includes(t))
+    ) as NameServerGroup[];
+    if (optionAllEnable !== "all") {
+      f = filter(f, (f) => f.enabled);
+    }
+    return f;
+  };
+
+
   // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
   const setUserAndView = (nsGroup: NameServerGroup) => {
     dispatch(nsGroupActions.setSetupEditNameServerGroupVisible(true));
@@ -122,52 +176,21 @@ export const Nameservers = () => {
     );
   }, []);
 
-  useEffect(() => {
-    if (nsGroup.length > 0) {
-      setShowTutorial(false);
-    } else {
-      setShowTutorial(true);
-    }
-    setDataTable(transformDataTable(filterDataTable()));
-  }, [nsGroup]);
-
-  useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
-  }, [textToSearch, optionAllEnable]);
-
-  const filterDataTable = (): NameServerGroup[] => {
-    const t = textToSearch.toLowerCase().trim();
-    let f = filter(
-      nsGroup,
-      (f: NameServerGroup) =>
-        f.name.toLowerCase().includes(t) ||
-        f.name.includes(t) ||
-        t === "" ||
-        getGroupNamesFromIDs(f.groups).find((u) =>
-          u.toLowerCase().trim().includes(t)
-        ) ||
-        f.domains.find((d) => d.toLowerCase().trim().includes(t)) ||
-        f.nameservers.find((n) => n.ip.includes(t))
-    ) as NameServerGroup[];
-    if (optionAllEnable !== "all") {
-      f = filter(f, (f) => f.enabled);
-    }
-    return f;
-  };
-
   const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
     setOptionAllEnable(value);
+    storeFilterState("nameServerFilter", "quickFilter", value);
   };
 
   const onChangeTextToSearch = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("nameServerFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    setDataTable(transformDataTable(filterDataTable()));
-  };
+  // const searchDataTable = () => {
+  //   setDataTable(transformDataTable(filterDataTable()));
+  // };
 
   const showConfirmDelete = (record: NameserverGroupDataTable) => {
     setNsGroupToAction(record as NameserverGroupDataTable);
@@ -490,7 +513,7 @@ export const Nameservers = () => {
             <Input
               allowClear
               value={textToSearch}
-              onPressEnter={searchDataTable}
+              // onPressEnter={searchDataTable}
               placeholder="Search by name, domain or nameservers..."
               onChange={onChangeTextToSearch}
             />
@@ -508,7 +531,9 @@ export const Nameservers = () => {
               <Select
                 value={pageSize.toString()}
                 options={pageSizeOptions}
-                onChange={onChangePageSize}
+                onChange={(value) => {
+                  onChangePageSize(value, "nameServerFilter");
+                }}
                 className="select-rows-per-page-en"
                 disabled={showTutorial}
               />
@@ -642,12 +667,12 @@ export const Nameservers = () => {
                 }}
               />
               <Column
-                  title="Match domains"
-                  dataIndex="domains"
-                  align="center"
-                  render={(text, record: NameserverGroupDataTable) => {
-                    return renderPopoverDomains(text, record.domains, record);
-                  }}
+                title="Match domains"
+                dataIndex="domains"
+                align="center"
+                render={(text, record: NameserverGroupDataTable) => {
+                  return renderPopoverDomains(text, record.domains, record);
+                }}
               />
               <Column
                 title="Nameservers"

@@ -39,6 +39,7 @@ import { Peer, PeerDataTable } from "../store/peer/types";
 import { ExclamationCircleOutlined, MinusOutlined } from "@ant-design/icons";
 import { actions as peerActions } from "../store/peer";
 import { useOidcUser } from "@axa-fr/react-oidc";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
@@ -108,15 +109,30 @@ export const RegularUsers = () => {
   }, [savedUser]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(users));
-  }, [users]);
+    console.log("here");
+    if (!loading && groups.length && users) {
+      const searchText = getFilterState("userFilter", "search");
+      if (searchText) setTextToSearch(searchText);
+
+      const pageSize = getFilterState("userFilter", "pageSize");
+      if (pageSize) onChangePageSize(pageSize, "userFilter");
+
+      if (searchText || pageSize) {
+        setDataTable(transformDataTable(filterDataTable(searchText)));
+      } else {
+        setDataTable(transformDataTable(users));
+      }
+    }
+  }, [loading, groups, users]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable()));
+    setDataTable(transformDataTable(filterDataTable("")));
   }, [textToSearch]);
 
-  const filterDataTable = (): User[] => {
-    const t = textToSearch.toLowerCase().trim();
+  const filterDataTable = (searchText: string): User[] => {
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
     let f: User[] = filter(
       users,
       (f: User) =>
@@ -132,12 +148,13 @@ export const RegularUsers = () => {
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
   ) => {
     setTextToSearch(e.target.value);
+    storeFilterState("userFilter", "search", e.target.value);
   };
 
-  const searchDataTable = () => {
-    const data = filterDataTable();
-    setDataTable(transformDataTable(data));
-  };
+  // const searchDataTable = () => {
+  //   const data = filterDataTable();
+  //   setDataTable(transformDataTable(data));
+  // };
 
   const onClickEdit = () => {
     dispatch(userActions.setUpdateUserDrawerVisible(true));
@@ -383,9 +400,9 @@ export const RegularUsers = () => {
                 ? "Same-domain email users are added automatically on first sign-in."
                 : ""}
               <a
-                  target="_blank"
-                  rel="noreferrer"
-                  href="https://docs.netbird.io/how-to/add-users-to-your-network"
+                target="_blank"
+                rel="noreferrer"
+                href="https://docs.netbird.io/how-to/add-users-to-your-network"
               >
                 {" "}
                 Learn more
@@ -401,9 +418,10 @@ export const RegularUsers = () => {
                   <Input
                     allowClear
                     value={textToSearch}
-                    onPressEnter={searchDataTable}
+                    // onPressEnter={searchDataTable}
                     placeholder="Search by name, email, groups or role..."
                     onChange={onChangeTextToSearch}
+                    className="input-search"
                   />
                 </Col>
                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
@@ -411,7 +429,9 @@ export const RegularUsers = () => {
                     <Select
                       value={pageSize.toString()}
                       options={pageSizeOptions}
-                      onChange={onChangePageSize}
+                      onChange={(value) => {
+                        onChangePageSize(value, "userFilter");
+                      }}
                       className="select-rows-per-page-en"
                     />
                   </Space>
