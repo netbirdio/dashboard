@@ -11,6 +11,7 @@ import {
   Select,
   Space,
   Typography,
+  SelectProps,
 } from "antd";
 import { useGetTokenSilently } from "../utils/token";
 import { useGetGroupTagHelpers } from "../utils/groups";
@@ -20,7 +21,7 @@ import { actions as nsGroupActions } from "../store/nameservers";
 
 const { Paragraph } = Typography;
 const styleNotification = { marginTop: 85 };
-
+const { Option } = Select;
 export const DNSSettingsForm = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
@@ -62,9 +63,7 @@ export const DNSSettingsForm = () => {
     if (!dnsSettingsData) return;
     dispatch(
       dnsSettingsActions.setDNSSettings({
-        disabled_management_groups: getGroupNamesFromIDs(
-          dnsSettingsData.disabled_management_groups
-        ),
+        disabled_management_groups: dnsSettingsData.disabled_management_groups,
       })
     );
   }, [dnsSettingsData]);
@@ -217,9 +216,12 @@ export const DNSSettingsForm = () => {
                       tagRender={blueTagRender}
                       onChange={handleChangeTags}
                       dropdownRender={dropDownRender}
+                      optionFilterProp="serchValue"
                     >
-                      {tagGroups.map((m) => (
-                        <Select.Option key={m}>{optionRender(m)}</Select.Option>
+                      {tagGroups.map((m, index) => (
+                        <Option key={index} value={m.id} serchValue={m.name}>
+                          {optionRender(m.name, m.id)}
+                        </Option>
                       ))}
                     </Select>
                   </Form.Item>

@@ -18,7 +18,7 @@ export const useGetGroupTagHelpers = () => {
     return tagRender(props, "");
   };
 
-   const tagRender = (props: CustomTagProps, color: string) => {
+  const tagRender = (props: CustomTagProps, color: string) => {
     const { value, closable, onClose } = props;
     const onPreventMouseDown = (event: React.MouseEvent<HTMLSpanElement>) => {
       event.preventDefault();
@@ -77,9 +77,9 @@ export const useGetGroupTagHelpers = () => {
     </>
   );
 
-  const optionRender = (label: string) => {
+  const optionRender = (label: string, id: any) => {
     let peersCount = "";
-    const g = groups.find((_g) => _g.name === label);
+    const g = groups.find((_g) => _g.id === id);
     if (g)
       peersCount = ` - ${g.peers_count || 0} ${
         !g.peers_count || parseInt(g.peers_count) !== 1 ? "peers" : "peer"
@@ -110,7 +110,7 @@ export const useGetGroupTagHelpers = () => {
     return [groupIDList, groupNameListToCreate];
   };
 
-   const getGroupNamesFromIDs = (groupIDList: string[]): string[] => {
+  const getGroupNamesFromIDs = (groupIDList: string[]): string[] => {
     if (!groupIDList) {
       return [];
     }
