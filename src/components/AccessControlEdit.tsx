@@ -630,7 +630,7 @@ const AccessControlEdit = () => {
                                 value={m.id}
                                 serchValue={m.name}
                               >
-                                {optionRender(m.name)}
+                                {optionRender(m.name, m.id)}
                               </Option>
                             ))}
                           </Select>
@@ -790,7 +790,7 @@ const AccessControlEdit = () => {
                                 value={m.id}
                                 serchValue={m.name}
                               >
-                                {optionRender(m.name)}
+                                {optionRender(m.name, m.id)}
                               </Option>
                             ))}
                           </Select>
