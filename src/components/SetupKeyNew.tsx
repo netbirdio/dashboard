@@ -70,13 +70,15 @@ const SetupKeyNew = () => {
 
   const createSetupKeyToSave = (): SetupKeyToSave => {
     let [existingGroups, groupsToCreate] = getExistingAndToCreateGroupsLists(
-      formSetupKey.autoGroupNames
+      formSetupKey.autoGroupNames || []
     );
-    const expiresIn = formSetupKey.expires_in * 24 * 3600; // the api expects seconds we have days
+    const expiresIn = formSetupKey.expires_in
+      ? formSetupKey.expires_in * 24 * 3600
+      : 7 * 24 * 3600; // the api expects seconds we have days
     return {
       id: formSetupKey.id,
       name: formSetupKey.name,
-      type: formSetupKey.type,
+      type: formSetupKey.type ? formSetupKey.type : "reusable",
       auto_groups: existingGroups,
       revoked: formSetupKey.revoked,
       groupsToCreate: groupsToCreate,
@@ -147,7 +149,7 @@ const SetupKeyNew = () => {
         type: "one-off",
         key: "",
         last_used: "",
-        expires: "",
+        expires: "7",
         state: "valid",
         auto_groups: [] as string[],
         usage_limit: 0,
@@ -218,25 +220,27 @@ const SetupKeyNew = () => {
   );
 
   const changesDetected = (): boolean => {
+    console.log("formSetupKey", formSetupKey);
     return (
       formSetupKey.name == null ||
       formSetupKey.name !== setupKey.name ||
-      groupsChanged() ||
-      formSetupKey.usage_limit !== setupKey.usage_limit
+      formSetupKey?.usage_limit !== setupKey.usage_limit
     );
   };
 
   const groupsChanged = (): boolean => {
+    console.log("groupsChanged", formSetupKey);
     if (
       setupKey &&
-      setupKey.auto_groups &&
-      formSetupKey.autoGroupNames.length !== setupKey.auto_groups.length
+      setupKey?.auto_groups &&
+      formSetupKey?.autoGroupNames &&
+      formSetupKey?.autoGroupNames.length !== setupKey?.auto_groups.length
     ) {
       return true;
     }
     const formGroupIds =
       groups
-        ?.filter((g) => formSetupKey.autoGroupNames.includes(g.name))
+        ?.filter((g) => formSetupKey?.autoGroupNames.includes(g.name))
         .map((g) => g.id || "") || [];
 
     return (
@@ -281,7 +285,7 @@ const SetupKeyNew = () => {
                   fontSize: "14px",
                   borderRadius: "2px",
                 }}
-                disabled={savedSetupKey.loading || !changesDetected()}
+                disabled={savedSetupKey.loading || !!!formSetupKey.name}
                 onClick={handleFormSubmit}
               >
                 Create key
@@ -342,6 +346,7 @@ const SetupKeyNew = () => {
             onValuesChange={onChange}
             initialValues={{
               usage_limit: 1,
+              expires_in: "7",
             }}
           >
             <Row>
@@ -496,7 +501,6 @@ const SetupKeyNew = () => {
                 <Form.Item
                   style={{ marginTop: "5px", marginBottom: 0 }}
                   name="autoGroupNames"
-                  rules={[{ validator: selectValidator }]}
                 >
                   <Select
                     mode="tags"
