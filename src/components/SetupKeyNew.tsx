@@ -78,7 +78,7 @@ const SetupKeyNew = () => {
     return {
       id: formSetupKey.id,
       name: formSetupKey.name,
-      type: formSetupKey.type ? formSetupKey.type : "reusable",
+      type: formSetupKey.type ? formSetupKey.type : "one-off",
       auto_groups: existingGroups,
       revoked: formSetupKey.revoked,
       groupsToCreate: groupsToCreate,
