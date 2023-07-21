@@ -479,7 +479,7 @@ const RouteAddNew = () => {
                   >
                     {tagGroups.map((m, index) => (
                       <Option key={index} value={m.id} serchValue={m.name}>
-                        {optionRender(m.name)}
+                        {optionRender(m.name, m.id)}
                       </Option>
                     ))}
                   </Select>
