@@ -22,6 +22,10 @@ if [[ -z "${AUTH_AUDIENCE}" ]]; then
     fi
 fi
 
+if [[ "${AUTH_AUDIENCE}" == "none" ]]; then
+    unset AUTH_AUDIENCE
+fi
+
 if [[ -z "${AUTH_SUPPORTED_SCOPES}" ]]; then
     if [[ -z "${AUTH0_DOMAIN}" ]]; then
         echo "AUTH_SUPPORTED_SCOPES environment variable must be set"
