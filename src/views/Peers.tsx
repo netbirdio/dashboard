@@ -49,13 +49,17 @@ import { usePageSizeHelpers } from "../utils/pageSize";
 import AddPeerPopup from "../components/popups/addpeer/addpeer/AddPeerPopup";
 import { getLocalItem, setLocalItem, StorageKey } from "../services/local";
 import { useOidcUser } from "@axa-fr/react-oidc";
+import { useGetGroupTagHelpers } from "../utils/groups";
 
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
 const { confirm } = Modal;
+const { Option } = Select;
 
 export const Peers = () => {
   const { onChangePageSize, pageSizeOptions, pageSize } = usePageSizeHelpers();
+  const { optionRender, blueTagRender, tagGroups, dropDownRender } =
+    useGetGroupTagHelpers();
 
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
@@ -79,6 +83,7 @@ export const Peers = () => {
   const [isAdmin, setIsAdmin] = useState(false);
 
   const [textToSearch, setTextToSearch] = useState("");
+  const [groupsFilterArray, setGroupsFilterArray] = useState([]);
   const [optionOnOff, setOptionOnOff] = useState("all");
   const [dataTable, setDataTable] = useState([] as PeerDataTable[]);
   const [peerToAction, setPeerToAction] = useState(
@@ -124,7 +129,7 @@ export const Peers = () => {
   }, [users]);
 
   useEffect(() => {
-    if ((!loading && peers && groups)) {
+    if (!loading && peers && groups) {
       const quickFilter = getFilterState("peerFilter", "quickFilter");
       if (quickFilter) setOptionOnOff(quickFilter);
 
@@ -134,8 +139,13 @@ export const Peers = () => {
       const pageSize = getFilterState("peerFilter", "pageSize");
       if (pageSize) onChangePageSize(pageSize, "peerFilter");
 
-      if (quickFilter || searchText || pageSize) {
-        setDataTable(transformDataTable(filterDataTable(searchText)));
+      const groupFilter = getFilterState("peerFilter", "groupFilter") || [];
+      if (groupFilter) setGroupsFilterArray(groupFilter);
+
+      if (quickFilter || searchText || pageSize || groupFilter) {
+        setDataTable(
+          transformDataTable(filterDataTable(searchText, groupFilter))
+        );
       } else {
         setDataTable(transformDataTable(peers));
       }
@@ -198,7 +208,7 @@ export const Peers = () => {
   }, [peers, groups]);
 
   useEffect(() => {
-    setDataTable(transformDataTable(filterDataTable("")));
+    setDataTable(transformDataTable(filterDataTable("", groupsFilterArray)));
   }, [textToSearch, optionOnOff]);
 
   const deleteKey = "deleting";
@@ -226,10 +236,16 @@ export const Peers = () => {
     }
   }, [deletedPeer]);
 
-  const filterDataTable = (searchText: string): Peer[] => {
-        const t = searchText
-          ? searchText.toLowerCase().trim()
-          : textToSearch.toLowerCase().trim();
+  const handleGroupChange = (value: any) => {
+    setGroupsFilterArray(value);
+    storeFilterState("peerFilter", "groupFilter", value);
+    setDataTable(transformDataTable(filterDataTable(textToSearch, value)));
+  };
+
+  const filterDataTable = (searchText: string, groupIDs: string[]): Peer[] => {
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
     let f: Peer[] = filter(peers, (f: Peer) => {
       let userEmail: string | null;
       const u = users?.find((u) => u.id === f.user_id)?.email;
@@ -246,21 +262,24 @@ export const Peers = () => {
     if (optionOnOff === "on") {
       f = filter(peers, (f: Peer) => f.connected);
     }
-    return f;
-  };
 
-  const getGroupNamesFromIDs = (
-    groupIDList: string[] | undefined
-  ): string[] => {
-    if (!groupIDList) {
-      return [];
+    let filterByGroupArray: any = [];
+    let tempFilterByGroupArray: any = [];
+    if (groupIDs.length) {
+      f.forEach((element) => {
+        element.groups?.forEach((element2) => {
+          if (element2.id && groupIDs.includes(element2.id)) {
+            if (!tempFilterByGroupArray.includes(element.id)) {
+              filterByGroupArray.push(element);
+              tempFilterByGroupArray.push(element.id);
+            }
+          }
+        });
+      });
+      f = filterByGroupArray;
     }
 
-    return (
-      groups
-        ?.filter((g) => groupIDList.includes(g.id!))
-        .map((g) => g.name || "") || []
-    );
+    return f;
   };
 
   const onChangeTextToSearch = (
@@ -626,7 +645,7 @@ export const Peers = () => {
                         allowClear
                         value={textToSearch}
                         // onPressEnter={searchDataTable}
-                        placeholder="Search by name, IP or owner..."
+                        placeholder="Search by name, IP, owner, or group..."
                         onChange={onChangeTextToSearch}
                       />
                     </Col>
@@ -639,7 +658,7 @@ export const Peers = () => {
                       xxl={11}
                       span={11}
                     >
-                      <Space size="middle">
+                      <Space size="middle" style={{ marginRight: "15px" }}>
                         <Radio.Group
                           options={optionsOnOff}
                           onChange={onChangeOnOff}
@@ -658,6 +677,23 @@ export const Peers = () => {
                           className="select-rows-per-page-en"
                         />
                       </Space>
+
+                      <Select
+                        mode="tags"
+                        placeholder="Filter by groups"
+                        tagRender={blueTagRender}
+                        // dropdownRender={dropDownRender}
+                        optionFilterProp="serchValue"
+                        className="groupsSelect"
+                        onChange={handleGroupChange}
+                        value={groupsFilterArray}
+                      >
+                        {tagGroups.map((m, index) => (
+                          <Option key={index} value={m.id} serchValue={m.name}>
+                            {optionRender(m.name, m.id)}
+                          </Option>
+                        ))}
+                      </Select>
                     </Col>
                     <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                       <Row justify="end">
