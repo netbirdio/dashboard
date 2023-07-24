@@ -645,7 +645,7 @@ export const Peers = () => {
                         allowClear
                         value={textToSearch}
                         // onPressEnter={searchDataTable}
-                        placeholder="Search by name, IP or owner..."
+                        placeholder="Search by name, IP, owner, or group..."
                         onChange={onChangeTextToSearch}
                       />
                     </Col>
@@ -680,7 +680,7 @@ export const Peers = () => {
 
                       <Select
                         mode="tags"
-                        placeholder="Search by groups"
+                        placeholder="Filter by groups"
                         tagRender={blueTagRender}
                         // dropdownRender={dropDownRender}
                         optionFilterProp="serchValue"
