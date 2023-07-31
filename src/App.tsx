@@ -70,16 +70,7 @@ function App() {
 
     return (
         <>
-        <ConfigProvider
-            theme={{
-                token: {
-                    borderRadius: 4,
-                    colorPrimary: "#1890ff",
-                    fontFamily: "Arial"
-                },
-                components: {Badge: {fontSizeSM: 20}},
-            }}
-        >
+
             <Provider store={store}>
                 {!show && <SecureLoading padding="3em" width={50} height={50}/>}
                 {show &&
@@ -124,8 +115,6 @@ function App() {
                     </Layout>
                 }
             </Provider>
-
-        </ConfigProvider>
         </>
     )
 }
