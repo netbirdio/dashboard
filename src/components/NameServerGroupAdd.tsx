@@ -273,7 +273,7 @@ const NameServerGroupAdd = () => {
   };
 
   const domainRegex =
-    /(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/;
+    /^(?!.*\s)[a-zA-Z0-9](?!.*\s$)(?!.*\.$)(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.){1,126}(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$/;
 
   const domainValidator = (_: RuleObject, domain: string) => {
     if (domainRegex.test(domain)) {
