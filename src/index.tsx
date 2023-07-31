@@ -17,11 +17,28 @@ const config = getConfig();
 // is required for doing logout. Therefore, we need to hardcode the config for auth
 const auth0AuthorityConfig: AuthorityConfiguration = {
     authorization_endpoint: new URL("authorize", config.authority).href,
-    token_endpoint:  new URL("oauth/token", config.authority).href,
+    token_endpoint: new URL("oauth/token", config.authority).href,
     revocation_endpoint: new URL("oauth/revoke", config.authority).href,
     end_session_endpoint: new URL("v2/logout", config.authority).href,
     userinfo_endpoint: new URL("userinfo", config.authority).href,
 } as AuthorityConfiguration
+
+const buildExtras = (config: any) => {
+    type Extras = { [key: string]: string }
+    let extras: Extras = {};
+
+    if (config.dragQueryParams) {
+        const searchParams = new URLSearchParams(window.location.search);
+        searchParams.forEach((value, key) => {
+            extras[key] = value
+        });
+    }
+
+    if (config.audience) {
+        extras.audience = config.audience
+    }
+    return extras
+}
 
 const providerConfig = {
     authority: config.authority,
@@ -34,7 +51,7 @@ const providerConfig = {
     // service_worker_relative_url:'/OidcServiceWorker.js',
     service_worker_only: false,
     authority_configuration: config.auth0Auth ? auth0AuthorityConfig : undefined,
-    ...(config.audience ? {extras: {audience: config.audience}} : null),
+    extras: buildExtras(config),
     ...(config.clientSecret ? {token_request_extras: {client_secret: config.clientSecret}} : null)
 };
 
