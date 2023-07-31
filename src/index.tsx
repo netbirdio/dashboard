@@ -10,6 +10,8 @@ import {BrowserRouter} from "react-router-dom";
 import Loading from "./components/Loading";
 import LoginError from "./components/LoginError";
 import {AuthorityConfiguration} from "@axa-fr/react-oidc/dist/vanilla/oidc";
+import InstallPage from "./views/Install";
+import {ConfigProvider} from "antd";
 
 const config = getConfig();
 
@@ -61,8 +63,14 @@ const root = ReactDOM.createRoot(
 
 const loadingComponent = () => <Loading padding="3em" width={50} height={50}/>
 
-root.render(
-    <OidcProvider
+const showApp = () => {
+    if (window.location.pathname === "/install") {
+        // We bypass authentication for pages that do not require auth.
+        // E.g., when we just want to show installation steps for public.
+        return <InstallPage/>
+    }
+
+    return <OidcProvider
         configuration={providerConfig}
         callbackSuccessComponent={loadingComponent}
         authenticatingErrorComponent={LoginError}
@@ -77,6 +85,21 @@ root.render(
             <App/>
         </BrowserRouter>
     </OidcProvider>
+}
+
+root.render(
+    <ConfigProvider
+        theme={{
+            token: {
+                borderRadius: 4,
+                colorPrimary: "#1890ff",
+                fontFamily: "Arial"
+            },
+            components: {Badge: {fontSizeSM: 20}},
+        }}
+    >
+        {showApp()}
+    </ConfigProvider>
 );
 
 // If you want to start measuring performance in your app, pass a function
