@@ -13,7 +13,15 @@ import {
   Row,
   Space,
   Typography,
+  Table,
+  Select,
+  Radio,
+  Input,
+  RadioChangeEvent,
 } from "antd";
+import { filter } from "lodash";
+import { storeFilterState, getFilterState } from "../utils/filterState";
+import { usePageSizeHelpers } from "../utils/pageSize";
 import { useGetTokenSilently } from "../utils/token";
 import { useGetGroupTagHelpers } from "../utils/groups";
 import { Container } from "../components/Container";
@@ -21,6 +29,8 @@ import ExpiresInInput, {
   expiresInToSeconds,
   secondsToExpiresIn,
 } from "./ExpiresInInput";
+import Column from "antd/lib/table/Column";
+import TableSpin from "../components/Spin";
 import { checkExpiresIn } from "../utils/common";
 import { actions as accountActions } from "../store/account";
 import { Account, FormAccount } from "../store/account/types";
@@ -28,6 +38,12 @@ import {
   ExclamationCircleOutlined,
   QuestionCircleFilled,
 } from "@ant-design/icons";
+import { actions as groupActions } from "../store/group";
+import { actions as setupKeyActions } from "../store/setup-key";
+import { actions as policyActions } from "../store/policy";
+import { actions as nsGroupActions } from "../store/nameservers";
+import { actions as routeActions } from "../store/route";
+import { actions as userActions } from "../store/user";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -36,6 +52,28 @@ const styleNotification = { marginTop: 85 };
 export const Settings = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
+  const { pageSize, onChangePageSize, pageSizeOptions } = usePageSizeHelpers(
+    getFilterState("groupsManagementPage", "pageSize")
+      ? getFilterState("groupsManagementPage", "pageSize")
+      : 10
+  );
+  const [optionOnOff, setOptionOnOff] = useState(
+    getFilterState("groupsManagementPage", "usedFilter")
+      ? getFilterState("groupsManagementPage", "usedFilter")
+      : "used"
+  );
+
+  const optionsOnOff = [
+    { label: "Used", value: "used" },
+    { label: "Unused", value: "unused" },
+  ];
+
+  const [filterGroup, setFilterGroup] = useState([]);
+  const [textToSearch, setTextToSearch] = useState(
+    getFilterState("groupsManagementPage", "search")
+      ? getFilterState("groupsManagementPage", "search")
+      : ""
+  );
 
   const {} = useGetGroupTagHelpers();
 
@@ -45,12 +83,42 @@ export const Settings = () => {
   const updatedAccount = useSelector(
     (state: RootState) => state.account.updatedAccount
   );
-  const users = useSelector((state: RootState) => state.user.data);
   const [formAccount, setFormAccount] = useState({} as FormAccount);
   const [accountToAction, setAccountToAction] = useState({} as FormAccount);
+  const groups = useSelector((state: RootState) => state.group.data);
+  const groupsLoading = useSelector((state: RootState) => state.group.loading);
+
+  const deleteGroup = useSelector(
+    (state: RootState) => state.group.deletedGroup
+  );
+
+  // ==========
+  const setupKeys = useSelector((state: RootState) => state.setupKey.data);
+  const setupKeysLoading = useSelector(
+    (state: RootState) => state.setupKey.loading
+  );
+  // ==========
+  const policies = useSelector((state: RootState) => state.policy.data);
+  const policiesLoading = useSelector(
+    (state: RootState) => state.policy.loading
+  );
+  // ==========
+  const routes = useSelector((state: RootState) => state.route.data);
+  const routesLoading = useSelector((state: RootState) => state.route.loading);
+  // ==========
+  const nsGroup = useSelector((state: RootState) => state.nameserverGroup.data);
+  const nsGrouploading = useSelector(
+    (state: RootState) => state.nameserverGroup.loading
+  );
+  // ==========
+
+  const users = useSelector((state: RootState) => state.user.data);
+  // ==========
+
   const [formPeerExpirationEnabled, setFormPeerExpirationEnabled] =
     useState(true);
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
+  const { confirm } = Modal;
 
   const [form] = Form.useForm();
   useEffect(() => {
@@ -60,7 +128,62 @@ export const Settings = () => {
         payload: null,
       })
     );
+
+    dispatch(
+      groupActions.getGroups.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+
+    dispatch(
+      setupKeyActions.getSetupKeys.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+
+    dispatch(
+      policyActions.getPolicies.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+
+    dispatch(
+      nsGroupActions.getNameServerGroups.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+
+    dispatch(
+      routeActions.getRoutes.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+
+    dispatch(
+      userActions.getRegularUsers.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
   }, []);
+
+  const onChangeTextToSearch = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    storeFilterState("groupsManagementPage", "search", e.target.value);
+    setTextToSearch(e.target.value);
+  };
+
+  const onChangeOnOff = ({ target: { value } }: RadioChangeEvent) => {
+    storeFilterState("groupsManagementPage", "usedFilter", value);
+    setOptionOnOff(value);
+    renderDataTable();
+  };
 
   useEffect(() => {
     if (accounts.length < 1) {
@@ -86,6 +209,133 @@ export const Settings = () => {
     setFormPeerExpirationEnabled(fAccount.peer_login_expiration_enabled);
     form.setFieldsValue(fAccount);
   }, [accounts]);
+
+  useEffect(() => {
+    if (groups && setupKeys && nsGroup && routes && users && policies) {
+      renderDataTable();
+    }
+  }, [
+    groups,
+    setupKeys,
+    nsGroup,
+    routes,
+    users,
+    policies,
+    optionOnOff,
+    textToSearch,
+  ]);
+
+  const renderDataTable = () => {
+    const mapForSetupKeys: any = [];
+    groups.forEach((item: any) => {
+      const cSetupKey = item.setupKey ? item.setupKey : [];
+      setupKeys.forEach((item2: any) => {
+        if (item2.auto_groups.includes(item.id)) {
+          if (cSetupKey.indexOf(item2.id) === -1) {
+            cSetupKey.push(item2.id);
+          }
+        }
+        item["setupKey"] = cSetupKey;
+      });
+      mapForSetupKeys.push(item);
+    });
+
+    const mapForNameservers: any = [];
+    mapForSetupKeys.forEach((item: any) => {
+      const cNameservers = item.nameservers ? item.nameservers : [];
+      nsGroup.forEach((item2: any) => {
+        if (item2.groups.includes(item.id)) {
+          if (cNameservers.indexOf(item2.id) === -1) {
+            cNameservers.push(item2.id);
+          }
+        }
+        item["nameservers"] = cNameservers;
+      });
+      mapForNameservers.push(item);
+    });
+
+    const mapForRoutes: any = [];
+    mapForNameservers.forEach((item: any) => {
+      const cRoutes = item.routes ? item.routes : [];
+      routes.forEach((item2: any) => {
+        if (item2.groups.includes(item.id)) {
+          if (cRoutes.indexOf(item2.id) === -1) {
+            cRoutes.push(item2.id);
+          }
+        }
+        item["routes"] = cRoutes;
+      });
+      mapForRoutes.push(item);
+    });
+
+    const mapForUser: any = [];
+    mapForRoutes.forEach((item: any) => {
+      const cUser = item.user ? item.user : [];
+      users.forEach((item2: any) => {
+        if (item2.auto_groups.includes(item.id)) {
+          if (cUser.indexOf(item2.id) === -1) {
+            cUser.push(item2.id);
+          }
+        }
+        item["user"] = cUser;
+      });
+      mapForUser.push(item);
+    });
+
+    const createSingleArrayForPolicy: any = [];
+    policies.map((aControl: any) => {
+      const cSingleAccessArray = aControl.allGroups ? aControl.allGroups : [];
+      aControl.rules[0].destinations.forEach((destination: any) => {
+        if (cSingleAccessArray.indexOf(destination.id) === -1) {
+          cSingleAccessArray.push(destination.id);
+        }
+      });
+
+      aControl.rules[0].sources.forEach((source: any) => {
+        if (cSingleAccessArray.indexOf(source.id) === -1) {
+          cSingleAccessArray.push(source.id);
+        }
+      });
+
+      aControl["cSingleAccessArray"] = cSingleAccessArray;
+      createSingleArrayForPolicy.push(aControl);
+    });
+
+    const mapForAccesControl: any = [];
+    mapForUser.forEach((item: any) => {
+      const cAccessControl = item.accessControl ? item.accessControl : [];
+      createSingleArrayForPolicy.forEach((item2: any) => {
+        if (item2.cSingleAccessArray.includes(item.id)) {
+          if (cAccessControl.indexOf(item2.id) === -1) {
+            cAccessControl.push(item2.id);
+          }
+        }
+        item["accessControl"] = cAccessControl;
+      });
+      mapForAccesControl.push(item);
+    });
+
+    const searchString = textToSearch.toLowerCase().trim();
+    let f: any = filter(mapForAccesControl, (f: any) =>
+      f.name.toLowerCase().includes(searchString)
+    );
+
+    if (optionOnOff === "used") {
+      const filterUnused = f.filter((item: any) => {
+        if (isDisabled(item)) {
+          return item;
+        }
+      });
+      setFilterGroup(filterUnused);
+    } else {
+      const filterUnused = f.filter((item: any) => {
+        if (!isDisabled(item)) {
+          return item;
+        }
+      });
+      setFilterGroup(filterUnused);
+    }
+  };
 
   const updatingSettings = "updating_settings";
   useEffect(() => {
@@ -207,6 +457,68 @@ export const Settings = () => {
     );
   };
 
+  const isDisabled = (group: any) => {
+    if (
+      (group.accessControl && group.accessControl.length > 0) ||
+      (group.nameservers && group.nameservers.length > 0) ||
+      (group.peers_count && group.peers_count > 0) ||
+      (group.routes && group.routes.length > 0) ||
+      (group.setupKey && group.setupKey.length > 0) ||
+      (group.user && group.user.length > 0)
+    ) {
+      return true;
+    }
+    return false;
+  };
+
+  const showConfirmDelete = (record: any) => {
+    confirm({
+      icon: <ExclamationCircleOutlined />,
+      title: <span className="font-500">Delete group {record.name}</span>,
+      okText: "Delete",
+      width: 600,
+      content: (
+        <Space direction="vertical" size="small">
+          <Paragraph>Are you sure you want to delete this group?</Paragraph>
+        </Space>
+      ),
+      okType: "danger",
+      onOk() {
+        dispatch(
+          groupActions.deleteGroup.request({
+            getAccessTokenSilently: getTokenSilently,
+            payload: record.id,
+          })
+        );
+      },
+      onCancel() {},
+    });
+  };
+  const deleteKey = "deleting";
+  useEffect(() => {
+    const style = { marginTop: 85 };
+    if (deleteGroup.loading) {
+      message.loading({ content: "Deleting...", key: deleteKey, style });
+    } else if (deleteGroup.success) {
+      message.success({
+        content: "Group has been successfully deleted.",
+        key: deleteKey,
+        duration: 2,
+        style,
+      });
+      // dispatch(routeActions.resetDeletedRoute(null));
+    } else if (deleteGroup.error) {
+      message.error({
+        content:
+          "Failed to remove group. You might not have enough permissions.",
+        key: deleteKey,
+        duration: 2,
+        style,
+      });
+      // dispatch(routeActions.resetDeletedRoute(null));
+    }
+  }, [deleteGroup]);
+
   return (
     <>
       <Container style={{ paddingTop: "40px" }}>
@@ -214,7 +526,7 @@ export const Settings = () => {
           <Col span={24}>
             <Title className="page-heading">Settings</Title>
             <Paragraph type="secondary">
-              Manage your account's settings
+              Manage the settings of your account
             </Paragraph>
             <Space
               direction="vertical"
@@ -232,7 +544,7 @@ export const Settings = () => {
                     style={{
                       color: "rgba(0, 0, 0, 0.88)",
                       fontWeight: "500",
-                      fontSize: "22px",
+                      fontSize: "18px",
                       marginBottom: "20px",
                     }}
                   >
@@ -362,6 +674,353 @@ export const Settings = () => {
                 </Card>
               </Form>
             </Space>
+          </Col>
+        </Row>
+
+        <Row style={{ marginTop: "20px", width: "100%" }}>
+          <Col span={24}>
+            <Card
+              bordered={true}
+              loading={loading}
+              style={{ marginBottom: "7px", width: "100%" }}
+            >
+              <div>
+                <Paragraph
+                  style={{
+                    textAlign: "left",
+                    whiteSpace: "pre-line",
+                    fontSize: "18px",
+                    fontWeight: "500",
+                  }}
+                >
+                  Groups
+                </Paragraph>
+                <Row
+                  gutter={21}
+                  style={{ marginTop: "-16px", marginBottom: "10px" }}
+                >
+                  <Col
+                    xs={24}
+                    sm={24}
+                    md={20}
+                    lg={20}
+                    xl={20}
+                    xxl={20}
+                    span={20}
+                  >
+                    <Paragraph
+                      type={"secondary"}
+                      style={{ textAlign: "left", whiteSpace: "pre-line" }}
+                    >
+                      Here is the overview of the groups of your account. You
+                      can delete the unused ones.
+                    </Paragraph>
+                  </Col>
+                </Row>
+
+                <Row gutter={[16, 24]} style={{ marginBottom: "20px" }}>
+                  <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
+                    <Input
+                      allowClear
+                      value={textToSearch}
+                      // onPressEnter={searchDataTable}
+                      placeholder="Search by group name"
+                      onChange={onChangeTextToSearch}
+                    />
+                  </Col>
+                  <Col
+                    xs={24}
+                    sm={24}
+                    md={11}
+                    lg={11}
+                    xl={11}
+                    xxl={11}
+                    span={11}
+                  >
+                    <Space size="middle" style={{ marginRight: "15px" }}>
+                      <Radio.Group
+                        options={optionsOnOff}
+                        onChange={onChangeOnOff}
+                        value={optionOnOff}
+                        optionType="button"
+                        buttonStyle="solid"
+                      />
+                      <Select
+                        value={pageSize.toString()}
+                        options={pageSizeOptions}
+                        onChange={(value) => {
+                          onChangePageSize(value, "groupsManagementPage");
+                        }}
+                        className="select-rows-per-page-en"
+                      />
+                    </Space>
+                  </Col>
+                </Row>
+
+                <Table
+                  size={"small"}
+                  showHeader={false}
+                  scroll={{ x: 800 }}
+                  pagination={{
+                    pageSize,
+                    showSizeChanger: false,
+                    showTotal: (total, range) =>
+                      `Showing ${range[0]} to ${range[1]} of ${total} groups`,
+                  }}
+                  loading={TableSpin(
+                    groupsLoading ||
+                      setupKeysLoading ||
+                      policiesLoading ||
+                      routesLoading ||
+                      nsGrouploading
+                  )}
+                  dataSource={filterGroup}
+                >
+                  <Column
+                    className={"non-highlighted-table-column"}
+                    sorter={(a, b) =>
+                      (a as any).name.localeCompare((b as any).name)
+                    }
+                    defaultSortOrder="ascend"
+                    render={(text, record, index) => {
+                      return (
+                        <>
+                          <Row>
+                            <Col>
+                              <Paragraph
+                                style={{
+                                  margin: "0px",
+                                  padding: "0px",
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {(record as any).name}
+                              </Paragraph>
+                            </Col>
+                          </Row>
+                        </>
+                      );
+                    }}
+                  />
+
+                  <Column
+                    className={"non-highlighted-table-column"}
+                    render={(text, record, index) => {
+                      return (
+                        <>
+                          <Row>
+                            <Col>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{ textAlign: "left",fontSize: "12px"}}
+                              >
+                                Peers
+                              </Paragraph>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  textAlign: "left",
+                                  marginTop: "-10px",
+                                  marginBottom: "0",
+                                  fontSize: "15px",
+                                }}
+                              >
+                                {(record as any).peers_count}
+                              </Paragraph>
+                            </Col>
+                          </Row>
+                        </>
+                      );
+                    }}
+                  />
+
+                  <Column
+                    className={"non-highlighted-table-column"}
+                    render={(text, record: any, index) => {
+                      return (
+                        <>
+                          <Row>
+                            <Col>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{ textAlign: "left",fontSize: "12px"}}
+                              >
+                                Access Controls
+                              </Paragraph>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  textAlign: "left",
+                                  marginTop: "-10px",
+                                  marginBottom: "0",
+                                  fontSize: "15px",
+                                }}
+                              >
+                                {record.accessControl &&
+                                  record.accessControl.length}
+                              </Paragraph>
+                            </Col>
+                          </Row>
+                        </>
+                      );
+                    }}
+                  />
+
+                  <Column
+                    className={"non-highlighted-table-column"}
+                    render={(text, record: any, index) => {
+                      return (
+                        <>
+                          <Row>
+                            <Col>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{ textAlign: "left",fontSize: "12px"}}
+                              >
+                                DNS
+                              </Paragraph>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  textAlign: "left",
+                                  marginTop: "-10px",
+                                  marginBottom: "0",
+                                  fontSize: "15px",
+                                }}
+                              >
+                                {record.nameservers &&
+                                  record.nameservers.length}
+                              </Paragraph>
+                            </Col>
+                          </Row>
+                        </>
+                      );
+                    }}
+                  />
+
+                  <Column
+                    className={"non-highlighted-table-column"}
+                    render={(text, record: any, index) => {
+                      return (
+                        <>
+                          <Row>
+                            <Col>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{ textAlign: "left",fontSize: "12px"}}
+                              >
+                                Routes
+                              </Paragraph>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  textAlign: "left",
+                                  marginTop: "-10px",
+                                  marginBottom: "0",
+                                  fontSize: "15px",
+                                }}
+                              >
+                                {record.routes && record.routes.length}
+                              </Paragraph>
+                            </Col>
+                          </Row>
+                        </>
+                      );
+                    }}
+                  />
+
+                  <Column
+                    className={"non-highlighted-table-column"}
+                    render={(text, record: any, index) => {
+                      return (
+                        <>
+                          <Row>
+                            <Col>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{ textAlign: "left",fontSize: "12px"}}
+                              >
+                                Setup Keys
+                              </Paragraph>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  textAlign: "left",
+                                  marginTop: "-10px",
+                                  marginBottom: "0",
+                                  fontSize: "15px",
+                                }}
+                              >
+                                {record.setupKey && record.setupKey.length}
+                              </Paragraph>
+                            </Col>
+                          </Row>
+                        </>
+                      );
+                    }}
+                  />
+
+                  <Column
+                    className={"non-highlighted-table-column"}
+                    render={(text, record: any, index) => {
+                      return (
+                        <>
+                          <Row>
+                            <Col>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{ textAlign: "left",fontSize: "12px"}}
+                              >
+                                Users
+                              </Paragraph>
+                              <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  textAlign: "left",
+                                  marginTop: "-10px",
+                                  marginBottom: "0",
+                                  fontSize: "15px",
+                                }}
+                              >
+                                {record.user && record.user.length}
+                              </Paragraph>
+                            </Col>
+                          </Row>
+                        </>
+                      );
+                    }}
+                  />
+                  <Column
+                    align="right"
+                    render={(text, record, index) => {
+                      const isButtonDisabled = isDisabled(record);
+
+                      return (
+                        <Tooltip
+                          className="delete-button"
+                          title={
+                            isButtonDisabled
+                              ? "Remove dependencies to this group to delete it."
+                              : ""
+                          }
+                        >
+                          <Button
+                            danger={true}
+                            type={"text"}
+                            disabled={isButtonDisabled}
+                            onClick={() => {
+                              showConfirmDelete(record);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        </Tooltip>
+                      );
+                    }}
+                  />
+                </Table>
+              </div>
+            </Card>
           </Col>
         </Row>
       </Container>

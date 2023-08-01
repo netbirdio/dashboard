@@ -74,13 +74,13 @@ export function* setDeleteGroup(action: ReturnType<typeof  actions.setDeleteGrou
 
 export function* deleteGroup(action: ReturnType<typeof actions.deleteGroup.request>): Generator {
   try {
-    yield call(actions.setDeleteGroup,{
+    yield put(actions.setDeleteGroup({
       loading: true,
       success: false,
       failure: false,
       error: null,
       data: null
-    } as DeleteResponse<string | null>)
+    } as DeleteResponse<string | null>))
 
     const effect = yield call(service.deleteGroup, action.payload);
     const response = effect as ApiResponse<any>;
@@ -93,8 +93,8 @@ export function* deleteGroup(action: ReturnType<typeof actions.deleteGroup.reque
       data: response.body
     } as DeleteResponse<string | null>));
 
-    const rules = (yield select(state => state.rule.data)) as Group[]
-    yield put(actions.getGroups.success(rules.filter((p:Group) => p.id !== action.payload.payload)))
+    const groups = (yield select(state => state.group.data)) as Group[]
+    yield put(actions.getGroups.success(groups.filter((p:Group) => p.id !== action.payload.payload)))
   } catch (err) {
     yield put(actions.deleteGroup.failure({
       loading: false,
