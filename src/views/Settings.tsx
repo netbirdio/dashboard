@@ -644,7 +644,8 @@ export const Settings = () => {
                       type={"secondary"}
                       style={{ textAlign: "left", whiteSpace: "pre-line" }}
                     >
-                      Here is the overview of the groups of your account. You can delete the unused ones.
+                      Here is the overview of the groups of your account. You
+                      can delete the unused ones.
                     </Paragraph>
                   </Col>
                 </Row>
@@ -682,18 +683,6 @@ export const Settings = () => {
                               <Paragraph
                                 style={{
                                   margin: "0px",
-                                  padding: "0px",
-                                }}
-                              >
-                                Group Name
-                              </Paragraph>
-                              <Paragraph
-                                type={"secondary"}
-                                style={{
-                                  fontSize: "13px",
-                                  fontWeight: "400",
-                                  margin: "0px",
-                                  marginTop: "-2px",
                                   padding: "0px",
                                 }}
                               >
@@ -901,7 +890,11 @@ export const Settings = () => {
                       return (
                         <Tooltip
                           className="delete-button"
-                          title={isButtonDisabled ? "Remove dependencies to this group to delete it." : ""}
+                          title={
+                            isButtonDisabled
+                              ? "Remove dependencies to this group to delete it."
+                              : ""
+                          }
                         >
                           <Button
                             danger={true}

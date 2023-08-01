@@ -59,22 +59,22 @@ function getFormattedDate(date, preformattedDate = false, hideYear = false) {
 
     if (minutes < 10) {
         // Adding leading zero to minutes
-        minutes = `0${ minutes }`;
+        minutes = `0${minutes}`;
     }
 
     if (preformattedDate) {
         // Today
         // Yesterday
-        return `${ preformattedDate }`;
+        return `${preformattedDate}`;
     }
 
     if (hideYear) {
         // 10. January
-        return `${ day }. ${ month }`;
+        return `${day}. ${month}`;
     }
 
     // 10. January 2017.
-    return `${ day }. ${ month } ${ year }`;
+    return `${day}. ${month} ${year}`;
 }
 
 export const fullDate = (dateParam) => {
@@ -107,11 +107,11 @@ export const timeAgo = (dateParam) => {
     } else if (seconds < 5) {
         return 'just now';
     } else if (seconds < 60) {
-        return `${ seconds } seconds ago`;
+        return `${seconds} seconds ago`;
     } else if (seconds < 90) {
         return 'about a minute ago';
     } else if (minutes < 60) {
-        return `${ minutes } minutes ago`;
+        return `${minutes} minutes ago`;
     } else if (isToday) {
         return getFormattedDate(date, 'today'); // Today at 10:20
     } else if (isYesterday) {
@@ -134,3 +134,18 @@ export const isNetBirdHosted = () => {
 export const isLocalDev = () => {
     return window.location.hostname.includes("localhost")
 }
+
+const domainRegex =
+    /^(?!.*\s)[a-zA-Z0-9](?!.*\s$)(?!.*\.$)(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.){1,126}(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$/;
+
+export const domainValidator = (_, domain) => {
+    if (domainRegex.test(domain)) {
+        return Promise.resolve();
+    }
+    // setIsPrimary(false);
+    return Promise.reject(
+        new Error(
+            "Please enter a valid domain, e.g. example.com or intra.example.com"
+        )
+    );
+};

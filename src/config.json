@@ -11,5 +11,6 @@
   "hotjarTrackID": "$NETBIRD_HOTJAR_TRACK_ID",
   "redirectURI": "$AUTH_REDIRECT_URI",
   "silentRedirectURI": "$AUTH_SILENT_REDIRECT_URI",
-  "tokenSource": "$NETBIRD_TOKEN_SOURCE"
+  "tokenSource": "$NETBIRD_TOKEN_SOURCE",
+  "dragQueryParams": "$NETBIRD_DRAG_QUERY_PARAMS"
 }

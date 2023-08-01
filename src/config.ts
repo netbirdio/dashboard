@@ -39,5 +39,7 @@ export function getConfig() {
     redirectURI: redirectURI,
     silentRedirectURI: silentRedirectURI,
     tokenSource: tokenSource,
+    // drags all the query params to the auth layer specified in the URL when accessing dashboard.
+    dragQueryParams: configJson.dragQueryParams == "true"
   };
 }
