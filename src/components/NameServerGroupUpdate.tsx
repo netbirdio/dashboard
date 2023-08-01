@@ -30,7 +30,7 @@ import {
 import { useGetGroupTagHelpers } from "../utils/groups";
 import { useGetTokenSilently } from "../utils/token";
 import { Container } from "./Container";
-
+import { domainValidator } from "../utils/common";
 const { Paragraph, Text } = Typography;
 
 interface formNSGroup extends NameServerGroup {}
@@ -253,21 +253,6 @@ const NameServerGroupUpdate = () => {
     setEditDescription(status);
   };
 
-  const domainRegex =
-    /(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9][a-z0-9-]{0,61}[a-z0-9]/;
-
-  const domainValidator = (_: RuleObject, domain: string) => {
-    if (domainRegex.test(domain)) {
-      return Promise.resolve();
-    }
-    setIsPrimary(false);
-    return Promise.reject(
-      new Error(
-        "Please enter a valid domain, e.g. example.com or intra.example.com"
-      )
-    );
-  };
-
   const nameValidator = (_: RuleObject, value: string) => {
     const found = nsGroupData.find(
       (u) => u.name == value && u.id !== formNSGroup.id
@@ -316,38 +301,38 @@ const NameServerGroupUpdate = () => {
       <Col span={24} style={{ marginBottom: "15px" }}>
         <Form.Item name="enabled" label="">
           <div
-              style={{
-                display: "flex",
-                gap: "15px",
-              }}
+            style={{
+              display: "flex",
+              gap: "15px",
+            }}
           >
             <Switch
-                onChange={handleChangeDisabled}
-                defaultChecked={formNSGroup.enabled}
-                size="small"
-                checked={formNSGroup.enabled}
+              onChange={handleChangeDisabled}
+              defaultChecked={formNSGroup.enabled}
+              size="small"
+              checked={formNSGroup.enabled}
             />
             <div>
               <label
-                  style={{
-                    color: "rgba(0, 0, 0, 0.88)",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                  }}
+                style={{
+                  color: "rgba(0, 0, 0, 0.88)",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
               >
                 Enabled
               </label>
               <Paragraph
-                  type={"secondary"}
-                  style={{
-                    marginTop: "-2",
-                    fontWeight: "400",
-                    marginBottom: "0",
-                  }}
+                type={"secondary"}
+                style={{
+                  marginTop: "-2",
+                  fontWeight: "400",
+                  marginBottom: "0",
+                }}
               >
                 {formNSGroup.enabled
-                    ? "Disable this server if you don't want the configuration to apply immediately"
-                    : " Enable this server if you want the configuration to apply immediately"}
+                  ? "Disable this server if you don't want the configuration to apply immediately"
+                  : " Enable this server if you want the configuration to apply immediately"}
               </Paragraph>
             </div>
           </div>
