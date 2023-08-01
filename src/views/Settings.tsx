@@ -46,7 +46,7 @@ const styleNotification = { marginTop: 85 };
 export const Settings = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
-  const { pageSize } = usePageSizeHelpers();
+  const { pageSize } = usePageSizeHelpers(5);
 
   const [filterGroup, setFilterGroup] = useState([]);
 
@@ -644,7 +644,7 @@ export const Settings = () => {
                       type={"secondary"}
                       style={{ textAlign: "left", whiteSpace: "pre-line" }}
                     >
-                      Groups heading here
+                      Here is the overview of the groups of your account. You can delete the unused ones.
                     </Paragraph>
                   </Col>
                 </Row>
@@ -901,7 +901,7 @@ export const Settings = () => {
                       return (
                         <Tooltip
                           className="delete-button"
-                          title={isButtonDisabled ? "here is toopl tip" : ""}
+                          title={isButtonDisabled ? "Remove dependencies to this group to delete it." : ""}
                         >
                           <Button
                             danger={true}
