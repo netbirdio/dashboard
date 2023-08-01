@@ -526,7 +526,7 @@ export const Settings = () => {
           <Col span={24}>
             <Title className="page-heading">Settings</Title>
             <Paragraph type="secondary">
-              Manage your account's settings
+              Manage the settings of your account
             </Paragraph>
             <Space
               direction="vertical"
@@ -544,7 +544,7 @@ export const Settings = () => {
                     style={{
                       color: "rgba(0, 0, 0, 0.88)",
                       fontWeight: "500",
-                      fontSize: "22px",
+                      fontSize: "18px",
                       marginBottom: "20px",
                     }}
                   >
@@ -812,7 +812,7 @@ export const Settings = () => {
                             <Col>
                               <Paragraph
                                 type={"secondary"}
-                                style={{ textAlign: "left", fontSize: "11px" }}
+                                style={{ textAlign: "left",fontSize: "12px"}}
                               >
                                 Peers
                               </Paragraph>
@@ -843,7 +843,7 @@ export const Settings = () => {
                             <Col>
                               <Paragraph
                                 type={"secondary"}
-                                style={{ textAlign: "left", fontSize: "11px" }}
+                                style={{ textAlign: "left",fontSize: "12px"}}
                               >
                                 Access Controls
                               </Paragraph>
@@ -875,7 +875,7 @@ export const Settings = () => {
                             <Col>
                               <Paragraph
                                 type={"secondary"}
-                                style={{ textAlign: "left", fontSize: "11px" }}
+                                style={{ textAlign: "left",fontSize: "12px"}}
                               >
                                 DNS
                               </Paragraph>
@@ -907,7 +907,7 @@ export const Settings = () => {
                             <Col>
                               <Paragraph
                                 type={"secondary"}
-                                style={{ textAlign: "left", fontSize: "11px" }}
+                                style={{ textAlign: "left",fontSize: "12px"}}
                               >
                                 Routes
                               </Paragraph>
@@ -938,7 +938,7 @@ export const Settings = () => {
                             <Col>
                               <Paragraph
                                 type={"secondary"}
-                                style={{ textAlign: "left", fontSize: "11px" }}
+                                style={{ textAlign: "left",fontSize: "12px"}}
                               >
                                 Setup Keys
                               </Paragraph>
@@ -969,7 +969,7 @@ export const Settings = () => {
                             <Col>
                               <Paragraph
                                 type={"secondary"}
-                                style={{ textAlign: "left", fontSize: "11px" }}
+                                style={{ textAlign: "left",fontSize: "12px"}}
                               >
                                 Users
                               </Paragraph>
