@@ -14,7 +14,13 @@ import {
   Space,
   Typography,
   Table,
+  Select,
+  Radio,
+  Input,
+  RadioChangeEvent,
 } from "antd";
+import { filter } from "lodash";
+import { storeFilterState, getFilterState } from "../utils/filterState";
 import { usePageSizeHelpers } from "../utils/pageSize";
 import { useGetTokenSilently } from "../utils/token";
 import { useGetGroupTagHelpers } from "../utils/groups";
@@ -46,9 +52,28 @@ const styleNotification = { marginTop: 85 };
 export const Settings = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
-  const { pageSize } = usePageSizeHelpers(5);
+  const { pageSize, onChangePageSize, pageSizeOptions } = usePageSizeHelpers(
+    getFilterState("groupsManagementPage", "pageSize")
+      ? getFilterState("groupsManagementPage", "pageSize")
+      : 10
+  );
+  const [optionOnOff, setOptionOnOff] = useState(
+    getFilterState("groupsManagementPage", "usedFilter")
+      ? getFilterState("groupsManagementPage", "usedFilter")
+      : "used"
+  );
+
+  const optionsOnOff = [
+    { label: "Used", value: "used" },
+    { label: "Unused", value: "unused" },
+  ];
 
   const [filterGroup, setFilterGroup] = useState([]);
+  const [textToSearch, setTextToSearch] = useState(
+    getFilterState("groupsManagementPage", "search")
+      ? getFilterState("groupsManagementPage", "search")
+      : ""
+  );
 
   const {} = useGetGroupTagHelpers();
 
@@ -147,6 +172,19 @@ export const Settings = () => {
     );
   }, []);
 
+  const onChangeTextToSearch = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    storeFilterState("groupsManagementPage", "search", e.target.value);
+    setTextToSearch(e.target.value);
+  };
+
+  const onChangeOnOff = ({ target: { value } }: RadioChangeEvent) => {
+    storeFilterState("groupsManagementPage", "usedFilter", value);
+    setOptionOnOff(value);
+    renderDataTable();
+  };
+
   useEffect(() => {
     if (accounts.length < 1) {
       console.debug(
@@ -174,99 +212,130 @@ export const Settings = () => {
 
   useEffect(() => {
     if (groups && setupKeys && nsGroup && routes && users && policies) {
-      const mapForSetupKeys: any = [];
-      groups.forEach((item: any) => {
-        const cSetupKey = item.setupKey ? item.setupKey : [];
-        setupKeys.forEach((item2: any) => {
-          if (item2.auto_groups.includes(item.id)) {
-            if (cSetupKey.indexOf(item2.id) === -1) {
-              cSetupKey.push(item2.id);
-            }
-          }
-          item["setupKey"] = cSetupKey;
-        });
-        mapForSetupKeys.push(item);
-      });
-
-      const mapForNameservers: any = [];
-      mapForSetupKeys.forEach((item: any) => {
-        const cNameservers = item.nameservers ? item.nameservers : [];
-        nsGroup.forEach((item2: any) => {
-          if (item2.groups.includes(item.id)) {
-            if (cNameservers.indexOf(item2.id) === -1) {
-              cNameservers.push(item2.id);
-            }
-          }
-          item["nameservers"] = cNameservers;
-        });
-        mapForNameservers.push(item);
-      });
-
-      const mapForRoutes: any = [];
-      mapForNameservers.forEach((item: any) => {
-        const cRoutes = item.routes ? item.routes : [];
-        routes.forEach((item2: any) => {
-          if (item2.groups.includes(item.id)) {
-            if (cRoutes.indexOf(item2.id) === -1) {
-              cRoutes.push(item2.id);
-            }
-          }
-          item["routes"] = cRoutes;
-        });
-        mapForRoutes.push(item);
-      });
-
-      const mapForUser: any = [];
-      mapForRoutes.forEach((item: any) => {
-        const cUser = item.user ? item.user : [];
-        users.forEach((item2: any) => {
-          if (item2.auto_groups.includes(item.id)) {
-            if (cUser.indexOf(item2.id) === -1) {
-              cUser.push(item2.id);
-            }
-          }
-          item["user"] = cUser;
-        });
-        mapForUser.push(item);
-      });
-
-      const createSingleArrayForPolicy: any = [];
-      policies.map((aControl: any) => {
-        const cSingleAccessArray = aControl.allGroups ? aControl.allGroups : [];
-        aControl.rules[0].destinations.forEach((destination: any) => {
-          if (cSingleAccessArray.indexOf(destination.id) === -1) {
-            cSingleAccessArray.push(destination.id);
-          }
-        });
-
-        aControl.rules[0].sources.forEach((source: any) => {
-          if (cSingleAccessArray.indexOf(source.id) === -1) {
-            cSingleAccessArray.push(source.id);
-          }
-        });
-
-        aControl["cSingleAccessArray"] = cSingleAccessArray;
-        createSingleArrayForPolicy.push(aControl);
-      });
-
-      const mapForAccesControl: any = [];
-      mapForUser.forEach((item: any) => {
-        const cAccessControl = item.accessControl ? item.accessControl : [];
-        createSingleArrayForPolicy.forEach((item2: any) => {
-          if (item2.cSingleAccessArray.includes(item.id)) {
-            if (cAccessControl.indexOf(item2.id) === -1) {
-              cAccessControl.push(item2.id);
-            }
-          }
-          item["accessControl"] = cAccessControl;
-        });
-        mapForAccesControl.push(item);
-      });
-
-      setFilterGroup(mapForAccesControl);
-      // console.log("mapForAccesControl", mapForAccesControl);
+      renderDataTable();
     }
-  }, [groups, setupKeys, nsGroup, routes, users, policies]);
+  }, [
+    groups,
+    setupKeys,
+    nsGroup,
+    routes,
+    users,
+    policies,
+    optionOnOff,
+    textToSearch,
+  ]);
+
+  const renderDataTable = () => {
+    const mapForSetupKeys: any = [];
+    groups.forEach((item: any) => {
+      const cSetupKey = item.setupKey ? item.setupKey : [];
+      setupKeys.forEach((item2: any) => {
+        if (item2.auto_groups.includes(item.id)) {
+          if (cSetupKey.indexOf(item2.id) === -1) {
+            cSetupKey.push(item2.id);
+          }
+        }
+        item["setupKey"] = cSetupKey;
+      });
+      mapForSetupKeys.push(item);
+    });
+
+    const mapForNameservers: any = [];
+    mapForSetupKeys.forEach((item: any) => {
+      const cNameservers = item.nameservers ? item.nameservers : [];
+      nsGroup.forEach((item2: any) => {
+        if (item2.groups.includes(item.id)) {
+          if (cNameservers.indexOf(item2.id) === -1) {
+            cNameservers.push(item2.id);
+          }
+        }
+        item["nameservers"] = cNameservers;
+      });
+      mapForNameservers.push(item);
+    });
+
+    const mapForRoutes: any = [];
+    mapForNameservers.forEach((item: any) => {
+      const cRoutes = item.routes ? item.routes : [];
+      routes.forEach((item2: any) => {
+        if (item2.groups.includes(item.id)) {
+          if (cRoutes.indexOf(item2.id) === -1) {
+            cRoutes.push(item2.id);
+          }
+        }
+        item["routes"] = cRoutes;
+      });
+      mapForRoutes.push(item);
+    });
+
+    const mapForUser: any = [];
+    mapForRoutes.forEach((item: any) => {
+      const cUser = item.user ? item.user : [];
+      users.forEach((item2: any) => {
+        if (item2.auto_groups.includes(item.id)) {
+          if (cUser.indexOf(item2.id) === -1) {
+            cUser.push(item2.id);
+          }
+        }
+        item["user"] = cUser;
+      });
+      mapForUser.push(item);
+    });
+
+    const createSingleArrayForPolicy: any = [];
+    policies.map((aControl: any) => {
+      const cSingleAccessArray = aControl.allGroups ? aControl.allGroups : [];
+      aControl.rules[0].destinations.forEach((destination: any) => {
+        if (cSingleAccessArray.indexOf(destination.id) === -1) {
+          cSingleAccessArray.push(destination.id);
+        }
+      });
+
+      aControl.rules[0].sources.forEach((source: any) => {
+        if (cSingleAccessArray.indexOf(source.id) === -1) {
+          cSingleAccessArray.push(source.id);
+        }
+      });
+
+      aControl["cSingleAccessArray"] = cSingleAccessArray;
+      createSingleArrayForPolicy.push(aControl);
+    });
+
+    const mapForAccesControl: any = [];
+    mapForUser.forEach((item: any) => {
+      const cAccessControl = item.accessControl ? item.accessControl : [];
+      createSingleArrayForPolicy.forEach((item2: any) => {
+        if (item2.cSingleAccessArray.includes(item.id)) {
+          if (cAccessControl.indexOf(item2.id) === -1) {
+            cAccessControl.push(item2.id);
+          }
+        }
+        item["accessControl"] = cAccessControl;
+      });
+      mapForAccesControl.push(item);
+    });
+
+    const searchString = textToSearch.toLowerCase().trim();
+    let f: any = filter(mapForAccesControl, (f: any) =>
+      f.name.toLowerCase().includes(searchString)
+    );
+
+    if (optionOnOff === "used") {
+      const filterUnused = f.filter((item: any) => {
+        if (isDisabled(item)) {
+          return item;
+        }
+      });
+      setFilterGroup(filterUnused);
+    } else {
+      const filterUnused = f.filter((item: any) => {
+        if (!isDisabled(item)) {
+          return item;
+        }
+      });
+      setFilterGroup(filterUnused);
+    }
+  };
 
   const updatingSettings = "updating_settings";
   useEffect(() => {
@@ -403,7 +472,6 @@ export const Settings = () => {
   };
 
   const showConfirmDelete = (record: any) => {
-    console.log("record", record);
     confirm({
       icon: <ExclamationCircleOutlined />,
       title: <span className="font-500">Delete group {record.name}</span>,
@@ -649,9 +717,48 @@ export const Settings = () => {
                     </Paragraph>
                   </Col>
                 </Row>
+
+                <Row gutter={[16, 24]} style={{ marginBottom: "20px" }}>
+                  <Col xs={24} sm={24} md={8} lg={8} xl={8} xxl={8} span={8}>
+                    <Input
+                      allowClear
+                      value={textToSearch}
+                      // onPressEnter={searchDataTable}
+                      placeholder="Search by group name"
+                      onChange={onChangeTextToSearch}
+                    />
+                  </Col>
+                  <Col
+                    xs={24}
+                    sm={24}
+                    md={11}
+                    lg={11}
+                    xl={11}
+                    xxl={11}
+                    span={11}
+                  >
+                    <Space size="middle" style={{ marginRight: "15px" }}>
+                      <Radio.Group
+                        options={optionsOnOff}
+                        onChange={onChangeOnOff}
+                        value={optionOnOff}
+                        optionType="button"
+                        buttonStyle="solid"
+                      />
+                      <Select
+                        value={pageSize.toString()}
+                        options={pageSizeOptions}
+                        onChange={(value) => {
+                          onChangePageSize(value, "groupsManagementPage");
+                        }}
+                        className="select-rows-per-page-en"
+                      />
+                    </Space>
+                  </Col>
+                </Row>
+
                 <Table
                   size={"small"}
-                  style={{ marginTop: "-10px" }}
                   showHeader={false}
                   scroll={{ x: 800 }}
                   pagination={{
@@ -684,6 +791,7 @@ export const Settings = () => {
                                 style={{
                                   margin: "0px",
                                   padding: "0px",
+                                  fontWeight: 500,
                                 }}
                               >
                                 {(record as any).name}
