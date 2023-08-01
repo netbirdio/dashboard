@@ -30,7 +30,7 @@ import {
 import { useGetGroupTagHelpers } from "../utils/groups";
 import { useGetTokenSilently } from "../utils/token";
 import { Container } from "./Container";
-
+import { domainValidator } from "../utils/common";
 const { Paragraph, Text } = Typography;
 
 interface formNSGroup extends NameServerGroup {}
@@ -251,21 +251,6 @@ const NameServerGroupUpdate = () => {
 
   const toggleEditDescription = (status: boolean) => {
     setEditDescription(status);
-  };
-
-  const domainRegex =
-    /^(?!.*\s)[a-zA-Z0-9](?!.*\s$)(?!.*\.$)(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.){1,126}(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$/;
-
-  const domainValidator = (_: RuleObject, domain: string) => {
-    if (domainRegex.test(domain)) {
-      return Promise.resolve();
-    }
-    setIsPrimary(false);
-    return Promise.reject(
-      new Error(
-        "Please enter a valid domain, e.g. example.com or intra.example.com"
-      )
-    );
   };
 
   const nameValidator = (_: RuleObject, value: string) => {
