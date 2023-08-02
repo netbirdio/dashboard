@@ -50,6 +50,7 @@ import AddPeerPopup from "../components/popups/addpeer/addpeer/AddPeerPopup";
 import { getLocalItem, setLocalItem, StorageKey } from "../services/local";
 import { useOidcUser } from "@axa-fr/react-oidc";
 import { useGetGroupTagHelpers } from "../utils/groups";
+import { UpdatePeerGroupModal } from "../components/UpdatePeerGroupModal";
 
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
@@ -81,6 +82,7 @@ export const Peers = () => {
   const [addPeerModalOpen, setAddPeerModalOpen] = useState(false);
   const { oidcUser } = useOidcUser();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [showGroupModal, setShowGroupModal] = useState(false);
 
   const [textToSearch, setTextToSearch] = useState("");
   const [groupsFilterArray, setGroupsFilterArray] = useState([]);
@@ -441,6 +443,16 @@ export const Peers = () => {
     dispatch(peerActions.setUpdateGroupsVisible(false));
   };
 
+  const setGroupVisible = (peerToAction: Peer, status: boolean) => {
+    if (status) {
+      dispatch(peerActions.setPeer({ ...peerToAction }));
+      setShowGroupModal(true);
+      return;
+    }
+    dispatch(peerActions.setPeer(null));
+    setShowGroupModal(true);
+  };
+
   const renderPopoverGroups = (
     label: string,
     groups: Group[] | string[] | null,
@@ -492,7 +504,7 @@ export const Peers = () => {
       >
         <Button
           type="link"
-          onClick={() => setUpdateGroupsVisible(peerToAction, true)}
+          onClick={() => setGroupVisible(peerToAction, true)}
         >
           {label}
         </Button>
@@ -935,7 +947,10 @@ export const Peers = () => {
           {confirmModalContextHolder}
         </>
       )}
-      {peer && <PeerUpdate />}
+      {peer && !showGroupModal && <PeerUpdate />}
+      {showGroupModal && (
+        <UpdatePeerGroupModal setShowGroupModal={setShowGroupModal} />
+      )}
     </>
   );
 };

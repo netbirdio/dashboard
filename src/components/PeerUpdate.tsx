@@ -50,7 +50,9 @@ const { Panel } = Collapse;
 const punycode = require("punycode/");
 const { Text } = Typography;
 
-const PeerUpdate = () => {
+const PeerUpdate = (props: any) => {
+  const { isGroupUpdateView, setShowGroupModal } = props;
+  console.log("isGroupUpdateView", isGroupUpdateView);
   const { getTokenSilently } = useGetTokenSilently();
   const { Column } = Table;
   const { confirm } = Modal;
@@ -159,10 +161,10 @@ const PeerUpdate = () => {
     const gs = peer?.groups?.map(
       (g) => ({ id: g?.id || "", name: g.name } as GroupPeer)
     ) as GroupPeer[];
-     const gs_name = gs?.map((g) => g.id) as string[];
+    const gs_name = gs?.map((g) => g.id) as string[];
     setPeerGroups(gs);
     setSelectedTagGroups(gs_name);
-     const fPeer = {
+    const fPeer = {
       ...peer,
       name: formPeer.name ? formPeer.name : peer.name,
       groupsNames: gs_name,
@@ -175,7 +177,6 @@ const PeerUpdate = () => {
     setFormPeer(fPeer);
     form.setFieldsValue(fPeer);
   }, [peer]);
-
 
   useEffect(() => {}, [users]);
 
@@ -288,6 +289,9 @@ const PeerUpdate = () => {
   };
 
   const onCancel = () => {
+    if (setShowGroupModal) {
+      setShowGroupModal(false);
+    }
     dispatch(peerActions.setPeer(null));
     setUpdateGroupsVisible(false);
     setEditName(false);
@@ -399,6 +403,9 @@ const PeerUpdate = () => {
         });
         // setUpdateGroupsVisible({} as Peer, false)
         dispatch(peerActions.resetSavedGroups(null));
+        if (setShowGroupModal) {
+          setShowGroupModal(false);
+        }
       } else if (savedGroups.error) {
         message.error({
           content:
@@ -649,22 +656,28 @@ const PeerUpdate = () => {
   return (
     <>
       {peer && (
-        <Container style={{ paddingTop: "40px" }}>
-          <Breadcrumb
-            style={{ marginBottom: "25px" }}
-            items={[
-              {
-                title: <a onClick={onBreadcrumbUsersClick}>Peers</a>,
-              },
-              {
-                title: formPeer.ip,
-              },
-            ]}
-          />
+        <Container style={{ paddingTop: isGroupUpdateView ? "0" : "40px" }}>
+          {!isGroupUpdateView && (
+            <Breadcrumb
+              style={{ marginBottom: "25px" }}
+              items={[
+                {
+                  title: <a onClick={onBreadcrumbUsersClick}>Peers</a>,
+                },
+                {
+                  title: formPeer.ip,
+                },
+              ]}
+            />
+          )}
           <Card
-            bordered={true}
-            style={{ marginBottom: "7px" }}
-            className="peers-form"
+            bordered={isGroupUpdateView ? false : true}
+            style={{
+              marginBottom: "7px",
+            }}
+            className={
+              isGroupUpdateView ? "peers-form noborderPadding" : "peers-form"
+            }
           >
             <Form
               layout="vertical"
@@ -672,214 +685,220 @@ const PeerUpdate = () => {
               form={form}
               onValuesChange={onChange}
             >
-              <Row gutter={16}>
-                <Col span={24}>
-                  <Row align="top">
-                    <Col flex="auto">
-                      {!editName && peer.id && formPeer.name ? (
-                        <div
-                          style={{
-                            color: "rgba(0, 0, 0, 0.88)",
-                            fontWeight: "500",
-                            fontSize: "22px",
-                          }}
-                          onClick={() => toggleEditName(true, peer.name)}
-                        >
-                          {formPeer.name ? formPeer.name : peer.name}
-                          <EditOutlined style={{ marginLeft: "10px" }} />
+              {!isGroupUpdateView && (
+                <>
+                  <Row gutter={16}>
+                    <Col span={24}>
+                      <Row align="top">
+                        <Col flex="auto">
+                          {!editName && peer.id && formPeer.name ? (
+                            <div
+                              style={{
+                                color: "rgba(0, 0, 0, 0.88)",
+                                fontWeight: "500",
+                                fontSize: "22px",
+                              }}
+                              onClick={() => toggleEditName(true, peer.name)}
+                            >
+                              {formPeer.name ? formPeer.name : peer.name}
+                              <EditOutlined style={{ marginLeft: "10px" }} />
 
+                              <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  textAlign: "left",
+                                  whiteSpace: "pre-line",
+                                  fontWeight: "400",
+                                }}
+                              >
+                                <div style={{ marginBottom: "2px" }}>
+                                  {" "}
+                                  {formPeer.userEmail}{" "}
+                                </div>
+                                <div>
+                                  {!formPeer.connected &&
+                                  formPeer.login_expired ? (
+                                    <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
+                                      <Tag color="red">
+                                        <Text
+                                          style={{
+                                            fontSize: "12px",
+                                            color: "rgba(210, 64, 64, 0.85)",
+                                          }}
+                                          type={"secondary"}
+                                        >
+                                          needs login
+                                        </Text>
+                                      </Tag>
+                                    </Tooltip>
+                                  ) : (
+                                    <></>
+                                  )}
+                                </div>
+                              </Paragraph>
+                            </div>
+                          ) : (
+                            <Row>
+                              <Space direction={"vertical"} size="small">
+                                <Form.Item
+                                  name="name"
+                                  label="Name"
+                                  style={{ margin: "1px" }}
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message:
+                                        "Please add a new name for this peer",
+                                      whitespace: true,
+                                    },
+                                    { validator: nameValidator },
+                                  ]}
+                                >
+                                  <Input
+                                    placeholder={peer.name}
+                                    ref={inputNameRef}
+                                    onPressEnter={() => toggleEditName(false)}
+                                    onBlur={() => toggleEditName(false)}
+                                    autoComplete="off"
+                                    max={59}
+                                  />
+                                </Form.Item>
+                                <Form.Item
+                                  label="Domain name preview"
+                                  tooltip="If the domain name already exists, we add an increment number suffix to it"
+                                  style={{ margin: "1px" }}
+                                >
+                                  <Paragraph>
+                                    <Tag>{estimatedName}</Tag>
+                                  </Paragraph>
+                                </Form.Item>
+                              </Space>
+                            </Row>
+                          )}
+                        </Col>
+                      </Row>
+                    </Col>
+                  </Row>
+                  <Row gutter={30} style={{ marginTop: "25px" }}>
+                    <Col lg={4} md={24}>
+                      <Form.Item
+                        name="ip"
+                        label={
+                          <>
+                            <span
+                              style={{
+                                marginRight: "5px",
+                                fontWeight: "500",
+                              }}
+                            >
+                              NetBird IP
+                            </span>
+
+                            {formPeer.connected ? (
+                              <Badge
+                                color="green"
+                                style={{
+                                  marginTop: "1px",
+                                  marginRight: "5px",
+                                  marginLeft: "0px",
+                                }}
+                              ></Badge>
+                            ) : (
+                              <Badge
+                                color="rgb(211,211,211)"
+                                style={{
+                                  marginTop: "1px",
+                                  marginRight: "5px",
+                                  marginLeft: "0px",
+                                }}
+                              ></Badge>
+                            )}
+                          </>
+                        }
+                      >
+                        <Input
+                          disabled={true}
+                          value={formPeer.ip}
+                          style={{ color: "#8c8c8c" }}
+                          autoComplete="off"
+                          suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col lg={5} md={24}>
+                      <Form.Item
+                        name="dns_label"
+                        label="Domain name"
+                        style={{ fontWeight: "500" }}
+                      >
+                        <Input
+                          disabled={true}
+                          value={formPeer.userEmail}
+                          style={{ color: "#8c8c8c" }}
+                          autoComplete="off"
+                          suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                        />
+                      </Form.Item>
+                    </Col>
+                    <Col lg={4} md={24}>
+                      <Form.Item
+                        name="last_seen"
+                        label="Last seen"
+                        style={{ fontWeight: "500" }}
+                      >
+                        <Input
+                          disabled={true}
+                          value={formPeer.last_seen}
+                          style={{ color: "#8c8c8c" }}
+                          autoComplete="off"
+                          suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                </>
+              )}
+              <Row gutter={16}>
+                {!isGroupUpdateView && (
+                  <Col span={24}>
+                    <Form.Item
+                      name="login_expiration_enabled"
+                      style={{ fontWeight: "500" }}
+                    >
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "15px",
+                          margin: "25px 0",
+                          lineHeight: "16px",
+                        }}
+                      >
+                        <Switch
+                          checked={formPeer.login_expiration_enabled}
+                          onChange={onLoginExpirationChange}
+                          disabled={!formPeer.user_id}
+                          size="small"
+                        />
+                        <div>
+                          <span className="font-500">Login expiration</span>
                           <Paragraph
                             type={"secondary"}
                             style={{
                               textAlign: "left",
                               whiteSpace: "pre-line",
                               fontWeight: "400",
+                              margin: "0",
                             }}
                           >
-                            <div style={{ marginBottom: "2px" }}>
-                              {" "}
-                              {formPeer.userEmail}{" "}
-                            </div>
-                            <div>
-                              {!formPeer.connected && formPeer.login_expired ? (
-                                <Tooltip title="The peer is offline and needs to be re-authenticated because its login has expired ">
-                                  <Tag color="red">
-                                    <Text
-                                      style={{
-                                        fontSize: "12px",
-                                        color: "rgba(210, 64, 64, 0.85)",
-                                      }}
-                                      type={"secondary"}
-                                    >
-                                      needs login
-                                    </Text>
-                                  </Tag>
-                                </Tooltip>
-                              ) : (
-                                <></>
-                              )}
-                            </div>
+                            Login expiration SSO login peers require
+                            re-authentication when their login expires
                           </Paragraph>
                         </div>
-                      ) : (
-                        <Row>
-                          <Space direction={"vertical"} size="small">
-                            <Form.Item
-                              name="name"
-                              label="Name"
-                              style={{ margin: "1px" }}
-                              rules={[
-                                {
-                                  required: true,
-                                  message:
-                                    "Please add a new name for this peer",
-                                  whitespace: true,
-                                },
-                                { validator: nameValidator },
-                              ]}
-                            >
-                              <Input
-                                placeholder={peer.name}
-                                ref={inputNameRef}
-                                onPressEnter={() => toggleEditName(false)}
-                                onBlur={() => toggleEditName(false)}
-                                autoComplete="off"
-                                max={59}
-                              />
-                            </Form.Item>
-                            <Form.Item
-                              label="Domain name preview"
-                              tooltip="If the domain name already exists, we add an increment number suffix to it"
-                              style={{ margin: "1px" }}
-                            >
-                              <Paragraph>
-                                <Tag>{estimatedName}</Tag>
-                              </Paragraph>
-                            </Form.Item>
-                          </Space>
-                        </Row>
-                      )}
-                    </Col>
-                  </Row>
-                </Col>
-              </Row>
-              <Row gutter={30} style={{ marginTop: "25px" }}>
-                <Col lg={4} md={24}>
-                  <Form.Item
-                    name="ip"
-                    label={
-                      <>
-                        <span
-                          style={{
-                            marginRight: "5px",
-                            fontWeight: "500",
-                          }}
-                        >
-                          NetBird IP
-                        </span>
-
-                        {formPeer.connected ? (
-                          <Badge
-                            color="green"
-                            style={{
-                              marginTop: "1px",
-                              marginRight: "5px",
-                              marginLeft: "0px",
-                            }}
-                          ></Badge>
-                        ) : (
-                          <Badge
-                            color="rgb(211,211,211)"
-                            style={{
-                              marginTop: "1px",
-                              marginRight: "5px",
-                              marginLeft: "0px",
-                            }}
-                          ></Badge>
-                        )}
-                      </>
-                    }
-                  >
-                    <Input
-                      disabled={true}
-                      value={formPeer.ip}
-                      style={{ color: "#8c8c8c" }}
-                      autoComplete="off"
-                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col lg={5} md={24}>
-                  <Form.Item
-                    name="dns_label"
-                    label="Domain name"
-                    style={{ fontWeight: "500" }}
-                  >
-                    <Input
-                      disabled={true}
-                      value={formPeer.userEmail}
-                      style={{ color: "#8c8c8c" }}
-                      autoComplete="off"
-                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                    />
-                  </Form.Item>
-                </Col>
-                <Col lg={4} md={24}>
-                  <Form.Item
-                    name="last_seen"
-                    label="Last seen"
-                    style={{ fontWeight: "500" }}
-                  >
-                    <Input
-                      disabled={true}
-                      value={formPeer.last_seen}
-                      style={{ color: "#8c8c8c" }}
-                      autoComplete="off"
-                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                    />
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              <Row gutter={16}>
-                <Col span={24}>
-                  <Form.Item
-                    name="login_expiration_enabled"
-                    style={{ fontWeight: "500" }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        gap: "15px",
-                        margin: "25px 0",
-                        lineHeight: "16px",
-                      }}
-                    >
-                      <Switch
-                        checked={formPeer.login_expiration_enabled}
-                        onChange={onLoginExpirationChange}
-                        disabled={!formPeer.user_id}
-                        size="small"
-                      />
-                      <div>
-                        <span className="font-500">Login expiration</span>
-                        <Paragraph
-                          type={"secondary"}
-                          style={{
-                            textAlign: "left",
-                            whiteSpace: "pre-line",
-                            fontWeight: "400",
-                            margin: "0",
-                          }}
-                        >
-                          Login expiration SSO login peers require
-                          re-authentication when their login expires
-                        </Paragraph>
                       </div>
-                    </div>
-                  </Form.Item>
-                </Col>
-                <Col md={24} lg={8}>
+                    </Form.Item>
+                  </Col>
+                )}
+                <Col md={24} lg={isGroupUpdateView ? 24 : 8}>
                   <Paragraph
                     style={{
                       whiteSpace: "pre-line",
@@ -945,227 +964,240 @@ const PeerUpdate = () => {
           </Card>
 
           {/* --- */}
-
-          <Card
-            bordered={true}
-            // loading={loading}ƒ
-            style={{ marginBottom: "7px" }}
-          >
-            <div style={{ maxWidth: "800px" }}>
-              <Paragraph
-                style={{
-                  textAlign: "left",
-                  whiteSpace: "pre-line",
-                  fontSize: "16px",
-                  fontWeight: "500",
-                }}
+          {!isGroupUpdateView && (
+            <>
+              <Card
+                bordered={true}
+                // loading={loading}ƒ
+                style={{ marginBottom: "7px" }}
               >
-                Network routes
-              </Paragraph>
-              <Row
-                gutter={21}
-                style={{ marginTop: "-16px", marginBottom: "10px" }}
-              >
-                <Col xs={24} sm={24} md={20} lg={20} xl={20} xxl={20} span={20}>
+                <div style={{ maxWidth: "800px" }}>
                   <Paragraph
-                    type={"secondary"}
-                    style={{ textAlign: "left", whiteSpace: "pre-line" }}
-                  >
-                    Access other networks without installing NetBird on every
-                    resource.
-                  </Paragraph>
-                </Col>
-                <Col
-                  xs={24}
-                  sm={24}
-                  md={1}
-                  lg={1}
-                  xl={1}
-                  xxl={1}
-                  span={1}
-                  style={{ marginTop: "-16px" }}
-                >
-                  {peerRoutes && peerRoutes.length > 0 && (
-                    <Button type="primary" onClick={onClickAddNewRoute}>
-                      Add route
-                    </Button>
-                  )}
-                </Col>
-              </Row>
-              {peerRoutes && peerRoutes.length > 0 && (
-                <Table
-                  size={"small"}
-                  style={{ marginTop: "-10px" }}
-                  showHeader={false}
-                  scroll={{ x: 800 }}
-                  pagination={false}
-                  dataSource={peerRoutes}
-                >
-                  <Column title="Name" dataIndex="network_id" />
-                  <Column title="Name" dataIndex="network" />
-                  <Column
-                    title="enabled"
-                    dataIndex="network"
-                    render={(e, record: any, index) => {
-                      return (
-                        <>
-                          <Switch
-                            defaultChecked={record.enabled}
-                            size="small"
-                            onChange={(checked) =>
-                              onRouteEnableChange(checked, record)
-                            }
-                          />
-                        </>
-                      );
+                    style={{
+                      textAlign: "left",
+                      whiteSpace: "pre-line",
+                      fontSize: "16px",
+                      fontWeight: "500",
                     }}
-                  />
-
-                  <Column
-                    align="right"
-                    render={(text, record: any, index) => {
-                      return (
-                        <Button
-                          danger={true}
-                          type={"text"}
-                          onClick={() => {
-                            showConfirmDelete(record.id, record.network_id);
-                          }}
-                        >
-                          Delete
+                  >
+                    Network routes
+                  </Paragraph>
+                  <Row
+                    gutter={21}
+                    style={{ marginTop: "-16px", marginBottom: "10px" }}
+                  >
+                    <Col
+                      xs={24}
+                      sm={24}
+                      md={20}
+                      lg={20}
+                      xl={20}
+                      xxl={20}
+                      span={20}
+                    >
+                      <Paragraph
+                        type={"secondary"}
+                        style={{ textAlign: "left", whiteSpace: "pre-line" }}
+                      >
+                        Access other networks without installing NetBird on
+                        every resource.
+                      </Paragraph>
+                    </Col>
+                    <Col
+                      xs={24}
+                      sm={24}
+                      md={1}
+                      lg={1}
+                      xl={1}
+                      xxl={1}
+                      span={1}
+                      style={{ marginTop: "-16px" }}
+                    >
+                      {peerRoutes && peerRoutes.length > 0 && (
+                        <Button type="primary" onClick={onClickAddNewRoute}>
+                          Add route
                         </Button>
-                      );
-                    }}
-                  />
-                </Table>
-              )}
-              <Divider style={{ marginTop: "-12px" }}></Divider>
-              {(peerRoutes === null || peerRoutes.length === 0) && (
-                <Space
-                  direction="vertical"
-                  size="small"
-                  align="start"
-                  style={{
-                    display: "flex",
-                    padding: "35px 0px",
-                    marginTop: "-40px",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Paragraph
-                    style={{ textAlign: "start", whiteSpace: "pre-line" }}
-                  >
-                    You don't have any routes yet
-                  </Paragraph>
-                  <Button type="primary" onClick={onClickAddNewRoute}>
-                    Add route
-                  </Button>
-                </Space>
-              )}
-            </div>
-          </Card>
+                      )}
+                    </Col>
+                  </Row>
+                  {peerRoutes && peerRoutes.length > 0 && (
+                    <Table
+                      size={"small"}
+                      style={{ marginTop: "-10px" }}
+                      showHeader={false}
+                      scroll={{ x: 800 }}
+                      pagination={false}
+                      dataSource={peerRoutes}
+                    >
+                      <Column title="Name" dataIndex="network_id" />
+                      <Column title="Name" dataIndex="network" />
+                      <Column
+                        title="enabled"
+                        dataIndex="network"
+                        render={(e, record: any, index) => {
+                          return (
+                            <>
+                              <Switch
+                                defaultChecked={record.enabled}
+                                size="small"
+                                onChange={(checked) =>
+                                  onRouteEnableChange(checked, record)
+                                }
+                              />
+                            </>
+                          );
+                        }}
+                      />
 
-          <Card bordered={true} style={{ marginBottom: "50px" }}>
-            <Col span={24}>
-              <Collapse
-                onChange={onChange}
-                bordered={false}
-                ghost={true}
-                style={{ padding: "0" }}
-              >
-                <Panel
-                  key="0"
-                  header={
-                    <Paragraph
+                      <Column
+                        align="right"
+                        render={(text, record: any, index) => {
+                          return (
+                            <Button
+                              danger={true}
+                              type={"text"}
+                              onClick={() => {
+                                showConfirmDelete(record.id, record.network_id);
+                              }}
+                            >
+                              Delete
+                            </Button>
+                          );
+                        }}
+                      />
+                    </Table>
+                  )}
+                  <Divider style={{ marginTop: "-12px" }}></Divider>
+                  {(peerRoutes === null || peerRoutes.length === 0) && (
+                    <Space
+                      direction="vertical"
+                      size="small"
+                      align="start"
                       style={{
-                        textAlign: "left",
-                        whiteSpace: "pre-line",
-                        fontSize: "16px",
-                        fontWeight: "500",
-                        margin: "0",
+                        display: "flex",
+                        padding: "35px 0px",
+                        marginTop: "-40px",
+                        justifyContent: "center",
                       }}
                     >
-                      System info
-                    </Paragraph>
-                  }
-                  className="system-info-panel"
-                >
-                  <Row gutter={16}>
-                    <Col
-                      span={24}
-                      style={{
-                        marginBottom: "2px",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          width: "100%",
-                          maxWidth: "130px",
-                          display: "inline-block",
-                        }}
+                      <Paragraph
+                        style={{ textAlign: "start", whiteSpace: "pre-line" }}
                       >
-                        Hostname:
-                      </Text>
-                      <Text type="secondary">{formPeer.hostname}</Text>
-                    </Col>
-                    <Col
-                      span={24}
-                      style={{
-                        marginBottom: "2px",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          width: "100%",
-                          maxWidth: "130px",
-                          display: "inline-block",
-                        }}
-                      >
-                        Operating system:
-                      </Text>
-                      <Text type={"secondary"}>{formPeer.os}</Text>
-                    </Col>
-                    <Col
-                      span={24}
-                      style={{
-                        marginBottom: "2px",
-                      }}
-                    >
-                      <Text
-                        style={{
-                          width: "100%",
-                          maxWidth: "130px",
-                          display: "inline-block",
-                        }}
-                      >
-                        Agent version:
-                      </Text>
-                      <Text type="secondary">{formPeer.version}</Text>
-                    </Col>
-                    {formPeer.ui_version && (
-                      <Col
-                        span={24}
-                        style={{
-                          marginBottom: "2px",
-                        }}
-                      >
-                        <Text
+                        You don't have any routes yet
+                      </Paragraph>
+                      <Button type="primary" onClick={onClickAddNewRoute}>
+                        Add route
+                      </Button>
+                    </Space>
+                  )}
+                </div>
+              </Card>
+
+              <Card bordered={true} style={{ marginBottom: "50px" }}>
+                <Col span={24}>
+                  <Collapse
+                    onChange={onChange}
+                    bordered={false}
+                    ghost={true}
+                    style={{ padding: "0" }}
+                  >
+                    <Panel
+                      key="0"
+                      header={
+                        <Paragraph
                           style={{
-                            width: "100%",
-                            maxWidth: "130px",
-                            display: "inline-block",
+                            textAlign: "left",
+                            whiteSpace: "pre-line",
+                            fontSize: "16px",
+                            fontWeight: "500",
+                            margin: "0",
                           }}
                         >
-                          UI version:
-                        </Text>
-                        <Text type={"secondary"}>{formPeer.ui_version}</Text>
-                      </Col>
-                    )}
-                  </Row>
-                </Panel>
-              </Collapse>
-            </Col>
-          </Card>
+                          System info
+                        </Paragraph>
+                      }
+                      className="system-info-panel"
+                    >
+                      <Row gutter={16}>
+                        <Col
+                          span={24}
+                          style={{
+                            marginBottom: "2px",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              width: "100%",
+                              maxWidth: "130px",
+                              display: "inline-block",
+                            }}
+                          >
+                            Hostname:
+                          </Text>
+                          <Text type="secondary">{formPeer.hostname}</Text>
+                        </Col>
+                        <Col
+                          span={24}
+                          style={{
+                            marginBottom: "2px",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              width: "100%",
+                              maxWidth: "130px",
+                              display: "inline-block",
+                            }}
+                          >
+                            Operating system:
+                          </Text>
+                          <Text type={"secondary"}>{formPeer.os}</Text>
+                        </Col>
+                        <Col
+                          span={24}
+                          style={{
+                            marginBottom: "2px",
+                          }}
+                        >
+                          <Text
+                            style={{
+                              width: "100%",
+                              maxWidth: "130px",
+                              display: "inline-block",
+                            }}
+                          >
+                            Agent version:
+                          </Text>
+                          <Text type="secondary">{formPeer.version}</Text>
+                        </Col>
+                        {formPeer.ui_version && (
+                          <Col
+                            span={24}
+                            style={{
+                              marginBottom: "2px",
+                            }}
+                          >
+                            <Text
+                              style={{
+                                width: "100%",
+                                maxWidth: "130px",
+                                display: "inline-block",
+                              }}
+                            >
+                              UI version:
+                            </Text>
+                            <Text type={"secondary"}>
+                              {formPeer.ui_version}
+                            </Text>
+                          </Col>
+                        )}
+                      </Row>
+                    </Panel>
+                  </Collapse>
+                </Col>
+              </Card>
+            </>
+          )}
         </Container>
       )}
       {setupNewRouteVisible && (
