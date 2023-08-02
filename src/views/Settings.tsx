@@ -569,7 +569,6 @@ export const Settings = () => {
         getItem('System settings', 'sub2', <SettingOutlined/>, [
             getItem('Authentication', 'auth'),
             getItem('Groups', 'groups'),
-            getItem('Billing', 'billing'),
         ], 'group'),
     ];
 
@@ -586,68 +585,12 @@ export const Settings = () => {
                 <Row>
                     <Col span={4}>
 
-                        <Menu items={items} onClick={onClick} defaultSelectedKeys={["auth"]}>
+                        <Menu items={items} onClick={onClick} defaultSelectedKeys={["auth"]} style={{borderInlineEnd:"none"}}>
                         </Menu>
 
                     </Col>
                     <Col span={20}>
-                      {billingClicked && (<Row>
-                            <Col span={24}>
-
-                                <Space
-                                    direction="vertical"
-                                    size="large"
-                                    style={{display: "flex"}}
-                                >
-                                    <Row style={{marginTop: "20px", width: "100%"}}>
-                                        <Col span={24}>
-                                            <Card loading={loading} defaultValue={"Enabled"}>
-                                                <div
-                                                    style={{
-                                                        color: "rgba(0, 0, 0, 0.88)",
-                                                        fontWeight: "500",
-                                                        fontSize: "18px",
-                                                        marginBottom: "20px",
-                                                    }}
-                                                >
-                                                    Billing - Free plan
-                                                </div>
-                                                <Row>
-                                                    <Col span={12} style={{marginBottom: "20px"}}>
-                                                        <Alert
-                                                            description="The Free plan allows you to add up to 5 users and 100 peers."
-                                                            type="info"
-                                                            action={
-                                                                <Space>
-                                                                    <Button size="small" type="primary">
-                                                                        Upgrade
-                                                                    </Button>
-                                                                </Space>
-                                                            }
-                                                        />
-                                                    </Col>
-                                                    <Space size={30} wrap></Space>
-                                                    <Col span={24}>
-
-                                                        <Progress strokeColor={"#1890ff"} percent={60} size={[200, 20]}
-                                                                  format={(percent) => `3/5 users`}/>
-
-                                                    </Col>
-                                                    <Col span={24}>
-                                                        <Progress strokeColor={"#1890ff"} percent={10} size={[500, 20]}
-                                                                  format={(percent) => `10/100 peers`}/>
-                                                    </Col>
-
-                                                </Row>
-                                            </Card>
-                                        </Col>
-                                    </Row>
-
-                                </Space>
-                            </Col>
-                        </Row>)}
-
-                      {authClicked && (<Row style={{marginTop: "20px", width: "100%"}}>
+                      {authClicked && (<Row style={{marginTop: "0", width: "100%"}}>
                             <Col span={24}>
                                 <Form
                                     name="basic"
@@ -791,7 +734,7 @@ export const Settings = () => {
                                 </Form>
                             </Col>
                         </Row>)}
-                      {groupsClicked && (<Row style={{marginTop: "20px", width: "100%"}}>
+                      {groupsClicked && (<Row style={{marginTop: "0", width: "100%"}}>
                             <Col span={24}>
                                 <Card
                                     bordered={true}
