@@ -586,7 +586,7 @@ export const Settings = () => {
         <Paragraph type="secondary">
           Manage the settings of your account
         </Paragraph>*/}
-        <Row style={{ gap: "10px", flexFlow: "row" }}>
+        <Row style={{ gap: "10px", flexFlow: "row" }} className="setting-nav">
           <Col span={4}>
             <Menu
               items={items}

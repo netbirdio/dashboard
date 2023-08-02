@@ -477,17 +477,29 @@ ul.ant-list-items {
 .route-form.edit-form-wrapper .ant-form-item {
   margin-bottom: 39px;
 }
+
 .delete-button {
   cursor: auto !important;
 }
+
 .groupsSelect {
   max-width: 200px;
   width: 100%;
 }
 
 @media (max-width: 1220px) {
-  .groupsSelect{
+  .groupsSelect {
     margin-left: 0;
     margin-top: 15px;
+  }
+}
+
+@media (max-width: 991px) {
+  .setting-nav {
+    flex-flow: column !important;
+  }
+
+  .setting-nav>div {
+    max-width: 100% !important;
   }
 }
