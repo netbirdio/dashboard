@@ -656,7 +656,7 @@ const PeerUpdate = (props: any) => {
   return (
     <>
       {peer && (
-        <Container style={{ paddingTop: isGroupUpdateView ? "0" : "40px" }}>
+        <Container style={{ padding: isGroupUpdateView ? "0" : "40px 0 0 0" }}>
           {!isGroupUpdateView && (
             <Breadcrumb
               style={{ marginBottom: "25px" }}
@@ -937,7 +937,7 @@ const PeerUpdate = (props: any) => {
                   span={24}
                   style={{
                     display: "flex",
-                    justifyContent: "start",
+                    justifyContent: isGroupUpdateView ? "end" : "start",
                     gap: "10px",
                     marginTop: "20px",
                   }}
