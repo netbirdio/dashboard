@@ -628,7 +628,7 @@ export const Peers = () => {
 
   return (
     <>
-      {!peer && (
+      {(!peer || (peer && showGroupModal)) && (
         <>
           <Container style={{ paddingTop: "40px" }}>
             <Row>
