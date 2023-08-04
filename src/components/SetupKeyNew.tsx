@@ -462,6 +462,13 @@ const SetupKeyNew = () => {
                 <Form.Item
                   name="expires_in"
                   rules={[
+                    {
+                      type: "number",
+                      min: 1,
+                      max: 365,
+                      message:
+                        "The expiration should be set between 1 and 365 days",
+                    },
                     { required: true, message: "Please enter expiration date" },
                   ]}
                 >
@@ -476,7 +483,7 @@ const SetupKeyNew = () => {
                   type={"secondary"}
                   style={{ marginTop: "-18px", marginBottom: 0 }}
                 >
-                  Should be between 1 and 180 days
+                  Should be between 1 and 365 days
                 </Paragraph>
               </Col>
             </Row>
