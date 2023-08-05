@@ -64,7 +64,7 @@ const AccessControlEdit = () => {
     { label: "Drop", value: "drop" },
   ];
   const protocols: SelectProps["options"] = [
-    { label: "All", value: "all" },
+    { label: "ALL", value: "all" },
     { label: "TCP", value: "tcp" },
     { label: "UDP", value: "udp" },
     { label: "ICMP", value: "icmp" },
