@@ -757,6 +757,7 @@ export const Peers = () => {
                           Get started by adding one to your network.
                         </Paragraph>
                         <Button
+                        data-testid="add-new-peer-button"
                           size={"middle"}
                           type="primary"
                           onClick={() => setAddPeerModalOpen(true)}
