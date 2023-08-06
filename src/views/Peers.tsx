@@ -934,6 +934,7 @@ export const Peers = () => {
             }}
             footer={[]}
             width={780}
+            data-testid="add-peer-modal"
           >
             <AddPeerPopup
               greeting={!hadFirstRun ? "Hi there!" : ""}
