@@ -1,0 +1,93 @@
+version: "3.4"
+services:
+  # Caddy reverse proxy
+  caddy:
+    image: caddy
+    restart: unless-stopped
+    networks: [ netbird ]
+    ports:
+      - '443:443'
+      - '80:80'
+      - '8080:8080'
+    volumes:
+      - netbird_caddy_data:/data
+      - ./Caddyfile:/etc/caddy/Caddyfile
+  #UI dashboard
+  dashboard:
+    image: wiretrustee/dashboard:latest
+    restart: unless-stopped
+    networks: [netbird]
+    env_file:
+      - ./dashboard.env
+  # Signal
+  signal:
+    image: netbirdio/signal:latest
+    restart: unless-stopped
+    networks: [netbird]
+  # Management
+  management:
+    image: netbirdio/management:latest
+    restart: unless-stopped
+    networks: [netbird]
+    volumes:
+      - netbird_management:/var/lib/netbird
+      - ./management.json:/etc/netbird/management.json
+    command: [
+      "--port", "80",
+      "--log-file", "console",
+      "--log-level", "info",
+      "--disable-anonymous-metrics=false",
+      "--single-account-mode-domain=netbird.selfhosted",
+      "--dns-domain=netbird.selfhosted",
+      "--idp-sign-key-refresh-enabled",
+    ]
+  # Coturn, AKA relay server
+  coturn:
+    image: coturn/coturn
+    restart: unless-stopped
+    domainname: netbird.relay.selfhosted
+    volumes:
+      - ./turnserver.conf:/etc/turnserver.conf:ro
+    network_mode: host
+    command:
+      - -c /etc/turnserver.conf
+  # Zitadel - identity provider
+  zitadel:
+    restart: 'always'
+    networks: [netbird]
+    image: 'ghcr.io/zitadel/zitadel:v2.31.3'
+    command: 'start-from-init --masterkeyFromEnv --tlsMode disabled'
+    env_file:
+      - ./zitadel.env
+    depends_on:
+      crdb:
+        condition: 'service_healthy'
+    volumes:
+      - ./machinekey:/machinekey
+      - netbird_zitadel_certs:/crdb-certs:ro
+  # CockroachDB for zitadel
+  crdb:
+    restart: 'always'
+    networks: [netbird]
+    image: 'cockroachdb/cockroach:v22.2.2'
+    command: 'start-single-node --advertise-addr crdb'
+    volumes:
+      - netbird_crdb_data:/cockroach/cockroach-data
+      - netbird_crdb_certs:/cockroach/certs
+      - netbird_zitadel_certs:/zitadel-certs
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/health?ready=1" ]
+      interval: '10s'
+      timeout: '30s'
+      retries: 5
+      start_period: '20s'
+
+volumes:
+  netbird_management:
+  netbird_caddy_data:
+  netbird_crdb_data:
+  netbird_crdb_certs:
+  netbird_zitadel_certs:
+
+networks:
+  netbird:

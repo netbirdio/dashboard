@@ -1,0 +1,33 @@
+{
+  debug
+	servers :80,:443 {
+    protocols h1 h2c
+  }
+}
+
+:80 {
+    # Signal
+    reverse_proxy /signalexchange.SignalExchange/* h2c://signal:10000
+    # Management
+    reverse_proxy /api/* management:80
+    reverse_proxy /management.ManagementService/* h2c://management:80
+    # Zitadel
+    reverse_proxy /zitadel.admin.v1.AdminService/* h2c://zitadel:8080
+    reverse_proxy /admin/v1/* h2c://zitadel:8080
+    reverse_proxy /zitadel.auth.v1.AuthService/* h2c://zitadel:8080
+    reverse_proxy /auth/v1/* h2c://zitadel:8080
+    reverse_proxy /zitadel.management.v1.ManagementService/* h2c://zitadel:8080
+    reverse_proxy /management/v1/* h2c://zitadel:8080
+    reverse_proxy /zitadel.system.v1.SystemService/* h2c://zitadel:8080
+    reverse_proxy /system/v1/* h2c://zitadel:8080
+    reverse_proxy /assets/v1/* h2c://zitadel:8080
+    reverse_proxy /ui/* h2c://zitadel:8080
+    reverse_proxy /oidc/v1/* h2c://zitadel:8080
+    reverse_proxy /saml/v2/* h2c://zitadel:8080
+    reverse_proxy /oauth/v2/* h2c://zitadel:8080
+    reverse_proxy /.well-known/openid-configuration h2c://zitadel:8080
+    reverse_proxy /openapi/* h2c://zitadel:8080
+    reverse_proxy /debug/* h2c://zitadel:8080
+    # Dashboard
+    reverse_proxy /* dashboard:80
+}

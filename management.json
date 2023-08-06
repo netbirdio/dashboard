@@ -1,0 +1,49 @@
+{
+    "Stuns": [
+        {
+            "Proto": "udp",
+            "URI": "stun:192.168.178.192:3478"
+        }
+    ],
+    "TURNConfig": {
+        "Turns": [
+            {
+                "Proto": "udp",
+                "URI": "turn:192.168.178.192:3478",
+                "Username": "self",
+                "Password": "cdlsJDuF8WHgbzKhvgZz7tx/saH1O82gvSV4ynoIh5A"
+            }
+        ],
+        "TimeBasedCredentials": false
+    },
+    "Signal": {
+        "Proto": "http",
+        "URI": "192.168.178.192:80"
+    },
+    "HttpConfig": {
+        "AuthIssuer": "http://192.168.178.192",
+        "AuthAudience": "226123612879447044@netbird",
+        "OIDCConfigEndpoint":"http://192.168.178.192/.well-known/openid-configuration"
+    },
+    "IdpManagerConfig": {
+        "ManagerType": "zitadel",
+        "ClientConfig": {
+            "Issuer": "http://192.168.178.192:80",
+            "TokenEndpoint": "http://192.168.178.192:80/oauth/v2/token",
+            "ClientID": "netbird-service-account",
+            "ClientSecret": "heoezvj1I5dioqvD3N8jgELpqy1XpaZknIllgLrPEysemkU3evZiggkFzYSuyHex",
+            "GrantType": "client_credentials"
+        },
+        "ExtraConfig": {
+            "ManagementEndpoint": "http://192.168.178.192:80/management/v1"
+        }
+     },
+    "PKCEAuthorizationFlow": {
+        "ProviderConfig": {
+            "Audience": "226123615077262340@netbird",
+            "ClientID": "226123615077262340@netbird",
+            "Scope": "openid profile email offline_access",
+            "RedirectURLs": ["http://localhost:53000/","http://localhost:54000/"]
+        }
+    }
+}
