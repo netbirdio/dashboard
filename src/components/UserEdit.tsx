@@ -51,7 +51,9 @@ interface TokenDataTable extends PersonalAccessToken {
   created_by_email: string;
 }
 
-const UserEdit = () => {
+const UserEdit = (props: any) => {
+  const { isGroupUpdateView, setShowGroupModal } = props;
+
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const { optionRender, blueTagRender, tagGroups, handleChangeTags } =
@@ -86,6 +88,9 @@ const UserEdit = () => {
     dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null));
     setFormUser({} as FormUser);
     dispatch(userActions.setEditUserPopupVisible(false));
+    if (setShowGroupModal) {
+      setShowGroupModal(false);
+    }
   };
 
   const createUserToSave = (values: any): UserToSave => {
@@ -99,7 +104,7 @@ const UserEdit = () => {
       (s: string) => !allGroupsNames.includes(s)
     );
     let userID = user ? user.id : "";
-    let isServiceUser = user ? user.is_service_user : false;
+    let isServiceUser = user ? user?.is_service_user : false;
     return {
       id: userID,
       role: values.role,
@@ -113,7 +118,7 @@ const UserEdit = () => {
 
   useEffect(() => {
     if (users) {
-      let currentUser = users.find((user) => user.is_current);
+      let currentUser = users.find((user) => user?.is_current);
       if (currentUser) {
         setIsAdmin(currentUser.role === "admin");
       }
@@ -281,7 +286,7 @@ const UserEdit = () => {
   }, []);
 
   useEffect(() => {
-    if (user.is_current || user.is_service_user) {
+    if (user?.is_current || user?.is_service_user) {
       dispatch(
         personalAccessTokenActions.getPersonalAccessTokens.request({
           getAccessTokenSilently: getTokenSilently,
@@ -306,34 +311,44 @@ const UserEdit = () => {
   return (
     <>
       <div style={{ paddingTop: "13px" }}>
-        <Breadcrumb
-          style={{ marginBottom: "30px" }}
-          items={[
-            {
-              title: (
-                <a onClick={() => onBreadcrumbUsersClick("Users")}>All Users</a>
-              ),
-            },
-            {
-              title: <a onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</a>,
-              // menu: { items: menuItems },
-            },
-            {
-              title: user.name,
-            },
-          ]}
-        />
-
-        <Card bordered={true} loading={loading} style={{ marginBottom: "7px" }}>
-          <h3
-            style={{
-              fontSize: "22px",
-              fontWeight: "500",
-              marginBottom: "25px",
-            }}
-          >
-            {user.name}
-          </h3>
+        {!isGroupUpdateView && (
+          <Breadcrumb
+            style={{ marginBottom: "30px" }}
+            items={[
+              {
+                title: (
+                  <a onClick={() => onBreadcrumbUsersClick("Users")}>
+                    All Users
+                  </a>
+                ),
+              },
+              {
+                title: <a onClick={() => onBreadcrumbUsersClick(tab)}>{tab}</a>,
+                // menu: { items: menuItems },
+              },
+              {
+                title: user.name,
+              },
+            ]}
+          />
+        )}
+        <Card
+          className={isGroupUpdateView ? " noborderPadding" : ""}
+          bordered={true}
+          loading={loading}
+          style={{ marginBottom: "7px" }}
+        >
+          {!isGroupUpdateView && (
+            <h3
+              style={{
+                fontSize: "22px",
+                fontWeight: "500",
+                marginBottom: "25px",
+              }}
+            >
+              {user.name}
+            </h3>
+          )}
           <div style={{ maxWidth: "800px" }}>
             <Form
               layout="vertical"
@@ -347,62 +362,63 @@ const UserEdit = () => {
                 autoGroupsNames: formUser.autoGroupsNames,
               }}
             >
-              <Row style={{ paddingBottom: "15px" }}>
-                {!user.is_service_user && (
-                  <Col
-                    xs={24}
-                    sm={24}
-                    md={11}
-                    lg={11}
-                    xl={11}
-                    xxl={11}
-                    span={11}
-                  >
-                    <Form.Item
-                      name="email"
-                      label={<Text style={{}}>Email</Text>}
-                      style={{ marginRight: "70px", fontWeight: "500" }}
+              {!isGroupUpdateView && (
+                <Row style={{ paddingBottom: "15px" }}>
+                  {!user?.is_service_user && (
+                    <Col
+                      xs={24}
+                      sm={24}
+                      md={11}
+                      lg={11}
+                      xl={11}
+                      xxl={11}
+                      span={11}
                     >
-                      <Input
-                        disabled={user.id}
-                        value={formUser.email}
-                        style={{ color: "#8c8c8c" }}
-                        autoComplete="off"
-                      />
+                      <Form.Item
+                        name="email"
+                        label={<Text style={{}}>Email</Text>}
+                        style={{ marginRight: "70px", fontWeight: "500" }}
+                      >
+                        <Input
+                          disabled={user.id}
+                          value={formUser.email}
+                          style={{ color: "#8c8c8c" }}
+                          autoComplete="off"
+                        />
+                      </Form.Item>
+                    </Col>
+                  )}
+                  <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                    <Form.Item
+                      name="role"
+                      label={<Text style={{ fontWeight: "500" }}>Role</Text>}
+                      style={{ marginRight: "50px", fontWeight: "500" }}
+                    >
+                      <Select
+                        style={{ width: "100%" }}
+                        disabled={user?.is_current}
+                      >
+                        <Option value="admin">
+                          <Text type={"secondary"}>admin</Text>
+                        </Option>
+                        <Option value="user">
+                          <Text type={"secondary"}>user</Text>
+                        </Option>
+                      </Select>
                     </Form.Item>
                   </Col>
-                )}
-                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                  <Form.Item
-                    name="role"
-                    label={<Text style={{ fontWeight: "500" }}>Role</Text>}
-                    style={{ marginRight: "50px", fontWeight: "500" }}
-                  >
-                    <Select
-                      style={{ width: "100%" }}
-                      disabled={user.is_current}
-                    >
-                      <Option value="admin">
-                        <Text type={"secondary"}>admin</Text>
-                      </Option>
-                      <Option value="user">
-                        <Text type={"secondary"}>user</Text>
-                      </Option>
-                    </Select>
-                  </Form.Item>
-                </Col>
-              </Row>
-
-              {!user.is_service_user && (
+                </Row>
+              )}
+              {!user?.is_service_user && (
                 <Row style={{ paddingBottom: "15px" }}>
                   <Col
                     xs={24}
                     sm={24}
-                    md={11}
-                    lg={11}
-                    xl={11}
-                    xxl={11}
-                    span={11}
+                    md={isGroupUpdateView ? 24 : 11}
+                    lg={isGroupUpdateView ? 24 : 11}
+                    xl={isGroupUpdateView ? 24 : 11}
+                    xxl={isGroupUpdateView ? 24 : 11}
+                    span={isGroupUpdateView ? 24 : 11}
                   >
                     <Form.Item
                       name="autoGroupsNames"
@@ -413,7 +429,9 @@ const UserEdit = () => {
                       }
                       tooltip="Every peer enrolled with this user will be automatically added to these groups"
                       rules={[{ validator: selectValidator }]}
-                      style={{ marginRight: "70px" }}
+                      style={{
+                        marginRight: `${!isGroupUpdateView ? "70px" : "0"}`,
+                      }}
                     >
                       <Select
                         mode="tags"
@@ -432,7 +450,7 @@ const UserEdit = () => {
                     </Form.Item>
                   </Col>
 
-                  {!user.is_current && isAdmin && (
+                  {!user?.is_current && isAdmin && !isGroupUpdateView && (
                     <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                       <Form.Item
                         valuePropName="checked"
@@ -447,7 +465,12 @@ const UserEdit = () => {
                 </Row>
               )}
 
-              <Space style={{ display: "flex", justifyContent: "start" }}>
+              <Space
+                style={{
+                  display: "flex",
+                  justifyContent: `${!isGroupUpdateView ? "start" : "end"}`,
+                }}
+              >
                 <Button disabled={loading} onClick={onCancel}>
                   Cancel
                 </Button>
@@ -459,7 +482,7 @@ const UserEdit = () => {
           </div>
         </Card>
 
-        {user && (user.is_current || user.is_service_user) && (
+        {user && (user?.is_current || user?.is_service_user) && (
           <Card
             bordered={true}
             loading={loading}
@@ -565,7 +588,7 @@ const UserEdit = () => {
                               >
                                 {"Created" +
                                   ((record as TokenDataTable)
-                                    .created_by_email && user.is_service_user
+                                    .created_by_email && user?.is_service_user
                                     ? " by " +
                                       (record as TokenDataTable)
                                         .created_by_email

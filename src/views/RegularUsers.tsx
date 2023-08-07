@@ -40,7 +40,7 @@ import { ExclamationCircleOutlined, MinusOutlined } from "@ant-design/icons";
 import { actions as peerActions } from "../store/peer";
 import { useOidcUser } from "@axa-fr/react-oidc";
 import { storeFilterState, getFilterState } from "../utils/filterState";
-
+import { UpdateUsersGroupModal } from "../components/UpdateUsersGroupModal";
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
 
@@ -56,6 +56,8 @@ export const RegularUsers = () => {
   const dispatch = useDispatch();
 
   const [isAdmin, setIsAdmin] = useState(false);
+    const [showGroupModal, setShowGroupModal] = useState(false);
+
 
   const groups = useSelector((state: RootState) => state.group.data);
   const users = useSelector((state: RootState) => state.user.regularUsers);
@@ -89,6 +91,20 @@ export const RegularUsers = () => {
     );
   };
 
+  const setUserAndViewGroups = (user: User) => {
+     dispatch(
+      userActions.setUser({
+        id: user.id,
+        email: user.email,
+        role: user.role,
+        auto_groups: user.auto_groups ? user.auto_groups : [],
+        name: user.name,
+        is_current: user.is_current,
+      } as User)
+     );
+    setShowGroupModal(true)
+  };
+
   const transformDataTable = (d: User[]): UserDataTable[] => {
     return d.map((p) => ({ key: p.id, ...p } as UserDataTable));
   };
@@ -109,7 +125,6 @@ export const RegularUsers = () => {
   }, [savedUser]);
 
   useEffect(() => {
-    console.log("here");
     if (!loading && groups.length && users) {
       const searchText = getFilterState("userFilter", "search");
       if (searchText) setTextToSearch(searchText);
@@ -202,7 +217,7 @@ export const RegularUsers = () => {
     }
 
     let btn = (
-      <Button type="link" onClick={() => setUserAndView(userToAction)}>
+      <Button type="link" onClick={() => setUserAndViewGroups(userToAction)}>
         {displayGroups.length}
       </Button>
     );
@@ -271,6 +286,7 @@ export const RegularUsers = () => {
       dispatch(userActions.setUpdateUserDrawerVisible(false));
       dispatch(userActions.setSavedUser({ ...savedUser, success: false }));
       dispatch(userActions.resetSavedUser(null));
+      setShowGroupModal(false)
     } else if (savedUser.error) {
       let errorMsg = "Failed to update user";
       switch (savedUser.error.statusCode) {
@@ -601,6 +617,9 @@ export const RegularUsers = () => {
         </Row>
       </Container>
       <InviteUserPopup />
+      {showGroupModal && (
+        <UpdateUsersGroupModal setShowGroupModal={setShowGroupModal} />
+      )}
       {confirmModalContextHolder}
     </>
   );

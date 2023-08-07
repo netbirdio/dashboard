@@ -19,6 +19,11 @@ export const Users = () => {
     const user = useSelector((state: RootState) => state.user.user)
     const tab = useSelector((state: RootState) => state.user.userTabOpen)
 
+      const editUserPopupVisible = useSelector(
+        (state: RootState) => state.user.editUserPopupVisible
+      );
+    
+    
     const userItems: TabsProps['items'] = [
         {
             key: 'Users',
@@ -61,24 +66,26 @@ export const Users = () => {
     }
 
     return (
-        <>
-            <Container style={{paddingTop: "40px"}}>
-                {!user && <Row>
-                    <Col span={24}>
-                        <Tabs
-                            defaultActiveKey={tab}
-                            items={tabItems}
-                            onTabClick={onTabClick}
-                            animated={{ inkBar: true, tabPane: false }}
-                            tabPosition="top"
-                            // destroyInactiveTabPane={true}
-                        />
-                    </Col>
-                </Row>}
-                {user && <UserEdit/>}
-            </Container>
-        </>
-    )
+      <>
+        <Container style={{ paddingTop: "40px" }}>
+          {!editUserPopupVisible && (
+            <Row>
+              <Col span={24}>
+                <Tabs
+                  defaultActiveKey={tab}
+                  items={tabItems}
+                  onTabClick={onTabClick}
+                  animated={{ inkBar: true, tabPane: false }}
+                  tabPosition="top"
+                  // destroyInactiveTabPane={true}
+                />
+              </Col>
+            </Row>
+          )}
+          {editUserPopupVisible && <UserEdit />}
+        </Container>
+      </>
+    );
 }
 
 export default Users;

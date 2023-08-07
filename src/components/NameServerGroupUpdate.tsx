@@ -35,7 +35,9 @@ const { Paragraph, Text } = Typography;
 
 interface formNSGroup extends NameServerGroup {}
 
-const NameServerGroupUpdate = () => {
+const NameServerGroupUpdate = (props: any) => {
+  const { isGroupUpdateView, setShowGroupModal } = props;
+
   const {
     blueTagRender,
     handleChangeTags,
@@ -121,6 +123,9 @@ const NameServerGroupUpdate = () => {
     );
     setEditName(false);
     setIsPrimary(false);
+    if (setShowGroupModal) {
+      setShowGroupModal(false);
+    }
   };
 
   const onChange = (changedValues: any) => {
@@ -553,19 +558,21 @@ const NameServerGroupUpdate = () => {
 
   return (
     <>
-      <Container style={{ paddingTop: "40px" }}>
-        <Breadcrumb
-          style={{ marginBottom: "25px" }}
-          items={[
-            {
-              title: <a onClick={onBreadcrumbUsersClick}>DNS</a>,
-            },
-            {
-              title: formNSGroup.name,
-            },
-          ]}
-        />
-        <Card>
+      <Container style={{ paddingTop: `${!isGroupUpdateView ? "40px" : "0"}` }}>
+        {!isGroupUpdateView && (
+          <Breadcrumb
+            style={{ marginBottom: "25px" }}
+            items={[
+              {
+                title: <a onClick={onBreadcrumbUsersClick}>DNS</a>,
+              },
+              {
+                title: formNSGroup.name,
+              },
+            ]}
+          />
+        )}
+        <Card className={isGroupUpdateView ? "noborderPadding" : ""}>
           <Form
             layout="vertical"
             requiredMark={false}
@@ -573,139 +580,148 @@ const NameServerGroupUpdate = () => {
             onValuesChange={onChange}
           >
             <Row gutter={16}>
-              <Col span={24}>
-                <Header
-                  style={{
-                    border: "none",
-                  }}
-                >
-                  <Row align="top">
-                    <Col flex="auto">
-                      {!editName && formNSGroup.id ? (
-                        <div
-                          className={
-                            "access-control input-text ant-drawer-title"
-                          }
-                          onClick={() => toggleEditName(true)}
-                          style={{
-                            fontSize: "22px",
-                            margin: " 0px 0px 10px",
-                            cursor: "pointer",
-                            fontWeight: "500",
-                            lineHeight: "24px",
-                          }}
-                        >
-                          {formNSGroup.id
-                            ? formNSGroup.name
-                            : "New nameserver group"}
-                        </div>
-                      ) : (
-                        <Row>
-                          <Col span={8}>
-                            <div style={{ lineHeight: "15px" }}>
-                              <label
-                                style={{
-                                  color: "rgba(0, 0, 0, 0.88)",
-                                  fontSize: "14px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                Name
-                              </label>
-                              <Form.Item
-                                name="name"
-                                rules={[
-                                  {
-                                    required: true,
-                                    message:
-                                      "Please add an identifier for this nameserver group",
-                                    whitespace: true,
-                                  },
-                                  {
-                                    validator: nameValidator,
-                                  },
-                                ]}
-                                style={{
-                                  marginBottom: "10px",
-                                  marginTop: "10px",
-                                }}
-                              >
-                                <Input
-                                  placeholder="e.g. Public DNS"
-                                  ref={inputNameRef}
-                                  onPressEnter={() => toggleEditName(false)}
-                                  onBlur={() => toggleEditName(false)}
-                                  autoComplete="off"
-                                  maxLength={40}
-                                />
-                              </Form.Item>
-                            </div>
-                          </Col>
-                        </Row>
-                      )}
-                      {!editDescription ? (
-                        <div
-                          className={
-                            "access-control input-text ant-drawer-subtitle"
-                          }
-                          style={{ margin: "0 0 39px 0px" }}
-                          onClick={() => toggleEditDescription(true)}
-                        >
-                          {formNSGroup.description &&
-                          formNSGroup.description.trim() !== ""
-                            ? formNSGroup.description
-                            : "Add description"}
-                        </div>
-                      ) : (
-                        <Row>
-                          <Col span={8} style={{ marginBottom: "15px" }}>
+              
+                <span className={isGroupUpdateView ? "d-none" : ""}>
+                  <Col span={24}>
+                    <Header
+                      style={{
+                        border: "none",
+                      }}
+                    >
+                      <Row align="top">
+                        <Col flex="auto">
+                          {!editName && formNSGroup.id ? (
                             <div
-                              style={{ lineHeight: "15px", marginTop: "24px" }}
+                              className={
+                                "access-control input-text ant-drawer-title"
+                              }
+                              onClick={() => toggleEditName(true)}
+                              style={{
+                                fontSize: "22px",
+                                margin: " 0px 0px 10px",
+                                cursor: "pointer",
+                                fontWeight: "500",
+                                lineHeight: "24px",
+                              }}
                             >
-                              <label
-                                style={{
-                                  color: "rgba(0, 0, 0, 0.88)",
-                                  fontSize: "14px",
-                                  fontWeight: "500",
-                                }}
-                              >
-                                Description
-                              </label>
-                              <Form.Item
-                                name="description"
-                                style={{ marginTop: "8px" }}
-                              >
-                                <Input
-                                  placeholder="Add description..."
-                                  ref={inputDescriptionRef}
-                                  onPressEnter={() =>
-                                    toggleEditDescription(false)
-                                  }
-                                  onBlur={() => toggleEditDescription(false)}
-                                  autoComplete="off"
-                                />
-                              </Form.Item>
+                              {formNSGroup.id
+                                ? formNSGroup.name
+                                : "New nameserver group"}
                             </div>
-                          </Col>
-                        </Row>
-                      )}
-                    </Col>
-                  </Row>
-                </Header>
-              </Col>
+                          ) : (
+                            <Row>
+                              <Col span={8}>
+                                <div style={{ lineHeight: "15px" }}>
+                                  <label
+                                    style={{
+                                      color: "rgba(0, 0, 0, 0.88)",
+                                      fontSize: "14px",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    Name
+                                  </label>
+                                  <Form.Item
+                                    name="name"
+                                    rules={[
+                                      {
+                                        required: true,
+                                        message:
+                                          "Please add an identifier for this nameserver group",
+                                        whitespace: true,
+                                      },
+                                      {
+                                        validator: nameValidator,
+                                      },
+                                    ]}
+                                    style={{
+                                      marginBottom: "10px",
+                                      marginTop: "10px",
+                                    }}
+                                  >
+                                    <Input
+                                      placeholder="e.g. Public DNS"
+                                      ref={inputNameRef}
+                                      onPressEnter={() => toggleEditName(false)}
+                                      onBlur={() => toggleEditName(false)}
+                                      autoComplete="off"
+                                      maxLength={40}
+                                    />
+                                  </Form.Item>
+                                </div>
+                              </Col>
+                            </Row>
+                          )}
+                          {!editDescription ? (
+                            <div
+                              className={
+                                "access-control input-text ant-drawer-subtitle"
+                              }
+                              style={{ margin: "0 0 39px 0px" }}
+                              onClick={() => toggleEditDescription(true)}
+                            >
+                              {formNSGroup.description &&
+                              formNSGroup.description.trim() !== ""
+                                ? formNSGroup.description
+                                : "Add description"}
+                            </div>
+                          ) : (
+                            <Row>
+                              <Col span={8} style={{ marginBottom: "15px" }}>
+                                <div
+                                  style={{
+                                    lineHeight: "15px",
+                                    marginTop: "24px",
+                                  }}
+                                >
+                                  <label
+                                    style={{
+                                      color: "rgba(0, 0, 0, 0.88)",
+                                      fontSize: "14px",
+                                      fontWeight: "500",
+                                    }}
+                                  >
+                                    Description
+                                  </label>
+                                  <Form.Item
+                                    name="description"
+                                    style={{ marginTop: "8px" }}
+                                  >
+                                    <Input
+                                      placeholder="Add description..."
+                                      ref={inputDescriptionRef}
+                                      onPressEnter={() =>
+                                        toggleEditDescription(false)
+                                      }
+                                      onBlur={() =>
+                                        toggleEditDescription(false)
+                                      }
+                                      autoComplete="off"
+                                    />
+                                  </Form.Item>
+                                </div>
+                              </Col>
+                            </Row>
+                          )}
+                        </Col>
+                      </Row>
+                    </Header>
+                  </Col>
 
-              <Col span={24} style={{ marginBottom: "15px" }}>
-                <Form.List
-                  name="nameservers"
-                  rules={[{ validator: formListValidator }]}
-                >
-                  {renderNSList}
-                </Form.List>
-              </Col>
+                  <Col span={24} style={{ marginBottom: "15px" }}>
+                    <Form.List
+                      name="nameservers"
+                      rules={[{ validator: formListValidator }]}
+                    >
+                      {renderNSList}
+                    </Form.List>
+                  </Col>
 
-              <Col span={24} style={{ marginBottom: "15px" }}>
-                <Form.List name="domains">{renderDomains}</Form.List>
-              </Col>
+                  <Col span={24} style={{ marginBottom: "15px" }}>
+                    <Form.List name="domains">{renderDomains}</Form.List>
+                  </Col>
+                </span>
+               
               <Col span={24} style={{ marginBottom: "15px" }}>
                 <label
                   style={{
@@ -749,7 +765,7 @@ const NameServerGroupUpdate = () => {
                 <Space
                   style={{
                     display: "flex",
-                    justifyContent: "start",
+                    justifyContent: `${!isGroupUpdateView ? "start" : "end"}`,
                     width: "100%",
                   }}
                 >
