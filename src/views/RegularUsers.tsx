@@ -618,7 +618,10 @@ export const RegularUsers = () => {
       </Container>
       <InviteUserPopup />
       {showGroupModal && (
-        <UpdateUsersGroupModal setShowGroupModal={setShowGroupModal} />
+        <UpdateUsersGroupModal
+          showGroupModal={showGroupModal}
+          setShowGroupModal={setShowGroupModal}
+        />
       )}
       {confirmModalContextHolder}
     </>

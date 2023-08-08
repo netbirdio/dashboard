@@ -49,7 +49,9 @@ interface FormPolicy {
   tagDestinationGroups: string[];
 }
 
-const AccessControlEdit = () => {
+const AccessControlEdit = (props:any) => {
+  const { isGroupUpdateView, setShowGroupModal } = props;
+
   const { optionRender, blueTagRender, tagGroups, grayTagRender } =
     useGetGroupTagHelpers();
 
@@ -233,6 +235,9 @@ const AccessControlEdit = () => {
       } as Policy)
     );
     setVisibleNewRule(false);
+    if (setShowGroupModal) {
+      setShowGroupModal(false)
+    }
   };
 
   const onChange = (data: any) => {
@@ -449,19 +454,25 @@ const AccessControlEdit = () => {
   return (
     <>
       {policy && (
-        <Container style={{ paddingTop: "40px" }}>
-          <Breadcrumb
-            style={{ marginBottom: "25px" }}
-            items={[
-              {
-                title: <a onClick={onBreadcrumbUsersClick}>Access Control</a>,
-              },
-              {
-                title: policy.name,
-              },
-            ]}
-          />
-          <Card bordered={true} style={{ marginBottom: "7px" }}>
+        <Container style={{ paddingTop: `${!isGroupUpdateView ? "40px" : "0px"}` }}>
+          {!isGroupUpdateView && (
+            <Breadcrumb
+              style={{ marginBottom: "25px" }}
+              items={[
+                {
+                  title: <a onClick={onBreadcrumbUsersClick}>Access Control</a>,
+                },
+                {
+                  title: policy.name,
+                },
+              ]}
+            />
+          )}
+          <Card
+            bordered={true}
+            style={{ marginBottom: "7px" }}
+            className={isGroupUpdateView ? "noborderPadding" : ""}
+          >
             <div style={{ maxWidth: "550px" }}>
               <Form
                 layout="vertical"
@@ -470,7 +481,7 @@ const AccessControlEdit = () => {
                 onValuesChange={onChange}
               >
                 <Row gutter={16}>
-                  <Col span={24}>
+                  <Col span={24} className={isGroupUpdateView ? "d-none" : ""}>
                     <Header
                       style={{
                         border: "none",
@@ -567,7 +578,11 @@ const AccessControlEdit = () => {
                       </Row>
                     </Header>
                   </Col>
-                  <Col span={24} style={{ marginBottom: "15px" }}>
+                  <Col
+                    span={24}
+                    style={{ marginBottom: "15px" }}
+                    className={isGroupUpdateView ? "d-none" : ""}
+                  >
                     <Form.Item name="enabled" label="">
                       <div
                         style={{
@@ -606,6 +621,7 @@ const AccessControlEdit = () => {
                       </div>
                     </Form.Item>
                   </Col>
+
                   <Col span={24}>
                     <Row gutter={15}>
                       <Col span={10}>
@@ -798,7 +814,11 @@ const AccessControlEdit = () => {
                       </Col>
                     </Row>
                   </Col>
-                  <Col span={24} style={{ marginBottom: "15px" }}>
+                  <Col
+                    span={24}
+                    style={{ marginBottom: "15px" }}
+                    className={isGroupUpdateView ? "d-none" : ""}
+                  >
                     <Paragraph
                       type={"secondary"}
                       style={{ marginTop: "-15px", marginBottom: "30px" }}
@@ -807,7 +827,11 @@ const AccessControlEdit = () => {
                       protocol below
                     </Paragraph>
                   </Col>
-                  <Col span={24} style={{ marginBottom: "15px" }}>
+                  <Col
+                    span={24}
+                    style={{ marginBottom: "15px" }}
+                    className={isGroupUpdateView ? "d-none" : ""}
+                  >
                     <Row>
                       <Col span={10}>
                         <Form.Item
@@ -828,7 +852,7 @@ const AccessControlEdit = () => {
                     </Row>
                   </Col>
 
-                  <Col span={24}>
+                  <Col span={24} className={isGroupUpdateView ? "d-none" : ""}>
                     <Row>
                       <Col span={10}>
                         {formPolicy.protocol === "all" ||
@@ -915,7 +939,7 @@ const AccessControlEdit = () => {
               style={{
                 display: "flex",
                 flexDirection: "row",
-                justifyContent: "start",
+                justifyContent: `${!isGroupUpdateView ? "start" : "end"}`,
                 padding: 0,
                 gap: "10px",
                 marginTop: "12px",

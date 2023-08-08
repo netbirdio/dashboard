@@ -39,6 +39,7 @@ import AccessControlModalGroups from "../components/AccessControlModalGroups";
 import tableSpin from "../components/Spin";
 import { useGetTokenSilently } from "../utils/token";
 import { usePageSizeHelpers } from "../utils/pageSize";
+import { UpdateAccessControlGroupModal } from "../components/UpdateAccessControlGroupModal";
 
 const { Title, Paragraph, Text } = Typography;
 const { Column } = Table;
@@ -72,6 +73,7 @@ export const AccessControl = () => {
   const { onChangePageSize, pageSizeOptions, pageSize } = usePageSizeHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
+  const [showGroupModal, setShowGroupModal] = useState(false);
 
   const policies = useSelector((state: RootState) => state.policy.data);
   const failed = useSelector((state: RootState) => state.policy.failed);
@@ -239,6 +241,7 @@ export const AccessControl = () => {
         policyActions.setSavedPolicy({ ...savedPolicy, success: false })
       );
       dispatch(policyActions.resetSavedPolicy(null));
+      setShowGroupModal(false)
     } else if (savedPolicy.error) {
       message.error({
         content:
@@ -420,6 +423,31 @@ export const AccessControl = () => {
     );
   };
 
+  const setPolicyAndViewGroups = (p: PolicyDataTable) => {
+    dispatch(
+      policyActions.setPolicy({
+        id: p.id || null,
+        name: p.name,
+        description: p.description,
+        enabled: p.enabled,
+        rules: [
+          {
+            id: p.id || null,
+            name: p.name,
+            description: p.description,
+            enabled: p.enabled,
+            sources: p.sources,
+            destinations: p.destinations,
+            bidirectional: p.bidirectional,
+            protocol: p.protocol,
+            ports: p.ports,
+          },
+        ],
+      } as Policy)
+    );
+    setShowGroupModal(true);
+  };
+
   const toggleModalGroups = (
     title: string,
     groups: Group[] | string[] | null,
@@ -485,7 +513,7 @@ export const AccessControl = () => {
           {label}
           <Button
             type="link"
-            onClick={() => setPolicyAndView(rule)}
+            onClick={() => setPolicyAndViewGroups(rule)}
             style={{ padding: "0 5px" }}
           >
             +{groups && groups.length - 1}
@@ -906,6 +934,9 @@ export const AccessControl = () => {
       )}
 
       {setupEditPolicyVisible && <AccessControlEdit />}
+      {showGroupModal && (
+        <UpdateAccessControlGroupModal setShowGroupModal={setShowGroupModal} />
+      )}
     </>
   );
 };

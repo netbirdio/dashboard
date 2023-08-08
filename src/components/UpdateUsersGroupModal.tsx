@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { Modal } from "antd";
 import UserEdit from "./UserEdit";
 
-
 export const UpdateUsersGroupModal = (props: any) => {
   return (
     <>
@@ -13,10 +12,12 @@ export const UpdateUsersGroupModal = (props: any) => {
         onCancel={() => props.setShowGroupModal(false)}
         width={450}
       >
-        <UserEdit
-          isGroupUpdateView={true}
-          setShowGroupModal={props.setShowGroupModal}
-        />
+        {props.showGroupModal && (
+          <UserEdit
+            isGroupUpdateView={true}
+            setShowGroupModal={props.setShowGroupModal}
+          />
+        )}
       </Modal>
     </>
   );

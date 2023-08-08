@@ -139,6 +139,9 @@ const UserEdit = (props: any) => {
         dispatch(userActions.setEditUserPopupVisible(false));
         dispatch(userActions.setUser(null as unknown as User));
         dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null));
+        if (setShowGroupModal) {
+          setShowGroupModal(false);
+        }
       })
       .catch((errorInfo) => {
         console.log("errorInfo", errorInfo);
@@ -266,7 +269,8 @@ const UserEdit = (props: any) => {
   useEffect(() => {
     if (user) {
       // @ts-ignore
-      setCurrentGroups(groups.filter((g) => g.name != "All" && user.auto_groups.includes(g.id)).map((g) => g.id) || []);
+      setCurrentGroups(groups.filter((g) => g.name != "All" && user.auto_groups.includes(g.id)).map((g) => g.id) || []
+      );
     }
   }, [groups, user]);
 
@@ -338,17 +342,17 @@ const UserEdit = (props: any) => {
           loading={loading}
           style={{ marginBottom: "7px" }}
         >
-          {!isGroupUpdateView && (
-            <h3
-              style={{
-                fontSize: "22px",
-                fontWeight: "500",
-                marginBottom: "25px",
-              }}
-            >
-              {user.name}
-            </h3>
-          )}
+          <h3
+            style={{
+              fontSize: "22px",
+              fontWeight: "500",
+              marginBottom: "25px",
+            }}
+            className={isGroupUpdateView ? "d-none" : ""}
+          >
+            {user?.name}
+          </h3>
+
           <div style={{ maxWidth: "800px" }}>
             <Form
               layout="vertical"
@@ -362,53 +366,54 @@ const UserEdit = (props: any) => {
                 autoGroupsNames: formUser.autoGroupsNames,
               }}
             >
-              {!isGroupUpdateView && (
-                <Row style={{ paddingBottom: "15px" }}>
-                  {!user?.is_service_user && (
-                    <Col
-                      xs={24}
-                      sm={24}
-                      md={11}
-                      lg={11}
-                      xl={11}
-                      xxl={11}
-                      span={11}
-                    >
-                      <Form.Item
-                        name="email"
-                        label={<Text style={{}}>Email</Text>}
-                        style={{ marginRight: "70px", fontWeight: "500" }}
-                      >
-                        <Input
-                          disabled={user.id}
-                          value={formUser.email}
-                          style={{ color: "#8c8c8c" }}
-                          autoComplete="off"
-                        />
-                      </Form.Item>
-                    </Col>
-                  )}
-                  <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+              <Row
+                style={{ paddingBottom: "15px" }}
+                className={isGroupUpdateView ? "d-none" : ""}
+              >
+                {!user?.is_service_user && (
+                  <Col
+                    xs={24}
+                    sm={24}
+                    md={11}
+                    lg={11}
+                    xl={11}
+                    xxl={11}
+                    span={11}
+                  >
                     <Form.Item
-                      name="role"
-                      label={<Text style={{ fontWeight: "500" }}>Role</Text>}
-                      style={{ marginRight: "50px", fontWeight: "500" }}
+                      name="email"
+                      label={<Text style={{}}>Email</Text>}
+                      style={{ marginRight: "70px", fontWeight: "500" }}
                     >
-                      <Select
-                        style={{ width: "100%" }}
-                        disabled={user?.is_current}
-                      >
-                        <Option value="admin">
-                          <Text type={"secondary"}>admin</Text>
-                        </Option>
-                        <Option value="user">
-                          <Text type={"secondary"}>user</Text>
-                        </Option>
-                      </Select>
+                      <Input
+                        disabled={user.id}
+                        value={formUser.email}
+                        style={{ color: "#8c8c8c" }}
+                        autoComplete="off"
+                      />
                     </Form.Item>
                   </Col>
-                </Row>
-              )}
+                )}
+                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                  <Form.Item
+                    name="role"
+                    label={<Text style={{ fontWeight: "500" }}>Role</Text>}
+                    style={{ marginRight: "50px", fontWeight: "500" }}
+                  >
+                    <Select
+                      style={{ width: "100%" }}
+                      disabled={user?.is_current}
+                    >
+                      <Option value="admin">
+                        <Text type={"secondary"}>admin</Text>
+                      </Option>
+                      <Option value="user">
+                        <Text type={"secondary"}>user</Text>
+                      </Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Row>
               {!user?.is_service_user && (
                 <Row style={{ paddingBottom: "15px" }}>
                   <Col
@@ -450,8 +455,17 @@ const UserEdit = (props: any) => {
                     </Form.Item>
                   </Col>
 
-                  {!user?.is_current && isAdmin && !isGroupUpdateView && (
-                    <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                  {!user?.is_current && isAdmin && (
+                    <Col
+                      xs={24}
+                      sm={24}
+                      md={5}
+                      lg={5}
+                      xl={5}
+                      xxl={5}
+                      span={5}
+                      className={isGroupUpdateView ? "d-none" : ""}
+                    >
                       <Form.Item
                         valuePropName="checked"
                         name="is_blocked"
@@ -464,7 +478,6 @@ const UserEdit = (props: any) => {
                   )}
                 </Row>
               )}
-
               <Space
                 style={{
                   display: "flex",
@@ -482,230 +495,242 @@ const UserEdit = (props: any) => {
           </div>
         </Card>
 
-        {user && (user?.is_current || user?.is_service_user) && (
-          <Card
-            bordered={true}
-            loading={loading}
-            style={{ marginBottom: "7px" }}
-          >
-            <div style={{ maxWidth: "800px" }}>
-              <Paragraph
-                style={{
-                  textAlign: "left",
-                  whiteSpace: "pre-line",
-                  fontSize: "18px",
-                  fontWeight: "500",
-                }}
-              >
-                Access tokens
-              </Paragraph>
-              <Row
-                gutter={21}
-                style={{ marginTop: "-16px", marginBottom: "10px" }}
-              >
-                <Col xs={24} sm={24} md={20} lg={20} xl={20} xxl={20} span={20}>
-                  <Paragraph
-                    type={"secondary"}
-                    style={{ textAlign: "left", whiteSpace: "pre-line" }}
-                  >
-                    Access tokens give access to NetBird API
-                  </Paragraph>
-                </Col>
-                <Col
-                  xs={24}
-                  sm={24}
-                  md={1}
-                  lg={1}
-                  xl={1}
-                  xxl={1}
-                  span={1}
-                  style={{ marginTop: "-16px" }}
+        {user &&
+          !isGroupUpdateView &&
+          (user?.is_current || user?.is_service_user) && (
+            <Card
+              bordered={true}
+              loading={loading}
+              style={{ marginBottom: "7px" }}
+            >
+              <div style={{ maxWidth: "800px" }}>
+                <Paragraph
+                  style={{
+                    textAlign: "left",
+                    whiteSpace: "pre-line",
+                    fontSize: "18px",
+                    fontWeight: "500",
+                  }}
                 >
-                  {personalAccessTokens && personalAccessTokens.length > 0 && (
+                  Access tokens
+                </Paragraph>
+                <Row
+                  gutter={21}
+                  style={{ marginTop: "-16px", marginBottom: "10px" }}
+                >
+                  <Col
+                    xs={24}
+                    sm={24}
+                    md={20}
+                    lg={20}
+                    xl={20}
+                    xxl={20}
+                    span={20}
+                  >
+                    <Paragraph
+                      type={"secondary"}
+                      style={{ textAlign: "left", whiteSpace: "pre-line" }}
+                    >
+                      Access tokens give access to NetBird API
+                    </Paragraph>
+                  </Col>
+                  <Col
+                    xs={24}
+                    sm={24}
+                    md={1}
+                    lg={1}
+                    xl={1}
+                    xxl={1}
+                    span={1}
+                    style={{ marginTop: "-16px" }}
+                  >
+                    {personalAccessTokens &&
+                      personalAccessTokens.length > 0 && (
+                        <Button
+                          type="primary"
+                          onClick={onClickAddNewPersonalAccessToken}
+                        >
+                          Create token
+                        </Button>
+                      )}
+                  </Col>
+                </Row>
+                {personalAccessTokens && personalAccessTokens.length > 0 && (
+                  <Table
+                    size={"small"}
+                    style={{ marginTop: "-10px" }}
+                    showHeader={false}
+                    scroll={{ x: 800 }}
+                    pagination={false}
+                    loading={tableSpin(loading)}
+                    dataSource={tokenTable}
+                  >
+                    <Column
+                      className={"non-highlighted-table-column"}
+                      sorter={(a, b) =>
+                        (a as TokenDataTable).created_at.localeCompare(
+                          (b as TokenDataTable).created_at
+                        )
+                      }
+                      defaultSortOrder="descend"
+                      render={(text, record, index) => {
+                        return (
+                          <>
+                            <Row>
+                              <Col>
+                                <Badge
+                                  status={
+                                    (record as TokenDataTable).status ===
+                                    "valid"
+                                      ? "success"
+                                      : "error"
+                                  }
+                                  style={{
+                                    marginTop: "1px",
+                                    marginRight: "5px",
+                                    marginLeft: "0px",
+                                  }}
+                                />
+                              </Col>
+                              <Col>
+                                <Paragraph
+                                  style={{
+                                    margin: "0px",
+                                    padding: "0px",
+                                  }}
+                                >
+                                  {(record as TokenDataTable).name}
+                                </Paragraph>
+                                <Paragraph
+                                  type={"secondary"}
+                                  style={{
+                                    fontSize: "13px",
+                                    fontWeight: "400",
+                                    margin: "0px",
+                                    marginTop: "-2px",
+                                    padding: "0px",
+                                  }}
+                                >
+                                  {"Created" +
+                                    ((record as TokenDataTable)
+                                      .created_by_email && user?.is_service_user
+                                      ? " by " +
+                                        (record as TokenDataTable)
+                                          .created_by_email
+                                      : "") +
+                                    " on " +
+                                    fullDate(
+                                      (record as TokenDataTable).created_at
+                                    )}
+                                </Paragraph>
+                              </Col>
+                            </Row>
+                          </>
+                        );
+                      }}
+                    />
+                    <Column
+                      render={(text, record, index) => {
+                        return (
+                          <>
+                            <Paragraph
+                              type={"secondary"}
+                              style={{ textAlign: "left", fontSize: "11px" }}
+                            >
+                              Expires on
+                            </Paragraph>
+                            <Paragraph
+                              type={"secondary"}
+                              style={{
+                                textAlign: "left",
+                                marginTop: "-10px",
+                                marginBottom: "0",
+                                fontSize: "15px",
+                              }}
+                            >
+                              {fullDate(
+                                (record as TokenDataTable).expiration_date
+                              )}
+                            </Paragraph>
+                          </>
+                        );
+                      }}
+                    />
+                    <Column
+                      render={(text, record, index) => {
+                        return (
+                          <>
+                            <Paragraph
+                              type={"secondary"}
+                              style={{ textAlign: "left", fontSize: "11px" }}
+                            >
+                              Last used
+                            </Paragraph>
+                            <Paragraph
+                              type={"secondary"}
+                              style={{
+                                textAlign: "left",
+                                marginTop: "-10px",
+                                marginBottom: "0",
+                                fontSize: "15px",
+                              }}
+                            >
+                              {(record as TokenDataTable).last_used
+                                ? fullDate((record as TokenDataTable).last_used)
+                                : "Never"}
+                            </Paragraph>
+                          </>
+                        );
+                      }}
+                    />
+                    <Column
+                      align="right"
+                      render={(text, record, index) => {
+                        return (
+                          <Button
+                            danger={true}
+                            type={"text"}
+                            onClick={() => {
+                              showConfirmDelete(record as TokenDataTable);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        );
+                      }}
+                    />
+                  </Table>
+                )}
+                <Divider style={{ marginTop: "-12px" }}></Divider>
+                {(personalAccessTokens === null ||
+                  personalAccessTokens.length === 0) && (
+                  <Space
+                    direction="vertical"
+                    size="small"
+                    align="start"
+                    style={{
+                      display: "flex",
+                      padding: "35px 0px",
+                      marginTop: "-40px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Paragraph
+                      style={{ textAlign: "start", whiteSpace: "pre-line" }}
+                    >
+                      You don’t have any access tokens yet
+                    </Paragraph>
                     <Button
                       type="primary"
                       onClick={onClickAddNewPersonalAccessToken}
                     >
                       Create token
                     </Button>
-                  )}
-                </Col>
-              </Row>
-              {personalAccessTokens && personalAccessTokens.length > 0 && (
-                <Table
-                  size={"small"}
-                  style={{ marginTop: "-10px" }}
-                  showHeader={false}
-                  scroll={{ x: 800 }}
-                  pagination={false}
-                  loading={tableSpin(loading)}
-                  dataSource={tokenTable}
-                >
-                  <Column
-                    className={"non-highlighted-table-column"}
-                    sorter={(a, b) =>
-                      (a as TokenDataTable).created_at.localeCompare(
-                        (b as TokenDataTable).created_at
-                      )
-                    }
-                    defaultSortOrder="descend"
-                    render={(text, record, index) => {
-                      return (
-                        <>
-                          <Row>
-                            <Col>
-                              <Badge
-                                status={
-                                  (record as TokenDataTable).status === "valid"
-                                    ? "success"
-                                    : "error"
-                                }
-                                style={{
-                                  marginTop: "1px",
-                                  marginRight: "5px",
-                                  marginLeft: "0px",
-                                }}
-                              />
-                            </Col>
-                            <Col>
-                              <Paragraph
-                                style={{
-                                  margin: "0px",
-                                  padding: "0px",
-                                }}
-                              >
-                                {(record as TokenDataTable).name}
-                              </Paragraph>
-                              <Paragraph
-                                type={"secondary"}
-                                style={{
-                                  fontSize: "13px",
-                                  fontWeight: "400",
-                                  margin: "0px",
-                                  marginTop: "-2px",
-                                  padding: "0px",
-                                }}
-                              >
-                                {"Created" +
-                                  ((record as TokenDataTable)
-                                    .created_by_email && user?.is_service_user
-                                    ? " by " +
-                                      (record as TokenDataTable)
-                                        .created_by_email
-                                    : "") +
-                                  " on " +
-                                  fullDate(
-                                    (record as TokenDataTable).created_at
-                                  )}
-                              </Paragraph>
-                            </Col>
-                          </Row>
-                        </>
-                      );
-                    }}
-                  />
-                  <Column
-                    render={(text, record, index) => {
-                      return (
-                        <>
-                          <Paragraph
-                            type={"secondary"}
-                            style={{ textAlign: "left", fontSize: "11px" }}
-                          >
-                            Expires on
-                          </Paragraph>
-                          <Paragraph
-                            type={"secondary"}
-                            style={{
-                              textAlign: "left",
-                              marginTop: "-10px",
-                              marginBottom: "0",
-                              fontSize: "15px",
-                            }}
-                          >
-                            {fullDate(
-                              (record as TokenDataTable).expiration_date
-                            )}
-                          </Paragraph>
-                        </>
-                      );
-                    }}
-                  />
-                  <Column
-                    render={(text, record, index) => {
-                      return (
-                        <>
-                          <Paragraph
-                            type={"secondary"}
-                            style={{ textAlign: "left", fontSize: "11px" }}
-                          >
-                            Last used
-                          </Paragraph>
-                          <Paragraph
-                            type={"secondary"}
-                            style={{
-                              textAlign: "left",
-                              marginTop: "-10px",
-                              marginBottom: "0",
-                              fontSize: "15px",
-                            }}
-                          >
-                            {(record as TokenDataTable).last_used
-                              ? fullDate((record as TokenDataTable).last_used)
-                              : "Never"}
-                          </Paragraph>
-                        </>
-                      );
-                    }}
-                  />
-                  <Column
-                    align="right"
-                    render={(text, record, index) => {
-                      return (
-                        <Button
-                          danger={true}
-                          type={"text"}
-                          onClick={() => {
-                            showConfirmDelete(record as TokenDataTable);
-                          }}
-                        >
-                          Delete
-                        </Button>
-                      );
-                    }}
-                  />
-                </Table>
-              )}
-              <Divider style={{ marginTop: "-12px" }}></Divider>
-              {(personalAccessTokens === null ||
-                personalAccessTokens.length === 0) && (
-                <Space
-                  direction="vertical"
-                  size="small"
-                  align="start"
-                  style={{
-                    display: "flex",
-                    padding: "35px 0px",
-                    marginTop: "-40px",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Paragraph
-                    style={{ textAlign: "start", whiteSpace: "pre-line" }}
-                  >
-                    You don’t have any access tokens yet
-                  </Paragraph>
-                  <Button
-                    type="primary"
-                    onClick={onClickAddNewPersonalAccessToken}
-                  >
-                    Create token
-                  </Button>
-                </Space>
-              )}
-            </div>
-          </Card>
-        )}
+                  </Space>
+                )}
+              </div>
+            </Card>
+          )}
       </div>
       <AddPATPopup />
       {confirmModalContextHolder}
