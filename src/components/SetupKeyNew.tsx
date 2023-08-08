@@ -220,8 +220,7 @@ const SetupKeyNew = () => {
   );
 
   const changesDetected = (): boolean => {
-    console.log("formSetupKey", formSetupKey);
-    return (
+     return (
       formSetupKey.name == null ||
       formSetupKey.name !== setupKey.name ||
       formSetupKey?.usage_limit !== setupKey.usage_limit
@@ -229,8 +228,7 @@ const SetupKeyNew = () => {
   };
 
   const groupsChanged = (): boolean => {
-    console.log("groupsChanged", formSetupKey);
-    if (
+     if (
       setupKey &&
       setupKey?.auto_groups &&
       formSetupKey?.autoGroupNames &&
