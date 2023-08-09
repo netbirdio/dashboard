@@ -9,6 +9,8 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { QuestionCircleOutlined } from "@ant-design/icons";
 import { CheckOutlined, CopyOutlined } from "@ant-design/icons";
 import { copyToClipboard } from "../../../../utils/common";
+import {getConfig} from "../../../../config";
+const { grpcApiOrigin } = getConfig();
 
 const { Panel } = Collapse;
 
@@ -68,15 +70,23 @@ export const LinuxTab = () => {
       ),
       copied: false,
     } as StepCommand,
-    {
+    ... grpcApiOrigin ? [{
       key: 2,
+      title: 'Click on "Settings" from the NetBird icon in your system tray and enter the following "Management URL"',
+      commands: grpcApiOrigin,
+      commandsForCopy: grpcApiOrigin,
+      copied: false,
+      showCopyButton: false,
+    }] : [],
+    {
+      key: 2 + (grpcApiOrigin ? 1 : 0),
       title: 'Click on "Connect" from the NetBird icon in your system tray',
       commands: "",
       copied: false,
       showCopyButton: false,
     },
     {
-      key: 3,
+      key: 3 + (grpcApiOrigin) ? 1 : 0,
       title: "Sign up using your email address",
       commands: "",
       copied: false,
