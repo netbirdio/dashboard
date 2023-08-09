@@ -154,7 +154,7 @@ const SetupKeyNew = () => {
         auto_groups: [] as string[],
         usage_limit: 0,
         used_times: 0,
-        expires_in: 0,
+        expires_in: 7,
       } as SetupKey)
     );
     setFormSetupKey({} as FormSetupKey);
@@ -344,7 +344,7 @@ const SetupKeyNew = () => {
             onValuesChange={onChange}
             initialValues={{
               usage_limit: 1,
-              expires_in: "7",
+              expires_in: 7,
             }}
           >
             <Row>
@@ -474,6 +474,7 @@ const SetupKeyNew = () => {
                     placeholder={`2`}
                     type="number"
                     addonAfter=" Days"
+                    value={setupKey.expires_in}
                     style={{ width: "160px", marginTop: "5px" }}
                   />
                 </Form.Item>
