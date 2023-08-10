@@ -531,7 +531,6 @@ export const Settings = () => {
   type MenuItem = Required<MenuProps>["items"][number];
 
   const onClick: MenuProps["onClick"] = (e) => {
-    console.log("click ", e.key);
     switch (e.key) {
       case "auth":
         setAuthClicked(true);

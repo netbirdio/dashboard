@@ -36,7 +36,7 @@ import { Group } from "../store/group/types";
 import { TooltipPlacement } from "antd/es/tooltip";
 import { useGetTokenSilently } from "../utils/token";
 import { usePageSizeHelpers } from "../utils/pageSize";
-
+import { UpdateKeyGroupModal } from "../components/UpdateKeyGroupModal";
 const { Title, Text, Paragraph } = Typography;
 const { Column } = Table;
 
@@ -49,6 +49,7 @@ export const SetupKeys = () => {
   const { onChangePageSize, pageSizeOptions, pageSize } = usePageSizeHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
+  const [showGroupModal, setShowGroupModal] = useState(false);
 
   const setupKeys = useSelector((state: RootState) => state.setupKey.data);
   const failed = useSelector((state: RootState) => state.setupKey.failed);
@@ -183,6 +184,7 @@ export const SetupKeys = () => {
       );
       dispatch(setupKeyActions.resetSavedSetupKey(null));
       dispatch(setupKeyActions.setSetupEditKeyVisible(false));
+      setShowGroupModal(false)
     } else if (savedSetupKey.error) {
       message.error({
         content:
@@ -298,6 +300,26 @@ export const SetupKeys = () => {
     );
   };
 
+  const setKeyAndViewGroups = (key: SetupKeyDataTable) => {
+    dispatch(
+      setupKeyActions.setSetupKey({
+        id: key?.id || null,
+        key: key?.key,
+        name: key?.name,
+        revoked: key?.revoked,
+        expires: key?.expires,
+        state: key?.state,
+        type: key?.type,
+        used_times: key?.used_times,
+        valid: key?.valid,
+        auto_groups: key?.auto_groups,
+        last_used: key?.last_used,
+        usage_limit: key?.usage_limit,
+      } as SetupKey)
+    );
+    setShowGroupModal(true)
+  };
+
   useEffect(() => {
     if (setupNewKeyVisible) {
       setGroupPopupVisible("");
@@ -336,7 +358,7 @@ export const SetupKeys = () => {
     let btn = (
       <Button
         type="link"
-        onClick={() => setKeyAndView(setupKeyToAction as SetupKeyDataTable)}
+        onClick={() => setKeyAndViewGroups(setupKeyToAction as SetupKeyDataTable)}
       >
         {displayGroups.length}
       </Button>
@@ -667,6 +689,9 @@ export const SetupKeys = () => {
         {setupEditKeyVisible && <SetupKeyEdit />}
       </Container>
       {setupNewKeyVisible && <SetupKeyNew />}
+      {showGroupModal && (
+        <UpdateKeyGroupModal setShowGroupModal={setShowGroupModal} />
+      )}
       {confirmModalContextHolder}
     </>
   );
