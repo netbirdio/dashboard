@@ -38,7 +38,8 @@ const customExpiresFormat = (value: Date): string | null => {
   return formatDate(value);
 };
 
-const SetupKeyNew = () => {
+const SetupKeyNew = (props: any) => {
+  const { isGroupUpdateView, setShowGroupModal } = props;
   const {
     optionRender,
     blueTagRender,
@@ -53,12 +54,12 @@ const SetupKeyNew = () => {
   const savedSetupKey = useSelector(
     (state: RootState) => state.setupKey.savedSetupKey
   );
- 
+
   const groups = useSelector((state: RootState) => state.group.data);
 
   const [form] = Form.useForm();
   const [editName, setEditName] = useState(false);
-   const [formSetupKey, setFormSetupKey] = useState({} as FormSetupKey);
+  const [formSetupKey, setFormSetupKey] = useState({} as FormSetupKey);
   const inputNameRef = useRef<any>(null);
 
   useEffect(() => {
@@ -160,6 +161,9 @@ const SetupKeyNew = () => {
     );
     setFormSetupKey({} as FormSetupKey);
     setVisibleNewSetupKey(false);
+    if (setShowGroupModal) {
+      setShowGroupModal(false);
+    }
   };
 
   const onChange = (data: any) => {
@@ -256,28 +260,36 @@ const SetupKeyNew = () => {
 
   return (
     <>
-      <Breadcrumb
-        style={{ marginBottom: "25px" }}
-        items={[
-          {
-            title: <a onClick={onBreadcrumbUsersClick}>Setup Keys</a>,
-          },
-          {
-            title: setupKey.name,
-          },
-        ]}
-      />
-      <Card bordered={true} style={{ marginBottom: "7px", border: "none" }}>
+      {!isGroupUpdateView && (
+        <Breadcrumb
+          style={{ marginBottom: "25px" }}
+          items={[
+            {
+              title: <a onClick={onBreadcrumbUsersClick}>Setup Keys</a>,
+            },
+            {
+              title: setupKey.name,
+            },
+          ]}
+        />
+      )}
+      <Card
+        bordered={true}
+        className={isGroupUpdateView ? " noborderPadding" : ""}
+        style={{ marginBottom: "7px", border: "none" }}
+      >
         <div style={{ maxWidth: "800px" }}>
-          <h3
-            style={{
-              fontSize: "22px",
-              fontWeight: "500",
-              marginBottom: "30px",
-            }}
-          >
-            {setupKey.name}
-          </h3>
+          {!isGroupUpdateView && (
+            <h3
+              style={{
+                fontSize: "22px",
+                fontWeight: "500",
+                marginBottom: "30px",
+              }}
+            >
+              {setupKey.name}
+            </h3>
+          )}
           <Form
             layout="vertical"
             requiredMark={false}
@@ -287,90 +299,95 @@ const SetupKeyNew = () => {
               usage_limit: 1,
             }}
           >
-            <Row style={{ marginTop: "10px" }}>
-              <Col
-                xs={24}
-                sm={24}
-                md={11}
-                lg={11}
-                xl={11}
-                xxl={11}
-                span={11}
-                style={{ paddingRight: "70px" }}
-              >
-                <Paragraph
+            {!isGroupUpdateView && (
+              <Row style={{ marginTop: "10px" }}>
+                <Col
+                  xs={24}
+                  sm={24}
+                  md={11}
+                  lg={11}
+                  xl={11}
+                  xxl={11}
+                  span={11}
                   style={{
-                    whiteSpace: "pre-line",
-                    fontWeight: "500",
-                    margin: 0,
+                    paddingRight: "70px",
                   }}
                 >
-                  Key
-                  <Tag
-                    color={`${
-                      formSetupKey.state === "valid" ? "green" : "red"
-                    }`}
+                  <Paragraph
                     style={{
-                      marginLeft: "10px",
-                      borderRadius: "2px",
+                      whiteSpace: "pre-line",
                       fontWeight: "500",
+                      margin: 0,
                     }}
                   >
-                    {formSetupKey.state}
-                  </Tag>
-                </Paragraph>
-                <Input
-                  style={{ marginTop: "8px" }}
-                  disabled
-                  value={getFormKey(formSetupKey.key)}
-                  suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                />
-              </Col>
+                    Key
+                    <Tag
+                      color={`${
+                        formSetupKey.state === "valid" ? "green" : "red"
+                      }`}
+                      style={{
+                        marginLeft: "10px",
+                        borderRadius: "2px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      {formSetupKey.state}
+                    </Tag>
+                  </Paragraph>
+                  <Input
+                    style={{ marginTop: "8px" }}
+                    disabled
+                    value={getFormKey(formSetupKey.key)}
+                    suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                  />
+                </Col>
 
-              <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                <Paragraph
-                  style={{
-                    whiteSpace: "pre-line",
-                    margin: 0,
-                    fontWeight: "500",
-                  }}
-                >
+                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                   <Paragraph
                     style={{
                       whiteSpace: "pre-line",
                       margin: 0,
                       fontWeight: "500",
                     }}
-                  ></Paragraph>
-                  {formSetupKey.type === "one-off" ? "One-off" : "Reusable"},
-                  available uses
-                </Paragraph>
-                <Col>
-                  <Input
-                    disabled
-                    value={
-                      formSetupKey.type === "reusable" &&
-                      formSetupKey.usage_limit === 0
-                        ? "unlimited"
-                        : formSetupKey.usage_limit - formSetupKey.used_times
-                    }
-                    suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                    style={{ marginTop: "8px" }}
-                  />
+                  >
+                    <Paragraph
+                      style={{
+                        whiteSpace: "pre-line",
+                        margin: 0,
+                        fontWeight: "500",
+                      }}
+                    ></Paragraph>
+                    {formSetupKey.type === "one-off" ? "One-off" : "Reusable"},
+                    available uses
+                  </Paragraph>
+                  <Col>
+                    <Input
+                      disabled
+                      value={
+                        formSetupKey.type === "reusable" &&
+                        formSetupKey.usage_limit === 0
+                          ? "unlimited"
+                          : formSetupKey.usage_limit - formSetupKey.used_times
+                      }
+                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                      style={{ marginTop: "8px" }}
+                    />
+                  </Col>
                 </Col>
-              </Col>
-            </Row>
-
-            <Row style={{ marginTop: "39px" }}>
+              </Row>
+            )}
+            <Row style={{ marginTop: `${isGroupUpdateView ? "0" : "39px"}` }}>
               <Col
                 xs={24}
                 sm={24}
-                md={11}
-                lg={11}
-                xl={11}
-                xxl={11}
-                span={11}
-                style={{ paddingRight: "70px" }}
+                md={!isGroupUpdateView ? 11 : 24}
+                lg={!isGroupUpdateView ? 11 : 24}
+                xl={!isGroupUpdateView ? 11 : 24}
+                xxl={!isGroupUpdateView ? 11 : 24}
+                span={!isGroupUpdateView ? 11 : 24}
+                style={{
+                  paddingRight: `${!isGroupUpdateView ? "70px" : "0"}`,
+                }}
               >
                 <Paragraph
                   style={{
@@ -407,20 +424,23 @@ const SetupKeyNew = () => {
                   </Form.Item>
                 </Col>
               </Col>
-
-              <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                <Paragraph style={{ margin: 0, fontWeight: "500" }}>
-                  Expires
-                </Paragraph>
-                <Row>
-                  <Input
-                    style={{ marginTop: "8px" }}
-                    disabled
-                    suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                    value={customExpiresFormat(new Date(formSetupKey.expires))!}
-                  />
-                </Row>
-              </Col>
+              {!isGroupUpdateView && (
+                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                  <Paragraph style={{ margin: 0, fontWeight: "500" }}>
+                    Expires
+                  </Paragraph>
+                  <Row>
+                    <Input
+                      style={{ marginTop: "8px" }}
+                      disabled
+                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                      value={
+                        customExpiresFormat(new Date(formSetupKey.expires))!
+                      }
+                    />
+                  </Row>
+                </Col>
+              )}
             </Row>
           </Form>
         </div>
@@ -428,7 +448,7 @@ const SetupKeyNew = () => {
           style={{
             display: "flex",
             flexDirection: "row",
-            justifyContent: "start",
+            justifyContent: `${!isGroupUpdateView ? "start" : "end"}`,
             padding: 0,
             gap: "10px",
             marginTop: "24px",

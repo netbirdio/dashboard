@@ -52,7 +52,6 @@ const { Text } = Typography;
 
 const PeerUpdate = (props: any) => {
   const { isGroupUpdateView, setShowGroupModal } = props;
-  console.log("isGroupUpdateView", isGroupUpdateView);
   const { getTokenSilently } = useGetTokenSilently();
   const { Column } = Table;
   const { confirm } = Modal;
