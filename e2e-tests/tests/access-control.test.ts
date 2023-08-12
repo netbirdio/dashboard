@@ -12,6 +12,10 @@ test.beforeEach(async ({ page }) => {
   await page.getByRole('button', { name: 'next' }).click();
   await page.getByLabel('Password').fill('testMe123@');
   await page.getByRole('button', { name: 'next' }).click();
+  const skipButton = page.getByRole('button', { name: 'skip' });
+  if (await skipButton.isVisible({ timeout: 300 })) {
+      await skipButton.click();
+  }
   await addPeerModal.assertPeerModalIsVisible();
 });
 
