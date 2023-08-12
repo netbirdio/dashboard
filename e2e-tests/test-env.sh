@@ -439,7 +439,6 @@ initEnvironment() {
   renderDockerCompose > docker-compose.yml
   renderCaddyfile > Caddyfile
   renderZitadelEnv > zitadel.env
-  echo "" > dashboard.env
   echo "" > turnserver.conf
   echo "" > management.json
 
@@ -635,13 +634,6 @@ services:
     volumes:
       - netbird_caddy_data:/data
       - ./Caddyfile:/etc/caddy/Caddyfile
-  #UI dashboard
-  dashboard:
-    image: wiretrustee/dashboard:latest
-    restart: unless-stopped
-    networks: [netbird]
-    env_file:
-      - ./dashboard.env
   # Signal
   signal:
     image: netbirdio/signal:latest
