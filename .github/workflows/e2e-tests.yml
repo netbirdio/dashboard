@@ -30,7 +30,7 @@ jobs:
         run: bash ./e2e-tests/test-env.sh
 
       - name: run e2e tests
-        run: npx playwright test
+        run: npx playwright test --workers 2
 
       - uses: actions/upload-artifact@v3
         if: always()
