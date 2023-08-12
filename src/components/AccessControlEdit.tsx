@@ -461,6 +461,7 @@ const AccessControlEdit = () => {
               },
             ]}
           />
+
           <Card bordered={true} style={{ marginBottom: "7px" }}>
             <div style={{ maxWidth: "550px" }}>
               <Form
@@ -606,6 +607,7 @@ const AccessControlEdit = () => {
                       </div>
                     </Form.Item>
                   </Col>
+
                   <Col span={24}>
                     <Row gutter={15}>
                       <Col span={10}>

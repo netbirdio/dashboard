@@ -72,7 +72,7 @@ export const AccessControl = () => {
   const { onChangePageSize, pageSizeOptions, pageSize } = usePageSizeHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
-
+ 
   const policies = useSelector((state: RootState) => state.policy.data);
   const failed = useSelector((state: RootState) => state.policy.failed);
   const loading = useSelector((state: RootState) => state.policy.loading);
@@ -419,6 +419,7 @@ export const AccessControl = () => {
       } as Policy)
     );
   };
+
 
   const toggleModalGroups = (
     title: string,

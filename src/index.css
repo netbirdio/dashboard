@@ -503,10 +503,16 @@ ul.ant-list-items {
     max-width: 100% !important;
   }
 }
+
 .noborderPadding .ant-card-body {
   padding: 0 !important;
 }
 
 .noborderPadding {
+  border: none !important;
   box-shadow: none !important;
+}
+
+.d-none{
+  display: none!important;
 }
