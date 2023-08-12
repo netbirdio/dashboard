@@ -757,6 +757,7 @@ export const Peers = () => {
                           Get started by adding one to your network.
                         </Paragraph>
                         <Button
+                        data-testid="add-new-peer-button"
                           size={"middle"}
                           type="primary"
                           onClick={() => setAddPeerModalOpen(true)}
@@ -934,6 +935,7 @@ export const Peers = () => {
             }}
             footer={[]}
             width={780}
+            data-testid="add-peer-modal"
           >
             <AddPeerPopup
               greeting={!hadFirstRun ? "Hi there!" : ""}

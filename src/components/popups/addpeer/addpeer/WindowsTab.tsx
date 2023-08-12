@@ -12,7 +12,7 @@ export const WindowsTab = () => {
             key: 1,
             title: 'Download and run Windows installer:',
             commands: (
-                <Button style={{marginTop: "5px"}} type="primary" href="https://pkgs.netbird.io/windows/x64" target="_blank">Download NetBird</Button>
+                <Button data-testid="download-windows-button" style={{marginTop: "5px"}} type="primary" href="https://pkgs.netbird.io/windows/x64" target="_blank">Download NetBird</Button>
             ),
             copied: false
         } as StepCommand,

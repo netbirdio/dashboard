@@ -13,7 +13,7 @@ export const AndroidTab = () => {
             key: 1,
             title: 'Download and install the application from Google Play Store:',
             commands: (
-                <a href="https://play.google.com/store/apps/details?id=io.netbird.client" target="_blank">
+                <a data-testid="download-android-button" href="https://play.google.com/store/apps/details?id=io.netbird.client" target="_blank">
                     <Image width="12em" preview={false} style={{marginTop: "5px"}} src={googleplay}/>
                 </a>
             ),
