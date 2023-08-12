@@ -298,7 +298,7 @@ export const AccessControl = () => {
     setPolicyToAction(record as PolicyDataTable);
     confirm({
       icon: <ExclamationCircleOutlined />,
-      title: <span className="font-500">Delete rule {record.name}</span>,
+      title: <span data-testid="confirm-delete-modal-title" className="font-500">Delete rule {record.name}</span>,
       width: 500,
       content: (
         <Space direction="vertical" size="small">
