@@ -19,7 +19,7 @@ jobs:
           node-version: '16'
           cache: 'npm'
 
-      - name: Install dependecies
+      - name: Install dependencies
         run: npm install
 
       - name: Build 
