@@ -1,13 +1,13 @@
-import { Page, test, expect } from "@playwright/test";
+import { Page, test} from "@playwright/test";
 
 export class TopMenu {
-    private readonly addNewPeerButton = this.page.getByTestId('add-new-peer-button')
+    private readonly accessControlButton = this.page.getByTestId('access-control-page')
 
     constructor(private readonly page: Page) {}
 
-      async clickOnAddNewPeerButton() {
-        await test.step('Click on Add new peer Button to open Add peer modal', async () => {
-            await this.addNewPeerButton.click();
+      async clickOnAccessControlOnTopMenu() {
+        await test.step('Click on Access Control page on a top menu', async () => {
+          await this.accessControlButton.click();  
         })
       }
     }
