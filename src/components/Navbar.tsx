@@ -35,12 +35,12 @@ const Navbar = () => {
   const [isRefreshingUserState, setIsRefreshingUserState] = useState(false);
 
   const items = [
-    { label: <Link to="/peers">Peers</Link>, key: "/peers" },
-    { label: <Link to="/setup-keys">Setup Keys</Link>, key: "/setup-keys" },
+    { label: <Link data-testid="peers-page" to="/peers">Peers</Link>, key: "/peers" },
+    { label: <Link data-testid="setup-keys-page" to="/setup-keys">Setup Keys</Link>, key: "/setup-keys" },
     { label: <Link data-testid="access-control-page" to="/acls">Access Control</Link>, key: "/acls" },
-    { label: <Link to="/routes">Network Routes</Link>, key: "/routes" },
-    { label: <Link to="/dns">DNS</Link>, key: "/dns" },
-    { label: <Link to="/users">Users</Link>, key: "/users" },
+    { label: <Link data-testid="network-routes-page" to="/routes">Network Routes</Link>, key: "/routes" },
+    { label: <Link data-testid="dns-page"to="/dns">DNS</Link>, key: "/dns" },
+    { label: <Link data-testid="usersf-page" to="/users">Users</Link>, key: "/users" },
     { label: <Link to="/activity">Activity</Link>, key: "/activity" },
     { label: <Link to="/settings">Settings</Link>, key: "/settings" },
   ] as ItemType[];
