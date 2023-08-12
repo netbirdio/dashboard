@@ -29,3 +29,6 @@ src/auth_config.json
 src/.local-config*.json
 /public/OidcServiceWorker.js
 /public/OidcTrustedDomains.js
+/e2e-tests/node_modules/
+/e2e-tests/playwright-report/
+/e2e-tests/test-results/
