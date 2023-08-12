@@ -27,7 +27,7 @@ jobs:
         run: npx playwright install-deps
 
       - name: create test environment
-        run: bash ./e2e-tests/test-env.sh
+        run: bash ./e2e-tests/create-test-env.sh
 
       - name: run e2e tests
         run: npx playwright test --workers 2

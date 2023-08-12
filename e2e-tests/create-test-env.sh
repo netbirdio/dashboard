@@ -634,11 +634,6 @@ services:
     volumes:
       - netbird_caddy_data:/data
       - ./Caddyfile:/etc/caddy/Caddyfile
-  # Signal
-  signal:
-    image: netbirdio/signal:latest
-    restart: unless-stopped
-    networks: [netbird]
   # Management
   management:
     image: netbirdio/management:latest
@@ -656,16 +651,6 @@ services:
       "--dns-domain=netbird.selfhosted",
       "--idp-sign-key-refresh-enabled",
     ]
-  # Coturn, AKA relay server
-  coturn:
-    image: coturn/coturn
-    restart: unless-stopped
-    domainname: netbird.relay.selfhosted
-    volumes:
-      - ./turnserver.conf:/etc/turnserver.conf:ro
-    network_mode: host
-    command:
-      - -c /etc/turnserver.conf
   # Zitadel - identity provider
   zitadel:
     restart: 'always'
