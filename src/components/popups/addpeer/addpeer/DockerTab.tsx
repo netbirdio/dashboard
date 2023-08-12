@@ -16,6 +16,7 @@ export const DockerTab = () => {
         title: "Install Docker",
         commands: (
           <Button
+            data-testid="download-docker-button"
             style={{ marginTop: "5px" }}
             type="primary"
             href="https://docs.docker.com/engine/install/"

@@ -51,6 +51,7 @@ export const LinuxTab = () => {
       commands: (
         <Row style={{ paddingTop: "5px" }}>
           <Button
+            data-testid="download-intel-button"
             style={{ marginRight: "10px" }}
             type="primary"
             href="https://pkgs.netbird.io/macos/amd64"
@@ -58,6 +59,7 @@ export const LinuxTab = () => {
             Download for Intel
           </Button>
           <Button
+            data-testid="download-m1-m2-button"
             style={{ marginRight: "10px" }}
             type="default"
             href="https://pkgs.netbird.io/macos/arm64"
