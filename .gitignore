@@ -32,3 +32,5 @@ src/.local-config*.json
 /e2e-tests/node_modules/
 /e2e-tests/playwright-report/
 /e2e-tests/test-results/
+/test-results/
+/playwright-report/
