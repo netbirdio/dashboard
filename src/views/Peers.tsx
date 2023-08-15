@@ -633,16 +633,16 @@ export const Peers = () => {
           <Container style={{ paddingTop: "40px" }}>
             <Row>
               <Col span={24}>
-                <Title className="page-heading">Peers</Title>
+                <Title className="page-heading">{isAdmin ? "Peers" : "My peers"}</Title>
                 {peers.length ? (
                   <Paragraph style={{ marginTop: "5px" }}>
-                    A list of all machines and devices connected to your private
-                    network. Use this view to manage peers
+                    {isAdmin ? "A list of all machines and devices connected to your private network. Use this view to manage peers" :
+                        "A list of all your machines and devices that you connected to NetBird."}
                   </Paragraph>
                 ) : (
                   <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
-                    A list of all machines and devices connected to your private
-                    network. Use this view to manage peers
+                    {isAdmin ? "A list of all machines and devices connected to your private network. Use this view to manage peers" :
+                        "A list of all your machines and devices that you connected to NetBird."}
                   </Paragraph>
                 )}
 
