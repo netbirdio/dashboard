@@ -590,6 +590,7 @@ export const Peers = () => {
             type="text"
             style={{ height: "auto", whiteSpace: "normal", textAlign: "left" }}
             onClick={() => setUpdateGroupsVisible(peer, true)}
+            className={!isAdmin ? "nohover" : ""}
           >
             <span style={{ textAlign: "left" }}>
               <Row>
@@ -605,6 +606,7 @@ export const Peers = () => {
       <div>
         <Button
           type="text"
+          className={!isAdmin ? "nohover" : ""}
           style={{ height: "auto", textAlign: "left" }}
           onClick={() => setUpdateGroupsVisible(peer, true)}
         >
