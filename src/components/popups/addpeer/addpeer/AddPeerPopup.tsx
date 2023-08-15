@@ -39,27 +39,27 @@ export const AddPeerPopup: React.FC<Props> = ({
     const items: TabsProps['items'] = [
         {
             key: "1",
-            label: <span><Icon component={LinuxSVG}/>Linux</span>,
+            label: <span data-testid="add-peer-modal-linux-tab"><Icon component={LinuxSVG}/>Linux</span>,
             children: <UbuntuTab/>,
         },
         {
             key: "2",
-            label: <span><WindowsFilled/>Windows</span>,
+            label: <span data-testid="add-peer-modal-windows-tab"><WindowsFilled/>Windows</span>,
             children: <WindowsTab/>,
         },
         {
             key: "3",
-            label: <span><AppleFilled/>MacOS</span>,
+            label: <span data-testid="add-peer-modal-mac-tab"><AppleFilled/>MacOS</span>,
             children: <MacTab/>,
         },
         {
             key: "4",
-            label: <span><AndroidFilled/>Android</span>,
+            label: <span data-testid="add-peer-modal-android-tab"><AndroidFilled/>Android</span>,
             children: <AndroidTab/>,
         },
         {
             key: "5",
-            label: <span><Icon component={DockerSVG}/>Docker</span>,
+            label: <span data-testid="add-peer-modal-docker-tab"><Icon component={DockerSVG}/>Docker</span>,
             children: <DockerTab/>,
         }
     ];

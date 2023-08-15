@@ -1,0 +1,42 @@
+name: run e2e tests
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  e2e_tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: setup-node
+        uses: actions/setup-node@v3
+        with:
+          node-version: '16'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: install playwright
+        run: npx playwright install
+
+      - name: install playwright deps
+        run: npx playwright install-deps
+
+      - name: create test environment
+        run: bash ./e2e-tests/create-test-env.sh
+
+      - name: run e2e tests
+        run: npx playwright test --workers 2
+
+      - uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 3
