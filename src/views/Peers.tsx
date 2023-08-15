@@ -822,7 +822,7 @@ export const Peers = () => {
                             return renderAddress(record);
                           }}
                         />
-                        <Column
+                        {isAdmin && (<Column
                           title="Groups"
                           dataIndex="groupsCount"
                           align="center"
@@ -833,41 +833,42 @@ export const Peers = () => {
                               record
                             );
                           }}
-                        />
-                        <Column
-                          title="SSH Server"
-                          dataIndex="ssh_enabled"
-                          align="center"
-                          render={(e, record: PeerDataTable, index) => {
-                            let isWindows = record.os
-                              .toLocaleLowerCase()
-                              .startsWith("windows");
-                            let toggle = (
-                              <Switch
-                                size={"small"}
-                                checked={e}
-                                disabled={isWindows}
-                                onClick={(checked: boolean) => {
-                                  if (checked) {
-                                    showConfirmEnableSSH(record);
-                                  } else {
-                                    handleSwitchSSH(record, checked);
-                                  }
-                                }}
-                              />
-                            );
-
-                            if (isWindows) {
-                              return (
-                                <Tooltip title="SSH server feature is not yet supported on Windows">
-                                  {toggle}
-                                </Tooltip>
+                        />)}
+                        {isAdmin && (<Column
+                            title="SSH Server"
+                            dataIndex="ssh_enabled"
+                            align="center"
+                            render={(e, record: PeerDataTable, index) => {
+                              let isWindows = record.os
+                                  .toLocaleLowerCase()
+                                  .startsWith("windows");
+                              let toggle = (
+                                  <Switch
+                                      size={"small"}
+                                      checked={e}
+                                      disabled={isWindows}
+                                      onClick={(checked: boolean) => {
+                                        if (checked) {
+                                          showConfirmEnableSSH(record);
+                                        } else {
+                                          handleSwitchSSH(record, checked);
+                                        }
+                                      }}
+                                  />
                               );
-                            } else {
-                              return toggle;
-                            }
-                          }}
-                        />
+
+                              if (isWindows) {
+                                return (
+                                    <Tooltip title="SSH server feature is not yet supported on Windows">
+                                      {toggle}
+                                    </Tooltip>
+                                );
+                              } else {
+                                return toggle;
+                              }
+                            }}
+                        />)}
+
 
                         <Column
                           title="LastSeen"

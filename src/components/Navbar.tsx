@@ -53,6 +53,7 @@ const Navbar = () => {
     "/acls",
     "/routes",
     "/dns",
+    "/users",
     "/activity",
     "/settings",
   ];
