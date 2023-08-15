@@ -434,6 +434,7 @@ export const Peers = () => {
   };
 
   const setUpdateGroupsVisible = (peerToAction: Peer, status: boolean) => {
+    if (!isAdmin) return;
     if (status) {
       dispatch(peerActions.setPeer({ ...peerToAction }));
       dispatch(peerActions.setUpdateGroupsVisible(true));
@@ -502,10 +503,7 @@ export const Peers = () => {
         open={groupPopupVisible === peerToAction.key}
         title={null}
       >
-        <Button
-          type="link"
-          onClick={() => setGroupVisible(peerToAction, true)}
-        >
+        <Button type="link" onClick={() => setGroupVisible(peerToAction, true)}>
           {label}
         </Button>
       </Popover>
@@ -592,6 +590,7 @@ export const Peers = () => {
             type="text"
             style={{ height: "auto", whiteSpace: "normal", textAlign: "left" }}
             onClick={() => setUpdateGroupsVisible(peer, true)}
+            className={!isAdmin ? "nohover" : ""}
           >
             <span style={{ textAlign: "left" }}>
               <Row>
@@ -607,6 +606,7 @@ export const Peers = () => {
       <div>
         <Button
           type="text"
+          className={!isAdmin ? "nohover" : ""}
           style={{ height: "auto", textAlign: "left" }}
           onClick={() => setUpdateGroupsVisible(peer, true)}
         >
@@ -633,16 +633,16 @@ export const Peers = () => {
           <Container style={{ paddingTop: "40px" }}>
             <Row>
               <Col span={24}>
-                <Title className="page-heading">Peers</Title>
+                <Title className="page-heading">{isAdmin ? "Peers" : "My peers"}</Title>
                 {peers.length ? (
                   <Paragraph style={{ marginTop: "5px" }}>
-                    A list of all machines and devices connected to your private
-                    network. Use this view to manage peers
+                    {isAdmin ? "A list of all machines and devices connected to your private network. Use this view to manage peers" :
+                        "A list of all your machines and devices that you connected to NetBird."}
                   </Paragraph>
                 ) : (
                   <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
-                    A list of all machines and devices connected to your private
-                    network. Use this view to manage peers
+                    {isAdmin ? "A list of all machines and devices connected to your private network. Use this view to manage peers" :
+                        "A list of all your machines and devices that you connected to NetBird."}
                   </Paragraph>
                 )}
 
@@ -690,22 +690,28 @@ export const Peers = () => {
                         />
                       </Space>
 
-                      <Select
-                        mode="tags"
-                        placeholder="Filter by groups"
-                        tagRender={blueTagRender}
-                        // dropdownRender={dropDownRender}
-                        optionFilterProp="serchValue"
-                        className="groupsSelect"
-                        onChange={handleGroupChange}
-                        value={groupsFilterArray}
-                      >
-                        {tagGroups.map((m, index) => (
-                          <Option key={index} value={m.id} serchValue={m.name}>
-                            {optionRender(m.name, m.id)}
-                          </Option>
-                        ))}
-                      </Select>
+                      {isAdmin && (
+                        <Select
+                          mode="tags"
+                          placeholder="Filter by groups"
+                          tagRender={blueTagRender}
+                          // dropdownRender={dropDownRender}
+                          optionFilterProp="serchValue"
+                          className="groupsSelect"
+                          onChange={handleGroupChange}
+                          value={groupsFilterArray}
+                        >
+                          {tagGroups.map((m, index) => (
+                            <Option
+                              key={index}
+                              value={m.id}
+                              serchValue={m.name}
+                            >
+                              {optionRender(m.name, m.id)}
+                            </Option>
+                          ))}
+                        </Select>
+                      )}
                     </Col>
                     <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                       <Row justify="end">
@@ -757,7 +763,7 @@ export const Peers = () => {
                           Get started by adding one to your network.
                         </Paragraph>
                         <Button
-                        data-testid="add-new-peer-button"
+                          data-testid="add-new-peer-button"
                           size={"middle"}
                           type="primary"
                           onClick={() => setAddPeerModalOpen(true)}
@@ -822,53 +828,56 @@ export const Peers = () => {
                             return renderAddress(record);
                           }}
                         />
-                        <Column
-                          title="Groups"
-                          dataIndex="groupsCount"
-                          align="center"
-                          render={(text, record: PeerDataTable, index) => {
-                            return renderPopoverGroups(
-                              text,
-                              record.groups,
-                              record
-                            );
-                          }}
-                        />
-                        <Column
-                          title="SSH Server"
-                          dataIndex="ssh_enabled"
-                          align="center"
-                          render={(e, record: PeerDataTable, index) => {
-                            let isWindows = record.os
-                              .toLocaleLowerCase()
-                              .startsWith("windows");
-                            let toggle = (
-                              <Switch
-                                size={"small"}
-                                checked={e}
-                                disabled={isWindows}
-                                onClick={(checked: boolean) => {
-                                  if (checked) {
-                                    showConfirmEnableSSH(record);
-                                  } else {
-                                    handleSwitchSSH(record, checked);
-                                  }
-                                }}
-                              />
-                            );
+                        {isAdmin && (
+                          <>
+                            <Column
+                              title="Groups"
+                              dataIndex="groupsCount"
+                              align="center"
+                              render={(text, record: PeerDataTable, index) => {
+                                return renderPopoverGroups(
+                                  text,
+                                  record.groups,
+                                  record
+                                );
+                              }}
+                            />
+                            <Column
+                              title="SSH Server"
+                              dataIndex="ssh_enabled"
+                              align="center"
+                              render={(e, record: PeerDataTable, index) => {
+                                let isWindows = record.os
+                                  .toLocaleLowerCase()
+                                  .startsWith("windows");
+                                let toggle = (
+                                  <Switch
+                                    size={"small"}
+                                    checked={e}
+                                    disabled={isWindows}
+                                    onClick={(checked: boolean) => {
+                                      if (checked) {
+                                        showConfirmEnableSSH(record);
+                                      } else {
+                                        handleSwitchSSH(record, checked);
+                                      }
+                                    }}
+                                  />
+                                );
 
-                            if (isWindows) {
-                              return (
-                                <Tooltip title="SSH server feature is not yet supported on Windows">
-                                  {toggle}
-                                </Tooltip>
-                              );
-                            } else {
-                              return toggle;
-                            }
-                          }}
-                        />
-
+                                if (isWindows) {
+                                  return (
+                                    <Tooltip title="SSH server feature is not yet supported on Windows">
+                                      {toggle}
+                                    </Tooltip>
+                                  );
+                                } else {
+                                  return toggle;
+                                }
+                              }}
+                            />
+                          </>
+                        )}
                         <Column
                           title="LastSeen"
                           dataIndex="last_seen"
