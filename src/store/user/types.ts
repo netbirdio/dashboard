@@ -8,6 +8,7 @@ export interface User {
     is_current?: boolean;
     is_service_user?: boolean;
     is_blocked?: boolean;
+    last_login?: string;
 }
 
 export interface FormUser extends User {

@@ -100,7 +100,7 @@ export const timeAgo = (dateParam) => {
     const isToday = today.toDateString() === date.toDateString();
     const isYesterday = yesterday.toDateString() === date.toDateString();
     const isThisYear = today.getFullYear() === date.getFullYear();
-
+    const never = date.getFullYear() === 1;
 
     if (seconds < -1) {
         return getFormattedDate(date, false, true);
@@ -118,6 +118,8 @@ export const timeAgo = (dateParam) => {
         return getFormattedDate(date, 'yesterday'); // Yesterday at 10:20
     } else if (isThisYear) {
         return getFormattedDate(date, false, true); // 10. January at 10:20
+    } else if (never) {
+        return 'never';
     }
 
     return getFormattedDate(date); // 10. January 2017. at 10:20
