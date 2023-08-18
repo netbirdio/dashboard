@@ -170,6 +170,21 @@ export const Activity = () => {
     let body = <></>;
     const user = users?.find((u) => u.id === event.initiator_id);
     switch (event.activity_code) {
+      case "peer.login.expire":
+        body = (
+            <span
+                style={{
+                height: "auto",
+                whiteSpace: "normal",
+                textAlign: "left",
+                }}
+            >
+                <Row>
+                <Text type="secondary">System</Text>
+                </Row>
+            </span>
+            );
+        break;
       case "setupkey.peer.add":
         const key = setupKeys?.find((k) => k.id === event.initiator_id);
         if (key) {
@@ -255,6 +270,7 @@ export const Activity = () => {
     switch (event.activity_code) {
       case "account.create":
       case "user.join":
+      case "dashboard.login":
         return "-";
       case "rule.add":
       case "rule.delete":
@@ -290,6 +306,8 @@ export const Activity = () => {
       case "peer.rename":
       case "peer.login.expiration.disable":
       case "peer.login.expiration.enable":
+      case "user.peer.login":
+      case "peer.login.expire":
         return renderMultiRowSpan(event.meta.fqdn, event.meta.ip);
       case "route.add":
       case "route.delete":
