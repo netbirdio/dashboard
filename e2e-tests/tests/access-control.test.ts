@@ -18,4 +18,5 @@ test.beforeEach(async ({ page }) => {
   await accessControlPage.assertDeleteModalIsVisibile();
   await accessControlPage.pressConfirmButton();
   await accessControlPage.assertDefaultAccessCotrolIsDeleted();
+  await accessControlPage.assertAddRuleButtonIsVisile();
  });

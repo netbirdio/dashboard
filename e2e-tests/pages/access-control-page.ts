@@ -6,6 +6,7 @@ export class AccessControlPage {
     private readonly deleteButton = this.page.getByRole('button', { name: 'Delete' })
     private readonly deleteModal = this.page.getByTestId('confirm-delete-modal-title')
     private readonly confirmButton = this.page.getByRole('button', { name: 'OK' })
+    private readonly addRulesButton = this.page.getByTestId('add-rule-empty-state-button')
 
     constructor(private readonly page: Page) {}
 
@@ -45,9 +46,9 @@ export class AccessControlPage {
       })
     }
 
-    async assertAdd() {
-      await test.step('Assert default access control should be deleted', async () => {
-          await expect(this.defaulAccessControl).not.toBeVisible();
+    async assertAddRuleButtonIsVisile() {
+      await test.step('Assert Add Rules button is visible', async () => {
+          await expect(this.addRulesButton).toBeVisible();
       })
     }
   }
