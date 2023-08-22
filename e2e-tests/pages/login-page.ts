@@ -1,4 +1,4 @@
-import { Page, test} from "@playwright/test";
+import { Page, test, expect} from "@playwright/test";
 
 export class LoginPage {
     private readonly localUrl = 'http://localhost:3000/'
@@ -6,6 +6,7 @@ export class LoginPage {
     private readonly nextButton = this.page.getByRole('button', { name: 'next' })
     private readonly passwordField = this.page.getByLabel('Password')
     private readonly skipButton = this.page.getByRole('button', { name: 'skip' });
+    private readonly netBirdLogo = this.page.getByRole('link', { name: 'logo' })
 
     constructor(private readonly page: Page) {}
 
@@ -19,6 +20,7 @@ export class LoginPage {
           if (await this.skipButton.isVisible({ timeout: 300 })) {
               await this.skipButton.click();
           }
+          await expect(this.netBirdLogo).toBeVisible();
         })
       }
 
