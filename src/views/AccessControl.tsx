@@ -666,6 +666,7 @@ export const AccessControl = () => {
                         <Row justify="end">
                           <Col>
                             <Button
+                              data-testid="add-rule-main-button"
                               type="primary"
                               disabled={savedPolicy.loading}
                               onClick={onClickAddNewPolicy}
@@ -719,6 +720,7 @@ export const AccessControl = () => {
                           </a>
                         </Paragraph>
                         <Button
+                          data-testid="add-rule-empty-state-button"
                           size={"middle"}
                           type="primary"
                           onClick={() => onClickAddNewPolicy()}

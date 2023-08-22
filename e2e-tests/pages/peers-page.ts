@@ -1,4 +1,4 @@
-import { Page, test, expect } from "@playwright/test";
+import { Page, test } from "@playwright/test";
 
 export class PeersPage {
     private readonly addNewPeerButton = this.page.getByTestId('add-new-peer-button')

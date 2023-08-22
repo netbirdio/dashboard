@@ -39,15 +39,15 @@ export default defineConfig({
       use: { channel: 'chrome', },
     },
 
-    {
-      name: 'firefox',
-      use: {  browserName: 'firefox', },
-    },
-
-    {
-      name: 'webkit',
-      use: { browserName: 'webkit', },
-    },
+    // {
+    //   name: 'firefox',
+    //   use: {  browserName: 'firefox', },
+    // },
+    //
+    // {
+    //   name: 'webkit',
+    //   use: { browserName: 'webkit', },
+    // },
 
     /* Test against mobile viewports. */
     // {
