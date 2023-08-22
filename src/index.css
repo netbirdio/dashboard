@@ -516,3 +516,7 @@ ul.ant-list-items {
 .d-none{
   display: none!important;
 }
+.nohover {
+    background: transparent!important;
+    cursor: text;
+}

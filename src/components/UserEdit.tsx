@@ -166,6 +166,7 @@ const UserEdit = (props: any) => {
     dispatch(userActions.setUser(null as unknown as User));
     dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null));
     dispatch(userActions.setUserTabOpen(key));
+    dispatch(userActions.setEditUserPopupVisible(false));
   };
 
   const selectValidator = (_: RuleObject, value: string[]) => {
@@ -331,7 +332,7 @@ const UserEdit = (props: any) => {
                 // menu: { items: menuItems },
               },
               {
-                title: user.name,
+                title: user?.name,
               },
             ]}
           />
@@ -386,7 +387,7 @@ const UserEdit = (props: any) => {
                       style={{ marginRight: "70px", fontWeight: "500" }}
                     >
                       <Input
-                        disabled={user.id}
+                        disabled={user?.id}
                         value={formUser.email}
                         style={{ color: "#8c8c8c" }}
                         autoComplete="off"

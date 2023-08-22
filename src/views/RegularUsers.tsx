@@ -31,7 +31,7 @@ import { useGetTokenSilently } from "../utils/token";
 import { actions as groupActions } from "../store/group";
 import { Group } from "../store/group/types";
 import { TooltipPlacement } from "antd/es/tooltip";
-import { capitalize, isLocalDev, isNetBirdHosted } from "../utils/common";
+import {capitalize, isLocalDev, isNetBirdHosted, timeAgo} from "../utils/common";
 import { usePageSizeHelpers } from "../utils/pageSize";
 import AddServiceUserPopup from "../components/popups/AddServiceUserPopup";
 import InviteUserPopup from "../components/popups/InviteUserPopup";
@@ -499,45 +499,54 @@ export const RegularUsers = () => {
                     defaultSortOrder="ascend"
                     render={(text, record, index) => {
                       const btn = (
-                        <Button
-                          type="text"
-                          onClick={() =>
-                            handleEditUser(record as UserDataTable)
-                          }
-                          className="tooltip-label"
-                        >
-                          <Text className="font-500">
-                            {text && text.trim() !== ""
-                              ? text
-                              : (record as User).id}
-                          </Text>
-                        </Button>
+                          <Button
+                              type="text"
+                              onClick={() =>
+                                  handleEditUser(record as UserDataTable)
+                              }
+                              className="tooltip-label"
+                          >
+                            <Text className="font-500">
+                              {text && text.trim() !== ""
+                                  ? text
+                                  : (record as User).id}
+                            </Text>
+                          </Button>
                       );
 
                       if ((record as User).is_current) {
                         return (
-                          <div>
-                            {btn}
-                            <Tag color="blue">me</Tag>
-                          </div>
+                            <>
+                              <div>
+                                {btn}
+                                <Tag color="blue">me</Tag>
+                              </div>
+                              <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>
+                            </>
                         );
                       }
 
                       if ((record as User).status === "invited") {
                         return (
-                          <div>
-                            {btn}
-                            <Tag color="gold">invited</Tag>
-                          </div>
+                            <>
+                              <div>
+                                {btn}
+                                <Tag color="gold">invited</Tag>
+                              </div>
+                              <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>
+                            </>
                         );
                       }
 
                       if ((record as User).status === "blocked") {
                         return (
-                          <div>
-                            {btn}
-                            <Tag color="red">blocked</Tag>
-                          </div>
+                            <>
+                              <div>
+                                {btn}
+                                <Tag color="red">blocked</Tag>
+                              </div>
+                              <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>
+                            </>
                         );
                       }
 
