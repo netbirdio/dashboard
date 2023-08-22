@@ -44,6 +44,12 @@ export class AccessControlPage {
           await expect(this.defaulAccessControl).not.toBeVisible();
       })
     }
+
+    async assertAdd() {
+      await test.step('Assert default access control should be deleted', async () => {
+          await expect(this.defaulAccessControl).not.toBeVisible();
+      })
+    }
   }
 
 export default AccessControlPage;
