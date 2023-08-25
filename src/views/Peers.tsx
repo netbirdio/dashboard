@@ -248,6 +248,7 @@ export const Peers = () => {
     const t = searchText
       ? searchText.toLowerCase().trim()
       : textToSearch.toLowerCase().trim();
+    
     let f: Peer[] = filter(peers, (f: Peer) => {
       let userEmail: string | null;
       const u = users?.find((u) => u.id === f.user_id)?.email;
@@ -261,8 +262,9 @@ export const Peers = () => {
         (userEmail && userEmail.toLowerCase().includes(t))
       );
     }) as Peer[];
+
     if (optionOnOff === "on") {
-      f = filter(peers, (f: Peer) => f.connected);
+      f = filter(f, (f: Peer) => f.connected);
     }
 
     let filterByGroupArray: any = [];
