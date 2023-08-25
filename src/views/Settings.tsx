@@ -33,6 +33,7 @@ import ExpiresInInput, {
   expiresInToSeconds,
   secondsToExpiresIn,
 } from "./ExpiresInInput";
+// import CheckoutPage from "../components/CheckoutForm";
 import Column from "antd/lib/table/Column";
 import TableSpin from "../components/Spin";
 import { checkExpiresIn } from "../utils/common";
@@ -55,6 +56,8 @@ const { Title, Paragraph, Text } = Typography;
 const styleNotification = { marginTop: 85 };
 
 export const Settings = () => {
+    const [paymentCompleted, setPaymentCompleted] = useState(false);
+
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const { pageSize, onChangePageSize, pageSizeOptions } = usePageSizeHelpers(
@@ -571,7 +574,11 @@ export const Settings = () => {
       "System settings",
       "sub2",
       <SettingOutlined />,
-      [getItem("Authentication", "auth"), getItem("Groups", "groups")],
+      [
+        getItem("Authentication", "auth"),
+        getItem("Groups", "groups"),
+        getItem("Billing", "billing"),
+     ],
       "group"
     ),
   ];
@@ -1119,6 +1126,67 @@ export const Settings = () => {
                       </Table>
                     </div>
                   </Card>
+                </Col>
+              </Row>
+            )}
+            {billingClicked && (
+              <Row>
+                <Col span={24}>
+                  <Space
+                    direction="vertical"
+                    size="large"
+                    style={{ display: "flex" }}
+                  >
+                    <Row style={{ width: "100%" }}>
+                      <Col span={24}>
+                        <Card loading={loading}>
+                          <div
+                            style={{
+                              color: "rgba(0, 0, 0, 0.88)",
+                              fontWeight: "500",
+                              fontSize: "18px",
+                              marginBottom: "20px",
+                            }}
+                          >
+                            Billing - Free plan
+                          </div>
+                          <Row>
+                            <Col span={12} style={{ marginBottom: "20px" }}>
+                              <Alert
+                                description="The Free plan allows you to add up to 5 users and 100 peers."
+                                type="info"
+                                action={
+                                  <Space>
+                                    <Button size="small" type="primary">
+                                      Upgrade
+                                    </Button>
+                                  </Space>
+                                }
+                              />
+                            </Col>
+                            <Space size={30} wrap></Space>
+                            <Col span={24}>
+                              <Progress
+                                strokeColor={"#1890FF"}
+                                percent={60}
+                                size={[200, 20]}
+                                format={(percent) => `${users.length}/5 users`}
+                              />
+                            </Col>
+                            <Col span={24}>
+                              <Progress
+                                strokeColor={"#1890FF"}
+                                percent={10}
+                                size={[500, 20]}
+                                format={(percent) => `10/100 peers`}
+                              />
+                            </Col>
+                            {/* <CheckoutPage /> */}
+                          </Row>
+                        </Card>
+                      </Col>
+                    </Row>
+                  </Space>
                 </Col>
               </Row>
             )}
