@@ -245,8 +245,6 @@ export const Peers = () => {
   };
 
   const filterDataTable = (searchText: string, groupIDs: string[]): Peer[] => {
-    console.log("searchText", textToSearch);
-    console.log("optionOnOff", optionOnOff);
     const t = searchText
       ? searchText.toLowerCase().trim()
       : textToSearch.toLowerCase().trim();
@@ -264,7 +262,7 @@ export const Peers = () => {
         (userEmail && userEmail.toLowerCase().includes(t))
       );
     }) as Peer[];
-    
+
     if (optionOnOff === "on") {
       f = filter(f, (f: Peer) => f.connected);
     }
