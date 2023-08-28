@@ -550,7 +550,14 @@ export const RegularUsers = () => {
                         );
                       }
 
-                      return btn;
+                      return (
+                          <>
+                            <div>
+                              {btn}
+                            </div>
+                            <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>
+                          </>
+                      );
                     }}
                   />
                   <Column
