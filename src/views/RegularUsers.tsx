@@ -521,7 +521,7 @@ export const RegularUsers = () => {
                                 {btn}
                                 <Tag color="blue">me</Tag>
                               </div>
-                              <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>
+                              {((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
                             </>
                         );
                       }
@@ -533,7 +533,7 @@ export const RegularUsers = () => {
                                 {btn}
                                 <Tag color="gold">invited</Tag>
                               </div>
-                              <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>
+                              {((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
                             </>
                         );
                       }
@@ -545,7 +545,7 @@ export const RegularUsers = () => {
                                 {btn}
                                 <Tag color="red">blocked</Tag>
                               </div>
-                              <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>
+                              {((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
                             </>
                         );
                       }
@@ -555,7 +555,7 @@ export const RegularUsers = () => {
                             <div>
                               {btn}
                             </div>
-                            <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>
+                            {((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
                           </>
                       );
                     }}
