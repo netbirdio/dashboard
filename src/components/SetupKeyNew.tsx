@@ -505,7 +505,7 @@ const SetupKeyNew = () => {
                   type={"secondary"}
                   style={{ whiteSpace: "pre-line", margin: 0 }}
                 >
-                  Use this type to create ephemeral peers
+                  Use this type of key to add peers that will be auto removed after being inactive
                 </Paragraph>
               </Col>
               <Col span={6}>

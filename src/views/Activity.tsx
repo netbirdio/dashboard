@@ -169,6 +169,21 @@ export const Activity = () => {
   const renderInitiator = (event: EventDataTable) => {
     let body = <></>;
     const user = users?.find((u) => u.id === event.initiator_id);
+    if (event.initiator_id == "sys") {
+      body = (
+          <span
+              style={{
+              height: "auto",
+              whiteSpace: "normal",
+              textAlign: "left",
+              }}
+          >
+              <Row>
+              <Text type="secondary">System</Text>
+              </Row>
+          </span>
+          );
+    }
     switch (event.activity_code) {
       case "peer.login.expire":
         body = (
