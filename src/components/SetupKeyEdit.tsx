@@ -442,6 +442,55 @@ const SetupKeyNew = (props: any) => {
                 </Col>
               )}
             </Row>
+             <Row style={{ marginTop: `${isGroupUpdateView ? "0" : "39px"}` }}>
+              <Col
+                xs={24}
+                sm={24}
+                md={!isGroupUpdateView ? 11 : 24}
+                lg={!isGroupUpdateView ? 11 : 24}
+                xl={!isGroupUpdateView ? 11 : 24}
+                xxl={!isGroupUpdateView ? 11 : 24}
+                span={!isGroupUpdateView ? 11 : 24}
+                style={{
+                  paddingRight: `${!isGroupUpdateView ? "70px" : "0"}`,
+                }}
+              >
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                    margin: 0,
+                    fontWeight: "500",
+                  }}
+                >
+                  Ephemeral
+                </Paragraph>
+
+                <Col span={24}>
+                  <Form.Item
+                    style={{ marginTop: "8px", marginBottom: 0 }}
+                    name="autoGroupNames"
+                    rules={[{ validator: selectValidator }]}
+                  >
+                    <Select
+                      mode="tags"
+                      style={{ width: "100%" }}
+                      placeholder="Associate groups with the key"
+                      tagRender={blueTagRender}
+                      dropdownRender={dropDownRender}
+                      // enabled only when we have a new key !setupkey.id or when the key is valid
+                      disabled={!(!setupKey.id || setupKey.valid)}
+                      optionFilterProp="serchValue"
+                    >
+                      {tagGroups.map((m, index) => (
+                        <Option key={index} value={m.id} serchValue={m.name}>
+                          {optionRender(m.name, m.id)}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
+                </Col>
+              </Col>
+            </Row>
           </Form>
         </div>
         <Container
