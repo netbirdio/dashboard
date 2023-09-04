@@ -75,6 +75,7 @@ const SetupKeyNew = () => {
     const expiresIn = formSetupKey.expires_in
       ? formSetupKey.expires_in * 24 * 3600
       : 7 * 24 * 3600; // the api expects seconds we have days
+
     return {
       id: formSetupKey.id,
       name: formSetupKey.name,
@@ -84,6 +85,7 @@ const SetupKeyNew = () => {
       groupsToCreate: groupsToCreate,
       expires_in: expiresIn,
       usage_limit: formSetupKey.usage_limit,
+      ephemeral: formSetupKey.ephemeral,
     } as SetupKeyToSave;
   };
 
@@ -155,6 +157,7 @@ const SetupKeyNew = () => {
         usage_limit: 0,
         used_times: 0,
         expires_in: 7,
+        ephemeral: false,
       } as SetupKey)
     );
     setFormSetupKey({} as FormSetupKey);
@@ -484,6 +487,41 @@ const SetupKeyNew = () => {
                 >
                   Should be between 1 and 365 days
                 </Paragraph>
+              </Col>
+            </Row>
+
+            <Row style={{ marginTop: "24px" }} justify={"space-between"}>
+              <Col span={18}>
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                    margin: 0,
+                    fontWeight: "500",
+                  }}
+                >
+                  Ephemeral peers
+                </Paragraph>
+                <Paragraph
+                  type={"secondary"}
+                  style={{ whiteSpace: "pre-line", margin: 0 }}
+                >
+                  Use this type of key to add peers that will be auto removed after being inactive
+                </Paragraph>
+              </Col>
+              <Col span={6}>
+                <Row justify={"end"}>
+                  <Form.Item name="ephemeral" valuePropName="checked">
+                    <Switch
+                      size="small"
+                      onChange={(checked) => {
+                        setFormSetupKey({
+                          ...formSetupKey,
+                          ephemeral: checked,
+                        });
+                      }}
+                    />
+                  </Form.Item>
+                </Row>
               </Col>
             </Row>
 
