@@ -576,6 +576,14 @@ export const SetupKeys = () => {
                           (a as any).name.localeCompare((b as any).name)
                         }
                         render={(text, record: any, index) => {
+                            let sk = record as SetupKeyDataTable;
+                            let expiry = sk.ephemeral ? (
+                                <Tag>
+                                    <Text type="secondary" style={{ fontSize: 10 }}>
+                                        ephemeral peers enabled
+                                    </Text>
+                                </Tag>
+                            ) : null;
                           return (
                             <Button
                               type="text"
@@ -584,18 +592,25 @@ export const SetupKeys = () => {
                               }
                               className="tooltip-label"
                             >
-                              {" "}
-                              <Text className="font-500">
-                                <Badge
-                                  size={"small"}
-                                  status={
-                                    record.state === "valid"
-                                      ? "success"
-                                      : "error"
-                                  }
-                                  text={text}
-                                ></Badge>
-                              </Text>
+                                <span style={{ textAlign: "left" }}>
+                                    <Row>
+                                      {" "}
+                                      <Text className="font-500">
+                                          <Badge
+                                                size={"small"}
+                                                status={
+                                                    record.state === "valid"
+                                                        ? "success"
+                                                        : "error"
+                                                }
+                                                text={text}
+                                            ></Badge>
+                                      </Text>
+                                    </Row>
+                                    <Row >
+                                      {expiry}
+                                    </Row>
+                                </span>
                             </Button>
                           );
                         }}
