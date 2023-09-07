@@ -20,6 +20,7 @@ import {
   Space,
   Table,
   Tag,
+  Tooltip,
   Typography,
 } from "antd";
 import { SetupKey, SetupKeyToSave } from "../store/setup-key/types";
@@ -108,28 +109,27 @@ export const SetupKeys = () => {
     );
   }, []);
 
-
   useEffect(() => {
     setDataTable(transformDataTable(filterDataTable("")));
   }, [textToSearch, optionValidAll]);
 
   useEffect(() => {
     if (!loading) {
-         const quickFilter = getFilterState("setupKeysFilter", "quickFilter");
-        if (quickFilter) setOptionValidAll(quickFilter);
+      const quickFilter = getFilterState("setupKeysFilter", "quickFilter");
+      if (quickFilter) setOptionValidAll(quickFilter);
 
-        const searchText = getFilterState("setupKeysFilter", "search");
-        if (searchText) setTextToSearch(searchText);
+      const searchText = getFilterState("setupKeysFilter", "search");
+      if (searchText) setTextToSearch(searchText);
 
-        const pageSize = getFilterState("setupKeysFilter", "pageSize");
-        if (pageSize) onChangePageSize(pageSize, "setupKeysFilter");
+      const pageSize = getFilterState("setupKeysFilter", "pageSize");
+      if (pageSize) onChangePageSize(pageSize, "setupKeysFilter");
 
-        if (quickFilter || searchText || pageSize) {
-             setDataTable(transformDataTable(filterDataTable(searchText)));
-        } else {
-           setDataTable(transformDataTable(filterDataTable("")));
-         }
-     }
+      if (quickFilter || searchText || pageSize) {
+        setDataTable(transformDataTable(filterDataTable(searchText)));
+      } else {
+        setDataTable(transformDataTable(filterDataTable("")));
+      }
+    }
   }, [loading]);
 
   const deleteKey = "deleting";
@@ -184,7 +184,7 @@ export const SetupKeys = () => {
       );
       dispatch(setupKeyActions.resetSavedSetupKey(null));
       dispatch(setupKeyActions.setSetupEditKeyVisible(false));
-      setShowGroupModal(false)
+      setShowGroupModal(false);
     } else if (savedSetupKey.error) {
       message.error({
         content:
@@ -201,9 +201,9 @@ export const SetupKeys = () => {
   }, [savedSetupKey]);
 
   const filterDataTable = (searchText: string): SetupKey[] => {
-     const t = searchText
-       ? searchText.toLowerCase().trim()
-       : textToSearch.toLowerCase().trim();
+    const t = searchText
+      ? searchText.toLowerCase().trim()
+      : textToSearch.toLowerCase().trim();
     let f: SetupKey[] = [...setupKeys];
     if (optionValidAll === "valid") {
       f = filter(setupKeys, (_f: SetupKey) => _f.valid && !_f.revoked);
@@ -296,6 +296,7 @@ export const SetupKeys = () => {
         auto_groups: key?.auto_groups,
         last_used: key?.last_used,
         usage_limit: key?.usage_limit,
+        ephemeral: key?.ephemeral,
       } as SetupKey)
     );
   };
@@ -317,7 +318,7 @@ export const SetupKeys = () => {
         usage_limit: key?.usage_limit,
       } as SetupKey)
     );
-    setShowGroupModal(true)
+    setShowGroupModal(true);
   };
 
   useEffect(() => {
@@ -358,7 +359,9 @@ export const SetupKeys = () => {
     let btn = (
       <Button
         type="link"
-        onClick={() => setKeyAndViewGroups(setupKeyToAction as SetupKeyDataTable)}
+        onClick={() =>
+          setKeyAndViewGroups(setupKeyToAction as SetupKeyDataTable)
+        }
       >
         {displayGroups.length}
       </Button>
@@ -576,14 +579,6 @@ export const SetupKeys = () => {
                           (a as any).name.localeCompare((b as any).name)
                         }
                         render={(text, record: any, index) => {
-                            let sk = record as SetupKeyDataTable;
-                            let expiry = sk.ephemeral ? (
-                                <Tag>
-                                    <Text type="secondary" style={{ fontSize: 10 }}>
-                                        ephemeral peers enabled
-                                    </Text>
-                                </Tag>
-                            ) : null;
                           return (
                             <Button
                               type="text"
@@ -592,25 +587,22 @@ export const SetupKeys = () => {
                               }
                               className="tooltip-label"
                             >
-                                <span style={{ textAlign: "left" }}>
-                                    <Row>
-                                      {" "}
-                                      <Text className="font-500">
-                                          <Badge
-                                                size={"small"}
-                                                status={
-                                                    record.state === "valid"
-                                                        ? "success"
-                                                        : "error"
-                                                }
-                                                text={text}
-                                            ></Badge>
-                                      </Text>
-                                    </Row>
-                                    <Row >
-                                      {expiry}
-                                    </Row>
-                                </span>
+                              <span style={{ textAlign: "left" }}>
+                                <Row>
+                                  {" "}
+                                  <Text className="font-500">
+                                    <Badge
+                                      size={"small"}
+                                      status={
+                                        record.state === "valid"
+                                          ? "success"
+                                          : "error"
+                                      }
+                                      text={text}
+                                    ></Badge>
+                                  </Text>
+                                </Row>
+                              </span>
                             </Button>
                           );
                         }}
@@ -625,6 +617,26 @@ export const SetupKeys = () => {
                         sorter={(a, b) =>
                           (a as any).type.localeCompare((b as any).type)
                         }
+                        render={(text, record, index) => {
+                          let sk = record as SetupKeyDataTable;
+                          let expiry = sk.ephemeral ? (
+                            <Tooltip title="Peers that are offline for over 10 minutes will be removed automatically">
+                              <Tag>
+                                <Text type="secondary" style={{ fontSize: 10 }}>
+                                  Ephemeral
+                                </Text>
+                              </Tag>
+                            </Tooltip>
+                          ) : null;
+                          return (
+                            <>
+                              <div className="emp-wrapper">
+                                <p>{sk.type}</p>
+                                {expiry}
+                              </div>
+                            </>
+                          );
+                        }}
                       />
                       <Column
                         title="Key"

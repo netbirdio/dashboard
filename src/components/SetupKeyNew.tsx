@@ -505,7 +505,8 @@ const SetupKeyNew = () => {
                   type={"secondary"}
                   style={{ whiteSpace: "pre-line", margin: 0 }}
                 >
-                  Use this type of key to add peers that will be auto removed after being inactive
+                  Peers that are offline for over 10 minutes will be removed
+                  automatically
                 </Paragraph>
               </Col>
               <Col span={6}>
