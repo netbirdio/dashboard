@@ -400,7 +400,7 @@ const SetupKeyNew = (props: any) => {
                       }}
                     ></Paragraph>
                     {/* {formSetupKey.type === "one-off" ? "One-off" : "Reusable"}, */}
-                    available uses
+                    Available uses
                   </Paragraph>
                   <Col>
                     <Input
