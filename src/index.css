@@ -520,3 +520,12 @@ ul.ant-list-items {
     background: transparent!important;
     cursor: text;
 }
+.emp-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.emp-wrapper p {
+  margin: 0;
+}

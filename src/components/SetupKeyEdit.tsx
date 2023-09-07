@@ -13,6 +13,7 @@ import {
   Tag,
   Typography,
   Card,
+  Tooltip,
 } from "antd";
 import { RootState } from "typesafe-actions";
 import {
@@ -54,7 +55,7 @@ const SetupKeyNew = (props: any) => {
   const savedSetupKey = useSelector(
     (state: RootState) => state.setupKey.savedSetupKey
   );
-
+ 
   const groups = useSelector((state: RootState) => state.group.data);
 
   const [form] = Form.useForm();
@@ -91,14 +92,13 @@ const SetupKeyNew = (props: any) => {
         .filter((g) => allGroups.get(g))
         .map((g) => allGroups.get(g)!.name);
     }
-
     const fSetupKey = {
       ...setupKey,
       autoGroupNames: setupKey.auto_groups || [],
       exp: moment(setupKey.expires),
       last: moment(setupKey.last_used),
     } as FormSetupKey;
-    form.setFieldsValue(fSetupKey);
+     form.setFieldsValue(fSetupKey);
     setFormSetupKey(fSetupKey);
   }, [setupKey]);
 
@@ -126,8 +126,7 @@ const SetupKeyNew = (props: any) => {
       await form.validateFields();
     } catch (e) {
       const errorFields = (e as any).errorFields;
-      return console.log("errorInfo", errorFields);
-    }
+     }
 
     const setupKeyToSave = createSetupKeyToSave();
     dispatch(
@@ -258,8 +257,7 @@ const SetupKeyNew = (props: any) => {
     dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null));
     setVisibleNewSetupKey(false);
   };
-
-  return (
+   return (
     <>
       {!isGroupUpdateView && (
         <Breadcrumb
@@ -303,13 +301,9 @@ const SetupKeyNew = (props: any) => {
             {!isGroupUpdateView && (
               <Row style={{ marginTop: "10px" }}>
                 <Col
-                  xs={24}
                   sm={24}
-                  md={11}
-                  lg={11}
-                  xl={11}
-                  xxl={11}
-                  span={11}
+                  md={8}
+                  lg={8}
                   style={{
                     paddingRight: "70px",
                   }}
@@ -343,7 +337,14 @@ const SetupKeyNew = (props: any) => {
                   />
                 </Col>
 
-                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                <Col
+                  sm={24}
+                  md={8}
+                  lg={6}
+                  style={{
+                    paddingRight: "70px",
+                  }}
+                >
                   <Paragraph
                     style={{
                       whiteSpace: "pre-line",
@@ -358,8 +359,48 @@ const SetupKeyNew = (props: any) => {
                         fontWeight: "500",
                       }}
                     ></Paragraph>
-                    {formSetupKey.type === "one-off" ? "One-off" : "Reusable"},
-                    available uses
+                    Type{" "}
+                    {formSetupKey.ephemeral ? (
+                      <Tooltip title="Peers that are offline for over 10 minutes will be removed automatically">
+                        <Tag>
+                          <Text type="secondary" style={{ fontSize: 10 }}>
+                            Ephemeral
+                          </Text>
+                        </Tag>
+                      </Tooltip>
+                    ) : (
+                      " "
+                    )}
+                  </Paragraph>
+                  <Col>
+                    <Input
+                      disabled
+                      value={
+                        formSetupKey.type === "one-off" ? "One-off" : "Reusable"
+                      }
+                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                      style={{ marginTop: "8px" }}
+                    />
+                  </Col>
+                </Col>
+
+                <Col sm={24} md={8} lg={3}>
+                  <Paragraph
+                    style={{
+                      whiteSpace: "pre-line",
+                      margin: 0,
+                      fontWeight: "500",
+                    }}
+                  >
+                    <Paragraph
+                      style={{
+                        whiteSpace: "pre-line",
+                        margin: 0,
+                        fontWeight: "500",
+                      }}
+                    ></Paragraph>
+                    {/* {formSetupKey.type === "one-off" ? "One-off" : "Reusable"}, */}
+                    Available uses
                   </Paragraph>
                   <Col>
                     <Input
@@ -378,44 +419,6 @@ const SetupKeyNew = (props: any) => {
               </Row>
             )}
             <Row style={{ marginTop: `${isGroupUpdateView ? "0" : "39px"}` }}>
-              <Col
-                  xs={24}
-                  sm={24}
-                  md={11}
-                  lg={11}
-                  xl={11}
-                  xxl={11}
-                  span={11}
-                  style={{
-                    paddingRight: "70px",
-                  }}
-              >
-                <Paragraph
-                    style={{
-                      whiteSpace: "pre-line",
-                      margin: 0,
-                      fontWeight: "500",
-                    }}
-                >
-                  <Paragraph
-                      style={{
-                        whiteSpace: "pre-line",
-                        margin: 0,
-                        fontWeight: "500",
-                      }}
-                  ></Paragraph>
-                  Ephemeral peers enabled?
-                </Paragraph>
-                <Col>
-                  <Input
-                      disabled
-                      value={formSetupKey.ephemeral? "yes" : "no"}
-                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                      style={{ marginTop: "8px" }}
-                  />
-
-                </Col>
-              </Col>
               {!isGroupUpdateView && (
                 <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                   <Paragraph style={{ margin: 0, fontWeight: "500" }}>
@@ -434,54 +437,54 @@ const SetupKeyNew = (props: any) => {
                 </Col>
               )}
             </Row>
-              <Row style={{ marginTop: `${isGroupUpdateView ? "0" : "39px"}` }}>
-                <Col
-                    xs={24}
-                    sm={24}
-                    md={!isGroupUpdateView ? 11 : 24}
-                    lg={!isGroupUpdateView ? 11 : 24}
-                    xl={!isGroupUpdateView ? 11 : 24}
-                    xxl={!isGroupUpdateView ? 11 : 24}
-                    span={!isGroupUpdateView ? 11 : 24}
-                    style={{
-                      paddingRight: `${!isGroupUpdateView ? "70px" : "0"}`,
-                    }}
+            <Row style={{ marginTop: `${isGroupUpdateView ? "0" : "39px"}` }}>
+              <Col
+                xs={24}
+                sm={24}
+                md={!isGroupUpdateView ? 11 : 24}
+                lg={!isGroupUpdateView ? 11 : 24}
+                xl={!isGroupUpdateView ? 11 : 24}
+                xxl={!isGroupUpdateView ? 11 : 24}
+                span={!isGroupUpdateView ? 11 : 24}
+                style={{
+                  paddingRight: `${!isGroupUpdateView ? "70px" : "0"}`,
+                }}
+              >
+                <Paragraph
+                  style={{
+                    whiteSpace: "pre-line",
+                    margin: 0,
+                    fontWeight: "500",
+                  }}
                 >
-                  <Paragraph
-                      style={{
-                        whiteSpace: "pre-line",
-                        margin: 0,
-                        fontWeight: "500",
-                      }}
-                  >
-                    Auto-assigned groups
-                  </Paragraph>
+                  Auto-assigned groups
+                </Paragraph>
 
-                  <Col span={24}>
-                    <Form.Item
-                        style={{ marginTop: "8px", marginBottom: 0 }}
-                        name="autoGroupNames"
-                        rules={[{ validator: selectValidator }]}
+                <Col span={24}>
+                  <Form.Item
+                    style={{ marginTop: "8px", marginBottom: 0 }}
+                    name="autoGroupNames"
+                    rules={[{ validator: selectValidator }]}
+                  >
+                    <Select
+                      mode="tags"
+                      style={{ width: "100%" }}
+                      placeholder="Associate groups with the key"
+                      tagRender={blueTagRender}
+                      dropdownRender={dropDownRender}
+                      // enabled only when we have a new key !setupkey.id or when the key is valid
+                      disabled={!(!setupKey.id || setupKey.valid)}
+                      optionFilterProp="searchValue"
                     >
-                      <Select
-                          mode="tags"
-                          style={{ width: "100%" }}
-                          placeholder="Associate groups with the key"
-                          tagRender={blueTagRender}
-                          dropdownRender={dropDownRender}
-                          // enabled only when we have a new key !setupkey.id or when the key is valid
-                          disabled={!(!setupKey.id || setupKey.valid)}
-                          optionFilterProp="searchValue"
-                      >
-                        {tagGroups.map((m, index) => (
-                            <Option key={index} value={m.id} serchValue={m.name}>
-                              {optionRender(m.name, m.id)}
-                            </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </Col>
+                      {tagGroups.map((m, index) => (
+                        <Option key={index} value={m.id} serchValue={m.name}>
+                          {optionRender(m.name, m.id)}
+                        </Option>
+                      ))}
+                    </Select>
+                  </Form.Item>
                 </Col>
+              </Col>
             </Row>
           </Form>
         </div>
