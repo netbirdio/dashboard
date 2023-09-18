@@ -284,7 +284,7 @@ const AccessControlNew = () => {
       <Divider style={{ margin: "8px 0" }} />
       <Row style={{ padding: "0 8px 4px" }}>
         <Col flex="auto">
-          <Text type={"secondary"}>Add new ports by pressing "Enter"</Text>
+          <Text type={"secondary"}>Add new groups by pressing "Enter"</Text>
         </Col>
         <Col flex="none">
           <svg
