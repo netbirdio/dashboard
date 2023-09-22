@@ -3,7 +3,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "typesafe-actions";
 import { actions as eventActions } from "../store/event";
 import { Container } from "../components/Container";
-import { isEmpty } from "lodash";
 import {
   Alert,
   Button,
@@ -333,19 +332,11 @@ export const Activity = () => {
       case "user.group.add":
       case "user.group.delete":
       case "user.role.update":
-        if (!isEmpty(event.meta) && (event.meta.email || event.meta.username)) {
+        if (event.meta.email || event.meta.username || event.target_id) {
           return renderMultiRowSpan(
             event.meta.username ? event.meta.username : event.target_id,
             event.meta.email ? event.meta.email : "User"
           );
-        } else {
-          const getUser = users?.find((u) => u.id === event.target_id);
-          if (getUser) {
-            return renderMultiRowSpan(
-              getUser.name ? getUser.name : getUser.id,
-              getUser.email ? getUser.email : "User"
-            );
-          }
         }
         if (event.meta.user_name) {
           return renderMultiRowSpan(
@@ -368,19 +359,11 @@ export const Activity = () => {
         return renderMultiRowSpan("", "System setting");
       case "personal.access.token.create":
       case "personal.access.token.delete":
-        if (!isEmpty(event.meta) && (event.meta.email || event.meta.username)) {
+        if (event.meta.email || event.meta.username || event.target_id) {
           return renderMultiRowSpan(
             event.meta.username ? event.meta.username : event.target_id,
             event.meta.email ? event.meta.email : "User"
           );
-        } else {
-          const getUser = users?.find((u) => u.id === event.target_id);
-          if (getUser) {
-            return renderMultiRowSpan(
-              getUser.name ? getUser.name : getUser.id,
-              getUser.email ? getUser.email : "User"
-            );
-          }
         }
         if (event.meta.user_name) {
           return renderMultiRowSpan(
@@ -395,21 +378,12 @@ export const Activity = () => {
       case "user.invite":
       case "user.block":
       case "user.unblock":
-        if (!isEmpty(event.meta) && (event.meta.email || event.meta.username)) {
+        if (event.meta.email || event.meta.username || event.target_id) {
           return renderMultiRowSpan(
             event.meta.username ? event.meta.username : event.target_id,
             event.meta.email ? event.meta.email : "User"
           );
-        } else {
-          const getUser = users?.find((u) => u.id === event.target_id);
-          if (getUser) {
-            return renderMultiRowSpan(
-              getUser.name ? getUser.name : getUser.id,
-              getUser.email ? getUser.email : "User"
-            );
-          }
         }
-
         break;
       default:
         console.error("unknown event - missing handling", event.activity_code);
