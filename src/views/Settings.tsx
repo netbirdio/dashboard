@@ -24,6 +24,7 @@ import {
   MenuProps,
 } from "antd";
 import { filter } from "lodash";
+import { isLocalDev, isNetBirdHosted } from "../utils/common";
 import { storeFilterState, getFilterState } from "../utils/filterState";
 import { usePageSizeHelpers } from "../utils/pageSize";
 import { useGetTokenSilently } from "../utils/token";
@@ -126,6 +127,10 @@ export const Settings = () => {
 
   const [formPeerExpirationEnabled, setFormPeerExpirationEnabled] =
     useState(true);
+  const [jwtGroupsEnabled, setJwtGroupsEnabled] = useState(true);
+  const [groupsPropagationEnabled, setGroupsPropagationEnabled] =
+    useState(true);
+  const [jwtGroupsClaimName, setJwtGroupsClaimName] = useState("");
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
   const { confirm } = Modal;
 
@@ -213,9 +218,15 @@ export const Settings = () => {
       ),
       peer_login_expiration_enabled:
         account.settings.peer_login_expiration_enabled,
+      jwt_groups_enabled: account.settings.jwt_groups_enabled,
+      jwt_groups_claim_name: account.settings.jwt_groups_claim_name,
+      groups_propagation_enabled: account.settings.groups_propagation_enabled,
     } as FormAccount;
     setFormAccount(fAccount);
     setFormPeerExpirationEnabled(fAccount.peer_login_expiration_enabled);
+    setJwtGroupsEnabled(fAccount.jwt_groups_enabled);
+    setGroupsPropagationEnabled(fAccount.groups_propagation_enabled);
+    setJwtGroupsClaimName(fAccount.jwt_groups_claim_name);
     form.setFieldsValue(fAccount);
   }, [accounts]);
 
@@ -375,6 +386,11 @@ export const Settings = () => {
         ),
         peer_login_expiration_enabled:
           updatedAccount.data.settings.peer_login_expiration_enabled,
+        jwt_groups_enabled: updatedAccount.data.settings.jwt_groups_enabled,
+        jwt_groups_claim_name:
+          updatedAccount.data.settings.jwt_groups_claim_name,
+        groups_propagation_enabled:
+          updatedAccount.data.settings.groups_propagation_enabled,
       } as FormAccount;
       setFormAccount(fAccount);
     } else if (updatedAccount.error) {
@@ -406,6 +422,9 @@ export const Settings = () => {
         confirmSave({
           ...values,
           peer_login_expiration_enabled: formPeerExpirationEnabled,
+          jwt_groups_enabled: jwtGroupsEnabled,
+          jwt_groups_claim_name: jwtGroupsClaimName,
+          groups_propagation_enabled: groupsPropagationEnabled,
         });
       })
       .catch((errorInfo) => {
@@ -428,6 +447,9 @@ export const Settings = () => {
           values.peer_login_expiration_formatted
         ),
         peer_login_expiration_enabled: values.peer_login_expiration_enabled,
+        jwt_groups_enabled: jwtGroupsEnabled,
+        jwt_groups_claim_name: jwtGroupsClaimName,
+        groups_propagation_enabled: groupsPropagationEnabled,
       },
     } as Account;
   };
@@ -577,7 +599,296 @@ export const Settings = () => {
   ];
 
   useEffect(() => {}, [groupsClicked, billingClicked, authClicked]);
+  const renderSettingForm = () => {
+    return (
+      <Form
+        name="basic"
+        autoComplete="off"
+        form={form}
+        onFinish={handleFormSubmit}
+      >
+        <Card loading={loading} defaultValue={"Enabled"}>
+          <div
+            style={{
+              color: "rgba(0, 0, 0, 0.88)",
+              fontWeight: "500",
+              fontSize: "18px",
+              marginBottom: "20px",
+            }}
+          >
+            {groupsClicked ? "User groups" : "Authentication"}
+          </div>
+          <div className={groupsClicked ? "d-none" : ""}>
+            <Row>
+              <Col span={12}>
+                <Form.Item name="peer_login_expiration_enabled" label="">
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "15px",
+                    }}
+                  >
+                    <Switch
+                      onChange={(checked) => {
+                        setFormPeerExpirationEnabled(checked);
+                      }}
+                      size="small"
+                      checked={formPeerExpirationEnabled}
+                    />
+                    <div>
+                      <label
+                        style={{
+                          color: "rgba(0, 0, 0, 0.88)",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                        }}
+                      >
+                        Peer login expiration{" "}
+                        <Tooltip
+                          title="Peer login expiration allows to periodically
+                                request re-authentication of peers that were
+                                added with the SSO login. You can disable the
+                                expiration per peer in the peers tab."
+                        >
+                          <Text
+                            style={{
+                              marginLeft: "5px",
+                              fontSize: "14px",
+                              color: "#bdbdbe",
+                            }}
+                            type={"secondary"}
+                          >
+                            <QuestionCircleFilled />
+                          </Text>
+                        </Tooltip>
+                      </label>
+                      <Paragraph
+                        type={"secondary"}
+                        style={{
+                          marginTop: "-2",
+                          fontWeight: "400",
+                          marginBottom: "0",
+                        }}
+                      >
+                        Request periodic re-authentication of peers registered
+                        with SSO
+                      </Paragraph>
+                    </div>
+                  </div>
+                </Form.Item>
+              </Col>
+            </Row>
+            <Row>
+              <Col span={12}>
+                <label
+                  style={{
+                    color: "rgba(0, 0, 0, 0.88)",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+                >
+                  Peer login expires in
+                </label>
+                <Paragraph
+                  type={"secondary"}
+                  style={{
+                    marginTop: "-2",
+                    fontWeight: "400",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Time after which every peer added with SSO login will require
+                  re-authentication
+                </Paragraph>
+              </Col>
+            </Row>
 
+            <Form.Item
+              name="peer_login_expiration_formatted"
+              rules={[{ validator: checkExpiresIn }]}
+            >
+              <ExpiresInInput
+                disabled={!formPeerExpirationEnabled}
+                options={Array.of(
+                  { key: "hour", title: "Hours" },
+                  {
+                    key: "day",
+                    title: "Days",
+                  }
+                )}
+              />
+            </Form.Item>
+          </div>
+          <div className={!groupsClicked ? "d-none" : ""}>
+            <Row>
+              <Col span={12}>
+                <Form.Item name="groups_propagation_enabled" label="">
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "15px",
+                    }}
+                  >
+                    <Switch
+                      onChange={(checked) => {
+                        setGroupsPropagationEnabled(checked);
+                      }}
+                      size="small"
+                      checked={groupsPropagationEnabled}
+                    />
+                    <div>
+                      <label
+                        style={{
+                          color: "rgba(0, 0, 0, 0.88)",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                        }}
+                      >
+                        Enable user group propagation
+                        <Tooltip title="The user group propagation will take effect on the next auto-groups update for a user.">
+                          <Text
+                            style={{
+                              marginLeft: "5px",
+                              fontSize: "14px",
+                              color: "#bdbdbe",
+                            }}
+                            type={"secondary"}
+                          >
+                            <QuestionCircleFilled />
+                          </Text>
+                        </Tooltip>
+                      </label>
+                      <Paragraph
+                        type={"secondary"}
+                        style={{
+                          marginTop: "-2",
+                          fontWeight: "400",
+                          marginBottom: "0",
+                        }}
+                      >
+                        Allow group propagation from user’s auto-groups to
+                        peers, sharing membership information
+                      </Paragraph>
+                    </div>
+                  </div>
+                </Form.Item>
+              </Col>
+            </Row>
+            {(isNetBirdHosted() || isLocalDev()) && (
+              <>
+                <Row>
+                  <Col span={12}>
+                    <Form.Item name="jwt_groups_enabled" label="">
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "15px",
+                        }}
+                      >
+                        <Switch
+                          onChange={(checked) => {
+                            setJwtGroupsEnabled(checked);
+                          }}
+                          size="small"
+                          checked={jwtGroupsEnabled}
+                        />
+                        <div>
+                          <label
+                            style={{
+                              color: "rgba(0, 0, 0, 0.88)",
+                              fontSize: "14px",
+                              fontWeight: "500",
+                            }}
+                          >
+                            Enable JWT group sync
+                          </label>
+                          <Paragraph
+                            type={"secondary"}
+                            style={{
+                              marginTop: "-2",
+                              fontWeight: "400",
+                              marginBottom: "0",
+                            }}
+                          >
+                            Extract & sync groups from JWT claims with user’s
+                            auto-groups, auto-creating groups from tokens.
+                          </Paragraph>
+                        </div>
+                      </div>
+                    </Form.Item>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col span={12}>
+                    <label
+                      style={{
+                        color: "rgba(0, 0, 0, 0.88)",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      JWT claim
+                    </label>
+                    <Paragraph
+                      type={"secondary"}
+                      style={{
+                        marginTop: "-2",
+                        fontWeight: "400",
+                        marginBottom: "5px",
+                      }}
+                    >
+                      Specify the JWT claim for extracting group names, e.g.,
+                      roles or groups, to add to account groups
+                    </Paragraph>
+                  </Col>
+                </Row>
+                <Row>
+                  <Col lg={6}>
+                    <Form.Item name="jwt_groups_claim_name">
+                      <Input
+                        value={jwtGroupsClaimName}
+                        autoComplete="off"
+                        onKeyDown={(event) => {
+                          if (event.code === "Space") event.preventDefault();
+                        }}
+                        onChange={(e) => {
+                          let val = e.target.value;
+                          var t = val.replace(/ /g, "");
+                          setJwtGroupsClaimName(t);
+                        }}
+                      />
+                    </Form.Item>
+                  </Col>
+                </Row>
+              </>
+            )}
+          </div>
+          <Col
+            span={24}
+            style={{ marginTop: "10px", marginBottom: "24px" }}
+            className={groupsClicked ? "d-none" : ""}
+          >
+            <Text type={"secondary"}>
+              Learn more about
+              <a
+                target="_blank"
+                rel="noreferrer"
+                href="https://docs.netbird.io/how-to/enforce-periodic-user-authentication"
+              >
+                {" "}
+                login expiration
+              </a>
+            </Text>
+          </Col>
+          <Form.Item style={{ marginBottom: "0" }}>
+            <Button type="primary" htmlType="submit">
+              Save
+            </Button>
+          </Form.Item>
+        </Card>
+      </Form>
+    );
+  };
   return (
     <>
       <Container style={{ paddingTop: "40px" }}>
@@ -597,530 +908,403 @@ export const Settings = () => {
           <Col span={20}>
             {authClicked && (
               <Row style={{ marginTop: "0", width: "100%" }}>
-                <Col span={24}>
-                  <Form
-                    name="basic"
-                    autoComplete="off"
-                    form={form}
-                    onFinish={handleFormSubmit}
-                  >
-                    <Card loading={loading} defaultValue={"Enabled"}>
-                      <div
-                        style={{
-                          color: "rgba(0, 0, 0, 0.88)",
-                          fontWeight: "500",
-                          fontSize: "18px",
-                          marginBottom: "20px",
-                        }}
-                      >
-                        Authentication
-                      </div>
-                      <Row>
-                        <Col span={12}>
-                          <Form.Item
-                            name="peer_login_expiration_enabled"
-                            label=""
-                          >
-                            <div
-                              style={{
-                                display: "flex",
-                                gap: "15px",
-                              }}
-                            >
-                              <Switch
-                                onChange={(checked) => {
-                                  setFormPeerExpirationEnabled(checked);
-                                }}
-                                size="small"
-                                checked={formPeerExpirationEnabled}
-                              />
-                              <div>
-                                <label
-                                  style={{
-                                    color: "rgba(0, 0, 0, 0.88)",
-                                    fontSize: "14px",
-                                    fontWeight: "500",
-                                  }}
-                                >
-                                  Peer login expiration{" "}
-                                  <Tooltip
-                                    title="Peer login expiration allows to periodically
-                                request re-authentication of peers that were
-                                added with the SSO login. You can disable the
-                                expiration per peer in the peers tab."
-                                  >
-                                    <Text
-                                      style={{
-                                        marginLeft: "5px",
-                                        fontSize: "14px",
-                                        color: "#bdbdbe",
-                                      }}
-                                      type={"secondary"}
-                                    >
-                                      <QuestionCircleFilled />
-                                    </Text>
-                                  </Tooltip>
-                                </label>
-                                <Paragraph
-                                  type={"secondary"}
-                                  style={{
-                                    marginTop: "-2",
-                                    fontWeight: "400",
-                                    marginBottom: "0",
-                                  }}
-                                >
-                                  Request periodic re-authentication of peers
-                                  registered with SSO
-                                </Paragraph>
-                              </div>
-                            </div>
-                          </Form.Item>
-                        </Col>
-                      </Row>
-                      <Row>
-                        <Col span={12}>
-                          <label
-                            style={{
-                              color: "rgba(0, 0, 0, 0.88)",
-                              fontSize: "14px",
-                              fontWeight: "500",
-                            }}
-                          >
-                            Peer login expires in
-                          </label>
-                          <Paragraph
-                            type={"secondary"}
-                            style={{
-                              marginTop: "-2",
-                              fontWeight: "400",
-                              marginBottom: "5px",
-                            }}
-                          >
-                            Time after which every peer added with SSO login
-                            will require re-authentication
-                          </Paragraph>
-                        </Col>
-                      </Row>
-
-                      <Form.Item
-                        name="peer_login_expiration_formatted"
-                        rules={[{ validator: checkExpiresIn }]}
-                      >
-                        <ExpiresInInput
-                          disabled={!formPeerExpirationEnabled}
-                          options={Array.of(
-                            { key: "hour", title: "Hours" },
-                            {
-                              key: "day",
-                              title: "Days",
-                            }
-                          )}
-                        />
-                      </Form.Item>
-
-                      <Col
-                        span={24}
-                        style={{ marginTop: "10px", marginBottom: "24px" }}
-                      >
-                        <Text type={"secondary"}>
-                          Learn more about
-                          <a
-                            target="_blank"
-                            rel="noreferrer"
-                            href="https://docs.netbird.io/how-to/enforce-periodic-user-authentication"
-                          >
-                            {" "}
-                            login expiration
-                          </a>
-                        </Text>
-                      </Col>
-                      <Form.Item style={{ marginBottom: "0" }}>
-                        <Button type="primary" htmlType="submit">
-                          Save
-                        </Button>
-                      </Form.Item>
-                    </Card>
-                  </Form>
-                </Col>
+                <Col span={24}>{renderSettingForm()}</Col>
               </Row>
             )}
             {groupsClicked && (
-              <Row style={{ marginTop: "0", width: "100%" }}>
-                <Col span={24}>
-                  <Card
-                    bordered={true}
-                    loading={loading}
-                    style={{ marginBottom: "7px", width: "100%" }}
-                  >
-                    <div>
-                      <Paragraph
-                        style={{
-                          textAlign: "left",
-                          whiteSpace: "pre-line",
-                          fontSize: "18px",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Groups
-                      </Paragraph>
-                      <Row
-                        gutter={21}
-                        style={{ marginTop: "-16px", marginBottom: "10px" }}
-                      >
-                        <Col
-                          xs={24}
-                          sm={24}
-                          md={20}
-                          lg={20}
-                          xl={20}
-                          xxl={20}
-                          span={20}
+              <>
+                <Row
+                  style={{
+                    marginTop: "0",
+                    marginBottom: "20px",
+                    width: "100%",
+                  }}
+                >
+                  <Col span={24}>{renderSettingForm()}</Col>
+                </Row>
+                <Row style={{ marginTop: "0", width: "100%" }}>
+                  <Col span={24}>
+                    <Card
+                      bordered={true}
+                      loading={loading}
+                      style={{ marginBottom: "7px", width: "100%" }}
+                    >
+                      <div>
+                        <Paragraph
+                          style={{
+                            textAlign: "left",
+                            whiteSpace: "pre-line",
+                            fontSize: "18px",
+                            fontWeight: "500",
+                          }}
                         >
-                          <Paragraph
-                            type={"secondary"}
-                            style={{
-                              textAlign: "left",
-                              whiteSpace: "pre-line",
-                            }}
+                          Groups
+                        </Paragraph>
+                        <Row
+                          gutter={21}
+                          style={{ marginTop: "-16px", marginBottom: "10px" }}
+                        >
+                          <Col
+                            xs={24}
+                            sm={24}
+                            md={20}
+                            lg={20}
+                            xl={20}
+                            xxl={20}
+                            span={20}
                           >
-                            Here is the overview of the groups of your account.
-                            You can delete the unused ones.
-                          </Paragraph>
-                        </Col>
-                      </Row>
-
-                      <Row gutter={[16, 24]} style={{ marginBottom: "20px" }}>
-                        <Col
-                          xs={24}
-                          sm={24}
-                          md={8}
-                          lg={8}
-                          xl={8}
-                          xxl={8}
-                          span={8}
-                        >
-                          <Input
-                            allowClear
-                            value={textToSearch}
-                            // onPressEnter={searchDataTable}
-                            placeholder="Search by group name"
-                            onChange={onChangeTextToSearch}
-                          />
-                        </Col>
-                        <Col
-                          xs={24}
-                          sm={24}
-                          md={11}
-                          lg={11}
-                          xl={11}
-                          xxl={11}
-                          span={11}
-                        >
-                          <Space size="middle" style={{ marginRight: "15px" }}>
-                            <Radio.Group
-                              options={optionsOnOff}
-                              onChange={onChangeOnOff}
-                              value={optionOnOff}
-                              optionType="button"
-                              buttonStyle="solid"
-                            />
-                            <Select
-                              value={pageSize.toString()}
-                              options={pageSizeOptions}
-                              onChange={(value) => {
-                                onChangePageSize(value, "groupsManagementPage");
+                            <Paragraph
+                              type={"secondary"}
+                              style={{
+                                textAlign: "left",
+                                whiteSpace: "pre-line",
                               }}
-                              className="select-rows-per-page-en"
+                            >
+                              Here is the overview of the groups of your
+                              account. You can delete the unused ones.
+                            </Paragraph>
+                          </Col>
+                        </Row>
+
+                        <Row gutter={[16, 24]} style={{ marginBottom: "20px" }}>
+                          <Col
+                            xs={24}
+                            sm={24}
+                            md={8}
+                            lg={8}
+                            xl={8}
+                            xxl={8}
+                            span={8}
+                          >
+                            <Input
+                              allowClear
+                              value={textToSearch}
+                              // onPressEnter={searchDataTable}
+                              placeholder="Search by group name"
+                              onChange={onChangeTextToSearch}
                             />
-                          </Space>
-                        </Col>
-                      </Row>
+                          </Col>
+                          <Col
+                            xs={24}
+                            sm={24}
+                            md={11}
+                            lg={11}
+                            xl={11}
+                            xxl={11}
+                            span={11}
+                          >
+                            <Space
+                              size="middle"
+                              style={{ marginRight: "15px" }}
+                            >
+                              <Radio.Group
+                                options={optionsOnOff}
+                                onChange={onChangeOnOff}
+                                value={optionOnOff}
+                                optionType="button"
+                                buttonStyle="solid"
+                              />
+                              <Select
+                                value={pageSize.toString()}
+                                options={pageSizeOptions}
+                                onChange={(value) => {
+                                  onChangePageSize(
+                                    value,
+                                    "groupsManagementPage"
+                                  );
+                                }}
+                                className="select-rows-per-page-en"
+                              />
+                            </Space>
+                          </Col>
+                        </Row>
 
-                      <Table
-                        size={"small"}
-                        showHeader={false}
-                        scroll={{ x: 800 }}
-                        pagination={{
-                          pageSize,
-                          showSizeChanger: false,
-                          showTotal: (total, range) =>
-                            `Showing ${range[0]} to ${range[1]} of ${total} groups`,
-                        }}
-                        loading={TableSpin(
-                          groupsLoading ||
-                            setupKeysLoading ||
-                            policiesLoading ||
-                            routesLoading ||
-                            nsGrouploading
-                        )}
-                        dataSource={filterGroup}
-                      >
-                        <Column
-                          className={"non-highlighted-table-column"}
-                          sorter={(a, b) =>
-                            (a as any).name.localeCompare((b as any).name)
-                          }
-                          defaultSortOrder="ascend"
-                          render={(text, record, index) => {
-                            return (
-                              <>
-                                <Row>
-                                  <Col>
-                                    <Paragraph
-                                      style={{
-                                        margin: "0px",
-                                        padding: "0px",
-                                        fontWeight: 500,
-                                      }}
-                                    >
-                                      {(record as any).name}
-                                    </Paragraph>
-                                  </Col>
-                                </Row>
-                              </>
-                            );
+                        <Table
+                          size={"small"}
+                          showHeader={false}
+                          scroll={{ x: 800 }}
+                          pagination={{
+                            pageSize,
+                            showSizeChanger: false,
+                            showTotal: (total, range) =>
+                              `Showing ${range[0]} to ${range[1]} of ${total} groups`,
                           }}
-                        />
+                          loading={TableSpin(
+                            groupsLoading ||
+                              setupKeysLoading ||
+                              policiesLoading ||
+                              routesLoading ||
+                              nsGrouploading
+                          )}
+                          dataSource={filterGroup}
+                        >
+                          <Column
+                            className={"non-highlighted-table-column"}
+                            sorter={(a, b) =>
+                              (a as any).name.localeCompare((b as any).name)
+                            }
+                            defaultSortOrder="ascend"
+                            render={(text, record, index) => {
+                              return (
+                                <>
+                                  <Row>
+                                    <Col>
+                                      <Paragraph
+                                        style={{
+                                          margin: "0px",
+                                          padding: "0px",
+                                          fontWeight: 500,
+                                        }}
+                                      >
+                                        {(record as any).name}
+                                      </Paragraph>
+                                    </Col>
+                                  </Row>
+                                </>
+                              );
+                            }}
+                          />
 
-                        <Column
-                          className={"non-highlighted-table-column"}
-                          render={(text, record, index) => {
-                            return (
-                              <>
-                                <Row>
-                                  <Col>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      Peers
-                                    </Paragraph>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        marginTop: "-10px",
-                                        marginBottom: "0",
-                                        fontSize: "15px",
-                                      }}
-                                    >
-                                      {(record as any).peers_count}
-                                    </Paragraph>
-                                  </Col>
-                                </Row>
-                              </>
-                            );
-                          }}
-                        />
+                          <Column
+                            className={"non-highlighted-table-column"}
+                            render={(text, record, index) => {
+                              return (
+                                <>
+                                  <Row>
+                                    <Col>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          fontSize: "12px",
+                                        }}
+                                      >
+                                        Peers
+                                      </Paragraph>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          marginTop: "-10px",
+                                          marginBottom: "0",
+                                          fontSize: "15px",
+                                        }}
+                                      >
+                                        {(record as any).peers_count}
+                                      </Paragraph>
+                                    </Col>
+                                  </Row>
+                                </>
+                              );
+                            }}
+                          />
 
-                        <Column
-                          className={"non-highlighted-table-column"}
-                          render={(text, record: any, index) => {
-                            return (
-                              <>
-                                <Row>
-                                  <Col>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      Access Controls
-                                    </Paragraph>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        marginTop: "-10px",
-                                        marginBottom: "0",
-                                        fontSize: "15px",
-                                      }}
-                                    >
-                                      {record.accessControl &&
-                                        record.accessControl.length}
-                                    </Paragraph>
-                                  </Col>
-                                </Row>
-                              </>
-                            );
-                          }}
-                        />
+                          <Column
+                            className={"non-highlighted-table-column"}
+                            render={(text, record: any, index) => {
+                              return (
+                                <>
+                                  <Row>
+                                    <Col>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          fontSize: "12px",
+                                        }}
+                                      >
+                                        Access Controls
+                                      </Paragraph>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          marginTop: "-10px",
+                                          marginBottom: "0",
+                                          fontSize: "15px",
+                                        }}
+                                      >
+                                        {record.accessControl &&
+                                          record.accessControl.length}
+                                      </Paragraph>
+                                    </Col>
+                                  </Row>
+                                </>
+                              );
+                            }}
+                          />
 
-                        <Column
-                          className={"non-highlighted-table-column"}
-                          render={(text, record: any, index) => {
-                            return (
-                              <>
-                                <Row>
-                                  <Col>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      DNS
-                                    </Paragraph>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        marginTop: "-10px",
-                                        marginBottom: "0",
-                                        fontSize: "15px",
-                                      }}
-                                    >
-                                      {record.nameservers &&
-                                        record.nameservers.length}
-                                    </Paragraph>
-                                  </Col>
-                                </Row>
-                              </>
-                            );
-                          }}
-                        />
+                          <Column
+                            className={"non-highlighted-table-column"}
+                            render={(text, record: any, index) => {
+                              return (
+                                <>
+                                  <Row>
+                                    <Col>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          fontSize: "12px",
+                                        }}
+                                      >
+                                        DNS
+                                      </Paragraph>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          marginTop: "-10px",
+                                          marginBottom: "0",
+                                          fontSize: "15px",
+                                        }}
+                                      >
+                                        {record.nameservers &&
+                                          record.nameservers.length}
+                                      </Paragraph>
+                                    </Col>
+                                  </Row>
+                                </>
+                              );
+                            }}
+                          />
 
-                        <Column
-                          className={"non-highlighted-table-column"}
-                          render={(text, record: any, index) => {
-                            return (
-                              <>
-                                <Row>
-                                  <Col>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      Routes
-                                    </Paragraph>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        marginTop: "-10px",
-                                        marginBottom: "0",
-                                        fontSize: "15px",
-                                      }}
-                                    >
-                                      {record.routes && record.routes.length}
-                                    </Paragraph>
-                                  </Col>
-                                </Row>
-                              </>
-                            );
-                          }}
-                        />
+                          <Column
+                            className={"non-highlighted-table-column"}
+                            render={(text, record: any, index) => {
+                              return (
+                                <>
+                                  <Row>
+                                    <Col>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          fontSize: "12px",
+                                        }}
+                                      >
+                                        Routes
+                                      </Paragraph>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          marginTop: "-10px",
+                                          marginBottom: "0",
+                                          fontSize: "15px",
+                                        }}
+                                      >
+                                        {record.routes && record.routes.length}
+                                      </Paragraph>
+                                    </Col>
+                                  </Row>
+                                </>
+                              );
+                            }}
+                          />
 
-                        <Column
-                          className={"non-highlighted-table-column"}
-                          render={(text, record: any, index) => {
-                            return (
-                              <>
-                                <Row>
-                                  <Col>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      Setup Keys
-                                    </Paragraph>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        marginTop: "-10px",
-                                        marginBottom: "0",
-                                        fontSize: "15px",
-                                      }}
-                                    >
-                                      {record.setupKey &&
-                                        record.setupKey.length}
-                                    </Paragraph>
-                                  </Col>
-                                </Row>
-                              </>
-                            );
-                          }}
-                        />
+                          <Column
+                            className={"non-highlighted-table-column"}
+                            render={(text, record: any, index) => {
+                              return (
+                                <>
+                                  <Row>
+                                    <Col>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          fontSize: "12px",
+                                        }}
+                                      >
+                                        Setup Keys
+                                      </Paragraph>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          marginTop: "-10px",
+                                          marginBottom: "0",
+                                          fontSize: "15px",
+                                        }}
+                                      >
+                                        {record.setupKey &&
+                                          record.setupKey.length}
+                                      </Paragraph>
+                                    </Col>
+                                  </Row>
+                                </>
+                              );
+                            }}
+                          />
 
-                        <Column
-                          className={"non-highlighted-table-column"}
-                          render={(text, record: any, index) => {
-                            return (
-                              <>
-                                <Row>
-                                  <Col>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        fontSize: "12px",
-                                      }}
-                                    >
-                                      Users
-                                    </Paragraph>
-                                    <Paragraph
-                                      type={"secondary"}
-                                      style={{
-                                        textAlign: "left",
-                                        marginTop: "-10px",
-                                        marginBottom: "0",
-                                        fontSize: "15px",
-                                      }}
-                                    >
-                                      {record.user && record.user.length}
-                                    </Paragraph>
-                                  </Col>
-                                </Row>
-                              </>
-                            );
-                          }}
-                        />
-                        <Column
-                          align="right"
-                          render={(text, record, index) => {
-                            const isButtonDisabled = isDisabled(record);
+                          <Column
+                            className={"non-highlighted-table-column"}
+                            render={(text, record: any, index) => {
+                              return (
+                                <>
+                                  <Row>
+                                    <Col>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          fontSize: "12px",
+                                        }}
+                                      >
+                                        Users
+                                      </Paragraph>
+                                      <Paragraph
+                                        type={"secondary"}
+                                        style={{
+                                          textAlign: "left",
+                                          marginTop: "-10px",
+                                          marginBottom: "0",
+                                          fontSize: "15px",
+                                        }}
+                                      >
+                                        {record.user && record.user.length}
+                                      </Paragraph>
+                                    </Col>
+                                  </Row>
+                                </>
+                              );
+                            }}
+                          />
+                          <Column
+                            align="right"
+                            render={(text, record, index) => {
+                              const isButtonDisabled = isDisabled(record);
 
-                            return (
-                              <Tooltip
-                                className="delete-button"
-                                title={
-                                  isButtonDisabled
-                                    ? "Remove dependencies to this group to delete it."
-                                    : ""
-                                }
-                              >
-                                <Button
-                                  danger={true}
-                                  type={"text"}
-                                  disabled={isButtonDisabled}
-                                  onClick={() => {
-                                    showConfirmDelete(record);
-                                  }}
+                              return (
+                                <Tooltip
+                                  className="delete-button"
+                                  title={
+                                    isButtonDisabled
+                                      ? "Remove dependencies to this group to delete it."
+                                      : ""
+                                  }
                                 >
-                                  Delete
-                                </Button>
-                              </Tooltip>
-                            );
-                          }}
-                        />
-                      </Table>
-                    </div>
-                  </Card>
-                </Col>
-              </Row>
+                                  <Button
+                                    danger={true}
+                                    type={"text"}
+                                    disabled={isButtonDisabled}
+                                    onClick={() => {
+                                      showConfirmDelete(record);
+                                    }}
+                                  >
+                                    Delete
+                                  </Button>
+                                </Tooltip>
+                              );
+                            }}
+                          />
+                        </Table>
+                      </div>
+                    </Card>
+                  </Col>
+                </Row>
+              </>
             )}
           </Col>
         </Row>
