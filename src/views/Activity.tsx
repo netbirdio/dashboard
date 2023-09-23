@@ -168,37 +168,36 @@ export const Activity = () => {
   };
   const renderInitiator = (event: EventDataTable) => {
     let body = <></>;
-    const user = users?.find((u) => u.id === event.initiator_id);
     if (event.initiator_id == "sys") {
       body = (
-          <span
-              style={{
-              height: "auto",
-              whiteSpace: "normal",
-              textAlign: "left",
-              }}
-          >
-              <Row>
-              <Text type="secondary">System</Text>
-              </Row>
-          </span>
-          );
+        <span
+          style={{
+            height: "auto",
+            whiteSpace: "normal",
+            textAlign: "left",
+          }}
+        >
+          <Row>
+            <Text type="secondary">System</Text>
+          </Row>
+        </span>
+      );
     }
     switch (event.activity_code) {
       case "peer.login.expire":
         body = (
-            <span
-                style={{
-                height: "auto",
-                whiteSpace: "normal",
-                textAlign: "left",
-                }}
-            >
-                <Row>
-                <Text type="secondary">System</Text>
-                </Row>
-            </span>
-            );
+          <span
+            style={{
+              height: "auto",
+              whiteSpace: "normal",
+              textAlign: "left",
+            }}
+          >
+            <Row>
+              <Text type="secondary">System</Text>
+            </Row>
+          </span>
+        );
         break;
       case "setupkey.peer.add":
         const key = setupKeys?.find((k) => k.id === event.initiator_id);
@@ -224,7 +223,7 @@ export const Activity = () => {
         }
         break;
       default:
-        if (user) {
+        if (event.initiator_name || event.initiator_email) {
           body = (
             <span
               style={{
@@ -235,16 +234,16 @@ export const Activity = () => {
             >
               <Row>
                 {" "}
-                <Text>{user.name ? user.name : user.id}</Text>{" "}
+                <Text>
+                  {event.initiator_name
+                    ? event.initiator_name
+                    : event.initiator_id}
+                </Text>{" "}
               </Row>
               <Row>
                 {" "}
                 <Text type="secondary">
-                  {user.email
-                    ? user.email
-                    : user.is_service_user
-                    ? "Service User"
-                    : "User"}
+                  {event.initiator_email ? event.initiator_email : "User"}
                 </Text>{" "}
               </Row>
             </span>
@@ -281,7 +280,6 @@ export const Activity = () => {
     ) {
       return "-";
     }
-    const user = users?.find((u) => u.id === event.target_id);
     switch (event.activity_code) {
       case "account.create":
       case "user.join":
@@ -334,14 +332,10 @@ export const Activity = () => {
       case "user.group.add":
       case "user.group.delete":
       case "user.role.update":
-        if (user) {
+        if (event.meta.email || event.meta.username || event.target_id) {
           return renderMultiRowSpan(
-            user.name ? user.name : user.id,
-            user.email
-              ? user.email
-              : user.is_service_user
-              ? "Service User"
-              : "User"
+            event.meta.username ? event.meta.username : event.target_id,
+            event.meta.email ? event.meta.email : "User"
           );
         }
         if (event.meta.user_name) {
@@ -365,14 +359,10 @@ export const Activity = () => {
         return renderMultiRowSpan("", "System setting");
       case "personal.access.token.create":
       case "personal.access.token.delete":
-        if (user) {
+        if (event.meta.email || event.meta.username || event.target_id) {
           return renderMultiRowSpan(
-            user.name ? user.name : user.id,
-            user.email
-              ? user.email
-              : user.is_service_user
-              ? "Service User"
-              : "User"
+            event.meta.username ? event.meta.username : event.target_id,
+            event.meta.email ? event.meta.email : "User"
           );
         }
         if (event.meta.user_name) {
@@ -384,14 +374,15 @@ export const Activity = () => {
         return "-";
       case "service.user.create":
       case "service.user.delete":
-        return renderMultiRowSpan(event.meta.name, "Service User");
+        return renderMultiRowSpan(event.meta.username, "Service User");
       case "user.invite":
       case "user.block":
+      case "user.delete":
       case "user.unblock":
-        if (user) {
+        if (event.meta.email || event.meta.username || event.target_id) {
           return renderMultiRowSpan(
-            user.name ? user.name : user.id,
-            user.email ? user.email : "User"
+            event.meta.username ? event.meta.username : event.target_id,
+            event.meta.email ? event.meta.email : "User"
           );
         }
         break;
