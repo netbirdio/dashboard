@@ -396,7 +396,7 @@ export const RegularUsers = () => {
         icon: <ExclamationCircleOutlined />,
         title: (
           <span className="font-500">
-            Are you sure you want to block {user.name} ?
+            Are you sure you want to block {user.name? user.name : user.id}?
           </span>
         ),
         width: 600,
@@ -450,11 +450,12 @@ export const RegularUsers = () => {
   const handleDeleteUser = (user: UserDataTable) => {
     confirmModal.confirm({
       icon: <ExclamationCircleOutlined />,
-      title: <span className="font-500">Delete user {user.name}</span>,
+      title: <span className="font-500">Are you sure you want to delete {user.name? user.name : user.id}?</span>,
       width: 500,
       content: (
         <Space direction="vertical" size="small">
-          <Paragraph>Are you sure you want to delete this user?</Paragraph>
+          <Paragraph>
+            Deleting this user will remove their devices and remove dashboard access.</Paragraph>
         </Space>
       ),
       onOk() {
@@ -582,59 +583,48 @@ export const RegularUsers = () => {
 
                       if ((record as User).is_current) {
                         return (
-                          <>
-                            <div>
-                              {btn}
-                              <Tag color="blue">me</Tag>
-                            </div>
-                            <Text
-                              type={"secondary"}
-                              style={{ paddingLeft: "15px" }}
-                            >
-                              Last login:{" "}
-                              {String(timeAgo((record as User).last_login))}
-                            </Text>
-                          </>
+                            <>
+                              <div>
+                                {btn}
+                                <Tag color="blue">me</Tag>
+                              </div>
+                              {((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
+                            </>
                         );
                       }
 
                       if ((record as User).status === "invited") {
                         return (
-                          <>
-                            <div>
-                              {btn}
-                              <Tag color="gold">invited</Tag>
-                            </div>
-                            <Text
-                              type={"secondary"}
-                              style={{ paddingLeft: "15px", paddingTop: "0px" }}
-                            >
-                              Last login:{" "}
-                              {String(timeAgo((record as User).last_login))}
-                            </Text>
-                          </>
+                            <>
+                              <div>
+                                {btn}
+                                <Tag color="gold">invited</Tag>
+                              </div>
+                              {((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
+                            </>
                         );
                       }
 
                       if ((record as User).status === "blocked") {
                         return (
-                          <>
-                            <div>
-                              {btn}
-                              <Tag color="red">blocked</Tag>
-                            </div>
-                            <Text
-                              type={"secondary"}
-                              style={{ paddingLeft: "15px" }}
-                            >
-                              Last login:{" "}
-                              {String(timeAgo((record as User).last_login))}
-                            </Text>
-                          </>
+                            <>
+                              <div>
+                                {btn}
+                                <Tag color="red">blocked</Tag>
+                              </div>
+                              {((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
+                            </>
                         );
                       }
 
-                      return btn;
+                      return (
+                          <>
+                            <div>
+                              {btn}
+                            </div>
+                            {((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
+                          </>
+                      );
                     }}
                   />
                   <Column
