@@ -179,6 +179,13 @@ const PeerUpdate = (props: any) => {
 
   useEffect(() => {}, [users]);
 
+  const routeAddAllowed = (os: string): boolean => {
+    return os !== ""
+        && !os.toLowerCase().startsWith("darwin")
+        && !os.toLowerCase().startsWith("windows")
+        && !os.toLowerCase().startsWith("android")
+  }
+
   const toggleEditName = (status: boolean, value?: string) => {
     setEditName(status);
 
@@ -965,6 +972,7 @@ const PeerUpdate = (props: any) => {
           {/* --- */}
           {!isGroupUpdateView && (
             <>
+              {routeAddAllowed(peer.os) &&
               <Card
                 bordered={true}
                 // loading={loading}ƒ
@@ -1090,7 +1098,7 @@ const PeerUpdate = (props: any) => {
                     </Space>
                   )}
                 </div>
-              </Card>
+              </Card>}
 
               <Card bordered={true} style={{ marginBottom: "50px" }}>
                 <Col span={24}>

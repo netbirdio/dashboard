@@ -63,7 +63,8 @@ export function* saveSetupKey(action: ReturnType<typeof actions.saveSetupKey.req
                     auto_groups: newGroups,
                     type: keyToSave.type,
                     expires_in: keyToSave.expires_in,
-                    usage_limit: keyToSave.usage_limit
+                    usage_limit: keyToSave.usage_limit,
+                    ephemeral: keyToSave.ephemeral
                 } as SetupKeyToSave
             });
         } else {

@@ -13,6 +13,7 @@ import {
   Tag,
   Typography,
   Card,
+  Tooltip,
 } from "antd";
 import { RootState } from "typesafe-actions";
 import {
@@ -54,7 +55,7 @@ const SetupKeyNew = (props: any) => {
   const savedSetupKey = useSelector(
     (state: RootState) => state.setupKey.savedSetupKey
   );
-
+ 
   const groups = useSelector((state: RootState) => state.group.data);
 
   const [form] = Form.useForm();
@@ -91,14 +92,13 @@ const SetupKeyNew = (props: any) => {
         .filter((g) => allGroups.get(g))
         .map((g) => allGroups.get(g)!.name);
     }
-
     const fSetupKey = {
       ...setupKey,
       autoGroupNames: setupKey.auto_groups || [],
       exp: moment(setupKey.expires),
       last: moment(setupKey.last_used),
     } as FormSetupKey;
-    form.setFieldsValue(fSetupKey);
+     form.setFieldsValue(fSetupKey);
     setFormSetupKey(fSetupKey);
   }, [setupKey]);
 
@@ -117,6 +117,7 @@ const SetupKeyNew = (props: any) => {
       groupsToCreate: groupsToCreate,
       expires_in: expiresIn,
       usage_limit: formSetupKey.usage_limit,
+      ephemeral: formSetupKey.ephemeral,
     } as SetupKeyToSave;
   };
 
@@ -125,8 +126,7 @@ const SetupKeyNew = (props: any) => {
       await form.validateFields();
     } catch (e) {
       const errorFields = (e as any).errorFields;
-      return console.log("errorInfo", errorFields);
-    }
+     }
 
     const setupKeyToSave = createSetupKeyToSave();
     dispatch(
@@ -257,8 +257,7 @@ const SetupKeyNew = (props: any) => {
     dispatch(personalAccessTokenActions.resetPersonalAccessTokens(null));
     setVisibleNewSetupKey(false);
   };
-
-  return (
+   return (
     <>
       {!isGroupUpdateView && (
         <Breadcrumb
@@ -302,13 +301,9 @@ const SetupKeyNew = (props: any) => {
             {!isGroupUpdateView && (
               <Row style={{ marginTop: "10px" }}>
                 <Col
-                  xs={24}
                   sm={24}
-                  md={11}
-                  lg={11}
-                  xl={11}
-                  xxl={11}
-                  span={11}
+                  md={8}
+                  lg={8}
                   style={{
                     paddingRight: "70px",
                   }}
@@ -342,7 +337,14 @@ const SetupKeyNew = (props: any) => {
                   />
                 </Col>
 
-                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                <Col
+                  sm={24}
+                  md={8}
+                  lg={6}
+                  style={{
+                    paddingRight: "70px",
+                  }}
+                >
                   <Paragraph
                     style={{
                       whiteSpace: "pre-line",
@@ -357,8 +359,48 @@ const SetupKeyNew = (props: any) => {
                         fontWeight: "500",
                       }}
                     ></Paragraph>
-                    {formSetupKey.type === "one-off" ? "One-off" : "Reusable"},
-                    available uses
+                    Type{" "}
+                    {formSetupKey.ephemeral ? (
+                      <Tooltip title="Peers that are offline for over 10 minutes will be removed automatically">
+                        <Tag>
+                          <Text type="secondary" style={{ fontSize: 10 }}>
+                            Ephemeral
+                          </Text>
+                        </Tag>
+                      </Tooltip>
+                    ) : (
+                      " "
+                    )}
+                  </Paragraph>
+                  <Col>
+                    <Input
+                      disabled
+                      value={
+                        formSetupKey.type === "one-off" ? "One-off" : "Reusable"
+                      }
+                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                      style={{ marginTop: "8px" }}
+                    />
+                  </Col>
+                </Col>
+
+                <Col sm={24} md={8} lg={3}>
+                  <Paragraph
+                    style={{
+                      whiteSpace: "pre-line",
+                      margin: 0,
+                      fontWeight: "500",
+                    }}
+                  >
+                    <Paragraph
+                      style={{
+                        whiteSpace: "pre-line",
+                        margin: 0,
+                        fontWeight: "500",
+                      }}
+                    ></Paragraph>
+                    {/* {formSetupKey.type === "one-off" ? "One-off" : "Reusable"}, */}
+                    Available uses
                   </Paragraph>
                   <Col>
                     <Input
@@ -376,6 +418,25 @@ const SetupKeyNew = (props: any) => {
                 </Col>
               </Row>
             )}
+            <Row style={{ marginTop: `${isGroupUpdateView ? "0" : "39px"}` }}>
+              {!isGroupUpdateView && (
+                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
+                  <Paragraph style={{ margin: 0, fontWeight: "500" }}>
+                    Expires
+                  </Paragraph>
+                  <Row>
+                    <Input
+                      style={{ marginTop: "8px" }}
+                      disabled
+                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
+                      value={
+                        customExpiresFormat(new Date(formSetupKey.expires))!
+                      }
+                    />
+                  </Row>
+                </Col>
+              )}
+            </Row>
             <Row style={{ marginTop: `${isGroupUpdateView ? "0" : "39px"}` }}>
               <Col
                 xs={24}
@@ -413,7 +474,7 @@ const SetupKeyNew = (props: any) => {
                       dropdownRender={dropDownRender}
                       // enabled only when we have a new key !setupkey.id or when the key is valid
                       disabled={!(!setupKey.id || setupKey.valid)}
-                      optionFilterProp="serchValue"
+                      optionFilterProp="searchValue"
                     >
                       {tagGroups.map((m, index) => (
                         <Option key={index} value={m.id} serchValue={m.name}>
@@ -424,23 +485,6 @@ const SetupKeyNew = (props: any) => {
                   </Form.Item>
                 </Col>
               </Col>
-              {!isGroupUpdateView && (
-                <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
-                  <Paragraph style={{ margin: 0, fontWeight: "500" }}>
-                    Expires
-                  </Paragraph>
-                  <Row>
-                    <Input
-                      style={{ marginTop: "8px" }}
-                      disabled
-                      suffix={<LockOutlined style={{ color: "#BFBFBF" }} />}
-                      value={
-                        customExpiresFormat(new Date(formSetupKey.expires))!
-                      }
-                    />
-                  </Row>
-                </Col>
-              )}
             </Row>
           </Form>
         </div>

@@ -31,7 +31,12 @@ import { useGetTokenSilently } from "../utils/token";
 import { actions as groupActions } from "../store/group";
 import { Group } from "../store/group/types";
 import { TooltipPlacement } from "antd/es/tooltip";
-import {capitalize, isLocalDev, isNetBirdHosted, timeAgo} from "../utils/common";
+import {
+  capitalize,
+  isLocalDev,
+  isNetBirdHosted,
+  timeAgo,
+} from "../utils/common";
 import { usePageSizeHelpers } from "../utils/pageSize";
 import AddServiceUserPopup from "../components/popups/AddServiceUserPopup";
 import InviteUserPopup from "../components/popups/InviteUserPopup";
@@ -56,13 +61,14 @@ export const RegularUsers = () => {
   const dispatch = useDispatch();
 
   const [isAdmin, setIsAdmin] = useState(false);
-    const [showGroupModal, setShowGroupModal] = useState(false);
-
+  const [showGroupModal, setShowGroupModal] = useState(false);
 
   const groups = useSelector((state: RootState) => state.group.data);
   const users = useSelector((state: RootState) => state.user.regularUsers);
   const failed = useSelector((state: RootState) => state.user.failed);
   const loading = useSelector((state: RootState) => state.user.loading);
+  const deleteUser = useSelector((state: RootState) => state.user.deletedUser);
+
   const updateUserDrawerVisible = useSelector(
     (state: RootState) => state.user.updateUserDrawerVisible
   );
@@ -75,6 +81,42 @@ export const RegularUsers = () => {
   const [textToSearch, setTextToSearch] = useState("");
   const [dataTable, setDataTable] = useState([] as UserDataTable[]);
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
+
+  const deleteKey = "deleting";
+  useEffect(() => {
+    const style = { marginTop: 85 };
+    if (deleteUser.loading) {
+      message.loading({ content: "Deleting...", key: deleteKey, style });
+    } else if (deleteUser.success) {
+      message.success({
+        content: "User has been successfully deleted.",
+        key: deleteKey,
+        duration: 2,
+        style,
+      });
+      dispatch(
+        userActions.getRegularUsers.request({
+          getAccessTokenSilently: getTokenSilently,
+          payload: null,
+        })
+      );
+      dispatch(
+        groupActions.getGroups.request({
+          getAccessTokenSilently: getTokenSilently,
+          payload: null,
+        })
+      );
+      dispatch(userActions.resetDeletedUser(null));
+    } else if (deleteUser.error) {
+      message.error({
+        content: "Failed to delete user.",
+        key: deleteKey,
+        duration: 2,
+        style,
+      });
+      dispatch(userActions.resetDeletedUser(null));
+    }
+  }, [deleteUser]);
 
   // setUserAndView makes the UserUpdate drawer visible (right side) and sets the user object
   const setUserAndView = (user: User) => {
@@ -92,7 +134,7 @@ export const RegularUsers = () => {
   };
 
   const setUserAndViewGroups = (user: User) => {
-     dispatch(
+    dispatch(
       userActions.setUser({
         id: user.id,
         email: user.email,
@@ -101,8 +143,8 @@ export const RegularUsers = () => {
         name: user.name,
         is_current: user.is_current,
       } as User)
-     );
-    setShowGroupModal(true)
+    );
+    setShowGroupModal(true);
   };
 
   const transformDataTable = (d: User[]): UserDataTable[] => {
@@ -286,7 +328,7 @@ export const RegularUsers = () => {
       dispatch(userActions.setUpdateUserDrawerVisible(false));
       dispatch(userActions.setSavedUser({ ...savedUser, success: false }));
       dispatch(userActions.resetSavedUser(null));
-      setShowGroupModal(false)
+      setShowGroupModal(false);
     } else if (savedUser.error) {
       let errorMsg = "Failed to update user";
       switch (savedUser.error.statusCode) {
@@ -405,6 +447,30 @@ export const RegularUsers = () => {
     } as UserToSave;
   };
 
+  const handleDeleteUser = (user: UserDataTable) => {
+    confirmModal.confirm({
+      icon: <ExclamationCircleOutlined />,
+      title: <span className="font-500">Delete user {user.name}</span>,
+      width: 500,
+      content: (
+        <Space direction="vertical" size="small">
+          <Paragraph>Are you sure you want to delete this user?</Paragraph>
+        </Space>
+      ),
+      onOk() {
+        dispatch(
+          userActions.deleteUser.request({
+            getAccessTokenSilently: getTokenSilently,
+            payload: user.id,
+          })
+        );
+      },
+      onCancel() {
+        // noop
+      },
+    });
+  };
+
   return (
     <>
       <Container style={{ padding: "0px" }}>
@@ -499,19 +565,19 @@ export const RegularUsers = () => {
                     defaultSortOrder="ascend"
                     render={(text, record, index) => {
                       const btn = (
-                          <Button
-                              type="text"
-                              onClick={() =>
-                                  handleEditUser(record as UserDataTable)
-                              }
-                              className="tooltip-label"
-                          >
-                            <Text className="font-500">
-                              {text && text.trim() !== ""
-                                  ? text
-                                  : (record as User).id}
-                            </Text>
-                          </Button>
+                        <Button
+                          type="text"
+                          onClick={() =>
+                            handleEditUser(record as UserDataTable)
+                          }
+                          className="tooltip-label"
+                        >
+                          <Text className="font-500">
+                            {text && text.trim() !== ""
+                              ? text
+                              : (record as User).id}
+                          </Text>
+                        </Button>
                       );
 
                       if ((record as User).is_current) {
@@ -613,6 +679,44 @@ export const RegularUsers = () => {
                         if (record.is_current) {
                           return (
                             <Tooltip title="You can't block or unblock yourself">
+                              <Empty
+                                image={""}
+                                description={""}
+                                style={{ height: "1px", width: "auto" }}
+                              />
+                            </Tooltip>
+                          );
+                        }
+
+                        return witch;
+                      }}
+                    />
+                  )}
+
+                  {isAdmin && (
+                    <Column
+                      title="Delete user"
+                      align="center"
+                      width="150px"
+                      // dataIndex="is_blocked"
+                      render={(e, record: UserDataTable, index) => {
+                        let witch = (
+                          <Button
+                            danger={true}
+                            type={"text"}
+                            style={{ marginLeft: "3px", marginRight: "3px" }}
+                            onClick={() => {
+                              let userRecord = record as UserDataTable;
+                              handleDeleteUser(userRecord);
+                            }}
+                          >
+                            Delete
+                          </Button>
+                        );
+
+                        if (record.is_current) {
+                          return (
+                            <Tooltip title="You can't delete yourself">
                               <Empty
                                 image={""}
                                 description={""}
