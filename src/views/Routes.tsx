@@ -443,7 +443,15 @@ export const Routes = () => {
         .filter((g) => groupsMap.get(g))
         .map((g) => groupsMap.get(g)!);
     }
-
+    if (userToAction.peer_groups) {
+      const groupedRoutes = [
+        {
+          groups: userToAction.groups,
+        },
+      ];
+      userToAction = { ...userToAction, groupedRoutes: groupedRoutes };
+    }
+ 
     let btn = (
       <Button
         type="link"
