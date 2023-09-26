@@ -28,7 +28,7 @@ import { RootState } from "typesafe-actions";
 import { Route, RouteToSave } from "../store/route/types";
 import { actions as routeActions } from "../store/route";
 import { actions as peerActions } from "../store/peer";
-import { filter, sortBy ,uniq} from "lodash";
+import { filter, sortBy, uniq } from "lodash";
 import { EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { storeFilterState, getFilterState } from "../utils/filterState";
 import RouteAddNew from "../components/RouteAddNew";
@@ -357,7 +357,7 @@ export const Routes = () => {
   };
 
   const setRouteAndView = (route: RouteDataTable, event: any) => {
-     event.preventDefault();
+    event.preventDefault();
     event.stopPropagation();
     if (!route.id) {
       dispatch(routeActions.setSetupNewRouteHA(true));
@@ -508,7 +508,7 @@ export const Routes = () => {
 
   const getAccordianHeader = (record: any) => {
     const getUniquePeerGroups = uniq(record.peer_groups);
-     return (
+    return (
       <div className="headerInner">
         <p className="font-500">
           {record.network_id}
@@ -534,13 +534,15 @@ export const Routes = () => {
             </>
           ) : (
             <>
-                {getUniquePeerGroups.length > 1 ? <Tag color="green">on</Tag> :
-                  <Tag color="default">
-                    <Text type="secondary" style={{ fontSize: 12 }}>
-                      off
-                    </Text>
-                  </Tag>
-                }
+              {getUniquePeerGroups.length > 1 ? (
+                <Tag color="green">on</Tag>
+              ) : (
+                <Tag color="default">
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    off
+                  </Text>
+                </Tag>
+              )}
               <Button
                 type="link"
                 style={{ padding: "0" }}
@@ -567,9 +569,22 @@ export const Routes = () => {
   };
 
   const showConfirmationDeleteAllRoutes = (selectedGroup: any, event: any) => {
-    event.preventDefault();
+     event.preventDefault();
     event.stopPropagation();
     let name = selectedGroup ? selectedGroup.network_id : "";
+
+    let groupsMap = new Map<string, Group>();
+    groups.forEach((g) => {
+      groupsMap.set(g.id!, g);
+    });
+
+    let displayGroups: Group[] = [];
+    if (selectedGroup.peer_groups) {
+      displayGroups = selectedGroup.peer_groups
+        .filter((g: any) => groupsMap.get(g))
+        .map((g: any) => groupsMap.get(g)!);
+    }
+
     confirm({
       icon: <ExclamationCircleOutlined />,
       title: <span className="font-500">Delete routes to network {name}</span>,
@@ -582,7 +597,19 @@ export const Routes = () => {
           </Paragraph>
           <Alert
             message={
-              <>
+              selectedGroup.peer_groups ? (
+                <List
+                  dataSource={displayGroups}
+                  renderItem={(item: any) => (
+                    <List.Item>
+                      <Text strong>- {item.name}</Text>
+                    </List.Item>
+                  )}
+                  bordered={false}
+                  split={false}
+                  itemLayout={"vertical"}
+                />
+              ) : (
                 <List
                   dataSource={selectedGroup.groupedRoutes}
                   renderItem={(item: any) => (
@@ -594,7 +621,7 @@ export const Routes = () => {
                   split={false}
                   itemLayout={"vertical"}
                 />
-              </>
+              )
             }
             type="warning"
             showIcon={false}
