@@ -56,8 +56,7 @@ export function* saveRoute(
     );
 
     const routeToSave = action.payload.payload;
-
-    let groupsToCreate = routeToSave.groupsToCreate;
+     let groupsToCreate = routeToSave.groupsToCreate;
     if (!groupsToCreate) {
       groupsToCreate = [];
     }
@@ -89,6 +88,7 @@ export function* saveRoute(
         network: routeToSave.network,
         network_id: routeToSave.network_id,
         peer: routeToSave.peer,
+        peer_groups: routeToSave.peer_groups,
         groups: newGroups,
       } as Route,
     };

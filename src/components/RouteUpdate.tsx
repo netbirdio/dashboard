@@ -74,6 +74,7 @@ const RouteAddNew = () => {
 
   useEffect(() => {
     if (!route) return;
+    console.log("routerouterouterouterouteroute", route);
     const fRoute = {
       ...route,
       groups: route.groups,
@@ -126,18 +127,29 @@ const RouteAddNew = () => {
       inputRoute.groups
     );
 
-    return {
+    const payload = {
       id: inputRoute.id,
       network: inputRoute.network,
       network_id: inputRoute.network_id,
       description: inputRoute.description,
-      peer: peerID,
       enabled: inputRoute.enabled,
       masquerade: inputRoute.masquerade,
       metric: inputRoute.metric,
       groups: existingGroups,
       groupsToCreate: groupsToCreate,
     } as RouteToSave;
+
+    if (formRoute.peer_groups) {
+      let pay = { ...payload, peer_groups: inputRoute.peer_groups };
+      return pay;
+    }
+
+    if (formRoute.peer !== "") {
+      let pay = { ...payload, peer: peerID };
+      return pay;
+    }
+
+    return payload;
   };
 
   const handleFormSubmit = () => {
@@ -205,6 +217,7 @@ const RouteAddNew = () => {
         masquerade: false,
         enabled: true,
         groups: [],
+        peer_groups: [],
       } as Route)
     );
     setVisibleNewRoute(false);
@@ -293,7 +306,7 @@ const RouteAddNew = () => {
       dispatch(routeActions.resetSavedRoute(null));
     }
   }, [savedRoute]);
-
+  console.log("formRoute", formRoute);
   return (
     <>
       {route && (
@@ -411,37 +424,97 @@ const RouteAddNew = () => {
               </Col>
 
               <Col span={24}>
-                <label
-                  style={{
-                    color: "rgba(0, 0, 0, 0.88)",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                  }}
-                >
-                  Routing Peer
-                </label>
-                <Paragraph
-                  type={"secondary"}
-                  style={{
-                    marginTop: "-2",
-                    fontWeight: "400",
-                    marginBottom: "5px",
-                  }}
-                >
-                  Assign a routing peer to the network. This peer has to reside
-                  in the network
-                </Paragraph>
-                <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
-                  <Select
-                    showSearch
-                    style={{ width: "100%" }}
-                    placeholder="Select Peer"
-                    dropdownRender={peerDropDownRender}
-                    options={options}
-                    allowClear={true}
-                  />
-                </Form.Item>
+                {formRoute.peer_groups ? (
+                  <>
+                    <label
+                      style={{
+                        color: "rgba(0, 0, 0, 0.88)",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Group of Peers
+                    </label>
+                    <Paragraph
+                      type={"secondary"}
+                      style={{
+                        marginTop: "-2",
+                        fontWeight: "400",
+                        marginBottom: "5px",
+                      }}
+                    >
+                      Assign group of peers as a routing peer for the Network
+                      CIDR
+                    </Paragraph>
+                    <Form.Item
+                      name="peer_groups"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select peer groups",
+                        },
+                      ]}
+                    >
+                      <Select
+                        mode="tags"
+                        style={{ maxWidth: "100%" }}
+                        tagRender={blueTagRender}
+                        onChange={handleChangeTags}
+                        dropdownRender={dropDownRender}
+                        optionFilterProp="serchValue"
+                      >
+                        {tagGroups.map((m, index) => (
+                          <Option key={index} value={m.id} serchValue={m.name}>
+                            {optionRender(m.name, m.id)}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </>
+                ) : (
+                  <>
+                    <label
+                      style={{
+                        color: "rgba(0, 0, 0, 0.88)",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Routing Peer
+                    </label>
+                    <Paragraph
+                      type={"secondary"}
+                      style={{
+                        marginTop: "-2",
+                        fontWeight: "400",
+                        marginBottom: "5px",
+                      }}
+                    >
+                      Assign a routing peer to the network. This peer has to
+                      reside in the network
+                    </Paragraph>
+                    <Form.Item
+                      name="peer"
+                       rules={[
+                        {
+                          required: true,
+                          message: "Please select routing one peer",
+                        },
+                      ]}
+                    >
+                      <Select
+                        showSearch
+                        style={{ width: "100%" }}
+                        placeholder="Select Peer"
+                        dropdownRender={peerDropDownRender}
+                        options={options}
+                        allowClear={true}
+                      />
+                    </Form.Item>
+                  </>
+                )}
               </Col>
+
               <Col span={24}>
                 <label
                   style={{
