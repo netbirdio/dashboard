@@ -28,7 +28,7 @@ import { RootState } from "typesafe-actions";
 import { Route, RouteToSave } from "../store/route/types";
 import { actions as routeActions } from "../store/route";
 import { actions as peerActions } from "../store/peer";
-import { filter, sortBy, uniq } from "lodash";
+import { filter, sortBy, uniqBy } from "lodash";
 import { EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { storeFilterState, getFilterState } from "../utils/filterState";
 import RouteAddNew from "../components/RouteAddNew";
@@ -507,7 +507,18 @@ export const Routes = () => {
   const callback = (key: any) => {};
 
   const getAccordianHeader = (record: any) => {
-    const getUniquePeerGroups = uniq(record.peer_groups);
+    const selectedPeersOfGroups: any = [];
+
+    if (record.peer_groups) {
+      peers.forEach((peer) => {
+        peer.groups?.forEach((pg) => {
+          if (record.peer_groups.includes(pg.id)) {
+            selectedPeersOfGroups.push(peer);
+          }
+        });
+      });
+    }
+    const getUniquePeerGroups = uniqBy(selectedPeersOfGroups, "id");
     return (
       <div className="headerInner">
         <p className="font-500">
@@ -569,7 +580,7 @@ export const Routes = () => {
   };
 
   const showConfirmationDeleteAllRoutes = (selectedGroup: any, event: any) => {
-     event.preventDefault();
+    event.preventDefault();
     event.stopPropagation();
     let name = selectedGroup ? selectedGroup.network_id : "";
 
