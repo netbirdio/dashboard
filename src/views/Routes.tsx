@@ -304,7 +304,7 @@ export const Routes = () => {
       setIsUpdating(false);
     } else if (savedRoute.error) {
       let errorMsg = `Failed to ${
-        isUpdating ? "Update" : "added"
+        isUpdating ? "update" : "added"
       } network route`;
       switch (savedRoute.error.statusCode) {
         case 403:
