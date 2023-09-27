@@ -350,7 +350,9 @@ const RouteAddNew = () => {
                       fontWeight: 500,
                     }}
                   >
-                    Add new routing peer
+                    {formRoute.peer_groups
+                      ? "Add Peer to the Group"
+                      : "Add new routing peer"}
                   </Paragraph>
                   <Paragraph
                     type={"secondary"}
@@ -363,8 +365,9 @@ const RouteAddNew = () => {
                       marginBottom: "4px",
                     }}
                   >
-                    When you add multiple routing peers, NetBird enables high
-                    availability
+                    {formRoute.peer_groups
+                      ? "Add this peer to the existing group to enable high availability"
+                      : "When you add multiple routing peers, NetBird enables high availability"}
                   </Paragraph>
 
                   <Row align="top">
@@ -495,7 +498,7 @@ const RouteAddNew = () => {
                     </Paragraph>
                     <Form.Item
                       name="peer"
-                       rules={[
+                      rules={[
                         {
                           required: true,
                           message: "Please select routing one peer",

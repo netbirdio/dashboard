@@ -451,7 +451,7 @@ export const Routes = () => {
       ];
       userToAction = { ...userToAction, groupedRoutes: groupedRoutes };
     }
- 
+
     let btn = (
       <Button
         type="link"
@@ -665,6 +665,9 @@ export const Routes = () => {
   };
 
   const changeRouteStatus = (record: any, checked: boolean) => {
+    if (record.peer_groups) {
+      delete record.peer;
+    }
     const updateReponse = { ...record, enabled: checked };
     dispatch(
       routeActions.saveRoute.request({
