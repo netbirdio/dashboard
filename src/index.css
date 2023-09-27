@@ -513,13 +513,15 @@ ul.ant-list-items {
   box-shadow: none !important;
 }
 
-.d-none{
-  display: none!important;
+.d-none {
+  display: none !important;
 }
+
 .nohover {
-    background: transparent!important;
-    cursor: text;
+  background: transparent !important;
+  cursor: text;
 }
+
 .emp-wrapper {
   display: flex;
   align-items: center;
@@ -529,8 +531,19 @@ ul.ant-list-items {
 .emp-wrapper p {
   margin: 0;
 }
+
 .g-r-wrapper {
   display: flex;
   gap: 8px;
   margin-bottom: 10px;
+}
+
+.gp-main-wrapper .g-r-wrapper {
+  margin: 0;
+}
+
+.gp-main-wrapper {
+  display: flex;
+  gap: 5px;
+  align-items: center;
 }

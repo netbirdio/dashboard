@@ -690,30 +690,27 @@ const PeerUpdate = (props: any) => {
     }
 
     return (
-      displayGroups &&
-      displayGroups.length > 0 &&
-      displayGroups.map((group) => {
-        return (
-          <div className="g-r-wrapper">
-            <span className="f-r-name">
-              <Tag color={"blue"} style={{ marginRight: 3 }}>
-                {group.name}
-              </Tag>
-            </span>{" "}
-            <span className="f-r-count">
-              <Tag color={""} style={{ marginRight: 3 }}>
-                {group.peers_count} peers
-              </Tag>
-            </span>
-            <Tooltip
-              title={`Peer  "${formPeer.name}" is a part of the router group. To remove this peer from the network route, you need 
+      <div className="gp-main-wrapper">
+        {displayGroups &&
+          displayGroups.length > 0 &&
+          displayGroups.map((group) => {
+            return (
+              <div className="g-r-wrapper">
+                <span className="f-r-name">
+                  <Tag color={"blue"} style={{ marginRight: 3 }}>
+                    {group.name}
+                  </Tag>
+                </span>{" "}
+              </div>
+            );
+          })}
+        <Tooltip
+          title={`Peer  "${formPeer.name}" is a part of the router group. To remove this peer from the network route, you need 
             to delete it from the group. You can do this in the following section: Select peer groups`}
-            >
-              <InfoCircleTwoTone color="#FD9349" size={20} />
-            </Tooltip>
-          </div>
-        );
-      })
+        >
+          <InfoCircleTwoTone color="#FD9349" size={20} />
+        </Tooltip>
+      </div>
     );
   };
 
