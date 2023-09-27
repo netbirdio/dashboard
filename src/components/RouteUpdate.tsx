@@ -74,8 +74,7 @@ const RouteAddNew = () => {
 
   useEffect(() => {
     if (!route) return;
-    console.log("routerouterouterouterouteroute", route);
-    const fRoute = {
+     const fRoute = {
       ...route,
       groups: route.groups,
     } as FormRoute;
@@ -306,7 +305,7 @@ const RouteAddNew = () => {
       dispatch(routeActions.resetSavedRoute(null));
     }
   }, [savedRoute]);
-  console.log("formRoute", formRoute);
+
   return (
     <>
       {route && (

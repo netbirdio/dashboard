@@ -146,8 +146,7 @@ const PeerUpdate = (props: any) => {
 
   useEffect(() => {
     setPeerRoutes([]);
-    console.log("peer", peer);
-    const temp: any[] = [];
+     const temp: any[] = [];
     if (peer && peer.groups) {
       peer?.groups?.forEach((pg: any) => {
         routes.forEach((route: any) => {
@@ -163,8 +162,7 @@ const PeerUpdate = (props: any) => {
     );
     let mergeArr: any = [...filterPeerRoutes, ...temp];
     setPeerRoutes(mergeArr);
-    console.log("mergeArr", mergeArr);
-    const filterNotPeerRoutes: any = routes.filter(
+     const filterNotPeerRoutes: any = routes.filter(
       (route) => route.peer !== peer.id
     );
     setNotPeerRoutes(filterNotPeerRoutes);
