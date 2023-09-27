@@ -59,6 +59,7 @@ export const Routes = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const { getGroupNamesFromIDs } = useGetGroupTagHelpers();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const groups = useSelector((state: RootState) => state.group.data);
   const routes = useSelector((state: RootState) => state.route.data);
@@ -75,6 +76,9 @@ export const Routes = () => {
   const loadingPeer = useSelector((state: RootState) => state.peer.loading);
   const setupNewRouteVisible = useSelector(
     (state: RootState) => state.route.setupNewRouteVisible
+  );
+  const setupEditRouteVisible = useSelector(
+    (state: RootState) => state.route.setupEditRouteVisible
   );
   const [showTutorial, setShowTutorial] = useState(true);
   const [textToSearch, setTextToSearch] = useState("");
@@ -271,6 +275,59 @@ export const Routes = () => {
       dispatch(routeActions.resetDeletedRoute(null));
     }
   }, [deletedRoute]);
+
+  const styleNotification = { marginTop: 85 };
+
+  const saveKey = isUpdating ? "Updating" : "Saving";
+  useEffect(() => {
+    if (savedRoute.loading) {
+      message.loading({
+        content: isUpdating ? "Updating..." : "Saving...",
+        key: saveKey,
+        duration: 0,
+        style: styleNotification,
+      });
+    } else if (savedRoute.success) {
+      message.success({
+        content: `Route has been successfully ${
+          isUpdating ? "Updated" : "added"
+        }`,
+        key: saveKey,
+        duration: 2,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSetupNewRouteVisible(false));
+      dispatch(routeActions.setSetupEditRouteVisible(false));
+      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
+      dispatch(routeActions.resetSavedRoute(null));
+      setIsUpdating(false);
+    } else if (savedRoute.error) {
+      let errorMsg = `Failed to ${
+        isUpdating ? "Update" : "added"
+      } network route`;
+      switch (savedRoute.error.statusCode) {
+        case 403:
+          errorMsg =
+            "Failed to update network route. You might not have enough permissions.";
+          break;
+        default:
+          errorMsg = savedRoute.error.data.message
+            ? savedRoute.error.data.message
+            : errorMsg;
+          break;
+      }
+      message.error({
+        content: errorMsg,
+        key: saveKey,
+        duration: 5,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
+      dispatch(routeActions.resetSavedRoute(null));
+      setIsUpdating(false);
+    }
+  }, [savedRoute]);
 
   const onChangeTextToSearch = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -665,6 +722,7 @@ export const Routes = () => {
   };
 
   const changeRouteStatus = (record: any, checked: boolean) => {
+    setIsUpdating(true);
     if (record.peer_groups) {
       delete record.peer;
     }
@@ -935,8 +993,9 @@ export const Routes = () => {
               </div>
             )}
           </Container>
-          <RouteAddNew />
-          <RouteUpdate />
+          {setupNewRouteVisible && <RouteAddNew />}
+
+          {setupEditRouteVisible && <RouteUpdate />}
         </>
       ) : (
         <RoutePeerUpdate />
