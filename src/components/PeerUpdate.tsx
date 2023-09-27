@@ -35,6 +35,7 @@ import {
   LockOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
+  InfoCircleTwoTone,
 } from "@ant-design/icons";
 import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
@@ -145,10 +146,24 @@ const PeerUpdate = (props: any) => {
 
   useEffect(() => {
     setPeerRoutes([]);
+    console.log("peer", peer);
+    const temp: any[] = [];
+    if (peer && peer.groups) {
+      peer?.groups?.forEach((pg: any) => {
+        routes.forEach((route: any) => {
+          if (route.peer_groups?.includes(pg.id)) {
+            temp.push(route);
+          }
+        });
+      });
+    }
+
     const filterPeerRoutes: any = routes.filter(
       (route) => route.peer === peer.id
     );
-    setPeerRoutes(filterPeerRoutes);
+    let mergeArr: any = [...filterPeerRoutes, ...temp];
+    setPeerRoutes(mergeArr);
+    console.log("mergeArr", mergeArr);
     const filterNotPeerRoutes: any = routes.filter(
       (route) => route.peer !== peer.id
     );
@@ -180,11 +195,13 @@ const PeerUpdate = (props: any) => {
   useEffect(() => {}, [users]);
 
   const routeAddAllowed = (os: string): boolean => {
-    return os !== ""
-        && !os.toLowerCase().startsWith("darwin")
-        && !os.toLowerCase().startsWith("windows")
-        && !os.toLowerCase().startsWith("android")
-  }
+    return (
+      os !== "" &&
+      !os.toLowerCase().startsWith("darwin") &&
+      !os.toLowerCase().startsWith("windows") &&
+      !os.toLowerCase().startsWith("android")
+    );
+  };
 
   const toggleEditName = (status: boolean, value?: string) => {
     setEditName(status);
@@ -659,6 +676,47 @@ const PeerUpdate = (props: any) => {
     }
   }, [deletedRoute]);
 
+  const renderGroupRouting = (rowGroups: string[] | null) => {
+    let groupsMap = new Map<string, Group>();
+    groups.forEach((g) => {
+      groupsMap.set(g.id!, g);
+    });
+
+    let displayGroups: Group[] = [];
+    if (rowGroups) {
+      displayGroups = rowGroups
+        .filter((g) => groupsMap.get(g))
+        .map((g) => groupsMap.get(g)!);
+    }
+
+    return (
+      displayGroups &&
+      displayGroups.length > 0 &&
+      displayGroups.map((group) => {
+        return (
+          <div className="g-r-wrapper">
+            <span className="f-r-name">
+              <Tag color={"blue"} style={{ marginRight: 3 }}>
+                {group.name}
+              </Tag>
+            </span>{" "}
+            <span className="f-r-count">
+              <Tag color={""} style={{ marginRight: 3 }}>
+                {group.peers_count} peers
+              </Tag>
+            </span>
+            <Tooltip
+              title={`Peer  "${formPeer.name}" is a part of the router group. To remove this peer from the network route, you need 
+            to delete it from the group. You can do this in the following section: Select peer groups`}
+            >
+              <InfoCircleTwoTone color="#FD9349" size={20} />
+            </Tooltip>
+          </div>
+        );
+      })
+    );
+  };
+
   return (
     <>
       {peer && (
@@ -972,133 +1030,141 @@ const PeerUpdate = (props: any) => {
           {/* --- */}
           {!isGroupUpdateView && (
             <>
-              {routeAddAllowed(peer.os) &&
-              <Card
-                bordered={true}
-                // loading={loading}ƒ
-                style={{ marginBottom: "7px" }}
-              >
-                <div style={{ maxWidth: "800px" }}>
-                  <Paragraph
-                    style={{
-                      textAlign: "left",
-                      whiteSpace: "pre-line",
-                      fontSize: "16px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Network routes
-                  </Paragraph>
-                  <Row
-                    gutter={21}
-                    style={{ marginTop: "-16px", marginBottom: "10px" }}
-                  >
-                    <Col
-                      xs={24}
-                      sm={24}
-                      md={20}
-                      lg={20}
-                      xl={20}
-                      xxl={20}
-                      span={20}
+              {routeAddAllowed(peer.os) && (
+                <Card
+                  bordered={true}
+                  // loading={loading}ƒ
+                  style={{ marginBottom: "7px" }}
+                >
+                  <div style={{ maxWidth: "800px" }}>
+                    <Paragraph
+                      style={{
+                        textAlign: "left",
+                        whiteSpace: "pre-line",
+                        fontSize: "16px",
+                        fontWeight: "500",
+                      }}
                     >
-                      <Paragraph
-                        type={"secondary"}
-                        style={{ textAlign: "left", whiteSpace: "pre-line" }}
+                      Network routes
+                    </Paragraph>
+                    <Row
+                      gutter={21}
+                      style={{ marginTop: "-16px", marginBottom: "10px" }}
+                    >
+                      <Col
+                        xs={24}
+                        sm={24}
+                        md={20}
+                        lg={20}
+                        xl={20}
+                        xxl={20}
+                        span={20}
                       >
-                        Access other networks without installing NetBird on
-                        every resource.
-                      </Paragraph>
-                    </Col>
-                    <Col
-                      xs={24}
-                      sm={24}
-                      md={1}
-                      lg={1}
-                      xl={1}
-                      xxl={1}
-                      span={1}
-                      style={{ marginTop: "-16px" }}
-                    >
-                      {peerRoutes && peerRoutes.length > 0 && (
+                        <Paragraph
+                          type={"secondary"}
+                          style={{ textAlign: "left", whiteSpace: "pre-line" }}
+                        >
+                          Access other networks without installing NetBird on
+                          every resource.
+                        </Paragraph>
+                      </Col>
+                      <Col
+                        xs={24}
+                        sm={24}
+                        md={1}
+                        lg={1}
+                        xl={1}
+                        xxl={1}
+                        span={1}
+                        style={{ marginTop: "-16px" }}
+                      >
+                        {peerRoutes && peerRoutes.length > 0 && (
+                          <Button type="primary" onClick={onClickAddNewRoute}>
+                            Add route
+                          </Button>
+                        )}
+                      </Col>
+                    </Row>
+                    {peerRoutes && peerRoutes.length > 0 && (
+                      <Table
+                        size={"small"}
+                        style={{ marginTop: "-10px" }}
+                        showHeader={false}
+                        scroll={{ x: 800 }}
+                        pagination={false}
+                        dataSource={peerRoutes}
+                      >
+                        <Column title="Name" dataIndex="network_id" />
+                        <Column title="Name" dataIndex="network" />
+                        <Column
+                          title="enabled"
+                          dataIndex="network"
+                          render={(e, record: any, index) => {
+                            return record.peer_groups ? (
+                              renderGroupRouting(record.peer_groups)
+                            ) : (
+                              <>
+                                <Switch
+                                  defaultChecked={record.enabled}
+                                  size="small"
+                                  onChange={(checked) =>
+                                    onRouteEnableChange(checked, record)
+                                  }
+                                />
+                              </>
+                            );
+                          }}
+                        />
+
+                        <Column
+                          align="right"
+                          render={(text, record: any, index) => {
+                            return record.peer_groups ? (
+                              ""
+                            ) : (
+                              <Button
+                                danger={true}
+                                type={"text"}
+                                onClick={() => {
+                                  showConfirmDelete(
+                                    record.id,
+                                    record.network_id
+                                  );
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            );
+                          }}
+                        />
+                      </Table>
+                    )}
+                    <Divider style={{ marginTop: "-12px" }}></Divider>
+                    {(peerRoutes === null || peerRoutes.length === 0) && (
+                      <Space
+                        direction="vertical"
+                        size="small"
+                        align="start"
+                        style={{
+                          display: "flex",
+                          padding: "35px 0px",
+                          marginTop: "-40px",
+                          justifyContent: "center",
+                        }}
+                      >
+                        <Paragraph
+                          style={{ textAlign: "start", whiteSpace: "pre-line" }}
+                        >
+                          You don't have any routes yet
+                        </Paragraph>
                         <Button type="primary" onClick={onClickAddNewRoute}>
                           Add route
                         </Button>
-                      )}
-                    </Col>
-                  </Row>
-                  {peerRoutes && peerRoutes.length > 0 && (
-                    <Table
-                      size={"small"}
-                      style={{ marginTop: "-10px" }}
-                      showHeader={false}
-                      scroll={{ x: 800 }}
-                      pagination={false}
-                      dataSource={peerRoutes}
-                    >
-                      <Column title="Name" dataIndex="network_id" />
-                      <Column title="Name" dataIndex="network" />
-                      <Column
-                        title="enabled"
-                        dataIndex="network"
-                        render={(e, record: any, index) => {
-                          return (
-                            <>
-                              <Switch
-                                defaultChecked={record.enabled}
-                                size="small"
-                                onChange={(checked) =>
-                                  onRouteEnableChange(checked, record)
-                                }
-                              />
-                            </>
-                          );
-                        }}
-                      />
-
-                      <Column
-                        align="right"
-                        render={(text, record: any, index) => {
-                          return (
-                            <Button
-                              danger={true}
-                              type={"text"}
-                              onClick={() => {
-                                showConfirmDelete(record.id, record.network_id);
-                              }}
-                            >
-                              Delete
-                            </Button>
-                          );
-                        }}
-                      />
-                    </Table>
-                  )}
-                  <Divider style={{ marginTop: "-12px" }}></Divider>
-                  {(peerRoutes === null || peerRoutes.length === 0) && (
-                    <Space
-                      direction="vertical"
-                      size="small"
-                      align="start"
-                      style={{
-                        display: "flex",
-                        padding: "35px 0px",
-                        marginTop: "-40px",
-                        justifyContent: "center",
-                      }}
-                    >
-                      <Paragraph
-                        style={{ textAlign: "start", whiteSpace: "pre-line" }}
-                      >
-                        You don't have any routes yet
-                      </Paragraph>
-                      <Button type="primary" onClick={onClickAddNewRoute}>
-                        Add route
-                      </Button>
-                    </Space>
-                  )}
-                </div>
-              </Card>}
+                      </Space>
+                    )}
+                  </div>
+                </Card>
+              )}
 
               <Card bordered={true} style={{ marginBottom: "50px" }}>
                 <Col span={24}>
