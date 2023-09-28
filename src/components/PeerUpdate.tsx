@@ -66,6 +66,7 @@ const PeerUpdate = (props: any) => {
   const updateGroupsVisible = useSelector(
     (state: RootState) => state.peer.updateGroupsVisible
   );
+  const allowList: string[] = ["linux"];
 
   const savedGroups = useSelector((state: RootState) => state.peer.savedGroups);
   const updatedPeers = useSelector(
@@ -146,7 +147,7 @@ const PeerUpdate = (props: any) => {
 
   useEffect(() => {
     setPeerRoutes([]);
-     const temp: any[] = [];
+    const temp: any[] = [];
     if (peer && peer.groups) {
       peer?.groups?.forEach((pg: any) => {
         routes.forEach((route: any) => {
@@ -162,7 +163,7 @@ const PeerUpdate = (props: any) => {
     );
     let mergeArr: any = [...filterPeerRoutes, ...temp];
     setPeerRoutes(mergeArr);
-     const filterNotPeerRoutes: any = routes.filter(
+    const filterNotPeerRoutes: any = routes.filter(
       (route) => route.peer !== peer.id
     );
     setNotPeerRoutes(filterNotPeerRoutes);
@@ -193,12 +194,7 @@ const PeerUpdate = (props: any) => {
   useEffect(() => {}, [users]);
 
   const routeAddAllowed = (os: string): boolean => {
-    return (
-      os !== "" &&
-      !os.toLowerCase().startsWith("darwin") &&
-      !os.toLowerCase().startsWith("windows") &&
-      !os.toLowerCase().startsWith("android")
-    );
+    return allowList.includes(os.toLowerCase());
   };
 
   const toggleEditName = (status: boolean, value?: string) => {
