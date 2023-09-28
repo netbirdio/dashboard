@@ -58,7 +58,7 @@ const { confirm } = Modal;
 const { Panel } = Collapse;
 
 export const Routes = () => {
-   const { getTokenSilently } = useGetTokenSilently();
+  const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const { getGroupNamesFromIDs } = useGetGroupTagHelpers();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -589,10 +589,9 @@ export const Routes = () => {
       </>
     );
   };
- 
+
   const getAccordianHeader = (record: any) => {
     const selectedPeersOfGroups: any = [];
-
     if (record.peer_groups) {
       peers.forEach((peer) => {
         peer.groups?.forEach((pg) => {
