@@ -547,3 +547,23 @@ ul.ant-list-items {
   gap: 5px;
   align-items: center;
 }
+
+.availtooltip a {
+  padding: 0 20px;
+}
+
+.availtooltip {
+  padding: 5px;
+}
+.availtooltip p{
+  margin: 0;
+}
+.avail-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.avail-inner span {
+  color: #1677ff;
+}

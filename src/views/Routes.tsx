@@ -21,6 +21,7 @@ import {
   Collapse,
   Typography,
   Badge,
+  Tooltip,
 } from "antd";
 import { Container } from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
@@ -32,6 +33,7 @@ import { filter, sortBy, uniqBy } from "lodash";
 import { EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
 import { storeFilterState, getFilterState } from "../utils/filterState";
 import RouteAddNew from "../components/RouteAddNew";
+import { Link } from "react-router-dom";
 import {
   GroupedDataTable,
   initPeerMaps,
@@ -56,7 +58,7 @@ const { confirm } = Modal;
 const { Panel } = Collapse;
 
 export const Routes = () => {
-  const { getTokenSilently } = useGetTokenSilently();
+   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const { getGroupNamesFromIDs } = useGetGroupTagHelpers();
   const [isUpdating, setIsUpdating] = useState(false);
@@ -570,7 +572,24 @@ export const Routes = () => {
   };
 
   const callback = (key: any) => {};
+  const availabilityTooltip = () => {
+    return (
+      <>
+        <div className="availtooltip">
+          <div className="avail-inner">
+            <ExclamationCircleOutlined />
+            <p style={{ color: "#000" }}>
+              To achieve High Availability you need to add more peers into this
+              group, you can do it in the Peers menu.
+            </p>
+          </div>
 
+          <Link to="/peers">Go to Peers</Link>
+        </div>
+      </>
+    );
+  };
+ 
   const getAccordianHeader = (record: any) => {
     const selectedPeersOfGroups: any = [];
 
@@ -597,7 +616,36 @@ export const Routes = () => {
         </p>
         <p>{record.network}</p>
         <p>
-          {record.routesCount > 1 ? (
+          {record.peer_groups ? (
+            getUniquePeerGroups.length > 1 ? (
+              <>
+                <Tag color="green">on</Tag>{" "}
+                <Button
+                  type="link"
+                  style={{ padding: "0" }}
+                  onClick={(event) => setRouteAndView(record, event)}
+                >
+                  Configure
+                </Button>
+              </>
+            ) : (
+              <Tooltip color="#fff" title={availabilityTooltip}>
+                <Tag color="default">
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    off
+                  </Text>
+                </Tag>
+
+                <Button
+                  type="link"
+                  style={{ padding: "0" }}
+                  onClick={(event) => setRouteAndView(record, event)}
+                >
+                  Configure
+                </Button>
+              </Tooltip>
+            )
+          ) : record.routesCount > 1 ? (
             <>
               <Tag color="green">on</Tag>
               <Button
@@ -610,15 +658,12 @@ export const Routes = () => {
             </>
           ) : (
             <>
-              {getUniquePeerGroups.length > 1 ? (
-                <Tag color="green">on</Tag>
-              ) : (
-                <Tag color="default">
-                  <Text type="secondary" style={{ fontSize: 12 }}>
-                    off
-                  </Text>
-                </Tag>
-              )}
+              <Tag color="default">
+                <Text type="secondary" style={{ fontSize: 12 }}>
+                  off
+                </Text>
+              </Tag>
+
               <Button
                 type="link"
                 style={{ padding: "0" }}
@@ -628,6 +673,8 @@ export const Routes = () => {
               </Button>
             </>
           )}
+
+          {}
         </p>
         <p className="text-right">
           <Button

@@ -248,7 +248,7 @@ export const Peers = () => {
     const t = searchText
       ? searchText.toLowerCase().trim()
       : textToSearch.toLowerCase().trim();
-    
+
     let f: Peer[] = filter(peers, (f: Peer) => {
       let userEmail: string | null;
       const u = users?.find((u) => u.id === f.user_id)?.email;
@@ -399,11 +399,7 @@ export const Peers = () => {
   };
 
   function handleSwitchSSH(record: PeerDataTable, checked: boolean) {
-    const peer = {
-      id: record.id,
-      ssh_enabled: checked,
-      name: record.name,
-    } as Peer;
+    const peer = { ...record, ssh_enabled: checked };
     dispatch(
       peerActions.updatePeer.request({
         getAccessTokenSilently: getTokenSilently,
@@ -635,16 +631,20 @@ export const Peers = () => {
           <Container style={{ paddingTop: "40px" }}>
             <Row>
               <Col span={24}>
-                <Title className="page-heading">{isAdmin ? "Peers" : "My peers"}</Title>
+                <Title className="page-heading">
+                  {isAdmin ? "Peers" : "My peers"}
+                </Title>
                 {peers.length ? (
                   <Paragraph style={{ marginTop: "5px" }}>
-                    {isAdmin ? "A list of all machines and devices connected to your private network. Use this view to manage peers" :
-                        "A list of all your machines and devices that you connected to NetBird."}
+                    {isAdmin
+                      ? "A list of all machines and devices connected to your private network. Use this view to manage peers"
+                      : "A list of all your machines and devices that you connected to NetBird."}
                   </Paragraph>
                 ) : (
                   <Paragraph style={{ marginTop: "5px" }} type={"secondary"}>
-                    {isAdmin ? "A list of all machines and devices connected to your private network. Use this view to manage peers" :
-                        "A list of all your machines and devices that you connected to NetBird."}
+                    {isAdmin
+                      ? "A list of all machines and devices connected to your private network. Use this view to manage peers"
+                      : "A list of all your machines and devices that you connected to NetBird."}
                   </Paragraph>
                 )}
 
