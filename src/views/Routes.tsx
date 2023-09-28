@@ -292,7 +292,7 @@ export const Routes = () => {
     } else if (savedRoute.success) {
       message.success({
         content: `Route has been successfully ${
-          isUpdating ? "Updated" : "added"
+          isUpdating ? "updated" : "added"
         }`,
         key: saveKey,
         duration: 2,
