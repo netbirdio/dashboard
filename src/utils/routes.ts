@@ -99,6 +99,9 @@ export const transformGroupedDataTable = (
       (value, index, arrary) => arrary.indexOf(value) === index
     );
     let groupDataTableRoutes = transformDataTable(listedRoutes, peers);
+    const filterEnabledRoutes = groupDataTableRoutes.filter(
+      (route) => route.enabled
+    );
     groupedRoutes.push({
       key: p.toString(),
       network_id: lastRoute!.network_id,
@@ -106,7 +109,7 @@ export const transformGroupedDataTable = (
       masquerade: lastRoute!.masquerade,
       description: lastRoute!.description,
       enabled: hasEnabled,
-      routesCount: groupDataTableRoutes.length,
+      routesCount: filterEnabledRoutes.length,
       groupedRoutes: groupDataTableRoutes,
       routesGroups: groupList,
       peer_groups: lastRoute!.peer_groups,
