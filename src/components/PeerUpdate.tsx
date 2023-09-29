@@ -703,10 +703,10 @@ const PeerUpdate = (props: any) => {
             );
           })}
         <Tooltip
-          title={`Peer  "${formPeer.name}" is a part of the router group. To remove this peer from the network route, you need 
-            to delete it from the group. You can do this in the following section: Select peer groups`}
+          title={`Peer  "${formPeer.name}" is a part of a group used in a network route. To remove this peer from the network route, you need 
+  to disassociate this peer from the groups used in this route.`}
         >
-          <InfoCircleTwoTone color="#FD9349" size={20} />
+          <InfoCircleTwoTone twoToneColor='#FD9349' size={20} />
         </Tooltip>
       </div>
     );

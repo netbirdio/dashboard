@@ -340,7 +340,7 @@ const RoutePeerUpdate = () => {
     },
     {
       key: "groupOfPeers",
-      label: "Group of Peers",
+      label: "Peer groups",
       disabled: true,
       children: (
         <>
@@ -352,7 +352,7 @@ const RoutePeerUpdate = () => {
               marginBottom: "5px",
             }}
           >
-            Assign group of peers as a routing peer for the Network CIDR
+            Assign peer groups with Linux machines to be used as routing peers
           </Paragraph>
           <Form.Item
             name="peer_groups"

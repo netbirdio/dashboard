@@ -304,7 +304,7 @@ const RouteAddNew = () => {
                     }}
                   >
                     {formRoute.peer_groups
-                      ? "Add Peer to the Group"
+                      ? "Configure peer groups"
                       : "Add new routing peer"}
                   </Paragraph>
                   <Paragraph
@@ -319,7 +319,7 @@ const RouteAddNew = () => {
                     }}
                   >
                     {formRoute.peer_groups
-                      ? "Add this peer to the existing group to enable high availability"
+                      ? "Add peer groups with multiple peers to enable high availability"
                       : "When you add multiple routing peers, NetBird enables high availability"}
                   </Paragraph>
 
@@ -346,7 +346,6 @@ const RouteAddNew = () => {
                           Network name and CIDR that you are adding the route to
                         </Paragraph>
                         <Form.Item
-                          // name="network_id"
                           label=""
                           rules={[
                             {
@@ -389,7 +388,7 @@ const RouteAddNew = () => {
                         fontWeight: "500",
                       }}
                     >
-                      Group of Peers
+                      Peer groups
                     </label>
                     <Paragraph
                       type={"secondary"}
@@ -399,8 +398,7 @@ const RouteAddNew = () => {
                         marginBottom: "5px",
                       }}
                     >
-                      Assign group of peers as a routing peer for the Network
-                      CIDR
+                      Assign peer groups with Linux machines to be used as routing peers
                     </Paragraph>
                     <Form.Item
                       name="peer_groups"
