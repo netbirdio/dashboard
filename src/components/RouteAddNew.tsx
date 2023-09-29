@@ -41,7 +41,7 @@ interface FormRoute extends Route {}
 
 const RouteAddNew = (selectedPeer: any) => {
   const [activeTab, setActiveTab] = useState<string | null>(null);
-   const {
+  const {
     blueTagRender,
     handleChangeTags,
     dropDownRender,
@@ -211,9 +211,35 @@ const RouteAddNew = (selectedPeer: any) => {
     form
       .validateFields()
       .then(() => {
+        const t = routes.filter((route) => {
+          if (
+            route.network_id === formRoute.network_id &&
+            route.network === formRoute.network
+          ) {
+            return route;
+          }
+        });
+
+        if (
+          formRoute.peer_groups &&
+          formRoute.peer_groups.length > 0 &&
+          t &&
+          t.length > 0
+        ) {
+          const style = { marginTop: 85 };
+          const duplicateNetworkIdKey = "duplicateKey";
+          return message.error({
+            content:
+              "Please use different network identifier or network range",
+            key: duplicateNetworkIdKey,
+            duration: 2,
+            style,
+          });
+        }
+
         if (!setupNewRouteHA || formRoute.peer != "") {
           const routeToSave = createRouteToSave(formRoute);
-           dispatch(
+          dispatch(
             routeActions.saveRoute.request({
               getAccessTokenSilently: getTokenSilently,
               payload: routeToSave,

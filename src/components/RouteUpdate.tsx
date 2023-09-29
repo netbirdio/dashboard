@@ -74,7 +74,7 @@ const RouteAddNew = () => {
 
   useEffect(() => {
     if (!route) return;
-     const fRoute = {
+    const fRoute = {
       ...route,
       groups: route.groups,
     } as FormRoute;
@@ -126,29 +126,18 @@ const RouteAddNew = () => {
       inputRoute.groups
     );
 
-    const payload = {
+    return {
       id: inputRoute.id,
       network: inputRoute.network,
       network_id: inputRoute.network_id,
       description: inputRoute.description,
+      peer: peerID,
       enabled: inputRoute.enabled,
       masquerade: inputRoute.masquerade,
       metric: inputRoute.metric,
       groups: existingGroups,
       groupsToCreate: groupsToCreate,
     } as RouteToSave;
-
-    if (formRoute.peer_groups) {
-      let pay = { ...payload, peer_groups: inputRoute.peer_groups };
-      return pay;
-    }
-
-    if (formRoute.peer !== "") {
-      let pay = { ...payload, peer: peerID };
-      return pay;
-    }
-
-    return payload;
   };
 
   const handleFormSubmit = () => {
@@ -216,7 +205,6 @@ const RouteAddNew = () => {
         masquerade: false,
         enabled: true,
         groups: [],
-        peer_groups: [],
       } as Route)
     );
     setVisibleNewRoute(false);
@@ -259,6 +247,52 @@ const RouteAddNew = () => {
     return selectValidator(obj, value);
   };
 
+  const styleNotification = { marginTop: 85 };
+
+  const saveKey = "saving";
+  useEffect(() => {
+    if (savedRoute.loading) {
+      message.loading({
+        content: "Saving...",
+        key: saveKey,
+        duration: 0,
+        style: styleNotification,
+      });
+    } else if (savedRoute.success) {
+      message.success({
+        content: "Route has been successfully added.",
+        key: saveKey,
+        duration: 2,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSetupNewRouteVisible(false));
+      dispatch(routeActions.setSetupEditRouteVisible(false));
+      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
+      dispatch(routeActions.resetSavedRoute(null));
+    } else if (savedRoute.error) {
+      let errorMsg = "Failed to update network route";
+      switch (savedRoute.error.statusCode) {
+        case 403:
+          errorMsg =
+            "Failed to update network route. You might not have enough permissions.";
+          break;
+        default:
+          errorMsg = savedRoute.error.data.message
+            ? savedRoute.error.data.message
+            : errorMsg;
+          break;
+      }
+      message.error({
+        content: errorMsg,
+        key: saveKey,
+        duration: 5,
+        style: styleNotification,
+      });
+      dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
+      dispatch(routeActions.resetSavedRoute(null));
+    }
+  }, [savedRoute]);
 
   return (
     <>
@@ -303,9 +337,7 @@ const RouteAddNew = () => {
                       fontWeight: 500,
                     }}
                   >
-                    {formRoute.peer_groups
-                      ? "Add Peer to the Group"
-                      : "Add new routing peer"}
+                    Add new routing peer
                   </Paragraph>
                   <Paragraph
                     type={"secondary"}
@@ -318,9 +350,8 @@ const RouteAddNew = () => {
                       marginBottom: "4px",
                     }}
                   >
-                    {formRoute.peer_groups
-                      ? "Add this peer to the existing group to enable high availability"
-                      : "When you add multiple routing peers, NetBird enables high availability"}
+                    When you add multiple routing peers, NetBird enables high
+                    availability
                   </Paragraph>
 
                   <Row align="top">
@@ -380,97 +411,37 @@ const RouteAddNew = () => {
               </Col>
 
               <Col span={24}>
-                {formRoute.peer_groups ? (
-                  <>
-                    <label
-                      style={{
-                        color: "rgba(0, 0, 0, 0.88)",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      Group of Peers
-                    </label>
-                    <Paragraph
-                      type={"secondary"}
-                      style={{
-                        marginTop: "-2",
-                        fontWeight: "400",
-                        marginBottom: "5px",
-                      }}
-                    >
-                      Assign group of peers as a routing peer for the Network
-                      CIDR
-                    </Paragraph>
-                    <Form.Item
-                      name="peer_groups"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select peer groups",
-                        },
-                      ]}
-                    >
-                      <Select
-                        mode="tags"
-                        style={{ maxWidth: "100%" }}
-                        tagRender={blueTagRender}
-                        onChange={handleChangeTags}
-                        dropdownRender={dropDownRender}
-                        optionFilterProp="serchValue"
-                      >
-                        {tagGroups.map((m, index) => (
-                          <Option key={index} value={m.id} serchValue={m.name}>
-                            {optionRender(m.name, m.id)}
-                          </Option>
-                        ))}
-                      </Select>
-                    </Form.Item>
-                  </>
-                ) : (
-                  <>
-                    <label
-                      style={{
-                        color: "rgba(0, 0, 0, 0.88)",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      Routing Peer
-                    </label>
-                    <Paragraph
-                      type={"secondary"}
-                      style={{
-                        marginTop: "-2",
-                        fontWeight: "400",
-                        marginBottom: "5px",
-                      }}
-                    >
-                      Assign a routing peer to the network. This peer has to
-                      reside in the network
-                    </Paragraph>
-                    <Form.Item
-                      name="peer"
-                      rules={[
-                        {
-                          required: true,
-                          message: "Please select routing one peer",
-                        },
-                      ]}
-                    >
-                      <Select
-                        showSearch
-                        style={{ width: "100%" }}
-                        placeholder="Select Peer"
-                        dropdownRender={peerDropDownRender}
-                        options={options}
-                        allowClear={true}
-                      />
-                    </Form.Item>
-                  </>
-                )}
+                <label
+                  style={{
+                    color: "rgba(0, 0, 0, 0.88)",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+                >
+                  Routing Peer
+                </label>
+                <Paragraph
+                  type={"secondary"}
+                  style={{
+                    marginTop: "-2",
+                    fontWeight: "400",
+                    marginBottom: "5px",
+                  }}
+                >
+                  Assign a routing peer to the network. This peer has to reside
+                  in the network
+                </Paragraph>
+                <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
+                  <Select
+                    showSearch
+                    style={{ width: "100%" }}
+                    placeholder="Select Peer"
+                    dropdownRender={peerDropDownRender}
+                    options={options}
+                    allowClear={true}
+                  />
+                </Form.Item>
               </Col>
-
               <Col span={24}>
                 <label
                   style={{
