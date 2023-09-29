@@ -774,7 +774,7 @@ export const Settings = () => {
                 </Form.Item>
               </Col>
             </Row>
-            {(isNetBirdHosted() || isLocalDev()) && (
+            {(!isNetBirdHosted() || isLocalDev()) && (
               <>
                 <Row>
                   <Col span={12}>
@@ -838,7 +838,7 @@ export const Settings = () => {
                       }}
                     >
                       Specify the JWT claim for extracting group names, e.g.,
-                      roles or groups, to add to account groups
+                      roles or groups, to add to account groups (this claim should contain a list of group names).
                     </Paragraph>
                   </Col>
                 </Row>
