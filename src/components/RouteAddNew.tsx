@@ -230,9 +230,9 @@ const RouteAddNew = (selectedPeer: any) => {
           const duplicateNetworkIdKey = "duplicateKey";
           return message.error({
             content:
-              "Please use different network identifier or network range",
+              "A route with this network identifier and network range already exists. Please use a different network identifier or network range.",
             key: duplicateNetworkIdKey,
-            duration: 2,
+            duration: 5,
             style,
           });
         }

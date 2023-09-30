@@ -579,8 +579,8 @@ export const Routes = () => {
           <div className="avail-inner">
             <ExclamationCircleOutlined />
             <p style={{ color: "#000" }}>
-              To achieve High Availability you need to add more peers into this
-              group, you can do it in the Peers menu.
+              To configure High Availability, you must add more peers to a group in this route.
+              You can do it in the Peers menu.
             </p>
           </div>
 
