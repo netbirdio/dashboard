@@ -623,7 +623,7 @@ export const SetupKeys = () => {
                             <Tooltip title="Peers that are offline for over 10 minutes will be removed automatically">
                               <Tag>
                                 <Text type="secondary" style={{ fontSize: 10 }}>
-                                  Ephemeral
+                                  ephemeral
                                 </Text>
                               </Tag>
                             </Tooltip>

@@ -337,7 +337,9 @@ const RouteAddNew = () => {
                       fontWeight: 500,
                     }}
                   >
-                    Add new routing peer
+                    {formRoute.peer_groups
+                      ? "Configure peer groups"
+                      : "Add new routing peer"}
                   </Paragraph>
                   <Paragraph
                     type={"secondary"}
@@ -350,8 +352,9 @@ const RouteAddNew = () => {
                       marginBottom: "4px",
                     }}
                   >
-                    When you add multiple routing peers, NetBird enables high
-                    availability
+                    {formRoute.peer_groups
+                      ? "Add peer groups with multiple peers to enable high availability"
+                      : "When you add multiple routing peers, NetBird enables high availability"}
                   </Paragraph>
 
                   <Row align="top">
@@ -377,7 +380,6 @@ const RouteAddNew = () => {
                           Network name and CIDR that you are adding the route to
                         </Paragraph>
                         <Form.Item
-                          // name="network_id"
                           label=""
                           rules={[
                             {
@@ -411,36 +413,94 @@ const RouteAddNew = () => {
               </Col>
 
               <Col span={24}>
-                <label
-                  style={{
-                    color: "rgba(0, 0, 0, 0.88)",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                  }}
-                >
-                  Routing Peer
-                </label>
-                <Paragraph
-                  type={"secondary"}
-                  style={{
-                    marginTop: "-2",
-                    fontWeight: "400",
-                    marginBottom: "5px",
-                  }}
-                >
-                  Assign a routing peer to the network. This peer has to reside
-                  in the network
-                </Paragraph>
-                <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
-                  <Select
-                    showSearch
-                    style={{ width: "100%" }}
-                    placeholder="Select Peer"
-                    dropdownRender={peerDropDownRender}
-                    options={options}
-                    allowClear={true}
-                  />
-                </Form.Item>
+                {formRoute.peer_groups ? (
+                  <>
+                    <label
+                      style={{
+                        color: "rgba(0, 0, 0, 0.88)",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Peer groups
+                    </label>
+                    <Paragraph
+                      type={"secondary"}
+                      style={{
+                        marginTop: "-2",
+                        fontWeight: "400",
+                        marginBottom: "5px",
+                      }}
+                    >
+                      Assign peer groups with Linux machines to be used as routing peers
+                    </Paragraph>
+                    <Form.Item
+                      name="peer_groups"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select peer groups",
+                        },
+                      ]}
+                    >
+                      <Select
+                        mode="tags"
+                        style={{ maxWidth: "100%" }}
+                        tagRender={blueTagRender}
+                        onChange={handleChangeTags}
+                        dropdownRender={dropDownRender}
+                        optionFilterProp="serchValue"
+                      >
+                        {tagGroups.map((m, index) => (
+                          <Option key={index} value={m.id} serchValue={m.name}>
+                            {optionRender(m.name, m.id)}
+                          </Option>
+                        ))}
+                      </Select>
+                    </Form.Item>
+                  </>
+                ) : (
+                  <>
+                    <label
+                      style={{
+                        color: "rgba(0, 0, 0, 0.88)",
+                        fontSize: "14px",
+                        fontWeight: "500",
+                      }}
+                    >
+                      Routing Peer
+                    </label>
+                    <Paragraph
+                      type={"secondary"}
+                      style={{
+                        marginTop: "-2",
+                        fontWeight: "400",
+                        marginBottom: "5px",
+                      }}
+                    >
+                      Assign a routing peer to the network. This peer has to
+                      reside in the network
+                    </Paragraph>
+                    <Form.Item
+                      name="peer"
+                      rules={[
+                        {
+                          required: true,
+                          message: "Please select routing one peer",
+                        },
+                      ]}
+                    >
+                      <Select
+                        showSearch
+                        style={{ width: "100%" }}
+                        placeholder="Select Peer"
+                        dropdownRender={peerDropDownRender}
+                        options={options}
+                        allowClear={true}
+                      />
+                    </Form.Item>
+                  </>
+                )}
               </Col>
               <Col span={24}>
                 <label

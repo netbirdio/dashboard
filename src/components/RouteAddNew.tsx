@@ -445,7 +445,7 @@ const RouteAddNew = (selectedPeer: any) => {
     },
     {
       key: "groupOfPeers",
-      label: "Group of Peers",
+      label: "Peer groups",
       children: (
         <>
           <Paragraph
@@ -456,7 +456,7 @@ const RouteAddNew = (selectedPeer: any) => {
               marginBottom: "5px",
             }}
           >
-            Assign group of peers as a routing peer for the Network CIDR
+            Assign peer groups with Linux machines to be used as routing peers
           </Paragraph>
           {activeTab === "groupOfPeers" && (
             <Form.Item
@@ -634,7 +634,7 @@ const RouteAddNew = (selectedPeer: any) => {
                                   marginBottom: "5px",
                                 }}
                               >
-                                Add a unique cryptographic key that is assigned
+                                Add a unique network identifier that is assigned
                                 to each device
                               </Paragraph>
                               <Form.Item
