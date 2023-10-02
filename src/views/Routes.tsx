@@ -71,6 +71,8 @@ export const Routes = () => {
   const routes = useSelector((state: RootState) => state.route.data);
   const failed = useSelector((state: RootState) => state.route.failed);
   const loading = useSelector((state: RootState) => state.route.loading);
+  const route = useSelector((state: RootState) => state.route.route);
+
   const deletedRoute = useSelector(
     (state: RootState) => state.route.deletedRoute
   );
@@ -286,52 +288,54 @@ export const Routes = () => {
 
   const saveKey = isUpdating ? "Updating" : "Saving";
   useEffect(() => {
-    if (savedRoute.loading) {
-      message.loading({
-        content: isUpdating ? "Updating..." : "Saving...",
-        key: saveKey,
-        duration: 0,
-        style: styleNotification,
-      });
-    } else if (savedRoute.success) {
-      message.success({
-        content: `Route has been successfully ${
-          isUpdating ? "updated" : "added"
-        }`,
-        key: saveKey,
-        duration: 2,
-        style: styleNotification,
-      });
-      dispatch(routeActions.setSetupNewRouteVisible(false));
-      dispatch(routeActions.setSetupEditRouteVisible(false));
-      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
-      dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
-      dispatch(routeActions.resetSavedRoute(null));
-      setIsUpdating(false);
-    } else if (savedRoute.error) {
-      let errorMsg = `Failed to ${
-        isUpdating ? "update" : "added"
-      } network route`;
-      switch (savedRoute.error.statusCode) {
-        case 403:
-          errorMsg =
-            "Failed to update network route. You might not have enough permissions.";
-          break;
-        default:
-          errorMsg = savedRoute.error.data.message
-            ? savedRoute.error.data.message
-            : errorMsg;
-          break;
+    if (!route || setupEditRouteVisible) {
+      if (savedRoute.loading) {
+        message.loading({
+          content: isUpdating ? "Updating..." : "Saving...",
+          key: saveKey,
+          duration: 0,
+          style: styleNotification,
+        });
+      } else if (savedRoute.success) {
+        message.success({
+          content: `Route has been successfully ${
+            isUpdating ? "updated" : "added"
+          }`,
+          key: saveKey,
+          duration: 2,
+          style: styleNotification,
+        });
+        dispatch(routeActions.setSetupNewRouteVisible(false));
+        dispatch(routeActions.setSetupEditRouteVisible(false));
+        dispatch(routeActions.setSetupEditRoutePeerVisible(false));
+        dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
+        dispatch(routeActions.resetSavedRoute(null));
+        setIsUpdating(false);
+      } else if (savedRoute.error) {
+        let errorMsg = `Failed to ${
+          isUpdating ? "update" : "added"
+        } network route`;
+        switch (savedRoute.error.statusCode) {
+          case 403:
+            errorMsg =
+              "Failed to update network route. You might not have enough permissions.";
+            break;
+          default:
+            errorMsg = savedRoute.error.data.message
+              ? savedRoute.error.data.message
+              : errorMsg;
+            break;
+        }
+        message.error({
+          content: errorMsg,
+          key: saveKey,
+          duration: 5,
+          style: styleNotification,
+        });
+        dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
+        dispatch(routeActions.resetSavedRoute(null));
+        setIsUpdating(false);
       }
-      message.error({
-        content: errorMsg,
-        key: saveKey,
-        duration: 5,
-        style: styleNotification,
-      });
-      dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
-      dispatch(routeActions.resetSavedRoute(null));
-      setIsUpdating(false);
     }
   }, [savedRoute]);
 

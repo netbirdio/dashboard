@@ -274,7 +274,7 @@ const RouteAddNew = () => {
                 disabled={savedRoute.loading}
                 onClick={handleFormSubmit}
               >
-                Add route
+                {formRoute.peer_groups ? "Save" : "Add route"}
               </Button>
             </Space>
           }

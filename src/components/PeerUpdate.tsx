@@ -35,7 +35,7 @@ import {
   LockOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
-  ExclamationCircleFilled
+  ExclamationCircleFilled,
 } from "@ant-design/icons";
 import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
@@ -687,11 +687,21 @@ const PeerUpdate = (props: any) => {
         .map((g) => groupsMap.get(g)!);
     }
 
+    const groupToCompare =
+      peer &&
+      peer.groups &&
+      peer?.groups.map((element1) => {
+        return element1.id;
+      });
+
     return (
       <div className="gp-main-wrapper">
         {displayGroups &&
           displayGroups.length > 0 &&
           displayGroups.map((group) => {
+            if (group.id && !groupToCompare?.includes(group?.id)) {
+              return null;
+            }
             return (
               <div className="g-r-wrapper">
                 <span className="f-r-name">
@@ -702,14 +712,6 @@ const PeerUpdate = (props: any) => {
               </div>
             );
           })}
-        <Tooltip
-          color="#fff"
-          overlayClassName="peer-avail-tooltip"
-          title={`Peer  "${formPeer.name}" is a part of a group used in a network route. To remove this peer from the network route, you need 
-  to disassociate this peer from the groups used in this route.`}
-        >
-          <ExclamationCircleFilled className="info-icon" />
-        </Tooltip>
       </div>
     );
   };
@@ -1117,7 +1119,17 @@ const PeerUpdate = (props: any) => {
                           align="right"
                           render={(text, record: any, index) => {
                             return record.peer_groups ? (
-                              ""
+                              <Tooltip
+                                color="#fff"
+                                overlayClassName="peer-avail-tooltip"
+                                title={`Peer  "${formPeer.name}" is a part of a group used in a network route.
+                                 To remove this peer from the network route, you need to disassociate
+                                 this peer from the groups used in this route.`}
+                              >
+                                <Button type={"text"} disabled={true}>
+                                  Delete
+                                </Button>
+                              </Tooltip>
                             ) : (
                               <Button
                                 danger={true}

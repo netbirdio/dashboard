@@ -200,8 +200,18 @@ const RouteAddNew = (selectedPeer: any) => {
     }
 
     if (activeTab === "groupOfPeers") {
-      let pay = { ...payload, peer_groups: inputRoute.peer_groups };
-      return pay;
+      if (inputRoute.peer_groups) {
+        let [currentPeersGroup, peerGroupToCreate] =
+          getExistingAndToCreateGroupsLists(inputRoute.peer_groups);
+      
+
+        let pay = {
+          ...payload,
+          peer_groups: currentPeersGroup,
+          groupsToCreate: peerGroupToCreate,
+        };
+        return pay;
+      }
     }
 
     return payload;
