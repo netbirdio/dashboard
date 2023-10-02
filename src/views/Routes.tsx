@@ -30,7 +30,11 @@ import { Route, RouteToSave } from "../store/route/types";
 import { actions as routeActions } from "../store/route";
 import { actions as peerActions } from "../store/peer";
 import { filter, sortBy, uniqBy } from "lodash";
-import { EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import {
+  EllipsisOutlined,
+  ExclamationCircleOutlined,
+  ExclamationCircleFilled,
+} from "@ant-design/icons";
 import { storeFilterState, getFilterState } from "../utils/filterState";
 import RouteAddNew from "../components/RouteAddNew";
 import { Link } from "react-router-dom";
@@ -577,14 +581,16 @@ export const Routes = () => {
       <>
         <div className="availtooltip">
           <div className="avail-inner">
-            <ExclamationCircleOutlined />
-            <p style={{ color: "#000" }}>
+            <div className="avail-icon">
+              <ExclamationCircleFilled />
+            </div>
+            <p className="avail-para">
               To achieve High Availability you need to add more peers into this
               group, you can do it in the Peers menu.
+              <br/>
+              <Link to="/peers" className="peer-lnk">Go to Peers</Link>
             </p>
           </div>
-
-          <Link to="/peers">Go to Peers</Link>
         </div>
       </>
     );
@@ -628,7 +634,12 @@ export const Routes = () => {
                 </Button>
               </>
             ) : (
-              <Tooltip color="#fff" title={availabilityTooltip}>
+              <Tooltip
+                color="#fff"
+                title={availabilityTooltip}
+                overlayInnerStyle={{ width: "350px" }}
+                className="avail-tooltip"
+              >
                 <Tag color="default">
                   <Text type="secondary" style={{ fontSize: 12 }}>
                     off

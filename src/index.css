@@ -549,15 +549,21 @@ ul.ant-list-items {
 }
 
 .availtooltip a {
-  padding: 0 20px;
+  padding: 5px 0 0;
+  display: inline-block;
+  font-size: 14px;
 }
 
 .availtooltip {
   padding: 5px;
 }
-.availtooltip p{
+
+.availtooltip p {
+  color: #000;
+  font-size: 13.5px;
   margin: 0;
 }
+
 .avail-inner {
   display: flex;
   align-items: flex-start;
@@ -565,5 +571,24 @@ ul.ant-list-items {
 }
 
 .avail-inner span {
-  color: #1677ff;
+  color: #1890FF;
+  font-size: 24px;
+}
+
+.avail-icon {
+  font-size: 24px;
+}
+.peer-avail-tooltip .ant-tooltip-inner {
+  color: #000;
+  font-size: 16px;
+  line-height: 24px;
+  padding: 25px;
+}
+
+.peer-avail-tooltip {
+  min-width: 400px;
+}
+.info-icon {
+  font-size: 22px;
+  color: #FD9349;
 }

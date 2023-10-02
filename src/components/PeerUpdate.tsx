@@ -35,7 +35,7 @@ import {
   LockOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
-  InfoCircleTwoTone,
+  InfoCircleFilled,
 } from "@ant-design/icons";
 import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
@@ -146,7 +146,7 @@ const PeerUpdate = (props: any) => {
 
   useEffect(() => {
     setPeerRoutes([]);
-     const temp: any[] = [];
+    const temp: any[] = [];
     if (peer && peer.groups) {
       peer?.groups?.forEach((pg: any) => {
         routes.forEach((route: any) => {
@@ -162,7 +162,7 @@ const PeerUpdate = (props: any) => {
     );
     let mergeArr: any = [...filterPeerRoutes, ...temp];
     setPeerRoutes(mergeArr);
-     const filterNotPeerRoutes: any = routes.filter(
+    const filterNotPeerRoutes: any = routes.filter(
       (route) => route.peer !== peer.id
     );
     setNotPeerRoutes(filterNotPeerRoutes);
@@ -703,10 +703,12 @@ const PeerUpdate = (props: any) => {
             );
           })}
         <Tooltip
+          color="#fff"
+          overlayClassName="peer-avail-tooltip"
           title={`Peer  "${formPeer.name}" is a part of a group used in a network route. To remove this peer from the network route, you need 
   to disassociate this peer from the groups used in this route.`}
         >
-          <InfoCircleTwoTone twoToneColor='#FD9349' size={20} />
+          <InfoCircleFilled className="info-icon" />
         </Tooltip>
       </div>
     );

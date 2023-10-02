@@ -110,6 +110,7 @@ const RouteAddNew = () => {
   });
 
   const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
+    console.log("inputRoute", inputRoute);
     let peerIDList = inputRoute.peer.split(routePeerSeparator);
     let peerID: string;
     if (peerIDList.length === 1) {
@@ -126,18 +127,28 @@ const RouteAddNew = () => {
       inputRoute.groups
     );
 
-    return {
+    const payload = {
       id: inputRoute.id,
       network: inputRoute.network,
       network_id: inputRoute.network_id,
       description: inputRoute.description,
-      peer: peerID,
       enabled: inputRoute.enabled,
       masquerade: inputRoute.masquerade,
       metric: inputRoute.metric,
       groups: existingGroups,
       groupsToCreate: groupsToCreate,
     } as RouteToSave;
+
+    if (inputRoute.peer_groups) {
+      let pay = { ...payload, peer_groups: inputRoute.peer_groups };
+      return pay;
+    }
+    if (inputRoute.peer) {
+      let pay = { ...payload, peer: peerID };
+      return pay;
+    }
+
+    return payload;
   };
 
   const handleFormSubmit = () => {
@@ -246,53 +257,6 @@ const RouteAddNew = () => {
     }
     return selectValidator(obj, value);
   };
-
-  const styleNotification = { marginTop: 85 };
-
-  const saveKey = "saving";
-  useEffect(() => {
-    if (savedRoute.loading) {
-      message.loading({
-        content: "Saving...",
-        key: saveKey,
-        duration: 0,
-        style: styleNotification,
-      });
-    } else if (savedRoute.success) {
-      message.success({
-        content: "Route has been successfully added.",
-        key: saveKey,
-        duration: 2,
-        style: styleNotification,
-      });
-      dispatch(routeActions.setSetupNewRouteVisible(false));
-      dispatch(routeActions.setSetupEditRouteVisible(false));
-      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
-      dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
-      dispatch(routeActions.resetSavedRoute(null));
-    } else if (savedRoute.error) {
-      let errorMsg = "Failed to update network route";
-      switch (savedRoute.error.statusCode) {
-        case 403:
-          errorMsg =
-            "Failed to update network route. You might not have enough permissions.";
-          break;
-        default:
-          errorMsg = savedRoute.error.data.message
-            ? savedRoute.error.data.message
-            : errorMsg;
-          break;
-      }
-      message.error({
-        content: errorMsg,
-        key: saveKey,
-        duration: 5,
-        style: styleNotification,
-      });
-      dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
-      dispatch(routeActions.resetSavedRoute(null));
-    }
-  }, [savedRoute]);
 
   return (
     <>
@@ -432,7 +396,8 @@ const RouteAddNew = () => {
                         marginBottom: "5px",
                       }}
                     >
-                      Assign peer groups with Linux machines to be used as routing peers
+                      Assign peer groups with Linux machines to be used as
+                      routing peers
                     </Paragraph>
                     <Form.Item
                       name="peer_groups"
