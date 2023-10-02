@@ -201,14 +201,14 @@ const RouteAddNew = (selectedPeer: any) => {
 
     if (activeTab === "groupOfPeers") {
       if (inputRoute.peer_groups) {
-        let [currentPeersGroup, peerGroupToCreate] =
+        let [currentPeersGroup, peerGroupsToCreate] =
           getExistingAndToCreateGroupsLists(inputRoute.peer_groups);
       
 
         let pay = {
           ...payload,
           peer_groups: currentPeersGroup,
-          groupsToCreate: peerGroupToCreate,
+          peerGroupsToCreate: peerGroupsToCreate,
         };
         return pay;
       }
@@ -249,7 +249,7 @@ const RouteAddNew = (selectedPeer: any) => {
 
         if (!setupNewRouteHA || formRoute.peer != "") {
           const routeToSave = createRouteToSave(formRoute);
-          dispatch(
+           dispatch(
             routeActions.saveRoute.request({
               getAccessTokenSilently: getTokenSilently,
               payload: routeToSave,
@@ -357,7 +357,7 @@ const RouteAddNew = (selectedPeer: any) => {
   };
 
   const selectPreValidator = (obj: RuleObject, value: string[]) => {
-    if (setupNewRouteHA && formRoute.peer == "") {
+     if (setupNewRouteHA && formRoute.peer === "") {
       let [, newGroups] = getExistingAndToCreateGroupsLists(value);
       if (newGroups.length > 0) {
         return Promise.reject(

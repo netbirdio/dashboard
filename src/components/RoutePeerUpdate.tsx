@@ -146,9 +146,19 @@ const RoutePeerUpdate = () => {
       return pay;
     }
 
+
     if (activeTab === "groupOfPeers") {
-      let pay = { ...payload, peer_groups: inputRoute.peer_groups };
-      return pay;
+      if (inputRoute.peer_groups) {
+        let [currentPeersGroup, peerGroupsToCreate] =
+          getExistingAndToCreateGroupsLists(inputRoute.peer_groups);
+
+        let pay = {
+          ...payload,
+          peer_groups: currentPeersGroup,
+          peerGroupsToCreate: peerGroupsToCreate,
+        };
+        return pay;
+      }
     }
 
     return payload;

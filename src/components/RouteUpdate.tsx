@@ -110,7 +110,6 @@ const RouteAddNew = () => {
   });
 
   const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
-    console.log("inputRoute", inputRoute);
     let peerIDList = inputRoute.peer.split(routePeerSeparator);
     let peerID: string;
     if (peerIDList.length === 1) {
@@ -140,9 +139,17 @@ const RouteAddNew = () => {
     } as RouteToSave;
 
     if (inputRoute.peer_groups) {
-      let pay = { ...payload, peer_groups: inputRoute.peer_groups };
+      let [currentPeersGroup, peerGroupsToCreate] =
+        getExistingAndToCreateGroupsLists(inputRoute.peer_groups);
+
+      let pay = {
+        ...payload,
+        peer_groups: currentPeersGroup,
+        peerGroupsToCreate: peerGroupsToCreate,
+      };
       return pay;
     }
+
     if (inputRoute.peer) {
       let pay = { ...payload, peer: peerID };
       return pay;
@@ -243,7 +250,7 @@ const RouteAddNew = () => {
   };
 
   const selectPreValidator = (obj: RuleObject, value: string[]) => {
-    if (setupNewRouteHA && formRoute.peer == "") {
+     if (setupNewRouteHA && formRoute.peer == "" && !formRoute.peer_groups) {
       let [, newGroups] = getExistingAndToCreateGroupsLists(value);
       if (newGroups.length > 0) {
         return Promise.reject(

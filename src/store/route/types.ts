@@ -18,4 +18,5 @@ export interface Route {
 export interface RouteToSave extends Route
 {
     groupsToCreate: string[]
+    peerGroupsToCreate: string[]
 }

@@ -288,7 +288,7 @@ export const Routes = () => {
 
   const saveKey = isUpdating ? "Updating" : "Saving";
   useEffect(() => {
-    if (!route || setupEditRouteVisible) {
+    if (!route || setupEditRouteVisible || setupNewRouteVisible) {
       if (savedRoute.loading) {
         message.loading({
           content: isUpdating ? "Updating..." : "Saving...",
