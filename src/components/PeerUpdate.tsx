@@ -35,7 +35,7 @@ import {
   LockOutlined,
   EditOutlined,
   ExclamationCircleOutlined,
-  InfoCircleFilled,
+  ExclamationCircleFilled
 } from "@ant-design/icons";
 import { RuleObject } from "antd/lib/form";
 import { useGetTokenSilently } from "../utils/token";
@@ -708,7 +708,7 @@ const PeerUpdate = (props: any) => {
           title={`Peer  "${formPeer.name}" is a part of a group used in a network route. To remove this peer from the network route, you need 
   to disassociate this peer from the groups used in this route.`}
         >
-          <InfoCircleFilled className="info-icon" />
+          <ExclamationCircleFilled className="info-icon" />
         </Tooltip>
       </div>
     );

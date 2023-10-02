@@ -585,10 +585,12 @@ export const Routes = () => {
               <ExclamationCircleFilled />
             </div>
             <p className="avail-para">
-              To achieve High Availability you need to add more peers into this
-              group, you can do it in the Peers menu.
-              <br/>
-              <Link to="/peers" className="peer-lnk">Go to Peers</Link>
+              To configure High Availability, you must add more peers to a group
+              in this route. You can do it in the Peers menu.
+              <br />
+              <Link to="/peers" className="peer-lnk">
+                Go to Peers
+              </Link>
             </p>
           </div>
         </div>
@@ -969,7 +971,7 @@ export const Routes = () => {
                             </p>
                             <p>Metric</p>
                             <p>Enabled</p>
-                            <p>Groups</p>
+                            <p>Distribution groups</p>
                           </div>
                           {record.groupedRoutes &&
                             record.groupedRoutes.length &&
