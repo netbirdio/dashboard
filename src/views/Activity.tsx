@@ -374,7 +374,7 @@ export const Activity = () => {
         return "-";
       case "service.user.create":
       case "service.user.delete":
-        return renderMultiRowSpan(event.meta.username, "Service User");
+        return renderMultiRowSpan(event.meta.name, "Service User");
       case "user.invite":
       case "user.block":
       case "user.delete":
