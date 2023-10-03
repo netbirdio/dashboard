@@ -694,7 +694,7 @@ export const RegularUsers = () => {
                     />
                   )}
 
-                  {/*{isAdmin && (
+                  {isAdmin && (
                     <Column
                       title="Delete user"
                       align="center"
@@ -730,7 +730,7 @@ export const RegularUsers = () => {
                         return witch;
                       }}
                     />
-                  )}*/}
+                  )}
                 </Table>
               </Card>
             </Space>
