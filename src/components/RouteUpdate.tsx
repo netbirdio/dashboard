@@ -110,6 +110,14 @@ const RouteAddNew = () => {
   });
 
   const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
+    if (inputRoute.peer_groups) {
+      inputRoute = {
+        ...inputRoute,
+        peer_groups: [
+          inputRoute.peer_groups[inputRoute.peer_groups.length - 1],
+        ],
+      };
+    }
     let peerIDList = inputRoute.peer.split(routePeerSeparator);
     let peerID: string;
     if (peerIDList.length === 1) {
@@ -158,6 +166,15 @@ const RouteAddNew = () => {
     return payload;
   };
 
+    const handleSingleChangeTags = (values: any) => {
+       const lastValue = values[values.length - 1];
+       if (values.length > 0) {
+        form.setFieldsValue({
+          peer_groups: [lastValue],
+        });
+      }
+    };
+  
   const handleFormSubmit = () => {
     form
       .validateFields()
@@ -250,7 +267,7 @@ const RouteAddNew = () => {
   };
 
   const selectPreValidator = (obj: RuleObject, value: string[]) => {
-     if (setupNewRouteHA && formRoute.peer == "" && !formRoute.peer_groups) {
+    if (setupNewRouteHA && formRoute.peer == "" && !formRoute.peer_groups) {
       let [, newGroups] = getExistingAndToCreateGroupsLists(value);
       if (newGroups.length > 0) {
         return Promise.reject(
@@ -309,7 +326,7 @@ const RouteAddNew = () => {
                     }}
                   >
                     {formRoute.peer_groups
-                      ? "Configure peer groups"
+                      ? "Configure peer group"
                       : "Add new routing peer"}
                   </Paragraph>
                   <Paragraph
@@ -324,7 +341,7 @@ const RouteAddNew = () => {
                     }}
                   >
                     {formRoute.peer_groups
-                      ? "Add peer groups with multiple peers to enable high availability"
+                      ? "Add peer group with multiple peers to enable high availability"
                       : "When you add multiple routing peers, NetBird enables high availability"}
                   </Paragraph>
 
@@ -403,7 +420,7 @@ const RouteAddNew = () => {
                         marginBottom: "5px",
                       }}
                     >
-                      Assign peer groups with Linux machines to be used as
+                      Assign peer group with Linux machines to be used as
                       routing peers
                     </Paragraph>
                     <Form.Item
@@ -411,7 +428,7 @@ const RouteAddNew = () => {
                       rules={[
                         {
                           required: true,
-                          message: "Please select peer groups",
+                          message: "Please select peer group",
                         },
                       ]}
                     >
@@ -419,7 +436,7 @@ const RouteAddNew = () => {
                         mode="tags"
                         style={{ maxWidth: "100%" }}
                         tagRender={blueTagRender}
-                        onChange={handleChangeTags}
+                        onChange={handleSingleChangeTags}
                         dropdownRender={dropDownRender}
                         optionFilterProp="serchValue"
                       >

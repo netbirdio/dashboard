@@ -113,7 +113,25 @@ const RoutePeerUpdate = () => {
     }
   });
 
+   const handleSingleChangeTags = (values: any) => {
+      const lastValue = values[values.length - 1];
+      if (values.length > 0) {
+       form.setFieldsValue({
+         peer_groups: [lastValue],
+       });
+     }
+   };
+  
   const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
+    if (inputRoute.peer_groups) {
+      inputRoute = {
+        ...inputRoute,
+        peer_groups: [
+          inputRoute.peer_groups[inputRoute.peer_groups.length - 1],
+        ],
+      };
+    }
+
     let peerIDList = inputRoute.peer.split(routePeerSeparator);
     let peerID: string;
     if (peerIDList.length === 1) {
@@ -145,7 +163,6 @@ const RoutePeerUpdate = () => {
       let pay = { ...payload, peer: peerID };
       return pay;
     }
-
 
     if (activeTab === "groupOfPeers") {
       if (inputRoute.peer_groups) {
@@ -362,14 +379,14 @@ const RoutePeerUpdate = () => {
               marginBottom: "5px",
             }}
           >
-            Assign peer groups with Linux machines to be used as routing peers
+            Assign peer group with Linux machines to be used as routing peers
           </Paragraph>
           <Form.Item
             name="peer_groups"
             rules={[
               {
                 required: true,
-                message: "Please select peer groups",
+                message: "Please select peer group",
               },
             ]}
           >
@@ -377,7 +394,7 @@ const RoutePeerUpdate = () => {
               mode="tags"
               style={{ maxWidth: "400px" }}
               tagRender={blueTagRender}
-              onChange={handleChangeTags}
+              onChange={handleSingleChangeTags}
               dropdownRender={dropDownRender}
               optionFilterProp="serchValue"
             >

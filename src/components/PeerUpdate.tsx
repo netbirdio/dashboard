@@ -411,13 +411,13 @@ const PeerUpdate = (props: any) => {
       const style = { marginTop: 85 };
       if (savedGroups.loading) {
         message.loading({
-          content: "Updating peer groups...",
+          content: "Updating peer group...",
           key: saveGroupsKey,
           style,
         });
       } else if (savedGroups.success) {
         message.success({
-          content: "Peer groups have been successfully updated.",
+          content: "Peer group have been successfully updated.",
           key: saveGroupsKey,
           duration: 2,
           style,
@@ -430,7 +430,7 @@ const PeerUpdate = (props: any) => {
       } else if (savedGroups.error) {
         message.error({
           content:
-            "Failed to update peer groups. You might not have enough permissions.",
+            "Failed to update peer group. You might not have enough permissions.",
           key: saveGroupsKey,
           duration: 2,
           style,

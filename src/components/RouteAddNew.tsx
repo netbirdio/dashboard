@@ -166,6 +166,12 @@ const RouteAddNew = (selectedPeer: any) => {
   }
 
   const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
+    if (inputRoute.peer_groups) {
+      inputRoute = {
+        ...inputRoute,
+        peer_groups: [inputRoute.peer_groups[inputRoute.peer_groups.length - 1]],
+      };
+    }
     let peerIDList = inputRoute.peer.split(routePeerSeparator);
     let peerID: string;
     if (peerIDList.length === 1) {
@@ -193,7 +199,7 @@ const RouteAddNew = (selectedPeer: any) => {
       groups: existingGroups,
       groupsToCreate: groupsToCreate,
     } as RouteToSave;
-
+ 
     if (activeTab === "routingPeer") {
       let pay = { ...payload, peer: peerID };
       return pay;
@@ -203,7 +209,6 @@ const RouteAddNew = (selectedPeer: any) => {
       if (inputRoute.peer_groups) {
         let [currentPeersGroup, peerGroupsToCreate] =
           getExistingAndToCreateGroupsLists(inputRoute.peer_groups);
-      
 
         let pay = {
           ...payload,
@@ -249,7 +254,7 @@ const RouteAddNew = (selectedPeer: any) => {
 
         if (!setupNewRouteHA || formRoute.peer != "") {
           const routeToSave = createRouteToSave(formRoute);
-           dispatch(
+          dispatch(
             routeActions.saveRoute.request({
               getAccessTokenSilently: getTokenSilently,
               payload: routeToSave,
@@ -356,8 +361,15 @@ const RouteAddNew = (selectedPeer: any) => {
     return Promise.resolve();
   };
 
+  const peerGroupsValidaton = (_: RuleObject, value: string) => {
+     if (value.length < 1) {
+      return Promise.reject(new Error("Please select peer groups"));
+    }
+    return Promise.resolve();
+  };
+ 
   const selectPreValidator = (obj: RuleObject, value: string[]) => {
-     if (setupNewRouteHA && formRoute.peer === "") {
+    if (setupNewRouteHA && formRoute.peer === "") {
       let [, newGroups] = getExistingAndToCreateGroupsLists(value);
       if (newGroups.length > 0) {
         return Promise.reject(
@@ -421,6 +433,15 @@ const RouteAddNew = (selectedPeer: any) => {
     setActiveTab(key);
   };
 
+  const handleSingleChangeTags = (values: any) => {
+     const lastValue = values[values.length - 1];
+     if (values.length > 0) {
+      form.setFieldsValue({
+        peer_groups: [lastValue],
+      });
+    }
+  };
+
   const items: TabsProps["items"] = [
     {
       key: "routingPeer",
@@ -455,7 +476,7 @@ const RouteAddNew = (selectedPeer: any) => {
     },
     {
       key: "groupOfPeers",
-      label: "Peer groups",
+      label: "Peer group",
       children: (
         <>
           <Paragraph
@@ -466,18 +487,18 @@ const RouteAddNew = (selectedPeer: any) => {
               marginBottom: "5px",
             }}
           >
-            Assign peer groups with Linux machines to be used as routing peers
+            Assign peer group with Linux machines to be used as routing peers
           </Paragraph>
           {activeTab === "groupOfPeers" && (
             <Form.Item
               name="peer_groups"
-              rules={[{ required: true, message: "Please select peer groups" }]}
+              rules={[{ validator: peerGroupsValidaton }]}
             >
               <Select
                 mode="tags"
                 style={{ width: "100%" }}
                 tagRender={blueTagRender}
-                onChange={handleChangeTags}
+                onChange={handleSingleChangeTags}
                 dropdownRender={dropDownRender}
                 optionFilterProp="serchValue"
               >
