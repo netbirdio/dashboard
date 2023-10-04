@@ -97,7 +97,7 @@ export function* saveRoute(
       .map((g) => g.body as Group)
       .map((g) => g.id);
     const newPeerGroups = [...routeToSave?.peer_groups || [], ...resPeersGroups];
-
+console.log("newPeerGroups", newPeerGroups);
     const payloadToSave = {
       getAccessTokenSilently: action.payload.getAccessTokenSilently,
       payload: {
@@ -109,7 +109,7 @@ export function* saveRoute(
         network: routeToSave.network,
         network_id: routeToSave.network_id,
         peer: routeToSave.peer,
-        peer_groups: newPeerGroups,
+        peer_groups: newPeerGroups.length ? newPeerGroups : null,
         groups: newGroups,
       } as Route,
     };

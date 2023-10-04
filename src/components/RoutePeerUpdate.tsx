@@ -113,15 +113,15 @@ const RoutePeerUpdate = () => {
     }
   });
 
-   const handleSingleChangeTags = (values: any) => {
-      const lastValue = values[values.length - 1];
-      if (values.length > 0) {
-       form.setFieldsValue({
-         peer_groups: [lastValue],
-       });
-     }
-   };
-  
+  const handleSingleChangeTags = (values: any) => {
+    const lastValue = values[values.length - 1];
+    if (values.length > 0) {
+      form.setFieldsValue({
+        peer_groups: [lastValue],
+      });
+    }
+  };
+
   const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
     if (inputRoute.peer_groups) {
       inputRoute = {

@@ -166,21 +166,24 @@ const RouteAddNew = () => {
     return payload;
   };
 
-    const handleSingleChangeTags = (values: any) => {
-       const lastValue = values[values.length - 1];
-       if (values.length > 0) {
-        form.setFieldsValue({
-          peer_groups: [lastValue],
-        });
-      }
-    };
-  
+  const handleSingleChangeTags = (values: any) => {
+    const lastValue = values[values.length - 1];
+    if (values.length > 0) {
+      form.setFieldsValue({
+        peer_groups: [lastValue],
+      });
+    }
+  };
+
   const handleFormSubmit = () => {
     form
       .validateFields()
       .then(() => {
         if (!setupNewRouteHA || formRoute.peer != "") {
           const routeToSave = createRouteToSave(formRoute);
+          if (routeToSave.peer && routeToSave.peer_groups?.length === 0) {
+            delete routeToSave.peer_groups;
+          }
           dispatch(
             routeActions.saveRoute.request({
               getAccessTokenSilently: getTokenSilently,
