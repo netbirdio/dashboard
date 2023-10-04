@@ -513,13 +513,15 @@ ul.ant-list-items {
   box-shadow: none !important;
 }
 
-.d-none{
-  display: none!important;
+.d-none {
+  display: none !important;
 }
+
 .nohover {
-    background: transparent!important;
-    cursor: text;
+  background: transparent !important;
+  cursor: text;
 }
+
 .emp-wrapper {
   display: flex;
   align-items: center;
@@ -528,4 +530,65 @@ ul.ant-list-items {
 
 .emp-wrapper p {
   margin: 0;
+}
+
+.g-r-wrapper {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.gp-main-wrapper .g-r-wrapper {
+  margin: 0;
+}
+
+.gp-main-wrapper {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.availtooltip a {
+  padding: 5px 0 0;
+  display: inline-block;
+  font-size: 14px;
+}
+
+.availtooltip {
+  padding: 5px;
+}
+
+.availtooltip p {
+  color: #000;
+  font-size: 13.5px;
+  margin: 0;
+}
+
+.avail-inner {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.avail-inner span {
+  color: #1890FF;
+  font-size: 24px;
+}
+
+.avail-icon {
+  font-size: 24px;
+}
+.peer-avail-tooltip .ant-tooltip-inner {
+  color: #000;
+  font-size: 14px;
+  line-height: 24px;
+  padding: 25px;
+}
+
+.peer-avail-tooltip {
+  min-width: 400px;
+}
+.info-icon {
+  font-size: 22px;
+  color: #FD9349;
 }

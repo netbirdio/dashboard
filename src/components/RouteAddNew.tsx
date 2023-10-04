@@ -17,7 +17,9 @@ import {
   Switch,
   Modal,
   Typography,
+  Tabs,
 } from "antd";
+import type { TabsProps } from "antd";
 import CreatableSelect from "react-select/creatable";
 import { Route, RouteToSave } from "../store/route/types";
 import { Header } from "antd/es/layout/layout";
@@ -38,6 +40,7 @@ const { Panel } = Collapse;
 interface FormRoute extends Route {}
 
 const RouteAddNew = (selectedPeer: any) => {
+  const [activeTab, setActiveTab] = useState<string | null>(null);
   const {
     blueTagRender,
     handleChangeTags,
@@ -74,6 +77,10 @@ const RouteAddNew = (selectedPeer: any) => {
   const [enableNetwork, setEnableNetwork] = useState(false);
   const [peerNameToIP, peerIPToName, peerIPToID] = initPeerMaps(peers);
   const [newRoute, setNewRoute] = useState(false);
+
+  useEffect(() => {
+    if (setupNewRouteVisible) setActiveTab("routingPeer");
+  }, [setupNewRouteVisible]);
 
   useEffect(() => {
     if (editName)
@@ -159,6 +166,12 @@ const RouteAddNew = (selectedPeer: any) => {
   }
 
   const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
+    if (inputRoute.peer_groups) {
+      inputRoute = {
+        ...inputRoute,
+        peer_groups: [inputRoute.peer_groups[inputRoute.peer_groups.length - 1]],
+      };
+    }
     let peerIDList = inputRoute.peer.split(routePeerSeparator);
     let peerID: string;
     if (peerIDList.length === 1) {
@@ -175,24 +188,70 @@ const RouteAddNew = (selectedPeer: any) => {
       inputRoute.groups
     );
 
-    return {
+    const payload = {
       id: inputRoute.id,
       network: inputRoute.network,
       network_id: inputRoute.network_id,
       description: inputRoute.description,
-      peer: peerID,
       enabled: inputRoute.enabled,
       masquerade: inputRoute.masquerade,
       metric: inputRoute.metric,
       groups: existingGroups,
       groupsToCreate: groupsToCreate,
     } as RouteToSave;
+ 
+    if (activeTab === "routingPeer") {
+      let pay = { ...payload, peer: peerID };
+      return pay;
+    }
+
+    if (activeTab === "groupOfPeers") {
+      if (inputRoute.peer_groups) {
+        let [currentPeersGroup, peerGroupsToCreate] =
+          getExistingAndToCreateGroupsLists(inputRoute.peer_groups);
+
+        let pay = {
+          ...payload,
+          peer_groups: currentPeersGroup,
+          peerGroupsToCreate: peerGroupsToCreate,
+        };
+        return pay;
+      }
+    }
+
+    return payload;
   };
 
   const handleFormSubmit = () => {
     form
       .validateFields()
       .then(() => {
+        const t = routes.filter((route) => {
+          if (
+            route.network_id === formRoute.network_id &&
+            route.network === formRoute.network
+          ) {
+            return route;
+          }
+        });
+
+        if (
+          formRoute.peer_groups &&
+          formRoute.peer_groups.length > 0 &&
+          t &&
+          t.length > 0
+        ) {
+          const style = { marginTop: 85 };
+          const duplicateNetworkIdKey = "duplicateKey";
+          return message.error({
+            content:
+              "A route with this network identifier and network range already exists. Please use a different network identifier or network range.",
+            key: duplicateNetworkIdKey,
+            duration: 5,
+            style,
+          });
+        }
+
         if (!setupNewRouteHA || formRoute.peer != "") {
           const routeToSave = createRouteToSave(formRoute);
           dispatch(
@@ -243,6 +302,7 @@ const RouteAddNew = (selectedPeer: any) => {
 
   const onCancel = () => {
     if (savedRoute.loading) return;
+    setActiveTab(null);
     setEditName(false);
     dispatch(
       routeActions.setRoute({
@@ -254,6 +314,7 @@ const RouteAddNew = (selectedPeer: any) => {
         masquerade: false,
         enabled: true,
         groups: [],
+        peer_groups: [],
       } as Route)
     );
     setVisibleNewRoute(false);
@@ -300,8 +361,15 @@ const RouteAddNew = (selectedPeer: any) => {
     return Promise.resolve();
   };
 
+  const peerGroupsValidaton = (_: RuleObject, value: string) => {
+     if (value.length < 1) {
+      return Promise.reject(new Error("Please select a peer group"));
+    }
+    return Promise.resolve();
+  };
+ 
   const selectPreValidator = (obj: RuleObject, value: string[]) => {
-    if (setupNewRouteHA && formRoute.peer == "") {
+    if (setupNewRouteHA && formRoute.peer === "") {
       let [, newGroups] = getExistingAndToCreateGroupsLists(value);
       if (newGroups.length > 0) {
         return Promise.reject(
@@ -361,56 +429,95 @@ const RouteAddNew = (selectedPeer: any) => {
     }
   };
 
-  const styleNotification = { marginTop: 85 };
+  const onTabChange = (key: string) => {
+    setActiveTab(key);
+  };
 
-  const saveKey = "saving";
-  useEffect(() => {
-    if (savedRoute.loading) {
-      message.loading({
-        content: "Saving...",
-        key: saveKey,
-        duration: 0,
-        style: styleNotification,
+  const handleSingleChangeTags = (values: any) => {
+     const lastValue = values[values.length - 1];
+     if (values.length > 0) {
+      form.setFieldsValue({
+        peer_groups: [lastValue],
       });
-    } else if (savedRoute.success) {
-      message.success({
-        content: "Route has been successfully added.",
-        key: saveKey,
-        duration: 2,
-        style: styleNotification,
-      });
-      dispatch(routeActions.setSetupNewRouteVisible(false));
-      dispatch(routeActions.setSetupEditRouteVisible(false));
-      dispatch(routeActions.setSetupEditRoutePeerVisible(false));
-      dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
-      dispatch(routeActions.resetSavedRoute(null));
-    } else if (savedRoute.error) {
-      let errorMsg = "Failed to update network route";
-      switch (savedRoute.error.statusCode) {
-        case 403:
-          errorMsg =
-            "Failed to update network route. You might not have enough permissions.";
-          break;
-        default:
-          errorMsg = savedRoute.error.data.message
-            ? savedRoute.error.data.message
-            : errorMsg;
-          break;
-      }
-      message.error({
-        content: errorMsg,
-        key: saveKey,
-        duration: 5,
-        style: styleNotification,
-      });
-      dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
-      dispatch(routeActions.resetSavedRoute(null));
     }
-  }, [savedRoute]);
+  };
+
+  const items: TabsProps["items"] = [
+    {
+      key: "routingPeer",
+      label: "Routing Peer",
+      children: (
+        <>
+          <Paragraph
+            type={"secondary"}
+            style={{
+              marginTop: "-2",
+              fontWeight: "400",
+              marginBottom: "5px",
+            }}
+          >
+            Assign a peer as a routing peer for the Network CIDR
+          </Paragraph>
+          {activeTab === "routingPeer" && (
+            <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
+              <Select
+                showSearch
+                style={{ width: "100%" }}
+                placeholder="Select Peer"
+                dropdownRender={peerDropDownRender}
+                options={options}
+                allowClear={true}
+                disabled={!!selectedPeer.selectedPeer}
+              />
+            </Form.Item>
+          )}{" "}
+        </>
+      ),
+    },
+    {
+      key: "groupOfPeers",
+      label: "Peer group",
+      children: (
+        <>
+          <Paragraph
+            type={"secondary"}
+            style={{
+              marginTop: "-2",
+              fontWeight: "400",
+              marginBottom: "5px",
+            }}
+          >
+            Assign peer group with Linux machines to be used as routing peers
+          </Paragraph>
+          {activeTab === "groupOfPeers" && (
+            <Form.Item
+              name="peer_groups"
+              rules={[{ validator: peerGroupsValidaton }]}
+            >
+              <Select
+                mode="tags"
+                style={{ width: "100%" }}
+                tagRender={blueTagRender}
+                onChange={handleSingleChangeTags}
+                dropdownRender={dropDownRender}
+                optionFilterProp="serchValue"
+              >
+                {tagGroups.map((m, index) => (
+                  <Option key={index} value={m.id} serchValue={m.name}>
+                    {optionRender(m.name, m.id)}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+          )}
+        </>
+      ),
+    },
+  ];
 
   return (
     <>
-      {route && (
+      {route && setupNewRouteVisible && (
         <Modal
           open={setupNewRouteVisible}
           onCancel={onCancel}
@@ -558,7 +665,7 @@ const RouteAddNew = (selectedPeer: any) => {
                                   marginBottom: "5px",
                                 }}
                               >
-                                Add a unique cryptographic key that is assigned
+                                Add a unique network identifier that is assigned
                                 to each device
                               </Paragraph>
                               <Form.Item
@@ -667,36 +774,15 @@ const RouteAddNew = (selectedPeer: any) => {
 
               {!!!selectedPeer.selectedPeer && (
                 <Col span={24}>
-                  <label
-                    style={{
-                      color: "rgba(0, 0, 0, 0.88)",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Routing Peer
-                  </label>
-                  <Paragraph
-                    type={"secondary"}
-                    style={{
-                      marginTop: "-2",
-                      fontWeight: "400",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    Assign a peer as a routing peer for the Network CIDR
-                  </Paragraph>
-                  <Form.Item name="peer" rules={[{ validator: peerValidator }]}>
-                    <Select
-                      showSearch
-                      style={{ width: "100%" }}
-                      placeholder="Select Peer"
-                      dropdownRender={peerDropDownRender}
-                      options={options}
-                      allowClear={true}
-                      disabled={!!selectedPeer.selectedPeer}
+                  {activeTab ? (
+                    <Tabs
+                      defaultActiveKey={activeTab}
+                      items={items}
+                      onChange={onTabChange}
                     />
-                  </Form.Item>
+                  ) : (
+                    ""
+                  )}
                 </Col>
               )}
               <Col span={24}>

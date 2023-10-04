@@ -17,10 +17,13 @@ import {
   Switch,
   Card,
   Typography,
+  Tabs,
 } from "antd";
+import type { TabsProps } from "antd";
 import { Route, RouteToSave } from "../store/route/types";
 import { Header } from "antd/es/layout/layout";
 import { RuleObject } from "antd/lib/form";
+import { isEmpty } from "lodash";
 import {
   initPeerMaps,
   peerToPeerIP,
@@ -61,6 +64,16 @@ const RoutePeerUpdate = () => {
   const [form] = Form.useForm();
   const inputDescriptionRef = useRef<any>(null);
   const [peerNameToIP, peerIPToName, peerIPToID] = initPeerMaps(peers);
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!isEmpty(formRoute))
+      if (formRoute.peer_groups) {
+        setActiveTab("groupOfPeers");
+      } else {
+        setActiveTab("routingPeer");
+      }
+  }, [formRoute]);
 
   useEffect(() => {
     if (editDescription)
@@ -100,7 +113,25 @@ const RoutePeerUpdate = () => {
     }
   });
 
+   const handleSingleChangeTags = (values: any) => {
+      const lastValue = values[values.length - 1];
+      if (values.length > 0) {
+       form.setFieldsValue({
+         peer_groups: [lastValue],
+       });
+     }
+   };
+  
   const createRouteToSave = (inputRoute: FormRoute): RouteToSave => {
+    if (inputRoute.peer_groups) {
+      inputRoute = {
+        ...inputRoute,
+        peer_groups: [
+          inputRoute.peer_groups[inputRoute.peer_groups.length - 1],
+        ],
+      };
+    }
+
     let peerIDList = inputRoute.peer.split(routePeerSeparator);
     let peerID: string;
     if (peerIDList.length === 1) {
@@ -116,18 +147,38 @@ const RoutePeerUpdate = () => {
       inputRoute.groups
     );
 
-    return {
+    const payload = {
       id: inputRoute.id,
       network: inputRoute.network,
       network_id: inputRoute.network_id,
       description: inputRoute.description,
-      peer: peerID,
       enabled: inputRoute.enabled,
       masquerade: inputRoute.masquerade,
       metric: inputRoute.metric,
       groups: existingGroups,
       groupsToCreate: groupsToCreate,
     } as RouteToSave;
+
+    if (activeTab === "routingPeer") {
+      let pay = { ...payload, peer: peerID };
+      return pay;
+    }
+
+    if (activeTab === "groupOfPeers") {
+      if (inputRoute.peer_groups) {
+        let [currentPeersGroup, peerGroupsToCreate] =
+          getExistingAndToCreateGroupsLists(inputRoute.peer_groups);
+
+        let pay = {
+          ...payload,
+          peer_groups: currentPeersGroup,
+          peerGroupsToCreate: peerGroupsToCreate,
+        };
+        return pay;
+      }
+    }
+
+    return payload;
   };
 
   const handleFormSubmit = () => {
@@ -165,6 +216,7 @@ const RoutePeerUpdate = () => {
         masquerade: false,
         enabled: true,
         groups: [],
+        peer_groups: [],
       } as Route)
     );
     setVisibleNewRoute(false);
@@ -268,6 +320,95 @@ const RoutePeerUpdate = () => {
       dispatch(routeActions.resetSavedRoute(null));
     }
   }, [savedRoute]);
+
+  const onTabChange = (key: string) => {
+    console.log(key);
+    // setActiveTab(key);
+  };
+
+  const items: TabsProps["items"] = [
+    {
+      key: "routingPeer",
+      label: "Routing Peer",
+      disabled: true,
+      children: (
+        <>
+          <Paragraph
+            type={"secondary"}
+            style={{
+              marginTop: "-2",
+              fontWeight: "400",
+              marginBottom: "5px",
+            }}
+          >
+            Assign a peer as a routing peer for the Network CIDR
+          </Paragraph>
+          <Form.Item
+            name="peer"
+            rules={[
+              {
+                required: true,
+                message: "Please select routing one peer",
+              },
+            ]}
+            style={{ maxWidth: "400px" }}
+          >
+            <Select
+              showSearch
+              style={{ width: "100%" }}
+              placeholder="Select Peer"
+              dropdownRender={peerDropDownRender}
+              options={options}
+              allowClear={true}
+            />
+          </Form.Item>
+        </>
+      ),
+    },
+    {
+      key: "groupOfPeers",
+      label: "Peer group",
+      disabled: true,
+      children: (
+        <>
+          <Paragraph
+            type={"secondary"}
+            style={{
+              marginTop: "-2",
+              fontWeight: "400",
+              marginBottom: "5px",
+            }}
+          >
+            Assign peer group with Linux machines to be used as routing peers
+          </Paragraph>
+          <Form.Item
+            name="peer_groups"
+            rules={[
+              {
+                required: true,
+                message: "Please select peer group",
+              },
+            ]}
+          >
+            <Select
+              mode="tags"
+              style={{ maxWidth: "400px" }}
+              tagRender={blueTagRender}
+              onChange={handleSingleChangeTags}
+              dropdownRender={dropDownRender}
+              optionFilterProp="serchValue"
+            >
+              {tagGroups.map((m, index) => (
+                <Option key={index} value={m.id} serchValue={m.name}>
+                  {optionRender(m.name, m.id)}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+        </>
+      ),
+    },
+  ];
 
   return (
     <>
@@ -409,39 +550,13 @@ const RoutePeerUpdate = () => {
                 </Col>
 
                 <Col span={24}>
-                  <label
-                    style={{
-                      color: "rgba(0, 0, 0, 0.88)",
-                      fontSize: "14px",
-                      fontWeight: "500",
-                    }}
-                  >
-                    Routing Peer
-                  </label>
-                  <Paragraph
-                    type={"secondary"}
-                    style={{
-                      marginTop: "-2",
-                      fontWeight: "400",
-                      marginBottom: "5px",
-                    }}
-                  >
-                    Assign a peer as a routing peer for the Network CIDR
-                  </Paragraph>
-                  <Form.Item
-                    name="peer"
-                    rules={[{ validator: peerValidator }]}
-                    style={{ maxWidth: "400px" }}
-                  >
-                    <Select
-                      showSearch
-                      style={{ width: "100%" }}
-                      placeholder="Select Peer"
-                      dropdownRender={peerDropDownRender}
-                      options={options}
-                      allowClear={true}
+                  {activeTab && (
+                    <Tabs
+                      defaultActiveKey={activeTab}
+                      items={items}
+                      onChange={onTabChange}
                     />
-                  </Form.Item>
+                  )}
                 </Col>
                 <Col span={24}>
                   <label

@@ -21,6 +21,7 @@ import {
   Collapse,
   Typography,
   Badge,
+  Tooltip,
 } from "antd";
 import { Container } from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
@@ -28,10 +29,15 @@ import { RootState } from "typesafe-actions";
 import { Route, RouteToSave } from "../store/route/types";
 import { actions as routeActions } from "../store/route";
 import { actions as peerActions } from "../store/peer";
-import { filter, sortBy } from "lodash";
-import { EllipsisOutlined, ExclamationCircleOutlined } from "@ant-design/icons";
+import { filter, sortBy, uniqBy } from "lodash";
+import {
+  EllipsisOutlined,
+  ExclamationCircleOutlined,
+  ExclamationCircleFilled,
+} from "@ant-design/icons";
 import { storeFilterState, getFilterState } from "../utils/filterState";
 import RouteAddNew from "../components/RouteAddNew";
+import { Link } from "react-router-dom";
 import {
   GroupedDataTable,
   initPeerMaps,
@@ -59,11 +65,14 @@ export const Routes = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const { getGroupNamesFromIDs } = useGetGroupTagHelpers();
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const groups = useSelector((state: RootState) => state.group.data);
   const routes = useSelector((state: RootState) => state.route.data);
   const failed = useSelector((state: RootState) => state.route.failed);
   const loading = useSelector((state: RootState) => state.route.loading);
+  const route = useSelector((state: RootState) => state.route.route);
+
   const deletedRoute = useSelector(
     (state: RootState) => state.route.deletedRoute
   );
@@ -75,6 +84,9 @@ export const Routes = () => {
   const loadingPeer = useSelector((state: RootState) => state.peer.loading);
   const setupNewRouteVisible = useSelector(
     (state: RootState) => state.route.setupNewRouteVisible
+  );
+  const setupEditRouteVisible = useSelector(
+    (state: RootState) => state.route.setupEditRouteVisible
   );
   const [showTutorial, setShowTutorial] = useState(true);
   const [textToSearch, setTextToSearch] = useState("");
@@ -229,7 +241,7 @@ export const Routes = () => {
 
   useEffect(() => {
     setGroupedDataTable(
-      filterGroupedDataTable(transformGroupedDataTable(routes, peers),"")
+      filterGroupedDataTable(transformGroupedDataTable(routes, peers), "")
     );
   }, [textToSearch, optionAllEnable]);
 
@@ -271,6 +283,61 @@ export const Routes = () => {
       dispatch(routeActions.resetDeletedRoute(null));
     }
   }, [deletedRoute]);
+
+  const styleNotification = { marginTop: 85 };
+
+  const saveKey = isUpdating ? "Updating" : "Saving";
+  useEffect(() => {
+    if (!route || setupEditRouteVisible || setupNewRouteVisible) {
+      if (savedRoute.loading) {
+        message.loading({
+          content: isUpdating ? "Updating..." : "Saving...",
+          key: saveKey,
+          duration: 0,
+          style: styleNotification,
+        });
+      } else if (savedRoute.success) {
+        message.success({
+          content: `Route has been successfully ${
+            isUpdating ? "updated" : "added"
+          }`,
+          key: saveKey,
+          duration: 2,
+          style: styleNotification,
+        });
+        dispatch(routeActions.setSetupNewRouteVisible(false));
+        dispatch(routeActions.setSetupEditRouteVisible(false));
+        dispatch(routeActions.setSetupEditRoutePeerVisible(false));
+        dispatch(routeActions.setSavedRoute({ ...savedRoute, success: false }));
+        dispatch(routeActions.resetSavedRoute(null));
+        setIsUpdating(false);
+      } else if (savedRoute.error) {
+        let errorMsg = `Failed to ${
+          isUpdating ? "update" : "added"
+        } network route`;
+        switch (savedRoute.error.statusCode) {
+          case 403:
+            errorMsg =
+              "Failed to update network route. You might not have enough permissions.";
+            break;
+          default:
+            errorMsg = savedRoute.error.data.message
+              ? savedRoute.error.data.message
+              : errorMsg;
+            break;
+        }
+        message.error({
+          content: errorMsg,
+          key: saveKey,
+          duration: 5,
+          style: styleNotification,
+        });
+        dispatch(routeActions.setSavedRoute({ ...savedRoute, error: null }));
+        dispatch(routeActions.resetSavedRoute(null));
+        setIsUpdating(false);
+      }
+    }
+  }, [savedRoute]);
 
   const onChangeTextToSearch = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -331,6 +398,7 @@ export const Routes = () => {
         metric: 9999,
         enabled: true,
         groups: [],
+        peer_groups: [],
       } as Route)
     );
   };
@@ -349,6 +417,7 @@ export const Routes = () => {
         masquerade: selectedRoute?.masquerade,
         enabled: selectedRoute?.enabled,
         groups: selectedRoute?.groups,
+        peer_groups: selectedRoute?.peer_groups,
       } as Route)
     );
     dispatch(routeActions.setSetupEditRoutePeerVisible(true));
@@ -370,7 +439,10 @@ export const Routes = () => {
         metric: route.metric ? route.metric : 9999,
         masquerade: route.masquerade,
         enabled: route.enabled,
-        groups: route.groups,
+        groups: route.peer_groups
+          ? route && route?.groupedRoutes && route?.groupedRoutes[0].groups
+          : route.groups,
+        peer_groups: route.peer_groups,
       } as Route)
     );
     dispatch(routeActions.setSetupEditRouteVisible(true));
@@ -388,6 +460,41 @@ export const Routes = () => {
     }
   };
 
+  const renderGroupRouting = (rowGroups: string[] | null) => {
+    let groupsMap = new Map<string, Group>();
+    groups.forEach((g) => {
+      groupsMap.set(g.id!, g);
+    });
+
+    let displayGroups: Group[] = [];
+    if (rowGroups) {
+      displayGroups = rowGroups
+        .filter((g) => groupsMap.get(g))
+        .map((g) => groupsMap.get(g)!);
+    }
+
+    return (
+      displayGroups &&
+      displayGroups.length > 0 &&
+      displayGroups.map((group) => {
+        return (
+          <div className="g-r-wrapper">
+            <span className="f-r-name">
+              <Tag color={"blue"} style={{ marginRight: 3 }}>
+                {group.name}
+              </Tag>
+            </span>{" "}
+            <span className="f-r-count">
+              <Tag color={""} style={{ marginRight: 3 }}>
+                {group.peers_count} peers
+              </Tag>
+            </span>
+          </div>
+        );
+      })
+    );
+  };
+
   const renderPopoverGroups = (
     rowGroups: string[] | null,
     userToAction: RouteDataTable
@@ -402,6 +509,14 @@ export const Routes = () => {
       displayGroups = rowGroups
         .filter((g) => groupsMap.get(g))
         .map((g) => groupsMap.get(g)!);
+    }
+    if (userToAction.peer_groups) {
+      const groupedRoutes = [
+        {
+          groups: userToAction.groups,
+        },
+      ];
+      userToAction = { ...userToAction, groupedRoutes: groupedRoutes };
     }
 
     let btn = (
@@ -465,12 +580,45 @@ export const Routes = () => {
   };
 
   const callback = (key: any) => {};
+  const availabilityTooltip = () => {
+    return (
+      <>
+        <div className="availtooltip">
+          <div className="avail-inner">
+            <div className="avail-icon">
+              <ExclamationCircleFilled />
+            </div>
+            <p className="avail-para">
+              To configure High Availability, you must add more peers to a group
+              in this route. You can do it in the Peers menu.
+              <br />
+              <Link to="/peers" className="peer-lnk">
+                Go to Peers
+              </Link>
+            </p>
+          </div>
+        </div>
+      </>
+    );
+  };
 
   const getAccordianHeader = (record: any) => {
+    const selectedPeersOfGroups: any = [];
+    if (record.peer_groups) {
+      peers.forEach((peer) => {
+        peer.groups?.forEach((pg) => {
+          if (record.peer_groups.includes(pg.id)) {
+            selectedPeersOfGroups.push(peer);
+          }
+        });
+      });
+    }
+    const getUniquePeerGroups = uniqBy(selectedPeersOfGroups, "id");
     return (
       <div className="headerInner">
         <p className="font-500">
           {record.network_id}
+
           <Badge
             size={"small"}
             style={{ marginLeft: "5px" }}
@@ -479,7 +627,41 @@ export const Routes = () => {
         </p>
         <p>{record.network}</p>
         <p>
-          {record.routesCount > 1 ? (
+          {record.peer_groups ? (
+            getUniquePeerGroups.length > 1 ? (
+              <>
+                <Tag color="green">on</Tag>{" "}
+                <Button
+                  type="link"
+                  style={{ padding: "0" }}
+                  onClick={(event) => setRouteAndView(record, event)}
+                >
+                  Configure
+                </Button>
+              </>
+            ) : (
+              <Tooltip
+                color="#fff"
+                title={availabilityTooltip}
+                overlayInnerStyle={{ width: "350px" }}
+                className="avail-tooltip"
+              >
+                <Tag color="default">
+                  <Text type="secondary" style={{ fontSize: 12 }}>
+                    off
+                  </Text>
+                </Tag>
+
+                <Button
+                  type="link"
+                  style={{ padding: "0" }}
+                  onClick={(event) => setRouteAndView(record, event)}
+                >
+                  Configure
+                </Button>
+              </Tooltip>
+            )
+          ) : record.routesCount > 1 ? (
             <>
               <Tag color="green">on</Tag>
               <Button
@@ -497,6 +679,7 @@ export const Routes = () => {
                   off
                 </Text>
               </Tag>
+
               <Button
                 type="link"
                 style={{ padding: "0" }}
@@ -506,6 +689,8 @@ export const Routes = () => {
               </Button>
             </>
           )}
+
+          {}
         </p>
         <p className="text-right">
           <Button
@@ -526,6 +711,19 @@ export const Routes = () => {
     event.preventDefault();
     event.stopPropagation();
     let name = selectedGroup ? selectedGroup.network_id : "";
+
+    let groupsMap = new Map<string, Group>();
+    groups.forEach((g) => {
+      groupsMap.set(g.id!, g);
+    });
+
+    let displayGroups: Group[] = [];
+    if (selectedGroup.peer_groups) {
+      displayGroups = selectedGroup.peer_groups
+        .filter((g: any) => groupsMap.get(g))
+        .map((g: any) => groupsMap.get(g)!);
+    }
+
     confirm({
       icon: <ExclamationCircleOutlined />,
       title: <span className="font-500">Delete routes to network {name}</span>,
@@ -538,7 +736,19 @@ export const Routes = () => {
           </Paragraph>
           <Alert
             message={
-              <>
+              selectedGroup.peer_groups ? (
+                <List
+                  dataSource={displayGroups}
+                  renderItem={(item: any) => (
+                    <List.Item>
+                      <Text strong>- {item.name}</Text>
+                    </List.Item>
+                  )}
+                  bordered={false}
+                  split={false}
+                  itemLayout={"vertical"}
+                />
+              ) : (
                 <List
                   dataSource={selectedGroup.groupedRoutes}
                   renderItem={(item: any) => (
@@ -550,7 +760,7 @@ export const Routes = () => {
                   split={false}
                   itemLayout={"vertical"}
                 />
-              </>
+              )
             }
             type="warning"
             showIcon={false}
@@ -575,6 +785,10 @@ export const Routes = () => {
   };
 
   const changeRouteStatus = (record: any, checked: boolean) => {
+    setIsUpdating(true);
+    if (record.peer_groups) {
+      delete record.peer;
+    }
     const updateReponse = { ...record, enabled: checked };
     dispatch(
       routeActions.saveRoute.request({
@@ -689,149 +903,6 @@ export const Routes = () => {
                       closable
                     />
                   )}
-                  {/* <Card bodyStyle={{ padding: 0 }}>
-                {!showTutorial && (
-                  <Table
-                    pagination={{
-                      current: currentPage,
-                      hideOnSinglePage: showTutorial,
-                      disabled: showTutorial,
-                      pageSize,
-                      responsive: true,
-                      showSizeChanger: false,
-                      showTotal: (total, range) =>
-                        `Showing ${range[0]} to ${range[1]} of ${total} routes`,
-                      onChange: (page) => {
-                        setCurrentPage(page);
-                      },
-                    }}
-                    className={`access-control-table ${
-                      showTutorial
-                        ? "card-table card-table-no-placeholder"
-                        : "card-table"
-                    }`}
-                    showSorterTooltip={false}
-                    scroll={{ x: true }}
-                    loading={tableSpin(loading || loadingPeer)}
-                    dataSource={groupedDataTable}
-                    expandable={{
-                      expandedRowRender,
-                      expandRowByClick: expandRowsOnClick,
-                      onExpandedRowsChange: (r) => {
-                        setExpandRowsOnClick(!r.length);
-                      },
-                    }}
-                  >
-                    <Column
-                      title={() => (
-                        <span>
-                          Network Identifier
-                          <Tooltip title="You can enable high-availability by assigning the same network identifier and network CIDR to multiple routes">
-                            <QuestionCircleOutlined
-                              style={{ marginLeft: "0.25em", color: "gray" }}
-                            />
-                          </Tooltip>
-                        </span>
-                      )}
-                      dataIndex="network_id"
-                      onFilter={(value: string | number | boolean, record) =>
-                        (record as any).name.includes(value)
-                      }
-                      defaultSortOrder="ascend"
-                      align="center"
-                      sorter={(a, b) =>
-                        (a as any).network_id.localeCompare(
-                          (b as any).network_id
-                        )
-                      }
-                      render={(text, record) => {
-                        const desc = (
-                          record as RouteDataTable
-                        ).description.trim();
-                        return (
-                          <Tooltip
-                            title={desc !== "" ? desc : "no description"}
-                            arrowPointAtCenter
-                          >
-                            <Text className="font-500">{text}</Text>
-                          </Tooltip>
-                        );
-                      }}
-                    />
-                    <Column
-                      title="Network Range"
-                      dataIndex="network"
-                      align="center"
-                      onFilter={(value: string | number | boolean, record) =>
-                        (record as any).network.includes(value)
-                      }
-                      sorter={(a, b) =>
-                        (a as any).network.localeCompare((b as any).network)
-                      }
-                      // defaultSortOrder='ascend'
-                    />
-                    <Column
-                      title="Route status"
-                      dataIndex="enabled"
-                      align="center"
-                      render={(text: Boolean) => {
-                        return text ? (
-                          <Tag color="green">enabled</Tag>
-                        ) : (
-                          <Tag color="red">disabled</Tag>
-                        );
-                      }}
-                    />
-                    <Column
-                      title="Masquerade Traffic"
-                      dataIndex="masquerade"
-                      align="center"
-                      render={(e, record: GroupedDataTable) => {
-                        let toggle = (
-                          <Switch
-                            size={"small"}
-                            checked={e}
-                            onClick={(checked: boolean) => {
-                              showConfirmEnableMasquerade(record, checked);
-                            }}
-                          />
-                        );
-                        return (
-                          <Tooltip title="Hides the traffic with the routing peer address">
-                            {toggle}
-                          </Tooltip>
-                        );
-                      }}
-                    />
-                    <Column
-                      title="High Availability"
-                      align="center"
-                      dataIndex="routesCount"
-                      render={(count, record: RouteDataTable) => {
-                        let tag = <Tag color="red">off</Tag>;
-                        if (count > 1) {
-                          tag = <Tag color="green">on</Tag>;
-                        }
-                        return (
-                          <div>
-                            {tag}
-                            <Divider type="vertical" />
-                            <Button
-                              type="link"
-                              onClick={(event) =>
-                                setRouteAndView(record, event)
-                              }
-                            >
-                              Configure
-                            </Button>
-                          </div>
-                        );
-                      }}
-                    />
-                  </Table>
-                )}
-                
-              </Card> */}
                 </Space>
               </Col>
             </Row>
@@ -896,10 +967,15 @@ export const Routes = () => {
                       return (
                         <Panel header={getAccordianHeader(record)} key={index}>
                           <div className="accordian-inner-header">
-                            <p>Routing Peer</p>
+                            <p>
+                              {record.groupedRoutes[0].peer_groups &&
+                              record.groupedRoutes[0].peer_groups.length > 0
+                                ? "Routing Group"
+                                : "Routing Peer"}
+                            </p>
                             <p>Metric</p>
                             <p>Enabled</p>
-                            <p>Groups</p>
+                            <p>Distribution groups</p>
                           </div>
                           {record.groupedRoutes &&
                             record.groupedRoutes.length &&
@@ -910,23 +986,37 @@ export const Routes = () => {
                                   key={index2}
                                 >
                                   <p>
-                                    <span
-                                      className="cursor-pointer"
-                                      onClick={() => {
-                                        onClickViewRoute(route);
-                                      }}
-                                    >
-                                      {route.peer_name}
-                                    </span>
-                                    <Badge
-                                      size={"small"}
-                                      style={{ marginLeft: "5px" }}
-                                      color={
-                                        route.enabled
-                                          ? "green"
-                                          : "rgb(211,211,211)"
-                                      }
-                                    ></Badge>
+                                    {route.peer_groups &&
+                                    route.peer_groups.length > 0 ? (
+                                      <span
+                                        className="cursor-pointer"
+                                        onClick={() => {
+                                          onClickViewRoute(route);
+                                        }}
+                                      >
+                                        {renderGroupRouting(route.peer_groups)}
+                                      </span>
+                                    ) : (
+                                      <>
+                                        <span
+                                          className="cursor-pointer"
+                                          onClick={() => {
+                                            onClickViewRoute(route);
+                                          }}
+                                        >
+                                          {route.peer_name}
+                                        </span>
+                                        <Badge
+                                          size={"small"}
+                                          style={{ marginLeft: "5px" }}
+                                          color={
+                                            route.enabled
+                                              ? "green"
+                                              : "rgb(211,211,211)"
+                                          }
+                                        ></Badge>
+                                      </>
+                                    )}
                                   </p>
                                   <p>{route.metric}</p>
                                   <p>
@@ -966,8 +1056,9 @@ export const Routes = () => {
               </div>
             )}
           </Container>
-          <RouteAddNew />
-          <RouteUpdate />
+          {setupNewRouteVisible && <RouteAddNew />}
+
+          {setupEditRouteVisible && <RouteUpdate />}
         </>
       ) : (
         <RoutePeerUpdate />

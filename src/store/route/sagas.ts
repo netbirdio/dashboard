@@ -56,15 +56,28 @@ export function* saveRoute(
     );
 
     const routeToSave = action.payload.payload;
-
     let groupsToCreate = routeToSave.groupsToCreate;
     if (!groupsToCreate) {
       groupsToCreate = [];
     }
 
+    let peerGroupsToCreate = routeToSave.peerGroupsToCreate;
+    if (!peerGroupsToCreate) {
+      peerGroupsToCreate = [];
+    }
+
     // first, create groups that were newly added by user
     const responsesGroup = yield all(
       groupsToCreate.map((g) =>
+        call(serviceGroup.createGroup, {
+          getAccessTokenSilently: action.payload.getAccessTokenSilently,
+          payload: { name: g },
+        })
+      )
+    );
+
+    const responsesPeerGroup = yield all(
+      peerGroupsToCreate.map((g) =>
         call(serviceGroup.createGroup, {
           getAccessTokenSilently: action.payload.getAccessTokenSilently,
           payload: { name: g },
@@ -78,6 +91,13 @@ export function* saveRoute(
       .map((g) => g.id);
     const newGroups = [...routeToSave.groups, ...resGroups];
 
+
+    const resPeersGroups = (responsesPeerGroup as ApiResponse<Group>[])
+      .filter((r) => r.statusCode === 200)
+      .map((g) => g.body as Group)
+      .map((g) => g.id);
+    const newPeerGroups = [...routeToSave?.peer_groups || [], ...resPeersGroups];
+
     const payloadToSave = {
       getAccessTokenSilently: action.payload.getAccessTokenSilently,
       payload: {
@@ -89,6 +109,7 @@ export function* saveRoute(
         network: routeToSave.network,
         network_id: routeToSave.network_id,
         peer: routeToSave.peer,
+        peer_groups: newPeerGroups,
         groups: newGroups,
       } as Route,
     };
