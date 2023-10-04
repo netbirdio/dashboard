@@ -410,7 +410,7 @@ const RouteAddNew = () => {
                         fontWeight: "500",
                       }}
                     >
-                      Peer groups
+                      Peer group
                     </label>
                     <Paragraph
                       type={"secondary"}

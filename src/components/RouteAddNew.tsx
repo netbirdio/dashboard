@@ -363,7 +363,7 @@ const RouteAddNew = (selectedPeer: any) => {
 
   const peerGroupsValidaton = (_: RuleObject, value: string) => {
      if (value.length < 1) {
-      return Promise.reject(new Error("Please select peer groups"));
+      return Promise.reject(new Error("Please select a peer group"));
     }
     return Promise.resolve();
   };

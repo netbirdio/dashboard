@@ -367,7 +367,7 @@ const RoutePeerUpdate = () => {
     },
     {
       key: "groupOfPeers",
-      label: "Peer groups",
+      label: "Peer group",
       disabled: true,
       children: (
         <>
