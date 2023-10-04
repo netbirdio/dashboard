@@ -109,7 +109,7 @@ export function* saveRoute(
         network: routeToSave.network,
         network_id: routeToSave.network_id,
         peer: routeToSave.peer,
-        peer_groups: newPeerGroups,
+        peer_groups: newPeerGroups.length ? newPeerGroups : null,
         groups: newGroups,
       } as Route,
     };
