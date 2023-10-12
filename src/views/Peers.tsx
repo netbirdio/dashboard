@@ -694,6 +694,7 @@ export const Peers = () => {
                       {isAdmin && (
                         <Select
                           mode="tags"
+                          style={{ marginRight: "15px" }}
                           placeholder="Filter by groups"
                           tagRender={blueTagRender}
                           // dropdownRender={dropDownRender}
@@ -717,7 +718,7 @@ export const Peers = () => {
                       <Tooltip title="Refersh">
                         <Button
                           onClick={refresh}
-                          style={{ marginLeft: "5px", color: "#1890ff" }}
+                          style={{color: "#1890ff" }}
                         >
                           <ReloadOutlined />
                         </Button>
