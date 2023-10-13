@@ -94,6 +94,7 @@ export const Peers = () => {
   const [groupPopupVisible, setGroupPopupVisible] = useState("");
   const [showTutorial, setShowTutorial] = useState(false);
   const [hadFirstRun, setHadFirstRun] = useState(true);
+  const [isRefreshButtonDisabled, setIsRefreshButtonDisabled] = useState(false);
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
   const optionsOnOff = [
@@ -180,6 +181,33 @@ export const Peers = () => {
           payload: null,
         })
       );
+  };
+
+  const fetchData = async () => {
+    setIsRefreshButtonDisabled(true);
+
+    dispatch(
+      userActions.getUsers.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    dispatch(
+      peerActions.getPeers.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    dispatch(
+      groupActions.getGroups.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 5000)).then(() =>
+      setIsRefreshButtonDisabled(false)
+    );
   };
 
   useEffect(() => {
@@ -714,9 +742,16 @@ export const Peers = () => {
                         </Select>
                       )}
 
-                      <Tooltip title="Refersh">
+                      <Tooltip
+                        title={
+                          isRefreshButtonDisabled
+                            ? "You can refresh it again in 5 sec"
+                            : "Refersh"
+                        }
+                      >
                         <Button
-                          onClick={refresh}
+                          onClick={fetchData}
+                          disabled={isRefreshButtonDisabled}
                           style={{ marginLeft: "5px", color: "#1890ff" }}
                         >
                           <ReloadOutlined />

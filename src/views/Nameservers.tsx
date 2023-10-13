@@ -21,8 +21,10 @@ import {
   Table,
   Tag,
   Typography,
+  Tooltip,
 } from "antd";
 import { filter } from "lodash";
+import { ReloadOutlined } from "@ant-design/icons";
 import tableSpin from "../components/Spin";
 import { storeFilterState, getFilterState } from "../utils/filterState";
 import { useGetTokenSilently } from "../utils/token";
@@ -77,6 +79,7 @@ export const Nameservers = () => {
   );
 
   const [textToSearch, setTextToSearch] = useState("");
+  const [isRefreshButtonDisabled, setIsRefreshButtonDisabled] = useState(false);
   const [optionAllEnable, setOptionAllEnable] = useState("all");
   const [dataTable, setDataTable] = useState([] as NameserverGroupDataTable[]);
   const [showTutorial, setShowTutorial] = useState(false);
@@ -191,6 +194,26 @@ export const Nameservers = () => {
       })
     );
   }, []);
+
+  const fetchData = async () => {
+    setIsRefreshButtonDisabled(true);
+
+    dispatch(
+      nsGroupActions.getNameServerGroups.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    dispatch(
+      groupActions.getGroups.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5000)).then(() =>
+      setIsRefreshButtonDisabled(false)
+    );
+  };
 
   const onChangeAllEnabled = ({ target: { value } }: RadioChangeEvent) => {
     setOptionAllEnable(value);
@@ -554,6 +577,22 @@ export const Nameservers = () => {
                   className="select-rows-per-page-en"
                   disabled={showTutorial}
                 />
+
+                <Tooltip
+                  title={
+                    isRefreshButtonDisabled
+                      ? "You can refresh it again in 5 sec"
+                      : "Refersh"
+                  }
+                >
+                  <Button
+                    onClick={fetchData}
+                    disabled={isRefreshButtonDisabled}
+                    style={{ color: "#1890ff" }}
+                  >
+                    <ReloadOutlined />
+                  </Button>
+                </Tooltip>
               </Space>
             </Col>
             <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>

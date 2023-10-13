@@ -41,7 +41,7 @@ import { usePageSizeHelpers } from "../utils/pageSize";
 import AddServiceUserPopup from "../components/popups/AddServiceUserPopup";
 import InviteUserPopup from "../components/popups/InviteUserPopup";
 import { Peer, PeerDataTable } from "../store/peer/types";
-import { ExclamationCircleOutlined, MinusOutlined } from "@ant-design/icons";
+import { ExclamationCircleOutlined, ReloadOutlined } from "@ant-design/icons";
 import { actions as peerActions } from "../store/peer";
 import { useOidcUser } from "@axa-fr/react-oidc";
 import { storeFilterState, getFilterState } from "../utils/filterState";
@@ -79,6 +79,7 @@ export const RegularUsers = () => {
     null as UserDataTable | null
   );
   const [textToSearch, setTextToSearch] = useState("");
+  const [isRefreshButtonDisabled, setIsRefreshButtonDisabled] = useState(false);
   const [dataTable, setDataTable] = useState([] as UserDataTable[]);
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
@@ -165,6 +166,31 @@ export const RegularUsers = () => {
       })
     );
   }, [savedUser]);
+
+  const fetchData = async () => {
+    setIsRefreshButtonDisabled(true);
+      dispatch(
+        userActions.getUsers.request({
+          getAccessTokenSilently: getTokenSilently,
+          payload: null,
+        })
+      );
+    dispatch(
+      userActions.getRegularUsers.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    dispatch(
+      groupActions.getGroups.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5000)).then(() =>
+      setIsRefreshButtonDisabled(false)
+    );
+  };
 
   useEffect(() => {
     if (!loading && groups.length && users) {
@@ -396,7 +422,7 @@ export const RegularUsers = () => {
         icon: <ExclamationCircleOutlined />,
         title: (
           <span className="font-500">
-            Are you sure you want to block {user.name? user.name : user.id}?
+            Are you sure you want to block {user.name ? user.name : user.id}?
           </span>
         ),
         width: 600,
@@ -450,12 +476,18 @@ export const RegularUsers = () => {
   const handleDeleteUser = (user: UserDataTable) => {
     confirmModal.confirm({
       icon: <ExclamationCircleOutlined />,
-      title: <span className="font-500">Are you sure you want to delete {user.name? user.name : user.id}?</span>,
+      title: (
+        <span className="font-500">
+          Are you sure you want to delete {user.name ? user.name : user.id}?
+        </span>
+      ),
       width: 500,
       content: (
         <Space direction="vertical" size="small">
           <Paragraph>
-            Deleting this user will remove their devices and remove dashboard access.</Paragraph>
+            Deleting this user will remove their devices and remove dashboard
+            access.
+          </Paragraph>
         </Space>
       ),
       onOk() {
@@ -518,6 +550,21 @@ export const RegularUsers = () => {
                       className="select-rows-per-page-en"
                     />
                   </Space>
+                  <Tooltip
+                    title={
+                      isRefreshButtonDisabled
+                        ? "You can refresh it again in 5 sec"
+                        : "Refersh"
+                    }
+                  >
+                    <Button
+                      onClick={fetchData}
+                      disabled={isRefreshButtonDisabled}
+                      style={{ marginLeft: "5px", color: "#1890ff" }}
+                    >
+                      <ReloadOutlined />
+                    </Button>
+                  </Tooltip>
                 </Col>
                 <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>
                   {(isNetBirdHosted() || isLocalDev()) && (
@@ -583,47 +630,87 @@ export const RegularUsers = () => {
 
                       if ((record as User).is_current) {
                         return (
-                            <>
-                              <div>
-                                {btn}
-                                <Tag color="blue">me</Tag>
-                              </div>
-                              {(isNetBirdHosted() || isLocalDev()) && ((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
-                            </>
+                          <>
+                            <div>
+                              {btn}
+                              <Tag color="blue">me</Tag>
+                            </div>
+                            {(isNetBirdHosted() || isLocalDev()) &&
+                              (record as User).last_login && (
+                                <Text
+                                  type={"secondary"}
+                                  style={{ paddingLeft: "15px" }}
+                                >
+                                  Last login:{" "}
+                                  {String(timeAgo((record as User).last_login))}
+                                </Text>
+                              )}
+                          </>
                         );
                       }
 
                       if ((record as User).status === "invited") {
                         return (
-                            <>
-                              <div>
-                                {btn}
-                                <Tag color="gold">invited</Tag>
-                              </div>
-                              {(isNetBirdHosted() || isLocalDev()) && ((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
-                            </>
+                          <>
+                            <div>
+                              {btn}
+                              <Tag color="gold">invited</Tag>
+                            </div>
+                            {(isNetBirdHosted() || isLocalDev()) &&
+                              (record as User).last_login && (
+                                <Text
+                                  type={"secondary"}
+                                  style={{
+                                    paddingLeft: "15px",
+                                    paddingTop: "0px",
+                                  }}
+                                >
+                                  Last login:{" "}
+                                  {String(timeAgo((record as User).last_login))}
+                                </Text>
+                              )}
+                          </>
                         );
                       }
 
                       if ((record as User).status === "blocked") {
                         return (
-                            <>
-                              <div>
-                                {btn}
-                                <Tag color="red">blocked</Tag>
-                              </div>
-                              {(isNetBirdHosted() || isLocalDev()) && ((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
-                            </>
+                          <>
+                            <div>
+                              {btn}
+                              <Tag color="red">blocked</Tag>
+                            </div>
+                            {(isNetBirdHosted() || isLocalDev()) &&
+                              (record as User).last_login && (
+                                <Text
+                                  type={"secondary"}
+                                  style={{ paddingLeft: "15px" }}
+                                >
+                                  Last login:{" "}
+                                  {String(timeAgo((record as User).last_login))}
+                                </Text>
+                              )}
+                          </>
                         );
                       }
 
                       return (
-                          <>
-                            <div>
-                              {btn}
-                            </div>
-                            {(isNetBirdHosted() || isLocalDev()) && ((record as User).last_login && <Text type={"secondary"} style={{paddingLeft: "15px", paddingTop: "0px"}}>Last login: {String(timeAgo((record as User).last_login))}</Text>)}
-                          </>
+                        <>
+                          <div>{btn}</div>
+                          {(isNetBirdHosted() || isLocalDev()) &&
+                            (record as User).last_login && (
+                              <Text
+                                type={"secondary"}
+                                style={{
+                                  paddingLeft: "15px",
+                                  paddingTop: "0px",
+                                }}
+                              >
+                                Last login:{" "}
+                                {String(timeAgo((record as User).last_login))}
+                              </Text>
+                            )}
+                        </>
                       );
                     }}
                   />
