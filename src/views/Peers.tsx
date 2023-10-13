@@ -722,6 +722,7 @@ export const Peers = () => {
                       {isAdmin && (
                         <Select
                           mode="tags"
+                          style={{ marginRight: "15px" }}
                           placeholder="Filter by groups"
                           tagRender={blueTagRender}
                           // dropdownRender={dropDownRender}
