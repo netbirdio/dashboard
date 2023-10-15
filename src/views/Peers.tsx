@@ -722,7 +722,7 @@ export const Peers = () => {
                       {isAdmin && (
                         <Select
                           mode="tags"
-                          style={{ marginRight: "15px" }}
+                          style={{ marginRight: "10px" }}
                           placeholder="Filter by groups"
                           tagRender={blueTagRender}
                           // dropdownRender={dropDownRender}
@@ -746,8 +746,8 @@ export const Peers = () => {
                       <Tooltip
                         title={
                           isRefreshButtonDisabled
-                            ? "You can refresh it again in 5 sec"
-                            : "Refersh"
+                            ? "You can refresh it again in 5 seconds"
+                            : "Refresh"
                         }
                       >
                         <Button

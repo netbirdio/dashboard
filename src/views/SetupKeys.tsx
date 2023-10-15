@@ -497,6 +497,7 @@ export const SetupKeys = () => {
                         disabled={!dataTable?.length}
                       />
                       <Select
+                        style={{ marginRight: "10px" }}
                         disabled={!dataTable?.length}
                         value={pageSize.toString()}
                         options={pageSizeOptions}
@@ -510,8 +511,8 @@ export const SetupKeys = () => {
                     <Tooltip
                       title={
                         isRefreshButtonDisabled
-                          ? "You can refresh it again in 5 sec"
-                          : "Refersh"
+                          ? "You can refresh it again in 5 seconds"
+                          : "Refresh"
                       }
                     >
                       <Button

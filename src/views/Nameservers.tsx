@@ -2,7 +2,6 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "typesafe-actions";
 import { actions as nsGroupActions } from "../store/nameservers";
-import { Container } from "../components/Container";
 import {
   Alert,
   Button,
@@ -581,8 +580,8 @@ export const Nameservers = () => {
                 <Tooltip
                   title={
                     isRefreshButtonDisabled
-                      ? "You can refresh it again in 5 sec"
-                      : "Refersh"
+                      ? "You can refresh it again in 5 seconds"
+                      : "Refresh"
                   }
                 >
                   <Button

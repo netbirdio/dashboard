@@ -542,6 +542,7 @@ export const RegularUsers = () => {
                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                   <Space size="middle">
                     <Select
+                      style={{ marginRight: "10px" }}
                       value={pageSize.toString()}
                       options={pageSizeOptions}
                       onChange={(value) => {
@@ -553,8 +554,8 @@ export const RegularUsers = () => {
                   <Tooltip
                     title={
                       isRefreshButtonDisabled
-                        ? "You can refresh it again in 5 sec"
-                        : "Refersh"
+                        ? "You can refresh it again in 5 seconds"
+                        : "Refresh"
                     }
                   >
                     <Button

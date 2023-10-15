@@ -314,6 +314,7 @@ export const ServiceUsers = () => {
                   >
                     <Space size="middle">
                       <Select
+                        style={{ marginRight: "10px" }}
                         value={pageSize.toString()}
                         options={pageSizeOptions}
                         onChange={(value) => {
@@ -326,8 +327,8 @@ export const ServiceUsers = () => {
                     <Tooltip
                       title={
                         isRefreshButtonDisabled
-                          ? "You can refresh it again in 5 sec"
-                          : "Refersh"
+                          ? "You can refresh it again in 5 seconds"
+                          : "Refresh"
                       }
                     >
                       <Button

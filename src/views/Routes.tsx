@@ -884,6 +884,7 @@ export const Routes = () => {
                     >
                       <Space size="middle">
                         <Radio.Group
+                            style={{ marginRight: "10px" }}
                           options={optionsAllEnabled}
                           onChange={onChangeAllEnabled}
                           value={optionAllEnable}
@@ -895,8 +896,8 @@ export const Routes = () => {
                       <Tooltip
                         title={
                           isRefreshButtonDisabled
-                            ? "You can refresh it again in 5 sec"
-                            : "Refersh"
+                            ? "You can refresh it again in 5 seconds"
+                            : "Refresh"
                         }
                       >
                         <Button
