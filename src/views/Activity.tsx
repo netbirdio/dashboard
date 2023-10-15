@@ -14,6 +14,7 @@ import {
   Space,
   Table,
   Typography,
+  Tooltip,
 } from "antd";
 import { Event } from "../store/event/types";
 import { filter } from "lodash";
@@ -23,7 +24,7 @@ import { useOidcUser } from "@axa-fr/react-oidc";
 import { capitalize, formatDateTime } from "../utils/common";
 import { User } from "../store/user/types";
 import { usePageSizeHelpers } from "../utils/pageSize";
-import { QuestionCircleFilled } from "@ant-design/icons";
+import { ReloadOutlined } from "@ant-design/icons";
 import { storeFilterState, getFilterState } from "../utils/filterState";
 
 const { Title, Paragraph, Text } = Typography;
@@ -44,6 +45,7 @@ export const Activity = () => {
   const setupKeys = useSelector((state: RootState) => state.setupKey.data);
 
   const [textToSearch, setTextToSearch] = useState("");
+  const [isRefreshButtonDisabled, setIsRefreshButtonDisabled] = useState(false);
   const [dataTable, setDataTable] = useState([] as EventDataTable[]);
 
   const transformDataTable = (d: Event[]): EventDataTable[] => {
@@ -58,6 +60,21 @@ export const Activity = () => {
       })
     );
   }, []);
+
+  const fetchData = async() => {
+    setIsRefreshButtonDisabled(true);
+
+    dispatch(
+      eventActions.getEvents.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 5000)).then(() =>
+      setIsRefreshButtonDisabled(false)
+    );
+  };
   // useEffect(() => {
   //   setDataTable(transformDataTable(events));
   // }, [events]);
@@ -427,6 +444,7 @@ export const Activity = () => {
                 <Col xs={24} sm={24} md={11} lg={11} xl={11} xxl={11} span={11}>
                   <Space size="middle">
                     <Select
+                      style={{ marginRight: "10px" }}
                       value={pageSize.toString()}
                       options={pageSizeOptions}
                       onChange={(value) => {
@@ -435,6 +453,22 @@ export const Activity = () => {
                       className="select-rows-per-page-en"
                     />
                   </Space>
+
+                  <Tooltip
+                    title={
+                      isRefreshButtonDisabled
+                        ? "You can refresh it again in 5 seconds"
+                        : "Refresh"
+                    }
+                  >
+                    <Button
+                      onClick={fetchData}
+                      disabled={isRefreshButtonDisabled}
+                      style={{ marginLeft: "5px", color: "#1890ff" }}
+                    >
+                      <ReloadOutlined />
+                    </Button>
+                  </Tooltip>
                 </Col>
               </Row>
               {failed && (

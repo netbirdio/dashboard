@@ -34,6 +34,7 @@ import {
   EllipsisOutlined,
   ExclamationCircleOutlined,
   ExclamationCircleFilled,
+  ReloadOutlined,
 } from "@ant-design/icons";
 import { storeFilterState, getFilterState } from "../utils/filterState";
 import RouteAddNew from "../components/RouteAddNew";
@@ -89,6 +90,7 @@ export const Routes = () => {
     (state: RootState) => state.route.setupEditRouteVisible
   );
   const [showTutorial, setShowTutorial] = useState(true);
+  const [isRefreshButtonDisabled, setIsRefreshButtonDisabled] = useState(false);
   const [textToSearch, setTextToSearch] = useState("");
   const [optionAllEnable, setOptionAllEnable] = useState("enabled");
   const [dataTable, setDataTable] = useState([] as RouteDataTable[]);
@@ -184,7 +186,28 @@ export const Routes = () => {
         payload: null,
       })
     );
+   
   }, []);
+
+  const fetchData = async() => {
+    setIsRefreshButtonDisabled(true);
+
+    dispatch(
+      peerActions.getPeers.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    dispatch(
+      groupActions.getGroups.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+     await new Promise((resolve) => setTimeout(resolve, 5000)).then(() =>
+       setIsRefreshButtonDisabled(false)
+     );
+  };
 
   const filterGroupedDataTable = (
     routes: GroupedDataTable[],
@@ -861,6 +884,7 @@ export const Routes = () => {
                     >
                       <Space size="middle">
                         <Radio.Group
+                            style={{ marginRight: "10px" }}
                           options={optionsAllEnabled}
                           onChange={onChangeAllEnabled}
                           value={optionAllEnable}
@@ -869,6 +893,21 @@ export const Routes = () => {
                           disabled={showTutorial}
                         />
                       </Space>
+                      <Tooltip
+                        title={
+                          isRefreshButtonDisabled
+                            ? "You can refresh it again in 5 seconds"
+                            : "Refresh"
+                        }
+                      >
+                        <Button
+                          onClick={fetchData}
+                          disabled={isRefreshButtonDisabled}
+                          style={{ marginLeft: "5px", color: "#1890ff" }}
+                        >
+                          <ReloadOutlined />
+                        </Button>
+                      </Tooltip>
                     </Col>
                     {!showTutorial && (
                       <Col

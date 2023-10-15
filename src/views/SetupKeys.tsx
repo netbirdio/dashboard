@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "typesafe-actions";
 import { actions as setupKeyActions } from "../store/setup-key";
 import { Container } from "../components/Container";
+import { ReloadOutlined } from "@ant-design/icons";
 import {
   Alert,
   Button,
@@ -51,6 +52,7 @@ export const SetupKeys = () => {
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const [showGroupModal, setShowGroupModal] = useState(false);
+  const [isRefreshButtonDisabled, setIsRefreshButtonDisabled] = useState(false);
 
   const setupKeys = useSelector((state: RootState) => state.setupKey.data);
   const failed = useSelector((state: RootState) => state.setupKey.failed);
@@ -108,6 +110,26 @@ export const SetupKeys = () => {
       })
     );
   }, []);
+
+  const fetchData = async () => {
+    setIsRefreshButtonDisabled(true);
+
+    dispatch(
+      setupKeyActions.getSetupKeys.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    dispatch(
+      groupActions.getGroups.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5000)).then(() =>
+      setIsRefreshButtonDisabled(false)
+    );
+  };
 
   useEffect(() => {
     setDataTable(transformDataTable(filterDataTable("")));
@@ -475,6 +497,7 @@ export const SetupKeys = () => {
                         disabled={!dataTable?.length}
                       />
                       <Select
+                        style={{ marginRight: "10px" }}
                         disabled={!dataTable?.length}
                         value={pageSize.toString()}
                         options={pageSizeOptions}
@@ -484,6 +507,22 @@ export const SetupKeys = () => {
                         className="select-rows-per-page-en"
                       />
                     </Space>
+
+                    <Tooltip
+                      title={
+                        isRefreshButtonDisabled
+                          ? "You can refresh it again in 5 seconds"
+                          : "Refresh"
+                      }
+                    >
+                      <Button
+                        onClick={fetchData}
+                        disabled={isRefreshButtonDisabled}
+                        style={{ marginLeft: "5px", color: "#1890ff" }}
+                      >
+                        <ReloadOutlined />
+                      </Button>
+                    </Tooltip>
                   </Col>
                   {dataTable.length ? (
                     <Col xs={24} sm={24} md={5} lg={5} xl={5} xxl={5} span={5}>

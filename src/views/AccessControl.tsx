@@ -21,6 +21,7 @@ import {
   Tooltip,
   Typography,
 } from "antd";
+import { ReloadOutlined } from "@ant-design/icons";
 import { Container } from "../components/Container";
 import { useDispatch, useSelector } from "react-redux";
 import { storeFilterState, getFilterState } from "../utils/filterState";
@@ -72,7 +73,7 @@ export const AccessControl = () => {
   const { onChangePageSize, pageSizeOptions, pageSize } = usePageSizeHelpers();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
- 
+
   const policies = useSelector((state: RootState) => state.policy.data);
   const failed = useSelector((state: RootState) => state.policy.failed);
   const loading = useSelector((state: RootState) => state.policy.loading);
@@ -84,6 +85,7 @@ export const AccessControl = () => {
   );
 
   const [showTutorial, setShowTutorial] = useState(true);
+  const [isRefreshButtonDisabled, setIsRefreshButtonDisabled] = useState(false);
   const [textToSearch, setTextToSearch] = useState("");
   const [optionAllEnable, setOptionAllEnable] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
@@ -183,6 +185,26 @@ export const AccessControl = () => {
       })
     );
   }, []);
+
+  const fetchData = async () => {
+    setIsRefreshButtonDisabled(true);
+
+    dispatch(
+      policyActions.getPolicies.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    dispatch(
+      groupActions.getGroups.request({
+        getAccessTokenSilently: getTokenSilently,
+        payload: null,
+      })
+    );
+    await new Promise((resolve) => setTimeout(resolve, 5000)).then(() =>
+      setIsRefreshButtonDisabled(false)
+    );
+  };
 
   useEffect(() => {
     if (failed) {
@@ -298,7 +320,11 @@ export const AccessControl = () => {
     setPolicyToAction(record as PolicyDataTable);
     confirm({
       icon: <ExclamationCircleOutlined />,
-      title: <span data-testid="confirm-delete-modal-title" className="font-500">Delete rule {record.name}</span>,
+      title: (
+        <span data-testid="confirm-delete-modal-title" className="font-500">
+          Delete rule {record.name}
+        </span>
+      ),
       width: 500,
       content: (
         <Space direction="vertical" size="small">
@@ -419,7 +445,6 @@ export const AccessControl = () => {
       } as Policy)
     );
   };
-
 
   const toggleModalGroups = (
     title: string,
@@ -643,6 +668,7 @@ export const AccessControl = () => {
                           disabled={showTutorial}
                         />
                         <Select
+                          style={{ marginRight: "10px" }}
                           value={pageSize.toString()}
                           options={pageSizeOptions}
                           onChange={(value) => {
@@ -652,6 +678,22 @@ export const AccessControl = () => {
                           disabled={showTutorial}
                         />
                       </Space>
+
+                      <Tooltip
+                        title={
+                          isRefreshButtonDisabled
+                            ? "You can refresh it again in 5 seconds"
+                            : "Refresh"
+                        }
+                      >
+                        <Button
+                          onClick={fetchData}
+                          disabled={isRefreshButtonDisabled}
+                          style={{ marginLeft: "5px", color: "#1890ff" }}
+                        >
+                          <ReloadOutlined />
+                        </Button>
+                      </Tooltip>
                     </Col>
                     {!showTutorial && (
                       <Col
