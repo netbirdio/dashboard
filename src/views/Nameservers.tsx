@@ -153,6 +153,7 @@ export const Nameservers = () => {
         nameservers: nsGroup.nameservers,
         groups: nsGroup.groups,
         enabled: nsGroup.enabled,
+        search_domains_enabled: nsGroup.search_domains_enabled,
       } as NameServerGroup)
     );
   };
@@ -168,6 +169,7 @@ export const Nameservers = () => {
         nameservers: nsGroup.nameservers,
         groups: nsGroup.groups,
         enabled: nsGroup.enabled,
+        search_domains_enabled: nsGroup.search_domains_enabled,
       } as NameServerGroup)
     );
     setShowGroupModal(true);

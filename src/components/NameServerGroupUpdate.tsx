@@ -70,6 +70,7 @@ const NameServerGroupUpdate = (props: any) => {
   const [editDescription, setEditDescription] = useState(false);
   const inputNameRef = useRef<any>(null);
   const inputDescriptionRef = useRef<any>(null);
+  const [matchDomains, setMatchDomains] = useState(0);
 
   useEffect(() => {
     if (editName)
@@ -119,6 +120,7 @@ const NameServerGroupUpdate = (props: any) => {
         nameservers: [] as NameServer[],
         groups: [],
         enabled: false,
+        search_domains_enabled: true,
       } as NameServerGroup)
     );
     setEditName(false);
@@ -134,74 +136,6 @@ const NameServerGroupUpdate = (props: any) => {
     }
     setFormNSGroup({ ...formNSGroup, ...changedValues });
   };
-
-  let googleChoice = "Google DNS";
-  let cloudflareChoice = "Cloudflare DNS";
-  let quad9Choice = "Quad9 DNS";
-  let customChoice = "Add custom nameserver";
-
-  let defaultDNSOptions: NameServerGroup[] = [
-    {
-      name: googleChoice,
-      description: "Google DNS servers",
-      domains: [],
-      primary: true,
-      nameservers: [
-        {
-          ip: "8.8.8.8",
-          ns_type: "udp",
-          port: 53,
-        },
-        {
-          ip: "8.8.4.4",
-          ns_type: "udp",
-          port: 53,
-        },
-      ],
-      groups: [],
-      enabled: true,
-    },
-    {
-      name: cloudflareChoice,
-      description: "Cloudflare DNS servers",
-      domains: [],
-      primary: true,
-      nameservers: [
-        {
-          ip: "1.1.1.1",
-          ns_type: "udp",
-          port: 53,
-        },
-        {
-          ip: "1.0.0.1",
-          ns_type: "udp",
-          port: 53,
-        },
-      ],
-      groups: [],
-      enabled: true,
-    },
-    {
-      name: quad9Choice,
-      description: "Quad9 DNS servers",
-      domains: [],
-      primary: true,
-      nameservers: [
-        {
-          ip: "9.9.9.9",
-          ns_type: "udp",
-          port: 53,
-        },
-        {
-          ip: "149.112.112.112",
-          ns_type: "udp",
-          port: 53,
-        },
-      ],
-      groups: [],
-      enabled: true,
-    },
-  ];
 
   const handleFormSubmit = () => {
     form
@@ -247,6 +181,8 @@ const NameServerGroupUpdate = (props: any) => {
       groups: existingGroups,
       groupsToCreate: newGroups,
       enabled: values.enabled,
+      search_domains_enabled:
+        matchDomains > 0 ? formNSGroup.search_domains_enabled : false,
     } as NameServerGroupToSave;
   };
 
@@ -356,7 +292,6 @@ const NameServerGroupUpdate = (props: any) => {
           >
             Nameservers
           </label>
-
           {!!fields.length && (
             <Row align="middle">
               <Col span={4} style={{ textAlign: "left" }}>
@@ -464,86 +399,90 @@ const NameServerGroupUpdate = (props: any) => {
     fields: FormListFieldData[],
     { add, remove }: any,
     { errors }: any
-  ) => (
-    <div style={{ width: "100%", maxWidth: "305px" }}>
-      <Row>
-        <Space>
-          <Col>
-            <label
-              style={{
-                color: "rgba(0, 0, 0, 0.88)",
-                fontSize: "14px",
-                fontWeight: "500",
-              }}
-            >
-              Match domains
-            </label>
-            <Paragraph
-              type={"secondary"}
-              style={{
-                fontWeight: "400",
-                marginBottom: "10px",
-              }}
-            >
-              Add domain if you want to have a specific one
-            </Paragraph>
-          </Col>
-        </Space>
-      </Row>
-      {fields.map((field, index) => {
-        return (
-          <Row key={index} style={{ marginBottom: "5px" }}>
-            <Col span={22}>
-              <Form.Item
-                style={{ margin: "0" }}
-                // hidden={isPrimary}
-                {...field}
-                rules={[{ validator: domainValidator }]}
-              >
-                <Input
-                  placeholder="e.g. example.com"
-                  style={{ width: "100%" }}
-                  autoComplete="off"
-                />
-              </Form.Item>
-            </Col>
-            <Col
-              span={2}
-              style={{
-                textAlign: "center",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}
-            >
-              <MinusCircleOutlined
-                // hidden={isPrimary}
-                className="dynamic-delete-button"
-                onClick={() => remove(field.name)}
-              />
-            </Col>
-          </Row>
-        );
-      })}
+  ) => {
+    setMatchDomains(fields.length);
 
-      <Row>
-        <Col span={24} style={{ margin: "1px" }}>
-          <Form.Item>
-            <Button
-              type="dashed"
-              onClick={() => add()}
-              block
-              icon={<PlusOutlined />}
-              style={{ marginTop: "5px", maxWidth: "280px" }}
-            >
-              Add Domain
-            </Button>
-          </Form.Item>
-        </Col>
-      </Row>
-      <Form.ErrorList errors={errors} />
-    </div>
-  );
+    return (
+      <div style={{ width: "100%", maxWidth: "305px" }}>
+        <Row>
+          <Space>
+            <Col>
+              <label
+                style={{
+                  color: "rgba(0, 0, 0, 0.88)",
+                  fontSize: "14px",
+                  fontWeight: "500",
+                }}
+              >
+                Match domains
+              </label>
+              <Paragraph
+                type={"secondary"}
+                style={{
+                  fontWeight: "400",
+                  marginBottom: "10px",
+                }}
+              >
+                Add domain if you want to have a specific one
+              </Paragraph>
+            </Col>
+          </Space>
+        </Row>
+        {fields.map((field, index) => {
+          return (
+            <Row key={index} style={{ marginBottom: "5px" }}>
+              <Col span={22}>
+                <Form.Item
+                  style={{ margin: "0" }}
+                  // hidden={isPrimary}
+                  {...field}
+                  rules={[{ validator: domainValidator }]}
+                >
+                  <Input
+                    placeholder="e.g. example.com"
+                    style={{ width: "100%" }}
+                    autoComplete="off"
+                  />
+                </Form.Item>
+              </Col>
+              <Col
+                span={2}
+                style={{
+                  textAlign: "center",
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}
+              >
+                <MinusCircleOutlined
+                  // hidden={isPrimary}
+                  className="dynamic-delete-button"
+                  onClick={() => remove(field.name)}
+                />
+              </Col>
+            </Row>
+          );
+        })}
+
+        <Row>
+          <Col span={24} style={{ margin: "1px" }}>
+            <Form.Item>
+              <Button
+                type="dashed"
+                onClick={() => add()}
+                block
+                icon={<PlusOutlined />}
+                style={{ marginTop: "5px", maxWidth: "280px" }}
+              >
+                Add Domain
+              </Button>
+            </Form.Item>
+          </Col>
+        </Row>
+        <Form.ErrorList errors={errors} />
+      </div>
+    );
+  };
 
   const handleChangeDisabled = (checked: boolean) => {
     setFormNSGroup({
@@ -554,6 +493,13 @@ const NameServerGroupUpdate = (props: any) => {
 
   const onBreadcrumbUsersClick = () => {
     onCancel();
+  };
+
+  const handleChangeMarkDomain = (checked: boolean) => {
+    setFormNSGroup({
+      ...formNSGroup,
+      search_domains_enabled: checked,
+    });
   };
 
   return (
@@ -580,148 +526,186 @@ const NameServerGroupUpdate = (props: any) => {
             onValuesChange={onChange}
           >
             <Row gutter={16}>
-              
-                <span className={isGroupUpdateView ? "d-none" : ""}>
-                  <Col span={24}>
-                    <Header
-                      style={{
-                        border: "none",
-                      }}
-                    >
-                      <Row align="top">
-                        <Col flex="auto">
-                          {!editName && formNSGroup.id ? (
-                            <div
-                              className={
-                                "access-control input-text ant-drawer-title"
-                              }
-                              onClick={() => toggleEditName(true)}
-                              style={{
-                                fontSize: "22px",
-                                margin: " 0px 0px 10px",
-                                cursor: "pointer",
-                                fontWeight: "500",
-                                lineHeight: "24px",
-                              }}
-                            >
-                              {formNSGroup.id
-                                ? formNSGroup.name
-                                : "New nameserver group"}
-                            </div>
-                          ) : (
-                            <Row>
-                              <Col span={8}>
-                                <div style={{ lineHeight: "15px" }}>
-                                  <label
-                                    style={{
-                                      color: "rgba(0, 0, 0, 0.88)",
-                                      fontSize: "14px",
-                                      fontWeight: "500",
-                                    }}
-                                  >
-                                    Name
-                                  </label>
-                                  <Form.Item
-                                    name="name"
-                                    rules={[
-                                      {
-                                        required: true,
-                                        message:
-                                          "Please add an identifier for this nameserver group",
-                                        whitespace: true,
-                                      },
-                                      {
-                                        validator: nameValidator,
-                                      },
-                                    ]}
-                                    style={{
-                                      marginBottom: "10px",
-                                      marginTop: "10px",
-                                    }}
-                                  >
-                                    <Input
-                                      placeholder="e.g. Public DNS"
-                                      ref={inputNameRef}
-                                      onPressEnter={() => toggleEditName(false)}
-                                      onBlur={() => toggleEditName(false)}
-                                      autoComplete="off"
-                                      maxLength={40}
-                                    />
-                                  </Form.Item>
-                                </div>
-                              </Col>
-                            </Row>
-                          )}
-                          {!editDescription ? (
-                            <div
-                              className={
-                                "access-control input-text ant-drawer-subtitle"
-                              }
-                              style={{ margin: "0 0 39px 0px" }}
-                              onClick={() => toggleEditDescription(true)}
-                            >
-                              {formNSGroup.description &&
-                              formNSGroup.description.trim() !== ""
-                                ? formNSGroup.description
-                                : "Add description"}
-                            </div>
-                          ) : (
-                            <Row>
-                              <Col span={8} style={{ marginBottom: "15px" }}>
-                                <div
+              <span className={isGroupUpdateView ? "d-none" : ""}>
+                <Col span={24}>
+                  <Header
+                    style={{
+                      border: "none",
+                    }}
+                  >
+                    <Row align="top">
+                      <Col flex="auto">
+                        {!editName && formNSGroup.id ? (
+                          <div
+                            className={
+                              "access-control input-text ant-drawer-title"
+                            }
+                            onClick={() => toggleEditName(true)}
+                            style={{
+                              fontSize: "22px",
+                              margin: " 0px 0px 10px",
+                              cursor: "pointer",
+                              fontWeight: "500",
+                              lineHeight: "24px",
+                            }}
+                          >
+                            {formNSGroup.id
+                              ? formNSGroup.name
+                              : "New nameserver group"}
+                          </div>
+                        ) : (
+                          <Row>
+                            <Col span={8}>
+                              <div style={{ lineHeight: "15px" }}>
+                                <label
                                   style={{
-                                    lineHeight: "15px",
-                                    marginTop: "24px",
+                                    color: "rgba(0, 0, 0, 0.88)",
+                                    fontSize: "14px",
+                                    fontWeight: "500",
                                   }}
                                 >
-                                  <label
-                                    style={{
-                                      color: "rgba(0, 0, 0, 0.88)",
-                                      fontSize: "14px",
-                                      fontWeight: "500",
-                                    }}
-                                  >
-                                    Description
-                                  </label>
-                                  <Form.Item
-                                    name="description"
-                                    style={{ marginTop: "8px" }}
-                                  >
-                                    <Input
-                                      placeholder="Add description..."
-                                      ref={inputDescriptionRef}
-                                      onPressEnter={() =>
-                                        toggleEditDescription(false)
-                                      }
-                                      onBlur={() =>
-                                        toggleEditDescription(false)
-                                      }
-                                      autoComplete="off"
-                                    />
-                                  </Form.Item>
-                                </div>
-                              </Col>
-                            </Row>
-                          )}
-                        </Col>
-                      </Row>
-                    </Header>
-                  </Col>
+                                  Name
+                                </label>
+                                <Form.Item
+                                  name="name"
+                                  rules={[
+                                    {
+                                      required: true,
+                                      message:
+                                        "Please add an identifier for this nameserver group",
+                                      whitespace: true,
+                                    },
+                                    {
+                                      validator: nameValidator,
+                                    },
+                                  ]}
+                                  style={{
+                                    marginBottom: "10px",
+                                    marginTop: "10px",
+                                  }}
+                                >
+                                  <Input
+                                    placeholder="e.g. Public DNS"
+                                    ref={inputNameRef}
+                                    onPressEnter={() => toggleEditName(false)}
+                                    onBlur={() => toggleEditName(false)}
+                                    autoComplete="off"
+                                    maxLength={40}
+                                  />
+                                </Form.Item>
+                              </div>
+                            </Col>
+                          </Row>
+                        )}
+                        {!editDescription ? (
+                          <div
+                            className={
+                              "access-control input-text ant-drawer-subtitle"
+                            }
+                            style={{ margin: "0 0 39px 0px" }}
+                            onClick={() => toggleEditDescription(true)}
+                          >
+                            {formNSGroup.description &&
+                            formNSGroup.description.trim() !== ""
+                              ? formNSGroup.description
+                              : "Add description"}
+                          </div>
+                        ) : (
+                          <Row>
+                            <Col span={8} style={{ marginBottom: "15px" }}>
+                              <div
+                                style={{
+                                  lineHeight: "15px",
+                                  marginTop: "24px",
+                                }}
+                              >
+                                <label
+                                  style={{
+                                    color: "rgba(0, 0, 0, 0.88)",
+                                    fontSize: "14px",
+                                    fontWeight: "500",
+                                  }}
+                                >
+                                  Description
+                                </label>
+                                <Form.Item
+                                  name="description"
+                                  style={{ marginTop: "8px" }}
+                                >
+                                  <Input
+                                    placeholder="Add description..."
+                                    ref={inputDescriptionRef}
+                                    onPressEnter={() =>
+                                      toggleEditDescription(false)
+                                    }
+                                    onBlur={() => toggleEditDescription(false)}
+                                    autoComplete="off"
+                                  />
+                                </Form.Item>
+                              </div>
+                            </Col>
+                          </Row>
+                        )}
+                      </Col>
+                    </Row>
+                  </Header>
+                </Col>
 
-                  <Col span={24} style={{ marginBottom: "15px" }}>
-                    <Form.List
-                      name="nameservers"
-                      rules={[{ validator: formListValidator }]}
-                    >
-                      {renderNSList}
-                    </Form.List>
-                  </Col>
+                <Col span={24} style={{ marginBottom: "15px" }}>
+                  <Form.List
+                    name="nameservers"
+                    rules={[{ validator: formListValidator }]}
+                  >
+                    {renderNSList}
+                  </Form.List>
+                </Col>
 
-                  <Col span={24} style={{ marginBottom: "15px" }}>
-                    <Form.List name="domains">{renderDomains}</Form.List>
+                <Col span={24} style={{ marginBottom: "15px" }}>
+                  <Form.List name="domains">{renderDomains}</Form.List>
+                </Col>
+
+                {matchDomains > 0 && (
+                  <Col span={24}>
+                    <Form.Item name="search_domains_enabled" label="">
+                      <div
+                        style={{
+                          display: "flex",
+                          gap: "15px",
+                        }}
+                      >
+                        <Switch
+                          onChange={handleChangeMarkDomain}
+                          defaultChecked={formNSGroup.search_domains_enabled}
+                          size="small"
+                        />
+                        <div>
+                          <label
+                            style={{
+                              color: "rgba(0, 0, 0, 0.88)",
+                              fontSize: "14px",
+                              fontWeight: "500",
+                            }}
+                          >
+                            Mark match domains as search domains"
+                          </label>
+                          <Paragraph
+                            type={"secondary"}
+                            style={{
+                              marginTop: "-2",
+                              fontWeight: "400",
+                              marginBottom: "0",
+                            }}
+                          >
+                            E.g., "peer.domain.com" will be accessible with
+                            "peer"
+                          </Paragraph>
+                        </div>
+                      </div>
+                    </Form.Item>
                   </Col>
-                </span>
-               
+                )}
+              </span>
+
               <Col span={24} style={{ marginBottom: "15px" }}>
                 <label
                   style={{
