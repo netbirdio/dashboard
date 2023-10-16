@@ -686,7 +686,7 @@ const NameServerGroupUpdate = (props: any) => {
                               fontWeight: "500",
                             }}
                           >
-                            Mark match domains as search domains"
+                            Mark match domains as search domains
                           </label>
                           <Paragraph
                             type={"secondary"}
@@ -696,7 +696,7 @@ const NameServerGroupUpdate = (props: any) => {
                               marginBottom: "0",
                             }}
                           >
-                            E.g., "peer.domain.com" will be accessible with
+                            E.g., "peer.example.com" will be accessible with
                             "peer"
                           </Paragraph>
                         </div>
