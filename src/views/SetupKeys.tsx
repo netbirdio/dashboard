@@ -494,7 +494,6 @@ export const SetupKeys = () => {
                         value={optionValidAll}
                         optionType="button"
                         buttonStyle="solid"
-                        disabled={!dataTable?.length}
                       />
                       <Select
                         style={{ marginRight: "10px" }}
