@@ -305,14 +305,14 @@ export const Settings = () => {
     const createSingleArrayForPolicy: any = [];
     policies.map((aControl: any) => {
       const cSingleAccessArray = aControl.allGroups ? aControl.allGroups : [];
-      if (aControl.rules[0].destinations.length > 0) {
+      if (aControl.rules[0].destinations) {
         aControl.rules[0].destinations.forEach((destination: any) => {
           if (cSingleAccessArray.indexOf(destination.id) === -1) {
             cSingleAccessArray.push(destination.id);
           }
         });
       }
-      if (aControl.rules[0].sources.length > 0) {
+      if (aControl.rules[0].sources) {
         aControl.rules[0].sources.forEach((source: any) => {
           if (cSingleAccessArray.indexOf(source.id) === -1) {
             cSingleAccessArray.push(source.id);
