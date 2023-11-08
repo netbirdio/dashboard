@@ -373,6 +373,9 @@ export const Activity = () => {
       case "account.setting.peer.login.expiration.enable":
       case "account.setting.peer.login.expiration.disable":
       case "account.setting.peer.login.expiration.update":
+      case "integration.create":
+      case "integration.update":
+      case "integration.delete":
         return renderMultiRowSpan("", "System setting");
       case "personal.access.token.create":
       case "personal.access.token.delete":
