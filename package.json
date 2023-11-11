@@ -20,7 +20,7 @@
     "@types/styled-components": "^5.1.25",
     "antd": "^5.3.1",
     "autoprefixer": "^10.4.4",
-    "axios": "^0.27.2",
+    "axios": "^1.6.0",
     "cidr-regex": "^3.1.1",
     "copyfiles": "^2.4.1",
     "heroicons": "^1.0.6",
