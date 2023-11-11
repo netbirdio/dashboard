@@ -197,6 +197,7 @@ const PeerUpdate = (props: any) => {
       os !== "" &&
       !os.toLowerCase().startsWith("darwin") &&
       !os.toLowerCase().startsWith("windows") &&
+      !os.toLowerCase().startsWith("ios") &&
       !os.toLowerCase().startsWith("android")
     );
   };

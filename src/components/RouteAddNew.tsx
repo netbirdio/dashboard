@@ -151,6 +151,7 @@ const RouteAddNew = (selectedPeer: any) => {
         !os.toLowerCase().startsWith("darwin") &&
         !os.toLowerCase().startsWith("windows") &&
         !os.toLowerCase().startsWith("android") &&
+        !os.toLowerCase().startsWith("ios") &&
         route &&
         !routes
           .filter((r) => r.network_id === route.network_id)
