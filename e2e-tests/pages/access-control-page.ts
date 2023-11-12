@@ -17,7 +17,7 @@ export class AccessControlPage {
       }
   
     async assertDefaultAccessCotrolIsCreated() {
-      await test.step('Assert that default cotrol access is created', async () => {
+      await test.step('Assert that default control access is created', async () => {
           await expect(this.defaulAccessControl).toBeVisible();
       })
     }
