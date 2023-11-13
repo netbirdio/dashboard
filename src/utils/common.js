@@ -1,6 +1,10 @@
 
 
 export const formatOS = (os) => {
+    if (os.startsWith("windows 10")) {
+        return "Windows 10";
+    }
+
     if (os.startsWith("Darwin")) {
         return os.replace("Darwin", "MacOS");
     }
