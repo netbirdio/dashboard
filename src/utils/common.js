@@ -1,8 +1,12 @@
 
 
 export const formatOS = (os) => {
-    if (os.startsWith("windows 10")) {
+    if (os.lowerCase.startsWith("windows 10")) {
         return "Windows 10";
+    }
+
+    if (os.lowerCase.startsWith("windows server 10")) {
+        return "Windows Server";
     }
 
     if (os.startsWith("Darwin")) {
