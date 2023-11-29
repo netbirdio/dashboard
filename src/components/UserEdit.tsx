@@ -79,6 +79,7 @@ const UserEdit = (props: any) => {
   const [formUser, setFormUser] = useState({} as FormUser);
   const [form] = Form.useForm();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isOwner, setIsOwner] = useState(false);
 
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
 
@@ -94,15 +95,21 @@ const UserEdit = (props: any) => {
   };
 
   const createUserToSave = (values: any): UserToSave => {
-    const autoGroups =
-      groups
-        ?.filter((g) => values.autoGroupsNames.includes(g.id))
-        .map((g) => g.id || "") || [];
+    let autoGroups:string[] = []
+    if (values.autoGroupsNames) {
+      autoGroups =
+          groups
+              ?.filter((g) => values.autoGroupsNames.includes(g.id))
+              .map((g) => g.id || "") || [];
+    }
     // find groups that do not yet exist (newly added by the user)
     const allGroupsNames: string[] = groups?.map((g) => g.id || "");
-    const groupsToCreate = values.autoGroupsNames.filter(
-      (s: string) => !allGroupsNames.includes(s)
-    );
+    let groupsToCreate:string[] = []
+    if (values.autoGroupsNames) {
+      groupsToCreate = values.autoGroupsNames.filter(
+          (s: string) => !allGroupsNames.includes(s)
+      );
+    }
     let userID = user ? user.id : "";
     let isServiceUser = user ? user?.is_service_user : false;
     return {
@@ -121,6 +128,7 @@ const UserEdit = (props: any) => {
       let currentUser = users.find((user) => user?.is_current);
       if (currentUser) {
         setIsAdmin(currentUser.role === "admin" || currentUser.role === "owner");
+        setIsOwner(currentUser.role === "owner");
       }
     }
   }, [users]);
@@ -411,9 +419,11 @@ const UserEdit = (props: any) => {
                       <Option value="user">
                         <Text type={"secondary"}>user</Text>
                       </Option>
-                      <Option value="owner">
-                        <Text type={"secondary"}>owner</Text>
-                      </Option>
+                      {!user?.is_service_user && isOwner && (
+                          <Option value="owner">
+                            <Text type={"secondary"}>owner</Text>
+                          </Option>
+                      )}
                     </Select>
                   </Form.Item>
                 </Col>
