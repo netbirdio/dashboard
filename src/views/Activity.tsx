@@ -338,6 +338,8 @@ export const Activity = () => {
       case "peer.login.expiration.enable":
       case "user.peer.login":
       case "peer.login.expire":
+      case "peer.approve":
+      case "peer.approval.revoke":
         return renderMultiRowSpan(event.meta.fqdn, event.meta.ip);
       case "route.add":
       case "route.delete":
@@ -373,6 +375,8 @@ export const Activity = () => {
       case "account.setting.peer.login.expiration.enable":
       case "account.setting.peer.login.expiration.disable":
       case "account.setting.peer.login.expiration.update":
+      case "account.setting.peer.approval.enable":
+      case "account.setting.peer.approval.disable":
       case "integration.create":
       case "integration.update":
       case "integration.delete":

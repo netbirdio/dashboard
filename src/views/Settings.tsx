@@ -127,6 +127,8 @@ export const Settings = () => {
 
   const [formPeerExpirationEnabled, setFormPeerExpirationEnabled] =
     useState(true);
+  const [formPeerApprovalEnabled, setFormPeerApprovalEnabled] =
+    useState(false);
   const [jwtGroupsEnabled, setJwtGroupsEnabled] = useState(true);
   const [groupsPropagationEnabled, setGroupsPropagationEnabled] =
     useState(true);
@@ -221,9 +223,11 @@ export const Settings = () => {
       jwt_groups_enabled: account.settings.jwt_groups_enabled,
       jwt_groups_claim_name: account.settings.jwt_groups_claim_name,
       groups_propagation_enabled: account.settings.groups_propagation_enabled,
+      peer_approval_enabled: account.settings.extra ? account.settings.extra.peer_approval_enabled : false,
     } as FormAccount;
     setFormAccount(fAccount);
     setFormPeerExpirationEnabled(fAccount.peer_login_expiration_enabled);
+    setFormPeerApprovalEnabled(fAccount.peer_approval_enabled);
     setJwtGroupsEnabled(fAccount.jwt_groups_enabled);
     setGroupsPropagationEnabled(fAccount.groups_propagation_enabled);
     setJwtGroupsClaimName(fAccount.jwt_groups_claim_name);
@@ -394,6 +398,7 @@ export const Settings = () => {
           updatedAccount.data.settings.jwt_groups_claim_name,
         groups_propagation_enabled:
           updatedAccount.data.settings.groups_propagation_enabled,
+        peer_approval_enabled: updatedAccount.data.settings.extra.peer_approval_enabled
       } as FormAccount;
       setFormAccount(fAccount);
     } else if (updatedAccount.error) {
@@ -428,6 +433,7 @@ export const Settings = () => {
           jwt_groups_enabled: jwtGroupsEnabled,
           jwt_groups_claim_name: jwtGroupsClaimName,
           groups_propagation_enabled: groupsPropagationEnabled,
+          peer_approval_enabled: formPeerApprovalEnabled,
         });
       })
       .catch((errorInfo) => {
@@ -453,6 +459,9 @@ export const Settings = () => {
         jwt_groups_enabled: jwtGroupsEnabled,
         jwt_groups_claim_name: jwtGroupsClaimName,
         groups_propagation_enabled: groupsPropagationEnabled,
+        extra: {
+          peer_approval_enabled: values.peer_approval_enabled
+        }
       },
     } as Account;
   };
@@ -624,6 +633,59 @@ export const Settings = () => {
           <div className={groupsClicked ? "d-none" : ""}>
             <Row>
               <Col span={12}>
+                {(isNetBirdHosted() || isLocalDev()) && <Form.Item name="peer_approval_enabled" label="">
+                  <div
+                    style={{
+                      display: "flex",
+                      gap: "15px",
+                    }}
+                  >
+                    <Switch
+                      onChange={(checked) => {
+                        setFormPeerApprovalEnabled(checked);
+                      }}
+                      size="small"
+                      checked={formPeerApprovalEnabled}
+                    />
+                    <div>
+                      <label
+                        style={{
+                          color: "rgba(0, 0, 0, 0.88)",
+                          fontSize: "14px",
+                          fontWeight: "500",
+                        }}
+                      >
+                        Peer approval{" "}
+                        <Tooltip
+                          title="Peer approval requires that every newly added peer
+                          will require approval by an administrator before it can connect to other peers.
+                          You can approve peers in the peers tab."
+                        >
+                          <Text
+                            style={{
+                              marginLeft: "5px",
+                              fontSize: "14px",
+                              color: "#bdbdbe",
+                            }}
+                            type={"secondary"}
+                          >
+                            <QuestionCircleFilled />
+                          </Text>
+                        </Tooltip>
+                      </label>
+                      <Paragraph
+                        type={"secondary"}
+                        style={{
+                          marginTop: "-2",
+                          fontWeight: "400",
+                          marginBottom: "0",
+                        }}
+                      >
+                        Require peers to be approved by an administrator
+                      </Paragraph>
+                    </div>
+                  </div>
+                </Form.Item>}
                 <Form.Item name="peer_login_expiration_enabled" label="">
                   <div
                     style={{
