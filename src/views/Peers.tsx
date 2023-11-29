@@ -126,7 +126,7 @@ export const Peers = () => {
     if (users) {
       let currentUser = users.find((user) => user.is_current);
       if (currentUser) {
-        setIsAdmin(currentUser.role === "admin");
+        setIsAdmin(currentUser.role === "admin" || currentUser.role === "owner");
       }
     }
   }, [users]);

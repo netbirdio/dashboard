@@ -120,7 +120,7 @@ const UserEdit = (props: any) => {
     if (users) {
       let currentUser = users.find((user) => user?.is_current);
       if (currentUser) {
-        setIsAdmin(currentUser.role === "admin");
+        setIsAdmin(currentUser.role === "admin" || currentUser.role === "owner");
       }
     }
   }, [users]);
@@ -410,6 +410,9 @@ const UserEdit = (props: any) => {
                       </Option>
                       <Option value="user">
                         <Text type={"secondary"}>user</Text>
+                      </Option>
+                      <Option value="owner">
+                        <Text type={"secondary"}>owner</Text>
                       </Option>
                     </Select>
                   </Form.Item>
