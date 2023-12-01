@@ -411,7 +411,7 @@ const UserEdit = (props: any) => {
                   >
                     <Select
                       style={{ width: "100%" }}
-                      disabled={user?.is_current}
+                      disabled={user?.is_current || user?.role === "owner"}
                     >
                       <Option value="admin">
                         <Text type={"secondary"}>admin</Text>
@@ -486,7 +486,7 @@ const UserEdit = (props: any) => {
                         label="Block user"
                         style={{ marginRight: "50px", fontWeight: "500" }}
                       >
-                        <Switch />
+                        <Switch disabled={user?.role == "owner"} />
                       </Form.Item>
                     </Col>
                   )}
