@@ -161,7 +161,7 @@ const Navbar = () => {
       return false;
     }
 
-    if (user.role?.toLowerCase() === "admin") {
+    if (user.role?.toLowerCase() === "admin" || user.role?.toLowerCase() === "owner") {
       return true;
     }
     return !adminOnlyTabs.find((t) => t === key);
