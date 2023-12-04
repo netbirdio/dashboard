@@ -364,6 +364,20 @@ export const Activity = () => {
           );
         }
         return "-";
+      case "transferred.owner.role":
+        if (event.meta.email || event.meta.username || event.target_id) {
+          return renderMultiRowSpan(
+              event.meta.username ? event.meta.username : event.target_id,
+              event.meta.email ? event.meta.email : "User"
+          );
+        }
+        if (event.meta.user_name) {
+          return renderMultiRowSpan(
+              event.meta.user_name,
+              event.meta.is_service_user ? "Service User" : "User"
+          );
+        }
+        return "-";
       case "setupkey.group.add":
       case "setupkey.group.delete":
         return renderMultiRowSpan(event.meta.setupkey, "Setup Key");

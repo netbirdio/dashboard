@@ -262,7 +262,7 @@ export const RegularUsers = () => {
     if (users) {
       let currentUser = users.find((user) => user.is_current);
       if (currentUser) {
-        setIsAdmin(currentUser.role === "admin");
+        setIsAdmin(currentUser.role === "admin" || currentUser.role === "owner");
       }
     }
   }, [users]);
@@ -758,16 +758,20 @@ export const RegularUsers = () => {
                           <Switch
                             size={"small"}
                             checked={e}
-                            disabled={record.is_current}
+                            disabled={record.is_current || record.role === "owner"}
                             onClick={(active: boolean) => {
                               handleBlockUser(active, record);
                             }}
                           />
                         );
 
-                        if (record.is_current) {
+                        if (record.is_current || record.role === "owner") {
+                          let title = "You can't block or unblock yourself"
+                            if(record.role === "owner") {
+                              title = "You can't block or unblock owners"
+                            }
                           return (
-                            <Tooltip title="You can't block or unblock yourself">
+                            <Tooltip title={title}>
                               <Empty
                                 image={""}
                                 description={""}
@@ -803,9 +807,13 @@ export const RegularUsers = () => {
                           </Button>
                         );
 
-                        if (record.is_current) {
+                        if (record.is_current || record.role === "owner") {
+                          let title = "You can't delete yourself"
+                          if(record.role === "owner") {
+                            title = "You can't delete owners"
+                          }
                           return (
-                            <Tooltip title="You can't delete yourself">
+                            <Tooltip title={title}>
                               <Empty
                                 image={""}
                                 description={""}
