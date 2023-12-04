@@ -645,9 +645,9 @@ export const Peers = () => {
 
     let approval = peer.approval_required ? (
         <Tooltip title="The peer needs to be approved by an administrator before it can connect to other peers">
-          <Tag color="green">
+          <Tag color="gold">
             <Text
-                style={{ fontSize: "10px", color: "rgba(0, 135, 0, 0.75)" }}
+                style={{ fontSize: "10px", color: "rgba(212, 136, 6, 1)" }}
                 type={"secondary"}
             >needs approval</Text>
           </Tag>
