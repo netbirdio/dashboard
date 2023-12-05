@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { capitalize, formatOS, timeAgo } from "../utils/common";
+import {capitalize, formatOS, isLocalDev, isNetBirdHosted, timeAgo} from "../utils/common";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "typesafe-actions";
 import { actions as peerActions } from "../store/peer";
@@ -79,6 +79,7 @@ export const Peers = () => {
     (state: RootState) => state.peer.updateGroupsVisible
   );
   const users = useSelector((state: RootState) => state.user.data);
+  const account = useSelector((state: RootState) => state.account.data);
   const [addPeerModalOpen, setAddPeerModalOpen] = useState(false);
   const { oidcUser } = useOidcUser();
   const [isAdmin, setIsAdmin] = useState(false);
@@ -100,6 +101,7 @@ export const Peers = () => {
   const optionsOnOff = [
     { label: "Online", value: "on" },
     { label: "All", value: "all" },
+    // ...((isNetBirdHosted() || isLocalDev()) && account[0].settings.extra.peer_approval_enabled ?  [{ label: "Needs approval", value: "approval" }] : []),
   ];
 
   const transformDataTable = (d: Peer[]): PeerDataTable[] => {
@@ -291,6 +293,16 @@ export const Peers = () => {
       );
     }) as Peer[];
 
+    // switch (optionOnOff) {
+    //     case "on":
+    //         f = filter(f, (f: Peer) => f.connected);
+    //         break;
+    //     case "approval":
+    //         f = filter(f, (f: Peer) => f.approval_required);
+    //         break;
+    //     default:
+    //         break;
+    // }
     if (optionOnOff === "on") {
       f = filter(f, (f: Peer) => f.connected);
     }
@@ -402,6 +414,36 @@ export const Peers = () => {
             getAccessTokenSilently: getTokenSilently,
             payload: record && record.id ? record.id! : "",
           })
+        );
+      },
+      onCancel() {
+        setPeerToAction(null);
+      },
+    });
+  };
+
+  const showConfirmApprove = (record: PeerDataTable) => {
+    setPeerToAction(record);
+
+    let content = (
+      <Paragraph>
+        Are you sure you want to approve this peer?
+      </Paragraph>
+    );
+
+    let name = record ? record.name : "";
+    confirmModal.confirm({
+      icon: <ExclamationCircleOutlined />,
+      title: <span className="font-500">Approve peer {name}</span>,
+      width: 600,
+      content: content,
+      onOk() {
+        record.approval_required = false
+        dispatch(
+            peerActions.updatePeer.request({
+              getAccessTokenSilently: getTokenSilently,
+              payload: record,
+            })
         );
       },
       onCancel() {
@@ -601,6 +643,19 @@ export const Peers = () => {
       ""
     );
 
+    let approval = peer.approval_required ? (
+        <Tooltip title="The peer needs to be approved by an administrator before it can connect to other peers">
+          <Tag color="gold">
+            <Text
+                style={{ fontSize: "10px", color: "rgba(212, 136, 6, 1)" }}
+                type={"secondary"}
+            >needs approval</Text>
+          </Tag>
+        </Tooltip>
+    ) : (
+        ""
+    );
+
     const userEmail = users?.find((u) => u.id === peer.user_id)?.email;
     let expiry = !peer.login_expiration_enabled ? (
       <Tag>
@@ -622,9 +677,9 @@ export const Peers = () => {
               <Row>
                 <Text className="font-500"> {status}</Text>
               </Row>
-              <Row>{loginExpire}</Row>
             </span>
           </Button>
+          <Row>{loginExpire}</Row>
         </>
       );
     }
@@ -643,11 +698,18 @@ export const Peers = () => {
             <Row>
               <Text type="secondary">{userEmail}</Text>
             </Row>
-            <Row style={{ minWidth: "195px" }}>
-              {expiry} {loginExpire}
-            </Row>
           </span>
         </Button>
+        <Row style={{ minWidth: "195px", paddingLeft: "15px" }}>
+          {expiry} {loginExpire} <Button
+            type="text"
+            style={{ height: "auto", whiteSpace: "normal", textAlign: "center", padding: "0px", margin: "0px" }}
+            onClick={() => showConfirmApprove(peer)}
+            className={!isAdmin ? "nohover" : ""}
+        >
+            {approval}
+        </Button>
+        </Row>
       </div>
     );
   };

@@ -16,7 +16,8 @@ export interface Peer {
   dns_label: string,
   last_login: string,
   login_expired: boolean,
-  login_expiration_enabled: boolean
+  login_expiration_enabled: boolean,
+  approval_required: boolean
 }
 
 export interface FormPeer extends Peer {
