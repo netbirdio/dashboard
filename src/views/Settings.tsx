@@ -18,8 +18,6 @@ import {
   Radio,
   Input,
   RadioChangeEvent,
-  Alert,
-  Progress,
   Menu,
   MenuProps,
 } from "antd";
@@ -50,12 +48,15 @@ import { actions as policyActions } from "../store/policy";
 import { actions as nsGroupActions } from "../store/nameservers";
 import { actions as routeActions } from "../store/route";
 import { actions as userActions } from "../store/user";
+import {useOidc} from "@axa-fr/react-oidc";
+import {getConfig} from "../config";
 
 const { Title, Paragraph, Text } = Typography;
 
 const styleNotification = { marginTop: 85 };
 
 export const Settings = () => {
+  const { logout } = useOidc();
   const { getTokenSilently } = useGetTokenSilently();
   const dispatch = useDispatch();
   const { pageSize, onChangePageSize, pageSizeOptions } = usePageSizeHelpers(
@@ -77,6 +78,8 @@ export const Settings = () => {
   const [groupsClicked, setGroupsClicked] = useState(false);
   const [billingClicked, setBillingClicked] = useState(false);
   const [authClicked, setAuthClicked] = useState(true);
+  const [dangerClicked, setDangerClicked] = useState(false);
+  const [accountDeleting, setAccountDeleting] = useState(false);
 
   const [filterGroup, setFilterGroup] = useState([]);
   const [textToSearch, setTextToSearch] = useState(
@@ -88,6 +91,7 @@ export const Settings = () => {
   const {} = useGetGroupTagHelpers();
 
   const accounts = useSelector((state: RootState) => state.account.data);
+  const accountDeleted = useSelector((state: RootState) => state.account.deleteAccount);
   const failed = useSelector((state: RootState) => state.account.failed);
   const loading = useSelector((state: RootState) => state.account.loading);
   const updatedAccount = useSelector(
@@ -200,6 +204,21 @@ export const Settings = () => {
   };
 
   useEffect(() => {
+    if (accountDeleted.success) {
+      showDeleteAccountMSG()
+      return
+    }
+
+    if (accountDeleted.failure) {
+      setAccountDeleting(false)
+      return
+    }
+  }, [accountDeleted]);
+
+  useEffect(() => {
+    if (accounts.length < 1 && accountDeleting) {
+      return;
+    }
     if (accounts.length < 1) {
       console.debug(
         "invalid account data returned from the Management API",
@@ -505,7 +524,7 @@ export const Settings = () => {
     return false;
   };
 
-  const showConfirmDelete = (record: any) => {
+  const showConfirmDeleteGroup = (record: any) => {
     confirm({
       icon: <ExclamationCircleOutlined />,
       title: <span className="font-500">Delete group {record.name}</span>,
@@ -528,6 +547,54 @@ export const Settings = () => {
       onCancel() {},
     });
   };
+
+  const showConfirmDeleteAccount = () => {
+    confirm({
+      icon: <ExclamationCircleOutlined />,
+      title: <span className="font-500">Delete NetBird Account</span>,
+      okText: "Delete",
+      width: 600,
+      content: (
+          <Space direction="vertical" size="small">
+            <Paragraph>Are you sure you want to delete your NetBird account?</Paragraph>
+          </Space>
+      ),
+      okType: "danger",
+      onOk() {
+        setAccountDeleting(true)
+        dispatch(
+            accountActions.deleteAccount.request({
+              getAccessTokenSilently: getTokenSilently,
+              payload: accounts[0].id,
+            })
+        );
+      },
+      onCancel() {},
+    });
+  };
+  const config = getConfig();
+  const showDeleteAccountMSG = () => {
+    setTimeout(
+        () => {logout("",{client_id: config.clientId})}, 5000);
+    confirm({
+      icon: <ExclamationCircleOutlined />,
+      title: <span className="font-500">NetBird Account deleted</span>,
+      okText: "Logout now",
+      width: 600,
+      content: (
+          <Space direction="vertical" size="small">
+            <Paragraph>Your account has been deleted. Your session will log out from your session in 5 seconds.</Paragraph>
+          </Space>
+      ),
+      okType: "primary",
+      onOk() {
+        logout("",{client_id: config.clientId})
+      },
+      onCancel() {},
+    });
+  };
+
+
   const deleteKey = "deleting";
   useEffect(() => {
     const style = { marginTop: 85 };
@@ -561,16 +628,25 @@ export const Settings = () => {
         setAuthClicked(true);
         setGroupsClicked(false);
         setBillingClicked(false);
+        setDangerClicked(false);
         break;
       case "groups":
         setGroupsClicked(true);
         setBillingClicked(false);
         setAuthClicked(false);
+        setDangerClicked(false);
         break;
       case "billing":
         setBillingClicked(true);
         setAuthClicked(false);
         setGroupsClicked(false);
+        setDangerClicked(false);
+        break;
+      case "danger":
+        setBillingClicked(false);
+        setAuthClicked(false);
+        setGroupsClicked(false);
+        setDangerClicked(true);
         break;
     }
   };
@@ -596,82 +672,237 @@ export const Settings = () => {
       "System settings",
       "sub2",
       <SettingOutlined />,
-      [getItem("Authentication", "auth"), getItem("Groups", "groups")],
+      [getItem("Authentication", "auth"), getItem("Groups", "groups"), getItem("Danger zone", "danger")],
       "group"
     ),
   ];
 
-  useEffect(() => {}, [groupsClicked, billingClicked, authClicked]);
-  const renderSettingForm = () => {
-    return (
-      <Form
-        name="basic"
-        autoComplete="off"
-        form={form}
-        onFinish={handleFormSubmit}
-      >
-        <Card loading={loading} defaultValue={"Enabled"}>
+  useEffect(() => {}, [groupsClicked, billingClicked, authClicked, dangerClicked]);
+  const renderGroupsSettingForm = () => {
+    return(
+        <>
           <div
-            style={{
-              color: "rgba(0, 0, 0, 0.88)",
-              fontWeight: "500",
-              fontSize: "18px",
-              marginBottom: "20px",
-            }}
+              style={{
+                color: "rgba(0, 0, 0, 0.88)",
+                fontWeight: "500",
+                fontSize: "18px",
+                marginBottom: "20px",
+              }}
           >
-            {groupsClicked ? "User groups" : "Authentication"}
+            User groups
           </div>
-          <div className={groupsClicked ? "d-none" : ""}>
+          <div>
             <Row>
               <Col span={12}>
-                <Form.Item name="peer_login_expiration_enabled" label="">
+                <Form.Item name="groups_propagation_enabled" label="">
                   <div
-                    style={{
-                      display: "flex",
-                      gap: "15px",
-                    }}
+                      style={{
+                        display: "flex",
+                        gap: "15px",
+                      }}
                   >
                     <Switch
-                      onChange={(checked) => {
-                        setFormPeerExpirationEnabled(checked);
-                      }}
-                      size="small"
-                      checked={formPeerExpirationEnabled}
+                        onChange={(checked) => {
+                          setGroupsPropagationEnabled(checked);
+                        }}
+                        size="small"
+                        checked={groupsPropagationEnabled}
                     />
                     <div>
                       <label
-                        style={{
-                          color: "rgba(0, 0, 0, 0.88)",
-                          fontSize: "14px",
-                          fontWeight: "500",
-                        }}
+                          style={{
+                            color: "rgba(0, 0, 0, 0.88)",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          }}
                       >
-                        Peer login expiration{" "}
-                        <Tooltip
-                          title="Peer login expiration allows to periodically
-                                request re-authentication of peers that were
-                                added with the SSO login. You can disable the
-                                expiration per peer in the peers tab."
-                        >
+                        Enable user group propagation
+                        <Tooltip title="The user group propagation will take effect on the next auto-groups update for a user.">
                           <Text
-                            style={{
-                              marginLeft: "5px",
-                              fontSize: "14px",
-                              color: "#bdbdbe",
-                            }}
-                            type={"secondary"}
+                              style={{
+                                marginLeft: "5px",
+                                fontSize: "14px",
+                                color: "#bdbdbe",
+                              }}
+                              type={"secondary"}
                           >
                             <QuestionCircleFilled />
                           </Text>
                         </Tooltip>
                       </label>
                       <Paragraph
-                        type={"secondary"}
-                        style={{
-                          marginTop: "-2",
-                          fontWeight: "400",
-                          marginBottom: "0",
+                          type={"secondary"}
+                          style={{
+                            marginTop: "-2",
+                            fontWeight: "400",
+                            marginBottom: "0",
+                          }}
+                      >
+                        Allow group propagation from user’s auto-groups to
+                        peers, sharing membership information
+                      </Paragraph>
+                    </div>
+                  </div>
+                </Form.Item>
+              </Col>
+            </Row>
+            {(!isNetBirdHosted() || isLocalDev()) && (
+                <>
+                  <Row>
+                    <Col span={12}>
+                      <Form.Item name="jwt_groups_enabled" label="">
+                        <div
+                            style={{
+                              display: "flex",
+                              gap: "15px",
+                            }}
+                        >
+                          <Switch
+                              onChange={(checked) => {
+                                setJwtGroupsEnabled(checked);
+                              }}
+                              size="small"
+                              checked={jwtGroupsEnabled}
+                          />
+                          <div>
+                            <label
+                                style={{
+                                  color: "rgba(0, 0, 0, 0.88)",
+                                  fontSize: "14px",
+                                  fontWeight: "500",
+                                }}
+                            >
+                              Enable JWT group sync
+                            </label>
+                            <Paragraph
+                                type={"secondary"}
+                                style={{
+                                  marginTop: "-2",
+                                  fontWeight: "400",
+                                  marginBottom: "0",
+                                }}
+                            >
+                              Extract & sync groups from JWT claims with user’s
+                              auto-groups, auto-creating groups from tokens.
+                            </Paragraph>
+                          </div>
+                        </div>
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col span={12}>
+                      <label
+                          style={{
+                            color: "rgba(0, 0, 0, 0.88)",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          }}
+                      >
+                        JWT claim
+                      </label>
+                      <Paragraph
+                          type={"secondary"}
+                          style={{
+                            marginTop: "-2",
+                            fontWeight: "400",
+                            marginBottom: "5px",
+                          }}
+                      >
+                        Specify the JWT claim for extracting group names, e.g.,
+                        roles or groups, to add to account groups (this claim should contain a list of group names).
+                      </Paragraph>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col lg={6}>
+                      <Form.Item name="jwt_groups_claim_name">
+                        <Input
+                            value={jwtGroupsClaimName}
+                            autoComplete="off"
+                            onKeyDown={(event) => {
+                              if (event.code === "Space") event.preventDefault();
+                            }}
+                            onChange={(e) => {
+                              let val = e.target.value;
+                              var t = val.replace(/ /g, "");
+                              setJwtGroupsClaimName(t);
+                            }}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                </>
+            )}
+          </div>
+        </>
+    )
+  }
+
+  const renderAuthSettingsForm = () => {
+    return (
+        <>
+          <div
+              style={{
+                color: "rgba(0, 0, 0, 0.88)",
+                fontWeight: "500",
+                fontSize: "18px",
+                marginBottom: "20px",
+              }}
+          >
+            Authentication
+          </div>
+          <div >
+            <Row>
+              <Col span={12}>
+                <Form.Item name="peer_login_expiration_enabled" label="">
+                  <div
+                      style={{
+                        display: "flex",
+                        gap: "15px",
+                      }}
+                  >
+                    <Switch
+                        onChange={(checked) => {
+                          setFormPeerExpirationEnabled(checked);
                         }}
+                        size="small"
+                        checked={formPeerExpirationEnabled}
+                    />
+                    <div>
+                      <label
+                          style={{
+                            color: "rgba(0, 0, 0, 0.88)",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          }}
+                      >
+                        Peer login expiration{" "}
+                        <Tooltip
+                            title="Peer login expiration allows to periodically
+                                  request re-authentication of peers that were
+                                  added with the SSO login. You can disable the
+                                  expiration per peer in the peers tab."
+                        >
+                          <Text
+                              style={{
+                                marginLeft: "5px",
+                                fontSize: "14px",
+                                color: "#bdbdbe",
+                              }}
+                              type={"secondary"}
+                          >
+                            <QuestionCircleFilled />
+                          </Text>
+                        </Tooltip>
+                      </label>
+                      <Paragraph
+                          type={"secondary"}
+                          style={{
+                            marginTop: "-2",
+                            fontWeight: "400",
+                            marginBottom: "0",
+                          }}
                       >
                         Request periodic re-authentication of peers registered
                         with SSO
@@ -684,21 +915,21 @@ export const Settings = () => {
             <Row>
               <Col span={12}>
                 <label
-                  style={{
-                    color: "rgba(0, 0, 0, 0.88)",
-                    fontSize: "14px",
-                    fontWeight: "500",
-                  }}
+                    style={{
+                      color: "rgba(0, 0, 0, 0.88)",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                    }}
                 >
                   Peer login expires in
                 </label>
                 <Paragraph
-                  type={"secondary"}
-                  style={{
-                    marginTop: "-2",
-                    fontWeight: "400",
-                    marginBottom: "5px",
-                  }}
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-2",
+                      fontWeight: "400",
+                      marginBottom: "5px",
+                    }}
                 >
                   Time after which every peer added with SSO login will require
                   re-authentication
@@ -707,187 +938,127 @@ export const Settings = () => {
             </Row>
 
             <Form.Item
-              name="peer_login_expiration_formatted"
-              rules={[{ validator: checkExpiresIn }]}
+                name="peer_login_expiration_formatted"
+                rules={[{ validator: checkExpiresIn }]}
             >
               <ExpiresInInput
-                disabled={!formPeerExpirationEnabled}
-                options={Array.of(
-                  { key: "hour", title: "Hours" },
-                  {
-                    key: "day",
-                    title: "Days",
-                  }
-                )}
+                  disabled={!formPeerExpirationEnabled}
+                  options={Array.of(
+                      { key: "hour", title: "Hours" },
+                      {
+                        key: "day",
+                        title: "Days",
+                      }
+                  )}
               />
             </Form.Item>
           </div>
-          <div className={!groupsClicked ? "d-none" : ""}>
-            <Row>
-              <Col span={12}>
-                <Form.Item name="groups_propagation_enabled" label="">
-                  <div
-                    style={{
-                      display: "flex",
-                      gap: "15px",
-                    }}
-                  >
-                    <Switch
-                      onChange={(checked) => {
-                        setGroupsPropagationEnabled(checked);
-                      }}
-                      size="small"
-                      checked={groupsPropagationEnabled}
-                    />
-                    <div>
-                      <label
-                        style={{
-                          color: "rgba(0, 0, 0, 0.88)",
-                          fontSize: "14px",
-                          fontWeight: "500",
-                        }}
-                      >
-                        Enable user group propagation
-                        <Tooltip title="The user group propagation will take effect on the next auto-groups update for a user.">
-                          <Text
-                            style={{
-                              marginLeft: "5px",
-                              fontSize: "14px",
-                              color: "#bdbdbe",
-                            }}
-                            type={"secondary"}
-                          >
-                            <QuestionCircleFilled />
-                          </Text>
-                        </Tooltip>
-                      </label>
-                      <Paragraph
-                        type={"secondary"}
-                        style={{
-                          marginTop: "-2",
-                          fontWeight: "400",
-                          marginBottom: "0",
-                        }}
-                      >
-                        Allow group propagation from user’s auto-groups to
-                        peers, sharing membership information
-                      </Paragraph>
-                    </div>
-                  </div>
-                </Form.Item>
-              </Col>
-            </Row>
-            {(!isNetBirdHosted() || isLocalDev()) && (
-              <>
-                <Row>
-                  <Col span={12}>
-                    <Form.Item name="jwt_groups_enabled" label="">
-                      <div
-                        style={{
-                          display: "flex",
-                          gap: "15px",
-                        }}
-                      >
-                        <Switch
-                          onChange={(checked) => {
-                            setJwtGroupsEnabled(checked);
-                          }}
-                          size="small"
-                          checked={jwtGroupsEnabled}
-                        />
-                        <div>
-                          <label
-                            style={{
-                              color: "rgba(0, 0, 0, 0.88)",
-                              fontSize: "14px",
-                              fontWeight: "500",
-                            }}
-                          >
-                            Enable JWT group sync
-                          </label>
-                          <Paragraph
-                            type={"secondary"}
-                            style={{
-                              marginTop: "-2",
-                              fontWeight: "400",
-                              marginBottom: "0",
-                            }}
-                          >
-                            Extract & sync groups from JWT claims with user’s
-                            auto-groups, auto-creating groups from tokens.
-                          </Paragraph>
-                        </div>
-                      </div>
-                    </Form.Item>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col span={12}>
-                    <label
-                      style={{
-                        color: "rgba(0, 0, 0, 0.88)",
-                        fontSize: "14px",
-                        fontWeight: "500",
-                      }}
-                    >
-                      JWT claim
-                    </label>
-                    <Paragraph
-                      type={"secondary"}
-                      style={{
-                        marginTop: "-2",
-                        fontWeight: "400",
-                        marginBottom: "5px",
-                      }}
-                    >
-                      Specify the JWT claim for extracting group names, e.g.,
-                      roles or groups, to add to account groups (this claim should contain a list of group names).
-                    </Paragraph>
-                  </Col>
-                </Row>
-                <Row>
-                  <Col lg={6}>
-                    <Form.Item name="jwt_groups_claim_name">
-                      <Input
-                        value={jwtGroupsClaimName}
-                        autoComplete="off"
-                        onKeyDown={(event) => {
-                          if (event.code === "Space") event.preventDefault();
-                        }}
-                        onChange={(e) => {
-                          let val = e.target.value;
-                          var t = val.replace(/ /g, "");
-                          setJwtGroupsClaimName(t);
-                        }}
-                      />
-                    </Form.Item>
-                  </Col>
-                </Row>
-              </>
-            )}
-          </div>
           <Col
-            span={24}
-            style={{ marginTop: "10px", marginBottom: "24px" }}
-            className={groupsClicked ? "d-none" : ""}
+              span={24}
+              style={{ marginTop: "10px", marginBottom: "24px" }}
           >
             <Text type={"secondary"}>
               Learn more about
               <a
-                target="_blank"
-                rel="noreferrer"
-                href="https://docs.netbird.io/how-to/enforce-periodic-user-authentication"
+                  target="_blank"
+                  rel="noreferrer"
+                  href="https://docs.netbird.io/how-to/enforce-periodic-user-authentication"
               >
                 {" "}
                 login expiration
               </a>
             </Text>
           </Col>
-          <Form.Item style={{ marginBottom: "0" }}>
+        </>
+    )
+  }
+
+  const renderDangerSettingsForm = () => {
+    return (
+        <>
+          <div
+              style={{
+                color: "rgba(0, 0, 0, 0.88)",
+                fontWeight: "500",
+                fontSize: "18px",
+                marginBottom: "20px",
+              }}
+          >
+            Danger zone
+          </div>
+          <div >
+            <Row>
+              <Col span={12}>
+                <Form.Item label="">
+                  <div
+                      style={{
+                        display: "flex",
+                        gap: "15px",
+                      }}
+                  >
+                    <div>
+                      <label
+                          style={{
+                            // color: "rgba(0, 0, 0, 0.88)",
+                            color: "red",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          }}
+                      >
+                        Delete NetBird account
+                      </label>
+                      <Paragraph
+                          type={"secondary"}
+                          style={{
+                            marginTop: "-2",
+                            fontWeight: "500",
+                            marginBottom: "0",
+                          }}
+                      >
+                        Before proceeding to delete your Netbird account, please be aware that this action is irreversible.
+                        Once your account is deleted, you will permanently lose access to all associated data,
+                        including your peers, users, groups, policies, and routes.
+                      </Paragraph>
+                    </div>
+                  </div>
+                </Form.Item>
+                <Form.Item style={{ marginBottom: "0" }}>
+                  <Button
+                      danger
+                      onClick={showConfirmDeleteAccount}>
+                    Delete account
+                  </Button>
+                </Form.Item>
+              </Col>
+            </Row>
+          </div>
+        </>
+    )
+  }
+
+  const renderSettingForm = () => {
+    let loaded = renderAuthSettingsForm()
+    if(groupsClicked) {
+      loaded = renderGroupsSettingForm()
+    }
+    if (dangerClicked) {
+        loaded = renderDangerSettingsForm()
+    }
+
+    return (
+      <Form
+        name="basic"
+        autoComplete="off"
+        form={form}
+        onFinish={handleFormSubmit}
+      >
+        <Card loading={loading} defaultValue={"Enabled"}>
+          {loaded}
+          {!dangerClicked && (<Form.Item style={{ marginBottom: "0" }}>
             <Button type="primary" htmlType="submit">
               Save
             </Button>
-          </Form.Item>
+          </Form.Item>)}
         </Card>
       </Form>
     );
@@ -1293,7 +1464,7 @@ export const Settings = () => {
                                     type={"text"}
                                     disabled={isButtonDisabled}
                                     onClick={() => {
-                                      showConfirmDelete(record);
+                                      showConfirmDeleteGroup(record);
                                     }}
                                   >
                                     Delete
@@ -1308,6 +1479,11 @@ export const Settings = () => {
                   </Col>
                 </Row>
               </>
+            )}
+            {dangerClicked && (
+                <Row style={{ marginTop: "0", width: "100%" }}>
+                  <Col span={24}>{renderSettingForm()}</Col>
+                </Row>
             )}
           </Col>
         </Row>

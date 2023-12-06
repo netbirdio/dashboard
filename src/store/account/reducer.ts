@@ -2,13 +2,14 @@ import { createReducer } from 'typesafe-actions';
 import { combineReducers } from 'redux';
 import { Account } from './types';
 import actions, { ActionTypes } from './actions';
-import {ApiError, ChangeResponse} from "../../services/api-client/types";
+import {ApiError, ChangeResponse, DeleteResponse} from "../../services/api-client/types";
 
 type StateType = Readonly<{
   data: Account[] | null;
   loading: boolean;
   failed: ApiError | null;
   savedAccount: ChangeResponse<Account | null>;
+  deletedAccount: DeleteResponse<string | null>;
 }>;
 
 const initialState: StateType = {
@@ -16,6 +17,13 @@ const initialState: StateType = {
   loading: false,
   failed: null,
   savedAccount: <ChangeResponse<Account | null>>{
+    loading: false,
+    success: false,
+    failure: false,
+    error: null,
+    data : null
+  },
+  deletedAccount: <DeleteResponse<string | null>>{
     loading: false,
     success: false,
     failure: false,
@@ -45,10 +53,18 @@ const updatedAccount = createReducer<ChangeResponse<Account | null>, ActionTypes
     .handleAction(actions.setUpdateAccount, (store, action) => action.payload)
     .handleAction(actions.resetUpdateAccount, () => initialState.savedAccount)
 
+const deleteAccount = createReducer<DeleteResponse<string | null>, ActionTypes>(initialState.deletedAccount)
+    .handleAction(actions.deleteAccount.request, () => initialState.deletedAccount)
+    .handleAction(actions.deleteAccount.success, (store, action) => action.payload)
+    .handleAction(actions.deleteAccount.failure, (store, action) => action.payload)
+    .handleAction(actions.setDeleteAccount, (store, action) => action.payload)
+    .handleAction(actions.resetDeletedAccount, () => initialState.deletedAccount)
+
 
 export default combineReducers({
   data,
   loading,
   failed,
-  updatedAccount
+  updatedAccount,
+  deleteAccount
 });
