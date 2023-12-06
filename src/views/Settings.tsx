@@ -131,6 +131,8 @@ export const Settings = () => {
 
   const [formPeerExpirationEnabled, setFormPeerExpirationEnabled] =
     useState(true);
+  const [formPeerApprovalEnabled, setFormPeerApprovalEnabled] =
+    useState(false);
   const [jwtGroupsEnabled, setJwtGroupsEnabled] = useState(true);
   const [groupsPropagationEnabled, setGroupsPropagationEnabled] =
     useState(true);
@@ -240,9 +242,11 @@ export const Settings = () => {
       jwt_groups_enabled: account.settings.jwt_groups_enabled,
       jwt_groups_claim_name: account.settings.jwt_groups_claim_name,
       groups_propagation_enabled: account.settings.groups_propagation_enabled,
+      peer_approval_enabled: account.settings.extra ? account.settings.extra.peer_approval_enabled : false,
     } as FormAccount;
     setFormAccount(fAccount);
     setFormPeerExpirationEnabled(fAccount.peer_login_expiration_enabled);
+    setFormPeerApprovalEnabled(fAccount.peer_approval_enabled);
     setJwtGroupsEnabled(fAccount.jwt_groups_enabled);
     setGroupsPropagationEnabled(fAccount.groups_propagation_enabled);
     setJwtGroupsClaimName(fAccount.jwt_groups_claim_name);
@@ -413,6 +417,7 @@ export const Settings = () => {
           updatedAccount.data.settings.jwt_groups_claim_name,
         groups_propagation_enabled:
           updatedAccount.data.settings.groups_propagation_enabled,
+        peer_approval_enabled: updatedAccount.data.settings.extra.peer_approval_enabled
       } as FormAccount;
       setFormAccount(fAccount);
     } else if (updatedAccount.error) {
@@ -447,6 +452,7 @@ export const Settings = () => {
           jwt_groups_enabled: jwtGroupsEnabled,
           jwt_groups_claim_name: jwtGroupsClaimName,
           groups_propagation_enabled: groupsPropagationEnabled,
+          peer_approval_enabled: formPeerApprovalEnabled,
         });
       })
       .catch((errorInfo) => {
@@ -472,6 +478,9 @@ export const Settings = () => {
         jwt_groups_enabled: jwtGroupsEnabled,
         jwt_groups_claim_name: jwtGroupsClaimName,
         groups_propagation_enabled: groupsPropagationEnabled,
+        extra: {
+          peer_approval_enabled: values.peer_approval_enabled
+        }
       },
     } as Account;
   };
