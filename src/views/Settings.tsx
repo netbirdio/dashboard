@@ -81,6 +81,9 @@ export const Settings = () => {
   const [dangerClicked, setDangerClicked] = useState(false);
   const [accountDeleting, setAccountDeleting] = useState(false);
 
+  const [isOwner, setIsOwner] = useState(false);
+
+
   const [filterGroup, setFilterGroup] = useState([]);
   const [textToSearch, setTextToSearch] = useState(
     getFilterState("groupsManagementPage", "search")
@@ -141,6 +144,16 @@ export const Settings = () => {
   const { confirm } = Modal;
 
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    if (users) {
+      let currentUser = users.find((user) => user?.is_current);
+      if (currentUser) {
+        setIsOwner(currentUser.role === "owner");
+      }
+    }
+  }, [users]);
+
   useEffect(() => {
     dispatch(
       accountActions.getAccounts.request({
@@ -665,7 +678,8 @@ export const Settings = () => {
     key: React.Key,
     icon?: React.ReactNode,
     children?: MenuItem[],
-    type?: "group"
+    type?: "group",
+    disabled?: boolean
   ): MenuItem {
     return {
       key,
@@ -673,6 +687,7 @@ export const Settings = () => {
       children,
       label,
       type,
+      disabled,
     } as MenuItem;
   }
 
@@ -681,7 +696,7 @@ export const Settings = () => {
       "System settings",
       "sub2",
       <SettingOutlined />,
-      [getItem("Authentication", "auth"), getItem("Groups", "groups"), getItem("Danger zone", "danger")],
+      [getItem("Authentication", "auth"), getItem("Groups", "groups"), getItem("Danger zone", "danger", undefined, undefined, undefined, !isOwner)],
       "group"
     ),
   ];
