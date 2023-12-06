@@ -864,6 +864,59 @@ export const Settings = () => {
           <div >
             <Row>
               <Col span={12}>
+                {(isNetBirdHosted() || isLocalDev()) && <Form.Item name="peer_approval_enabled" label="">
+                  <div
+                      style={{
+                        display: "flex",
+                        gap: "15px",
+                      }}
+                  >
+                    <Switch
+                        onChange={(checked) => {
+                          setFormPeerApprovalEnabled(checked);
+                        }}
+                        size="small"
+                        checked={formPeerApprovalEnabled}
+                    />
+                    <div>
+                      <label
+                          style={{
+                            color: "rgba(0, 0, 0, 0.88)",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          }}
+                      >
+                        Peer approval{" "}
+                        <Tooltip
+                            title="Peer approval requires that every newly added peer
+                          will require approval by an administrator before it can connect to other peers.
+                          You can approve peers in the peers tab."
+                        >
+                          <Text
+                              style={{
+                                marginLeft: "5px",
+                                fontSize: "14px",
+                                color: "#bdbdbe",
+                              }}
+                              type={"secondary"}
+                          >
+                            <QuestionCircleFilled />
+                          </Text>
+                        </Tooltip>
+                      </label>
+                      <Paragraph
+                          type={"secondary"}
+                          style={{
+                            marginTop: "-2",
+                            fontWeight: "400",
+                            marginBottom: "0",
+                          }}
+                      >
+                        Require peers to be approved by an administrator
+                      </Paragraph>
+                    </div>
+                  </div>
+                </Form.Item>}
                 <Form.Item name="peer_login_expiration_enabled" label="">
                   <div
                       style={{
