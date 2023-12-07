@@ -15,5 +15,11 @@ export default {
         `/api/accounts/${id}`,
         payload
     );
-  }
+  },
+  async deleteAccount(payload:RequestPayload<string>): Promise<ApiResponse<any>> {
+    return apiClient.delete<any>(
+        `/api/accounts/` + payload.payload,
+        payload
+    );
+  },
 };
