@@ -1,15 +1,15 @@
 # Wiretrustee Dashboard
-Wiretrustee Dashboard is a the Wiretrustee Managemenet server UI. It allow users to signin, view setup keys and manage peers. This image is **not ready** for production use.
+Wiretrustee Dashboard is a the Wiretrustee Management server UI. It allow users to signin, view setup keys and manage peers. This image is **not ready** for production use.
 ## Tags
 ```latest``` ```vX.X.X``` not available yet.
 
-```main``` builded on every PR being merged to the repository
+```main``` built on every PR being merged to the repository
 ## How to use this image
 HTTP run:
 ```shell
 docker run -d --rm -p 80:80 wiretrustee/dashboard:main
 ```
-Using SSL certificate from Let's Encript®:
+Using SSL certificate from Let's Encrypt®:
 ```shell
 docker run -d --rm -p 80:80 -p 443:443 \
   -e LETSENCRYPT_DOMAIN=app.mydomain.com \
