@@ -605,7 +605,7 @@ export const Settings = () => {
       width: 600,
       content: (
           <Space direction="vertical" size="small">
-            <Paragraph>Your account has been deleted. Your session will log out from your session in 5 seconds.</Paragraph>
+            <Paragraph>Your account has been deleted. You will be logged out from your session in 5 seconds.</Paragraph>
           </Space>
       ),
       okType: "primary",
