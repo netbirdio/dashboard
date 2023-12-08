@@ -96,7 +96,7 @@ export const transformGroupedDataTable = (
       }
     });
     groupList = groupList.filter(
-      (value, index, arrary) => arrary.indexOf(value) === index
+      (value, index, array) => array.indexOf(value) === index
     );
     let groupDataTableRoutes = transformDataTable(listedRoutes, peers);
     const filterEnabledRoutes = groupDataTableRoutes.filter(

@@ -126,6 +126,7 @@ const NameServerGroupAdd = () => {
   };
 
   const onChange = (changedValues: any) => {
+
     if (changedValues.primary !== undefined) {
       setIsPrimary(changedValues.primary);
     }
@@ -207,6 +208,7 @@ const NameServerGroupAdd = () => {
     let nsGroupLocal = {} as NameServerGroup;
     if (value === customChoice) {
       nsGroupLocal = nsGroup;
+      nsGroupLocal.domains = [];
     } else {
       defaultDNSOptions.forEach((nsg) => {
         if (value === nsg.name) {
