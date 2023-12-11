@@ -481,21 +481,24 @@ export const Settings = () => {
   };
 
   const createAccountToSave = (values: FormAccount): Account => {
-    return {
+    let accountToSave = {
       id: formAccount.id,
       settings: {
         peer_login_expiration: expiresInToSeconds(
-          values.peer_login_expiration_formatted
+            values.peer_login_expiration_formatted
         ),
         peer_login_expiration_enabled: values.peer_login_expiration_enabled,
         jwt_groups_enabled: jwtGroupsEnabled,
         jwt_groups_claim_name: jwtGroupsClaimName,
         groups_propagation_enabled: groupsPropagationEnabled,
-        extra: {
-          peer_approval_enabled: values.peer_approval_enabled
-        }
       },
     } as Account;
+    if (isNetBirdHosted() || isLocalDev()) {
+      accountToSave.settings.extra = {
+        peer_approval_enabled: values.peer_approval_enabled
+      }
+    }
+    return accountToSave;
   };
 
   const confirmSave = (newValues: FormAccount) => {
