@@ -481,12 +481,15 @@ export const Settings = () => {
   };
 
   const createAccountToSave = (values: FormAccount): Account => {
+    let peer_login_expiration = values.peer_login_expiration_formatted? expiresInToSeconds(
+        values.peer_login_expiration_formatted
+    ) : accounts[0].settings.peer_login_expiration;
+
+
     let accountToSave = {
       id: formAccount.id,
       settings: {
-        peer_login_expiration: expiresInToSeconds(
-            values.peer_login_expiration_formatted
-        ),
+        peer_login_expiration: peer_login_expiration,
         peer_login_expiration_enabled: values.peer_login_expiration_enabled,
         jwt_groups_enabled: jwtGroupsEnabled,
         jwt_groups_claim_name: jwtGroupsClaimName,
