@@ -909,9 +909,7 @@ export const Settings = () => {
                       >
                         Peer approval{" "}
                         <Tooltip
-                            title="Peer approval requires that every newly added peer
-                          will require approval by an administrator before it can connect to other peers.
-                          You can approve peers in the peers tab."
+                            title="When enabled, every newly added peer will require approval by an administrator before it can connect to other peers. You can approve peers in the peers tab."
                         >
                           <Text
                               style={{
