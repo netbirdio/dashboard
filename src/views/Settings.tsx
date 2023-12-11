@@ -430,7 +430,7 @@ export const Settings = () => {
           updatedAccount.data.settings.jwt_groups_claim_name,
         groups_propagation_enabled:
           updatedAccount.data.settings.groups_propagation_enabled,
-        peer_approval_enabled: updatedAccount.data.settings.extra.peer_approval_enabled
+        peer_approval_enabled: updatedAccount.data.settings.extra? updatedAccount.data.settings.extra.peer_approval_enabled : false,
       } as FormAccount;
       setFormAccount(fAccount);
     } else if (updatedAccount.error) {
