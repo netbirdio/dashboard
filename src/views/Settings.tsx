@@ -140,7 +140,7 @@ export const Settings = () => {
   const [groupsPropagationEnabled, setGroupsPropagationEnabled] =
     useState(true);
   const [jwtGroupsClaimName, setJwtGroupsClaimName] = useState("");
-  const [jwtAllowGroups, setJwtAllowGroups ]  = useState<string[]>([]);
+  const [jwtAllowGroups, setJwtAllowGroups]  = useState<string[]>([]);
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
   const { confirm } = Modal;
 
@@ -888,7 +888,8 @@ export const Settings = () => {
                             marginBottom: "5px",
                           }}
                       >
-                        Specify the JWT allow group name for allowing access, e.g., VPN user.
+                        Specify the JWT allow group name for granting access, e.g., VPN user.
+                        Users without a specified JWT group will have their authentication rejected.
                       </Paragraph>
                     </Col>
                   </Row>
