@@ -143,6 +143,7 @@ export const Settings = () => {
     useState(true);
   const [jwtGroupsClaimName, setJwtGroupsClaimName] = useState("");
   const [jwtAllowGroups, setJwtAllowGroups]  = useState<string[]>([]);
+  const [displayJWTAllowGroups, setDisplayJWTAllowGroups]  = useState(false);
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
   const { confirm } = Modal;
 
@@ -257,7 +258,7 @@ export const Settings = () => {
         account.settings.peer_login_expiration_enabled,
       jwt_groups_enabled: account.settings.jwt_groups_enabled,
       jwt_groups_claim_name: account.settings.jwt_groups_claim_name,
-      jwt_allow_groups: [account.settings.jwt_allow_groups[0]],
+      jwt_allow_groups: account.settings.jwt_allow_groups? account.settings.jwt_allow_groups : [],
       groups_propagation_enabled: account.settings.groups_propagation_enabled,
       peer_approval_enabled: account.settings.extra ? account.settings.extra.peer_approval_enabled : false,
     } as FormAccount;
@@ -901,29 +902,37 @@ export const Settings = () => {
                             marginBottom: "5px",
                           }}
                       >
-                        Specify the JWT allow group name for granting access, e.g., VPN user.
-                        Users without a specified JWT group will have their authentication rejected.
+                        Limit access to NetBird for the specified group name, e.g., NetBird users.
+                        To use the group, first you need to configure it first in your IdP.
                       </Paragraph>
                     </Col>
                   </Row>
                   <Row>
-
-
                     <Col lg={6}>
-                      <Form.Item name="jwt_allow_groups">
+                      <Form.Item name="jwt_allow_groups" style={displayJWTAllowGroups ? {marginBottom: "2px",} : {}}>
                         <Input
                             value={jwtAllowGroups[0]}
                             autoComplete="off"
-                            onKeyDown={(event) => {
-                              if (event.code === "Space") event.preventDefault();
-                            }}
                             onChange={(e) => {
                               setJwtAllowGroups([e.target.value]);
+                              setDisplayJWTAllowGroups(true);
                             }}
                         />
                       </Form.Item>
                     </Col>
                   </Row>
+                  { displayJWTAllowGroups && (
+                      <Row>
+                        <Paragraph style={{
+                          marginTop: "-20",
+                          fontWeight: "400",
+                          marginBottom: "5px",
+                          color: "red"
+                        }}>
+                          To prevent losing access, ensure you are part of this group.
+                        </Paragraph>
+                      </Row>
+                  )}
                 </>
             )}
           </div>
