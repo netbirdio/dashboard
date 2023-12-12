@@ -715,7 +715,7 @@ export const Settings = () => {
       "System settings",
       "sub2",
       <SettingOutlined />,
-      [getItem("Authentication", "auth"), getItem("Groups", "groups"), getItem("Identity provider", "idp"), getItem("Danger zone", "danger", undefined, undefined, undefined, !isOwner)],
+      [getItem("Authentication", "auth"), getItem("Groups", "groups"), getItem("Identity provider", "idp", undefined, undefined, undefined, !(isNetBirdHosted() || isLocalDev())), getItem("Danger zone", "danger", undefined, undefined, undefined, !isOwner)],
       "group"
     ),
   ];
@@ -1066,6 +1066,7 @@ export const Settings = () => {
               </a>
             </Text>
           </Col>
+          {(isNetBirdHosted() || isLocalDev()) && (
             <Col span={24}
                  style={{ marginTop: "10px", marginBottom: "24px" }}>
               <label
@@ -1099,7 +1100,7 @@ export const Settings = () => {
                   to enable this feature
                 </Text>
               </Paragraph>
-            </Col>
+            </Col>)}
         </>
     )
   }
