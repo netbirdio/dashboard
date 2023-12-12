@@ -50,6 +50,7 @@ import { actions as routeActions } from "../store/route";
 import { actions as userActions } from "../store/user";
 import {useOidc} from "@axa-fr/react-oidc";
 import {getConfig} from "../config";
+import {Link} from "react-router-dom";
 
 const { Title, Paragraph, Text } = Typography;
 
@@ -76,6 +77,7 @@ export const Settings = () => {
   ];
 
   const [groupsClicked, setGroupsClicked] = useState(false);
+  const [idpCLicked, setIdpClicked] = useState(false);
   const [billingClicked, setBillingClicked] = useState(false);
   const [authClicked, setAuthClicked] = useState(true);
   const [dangerClicked, setDangerClicked] = useState(false);
@@ -434,7 +436,7 @@ export const Settings = () => {
         jwt_allow_groups: updatedAccount.data.settings.jwt_allow_groups,
         groups_propagation_enabled:
           updatedAccount.data.settings.groups_propagation_enabled,
-        peer_approval_enabled: updatedAccount.data.settings.extra.peer_approval_enabled
+        peer_approval_enabled: updatedAccount.data.settings.extra? updatedAccount.data.settings.extra.peer_approval_enabled : false,
       } as FormAccount;
       setFormAccount(fAccount);
     } else if (updatedAccount.error) {
@@ -664,24 +666,35 @@ export const Settings = () => {
         setGroupsClicked(false);
         setBillingClicked(false);
         setDangerClicked(false);
+        setIdpClicked(false);
         break;
       case "groups":
         setGroupsClicked(true);
         setBillingClicked(false);
         setAuthClicked(false);
         setDangerClicked(false);
+        setIdpClicked(false);
         break;
       case "billing":
         setBillingClicked(true);
         setAuthClicked(false);
         setGroupsClicked(false);
         setDangerClicked(false);
+        setIdpClicked(false);
         break;
       case "danger":
         setBillingClicked(false);
         setAuthClicked(false);
         setGroupsClicked(false);
         setDangerClicked(true);
+        setIdpClicked(false);
+        break;
+      case "idp":
+        setIdpClicked(true);
+        setBillingClicked(false);
+        setAuthClicked(false);
+        setGroupsClicked(false);
+        setDangerClicked(false);
         break;
     }
   };
@@ -709,12 +722,12 @@ export const Settings = () => {
       "System settings",
       "sub2",
       <SettingOutlined />,
-      [getItem("Authentication", "auth"), getItem("Groups", "groups"), getItem("Danger zone", "danger", undefined, undefined, undefined, !isOwner)],
+      [getItem("Authentication", "auth"), getItem("Groups", "groups"), getItem("Identity provider", "idp", undefined, undefined, undefined, !(isNetBirdHosted() || isLocalDev())), getItem("Danger zone", "danger", undefined, undefined, undefined, !isOwner)],
       "group"
     ),
   ];
 
-  useEffect(() => {}, [groupsClicked, billingClicked, authClicked, dangerClicked]);
+  useEffect(() => {}, [groupsClicked, billingClicked, authClicked, dangerClicked, idpCLicked]);
   const renderGroupsSettingForm = () => {
     return(
         <>
@@ -958,9 +971,7 @@ export const Settings = () => {
                       >
                         Peer approval{" "}
                         <Tooltip
-                            title="Peer approval requires that every newly added peer
-                          will require approval by an administrator before it can connect to other peers.
-                          You can approve peers in the peers tab."
+                            title="When enabled, every newly added peer will require approval by an administrator before it can connect to other peers. You can approve peers in the peers tab."
                         >
                           <Text
                               style={{
@@ -1085,9 +1096,10 @@ export const Settings = () => {
               />
             </Form.Item>
           </div>
+
           <Col
               span={24}
-              style={{ marginTop: "10px", marginBottom: "24px" }}
+                style={{ marginTop: "-10px", marginBottom: "24px" }}
           >
             <Text type={"secondary"}>
               Learn more about
@@ -1101,6 +1113,125 @@ export const Settings = () => {
               </a>
             </Text>
           </Col>
+          {(isNetBirdHosted() || isLocalDev()) && (
+            <Col span={24}
+                 style={{ marginTop: "10px", marginBottom: "24px" }}>
+              <label
+                  style={{
+                    color: "rgba(0, 0, 0, 0.88)",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+              >
+                Multi-factor authentication (MFA)
+              </label>
+              <Paragraph
+                  type={"secondary"}
+                  style={{
+                    marginTop: "-2",
+                    fontWeight: "400",
+                    marginBottom: "5px",
+                  }}
+              >
+                <Text type={"secondary"}>
+                  If your IdP supports MFA, it will work automatically with NetBird. Otherwise, contact us at
+                  <a
+                      target="_blank"
+                      rel="noreferrer"
+                      href="mailto:support@netbird.io"
+                  >
+                    {" "}
+                    support@netbird.io
+                    {" "}
+                  </a>
+                  to enable this feature
+                </Text>
+              </Paragraph>
+            </Col>)}
+        </>
+    )
+  }
+
+  const renderIdpSettingsForm = () => {
+    return (
+        <>
+          <div
+              style={{
+                color: "rgba(0, 0, 0, 0.88)",
+                fontWeight: "500",
+                fontSize: "18px",
+                marginBottom: "20px",
+              }}
+          >
+            Identity provider
+          </div>
+          <div >
+
+            <Row>
+              <Col span={24}>
+                <label
+                    style={{
+                      color: "rgba(0, 0, 0, 0.88)",
+                      fontSize: "14px",
+                      fontWeight: "500",
+                    }}
+                >
+                  User and group sync
+                </label>
+                <Paragraph
+                    type={"secondary"}
+                    style={{
+                      marginTop: "-2",
+                      fontWeight: "400",
+                      marginBottom: "5px",
+                    }}
+                >
+                  Sync users and groups from your IdP to use them in access control
+                </Paragraph>
+              </Col>
+            </Row>
+
+            <Col span={24}
+                 style={{ marginTop: "10px", marginBottom: "24px" }}>
+              <label
+                  style={{
+                    color: "rgba(0, 0, 0, 0.88)",
+                    fontSize: "14px",
+                    fontWeight: "500",
+                  }}
+              >
+                Custom IdP
+              </label>
+              <Paragraph
+                  type={"secondary"}
+                  style={{
+                    marginTop: "-2",
+                    fontWeight: "400",
+                    marginBottom: "5px",
+                  }}
+              >
+                Configure your custom IdP like Okta or Jumpcloud
+              </Paragraph>
+            </Col>
+
+            <Col
+                span={24}
+                style={{ marginTop: "10px", marginBottom: "24px" }}
+            >
+              <Text type={"secondary"}>
+                To enable these features, please contact us at
+                <a
+                    target="_blank"
+                    rel="noreferrer"
+                    href="mailto:support@netbird.io"
+                >
+                  {" "}
+                  support@netbird.io
+                </a>
+              </Text>
+            </Col>
+          </div>
+
         </>
     )
   }
@@ -1176,6 +1307,9 @@ export const Settings = () => {
     if (dangerClicked) {
         loaded = renderDangerSettingsForm()
     }
+    if (idpCLicked) {
+        loaded = renderIdpSettingsForm()
+    }
 
     return (
       <Form
@@ -1186,7 +1320,7 @@ export const Settings = () => {
       >
         <Card loading={loading} defaultValue={"Enabled"}>
           {loaded}
-          {!dangerClicked && (<Form.Item style={{ marginBottom: "0" }}>
+          {!(dangerClicked || idpCLicked) && (<Form.Item style={{ marginBottom: "0" }}>
             <Button type="primary" htmlType="submit">
               Save
             </Button>
@@ -1613,6 +1747,11 @@ export const Settings = () => {
               </>
             )}
             {dangerClicked && (
+                <Row style={{ marginTop: "0", width: "100%" }}>
+                  <Col span={24}>{renderSettingForm()}</Col>
+                </Row>
+            )}
+            {idpCLicked && (
                 <Row style={{ marginTop: "0", width: "100%" }}>
                   <Col span={24}>{renderSettingForm()}</Col>
                 </Row>
