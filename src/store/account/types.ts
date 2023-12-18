@@ -8,6 +8,7 @@ export interface Account {
     jwt_groups_enabled: boolean;
     groups_propagation_enabled: boolean;
     jwt_groups_claim_name: string;
+    jwt_allow_groups: string[];
     extra: {
       peer_approval_enabled: boolean;
     }
@@ -19,6 +20,7 @@ export interface FormAccount extends Account {
   jwt_groups_enabled: boolean;
   groups_propagation_enabled: boolean;
   jwt_groups_claim_name: string;
+  jwt_allow_groups: string[];
   peer_login_expiration_formatted: ExpiresInValue;
   peer_approval_enabled: boolean;
 }

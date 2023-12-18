@@ -142,6 +142,8 @@ export const Settings = () => {
   const [groupsPropagationEnabled, setGroupsPropagationEnabled] =
     useState(true);
   const [jwtGroupsClaimName, setJwtGroupsClaimName] = useState("");
+  const [jwtAllowGroups, setJwtAllowGroups]  = useState<string[]>([]);
+  const [displayJWTAllowGroups, setDisplayJWTAllowGroups]  = useState(false);
   const [confirmModal, confirmModalContextHolder] = Modal.useModal();
   const { confirm } = Modal;
 
@@ -256,6 +258,7 @@ export const Settings = () => {
         account.settings.peer_login_expiration_enabled,
       jwt_groups_enabled: account.settings.jwt_groups_enabled,
       jwt_groups_claim_name: account.settings.jwt_groups_claim_name,
+      jwt_allow_groups: account.settings.jwt_allow_groups? account.settings.jwt_allow_groups : [],
       groups_propagation_enabled: account.settings.groups_propagation_enabled,
       peer_approval_enabled: account.settings.extra ? account.settings.extra.peer_approval_enabled : false,
     } as FormAccount;
@@ -265,6 +268,7 @@ export const Settings = () => {
     setJwtGroupsEnabled(fAccount.jwt_groups_enabled);
     setGroupsPropagationEnabled(fAccount.groups_propagation_enabled);
     setJwtGroupsClaimName(fAccount.jwt_groups_claim_name);
+    setJwtAllowGroups(fAccount.jwt_allow_groups);
     form.setFieldsValue(fAccount);
   }, [accounts]);
 
@@ -430,6 +434,7 @@ export const Settings = () => {
         jwt_groups_enabled: updatedAccount.data.settings.jwt_groups_enabled,
         jwt_groups_claim_name:
           updatedAccount.data.settings.jwt_groups_claim_name,
+        jwt_allow_groups: updatedAccount.data.settings.jwt_allow_groups,
         groups_propagation_enabled:
           updatedAccount.data.settings.groups_propagation_enabled,
         peer_approval_enabled: updatedAccount.data.settings.extra? updatedAccount.data.settings.extra.peer_approval_enabled : false,
@@ -466,6 +471,7 @@ export const Settings = () => {
           peer_login_expiration_enabled: formPeerExpirationEnabled,
           jwt_groups_enabled: jwtGroupsEnabled,
           jwt_groups_claim_name: jwtGroupsClaimName,
+          jwt_allow_groups: jwtAllowGroups,
           groups_propagation_enabled: groupsPropagationEnabled,
           peer_approval_enabled: formPeerApprovalEnabled,
         });
@@ -495,6 +501,7 @@ export const Settings = () => {
         peer_login_expiration_enabled: values.peer_login_expiration_enabled,
         jwt_groups_enabled: jwtGroupsEnabled,
         jwt_groups_claim_name: jwtGroupsClaimName,
+        jwt_allow_groups: jwtAllowGroups,
         groups_propagation_enabled: groupsPropagationEnabled,
       },
     } as Account;
@@ -532,6 +539,7 @@ export const Settings = () => {
 
   const saveAccount = (newValues: FormAccount) => {
     let accountToSave = createAccountToSave(newValues);
+
     dispatch(
       accountActions.updateAccount.request({
         getAccessTokenSilently: getTokenSilently,
@@ -875,6 +883,56 @@ export const Settings = () => {
                       </Form.Item>
                     </Col>
                   </Row>
+                  <Row>
+                    <Col span={12}>
+                      <label
+                          style={{
+                            color: "rgba(0, 0, 0, 0.88)",
+                            fontSize: "14px",
+                            fontWeight: "500",
+                          }}
+                      >
+                        JWT allow group
+                      </label>
+                      <Paragraph
+                          type={"secondary"}
+                          style={{
+                            marginTop: "-2",
+                            fontWeight: "400",
+                            marginBottom: "5px",
+                          }}
+                      >
+                        Limit access to NetBird for the specified group name, e.g., NetBird users.
+                        To use the group, first you need to configure it first in your IdP.
+                      </Paragraph>
+                    </Col>
+                  </Row>
+                  <Row>
+                    <Col lg={6}>
+                      <Form.Item name="jwt_allow_groups" style={displayJWTAllowGroups ? {marginBottom: "2px",} : {}}>
+                        <Input
+                            value={jwtAllowGroups[0]}
+                            autoComplete="off"
+                            onChange={(e) => {
+                              setJwtAllowGroups([e.target.value]);
+                              setDisplayJWTAllowGroups(true);
+                            }}
+                        />
+                      </Form.Item>
+                    </Col>
+                  </Row>
+                  { displayJWTAllowGroups && (
+                      <Row>
+                        <Paragraph style={{
+                          marginTop: "-20",
+                          fontWeight: "400",
+                          marginBottom: "5px",
+                          color: "red"
+                        }}>
+                          To prevent losing access, ensure you are part of this group.
+                        </Paragraph>
+                      </Row>
+                  )}
                 </>
             )}
           </div>
