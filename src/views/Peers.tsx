@@ -679,7 +679,15 @@ export const Peers = () => {
               </Row>
             </span>
           </Button>
-          <Row>{loginExpire}</Row>
+          <Row style={{ minWidth: "195px", paddingLeft: "15px" }}>{loginExpire} <Button
+              type="text"
+              style={{ height: "auto", whiteSpace: "normal", textAlign: "center", padding: "0px", margin: "0px" }}
+              onClick={() => showConfirmApprove(peer)}
+              className={!isAdmin ? "nohover" : ""}
+          >
+            {approval}
+          </Button>
+          </Row>
         </>
       );
     }
