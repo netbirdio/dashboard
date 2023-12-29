@@ -15,18 +15,18 @@ const Banner = () => {
 		localStorage.setItem(banner_closed_key,'true');
 	};
 
-	const announcement = "New Release! Manage DNS with NetBird."
+	const announcement = "NetBird is now available on the App Store."
 
 	const announcement_md5 = Md5.hashStr(announcement)
 
 	const linkLearnMore = () => {
 		return (
 			<a
-				href="https://docs.netbird.io/how-to/manage-dns-in-your-network"
+				href="https://apps.apple.com/us/app/netbird-p2p-vpn/id6469329339"
 				className="font-bold underline"
 				target="_blank"
 				rel="noreferrer"
-			><Text strong style={{color: "#ffffff"}}>Learn more&nbsp;<span aria-hidden="true">&rarr;</span></Text></a>
+			><Text strong style={{color: "#ffffff"}}>Download&nbsp;<span aria-hidden="true">&rarr;</span></Text></a>
 		)
 	}
 
@@ -36,7 +36,7 @@ const Banner = () => {
 
 		if((!stored_banner_closed || stored_banner_closed !== 'true') ||
 			(!store_banner_md5 || store_banner_md5 !== announcement_md5)) {
-			//setShow(true);
+			setShow(true);
 			localStorage.setItem(banner_md5_key,announcement_md5);
 			localStorage.setItem(banner_closed_key,'false');
 		}

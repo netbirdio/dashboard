@@ -11,6 +11,8 @@ import MacTab from "./MacTab";
 import Link from "antd/lib/typography/Link";
 import DockerTab from "./DockerTab";
 import AndroidTab from "./AndroidTab";
+import IOSTab from "./IOSTab";
+import {IOSIcon} from "./IOSIcon";
 
 type Props = {
     greeting?: string;
@@ -54,11 +56,16 @@ export const AddPeerPopup: React.FC<Props> = ({
         },
         {
             key: "4",
+            label: <span data-testid="add-peer-modal-ios-tab"><IOSIcon/>iOS</span>,
+            children: <IOSTab/>,
+        },
+        {
+            key: "5",
             label: <span data-testid="add-peer-modal-android-tab"><AndroidFilled/>Android</span>,
             children: <AndroidTab/>,
         },
         {
-            key: "5",
+            key: "6",
             label: <span data-testid="add-peer-modal-docker-tab"><Icon component={DockerSVG}/>Docker</span>,
             children: <DockerTab/>,
         }

@@ -6,6 +6,7 @@ export class AddPeerModal {
     private readonly windowsTab = this.page.getByTestId('add-peer-modal-windows-tab')
     private readonly macTab = this.page.getByTestId('add-peer-modal-mac-tab')
     private readonly androidTab = this.page.getByTestId('add-peer-modal-android-tab')
+    private readonly iosTab = this.page.getByTestId('add-peer-modal-ios-tab')
     private readonly dockerTab = this.page.getByTestId('add-peer-modal-docker-tab')
     private readonly linuxTabText = this.page.locator('pre').filter({ hasText: 'curl -fsSL https://pkgs.netbird.io/install.sh | sh' })
     private readonly windowsDownloadButton = this.page.getByTestId('download-windows-button')
@@ -57,6 +58,13 @@ export class AddPeerModal {
         })
       }
 
+      async openIOSTab() {
+        await test.step('Open iOS tab on add peer modal', async () => {
+            await this.iosTab.click();
+
+        })
+      }
+
       async openDockerTab() {
         await test.step('Open Docker tab on add peer modal', async () => {
             await this.dockerTab.click();
@@ -91,6 +99,12 @@ export class AddPeerModal {
       async assertAndroidDownloadButtonHasCorrectLink() {
         await test.step('Assert Android download button has a correct link', async () => {
             await expect(this.androidDownloadButton).toHaveAttribute('href', 'https://play.google.com/store/apps/details?id=io.netbird.client');
+        })
+      }
+
+      async assertiOSDownloadButtonHasCorrectLink() {
+        await test.step('Assert iOS download button has a correct link', async () => {
+            await expect(this.androidDownloadButton).toHaveAttribute('href', 'https://apps.apple.com/app/netbird-p2p-vpn/id6469329339');
         })
       }
 
