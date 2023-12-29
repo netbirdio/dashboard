@@ -104,7 +104,7 @@ export class AddPeerModal {
 
       async assertiOSDownloadButtonHasCorrectLink() {
         await test.step('Assert iOS download button has a correct link', async () => {
-            await expect(this.androidDownloadButton).toHaveAttribute('href', 'hhttps://apps.apple.com/app/netbird-p2p-vpn/id6469329339');
+            await expect(this.androidDownloadButton).toHaveAttribute('href', 'https://apps.apple.com/app/netbird-p2p-vpn/id6469329339');
         })
       }
 
