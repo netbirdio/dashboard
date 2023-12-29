@@ -102,6 +102,12 @@ export class AddPeerModal {
         })
       }
 
+      async assertiOSDownloadButtonHasCorrectLink() {
+        await test.step('Assert iOS download button has a correct link', async () => {
+            await expect(this.androidDownloadButton).toHaveAttribute('href', 'hhttps://apps.apple.com/us/app/netbird-p2p-vpn/id6469329339');
+        })
+      }
+
       async assertDockerDownloadButtonHasCorrectLink() {
         await test.step('Assert Docker download button has a correct link', async () => {
             await expect(this.dockerDownloadButton).toHaveAttribute('href', 'https://docs.docker.com/engine/install/');
