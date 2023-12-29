@@ -56,7 +56,7 @@ export const AddPeerPopup: React.FC<Props> = ({
         },
         {
             key: "4",
-            label: <span data-testid="add-peer-modal-android-tab"><IOSIcon/>iOS</span>,
+            label: <span data-testid="add-peer-modal-ios-tab"><IOSIcon/>iOS</span>,
             children: <IOSTab/>,
         },
         {

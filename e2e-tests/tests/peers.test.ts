@@ -30,6 +30,11 @@ test('Test MacOS tab on a first access add peer modal / @bc', async () => {
   await addPeerModal.assertM1M2DownloadButtonHasCorrectLink();
 });
 
+test('Test iOS tab on a first access add peer modal', async () => {
+  await addPeerModal.openIOSTab();
+  await addPeerModal.assertAndroidDownloadButtonHasCorrectLink();
+});
+
 test('Test Android tab on a first access add peer modal', async () => {
   await addPeerModal.openAndroidTab();
   await addPeerModal.assertAndroidDownloadButtonHasCorrectLink();

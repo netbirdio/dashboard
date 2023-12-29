@@ -6,6 +6,7 @@ export class AddPeerModal {
     private readonly windowsTab = this.page.getByTestId('add-peer-modal-windows-tab')
     private readonly macTab = this.page.getByTestId('add-peer-modal-mac-tab')
     private readonly androidTab = this.page.getByTestId('add-peer-modal-android-tab')
+    private readonly iosTab = this.page.getByTestId('add-peer-modal-ios-tab')
     private readonly dockerTab = this.page.getByTestId('add-peer-modal-docker-tab')
     private readonly linuxTabText = this.page.locator('pre').filter({ hasText: 'curl -fsSL https://pkgs.netbird.io/install.sh | sh' })
     private readonly windowsDownloadButton = this.page.getByTestId('download-windows-button')
@@ -54,6 +55,13 @@ export class AddPeerModal {
         await test.step('Open Android tab on add peer modal', async () => {
             await this.androidTab.click();
             
+        })
+      }
+
+      async openIOSTab() {
+        await test.step('Open iOS tab on add peer modal', async () => {
+            await this.iosTab.click();
+
         })
       }
 
