@@ -16,7 +16,7 @@ export const IOSTab = () => {
             key: 1,
             title: 'Download and install the application from App Store:',
             commands: (
-                <a data-testid="download-android-button" href="https://apps.apple.com/us/app/netbird-p2p-vpn/id6469329339" target="_blank">
+                <a data-testid="download-android-button" href="https://apps.apple.com/app/netbird-p2p-vpn/id6469329339" target="_blank">
                     <Image width="12em" preview={false} style={{marginTop: "5px"}} src={applestore}/>
                 </a>
             ),
