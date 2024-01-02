@@ -437,6 +437,7 @@ export const Peers = () => {
       title: <span className="font-500">Approve peer {name}</span>,
       width: 600,
       content: content,
+      okText: "Approve",
       onOk() {
         record.approval_required = false
         dispatch(
