@@ -130,6 +130,10 @@ export const Activity = () => {
   //   setDataTable(transformDataTable(data));
   // };
 
+  function capitalizeFirstLetter(string: string) {
+    return string.charAt(0).toUpperCase() + string.slice(1);
+  }
+
   const getActivityRow = (objectType: string, name: string, text: string) => {
     return (
       <Row>
@@ -156,6 +160,12 @@ export const Activity = () => {
         return getActivityRow("Group", event.meta.group, "added to setup key");
       case "setupkey.group.delete":
         return getActivityRow("Group", event.meta.group, "removed setup key");
+      case "integration.create":
+        return getActivityRow("", capitalizeFirstLetter(event.meta.platform), "integration created");
+      case "integration.update":
+        return getActivityRow("", capitalizeFirstLetter(event.meta.platform), "integration updated");
+      case "integration.delete":
+        return getActivityRow("", capitalizeFirstLetter(event.meta.platform), "integration deleted");
       case "dns.setting.disabled.management.group.add":
         return getActivityRow(
           "Group",
