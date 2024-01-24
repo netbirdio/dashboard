@@ -22,7 +22,7 @@ import {SecureLoading} from "./components/Loading";
 import DNS from "./views/DNS";
 import Activity from "./views/Activity";
 import Settings from "./views/Settings";
-import {isNetBirdHosted} from "./utils/common";
+import {isLocalDev, isNetBirdHosted} from "./utils/common";
 
 
 const {Header, Content} = Layout;
@@ -76,7 +76,7 @@ function App() {
                 {!show && <SecureLoading padding="3em" width={50} height={50}/>}
                 {show &&
                     <Layout>
-                        {isNetBirdHosted() && <Banner/>}
+                        {(isNetBirdHosted() || isLocalDev()) && <Banner/>}
                         <Header className="header" style={{
                             display: "flex",
                             flexDirection: "column",

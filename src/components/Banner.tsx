@@ -15,6 +15,8 @@ const Banner = () => {
 		localStorage.setItem(banner_closed_key,'true');
 	};
 
+	// todo: when updating this announcement, ensure to
+	// remove the condition on App.tsx that limits the current banner to cloud and local dev
 	const announcement = "Discover the new NetBird Dashboard with a brand new look and feel."
 
 	const announcement_md5 = Md5.hashStr(announcement)
