@@ -15,18 +15,18 @@ const Banner = () => {
 		localStorage.setItem(banner_closed_key,'true');
 	};
 
-	const announcement = "NetBird is now available on the App Store."
+	const announcement = "Discover the new NetBird Dashboard with a brand new look and feel."
 
 	const announcement_md5 = Md5.hashStr(announcement)
 
 	const linkLearnMore = () => {
 		return (
 			<a
-				href="https://apps.apple.com/us/app/netbird-p2p-vpn/id6469329339"
+				href="https://preview.netbird.io/peers"
 				className="font-bold underline"
 				target="_blank"
 				rel="noreferrer"
-			><Text strong style={{color: "#ffffff"}}>Download&nbsp;<span aria-hidden="true">&rarr;</span></Text></a>
+			><Text strong style={{color: "#ffffff"}}>Try it out now&nbsp;<span aria-hidden="true">&rarr;</span></Text></a>
 		)
 	}
 
