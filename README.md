@@ -70,16 +70,6 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
      -e NETBIRD_MGMT_API_ENDPOINT=<SET YOUR MANAGEMETN API URL> \
      netbirdio/dashboard:main
    ```
-   
-## How to migrate from legacy dashboard
-
-The new dashboard comes with a new docker image `netbirdio/dashboard:main`.  
-To migrate from the legacy dashboard `wiretrustee/dashboard:main` to the new one, please follow the steps below.
-
-1. Stop the dashboard container `docker compose down dashboard`
-2. Replace the image name in your `docker-compose.yml` with `netbirdio/dashboard:main`
-3. Recreate the dashboard container `docker compose up -d --force-recreate dashboard`
-
 
 ## How to run local development
 
@@ -92,3 +82,12 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing by modifying the code inside `src/..`  
 The page auto-updates as you edit the file.
+
+## How to migrate from old dashboard (v1) 
+
+The new dashboard comes with a new docker image `netbirdio/dashboard:main`.  
+To migrate from the old dashboard (v1) `wiretrustee/dashboard:main` to the new one, please follow the steps below.
+
+1. Stop the dashboard container `docker compose down dashboard`
+2. Replace the docker image name in your `docker-compose.yml` with `netbirdio/dashboard:main`
+3. Recreate the dashboard container `docker compose up -d --force-recreate dashboard`
