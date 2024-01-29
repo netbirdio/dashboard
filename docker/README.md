@@ -1,5 +1,5 @@
-# Wiretrustee Dashboard
-Wiretrustee Dashboard is a the Wiretrustee Management server UI. It allow users to signin, view setup keys and manage peers. This image is **not ready** for production use.
+# NetBird Dashboard
+NetBird Dashboard is NetBirds Management server UI. It allows users to signin, view setup keys and manage peers. This image is **not ready** for production use.
 ## Tags
 ```latest``` ```vX.X.X``` not available yet.
 
@@ -14,7 +14,7 @@ Using SSL certificate from Let's Encrypt®:
 docker run -d --rm -p 80:80 -p 443:443 \
   -e LETSENCRYPT_DOMAIN=app.mydomain.com \
   -e LETSENCRYPT_EMAIL=hello@mydomain.com \
-  wiretrustee/dashboard:main
+  netbirdio/dashboard:main
 ```
 > For SSL generation, you need to run this image in a server with proper public IP and a domain name pointing to it.
 ## Environment variables
