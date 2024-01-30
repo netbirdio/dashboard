@@ -2,42 +2,42 @@
 
 # dependencies
 /node_modules
-/node_modules.bkp
 /.pnp
 .pnp.js
 
 # testing
 /coverage
 
+# next.js
+/.next/
+/out/
+
 # production
 /build
+/out
 
 # misc
 .DS_Store
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
+*.pem
 
+# debug
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-src/auth_config.json
-.idea
-.eslintcache
-src/.local-config*.json
-/public/OidcServiceWorker.js
-/public/OidcTrustedDomains.js
-/e2e-tests/node_modules/
-/e2e-tests/playwright-report/
-/e2e-tests/test-results/
-/test-results/
-/playwright-report/
-.env
-Caddyfile
-docker-compose.yml
-machinekey/
-management.json
-turnserver.conf
-zitadel.env
+# local env files
+.env*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# config
+.local-config.json
+.configs/.local-config.zitadel.json
+.configs/.staging-config.json
+.configs/.temp-config.json
+.configs

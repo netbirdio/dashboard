@@ -7,6 +7,9 @@ on:
       - "**"
   pull_request:
 
+env:
+  IMAGE_NAME: netbirdio/dashboard
+
 jobs:
   build_n_push:
     runs-on: ubuntu-latest
@@ -16,15 +19,16 @@ jobs:
       - name: setup-node
         uses: actions/setup-node@v3
         with:
-          node-version: '16'
+          node-version: '18'
           cache: 'npm'
 
       - name: Install dependencies
         run: npm install
 
+      - run: echo '{}' > .local-config.json
+
       - name: Build 
-        # skiping fail on warning for now
-        run: CI=false npm run build
+        run: npm run build
       - 
         name: Set up QEMU
         uses: docker/setup-qemu-action@v2
@@ -36,14 +40,14 @@ jobs:
         id: meta
         uses: docker/metadata-action@v4
         with:
-          images: wiretrustee/dashboard
+          images: ${{ env.IMAGE_NAME }}
       -
         name: Login to DockerHub
         if: github.event_name != 'pull_request'
         uses: docker/login-action@v2
         with:
-          username: ${{ secrets.DOCKER_USER }}
-          password: ${{ secrets.DOCKER_TOKEN }}
+          username: ${{ secrets.NB_DOCKER_USER }}
+          password: ${{ secrets.NB_DOCKER_TOKEN }}
       -
         name: Docker build and push
         uses: docker/build-push-action@v3

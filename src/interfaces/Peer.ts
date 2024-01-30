@@ -1,0 +1,57 @@
+import { Group } from "@/interfaces/Group";
+import { User } from "@/interfaces/User";
+
+export interface Peer {
+  id?: string;
+  name: string;
+  ip: string;
+  connected: boolean;
+  last_seen: Date;
+  os: string;
+  version: string;
+  groups?: Group[];
+  ssh_enabled: boolean;
+  hostname: string;
+  user_id?: string;
+  user?: User;
+  ui_version?: string;
+  dns_label: string;
+  last_login: Date;
+  login_expired: boolean;
+  login_expiration_enabled: boolean;
+  approval_required: boolean;
+}
+
+export interface FormPeer extends Peer {
+  groupsNames: string[];
+  userEmail?: string;
+}
+
+export interface PeerToSave extends Peer {
+  groupsToSave: string[];
+}
+
+export interface PeerGroupsToSave {
+  ID: string;
+  groupsToRemove: string[];
+  groupsToAdd: string[];
+  groupsNoId: string[];
+}
+
+export interface PeerNameToIP {
+  [key: string]: string;
+}
+
+export interface PeerIPToName {
+  [key: string]: string;
+}
+
+export interface PeerIPToID {
+  [key: string]: string;
+}
+
+export interface PeerDataTable extends Peer {
+  key: string;
+  groups: Group[];
+  groupsCount: number;
+}

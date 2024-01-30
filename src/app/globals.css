@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+
+
+h1 {
+    @apply text-2xl font-medium text-gray-700 dark:text-nb-gray-100 my-1;
+}
+h2 {
+    @apply text-xl font-medium text-gray-700 dark:text-nb-gray-100 my-1;
+}
+p {
+    @apply font-light tracking-wide text-gray-700 dark:text-zinc-50 text-sm;
+}
+
+.p-default {
+    @apply px-4 sm:px-6 md:px-8;
+}
+
+/* Hide scrollbar for Chrome, Safari and Opera */
+.no-scrollbar::-webkit-scrollbar {
+    display: none;
+}
+
+/* Hide scrollbar for IE, Edge and Firefox */
+.no-scrollbar {
+    -ms-overflow-style: none;  /* IE and Edge */
+    scrollbar-width: none;  /* Firefox */
+}
+
+[placeholder]{
+    text-overflow:ellipsis;
+}
+
+.animated-gradient-bg{
+    background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+    background-size: 400% 400%;
+    animation: gradient 15s ease infinite;
+    height: 100%;
+}
+
+@keyframes gradient {
+    0% {
+        background-position: 0 50%;
+    }
+    50% {
+        background-position: 100% 50%;
+    }
+    100% {
+        background-position: 0 50%;
+    }
+}
+
+.sticky {
+    position: sticky !important;
+    left: 0;
+    top: 0;
+    z-index: 1;
+}
+
+
+.table-fixed-scroll {
+    display: table;
+    position: relative;
+    width: 100%;
+}

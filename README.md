@@ -1,4 +1,4 @@
-# NetBird dashboard
+# NetBird Dashboard
 
 This project is the UI for NetBird's Management service.
 
@@ -17,15 +17,15 @@ The dashboard makes it possible to:
 - define access controls
 
 ## Some Screenshots
-<img src="./media/auth.png" alt="auth"/>
-<img src="./media/peers.png" alt="peers"/>
-<img src="./media/add-peer.png" alt="add-peer"/>
+<img src="./src/assets/screenshots/peers.png" alt="peers"/>
+<img src="./src/assets/screenshots/add-peer.png" alt="add-peer"/>
 
 
 ## Technologies Used
 
+- NextJS
 - ReactJS
-- AntD UI framework
+- Tailwind CSS
 - Auth0
 - Nginx
 - Docker
@@ -38,28 +38,28 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
 
 1. Install [Docker](https://docs.docker.com/get-docker/)
 2. Register [Auth0](https://auth0.com/) account
-3. Running Wiretrustee UI Dashboard requires the following Auth0 environmental variables to be set (see docker command below):
+3. Running NetBird UI Dashboard requires the following Auth0 environmental variables to be set (see docker command below):
 
    `AUTH0_DOMAIN` `AUTH0_CLIENT_ID` `AUTH0_AUDIENCE`
 
    To obtain these, please use [Auth0 React SDK Guide](https://auth0.com/docs/quickstart/spa/react/01-login#configure-auth0) up until "Configure Allowed Web Origins"
 
-4. Wiretrustee UI Dashboard uses Wiretrustee Management Service HTTP API, so setting `NETBIRD_MGMT_API_ENDPOINT` is required. Most likely it will be `http://localhost:33071` if you are hosting Management API on the same server.
+4. NetBird UI Dashboard uses NetBirds Management Service HTTP API, so setting `NETBIRD_MGMT_API_ENDPOINT` is required. Most likely it will be `http://localhost:33071` if you are hosting Management API on the same server.
 5. Run docker container without SSL (Let's Encrypt):
 
    ```shell
-   docker run -d --name wiretrustee-dashboard \
+   docker run -d --name netbird-dashboard \
      --rm -p 80:80 -p 443:443 \
      -e AUTH0_DOMAIN=<SET YOUR AUTH DOMAIN> \
      -e AUTH0_CLIENT_ID=<SET YOUR CLIENT ID> \
      -e AUTH0_AUDIENCE=<SET YOUR AUDIENCE> \
      -e NETBIRD_MGMT_API_ENDPOINT=<SET YOUR MANAGEMETN API URL> \
-     wiretrustee/dashboard:main
+     netbirdio/dashboard:main
    ```
 6. Run docker container with SSL (Let's Encrypt):
 
    ```shell
-   docker run -d --name wiretrustee-dashboard \
+   docker run -d --name netbird-dashboard \
      --rm -p 80:80 -p 443:443 \
      -e NGINX_SSL_PORT=443 \
      -e LETSENCRYPT_DOMAIN=<YOUR PUBLIC DOMAIN> \
@@ -68,11 +68,26 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
      -e AUTH0_CLIENT_ID=<SET YOUR CLEITN ID> \
      -e AUTH0_AUDIENCE=<SET YOUR AUDIENCE> \
      -e NETBIRD_MGMT_API_ENDPOINT=<SET YOUR MANAGEMETN API URL> \
-     wiretrustee/dashboard:main
+     netbirdio/dashboard:main
    ```
 
 ## How to run local development
-1. Install node 16
-2. create and update the `src/.local-config.json` file. This file should contain values to be replaced from `src/config.json`
-3. run `npm install`
-4. run `npm run start dev`
+
+1. Install [Node](https://nodejs.org/)
+2. Create and update the `.local-config.json` file. This file should contain values to be replaced from `config.json`
+3. Run `npm install` to install dependencies
+4. Run `npm run dev` to start the development server
+
+Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+
+You can start editing by modifying the code inside `src/..`  
+The page auto-updates as you edit the file.
+
+## How to migrate from old dashboard (v1) 
+
+The new dashboard comes with a new docker image `netbirdio/dashboard:main`.  
+To migrate from the old dashboard (v1) `wiretrustee/dashboard:main` to the new one, please follow the steps below.
+
+1. Stop the dashboard container `docker compose down dashboard`
+2. Replace the docker image name in your `docker-compose.yml` with `netbirdio/dashboard:main`
+3. Recreate the dashboard container `docker compose up -d --force-recreate dashboard`
