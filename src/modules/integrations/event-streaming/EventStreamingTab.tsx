@@ -31,7 +31,10 @@ export default function EventStreamingTab() {
         </Paragraph>
         <Paragraph>
           Learn more about{" "}
-          <InlineLink href={"#"} target={"_blank"}>
+          <InlineLink
+            href={"https://docs.netbird.io/how-to/activity-event-streaming"}
+            target={"_blank"}
+          >
             Event Streaming
             <ExternalLinkIcon size={12} />
           </InlineLink>
