@@ -1,4 +1,9 @@
-import { useOidc, useOidcFetch } from "@axa-fr/react-oidc";
+import {
+  useOidc,
+  useOidcAccessToken,
+  useOidcFetch,
+  useOidcIdToken,
+} from "@axa-fr/react-oidc";
 import loadConfig from "@utils/config";
 import { usePathname } from "next/navigation";
 import useSWR from "swr";
@@ -32,8 +37,37 @@ async function apiRequest<T>(
   return (await res.json()) as T;
 }
 
+export function useNetBirdFetch() {
+  const { fetch: oidcFetch } = useOidcFetch();
+  const tokenSource = config.tokenSource;
+  const { idToken } = useOidcIdToken();
+  const { accessToken } = useOidcAccessToken();
+
+  console.info("Token source: ", tokenSource);
+  console.log("ID Token: ", idToken);
+  console.log("Access Token: ", accessToken);
+
+  const nativeFetch = async (input: RequestInfo, init?: RequestInit) => {
+    const token =
+      tokenSource.toLowerCase() == "idtoken" ? idToken : accessToken;
+    const headers = {
+      "Content-Type": "application/json",
+      Accept: "application/json",
+      Authorization: `Bearer ${token}`,
+    };
+    return fetch(input, {
+      ...init,
+      headers,
+    });
+  };
+
+  return {
+    fetch: nativeFetch,
+  };
+}
+
 export default function useFetchApi<T>(url: string) {
-  const { fetch } = useOidcFetch();
+  const { fetch } = useNetBirdFetch();
   const handleErrors = useApiErrorHandling();
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
@@ -58,7 +92,7 @@ export default function useFetchApi<T>(url: string) {
 }
 
 export function useApiCall<T>(url: string) {
-  const { fetch } = useOidcFetch();
+  const { fetch } = useNetBirdFetch();
   const handleErrors = useApiErrorHandling();
 
   return {
