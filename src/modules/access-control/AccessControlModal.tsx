@@ -48,6 +48,10 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
 import { Policy, Protocol } from "@/interfaces/Policy";
+import {
+  PostureChecksTab,
+  PostureChecksTabTrigger,
+} from "@/modules/access-control/posture-checks/PostureChecksTab";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
 type Props = {
@@ -252,6 +256,7 @@ export function AccessControlModalContent({
             <ArrowRightLeft size={16} />
             Rule
           </TabsTrigger>
+          <PostureChecksTabTrigger />
           <TabsTrigger value={"general"}>
             <Text
               size={16}
@@ -395,6 +400,7 @@ export function AccessControlModalContent({
             </div>
           </div>
         </TabsContent>
+        <PostureChecksTab />
       </Tabs>
 
       <ModalFooter className={"items-center"}>

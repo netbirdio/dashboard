@@ -49,6 +49,7 @@
     "flowbite-react": "^0.6.4",
     "framer-motion": "^10.16.4",
     "ip-cidr": "^3.1.0",
+    "iso-3166": "^4.3.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.287.0",
     "next": "13.5.5",
