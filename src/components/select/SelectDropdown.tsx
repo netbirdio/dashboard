@@ -2,17 +2,23 @@ import Button from "@components/Button";
 import { CommandItem } from "@components/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
+import { SelectDropdownSearchInput } from "@components/select/SelectDropdownSearchInput";
+import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandList } from "cmdk";
 import { trim } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
 
 export interface SelectOption {
   label: string | React.ReactNode;
   value: string;
-  icon?: React.ComponentType<{ size: number; width: number }>;
+  icon?: React.ComponentType<{
+    size?: number;
+    width?: number;
+    country?: string;
+  }>;
 }
 
 interface SelectDropdownProps {
@@ -21,6 +27,8 @@ interface SelectDropdownProps {
   disabled?: boolean;
   popoverWidth?: "auto" | number;
   options: SelectOption[];
+  showSearch?: boolean;
+  placeholder?: string;
 }
 
 export function SelectDropdown({
@@ -29,6 +37,8 @@ export function SelectDropdown({
   disabled = false,
   popoverWidth = "auto",
   options,
+  showSearch = false,
+  placeholder,
 }: SelectDropdownProps) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -38,17 +48,40 @@ export function SelectDropdown({
     } else {
       onChange && onChange(selectedValue);
     }
+    setTimeout(() => {
+      setSearch("");
+    }, 100);
     setOpen(false);
   };
 
   const [open, setOpen] = useState(false);
 
+  const [slice, setSlice] = useState(10);
+
+  useEffect(() => {
+    if (open) {
+      setTimeout(() => {
+        setSlice(options.length);
+      }, 100);
+    } else {
+      setSlice(10);
+    }
+  }, [open, options]);
+
   const selected = options.find((o) => o.value === value);
+
+  const searchRef = React.useRef<HTMLInputElement>(null);
+  const [search, setSearch] = useState("");
 
   return (
     <Popover
       open={open}
       onOpenChange={(isOpen) => {
+        if (!isOpen) {
+          setTimeout(() => {
+            setSearch("");
+          }, 100);
+        }
         setOpen(isOpen);
       }}
     >
@@ -99,18 +132,31 @@ export function SelectDropdown({
           }}
         >
           <CommandList className={"w-full"}>
+            {showSearch && (
+              <SelectDropdownSearchInput
+                search={search}
+                setSearch={setSearch}
+                ref={searchRef}
+                placeholder={placeholder}
+              />
+            )}
+
             <ScrollArea
-              className={
-                "max-h-[380px] overflow-y-auto flex flex-col gap-1 pl-2 py-2 pr-3"
-              }
+              className={cn(
+                "max-h-[380px] overflow-y-auto flex flex-col gap-1 pl-2 pb-2 pr-3",
+                !showSearch && "pt-2",
+              )}
             >
               <CommandGroup>
                 <div className={"grid grid-cols-1 gap-1"}>
-                  {options.map((option) => {
+                  {options.slice(0, slice).map((option) => {
                     return (
                       <CommandItem
                         key={option.value}
-                        value={option.value}
+                        value={
+                          ((option.label as string) || "") +
+                          (option.value || "")
+                        }
                         className={"py-1 px-2"}
                         onSelect={() => toggle(option.value)}
                         onClick={(e) => e.preventDefault()}

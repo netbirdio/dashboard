@@ -33,8 +33,8 @@ export function PeerSelector({
 
   const [dropdownOptions, setDropdownOptions] = useState<Peer[]>([]);
   const searchRef = React.useRef<HTMLInputElement>(null);
-  const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
   const [search, setSearch] = useState("");
+  const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   // Update dropdown options when peers change
   useEffect(() => {
