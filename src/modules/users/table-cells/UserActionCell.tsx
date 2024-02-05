@@ -18,8 +18,9 @@ export default function UserActionCell({ user, serviceUser = false }: Props) {
   const { mutate } = useSWRConfig();
 
   const deleteRule = async () => {
+    const name = user.name || "User";
     notify({
-      title: user.name + "deleted",
+      title: name + "deleted",
       description: "User was successfully deleted.",
       promise: userRequest.del("", `/${user.id}`).then(() => {
         mutate(`/users?service_user=${serviceUser}`);
@@ -29,8 +30,9 @@ export default function UserActionCell({ user, serviceUser = false }: Props) {
   };
 
   const openConfirm = async () => {
+    const name = user.name || "User";
     const choice = await confirm({
-      title: `Delete '${user.name}'?`,
+      title: `Delete '${name}'?`,
       description:
         "Deleting this user will remove their devices and remove dashboard access. This action cannot be undone.",
       confirmText: "Delete",

@@ -88,13 +88,18 @@ export function ActivityUserSelector({
                   style={{
                     color: selectedUser?.name
                       ? generateColorFromString(
-                          selectedUser?.name || "System User",
+                          selectedUser?.name ||
+                            selectedUser?.id ||
+                            "System User",
                         )
                       : "#808080",
                   }}
                 >
-                  {!selectedUser?.name && <Cog size={12} />}
-                  {selectedUser?.name?.charAt(0)}
+                  {selectedUser?.email === "NetBird" ? (
+                    <Cog size={12} />
+                  ) : (
+                    selectedUser?.name?.charAt(0) || selectedUser?.id?.charAt(0)
+                  )}
                 </div>
                 <div className={"flex items-center gap-2"}>
                   <TextWithTooltip
@@ -203,10 +208,14 @@ export function ActivityUserSelector({
                   </CommandItem>
 
                   {users.map((user) => {
+                    const searchValue =
+                      user.email === "NetBird"
+                        ? "NetBird System"
+                        : user.name + " " + user.id + " " + user.email;
                     return (
                       <CommandItem
                         key={user.id}
-                        value={user.name + " " + user.id}
+                        value={searchValue}
                         className={"py-1 px-2"}
                         onSelect={() => {
                           toggle(user.email);
@@ -222,19 +231,26 @@ export function ActivityUserSelector({
                             style={{
                               color: user?.name
                                 ? generateColorFromString(
-                                    user?.name || "System User",
+                                    user?.name || user?.id || "System User",
                                   )
                                 : "#808080",
                             }}
                           >
-                            {!user?.name && <Cog size={14} />}
-                            {user?.name?.charAt(0)}
+                            {user?.email === "NetBird" ? (
+                              <Cog size={14} />
+                            ) : (
+                              user?.name?.charAt(0) || user?.id?.charAt(0)
+                            )}
                           </div>
 
                           <div className={"flex flex-col text-xs"}>
                             <span className={" text-nb-gray-200"}>
                               <TextWithTooltip
-                                text={user?.name || "System"}
+                                text={
+                                  user?.email === "NetBird"
+                                    ? "System"
+                                    : user?.name || user?.id
+                                }
                                 maxChars={20}
                               />
                             </span>

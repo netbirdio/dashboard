@@ -18,12 +18,12 @@ export default function UserNameCell({ user }: Props) {
         }
         style={{
           color: user?.name
-            ? generateColorFromString(user?.name || "System User")
+            ? generateColorFromString(user?.name || user?.id || "System User")
             : "#808080",
         }}
       >
-        {!user?.name && <Cog size={12} />}
-        {user?.name?.charAt(0)}
+        {!user?.name && !user?.id && <Cog size={12} />}
+        {user?.name?.charAt(0) || user?.id?.charAt(0)}
         {(status == "invited" || status == "blocked") && (
           <div
             className={cn(
@@ -39,7 +39,7 @@ export default function UserNameCell({ user }: Props) {
       </div>
       <div className={"flex flex-col justify-center"}>
         <span className={cn("text-base font-medium flex items-center gap-3")}>
-          {user.name}
+          {user.name || user.id}
           {isCurrent && (
             <span
               className={
