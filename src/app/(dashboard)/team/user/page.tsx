@@ -121,7 +121,7 @@ function UserOverview({ user }: Props) {
             />
           )}
 
-          <Breadcrumbs.Item label={user.name} active />
+          <Breadcrumbs.Item label={user.name || user.id} active />
         </Breadcrumbs>
 
         <div className={"flex justify-between max-w-6xl"}>
@@ -138,7 +138,9 @@ function UserOverview({ user }: Props) {
                       }
                     : {
                         color: user?.name
-                          ? generateColorFromString(user?.name || "System User")
+                          ? generateColorFromString(
+                              user?.name || user?.id || "System User",
+                            )
                           : "#808080",
                       }
                 }
@@ -146,10 +148,12 @@ function UserOverview({ user }: Props) {
                 {user.is_service_user ? (
                   <IconSettings2 size={16} />
                 ) : (
-                  user?.name?.charAt(0)
+                  user?.name?.charAt(0) || user?.id?.charAt(0)
                 )}
               </div>
-              <h1 className={"flex items-center gap-3"}>{user.name}</h1>
+              <h1 className={"flex items-center gap-3"}>
+                {user.name || user.id}
+              </h1>
             </div>
           </div>
           <div className={"flex gap-4"}>
@@ -256,10 +260,10 @@ function UserInformationCard({ user }: { user: User }) {
           label={
             <>
               <User2 size={16} />
-              Name
+              {user.name ? "Name" : "User ID"}
             </>
           }
-          value={user.name}
+          value={user.name || user.id}
         />
 
         {!isServiceUser && (
@@ -270,7 +274,7 @@ function UserInformationCard({ user }: { user: User }) {
                 E-Mail
               </>
             }
-            value={user.email}
+            value={user.email || "-"}
           />
         )}
 

@@ -123,7 +123,7 @@ export default function UsersTable({ users, isLoading }: Props) {
     <>
       <DataTable
         isLoading={isLoading}
-        text={"Network Routes"}
+        text={"Users"}
         sorting={sorting}
         setSorting={setSorting}
         columns={UsersTableColumns}
