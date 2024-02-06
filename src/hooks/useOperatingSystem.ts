@@ -9,6 +9,8 @@ export default function useOperatingSystem() {
 }
 
 export const getOperatingSystem = (os: string) => {
+  //ua.toLowerCase().indexOf('macintosh') > -1 && navigator.maxTouchPoints && navigator.maxTouchPoints > 2
+
   if (os.includes("darwin")) return OperatingSystem.APPLE as const;
   if (os.includes("mac")) return OperatingSystem.APPLE as const;
   if (os.includes("android")) return OperatingSystem.ANDROID as const;

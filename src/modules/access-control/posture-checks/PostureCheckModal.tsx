@@ -1,8 +1,8 @@
 import Button from "@components/Button";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
-import { Label } from "@components/Label";
 import {
   Modal,
   ModalClose,
@@ -14,25 +14,23 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
+import { HoverModalCard } from "@components/ui/HoverModalCard";
 import { cn } from "@utils/helpers";
 import { iso31661 } from "iso-3166";
 import {
   Disc3Icon,
   ExternalLinkIcon,
   FlagIcon,
-  Globe2Icon,
-  MonitorSmartphoneIcon,
   PlusCircle,
-  PlusIcon,
-  Text,
+  Shield,
+  ShieldCheck,
+  ShieldXIcon,
 } from "lucide-react";
 import React, { createElement, useState } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { PostureCheckIcons } from "@/modules/access-control/posture-checks/PostureCheckIcons";
-import { ClientVersionCheck } from "@/modules/posture-checks/ClientVersionCheck";
 
 type Props = {
   open: boolean;
@@ -97,7 +95,27 @@ export function CheckContent({ onSuccess }: ModalProps) {
     },
   ];
 
-  const [tab, setTab] = useState("nb-client-check");
+  const [tab, setTab] = useState("checks");
+  const [allowDenyLocation, setAllowDenyLocation] = useState("all");
+  const [restrictOs, setRestrictOs] = useState(false);
+
+  const allowDenyOptions = [
+    {
+      label: "Allow all locations",
+      value: "all",
+      icon: Shield,
+    },
+    {
+      label: "Only allow access from specific locations",
+      value: "allow",
+      icon: ShieldCheck,
+    },
+    {
+      label: "Block access from specific locations",
+      value: "deny",
+      icon: ShieldXIcon,
+    },
+  ] as SelectOption[];
 
   return (
     <ModalContent maxWidthClass={cn("relative", "max-w-xl")} showClose={true}>
@@ -117,143 +135,85 @@ export function CheckContent({ onSuccess }: ModalProps) {
       </div>
       <GradientFadedBackground />
 
-      <div className={"px-8 mb-10 flex-col gap-3 flex mt-8"}>
-        {/*Client Version Check*/}
-        <ClientVersionCheck />
-
-        <div
-          className={
-            "bg-nb-gray-940 border border-nb-gray-900 py-3 pl-4 pr-4 rounded-md flex gap-4 items-center"
-          }
-        >
-          <div
-            className={
-              "h-9 w-9 shrink-0 bg-gradient-to-tr shadow-xl from-indigo-500 to-indigo-400 rounded-md flex items-center justify-center"
+      <div className={"mb-6 flex-col gap-3 flex mt-5"}>
+        <div className={"px-4 z-10"}>
+          <HoverModalCard
+            value={"version"}
+            title={"NetBird Client Version"}
+            description={
+              "Restrict access to peers with a specific NetBird client version."
             }
+            icon={<NetBirdIcon size={18} />}
           >
-            <FlagIcon size={16} />
-          </div>
-          <div>
-            <div className={"text-sm font-medium"}>Location & Region</div>
-            <div className={"text-xs mt-0.5 text-nb-gray-300"}>
-              Restrict access in your network based on location or region.
-            </div>
-          </div>
-          <div className={"ml-auto"}>
-            <Button variant={"secondary"} size={"xs"}>
-              <PlusIcon size={12} />
-              Add Check
-            </Button>
-          </div>
-        </div>
-        <div
-          className={
-            "bg-nb-gray-940 border border-nb-gray-900 py-3 pl-4 pr-4 rounded-md flex gap-4 items-center"
-          }
-        >
-          <div
-            className={
-              "h-9 w-9 shrink-0 bg-gradient-to-tr shadow-xl from-nb-gray-500 to-nb-gray-300 rounded-md flex items-center justify-center"
-            }
-          >
-            <Disc3Icon size={16} />
-          </div>
-          <div>
-            <div className={"text-sm font-medium"}>Operating System</div>
-            <div className={"text-xs mt-0.5 text-nb-gray-300"}>
-              Restrict access in your network based on the operating system of a
-              peer.
-            </div>
-          </div>
-          <div className={"ml-auto"}>
-            <Button variant={"secondary"} size={"xs"}>
-              <PlusIcon size={12} />
-              Add Check
-            </Button>
-          </div>
-        </div>
-      </div>
-
-      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
-        <TabsList justify={"start"} className={"px-8"}>
-          <TabsTrigger value={"nb-client-check"}>
-            <NetBirdIcon size={16} />
-            Client Version
-          </TabsTrigger>
-          <TabsTrigger value={"location-check"}>
-            <Globe2Icon size={16} />
-            Location
-          </TabsTrigger>
-          <TabsTrigger value={"os-check"}>
-            <MonitorSmartphoneIcon size={16} />
-            Operating System
-          </TabsTrigger>
-
-          <TabsTrigger value={"general"}>
-            <Text
-              size={16}
-              className={
-                "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
-              }
-            />
-            Name & Description
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value={"nb-client-check"} className={" px-8"}>
-          <div className={cn("flex justify-between pb-4 gap-3")}>
-            <div>
-              <Label>NetBird Client Version</Label>
-              <HelpText className={"max-w-[340px]"}>
+            <div className={"flex flex-col px-8 gap-3"}>
+              <HelpText className={"max-w-[340px] mb-0"}>
                 Only peers with the minimum specified NetBird client version
                 will have access to the network.
               </HelpText>
+              <Input
+                min={1}
+                maxWidthClass={"max-w-[260px]"}
+                type={"number"}
+                placeholder={"e.g., 0.25.0"}
+                customPrefix={"Min. Version"}
+              />
             </div>
-
-            <Input
-              min={1}
-              maxWidthClass={"max-w-[260px] mt-2"}
-              type={"number"}
-              placeholder={"All Versions"}
-              customPrefix={"Min. Version"}
-            />
-          </div>
-        </TabsContent>
-        <TabsContent value={"location-check"} className={"pb-6 px-8"}>
-          <div className={"mb-3"}>
-            <div>
-              <Label>Location & Region</Label>
+          </HoverModalCard>
+          <HoverModalCard
+            value={"location"}
+            icon={<FlagIcon size={16} />}
+            title={"Country & Region"}
+            description={
+              "Restrict access in your network based on country or region."
+            }
+            iconClass={"bg-gradient-to-tr from-indigo-500 to-indigo-400"}
+            modalWidthClass={"max-w-xl"}
+          >
+            <div className={"flex flex-col px-8 gap-2"}>
               <HelpText>
-                Add a location or region to restrict access in your network.
-                Only peers that match the specified condition will be allowed to
-                access the network.
+                Choose whether to allow or block access from specific locations.
+                Only peers matching the criteria will have access to the
+                network.
               </HelpText>
-            </div>
-
-            <div className={"flex gap-2 mt-4"}>
               <SelectDropdown
-                showSearch={true}
-                value={country}
-                onChange={setCountry}
+                value={allowDenyLocation}
+                onChange={setAllowDenyLocation}
                 placeholder={"Search for a country..."}
-                options={datadogRegions}
+                options={allowDenyOptions}
               />
-
-              <SelectDropdown
-                showSearch={true}
-                placeholder={"Search for a state..."}
-                value={state}
-                onChange={setState}
-                options={states}
-              />
+              <Button variant={"dotted"} size={"sm"}>
+                <PlusCircle size={16} />
+                Add Location
+              </Button>
             </div>
-            <Button variant={"dotted"} size={"sm"} className={"w-full mt-6"}>
-              <PlusCircle size={16} />
-              Add Location
-            </Button>
-          </div>
-        </TabsContent>
-      </Tabs>
+          </HoverModalCard>
+          <HoverModalCard
+            value={"os"}
+            icon={<Disc3Icon size={16} />}
+            title={"Operating System"}
+            description={
+              "Restrict access in your network based on the operating system."
+            }
+            iconClass={"bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300"}
+          >
+            <div className={"flex flex-col px-8 gap-2"}>
+              <FancyToggleSwitch
+                value={restrictOs}
+                onChange={setRestrictOs}
+                label={<>Restrict operating systems</>}
+                helpText={
+                  "Only peers with the specified operating system and minimum version will have access to the network."
+                }
+              />
+              <div>Windows min. (xp, 7, 8, 10, 11)</div>
+              ios min. (10, 11, 12, 13, 14)
+              <div>Android min. (4.4, 5, 6, 7, 8, 9, 10)</div>
+              <div>Linux min. (Ubuntu, Debian, Fedora, CentOS)</div>
+              macos min. (10.10, 10.11, 10.12, 10.13, 10.14, 10.15, 11)
+            </div>
+          </HoverModalCard>
+        </div>
+      </div>
 
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
