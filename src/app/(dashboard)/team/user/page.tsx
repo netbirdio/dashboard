@@ -303,10 +303,12 @@ function UserInformationCard({ user }: { user: User }) {
                 </>
               }
               value={
-                dayjs(user.last_login).format("D MMMM, YYYY [at] h:mm A") +
-                " (" +
-                dayjs().to(user.last_login) +
-                ")"
+                dayjs(user.last_login).isBefore(dayjs().subtract(1000, "years"))
+                  ? "Never"
+                  : dayjs(user.last_login).format("D MMMM, YYYY [at] h:mm A") +
+                    " (" +
+                    dayjs().to(user.last_login) +
+                    ")"
               }
             />
           </>
