@@ -93,7 +93,7 @@ export function SelectDropdown({
           className={"w-full"}
         >
           <div className={"w-full flex justify-between items-center gap-2"}>
-            {selected && (
+            {selected ? (
               <React.Fragment>
                 <div className={"flex items-center gap-2.5"}>
                   {selected?.icon && <selected.icon size={14} width={14} />}
@@ -101,6 +101,14 @@ export function SelectDropdown({
                     <span className={"text-nb-gray-200"}>
                       {selected?.label}
                     </span>
+                  </div>
+                </div>
+              </React.Fragment>
+            ) : (
+              <React.Fragment>
+                <div className={"flex items-center gap-2.5"}>
+                  <div className={"flex flex-col text-sm font-medium"}>
+                    <span className={"text-nb-gray-200"}>Select...</span>
                   </div>
                 </div>
               </React.Fragment>

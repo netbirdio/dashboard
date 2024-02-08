@@ -1,8 +1,8 @@
 import Button from "@components/Button";
-import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
+import { Label } from "@components/Label";
 import {
   Modal,
   ModalClose,
@@ -30,7 +30,15 @@ import {
 import React, { createElement, useState } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import {
+  androidVersions,
+  iOSVersions,
+  macOSVersions,
+  windowsKernelVersions,
+} from "@/interfaces/PostureCheck";
+import { OperatingSystemPostureCheck } from "@/modules/access-control/posture-checks/OperatingSystemPostureCheck";
 import { PostureCheckIcons } from "@/modules/access-control/posture-checks/PostureCheckIcons";
+import { OSLogo } from "@/modules/peers/PeerOSCell";
 
 type Props = {
   open: boolean;
@@ -117,6 +125,12 @@ export function CheckContent({ onSuccess }: ModalProps) {
     },
   ] as SelectOption[];
 
+  const [windowsVersion, setWindowsVersion] = useState<string | undefined>("0");
+  const [macOSVersion, setMacOSVersion] = useState<string | undefined>("0");
+  const [androidVersion, setAndroidVersion] = useState<string | undefined>("0");
+  const [iOSVersion, setIOSVersion] = useState<string | undefined>("0");
+  const [linuxVersion, setLinuxVersion] = useState<string | undefined>("0");
+
   return (
     <ModalContent maxWidthClass={cn("relative", "max-w-xl")} showClose={true}>
       <PostureCheckIcons />
@@ -191,25 +205,63 @@ export function CheckContent({ onSuccess }: ModalProps) {
             value={"os"}
             icon={<Disc3Icon size={16} />}
             title={"Operating System"}
+            modalWidthClass={"max-w-3xl"}
             description={
               "Restrict access in your network based on the operating system."
             }
             iconClass={"bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300"}
           >
-            <div className={"flex flex-col px-8 gap-2"}>
-              <FancyToggleSwitch
-                value={restrictOs}
-                onChange={setRestrictOs}
-                label={<>Restrict operating systems</>}
-                helpText={
-                  "Only peers with the specified operating system and minimum version will have access to the network."
-                }
-              />
-              <div>Windows min. (xp, 7, 8, 10, 11)</div>
-              ios min. (10, 11, 12, 13, 14)
-              <div>Android min. (4.4, 5, 6, 7, 8, 9, 10)</div>
-              <div>Linux min. (Ubuntu, Debian, Fedora, CentOS)</div>
-              macos min. (10.10, 10.11, 10.12, 10.13, 10.14, 10.15, 11)
+            <div className={"flex flex-col px-8 gap-4"}>
+              <OperatingSystemPostureCheck
+                versionList={windowsKernelVersions}
+                value={windowsVersion}
+                onChange={setWindowsVersion}
+              >
+                <Label>
+                  <OSLogo os={"windows"} />
+                  Windows
+                </Label>
+              </OperatingSystemPostureCheck>
+              <OperatingSystemPostureCheck
+                versionList={macOSVersions}
+                value={macOSVersion}
+                onChange={setMacOSVersion}
+              >
+                <Label>
+                  <OSLogo os={"mac"} />
+                  macOS
+                </Label>
+              </OperatingSystemPostureCheck>
+              <OperatingSystemPostureCheck
+                versionList={iOSVersions}
+                value={macOSVersion}
+                onChange={setMacOSVersion}
+              >
+                <Label>
+                  <OSLogo os={"ios"} />
+                  iOS
+                </Label>
+              </OperatingSystemPostureCheck>
+              <OperatingSystemPostureCheck
+                versionList={androidVersions}
+                value={macOSVersion}
+                onChange={setMacOSVersion}
+              >
+                <Label>
+                  <OSLogo os={"android"} />
+                  Android
+                </Label>
+              </OperatingSystemPostureCheck>
+              <OperatingSystemPostureCheck
+                versionList={macOSVersions}
+                value={macOSVersion}
+                onChange={setMacOSVersion}
+              >
+                <Label>
+                  <OSLogo os={"linux"} />
+                  Linux
+                </Label>
+              </OperatingSystemPostureCheck>
             </div>
           </HoverModalCard>
         </div>

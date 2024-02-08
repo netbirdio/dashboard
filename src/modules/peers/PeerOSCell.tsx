@@ -40,7 +40,7 @@ export function PeerOSCell({ os }: { os: string }) {
   );
 }
 
-function OSLogo({ os }: { os: string }) {
+export function OSLogo({ os }: { os: string }) {
   const icon = useMemo(() => {
     return getOperatingSystem(os.toLowerCase());
   }, [os]);

@@ -7,7 +7,6 @@ import {
   ModalFooter,
 } from "@components/modal/Modal";
 import Paragraph from "@components/Paragraph";
-import Separator from "@components/Separator";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
@@ -84,8 +83,8 @@ export const HoverModalCard = ({
               </div>
             </div>
           </div>
-          <Separator />
-          <div className={"pb-6 pt-5"}>{children}</div>
+
+          <div className={"pb-6"}>{children}</div>
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>
               <Paragraph className={"text-sm mt-auto"}>
