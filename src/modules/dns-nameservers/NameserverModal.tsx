@@ -2,19 +2,25 @@ import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
-import {Input} from "@components/Input";
-import {Label} from "@components/Label";
-import {Modal, ModalClose, ModalContent, ModalFooter, ModalTrigger,} from "@components/modal/Modal";
+import { Input } from "@components/Input";
+import { Label } from "@components/Label";
+import {
+  Modal,
+  ModalClose,
+  ModalContent,
+  ModalFooter,
+  ModalTrigger,
+} from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import {notify} from "@components/Notification";
+import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
-import {PeerGroupSelector} from "@components/PeerGroupSelector";
-import {Tabs, TabsContent, TabsList, TabsTrigger} from "@components/Tabs";
-import {Textarea} from "@components/Textarea";
-import {useApiCall} from "@utils/api";
-import {cn, validator} from "@utils/helpers";
+import { PeerGroupSelector } from "@components/PeerGroupSelector";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import { Textarea } from "@components/Textarea";
+import { useApiCall } from "@utils/api";
+import { cn, validator } from "@utils/helpers";
 import cidr from "ip-cidr";
-import {uniqueId} from "lodash";
+import { uniqueId } from "lodash";
 import {
   ExternalLinkIcon,
   GlobeIcon,
@@ -26,10 +32,10 @@ import {
   ServerIcon,
   Text,
 } from "lucide-react";
-import React, {useEffect, useMemo, useReducer, useState} from "react";
-import {useSWRConfig} from "swr";
+import React, { useEffect, useMemo, useReducer, useState } from "react";
+import { useSWRConfig } from "swr";
 import DNSIcon from "@/assets/icons/DNSIcon";
-import {Domain, Nameserver, NameserverGroup} from "@/interfaces/Nameserver";
+import { Domain, Nameserver, NameserverGroup } from "@/interfaces/Nameserver";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
 type Props = {
@@ -177,9 +183,10 @@ export function NameserverModalContent({
   };
 
   // Nameservers
-  const [nameservers, setNameservers] = useReducer(
-    nameServerReducer,
-    preset?.nameservers || [],
+  const [nameservers, setNameservers] = useReducer(nameServerReducer, [], () =>
+    preset?.nameservers
+      ? preset.nameservers.map((ns) => ({ id: uniqueId("ns"), ...ns }))
+      : [],
   );
 
   const [groups, setGroups, { save: saveGroups }] = useGroupHelper({
