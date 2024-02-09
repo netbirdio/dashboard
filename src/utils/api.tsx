@@ -43,10 +43,6 @@ export function useNetBirdFetch() {
   const { idToken } = useOidcIdToken();
   const { accessToken } = useOidcAccessToken();
 
-  console.info("Token source: ", tokenSource);
-  console.log("ID Token: ", idToken);
-  console.log("Access Token: ", accessToken);
-
   const nativeFetch = async (input: RequestInfo, init?: RequestInit) => {
     const token =
       tokenSource.toLowerCase() == "idtoken" ? idToken : accessToken;

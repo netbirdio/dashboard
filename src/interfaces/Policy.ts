@@ -1,4 +1,5 @@
 import { Group } from "@/interfaces/Group";
+import { PostureCheck } from "@/interfaces/PostureCheck";
 
 export interface Policy {
   id?: string;
@@ -7,6 +8,7 @@ export interface Policy {
   enabled: boolean;
   query: string;
   rules: PolicyRule[];
+  source_posture_checks: PostureCheck[] | null;
 }
 
 export interface PolicyRule {
@@ -23,9 +25,3 @@ export interface PolicyRule {
 }
 
 export type Protocol = "all" | "tcp" | "udp" | "icmp";
-
-export interface PolicyToSave extends Policy {
-  sourcesNoId?: string[];
-  destinationsNoId?: string[];
-  groupsToSave?: string[];
-}

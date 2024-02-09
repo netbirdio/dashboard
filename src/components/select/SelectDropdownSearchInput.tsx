@@ -1,13 +1,12 @@
 import { IconArrowBack } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
-import { CommandInput } from "cmdk";
 import { SearchIcon } from "lucide-react";
 import * as React from "react";
-import { forwardRef } from "react";
+import { Dispatch, forwardRef } from "react";
 
 type Props = {
   search: string;
-  setSearch: React.Dispatch<React.SetStateAction<string>>;
+  setSearch: Dispatch<React.SetStateAction<string>>;
   placeholder?: string;
 };
 
@@ -22,7 +21,7 @@ export const SelectDropdownSearchInput = forwardRef<HTMLInputElement, Props>(
   ) => {
     return (
       <div className={"relative"}>
-        <CommandInput
+        <input
           className={cn(
             "min-h-[42px] w-full relative",
             "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
@@ -31,7 +30,7 @@ export const SelectDropdownSearchInput = forwardRef<HTMLInputElement, Props>(
           )}
           ref={ref}
           value={search}
-          onValueChange={setSearch}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder={placeholder}
         />
         <div className={"absolute left-0 top-0 h-full flex items-center pl-4"}>

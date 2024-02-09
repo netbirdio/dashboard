@@ -1,5 +1,49 @@
 import { SelectOption } from "@components/select/SelectDropdown";
 
+export interface PostureCheck {
+  id: string;
+  name: string;
+  description?: string;
+  checks: {
+    nb_version_check?: NetBirdVersionCheck;
+    os_version_check?: OperatingSystemVersionCheck;
+    geo_location_check?: GeoLocationCheck;
+  };
+}
+
+export interface NetBirdVersionCheck {
+  min_version: string;
+}
+
+export interface OperatingSystemVersionCheck {
+  android?: {
+    min_version: string;
+  };
+  darwin?: {
+    min_version: string;
+  };
+  ios?: {
+    min_version: string;
+  };
+  linux?: {
+    min_kernel_version: string;
+  };
+  windows?: {
+    min_kernel_version: string;
+  };
+}
+
+export interface GeoLocationCheck {
+  locations: GeoLocation[];
+  action: "allow" | "deny";
+}
+
+export interface GeoLocation {
+  id: string;
+  country_code: string;
+  city_name: string;
+}
+
 export const windowsKernelVersions: SelectOption[] = [
   { value: "5.0", label: "Windows 2000" },
   { value: "5.1", label: "Windows XP" },

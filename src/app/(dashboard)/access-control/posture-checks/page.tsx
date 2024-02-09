@@ -6,7 +6,7 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import useFetchApi from "@utils/api";
-import { BookIcon, ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, ShieldCheck } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
@@ -14,11 +14,13 @@ import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { Policy } from "@/interfaces/Policy";
 import PageContainer from "@/layouts/PageContainer";
 
-const AccessControlTable = lazy(
-  () => import("@/modules/access-control/rules/table/AccessControlTable"),
+const PostureChecksTable = lazy(
+  () => import("@/modules/access-control/posture-checks/PostureChecksTable"),
 );
-export default function AccessControlPage() {
-  const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
+
+export default function PostureChecksPage() {
+  const { data: postureChecks, isLoading } =
+    useFetchApi<Policy[]>("/posture-checks");
 
   return (
     <PageContainer>
@@ -31,16 +33,16 @@ export default function AccessControlPage() {
               icon={<AccessControlIcon size={13} />}
             />
             <Breadcrumbs.Item
-              href={"/access-control"}
-              label={"Rules"}
+              href={"/access-control/posture-checks"}
+              label={"Posture Checks"}
               active
-              icon={<BookIcon size={14} />}
+              icon={<ShieldCheck size={17} />}
             />
           </Breadcrumbs>
           <h1>
-            {policies && policies.length > 1
-              ? `${policies.length} Access Control Rules`
-              : "Access Control Rules"}
+            {postureChecks && postureChecks.length > 1
+              ? `${postureChecks.length} Posture Checks`
+              : "Posture Checks"}
           </h1>
           <Paragraph>
             Create rules to manage access in your network and define what peers
@@ -48,21 +50,21 @@ export default function AccessControlPage() {
           </Paragraph>
           <Paragraph>
             Learn more about
-            <InlineLink
-              href={"https://docs.netbird.io/how-to/manage-network-access"}
-              target={"_blank"}
-            >
-              Access Controls
+            <InlineLink href={"#"} target={"_blank"}>
+              Posture Checks
               <ExternalLinkIcon size={12} />
             </InlineLink>
             in our documentation.
           </Paragraph>
         </div>
 
-        <RestrictedAccess page={"Access Control"}>
+        <RestrictedAccess page={"Posture Checks"}>
           <PoliciesProvider>
             <Suspense fallback={<SkeletonTable />}>
-              <AccessControlTable isLoading={isLoading} policies={policies} />
+              <PostureChecksTable
+                isLoading={isLoading}
+                postureChecks={postureChecks}
+              />
             </Suspense>
           </PoliciesProvider>
         </RestrictedAccess>

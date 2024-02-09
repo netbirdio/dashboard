@@ -1,16 +1,7 @@
-import Button from "@components/Button";
-import InlineLink from "@components/InlineLink";
-import {
-  Modal,
-  ModalClose,
-  ModalContent,
-  ModalFooter,
-} from "@components/modal/Modal";
-import Paragraph from "@components/Paragraph";
+import { Modal, ModalContent } from "@components/modal/Modal";
+import { IconCircleFilled } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
-import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
-import { useState } from "react";
 
 export const HoverModalCard = ({
   value,
@@ -20,6 +11,11 @@ export const HoverModalCard = ({
   icon,
   iconClass = "bg-gradient-to-tr from-netbird-200 to-netbird-100",
   modalWidthClass = "max-w-xl",
+  onClose,
+  onSave,
+  open,
+  setOpen,
+  active,
 }: {
   value: string;
   children?: React.ReactNode;
@@ -28,9 +24,12 @@ export const HoverModalCard = ({
   iconClass?: string;
   icon?: React.ReactNode;
   modalWidthClass?: string;
+  onClose?: () => void;
+  onSave?: () => void;
+  open: boolean;
+  setOpen: (open: boolean) => void;
+  active?: boolean;
 }) => {
-  const [open, setOpen] = useState(false);
-
   return (
     <div>
       <div
@@ -48,19 +47,42 @@ export const HoverModalCard = ({
           >
             {icon}
           </div>
-          <div className={"pr-10"}>
-            <div className={"text-sm font-medium flex gap-2 items-center"}>
-              {title}
+          <div className={" w-full"}>
+            <div
+              className={
+                "text-sm font-medium flex gap-2 items-center justify-between"
+              }
+            >
+              <span> {title}</span>
             </div>
             <div className={"text-xs mt-0.5 text-nb-gray-300"}>
               {description}
             </div>
           </div>
-          <div className={"ml-auto flex gap-2 items-center "}></div>
+          <span
+            className={cn(
+              "text-[10px] rounded-full px-2 py-0.5 flex items-center gap-1 w-[55px] justify-center uppercase font-medium",
+              active
+                ? "text-green-400 bg-green-900"
+                : "text-nb-gray-400 bg-nb-gray-900",
+            )}
+          >
+            <IconCircleFilled size={7} className={"mt-[0.1px]"} />
+            {active ? "On" : "Off"}
+          </span>
         </div>
       </div>
 
-      <Modal open={open} onOpenChange={setOpen}>
+      <Modal
+        open={open}
+        onOpenChange={(open) => {
+          setOpen(open);
+          if (onClose && !open) {
+            onClose();
+          }
+        }}
+        key={open ? 1 : 0}
+      >
         <ModalContent
           maxWidthClass={cn("relative", modalWidthClass)}
           showClose={true}
@@ -84,30 +106,7 @@ export const HoverModalCard = ({
             </div>
           </div>
 
-          <div className={"pb-6"}>{children}</div>
-          <ModalFooter className={"items-center"}>
-            <div className={"w-full"}>
-              <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
-                  }
-                  target={"_blank"}
-                >
-                  Posture Checks
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </Paragraph>
-            </div>
-            <div className={"flex gap-3 w-full justify-end"}>
-              <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
-              </ModalClose>
-
-              <Button variant={"primary"}>Save</Button>
-            </div>
-          </ModalFooter>
+          {children}
         </ModalContent>
       </Modal>
     </div>

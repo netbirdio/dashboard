@@ -7,33 +7,33 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
+import { useLocalStorage } from "@hooks/useLocalStorage";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { Policy } from "@/interfaces/Policy";
 import AccessControlModal, {
   AccessControlUpdateModal,
-} from "@/modules/access-control/AccessControlModal";
-import AccessControlActionCell from "@/modules/access-control/table/AccessControlActionCell";
-import AccessControlActiveCell from "@/modules/access-control/table/AccessControlActiveCell";
-import AccessControlDestinationsCell from "@/modules/access-control/table/AccessControlDestinationsCell";
-import AccessControlDirectionCell from "@/modules/access-control/table/AccessControlDirectionCell";
-import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
-import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
-import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
-import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
+} from "@/modules/access-control/rules/AccessControlModal";
+import AccessControlActionCell from "@/modules/access-control/rules/table/AccessControlActionCell";
+import AccessControlActiveCell from "@/modules/access-control/rules/table/AccessControlActiveCell";
+import AccessControlDestinationsCell from "@/modules/access-control/rules/table/AccessControlDestinationsCell";
+import AccessControlDirectionCell from "@/modules/access-control/rules/table/AccessControlDirectionCell";
+import AccessControlNameCell from "@/modules/access-control/rules/table/AccessControlNameCell";
+import AccessControlPortsCell from "@/modules/access-control/rules/table/AccessControlPortsCell";
+import AccessControlProtocolCell from "@/modules/access-control/rules/table/AccessControlProtocolCell";
+import AccessControlSourcesCell from "@/modules/access-control/rules/table/AccessControlSourcesCell";
 import RouteModal from "@/modules/routes/RouteModal";
 
 type Props = {
-  policies?: Policy[];
+  postureChecks?: Policy[];
   isLoading: boolean;
 };
 
-export const AccessControlTableColumns: ColumnDef<Policy>[] = [
+export const PostureChecksColumns: ColumnDef<Policy>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -150,7 +150,10 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
   },
 ];
 
-export default function AccessControlTable({ policies, isLoading }: Props) {
+export default function PostureChecksTable({
+  postureChecks,
+  isLoading,
+}: Props) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -184,11 +187,11 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
         text={"Access Control"}
         sorting={sorting}
         setSorting={setSorting}
-        columns={AccessControlTableColumns}
+        columns={PostureChecksColumns}
         columnVisibility={{
           description: false,
         }}
-        data={policies}
+        data={postureChecks}
         onRowClick={(row, cell) => {
           setCurrentRow(row.original);
           setEditModal(true);
@@ -234,7 +237,7 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
         }
         rightSide={() => (
           <>
-            {policies && policies?.length > 0 && (
+            {postureChecks && postureChecks?.length > 0 && (
               <AccessControlModal>
                 <Button variant={"primary"} className={"ml-auto"}>
                   <PlusCircle size={16} />
@@ -247,13 +250,13 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
       >
         {(table) => (
           <>
-            <ButtonGroup disabled={policies?.length == 0}>
+            <ButtonGroup disabled={postureChecks?.length == 0}>
               <ButtonGroup.Button
                 onClick={() => {
                   table.setPageIndex(0);
                   table.getColumn("enabled")?.setFilterValue(undefined);
                 }}
-                disabled={policies?.length == 0}
+                disabled={postureChecks?.length == 0}
                 variant={
                   table.getColumn("enabled")?.getFilterValue() === undefined
                     ? "tertiary"
@@ -267,7 +270,7 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
                   table.setPageIndex(0);
                   table.getColumn("enabled")?.setFilterValue(true);
                 }}
-                disabled={policies?.length == 0}
+                disabled={postureChecks?.length == 0}
                 variant={
                   table.getColumn("enabled")?.getFilterValue() === true
                     ? "tertiary"
@@ -281,7 +284,7 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
                   table.setPageIndex(0);
                   table.getColumn("enabled")?.setFilterValue(false);
                 }}
-                disabled={policies?.length == 0}
+                disabled={postureChecks?.length == 0}
                 variant={
                   table.getColumn("enabled")?.getFilterValue() === false
                     ? "tertiary"
@@ -293,10 +296,10 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
             </ButtonGroup>
             <DataTableRowsPerPage
               table={table}
-              disabled={policies?.length == 0}
+              disabled={postureChecks?.length == 0}
             />
             <DataTableRefreshButton
-              isDisabled={policies?.length == 0}
+              isDisabled={postureChecks?.length == 0}
               onClick={() => {
                 mutate("/policies").then();
                 mutate("/groups").then();

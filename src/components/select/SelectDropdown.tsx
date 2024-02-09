@@ -3,9 +3,10 @@ import { CommandItem } from "@components/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
 import { SelectDropdownSearchInput } from "@components/select/SelectDropdownSearchInput";
+import { useDebounce } from "@hooks/useDebounce";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandList } from "cmdk";
-import { trim } from "lodash";
+import { isEmpty } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
@@ -29,6 +30,7 @@ interface SelectDropdownProps {
   options: SelectOption[];
   showSearch?: boolean;
   placeholder?: string;
+  searchPlaceholder?: string;
 }
 
 export function SelectDropdown({
@@ -38,7 +40,8 @@ export function SelectDropdown({
   popoverWidth = "auto",
   options,
   showSearch = false,
-  placeholder,
+  placeholder = "Select...",
+  searchPlaceholder = "Search...",
 }: SelectDropdownProps) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -72,6 +75,15 @@ export function SelectDropdown({
 
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 200);
+
+  const filteredItems = React.useMemo(() => {
+    if (isEmpty(debouncedSearch)) return options;
+    return options.filter((item) => {
+      const value = `${item.label}${item.value}` || "";
+      return value.toLowerCase().includes(debouncedSearch.toLowerCase());
+    });
+  }, [options, debouncedSearch]);
 
   return (
     <Popover
@@ -108,7 +120,7 @@ export function SelectDropdown({
               <React.Fragment>
                 <div className={"flex items-center gap-2.5"}>
                   <div className={"flex flex-col text-sm font-medium"}>
-                    <span className={"text-nb-gray-200"}>Select...</span>
+                    <span className={"text-nb-gray-200"}>{placeholder}</span>
                   </div>
                 </div>
               </React.Fragment>
@@ -132,12 +144,8 @@ export function SelectDropdown({
         <Command
           className={"w-full flex"}
           loop
-          filter={(value, search) => {
-            const formatValue = trim(value.toLowerCase());
-            const formatSearch = trim(search.toLowerCase());
-            if (formatValue.includes(formatSearch)) return 1;
-            return 0;
-          }}
+          filter={() => 0}
+          shouldFilter={false}
         >
           <CommandList className={"w-full"}>
             {showSearch && (
@@ -145,7 +153,7 @@ export function SelectDropdown({
                 search={search}
                 setSearch={setSearch}
                 ref={searchRef}
-                placeholder={placeholder}
+                placeholder={searchPlaceholder}
               />
             )}
 
@@ -157,14 +165,12 @@ export function SelectDropdown({
             >
               <CommandGroup>
                 <div className={"grid grid-cols-1 gap-1"}>
-                  {options.slice(0, slice).map((option) => {
+                  {filteredItems.slice(0, slice).map((option) => {
+                    const value = option.value || "" + option.label || "";
                     return (
                       <CommandItem
                         key={option.value}
-                        value={
-                          ((option.label as string) || "") +
-                          (option.value || "")
-                        }
+                        value={value}
                         className={"py-1 px-2"}
                         onSelect={() => toggle(option.value)}
                         onClick={(e) => e.preventDefault()}

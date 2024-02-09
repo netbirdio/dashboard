@@ -1,3 +1,4 @@
+import { Input } from "@components/Input";
 import { RadioGroup, RadioGroupItem } from "@components/RadioGroup";
 import {
   SelectDropdown,
@@ -62,35 +63,45 @@ export const OperatingSystemPostureCheck = ({
 
   return (
     <div className={""}>
-      <div className={"flex gap-4 items-center"}>
-        <div className={"min-w-[120px]"}>{children}</div>
-        <RadioGroup value={allow} onChange={changeAllow}>
-          <RadioGroupItem value={"allow"} variant={"green"}>
-            <ShieldCheck size={14} />
-            Allow
-          </RadioGroupItem>
-          <RadioGroupItem value={"block"} variant={"red"}>
-            <ShieldXIcon size={14} />
-            Block
-          </RadioGroupItem>
-        </RadioGroup>
-
-        <SelectDropdown
-          value={allOrMin}
-          onChange={setAllOrMin}
-          options={allOrMinOptions}
-          disabled={allow === "block"}
-        />
-        {versionList && (
+      <div className={" gap-4 items-center flex"}>
+        <div className={"min-w-[100px]"}>{children}</div>
+        <div className={"grid grid-cols-3 gap-4"}>
+          <RadioGroup value={allow} onChange={changeAllow}>
+            <RadioGroupItem value={"allow"} variant={"green"}>
+              <ShieldCheck size={14} />
+              Allow
+            </RadioGroupItem>
+            <RadioGroupItem value={"block"} variant={"red"}>
+              <ShieldXIcon size={14} />
+              Block
+            </RadioGroupItem>
+          </RadioGroup>
           <SelectDropdown
-            value={value || "0"}
-            showSearch={true}
-            placeholder={"Search version..."}
-            onChange={onChange}
-            options={versionList}
-            disabled={allOrMin === "all" || allow === "block"}
+            value={allOrMin}
+            onChange={setAllOrMin}
+            options={allOrMinOptions}
+            disabled={allow === "block"}
           />
-        )}
+          {versionList ? (
+            <SelectDropdown
+              value={value || "0"}
+              showSearch={true}
+              placeholder={"Search version..."}
+              onChange={onChange}
+              options={versionList}
+              disabled={allOrMin === "all" || allow === "block"}
+            />
+          ) : (
+            <Input
+              value={value}
+              placeholder={"e.g., 10.15.7"}
+              disabled={allOrMin === "all" || allow === "block"}
+              onChange={(v) => {
+                onChange(v.target.value);
+              }}
+            />
+          )}
+        </div>
       </div>
     </div>
   );

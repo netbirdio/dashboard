@@ -39,7 +39,7 @@
     "autoprefixer": "^10",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.0.0",
-    "cmdk": "^0.2.0",
+    "cmdk": "^0.2.1",
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.10",
     "eslint": "^8",
@@ -69,7 +69,8 @@
     "swr": "^2.2.4",
     "tailwind-merge": "^1.14.0",
     "tailwindcss-animate": "^1.0.7",
-    "typescript": "^5"
+    "typescript": "^5",
+    "virtua": "^0.25.0"
   },
   "devDependencies": {
     "cypress": "^13.3.3",
