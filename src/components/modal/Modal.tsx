@@ -31,8 +31,8 @@ const ModalOverlay = React.forwardRef<
   <DialogPrimitive.Overlay
     ref={ref}
     className={cn(
-      "fixed inset-0 z-50 bg-black/30 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 dark:bg-neutral-950/70",
-      "place-items-center overflow-y-auto",
+      "fixed top-0 left-0 bottom-0 right-0 grid z-50 bg-black/30 backdrop-blur-sm data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 dark:bg-neutral-950/70",
+      "mx-auto place-items-start overflow-y-auto md:py-16",
       className,
     )}
     {...props}
@@ -65,7 +65,7 @@ const ModalContent = React.forwardRef<
         <DialogPrimitive.Content
           ref={ref}
           className={cn(
-            "fixed left-[50%] top-0 md:top-[5%] z-50 grid w-full translate-x-[-50%] border border-neutral-200 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1/2  data-[state=open]:slide-in-from-left-1/2 ] sm:rounded-lg md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
+            "mx-auto relative top-0 z-50 grid w-full  border border-neutral-200 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 sm:rounded-lg md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
             className,
             maxWidthClass,
           )}
