@@ -26,7 +26,6 @@ import AccessControlNameCell from "@/modules/access-control/table/AccessControlN
 import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
 import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
-import RouteModal from "@/modules/routes/RouteModal";
 
 type Props = {
   policies?: Policy[];
@@ -211,12 +210,12 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
               "It looks like you don't have any rules yet. Rules can allow connections by specific protocol and ports."
             }
             button={
-              <RouteModal>
+              <AccessControlModal>
                 <Button variant={"primary"} className={""}>
                   <PlusCircle size={16} />
                   Add Rule
                 </Button>
-              </RouteModal>
+              </AccessControlModal>
             }
             learnMore={
               <>

@@ -162,7 +162,9 @@ export function AccessControlModalContent({
     const createOrUpdateGroups = uniqBy([...g1, ...g2], "name").map(
       (g) => g.promise,
     );
-    const groups = await Promise.all(createOrUpdateGroups);
+    const groups = await Promise.all(
+      createOrUpdateGroups.map((call) => call()),
+    );
 
     let sources = sourceGroups
       .map((g) => {
