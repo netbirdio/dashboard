@@ -7,6 +7,7 @@ import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
+import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
 import { ExternalLinkIcon, MailPlus, PlusCircle } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -176,14 +177,16 @@ export default function UsersTable({ users, isLoading }: Props) {
         }
         rightSide={() => (
           <>
-            {users && users?.length > 0 && (
-              <UserInviteModal>
-                <Button variant={"primary"} className={"ml-auto"}>
-                  <MailPlus size={16} />
-                  Invite User
-                </Button>
-              </UserInviteModal>
-            )}
+            {(isLocalDev() || isNetBirdHosted()) &&
+              users &&
+              users?.length > 0 && (
+                <UserInviteModal>
+                  <Button variant={"primary"} className={"ml-auto"}>
+                    <MailPlus size={16} />
+                    Invite User
+                  </Button>
+                </UserInviteModal>
+              )}
           </>
         )}
       >
