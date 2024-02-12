@@ -132,7 +132,7 @@ function PeerOverview() {
             <Breadcrumbs.Item label={peer.ip} active />
           </Breadcrumbs>
 
-          <div className={"flex justify-between max-w-6xl"}>
+          <div className={"flex justify-between max-w-6xl items-start"}>
             <div>
               <div className={"flex items-center gap-3"}>
                 <h1 className={"flex items-center gap-3"}>
