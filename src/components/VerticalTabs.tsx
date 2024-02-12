@@ -26,29 +26,17 @@ function VerticalTabs({ value, onChange, children }: Props) {
   );
 }
 
-function List({
-  children,
-  fullHeight = true,
-  border = true,
-  className,
-}: {
-  children: React.ReactNode;
-  fullHeight?: boolean;
-  border?: boolean;
-  className?: string;
-}) {
+function List({ children }: { children: React.ReactNode }) {
   const isLg = useIsLg();
   return (
     <Tabs.List
       className={cn(
         "px-4 py-4 whitespace-nowrap overflow-y-hidden shrink-0 no-scrollbar",
-        "lg:h-full items-start bg-nb-gray  border-nb-gray-930",
+        "lg:h-full items-start bg-nb-gray border-b border-nb-gray-930",
         "flex lg:flex-col lg:gap-1",
-        border && "border-b",
-        className,
       )}
       style={{
-        height: isLg && fullHeight ? "calc(100vh - 75px)" : "auto",
+        height: isLg ? "calc(100vh - 75px)" : "auto",
       }}
     >
       {children}

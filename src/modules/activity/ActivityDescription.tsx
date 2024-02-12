@@ -314,8 +314,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value>
-        was deleted
+        <Value>{event.meta.email}</Value> was deleted
       </div>
     );
 
@@ -454,7 +453,7 @@ function Value({
   return children ? (
     <span
       className={cn(
-        "text-nb-gray-200 inline font-medium bg-nb-gray-900 py-[3px] text-[12px] px-[5px] border border-nb-gray-800 rounded-[4px]",
+        "text-nb-gray-200 inline font-medium bg-nb-gray-900 py-[3px] text-[11px] px-[5px] border border-nb-gray-800 rounded-[4px]",
         className,
       )}
     >

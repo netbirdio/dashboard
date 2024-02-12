@@ -19,7 +19,7 @@ export default function ServiceUserNameCell({ user }: Props) {
       </div>
       <div className={"flex flex-col justify-center"}>
         <span className={cn("text-base font-medium flex items-center gap-3")}>
-          {user.name}
+          {user.name || user.id}
         </span>
       </div>
     </div>

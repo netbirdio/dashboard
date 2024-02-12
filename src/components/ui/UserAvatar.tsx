@@ -31,11 +31,11 @@ export const UserAvatar = ({ size = "default" }: Props) => {
       )}
       style={{
         color: user?.name
-          ? generateColorFromString(user?.name || "System User")
+          ? generateColorFromString(user?.name || user?.id || "System User")
           : "#808080",
       }}
     >
-      {user?.name?.charAt(0)}
+      {user?.name?.charAt(0) || user?.id?.charAt(0)}
     </div>
   );
 };

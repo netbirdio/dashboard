@@ -1,4 +1,5 @@
 import { useApiCall } from "@utils/api";
+import { isEmpty } from "lodash";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useGroups } from "@/contexts/GroupsProvider";
@@ -46,7 +47,7 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
     return groupsToUpdate.map((group) => {
       return {
         name: group.name,
-        promise: updateOrCreateGroup(group),
+        promise: () => updateOrCreateGroup(group),
       };
     });
   };
@@ -67,7 +68,7 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
       return removePeerFromGroup(group);
     });
 
-    return [...updateCalls, ...removeCalls] as Promise<Group>[];
+    return [...updateCalls.map((c) => c()), ...removeCalls] as Promise<Group>[];
   };
 
   const removePeerFromGroup = async (g: Group) => {
@@ -93,20 +94,24 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
   const updateOrCreateGroup = async (selectedGroup: Group) => {
     const groupPeers =
       selectedGroup.peers &&
-      selectedGroup.peers.map((p) => {
-        const groupPeer = p as GroupPeer;
-        return groupPeer.id;
-      });
+      selectedGroup.peers
+        .map((p) => {
+          const groupPeer = p as GroupPeer;
+          return groupPeer.id;
+        })
+        .filter((p) => p !== undefined && p !== null);
 
     // Update group if it has an id (only when peer prop is passed)
     const hasId = !!selectedGroup.id;
+    const peers = isEmpty(groupPeers) ? undefined : groupPeers;
+
     if (hasId) {
       if (selectedGroup.name == "All" || !peer)
         return Promise.resolve(selectedGroup);
       return groupRequest.put(
         {
           name: selectedGroup.name,
-          peers: groupPeers || [],
+          peers: peers,
         },
         `/${selectedGroup.id}`,
       );

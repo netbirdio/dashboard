@@ -19,7 +19,7 @@ export default function ModalHeader({
   margin = "mt-0",
 }: Props) {
   return (
-    <div className={cn(className, "relative z-[1]")}>
+    <div className={className}>
       <div className={"flex items-start gap-5 pr-10"}>
         {icon && <SquareIcon color={color} icon={icon} />}
         <div>

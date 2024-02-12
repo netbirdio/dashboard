@@ -11,7 +11,6 @@ import {
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
-import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import { IconMailForward } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
@@ -91,7 +90,17 @@ export function UserInviteModalContent({ onSuccess }: ModalProps) {
 
   return (
     <ModalContent maxWidthClass={"max-w-md relative"} showClose={true}>
-      <GradientFadedBackground />
+      <div
+        className={
+          "h-full w-full absolute left-0 top-0 rounded-md overflow-hidden z-0"
+        }
+      >
+        <div
+          className={
+            "bg-gradient-to-b from-nb-gray-900/20 via-transparent to-transparent w-full h-full rounded-md"
+          }
+        ></div>
+      </div>
       <UserAvatars />
 
       <div

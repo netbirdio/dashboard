@@ -150,7 +150,9 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
     const createOrUpdateGroups = uniqBy([...g1, ...g2], "name").map(
       (g) => g.promise,
     );
-    const createdGroups = await Promise.all(createOrUpdateGroups);
+    const createdGroups = await Promise.all(
+      createOrUpdateGroups.map((call) => call()),
+    );
     const peerGroups = routingPeerGroups
       .map((g) => {
         const find = createdGroups.find((group) => group.name === g.name);

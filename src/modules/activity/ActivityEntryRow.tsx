@@ -61,22 +61,24 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
                 }
                 style={{
                   color: user?.name
-                    ? generateColorFromString(user?.name || "System User")
+                    ? generateColorFromString(
+                        user?.name || user?.id || "System User",
+                      )
                     : "#808080",
                 }}
               >
-                {!user?.name && <Cog size={12} />}
-                {user?.name?.charAt(0)}
+                {!user?.name && !user?.id && <Cog size={12} />}
+                {user?.name?.charAt(0) || user?.id?.charAt(0)}
               </div>
 
               <span className={"text-sm text-nb-gray-200"}>
-                <TextWithTooltip text={user?.name || "System"} maxChars={20} />
-              </span>
-              <span className={"text-sm text-nb-gray-400 font-light"}>
                 <TextWithTooltip
-                  text={user?.email || "NetBird"}
+                  text={user?.name || user?.id || "System"}
                   maxChars={20}
                 />
+              </span>
+              <span className={"text-sm text-nb-gray-400 font-light"}>
+                <TextWithTooltip text={user?.email || ""} maxChars={20} />
               </span>
             </div>
           </div>
@@ -91,11 +93,15 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
 
         <Card
           className={
-            "w-full relative bg-nb-gray-925 text-sm text-nb-gray-300 flex flex-col px-4 pt-3 pb-4"
+            "w-full relative bg-nb-gray-925 text-sm text-nb-gray-300 flex flex-col px-4 pt-3 pb-3"
           }
         >
           <div className={"flex gap-4"}>
-            <div className={"flex items-center mt-2 text-nb-gray-300 text-sm"}>
+            <div
+              className={
+                "flex items-center text-nb-gray-300 text-sm leading-[2]"
+              }
+            >
               <ActivityDescription event={event} />
             </div>
           </div>

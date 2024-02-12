@@ -6,7 +6,7 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import useFetchApi from "@utils/api";
-import { BookIcon, ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
@@ -15,7 +15,7 @@ import { Policy } from "@/interfaces/Policy";
 import PageContainer from "@/layouts/PageContainer";
 
 const AccessControlTable = lazy(
-  () => import("@/modules/access-control/rules/table/AccessControlTable"),
+  () => import("@/modules/access-control/table/AccessControlTable"),
 );
 export default function AccessControlPage() {
   const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
@@ -26,21 +26,15 @@ export default function AccessControlPage() {
         <div className={"p-default py-6"}>
           <Breadcrumbs>
             <Breadcrumbs.Item
-              href={"/access-control"}
+              href={"/policies"}
               label={"Access Control"}
               icon={<AccessControlIcon size={13} />}
-            />
-            <Breadcrumbs.Item
-              href={"/access-control"}
-              label={"Rules"}
-              active
-              icon={<BookIcon size={14} />}
             />
           </Breadcrumbs>
           <h1>
             {policies && policies.length > 1
-              ? `${policies.length} Access Control Rules`
-              : "Access Control Rules"}
+              ? `${policies.length} Access Control Policies`
+              : "Access Control Policies"}
           </h1>
           <Paragraph>
             Create rules to manage access in your network and define what peers

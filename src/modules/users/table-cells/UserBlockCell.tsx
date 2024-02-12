@@ -20,12 +20,12 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
   const disabled = user.is_current || user.role === "owner";
 
   const update = async (blocked: boolean) => {
+    const name = user.name || "User";
+
     notify({
       title: blocked ? "User blocked" : "User unblocked",
       description:
-        user.name +
-        " was successfully " +
-        (blocked ? "blocked." : "unblocked."),
+        name + " was successfully " + (blocked ? "blocked." : "unblocked."),
       promise: userRequest
         .put(
           {

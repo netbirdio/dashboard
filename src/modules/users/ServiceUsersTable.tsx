@@ -88,7 +88,7 @@ export default function ServiceUsersTable({ users, isLoading }: Props) {
     <>
       <DataTable
         isLoading={isLoading}
-        text={"Network Routes"}
+        text={"Service Users"}
         sorting={sorting}
         setSorting={setSorting}
         columns={ServiceUsersTableColumns}

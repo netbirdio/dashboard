@@ -1,11 +1,12 @@
 import {
   useOidc,
   useOidcAccessToken,
-  useOidcFetch,
   useOidcIdToken,
 } from "@axa-fr/react-oidc";
 import loadConfig from "@utils/config";
+import { sleep } from "@utils/helpers";
 import { usePathname } from "next/navigation";
+import { isExpired } from "react-jwt";
 import useSWR from "swr";
 import { useErrorBoundary } from "@/contexts/ErrorBoundary";
 
@@ -38,19 +39,33 @@ async function apiRequest<T>(
 }
 
 export function useNetBirdFetch() {
-  const { fetch: oidcFetch } = useOidcFetch();
-  const tokenSource = config.tokenSource;
+  const tokenSource = config.tokenSource || "accessToken";
   const { idToken } = useOidcIdToken();
   const { accessToken } = useOidcAccessToken();
+  const token = tokenSource.toLowerCase() == "idtoken" ? idToken : accessToken;
+  const handleErrors = useApiErrorHandling();
+
+  const isTokenExpired = async () => {
+    let attempts = 20;
+    while (isExpired(token) && attempts > 0) {
+      await sleep(500);
+      attempts = attempts - 1;
+    }
+    return isExpired(token);
+  };
 
   const nativeFetch = async (input: RequestInfo, init?: RequestInit) => {
-    const token =
-      tokenSource.toLowerCase() == "idtoken" ? idToken : accessToken;
+    const tokenExpired = await isTokenExpired();
+    if (tokenExpired) {
+      return handleErrors({ code: 401, message: "token expired" });
+    }
+
     const headers = {
       "Content-Type": "application/json",
       Accept: "application/json",
       Authorization: `Bearer ${token}`,
     };
+
     return fetch(input, {
       ...init,
       headers,
@@ -122,6 +137,9 @@ export function useApiErrorHandling() {
 
   return (err: ErrorResponse) => {
     if (err.code == 401 && err.message == "no valid authentication provided") {
+      return login(currentPath);
+    }
+    if (err.code == 401 && err.message == "token expired") {
       return login(currentPath);
     }
     if (err.code == 401 && err.message == "token invalid") {

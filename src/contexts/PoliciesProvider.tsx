@@ -28,10 +28,10 @@ export default function PoliciesProvider({ children }: Props) {
     message?: string,
   ) => {
     notify({
-      title: "Access Control Rule " + policy.name,
+      title: "Access Control Policy " + policy.name,
       description: message
         ? message
-        : "The access control rule was successfully updated",
+        : "The access control policy was successfully updated",
       promise: request
         .put(
           {
