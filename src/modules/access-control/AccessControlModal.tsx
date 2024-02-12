@@ -112,9 +112,9 @@ export function AccessControlModalContent({
   const firstRule = policy?.rules ? policy.rules[0] : undefined;
 
   const [tab, setTab] = useState(() => {
-    if (!cell) return "rule";
+    if (!cell) return "policy";
     if (cell == "name") return "general";
-    return "rule";
+    return "policy";
   });
 
   const [enabled, setEnabled] = useState<boolean>(policy?.enabled ?? true);
@@ -210,13 +210,13 @@ export function AccessControlModalContent({
           mutate("/policies");
           onSuccess && onSuccess(policy);
         },
-        "The rule was successfully saved",
+        "The policy was successfully saved",
       );
     } else {
       notify({
-        title: "Create Access Control Rule",
-        description: "Rule was created successfully.",
-        loadingMessage: "Creating your setup key...",
+        title: "Create Access Control Policy",
+        description: "Policy was created successfully.",
+        loadingMessage: "Creating your policy...",
         promise: policyRequest.post(policyObj).then((policy) => {
           mutate("/policies");
           onSuccess && onSuccess(policy);
@@ -239,18 +239,20 @@ export function AccessControlModalContent({
         icon={<AccessControlIcon className={"fill-netbird"} />}
         title={
           policy
-            ? "Update Access Control Rule"
-            : "Create New Access Control Rule"
+            ? "Update Access Control Policy"
+            : "Create New Access Control Policy"
         }
-        description={"Use this rule to restrict access to groups of resources."}
+        description={
+          "Use this policy to restrict access to groups of resources."
+        }
         color={"netbird"}
       />
 
       <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
         <TabsList justify={"start"} className={"px-8"}>
-          <TabsTrigger value={"rule"}>
+          <TabsTrigger value={"policy"}>
             <ArrowRightLeft size={16} />
-            Rule
+            Policy
           </TabsTrigger>
           <TabsTrigger value={"general"}>
             <Text
@@ -263,7 +265,7 @@ export function AccessControlModalContent({
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value={"rule"} className={"pb-8"}>
+        <TabsContent value={"policy"} className={"pb-8"}>
           <div className={"px-8 flex-col flex gap-6"}>
             <div className={"flex justify-between items-center"}>
               <div>
@@ -357,10 +359,10 @@ export function AccessControlModalContent({
               label={
                 <>
                   <Power size={15} />
-                  Enable Rule
+                  Enable Policy
                 </>
               }
-              helpText={"Use this switch to enable or disable the rule."}
+              helpText={"Use this switch to enable or disable the policy."}
             />
           </div>
         </TabsContent>
@@ -369,7 +371,7 @@ export function AccessControlModalContent({
             <div>
               <Label>Name of the Rule</Label>
               <HelpText>
-                Set an easily identifiable name for your rule.
+                Set an easily identifiable name for your policy.
               </HelpText>
               <Input
                 autoFocus={true}
@@ -382,7 +384,7 @@ export function AccessControlModalContent({
             <div>
               <Label>Description (optional)</Label>
               <HelpText>
-                Write a short description to add more context to this rule.
+                Write a short description to add more context to this policy.
               </HelpText>
               <Textarea
                 value={description}
@@ -427,7 +429,7 @@ export function AccessControlModalContent({
             ) : (
               <>
                 <PlusCircle size={16} />
-                Add Rule
+                Add Policy
               </>
             )}
           </Button>

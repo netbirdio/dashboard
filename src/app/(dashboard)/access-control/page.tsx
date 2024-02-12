@@ -33,8 +33,8 @@ export default function AccessControlPage() {
           </Breadcrumbs>
           <h1>
             {policies && policies.length > 1
-              ? `${policies.length} Access Control Rules`
-              : "Access Control Rules"}
+              ? `${policies.length} Access Control Policies`
+              : "Access Control Policies"}
           </h1>
           <Paragraph>
             Create rules to manage access in your network and define what peers

@@ -18,12 +18,12 @@ export default function AccessControlActionCell({ policy }: Props) {
 
   const deleteRule = async () => {
     notify({
-      title: "Access Control Rule " + policy.name,
-      description: "The rule was successfully removed.",
+      title: "Access Control Policy " + policy.name,
+      description: "The policy was successfully removed.",
       promise: policyRequest.del("", `/${policy.id}`).then(() => {
         mutate("/policies");
       }),
-      loadingMessage: "Deleting the rule...",
+      loadingMessage: "Deleting the policy...",
     });
   };
 
@@ -31,7 +31,7 @@ export default function AccessControlActionCell({ policy }: Props) {
     const choice = await confirm({
       title: `Delete '${policy.name}'?`,
       description:
-        "Are you sure you want to delete this access control rule? This action cannot be undone.",
+        "Are you sure you want to delete this access control policy? This action cannot be undone.",
       confirmText: "Delete",
       cancelText: "Cancel",
       type: "danger",
