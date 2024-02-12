@@ -47,13 +47,10 @@ export default function SetupKeyModal({ children }: Props) {
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const [, copy] = useCopyToClipboard(setupKey?.key);
-  const { mutate } = useSWRConfig();
 
   const handleSuccess = (setupKey: SetupKey) => {
     setSetupKey(setupKey);
     setSuccessModal(true);
-    mutate("/setup-keys").then();
-    mutate("/groups").then();
   };
 
   return (
@@ -131,6 +128,7 @@ type ModalProps = {
 
 export function SetupKeyModalContent({ onSuccess }: ModalProps) {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys");
+  const { mutate } = useSWRConfig();
 
   const [name, setName] = useState("");
   const [reusable, setReusable] = useState(false);
@@ -171,7 +169,8 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
           })
           .then((setupKey) => {
             onSuccess && onSuccess(setupKey);
-            close && close();
+            mutate("/setup-keys");
+            mutate("/groups");
           });
       }),
       loadingMessage: "Creating your setup key...",
