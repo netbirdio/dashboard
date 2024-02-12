@@ -38,6 +38,10 @@ export default function PostureCheckModal({
     postureCheck?.checks.geo_location_check || undefined,
   );
 
+  const [osVersionCheck, setOsVersionCheck] = useState(
+    postureCheck?.checks.os_version_check || undefined,
+  );
+
   return (
     <>
       <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
@@ -70,7 +74,10 @@ export default function PostureCheckModal({
                 value={geoLocationCheck}
                 onChange={setGeoLocationCheckCheck}
               />
-              <OperatingSystemCheck />
+              <OperatingSystemCheck
+                value={osVersionCheck}
+                onChange={setOsVersionCheck}
+              />
             </div>
           </div>
 

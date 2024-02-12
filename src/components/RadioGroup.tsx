@@ -1,6 +1,5 @@
 import * as RadixRadioGroup from "@radix-ui/react-radio-group";
 import { cn } from "@utils/helpers";
-import { motion } from "framer-motion";
 import * as React from "react";
 import { useState } from "react";
 
@@ -44,10 +43,8 @@ export const RadioGroupItem = ({
 }) => {
   return (
     <RadixRadioGroup.Item value={value} asChild={true}>
-      <motion.div
+      <div
         key={value}
-        layoutId={"radio-group-item"}
-        layout
         className={cn(
           variant === "default" &&
             "text-nb-gray-500 hover:text-nb-gray-400 data-[state=checked]:bg-nb-gray-600 data-[state=checked]:text-nb-gray-100",
@@ -59,7 +56,7 @@ export const RadioGroupItem = ({
         )}
       >
         {children ? children : <div className={"h-3"}></div>}
-      </motion.div>
+      </div>
     </RadixRadioGroup.Item>
   );
 };

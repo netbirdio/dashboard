@@ -1,24 +1,28 @@
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
+import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
+import { Label } from "@components/Label";
 import { RadioGroup, RadioGroupItem } from "@components/RadioGroup";
 import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
+import { IconMathEqualGreater } from "@tabler/icons-react";
 import {
-  ChevronRightCircle,
+  FileCog,
   GalleryHorizontalEnd,
   ShieldCheck,
   ShieldXIcon,
 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
 type Props = {
   value: string | undefined;
   onChange: (value: string | undefined) => void;
-  defaultValue?: string;
   versionList?: SelectOption[];
-  children?: React.ReactNode;
+  os: OperatingSystem;
 };
 
 const allOrMinOptions = [
@@ -28,9 +32,9 @@ const allOrMinOptions = [
     icon: GalleryHorizontalEnd,
   },
   {
-    label: "Greater than",
+    label: "Equal or greater than",
     value: "min",
-    icon: ChevronRightCircle,
+    icon: IconMathEqualGreater,
   },
 ] as SelectOption[];
 
@@ -38,71 +42,93 @@ export const OperatingSystemPostureCheck = ({
   value,
   onChange,
   versionList,
-  defaultValue,
-  children,
+  os,
 }: Props) => {
   const [allow, setAllow] = useState(value == undefined ? "block" : "allow");
-  const [allOrMin, setAllOrMin] = useState(value == "0" ? "all" : "min");
+  const [allOrMin, setAllOrMin] = useState(value == "" ? "all" : "min");
+  const [useCustomVersion, setUseCustomVersion] = useState(false);
 
   const changeAllow = (value: string) => {
     setAllow(value);
     if (value === "block") {
       setAllOrMin("all");
       onChange(undefined);
+      setAllOrMin("all");
+      setUseCustomVersion(false);
     } else {
-      onChange("0");
+      onChange("");
     }
   };
 
-  const changeDropdown = (value: string) => {
-    setAllOrMin(value);
-    if (value === "all") {
-      onChange("0");
-    }
-  };
+  const prefix =
+    os === OperatingSystem.LINUX || os === OperatingSystem.WINDOWS
+      ? "Kernel Version"
+      : "Version";
 
   return (
     <div className={""}>
-      <div className={" gap-4 items-center flex"}>
-        <div className={"min-w-[100px]"}>{children}</div>
-        <div className={"grid grid-cols-3 gap-4"}>
-          <RadioGroup value={allow} onChange={changeAllow}>
-            <RadioGroupItem value={"allow"} variant={"green"}>
-              <ShieldCheck size={14} />
-              Allow
-            </RadioGroupItem>
-            <RadioGroupItem value={"block"} variant={"red"}>
-              <ShieldXIcon size={14} />
-              Block
-            </RadioGroupItem>
-          </RadioGroup>
-          <SelectDropdown
-            value={allOrMin}
-            onChange={setAllOrMin}
-            options={allOrMinOptions}
-            disabled={allow === "block"}
-          />
-          {versionList ? (
-            <SelectDropdown
-              value={value || "0"}
-              showSearch={true}
-              placeholder={"Search version..."}
-              onChange={onChange}
-              options={versionList}
-              disabled={allOrMin === "all" || allow === "block"}
-            />
-          ) : (
-            <Input
-              value={value}
-              placeholder={"e.g., 10.15.7"}
-              disabled={allOrMin === "all" || allow === "block"}
-              onChange={(v) => {
-                onChange(v.target.value);
-              }}
-            />
-          )}
+      <div className={"flex justify-between items-start gap-10 "}>
+        <div>
+          <Label>Allow or Block</Label>
+          <HelpText>
+            Choose whether you want to allow or block the operating system.
+          </HelpText>
         </div>
+        <RadioGroup value={allow} onChange={changeAllow}>
+          <RadioGroupItem value={"allow"} variant={"green"}>
+            <ShieldCheck size={14} />
+            Allow
+          </RadioGroupItem>
+          <RadioGroupItem value={"block"} variant={"red"}>
+            <ShieldXIcon size={14} />
+            Block
+          </RadioGroupItem>
+        </RadioGroup>
       </div>
+      <div className={"gap-4 items-center grid grid-cols-2 mt-3"}>
+        <SelectDropdown
+          value={allOrMin}
+          onChange={setAllOrMin}
+          options={allOrMinOptions}
+          disabled={allow === "block"}
+        />
+        {versionList && !useCustomVersion ? (
+          <SelectDropdown
+            value={value || "0"}
+            showSearch={true}
+            placeholder={"Select version..."}
+            onChange={onChange}
+            options={versionList}
+            disabled={allOrMin === "all" || allow === "block"}
+          />
+        ) : (
+          <Input
+            value={value}
+            customPrefix={prefix}
+            placeholder={"e.g., 6.0.0"}
+            disabled={allOrMin === "all" || allow === "block"}
+            onChange={(v) => {
+              onChange(v.target.value);
+            }}
+          />
+        )}
+      </div>
+      {os !== OperatingSystem.LINUX && (
+        <div className={"mt-4"}>
+          <FancyToggleSwitch
+            disabled={allow === "block" || allOrMin === "all"}
+            value={useCustomVersion}
+            onChange={setUseCustomVersion}
+            label={
+              <>
+                <FileCog size={14} />
+                Use custom version number
+              </>
+            }
+            helpText={"Use a custom version number if you need more control."}
+          />
+        </div>
+      )}
     </div>
   );
 };

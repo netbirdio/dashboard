@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@components/RadioGroup";
 import { CitySelector } from "@components/ui/CitySelector";
 import { CountrySelector } from "@components/ui/CountrySelector";
 import { HoverModalCard } from "@components/ui/HoverModalCard";
-import { uniqueId } from "lodash";
+import { isEmpty, uniqueId } from "lodash";
 import {
   ExternalLinkIcon,
   FlagIcon,
@@ -40,6 +40,7 @@ export const GeoLocationCheckCard = ({ value, onChange }: Props) => {
       }
       iconClass={"bg-gradient-to-tr from-indigo-500 to-indigo-400"}
       modalWidthClass={"max-w-2xl"}
+      active={value ? value?.locations?.length > 0 : false}
     >
       <CheckContent
         value={value}
@@ -53,8 +54,12 @@ export const GeoLocationCheckCard = ({ value, onChange }: Props) => {
 };
 
 const CheckContent = ({ value, onChange }: Props) => {
-  const [allowDenyLocation, setAllowDenyLocation] = useState("allow");
-  const [locations, setLocations] = useState<GeoLocation[]>([]);
+  const [allowDenyLocation, setAllowDenyLocation] = useState<string>(
+    value?.action ? value.action : "allow",
+  );
+  const [locations, setLocations] = useState<GeoLocation[]>(
+    value?.locations || [],
+  );
 
   const updateLocation = (id: string, location: GeoLocation) => {
     const find = locations.find((l) => l.id === id);
@@ -161,7 +166,21 @@ const CheckContent = ({ value, onChange }: Props) => {
           <ModalClose asChild={true}>
             <Button variant={"secondary"}>Cancel</Button>
           </ModalClose>
-          <Button variant={"primary"}>Save</Button>
+          <Button
+            variant={"primary"}
+            onClick={() => {
+              if (isEmpty(locations)) {
+                onChange(undefined);
+              } else {
+                onChange({
+                  action: allowDenyLocation as "allow" | "deny",
+                  locations: locations,
+                });
+              }
+            }}
+          >
+            Save
+          </Button>
         </div>
       </ModalFooter>
     </>

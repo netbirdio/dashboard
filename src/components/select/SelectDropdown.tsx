@@ -165,7 +165,7 @@ export function SelectDropdown({
             >
               <CommandGroup>
                 <div className={"grid grid-cols-1 gap-1"}>
-                  {filteredItems.slice(0, slice).map((option) => {
+                  {filteredItems.map((option) => {
                     const value = option.value || "" + option.label || "";
                     return (
                       <CommandItem
