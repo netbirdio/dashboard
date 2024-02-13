@@ -11,6 +11,8 @@ import React from "react";
 import { useSWRConfig } from "swr";
 import type { Policy } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
+import { PostureCheckChecksCell } from "@/modules/access-control/posture-checks/table/PostureCheckChecksCell";
+import { PostureCheckNameCell } from "@/modules/access-control/posture-checks/table/PostureCheckNameCell";
 
 type Props = {
   postureChecks?: Policy[];
@@ -42,14 +44,18 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
+    cell: ({ row }) => <PostureCheckNameCell check={row.original} />,
   },
   {
     accessorKey: "id",
-    header: "",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Checks</DataTableHeader>;
+    },
+    cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
   },
 ];
 
-export default function PostureChecksTable() {
+export default function PostureCheckTable() {
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
   const { mutate } = useSWRConfig();
@@ -67,7 +73,7 @@ export default function PostureChecksTable() {
   );
 
   return (
-    <>
+    <div className={""}>
       <DataTable
         isLoading={isLoading}
         text={"Access Control"}
@@ -100,13 +106,13 @@ export default function PostureChecksTable() {
               <DataTableRefreshButton
                 isDisabled={postureChecks?.length == 0}
                 onClick={() => {
-                  mutate("/policies");
+                  mutate("/posture-checks");
                 }}
               />
             </>
           );
         }}
       </DataTable>
-    </>
+    </div>
   );
 }

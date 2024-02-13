@@ -15,7 +15,8 @@ import { Policy } from "@/interfaces/Policy";
 import PageContainer from "@/layouts/PageContainer";
 
 const PostureChecksTable = lazy(
-  () => import("@/modules/access-control/posture-checks/PostureChecksTable"),
+  () =>
+    import("@/modules/access-control/posture-checks/table/PostureChecksTable"),
 );
 
 export default function PostureChecksPage() {
