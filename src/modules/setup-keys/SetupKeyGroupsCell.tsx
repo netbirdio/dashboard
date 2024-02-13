@@ -27,7 +27,7 @@ export default function SetupKeyGroupsCell({ setupKey }: Props) {
           revoked: setupKey.revoked,
           auto_groups: groups.map((group) => group.id),
           usage_limit: setupKey.usage_limit,
-          ephemeral_peers: setupKey.ephemeral,
+          ephemeral: setupKey.ephemeral,
         })
         .then(() => {
           setModal(false);
