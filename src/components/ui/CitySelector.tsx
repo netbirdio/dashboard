@@ -31,7 +31,7 @@ export const CitySelector = ({ value, onChange, country = "de" }: Props) => {
     const all = cities?.map((city) => {
       return {
         label: city.city_name,
-        value: city.geoname_id.toString(),
+        value: city.city_name,
         icon: pinIcon,
       } as SelectOption;
     }) as SelectOption[];

@@ -1,17 +1,29 @@
 import Button from "@components/Button";
+import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
+import { Input } from "@components/Input";
+import { Label } from "@components/Label";
 import {
   Modal,
   ModalClose,
   ModalContent,
   ModalFooter,
 } from "@components/modal/Modal";
+import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
+import { Textarea } from "@components/Textarea";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
+import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
+import { isEmpty } from "lodash";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { useState } from "react";
-import { PostureCheck } from "@/interfaces/PostureCheck";
+import { useSWRConfig } from "swr";
+import {
+  GeoLocationCheck,
+  OperatingSystemVersionCheck,
+  PostureCheck,
+} from "@/interfaces/PostureCheck";
 import { GeoLocationCheckCard } from "@/modules/access-control/posture-checks/GeoLocationCheckCard";
 import { NetBirdVersionCheckCard } from "@/modules/access-control/posture-checks/NetBirdVersionCheckCard";
 import { OperatingSystemCheck } from "@/modules/access-control/posture-checks/OperatingSystemCheck";
@@ -20,7 +32,7 @@ import { PostureCheckIcons } from "@/modules/access-control/posture-checks/Postu
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (check: PostureCheck) => void;
   postureCheck?: PostureCheck;
 };
 
@@ -41,6 +53,73 @@ export default function PostureCheckModal({
   const [osVersionCheck, setOsVersionCheck] = useState(
     postureCheck?.checks.os_version_check || undefined,
   );
+
+  const [slide, setSlide] = useState(0);
+
+  const [name, setName] = useState("");
+  const [description, setDescription] = useState("");
+
+  const postureCheckRequest = useApiCall("/posture-checks");
+  const { mutate } = useSWRConfig();
+
+  const validateOSCheck = (osCheck?: OperatingSystemVersionCheck) => {
+    if (!osCheck) return;
+    const os = osCheck;
+    if (os.darwin && os.darwin.min_version == "") os.darwin.min_version = "0";
+    if (os.android && os.android.min_version == "")
+      os.android.min_version = "0";
+    if (os.windows && os.windows.min_kernel_version == "")
+      os.windows.min_kernel_version = "0";
+    if (os.linux && os.linux.min_kernel_version == "")
+      os.linux.min_kernel_version = "0";
+    if (os.ios && os.ios.min_version == "") os.ios.min_version = "0";
+    return os;
+  };
+
+  const validateLocationCheck = (locationCheck?: GeoLocationCheck) => {
+    if (!locationCheck) return;
+    if (!locationCheck.locations) return;
+    return {
+      action: locationCheck.action,
+      locations: locationCheck.locations.map((location) => {
+        if (location.city_name == "")
+          return { country_code: location.country_code };
+        return {
+          country_code: location.country_code,
+          city_name: location.city_name,
+        };
+      }),
+    };
+  };
+
+  const createPostureCheck = () => {
+    const postureCheck = {
+      name,
+      description,
+      checks: {
+        nb_version_check: nbVersionCheck,
+        geo_location_check: validateLocationCheck(geoLocationCheck),
+        os_version_check: validateOSCheck(osVersionCheck),
+      },
+    };
+
+    notify({
+      title: "Posture Check",
+      description: "Posture Check was created successfully.",
+      loadingMessage: "Creating your posture check...",
+      promise: postureCheckRequest
+        .post(postureCheck)
+        .then((check: PostureCheck) => {
+          mutate("/posture-checks");
+          onSuccess?.(check);
+          onOpenChange(false);
+        }),
+    });
+  };
+
+  const isAtLeastOneCheckEnabled =
+    !!nbVersionCheck || !!geoLocationCheck || !!osVersionCheck;
+  const canCreate = !isEmpty(name) && isAtLeastOneCheckEnabled;
 
   return (
     <>
@@ -66,18 +145,53 @@ export default function PostureCheckModal({
 
           <div className={"mb-6 flex-col gap-3 flex mt-5"}>
             <div className={"px-4 z-10"}>
-              <NetBirdVersionCheckCard
-                value={nbVersionCheck}
-                onChange={setNbVersionCheck}
-              />
-              <GeoLocationCheckCard
-                value={geoLocationCheck}
-                onChange={setGeoLocationCheckCheck}
-              />
-              <OperatingSystemCheck
-                value={osVersionCheck}
-                onChange={setOsVersionCheck}
-              />
+              {slide === 0 ? (
+                <>
+                  <NetBirdVersionCheckCard
+                    value={nbVersionCheck}
+                    onChange={setNbVersionCheck}
+                  />
+                  <GeoLocationCheckCard
+                    value={geoLocationCheck}
+                    onChange={setGeoLocationCheckCheck}
+                  />
+                  <OperatingSystemCheck
+                    value={osVersionCheck}
+                    onChange={setOsVersionCheck}
+                  />
+                </>
+              ) : (
+                <div className={"flex flex-col gap-6 px-4 mt-3 mb-2"}>
+                  <div>
+                    <Label>Name of the Posture Check</Label>
+                    <HelpText>
+                      Set an easily identifiable name for your posture check.
+                    </HelpText>
+                    <Input
+                      autoFocus={true}
+                      tabIndex={0}
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      placeholder={"e.g., NetBird Version > 0.25.0"}
+                    />
+                  </div>
+                  <div>
+                    <Label>Description (optional)</Label>
+                    <HelpText>
+                      Write a short description to add more context to this
+                      policy.
+                    </HelpText>
+                    <Textarea
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      placeholder={
+                        "e.g., Check if the NetBird version is bigger than 0.25.0"
+                      }
+                      rows={3}
+                    />
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
@@ -97,10 +211,29 @@ export default function PostureCheckModal({
               </Paragraph>
             </div>
             <div className={"flex gap-3 w-full justify-end"}>
-              <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
-              </ModalClose>
-              <Button variant={"primary"}>Continue</Button>
+              {slide != 1 ? (
+                <>
+                  <ModalClose asChild={true}>
+                    <Button variant={"secondary"}>Cancel</Button>
+                  </ModalClose>
+                  <Button variant={"primary"} onClick={() => setSlide(1)}>
+                    Continue
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button variant={"secondary"} onClick={() => setSlide(0)}>
+                    Back
+                  </Button>
+                  <Button
+                    variant={"primary"}
+                    disabled={!canCreate}
+                    onClick={createPostureCheck}
+                  >
+                    Create Posture Check
+                  </Button>
+                </>
+              )}
             </div>
           </ModalFooter>
         </ModalContent>

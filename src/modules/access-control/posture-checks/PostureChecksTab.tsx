@@ -1,12 +1,16 @@
 import Button from "@components/Button";
 import Paragraph from "@components/Paragraph";
 import { TabsContent, TabsTrigger } from "@components/Tabs";
+import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
-import { FolderSearch, ShieldCheck } from "lucide-react";
+import { Disc3Icon, FlagIcon, FolderSearch, ShieldCheck } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckIcons } from "@/modules/access-control/posture-checks/PostureCheckIcons";
 import PostureCheckModal from "@/modules/access-control/posture-checks/PostureCheckModal";
+import { PostureChecksSelectionModal } from "@/modules/access-control/posture-checks/PostureChecksSelectionModal";
 
 type Props = {};
 
@@ -19,24 +23,89 @@ export const PostureChecksTabTrigger = ({}: Props) => {
   );
 };
 export const PostureChecksTab = ({}: Props) => {
-  const [nbVersionModal, setNbVersionModal] = useState(false);
+  const [postureChecks, setPostureChecks] = useState<PostureCheck[]>([]);
+
+  const addPostureChecks = (check: PostureCheck[]) => {
+    setPostureChecks((prev) => [...prev, ...check]);
+  };
 
   return (
     <TabsContent value={"posture-checks"} className={"px-8 pb-8 mt-3"}>
-      <NoChecksCard />
+      <div className={"flex flex-col gap-3"}>
+        {postureChecks?.map((postureCheck) => (
+          <div
+            key={postureCheck.id}
+            className={
+              "bg-nb-gray-920 rounded-md border border-nb-gray-900 flex py-3 px-4 items-center justify-between gap-10"
+            }
+          >
+            <div className={"flex flex-col gap-0.5 min-w-0"}>
+              <div className={"text-sm text-nb-gray-100 truncate"}>
+                {postureCheck.name}
+              </div>
+              <div className={"text-xs text-nb-gray-400 truncate "}>
+                {postureCheck.description}
+              </div>
+            </div>
+            <div className={"flex items-center gap-2"}>
+              <div
+                className={cn(
+                  "bg-nb-gray-700 h-8 w-8 rounded-md flex items-center justify-center border border-nb-gray-600",
+                  !postureCheck.checks.nb_version_check &&
+                    "opacity-30 pointer-events-none",
+                )}
+              >
+                <NetBirdIcon size={14} />
+              </div>
+              <div
+                className={cn(
+                  "bg-nb-gray-700 h-8 w-8 rounded-md flex items-center justify-center border border-nb-gray-600",
+                  !postureCheck.checks.geo_location_check &&
+                    "opacity-30 pointer-events-none",
+                )}
+              >
+                <FlagIcon size={14} />
+              </div>
+              <div
+                className={cn(
+                  "bg-nb-gray-700 h-8 w-8 rounded-md flex items-center justify-center border border-nb-gray-600",
+                  !postureCheck.checks.os_version_check &&
+                    "opacity-30 pointer-events-none",
+                )}
+              >
+                <Disc3Icon size={14} />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+      <NoChecksCard onAdd={addPostureChecks} />
     </TabsContent>
   );
 };
 
-export function NoChecksCard() {
-  const [nbVersionModal, setNbVersionModal] = useState(false);
+export function NoChecksCard({
+  onAdd,
+}: {
+  onAdd: (check: PostureCheck[]) => void;
+}) {
+  const [modal, setModal] = useState(false);
+  const { data: postureChecks } =
+    useFetchApi<PostureCheck[]>("/posture-checks");
+
+  const addSingleCheck = (check: PostureCheck) => {
+    setModal(false);
+    onAdd([check]);
+  };
 
   return (
     <>
       <PostureCheckModal
-        open={nbVersionModal}
-        onOpenChange={setNbVersionModal}
+        open={modal}
+        onOpenChange={setModal}
+        onSuccess={addSingleCheck}
       />
+
       <PostureCheckIcons />
 
       <div
@@ -54,15 +123,17 @@ export function NoChecksCard() {
         </Paragraph>
       </div>
       <div className={"flex items-center justify-center gap-4 mt-5"}>
-        <Button variant={"secondary"} size={"xs"} disabled={true}>
-          <FolderSearch size={14} />
-          Add existing check
-        </Button>
-        <Button
-          variant={"primary"}
-          size={"xs"}
-          onClick={() => setNbVersionModal(true)}
-        >
+        <PostureChecksSelectionModal>
+          <Button
+            variant={"secondary"}
+            size={"xs"}
+            disabled={postureChecks?.length == 0}
+          >
+            <FolderSearch size={14} />
+            Add existing check
+          </Button>
+        </PostureChecksSelectionModal>
+        <Button variant={"primary"} size={"xs"} onClick={() => setModal(true)}>
           Create new check
         </Button>
       </div>

@@ -19,8 +19,8 @@ import { useState } from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
 type Props = {
-  value: string | undefined;
-  onChange: (value: string | undefined) => void;
+  value: string;
+  onChange: (value: string) => void;
   versionList?: SelectOption[];
   os: OperatingSystem;
 };
@@ -44,7 +44,7 @@ export const OperatingSystemPostureCheck = ({
   versionList,
   os,
 }: Props) => {
-  const [allow, setAllow] = useState(value == undefined ? "block" : "allow");
+  const [allow, setAllow] = useState(value == "-" ? "block" : "allow");
   const [allOrMin, setAllOrMin] = useState(value == "" ? "all" : "min");
   const [useCustomVersion, setUseCustomVersion] = useState(false);
 
@@ -52,7 +52,7 @@ export const OperatingSystemPostureCheck = ({
     setAllow(value);
     if (value === "block") {
       setAllOrMin("all");
-      onChange(undefined);
+      onChange("-");
       setAllOrMin("all");
       setUseCustomVersion(false);
     } else {

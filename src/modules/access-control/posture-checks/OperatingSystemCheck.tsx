@@ -4,6 +4,7 @@ import { ModalClose, ModalFooter } from "@components/modal/Modal";
 import Paragraph from "@components/Paragraph";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { HoverModalCard } from "@components/ui/HoverModalCard";
+import { isEmpty } from "lodash";
 import { Disc3Icon, ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
@@ -30,7 +31,6 @@ type Props = {
 export const OperatingSystemCheck = ({ value, onChange }: Props) => {
   const [open, setOpen] = useState(false);
 
-  console.log("OperatingSystemCheck", value);
   return (
     <HoverModalCard
       open={open}
@@ -44,6 +44,7 @@ export const OperatingSystemCheck = ({ value, onChange }: Props) => {
         "Restrict access in your network based on the operating system."
       }
       iconClass={"bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300"}
+      active={value !== undefined}
     >
       <CheckContent
         value={value}
@@ -59,20 +60,38 @@ export const OperatingSystemCheck = ({ value, onChange }: Props) => {
 const CheckContent = ({ value, onChange }: Props) => {
   const [tab, setTab] = useState(String(OperatingSystem.LINUX));
 
-  const [windowsVersion, setWindowsVersion] = useState<string | undefined>(
-    value ? value.windows?.min_kernel_version : "",
+  const firstTimeCheck = value === undefined;
+
+  const [windowsVersion, setWindowsVersion] = useState<string>(
+    firstTimeCheck
+      ? ""
+      : value && value.windows
+      ? value.windows.min_kernel_version
+      : "-",
   );
-  const [macOSVersion, setMacOSVersion] = useState<string | undefined>(
-    value ? value.darwin?.min_version : "",
+  const [macOSVersion, setMacOSVersion] = useState<string>(
+    firstTimeCheck
+      ? ""
+      : value && value.darwin
+      ? value.darwin?.min_version
+      : "-",
   );
-  const [androidVersion, setAndroidVersion] = useState<string | undefined>(
-    value ? value.android?.min_version : "",
+  const [androidVersion, setAndroidVersion] = useState<string>(
+    firstTimeCheck
+      ? ""
+      : value && value.android
+      ? value.android?.min_version
+      : "-",
   );
-  const [iOSVersion, setIOSVersion] = useState<string | undefined>(
-    value ? value.ios?.min_version : "",
+  const [iOSVersion, setIOSVersion] = useState<string>(
+    firstTimeCheck ? "" : value && value.ios ? value.ios?.min_version : "-",
   );
-  const [linuxVersion, setLinuxVersion] = useState<string | undefined>(
-    value ? value.linux?.min_kernel_version : "",
+  const [linuxVersion, setLinuxVersion] = useState<string>(
+    firstTimeCheck
+      ? ""
+      : value && value.linux
+      ? value.linux?.min_kernel_version
+      : "-",
   );
 
   console.log(
@@ -188,28 +207,29 @@ const CheckContent = ({ value, onChange }: Props) => {
           <Button
             variant={"primary"}
             onClick={() => {
-              onChange({
-                windows:
-                  windowsVersion && windowsVersion !== ""
-                    ? { min_kernel_version: windowsVersion }
-                    : undefined,
-                darwin:
-                  macOSVersion && macOSVersion !== ""
-                    ? { min_version: macOSVersion }
-                    : undefined,
-                android:
-                  androidVersion && androidVersion !== ""
-                    ? { min_version: androidVersion }
-                    : undefined,
-                ios:
-                  iOSVersion && iOSVersion !== ""
-                    ? { min_version: iOSVersion }
-                    : undefined,
-                linux:
-                  linuxVersion && linuxVersion !== ""
-                    ? { min_kernel_version: linuxVersion }
-                    : undefined,
-              });
+              const osCheck = {} as OperatingSystemVersionCheck;
+
+              if (windowsVersion !== "-") {
+                osCheck.windows = { min_kernel_version: windowsVersion };
+              }
+              if (macOSVersion !== "-") {
+                osCheck.darwin = { min_version: macOSVersion };
+              }
+              if (androidVersion !== "-") {
+                osCheck.android = { min_version: androidVersion };
+              }
+              if (iOSVersion !== "-") {
+                osCheck.ios = { min_version: iOSVersion };
+              }
+              if (linuxVersion !== "-") {
+                osCheck.linux = { min_kernel_version: linuxVersion };
+              }
+
+              if (isEmpty(osCheck)) {
+                onChange(undefined);
+              } else {
+                onChange(osCheck);
+              }
             }}
           >
             Save
