@@ -3,7 +3,7 @@ import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { useApiCall } from "@utils/api";
 import { useIsMd } from "@utils/responsive";
 import { getLatestNetbirdRelease } from "@utils/version";
-import React, { useContext, useEffect, useMemo, useState } from "react";
+import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { User } from "@/interfaces/User";
 import type { NetbirdRelease } from "@/interfaces/Version";
@@ -31,12 +31,16 @@ export default function ApplicationProvider({ children }: Props) {
   const isMd = useIsMd();
   const userRequest = useApiCall<User[]>("/users", true);
   const [show, setShow] = useState(false);
+  const requestCalled = useRef(false);
 
   useEffect(() => {
-    userRequest
-      .get()
-      .then(() => setShow(true))
-      .catch(() => setShow(true));
+    if (!requestCalled.current) {
+      userRequest
+        .get()
+        .then(() => setShow(true))
+        .catch(() => setShow(true));
+      requestCalled.current = true;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
