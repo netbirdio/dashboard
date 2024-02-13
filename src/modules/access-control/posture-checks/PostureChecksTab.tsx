@@ -25,8 +25,14 @@ export const PostureChecksTabTrigger = ({}: Props) => {
 export const PostureChecksTab = ({}: Props) => {
   const [postureChecks, setPostureChecks] = useState<PostureCheck[]>([]);
 
-  const addPostureChecks = (check: PostureCheck[]) => {
-    setPostureChecks((prev) => [...prev, ...check]);
+  const addPostureChecks = (checks: PostureCheck[]) => {
+    setPostureChecks((prev) => {
+      const allChecks = [...prev, ...checks];
+      return allChecks.filter(
+        (check, index, self) =>
+          self.findIndex((c) => c.id === check.id) === index,
+      );
+    });
   };
 
   return (
@@ -93,9 +99,9 @@ export function NoChecksCard({
   const { data: postureChecks } =
     useFetchApi<PostureCheck[]>("/posture-checks");
 
-  const addSingleCheck = (check: PostureCheck) => {
+  const addChecks = (checks: PostureCheck[]) => {
     setModal(false);
-    onAdd([check]);
+    onAdd(checks);
   };
 
   return (
@@ -103,7 +109,7 @@ export function NoChecksCard({
       <PostureCheckModal
         open={modal}
         onOpenChange={setModal}
-        onSuccess={addSingleCheck}
+        onSuccess={(check) => addChecks([check])}
       />
 
       <PostureCheckIcons />
@@ -123,7 +129,7 @@ export function NoChecksCard({
         </Paragraph>
       </div>
       <div className={"flex items-center justify-center gap-4 mt-5"}>
-        <PostureChecksSelectionModal>
+        <PostureChecksSelectionModal onAdd={onAdd}>
           <Button
             variant={"secondary"}
             size={"xs"}

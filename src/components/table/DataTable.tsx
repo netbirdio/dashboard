@@ -361,6 +361,7 @@ export function DataTableContent<TData, TValue>({
                             minimal={minimal}
                             className={cn(
                               onRowClick && "cursor-pointer relative",
+                              rowClassName,
                             )}
                             data-state={row.getIsSelected() && "selected"}
                           >
