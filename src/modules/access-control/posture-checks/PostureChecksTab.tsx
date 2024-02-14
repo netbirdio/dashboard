@@ -20,7 +20,7 @@ type Props = {
 
 export const PostureChecksTabTrigger = () => {
   return (
-    <TabsTrigger value={"posture-checks"}>
+    <TabsTrigger value={"posture_checks"}>
       <ShieldCheck size={16} />
       Posture Checks
     </TabsTrigger>
@@ -58,7 +58,7 @@ export const PostureChecksTab = ({
   const [currentEditCheck, setCurrentEditCheck] = useState<PostureCheck>();
 
   return (
-    <TabsContent value={"posture-checks"} className={"px-8 pb-8 mt-3"}>
+    <TabsContent value={"posture_checks"} className={"px-8 pb-8 mt-3"}>
       {checkModal && (
         <PostureCheckModal
           open={checkModal}

@@ -42,7 +42,7 @@ import {
   Shield,
   Text,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePolicies } from "@/contexts/PoliciesProvider";
@@ -121,6 +121,7 @@ export function AccessControlModalContent({
 
   const [tab, setTab] = useState(() => {
     if (!cell) return "policy";
+    if (cell == "posture_checks") return "posture_checks";
     if (cell == "name") return "general";
     return "policy";
   });
@@ -246,6 +247,9 @@ export function AccessControlModalContent({
     if (direction != "bi" && ports.length == 0) return true;
   }, [sourceGroups, destinationGroups, direction, ports, name]);
 
+  const [postureChecks, setPostureChecks] = useState<PostureCheck[]>([]);
+  const postureChecksLoaded = useRef(false);
+
   const initialPostureChecks = useMemo(() => {
     return (
       allPostureChecks?.filter((check) => {
@@ -257,9 +261,14 @@ export function AccessControlModalContent({
     );
   }, [policy, allPostureChecks]);
 
-  const [postureChecks, setPostureChecks] = useState<PostureCheck[]>(
-    initialPostureChecks || [],
-  );
+  useEffect(() => {
+    if (postureChecksLoaded.current) return;
+
+    if (initialPostureChecks) {
+      postureChecksLoaded.current = true;
+      setPostureChecks(initialPostureChecks);
+    }
+  }, [initialPostureChecks]);
 
   return (
     <ModalContent maxWidthClass={"max-w-2xl"}>

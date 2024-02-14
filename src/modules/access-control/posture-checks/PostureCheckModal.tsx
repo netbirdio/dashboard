@@ -149,7 +149,9 @@ export default function PostureCheckModal({
             }
           >
             <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-              {postureCheck ? "Edit Posture Check" : "Create New Posture Check"}
+              {postureCheck
+                ? "Update Posture Check"
+                : "Create New Posture Check"}
             </h2>
             <Paragraph className={cn("text-sm text-center max-w-lg")}>
               Use posture checks to further restrict access in your network.
