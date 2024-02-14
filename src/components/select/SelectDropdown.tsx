@@ -4,12 +4,13 @@ import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
 import { SelectDropdownSearchInput } from "@components/select/SelectDropdownSearchInput";
 import { useDebounce } from "@hooks/useDebounce";
+import useIsVisible from "@hooks/useIsVisible";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandList } from "cmdk";
 import { isEmpty } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
 
 export interface SelectOption {
@@ -89,6 +90,7 @@ export function SelectDropdown({
     <Popover
       open={open}
       onOpenChange={(isOpen) => {
+        setSlice(10);
         if (!isOpen) {
           setTimeout(() => {
             setSearch("");
@@ -157,6 +159,12 @@ export function SelectDropdown({
               />
             )}
 
+            {filteredItems.length == 0 && (
+              <div className={"text-center pb-2 px-3 text-nb-gray-400 text-xs"}>
+                There are no results matching your search.
+              </div>
+            )}
+
             <ScrollArea
               className={cn(
                 "max-h-[380px] overflow-y-auto flex flex-col gap-1 pl-2 pb-2 pr-3",
@@ -165,27 +173,13 @@ export function SelectDropdown({
             >
               <CommandGroup>
                 <div className={"grid grid-cols-1 gap-1"}>
-                  {filteredItems.map((option) => {
-                    const value = option.value || "" + option.label || "";
-                    return (
-                      <CommandItem
-                        key={option.value}
-                        value={value}
-                        className={"py-1 px-2"}
-                        onSelect={() => toggle(option.value)}
-                        onClick={(e) => e.preventDefault()}
-                      >
-                        <div className={"flex items-center gap-2.5 p-1"}>
-                          {option.icon && <option.icon size={14} width={14} />}
-                          <div className={"flex flex-col text-sm font-medium"}>
-                            <span className={"text-nb-gray-200"}>
-                              {option.label}
-                            </span>
-                          </div>
-                        </div>
-                      </CommandItem>
-                    );
-                  })}
+                  {filteredItems.map((option) => (
+                    <SelectDropdownItem
+                      option={option}
+                      toggle={toggle}
+                      key={option.value}
+                    />
+                  ))}
                 </div>
               </CommandGroup>
             </ScrollArea>
@@ -195,3 +189,37 @@ export function SelectDropdown({
     </Popover>
   );
 }
+
+const SelectDropdownItem = ({
+  option,
+  toggle,
+}: {
+  option: SelectOption;
+  toggle: (value: string) => void;
+}) => {
+  const value = option.value || "" + option.label || "";
+  const elementRef = useRef<HTMLDivElement>(null);
+  const isVisible = useIsVisible(elementRef);
+  return (
+    <div ref={elementRef} className={"transition-all"}>
+      {isVisible ? (
+        <CommandItem
+          value={value}
+          ref={elementRef}
+          className={"py-1 px-2"}
+          onSelect={() => toggle(option.value)}
+          onClick={(e) => e.preventDefault()}
+        >
+          <div className={"flex items-center gap-2.5 p-1"}>
+            {option.icon && <option.icon size={14} width={14} />}
+            <div className={"flex flex-col text-sm font-medium"}>
+              <span className={"text-nb-gray-200"}>{option.label}</span>
+            </div>
+          </div>
+        </CommandItem>
+      ) : (
+        <div className={"h-[35px] py-1 px-2"}></div>
+      )}
+    </div>
+  );
+};

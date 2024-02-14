@@ -58,7 +58,13 @@ const CheckContent = ({ value, onChange }: Props) => {
     value?.action ? value.action : "allow",
   );
   const [locations, setLocations] = useState<GeoLocation[]>(
-    value?.locations || [],
+    value?.locations.map((l) => {
+      return {
+        id: uniqueId("location"),
+        country_code: l.country_code,
+        city_name: l.city_name,
+      };
+    }) || [],
   );
 
   const updateLocation = (id: string, location: GeoLocation) => {

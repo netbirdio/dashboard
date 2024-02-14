@@ -264,7 +264,7 @@ export function AccessControlModalContent({
   useEffect(() => {
     if (postureChecksLoaded.current) return;
 
-    if (initialPostureChecks) {
+    if (initialPostureChecks.length > 0) {
       postureChecksLoaded.current = true;
       setPostureChecks(initialPostureChecks);
     }
