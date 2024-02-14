@@ -42,25 +42,25 @@ export default function PostureCheckModal({
   onSuccess,
   postureCheck,
 }: Props) {
+  const postureCheckRequest = useApiCall("/posture-checks");
+  const { mutate } = useSWRConfig();
+
+  const [name, setName] = useState(postureCheck?.name || "");
+  const [description, setDescription] = useState(
+    postureCheck?.description || "",
+  );
+
   const [nbVersionCheck, setNbVersionCheck] = useState(
     postureCheck?.checks.nb_version_check || undefined,
   );
-
   const [geoLocationCheck, setGeoLocationCheckCheck] = useState(
     postureCheck?.checks.geo_location_check || undefined,
   );
-
   const [osVersionCheck, setOsVersionCheck] = useState(
     postureCheck?.checks.os_version_check || undefined,
   );
 
   const [slide, setSlide] = useState(0);
-
-  const [name, setName] = useState("");
-  const [description, setDescription] = useState("");
-
-  const postureCheckRequest = useApiCall("/posture-checks");
-  const { mutate } = useSWRConfig();
 
   const validateOSCheck = (osCheck?: OperatingSystemVersionCheck) => {
     if (!osCheck) return;
@@ -92,8 +92,8 @@ export default function PostureCheckModal({
     };
   };
 
-  const createPostureCheck = () => {
-    const postureCheck = {
+  const updateOrCreatePostureCheck = () => {
+    const newData = {
       name,
       description,
       checks: {
@@ -103,17 +103,31 @@ export default function PostureCheckModal({
       },
     };
 
+    const updateOrCreate = !postureCheck
+      ? () =>
+          postureCheckRequest.post(newData).then((check: PostureCheck) => {
+            mutate("/posture-checks");
+            onSuccess?.(check);
+            onOpenChange(false);
+          })
+      : () =>
+          postureCheckRequest
+            .put({ ...newData, id: postureCheck.id }, `/${postureCheck.id}`)
+            .then((check: PostureCheck) => {
+              mutate("/posture-checks").then();
+              onSuccess?.(check);
+              onOpenChange(false);
+            });
+
     notify({
-      title: "Posture Check",
-      description: "Posture Check was created successfully.",
-      loadingMessage: "Creating your posture check...",
-      promise: postureCheckRequest
-        .post(postureCheck)
-        .then((check: PostureCheck) => {
-          mutate("/posture-checks");
-          onSuccess?.(check);
-          onOpenChange(false);
-        }),
+      title: `Posture Check ${newData.name}`,
+      description: `Posture Check was ${
+        postureCheck ? "updated" : "created"
+      } successfully.`,
+      loadingMessage: `${
+        postureCheck ? "Updating" : "Creating"
+      } your posture check...`,
+      promise: updateOrCreate(),
     });
   };
 
@@ -135,7 +149,7 @@ export default function PostureCheckModal({
             }
           >
             <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-              Create New Posture Check
+              {postureCheck ? "Edit Posture Check" : "Create New Posture Check"}
             </h2>
             <Paragraph className={cn("text-sm text-center max-w-lg")}>
               Use posture checks to further restrict access in your network.
@@ -228,9 +242,11 @@ export default function PostureCheckModal({
                   <Button
                     variant={"primary"}
                     disabled={!canCreate}
-                    onClick={createPostureCheck}
+                    onClick={updateOrCreatePostureCheck}
                   >
-                    Create Posture Check
+                    {postureCheck
+                      ? "Save Posture Check"
+                      : "Create Posture Check"}
                   </Button>
                 </>
               )}

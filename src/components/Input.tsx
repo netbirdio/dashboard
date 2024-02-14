@@ -60,7 +60,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 }),
                 "flex h-[42px] w-auto rounded-l-md bg-white px-3 py-2 text-sm ",
                 "border  items-center whitespace-nowrap",
-                props.disabled && "opacity-50",
+                props.disabled && "opacity-20",
               )}
             >
               {customPrefix}

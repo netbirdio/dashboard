@@ -28,7 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
 import PolicyDirection, { Direction } from "@components/ui/PolicyDirection";
-import { useApiCall } from "@utils/api";
+import useFetchApi, { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import { uniqBy } from "lodash";
 import {
@@ -48,6 +48,7 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
 import { Policy, Protocol } from "@/interfaces/Policy";
+import { PostureCheck } from "@/interfaces/PostureCheck";
 import {
   PostureChecksTab,
   PostureChecksTabTrigger,
@@ -112,6 +113,9 @@ export function AccessControlModalContent({
   policy,
   cell,
 }: ModalProps) {
+  const { data: allPostureChecks, isLoading } =
+    useFetchApi<PostureCheck[]>("/posture-checks");
+
   const { updatePolicy } = usePolicies();
   const firstRule = policy?.rules ? policy.rules[0] : undefined;
 
@@ -193,6 +197,9 @@ export function AccessControlModalContent({
       name,
       description,
       enabled,
+      source_posture_checks: postureChecks
+        ? postureChecks.map((c) => c.id)
+        : undefined,
       rules: [
         {
           bidirectional: direction == "bi",
@@ -238,6 +245,21 @@ export function AccessControlModalContent({
     if (name.length == 0) return true;
     if (direction != "bi" && ports.length == 0) return true;
   }, [sourceGroups, destinationGroups, direction, ports, name]);
+
+  const initialPostureChecks = useMemo(() => {
+    return (
+      allPostureChecks?.filter((check) => {
+        if (policy?.source_posture_checks) {
+          return policy.source_posture_checks.includes(check.id);
+        }
+        return false;
+      }) || []
+    );
+  }, [policy, allPostureChecks]);
+
+  const [postureChecks, setPostureChecks] = useState<PostureCheck[]>(
+    initialPostureChecks || [],
+  );
 
   return (
     <ModalContent maxWidthClass={"max-w-2xl"}>
@@ -373,7 +395,10 @@ export function AccessControlModalContent({
             />
           </div>
         </TabsContent>
-        <PostureChecksTab />
+        <PostureChecksTab
+          postureChecks={postureChecks}
+          setPostureChecks={setPostureChecks}
+        />
         <TabsContent value={"general"} className={"px-8 pb-6"}>
           <div className={"flex flex-col gap-6"}>
             <div>

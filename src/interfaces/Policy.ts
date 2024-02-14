@@ -1,5 +1,4 @@
 import { Group } from "@/interfaces/Group";
-import { PostureCheck } from "@/interfaces/PostureCheck";
 
 export interface Policy {
   id?: string;
@@ -8,7 +7,7 @@ export interface Policy {
   enabled: boolean;
   query: string;
   rules: PolicyRule[];
-  source_posture_checks: PostureCheck[] | null;
+  source_posture_checks: string[];
 }
 
 export interface PolicyRule {

@@ -12,24 +12,24 @@ export const PostureCheckChecksCell = ({ check }: Props) => {
     <div className={"flex items-center gap-2"}>
       <div
         className={cn(
-          "bg-nb-gray-700 h-8 w-8 rounded-md flex items-center justify-center border border-nb-gray-600",
-          !check.checks.nb_version_check && "opacity-30 pointer-events-none",
+          "bg-gradient-to-tr from-netbird-200 to-netbird-100 h-8 w-8 rounded-md flex items-center justify-center",
+          !check.checks.nb_version_check && "opacity-5 pointer-events-none",
         )}
       >
         <NetBirdIcon size={14} />
       </div>
       <div
         className={cn(
-          "bg-nb-gray-700 h-8 w-8 rounded-md flex items-center justify-center border border-nb-gray-600",
-          !check.checks.geo_location_check && "opacity-30 pointer-events-none",
+          "bg-gradient-to-tr from-indigo-500 to-indigo-400 h-8 w-8 rounded-md flex items-center justify-center",
+          !check.checks.geo_location_check && "opacity-5 pointer-events-none",
         )}
       >
         <FlagIcon size={14} />
       </div>
       <div
         className={cn(
-          "bg-nb-gray-700 h-8 w-8 rounded-md flex items-center justify-center border border-nb-gray-600",
-          !check.checks.os_version_check && "opacity-30 pointer-events-none",
+          "bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300 h-8 w-8 rounded-md flex items-center justify-center",
+          !check.checks.os_version_check && "opacity-5 pointer-events-none",
         )}
       >
         <Disc3Icon size={14} />

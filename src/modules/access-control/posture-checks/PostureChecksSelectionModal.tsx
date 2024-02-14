@@ -1,19 +1,21 @@
-import { Modal, ModalContent, ModalTrigger } from "@components/modal/Modal";
+import { Modal, ModalContent } from "@components/modal/Modal";
 import { cn } from "@utils/helpers";
 import * as React from "react";
-import { useState } from "react";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import PostureCheckTable from "@/modules/access-control/posture-checks/table/PostureCheckTable";
 
 type Props = {
-  children: React.ReactNode;
-  onAdd: (checks: PostureCheck[]) => void;
+  onSuccess: (checks: PostureCheck[]) => void;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 };
-export const PostureChecksSelectionModal = ({ children, onAdd }: Props) => {
-  const [open, setOpen] = useState(false);
+export const PostureChecksSelectionModal = ({
+  onSuccess,
+  open,
+  onOpenChange,
+}: Props) => {
   return (
-    <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
-      <ModalTrigger asChild={true}>{children}</ModalTrigger>
+    <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
       <ModalContent
         maxWidthClass={cn("relative", "max-w-2xl")}
         className={"pb-0"}
@@ -21,8 +23,8 @@ export const PostureChecksSelectionModal = ({ children, onAdd }: Props) => {
       >
         <PostureCheckTable
           onAdd={(checks) => {
-            onAdd(checks);
-            setOpen(false);
+            onSuccess(checks);
+            onOpenChange(false);
           }}
         />
       </ModalContent>

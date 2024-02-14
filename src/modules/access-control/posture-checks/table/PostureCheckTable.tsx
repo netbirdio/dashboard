@@ -38,15 +38,17 @@ export default function PostureCheckTable({ onAdd }: Props) {
     <div className={""}>
       <DataTable
         isLoading={isLoading}
-        text={"Access Control"}
+        text={"Posture Check"}
         sorting={sorting}
-        wrapperClassName={"!border-b-0"}
+        wrapperClassName={""}
         setSorting={setSorting}
         columns={PostureChecksColumns}
+        showHeader={true}
         columnVisibility={{
           description: false,
         }}
         tableClassName={"mt-6 !border-0"}
+        rowClassName={"!border-b-0 px-10"}
         data={postureChecks}
         searchPlaceholder={"Search by name and description..."}
         onRowClick={(row) => row.toggleSelected()}
