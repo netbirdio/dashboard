@@ -44,6 +44,12 @@ export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
     sortingFn: "basic",
   },
   {
+    id: "group_names",
+    accessorFn: (row) => {
+      return row.group_names?.map((name) => name).join(", ");
+    },
+  },
+  {
     accessorKey: "network",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Network Range</DataTableHeader>;
@@ -121,10 +127,11 @@ export default function NetworkRoutesTable({
       setSorting={setSorting}
       columns={GroupedRouteTableColumns}
       data={groupedRoutes}
-      searchPlaceholder={"Search by network, range or name..."}
+      searchPlaceholder={"Search by network, range, name or groups..."}
       columnVisibility={{
         enabled: false,
         description: false,
+        group_names: false,
       }}
       renderExpandedRow={(row) => {
         const data = cloneDeep(row);

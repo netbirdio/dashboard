@@ -12,6 +12,7 @@ export interface Route {
   peer_groups?: string[];
   routesGroups?: string[];
   groupedRoutes?: GroupedRoute[];
+  group_names?: string[];
 }
 
 export interface GroupedRoute {
@@ -22,5 +23,6 @@ export interface GroupedRoute {
   high_availability_count: number;
   is_using_route_groups: boolean;
   routes?: Route[];
+  group_names?: string[];
   description?: string;
 }
