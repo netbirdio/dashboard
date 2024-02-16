@@ -30,7 +30,6 @@ export const GeoLocationCheckCard = ({ value, onChange }: Props) => {
   const [open, setOpen] = useState(false);
   return (
     <HoverModalCard
-      value={"location"}
       open={open}
       setOpen={setOpen}
       icon={<FlagIcon size={16} />}
@@ -110,7 +109,7 @@ const CheckContent = ({ value, onChange }: Props) => {
         </div>
         {locations.length > 0 && (
           <div className={"mb-2 flex flex-col gap-2 w-full "}>
-            {locations.map((location, index) => {
+            {locations.map((location) => {
               return (
                 <div key={location.id} className={"flex gap-2"}>
                   <CountrySelector

@@ -28,9 +28,10 @@ export default function AccessControlPage() {
             <Breadcrumbs.Item
               href={"/policies"}
               label={"Access Control"}
-              icon={<AccessControlIcon size={13} />}
+              icon={<AccessControlIcon size={14} />}
             />
           </Breadcrumbs>
+
           <h1>
             {policies && policies.length > 1
               ? `${policies.length} Access Control Policies`

@@ -49,11 +49,11 @@ import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
 import { Policy, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import {
-  PostureChecksTab,
-  PostureChecksTabTrigger,
-} from "@/modules/access-control/posture-checks/PostureChecksTab";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import {
+  PostureChecksTabTrigger,
+  PostureCheckTab,
+} from "@/modules/posture-checks/ui/PostureCheckTab";
 
 type Props = {
   children?: React.ReactNode;
@@ -113,7 +113,7 @@ export function AccessControlModalContent({
   policy,
   cell,
 }: ModalProps) {
-  const { data: allPostureChecks, isLoading } =
+  const { data: allPostureChecks } =
     useFetchApi<PostureCheck[]>("/posture-checks");
 
   const { updatePolicy } = usePolicies();
@@ -404,7 +404,7 @@ export function AccessControlModalContent({
             />
           </div>
         </TabsContent>
-        <PostureChecksTab
+        <PostureCheckTab
           postureChecks={postureChecks}
           setPostureChecks={setPostureChecks}
         />

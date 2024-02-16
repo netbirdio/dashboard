@@ -9,7 +9,7 @@ type Props = {
 };
 export const PostureCheckChecksCell = ({ check }: Props) => {
   return (
-    <div className={"flex items-center gap-2"}>
+    <div className={"flex items-center gap-3"}>
       <div
         className={cn(
           "bg-gradient-to-tr from-netbird-200 to-netbird-100 h-8 w-8 rounded-md flex items-center justify-center",

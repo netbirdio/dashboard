@@ -1,4 +1,5 @@
 import { SelectOption } from "@components/select/SelectDropdown";
+import { Policy } from "@/interfaces/Policy";
 
 export interface PostureCheck {
   id: string;
@@ -9,6 +10,8 @@ export interface PostureCheck {
     os_version_check?: OperatingSystemVersionCheck;
     geo_location_check?: GeoLocationCheck;
   };
+  policies?: Policy[];
+  active?: boolean;
 }
 
 export interface NetBirdVersionCheck {

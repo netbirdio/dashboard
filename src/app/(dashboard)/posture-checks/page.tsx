@@ -11,17 +11,15 @@ import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
-import { Policy } from "@/interfaces/Policy";
+import { PostureCheck } from "@/interfaces/PostureCheck";
 import PageContainer from "@/layouts/PageContainer";
 
-const PostureChecksTable = lazy(
-  () =>
-    import("@/modules/access-control/posture-checks/table/PostureChecksTable"),
+const PostureCheckTable = lazy(
+  () => import("@/modules/posture-checks/table/PostureCheckTable"),
 );
-
 export default function PostureChecksPage() {
   const { data: postureChecks, isLoading } =
-    useFetchApi<Policy[]>("/posture-checks");
+    useFetchApi<PostureCheck[]>("/posture-checks");
 
   return (
     <PageContainer>
@@ -31,13 +29,13 @@ export default function PostureChecksPage() {
             <Breadcrumbs.Item
               href={"/access-control"}
               label={"Access Control"}
-              icon={<AccessControlIcon size={13} />}
+              icon={<AccessControlIcon size={14} />}
             />
             <Breadcrumbs.Item
-              href={"/access-control/posture-checks"}
+              href={"/posture-checks"}
               label={"Posture Checks"}
               active
-              icon={<ShieldCheck size={17} />}
+              icon={<ShieldCheck size={15} />}
             />
           </Breadcrumbs>
           <h1>
@@ -46,8 +44,7 @@ export default function PostureChecksPage() {
               : "Posture Checks"}
           </h1>
           <Paragraph>
-            Create rules to manage access in your network and define what peers
-            can connect.
+            Use posture checks to further restrict access in your network.
           </Paragraph>
           <Paragraph>
             Learn more about
@@ -62,7 +59,7 @@ export default function PostureChecksPage() {
         <RestrictedAccess page={"Posture Checks"}>
           <PoliciesProvider>
             <Suspense fallback={<SkeletonTable />}>
-              <PostureChecksTable
+              <PostureCheckTable
                 isLoading={isLoading}
                 postureChecks={postureChecks}
               />

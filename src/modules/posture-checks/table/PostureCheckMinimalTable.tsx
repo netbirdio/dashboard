@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import React from "react";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import { NoChecksCard } from "@/modules/access-control/posture-checks/PostureChecksTab";
-import { PostureCheckChecksCell } from "@/modules/access-control/posture-checks/table/PostureCheckChecksCell";
-import { PostureCheckNameCell } from "@/modules/access-control/posture-checks/table/PostureCheckNameCell";
+import { PostureCheckChecksCell2 } from "@/modules/posture-checks/table/PostureCheckChecksCell2";
+import { PostureCheckSmallNameCell } from "@/modules/posture-checks/table/PostureCheckSmallNameCell";
+import { NoChecksCard } from "@/modules/posture-checks/ui/PostureCheckTab";
 
 type Props = {
   data: PostureCheck[];
@@ -51,25 +51,28 @@ export default function PostureCheckMinimalTable({
           </Button>
           <Button variant={"primary"} size={"xs"} onClick={onAddClick}>
             <PlusCircle size={14} />
-            New Check
+            New Posture Check
           </Button>
         </div>
       </div>
 
       <div
         className={
-          "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30 py-2 px-6"
+          "rounded-md overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30 py-1 px-1"
         }
       >
         {data.map((check) => {
           return (
             <div
               key={check.id}
-              className={"flex justify-between py-2 items-center"}
+              className={
+                "flex justify-between py-2 items-center hover:bg-nb-gray-900/30 rounded-md cursor-pointer px-4 transition-all"
+              }
+              onClick={() => onEditClick(check)}
             >
-              <PostureCheckNameCell check={check} />
+              <PostureCheckSmallNameCell check={check} />
               <div className={"flex gap-4 items-center"}>
-                <PostureCheckChecksCell check={check} />
+                <PostureCheckChecksCell2 check={check} />
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger
                     asChild={true}
@@ -89,13 +92,13 @@ export default function PostureCheckMinimalTable({
                     <DropdownMenuItem onClick={() => onEditClick(check)}>
                       <div className={"flex gap-3 items-center"}>
                         <Edit size={14} className={"shrink-0"} />
-                        Edit Check
+                        Edit Posture Check
                       </div>
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => onRemoveClick(check)}>
                       <div className={"flex gap-3 items-center"}>
                         <MinusCircleIcon size={14} className={"shrink-0"} />
-                        Remove Check
+                        Remove Posture Check
                       </div>
                     </DropdownMenuItem>
                   </DropdownMenuContent>

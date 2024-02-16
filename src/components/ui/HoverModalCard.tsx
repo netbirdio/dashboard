@@ -2,9 +2,9 @@ import { Modal, ModalContent } from "@components/modal/Modal";
 import { IconCircleFilled } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import * as React from "react";
+import { useDialog } from "@/contexts/DialogProvider";
 
 export const HoverModalCard = ({
-  value,
   children,
   title,
   description,
@@ -12,12 +12,11 @@ export const HoverModalCard = ({
   iconClass = "bg-gradient-to-tr from-netbird-200 to-netbird-100",
   modalWidthClass = "max-w-xl",
   onClose,
-  onSave,
   open,
   setOpen,
   active,
+  onReset,
 }: {
-  value: string;
   children?: React.ReactNode;
   title?: string;
   description?: string;
@@ -25,11 +24,25 @@ export const HoverModalCard = ({
   icon?: React.ReactNode;
   modalWidthClass?: string;
   onClose?: () => void;
-  onSave?: () => void;
   open: boolean;
   setOpen: (open: boolean) => void;
+  onReset?: () => void;
   active?: boolean;
 }) => {
+  const { confirm } = useDialog();
+
+  const handleReset = async () => {
+    const reset = await confirm({
+      title: `Disable this check?`,
+      description:
+        "Are you sure you want to disable this check? All settings of this check will be lost.",
+      confirmText: "Disable",
+      cancelText: "Cancel",
+      type: "danger",
+    });
+    if (reset) onReset?.();
+  };
+
   return (
     <div>
       <div
@@ -59,17 +72,25 @@ export const HoverModalCard = ({
               {description}
             </div>
           </div>
-          <span
-            className={cn(
-              "text-[10px] rounded-full px-2 py-0.5 flex items-center gap-1 w-[55px] justify-center uppercase font-medium",
-              active
-                ? "text-green-400 bg-green-900"
-                : "text-nb-gray-400 bg-nb-gray-900",
-            )}
-          >
-            <IconCircleFilled size={7} className={"mt-[0.1px]"} />
-            {active ? "On" : "Off"}
-          </span>
+          <div>
+            <span
+              className={cn(
+                "text-[10px] rounded-full px-1 py-1 flex items-center gap-1 w-[50px] justify-center uppercase font-medium",
+                active
+                  ? "text-green-400 bg-green-900 hover:bg-green-800 transition-all hover:text-green-200"
+                  : "text-nb-gray-400 bg-nb-gray-900",
+              )}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (active) handleReset().then();
+                else setOpen(true);
+              }}
+            >
+              <IconCircleFilled size={7} className={"mt-[0.1px]"} />
+              {active ? "On" : "Off"}
+            </span>
+          </div>
         </div>
       </div>
 

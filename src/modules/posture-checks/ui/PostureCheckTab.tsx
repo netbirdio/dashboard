@@ -8,10 +8,10 @@ import { FolderSearch, ShieldCheck } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import { PostureCheckIcons } from "@/modules/access-control/posture-checks/PostureCheckIcons";
-import PostureCheckModal from "@/modules/access-control/posture-checks/PostureCheckModal";
-import { PostureChecksSelectionModal } from "@/modules/access-control/posture-checks/PostureChecksSelectionModal";
-import PostureCheckMinimalTable from "@/modules/access-control/posture-checks/table/PostureCheckMinimalTable";
+import { PostureCheckBrowseModal } from "@/modules/posture-checks/modal/PostureCheckBrowseModal";
+import PostureCheckModal from "@/modules/posture-checks/modal/PostureCheckModal";
+import PostureCheckMinimalTable from "@/modules/posture-checks/table/PostureCheckMinimalTable";
+import { PostureCheckIcons } from "@/modules/posture-checks/ui/PostureCheckIcons";
 
 type Props = {
   postureChecks: PostureCheck[];
@@ -26,10 +26,8 @@ export const PostureChecksTabTrigger = () => {
     </TabsTrigger>
   );
 };
-export const PostureChecksTab = ({
-  postureChecks,
-  setPostureChecks,
-}: Props) => {
+
+export const PostureCheckTab = ({ postureChecks, setPostureChecks }: Props) => {
   const addPostureChecks = (checks: PostureCheck[]) => {
     setPostureChecks((prev) => {
       const previous = prev.map((check) => {
@@ -37,9 +35,7 @@ export const PostureChecksTab = ({
         if (find) return find;
         return check;
       });
-
       const allChecks = [...previous, ...checks];
-
       return allChecks.filter(
         (check, index, self) =>
           self.findIndex((c) => c.id === check.id) === index,
@@ -69,7 +65,7 @@ export const PostureChecksTab = ({
       )}
 
       {browseModal && (
-        <PostureChecksSelectionModal
+        <PostureCheckBrowseModal
           open={browseModal}
           onOpenChange={setBrowseModal}
           onSuccess={(check) => addPostureChecks(check)}
@@ -117,7 +113,7 @@ export function NoChecksCard({
         }
       >
         <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-          You haven't added any posture checks yet
+          {"You haven't added any posture checks yet"}
         </h2>
         <Paragraph className={cn("text-sm text-center max-w-md mt-1")}>
           Add various posture checks to further restrict access in your network.
@@ -137,7 +133,7 @@ export function NoChecksCard({
         </Button>
         <Button variant={"primary"} size={"xs"} onClick={onAddClick}>
           <IconCirclePlus size={14} />
-          New Check
+          New Posture Check
         </Button>
       </div>
     </div>

@@ -24,10 +24,10 @@ import {
   OperatingSystemVersionCheck,
   PostureCheck,
 } from "@/interfaces/PostureCheck";
-import { GeoLocationCheckCard } from "@/modules/access-control/posture-checks/GeoLocationCheckCard";
-import { NetBirdVersionCheckCard } from "@/modules/access-control/posture-checks/NetBirdVersionCheckCard";
-import { OperatingSystemCheck } from "@/modules/access-control/posture-checks/OperatingSystemCheck";
-import { PostureCheckIcons } from "@/modules/access-control/posture-checks/PostureCheckIcons";
+import { GeoLocationCheckCard } from "@/modules/posture-checks/checks/GeoLocationCheckCard";
+import { NetBirdVersionCheckCard } from "@/modules/posture-checks/checks/NetBirdVersionCheckCard";
+import { OperatingSystemCheck } from "@/modules/posture-checks/checks/OperatingSystemCheck";
+import { PostureCheckIcons } from "@/modules/posture-checks/ui/PostureCheckIcons";
 
 type Props = {
   open: boolean;

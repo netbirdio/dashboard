@@ -26,7 +26,6 @@ export const NetBirdVersionCheckCard = ({ value, onChange }: Props) => {
       open={open}
       setOpen={setOpen}
       key={open ? 1 : 0}
-      value={"version"}
       active={value?.min_version !== undefined}
       title={"NetBird Client Version"}
       description={
@@ -34,6 +33,7 @@ export const NetBirdVersionCheckCard = ({ value, onChange }: Props) => {
       }
       icon={<NetBirdIcon size={18} />}
       modalWidthClass={"max-w-lg"}
+      onReset={() => onChange(undefined)}
     >
       <CheckContent
         value={value}

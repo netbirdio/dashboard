@@ -45,7 +45,9 @@ export const OperatingSystemPostureCheck = ({
   os,
 }: Props) => {
   const [allow, setAllow] = useState(value == "-" ? "block" : "allow");
-  const [allOrMin, setAllOrMin] = useState(value == "" ? "all" : "min");
+  const [allOrMin, setAllOrMin] = useState(
+    value == "" || value == "-" || value == "0" ? "all" : "min",
+  );
   const [useCustomVersion, setUseCustomVersion] = useState(false);
 
   const changeAllow = (value: string) => {
@@ -57,6 +59,8 @@ export const OperatingSystemPostureCheck = ({
       setUseCustomVersion(false);
     } else {
       onChange("");
+      setAllOrMin("all");
+      setUseCustomVersion(false);
     }
   };
 

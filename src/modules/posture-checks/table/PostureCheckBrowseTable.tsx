@@ -10,14 +10,14 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import { PostureCheckChecksCell } from "@/modules/access-control/posture-checks/table/PostureCheckChecksCell";
-import { PostureCheckNameCell } from "@/modules/access-control/posture-checks/table/PostureCheckNameCell";
+import { PostureCheckChecksCell2 } from "@/modules/posture-checks/table/PostureCheckChecksCell2";
+import { PostureCheckSmallNameCell } from "@/modules/posture-checks/table/PostureCheckSmallNameCell";
 
 type Props = {
   onAdd: (checks: PostureCheck[]) => void;
 };
 
-export default function PostureCheckTable({ onAdd }: Props) {
+export default function PostureCheckBrowseTable({ onAdd }: Props) {
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
   const { mutate } = useSWRConfig();
@@ -71,7 +71,7 @@ export default function PostureCheckTable({ onAdd }: Props) {
           </>
         )}
       >
-        {(table) => {
+        {() => {
           return (
             <>
               <DataTableRefreshButton
@@ -117,13 +117,13 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
-    cell: ({ row }) => <PostureCheckNameCell check={row.original} />,
+    cell: ({ row }) => <PostureCheckSmallNameCell check={row.original} />,
   },
   {
     accessorKey: "id",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Checks</DataTableHeader>;
     },
-    cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
+    cell: ({ row }) => <PostureCheckChecksCell2 check={row.original} />,
   },
 ];

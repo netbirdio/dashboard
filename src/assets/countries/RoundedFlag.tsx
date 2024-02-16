@@ -4,13 +4,18 @@ import { memo } from "react";
 
 type Props = {
   country: string;
+  size?: number;
 };
-const RoundedFlag = ({ country }: Props) => {
+const RoundedFlag = ({ country, size = 20 }: Props) => {
   return (
     <div
       className={
-        "w-5 h-5 shrink-0 overflow-hidden rounded-full relative shadow-2xl border border-nb-gray-800 flex items-center justify-center"
+        "shrink-0 overflow-hidden rounded-full relative shadow-xl flex items-center justify-center"
       }
+      style={{
+        width: size == 14 ? 20 : size,
+        height: size == 14 ? 20 : size,
+      }}
     >
       <Image
         src={`/assets/flags/4x3/${country.toLowerCase()}.svg`}

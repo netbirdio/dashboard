@@ -21,7 +21,7 @@ import {
   OperatingSystemVersionCheck,
   windowsKernelVersions,
 } from "@/interfaces/PostureCheck";
-import { OperatingSystemPostureCheck } from "@/modules/access-control/posture-checks/OperatingSystemPostureCheck";
+import { OperatingSystemPostureCheck } from "@/modules/posture-checks/checks/OperatingSystemPostureCheck";
 
 type Props = {
   value?: OperatingSystemVersionCheck;
@@ -35,7 +35,6 @@ export const OperatingSystemCheck = ({ value, onChange }: Props) => {
     <HoverModalCard
       open={open}
       setOpen={setOpen}
-      value={"os"}
       key={open ? 1 : 0}
       icon={<Disc3Icon size={16} />}
       title={"Operating System"}
@@ -58,7 +57,7 @@ export const OperatingSystemCheck = ({ value, onChange }: Props) => {
 };
 
 const CheckContent = ({ value, onChange }: Props) => {
-  const [tab, setTab] = useState(String(OperatingSystem.LINUX));
+  const [tab] = useState(String(OperatingSystem.LINUX));
 
   const firstTimeCheck = value === undefined;
 

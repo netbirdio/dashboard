@@ -12,9 +12,7 @@ type Props = {
   onChange: (value: string) => void;
 };
 export const CountrySelector = ({ value, onChange }: Props) => {
-  const { data: countries, isLoading } = useFetchApi<Country[]>(
-    "/locations/countries",
-  );
+  const { data: countries } = useFetchApi<Country[]>("/locations/countries");
 
   const countryList = useMemo(() => {
     return countries?.map((country) => {
@@ -25,6 +23,7 @@ export const CountrySelector = ({ value, onChange }: Props) => {
       }) =>
         createElement(RoundedFlag, {
           country: country.country_code,
+          size: 20,
           ...props,
         });
       return {

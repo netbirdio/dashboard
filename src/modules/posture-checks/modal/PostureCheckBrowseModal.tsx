@@ -2,14 +2,14 @@ import { Modal, ModalContent } from "@components/modal/Modal";
 import { cn } from "@utils/helpers";
 import * as React from "react";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import PostureCheckTable from "@/modules/access-control/posture-checks/table/PostureCheckTable";
+import PostureCheckBrowseTable from "@/modules/posture-checks/table/PostureCheckBrowseTable";
 
 type Props = {
   onSuccess: (checks: PostureCheck[]) => void;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 };
-export const PostureChecksSelectionModal = ({
+export const PostureCheckBrowseModal = ({
   onSuccess,
   open,
   onOpenChange,
@@ -21,7 +21,7 @@ export const PostureChecksSelectionModal = ({
         className={"pb-0"}
         showClose={false}
       >
-        <PostureCheckTable
+        <PostureCheckBrowseTable
           onAdd={(checks) => {
             onSuccess(checks);
             onOpenChange(false);
