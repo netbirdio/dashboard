@@ -13,7 +13,11 @@ export const PostureCheckNameCell = ({ check }: Props) => {
       inactiveDot={"gray"}
       text={check.name}
     >
-      <DescriptionWithTooltip className={"mt-1"} text={check.description} />
+      <DescriptionWithTooltip
+        className={"mt-1"}
+        text={check.description}
+        maxChars={30}
+      />
     </ActiveInactiveRow>
   );
 };
