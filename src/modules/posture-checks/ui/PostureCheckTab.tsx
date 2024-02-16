@@ -7,6 +7,7 @@ import { cn } from "@utils/helpers";
 import { FolderSearch, ShieldCheck } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import Skeleton from "react-loading-skeleton";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckBrowseModal } from "@/modules/posture-checks/modal/PostureCheckBrowseModal";
 import PostureCheckModal from "@/modules/posture-checks/modal/PostureCheckModal";
@@ -16,6 +17,7 @@ import { PostureCheckIcons } from "@/modules/posture-checks/ui/PostureCheckIcons
 type Props = {
   postureChecks: PostureCheck[];
   setPostureChecks: React.Dispatch<React.SetStateAction<PostureCheck[]>>;
+  isLoading: boolean;
 };
 
 export const PostureChecksTabTrigger = () => {
@@ -27,7 +29,11 @@ export const PostureChecksTabTrigger = () => {
   );
 };
 
-export const PostureCheckTab = ({ postureChecks, setPostureChecks }: Props) => {
+export const PostureCheckTab = ({
+  postureChecks,
+  setPostureChecks,
+  isLoading,
+}: Props) => {
   const addPostureChecks = (checks: PostureCheck[]) => {
     setPostureChecks((prev) => {
       const previous = prev.map((check) => {
@@ -53,7 +59,17 @@ export const PostureCheckTab = ({ postureChecks, setPostureChecks }: Props) => {
   const [browseModal, setBrowseModal] = useState(false);
   const [currentEditCheck, setCurrentEditCheck] = useState<PostureCheck>();
 
-  return (
+  return isLoading ? (
+    <TabsContent
+      value={"posture_checks"}
+      className={"px-8 pb-8 mt-3 gap-2 flex flex-col"}
+    >
+      <Skeleton width={"100%"} height={41} />
+      <Skeleton width={"100%"} height={42} />
+      <Skeleton width={"100%"} height={42} />
+      <Skeleton width={"100%"} height={41} />
+    </TabsContent>
+  ) : (
     <TabsContent value={"posture_checks"} className={"px-8 pb-8 mt-3"}>
       {checkModal && (
         <PostureCheckModal

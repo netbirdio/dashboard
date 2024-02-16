@@ -40,6 +40,7 @@ export const GeoLocationCheckCard = ({ value, onChange }: Props) => {
       iconClass={"bg-gradient-to-tr from-indigo-500 to-indigo-400"}
       modalWidthClass={"max-w-2xl"}
       active={value ? value?.locations?.length > 0 : false}
+      onReset={() => onChange(undefined)}
     >
       <CheckContent
         value={value}
@@ -61,7 +62,7 @@ const CheckContent = ({ value, onChange }: Props) => {
       return {
         id: uniqueId("location"),
         country_code: l.country_code,
-        city_name: l.city_name,
+        city_name: l.city_name || "",
       };
     }) || [],
   );
@@ -123,7 +124,7 @@ const CheckContent = ({ value, onChange }: Props) => {
                   />
                   {location.country_code && (
                     <CitySelector
-                      value={location.city_name}
+                      value={location.city_name || ""}
                       onChange={(value) => {
                         updateLocation(location.id, {
                           ...location,

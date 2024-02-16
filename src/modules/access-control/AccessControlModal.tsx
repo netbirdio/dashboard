@@ -113,7 +113,7 @@ export function AccessControlModalContent({
   policy,
   cell,
 }: ModalProps) {
-  const { data: allPostureChecks } =
+  const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
 
   const { updatePolicy } = usePolicies();
@@ -405,6 +405,7 @@ export function AccessControlModalContent({
           </div>
         </TabsContent>
         <PostureCheckTab
+          isLoading={isPostureChecksLoading}
           postureChecks={postureChecks}
           setPostureChecks={setPostureChecks}
         />

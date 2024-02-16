@@ -48,7 +48,13 @@ export const OperatingSystemPostureCheck = ({
   const [allOrMin, setAllOrMin] = useState(
     value == "" || value == "-" || value == "0" ? "all" : "min",
   );
-  const [useCustomVersion, setUseCustomVersion] = useState(false);
+  const [useCustomVersion, setUseCustomVersion] = useState(() => {
+    if (!versionList) return false;
+    if (!value) return false;
+    if (value === "-") return false;
+    const find = versionList.map((v) => v.value).includes(value);
+    return !find;
+  });
 
   const changeAllow = (value: string) => {
     setAllow(value);

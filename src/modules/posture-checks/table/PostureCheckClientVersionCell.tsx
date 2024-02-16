@@ -21,9 +21,10 @@ export const PostureCheckClientVersionCell = ({ check }: Props) => {
   const accessControlUsage = useMemo(() => {
     const checkId = check.id;
     if (!policies) return [];
-    return policies?.filter((policy) =>
-      policy.source_posture_checks.includes(checkId),
-    );
+    return policies?.filter((policy) => {
+      if (!policy.source_posture_checks) return false;
+      return policy.source_posture_checks.includes(checkId);
+    });
   }, [policies, check]);
 
   return (

@@ -44,6 +44,7 @@ export const OperatingSystemCheck = ({ value, onChange }: Props) => {
       }
       iconClass={"bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300"}
       active={value !== undefined}
+      onReset={() => onChange(undefined)}
     >
       <CheckContent
         value={value}
@@ -91,16 +92,6 @@ const CheckContent = ({ value, onChange }: Props) => {
       : value && value.linux
       ? value.linux?.min_kernel_version
       : "-",
-  );
-
-  console.log(
-    "CheckContent",
-    value,
-    windowsVersion,
-    macOSVersion,
-    androidVersion,
-    iOSVersion,
-    linuxVersion,
   );
 
   return (
