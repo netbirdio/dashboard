@@ -1,7 +1,8 @@
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import RouteActionCell from "@/modules/routes/RouteActionCell";
 import RouteActiveCell from "@/modules/routes/RouteActiveCell";
@@ -39,7 +40,6 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     ),
     cell: ({ row }) => <RouteActiveCell route={row.original} />,
   },
-
   {
     id: "groups",
     accessorFn: (r) => r.groups?.length,
@@ -51,6 +51,12 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     cell: ({ row }) => <RouteDistributionGroupsCell route={row.original} />,
   },
   {
+    id: "group_names",
+    accessorFn: (row) => {
+      return row.group_names?.map((name) => name).join(", ");
+    },
+  },
+  {
     accessorKey: "id",
     header: "",
     cell: ({ row }) => <RouteActionCell route={row.original} />,
@@ -58,6 +64,8 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
 ];
 
 export default function RouteTable({ row }: Props) {
+  const { groups } = useGroups();
+
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
     {
@@ -73,6 +81,26 @@ export default function RouteTable({ row }: Props) {
   const [editModal, setEditModal] = useState(false);
   const [currentRow, setCurrentRow] = useState<Route>();
   const [currentCellClicked, setCurrentCellClicked] = useState("");
+
+  const data = useMemo(() => {
+    if (!row.routes) return [];
+    // Get the group names for better search results
+    return row.routes.map((route) => {
+      const distributionGroupNames =
+        route.groups?.map((id) => {
+          return groups?.find((g) => g.id === id)?.name || "";
+        }) || [];
+      const peerGroupNames =
+        route.peer_groups?.map((id) => {
+          return groups?.find((g) => g.id === id)?.name || "";
+        }) || [];
+      const allGroupNames = [...distributionGroupNames, ...peerGroupNames];
+      return {
+        ...route,
+        group_names: allGroupNames,
+      } as Route;
+    });
+  }, [row.routes, groups]);
 
   return (
     <>
@@ -92,6 +120,9 @@ export default function RouteTable({ row }: Props) {
         text={"Network Routes"}
         manualPagination={true}
         sorting={sorting}
+        columnVisibility={{
+          group_names: false,
+        }}
         onRowClick={(row, cell) => {
           setCurrentRow(row.original);
           setEditModal(true);
@@ -99,7 +130,7 @@ export default function RouteTable({ row }: Props) {
         }}
         setSorting={setSorting}
         columns={RouteTableColumns}
-        data={row.routes}
+        data={data}
       />
     </>
   );
