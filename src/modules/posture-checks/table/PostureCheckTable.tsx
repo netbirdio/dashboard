@@ -74,9 +74,10 @@ export default function PostureCheckTable({ postureChecks, isLoading }: Props) {
     return postureChecks?.map((check) => {
       const checkId = check.id;
       if (!policies) return check;
-      const usage = policies?.filter((policy) =>
-        policy.source_posture_checks.includes(checkId),
-      );
+      const usage = policies?.filter((policy) => {
+        if (!policy.source_posture_checks) return false;
+        return policy.source_posture_checks.includes(checkId);
+      });
       const isOnePolicyEnabled = usage.some((policy) => policy.enabled);
       return {
         ...check,
