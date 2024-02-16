@@ -252,6 +252,9 @@ function UserOverview({ user }: Props) {
 
 function UserInformationCard({ user }: { user: User }) {
   const isServiceUser = user.is_service_user || false;
+  const neverLoggedIn = dayjs(user.last_login).isBefore(
+    dayjs().subtract(1000, "years"),
+  );
 
   return (
     <Card>
@@ -307,10 +310,12 @@ function UserInformationCard({ user }: { user: User }) {
                 </>
               }
               value={
-                dayjs(user.last_login).format("D MMMM, YYYY [at] h:mm A") +
-                " (" +
-                dayjs().to(user.last_login) +
-                ")"
+                neverLoggedIn
+                  ? "Never"
+                  : dayjs(user.last_login).format("D MMMM, YYYY [at] h:mm A") +
+                    " (" +
+                    dayjs().to(user.last_login) +
+                    ")"
               }
             />
           </>
