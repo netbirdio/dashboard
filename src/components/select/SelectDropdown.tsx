@@ -102,10 +102,10 @@ export function SelectDropdown({
         setOpen(isOpen);
       }}
     >
-      <PopoverTrigger asChild={true}>
+      <PopoverTrigger asChild={true} disabled={disabled || isLoading}>
         <Button
           variant={"input"}
-          disabled={disabled}
+          disabled={disabled || isLoading}
           ref={inputRef}
           className={"w-full"}
         >
@@ -181,7 +181,7 @@ export function SelectDropdown({
             >
               <CommandGroup>
                 <div className={"grid grid-cols-1 gap-1"}>
-                  {filteredItems.slice(0, slice).map((option) => (
+                  {filteredItems.map((option) => (
                     <SelectDropdownItem
                       option={option}
                       toggle={toggle}
@@ -212,8 +212,8 @@ const SelectDropdownItem = ({
   const [visible, setVisible] = useState(isVisible);
 
   useEffect(() => {
-    if (isVisible) {
-      setVisible(isVisible);
+    if (isVisible && !visible) {
+      setVisible(true);
     }
   }, [isVisible]);
 
