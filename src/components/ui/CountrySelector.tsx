@@ -12,7 +12,9 @@ type Props = {
   onChange: (value: string) => void;
 };
 export const CountrySelector = ({ value, onChange }: Props) => {
-  const { data: countries } = useFetchApi<Country[]>("/locations/countries");
+  const { data: countries, isLoading } = useFetchApi<Country[]>(
+    "/locations/countries",
+  );
 
   const countryList = useMemo(() => {
     return countries?.map((country) => {
@@ -35,13 +37,16 @@ export const CountrySelector = ({ value, onChange }: Props) => {
   }, [countries]);
 
   return (
-    <SelectDropdown
-      showSearch={true}
-      placeholder={"Select country..."}
-      searchPlaceholder={"Search country..."}
-      value={value}
-      onChange={onChange}
-      options={countryList || []}
-    />
+    <div className={"block w-full"}>
+      <SelectDropdown
+        isLoading={isLoading}
+        showSearch={true}
+        placeholder={"Select country..."}
+        searchPlaceholder={"Search country..."}
+        value={value}
+        onChange={onChange}
+        options={countryList || []}
+      />
+    </div>
   );
 };

@@ -11,6 +11,7 @@ import { isEmpty } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 import { useEffect, useRef, useState } from "react";
+import Skeleton from "react-loading-skeleton";
 import { useElementSize } from "@/hooks/useElementSize";
 
 export interface SelectOption {
@@ -32,6 +33,7 @@ interface SelectDropdownProps {
   showSearch?: boolean;
   placeholder?: string;
   searchPlaceholder?: string;
+  isLoading?: boolean;
 }
 
 export function SelectDropdown({
@@ -43,6 +45,7 @@ export function SelectDropdown({
   showSearch = false,
   placeholder = "Select...",
   searchPlaceholder = "Search...",
+  isLoading = false,
 }: SelectDropdownProps) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -107,7 +110,12 @@ export function SelectDropdown({
           className={"w-full"}
         >
           <div className={"w-full flex justify-between items-center gap-2"}>
-            {selected ? (
+            {isLoading ? (
+              <div className={"flex gap-2"}>
+                <Skeleton width={20} />
+                <Skeleton width={100} />
+              </div>
+            ) : selected ? (
               <React.Fragment>
                 <div className={"flex items-center gap-2.5"}>
                   {selected?.icon && <selected.icon size={14} width={14} />}
@@ -173,7 +181,7 @@ export function SelectDropdown({
             >
               <CommandGroup>
                 <div className={"grid grid-cols-1 gap-1"}>
-                  {filteredItems.map((option) => (
+                  {filteredItems.slice(0, slice).map((option) => (
                     <SelectDropdownItem
                       option={option}
                       toggle={toggle}
@@ -200,9 +208,18 @@ const SelectDropdownItem = ({
   const value = option.value || "" + option.label || "";
   const elementRef = useRef<HTMLDivElement>(null);
   const isVisible = useIsVisible(elementRef);
+
+  const [visible, setVisible] = useState(isVisible);
+
+  useEffect(() => {
+    if (isVisible) {
+      setVisible(isVisible);
+    }
+  }, [isVisible]);
+
   return (
     <div ref={elementRef} className={"transition-all"}>
-      {isVisible ? (
+      {visible ? (
         <CommandItem
           value={value}
           ref={elementRef}

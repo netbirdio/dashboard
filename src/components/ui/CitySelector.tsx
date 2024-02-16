@@ -41,13 +41,16 @@ export const CitySelector = ({ value, onChange, country = "de" }: Props) => {
   }, [cities]);
 
   return (
-    <SelectDropdown
-      showSearch={true}
-      placeholder={"Select city (optional)..."}
-      searchPlaceholder={"Search city..."}
-      value={value}
-      onChange={onChange}
-      options={cityList || []}
-    />
+    <div className={"block w-full"}>
+      <SelectDropdown
+        isLoading={isLoading}
+        showSearch={true}
+        placeholder={"Select city (optional)..."}
+        searchPlaceholder={"Search city..."}
+        value={value}
+        onChange={onChange}
+        options={cityList || []}
+      />
+    </div>
   );
 };
