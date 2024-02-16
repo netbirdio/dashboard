@@ -41,6 +41,19 @@ export default function useGroupedRoutes({ routes }: Props) {
       const countEnabledPeers = peerRoutes.filter((r) => r.enabled).length;
       const allPeers = countPeersOfGroup + countEnabledPeers;
 
+      // Get the group names for better search results
+      const peerGroupNames =
+        groupPeerRoute?.peer_groups?.map((id) => {
+          return groups?.find((g) => g.id == id)?.name || "";
+        }) || [];
+
+      const routeGroups = routes.map((r) => r.groups).flat();
+      const distributionGroupNames = routeGroups.map((group) => {
+        return groups?.find((g) => g.id == group)?.name || "";
+      });
+
+      const allGroupNames = [...peerGroupNames, ...distributionGroupNames];
+
       results.push({
         id,
         enabled: routes.find((r) => r.enabled) != undefined,
@@ -50,6 +63,7 @@ export default function useGroupedRoutes({ routes }: Props) {
         is_using_route_groups: !!groupPeerRoute,
         description: groupPeerRoute ? groupPeerRoute?.description : undefined,
         routes: routes,
+        group_names: allGroupNames,
       });
     });
     return results;
