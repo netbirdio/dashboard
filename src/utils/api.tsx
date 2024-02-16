@@ -38,12 +38,12 @@ async function apiRequest<T>(
   return (await res.json()) as T;
 }
 
-export function useNetBirdFetch() {
+export function useNetBirdFetch(ignoreError: boolean = false) {
   const tokenSource = config.tokenSource || "accessToken";
   const { idToken } = useOidcIdToken();
   const { accessToken } = useOidcAccessToken();
   const token = tokenSource.toLowerCase() == "idtoken" ? idToken : accessToken;
-  const handleErrors = useApiErrorHandling();
+  const handleErrors = useApiErrorHandling(ignoreError);
 
   const isTokenExpired = async () => {
     let attempts = 20;
@@ -77,9 +77,9 @@ export function useNetBirdFetch() {
   };
 }
 
-export default function useFetchApi<T>(url: string) {
-  const { fetch } = useNetBirdFetch();
-  const handleErrors = useApiErrorHandling();
+export default function useFetchApi<T>(url: string, ignoreError = false) {
+  const { fetch } = useNetBirdFetch(ignoreError);
+  const handleErrors = useApiErrorHandling(ignoreError);
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     url,
@@ -102,9 +102,9 @@ export default function useFetchApi<T>(url: string) {
   } as const;
 }
 
-export function useApiCall<T>(url: string) {
-  const { fetch } = useNetBirdFetch();
-  const handleErrors = useApiErrorHandling();
+export function useApiCall<T>(url: string, ignoreError = false) {
+  const { fetch } = useNetBirdFetch(ignoreError);
+  const handleErrors = useApiErrorHandling(ignoreError);
 
   return {
     post: async (data: any, suffix = "") => {
@@ -130,10 +130,15 @@ export function useApiCall<T>(url: string) {
   };
 }
 
-export function useApiErrorHandling() {
+export function useApiErrorHandling(ignoreError = false) {
   const { login } = useOidc();
   const currentPath = usePathname();
   const { setError } = useErrorBoundary();
+  if (ignoreError)
+    return (err: ErrorResponse) => {
+      console.log(err);
+      return Promise.reject(err);
+    };
 
   return (err: ErrorResponse) => {
     if (err.code == 401 && err.message == "no valid authentication provided") {

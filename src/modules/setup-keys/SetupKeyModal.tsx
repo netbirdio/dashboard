@@ -165,7 +165,7 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
             revoked: false,
             auto_groups: groups.map((group) => group.id),
             usage_limit: reusable ? parseInt(usageLimit) : 1,
-            ephemeral_peers: ephemeralPeers,
+            ephemeral: ephemeralPeers,
           })
           .then((setupKey) => {
             onSuccess && onSuccess(setupKey);

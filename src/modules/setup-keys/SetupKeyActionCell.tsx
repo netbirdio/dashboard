@@ -27,7 +27,7 @@ export default function SetupKeyActionCell({ setupKey }: Props) {
           revoked: true,
           auto_groups: setupKey.auto_groups,
           usage_limit: setupKey.usage_limit,
-          ephemeral_peers: setupKey.ephemeral,
+          ephemeral: setupKey.ephemeral,
         })
         .then(() => {
           mutate("/setup-keys");
