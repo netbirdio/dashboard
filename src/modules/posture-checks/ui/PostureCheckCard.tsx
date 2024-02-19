@@ -1,10 +1,12 @@
+import FullTooltip from "@components/FullTooltip";
 import { Modal, ModalContent } from "@components/modal/Modal";
 import { IconCircleFilled } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
+import { ScaleIcon } from "lucide-react";
 import * as React from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 
-export const HoverModalCard = ({
+export const PostureCheckCard = ({
   children,
   title,
   description,
@@ -16,6 +18,7 @@ export const HoverModalCard = ({
   setOpen,
   active,
   onReset,
+  license,
 }: {
   children?: React.ReactNode;
   title?: string;
@@ -28,6 +31,7 @@ export const HoverModalCard = ({
   setOpen: (open: boolean) => void;
   onReset?: () => void;
   active?: boolean;
+  license?: React.ReactNode;
 }) => {
   const { confirm } = useDialog();
 
@@ -42,6 +46,17 @@ export const HoverModalCard = ({
     });
     if (reset) onReset?.();
   };
+
+  const licenseToolTip = (
+    <FullTooltip content={license}>
+      <ScaleIcon
+        size={14}
+        className={
+          "text-nb-gray-400 hover:text-nb-gray-200 transition-all cursor-pointer"
+        }
+      />
+    </FullTooltip>
+  );
 
   return (
     <div>
@@ -66,7 +81,10 @@ export const HoverModalCard = ({
                 "text-sm font-medium flex gap-2 items-center justify-between"
               }
             >
-              <span> {title}</span>
+              <span className={"flex items-center gap-2"}>
+                {title}
+                {license && licenseToolTip}
+              </span>
             </div>
             <div className={"text-xs mt-0.5 text-nb-gray-300"}>
               {description}
@@ -120,6 +138,7 @@ export const HoverModalCard = ({
             <div className={"pr-10"}>
               <div className={"text-sm font-medium flex gap-2 items-center"}>
                 {title}
+                {license && licenseToolTip}
               </div>
               <div className={"text-xs mt-0.5 text-nb-gray-300"}>
                 {description}

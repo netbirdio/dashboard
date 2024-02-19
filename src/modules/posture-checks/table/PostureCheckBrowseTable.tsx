@@ -10,8 +10,8 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import { PostureCheckChecksCell2 } from "@/modules/posture-checks/table/PostureCheckChecksCell2";
-import { PostureCheckSmallNameCell } from "@/modules/posture-checks/table/PostureCheckSmallNameCell";
+import { PostureCheckChecksCell } from "@/modules/posture-checks/table/cells/PostureCheckChecksCell";
+import { PostureCheckNameCell } from "@/modules/posture-checks/table/cells/PostureCheckNameCell";
 
 type Props = {
   onAdd: (checks: PostureCheck[]) => void;
@@ -117,13 +117,15 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
-    cell: ({ row }) => <PostureCheckSmallNameCell check={row.original} />,
+    cell: ({ row }) => (
+      <PostureCheckNameCell small={true} check={row.original} />
+    ),
   },
   {
     accessorKey: "id",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Checks</DataTableHeader>;
     },
-    cell: ({ row }) => <PostureCheckChecksCell2 check={row.original} />,
+    cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
   },
 ];

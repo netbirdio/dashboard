@@ -7,12 +7,12 @@ import { PostureCheck } from "@/interfaces/PostureCheck";
 type Props = {
   check: PostureCheck;
 };
-export const PostureCheckChecksCell2 = ({ check }: Props) => {
+export const PostureCheckChecksCell = ({ check }: Props) => {
   return (
     <div className={"flex"}>
       <div
         className={
-          "flex items-center gap-3 bg-nb-gray-900/80 border border-nb-gray-800/50 py-1 rounded-full px-1"
+          "flex items-center gap-3 bg-nb-gray-900/80 hover:bg-nb-gray-800 border border-nb-gray-800/50 py-1 rounded-full px-1 transition-all"
         }
       >
         <div className={"flex -space-x-2 "}>

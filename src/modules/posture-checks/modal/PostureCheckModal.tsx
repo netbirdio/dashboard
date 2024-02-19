@@ -9,25 +9,24 @@ import {
   ModalContent,
   ModalFooter,
 } from "@components/modal/Modal";
+import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
-import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import { isEmpty } from "lodash";
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, LayoutList, ShieldCheck, Text } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import {
-  GeoLocationCheck,
   OperatingSystemVersionCheck,
   PostureCheck,
 } from "@/interfaces/PostureCheck";
-import { GeoLocationCheckCard } from "@/modules/posture-checks/checks/GeoLocationCheckCard";
-import { NetBirdVersionCheckCard } from "@/modules/posture-checks/checks/NetBirdVersionCheckCard";
-import { OperatingSystemCheck } from "@/modules/posture-checks/checks/OperatingSystemCheck";
-import { PostureCheckIcons } from "@/modules/posture-checks/ui/PostureCheckIcons";
+import { PostureCheckGeoLocation } from "@/modules/posture-checks/checks/PostureCheckGeoLocation";
+import { PostureCheckNetBirdVersion } from "@/modules/posture-checks/checks/PostureCheckNetBirdVersion";
+import { PostureCheckOperatingSystem } from "@/modules/posture-checks/checks/PostureCheckOperatingSystem";
 
 type Props = {
   open: boolean;
@@ -76,7 +75,7 @@ export default function PostureCheckModal({
     return os;
   };
 
-  const validateLocationCheck = (locationCheck?: GeoLocationCheck) => {
+  const validateLocationCheck = (locationCheck?: PostureCheckGeoLocation) => {
     if (!locationCheck) return;
     if (!locationCheck.locations) return;
     return {
@@ -135,81 +134,93 @@ export default function PostureCheckModal({
     !!nbVersionCheck || !!geoLocationCheck || !!osVersionCheck;
   const canCreate = !isEmpty(name) && isAtLeastOneCheckEnabled;
 
+  const [tab, setTab] = useState("checks");
+
   return (
     <>
       <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
         <ModalContent
-          maxWidthClass={cn("relative", "max-w-xl")}
+          maxWidthClass={cn("relative", "max-w-2xl")}
           showClose={true}
         >
-          <PostureCheckIcons />
-          <div
-            className={
-              "mx-auto text-center flex flex-col items-center justify-center mt-6"
+          <ModalHeader
+            icon={<ShieldCheck size={19} />}
+            title={
+              postureCheck ? "Update Posture Check" : "Create Posture Check"
             }
-          >
-            <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-              {postureCheck
-                ? "Update Posture Check"
-                : "Create New Posture Check"}
-            </h2>
-            <Paragraph className={cn("text-sm text-center max-w-lg")}>
-              Use posture checks to further restrict access in your network.
-            </Paragraph>
-          </div>
-          <GradientFadedBackground />
+            description={
+              "Use posture checks to further restrict access in your network."
+            }
+            color={"netbird"}
+          />
 
-          <div className={"mb-6 flex-col gap-3 flex mt-5"}>
-            <div className={"px-4 z-10"}>
-              {slide === 0 ? (
-                <>
-                  <NetBirdVersionCheckCard
-                    value={nbVersionCheck}
-                    onChange={setNbVersionCheck}
+          <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
+            <TabsList justify={"start"} className={"px-8"}>
+              <TabsTrigger value={"checks"}>
+                <LayoutList size={16} />
+                Checks
+              </TabsTrigger>
+
+              <TabsTrigger value={"general"}>
+                <Text
+                  size={16}
+                  className={
+                    "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+                  }
+                />
+                Name & Description
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value={"checks"} className={"pb-6 px-8"}>
+              <>
+                <PostureCheckNetBirdVersion
+                  value={nbVersionCheck}
+                  onChange={setNbVersionCheck}
+                />
+                <PostureCheckGeoLocation
+                  value={geoLocationCheck}
+                  onChange={setGeoLocationCheckCheck}
+                />
+                <PostureCheckOperatingSystem
+                  value={osVersionCheck}
+                  onChange={setOsVersionCheck}
+                />
+              </>
+            </TabsContent>
+            <TabsContent value={"general"} className={"pb-8 px-8"}>
+              <div className={"flex flex-col gap-6"}>
+                <div>
+                  <Label>Name of the Posture Check</Label>
+                  <HelpText>
+                    Set an easily identifiable name for your posture check.
+                  </HelpText>
+                  <Input
+                    autoFocus={true}
+                    tabIndex={0}
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    placeholder={"e.g., NetBird Version > 0.25.0"}
                   />
-                  <GeoLocationCheckCard
-                    value={geoLocationCheck}
-                    onChange={setGeoLocationCheckCheck}
-                  />
-                  <OperatingSystemCheck
-                    value={osVersionCheck}
-                    onChange={setOsVersionCheck}
-                  />
-                </>
-              ) : (
-                <div className={"flex flex-col gap-6 px-4 mt-3 mb-2"}>
-                  <div>
-                    <Label>Name of the Posture Check</Label>
-                    <HelpText>
-                      Set an easily identifiable name for your posture check.
-                    </HelpText>
-                    <Input
-                      autoFocus={true}
-                      tabIndex={0}
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      placeholder={"e.g., NetBird Version > 0.25.0"}
-                    />
-                  </div>
-                  <div>
-                    <Label>Description (optional)</Label>
-                    <HelpText>
-                      Write a short description to add more context to this
-                      policy.
-                    </HelpText>
-                    <Textarea
-                      value={description}
-                      onChange={(e) => setDescription(e.target.value)}
-                      placeholder={
-                        "e.g., Check if the NetBird version is bigger than 0.25.0"
-                      }
-                      rows={3}
-                    />
-                  </div>
                 </div>
-              )}
-            </div>
-          </div>
+                <div>
+                  <Label>Description (optional)</Label>
+                  <HelpText>
+                    Write a short description to add more context to this
+                    policy.
+                  </HelpText>
+                  <Textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder={
+                      "e.g., Check if the NetBird version is bigger than 0.25.0"
+                    }
+                    rows={3}
+                  />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
 
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>

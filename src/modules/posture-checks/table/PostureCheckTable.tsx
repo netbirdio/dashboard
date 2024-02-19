@@ -18,10 +18,10 @@ import { useSWRConfig } from "swr";
 import { Policy } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import PostureCheckModal from "@/modules/posture-checks/modal/PostureCheckModal";
-import { PostureCheckActionCell } from "@/modules/posture-checks/table/PostureCheckActionCell";
-import { PostureCheckChecksCell2 } from "@/modules/posture-checks/table/PostureCheckChecksCell2";
-import { PostureCheckClientVersionCell } from "@/modules/posture-checks/table/PostureCheckClientVersionCell";
-import { PostureCheckNameCell } from "@/modules/posture-checks/table/PostureCheckNameCell";
+import { PostureCheckActionCell } from "@/modules/posture-checks/table/cells/PostureCheckActionCell";
+import { PostureCheckChecksCell } from "@/modules/posture-checks/table/cells/PostureCheckChecksCell";
+import { PostureCheckNameCell } from "@/modules/posture-checks/table/cells/PostureCheckNameCell";
+import { PostureCheckPolicyUsageCell } from "@/modules/posture-checks/table/cells/PostureCheckPolicyUsageCell";
 
 type Props = {
   isLoading: boolean;
@@ -47,14 +47,14 @@ const Columns: ColumnDef<PostureCheck>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Checks</DataTableHeader>;
     },
-    cell: ({ row }) => <PostureCheckChecksCell2 check={row.original} />,
+    cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
   },
   {
     id: "access_control_usage",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Used by</DataTableHeader>;
     },
-    cell: ({ row }) => <PostureCheckClientVersionCell check={row.original} />,
+    cell: ({ row }) => <PostureCheckPolicyUsageCell check={row.original} />,
   },
 
   {

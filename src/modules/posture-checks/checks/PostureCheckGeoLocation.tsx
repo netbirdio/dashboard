@@ -7,7 +7,6 @@ import Paragraph from "@components/Paragraph";
 import { RadioGroup, RadioGroupItem } from "@components/RadioGroup";
 import { CitySelector } from "@components/ui/CitySelector";
 import { CountrySelector } from "@components/ui/CountrySelector";
-import { HoverModalCard } from "@components/ui/HoverModalCard";
 import { isEmpty, uniqueId } from "lodash";
 import {
   ExternalLinkIcon,
@@ -20,16 +19,18 @@ import {
 import * as React from "react";
 import { useState } from "react";
 import { GeoLocation, GeoLocationCheck } from "@/interfaces/PostureCheck";
+import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 
 type Props = {
   value?: GeoLocationCheck;
   onChange: (value: GeoLocationCheck | undefined) => void;
 };
 
-export const GeoLocationCheckCard = ({ value, onChange }: Props) => {
+export const PostureCheckGeoLocation = ({ value, onChange }: Props) => {
   const [open, setOpen] = useState(false);
+
   return (
-    <HoverModalCard
+    <PostureCheckCard
       open={open}
       setOpen={setOpen}
       icon={<FlagIcon size={16} />}
@@ -41,6 +42,14 @@ export const GeoLocationCheckCard = ({ value, onChange }: Props) => {
       modalWidthClass={"max-w-2xl"}
       active={value ? value?.locations?.length > 0 : false}
       onReset={() => onChange(undefined)}
+      license={
+        <div className={"text-xs max-w-xs"}>
+          This check includes GeoLite2 data created by MaxMind, available from{" "}
+          <InlineLink href={"https://www.maxmind.com"} target={"_blank"}>
+            https://www.maxmind.com
+          </InlineLink>
+        </div>
+      }
     >
       <CheckContent
         value={value}
@@ -49,7 +58,7 @@ export const GeoLocationCheckCard = ({ value, onChange }: Props) => {
           setOpen(false);
         }}
       />
-    </HoverModalCard>
+    </PostureCheckCard>
   );
 };
 
@@ -92,9 +101,9 @@ const CheckContent = ({ value, onChange }: Props) => {
         <div className={"flex justify-between items-start gap-10 mt-2"}>
           <div>
             <Label>Allow or Block Location</Label>
-            <HelpText>
+            <HelpText className={""}>
               Choose whether you want to allow or block access from specific
-              countries or regions.
+              countries or regions
             </HelpText>
           </div>
           <RadioGroup value={allowDenyLocation} onChange={setAllowDenyLocation}>

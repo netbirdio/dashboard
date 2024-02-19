@@ -5,24 +5,24 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { ModalClose, ModalFooter } from "@components/modal/Modal";
 import Paragraph from "@components/Paragraph";
-import { HoverModalCard } from "@components/ui/HoverModalCard";
 import { isEmpty } from "lodash";
 import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { NetBirdVersionCheck } from "@/interfaces/PostureCheck";
+import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 
 type Props = {
   value?: NetBirdVersionCheck;
   onChange: (value: NetBirdVersionCheck | undefined) => void;
 };
 
-export const NetBirdVersionCheckCard = ({ value, onChange }: Props) => {
+export const PostureCheckNetBirdVersion = ({ value, onChange }: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <HoverModalCard
+    <PostureCheckCard
       open={open}
       setOpen={setOpen}
       key={open ? 1 : 0}
@@ -42,7 +42,7 @@ export const NetBirdVersionCheckCard = ({ value, onChange }: Props) => {
           setOpen(false);
         }}
       />
-    </HoverModalCard>
+    </PostureCheckCard>
   );
 };
 

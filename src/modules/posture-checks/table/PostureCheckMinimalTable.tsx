@@ -16,9 +16,9 @@ import {
 } from "lucide-react";
 import React from "react";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import { PostureCheckChecksCell2 } from "@/modules/posture-checks/table/PostureCheckChecksCell2";
-import { PostureCheckSmallNameCell } from "@/modules/posture-checks/table/PostureCheckSmallNameCell";
-import { NoChecksCard } from "@/modules/posture-checks/ui/PostureCheckTab";
+import { PostureCheckChecksCell } from "@/modules/posture-checks/table/cells/PostureCheckChecksCell";
+import { PostureCheckNameCell } from "@/modules/posture-checks/table/cells/PostureCheckNameCell";
+import { PostureCheckNoChecksInfo } from "@/modules/posture-checks/ui/PostureCheckNoChecksInfo";
 
 type Props = {
   data: PostureCheck[];
@@ -70,9 +70,9 @@ export default function PostureCheckMinimalTable({
               }
               onClick={() => onEditClick(check)}
             >
-              <PostureCheckSmallNameCell check={check} />
+              <PostureCheckNameCell small={true} check={check} />
               <div className={"flex gap-4 items-center"}>
-                <PostureCheckChecksCell2 check={check} />
+                <PostureCheckChecksCell check={check} />
                 <DropdownMenu modal={false}>
                   <DropdownMenuTrigger
                     asChild={true}
@@ -110,6 +110,9 @@ export default function PostureCheckMinimalTable({
       </div>
     </div>
   ) : (
-    <NoChecksCard onAddClick={onAddClick} onBrowseClick={onBrowseClick} />
+    <PostureCheckNoChecksInfo
+      onAddClick={onAddClick}
+      onBrowseClick={onBrowseClick}
+    />
   );
 }

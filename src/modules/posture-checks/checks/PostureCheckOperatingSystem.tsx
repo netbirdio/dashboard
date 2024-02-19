@@ -1,11 +1,27 @@
 import Button from "@components/Button";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
+import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
+import { Input } from "@components/Input";
+import { Label } from "@components/Label";
 import { ModalClose, ModalFooter } from "@components/modal/Modal";
 import Paragraph from "@components/Paragraph";
+import { RadioGroup, RadioGroupItem } from "@components/RadioGroup";
+import {
+  SelectDropdown,
+  SelectOption,
+} from "@components/select/SelectDropdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
-import { HoverModalCard } from "@components/ui/HoverModalCard";
+import { IconMathEqualGreater } from "@tabler/icons-react";
 import { isEmpty } from "lodash";
-import { Disc3Icon, ExternalLinkIcon } from "lucide-react";
+import {
+  Disc3Icon,
+  ExternalLinkIcon,
+  FileCog,
+  GalleryHorizontalEnd,
+  ShieldCheck,
+  ShieldXIcon,
+} from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import AndroidIcon from "@/assets/icons/AndroidIcon";
@@ -21,18 +37,18 @@ import {
   OperatingSystemVersionCheck,
   windowsKernelVersions,
 } from "@/interfaces/PostureCheck";
-import { OperatingSystemPostureCheck } from "@/modules/posture-checks/checks/OperatingSystemPostureCheck";
+import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 
 type Props = {
   value?: OperatingSystemVersionCheck;
   onChange: (value: OperatingSystemVersionCheck | undefined) => void;
 };
 
-export const OperatingSystemCheck = ({ value, onChange }: Props) => {
+export const PostureCheckOperatingSystem = ({ value, onChange }: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
-    <HoverModalCard
+    <PostureCheckCard
       open={open}
       setOpen={setOpen}
       key={open ? 1 : 0}
@@ -53,7 +69,7 @@ export const OperatingSystemCheck = ({ value, onChange }: Props) => {
           setOpen(false);
         }}
       />
-    </HoverModalCard>
+    </PostureCheckCard>
   );
 };
 
@@ -140,14 +156,14 @@ const CheckContent = ({ value, onChange }: Props) => {
           </TabsTrigger>
         </TabsList>
         <TabsContent value={String(OperatingSystem.LINUX)} className={"px-8"}>
-          <OperatingSystemPostureCheck
+          <OperatingSystemTab
             value={linuxVersion}
             onChange={setLinuxVersion}
             os={OperatingSystem.LINUX}
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.WINDOWS)} className={"px-8"}>
-          <OperatingSystemPostureCheck
+          <OperatingSystemTab
             versionList={windowsKernelVersions}
             value={windowsVersion}
             onChange={setWindowsVersion}
@@ -155,7 +171,7 @@ const CheckContent = ({ value, onChange }: Props) => {
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.APPLE)} className={"px-8"}>
-          <OperatingSystemPostureCheck
+          <OperatingSystemTab
             versionList={macOSVersions}
             value={macOSVersion}
             onChange={setMacOSVersion}
@@ -163,7 +179,7 @@ const CheckContent = ({ value, onChange }: Props) => {
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.IOS)} className={"px-8"}>
-          <OperatingSystemPostureCheck
+          <OperatingSystemTab
             versionList={iOSVersions}
             value={iOSVersion}
             onChange={setIOSVersion}
@@ -171,7 +187,7 @@ const CheckContent = ({ value, onChange }: Props) => {
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.ANDROID)} className={"px-8"}>
-          <OperatingSystemPostureCheck
+          <OperatingSystemTab
             versionList={androidVersions}
             value={androidVersion}
             onChange={setAndroidVersion}
@@ -227,5 +243,130 @@ const CheckContent = ({ value, onChange }: Props) => {
         </div>
       </ModalFooter>
     </>
+  );
+};
+
+type OperatingSystemTabProps = {
+  value: string;
+  onChange: (value: string) => void;
+  versionList?: SelectOption[];
+  os: OperatingSystem;
+};
+
+const allOrMinOptions = [
+  {
+    label: "All versions",
+    value: "all",
+    icon: GalleryHorizontalEnd,
+  },
+  {
+    label: "Equal or greater than",
+    value: "min",
+    icon: IconMathEqualGreater,
+  },
+] as SelectOption[];
+
+export const OperatingSystemTab = ({
+  value,
+  onChange,
+  versionList,
+  os,
+}: OperatingSystemTabProps) => {
+  const [allow, setAllow] = useState(value == "-" ? "block" : "allow");
+  const [allOrMin, setAllOrMin] = useState(
+    value == "" || value == "-" || value == "0" ? "all" : "min",
+  );
+  const [useCustomVersion, setUseCustomVersion] = useState(() => {
+    if (!versionList) return false;
+    if (!value) return false;
+    if (value === "-") return false;
+    const find = versionList.map((v) => v.value).includes(value);
+    return !find;
+  });
+
+  const changeAllow = (value: string) => {
+    setAllow(value);
+    if (value === "block") {
+      setAllOrMin("all");
+      onChange("-");
+      setAllOrMin("all");
+      setUseCustomVersion(false);
+    } else {
+      onChange("");
+      setAllOrMin("all");
+      setUseCustomVersion(false);
+    }
+  };
+
+  const prefix =
+    os === OperatingSystem.LINUX || os === OperatingSystem.WINDOWS
+      ? "Kernel Version"
+      : "Version";
+
+  return (
+    <div className={""}>
+      <div className={"flex justify-between items-start gap-10 "}>
+        <div>
+          <Label>Allow or Block</Label>
+          <HelpText>
+            Choose whether you want to allow or block the operating system.
+          </HelpText>
+        </div>
+        <RadioGroup value={allow} onChange={changeAllow}>
+          <RadioGroupItem value={"allow"} variant={"green"}>
+            <ShieldCheck size={14} />
+            Allow
+          </RadioGroupItem>
+          <RadioGroupItem value={"block"} variant={"red"}>
+            <ShieldXIcon size={14} />
+            Block
+          </RadioGroupItem>
+        </RadioGroup>
+      </div>
+      <div className={"gap-4 items-center grid grid-cols-2 mt-3"}>
+        <SelectDropdown
+          value={allOrMin}
+          onChange={setAllOrMin}
+          options={allOrMinOptions}
+          disabled={allow === "block"}
+        />
+        {versionList && !useCustomVersion ? (
+          <SelectDropdown
+            value={value || "0"}
+            showSearch={true}
+            placeholder={"Select version..."}
+            onChange={onChange}
+            options={versionList}
+            disabled={allOrMin === "all" || allow === "block"}
+          />
+        ) : (
+          <Input
+            value={value}
+            customPrefix={prefix}
+            placeholder={"e.g., 6.0.0"}
+            disabled={allOrMin === "all" || allow === "block"}
+            onChange={(v) => {
+              onChange(v.target.value);
+            }}
+          />
+        )}
+      </div>
+      {os !== OperatingSystem.LINUX && (
+        <div className={"mt-4"}>
+          <FancyToggleSwitch
+            disabled={allow === "block" || allOrMin === "all"}
+            value={useCustomVersion}
+            onChange={setUseCustomVersion}
+            label={
+              <>
+                <FileCog size={14} />
+                Use custom version number
+              </>
+            }
+            helpText={"Use a custom version number if you need more control."}
+          />
+        </div>
+      )}
+    </div>
   );
 };

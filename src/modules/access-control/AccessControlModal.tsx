@@ -50,10 +50,8 @@ import { Group } from "@/interfaces/Group";
 import { Policy, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import {
-  PostureChecksTabTrigger,
-  PostureCheckTab,
-} from "@/modules/posture-checks/ui/PostureCheckTab";
+import { PostureCheckTab } from "@/modules/posture-checks/ui/PostureCheckTab";
+import { PostureCheckTabTrigger } from "@/modules/posture-checks/ui/PostureCheckTabTrigger";
 
 type Props = {
   children?: React.ReactNode;
@@ -291,7 +289,7 @@ export function AccessControlModalContent({
             <ArrowRightLeft size={16} />
             Policy
           </TabsTrigger>
-          <PostureChecksTabTrigger />
+          <PostureCheckTabTrigger />
           <TabsTrigger value={"general"}>
             <Text
               size={16}
