@@ -15,6 +15,9 @@ type Props = {
   interactive?: boolean;
   disabled?: boolean;
   className?: string;
+  contentClassName?: string;
+  align?: "end" | "center" | "start";
+  side?: "top" | "bottom" | "left" | "right";
 };
 export default function FullTooltip({
   children,
@@ -24,6 +27,9 @@ export default function FullTooltip({
   interactive = true,
   disabled,
   className,
+  contentClassName,
+  align = "center",
+  side = "top",
 }: Props) {
   return !disabled ? (
     <TooltipProvider disableHoverableContent={!interactive}>
@@ -43,7 +49,12 @@ export default function FullTooltip({
           )}
         </TooltipTrigger>
         {!disabled && (
-          <TooltipContent alignOffset={20}>
+          <TooltipContent
+            alignOffset={20}
+            className={contentClassName}
+            align={align}
+            side={side}
+          >
             <div className={"text-neutral-300 flex flex-col gap-1"}>
               {content}
             </div>

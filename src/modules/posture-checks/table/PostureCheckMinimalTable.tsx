@@ -39,7 +39,10 @@ export default function PostureCheckMinimalTable({
     <div className={""}>
       <div className={"flex justify-between gap-10 mb-5 items-end"}>
         <div>
-          <Label> {data.length} Posture Checks</Label>
+          <Label>
+            {data.length}{" "}
+            {data.length == 1 ? "Posture Check" : "Posture Checks"}
+          </Label>
           <HelpText className={"mb-0"}>
             Use posture checks to further restrict access in your network.
           </HelpText>

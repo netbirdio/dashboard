@@ -17,18 +17,18 @@ const Tabs = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Root>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.Root>
 >(({ className, onValueChange, ...props }, ref) => {
-  const [value, setValue] = useState(
+  const [tabValue, setTabValue] = useState(
     props.defaultValue ? props.defaultValue : "",
   );
 
   return (
-    <TabContext.Provider value={value}>
+    <TabContext.Provider value={props.value ? props.value : tabValue}>
       <TabsPrimitive.Root
         ref={ref}
-        value={value}
-        onValueChange={(value) => {
-          setValue(value);
-          onValueChange && onValueChange(value);
+        value={props.value ? props.value : tabValue}
+        onValueChange={(v) => {
+          setTabValue(v);
+          onValueChange && onValueChange(v);
         }}
         className={cn("relative min-w-0", className)}
         {...props}

@@ -27,7 +27,7 @@ import { useState } from "react";
 import AndroidIcon from "@/assets/icons/AndroidIcon";
 import AppleIcon from "@/assets/icons/AppleIcon";
 import IOSIcon from "@/assets/icons/IOSIcon";
-import ShellIcon from "@/assets/icons/ShellIcon";
+import { LinuxIcon } from "@/assets/icons/LinuxIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
@@ -115,7 +115,7 @@ const CheckContent = ({ value, onChange }: Props) => {
       <Tabs defaultValue={tab}>
         <TabsList justify={"start"} className={"px-8"}>
           <TabsTrigger value={String(OperatingSystem.LINUX)}>
-            <ShellIcon
+            <LinuxIcon
               className={
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
@@ -280,6 +280,7 @@ export const OperatingSystemTab = ({
     if (!versionList) return false;
     if (!value) return false;
     if (value === "-") return false;
+    if (value === "0") return false;
     const find = versionList.map((v) => v.value).includes(value);
     return !find;
   });

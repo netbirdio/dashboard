@@ -107,6 +107,7 @@ export default function PostureCheckTable({ postureChecks, isLoading }: Props) {
       {postureCheckModal && (
         <PostureCheckModal
           open={postureCheckModal}
+          key={currentRow ? 1 : 0}
           onOpenChange={setPostureCheckModal}
           postureCheck={currentRow}
         />
@@ -136,7 +137,10 @@ export default function PostureCheckTable({ postureChecks, isLoading }: Props) {
               <Button
                 variant={"primary"}
                 className={"ml-auto"}
-                onClick={() => setPostureCheckModal(true)}
+                onClick={() => {
+                  setCurrentRow(undefined);
+                  setPostureCheckModal(true);
+                }}
               >
                 <IconCirclePlus size={16} />
                 Add Posture Check

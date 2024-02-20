@@ -3,12 +3,7 @@ import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
-import {
-  Modal,
-  ModalClose,
-  ModalContent,
-  ModalFooter,
-} from "@components/modal/Modal";
+import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
@@ -21,6 +16,7 @@ import { ExternalLinkIcon, LayoutList, ShieldCheck, Text } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import {
+  GeoLocationCheck,
   OperatingSystemVersionCheck,
   PostureCheck,
 } from "@/interfaces/PostureCheck";
@@ -75,7 +71,7 @@ export default function PostureCheckModal({
     return os;
   };
 
-  const validateLocationCheck = (locationCheck?: PostureCheckGeoLocation) => {
+  const validateLocationCheck = (locationCheck?: GeoLocationCheck) => {
     if (!locationCheck) return;
     if (!locationCheck.locations) return;
     return {
@@ -154,7 +150,7 @@ export default function PostureCheckModal({
             color={"netbird"}
           />
 
-          <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
+          <Tabs onValueChange={(v) => setTab(v)} defaultValue={tab} value={tab}>
             <TabsList justify={"start"} className={"px-8"}>
               <TabsTrigger value={"checks"}>
                 <LayoutList size={16} />
@@ -238,31 +234,34 @@ export default function PostureCheckModal({
               </Paragraph>
             </div>
             <div className={"flex gap-3 w-full justify-end"}>
-              {slide != 1 ? (
-                <>
-                  <ModalClose asChild={true}>
-                    <Button variant={"secondary"}>Cancel</Button>
-                  </ModalClose>
-                  <Button variant={"primary"} onClick={() => setSlide(1)}>
+              <>
+                <Button
+                  variant={"secondary"}
+                  onClick={() => onOpenChange(false)}
+                >
+                  Cancel
+                </Button>
+
+                {!postureCheck && tab == "checks" && (
+                  <Button
+                    variant={"primary"}
+                    onClick={() => setTab("general")}
+                    disabled={!isAtLeastOneCheckEnabled}
+                  >
                     Continue
                   </Button>
-                </>
-              ) : (
-                <>
-                  <Button variant={"secondary"} onClick={() => setSlide(0)}>
-                    Back
-                  </Button>
+                )}
+
+                {((!postureCheck && tab == "general") || postureCheck) && (
                   <Button
                     variant={"primary"}
                     disabled={!canCreate}
                     onClick={updateOrCreatePostureCheck}
                   >
-                    {postureCheck
-                      ? "Save Posture Check"
-                      : "Create Posture Check"}
+                    {postureCheck ? "Save Changes" : "Create Posture Check"}
                   </Button>
-                </>
-              )}
+                )}
+              </>
             </div>
           </ModalFooter>
         </ModalContent>

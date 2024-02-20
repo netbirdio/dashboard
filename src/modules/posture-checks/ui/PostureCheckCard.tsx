@@ -52,18 +52,18 @@ export const PostureCheckCard = ({
       <ScaleIcon
         size={14}
         className={
-          "text-nb-gray-400 hover:text-nb-gray-200 transition-all cursor-pointer"
+          "text-nb-gray-400 hover:text-nb-gray-200 transition-all cursor-pointer -top-[1px] relative"
         }
       />
     </FullTooltip>
   );
 
   return (
-    <div>
+    <div className={"w-full"}>
       <div
         onClick={() => setOpen(true)}
         className={
-          "hover:bg-nb-gray-920/80 border border-transparent hover:border-nb-gray-900 rounded-md flex flex-col items-center transition-all cursor-pointer"
+          "hover:bg-nb-gray-920/80 border border-transparent hover:border-nb-gray-900 rounded-md flex flex-col items-center transition-all cursor-pointer w-full"
         }
       >
         <div className={"flex gap-4 items-center w-full px-4 py-3"}>

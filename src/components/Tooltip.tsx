@@ -13,7 +13,7 @@ const TooltipTrigger = TooltipPrimitive.Trigger;
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,
   React.ComponentPropsWithoutRef<typeof TooltipPrimitive.Content>
->(({ className = "px-5 py-3", sideOffset = 7, ...props }, ref) => (
+>(({ className = "px-4 py-2.5", sideOffset = 7, ...props }, ref) => (
   <TooltipPrimitive.Portal>
     <TooltipPrimitive.Content
       ref={ref}

@@ -17,32 +17,68 @@ export const PostureCheckPolicyUsageCell = ({ check }: Props) => {
 
   return (
     <div className={cn("flex gap-4")}>
-      <Badge
-        variant={"gray"}
-        className={cn(
-          "min-w-[110px] font-medium cursor-pointer",
-          check.policies &&
-            check.policies.length == 0 &&
-            "opacity-30 pointer-events-none",
-        )}
+      <FullTooltip
+        disabled={!(check.policies && check.policies?.length > 0)}
+        content={
+          <div className={"text-xs max-w-lg"}>
+            <span className={"font-medium text-nb-gray-100 text-sm"}>
+              Assigned
+              {check.policies && check.policies?.length > 1
+                ? " Policies"
+                : " Policy"}
+            </span>
+            <div className={"flex gap-2 pt-3 pb-2 flex-wrap"}>
+              {check.policies &&
+                check.policies?.length > 0 &&
+                check.policies?.map((policy: Policy, index: number) => {
+                  return (
+                    <Badge
+                      variant={"gray-ghost"}
+                      useHover={false}
+                      key={index}
+                      className={"justify-start font-medium"}
+                    >
+                      <AccessControlIcon size={12} />
+                      {policy.name}
+                    </Badge>
+                  );
+                })}
+            </div>
+          </div>
+        }
+        interactive={false}
       >
-        <AccessControlIcon size={12} />
-        <span>
-          <span className={"font-bold"}>
-            {check.policies && check.policies?.length > 0
-              ? check.policies && check.policies?.length
-              : ""}
-          </span>{" "}
-          {check.policies && check.policies?.length == 0
-            ? "No Policies"
-            : check.policies && check.policies?.length > 1
-            ? "Policies"
-            : "Policy"}
-        </span>
-      </Badge>
+        <Badge
+          variant={"gray"}
+          useHover={!!(check.policies && check.policies?.length > 0)}
+          className={cn(
+            "min-w-[110px] font-medium cursor-pointer",
+            check.policies &&
+              check.policies.length == 0 &&
+              "opacity-30 pointer-events-none",
+          )}
+        >
+          <AccessControlIcon size={12} />
+          <span>
+            <span className={"font-bold"}>
+              {check.policies && check.policies?.length > 0
+                ? check.policies && check.policies?.length
+                : ""}
+            </span>{" "}
+            {check.policies && check.policies?.length == 0
+              ? "No Policies"
+              : check.policies && check.policies?.length > 1
+              ? "Policies"
+              : "Policy"}
+          </span>
+        </Badge>
+      </FullTooltip>
       <FullTooltip
         content={
-          "Assign postures checks within the Access Control Policies page"
+          <div className={"text-xs max-w-[260px]"}>
+            To assign this posture check to your policies, visit the Policies
+            page.
+          </div>
         }
         interactive={false}
       >
