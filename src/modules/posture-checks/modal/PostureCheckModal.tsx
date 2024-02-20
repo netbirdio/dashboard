@@ -55,8 +55,6 @@ export default function PostureCheckModal({
     postureCheck?.checks.os_version_check || undefined,
   );
 
-  const [slide, setSlide] = useState(0);
-
   const validateOSCheck = (osCheck?: OperatingSystemVersionCheck) => {
     if (!osCheck) return;
     const os = osCheck;
