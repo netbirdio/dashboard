@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import FullTooltip from "@components/FullTooltip";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import { Trash2 } from "lucide-react";
@@ -36,12 +37,31 @@ export const PostureCheckActionCell = ({ check }: Props) => {
     }
   };
 
+  const hasPolicies = check.policies ? check.policies?.length > 0 : false;
+
   return (
     <div className={"flex justify-end pr-4"}>
-      <Button variant={"danger-outline"} size={"sm"} onClick={handleDelete}>
-        <Trash2 size={16} />
-        Delete
-      </Button>
+      <FullTooltip
+        disabled={!hasPolicies}
+        content={
+          <div className={"text-xs max-w-xs"}>
+            This posture check is assigned to a policy and cannot be deleted.
+            Please remove the posture check from all policies before deleting
+            it.
+          </div>
+        }
+        interactive={false}
+      >
+        <Button
+          variant={"danger-outline"}
+          size={"sm"}
+          onClick={handleDelete}
+          disabled={hasPolicies}
+        >
+          <Trash2 size={16} />
+          Delete
+        </Button>
+      </FullTooltip>
     </div>
   );
 };

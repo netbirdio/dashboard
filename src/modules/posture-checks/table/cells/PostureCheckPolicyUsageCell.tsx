@@ -49,6 +49,7 @@ export const PostureCheckPolicyUsageCell = ({ check }: Props) => {
         interactive={false}
       >
         <Badge
+          onClick={() => router.push("/access-control")}
           variant={"gray"}
           useHover={!!(check.policies && check.policies?.length > 0)}
           className={cn(
