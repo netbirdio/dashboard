@@ -1,6 +1,8 @@
+import FullTooltip from "@components/FullTooltip";
 import Paragraph from "@components/Paragraph";
 import { cn } from "@utils/helpers";
 import { cva } from "class-variance-authority";
+import { AlertCircle } from "lucide-react";
 import * as React from "react";
 
 export interface InputProps
@@ -10,6 +12,7 @@ export interface InputProps
   maxWidthClass?: string;
   icon?: React.ReactNode;
   error?: string;
+  errorTooltip?: boolean;
 }
 
 const inputVariants = cva("", {
@@ -45,6 +48,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       icon,
       maxWidthClass = "",
       error,
+      errorTooltip = false,
       ...props
     },
     ref,
@@ -99,8 +103,33 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           >
             {customSuffix}
           </div>
+          {error && errorTooltip && (
+            <div
+              className={
+                "absolute right-0 top-2 h-[0px] w-full flex items-center pr-3 justify-center"
+              }
+            >
+              <FullTooltip
+                content={
+                  <div className={"text-xs text-red-500 inline-flex"}>
+                    <AlertCircle
+                      size={13}
+                      className={"top-[1px] relative mr-2"}
+                    />
+                    {error}
+                  </div>
+                }
+                interactive={false}
+                align={"center"}
+                side={"top"}
+                keepOpen={true}
+              >
+                &nbsp;
+              </FullTooltip>
+            </div>
+          )}
         </div>
-        {error && (
+        {error && !errorTooltip && (
           <Paragraph className={"text-xs !text-red-500 mt-2"}>
             {error}
           </Paragraph>

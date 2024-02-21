@@ -13,6 +13,7 @@ import {
 } from "@components/select/SelectDropdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { IconMathEqualGreater } from "@tabler/icons-react";
+import { validator } from "@utils/helpers";
 import { isEmpty } from "lodash";
 import {
   Disc3Icon,
@@ -23,7 +24,7 @@ import {
   ShieldXIcon,
 } from "lucide-react";
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import AndroidIcon from "@/assets/icons/AndroidIcon";
 import AppleIcon from "@/assets/icons/AppleIcon";
 import IOSIcon from "@/assets/icons/IOSIcon";
@@ -110,6 +111,15 @@ const CheckContent = ({ value, onChange }: Props) => {
       : "-",
   );
 
+  const [linuxError, setLinuxError] = useState("");
+  const [windowsError, setWindowsError] = useState("");
+  const [macOSError, setMacOSError] = useState("");
+  const [iOSError, setIOSError] = useState("");
+  const [androidError, setAndroidError] = useState("");
+
+  const versionError =
+    linuxError || windowsError || macOSError || iOSError || androidError;
+
   return (
     <>
       <Tabs defaultValue={tab}>
@@ -160,6 +170,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             value={linuxVersion}
             onChange={setLinuxVersion}
             os={OperatingSystem.LINUX}
+            onError={setLinuxError}
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.WINDOWS)} className={"px-8"}>
@@ -168,6 +179,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             value={windowsVersion}
             onChange={setWindowsVersion}
             os={OperatingSystem.WINDOWS}
+            onError={setWindowsError}
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.APPLE)} className={"px-8"}>
@@ -176,6 +188,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             value={macOSVersion}
             onChange={setMacOSVersion}
             os={OperatingSystem.APPLE}
+            onError={setMacOSError}
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.IOS)} className={"px-8"}>
@@ -184,6 +197,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             value={iOSVersion}
             onChange={setIOSVersion}
             os={OperatingSystem.IOS}
+            onError={setIOSError}
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.ANDROID)} className={"px-8"}>
@@ -192,6 +206,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             value={androidVersion}
             onChange={setAndroidVersion}
             os={OperatingSystem.ANDROID}
+            onError={setAndroidError}
           />
         </TabsContent>
       </Tabs>
@@ -211,6 +226,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             <Button variant={"secondary"}>Cancel</Button>
           </ModalClose>
           <Button
+            disabled={!!versionError}
             variant={"primary"}
             onClick={() => {
               const osCheck = {} as OperatingSystemVersionCheck;
@@ -251,6 +267,7 @@ type OperatingSystemTabProps = {
   onChange: (value: string) => void;
   versionList?: SelectOption[];
   os: OperatingSystem;
+  onError: (error: string) => void;
 };
 
 const allOrMinOptions = [
@@ -271,6 +288,7 @@ export const OperatingSystemTab = ({
   onChange,
   versionList,
   os,
+  onError,
 }: OperatingSystemTabProps) => {
   const [allow, setAllow] = useState(value == "-" ? "block" : "allow");
   const [allOrMin, setAllOrMin] = useState(
@@ -299,10 +317,33 @@ export const OperatingSystemTab = ({
     }
   };
 
+  const changeAllOrMin = (option: string) => {
+    setAllOrMin(option);
+    if (option === "all") {
+      onChange("");
+    } else if (option === "min" && value == "" && versionList) {
+      const getLast = versionList[versionList.length - 1];
+      onChange(getLast.value);
+    }
+  };
+
   const prefix =
     os === OperatingSystem.LINUX || os === OperatingSystem.WINDOWS
       ? "Kernel Version"
       : "Version";
+
+  const versionError = useMemo(() => {
+    const msg = "Please enter a valid version, e.g., 0.2, 0.2.0, 0.2.0-alpha.1";
+    if (value == "") return "";
+    if (value == "-") return "";
+    const validSemver = validator.isValidVersion(value);
+    if (!validSemver) return msg;
+    return "";
+  }, [value]);
+
+  useEffect(() => {
+    onError(versionError);
+  }, [versionError]);
 
   return (
     <div className={""}>
@@ -327,7 +368,7 @@ export const OperatingSystemTab = ({
       <div className={"gap-4 items-center grid grid-cols-2 mt-3"}>
         <SelectDropdown
           value={allOrMin}
-          onChange={setAllOrMin}
+          onChange={changeAllOrMin}
           options={allOrMinOptions}
           disabled={allow === "block"}
         />
@@ -345,6 +386,8 @@ export const OperatingSystemTab = ({
             value={value}
             customPrefix={prefix}
             placeholder={"e.g., 6.0.0"}
+            error={versionError}
+            errorTooltip={true}
             disabled={allOrMin === "all" || allow === "block"}
             onChange={(v) => {
               onChange(v.target.value);
