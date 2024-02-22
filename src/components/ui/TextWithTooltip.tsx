@@ -24,11 +24,12 @@ export default function TextWithTooltip({
     <FullTooltip
       disabled={charCount <= maxChars || hideTooltip}
       interactive={false}
+      className={"truncate w-full"}
       content={
         <div className={"max-w-xs break-all whitespace-normal"}>{text}</div>
       }
     >
-      <span className={cn(className)}>
+      <span className={cn(className, "truncate")}>
         {charCount > maxChars ? text && `${text.slice(0, maxChars)}...` : text}
       </span>
     </FullTooltip>

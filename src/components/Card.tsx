@@ -30,6 +30,7 @@ type CardListItemProps = {
   value: React.ReactNode;
   className?: string;
   copy?: boolean;
+  tooltip?: boolean;
 };
 
 function CardListItem({
@@ -37,6 +38,7 @@ function CardListItem({
   value,
   className,
   copy = false,
+  tooltip = true,
 }: CardListItemProps) {
   const [, copyToClipBoard] = useCopyToClipboard(value as string);
 
@@ -57,7 +59,11 @@ function CardListItem({
           copy && copyToClipBoard(`${label} has been copied to clipboard.`)
         }
       >
-        <TextWithTooltip text={value as string} maxChars={40} />
+        {tooltip ? (
+          <TextWithTooltip text={value as string} maxChars={40} />
+        ) : (
+          value
+        )}
         {copy && <Copy size={13} />}
       </div>
     </li>
