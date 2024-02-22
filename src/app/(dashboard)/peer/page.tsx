@@ -339,10 +339,12 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
             </>
           }
           value={
-            dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
-            " (" +
-            dayjs().to(peer.last_seen) +
-            ")"
+            peer.connected
+              ? "just now"
+              : dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
+                " (" +
+                dayjs().to(peer.last_seen) +
+                ")"
           }
         />
         <Card.ListItem

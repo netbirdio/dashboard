@@ -24,6 +24,7 @@ import AccessControlDestinationsCell from "@/modules/access-control/table/Access
 import AccessControlDirectionCell from "@/modules/access-control/table/AccessControlDirectionCell";
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
 import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
+import AccessControlPostureCheckCell from "@/modules/access-control/table/AccessControlPostureCheckCell";
 import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
 
@@ -141,6 +142,17 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
       return <DataTableHeader column={column}>Ports</DataTableHeader>;
     },
     cell: ({ cell }) => <AccessControlPortsCell policy={cell.row.original} />,
+  },
+  {
+    id: "posture_checks",
+    accessorFn: (row) => row.source_posture_checks?.length || 0,
+    sortingFn: "basic",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Posture Checks</DataTableHeader>;
+    },
+    cell: ({ cell }) => (
+      <AccessControlPostureCheckCell policy={cell.row.original} />
+    ),
   },
   {
     accessorKey: "id",

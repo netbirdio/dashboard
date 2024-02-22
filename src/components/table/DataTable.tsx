@@ -120,6 +120,7 @@ interface DataTableProps<TData, TValue> {
   showSearch?: boolean;
   rightSide?: (table: TanStackTable<TData>) => React.ReactNode;
   manualPagination?: boolean;
+  showHeader?: boolean;
 }
 
 export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
@@ -152,6 +153,7 @@ export function DataTableContent<TData, TValue>({
   searchClassName,
   rightSide,
   manualPagination = false,
+  showHeader = true,
 }: DataTableProps<TData, TValue>) {
   const path = usePathname();
   const [columnFilters, setColumnFilters] = useLocalStorage<ColumnFiltersState>(
@@ -250,7 +252,7 @@ export function DataTableContent<TData, TValue>({
           className={cn("relative mt-8", tableClassName)}
           minimal={minimal}
         >
-          {as == "table" && (
+          {showHeader && as == "table" && (
             <TableHeaderComponent minimal={minimal}>
               {table.getHeaderGroups().map((headerGroup) => (
                 <TableRowComponent key={headerGroup.id} minimal={minimal}>
@@ -361,6 +363,7 @@ export function DataTableContent<TData, TValue>({
                             minimal={minimal}
                             className={cn(
                               onRowClick && "cursor-pointer relative",
+                              rowClassName,
                             )}
                             data-state={row.getIsSelected() && "selected"}
                           >

@@ -69,4 +69,9 @@ export const validator = {
     ); // validate fragment locator
     return urlPattern.test(urlString);
   },
+  isValidVersion: (version: string) => {
+    const semverRegex =
+      /^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
+    return semverRegex.test(version);
+  },
 };

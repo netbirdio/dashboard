@@ -7,6 +7,7 @@ export interface Policy {
   enabled: boolean;
   query: string;
   rules: PolicyRule[];
+  source_posture_checks: string[];
 }
 
 export interface PolicyRule {
@@ -23,9 +24,3 @@ export interface PolicyRule {
 }
 
 export type Protocol = "all" | "tcp" | "udp" | "icmp";
-
-export interface PolicyToSave extends Policy {
-  sourcesNoId?: string[];
-  destinationsNoId?: string[];
-  groupsToSave?: string[];
-}

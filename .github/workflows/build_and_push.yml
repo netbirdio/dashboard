@@ -27,12 +27,12 @@ jobs:
 
       - run: echo '{}' > .local-config.json
 
-      - name: Build 
+      - name: Build
         run: npm run build
-      - 
+      -
         name: Set up QEMU
         uses: docker/setup-qemu-action@v2
-      - 
+      -
         name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
       -

@@ -28,7 +28,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
 import PolicyDirection, { Direction } from "@components/ui/PolicyDirection";
-import { useApiCall } from "@utils/api";
+import useFetchApi, { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import { uniqBy } from "lodash";
 import {
@@ -42,13 +42,16 @@ import {
   Shield,
   Text,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
 import { Policy, Protocol } from "@/interfaces/Policy";
+import { PostureCheck } from "@/interfaces/PostureCheck";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { PostureCheckTab } from "@/modules/posture-checks/ui/PostureCheckTab";
+import { PostureCheckTabTrigger } from "@/modules/posture-checks/ui/PostureCheckTabTrigger";
 
 type Props = {
   children?: React.ReactNode;
@@ -108,11 +111,15 @@ export function AccessControlModalContent({
   policy,
   cell,
 }: ModalProps) {
+  const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
+    useFetchApi<PostureCheck[]>("/posture-checks");
+
   const { updatePolicy } = usePolicies();
   const firstRule = policy?.rules ? policy.rules[0] : undefined;
 
   const [tab, setTab] = useState(() => {
     if (!cell) return "policy";
+    if (cell == "posture_checks") return "posture_checks";
     if (cell == "name") return "general";
     return "policy";
   });
@@ -189,6 +196,9 @@ export function AccessControlModalContent({
       name,
       description,
       enabled,
+      source_posture_checks: postureChecks
+        ? postureChecks.map((c) => c.id)
+        : undefined,
       rules: [
         {
           bidirectional: direction == "bi",
@@ -235,6 +245,29 @@ export function AccessControlModalContent({
     if (direction != "bi" && ports.length == 0) return true;
   }, [sourceGroups, destinationGroups, direction, ports, name]);
 
+  const [postureChecks, setPostureChecks] = useState<PostureCheck[]>([]);
+  const postureChecksLoaded = useRef(false);
+
+  const initialPostureChecks = useMemo(() => {
+    return (
+      allPostureChecks?.filter((check) => {
+        if (policy?.source_posture_checks) {
+          return policy.source_posture_checks.includes(check.id);
+        }
+        return false;
+      }) || []
+    );
+  }, [policy, allPostureChecks]);
+
+  useEffect(() => {
+    if (postureChecksLoaded.current) return;
+
+    if (initialPostureChecks.length > 0) {
+      postureChecksLoaded.current = true;
+      setPostureChecks(initialPostureChecks);
+    }
+  }, [initialPostureChecks]);
+
   return (
     <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
@@ -256,6 +289,7 @@ export function AccessControlModalContent({
             <ArrowRightLeft size={16} />
             Policy
           </TabsTrigger>
+          <PostureCheckTabTrigger />
           <TabsTrigger value={"general"}>
             <Text
               size={16}
@@ -368,6 +402,11 @@ export function AccessControlModalContent({
             />
           </div>
         </TabsContent>
+        <PostureCheckTab
+          isLoading={isPostureChecksLoading}
+          postureChecks={postureChecks}
+          setPostureChecks={setPostureChecks}
+        />
         <TabsContent value={"general"} className={"px-8 pb-6"}>
           <div className={"flex flex-col gap-6"}>
             <div>

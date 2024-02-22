@@ -40,6 +40,10 @@ export default function PoliciesProvider({ children }: Props) {
             enabled: toUpdate.enabled ?? policy.enabled,
             query: toUpdate.query ?? policy.query ?? "",
             rules: toUpdate.rules ?? policy.rules ?? [],
+            source_posture_checks:
+              toUpdate.source_posture_checks ??
+              policy.source_posture_checks ??
+              [],
           },
           `/${policy.id}`,
         )

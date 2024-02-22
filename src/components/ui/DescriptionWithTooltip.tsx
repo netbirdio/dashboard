@@ -5,13 +5,18 @@ import React from "react";
 type Props = {
   text?: string;
   className?: string;
+  maxChars?: number;
 };
 
-export default function DescriptionWithTooltip({ text, className }: Props) {
+export default function DescriptionWithTooltip({
+  text,
+  className,
+  maxChars = 30,
+}: Props) {
   return (
     <TextWithTooltip
       text={text}
-      maxChars={30}
+      maxChars={maxChars}
       className={cn("text-sm text-nb-gray-400 whitespace-nowrap", className)}
     />
   );

@@ -42,7 +42,7 @@ export default function Navigation({
         hideOnMobile ? "hidden md:block" : "",
         fullWidth
           ? "w-auto max-w-[22rem]"
-          : "w-[14rem] min-w-[14rem] overflow-y-auto",
+          : "w-[15rem] min-w-[15rem] overflow-y-auto",
       )}
       theme={customTheme}
       style={{
@@ -69,8 +69,22 @@ export default function Navigation({
                 <SidebarItem
                   icon={<AccessControlIcon />}
                   label="Access Control"
-                  href={"/access-control"}
-                />
+                  collapsible
+                >
+                  <SidebarItem
+                    label="Policies"
+                    href={"/access-control"}
+                    isChild
+                    exactPathMatch={true}
+                  />
+                  <SidebarItem
+                    label="Posture Checks"
+                    isChild
+                    href={"/posture-checks"}
+                    exactPathMatch={true}
+                  />
+                </SidebarItem>
+
                 <SidebarItem
                   icon={<NetworkRoutesIcon />}
                   label="Network Routes"
