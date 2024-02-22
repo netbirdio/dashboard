@@ -28,12 +28,16 @@ export default function CopyToClipboardText({ children, message }: Props) {
 
       {copied ? (
         <CheckIcon
-          className={"text-nb-gray-100 opacity-0 group-hover:opacity-100"}
+          className={
+            "text-nb-gray-100 opacity-0 group-hover:opacity-100 shrink-0"
+          }
           size={12}
         />
       ) : (
         <CopyIcon
-          className={"text-nb-gray-100 opacity-0 group-hover:opacity-100"}
+          className={
+            "text-nb-gray-100 opacity-0 group-hover:opacity-100 shrink-0"
+          }
           size={12}
         />
       )}
