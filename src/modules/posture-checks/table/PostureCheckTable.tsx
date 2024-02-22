@@ -174,7 +174,7 @@ export default function PostureCheckTable({ postureChecks, isLoading }: Props) {
             learnMore={
               <>
                 Learn more about
-                <InlineLink href={"#"} target={"_blank"}>
+                <InlineLink href={"https://docs.netbird.io/how-to/manage-posture-checks"} target={"_blank"}>
                   Posture Checks
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
