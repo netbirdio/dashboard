@@ -86,7 +86,7 @@ const CheckContent = ({ value, onChange }: Props) => {
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
-            <InlineLink href={"#"} target={"_blank"}>
+            <InlineLink href={"https://docs.netbird.io/how-to/manage-posture-checks#net-bird-client-version-check"} target={"_blank"}>
               Client Version Check
               <ExternalLinkIcon size={12} />
             </InlineLink>

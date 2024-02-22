@@ -171,7 +171,7 @@ const CheckContent = ({ value, onChange }: Props) => {
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
-            <InlineLink href={"#"} target={"_blank"}>
+            <InlineLink href={"https://docs.netbird.io/how-to/manage-posture-checks#geolocation-check"} target={"_blank"}>
               Country & Region Check
               <ExternalLinkIcon size={12} />
             </InlineLink>
