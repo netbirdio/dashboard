@@ -321,7 +321,7 @@ export function NameserverModalContent({
               )}
 
               <Button
-                disabled={nameservers.length >= 2}
+                disabled={nameservers.length >= 3}
                 variant={"dotted"}
                 className={"w-full"}
                 size={"sm"}
