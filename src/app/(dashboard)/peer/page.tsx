@@ -144,7 +144,7 @@ function PeerOverview() {
                   <CircleIcon
                     active={peer.connected}
                     size={12}
-                    className={"mb-[3px]"}
+                    className={"mb-[3px] shrink-0"}
                   />
                   <TextWithTooltip text={name} maxChars={30} />
 
