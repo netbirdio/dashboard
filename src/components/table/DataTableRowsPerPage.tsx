@@ -18,6 +18,8 @@ export function DataTableRowsPerPage<TData>({
   disabled,
 }: DataTablePaginationProps<TData>) {
   const [open, setOpen] = React.useState(false);
+  const [isHovered, setIsHovered] = React.useState(false); 
+  const textColorClass = isHovered ? "text-white" : "text-nb-gray-300";
 
   return (
     <>
@@ -28,16 +30,18 @@ export function DataTableRowsPerPage<TData>({
             role="combobox"
             aria-expanded={open}
             disabled={disabled}
+            onMouseEnter={() => setIsHovered(true)} 
+            onMouseLeave={() => setIsHovered(false)} 
             className="w-[200px] justify-between"
           >
-            <RowsIcon size={15} className={"text-nb-gray-300"} />
+            <RowsIcon size={15} className={textColorClass} />
             <div>
-              <span className={"text-white"}>
+              <span className={textColorClass}>
                 {table.getState().pagination.pageSize}
               </span>
-              <span className={"text-nb-gray-300"}> rows per page</span>
+              <span className={textColorClass}> rows per page</span>
             </div>
-            <ChevronDown className="h-4 w-4 opacity-50" />
+            <ChevronDown className={`h-4 w-4 opacity-50 ${textColorClass}`} />
           </Button>
         </PopoverTrigger>
         <PopoverContent className="w-[200px] p-0" sideOffset={7}>
@@ -56,18 +60,15 @@ export function DataTableRowsPerPage<TData>({
                     className={cn(
                       "cursor-pointer",
                       "flex gap-2 px-2 py-1.5 my-1 mx-1 rounded-md items-center hover:dark:bg-nb-gray-800 text-nb-gray-400 hover:text-white",
-                      table.getState().pagination.pageSize === val
-                        ? "text-white"
-                        : "",
+                      table.getState().pagination.pageSize === val ? "text-white" : "",
                     )}
                   >
                     <Check
                       size={15}
                       className={cn(
-                        "text-white shrink-0",
-                        table.getState().pagination.pageSize === val
-                          ? "opacity-100"
-                          : "opacity-0",
+                        "shrink-0",
+                        table.getState().pagination.pageSize === val ? "opacity-100 text-white" : "opacity-0",
+                        textColorClass, 
                       )}
                     />
                     {val}

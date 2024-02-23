@@ -50,7 +50,7 @@ export function OSLogo({ os }: { os: string }) {
   if (icon === OperatingSystem.APPLE)
     return <Image src={AppleLogo} alt={""} width={14} />;
   if (icon === OperatingSystem.IOS)
-    return <IOSIcon className={"fill-white"} size={20} />;
+    return <Image src={AppleLogo} alt={""} width={14} />;
   if (icon === OperatingSystem.ANDROID)
     return <FcAndroidOs className={"text-white text-2xl brightness-200"} />;
 
