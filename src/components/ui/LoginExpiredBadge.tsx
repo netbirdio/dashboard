@@ -10,7 +10,7 @@ export default function LoginExpiredBadge({ loginExpired }: Props) {
     <Tooltip delayDuration={1}>
       <TooltipTrigger>
         <Badge variant={"red"} className={"px-3"}>
-          <AlertTriangle size={14} className={"mr-1"} />
+          <AlertTriangle size={13} className={"mr-1"} />
           Login required
         </Badge>
       </TooltipTrigger>

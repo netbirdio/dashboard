@@ -2,19 +2,16 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
-import useFetchApi from "@utils/api";
 import { createElement, useMemo } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
-import { Country } from "@/interfaces/Country";
+import { useCountries } from "@/contexts/CountryProvider";
 
 type Props = {
   value: string;
   onChange: (value: string) => void;
 };
 export const CountrySelector = ({ value, onChange }: Props) => {
-  const { data: countries, isLoading } = useFetchApi<Country[]>(
-    "/locations/countries",
-  );
+  const { countries, isLoading } = useCountries();
 
   const countryList = useMemo(() => {
     return countries?.map((country) => {

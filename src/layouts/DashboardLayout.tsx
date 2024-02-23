@@ -12,6 +12,7 @@ import React from "react";
 import ApplicationProvider, {
   useApplicationContext,
 } from "@/contexts/ApplicationProvider";
+import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
@@ -26,7 +27,9 @@ export default function DashboardLayout({
     <ApplicationProvider>
       <UsersProvider>
         <GroupsProvider>
-          <DashboardPageContent>{children}</DashboardPageContent>
+          <CountryProvider>
+            <DashboardPageContent>{children}</DashboardPageContent>
+          </CountryProvider>
         </GroupsProvider>
       </UsersProvider>
     </ApplicationProvider>
