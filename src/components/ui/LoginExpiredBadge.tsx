@@ -6,7 +6,7 @@ type Props = {
   loginExpired: boolean;
 };
 export default function LoginExpiredBadge({ loginExpired }: Props) {
-  return !loginExpired ? (
+  return loginExpired ? (
     <Tooltip delayDuration={1}>
       <TooltipTrigger>
         <Badge variant={"red"} className={"px-3"}>
