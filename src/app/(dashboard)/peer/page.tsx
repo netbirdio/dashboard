@@ -342,8 +342,8 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
                   <Skeleton width={140} />
                 ) : (
                   <div className={"flex gap-2 items-center"}>
-                    <div className={"border-2 border-nb-gray-800 rounded-full"}>
-                      <RoundedFlag country={"de"} size={13} />
+                    <div className={"border-0 border-nb-gray-800 rounded-full"}>
+                      <RoundedFlag country={peer.country_code} size={12} />
                     </div>
                     {countryText}
                   </div>
