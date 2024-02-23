@@ -27,7 +27,7 @@ export default function GroupBadge({
       className={cn("transition-all group whitespace-nowrap", className)}
       onClick={onClick}
     >
-      <FolderGit2 size={12} />
+      <FolderGit2 size={12} className={"shrink-0"} />
       <TextWithTooltip text={group.name} maxChars={20} />
       {children}
       {showX && (

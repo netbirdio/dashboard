@@ -26,23 +26,28 @@ import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { IconCloudLock, IconInfoCircle } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import dayjs from "dayjs";
-import { trim } from "lodash";
+import { isEmpty, trim } from "lodash";
 import {
   Cpu,
+  FlagIcon,
   Globe,
   History,
   MapPin,
   MonitorSmartphoneIcon,
+  NetworkIcon,
   PencilIcon,
   TerminalSquare,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toASCII } from "punycode";
 import React, { useMemo, useState } from "react";
+import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
+import RoundedFlag from "@/assets/countries/RoundedFlag";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { useCountries } from "@/contexts/CountryProvider";
 import PeerProvider, { usePeer } from "@/contexts/PeerProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
@@ -139,7 +144,7 @@ function PeerOverview() {
                   <CircleIcon
                     active={peer.connected}
                     size={12}
-                    className={"mb-[3px]"}
+                    className={"mb-[3px] shrink-0"}
                   />
                   <TextWithTooltip text={name} maxChars={30} />
 
@@ -291,6 +296,12 @@ function PeerOverview() {
 }
 
 function PeerInformationCard({ peer }: { peer: Peer }) {
+  const { isLoading, getRegionByPeer } = useCountries();
+
+  const countryText = useMemo(() => {
+    return getRegionByPeer(peer);
+  }, [getRegionByPeer, peer]);
+
   return (
     <Card>
       <Card.List>
@@ -302,6 +313,44 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
             </>
           }
           value={peer.ip}
+        />
+
+        <Card.ListItem
+          label={
+            <>
+              <NetworkIcon size={16} />
+              Public IP-Address
+            </>
+          }
+          value={peer.connection_ip}
+        />
+
+        <Card.ListItem
+          label={
+            <>
+              <FlagIcon size={16} />
+              Region
+            </>
+          }
+          tooltip={false}
+          value={
+            isEmpty(peer.country_code) ? (
+              "Unknown"
+            ) : (
+              <>
+                {isLoading ? (
+                  <Skeleton width={140} />
+                ) : (
+                  <div className={"flex gap-2 items-center"}>
+                    <div className={"border-0 border-nb-gray-800 rounded-full"}>
+                      <RoundedFlag country={peer.country_code} size={12} />
+                    </div>
+                    {countryText}
+                  </div>
+                )}
+              </>
+            )
+          }
         />
 
         <Card.ListItem
@@ -347,6 +396,7 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
                 ")"
           }
         />
+
         <Card.ListItem
           label={
             <>

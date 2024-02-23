@@ -77,7 +77,11 @@ export function useNetBirdFetch(ignoreError: boolean = false) {
   };
 }
 
-export default function useFetchApi<T>(url: string, ignoreError = false) {
+export default function useFetchApi<T>(
+  url: string,
+  ignoreError = false,
+  revalidate = true,
+) {
   const { fetch } = useNetBirdFetch(ignoreError);
   const handleErrors = useApiErrorHandling(ignoreError);
 
@@ -90,6 +94,9 @@ export default function useFetchApi<T>(url: string, ignoreError = false) {
     },
     {
       keepPreviousData: true,
+      revalidateOnFocus: revalidate,
+      revalidateIfStale: revalidate,
+      revalidateOnReconnect: revalidate,
     },
   );
 
