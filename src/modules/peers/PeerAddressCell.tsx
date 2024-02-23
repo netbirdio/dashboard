@@ -21,7 +21,7 @@ export default function PeerAddressCell({ peer }: Props) {
     >
       <div
         className={
-          "flex gap-4 items-center min-w-[320px] max-w-[320px] group/cell transition-all hover:bg-nb-gray-800/20  py-2 px-3 rounded-md cursor-pointer"
+          "flex gap-4 items-center min-w-[320px] max-w-[320px] group/cell transition-all hover:bg-nb-gray-800/10 py-2 px-3 rounded-md cursor-default"
         }
         onClick={(e) => {
           e.stopPropagation();
@@ -30,13 +30,13 @@ export default function PeerAddressCell({ peer }: Props) {
       >
         <div
           className={cn(
-            "flex items-center justify-center rounded-full h-8 w-8 shrink-0 bg-nb-gray-900 transition-all",
+            "flex items-center justify-center rounded-full h-8 w-8 shrink-0 bg-nb-gray-920/80 transition-all",
           )}
         >
           {isEmpty(peer.country_code) ? (
             <GlobeIcon size={16} className={"text-nb-gray-300"} />
           ) : (
-            <RoundedFlag country={peer.country_code} size={26} />
+            <RoundedFlag country={peer.country_code} size={20} />
           )}
         </div>
         <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 font-light truncate">
