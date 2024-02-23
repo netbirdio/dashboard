@@ -18,6 +18,8 @@ const CountryContext = React.createContext(
 export default function CountryProvider({ children }: Props) {
   const { data: countries, isLoading } = useFetchApi<Country[]>(
     "/locations/countries",
+    false,
+    false,
   );
 
   const getRegionByPeer = useCallback(
