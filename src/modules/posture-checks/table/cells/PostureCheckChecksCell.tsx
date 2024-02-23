@@ -1,11 +1,12 @@
 import { cn } from "@utils/helpers";
-import { Disc3Icon, FlagIcon } from "lucide-react";
+import { Disc3Icon, FlagIcon, NetworkIcon } from "lucide-react";
 import * as React from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { GeoLocationTooltip } from "@/modules/posture-checks/checks/tooltips/GeoLocationTooltip";
 import { NetBirdVersionTooltip } from "@/modules/posture-checks/checks/tooltips/NetBirdVersionTooltip";
 import { OperatingSystemTooltip } from "@/modules/posture-checks/checks/tooltips/OperatingSystemTooltip";
+import { PrivateNetworkTooltip } from "@/modules/posture-checks/checks/tooltips/PrivateNetworkTooltip";
 
 type Props = {
   check: PostureCheck;
@@ -55,6 +56,18 @@ export const PostureCheckChecksCell = ({ check }: Props) => {
                 <Disc3Icon size={14} />
               </div>
             </OperatingSystemTooltip>
+          )}
+
+          {check.checks.private_network_check && (
+            <PrivateNetworkTooltip check={check.checks.private_network_check}>
+              <div
+                className={cn(
+                  "bg-gradient-to-tr from-blue-500 to-blue-400 h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
+                )}
+              >
+                <NetworkIcon size={14} />
+              </div>
+            </PrivateNetworkTooltip>
           )}
         </div>
       </div>

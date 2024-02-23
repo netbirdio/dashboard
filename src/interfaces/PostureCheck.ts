@@ -9,6 +9,7 @@ export interface PostureCheck {
     nb_version_check?: NetBirdVersionCheck;
     os_version_check?: OperatingSystemVersionCheck;
     geo_location_check?: GeoLocationCheck;
+    private_network_check?: PrivateNetworkCheck;
   };
   policies?: Policy[];
   active?: boolean;
@@ -45,6 +46,11 @@ export interface GeoLocation {
   id: string;
   country_code: string;
   city_name: string;
+}
+
+export interface PrivateNetworkCheck {
+  ranges: string[];
+  action: "allow" | "deny";
 }
 
 export const windowsKernelVersions: SelectOption[] = [
