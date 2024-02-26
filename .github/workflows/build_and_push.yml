@@ -2,7 +2,7 @@ name: build and push
 on:
   push:
     branches:
-      - feature/network-check
+      - main
     tags:
       - "**"
   pull_request:
@@ -54,7 +54,7 @@ jobs:
         with:
           context: .
           file: docker/Dockerfile
-          push: true
+          push: ${{ github.event_name != 'pull_request' }}
           platforms: linux/amd64,linux/arm64,linux/arm
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
