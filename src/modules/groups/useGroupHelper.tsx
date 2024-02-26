@@ -30,7 +30,7 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
   }, [groups, initial]);
 
   const [selectedGroups, setSelectedGroups] = useState<Group[]>(initialGroups);
-  const peerGroups = usePeerGroups(peer);
+  const { peerGroups } = usePeerGroups(peer);
 
   const save = async () => {
     return Promise.all(getAllGroupCalls()).then((groups) => {

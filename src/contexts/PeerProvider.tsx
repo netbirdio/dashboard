@@ -1,4 +1,5 @@
 import { notify } from "@components/Notification";
+import SkeletonPeerDetail from "@components/skeletons/SkeletonPeerDetail";
 import { useApiCall } from "@utils/api";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
@@ -27,12 +28,13 @@ const PeerContext = React.createContext(
     ) => Promise<Peer>;
     openSSHDialog: () => Promise<boolean>;
     deletePeer: () => void;
+    isLoading: boolean;
   },
 );
 
 export default function PeerProvider({ children, peer }: Props) {
   const user = usePeerUser(peer);
-  const peerGroups = usePeerGroups(peer);
+  const { peerGroups, isLoading } = usePeerGroups(peer);
   const peerRequest = useApiCall<Peer>("/peers");
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
@@ -94,12 +96,22 @@ export default function PeerProvider({ children, peer }: Props) {
     });
   };
 
-  return (
+  return !isLoading ? (
     <PeerContext.Provider
-      value={{ peer, peerGroups, user, update, openSSHDialog, deletePeer }}
+      value={{
+        peer,
+        peerGroups,
+        user,
+        update,
+        openSSHDialog,
+        deletePeer,
+        isLoading,
+      }}
     >
       {children}
     </PeerContext.Provider>
+  ) : (
+    <SkeletonPeerDetail />
   );
 }
 
@@ -108,9 +120,9 @@ export default function PeerProvider({ children, peer }: Props) {
  * @param peer
  */
 export const usePeerGroups = (peer?: Peer) => {
-  const { groups } = useGroups();
+  const { groups, isLoading } = useGroups();
 
-  return useMemo(() => {
+  const peerGroups = useMemo(() => {
     if (!peer) return [];
     const peerGroups = groups?.filter((group) => {
       const foundGroup = group.peers?.find((p) => {
@@ -121,6 +133,8 @@ export const usePeerGroups = (peer?: Peer) => {
     });
     return peerGroups || [];
   }, [groups, peer]);
+
+  return { peerGroups, isLoading };
 };
 
 /**
