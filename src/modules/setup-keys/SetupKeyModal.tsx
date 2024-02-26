@@ -1,5 +1,3 @@
-"use client";
-
 import Button from "@components/Button";
 import Code from "@components/Code";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
@@ -39,11 +37,12 @@ import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
 type Props = {
-  children: React.ReactNode;
+  children?: React.ReactNode;
+  open: boolean;
+  setOpen: (open: boolean) => void;
 };
 const copyMessage = "Setup-Key was copied to your clipboard!";
-export default function SetupKeyModal({ children }: Props) {
-  const [modal, setModal] = useState(false);
+export default function SetupKeyModal({ children, open, setOpen }: Props) {
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const [, copy] = useCopyToClipboard(setupKey?.key);
@@ -55,15 +54,15 @@ export default function SetupKeyModal({ children }: Props) {
 
   return (
     <>
-      <Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
-        <ModalTrigger asChild>{children}</ModalTrigger>
+      <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
+        {children && <ModalTrigger asChild>{children}</ModalTrigger>}
         <SetupKeyModalContent onSuccess={handleSuccess} />
       </Modal>
       <Modal
         open={successModal}
         onOpenChange={(open) => {
           setSuccessModal(open);
-          setModal(open);
+          setOpen(open);
         }}
       >
         <ModalContent
