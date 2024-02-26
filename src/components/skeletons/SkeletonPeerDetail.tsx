@@ -1,10 +1,6 @@
 import Skeleton from "react-loading-skeleton";
 
-type Props = {
-  withHeader?: boolean;
-};
-
-export default function SkeletonPeerDetail({ withHeader = true }: Props) {
+export default function SkeletonPeerDetail() {
   return (
     <div className={"w-full mt-6 p-default"}>
       <div className={"flex flex-wrap w-full justify-between max-w-6xl "}>
