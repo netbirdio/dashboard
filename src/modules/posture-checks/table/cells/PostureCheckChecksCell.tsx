@@ -6,7 +6,7 @@ import { PostureCheck } from "@/interfaces/PostureCheck";
 import { GeoLocationTooltip } from "@/modules/posture-checks/checks/tooltips/GeoLocationTooltip";
 import { NetBirdVersionTooltip } from "@/modules/posture-checks/checks/tooltips/NetBirdVersionTooltip";
 import { OperatingSystemTooltip } from "@/modules/posture-checks/checks/tooltips/OperatingSystemTooltip";
-import { PrivateNetworkTooltip } from "@/modules/posture-checks/checks/tooltips/PrivateNetworkTooltip";
+import { PeerNetworkRangeTooltip } from "@/modules/posture-checks/checks/tooltips/PeerNetworkRangeTooltip";
 
 type Props = {
   check: PostureCheck;
@@ -58,8 +58,10 @@ export const PostureCheckChecksCell = ({ check }: Props) => {
             </OperatingSystemTooltip>
           )}
 
-          {check.checks.private_network_check && (
-            <PrivateNetworkTooltip check={check.checks.private_network_check}>
+          {check.checks.peer_network_range_check && (
+            <PeerNetworkRangeTooltip
+              check={check.checks.peer_network_range_check}
+            >
               <div
                 className={cn(
                   "bg-gradient-to-tr from-blue-500 to-blue-400 h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
@@ -67,7 +69,7 @@ export const PostureCheckChecksCell = ({ check }: Props) => {
               >
                 <NetworkIcon size={14} />
               </div>
-            </PrivateNetworkTooltip>
+            </PeerNetworkRangeTooltip>
           )}
         </div>
       </div>

@@ -3,13 +3,13 @@ import FullTooltip from "@components/FullTooltip";
 import { ScrollArea } from "@components/ScrollArea";
 import { NetworkIcon } from "lucide-react";
 import * as React from "react";
-import { PrivateNetworkCheck } from "@/interfaces/PostureCheck";
+import { PeerNetworkRangeCheck } from "@/interfaces/PostureCheck";
 
 type Props = {
-  check?: PrivateNetworkCheck;
+  check?: PeerNetworkRangeCheck;
   children?: React.ReactNode;
 };
-export const PrivateNetworkTooltip = ({ check, children }: Props) => {
+export const PeerNetworkRangeTooltip = ({ check, children }: Props) => {
   return check ? (
     <FullTooltip
       className={"w-full"}
@@ -25,12 +25,12 @@ export const PrivateNetworkTooltip = ({ check, children }: Props) => {
                 <span className={"text-green-500 font-semibold"}>
                   Allow only
                 </span>{" "}
-                the following network ranges
+                the following peer network ranges
               </span>
             ) : (
               <span>
                 <span className={"text-red-500 font-semibold"}>Block</span> the
-                following network ranges
+                following peer network ranges
               </span>
             )}
           </div>
@@ -38,7 +38,7 @@ export const PrivateNetworkTooltip = ({ check, children }: Props) => {
           <ScrollArea
             className={"max-h-[275px] overflow-y-auto flex flex-col px-4"}
           >
-            <div className={"flex flex-col gap-1.5 mt-2 text-xs mb-3"}>
+            <div className={"flex flex-col gap-1.5 mt-1 text-xs mb-3.5"}>
               {check.ranges.map((ipRange, index) => {
                 return (
                   <Badge

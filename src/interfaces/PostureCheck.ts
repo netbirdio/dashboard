@@ -9,7 +9,7 @@ export interface PostureCheck {
     nb_version_check?: NetBirdVersionCheck;
     os_version_check?: OperatingSystemVersionCheck;
     geo_location_check?: GeoLocationCheck;
-    private_network_check?: PrivateNetworkCheck;
+    peer_network_range_check?: PeerNetworkRangeCheck;
   };
   policies?: Policy[];
   active?: boolean;
@@ -48,7 +48,7 @@ export interface GeoLocation {
   city_name: string;
 }
 
-export interface PrivateNetworkCheck {
+export interface PeerNetworkRangeCheck {
   ranges: string[];
   action: "allow" | "deny";
 }

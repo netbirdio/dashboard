@@ -18,15 +18,15 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
-import { PrivateNetworkCheck } from "@/interfaces/PostureCheck";
+import { PeerNetworkRangeCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 
 type Props = {
-  value?: PrivateNetworkCheck;
-  onChange: (value: PrivateNetworkCheck | undefined) => void;
+  value?: PeerNetworkRangeCheck;
+  onChange: (value: PeerNetworkRangeCheck | undefined) => void;
 };
 
-export const PostureCheckPrivateNetwork = ({ value, onChange }: Props) => {
+export const PostureCheckPeerNetworkRange = ({ value, onChange }: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -35,9 +35,11 @@ export const PostureCheckPrivateNetwork = ({ value, onChange }: Props) => {
       setOpen={setOpen}
       key={open ? 1 : 0}
       icon={<NetworkIcon size={16} />}
-      title={"Private Network"}
+      title={"Peer Network Range"}
       modalWidthClass={"max-w-xl"}
-      description={"Restrict access by allowing or blocking private networks."}
+      description={
+        "Restrict access by allowing or blocking peer network ranges."
+      }
       iconClass={"bg-gradient-to-tr from-blue-500 to-blue-400"}
       active={value !== undefined}
       onReset={() => onChange(undefined)}
@@ -120,10 +122,10 @@ const CheckContent = ({ value, onChange }: Props) => {
       <div className={"flex flex-col px-8 gap-2 pb-6"}>
         <div className={"flex justify-between items-start gap-10 mt-2"}>
           <div>
-            <Label>Allow or Block Network</Label>
+            <Label>Allow or Block Ranges</Label>
             <HelpText className={""}>
-              Choose whether you want to allow or block access from specific
-              network ranges
+              Choose whether you want to allow or block specific peer network
+              ranges
             </HelpText>
           </div>
           <RadioGroup value={allowOrDeny} onChange={setAllowOrDeny}>
@@ -170,7 +172,7 @@ const CheckContent = ({ value, onChange }: Props) => {
         )}
         <Button variant={"dotted"} size={"sm"} onClick={addNetworkRange}>
           <PlusCircle size={16} />
-          Add Network
+          Add Network Range
         </Button>
       </div>
       <ModalFooter className={"items-center"}>
@@ -179,11 +181,11 @@ const CheckContent = ({ value, onChange }: Props) => {
             Learn more about
             <InlineLink
               href={
-                "https://docs.netbird.io/how-to/manage-posture-checks#private-network-check"
+                "https://docs.netbird.io/how-to/manage-posture-checks#peer-network-range-check"
               }
               target={"_blank"}
             >
-              Private Network Check
+              Peer Network Range Check
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>

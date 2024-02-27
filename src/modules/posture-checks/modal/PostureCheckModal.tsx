@@ -23,7 +23,7 @@ import {
 import { PostureCheckGeoLocation } from "@/modules/posture-checks/checks/PostureCheckGeoLocation";
 import { PostureCheckNetBirdVersion } from "@/modules/posture-checks/checks/PostureCheckNetBirdVersion";
 import { PostureCheckOperatingSystem } from "@/modules/posture-checks/checks/PostureCheckOperatingSystem";
-import { PostureCheckPrivateNetwork } from "@/modules/posture-checks/checks/PostureCheckPrivateNetwork";
+import { PostureCheckPeerNetworkRange } from "@/modules/posture-checks/checks/PostureCheckPeerNetworkRange";
 
 type Props = {
   open: boolean;
@@ -55,8 +55,8 @@ export default function PostureCheckModal({
   const [osVersionCheck, setOsVersionCheck] = useState(
     postureCheck?.checks.os_version_check || undefined,
   );
-  const [privateNetworkCheck, setPrivateNetworkCheck] = useState(
-    postureCheck?.checks.private_network_check || undefined,
+  const [peerNetworkRangeCheck, setPeerNetworkRangeCheck] = useState(
+    postureCheck?.checks.peer_network_range_check || undefined,
   );
 
   const validateOSCheck = (osCheck?: OperatingSystemVersionCheck) => {
@@ -97,7 +97,7 @@ export default function PostureCheckModal({
         nb_version_check: nbVersionCheck,
         geo_location_check: validateLocationCheck(geoLocationCheck),
         os_version_check: validateOSCheck(osVersionCheck),
-        private_network_check: privateNetworkCheck,
+        peer_network_range_check: peerNetworkRangeCheck,
       },
     };
 
@@ -133,7 +133,7 @@ export default function PostureCheckModal({
     !!nbVersionCheck ||
     !!geoLocationCheck ||
     !!osVersionCheck ||
-    !!privateNetworkCheck;
+    !!peerNetworkRangeCheck;
   const canCreate = !isEmpty(name) && isAtLeastOneCheckEnabled;
 
   const [tab, setTab] = useState("checks");
@@ -188,9 +188,9 @@ export default function PostureCheckModal({
                   value={osVersionCheck}
                   onChange={setOsVersionCheck}
                 />
-                <PostureCheckPrivateNetwork
-                  value={privateNetworkCheck}
-                  onChange={setPrivateNetworkCheck}
+                <PostureCheckPeerNetworkRange
+                  value={peerNetworkRangeCheck}
+                  onChange={setPeerNetworkRangeCheck}
                 />
               </>
             </TabsContent>
