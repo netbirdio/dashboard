@@ -12,11 +12,12 @@ const GroupContext = React.createContext(
     refresh: () => void;
     dropdownOptions: Group[];
     setDropdownOptions: React.Dispatch<React.SetStateAction<Group[]>>;
+    isLoading: boolean;
   },
 );
 
 export default function GroupsProvider({ children }: Props) {
-  const { data: groups, mutate } = useFetchApi<Group[]>("/groups");
+  const { data: groups, mutate, isLoading } = useFetchApi<Group[]>("/groups");
   const [dropdownOptions, setDropdownOptions] = useState<Group[]>([]);
 
   const refresh = () => {
@@ -25,7 +26,13 @@ export default function GroupsProvider({ children }: Props) {
 
   return (
     <GroupContext.Provider
-      value={{ groups, refresh, dropdownOptions, setDropdownOptions }}
+      value={{
+        groups,
+        refresh,
+        dropdownOptions,
+        setDropdownOptions,
+        isLoading,
+      }}
     >
       {children}
     </GroupContext.Provider>

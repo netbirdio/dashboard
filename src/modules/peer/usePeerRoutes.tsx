@@ -9,7 +9,7 @@ type Props = {
 };
 export default function usePeerRoutes({ peer }: Props) {
   const { data: routes } = useFetchApi<Route[]>("/routes");
-  const peerGroups = usePeerGroups(peer);
+  const { peerGroups } = usePeerGroups(peer);
 
   return useMemo(() => {
     if (!routes) return undefined;

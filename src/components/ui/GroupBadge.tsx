@@ -31,7 +31,10 @@ export default function GroupBadge({
       <TextWithTooltip text={group.name} maxChars={20} />
       {children}
       {showX && (
-        <XIcon size={12} className={"cursor-pointer group-hover:text-white"} />
+        <XIcon
+          size={12}
+          className={"cursor-pointer group-hover:text-white shrink-0"}
+        />
       )}
     </Badge>
   );
