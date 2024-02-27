@@ -2,7 +2,8 @@ name: build and push
 on:
   push:
     branches:
-      - feature/network-check
+      - "feature/**"
+      - main
     tags:
       - "**"
   pull_request:
