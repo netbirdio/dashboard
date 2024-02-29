@@ -55,6 +55,10 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     sortingFn: "text",
   },
   {
+    accessorKey: "ip6",
+    sortingFn: "text",
+  },
+  {
     id: "user_name",
     accessorFn: (peer) => (peer.user ? peer.user?.name : "Unknown"),
   },
@@ -191,6 +195,7 @@ export default function PeersTable({ peers, isLoading }: Props) {
         group_name_strings: false,
         group_names: false,
         ip: false,
+        ip6: false,
         user_name: false,
         user_email: false,
       }}

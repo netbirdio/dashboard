@@ -46,7 +46,7 @@ export default function PeerAddressCell({ peer }: Props) {
             <span className={"font-normal truncate"}>{peer.dns_label}</span>
           </CopyToClipboardText>
           <CopyToClipboardText
-            message={"IP address has been copied to your clipboard"}
+            message={"IPv4 address has been copied to your clipboard"}
           >
             <span
               className={"dark:text-nb-gray-400 font-mono font-thin text-xs"}
@@ -54,6 +54,17 @@ export default function PeerAddressCell({ peer }: Props) {
               {peer.ip}
             </span>
           </CopyToClipboardText>
+          {peer.ip6 != null ? (
+              <CopyToClipboardText
+                  message={"IPv6 address has been copied to your clipboard"}
+              >
+            <span
+                className={"dark:text-nb-gray-400 font-mono font-thin text-xs"}
+            >
+              {peer.ip6}
+            </span>
+              </CopyToClipboardText>
+          ) : null}
         </div>
       </div>
     </FullTooltip>

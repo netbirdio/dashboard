@@ -80,6 +80,7 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
     return groupRequest.put(
       {
         name: g.name,
+        ipv6_enabled: g.ipv6_enabled,
         peers: newPeerGroups
           ? newPeerGroups.map((p) => {
               const groupPeer = p as GroupPeer;
@@ -111,6 +112,7 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
       return groupRequest.put(
         {
           name: selectedGroup.name,
+          ipv6_enabled: selectedGroup.ipv6_enabled,
           peers: peers,
         },
         `/${selectedGroup.id}`,
@@ -121,6 +123,7 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
     return groupRequest
       .post({
         name: selectedGroup.name,
+        ipv6_enabled: selectedGroup.ipv6_enabled,
         peers: groupPeers || [],
       })
       .then((group) => {

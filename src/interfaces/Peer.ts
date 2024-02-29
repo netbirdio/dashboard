@@ -5,6 +5,7 @@ export interface Peer {
   id?: string;
   name: string;
   ip: string;
+  ip6?: string,
   connected: boolean;
   last_seen: Date;
   os: string;
@@ -19,6 +20,8 @@ export interface Peer {
   last_login: Date;
   login_expired: boolean;
   login_expiration_enabled: boolean;
+  ipv6_supported: boolean,
+  ipv6_enabled: string,
   approval_required: boolean;
   city_name: string;
   country_code: string;

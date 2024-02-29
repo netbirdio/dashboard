@@ -3,6 +3,7 @@ export interface Group {
   name: string;
   peers?: GroupPeer[] | string[];
   peers_count?: number;
+  ipv6_enabled: boolean
 }
 
 export interface GroupPeer {

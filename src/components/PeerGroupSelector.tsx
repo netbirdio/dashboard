@@ -72,16 +72,16 @@ export function PeerGroupSelector({
     if (!group && !option) {
       setDropdownOptions((previous) => [
         ...previous,
-        { name: name, peers: groupPeers },
+        { name: name, peers: groupPeers, ipv6_enabled: false },
       ]);
     }
 
     if (max == 1 && values.length == 1) {
-      onChange([{ name: name, id: group?.id, peers: groupPeers }]);
+      onChange([{ name: name, id: group?.id, peers: groupPeers, ipv6_enabled: group == null ? false : group.ipv6_enabled }]);
     } else {
       onChange((previous) => [
         ...previous,
-        { name: name, id: group?.id, peers: groupPeers },
+        { name: name, id: group?.id, peers: groupPeers, ipv6_enabled: group == null ? false : group.ipv6_enabled },
       ]);
     }
 
