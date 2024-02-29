@@ -18,6 +18,7 @@ import ActiveInactiveRow from "@/modules/common-table-rows/ActiveInactiveRow";
 import GroupsActionCell from "@/modules/settings/GroupsActionCell";
 import GroupsCountCell from "@/modules/settings/GroupsCountCell";
 import useGroupsUsage, { GroupUsage } from "@/modules/settings/useGroupsUsage";
+import GroupsIPv6Cell from "@/modules/settings/GroupsIPv6Cell";
 
 // Peers, Access Controls, DNS, Routes, Setup Keys, Users
 export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
@@ -175,6 +176,16 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
         row.users_count > 0
       );
     },
+  },
+  {
+    id: "ipv6",
+    header: ({ column }) => {
+      return <DataTableHeader column={column} className={"text-sm normal-case"}>IPv6</DataTableHeader>;
+    },
+    accessorFn: row => row.original_group.ipv6_enabled,
+    cell: ({ row }) => (
+      <GroupsIPv6Cell group={row.original}/>
+    ),
   },
   {
     accessorKey: "id",
