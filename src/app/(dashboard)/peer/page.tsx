@@ -271,7 +271,10 @@ function PeerOverview() {
               <div>
                 <Label>IPv6 Support</Label>
                 <HelpText>
-                  Whether to enable IPv6, disable it, or enable IPv6 if at least one group has it enabled.
+                  Whether to enable IPv6, disable it, or enable IPv6 automatically.
+                  Overrides groupwide setting if set to something else than Automatic. <br />
+                  Automatic enables IPv6 if it is enabled by at least one group or if the peer is used in at least one
+                  IPv6 route.
                 </HelpText>
                 <FullTooltip
                   content={
@@ -295,7 +298,7 @@ function PeerOverview() {
                     onChange={setIpv6Enabled}
                     options={[
                       {label: "Force enabled", value: "enabled"},
-                      {label: "Inherit from Groups", value: "inherit"},
+                      {label: "Automatic", value: "auto"},
                       {label: "Force disabled", value: "disabled"},
                     ]}
                   />
