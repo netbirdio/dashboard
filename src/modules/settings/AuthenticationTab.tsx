@@ -56,7 +56,9 @@ export default function AuthenticationTab({ account }: Props) {
     account.settings.peer_login_expiration || 86400,
   );
   const [expiresIn, setExpiresIn] = useState(() => {
-    if (expiresInSeconds <= 86400) return "1";
+    if (expiresInSeconds <= 86400) {
+      return Math.round(expiresInSeconds / 3600).toString();
+    }
     return Math.round(expiresInSeconds / 86400).toString();
   });
 
@@ -64,7 +66,7 @@ export default function AuthenticationTab({ account }: Props) {
    * Interval
    */
   const initialInterval = useMemo(() => {
-    if (Number(expiresIn) <= 86400) return "hours";
+    if (expiresInSeconds <= 86400) return "hours";
     return "days";
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
