@@ -42,7 +42,7 @@ export function PeerOSCell({ os }: { os: string }) {
 
 export function OSLogo({ os }: { os: string }) {
   const icon = useMemo(() => {
-    return getOperatingSystem(os.toLowerCase());
+    return getOperatingSystem(os);
   }, [os]);
 
   if (icon === OperatingSystem.WINDOWS)

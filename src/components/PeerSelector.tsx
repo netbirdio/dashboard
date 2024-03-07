@@ -1,7 +1,6 @@
 import { CommandItem } from "@components/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
-import SmallOSIcon from "@components/ui/SmallOSIcon";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { IconArrowBack } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
@@ -11,6 +10,7 @@ import { sortBy, trim, unionBy } from "lodash";
 import { ChevronsUpDown, MapPin, SearchIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
+import { FcLinux } from "react-icons/fc";
 import { useElementSize } from "@/hooks/useElementSize";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
@@ -45,7 +45,7 @@ export function PeerSelector({
 
     // Filter out peers that are not linux
     options = options.filter((peer) => {
-      return getOperatingSystem(peer.os) == OperatingSystem.LINUX;
+      return getOperatingSystem(peer.os) === OperatingSystem.LINUX;
     });
 
     // Filter out excluded peers
@@ -56,7 +56,7 @@ export function PeerSelector({
       });
     }
 
-    setDropdownOptions(unionBy(options, dropdownOptions, "name"));
+    setDropdownOptions(unionBy(options, dropdownOptions, "id"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [peers]);
 
@@ -100,6 +100,12 @@ export function PeerSelector({
     }
   }, [open, dropdownOptions]);
 
+  const LinuxIcon = (
+    <span className={"grayscale brightness-[100%] contrast-[40%]"}>
+      <FcLinux className={"text-white text-lg min-w-[20px] brightness-150"} />
+    </span>
+  );
+
   return (
     <Popover
       open={open}
@@ -135,7 +141,7 @@ export function PeerSelector({
                 }
               >
                 <div className={"flex items-center gap-2.5 text-sm"}>
-                  <SmallOSIcon os={value.os} />
+                  {LinuxIcon}
                   <TextWithTooltip text={value.name} maxChars={20} />
                 </div>
 
@@ -249,7 +255,7 @@ export function PeerSelector({
                         }}
                       >
                         <div className={"flex items-center gap-2.5 text-sm"}>
-                          <SmallOSIcon os={option.os} />
+                          {LinuxIcon}
                           <TextWithTooltip text={option.name} maxChars={20} />
                         </div>
 
