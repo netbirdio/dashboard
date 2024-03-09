@@ -12,6 +12,7 @@ import {
   NetworkIcon,
   Server,
   Shield,
+  ShieldCheck,
   User,
 } from "lucide-react";
 import React from "react";
@@ -70,6 +71,10 @@ export default function ActivityTypeIcon({
     return <User size={size} className={cn(DEFAULT_CLASSES, className)} />;
   } else if (code.startsWith("service")) {
     return <Cog size={size} className={cn(DEFAULT_CLASSES, className)} />;
+  } else if (code.startsWith("posture")) {
+    return (
+      <ShieldCheck size={size} className={cn(DEFAULT_CLASSES, className)} />
+    );
   } else {
     return (
       <HelpCircleIcon size={size} className={cn(DEFAULT_CLASSES, className)} />
