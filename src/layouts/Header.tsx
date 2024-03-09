@@ -9,12 +9,28 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useMemo } from "react";
 import NetBirdLogo from "@/assets/netbird.svg";
+import NetBirdLogoFull from "@/assets/netbird-full.svg";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 
 export default function NavbarWithDropdown() {
   const router = useRouter();
   const Logo = useMemo(() => {
-    return <Image src={NetBirdLogo} width={30} alt={"NetBird Logo"} />;
+    return (
+      <>
+        <Image
+          src={NetBirdLogoFull}
+          height={22}
+          alt={"NetBird Logo"}
+          className={"hidden md:block"}
+        />
+        <Image
+          src={NetBirdLogo}
+          width={30}
+          alt={"NetBird Logo"}
+          className={"md:hidden"}
+        />
+      </>
+    );
   }, []);
 
   const { toggleMobileNav } = useApplicationContext();
