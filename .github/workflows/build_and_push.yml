@@ -2,6 +2,7 @@ name: build and push
 on:
   push:
     branches:
+      - "feature/**"
       - main
     tags:
       - "**"

@@ -23,6 +23,7 @@ import {
 import { PostureCheckGeoLocation } from "@/modules/posture-checks/checks/PostureCheckGeoLocation";
 import { PostureCheckNetBirdVersion } from "@/modules/posture-checks/checks/PostureCheckNetBirdVersion";
 import { PostureCheckOperatingSystem } from "@/modules/posture-checks/checks/PostureCheckOperatingSystem";
+import { PostureCheckPeerNetworkRange } from "@/modules/posture-checks/checks/PostureCheckPeerNetworkRange";
 
 type Props = {
   open: boolean;
@@ -53,6 +54,9 @@ export default function PostureCheckModal({
   );
   const [osVersionCheck, setOsVersionCheck] = useState(
     postureCheck?.checks.os_version_check || undefined,
+  );
+  const [peerNetworkRangeCheck, setPeerNetworkRangeCheck] = useState(
+    postureCheck?.checks.peer_network_range_check || undefined,
   );
 
   const validateOSCheck = (osCheck?: OperatingSystemVersionCheck) => {
@@ -93,6 +97,7 @@ export default function PostureCheckModal({
         nb_version_check: nbVersionCheck,
         geo_location_check: validateLocationCheck(geoLocationCheck),
         os_version_check: validateOSCheck(osVersionCheck),
+        peer_network_range_check: peerNetworkRangeCheck,
       },
     };
 
@@ -125,7 +130,10 @@ export default function PostureCheckModal({
   };
 
   const isAtLeastOneCheckEnabled =
-    !!nbVersionCheck || !!geoLocationCheck || !!osVersionCheck;
+    !!nbVersionCheck ||
+    !!geoLocationCheck ||
+    !!osVersionCheck ||
+    !!peerNetworkRangeCheck;
   const canCreate = !isEmpty(name) && isAtLeastOneCheckEnabled;
 
   const [tab, setTab] = useState("checks");
@@ -180,6 +188,10 @@ export default function PostureCheckModal({
                   value={osVersionCheck}
                   onChange={setOsVersionCheck}
                 />
+                <PostureCheckPeerNetworkRange
+                  value={peerNetworkRangeCheck}
+                  onChange={setPeerNetworkRangeCheck}
+                />
               </>
             </TabsContent>
             <TabsContent value={"general"} className={"pb-8 px-8"}>
@@ -221,9 +233,7 @@ export default function PostureCheckModal({
               <Paragraph className={"text-sm mt-auto"}>
                 Learn more about
                 <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/manage-posture-checks"
-                  }
+                  href={"https://docs.netbird.io/how-to/manage-posture-checks"}
                   target={"_blank"}
                 >
                   Posture Checks
