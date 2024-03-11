@@ -9,6 +9,7 @@ import { useIsSm, useIsXs } from "@utils/responsive";
 import { AnimatePresence, motion } from "framer-motion";
 import { XIcon } from "lucide-react";
 import React from "react";
+import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import ApplicationProvider, {
   useApplicationContext,
 } from "@/contexts/ApplicationProvider";
@@ -16,7 +17,7 @@ import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
-import Navbar from "./Header";
+import Navbar, { headerHeight } from "./Header";
 
 export default function DashboardLayout({
   children,
@@ -43,7 +44,7 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
   const isXs = useIsXs();
 
   const navOpenPageWidth = isSm ? "50%" : isXs ? "65%" : "80%";
-
+  const { bannerHeight } = useAnnouncement();
   return (
     <div className={cn("flex flex-col h-screen", mobileNavOpen && "flex")}>
       {mobileNavOpen && (
@@ -148,7 +149,7 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
             <div
               className={"flex flex-row flex-grow"}
               style={{
-                height: "calc(100vh - 75px)",
+                height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
             >
               <Navigation hideOnMobile />
