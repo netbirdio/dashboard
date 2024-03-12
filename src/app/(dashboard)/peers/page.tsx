@@ -22,6 +22,7 @@ export default function Peers() {
 
   useEffect(() => {
     refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const peersWithUser = peers?.map((peer) => {
