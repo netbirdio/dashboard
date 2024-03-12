@@ -21,7 +21,7 @@ export default function GroupsProvider({ children }: Props) {
   const [dropdownOptions, setDropdownOptions] = useState<Group[]>([]);
 
   const refresh = () => {
-    mutate().then();
+    if (groups && !isLoading) mutate().then();
   };
 
   return (
