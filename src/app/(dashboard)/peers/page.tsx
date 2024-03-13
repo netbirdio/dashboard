@@ -91,7 +91,7 @@ function PeersDefaultView() {
           </InlineLink>
         </Paragraph>
       </div>
-      <div className={"grid w-full px-8 pt-1"}>
+      <div className={"grid w-full px-8 pt-1 pb-8"}>
         <div className={"max-w-3xl"}>
           <div
             className={
