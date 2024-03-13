@@ -44,13 +44,11 @@ export function SetupModalContent({
   user,
   header = true,
   footer = true,
-  className,
   tabAlignment = "center",
 }: {
   user?: OidcUserInfo;
   header?: boolean;
   footer?: boolean;
-  className?: string;
   tabAlignment?: "center" | "start" | "end";
 }) {
   const os = useOperatingSystem();
