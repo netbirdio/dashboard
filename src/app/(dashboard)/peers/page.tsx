@@ -8,13 +8,24 @@ import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
-import { useUsers } from "@/contexts/UsersProvider";
+import { useLoggedInUser, useUsers } from "@/contexts/UsersProvider";
 import { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
+import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
 
 const PeersTable = lazy(() => import("@/modules/peers/PeersTable"));
 
 export default function Peers() {
+  const { isUser } = useLoggedInUser();
+
+  return (
+    <PageContainer>
+      {isUser ? <PeersDefaultView /> : <PeersView />}
+    </PageContainer>
+  );
+}
+
+function PeersView() {
   const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
   const { users } = useUsers();
 
@@ -27,7 +38,7 @@ export default function Peers() {
   });
 
   return (
-    <PageContainer>
+    <>
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
@@ -56,6 +67,45 @@ export default function Peers() {
       <Suspense fallback={<SkeletonTable />}>
         <PeersTable isLoading={isLoading} peers={peersWithUser} />
       </Suspense>
-    </PageContainer>
+    </>
+  );
+}
+
+function PeersDefaultView() {
+  return (
+    <>
+      <div className={"p-default py-6"}>
+        <h1>Add new peer to your network</h1>
+        <Paragraph>
+          To get started, install NetBird and log in using your email account.
+          After that you should be connected.
+        </Paragraph>
+        <Paragraph>
+          If you have further questions check out our{" "}
+          <InlineLink
+            href={"https://docs.netbird.io/how-to/getting-started#installation"}
+            target={"_blank"}
+          >
+            Installation Guide
+            <ExternalLinkIcon size={12} />
+          </InlineLink>
+        </Paragraph>
+      </div>
+      <div className={"grid w-full px-8 pt-1"}>
+        <div className={"max-w-3xl"}>
+          <div
+            className={
+              "rounded-md border border-nb-gray-900/70 grid w-full bg-nb-gray-930/40 stepper-bg-variant"
+            }
+          >
+            <SetupModalContent
+              header={false}
+              footer={false}
+              tabAlignment={"start"}
+            />
+          </div>
+        </div>
+      </div>
+    </>
   );
 }
