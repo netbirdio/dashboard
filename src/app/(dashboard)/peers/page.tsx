@@ -73,15 +73,13 @@ function PeersView() {
 
 function PeersDefaultView() {
   return (
-    <>
-      <div className={"p-default py-6"}>
+    <div className={"flex items-center justify-center flex-col"}>
+      <div className={"p-default py-6 max-w-3xl text-center"}>
         <h1>Add new peer to your network</h1>
-        <Paragraph>
+        <Paragraph className={"inline"}>
           To get started, install NetBird and log in using your email account.
-          After that you should be connected.
-        </Paragraph>
-        <Paragraph>
-          If you have further questions check out our{" "}
+          After that you should be connected. If you have further questions
+          check out our{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/getting-started#installation"}
             target={"_blank"}
@@ -91,21 +89,15 @@ function PeersDefaultView() {
           </InlineLink>
         </Paragraph>
       </div>
-      <div className={"grid w-full px-8 pt-1 pb-8"}>
-        <div className={"max-w-3xl"}>
-          <div
-            className={
-              "rounded-md border border-nb-gray-900/70 grid w-full bg-nb-gray-930/40 stepper-bg-variant"
-            }
-          >
-            <SetupModalContent
-              header={false}
-              footer={false}
-              tabAlignment={"start"}
-            />
-          </div>
+      <div className={"px-3 pt-1 pb-8 max-w-3xl w-full"}>
+        <div
+          className={
+            "rounded-md border border-nb-gray-900/70 grid w-full bg-nb-gray-930/40 stepper-bg-variant"
+          }
+        >
+          <SetupModalContent header={false} footer={false} />
         </div>
       </div>
-    </>
+    </div>
   );
 }
