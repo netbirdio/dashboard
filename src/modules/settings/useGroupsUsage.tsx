@@ -10,6 +10,7 @@ import { User } from "@/interfaces/User";
 export interface GroupUsage {
   id: string;
   name: string;
+  original_group: Group;
   peers_count: number;
   policies_count: number;
   nameservers_count: number;
@@ -125,6 +126,7 @@ export default function useGroupsUsage() {
       return {
         id: group.id,
         name: group.name,
+        original_group: group,
         peers_count: group.peers_count,
         policies_count: policyCount,
         nameservers_count: nameserverCount,

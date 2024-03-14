@@ -24,7 +24,8 @@ const PeerContext = React.createContext(
       name: string,
       ssh: boolean,
       loginExpiration: boolean,
-      approval_required?: boolean,
+      ipv6_enabled: string,
+      approval_required?: boolean
     ) => Promise<Peer>;
     openSSHDialog: () => Promise<boolean>;
     deletePeer: () => void;
@@ -65,7 +66,8 @@ export default function PeerProvider({ children, peer }: Props) {
     name: string,
     ssh: boolean,
     loginExpiration: boolean,
-    approval_required?: boolean,
+    ipv6_enabled: string,
+    approval_required?: boolean
   ) => {
     return peerRequest.put(
       {
@@ -80,6 +82,7 @@ export default function PeerProvider({ children, peer }: Props) {
           approval_required != undefined
             ? approval_required
             : peer.approval_required,
+        ipv6_enabled: ipv6_enabled != undefined ? ipv6_enabled : peer.ipv6_enabled
       },
       `/${peer.id}`,
     );
