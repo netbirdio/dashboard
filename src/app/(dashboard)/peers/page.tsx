@@ -6,8 +6,9 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useEffect } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { useLoggedInUser, useUsers } from "@/contexts/UsersProvider";
 import { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
@@ -28,6 +29,12 @@ export default function Peers() {
 function PeersView() {
   const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
   const { users } = useUsers();
+  const { refresh } = useGroups();
+
+  useEffect(() => {
+    refresh();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const peersWithUser = peers?.map((peer) => {
     if (!users) return peer;
