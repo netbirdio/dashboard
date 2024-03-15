@@ -57,7 +57,7 @@ function UserOverview({ user }: Props) {
   const router = useRouter();
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
-  const { loggedInUser, isOwnerOrAdmin } = useLoggedInUser();
+  const { loggedInUser, isOwnerOrAdmin, isUser } = useLoggedInUser();
   const isLoggedInUser = loggedInUser ? loggedInUser?.id === user.id : false;
 
   const initialGroups = user.auto_groups;
@@ -104,6 +104,7 @@ function UserOverview({ user }: Props) {
           <Breadcrumbs.Item
             href={"/team"}
             label={"Team"}
+            disabled={isUser}
             icon={<TeamIcon size={13} />}
           />
 
@@ -117,6 +118,7 @@ function UserOverview({ user }: Props) {
             <Breadcrumbs.Item
               href={"/team/users"}
               label={"Users"}
+              disabled={isUser}
               icon={<User2 size={16} />}
             />
           )}
@@ -156,28 +158,30 @@ function UserOverview({ user }: Props) {
               </h1>
             </div>
           </div>
-          <div className={"flex gap-4"}>
-            <Button
-              variant={"default"}
-              className={"w-full"}
-              onClick={() => {
-                user.is_service_user
-                  ? router.push("/team/service-users")
-                  : router.push("/team/users");
-              }}
-            >
-              Cancel
-            </Button>
+          {!isUser && (
+            <div className={"flex gap-4"}>
+              <Button
+                variant={"default"}
+                className={"w-full"}
+                onClick={() => {
+                  user.is_service_user
+                    ? router.push("/team/service-users")
+                    : router.push("/team/users");
+                }}
+              >
+                Cancel
+              </Button>
 
-            <Button
-              variant={"primary"}
-              className={"w-full"}
-              disabled={!hasChanges}
-              onClick={save}
-            >
-              Save Changes
-            </Button>
-          </div>
+              <Button
+                variant={"primary"}
+                className={"w-full"}
+                disabled={!hasChanges}
+                onClick={save}
+              >
+                Save Changes
+              </Button>
+            </div>
+          )}
         </div>
 
         <div className={"flex gap-10 w-full mt-8 max-w-6xl"}>
@@ -190,6 +194,7 @@ function UserOverview({ user }: Props) {
                   Groups will be assigned to peers added by this user.
                 </HelpText>
                 <PeerGroupSelector
+                  disabled={isUser}
                   onChange={setSelectedGroups}
                   values={selectedGroups}
                 />

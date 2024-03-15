@@ -15,7 +15,7 @@ import ApplicationProvider, {
 } from "@/contexts/ApplicationProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
-import UsersProvider from "@/contexts/UsersProvider";
+import UsersProvider, { useLoggedInUser } from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
 import Navbar, { headerHeight } from "./Header";
 
@@ -42,6 +42,7 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
   const { mobileNavOpen, toggleMobileNav } = useApplicationContext();
   const isSm = useIsSm();
   const isXs = useIsXs();
+  const { isUser } = useLoggedInUser();
 
   const navOpenPageWidth = isSm ? "50%" : isXs ? "65%" : "80%";
   const { bannerHeight } = useAnnouncement();
@@ -146,13 +147,14 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
             }}
           >
             <Navbar />
+
             <div
               className={"flex flex-row flex-grow"}
               style={{
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
             >
-              <Navigation hideOnMobile />
+              {!isUser && <Navigation hideOnMobile />}
               {children}
             </div>
           </motion.div>

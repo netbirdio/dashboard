@@ -65,3 +65,7 @@ p {
     position: relative;
     width: 100%;
 }
+
+.stepper-bg-variant .step-circle {
+    @apply !border-[#1d2024];
+}

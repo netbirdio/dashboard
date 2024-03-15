@@ -1,5 +1,6 @@
 import useFetchApi from "@utils/api";
 import React, { useCallback } from "react";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Country } from "@/interfaces/Country";
 import { Peer } from "@/interfaces/Peer";
 
@@ -16,6 +17,16 @@ const CountryContext = React.createContext(
 );
 
 export default function CountryProvider({ children }: Props) {
+  const { isUser } = useLoggedInUser();
+
+  return isUser ? (
+    children
+  ) : (
+    <CountryProviderContent>{children}</CountryProviderContent>
+  );
+}
+
+function CountryProviderContent({ children }: Props) {
   const { data: countries, isLoading } = useFetchApi<Country[]>(
     "/locations/countries",
     false,
