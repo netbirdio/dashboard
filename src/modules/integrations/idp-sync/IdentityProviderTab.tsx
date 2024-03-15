@@ -10,6 +10,7 @@ import IntegrationIcon from "@/assets/icons/IntegrationIcon";
 import { useAccount } from "@/modules/account/useAccount";
 import { AzureAD } from "@/modules/integrations/idp-sync/azure-ad/AzureAD";
 import { GoogleWorkspace } from "@/modules/integrations/idp-sync/google-workspace/GoogleWorkspace";
+import { Okta } from "@/modules/integrations/idp-sync/okta-scim/Okta";
 import { useIntegrations } from "@/modules/integrations/idp-sync/useIntegrations";
 
 export default function IdentityProviderTab() {
@@ -40,7 +41,10 @@ export default function IdentityProviderTab() {
         </Paragraph>
         <Paragraph>
           Learn more about{" "}
-          <InlineLink href={"#"} target={"_blank"}>
+          <InlineLink
+            href={"https://docs.netbird.io/how-to/idp-sync"}
+            target={"_blank"}
+          >
             Identity Provider
             <ExternalLinkIcon size={12} />
           </InlineLink>
@@ -51,11 +55,13 @@ export default function IdentityProviderTab() {
             <>
               <SkeletonIntegration loadingHeight={196} />
               <SkeletonIntegration loadingHeight={196} />
+              <SkeletonIntegration loadingHeight={196} />
             </>
           ) : (
             <>
               <GoogleWorkspace />
               <AzureAD />
+              <Okta />
             </>
           )}
         </div>
