@@ -13,6 +13,7 @@ import NetBirdLogo from "@/assets/netbird.svg";
 import NetBirdLogoFull from "@/assets/netbird-full.svg";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 
 export const headerHeight = 75;
 
@@ -39,6 +40,8 @@ export default function NavbarWithDropdown() {
 
   const { toggleMobileNav } = useApplicationContext();
   const { bannerHeight } = useAnnouncement();
+  const { isUser } = useLoggedInUser();
+
   return (
     <>
       <div
@@ -57,7 +60,10 @@ export default function NavbarWithDropdown() {
         >
           <div className={"flex items-center gap-4 md:hidden"}>
             <Button
-              className={"!px-3 md:hidden"}
+              className={cn(
+                "!px-3 md:hidden",
+                isUser && "opacity-0 pointer-events-none",
+              )}
               variant={"default-outline"}
               onClick={toggleMobileNav}
             >

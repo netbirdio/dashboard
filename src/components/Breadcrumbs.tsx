@@ -15,13 +15,25 @@ type ItemProps = {
   label: string;
   icon?: React.ReactNode;
   active?: boolean;
+  disabled?: boolean;
 };
 
-export const Item = ({ href, label, icon, active }: ItemProps) => {
+export const Item = ({
+  href,
+  label,
+  icon,
+  active,
+  disabled = false,
+}: ItemProps) => {
   const router = useRouter();
 
   return (
-    <div className={"flex items-center gap-2 group"}>
+    <div
+      className={cn(
+        "flex items-center gap-2 group",
+        disabled && "pointer-events-none",
+      )}
+    >
       <ChevronRightIcon
         size={16}
         className={"text-nb-gray-400 group-first:hidden"}
