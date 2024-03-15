@@ -306,6 +306,8 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
     <Card>
       <Card.List>
         <Card.ListItem
+          copy
+          copyText={"NetBird IP-Address"}
           label={
             <>
               <MapPin size={16} />
@@ -316,6 +318,8 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
         />
 
         <Card.ListItem
+          copy
+          copyText={"Public IP-Address"}
           label={
             <>
               <NetworkIcon size={16} />
@@ -323,6 +327,30 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
             </>
           }
           value={peer.connection_ip}
+        />
+
+        <Card.ListItem
+          copy
+          copyText={"Domain name"}
+          label={
+            <>
+              <Globe size={16} />
+              Domain Name
+            </>
+          }
+          value={peer.dns_label}
+        />
+
+        <Card.ListItem
+          copy
+          copyText={"Hostname"}
+          label={
+            <>
+              <MonitorSmartphoneIcon size={16} />
+              Hostname
+            </>
+          }
+          value={peer.hostname}
         />
 
         <Card.ListItem
@@ -353,24 +381,6 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
           }
         />
 
-        <Card.ListItem
-          label={
-            <>
-              <Globe size={16} />
-              Domain Name
-            </>
-          }
-          value={peer.dns_label}
-        />
-        <Card.ListItem
-          label={
-            <>
-              <MonitorSmartphoneIcon size={16} />
-              Hostname
-            </>
-          }
-          value={peer.hostname}
-        />
         <Card.ListItem
           label={
             <>

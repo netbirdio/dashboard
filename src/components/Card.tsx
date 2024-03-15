@@ -30,6 +30,7 @@ type CardListItemProps = {
   value: React.ReactNode;
   className?: string;
   copy?: boolean;
+  copyText?: string;
   tooltip?: boolean;
 };
 
@@ -38,6 +39,7 @@ function CardListItem({
   value,
   className,
   copy = false,
+  copyText,
   tooltip = true,
 }: CardListItemProps) {
   const [, copyToClipBoard] = useCopyToClipboard(value as string);
@@ -56,7 +58,10 @@ function CardListItem({
           copy && "cursor-pointer hover:text-nb-gray-300 transition-all",
         )}
         onClick={() =>
-          copy && copyToClipBoard(`${label} has been copied to clipboard.`)
+          copy &&
+          copyToClipBoard(
+            `${copyText ? copyText : label} has been copied to clipboard.`,
+          )
         }
       >
         {tooltip ? (
@@ -64,7 +69,7 @@ function CardListItem({
         ) : (
           value
         )}
-        {copy && <Copy size={13} />}
+        {copy && <Copy size={13} className={"shrink-0"} />}
       </div>
     </li>
   );
