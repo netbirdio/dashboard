@@ -86,8 +86,6 @@ export function PeerGroupSelector({
     }
 
     if (max == 1) setOpen(false);
-
-    setSearch("");
   };
 
   // Remove group from the groupOptions if it does not have an id
