@@ -2,6 +2,7 @@
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import DataTableGlobalSearch from "@components/table/DataTableGlobalSearch";
 import { DataTablePagination } from "@components/table/DataTablePagination";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
   Table,
   TableBody,
@@ -223,6 +224,15 @@ export function DataTableContent<TData, TValue>({
   const TableDataUnstyledComponent = as === "table" ? "td" : "div";
   const TableRowUnstyledComponent = as === "table" ? "tr" : "div";
 
+  /**
+   * Reset all filters, search & set pagination to first page
+   */
+  const resetFilters = () => {
+    table.setPageIndex(0);
+    setColumnFilters([]);
+    setGlobalSearch("");
+  };
+
   return (
     <div className={cn("relative table-fixed-scroll", className)}>
       {!minimal && (
@@ -238,6 +248,7 @@ export function DataTableContent<TData, TValue>({
             placeholder={searchPlaceholder}
           />
           {children && children(table)}
+          <DataTableResetFilterButton onClick={resetFilters} table={table} />
           <div className={"flex gap-4 flex-wrap grow"}>
             <div className={"flex gap-4 flex-wrap"}></div>
             {rightSide && rightSide(table)}
