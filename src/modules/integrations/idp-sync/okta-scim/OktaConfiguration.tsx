@@ -1,6 +1,6 @@
 import Button from "@components/Button";
+import Card from "@components/Card";
 import HelpText from "@components/HelpText";
-import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import {
   Modal,
@@ -19,16 +19,14 @@ import {
   Cog,
   FolderGit2,
   KeyRound,
+  RefreshCcw,
   UserCircle,
 } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/entra-id.png";
 import { useDialog } from "@/contexts/DialogProvider";
-import {
-  AzureADIntegration,
-  OktaIntegration,
-} from "@/interfaces/IdentityProvider";
+import { OktaIntegration } from "@/interfaces/IdentityProvider";
 import { GroupPrefixInput } from "@/modules/integrations/idp-sync/GroupPrefixInput";
 import { useIntegrations } from "@/modules/integrations/idp-sync/useIntegrations";
 import { IntegrationModalHeader } from "@/modules/integrations/IntegrationModalHeader";
@@ -74,12 +72,14 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
   const [tab, setTab] = useState<string>("settings");
 
-  const oktaRequest = useApiCall<AzureADIntegration>(
+  const oktaRequest = useApiCall<OktaIntegration>(
     "/integrations/okta-scim-idp",
   );
 
   const clientSecretPlaceholder = "******************************";
-  const [clientSecret, setClientSecret] = useState(clientSecretPlaceholder);
+  const [authToken, setAuthToken] = useState(
+    config.auth_token || clientSecretPlaceholder,
+  );
 
   const [groupPrefixes, setGroupPrefixes] = useState<string[]>(
     config.group_prefixes || [],
@@ -87,6 +87,36 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
   const [userGroupPrefixes, setUserGroupPrefixes] = useState<string[]>(
     config.user_group_prefixes || [],
   );
+
+  const { hasChanges, updateRef } = useHasChanges([
+    authToken,
+    groupPrefixes,
+    userGroupPrefixes,
+  ]);
+
+  const regenerateAuthToken = async () => {
+    const choice = await confirm({
+      title: `Regenerate Auth Token?`,
+      description:
+        "Are you sure you want to regenerate the auth token? You will need to update the token in your Okta configuration.",
+      confirmText: "Regenerate",
+      cancelText: "Cancel",
+      type: "default",
+    });
+
+    if (!choice) return;
+
+    notify({
+      title: "Okta Integration",
+      description: `Auth token for Okta was successfully regenerated`,
+      promise: oktaRequest.post({}, `/${config.id}/token`).then((r) => {
+        mutate("/integrations/okta-scim-idp");
+        setAuthToken(r.auth_token);
+        updateRef([r.auth_token, groupPrefixes, userGroupPrefixes]);
+      }),
+      loadingMessage: "Updating your auth token...",
+    });
+  };
 
   const deleteIntegration = async () => {
     const choice = await confirm({
@@ -100,8 +130,8 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     if (!choice) return;
 
     notify({
-      title: "Okta SCIM Integration",
-      description: `Okta SCIM was successfully deleted`,
+      title: "Okta Integration",
+      description: `Okta was successfully deleted`,
       promise: oktaRequest.del({}, `/${config.id}`).then(() => {
         mutate("/integrations/okta-scim-idp");
         onSuccess();
@@ -112,15 +142,11 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
   const updateIntegration = async () => {
     notify({
-      title: "Okta SCIM Integration",
-      description: `Okta SCIM was successfully updated`,
+      title: "Okta Integration",
+      description: `Okta was successfully updated`,
       promise: oktaRequest
         .put(
           {
-            client_secret:
-              clientSecretPlaceholder == clientSecret
-                ? undefined
-                : btoa(clientSecret),
             group_prefixes: groupPrefixes || [],
             user_group_prefixes: userGroupPrefixes || [],
           },
@@ -134,12 +160,6 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
     });
   };
 
-  const { hasChanges } = useHasChanges([
-    clientSecret,
-    groupPrefixes,
-    userGroupPrefixes,
-  ]);
-
   return (
     <ModalContent
       maxWidthClass={cn("relative max-w-xl")}
@@ -151,7 +171,7 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
 
       <IntegrationModalHeader
         image={integrationImage}
-        title={"Okta SCIM Configuration"}
+        title={"Okta Configuration"}
         description={"Sync your users and groups from Okta to NetBird."}
       />
 
@@ -200,20 +220,25 @@ export function ConfigurationContent({ onSuccess, config }: ModalProps) {
         </TabsList>
         <TabsContent value={"settings"} className={"px-8 text-sm"}>
           <div className={"flex-col gap-3 flex"}>
-            <Input
-              autoCorrect={"off"}
-              type={"text"}
-              className={"w-full"}
-              customPrefix={
-                <div className={"min-w-[165px] flex gap-2 items-center"}>
-                  <KeyRound size={16} />
-                  Client Secret
-                </div>
-              }
-              placeholder={"YdV7Q~JJ62Xl.LvYoBanxZR2sJA2va_3UbqvncY8"}
-              value={clientSecret}
-              onChange={(e) => setClientSecret(e.target.value)}
-            />
+            <Card className={"w-full"}>
+              <Card.List>
+                <Card.ListItem
+                  copy={!authToken.includes("*")}
+                  copyText={"Auth token"}
+                  label={
+                    <>
+                      <KeyRound size={16} />
+                      Auth Token
+                    </>
+                  }
+                  value={authToken}
+                />
+              </Card.List>
+            </Card>
+            <Button variant={"secondary"} onClick={regenerateAuthToken}>
+              <RefreshCcw size={16} />
+              Regenerate Auth Token
+            </Button>
           </div>
         </TabsContent>
 

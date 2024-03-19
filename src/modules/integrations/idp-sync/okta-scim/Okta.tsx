@@ -1,5 +1,4 @@
 import Button from "@components/Button";
-import FullTooltip from "@components/FullTooltip";
 import { notify } from "@components/Notification";
 import { SkeletonIntegration } from "@components/skeletons/SkeletonIntegration";
 import useFetchApi, { useApiCall } from "@utils/api";
@@ -83,7 +82,10 @@ export const Okta = () => {
       <OktaSetup
         open={setupModal}
         onOpenChange={setSetupModal}
-        onSuccess={() => setEnabled(true)}
+        onSuccess={() => {
+          setEnabled(true);
+          mutate("/integrations/okta-scim-idp");
+        }}
       />
     </>
   );
@@ -103,41 +105,18 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
 
   const [configModal, setConfigModal] = useState(false);
 
-  const forceSync = async () => {
-    notify({
-      title: "Okta SCIM Integration",
-      description: `Okta SCIM was successfully synced`,
-      loadingMessage: "Syncing integration...",
-      promise: syncRequest.post({}).then(() => {
-        mutate(`/integrations/okta-scim-idp/${config.id}/logs`);
-      }),
-    });
-  };
-
   return (
     <>
       <div className={"flex gap-2"}>
-        <FullTooltip
-          content={
-            <div className={"text-xs"}>
-              Force synchronization of users and groups
-            </div>
-          }
+        <Button
+          variant={"default-outline"}
+          size={"xs"}
+          className={"w-full items-center pointer-events-none"}
           disabled={!config.enabled}
-          className={"w-full"}
-          interactive={false}
         >
-          <Button
-            variant={"secondary"}
-            size={"xs"}
-            className={"w-full items-center"}
-            onClick={forceSync}
-            disabled={!config.enabled}
-          >
-            <RefreshCw size={14} />
-            Synced {dayjs().to(logs?.[0]?.timestamp)}
-          </Button>
-        </FullTooltip>
+          <RefreshCw size={14} />
+          Synced {dayjs().to(logs?.[0]?.timestamp)}
+        </Button>
 
         <Button
           variant={"secondary"}
