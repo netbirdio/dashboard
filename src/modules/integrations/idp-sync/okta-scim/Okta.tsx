@@ -98,10 +98,6 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
   const { data: logs } = useFetchApi<IdentityProviderLog[]>(
     `/integrations/okta-scim-idp/${config.id}/logs`,
   );
-  const { mutate } = useSWRConfig();
-  const syncRequest = useApiCall<{ response: boolean }>(
-    `/integrations/okta-scim-idp/${config.id}/sync`,
-  );
 
   const [configModal, setConfigModal] = useState(false);
 

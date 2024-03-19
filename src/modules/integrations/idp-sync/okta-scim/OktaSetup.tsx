@@ -24,9 +24,7 @@ import {
   UserCircle,
 } from "lucide-react";
 import React, { useEffect, useState } from "react";
-import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/okta.png";
-import { useErrorBoundary } from "@/contexts/ErrorBoundary";
 import { OktaIntegration } from "@/interfaces/IdentityProvider";
 import oktaGroupsAssignments from "@/modules/integrations/idp-sync/okta-scim/images/okta-groups-assignments.png";
 import oktaSAMLConfig from "@/modules/integrations/idp-sync/okta-scim/images/okta-saml-configuration.png";
@@ -73,7 +71,6 @@ export function SetupContent({
   authToken,
   setAuthToken,
 }: ModalProps) {
-  const { mutate } = useSWRConfig();
   const integrationsRequest = useApiCall<OktaIntegration[]>(
     "/integrations/okta-scim-idp",
   );
@@ -84,9 +81,8 @@ export function SetupContent({
   const [step, setStep] = useState(0);
   const maxSteps = 7;
 
-  const [groupPrefixes, setGroupPrefixes] = useState<string[]>([]);
-  const [userGroupPrefixes, setUserGroupPrefixes] = useState<string[]>([]);
-  const { setError } = useErrorBoundary();
+  // const [groupPrefixes, setGroupPrefixes] = useState<string[]>([]);
+  // const [userGroupPrefixes, setUserGroupPrefixes] = useState<string[]>([]);
 
   useEffect(() => {
     const getAuthToken = async () => {
@@ -105,6 +101,7 @@ export function SetupContent({
     };
 
     getAuthToken().then((t) => setAuthToken(t));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
