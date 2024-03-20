@@ -32,6 +32,7 @@ import {
   FlagIcon,
   Globe,
   History,
+  LockIcon,
   MapPin,
   MonitorSmartphoneIcon,
   NetworkIcon,
@@ -50,6 +51,7 @@ import PeerIcon from "@/assets/icons/PeerIcon";
 import { useCountries } from "@/contexts/CountryProvider";
 import PeerProvider, { usePeer } from "@/contexts/PeerProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
@@ -124,6 +126,8 @@ function PeerOverview() {
     });
   };
 
+  const { isUser } = useLoggedInUser();
+
   return (
     <PageContainer>
       <RoutesProvider>
@@ -148,29 +152,31 @@ function PeerOverview() {
                   />
                   <TextWithTooltip text={name} maxChars={30} />
 
-                  <Modal
-                    open={showEditNameModal}
-                    onOpenChange={setShowEditNameModal}
-                  >
-                    <ModalTrigger>
-                      <div
-                        className={
-                          "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
-                        }
-                      >
-                        <PencilIcon size={16} />
-                      </div>
-                    </ModalTrigger>
-                    <EditNameModal
-                      onSuccess={(newName) => {
-                        setName(newName);
-                        setShowEditNameModal(false);
-                      }}
-                      peer={peer}
-                      initialName={name}
-                      key={showEditNameModal ? 1 : 0}
-                    />
-                  </Modal>
+                  {!isUser && (
+                    <Modal
+                      open={showEditNameModal}
+                      onOpenChange={setShowEditNameModal}
+                    >
+                      <ModalTrigger>
+                        <div
+                          className={
+                            "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
+                          }
+                        >
+                          <PencilIcon size={16} />
+                        </div>
+                      </ModalTrigger>
+                      <EditNameModal
+                        onSuccess={(newName) => {
+                          setName(newName);
+                          setShowEditNameModal(false);
+                        }}
+                        peer={peer}
+                        initialName={name}
+                        key={showEditNameModal ? 1 : 0}
+                      />
+                    </Modal>
+                  )}
                 </h1>
                 <LoginExpiredBadge loginExpired={peer.login_expired} />
               </div>
@@ -192,7 +198,7 @@ function PeerOverview() {
                 variant={"primary"}
                 className={"w-full"}
                 onClick={() => updatePeer()}
-                disabled={!hasChanges}
+                disabled={!hasChanges || isUser}
               >
                 Save Changes
               </Button>
@@ -210,18 +216,32 @@ function PeerOverview() {
                       "flex gap-2 items-center !text-nb-gray-300 text-xs"
                     }
                   >
-                    <IconInfoCircle size={14} />
-                    <span>
-                      Login expiration is disabled for all peers added with an
-                      setup-key.
-                    </span>
+                    {!peer.user_id ? (
+                      <>
+                        <>
+                          <IconInfoCircle size={14} />
+                          <span>
+                            Login expiration is disabled for all peers added
+                            with an setup-key.
+                          </span>
+                        </>
+                      </>
+                    ) : (
+                      <>
+                        <LockIcon size={14} />
+                        <span>
+                          {`You don't have the required permissions to update this
+                          setting.`}
+                        </span>
+                      </>
+                    )}
                   </div>
                 }
                 className={"w-full block"}
-                disabled={!!peer.user_id}
+                disabled={!!peer.user_id && !isUser}
               >
                 <FancyToggleSwitch
-                  disabled={!peer.user_id}
+                  disabled={!peer.user_id || isUser}
                   value={loginExpiration}
                   onChange={setLoginExpiration}
                   label={
@@ -235,33 +255,74 @@ function PeerOverview() {
                   }
                 />
               </FullTooltip>
-              <FancyToggleSwitch
-                value={ssh}
-                onChange={(set) =>
-                  !set
-                    ? setSsh(false)
-                    : openSSHDialog().then((confirm) => setSsh(confirm))
+              <FullTooltip
+                content={
+                  <div
+                    className={
+                      "flex gap-2 items-center !text-nb-gray-300 text-xs"
+                    }
+                  >
+                    <LockIcon size={14} />
+                    <span>
+                      {`You don't have the required permissions to update this
+                          setting.`}
+                    </span>
+                  </div>
                 }
-                label={
-                  <>
-                    <TerminalSquare size={16} />
-                    SSH Access
-                  </>
-                }
-                helpText={
-                  "Enable the SSH server on this peer to access the machine via an secure shell."
-                }
-              />
+                interactive={false}
+                className={"w-full block"}
+                disabled={!isUser}
+              >
+                <FancyToggleSwitch
+                  value={ssh}
+                  disabled={isUser}
+                  onChange={(set) =>
+                    !set
+                      ? setSsh(false)
+                      : openSSHDialog().then((confirm) => setSsh(confirm))
+                  }
+                  label={
+                    <>
+                      <TerminalSquare size={16} />
+                      SSH Access
+                    </>
+                  }
+                  helpText={
+                    "Enable the SSH server on this peer to access the machine via an secure shell."
+                  }
+                />
+              </FullTooltip>
+
               <div>
                 <Label>Assigned Groups</Label>
                 <HelpText>
                   Use groups to control what this peer can access.
                 </HelpText>
-                <PeerGroupSelector
-                  onChange={setSelectedGroups}
-                  values={selectedGroups}
-                  peer={peer}
-                />
+                <FullTooltip
+                  content={
+                    <div
+                      className={
+                        "flex gap-2 items-center !text-nb-gray-300 text-xs"
+                      }
+                    >
+                      <LockIcon size={14} />
+                      <span>
+                        {`You don't have the required permissions to update this
+                          setting.`}
+                      </span>
+                    </div>
+                  }
+                  interactive={false}
+                  className={"w-full block"}
+                  disabled={!isUser}
+                >
+                  <PeerGroupSelector
+                    disabled={isUser}
+                    onChange={setSelectedGroups}
+                    values={selectedGroups}
+                    peer={peer}
+                  />
+                </FullTooltip>
               </div>
             </div>
           </div>
@@ -269,7 +330,7 @@ function PeerOverview() {
 
         <Separator />
 
-        {isLinux ? (
+        {isLinux && !isUser ? (
           <div className={"px-8 py-6"}>
             <div className={"max-w-6xl"}>
               <div className={"flex justify-between items-center"}>

@@ -21,7 +21,7 @@ export default function Peers() {
 
   return (
     <PageContainer>
-      {isUser ? <PeersDefaultView /> : <PeersView />}
+      <PeersView />
     </PageContainer>
   );
 }

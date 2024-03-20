@@ -17,6 +17,7 @@ import React from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import PeerProvider from "@/contexts/PeerProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
@@ -133,6 +134,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     ),
   },
   {
+    id: "actions",
     accessorKey: "id",
     header: "",
     cell: ({ row }) => (
@@ -176,6 +178,8 @@ export default function PeersTable({ peers, isLoading }: Props) {
       "name",
     ) as Group[]) || ([] as Group[]);
 
+  const { isUser } = useLoggedInUser();
+
   return (
     <DataTable
       onRowClick={(row) => router.push("/peer?id=" + row.original.id)}
@@ -193,6 +197,7 @@ export default function PeersTable({ peers, isLoading }: Props) {
         ip: false,
         user_name: false,
         user_email: false,
+        actions: !isUser,
       }}
       isLoading={isLoading}
       getStartedCard={

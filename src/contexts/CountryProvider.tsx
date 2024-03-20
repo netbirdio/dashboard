@@ -19,11 +19,7 @@ const CountryContext = React.createContext(
 export default function CountryProvider({ children }: Props) {
   const { isUser } = useLoggedInUser();
 
-  return isUser ? (
-    children
-  ) : (
-    <CountryProviderContent>{children}</CountryProviderContent>
-  );
+  return <CountryProviderContent>{children}</CountryProviderContent>;
 }
 
 function CountryProviderContent({ children }: Props) {
