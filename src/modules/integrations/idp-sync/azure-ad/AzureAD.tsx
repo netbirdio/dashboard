@@ -4,9 +4,10 @@ import { notify } from "@components/Notification";
 import { SkeletonIntegration } from "@components/skeletons/SkeletonIntegration";
 import useFetchApi, { useApiCall } from "@utils/api";
 import dayjs from "dayjs";
+import { isEmpty } from "lodash";
 import { RefreshCw, Settings } from "lucide-react";
 import * as React from "react";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import integrationImage from "@/assets/integrations/entra-id.png";
 import {
@@ -116,6 +117,11 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
     });
   };
 
+  const lastSync = useMemo(() => {
+    if (isEmpty(logs)) return "Not synchronized";
+    return "Synced " + dayjs().to(logs?.[0]?.timestamp);
+  }, [logs]);
+
   return (
     <>
       <div className={"flex gap-2"}>
@@ -137,7 +143,7 @@ const ConfigurationButton = ({ config }: ConfigurationProps) => {
             disabled={!config.enabled}
           >
             <RefreshCw size={14} />
-            Synced {dayjs().to(logs?.[0]?.timestamp)}
+            {lastSync}
           </Button>
         </FullTooltip>
 
