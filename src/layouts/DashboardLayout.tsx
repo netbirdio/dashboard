@@ -154,7 +154,7 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
             >
-              {!isUser && <Navigation hideOnMobile />}
+              <Navigation hideOnMobile />
               {children}
             </div>
           </motion.div>

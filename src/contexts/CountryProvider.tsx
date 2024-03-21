@@ -19,8 +19,14 @@ const CountryContext = React.createContext(
 export default function CountryProvider({ children }: Props) {
   const { isUser } = useLoggedInUser();
 
+  const getRegionByPeer = (peer: Peer) => "Unknown";
+
   return isUser ? (
-    children
+    <CountryContext.Provider
+      value={{ countries: [], isLoading: false, getRegionByPeer }}
+    >
+      {children}
+    </CountryContext.Provider>
   ) : (
     <CountryProviderContent>{children}</CountryProviderContent>
   );

@@ -14,6 +14,7 @@ import { FolderGit2 } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -38,6 +39,7 @@ export default function GroupsRow({
   peer,
 }: Props) {
   const { groups: allGroups } = useGroups();
+  const { isUser } = useLoggedInUser();
 
   // Get the group by the id
   const foundGroups = useMemo(() => {
@@ -54,7 +56,7 @@ export default function GroupsRow({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setModal && setModal(true);
+          setModal && !isUser && setModal(true);
         }}
       >
         <MultipleGroups groups={foundGroups} label={label} />

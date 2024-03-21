@@ -22,11 +22,7 @@ export default function GroupsProvider({ children }: Props) {
   const path = usePathname();
   const { isUser } = useLoggedInUser();
 
-  return isUser && path == "/peers" ? (
-    children
-  ) : (
-    <GroupsProviderContent>{children}</GroupsProviderContent>
-  );
+  return <GroupsProviderContent>{children}</GroupsProviderContent>;
 }
 
 export function GroupsProviderContent({ children }: Props) {
