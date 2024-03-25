@@ -42,7 +42,7 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
   const { mobileNavOpen, toggleMobileNav } = useApplicationContext();
   const isSm = useIsSm();
   const isXs = useIsXs();
-  const { isUser } = useLoggedInUser();
+  const { permission } = useLoggedInUser();
 
   const navOpenPageWidth = isSm ? "50%" : isXs ? "65%" : "80%";
   const { bannerHeight } = useAnnouncement();
@@ -154,7 +154,9 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
             >
-              <Navigation hideOnMobile />
+              {permission.dashboard_view !== "blocked" && (
+                <Navigation hideOnMobile />
+              )}
               {children}
             </div>
           </motion.div>
