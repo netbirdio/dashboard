@@ -20,6 +20,7 @@ import { PeerSelector } from "@components/PeerSelector";
 import { SegmentedTabs } from "@components/SegmentedTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
+import { IconDirectionSign } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import cidr from "ip-cidr";
 import { uniqBy } from "lodash";
@@ -63,17 +64,20 @@ export default function RouteModal({ children }: Props) {
 type ModalProps = {
   onSuccess?: (route: Route) => void;
   peer?: Peer;
+  exitNode?: boolean;
 };
 
-export function RouteModalContent({ onSuccess, peer }: ModalProps) {
+export function RouteModalContent({ onSuccess, peer, exitNode }: ModalProps) {
   const { createRoute } = useRoutes();
 
   // General
-  const [networkIdentifier, setNetworkIdentifier] = useState("");
+  const [networkIdentifier, setNetworkIdentifier] = useState(
+    exitNode ? (peer ? `Exit Node (${peer.name})` : "Exit Node") : "",
+  );
   const [description, setDescription] = useState("");
 
   // Network
-  const [networkRange, setNetworkRange] = useState("");
+  const [networkRange, setNetworkRange] = useState(exitNode ? "0.0.0.0/0" : "");
   const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(peer);
 
   const [
@@ -170,10 +174,22 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
-        icon={<NetworkRoutesIcon className={"fill-netbird"} />}
-        title={"Create New  Route"}
-        description={"Access LANs and VPC by adding a network route."}
-        color={"netbird"}
+        icon={
+          exitNode ? (
+            <IconDirectionSign size={20} />
+          ) : (
+            <NetworkRoutesIcon className={"fill-netbird"} />
+          )
+        }
+        title={exitNode ? "Add Exit Node" : "Create New  Route"}
+        description={
+          exitNode
+            ? peer
+              ? `Route all traffic trough the peer '${peer.name}'`
+              : "Route all internet traffic trough a peer"
+            : "Access LANs and VPC by adding a network route."
+        }
+        color={exitNode ? "yellow" : "netbird"}
       />
 
       <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
@@ -212,6 +228,75 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
             Additional Settings
           </TabsTrigger>
         </TabsList>
+        <TabsContent value={"network"} className={"pb-8"}>
+          <div className={"px-8 flex-col flex gap-6"}>
+            <div className={cn(exitNode && "hidden")}>
+              <Label>Network Range</Label>
+              <HelpText>Add a private IP address range</HelpText>
+              <Input
+                ref={networkRangeRef}
+                customPrefix={<NetworkIcon size={16} />}
+                placeholder={"e.g., 172.16.0.0/16"}
+                value={networkRange}
+                className={"font-mono !text-[13px]"}
+                error={cidrError}
+                onChange={(e) => setNetworkRange(e.target.value)}
+              />
+            </div>
+            {exitNode && peer ? (
+              <></>
+            ) : (
+              <SegmentedTabs value={peerTab} onChange={setPeerTab}>
+                <SegmentedTabs.List>
+                  <SegmentedTabs.Trigger value={"routing-peer"}>
+                    <MonitorSmartphoneIcon size={16} />
+                    Routing Peer
+                  </SegmentedTabs.Trigger>
+
+                  <SegmentedTabs.Trigger value={"peer-group"} disabled={!!peer}>
+                    <FolderGit2 size={16} />
+                    Peer Group
+                  </SegmentedTabs.Trigger>
+                </SegmentedTabs.List>
+                <SegmentedTabs.Content value={"routing-peer"}>
+                  <div>
+                    <HelpText>
+                      Assign a single peer as a routing peer for the
+                      {exitNode ? " Exit Node" : " Network CIDR"}
+                    </HelpText>
+                    <PeerSelector
+                      onChange={setRoutingPeer}
+                      value={routingPeer}
+                      disabled={!!peer}
+                    />
+                  </div>
+                </SegmentedTabs.Content>
+                <SegmentedTabs.Content value={"peer-group"}>
+                  <div>
+                    <HelpText>
+                      Assign peer group with Linux machines to be used as
+                      routing peers.
+                    </HelpText>
+                    <PeerGroupSelector
+                      max={1}
+                      onChange={setRoutingPeerGroups}
+                      values={routingPeerGroups}
+                    />
+                  </div>
+                </SegmentedTabs.Content>
+              </SegmentedTabs>
+            )}
+
+            <div>
+              <Label>Distribution Groups</Label>
+              <HelpText>
+                Advertise this route to peers that belong to the following
+                groups
+              </HelpText>
+              <PeerGroupSelector onChange={setGroups} values={groups} />
+            </div>
+          </div>
+        </TabsContent>
         <TabsContent value={"general"} className={"px-8 pb-6"}>
           <div className={"flex flex-col gap-6"}>
             <div>
@@ -241,69 +326,6 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
                 rows={3}
                 onChange={(e) => setDescription(e.target.value)}
               />
-            </div>
-          </div>
-        </TabsContent>
-        <TabsContent value={"network"} className={"pb-8"}>
-          <div className={"px-8 flex-col flex gap-6"}>
-            <div>
-              <Label>Network Range</Label>
-              <HelpText>Add a private IP address range</HelpText>
-              <Input
-                ref={networkRangeRef}
-                customPrefix={<NetworkIcon size={16} />}
-                placeholder={"e.g., 172.16.0.0/16"}
-                value={networkRange}
-                className={"font-mono !text-[13px]"}
-                error={cidrError}
-                onChange={(e) => setNetworkRange(e.target.value)}
-              />
-            </div>
-            <SegmentedTabs value={peerTab} onChange={setPeerTab}>
-              <SegmentedTabs.List>
-                <SegmentedTabs.Trigger value={"routing-peer"}>
-                  <MonitorSmartphoneIcon size={16} />
-                  Routing Peer
-                </SegmentedTabs.Trigger>
-
-                <SegmentedTabs.Trigger value={"peer-group"} disabled={!!peer}>
-                  <FolderGit2 size={16} />
-                  Peer Group
-                </SegmentedTabs.Trigger>
-              </SegmentedTabs.List>
-              <SegmentedTabs.Content value={"routing-peer"}>
-                <div>
-                  <HelpText>
-                    Assign a single peer as a routing peer for the Network CIDR.
-                  </HelpText>
-                  <PeerSelector
-                    onChange={setRoutingPeer}
-                    value={routingPeer}
-                    disabled={!!peer}
-                  />
-                </div>
-              </SegmentedTabs.Content>
-              <SegmentedTabs.Content value={"peer-group"}>
-                <div>
-                  <HelpText>
-                    Assign peer group with Linux machines to be used as routing
-                    peers.
-                  </HelpText>
-                  <PeerGroupSelector
-                    max={1}
-                    onChange={setRoutingPeerGroups}
-                    values={routingPeerGroups}
-                  />
-                </div>
-              </SegmentedTabs.Content>
-            </SegmentedTabs>
-            <div>
-              <Label>Distribution Groups</Label>
-              <HelpText>
-                Advertise this route to peers that belong to the following
-                groups
-              </HelpText>
-              <PeerGroupSelector onChange={setGroups} values={groups} />
             </div>
           </div>
         </TabsContent>
@@ -366,11 +388,13 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
             Learn more about
             <InlineLink
               href={
-                "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                exitNode
+                  ? "#"
+                  : "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
               }
               target={"_blank"}
             >
-              Network Routes
+              {exitNode ? "Exit Nodes" : "Network Routes"}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -386,7 +410,7 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
             onClick={createRouteHandler}
           >
             <PlusCircle size={16} />
-            Add Route
+            {exitNode ? "Add Exit Node" : "Add Route"}
           </Button>
         </div>
       </ModalFooter>

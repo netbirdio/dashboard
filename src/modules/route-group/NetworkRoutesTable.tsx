@@ -17,6 +17,7 @@ import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import GroupRouteProvider from "@/contexts/GroupRouteProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { GroupedRoute, Route } from "@/interfaces/Route";
+import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
 import GroupedRouteActionCell from "@/modules/route-group/GroupedRouteActionCell";
 import GroupedRouteHighAvailabilityCell from "@/modules/route-group/GroupedRouteHighAvailabilityCell";
 import GroupedRouteNameCell from "@/modules/route-group/GroupedRouteNameCell";
@@ -183,12 +184,15 @@ export default function NetworkRoutesTable({
       rightSide={() => (
         <>
           {routes && routes?.length > 0 && (
-            <RouteModal>
-              <Button variant={"primary"} className={"ml-auto"}>
-                <PlusCircle size={16} />
-                Add Route
-              </Button>
-            </RouteModal>
+            <div className={"gap-x-4 ml-auto flex"}>
+              <AddExitNodeButton />
+              <RouteModal>
+                <Button variant={"primary"} className={""}>
+                  <PlusCircle size={16} />
+                  Add Route
+                </Button>
+              </RouteModal>
+            </div>
           )}
         </>
       )}

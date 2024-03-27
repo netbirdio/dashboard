@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { useUsers } from "@/contexts/UsersProvider";
 import { Peer } from "@/interfaces/Peer";
 import ActiveInactiveRow from "@/modules/common-table-rows/ActiveInactiveRow";
+import { ExitNodePeerIndicator } from "@/modules/exit-node/ExitNodePeerIndicator";
 
 type Props = {
   peer: Peer;
@@ -24,7 +25,15 @@ export default function PeerNameCell({ peer }: Props) {
       data-testid="peer-name-cell"
       onClick={() => router.push("/peer?id=" + peer.id)}
     >
-      <ActiveInactiveRow active={peer.connected} text={peer.name}>
+      <ActiveInactiveRow
+        active={peer.connected}
+        text={
+          <div className={"flex items-center gap-2"}>
+            {peer.name}
+            <ExitNodePeerIndicator peer={peer} />
+          </div>
+        }
+      >
         <div className={"text-nb-gray-400 font-light"}>{userOfPeer?.email}</div>
       </ActiveInactiveRow>
     </div>
