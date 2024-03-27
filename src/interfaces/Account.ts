@@ -10,5 +10,6 @@ export interface Account {
     jwt_groups_enabled: boolean;
     jwt_groups_claim_name: string;
     jwt_allow_groups: string[];
+    regular_users_view_blocked: boolean;
   };
 }

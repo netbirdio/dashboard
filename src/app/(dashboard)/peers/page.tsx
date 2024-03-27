@@ -17,11 +17,15 @@ import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
 const PeersTable = lazy(() => import("@/modules/peers/PeersTable"));
 
 export default function Peers() {
-  const { isUser } = useLoggedInUser();
+  const { permission } = useLoggedInUser();
 
   return (
     <PageContainer>
-      <PeersView />
+      {permission?.dashboard_view === "blocked" ? (
+        <PeersDefaultView />
+      ) : (
+        <PeersView />
+      )}
     </PageContainer>
   );
 }

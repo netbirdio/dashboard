@@ -1,3 +1,5 @@
+import { Permission } from "@/interfaces/Permission";
+
 export interface User {
   id: string;
   email?: string;
@@ -9,6 +11,7 @@ export interface User {
   is_service_user?: boolean;
   is_blocked?: boolean;
   last_login?: Date;
+  permissions: Permission;
 }
 
 export enum Role {

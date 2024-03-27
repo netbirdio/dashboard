@@ -40,7 +40,7 @@ export default function NavbarWithDropdown() {
 
   const { toggleMobileNav } = useApplicationContext();
   const { bannerHeight } = useAnnouncement();
-  const { isUser } = useLoggedInUser();
+  const { permission } = useLoggedInUser();
 
   return (
     <>
@@ -62,7 +62,8 @@ export default function NavbarWithDropdown() {
             <Button
               className={cn(
                 "!px-3 md:hidden",
-                isUser && "opacity-0 pointer-events-none",
+                permission.dashboard_view == "blocked" &&
+                  "opacity-0 pointer-events-none",
               )}
               variant={"default-outline"}
               onClick={toggleMobileNav}
