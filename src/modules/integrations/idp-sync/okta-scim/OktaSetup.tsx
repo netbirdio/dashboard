@@ -331,6 +331,7 @@ export function SetupContent({
                   {
                     label: "Authentication Mode",
                     value: "HTTP Header",
+                    noCopy: true,
                   },
                   {
                     label: "Authorization (Bearer)",
@@ -350,7 +351,7 @@ export function SetupContent({
             </Steps.Step>
             <Steps.Step step={4} line={false}>
               <p className={"font-normal"}>
-                Click on <Mark>Save</Mark>
+                Click <Mark>Save</Mark>
               </p>
             </Steps.Step>
           </Steps>
