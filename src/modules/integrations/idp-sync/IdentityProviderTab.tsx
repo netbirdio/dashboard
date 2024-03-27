@@ -65,15 +65,14 @@ export default function IdentityProviderTab() {
             </>
           )}
         </div>
-        <div className={"flex flex-col gap-6 max-w-md mt-10"}>
+        <div className={"flex flex-col gap-6 max-w-lg mt-10"}>
           <div
             className={
               "bg-netbird-950 px-6 py-4 rounded-md border border-netbird-500 "
             }
           >
             <Label className={"!text-netbird-100 text-md"}>
-              Looking to enable a custom Identity Provider like Okta or
-              Jumpcloud?
+              Looking to enable a custom IDP like Jumpcloud?
             </Label>
             <p className={"!text-netbird-200 mt-2"}>
               Please contact us at{" "}
