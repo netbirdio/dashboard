@@ -12,7 +12,7 @@ export const ExitNodeHelpTooltip = ({ children }: Props) => {
       content={
         <div className={"text-xs max-w-xs"}>
           An exit node is a network route that routes all your internet traffic
-          trough one of your peers.
+          through one of your peers.
           <div className={"mt-2"}>
             Learn more about{" "}
             <InlineLink href={"#"} target={"_blank"} className={"mr-1"}>

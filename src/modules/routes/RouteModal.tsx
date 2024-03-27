@@ -185,8 +185,8 @@ export function RouteModalContent({ onSuccess, peer, exitNode }: ModalProps) {
         description={
           exitNode
             ? peer
-              ? `Route all traffic trough the peer '${peer.name}'`
-              : "Route all internet traffic trough a peer"
+              ? `Route all traffic through the peer '${peer.name}'`
+              : "Route all internet traffic through a peer"
             : "Access LANs and VPC by adding a network route."
         }
         color={exitNode ? "yellow" : "netbird"}
