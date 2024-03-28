@@ -11,7 +11,6 @@ import React from "react";
 import { Toaster } from "react-hot-toast";
 import OIDCProvider from "@/auth/OIDCProvider";
 import AnalyticsProvider from "@/contexts/AnalyticsProvider";
-import AnnouncementProvider from "@/contexts/AnnouncementProvider";
 import DialogProvider from "@/contexts/DialogProvider";
 import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
 import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
@@ -36,11 +35,9 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             <GlobalThemeProvider>
               <ErrorBoundaryProvider>
                 <OIDCProvider>
-                  <AnnouncementProvider>
-                    <TooltipProvider delayDuration={0}>
-                      {children}
-                    </TooltipProvider>
-                  </AnnouncementProvider>
+                  <TooltipProvider delayDuration={0}>
+                    {children}
+                  </TooltipProvider>
                 </OIDCProvider>
               </ErrorBoundaryProvider>
             </GlobalThemeProvider>
