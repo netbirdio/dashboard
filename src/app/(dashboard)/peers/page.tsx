@@ -22,7 +22,7 @@ export default function Peers() {
   return (
     <PageContainer>
       {permission?.dashboard_view === "blocked" ? (
-        <PeersDefaultView />
+        <PeersBlockedView />
       ) : (
         <PeersView />
       )}
@@ -82,11 +82,11 @@ function PeersView() {
   );
 }
 
-function PeersDefaultView() {
+function PeersBlockedView() {
   return (
     <div className={"flex items-center justify-center flex-col"}>
       <div className={"p-default py-6 max-w-3xl text-center"}>
-        <h1>Add new peer to your network</h1>
+        <h1>Add new device to your network</h1>
         <Paragraph className={"inline"}>
           To get started, install NetBird and log in using your email account.
           After that you should be connected. If you have further questions
