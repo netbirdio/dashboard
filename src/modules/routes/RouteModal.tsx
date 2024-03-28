@@ -342,19 +342,22 @@ export function RouteModalContent({ onSuccess, peer, exitNode }: ModalProps) {
               }
               helpText={"Use this switch to enable or disable the route."}
             />
-            <FancyToggleSwitch
-              value={masquerade}
-              onChange={setMasquerade}
-              label={
-                <>
-                  <VenetianMask size={15} />
-                  Masquerade
-                </>
-              }
-              helpText={
-                "Allow access to your private networks without configuring routes on your local routers or other devices."
-              }
-            />
+            {!exitNode && (
+              <FancyToggleSwitch
+                value={masquerade}
+                onChange={setMasquerade}
+                label={
+                  <>
+                    <VenetianMask size={15} />
+                    Masquerade
+                  </>
+                }
+                helpText={
+                  "Allow access to your private networks without configuring routes on your local routers or other devices."
+                }
+              />
+            )}
+
             <div className={cn("flex justify-between")}>
               <div>
                 <Label>Metrics</Label>
