@@ -9,7 +9,9 @@ import { useIsSm, useIsXs } from "@utils/responsive";
 import { AnimatePresence, motion } from "framer-motion";
 import { XIcon } from "lucide-react";
 import React from "react";
-import { useAnnouncement } from "@/contexts/AnnouncementProvider";
+import AnnouncementProvider, {
+  useAnnouncement,
+} from "@/contexts/AnnouncementProvider";
 import ApplicationProvider, {
   useApplicationContext,
 } from "@/contexts/ApplicationProvider";
@@ -29,7 +31,9 @@ export default function DashboardLayout({
       <UsersProvider>
         <GroupsProvider>
           <CountryProvider>
-            <DashboardPageContent>{children}</DashboardPageContent>
+            <AnnouncementProvider>
+              <DashboardPageContent>{children}</DashboardPageContent>
+            </AnnouncementProvider>
           </CountryProvider>
         </GroupsProvider>
       </UsersProvider>
