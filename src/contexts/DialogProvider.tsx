@@ -81,10 +81,13 @@ export default function DialogProvider({ children }: Props) {
             />
 
             {dialogOptions.children && (
-              <div className={"px-8 pt-4"}>{dialogOptions.children}</div>
+              <div className={"px-8 pt-0"}>{dialogOptions.children}</div>
             )}
 
-            <ModalFooter className={"items-center gap-2"} separator={false}>
+            <ModalFooter
+              className={"items-center gap-2 pt-5"}
+              separator={false}
+            >
               <ModalClose asChild={true}>
                 <Button
                   variant={"secondary"}
