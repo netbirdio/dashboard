@@ -5,14 +5,12 @@ import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import useFetchApi from "@utils/api";
-import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
 import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
 import ActivityIcon from "@/assets/icons/ActivityIcon";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import PageContainer from "@/layouts/PageContainer";
 import ActivityTable from "@/modules/activity/ActivityTable";
-import { EventStreamingCard } from "@/modules/integrations/event-streaming/EventStreamingCard";
 
 export default function Activity() {
   const { data: events, isLoading } = useFetchApi<ActivityEvent[]>("/events");
@@ -50,7 +48,6 @@ export default function Activity() {
         </Paragraph>
       </div>
       <RestrictedAccess page={"Activity"}>
-        {(isLocalDev() || isNetBirdHosted()) && <EventStreamingCard />}
         <ActivityTable events={events} isLoading={isLoading} />
       </RestrictedAccess>
     </PageContainer>

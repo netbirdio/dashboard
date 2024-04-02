@@ -16,8 +16,7 @@ import {
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { cn, isInt } from "@utils/helpers";
-import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
-import { CalendarClock, ShieldIcon, TimerReset, VoteIcon } from "lucide-react";
+import { CalendarClock, ShieldIcon, TimerReset } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
@@ -143,22 +142,6 @@ export default function AuthenticationTab({ account }: Props) {
         </div>
 
         <div className={"flex flex-col gap-6 w-full mt-8"}>
-          {(isLocalDev() || isNetBirdHosted()) && (
-            <div>
-              <FancyToggleSwitch
-                value={peerApproval}
-                onChange={setPeerApproval}
-                label={
-                  <>
-                    <VoteIcon size={15} />
-                    Peer approval
-                  </>
-                }
-                helpText={"Require peers to be approved by an administrator."}
-              />
-            </div>
-          )}
-
           <div>
             <FancyToggleSwitch
               value={loginExpiration}

@@ -8,7 +8,8 @@ import {
   LockIcon,
   ShieldIcon,
 } from "lucide-react";
-import React, { useState } from "react";
+import { useSearchParams } from "next/navigation";
+import React, { useEffect, useState } from "react";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import PageContainer from "@/layouts/PageContainer";
 import { useAccount } from "@/modules/account/useAccount";
@@ -18,9 +19,17 @@ import GroupsTab from "@/modules/settings/GroupsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 
 export default function NetBirdSettings() {
-  const [tab, setTab] = useState("authentication");
+  const queryParams = useSearchParams();
+  const queryTab = queryParams.get("tab");
+  const [tab, setTab] = useState(queryTab || "authentication");
   const { isOwner } = useLoggedInUser();
   const account = useAccount();
+
+  useEffect(() => {
+    if (queryTab) {
+      setTab(queryTab);
+    }
+  }, [queryTab]);
 
   return (
     <PageContainer>

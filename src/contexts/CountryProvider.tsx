@@ -17,11 +17,11 @@ const CountryContext = React.createContext(
 );
 
 export default function CountryProvider({ children }: Props) {
-  const { isUser } = useLoggedInUser();
+  const { permission } = useLoggedInUser();
 
   const getRegionByPeer = (peer: Peer) => "Unknown";
 
-  return isUser ? (
+  return permission?.dashboard_view != "full" ? (
     <CountryContext.Provider
       value={{ countries: [], isLoading: false, getRegionByPeer }}
     >
@@ -35,7 +35,7 @@ export default function CountryProvider({ children }: Props) {
 function CountryProviderContent({ children }: Props) {
   const { data: countries, isLoading } = useFetchApi<Country[]>(
     "/locations/countries",
-    false,
+    true,
     false,
   );
 
