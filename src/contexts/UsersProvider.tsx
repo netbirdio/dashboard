@@ -27,7 +27,7 @@ export default function UsersProvider({ children }: Props) {
     return users?.find((user) => user.is_current);
   }, [users]);
 
-  return !isLoading ? (
+  return !isLoading && loggedInUser ? (
     <UsersContext.Provider value={{ users, refresh, loggedInUser }}>
       {children}
     </UsersContext.Provider>
