@@ -19,6 +19,7 @@ const AnalyticsContext = React.createContext(
   {} as {
     initialized: boolean;
     trackPageView: () => void;
+    trackEvent: (category: string, action: string, label: string) => void;
   },
 );
 const config = loadConfig();
@@ -51,8 +52,20 @@ export default function AnalyticsProvider({ children }: Props) {
     ReactGA.send({ hitType: "pageview", page: path, title: document.title });
   };
 
+  const trackEvent = (category: string, action: string, label: string) => {
+    if (isProduction() && ReactGA.isInitialized) {
+      ReactGA.event({
+        category: category,
+        action: action,
+        label: label,
+      });
+    }
+  };
+
   return (
-    <AnalyticsContext.Provider value={{ initialized, trackPageView }}>
+    <AnalyticsContext.Provider
+      value={{ initialized, trackPageView, trackEvent }}
+    >
       {children}
     </AnalyticsContext.Provider>
   );
