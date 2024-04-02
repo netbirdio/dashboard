@@ -13,6 +13,7 @@ export interface Announcement extends AnnouncementVariant {
   linkText?: string;
   isExternal?: boolean;
   closeable: boolean;
+  isCloudOnly: boolean;
 }
 
 interface AnnouncementInfo extends Announcement {
@@ -29,6 +30,9 @@ const AnnouncementContext = React.createContext(
     bannerHeight: number;
     announcements?: AnnouncementInfo[];
     closeAnnouncement: (hash: string) => void;
+    setAnnouncements: React.Dispatch<
+      React.SetStateAction<AnnouncementInfo[] | undefined>
+    >;
   },
 );
 
@@ -43,6 +47,7 @@ export default function AnnouncementProvider({ children }: Props) {
   const { permission } = useLoggedInUser();
 
   useEffect(() => {
+    if (announcements && announcements.length > 0) return;
     if (permission?.dashboard_view === "blocked") return;
     const initial = initialAnnouncements.map((announcement) => {
       const hash = md5(announcement.text).toString();
@@ -51,12 +56,12 @@ export default function AnnouncementProvider({ children }: Props) {
         ...announcement,
         hash,
         isOpen,
-      };
+      } as AnnouncementInfo;
     });
     if (initial.length > 0) {
       setAnnouncements(initial);
     }
-  }, [closedAnnouncements]);
+  }, [closedAnnouncements, announcements]);
 
   const closeAnnouncement = (hash: string) => {
     setClosedAnnouncements([...closedAnnouncements, hash]);
@@ -81,7 +86,12 @@ export default function AnnouncementProvider({ children }: Props) {
 
   return (
     <AnnouncementContext.Provider
-      value={{ bannerHeight: height, announcements, closeAnnouncement }}
+      value={{
+        bannerHeight: height,
+        announcements,
+        closeAnnouncement,
+        setAnnouncements,
+      }}
     >
       {children}
     </AnnouncementContext.Provider>
