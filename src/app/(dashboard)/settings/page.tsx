@@ -22,7 +22,7 @@ export default function NetBirdSettings() {
   const queryParams = useSearchParams();
   const queryTab = queryParams.get("tab");
   const [tab, setTab] = useState(queryTab || "authentication");
-  const { isOwnerOrAdmin, isOwner } = useLoggedInUser();
+  const { isOwner } = useLoggedInUser();
   const account = useAccount();
 
   useEffect(() => {

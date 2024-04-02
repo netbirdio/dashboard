@@ -34,7 +34,6 @@ export default function Navigation({
   hideOnMobile = false,
 }: Props) {
   const { isUser } = useLoggedInUser();
-  const { isOwnerOrAdmin } = useLoggedInUser();
   const { bannerHeight } = useAnnouncement();
 
   return (
