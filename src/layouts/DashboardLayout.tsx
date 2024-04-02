@@ -29,13 +29,13 @@ export default function DashboardLayout({
   return (
     <ApplicationProvider>
       <UsersProvider>
-        <GroupsProvider>
-          <CountryProvider>
-            <AnnouncementProvider>
+        <AnnouncementProvider>
+          <GroupsProvider>
+            <CountryProvider>
               <DashboardPageContent>{children}</DashboardPageContent>
-            </AnnouncementProvider>
-          </CountryProvider>
-        </GroupsProvider>
+            </CountryProvider>
+          </GroupsProvider>
+        </AnnouncementProvider>
       </UsersProvider>
     </ApplicationProvider>
   );
