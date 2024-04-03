@@ -160,11 +160,12 @@ export function useApiErrorHandling(ignoreError = false) {
     };
 
   return (err: ErrorResponse) => {
+    console.info("API request error", err);
     if (err.code == 401 && err.message == "no valid authentication provided") {
-      return login(currentPath);
+      return login(currentPath, { client_id: config.clientId });
     }
     if (err.code == 401 && err.message == "token expired") {
-      return login(currentPath);
+      return login(currentPath, { client_id: config.clientId });
     }
     if (err.code == 401 && err.message == "token invalid") {
       return setError(err);

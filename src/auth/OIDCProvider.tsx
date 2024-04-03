@@ -34,7 +34,7 @@ const auth0AuthorityConfig: AuthorityConfiguration = {
 
 const onEvent = (configurationName: any, eventName: any, data: any) => {
   if (process.env.NODE_ENV !== "production") {
-    //console.info(`oidc:${configurationName}:${eventName}`, data);
+    console.info(`oidc:${configurationName}:${eventName}`, data);
   }
 };
 
