@@ -158,12 +158,15 @@ export default function NetworkRoutesTable({
             "It looks like you don't have any routes. Access LANs and VPC by adding a network route."
           }
           button={
-            <RouteModal>
-              <Button variant={"primary"} className={""}>
-                <PlusCircle size={16} />
-                Add Route
-              </Button>
-            </RouteModal>
+            <div className={"gap-x-4 flex items-center justify-center"}>
+              <AddExitNodeButton />
+              <RouteModal>
+                <Button variant={"primary"} className={""}>
+                  <PlusCircle size={16} />
+                  Add Route
+                </Button>
+              </RouteModal>
+            </div>
           }
           learnMore={
             <>

@@ -18,24 +18,24 @@ export default function PeerNameCell({ peer }: Props) {
   }, [users, peer.user_id]);
 
   return (
-    <div
-      className={
-        "flex items-center min-w-[250px] max-w-[250px] gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
-      }
-      data-testid="peer-name-cell"
-      onClick={() => router.push("/peer?id=" + peer.id)}
-    >
-      <ActiveInactiveRow
-        active={peer.connected}
-        text={
-          <div className={"flex items-center gap-2"}>
-            {peer.name}
-            <ExitNodePeerIndicator peer={peer} />
-          </div>
+    <div>
+      <div
+        className={
+          "flex items-center max-w-[300px] gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
         }
+        data-testid="peer-name-cell"
+        onClick={() => router.push("/peer?id=" + peer.id)}
       >
-        <div className={"text-nb-gray-400 font-light"}>{userOfPeer?.email}</div>
-      </ActiveInactiveRow>
+        <ActiveInactiveRow
+          active={peer.connected}
+          text={peer.name}
+          additionalInfo={<ExitNodePeerIndicator peer={peer} />}
+        >
+          <div className={"text-nb-gray-400 font-light truncate"}>
+            {userOfPeer?.email}
+          </div>
+        </ActiveInactiveRow>
+      </div>
     </div>
   );
 }

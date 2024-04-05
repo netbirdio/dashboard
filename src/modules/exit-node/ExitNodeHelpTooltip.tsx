@@ -5,10 +5,15 @@ import * as React from "react";
 
 type Props = {
   children: React.ReactNode;
+  hoverButton?: boolean;
 };
-export const ExitNodeHelpTooltip = ({ children }: Props) => {
+export const ExitNodeHelpTooltip = ({
+  children,
+  hoverButton = false,
+}: Props) => {
   return (
     <FullTooltip
+      hoverButton={hoverButton}
       content={
         <div className={"text-xs max-w-xs"}>
           An exit node is a network route that routes all your internet traffic

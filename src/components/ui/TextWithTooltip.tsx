@@ -24,14 +24,21 @@ export default function TextWithTooltip({
     <FullTooltip
       disabled={charCount <= maxChars || hideTooltip}
       interactive={false}
-      className={"truncate w-full"}
+      className={"truncate w-full min-w-0"}
       content={
-        <div className={"max-w-xs break-all whitespace-normal"}>{text}</div>
+        <div className={"max-w-xs break-all whitespace-normal text-xs"}>
+          {text}
+        </div>
       }
     >
-      <span className={cn(className, "truncate")}>
-        {charCount > maxChars ? text && `${text.slice(0, maxChars)}...` : text}
-      </span>
+      <div
+        className={"w-full min-w-0 inline-block"}
+        style={{
+          maxWidth: `${maxChars + 5}ch`,
+        }}
+      >
+        <div className={cn(className, "truncate")}>{text}</div>
+      </div>
     </FullTooltip>
   );
 }
