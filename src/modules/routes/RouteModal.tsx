@@ -178,22 +178,22 @@ export function RouteModalContent({
   /**
    * Allow to create route only when all fields are filled
    */
-  const isDisabled = useMemo(() => {
-    return (
-      networkIdentifier == "" ||
+  const isNetworkEntered = useMemo(() => {
+    return !(
       (cidrError && cidrError.length > 1) ||
       (peerTab === "peer-group" && routingPeerGroups.length == 0) ||
       (peerTab === "routing-peer" && !routingPeer) ||
       groups.length == 0
     );
-  }, [
-    networkIdentifier,
-    cidrError,
-    peerTab,
-    routingPeerGroups.length,
-    routingPeer,
-    groups,
-  ]);
+  }, [cidrError, peerTab, routingPeerGroups.length, routingPeer, groups]);
+
+  const isNameEntered = useMemo(() => {
+    return !(networkIdentifier == "");
+  }, [networkIdentifier]);
+
+  const canCreateOrSave = useMemo(() => {
+    return isNetworkEntered && isNameEntered;
+  }, [isNetworkEntered, isNameEntered]);
 
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
@@ -223,7 +223,7 @@ export function RouteModalContent({
         color={exitNode ? "yellow" : "netbird"}
       />
 
-      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
+      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
         <TabsList justify={"start"} className={"px-8"}>
           <TabsTrigger
             value={"network"}
@@ -239,6 +239,7 @@ export function RouteModalContent({
           </TabsTrigger>
           <TabsTrigger
             value={"general"}
+            disabled={!isNetworkEntered}
             onClick={() => nameRef.current?.focus()}
           >
             <Text
@@ -249,7 +250,7 @@ export function RouteModalContent({
             />
             Name & Description
           </TabsTrigger>
-          <TabsTrigger value={"settings"}>
+          <TabsTrigger value={"settings"} disabled={!canCreateOrSave}>
             <Settings2
               size={16}
               className={
@@ -437,18 +438,52 @@ export function RouteModalContent({
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
-          </ModalClose>
+          {tab == "network" && (
+            <ModalClose asChild={true}>
+              <Button variant={"secondary"}>Cancel</Button>
+            </ModalClose>
+          )}
 
-          <Button
-            variant={"primary"}
-            disabled={isDisabled}
-            onClick={createRouteHandler}
-          >
-            <PlusCircle size={16} />
-            {exitNode ? "Add Exit Node" : "Add Route"}
-          </Button>
+          {tab == "general" && (
+            <Button variant={"secondary"} onClick={() => setTab("network")}>
+              Back
+            </Button>
+          )}
+
+          {tab == "settings" && (
+            <Button variant={"secondary"} onClick={() => setTab("general")}>
+              Back
+            </Button>
+          )}
+
+          {tab == "network" && (
+            <Button
+              variant={"primary"}
+              onClick={() => setTab("general")}
+              disabled={!isNetworkEntered}
+            >
+              Continue
+            </Button>
+          )}
+          {tab == "general" && (
+            <Button
+              variant={"primary"}
+              onClick={() => setTab("settings")}
+              disabled={!canCreateOrSave}
+            >
+              Continue
+            </Button>
+          )}
+          {tab == "settings" && (
+            <Button
+              variant={"primary"}
+              disabled={!canCreateOrSave}
+              onClick={createRouteHandler}
+            >
+              <PlusCircle size={16} />
+              {exitNode ? "Add Exit Node" : "Add Route"}
+            </Button>
+          )}
         </div>
       </ModalFooter>
     </ModalContent>
