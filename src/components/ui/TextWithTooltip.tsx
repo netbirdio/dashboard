@@ -34,7 +34,7 @@ export default function TextWithTooltip({
       <div
         className={"w-full min-w-0 inline-block"}
         style={{
-          maxWidth: `${maxChars + 5}ch`,
+          maxWidth: `${maxChars - 2}ch`,
         }}
       >
         <div className={cn(className, "truncate")}>{text}</div>

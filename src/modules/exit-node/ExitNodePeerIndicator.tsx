@@ -1,23 +1,21 @@
 import FullTooltip from "@components/FullTooltip";
 import { IconDirectionSign } from "@tabler/icons-react";
-import useFetchApi from "@utils/api";
 import * as React from "react";
 import { Peer } from "@/interfaces/Peer";
-import { Route } from "@/interfaces/Route";
+import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
 
 type Props = {
   peer: Peer;
 };
 export const ExitNodePeerIndicator = ({ peer }: Props) => {
-  const { data: routes } = useFetchApi<Route[]>(`/routes`);
-  const isExitNode = routes?.some((route) => route?.peer === peer.id);
+  const hasExitNode = useHasExitNodes(peer);
 
-  return isExitNode ? (
+  return hasExitNode ? (
     <FullTooltip
       content={
         <div className={"text-xs max-w-xs"}>
-          This peer is used as an exit node. All internet traffic will be routed
-          through this peer.
+          This peer has an exit node. Traffic from the configured distribution
+          groups will be routed through this peer.
         </div>
       }
     >

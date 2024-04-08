@@ -65,21 +65,35 @@ type ModalProps = {
   onSuccess?: (route: Route) => void;
   peer?: Peer;
   exitNode?: boolean;
+  isFirstExitNode?: boolean;
 };
 
-export function RouteModalContent({ onSuccess, peer, exitNode }: ModalProps) {
+export function RouteModalContent({
+  onSuccess,
+  peer,
+  exitNode,
+  isFirstExitNode = false,
+}: ModalProps) {
   const { createRoute } = useRoutes();
+  const [tab, setTab] = useState("network");
 
-  // General
+  /**
+   * Network Identifier, Description & Network Range
+   */
   const [networkIdentifier, setNetworkIdentifier] = useState(
-    exitNode ? (peer ? `Exit Node (${peer.name})` : "Exit Node") : "",
+    exitNode
+      ? peer
+        ? `Exit Node (${
+            peer.name.length > 25
+              ? peer.name.substring(0, 25) + "..."
+              : peer.name
+          })`
+        : "Exit Node"
+      : "",
   );
   const [description, setDescription] = useState("");
-
-  // Network
   const [networkRange, setNetworkRange] = useState(exitNode ? "0.0.0.0/0" : "");
   const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(peer);
-
   const [
     routingPeerGroups,
     setRoutingPeerGroups,
@@ -88,29 +102,23 @@ export function RouteModalContent({ onSuccess, peer, exitNode }: ModalProps) {
     initial: [],
   });
 
+  /**
+   * Distribution Groups
+   */
   const [groups, setGroups, { getGroupsToUpdate }] = useGroupHelper({
     initial: [],
   });
 
-  // Additional Settings
+  /**
+   * Additional Settings
+   */
   const [enabled, setEnabled] = useState<boolean>(true);
   const [metric, setMetric] = useState("9999");
   const [masquerade, setMasquerade] = useState<boolean>(true);
 
-  // Validate CIDR
-  const cidrError = useMemo(() => {
-    if (networkRange == "") return "";
-    const validCIDR = cidr.isValidAddress(networkRange);
-    if (!validCIDR) return "Please enter a valid CIDR, e.g., 192.168.1.0/24";
-  }, [networkRange]);
-
-  // Refs to manage focus on tab change
-  const networkRangeRef = useRef<HTMLInputElement>(null);
-  const nameRef = useRef<HTMLInputElement>(null);
-  const [peerTab, setPeerTab] = useState("routing-peer");
-
-  // Create route
-  // TODO Refactor to avoid duplicate code
+  /**
+   * Create Route
+   */
   const createRouteHandler = async () => {
     const g1 = getAllRoutingGroupsToUpdate();
     const g2 = getGroupsToUpdate();
@@ -151,7 +159,25 @@ export function RouteModalContent({ onSuccess, peer, exitNode }: ModalProps) {
     );
   };
 
-  // Is button disabled
+  /**
+   * Refs to manage input focus on tab change
+   */
+  const networkRangeRef = useRef<HTMLInputElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+  const [peerTab, setPeerTab] = useState("routing-peer");
+
+  /**
+   * Validate CIDR Range
+   */
+  const cidrError = useMemo(() => {
+    if (networkRange == "") return "";
+    const validCIDR = cidr.isValidAddress(networkRange);
+    if (!validCIDR) return "Please enter a valid CIDR, e.g., 192.168.1.0/24";
+  }, [networkRange]);
+
+  /**
+   * Allow to create route only when all fields are filled
+   */
   const isDisabled = useMemo(() => {
     return (
       networkIdentifier == "" ||
@@ -169,8 +195,6 @@ export function RouteModalContent({ onSuccess, peer, exitNode }: ModalProps) {
     groups,
   ]);
 
-  const [tab, setTab] = useState("network");
-
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
@@ -181,7 +205,14 @@ export function RouteModalContent({ onSuccess, peer, exitNode }: ModalProps) {
             <NetworkRoutesIcon className={"fill-netbird"} />
           )
         }
-        title={exitNode ? "Add Exit Node" : "Create New  Route"}
+        title={
+          exitNode
+            ? isFirstExitNode
+              ? "Setup Exit Node"
+              : "Add Exit Node"
+            : "Create New  Route"
+        }
+        truncate={!!peer}
         description={
           exitNode
             ? peer
@@ -290,8 +321,11 @@ export function RouteModalContent({ onSuccess, peer, exitNode }: ModalProps) {
             <div>
               <Label>Distribution Groups</Label>
               <HelpText>
-                Advertise this route to peers that belong to the following
-                groups
+                {exitNode
+                  ? peer
+                    ? `Route all internet traffic through this peer for the following groups`
+                    : `Route all internet traffic through the peer(s) for the following groups`
+                  : "Advertise this route to peers that belong to the following groups"}
               </HelpText>
               <PeerGroupSelector onChange={setGroups} values={groups} />
             </div>

@@ -58,6 +58,7 @@ import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
 import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
+import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import AddRouteDropdownButton from "@/modules/peer/AddRouteDropdownButton";
 import PeerRoutesTable from "@/modules/peer/PeerRoutesTable";
@@ -128,6 +129,7 @@ function PeerOverview() {
   };
 
   const { isUser } = useLoggedInUser();
+  const hasExitNodes = useHasExitNodes(peer);
 
   return (
     <PageContainer>
@@ -344,7 +346,7 @@ function PeerOverview() {
                 </div>
                 <div className={"inline-flex gap-4 justify-end"}>
                   <div className={"gap-4 flex"}>
-                    <AddExitNodeButton peer={peer} />
+                    <AddExitNodeButton peer={peer} firstTime={!hasExitNodes} />
                     <AddRouteDropdownButton />
                   </div>
                 </div>
