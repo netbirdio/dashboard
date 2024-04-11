@@ -142,7 +142,8 @@ export function GroupSelector({
                 <div className={""}>
                   <div className={"grid grid-cols-1 gap-1"}>
                     {orderBy(groups, "name")?.map((item) => {
-                      const value = item.name;
+                      const value = item?.name || "";
+                      if (value === "") return null;
                       const isSelected =
                         values.find((c) => c == value) != undefined;
 

@@ -72,12 +72,12 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     accessorKey: "group_name_strings",
-    accessorFn: (peer) => peer.groups?.map((g) => g.name).join(", "),
+    accessorFn: (peer) => peer.groups?.map((g) => g?.name || "").join(", "),
     sortingFn: "text",
   },
   {
     accessorKey: "group_names",
-    accessorFn: (peer) => peer.groups?.map((g) => g.name),
+    accessorFn: (peer) => peer.groups?.map((g) => g?.name || ""),
     sortingFn: "text",
     filterFn: "arrIncludesSome",
   },
