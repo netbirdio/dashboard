@@ -17,11 +17,11 @@ export default function SetupKeyActionCell({ setupKey }: Props) {
 
   const handleRevoke = async () => {
     notify({
-      title: "Setup Key: " + setupKey.name,
+      title: setupKey?.name || "Setup Key",
       description: "Setup key was successfully revoked",
       promise: deleteRequest
         .put({
-          name: setupKey.name,
+          name: setupKey?.name || "Setup Key",
           type: setupKey.type,
           expires_in: setupKey.expires_in,
           revoked: true,
@@ -39,7 +39,7 @@ export default function SetupKeyActionCell({ setupKey }: Props) {
 
   const handleConfirm = async () => {
     const choice = await confirm({
-      title: `Revoke '${setupKey.name}'?`,
+      title: `Revoke '${setupKey?.name || "Setup Key"}'?`,
       description:
         "Are you sure you want to revoke the setup key? This action cannot be undone.",
       confirmText: "Revoke",
