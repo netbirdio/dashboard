@@ -52,7 +52,7 @@ export default function SetupKeysTable({ setupKeys, isLoading }: Props) {
 
   return (
     <>
-      <SetupKeyModal open={open} setOpen={setOpen} />
+      {open && <SetupKeyModal open={open} setOpen={setOpen} />}
       <DataTable
         isLoading={isLoading}
         text={"Setup Keys"}

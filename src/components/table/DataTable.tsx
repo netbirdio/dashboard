@@ -55,11 +55,15 @@ declare module "@tanstack/table-core" {
 }
 
 const fuzzyFilter: FilterFn<any> = (row, columnId, value, addMeta) => {
-  const val = row.getValue(columnId);
-  if (!val) return false;
-  if (typeof val !== "string") return false;
-  const lowerCaseValue = removeAllSpaces(trim(value.toLowerCase()));
-  return val.toLowerCase().includes(lowerCaseValue);
+  try {
+    const val = row.getValue(columnId);
+    if (!val) return false;
+    if (typeof val !== "string") return false;
+    const lowerCaseValue = removeAllSpaces(trim(value.toLowerCase()));
+    return val.toLowerCase().includes(lowerCaseValue);
+  } catch (e) {
+    return false;
+  }
 };
 
 const exactMatch: FilterFn<any> = (row, columnId, value) => {

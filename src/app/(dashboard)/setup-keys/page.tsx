@@ -7,7 +7,7 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useMemo } from "react";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { Group } from "@/interfaces/Group";
@@ -22,16 +22,21 @@ export default function SetupKeys() {
   const { data: setupKeys, isLoading } = useFetchApi<SetupKey[]>("/setup-keys");
   const { groups } = useGroups();
 
-  const setupKeysWithGroups = setupKeys?.map((setupKey) => {
-    if (!setupKey.auto_groups) return setupKey;
-    if (!groups) return setupKey;
-    return {
-      ...setupKey,
-      groups: setupKey.auto_groups.map((group) => {
-        return groups.find((g) => g.id === group) || undefined;
-      }) as Group[] | undefined,
-    };
-  });
+  const setupKeysWithGroups = useMemo(() => {
+    if (!setupKeys) return [];
+    return setupKeys?.map((setupKey) => {
+      if (!setupKey.auto_groups) return setupKey;
+      if (!groups) return setupKey;
+      return {
+        ...setupKey,
+        groups: setupKey.auto_groups
+          ?.map((group) => {
+            return groups.find((g) => g.id === group) || undefined;
+          })
+          .filter((group) => group !== undefined) as Group[],
+      };
+    });
+  }, [setupKeys, groups]);
 
   return (
     <PageContainer>

@@ -39,7 +39,10 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
     },
     sortingFn: "text",
     cell: ({ row }) => (
-      <SetupKeyNameCell valid={row.original.valid} name={row.original.name} />
+      <SetupKeyNameCell
+        valid={row.original.valid}
+        name={row.original?.name || ""}
+      />
     ),
   },
   {
@@ -66,7 +69,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
   {
     id: "group_strings",
     accessorKey: "group_strings",
-    accessorFn: (s) => s.groups?.map((g) => g.name).join(", "),
+    accessorFn: (s) => s.groups?.map((g) => g?.name || "").join(", "),
   },
   {
     accessorKey: "last_used",
