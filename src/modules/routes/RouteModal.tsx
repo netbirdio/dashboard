@@ -147,6 +147,18 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
     );
   };
 
+  const networkIdentifierError = useMemo(() => {
+    return (networkIdentifier?.length || 0) > 40
+      ? "Network Identifier must be less than 40 characters"
+      : "";
+  }, [networkIdentifier]);
+
+  const metricError = useMemo(() => {
+    return parseInt(metric) < 1 || parseInt(metric) > 9999
+      ? "Metric must be between 1 and 9999"
+      : "";
+  }, [metric]);
+
   // Is button disabled
   const isDisabled = useMemo(() => {
     return (
@@ -154,7 +166,9 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
       (cidrError && cidrError.length > 1) ||
       (peerTab === "peer-group" && routingPeerGroups.length == 0) ||
       (peerTab === "routing-peer" && !routingPeer) ||
-      groups.length == 0
+      groups.length == 0 ||
+      networkIdentifierError !== "" ||
+      metricError !== ""
     );
   }, [
     networkIdentifier,
@@ -163,6 +177,8 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
     routingPeerGroups.length,
     routingPeer,
     groups,
+    networkIdentifierError,
+    metricError,
   ]);
 
   const [tab, setTab] = useState("network");
@@ -220,6 +236,7 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
                 Add a unique network identifier that is assigned to each device.
               </HelpText>
               <Input
+                error={networkIdentifierError}
                 autoFocus={true}
                 tabIndex={0}
                 ref={nameRef}
@@ -346,6 +363,8 @@ export function RouteModalContent({ onSuccess, peer }: ModalProps) {
                 max={9999}
                 maxWidthClass={"max-w-[200px]"}
                 value={metric}
+                error={metricError}
+                errorTooltip={true}
                 type={"number"}
                 onChange={(e) => setMetric(e.target.value)}
                 customPrefix={

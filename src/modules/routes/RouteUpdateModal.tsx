@@ -197,14 +197,21 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
       .filter((p) => p != undefined) as string[];
   }, [groupedRoute]);
 
+  const metricError = useMemo(() => {
+    return parseInt(metric.toString()) < 1 || parseInt(metric.toString()) > 9999
+      ? "Metric must be between 1 and 9999"
+      : "";
+  }, [metric]);
+
   // Is button disabled
   const isDisabled = useMemo(() => {
     return (
       (peerTab === "peer-group" && routingPeerGroups.length == 0) ||
       (peerTab === "routing-peer" && !routingPeer) ||
-      groups.length == 0
+      groups.length == 0 ||
+      metricError !== ""
     );
-  }, [peerTab, routingPeerGroups.length, routingPeer, groups]);
+  }, [peerTab, routingPeerGroups.length, routingPeer, groups, metricError]);
 
   const [tab, setTab] = useState(
     cell && cell == "metric" ? "settings" : "network",
@@ -352,6 +359,8 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
                 max={9999}
                 maxWidthClass={"max-w-[200px]"}
                 value={metric}
+                error={metricError}
+                errorTooltip={true}
                 type={"number"}
                 onChange={(e) => setMetric(e.target.value)}
                 customPrefix={
