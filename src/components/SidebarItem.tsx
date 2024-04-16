@@ -60,7 +60,7 @@ export default function SidebarItem({
         <li className={"px-4 cursor-pointer"}>
           <button
             className={classNames(
-              "rounded-lg text-base w-full ",
+              "rounded-lg text-[.95rem] w-full ",
               "font-normal ",
               className,
               isChild ? "pl-7 pr-2 py-2 mt-1 mb-0.5" : "py-2 px-3",

@@ -5,7 +5,9 @@ import * as React from "react";
 type Props = {
   data: {
     label: string;
-    value: string;
+    value: string | React.ReactNode;
+    noCopy?: boolean;
+    tooltip?: boolean;
   }[];
   className?: string;
 };
@@ -16,10 +18,11 @@ export const MinimalList = ({ data, className }: Props) => {
         {data.map((item, index) => {
           return (
             <Card.ListItem
-              copy
+              copy={!item.noCopy}
               label={item.label}
               value={item.value}
               key={index}
+              tooltip={item.tooltip !== false}
             />
           );
         })}

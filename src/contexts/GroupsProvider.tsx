@@ -20,9 +20,13 @@ const GroupContext = React.createContext(
 
 export default function GroupsProvider({ children }: Props) {
   const path = usePathname();
-  const { isUser } = useLoggedInUser();
+  const { permission } = useLoggedInUser();
 
-  return <GroupsProviderContent>{children}</GroupsProviderContent>;
+  return path === "/peers" && permission.dashboard_view == "blocked" ? (
+    <>{children}</>
+  ) : (
+    <GroupsProviderContent>{children}</GroupsProviderContent>
+  );
 }
 
 export function GroupsProviderContent({ children }: Props) {

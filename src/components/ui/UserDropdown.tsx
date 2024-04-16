@@ -36,6 +36,7 @@ export default function UserDropdown() {
   useHotkeys("shift+mod+l", () => logout(), []);
 
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { permission } = useLoggedInUser();
 
   return (
     <DropdownMenu
@@ -67,19 +68,23 @@ export default function UserDropdown() {
         </DropdownMenuLabel>
 
         <DropdownMenuSeparator />
-        <DropdownMenuItem
-          onClick={() => {
-            setDropdownOpen(false);
-            if (loggedInUser) {
-              router.push(`/team/user?id=${loggedInUser.id}`);
-            }
-          }}
-        >
-          <div className={"flex gap-3 items-center"}>
-            <User2 size={14} />
-            Profile Settings
-          </div>
-        </DropdownMenuItem>
+
+        {permission.dashboard_view !== "blocked" && (
+          <DropdownMenuItem
+            onClick={() => {
+              setDropdownOpen(false);
+              if (loggedInUser) {
+                router.push(`/team/user?id=${loggedInUser.id}`);
+              }
+            }}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <User2 size={14} />
+              Profile Settings
+            </div>
+          </DropdownMenuItem>
+        )}
+
         <DropdownMenuItem onClick={logoutSession}>
           <div className={"flex gap-3 items-center"}>
             <LogOutIcon size={14} />

@@ -3,7 +3,14 @@ import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { useApiCall } from "@utils/api";
 import { useIsMd } from "@utils/responsive";
 import { getLatestNetbirdRelease } from "@utils/version";
-import React, { useContext, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { User } from "@/interfaces/User";
 import type { NetbirdRelease } from "@/interfaces/Version";
@@ -32,13 +39,27 @@ export default function ApplicationProvider({ children }: Props) {
   const userRequest = useApiCall<User[]>("/users", true);
   const [show, setShow] = useState(false);
   const requestCalled = useRef(false);
+  const maxTries = 3;
+
+  const populateCache = useCallback(
+    async (tries = 0) => {
+      if (tries >= maxTries) {
+        setShow(true);
+        return Promise.reject();
+      }
+      try {
+        await userRequest.get().then(() => setShow(true));
+        return Promise.resolve();
+      } catch (e) {
+        setTimeout(() => populateCache(tries + 1), 500);
+      }
+    },
+    [userRequest, setShow],
+  );
 
   useEffect(() => {
     if (!requestCalled.current) {
-      userRequest
-        .get()
-        .then(() => setShow(true))
-        .catch(() => setShow(true));
+      populateCache().then();
       requestCalled.current = true;
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
