@@ -20,7 +20,13 @@ export const ExitNodeHelpTooltip = ({
           through one of your peers.
           <div className={"mt-2"}>
             Learn more about{" "}
-            <InlineLink href={"#"} target={"_blank"} className={"mr-1"}>
+            <InlineLink
+              href={
+                "https://docs.netbird.io/how-to/configuring-default-routes-for-internet-traffic"
+              }
+              target={"_blank"}
+              className={"mr-1"}
+            >
               Exit Nodes
               <ExternalLinkIcon size={10} />
             </InlineLink>
