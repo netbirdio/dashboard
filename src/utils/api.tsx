@@ -169,13 +169,13 @@ export function useApiErrorHandling(ignoreError = false) {
       return login(currentPath);
     }
     if (err.code == 401 && err.message == "token invalid") {
-      return setError(err);
+      setError(err);
     }
     if (err.code == 500 && err.message == "internal server error") {
-      return setError(err);
+      setError(err);
     }
     if (err.code > 400 && err.code <= 500) {
-      return setError(err);
+      setError(err);
     }
 
     return Promise.reject(err);

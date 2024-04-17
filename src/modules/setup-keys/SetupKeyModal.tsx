@@ -126,7 +126,7 @@ type ModalProps = {
 };
 
 export function SetupKeyModalContent({ onSuccess }: ModalProps) {
-  const setupKeyRequest = useApiCall<SetupKey>("/setup-keys");
+  const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { mutate } = useSWRConfig();
 
   const [name, setName] = useState("");
@@ -143,10 +143,18 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
     return reusable ? "Unlimited" : "1";
   }, [reusable]);
 
+  const expiresInError = useMemo(() => {
+    const expires = parseInt(expiresIn);
+    if (expires < 1 || expires > 365) {
+      return "Days should be between 1 and 365";
+    }
+    return "";
+  }, [expiresIn]);
+
   const isDisabled = useMemo(() => {
     const trimmedName = trim(name);
-    return trimmedName.length === 0;
-  }, [name]);
+    return trimmedName.length === 0 || expiresInError.length > 0;
+  }, [name, expiresInError]);
 
   const submit = () => {
     if (!selectedGroups) return;
@@ -245,6 +253,8 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
             min={1}
             max={365}
             value={expiresIn}
+            error={expiresInError}
+            errorTooltip={true}
             type={"number"}
             onChange={(e) => setExpiresIn(e.target.value)}
             customPrefix={

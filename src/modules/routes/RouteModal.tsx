@@ -183,17 +183,37 @@ export function RouteModalContent({
       (cidrError && cidrError.length > 1) ||
       (peerTab === "peer-group" && routingPeerGroups.length == 0) ||
       (peerTab === "routing-peer" && !routingPeer) ||
-      groups.length == 0
+      groups.length == 0 ||
+      networkRange == ""
     );
-  }, [cidrError, peerTab, routingPeerGroups.length, routingPeer, groups]);
+  }, [
+    cidrError,
+    peerTab,
+    routingPeerGroups.length,
+    routingPeer,
+    groups,
+    networkRange,
+  ]);
 
-  const isNameEntered = useMemo(() => {
-    return !(networkIdentifier == "");
+  const networkIdentifierError = useMemo(() => {
+    return (networkIdentifier?.length || 0) > 40
+      ? "Network Identifier must be less than 40 characters"
+      : "";
   }, [networkIdentifier]);
 
+  const metricError = useMemo(() => {
+    return parseInt(metric) < 1 || parseInt(metric) > 9999
+      ? "Metric must be between 1 and 9999"
+      : "";
+  }, [metric]);
+
+  const isNameEntered = useMemo(() => {
+    return networkIdentifier != "" && networkIdentifierError == "";
+  }, [networkIdentifier, networkIdentifierError]);
+
   const canCreateOrSave = useMemo(() => {
-    return isNetworkEntered && isNameEntered;
-  }, [isNetworkEntered, isNameEntered]);
+    return isNetworkEntered && isNameEntered && metricError == "";
+  }, [isNetworkEntered, isNameEntered, metricError]);
 
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
@@ -250,7 +270,10 @@ export function RouteModalContent({
             />
             Name & Description
           </TabsTrigger>
-          <TabsTrigger value={"settings"} disabled={!canCreateOrSave}>
+          <TabsTrigger
+            value={"settings"}
+            disabled={!isNetworkEntered || !isNameEntered}
+          >
             <Settings2
               size={16}
               className={
@@ -340,6 +363,7 @@ export function RouteModalContent({
                 Add a unique network identifier that is assigned to each device.
               </HelpText>
               <Input
+                error={networkIdentifierError}
                 autoFocus={true}
                 tabIndex={0}
                 ref={nameRef}
@@ -406,6 +430,8 @@ export function RouteModalContent({
                 max={9999}
                 maxWidthClass={"max-w-[200px]"}
                 value={metric}
+                error={metricError}
+                errorTooltip={true}
                 type={"number"}
                 onChange={(e) => setMetric(e.target.value)}
                 customPrefix={
@@ -469,7 +495,7 @@ export function RouteModalContent({
             <Button
               variant={"primary"}
               onClick={() => setTab("settings")}
-              disabled={!canCreateOrSave}
+              disabled={!isNameEntered || !isNetworkEntered}
             >
               Continue
             </Button>

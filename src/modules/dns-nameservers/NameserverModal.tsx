@@ -115,7 +115,7 @@ export function NameserverModalContent({
   preset,
   cell,
 }: ModalProps) {
-  const nsRequest = useApiCall<NameserverGroup>("/dns/nameservers");
+  const nsRequest = useApiCall<NameserverGroup>("/dns/nameservers", true);
   const { mutate } = useSWRConfig();
 
   const isUpdate = useMemo(() => {
@@ -233,24 +233,31 @@ export function NameserverModalContent({
     return domains.some((d) => d.name === "");
   }, [domains]);
 
+  const nameLengthError = useMemo(() => {
+    if (name.length > 40) return "Name should be less than 40 characters";
+    return "";
+  }, [name]);
+
   const hasAnyError = useMemo(() => {
     return (
       hasNSErrors ||
       nsError ||
       domainError ||
-      name == "" ||
       nameservers.length == 0 ||
       hasDomainErrors ||
-      groups.length == 0
+      groups.length == 0 ||
+      nameLengthError !== "" ||
+      name == ""
     );
   }, [
     nsError,
     domainError,
-    name,
     nameservers,
     groups,
     hasNSErrors,
     hasDomainErrors,
+    nameLengthError,
+    name,
   ]);
 
   return (
@@ -427,6 +434,7 @@ export function NameserverModalContent({
               <Input
                 autoFocus={true}
                 tabIndex={0}
+                error={nameLengthError}
                 placeholder={"e.g., Public DNS"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -516,7 +524,7 @@ function NameserverInput({
     const validCIDR = cidr.isValidAddress(ip);
     if (!validCIDR) {
       onError && onError(true);
-      return "Please enter a valid CIDR, e.g., 192.168.1.0/24";
+      return "Please enter a valid IP, e.g., 192.168.1.0";
     }
     onError && onError(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -532,7 +540,7 @@ function NameserverInput({
       <div className={"w-full"}>
         <Input
           customPrefix={"IP"}
-          placeholder={"e.g., 172.16.0.0/16"}
+          placeholder={"e.g., 172.16.0.0"}
           maxWidthClass={"w-full"}
           value={ip}
           className={"font-mono !text-[13px]"}

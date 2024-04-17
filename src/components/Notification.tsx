@@ -1,3 +1,4 @@
+import { IconCircleX } from "@tabler/icons-react";
 import type { ErrorResponse } from "@utils/api";
 import { cn } from "@utils/helpers";
 import classNames from "classnames";
@@ -88,7 +89,7 @@ export default function Notification<T>({
               {loading ? (
                 <Loader2 size={14} className={"animate-spin"} />
               ) : error ? (
-                <XIcon size={14} />
+                <IconCircleX size={24} />
               ) : (
                 icon || <CheckIcon size={14} />
               )}

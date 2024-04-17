@@ -25,7 +25,7 @@ const RoutesContext = React.createContext(
 );
 
 export default function RoutesProvider({ children }: Props) {
-  const routeRequest = useApiCall<Route>("/routes");
+  const routeRequest = useApiCall<Route>("/routes", true);
   const { mutate } = useSWRConfig();
 
   const updateRoute = async (
