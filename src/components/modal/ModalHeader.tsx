@@ -9,6 +9,7 @@ interface Props extends IconVariant {
   description: string | React.ReactNode;
   className?: string;
   margin?: string;
+  truncate?: boolean;
 }
 export default function ModalHeader({
   icon,
@@ -17,14 +18,19 @@ export default function ModalHeader({
   color = "netbird",
   className = "pb-6 px-8",
   margin = "mt-0",
+  truncate = false,
 }: Props) {
   return (
-    <div className={className}>
-      <div className={"flex items-start gap-5 pr-10"}>
+    <div className={cn(className, "min-w-0")}>
+      <div className={"flex items-start gap-5 pr-10 min-w-0"}>
         {icon && <SquareIcon color={color} icon={icon} />}
-        <div>
+        <div className={"min-w-0"}>
           <h2 className={"text-lg my-0 leading-[1.5]"}>{title}</h2>
-          <Paragraph className={cn("text-sm", margin)}>{description}</Paragraph>
+          <Paragraph
+            className={cn("text-sm", margin, truncate && "!block truncate")}
+          >
+            {description}
+          </Paragraph>
         </div>
       </div>
     </div>

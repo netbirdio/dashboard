@@ -14,6 +14,7 @@ import PeerRouteActiveCell from "@/modules/peer/PeerRouteActiveCell";
 import PeerRouteNameCell from "@/modules/peer/PeerRouteNameCell";
 import PeerRouteNetworkCell from "@/modules/peer/PeerRouteNetworkCell";
 import usePeerRoutes from "@/modules/peer/usePeerRoutes";
+import RouteDistributionGroupsCell from "@/modules/routes/RouteDistributionGroupsCell";
 
 type Props = {
   peer: Peer;
@@ -34,6 +35,16 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
       return <DataTableHeader column={column}>Network Range</DataTableHeader>;
     },
     cell: ({ row }) => <PeerRouteNetworkCell route={row.original} />,
+  },
+  {
+    id: "groups",
+    accessorFn: (r) => r.groups?.length,
+    header: ({ column }) => {
+      return (
+        <DataTableHeader column={column}>Distribution Groups</DataTableHeader>
+      );
+    },
+    cell: ({ row }) => <RouteDistributionGroupsCell route={row.original} />,
   },
   {
     id: "enabled",
