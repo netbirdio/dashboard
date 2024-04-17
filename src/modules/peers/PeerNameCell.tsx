@@ -1,7 +1,7 @@
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
-import { useUsers } from "@/contexts/UsersProvider";
+import { useLoggedInUser, useUsers } from "@/contexts/UsersProvider";
 import { Peer } from "@/interfaces/Peer";
 import ActiveInactiveRow from "@/modules/common-table-rows/ActiveInactiveRow";
 import { ExitNodePeerIndicator } from "@/modules/exit-node/ExitNodePeerIndicator";
@@ -12,6 +12,7 @@ type Props = {
 export default function PeerNameCell({ peer }: Props) {
   const { users } = useUsers();
   const router = useRouter();
+  const { isOwnerOrAdmin } = useLoggedInUser();
 
   const userOfPeer = useMemo(() => {
     return users?.find((user) => user.id === peer.user_id);
@@ -29,7 +30,9 @@ export default function PeerNameCell({ peer }: Props) {
         <ActiveInactiveRow
           active={peer.connected}
           text={peer.name}
-          additionalInfo={<ExitNodePeerIndicator peer={peer} />}
+          additionalInfo={
+            isOwnerOrAdmin && <ExitNodePeerIndicator peer={peer} />
+          }
         >
           <div className={"text-nb-gray-400 font-light truncate"}>
             {userOfPeer?.email}

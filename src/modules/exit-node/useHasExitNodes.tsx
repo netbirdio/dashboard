@@ -1,9 +1,16 @@
 import useFetchApi from "@utils/api";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Peer } from "@/interfaces/Peer";
 import { Route } from "@/interfaces/Route";
 
 export const useHasExitNodes = (peer?: Peer) => {
-  const { data: routes } = useFetchApi<Route[]>(`/routes`);
+  const { isOwnerOrAdmin } = useLoggedInUser();
+  const { data: routes } = useFetchApi<Route[]>(
+    `/routes`,
+    false,
+    true,
+    isOwnerOrAdmin,
+  );
   return peer
     ? routes?.some(
         (route) =>

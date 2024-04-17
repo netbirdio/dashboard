@@ -93,6 +93,7 @@ export default function useFetchApi<T>(
   url: string,
   ignoreError = false,
   revalidate = true,
+  allowFetch = true,
 ) {
   const { fetch } = useNetBirdFetch(ignoreError);
   const handleErrors = useApiErrorHandling(ignoreError);
@@ -100,6 +101,7 @@ export default function useFetchApi<T>(
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     url,
     async (url) => {
+      if (!allowFetch) return;
       return apiRequest<T>(fetch, "GET", url).catch((err) =>
         handleErrors(err as ErrorResponse),
       );
