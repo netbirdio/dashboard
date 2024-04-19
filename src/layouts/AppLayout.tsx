@@ -6,7 +6,7 @@ import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
 import { Viewport } from "next/dist/lib/metadata/types/extra-types";
-import { Inter } from "next/font/google";
+import localFont from "next/font/local";
 import React from "react";
 import { Toaster } from "react-hot-toast";
 import OIDCProvider from "@/auth/OIDCProvider";
@@ -16,7 +16,10 @@ import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
 import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
 
-const inter = Inter({ subsets: ["latin"] });
+const inter = localFont({
+  src: "../assets/fonts/Inter.ttf",
+  display: "swap",
+});
 
 // Extend dayjs with relativeTime plugin
 dayjs.extend(relativeTime);
