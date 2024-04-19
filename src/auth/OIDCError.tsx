@@ -2,7 +2,7 @@ import { useOidc, useOidcUser } from "@axa-fr/react-oidc";
 import Button from "@components/Button";
 import Paragraph from "@components/Paragraph";
 import loadConfig from "@utils/config";
-import { ArrowRightIcon, LogOut } from "lucide-react";
+import { ArrowRightIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useEffect, useState } from "react";
@@ -55,7 +55,7 @@ export const OIDCError = () => {
             variant={"primary"}
             size={"sm"}
             className={"mt-5"}
-            onClick={() => login("/", { client_id: config.clientId })}
+            onClick={() => logout("/", { client_id: config.clientId })}
           >
             Continue
             <ArrowRightIcon size={16} />
@@ -83,7 +83,6 @@ export const OIDCError = () => {
             onClick={() => logout("/", { client_id: config.clientId })}
           >
             Logout
-            <LogOut size={16} />
           </Button>
         </>
       )}

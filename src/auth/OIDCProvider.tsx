@@ -6,6 +6,7 @@ import {
   OidcConfiguration,
 } from "@axa-fr/react-oidc/dist/vanilla/oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
+import { useLocalStorage } from "@hooks/useLocalStorage";
 import { useRedirect } from "@hooks/useRedirect";
 import loadConfig, { buildExtras } from "@utils/config";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -43,6 +44,19 @@ export default function OIDCProvider({ children }: Props) {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const path = usePathname();
+  const params = useSearchParams()?.toString();
+  const [, setQueryParams] = useLocalStorage("netbird-query-params", params);
+
+  useEffect(() => {
+    if (
+      params?.includes("tab") ||
+      params?.includes("search") ||
+      params?.includes("id")
+    ) {
+      setQueryParams(params);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const withCustomHistory = () => {
     return {

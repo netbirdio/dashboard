@@ -14,7 +14,7 @@ export const ExitNodePeerIndicator = ({ peer }: Props) => {
     <FullTooltip
       content={
         <div className={"text-xs max-w-xs"}>
-          This peer has an exit node. Traffic from the configured distribution
+          This peer is an exit node. Traffic from the configured distribution
           groups will be routed through this peer.
         </div>
       }
