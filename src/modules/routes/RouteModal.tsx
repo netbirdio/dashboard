@@ -317,7 +317,7 @@ export function RouteModalContent({
                   <div>
                     <HelpText>
                       Assign a single peer as a routing peer for the
-                      {exitNode ? " Exit Node" : " Network CIDR"}
+                      {exitNode ? " exit node." : " Network CIDR."}
                     </HelpText>
                     <PeerSelector
                       onChange={setRoutingPeer}
@@ -329,8 +329,8 @@ export function RouteModalContent({
                 <SegmentedTabs.Content value={"peer-group"}>
                   <div>
                     <HelpText>
-                      Assign peer group with Linux machines to be used as
-                      routing peers.
+                      Assign a peer group with Linux machines to be used as
+                      {exitNode ? " exit nodes." : "routing peers."}
                     </HelpText>
                     <PeerGroupSelector
                       max={1}

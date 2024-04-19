@@ -12,30 +12,36 @@ export const ExitNodeHelpTooltip = ({
   hoverButton = false,
 }: Props) => {
   return (
-    <FullTooltip
-      hoverButton={hoverButton}
-      content={
-        <div className={"text-xs max-w-xs"}>
-          An exit node is a network route that routes all your internet traffic
-          through one of your peers.
-          <div className={"mt-2"}>
-            Learn more about{" "}
-            <InlineLink
-              href={
-                "https://docs.netbird.io/how-to/configuring-default-routes-for-internet-traffic"
-              }
-              target={"_blank"}
-              className={"mr-1"}
-            >
-              Exit Nodes
-              <ExternalLinkIcon size={10} />
-            </InlineLink>
-            in our documentation.
-          </div>
-        </div>
-      }
+    <div
+      onClick={(e) => {
+        e.stopPropagation();
+      }}
     >
-      {children}
-    </FullTooltip>
+      <FullTooltip
+        hoverButton={hoverButton}
+        content={
+          <div className={"text-xs max-w-xs"}>
+            An exit node is a network route that routes all your internet
+            traffic through one of your peers.
+            <div className={"mt-2"}>
+              Learn more about{" "}
+              <InlineLink
+                href={
+                  "https://docs.netbird.io/how-to/configuring-default-routes-for-internet-traffic"
+                }
+                target={"_blank"}
+                className={"mr-1"}
+              >
+                Exit Nodes
+                <ExternalLinkIcon size={10} />
+              </InlineLink>
+              in our documentation.
+            </div>
+          </div>
+        }
+      >
+        {children}
+      </FullTooltip>
+    </div>
   );
 };
