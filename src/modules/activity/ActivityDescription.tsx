@@ -477,15 +477,46 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
-  // TODO add activity texts
-  // rule.add
-  // rule.update
-  // rule.delete
-  // setupkey.update
-  // setupkey.overuse
-  // group.update
-  // group.delete
-  // user.peer.login
+  if (event.activity_code == "transferred.owner.role")
+    return <div className={"inline"}>Owner role was transferred</div>;
+
+  /**
+   * EDR
+   */
+  if (event.activity_code == "integrated-validator.api.created")
+    return (
+      <div className={"inline"}>
+        <Value>{m?.platform}</Value> integration created
+      </div>
+    );
+
+  if (event.activity_code == "integrated-validator.api.updated")
+    return (
+      <div className={"inline"}>
+        <Value>{m?.platform}</Value> integration updated
+      </div>
+    );
+
+  if (event.activity_code == "integrated-validator.api.deleted")
+    return (
+      <div className={"inline"}>
+        <Value>{m?.platform}</Value> integration deleted
+      </div>
+    );
+
+  if (event.activity_code == "integrated-validator.host-check.approved")
+    return (
+      <div className={"inline"}>
+        Peer approved by <Value>{m?.platform}</Value> integration
+      </div>
+    );
+
+  if (event.activity_code == "integrated-validator.host-check.denied")
+    return (
+      <div className={"inline"}>
+        Peer rejected by <Value>{m?.platform}</Value> integration
+      </div>
+    );
 
   return (
     <div className={"flex gap-2.5 items-center"}>

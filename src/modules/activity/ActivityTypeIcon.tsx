@@ -3,6 +3,7 @@ import {
   ArrowLeftRight,
   Blocks,
   Cog,
+  CreditCardIcon,
   FolderGit2,
   Globe,
   HelpCircleIcon,
@@ -10,6 +11,7 @@ import {
   LogIn,
   MonitorSmartphoneIcon,
   NetworkIcon,
+  RefreshCcw,
   Server,
   Shield,
   ShieldCheck,
@@ -71,9 +73,21 @@ export default function ActivityTypeIcon({
     return <User size={size} className={cn(DEFAULT_CLASSES, className)} />;
   } else if (code.startsWith("service")) {
     return <Cog size={size} className={cn(DEFAULT_CLASSES, className)} />;
+  } else if (code.startsWith("billing")) {
+    return (
+      <CreditCardIcon size={size} className={cn(DEFAULT_CLASSES, className)} />
+    );
+  } else if (code.startsWith("integrated")) {
+    return (
+      <ShieldCheck size={size} className={cn(DEFAULT_CLASSES, className)} />
+    );
   } else if (code.startsWith("posture")) {
     return (
       <ShieldCheck size={size} className={cn(DEFAULT_CLASSES, className)} />
+    );
+  } else if (code.startsWith("transferred")) {
+    return (
+      <RefreshCcw size={size} className={cn(DEFAULT_CLASSES, className)} />
     );
   } else {
     return (
