@@ -24,6 +24,7 @@ import { PostureCheckGeoLocation } from "@/modules/posture-checks/checks/Posture
 import { PostureCheckNetBirdVersion } from "@/modules/posture-checks/checks/PostureCheckNetBirdVersion";
 import { PostureCheckOperatingSystem } from "@/modules/posture-checks/checks/PostureCheckOperatingSystem";
 import { PostureCheckPeerNetworkRange } from "@/modules/posture-checks/checks/PostureCheckPeerNetworkRange";
+import { PostureCheckProcess } from "@/modules/posture-checks/checks/PostureCheckProcess";
 
 type Props = {
   open: boolean;
@@ -57,6 +58,9 @@ export default function PostureCheckModal({
   );
   const [peerNetworkRangeCheck, setPeerNetworkRangeCheck] = useState(
     postureCheck?.checks.peer_network_range_check || undefined,
+  );
+  const [processCheck, setProcessCheck] = useState(
+    postureCheck?.checks.process_check || undefined,
   );
 
   const validateOSCheck = (osCheck?: OperatingSystemVersionCheck) => {
@@ -98,6 +102,7 @@ export default function PostureCheckModal({
         geo_location_check: validateLocationCheck(geoLocationCheck),
         os_version_check: validateOSCheck(osVersionCheck),
         peer_network_range_check: peerNetworkRangeCheck,
+        process_check: processCheck,
       },
     };
 
@@ -133,7 +138,8 @@ export default function PostureCheckModal({
     !!nbVersionCheck ||
     !!geoLocationCheck ||
     !!osVersionCheck ||
-    !!peerNetworkRangeCheck;
+    !!peerNetworkRangeCheck ||
+    !!processCheck;
   const canCreate = !isEmpty(name) && isAtLeastOneCheckEnabled;
 
   const [tab, setTab] = useState("checks");
@@ -184,13 +190,17 @@ export default function PostureCheckModal({
                   value={geoLocationCheck}
                   onChange={setGeoLocationCheckCheck}
                 />
+                <PostureCheckPeerNetworkRange
+                  value={peerNetworkRangeCheck}
+                  onChange={setPeerNetworkRangeCheck}
+                />
                 <PostureCheckOperatingSystem
                   value={osVersionCheck}
                   onChange={setOsVersionCheck}
                 />
-                <PostureCheckPeerNetworkRange
-                  value={peerNetworkRangeCheck}
-                  onChange={setPeerNetworkRangeCheck}
+                <PostureCheckProcess
+                  value={processCheck}
+                  onChange={setProcessCheck}
                 />
               </>
             </TabsContent>
