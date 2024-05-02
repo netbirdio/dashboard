@@ -238,27 +238,22 @@ export function NameserverModalContent({
     return "";
   }, [name]);
 
-  const hasAnyError = useMemo(() => {
-    return (
+  const canContinueToDomains = useMemo(() => {
+    return !(
       hasNSErrors ||
       nsError ||
-      domainError ||
       nameservers.length == 0 ||
-      hasDomainErrors ||
-      groups.length == 0 ||
-      nameLengthError !== "" ||
-      name == ""
+      groups.length == 0
     );
-  }, [
-    nsError,
-    domainError,
-    nameservers,
-    groups,
-    hasNSErrors,
-    hasDomainErrors,
-    nameLengthError,
-    name,
-  ]);
+  }, [hasNSErrors, nsError, nameservers.length, groups.length]);
+
+  const canContinueToGeneral = useMemo(() => {
+    return !(!canContinueToDomains || domainError || hasDomainErrors);
+  }, [canContinueToDomains, domainError, hasDomainErrors]);
+
+  const canSubmit = useMemo(() => {
+    return !(!canContinueToGeneral || nameLengthError !== "" || name == "");
+  }, [canContinueToGeneral, nameLengthError, name]);
 
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
@@ -269,7 +264,7 @@ export function NameserverModalContent({
         color={"netbird"}
       />
 
-      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
+      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
         <TabsList justify={"start"} className={"px-8"}>
           <TabsTrigger value={"nameserver"}>
             <ServerIcon
@@ -280,7 +275,7 @@ export function NameserverModalContent({
             />
             Nameserver
           </TabsTrigger>
-          <TabsTrigger value={"domains"}>
+          <TabsTrigger value={"domains"} disabled={!canContinueToDomains}>
             <GlobeIcon
               size={16}
               className={
@@ -289,7 +284,7 @@ export function NameserverModalContent({
             />
             Domains
           </TabsTrigger>
-          <TabsTrigger value={"general"}>
+          <TabsTrigger value={"general"} disabled={!canContinueToGeneral}>
             <Text
               size={16}
               className={
@@ -473,20 +468,77 @@ export function NameserverModalContent({
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
-          </ModalClose>
+          {!isUpdate ? (
+            <>
+              {tab == "nameserver" && (
+                <ModalClose asChild={true}>
+                  <Button variant={"secondary"}>Cancel</Button>
+                </ModalClose>
+              )}
 
-          <Button variant={"primary"} disabled={hasAnyError} onClick={submit}>
-            {isUpdate ? (
-              <>Save Changes</>
-            ) : (
-              <>
-                <PlusCircle size={16} />
-                Add Nameserver
-              </>
-            )}
-          </Button>
+              {tab == "domains" && (
+                <Button
+                  variant={"secondary"}
+                  onClick={() => setTab("nameserver")}
+                >
+                  Back
+                </Button>
+              )}
+
+              {tab == "nameserver" && (
+                <Button
+                  variant={"primary"}
+                  onClick={() => setTab("domains")}
+                  disabled={!canContinueToDomains}
+                >
+                  Continue
+                </Button>
+              )}
+
+              {tab == "domains" && (
+                <Button
+                  variant={"primary"}
+                  onClick={() => setTab("general")}
+                  disabled={!canContinueToGeneral}
+                >
+                  Continue
+                </Button>
+              )}
+
+              {tab == "general" && (
+                <>
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => setTab("domains")}
+                  >
+                    Back
+                  </Button>
+
+                  <Button
+                    variant={"primary"}
+                    disabled={!canSubmit}
+                    onClick={submit}
+                  >
+                    <PlusCircle size={16} />
+                    Add Nameserver
+                  </Button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <ModalClose asChild={true}>
+                <Button variant={"secondary"}>Cancel</Button>
+              </ModalClose>
+              <Button
+                variant={"primary"}
+                disabled={!canSubmit}
+                onClick={submit}
+              >
+                Save Changes
+              </Button>
+            </>
+          )}
         </div>
       </ModalFooter>
     </ModalContent>
