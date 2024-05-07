@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
+import AppleIcon from "@/assets/icons/AppleIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
 import { Process, ProcessCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
@@ -60,14 +61,16 @@ const CheckContent = ({ value, onChange }: Props) => {
       ? value.processes.map((p) => {
           return {
             id: uniqueId("process"),
-            path: p?.path || "",
+            linux_path: p?.linux_path || "",
+            mac_path: p?.mac_path || "",
             windows_path: p?.windows_path || "",
           };
         })
       : [
           {
             id: uniqueId("process"),
-            path: "",
+            linux_path: "",
+            mac_path: "",
             windows_path: "",
           },
         ],
@@ -75,11 +78,12 @@ const CheckContent = ({ value, onChange }: Props) => {
 
   const handleProcessChange = (
     id: string,
-    path: string,
+    linux_path: string,
+    mac_path: string,
     windows_path: string,
   ) => {
     const newProcesses = processes.map((p) =>
-      p.id === id ? { ...p, path, windows_path } : p,
+      p.id === id ? { ...p, linux_path, mac_path, windows_path } : p,
     );
     setProcesses(newProcesses);
   };
@@ -92,7 +96,12 @@ const CheckContent = ({ value, onChange }: Props) => {
   const addProcess = () => {
     setProcesses([
       ...processes,
-      { id: uniqueId("process"), path: "", windows_path: "" },
+      {
+        id: uniqueId("process"),
+        linux_path: "",
+        mac_path: "",
+        windows_path: "",
+      },
     ]);
   };
 
@@ -101,8 +110,13 @@ const CheckContent = ({ value, onChange }: Props) => {
       return processes.map((p) => {
         return {
           id: p.id,
-          errorUnixPath: p?.path
-            ? validator.isValidUnixFilePath(p?.path || "")
+          errorMacPath: p?.mac_path
+            ? validator.isValidUnixFilePath(p?.mac_path || "")
+              ? ""
+              : "Please enter a valid macOS file path"
+            : "",
+          errorLinuxPath: p?.linux_path
+            ? validator.isValidUnixFilePath(p?.linux_path || "")
               ? ""
               : "Please enter a valid Unix file path"
             : "",
@@ -121,10 +135,13 @@ const CheckContent = ({ value, onChange }: Props) => {
   const hasErrorsOrIsEmpty = useMemo(() => {
     if (processes.length === 0) return true;
     const hasOnlyEmptyPaths = processes.some(
-      (p) => p.path === "" && p.windows_path === "",
+      (p) => p.linux_path === "" && p.mac_path === "" && p.windows_path === "",
     );
     const hasPathErrors = pathErrors.some(
-      (e) => e.errorUnixPath !== "" || e.errorWindowsPath !== "",
+      (e) =>
+        e.errorLinuxPath !== "" ||
+        e.errorMacPath !== "" ||
+        e.errorWindowsPath !== "",
     );
     return hasOnlyEmptyPaths || hasPathErrors;
   }, [processes, pathErrors]);
@@ -137,9 +154,8 @@ const CheckContent = ({ value, onChange }: Props) => {
             <Label>Processes</Label>
             <HelpText className={""}>
               Add the path of an executable file of the process. You can define
-              a path for Unix-like operating systems and a path for Windows.
-              Peers will only be allowed to connect if the process is running on
-              their system.
+              a path for Linux, macOS and Windows. Peers will only be allowed to
+              connect if the process is running on their system.
             </HelpText>
           </div>
         </div>
@@ -152,9 +168,9 @@ const CheckContent = ({ value, onChange }: Props) => {
                     <Input
                       customPrefix={<TerminalIcon size={16} />}
                       placeholder={"/usr/local/bin/netbird"}
-                      value={p.path}
+                      value={p.linux_path}
                       error={
-                        pathErrors.find((e) => e.id === p.id)?.errorUnixPath
+                        pathErrors.find((e) => e.id === p.id)?.errorLinuxPath
                       }
                       errorTooltip={true}
                       errorTooltipPosition={"top-right"}
@@ -162,6 +178,36 @@ const CheckContent = ({ value, onChange }: Props) => {
                       onChange={(e) =>
                         handleProcessChange(
                           p.id,
+                          e.target.value,
+                          p?.mac_path || "",
+                          p?.windows_path || "",
+                        )
+                      }
+                    />
+                    <Input
+                      customPrefix={
+                        <AppleIcon
+                          size={16}
+                          className={cn(
+                            pathErrors.find((e) => e.id === p.id)
+                              ?.errorMacPath && "fill-red-500",
+                          )}
+                        />
+                      }
+                      placeholder={
+                        "/Applications/NetBird.app/Contents/MacOS/netbird"
+                      }
+                      value={p.mac_path}
+                      error={
+                        pathErrors.find((e) => e.id === p.id)?.errorMacPath
+                      }
+                      errorTooltip={true}
+                      errorTooltipPosition={"top-right"}
+                      className={"w-full"}
+                      onChange={(e) =>
+                        handleProcessChange(
+                          p.id,
+                          p?.linux_path || "",
                           e.target.value,
                           p?.windows_path || "",
                         )
@@ -186,7 +232,12 @@ const CheckContent = ({ value, onChange }: Props) => {
                       }
                       className={"w-full"}
                       onChange={(e) =>
-                        handleProcessChange(p.id, p?.path || "", e.target.value)
+                        handleProcessChange(
+                          p.id,
+                          p?.linux_path || "",
+                          p?.mac_path || "",
+                          e.target.value,
+                        )
                       }
                     />
                   </div>
@@ -241,7 +292,10 @@ const CheckContent = ({ value, onChange }: Props) => {
               } else {
                 onChange({
                   processes: processes.filter(
-                    (p) => p.path !== "" || p.windows_path !== "",
+                    (p) =>
+                      p.linux_path !== "" ||
+                      p.mac_path !== "" ||
+                      p.windows_path !== "",
                   ),
                 });
               }

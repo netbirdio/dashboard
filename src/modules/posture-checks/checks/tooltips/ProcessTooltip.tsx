@@ -4,6 +4,7 @@ import { ScrollArea } from "@components/ScrollArea";
 import { tryGetProcessNameFromPath } from "@utils/helpers";
 import { TerminalIcon } from "lucide-react";
 import * as React from "react";
+import AppleIcon from "@/assets/icons/AppleIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
 import { ProcessCheck } from "@/interfaces/PostureCheck";
 
@@ -39,7 +40,7 @@ export const ProcessTooltip = ({ check, children }: Props) => {
               {check.processes.map((p, index) => {
                 return (
                   <div className={"flex-col flex gap-1 min-w-0"} key={index}>
-                    {p?.path && (
+                    {p?.linux_path && (
                       <Badge
                         variant={"gray"}
                         useHover={false}
@@ -50,9 +51,29 @@ export const ProcessTooltip = ({ check, children }: Props) => {
                         </span>
                         <span
                           className={"truncate inline-block "}
-                          title={p?.path}
+                          title={p?.linux_path}
                         >
-                          {tryGetProcessNameFromPath(p?.path) || "Unknown path"}
+                          {tryGetProcessNameFromPath(p?.linux_path) ||
+                            "Unknown path"}
+                        </span>
+                      </Badge>
+                    )}
+
+                    {p?.mac_path && (
+                      <Badge
+                        variant={"gray"}
+                        useHover={false}
+                        className={"justify-start font-medium text-xs min-w-0"}
+                      >
+                        <span className={"mr-1.5"}>
+                          <AppleIcon size={12} />
+                        </span>
+                        <span
+                          className={"truncate inline-block "}
+                          title={p?.mac_path}
+                        >
+                          {tryGetProcessNameFromPath(p?.mac_path) ||
+                            "Unknown path"}
                         </span>
                       </Badge>
                     )}

@@ -60,7 +60,8 @@ export interface ProcessCheck {
 
 export interface Process {
   id: string;
-  path?: string;
+  linux_path?: string;
+  mac_path?: string;
   windows_path?: string;
 }
 
