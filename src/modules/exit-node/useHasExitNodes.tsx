@@ -13,8 +13,7 @@ export const useHasExitNodes = (peer?: Peer) => {
   );
   return peer
     ? routes?.some(
-        (route) =>
-          route?.peer === peer.id && route?.network.includes("0.0.0.0"),
+        (route) => route?.peer === peer.id && route?.network === "0.0.0.0/0",
       ) || false
     : false;
 };

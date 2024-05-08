@@ -21,12 +21,19 @@ function SegmentedTabs({ value, onChange, children }: Props) {
   );
 }
 
-function List({ children }: { children: React.ReactNode }) {
+function List({
+  children,
+  className = "",
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
   return (
     <TabsList
-      className={
-        "bg-nb-gray-930/70 p-1.5 rounded-t-lg flex justify-center gap-1 border border-b-0 border-nb-gray-900"
-      }
+      className={cn(
+        "bg-nb-gray-930/70 p-1.5 rounded-t-lg flex justify-center gap-1 border border-b-0 border-nb-gray-900",
+        className,
+      )}
     >
       {children}
     </TabsList>

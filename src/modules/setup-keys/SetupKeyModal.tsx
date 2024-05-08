@@ -87,7 +87,11 @@ export default function SetupKeyModal({ children, open, setOpen }: Props) {
             </div>
           </div>
 
-          <div className={"px-8 pb-6"}>
+          <div
+            className={"px-8 pb-6"}
+            data-cy={"setup-key-copy-input"}
+            data-cy-setup-key-value={setupKey?.key || ""}
+          >
             <Code message={copyMessage}>
               <Code.Line>
                 {setupKey?.key || "Setup key could not be created..."}
@@ -101,6 +105,7 @@ export default function SetupKeyModal({ children, open, setOpen }: Props) {
                   variant={"secondary"}
                   className={"w-full"}
                   tabIndex={-1}
+                  data-cy={"setup-key-close"}
                 >
                   Close
                 </Button>
@@ -108,6 +113,7 @@ export default function SetupKeyModal({ children, open, setOpen }: Props) {
               <Button
                 variant={"primary"}
                 className={"w-full"}
+                data-cy={"setup-key-copy"}
                 onClick={() => copy(copyMessage)}
               >
                 <CopyIcon size={14} />
@@ -202,6 +208,7 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
           <Input
             placeholder={"e.g., AWS Servers"}
             value={name}
+            data-cy={"setup-key-name"}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
@@ -233,6 +240,7 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
             disabled={!reusable}
             value={usageLimit}
             type={"number"}
+            data-cy={"setup-key-usage-limit"}
             onChange={(e) => setUsageLimit(e.target.value)}
             placeholder={usageLimitPlaceholder}
             customPrefix={
@@ -256,6 +264,7 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
             error={expiresInError}
             errorTooltip={true}
             type={"number"}
+            data-cy={"setup-key-expire-in-days"}
             onChange={(e) => setExpiresIn(e.target.value)}
             customPrefix={
               <AlarmClock size={16} className={"text-nb-gray-300"} />
@@ -312,7 +321,12 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
             <Button variant={"secondary"}>Cancel</Button>
           </ModalClose>
 
-          <Button variant={"primary"} onClick={submit} disabled={isDisabled}>
+          <Button
+            variant={"primary"}
+            onClick={submit}
+            disabled={isDisabled}
+            data-cy={"create-setup-key"}
+          >
             <PlusCircle size={16} />
             Create Setup Key
           </Button>

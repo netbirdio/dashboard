@@ -27,9 +27,11 @@ const loadConfig = (): Config => {
   let silentRedirectURI = "/#silent-callback";
   let tokenSource = "accessToken";
 
-  if (process.env.NODE_ENV !== "production") {
+  if (process.env.APP_ENV === "test") {
+    configJson = require("@/config/test");
+  } else if (process.env.NODE_ENV === "development") {
     configJson = require("@/config/local");
-  } else {
+  } else if (process.env.NODE_ENV === "production") {
     configJson = require("@/config/production");
   }
 

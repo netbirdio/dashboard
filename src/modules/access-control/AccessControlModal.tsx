@@ -239,12 +239,6 @@ export function AccessControlModalContent({
 
   const portAndDirectionDisabled = protocol == "icmp" || protocol == "all";
 
-  const buttonDisabled = useMemo(() => {
-    if (sourceGroups.length == 0 || destinationGroups.length == 0) return true;
-    if (name.length == 0) return true;
-    if (direction != "bi" && ports.length == 0) return true;
-  }, [sourceGroups, destinationGroups, direction, ports, name]);
-
   const [postureChecks, setPostureChecks] = useState<PostureCheck[]>([]);
   const postureChecksLoaded = useRef(false);
 
@@ -268,6 +262,16 @@ export function AccessControlModalContent({
     }
   }, [initialPostureChecks]);
 
+  const continuePostureChecksDisabled = useMemo(() => {
+    if (sourceGroups.length == 0 || destinationGroups.length == 0) return true;
+    if (direction != "bi" && ports.length == 0) return true;
+  }, [sourceGroups, destinationGroups, direction, ports]);
+
+  const submitDisabled = useMemo(() => {
+    if (name.length == 0) return true;
+    if (continuePostureChecksDisabled) return true;
+  }, [name, continuePostureChecksDisabled]);
+
   return (
     <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
@@ -283,14 +287,17 @@ export function AccessControlModalContent({
         color={"netbird"}
       />
 
-      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
+      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
         <TabsList justify={"start"} className={"px-8"}>
           <TabsTrigger value={"policy"}>
             <ArrowRightLeft size={16} />
             Policy
           </TabsTrigger>
-          <PostureCheckTabTrigger />
-          <TabsTrigger value={"general"}>
+          <PostureCheckTabTrigger disabled={continuePostureChecksDisabled} />
+          <TabsTrigger
+            value={"general"}
+            disabled={continuePostureChecksDisabled}
+          >
             <Text
               size={16}
               className={
@@ -456,24 +463,74 @@ export function AccessControlModalContent({
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
-          </ModalClose>
+          {!policy ? (
+            <>
+              {tab == "policy" && (
+                <ModalClose asChild={true}>
+                  <Button variant={"secondary"}>Cancel</Button>
+                </ModalClose>
+              )}
 
-          <Button
-            variant={"primary"}
-            disabled={buttonDisabled}
-            onClick={submit}
-          >
-            {policy ? (
-              <>Save Changes</>
-            ) : (
-              <>
-                <PlusCircle size={16} />
-                Add Policy
-              </>
-            )}
-          </Button>
+              {tab == "posture_checks" && (
+                <Button variant={"secondary"} onClick={() => setTab("policy")}>
+                  Back
+                </Button>
+              )}
+
+              {tab == "policy" && (
+                <Button
+                  variant={"primary"}
+                  onClick={() => setTab("posture_checks")}
+                  disabled={continuePostureChecksDisabled}
+                >
+                  Continue
+                </Button>
+              )}
+
+              {tab == "posture_checks" && (
+                <Button
+                  variant={"primary"}
+                  onClick={() => setTab("general")}
+                  disabled={continuePostureChecksDisabled}
+                >
+                  Continue
+                </Button>
+              )}
+
+              {tab == "general" && (
+                <>
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => setTab("posture_checks")}
+                  >
+                    Back
+                  </Button>
+
+                  <Button
+                    variant={"primary"}
+                    disabled={submitDisabled}
+                    onClick={submit}
+                  >
+                    <PlusCircle size={16} />
+                    Add Policy
+                  </Button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <ModalClose asChild={true}>
+                <Button variant={"secondary"}>Cancel</Button>
+              </ModalClose>
+              <Button
+                variant={"primary"}
+                disabled={submitDisabled}
+                onClick={submit}
+              >
+                Save Changes
+              </Button>
+            </>
+          )}
         </div>
       </ModalFooter>
     </ModalContent>

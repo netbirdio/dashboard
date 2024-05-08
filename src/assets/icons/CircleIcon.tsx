@@ -16,6 +16,8 @@ export default function CircleIcon({
   return (
     <span
       style={{ width: size + "px", height: size + "px" }}
+      data-cy="circle-icon"
+      data-cy-status={active ? "active" : "inactive"}
       className={cn(
         "rounded-full",
         active
