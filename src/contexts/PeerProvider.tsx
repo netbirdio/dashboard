@@ -77,9 +77,7 @@ export default function PeerProvider({ children, peer }: Props) {
             ? loginExpiration
             : peer.login_expiration_enabled,
         approval_required:
-          approval_required != undefined
-            ? approval_required
-            : peer.approval_required,
+          approval_required == undefined ? undefined : approval_required,
       },
       `/${peer.id}`,
     );

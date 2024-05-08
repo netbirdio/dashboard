@@ -46,6 +46,7 @@ export default function SetupKeyGroupsCell({ setupKey }: Props) {
       }
       groups={setupKey.auto_groups || []}
       onSave={handleSave}
+      showAddGroupButton={true}
       modal={modal}
       setModal={setModal}
     />

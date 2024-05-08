@@ -5,6 +5,9 @@ const nextConfig = {
     unoptimized: true,
   },
   reactStrictMode: false,
+  env: {
+    APP_ENV: process.env.APP_ENV || "production",
+  },
 };
 
 module.exports = nextConfig;

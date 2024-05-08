@@ -198,6 +198,7 @@ export function PeerGroupSelector({
           <CommandList className={"w-full"}>
             <div className={"relative"}>
               <CommandInput
+                data-cy={"group-search-input"}
                 className={cn(
                   "min-h-[42px] w-full relative",
                   "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
