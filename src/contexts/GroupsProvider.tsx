@@ -1,5 +1,7 @@
 import useFetchApi from "@utils/api";
+import { usePathname } from "next/navigation";
 import React, { useState } from "react";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
 
 type Props = {
@@ -17,11 +19,22 @@ const GroupContext = React.createContext(
 );
 
 export default function GroupsProvider({ children }: Props) {
+  const path = usePathname();
+  const { permission } = useLoggedInUser();
+
+  return path === "/peers" && permission.dashboard_view == "blocked" ? (
+    <>{children}</>
+  ) : (
+    <GroupsProviderContent>{children}</GroupsProviderContent>
+  );
+}
+
+export function GroupsProviderContent({ children }: Props) {
   const { data: groups, mutate, isLoading } = useFetchApi<Group[]>("/groups");
   const [dropdownOptions, setDropdownOptions] = useState<Group[]>([]);
 
   const refresh = () => {
-    mutate().then();
+    if (groups && !isLoading) mutate().then();
   };
 
   return (

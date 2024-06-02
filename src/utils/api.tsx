@@ -26,16 +26,28 @@ async function apiRequest<T>(
   data?: any,
 ) {
   const origin = config.apiOrigin;
+
   const res = await oidcFetch(`${origin}/api${url}`, {
     method,
     body: JSON.stringify(data),
   });
-  if (!res.ok) {
-    const error = (await res.json()) as ErrorResponse;
-    return Promise.reject(error);
-  }
 
-  return (await res.json()) as T;
+  try {
+    if (!res.ok) {
+      const error = (await res.json()) as ErrorResponse;
+      return Promise.reject(error);
+    }
+    return (await res.json()) as T;
+  } catch (e) {
+    if (!res.ok) {
+      const error = {
+        code: res.status,
+        message: res.statusText,
+      } as ErrorResponse;
+      return Promise.reject(error);
+    }
+    return res;
+  }
 }
 
 export function useNetBirdFetch(ignoreError: boolean = false) {
@@ -81,6 +93,7 @@ export default function useFetchApi<T>(
   url: string,
   ignoreError = false,
   revalidate = true,
+  allowFetch = true,
 ) {
   const { fetch } = useNetBirdFetch(ignoreError);
   const handleErrors = useApiErrorHandling(ignoreError);
@@ -88,6 +101,7 @@ export default function useFetchApi<T>(
   const { data, error, isLoading, isValidating, mutate } = useSWR(
     url,
     async (url) => {
+      if (!allowFetch) return;
       return apiRequest<T>(fetch, "GET", url).catch((err) =>
         handleErrors(err as ErrorResponse),
       );
@@ -155,10 +169,13 @@ export function useApiErrorHandling(ignoreError = false) {
       return login(currentPath);
     }
     if (err.code == 401 && err.message == "token invalid") {
-      return setError(err);
+      setError(err);
     }
     if (err.code == 500 && err.message == "internal server error") {
-      return setError(err);
+      setError(err);
+    }
+    if (err.code > 400 && err.code <= 500) {
+      setError(err);
     }
 
     return Promise.reject(err);

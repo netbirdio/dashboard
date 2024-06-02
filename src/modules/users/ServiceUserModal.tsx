@@ -100,7 +100,11 @@ export function ServiceUserModalContent({ onSuccess }: ModalProps) {
             />
           </div>
 
-          <UserRoleSelector value={role as Role} onChange={setRole} />
+          <UserRoleSelector
+            value={role as Role}
+            onChange={setRole}
+            hideOwner={true}
+          />
         </div>
       </div>
 

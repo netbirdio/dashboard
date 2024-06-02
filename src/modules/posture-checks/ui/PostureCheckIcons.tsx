@@ -2,8 +2,7 @@ import { cn } from "@utils/helpers";
 import Image from "next/image";
 import * as React from "react";
 import { FaWindows } from "react-icons/fa6";
-import { CountryDERounded } from "@/assets/countries/CountryDERounded";
-import { CountryUSRounded } from "@/assets/countries/CountryUSRounded";
+import RoundedFlag from "@/assets/countries/RoundedFlag";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import AppleLogo from "@/assets/os-icons/apple.svg";
 
@@ -24,7 +23,7 @@ export const PostureCheckIcons = () => {
             "h-6 w-6 overflow-hidden rounded-full flex items-center justify-center"
           }
         >
-          <CountryDERounded />
+          <RoundedFlag country="de" />
         </div>
       </Circle>
       <Circle className={"z-[3]"}>
@@ -36,7 +35,7 @@ export const PostureCheckIcons = () => {
             "h-6 w-6 overflow-hidden rounded-full flex items-center justify-center"
           }
         >
-          <CountryUSRounded />
+          <RoundedFlag country="us" />
         </div>
       </Circle>
       <Circle className={"z-[1] top-2 "}>

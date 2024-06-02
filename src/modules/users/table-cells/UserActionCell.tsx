@@ -20,7 +20,7 @@ export default function UserActionCell({ user, serviceUser = false }: Props) {
   const deleteRule = async () => {
     const name = user.name || "User";
     notify({
-      title: name + "deleted",
+      title: `'${name}' deleted`,
       description: "User was successfully deleted.",
       promise: userRequest.del("", `/${user.id}`).then(() => {
         mutate(`/users?service_user=${serviceUser}`);

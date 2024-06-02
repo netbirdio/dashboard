@@ -15,6 +15,7 @@ const iconVariant = cva(
         green: "bg-green-950 border-green-500 text-green-500",
         purple: "bg-purple-950 border-purple-500 text-purple-500",
         indigo: "bg-indigo-950 border-indigo-500 text-indigo-500",
+        yellow: "bg-yellow-950 border-yellow-400 text-yellow-400",
       },
       size: {
         small: "w-8 h-8",

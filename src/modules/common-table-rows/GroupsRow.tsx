@@ -1,3 +1,4 @@
+import Badge from "@components/Badge";
 import Button from "@components/Button";
 import {
   Modal,
@@ -10,10 +11,12 @@ import ModalHeader from "@components/modal/ModalHeader";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import Separator from "@components/Separator";
 import MultipleGroups from "@components/ui/MultipleGroups";
+import { IconCirclePlus } from "@tabler/icons-react";
 import { FolderGit2 } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -26,6 +29,7 @@ type Props = {
   label?: string;
   description?: string;
   peer?: Peer;
+  showAddGroupButton?: boolean;
 };
 
 export default function GroupsRow({
@@ -36,8 +40,10 @@ export default function GroupsRow({
   label = "Assigned Groups",
   description = "Use groups to control what this peer can access",
   peer,
+  showAddGroupButton = false,
 }: Props) {
   const { groups: allGroups } = useGroups();
+  const { isUser } = useLoggedInUser();
 
   // Get the group by the id
   const foundGroups = useMemo(() => {
@@ -54,10 +60,17 @@ export default function GroupsRow({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setModal && setModal(true);
+          setModal && !isUser && setModal(true);
         }}
       >
-        <MultipleGroups groups={foundGroups} label={label} />
+        {foundGroups?.length == 0 && showAddGroupButton ? (
+          <Badge variant={"gray"} useHover={true}>
+            <IconCirclePlus size={14} />
+            Add Groups
+          </Badge>
+        ) : (
+          <MultipleGroups groups={foundGroups} label={label} />
+        )}
       </ModalTrigger>
       <EditGroupsModal
         groups={foundGroups}

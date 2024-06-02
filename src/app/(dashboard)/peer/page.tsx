@@ -32,6 +32,7 @@ import {
   FlagIcon,
   Globe,
   History,
+  LockIcon,
   MapPin,
   MonitorSmartphoneIcon,
   NetworkIcon,
@@ -50,11 +51,14 @@ import PeerIcon from "@/assets/icons/PeerIcon";
 import { useCountries } from "@/contexts/CountryProvider";
 import PeerProvider, { usePeer } from "@/contexts/PeerProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
+import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
+import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import AddRouteDropdownButton from "@/modules/peer/AddRouteDropdownButton";
 import PeerRoutesTable from "@/modules/peer/PeerRoutesTable";
@@ -129,6 +133,9 @@ function PeerOverview() {
     });
   };
 
+  const { isUser } = useLoggedInUser();
+  const hasExitNodes = useHasExitNodes(peer);
+
   return (
     <PageContainer>
       <RoutesProvider>
@@ -153,20 +160,21 @@ function PeerOverview() {
                   />
                   <TextWithTooltip text={name} maxChars={30}/>
 
-                  <Modal
+                  {!isUser && (
+                    <Modal
                       open={showEditNameModal}
                       onOpenChange={setShowEditNameModal}
-                  >
-                    <ModalTrigger>
-                      <div
+                    >
+                      <ModalTrigger>
+                        <div
                           className={
                             "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
                           }
-                      >
-                        <PencilIcon size={16}/>
-                      </div>
-                    </ModalTrigger>
-                    <EditNameModal
+                        >
+                          <PencilIcon size={16} />
+                        </div>
+                      </ModalTrigger>
+                      <EditNameModal
                         onSuccess={(newName) => {
                           setName(newName);
                           setShowEditNameModal(false);
@@ -174,8 +182,9 @@ function PeerOverview() {
                         peer={peer}
                         initialName={name}
                         key={showEditNameModal ? 1 : 0}
-                    />
-                  </Modal>
+                      />
+                    </Modal>
+                  )}
                 </h1>
                 <LoginExpiredBadge loginExpired={peer.login_expired}/>
               </div>
@@ -194,10 +203,10 @@ function PeerOverview() {
                 Cancel
               </Button>
               <Button
-                  variant={"primary"}
-                  className={"w-full"}
-                  onClick={() => updatePeer()}
-                  disabled={!hasChanges}
+                variant={"primary"}
+                className={"w-full"}
+                onClick={() => updatePeer()}
+                disabled={!hasChanges || isUser}
               >
                 Save Changes
               </Button>
@@ -209,43 +218,76 @@ function PeerOverview() {
 
             <div className={"flex flex-col gap-6 w-1/2"}>
               <FullTooltip
-                  content={
-                    <div
-                        className={
-                          "flex gap-2 items-center !text-nb-gray-300 text-xs"
-                        }
-                    >
-                      <IconInfoCircle size={14}/>
-                      <span>
-                      Login expiration is disabled for all peers added with an
-                      setup-key.
-                    </span>
-                    </div>
-                  }
-                  className={"w-full block"}
-                  disabled={!!peer.user_id}
+                content={
+                  <div
+                    className={
+                      "flex gap-2 items-center !text-nb-gray-300 text-xs"
+                    }
+                  >
+                    {!peer.user_id ? (
+                      <>
+                        <>
+                          <IconInfoCircle size={14}/>
+                          <span>
+                            Login expiration is disabled for all peers added
+                            with an setup-key.
+                          </span>
+                        </>
+                      </>
+                    ) : (
+                      <>
+                        <LockIcon size={14}/>
+                        <span>
+                          {`You don't have the required permissions to update this
+                          setting.`}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                }
+                className={"w-full block"}
+                disabled={!!peer.user_id && !isUser}
               >
                 <FancyToggleSwitch
-                    disabled={!peer.user_id}
-                    value={loginExpiration}
-                    onChange={setLoginExpiration}
-                    label={
-                      <>
-                        <IconCloudLock size={16}/>
-                        Login Expiration
-                      </>
-                    }
-                    helpText={
-                      "Enable to require SSO login peers to re-authenticate when their login expires."
-                    }
+                  disabled={!peer.user_id || isUser}
+                  value={loginExpiration}
+                  onChange={setLoginExpiration}
+                  label={
+                    <>
+                      <IconCloudLock size={16}/>
+                      Login Expiration
+                    </>
+                  }
+                  helpText={
+                    "Enable to require SSO login peers to re-authenticate when their login expires."
+                  }
                 />
               </FullTooltip>
-              <FancyToggleSwitch
+              <FullTooltip
+                content={
+                  <div
+                    className={
+                      "flex gap-2 items-center !text-nb-gray-300 text-xs"
+                    }
+                  >
+                    <LockIcon size={14}/>
+                    <span>
+                      {`You don't have the required permissions to update this
+                          setting.`}
+                    </span>
+                  </div>
+                }
+                interactive={false}
+                className={"w-full block"}
+                disabled={!isUser}
+              >
+                <FancyToggleSwitch
                   value={ssh}
+                  disabled={isUser}
                   onChange={(set) =>
-                      !set
-                          ? setSsh(false)
-                          : openSSHDialog().then((confirm) => setSsh(confirm))
+                    !set
+                      ? setSsh(false)
+                      : openSSHDialog().then((confirm) => setSsh(confirm))
                   }
                   label={
                     <>
@@ -256,23 +298,45 @@ function PeerOverview() {
                   helpText={
                     "Enable the SSH server on this peer to access the machine via an secure shell."
                   }
-              />
+                />
+              </FullTooltip>
+
               <div>
                 <Label>Assigned Groups</Label>
                 <HelpText>
                   Use groups to control what this peer can access.
                 </HelpText>
-                <PeerGroupSelector
+                <FullTooltip
+                  content={
+                    <div
+                      className={
+                        "flex gap-2 items-center !text-nb-gray-300 text-xs"
+                      }
+                    >
+                      <LockIcon size={14}/>
+                      <span>
+                        {`You don't have the required permissions to update this
+                          setting.`}
+                      </span>
+                    </div>
+                  }
+                  interactive={false}
+                  className={"w-full block"}
+                  disabled={!isUser}
+                >
+                  <PeerGroupSelector
+                    disabled={isUser}
                     onChange={setSelectedGroups}
                     values={selectedGroups}
                     peer={peer}
-                />
+                  />
+                </FullTooltip>
               </div>
               <div>
                 <Label>IPv6 Support</Label>
                 <HelpText>
                   Whether to enable IPv6, disable it, or enable IPv6 automatically.
-                  Overrides groupwide setting if set to something else than Automatic. <br />
+                  Overrides groupwide setting if set to something else than Automatic. <br/>
                   Automatic enables IPv6 if it is enabled by at least one group or if the peer is used in at least one
                   IPv6 route.
                 </HelpText>
@@ -310,26 +374,27 @@ function PeerOverview() {
 
         <Separator/>
 
-        {isLinux ? (
-            <div className={"px-8 py-6"}>
-              <div className={"max-w-6xl"}>
-                <div className={"flex justify-between items-center"}>
-                  <div>
-                    <h2>Network Routes</h2>
-                    <Paragraph>
-                      Access other networks without installing NetBird on every
-                      resource.
-                    </Paragraph>
-                  </div>
-                  <div className={"inline-flex gap-4 justify-end"}>
-                    <div>
-                      <AddRouteDropdownButton/>
-                    </div>
+        {isLinux && !isUser ? (
+          <div className={"px-8 py-6"}>
+            <div className={"max-w-6xl"}>
+              <div className={"flex justify-between items-center"}>
+                <div>
+                  <h2>Network Routes</h2>
+                  <Paragraph>
+                    Access other networks without installing NetBird on every
+                    resource.
+                  </Paragraph>
+                </div>
+                <div className={"inline-flex gap-4 justify-end"}>
+                  <div className={"gap-4 flex"}>
+                    <AddExitNodeButton peer={peer} firstTime={!hasExitNodes}/>
+                    <AddRouteDropdownButton/>
                   </div>
                 </div>
-                <PeerRoutesTable peer={peer}/>
               </div>
+              <PeerRoutesTable peer={peer}/>
             </div>
+          </div>
         ) : null}
       </RoutesProvider>
     </PageContainer>
@@ -344,22 +409,24 @@ function PeerInformationCard({peer}: { peer: Peer }) {
   }, [getRegionByPeer, peer]);
 
   return (
-      <Card>
-        <Card.List>
-          <Card.ListItem
-              label={
-                <>
-                  <MapPin size={16}/>
-                  NetBird IPv4-Address
-                </>
-              }
-              value={peer.ip}
-          />
+    <Card>
+      <Card.List>
+        <Card.ListItem
+          copy
+          copyText={"NetBird IP-Address"}
+          label={
+            <>
+              <MapPin size={16}/>
+              NetBird IPv4-Address
+            </>
+          }
+          value={peer.ip}
+        />
 
-          <Card.ListItem
-              label={
-                <>
-                  <MapPin size={16}/>
+        <Card.ListItem
+          label={
+            <>
+              <MapPin size={16}/>
                   NetBird IPv6-Address
                 </>
               }
@@ -367,6 +434,8 @@ function PeerInformationCard({peer}: { peer: Peer }) {
           />
 
         <Card.ListItem
+          copy
+          copyText={"Public IP-Address"}
           label={
             <>
               <NetworkIcon size={16} />
@@ -374,6 +443,30 @@ function PeerInformationCard({peer}: { peer: Peer }) {
             </>
           }
           value={peer.connection_ip}
+        />
+
+        <Card.ListItem
+          copy
+          copyText={"Domain name"}
+          label={
+            <>
+              <Globe size={16} />
+              Domain Name
+            </>
+          }
+          value={peer.dns_label}
+        />
+
+        <Card.ListItem
+          copy
+          copyText={"Hostname"}
+          label={
+            <>
+              <MonitorSmartphoneIcon size={16} />
+              Hostname
+            </>
+          }
+          value={peer.hostname}
         />
 
         <Card.ListItem
@@ -404,24 +497,6 @@ function PeerInformationCard({peer}: { peer: Peer }) {
           }
         />
 
-        <Card.ListItem
-          label={
-            <>
-              <Globe size={16} />
-              Domain Name
-            </>
-          }
-          value={peer.dns_label}
-        />
-        <Card.ListItem
-          label={
-            <>
-              <MonitorSmartphoneIcon size={16} />
-              Hostname
-            </>
-          }
-          value={peer.hostname}
-        />
         <Card.ListItem
           label={
             <>

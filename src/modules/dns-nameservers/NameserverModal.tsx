@@ -115,7 +115,7 @@ export function NameserverModalContent({
   preset,
   cell,
 }: ModalProps) {
-  const nsRequest = useApiCall<NameserverGroup>("/dns/nameservers");
+  const nsRequest = useApiCall<NameserverGroup>("/dns/nameservers", true);
   const { mutate } = useSWRConfig();
 
   const isUpdate = useMemo(() => {
@@ -233,25 +233,27 @@ export function NameserverModalContent({
     return domains.some((d) => d.name === "");
   }, [domains]);
 
-  const hasAnyError = useMemo(() => {
-    return (
+  const nameLengthError = useMemo(() => {
+    if (name.length > 40) return "Name should be less than 40 characters";
+    return "";
+  }, [name]);
+
+  const canContinueToDomains = useMemo(() => {
+    return !(
       hasNSErrors ||
       nsError ||
-      domainError ||
-      name == "" ||
       nameservers.length == 0 ||
-      hasDomainErrors ||
       groups.length == 0
     );
-  }, [
-    nsError,
-    domainError,
-    name,
-    nameservers,
-    groups,
-    hasNSErrors,
-    hasDomainErrors,
-  ]);
+  }, [hasNSErrors, nsError, nameservers.length, groups.length]);
+
+  const canContinueToGeneral = useMemo(() => {
+    return !(!canContinueToDomains || domainError || hasDomainErrors);
+  }, [canContinueToDomains, domainError, hasDomainErrors]);
+
+  const canSubmit = useMemo(() => {
+    return !(!canContinueToGeneral || nameLengthError !== "" || name == "");
+  }, [canContinueToGeneral, nameLengthError, name]);
 
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
@@ -262,7 +264,7 @@ export function NameserverModalContent({
         color={"netbird"}
       />
 
-      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
+      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
         <TabsList justify={"start"} className={"px-8"}>
           <TabsTrigger value={"nameserver"}>
             <ServerIcon
@@ -273,7 +275,7 @@ export function NameserverModalContent({
             />
             Nameserver
           </TabsTrigger>
-          <TabsTrigger value={"domains"}>
+          <TabsTrigger value={"domains"} disabled={!canContinueToDomains}>
             <GlobeIcon
               size={16}
               className={
@@ -282,7 +284,7 @@ export function NameserverModalContent({
             />
             Domains
           </TabsTrigger>
-          <TabsTrigger value={"general"}>
+          <TabsTrigger value={"general"} disabled={!canContinueToGeneral}>
             <Text
               size={16}
               className={
@@ -432,6 +434,7 @@ export function NameserverModalContent({
               <Input
                 autoFocus={true}
                 tabIndex={0}
+                error={nameLengthError}
                 placeholder={"e.g., Public DNS"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -470,20 +473,77 @@ export function NameserverModalContent({
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
-          </ModalClose>
+          {!isUpdate ? (
+            <>
+              {tab == "nameserver" && (
+                <ModalClose asChild={true}>
+                  <Button variant={"secondary"}>Cancel</Button>
+                </ModalClose>
+              )}
 
-          <Button variant={"primary"} disabled={hasAnyError} onClick={submit}>
-            {isUpdate ? (
-              <>Save Changes</>
-            ) : (
-              <>
-                <PlusCircle size={16} />
-                Add Nameserver
-              </>
-            )}
-          </Button>
+              {tab == "domains" && (
+                <Button
+                  variant={"secondary"}
+                  onClick={() => setTab("nameserver")}
+                >
+                  Back
+                </Button>
+              )}
+
+              {tab == "nameserver" && (
+                <Button
+                  variant={"primary"}
+                  onClick={() => setTab("domains")}
+                  disabled={!canContinueToDomains}
+                >
+                  Continue
+                </Button>
+              )}
+
+              {tab == "domains" && (
+                <Button
+                  variant={"primary"}
+                  onClick={() => setTab("general")}
+                  disabled={!canContinueToGeneral}
+                >
+                  Continue
+                </Button>
+              )}
+
+              {tab == "general" && (
+                <>
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => setTab("domains")}
+                  >
+                    Back
+                  </Button>
+
+                  <Button
+                    variant={"primary"}
+                    disabled={!canSubmit}
+                    onClick={submit}
+                  >
+                    <PlusCircle size={16} />
+                    Add Nameserver
+                  </Button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <ModalClose asChild={true}>
+                <Button variant={"secondary"}>Cancel</Button>
+              </ModalClose>
+              <Button
+                variant={"primary"}
+                disabled={!canSubmit}
+                onClick={submit}
+              >
+                Save Changes
+              </Button>
+            </>
+          )}
         </div>
       </ModalFooter>
     </ModalContent>
@@ -521,7 +581,7 @@ function NameserverInput({
     const validCIDR = cidr.isValidAddress(ip);
     if (!validCIDR) {
       onError && onError(true);
-      return "Please enter a valid CIDR, e.g., 192.168.1.0/24";
+      return "Please enter a valid IP, e.g., 192.168.1.0";
     }
     onError && onError(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -537,7 +597,7 @@ function NameserverInput({
       <div className={"w-full"}>
         <Input
           customPrefix={"IP"}
-          placeholder={"e.g., 172.16.0.0/16"}
+          placeholder={"e.g., 172.16.0.0"}
           maxWidthClass={"w-full"}
           value={ip}
           className={"font-mono !text-[13px]"}

@@ -17,15 +17,15 @@ export default function SetupKeyGroupsCell({ setupKey }: Props) {
     const groups = await Promise.all(promises);
 
     notify({
-      title: setupKey.name,
+      title: setupKey?.name || "Setup Key",
       description: "Groups of the setup key were successfully saved",
       promise: request
         .put({
-          name: setupKey.name,
+          name: setupKey?.name || "Setup Key",
           type: setupKey.type,
           expires_in: setupKey.expires_in,
           revoked: setupKey.revoked,
-          auto_groups: groups.map((group) => group.id),
+          auto_groups: groups?.map((group) => group.id) || [],
           usage_limit: setupKey.usage_limit,
           ephemeral: setupKey.ephemeral,
         })
@@ -46,6 +46,7 @@ export default function SetupKeyGroupsCell({ setupKey }: Props) {
       }
       groups={setupKey.auto_groups || []}
       onSave={handleSave}
+      showAddGroupButton={true}
       modal={modal}
       setModal={setModal}
     />

@@ -75,3 +75,7 @@ export const validator = {
     return semverRegex.test(version);
   },
 };
+
+export function isInt(n: number) {
+  return n % 1 === 0;
+}

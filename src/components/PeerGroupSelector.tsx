@@ -86,8 +86,6 @@ export function PeerGroupSelector({
     }
 
     if (max == 1) setOpen(false);
-
-    setSearch("");
   };
 
   // Remove group from the groupOptions if it does not have an id
@@ -145,6 +143,7 @@ export function PeerGroupSelector({
             "min-h-[46px] w-full relative items-center",
             "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
             "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
+            "disabled:pointer-events-none disabled:opacity-30",
           )}
           disabled={disabled}
           ref={inputRef}
@@ -199,6 +198,7 @@ export function PeerGroupSelector({
           <CommandList className={"w-full"}>
             <div className={"relative"}>
               <CommandInput
+                data-cy={"group-search-input"}
                 className={cn(
                   "min-h-[42px] w-full relative",
                   "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",

@@ -15,9 +15,8 @@ import {
 } from "@components/Select";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
-import { cn } from "@utils/helpers";
-import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
-import { CalendarClock, ShieldIcon, TimerReset, VoteIcon } from "lucide-react";
+import { cn, isInt } from "@utils/helpers";
+import { CalendarClock, ShieldIcon, TimerReset } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
@@ -55,18 +54,21 @@ export default function AuthenticationTab({ account }: Props) {
   const [expiresInSeconds] = useState(
     account.settings.peer_login_expiration || 86400,
   );
+
   const [expiresIn, setExpiresIn] = useState(() => {
-    if (expiresInSeconds <= 86400) {
-      return Math.round(expiresInSeconds / 3600).toString();
+    if (expiresInSeconds <= 172800) {
+      const hours = expiresInSeconds / 3600;
+      return isInt(hours) ? hours.toString() : hours.toFixed(2).toString();
     }
-    return Math.round(expiresInSeconds / 86400).toString();
+    const days = expiresInSeconds / 86400;
+    return isInt(days) ? days.toString() : days.toFixed(2).toString();
   });
 
   /**
    * Interval
    */
   const initialInterval = useMemo(() => {
-    if (expiresInSeconds <= 86400) return "hours";
+    if (expiresInSeconds <= 172800) return "hours";
     return "days";
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -140,22 +142,6 @@ export default function AuthenticationTab({ account }: Props) {
         </div>
 
         <div className={"flex flex-col gap-6 w-full mt-8"}>
-          {(isLocalDev() || isNetBirdHosted()) && (
-            <div>
-              <FancyToggleSwitch
-                value={peerApproval}
-                onChange={setPeerApproval}
-                label={
-                  <>
-                    <VoteIcon size={15} />
-                    Peer approval
-                  </>
-                }
-                helpText={"Require peers to be approved by an administrator."}
-              />
-            </div>
-          )}
-
           <div>
             <FancyToggleSwitch
               value={loginExpiration}

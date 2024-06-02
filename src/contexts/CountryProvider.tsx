@@ -1,5 +1,6 @@
 import useFetchApi from "@utils/api";
 import React, { useCallback } from "react";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Country } from "@/interfaces/Country";
 import { Peer } from "@/interfaces/Peer";
 
@@ -16,9 +17,25 @@ const CountryContext = React.createContext(
 );
 
 export default function CountryProvider({ children }: Props) {
+  const { permission } = useLoggedInUser();
+
+  const getRegionByPeer = (peer: Peer) => "Unknown";
+
+  return permission?.dashboard_view != "full" ? (
+    <CountryContext.Provider
+      value={{ countries: [], isLoading: false, getRegionByPeer }}
+    >
+      {children}
+    </CountryContext.Provider>
+  ) : (
+    <CountryProviderContent>{children}</CountryProviderContent>
+  );
+}
+
+function CountryProviderContent({ children }: Props) {
   const { data: countries, isLoading } = useFetchApi<Country[]>(
     "/locations/countries",
-    false,
+    true,
     false,
   );
 

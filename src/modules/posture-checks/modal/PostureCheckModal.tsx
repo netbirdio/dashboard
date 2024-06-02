@@ -163,7 +163,10 @@ export default function PostureCheckModal({
                 Checks
               </TabsTrigger>
 
-              <TabsTrigger value={"general"}>
+              <TabsTrigger
+                value={"general"}
+                disabled={!isAtLeastOneCheckEnabled}
+              >
                 <Text
                   size={16}
                   className={
@@ -243,12 +246,23 @@ export default function PostureCheckModal({
             </div>
             <div className={"flex gap-3 w-full justify-end"}>
               <>
-                <Button
-                  variant={"secondary"}
-                  onClick={() => onOpenChange(false)}
-                >
-                  Cancel
-                </Button>
+                {tab == "checks" && (
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Cancel
+                  </Button>
+                )}
+
+                {tab == "general" && (
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => setTab("checks")}
+                  >
+                    Back
+                  </Button>
+                )}
 
                 {!postureCheck && tab == "checks" && (
                   <Button

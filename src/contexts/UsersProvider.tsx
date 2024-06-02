@@ -1,6 +1,7 @@
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import useFetchApi from "@utils/api";
 import React, { useMemo } from "react";
+import { Permission } from "@/interfaces/Permission";
 import { User } from "@/interfaces/User";
 
 type Props = {
@@ -26,7 +27,7 @@ export default function UsersProvider({ children }: Props) {
     return users?.find((user) => user.is_current);
   }, [users]);
 
-  return !isLoading ? (
+  return !isLoading && loggedInUser ? (
     <UsersContext.Provider value={{ users, refresh, loggedInUser }}>
       {children}
     </UsersContext.Provider>
@@ -43,5 +44,19 @@ export const useLoggedInUser = () => {
   const isAdmin = loggedInUser ? loggedInUser?.role === "admin" : false;
   const isUser = !isOwner && !isAdmin;
   const isOwnerOrAdmin = isOwner || isAdmin;
-  return { loggedInUser, isOwner, isAdmin, isUser, isOwnerOrAdmin } as const;
+
+  const permission = useMemo(() => {
+    return {
+      dashboard_view: loggedInUser?.permissions.dashboard_view || "blocked",
+    } as Permission;
+  }, [loggedInUser]);
+
+  return {
+    loggedInUser,
+    isOwner,
+    isAdmin,
+    isUser,
+    isOwnerOrAdmin,
+    permission,
+  } as const;
 };

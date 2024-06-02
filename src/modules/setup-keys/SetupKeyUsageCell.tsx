@@ -1,4 +1,5 @@
-import { MonitorSmartphoneIcon } from "lucide-react";
+import { IconRepeat } from "@tabler/icons-react";
+import { Repeat1 } from "lucide-react";
 
 type Props = {
   current: number;
@@ -7,14 +8,16 @@ type Props = {
 };
 export default function SetupKeyUsageCell({ current, limit, reusable }: Props) {
   return reusable ? (
-    <div className={"flex gap-1 flex-col"}>
-      <div className={"flex items-center gap-2"}>
-        <MonitorSmartphoneIcon size={14} />
-        {current} of {limit} Peers
-      </div>
-      <div></div>
+    <div className={"flex items-center text-[13px] text-nb-gray-300 gap-2"}>
+      <IconRepeat size={14} className={"text-green-400"} />
+      <span>
+        <span className={"font-medium text-nb-gray-200"}> {current} </span> of{" "}
+        {limit == 0 ? <>Unlimited</> : limit} Peers
+      </span>
     </div>
   ) : (
-    <div className={"text-nb-gray-800"}>-</div>
+    <div className={"flex items-center text-[13px] text-nb-gray-300 gap-2"}>
+      <Repeat1 size={14} /> One-off
+    </div>
   );
 }

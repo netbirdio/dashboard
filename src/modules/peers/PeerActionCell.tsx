@@ -19,6 +19,7 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
 import { usePeer } from "@/contexts/PeerProvider";
+import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
 
 export default function PeerActionCell() {
   const { peer, deletePeer, update, openSSHDialog } = usePeer();
@@ -127,6 +128,9 @@ export default function PeerActionCell() {
               </div>
             </div>
           </DropdownMenuItem>
+
+          <ExitNodeDropdownButton peer={peer} />
+
           <DropdownMenuSeparator />
 
           <DropdownMenuItem onClick={deletePeer} variant={"danger"}>

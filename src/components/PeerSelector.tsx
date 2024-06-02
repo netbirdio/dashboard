@@ -121,7 +121,7 @@ export function PeerSelector({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "min-h-[42px] w-full relative items-center group",
+            "min-h-[46px] w-full relative items-center group",
             "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
             "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer enabled:hover:dark:bg-nb-gray-900/50",
             "disabled:opacity-40 disabled:cursor-default",

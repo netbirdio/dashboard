@@ -10,6 +10,7 @@ type Props = {
   leftSection?: React.ReactNode;
   text?: string | React.ReactNode;
   className?: string;
+  additionalInfo?: React.ReactNode;
 };
 export default function ActiveInactiveRow({
   active,
@@ -18,11 +19,12 @@ export default function ActiveInactiveRow({
   leftSection,
   inactiveDot = "gray",
   className,
+  additionalInfo,
 }: Props) {
   return (
     <div
       className={cn(
-        "flex gap-3 dark:text-neutral-300 text-neutral-500 min-w-[250px] max-w-[250px]",
+        "gap-3 dark:text-neutral-300 text-neutral-500 min-w-0",
         className,
       )}
     >
@@ -34,9 +36,12 @@ export default function ActiveInactiveRow({
             inactiveDot={inactiveDot}
             className={"mt-1 shrink-0"}
           />
-          <div className={"flex flex-col"}>
-            <div className={" font-medium"}>
+          <div className={"flex flex-col min-w-0"}>
+            <div
+              className={"font-medium flex gap-2 items-center justify-center"}
+            >
               <TextWithTooltip text={text as string} maxChars={25} />
+              {additionalInfo}
             </div>
             {children}
           </div>

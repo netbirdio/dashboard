@@ -50,7 +50,7 @@ export default function GroupsTab({ account }: Props) {
    * JWT Group Sync
    */
   const [jwtGroupSync, setJwtGroupSync] = useState<boolean>(
-    account.settings.groups_propagation_enabled,
+    account.settings.jwt_groups_enabled,
   );
   const [jwtGroupsClaimName, setJwtGroupsClaimName] = useState(
     account.settings.jwt_groups_claim_name,

@@ -5,6 +5,7 @@ import { ModalContent, ModalFooter } from "@components/modal/Modal";
 import Paragraph from "@components/Paragraph";
 import SmallParagraph from "@components/SmallParagraph";
 import { Tabs, TabsList, TabsTrigger } from "@components/Tabs";
+import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
 import AndroidIcon from "@/assets/icons/AndroidIcon";
 import AppleIcon from "@/assets/icons/AppleIcon";
@@ -32,29 +33,49 @@ type Props = {
 };
 
 export default function SetupModal({ showClose = true, user }: Props) {
-  const os = useOperatingSystem();
+  return (
+    <ModalContent showClose={showClose}>
+      <SetupModalContent user={user} />
+    </ModalContent>
+  );
+}
 
+export function SetupModalContent({
+  user,
+  header = true,
+  footer = true,
+  tabAlignment = "center",
+}: {
+  user?: OidcUserInfo;
+  header?: boolean;
+  footer?: boolean;
+  tabAlignment?: "center" | "start" | "end";
+}) {
+  const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
 
   return (
-    <ModalContent showClose={showClose}>
-      <div className={"text-center pb-8 pt-4 px-8"}>
-        <h2 className={"text-3xl max-w-lg mx-auto"}>
-          {isFirstRun ? (
-            <>
-              Hello {user?.given_name || "there"}! 👋 <br />
-              {`It's time to add your first device.`}
-            </>
-          ) : (
-            <>Add new peer</>
-          )}
-        </h2>
-        <Paragraph className={"max-w-xs mx-auto mt-3"}>
-          To get started, install NetBird and log in using your email account.
-        </Paragraph>
-      </div>
+    <>
+      {header && (
+        <div className={"text-center pb-8 pt-4 px-8"}>
+          <h2 className={"text-3xl max-w-lg mx-auto"}>
+            {isFirstRun ? (
+              <>
+                Hello {user?.given_name || "there"}! 👋 <br />
+                {`It's time to add your first device.`}
+              </>
+            ) : (
+              <>Add new peer</>
+            )}
+          </h2>
+          <Paragraph className={"max-w-xs mx-auto mt-3"}>
+            To get started, install NetBird and log in using your email account.
+          </Paragraph>
+        </div>
+      )}
+
       <Tabs defaultValue={String(os)}>
-        <TabsList>
+        <TabsList justify={tabAlignment} className={"pt-2 px-3"}>
           <TabsTrigger value={String(OperatingSystem.LINUX)}>
             <ShellIcon
               className={
@@ -111,23 +132,26 @@ export default function SetupModal({ showClose = true, user }: Props) {
         <IOSTab />
         <DockerTab />
       </Tabs>
-      <ModalFooter variant={"setup"}>
-        <div>
-          <SmallParagraph>
-            After that you should be connected. Add more devices to your network
-            or manage your existing devices in the admin panel. If you have
-            further questions check out our{" "}
-            <InlineLink
-              href={
-                "https://docs.netbird.io/how-to/getting-started#installation"
-              }
-              target={"_blank"}
-            >
-              installation guide.
-            </InlineLink>
-          </SmallParagraph>
-        </div>
-      </ModalFooter>
-    </ModalContent>
+      {footer && (
+        <ModalFooter variant={"setup"}>
+          <div>
+            <SmallParagraph>
+              After that you should be connected. Add more devices to your
+              network or manage your existing devices in the admin panel. If you
+              have further questions check out our{" "}
+              <InlineLink
+                href={
+                  "https://docs.netbird.io/how-to/getting-started#installation"
+                }
+                target={"_blank"}
+              >
+                Installation Guide
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
+            </SmallParagraph>
+          </div>
+        </ModalFooter>
+      )}
+    </>
   );
 }

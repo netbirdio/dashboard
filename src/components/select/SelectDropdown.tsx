@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import { CommandItem } from "@components/Command";
+import Paragraph from "@components/Paragraph";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
 import { SelectDropdownSearchInput } from "@components/select/SelectDropdownSearchInput";
@@ -31,6 +32,7 @@ interface SelectDropdownProps {
   popoverWidth?: "auto" | number;
   options: SelectOption[];
   showSearch?: boolean;
+  showValues?: boolean;
   placeholder?: string;
   searchPlaceholder?: string;
   isLoading?: boolean;
@@ -43,6 +45,7 @@ export function SelectDropdown({
   popoverWidth = "auto",
   options,
   showSearch = false,
+  showValues = false,
   placeholder = "Select...",
   searchPlaceholder = "Search...",
   isLoading = false,
@@ -186,6 +189,7 @@ export function SelectDropdown({
                       option={option}
                       toggle={toggle}
                       key={option.value}
+                      showValue={showValues}
                     />
                   ))}
                 </div>
@@ -201,9 +205,11 @@ export function SelectDropdown({
 const SelectDropdownItem = ({
   option,
   toggle,
+  showValue = false,
 }: {
   option: SelectOption;
   toggle: (value: string) => void;
+  showValue?: boolean;
 }) => {
   const value = option.value || "" + option.label || "";
   const elementRef = useRef<HTMLDivElement>(null);
@@ -233,6 +239,13 @@ const SelectDropdownItem = ({
               <span className={"text-nb-gray-200"}>{option.label}</span>
             </div>
           </div>
+          {showValue && (
+            <div className={"flex items-center gap-2.5 p-1"}>
+              <Paragraph className={cn("text-sm text-right")}>
+                {option.value}
+              </Paragraph>
+            </div>
+          )}
         </CommandItem>
       ) : (
         <div className={"h-[35px] py-1 px-2"}></div>

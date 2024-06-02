@@ -17,6 +17,7 @@ import React from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import PeerProvider from "@/contexts/PeerProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
@@ -75,12 +76,12 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     accessorKey: "group_name_strings",
-    accessorFn: (peer) => peer.groups?.map((g) => g.name).join(", "),
+    accessorFn: (peer) => peer.groups?.map((g) => g?.name || "").join(", "),
     sortingFn: "text",
   },
   {
     accessorKey: "group_names",
-    accessorFn: (peer) => peer.groups?.map((g) => g.name),
+    accessorFn: (peer) => peer.groups?.map((g) => g?.name || ""),
     sortingFn: "text",
     filterFn: "arrIncludesSome",
   },
@@ -137,6 +138,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     ),
   },
   {
+    id: "actions",
     accessorKey: "id",
     header: "",
     cell: ({ row }) => (
@@ -180,6 +182,8 @@ export default function PeersTable({ peers, isLoading }: Props) {
       "name",
     ) as Group[]) || ([] as Group[]);
 
+  const { isUser } = useLoggedInUser();
+
   return (
     <DataTable
       onRowClick={(row) => router.push("/peer?id=" + row.original.id)}
@@ -198,6 +202,7 @@ export default function PeersTable({ peers, isLoading }: Props) {
         ip6: false,
         user_name: false,
         user_email: false,
+        actions: !isUser,
       }}
       isLoading={isLoading}
       getStartedCard={
@@ -235,6 +240,29 @@ export default function PeersTable({ peers, isLoading }: Props) {
         <>
           <ButtonGroup disabled={peers?.length == 0}>
             <ButtonGroup.Button
+              disabled={peers?.length == 0}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.setColumnFilters([
+                  {
+                    id: "connected",
+                    value: undefined,
+                  },
+                  {
+                    id: "approval_required",
+                    value: undefined,
+                  },
+                ]);
+              }}
+              variant={
+                table.getColumn("connected")?.getFilterValue() == undefined
+                  ? "tertiary"
+                  : "secondary"
+              }
+            >
+              All
+            </ButtonGroup.Button>
+            <ButtonGroup.Button
               onClick={() => {
                 table.setPageIndex(0);
                 table.setColumnFilters([
@@ -258,13 +286,12 @@ export default function PeersTable({ peers, isLoading }: Props) {
               Online
             </ButtonGroup.Button>
             <ButtonGroup.Button
-              disabled={peers?.length == 0}
               onClick={() => {
                 table.setPageIndex(0);
                 table.setColumnFilters([
                   {
                     id: "connected",
-                    value: undefined,
+                    value: false,
                   },
                   {
                     id: "approval_required",
@@ -272,13 +299,14 @@ export default function PeersTable({ peers, isLoading }: Props) {
                   },
                 ]);
               }}
+              disabled={peers?.length == 0}
               variant={
-                table.getColumn("connected")?.getFilterValue() == undefined
+                table.getColumn("connected")?.getFilterValue() == false
                   ? "tertiary"
                   : "secondary"
               }
             >
-              All
+              Offline
             </ButtonGroup.Button>
           </ButtonGroup>
 

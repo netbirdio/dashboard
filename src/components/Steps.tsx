@@ -36,7 +36,7 @@ const Step = ({ children, step, line = true, center = false }: StepProps) => {
         className={cn(
           "h-[34px] w-[34px] shrink-0 rounded-full  flex items-center justify-center font-medium text-xs relative z-0 border-4  transition-all",
           "dark:bg-nb-gray-900 dark:text-nb-gray-400 dark:border-nb-gray dark:group-hover:bg-nb-gray-800",
-          "bg-nb-gray-100 text-nb-gray-400 border-white group-hover:bg-nb-gray-200",
+          "bg-nb-gray-100 text-nb-gray-400 border-white group-hover:bg-nb-gray-200 step-circle",
         )}
       >
         {step}

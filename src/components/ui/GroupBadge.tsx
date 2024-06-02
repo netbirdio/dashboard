@@ -21,14 +21,14 @@ export default function GroupBadge({
 }: Props) {
   return (
     <Badge
-      key={group.name}
+      key={group.id}
       useHover={true}
       variant={"gray-ghost"}
       className={cn("transition-all group whitespace-nowrap", className)}
       onClick={onClick}
     >
       <FolderGit2 size={12} className={"shrink-0"} />
-      <TextWithTooltip text={group.name} maxChars={20} />
+      <TextWithTooltip text={group?.name || ""} maxChars={20} />
       {children}
       {showX && (
         <XIcon
