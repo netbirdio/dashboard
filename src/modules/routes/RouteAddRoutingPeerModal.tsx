@@ -92,6 +92,8 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
     let useRange = false;
     if (routeNetwork?.domains) {
       useRange = routeNetwork.domains.length <= 0;
+    } else {
+      useRange = true;
     }
 
     createRoute(
