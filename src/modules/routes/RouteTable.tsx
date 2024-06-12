@@ -24,6 +24,10 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     cell: ({ row }) => <RoutePeerCell route={row.original} />,
   },
   {
+    accessorKey: "description",
+    sortingFn: "text",
+  },
+  {
     accessorKey: "metric",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Metric</DataTableHeader>;
@@ -122,6 +126,7 @@ export default function RouteTable({ row }: Props) {
         sorting={sorting}
         columnVisibility={{
           group_names: false,
+          description: false,
         }}
         onRowClick={(row, cell) => {
           setCurrentRow(row.original);

@@ -23,6 +23,7 @@ import Separator from "@components/Separator";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import LoginExpiredBadge from "@components/ui/LoginExpiredBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import useRedirect from "@hooks/useRedirect";
 import { IconCloudLock, IconInfoCircle } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import dayjs from "dayjs";
@@ -66,8 +67,11 @@ import PeerRoutesTable from "@/modules/peer/PeerRoutesTable";
 export default function PeerPage() {
   const queryParameter = useSearchParams();
   const peerId = queryParameter.get("id");
-  const { data: peer } = useFetchApi<Peer>("/peers/" + peerId);
-  return peer ? (
+  const { data: peer, isLoading } = useFetchApi<Peer>("/peers/" + peerId, true);
+
+  useRedirect("/peers", false, !peerId);
+
+  return peer && !isLoading ? (
     <PeerProvider peer={peer}>
       <PeerOverview />
     </PeerProvider>

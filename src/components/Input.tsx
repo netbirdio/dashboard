@@ -13,7 +13,6 @@ export interface InputProps
   icon?: React.ReactNode;
   error?: string;
   errorTooltip?: boolean;
-  errorTooltipPosition?: "top" | "top-right";
 }
 
 const inputVariants = cva("", {
@@ -50,7 +49,6 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       maxWidthClass = "",
       error,
       errorTooltip = false,
-      errorTooltipPosition = "top",
       ...props
     },
     ref,
@@ -107,12 +105,9 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </div>
           {error && errorTooltip && (
             <div
-              className={cn(
-                errorTooltipPosition == "top" &&
-                  "absolute right-0 top-2 h-[0px] w-full flex items-center pr-3 justify-center",
-                errorTooltipPosition == "top-right" &&
-                  "absolute -right-6 top-2 h-[0px] w-full flex items-center pr-3 justify-end",
-              )}
+              className={
+                "absolute right-0 top-2 h-[0px] w-full flex items-center pr-3 justify-center"
+              }
             >
               <FullTooltip
                 content={
@@ -125,7 +120,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                   </div>
                 }
                 interactive={false}
-                align={errorTooltipPosition == "top" ? "center" : "end"}
+                align={"center"}
                 side={"top"}
                 keepOpen={true}
               >
