@@ -39,7 +39,7 @@ export default function InputDomain({
   onRemove,
   onError,
 }: Readonly<Props>) {
-  const [name, setName] = useState(value.name);
+  const [name, setName] = useState(value?.name || "");
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setName(e.target.value);
@@ -52,16 +52,16 @@ export default function InputDomain({
     }
     const valid = validator.isValidDomain(name);
     if (!valid) {
-      onError && onError(true);
       return "Please enter a valid domain, e.g. example.com or intra.example.com";
     }
-    onError && onError(false);
-  }, [name, onError]);
+  }, [name]);
 
   useEffect(() => {
-    return () => onError && onError(false);
+    const hasError = domainError !== "" && domainError !== undefined;
+    onError?.(hasError);
+    return () => onError?.(false);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [domainError]);
 
   return (
     <div className={"flex gap-2 w-full"}>
