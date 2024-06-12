@@ -74,8 +74,37 @@ export const validator = {
       /^(\d+)(?:\.(\d+))?(?:\.(\d+))?(?:-([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?(?:\+([0-9A-Za-z-]+(?:\.[0-9A-Za-z-]+)*))?$/;
     return semverRegex.test(version);
   },
+  isValidUnixFilePath: (path: string) => {
+    const endsWithSlash = path.endsWith("/");
+    const unixPathRegex = /^\/(?:[^/]+\/)*[^/]+$/;
+    const isValid = unixPathRegex.test(path);
+    return isValid && !endsWithSlash;
+  },
+  isValidWindowsFilePath: (path: string) => {
+    const endsWithBackSlash = path.endsWith("\\");
+    const windowsPathRegex =
+      /^[a-zA-Z]:\\(?:[^\\/:*?"<>|\r\n]+\\)*[^\\/:*?"<>|\r\n]*$/;
+    const isValid = windowsPathRegex.test(path);
+    return isValid && !endsWithBackSlash;
+  },
 };
 
 export function isInt(n: number) {
   return n % 1 === 0;
+}
+
+export function tryGetProcessNameFromPath(path: string) {
+  try {
+    const canSplitByForwardSlash = path.includes("/");
+    const canSplitByBackSlash = path.includes("\\");
+    const byForwardSlash = canSplitByForwardSlash
+      ? path.split("/").pop()
+      : undefined;
+    const byBackSlash = canSplitByBackSlash
+      ? path.split("\\").pop()
+      : undefined;
+    return byForwardSlash || byBackSlash || path;
+  } catch (e) {
+    return path;
+  }
 }

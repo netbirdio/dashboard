@@ -10,6 +10,7 @@ export interface PostureCheck {
     os_version_check?: OperatingSystemVersionCheck;
     geo_location_check?: GeoLocationCheck;
     peer_network_range_check?: PeerNetworkRangeCheck;
+    process_check?: ProcessCheck;
   };
   policies?: Policy[];
   active?: boolean;
@@ -51,6 +52,17 @@ export interface GeoLocation {
 export interface PeerNetworkRangeCheck {
   ranges: string[];
   action: "allow" | "deny";
+}
+
+export interface ProcessCheck {
+  processes: Process[];
+}
+
+export interface Process {
+  id: string;
+  linux_path?: string;
+  mac_path?: string;
+  windows_path?: string;
 }
 
 export const windowsKernelVersions: SelectOption[] = [

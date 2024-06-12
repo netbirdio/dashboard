@@ -1,5 +1,5 @@
 import { cn } from "@utils/helpers";
-import { Disc3Icon, FlagIcon, NetworkIcon } from "lucide-react";
+import { Disc3Icon, FlagIcon, NetworkIcon, ServerCogIcon } from "lucide-react";
 import * as React from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { PostureCheck } from "@/interfaces/PostureCheck";
@@ -7,6 +7,7 @@ import { GeoLocationTooltip } from "@/modules/posture-checks/checks/tooltips/Geo
 import { NetBirdVersionTooltip } from "@/modules/posture-checks/checks/tooltips/NetBirdVersionTooltip";
 import { OperatingSystemTooltip } from "@/modules/posture-checks/checks/tooltips/OperatingSystemTooltip";
 import { PeerNetworkRangeTooltip } from "@/modules/posture-checks/checks/tooltips/PeerNetworkRangeTooltip";
+import { ProcessTooltip } from "@/modules/posture-checks/checks/tooltips/ProcessTooltip";
 
 type Props = {
   check: PostureCheck;
@@ -70,6 +71,18 @@ export const PostureCheckChecksCell = ({ check }: Props) => {
                 <NetworkIcon size={14} />
               </div>
             </PeerNetworkRangeTooltip>
+          )}
+
+          {check.checks.process_check && (
+            <ProcessTooltip check={check.checks.process_check}>
+              <div
+                className={cn(
+                  "bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300 h-8 w-8 rounded-full flex items-center justify-center relative z-[8] hover:scale-[1.1] transition-all",
+                )}
+              >
+                <ServerCogIcon size={14} />
+              </div>
+            </ProcessTooltip>
           )}
         </div>
       </div>
