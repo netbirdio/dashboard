@@ -12,8 +12,8 @@ import { Route } from "@/interfaces/Route";
 import PeerRouteActionCell from "@/modules/peer/PeerRouteActionCell";
 import PeerRouteActiveCell from "@/modules/peer/PeerRouteActiveCell";
 import PeerRouteNameCell from "@/modules/peer/PeerRouteNameCell";
-import PeerRouteNetworkCell from "@/modules/peer/PeerRouteNetworkCell";
 import usePeerRoutes from "@/modules/peer/usePeerRoutes";
+import GroupedRouteNetworkRangeCell from "@/modules/route-group/GroupedRouteNetworkRangeCell";
 import RouteDistributionGroupsCell from "@/modules/routes/RouteDistributionGroupsCell";
 
 type Props = {
@@ -32,9 +32,14 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     accessorKey: "network",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Network Range</DataTableHeader>;
+      return <DataTableHeader column={column}>Network</DataTableHeader>;
     },
-    cell: ({ row }) => <PeerRouteNetworkCell route={row.original} />,
+    cell: ({ row }) => (
+      <GroupedRouteNetworkRangeCell
+        domains={row.original?.domains}
+        network={row.original?.network}
+      />
+    ),
   },
   {
     id: "groups",

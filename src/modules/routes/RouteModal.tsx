@@ -1,7 +1,9 @@
 "use client";
 
 import Button from "@components/Button";
+import ButtonGroup from "@components/ButtonGroup";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
+import FullTooltip from "@components/FullTooltip";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -20,24 +22,29 @@ import { PeerSelector } from "@components/PeerSelector";
 import { SegmentedTabs } from "@components/SegmentedTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
+import InputDomain, { domainReducer } from "@components/ui/InputDomain";
 import { IconDirectionSign } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import cidr from "ip-cidr";
 import { uniqBy } from "lodash";
 import {
   ArrowDownWideNarrow,
+  CircleHelp,
   ExternalLinkIcon,
   FolderGit2,
+  GlobeIcon,
+  GlobeLockIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
   PlusCircle,
+  PlusIcon,
   Power,
   RouteIcon,
   Settings2,
   Text,
   VenetianMask,
 } from "lucide-react";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { useRoutes } from "@/contexts/RoutesProvider";
 import { Peer } from "@/interfaces/Peer";
@@ -103,6 +110,32 @@ export function RouteModalContent({
   });
 
   /**
+   * DNS Routes
+   * IP Range or Domain Tab = ip-range or domains
+   */
+  const [domainRoutes, setDomainRoutes] = useReducer(domainReducer, []);
+  const [domainError, setDomainError] = useState<boolean>(false);
+  const [routeType, setRouteTyp] = useState<string>("ip-range");
+  const [keepRoute, setKeepRoute] = useState<boolean>(true);
+
+  const isMasqueradeDisabled = useMemo(() => {
+    if (exitNode) return true;
+    return routeType === "domains";
+  }, [exitNode, routeType]);
+
+  const isDomainOrRangeEntered = useMemo(() => {
+    if (routeType === "ip-range") return networkRange !== "";
+    const isEmptyDomain = domainRoutes.some((d) => d.name === "");
+    const isAtLeastOneDomain = domainRoutes.length > 0;
+    return !isEmptyDomain && isAtLeastOneDomain && !domainError;
+  }, [domainRoutes, routeType, networkRange, domainError]);
+
+  // Enable Masquerade if domain route type is selected
+  useEffect(() => {
+    if (routeType === "domains") setMasquerade(true);
+  }, [routeType]);
+
+  /**
    * Distribution Groups
    */
   const [groups, setGroups, { getGroupsToUpdate }] = useGroupHelper({
@@ -142,6 +175,11 @@ export function RouteModalContent({
       .filter((g) => g !== undefined) as string[];
 
     const useSinglePeer = peerTab === "routing-peer";
+    const domainRouteNames =
+      routeType === "domains"
+        ? domainRoutes.map((d) => d.name).filter((d) => d !== "")
+        : undefined;
+    const useKeepRoute = routeType === "domains" ? keepRoute : undefined;
 
     createRoute(
       {
@@ -150,7 +188,9 @@ export function RouteModalContent({
         enabled: enabled,
         peer: useSinglePeer ? routingPeer?.id : undefined,
         peer_groups: useSinglePeer ? undefined : peerGroups || undefined,
-        network: networkRange,
+        network: routeType === "ip-range" ? networkRange : undefined,
+        domains: domainRouteNames,
+        keep_route: useKeepRoute,
         metric: Number(metric) || 9999,
         masquerade: masquerade,
         groups: groupIds,
@@ -184,7 +224,7 @@ export function RouteModalContent({
       (peerTab === "peer-group" && routingPeerGroups.length == 0) ||
       (peerTab === "routing-peer" && !routingPeer) ||
       groups.length == 0 ||
-      networkRange == ""
+      !isDomainOrRangeEntered
     );
   }, [
     cidrError,
@@ -192,7 +232,7 @@ export function RouteModalContent({
     routingPeerGroups.length,
     routingPeer,
     groups,
-    networkRange,
+    isDomainOrRangeEntered,
   ]);
 
   const networkIdentifierError = useMemo(() => {
@@ -228,7 +268,7 @@ export function RouteModalContent({
         title={
           exitNode
             ? isFirstExitNode
-              ? "Setup Exit Node"
+              ? "Set Up Exit Node"
               : "Add Exit Node"
             : "Create New  Route"
         }
@@ -286,18 +326,138 @@ export function RouteModalContent({
         <TabsContent value={"network"} className={"pb-8"}>
           <div className={"px-8 flex-col flex gap-6"}>
             <div className={cn(exitNode && "hidden")}>
-              <Label>Network Range</Label>
-              <HelpText>Add a private IP address range</HelpText>
-              <Input
-                ref={networkRangeRef}
-                customPrefix={<NetworkIcon size={16} />}
-                placeholder={"e.g., 172.16.0.0/16"}
-                value={networkRange}
-                className={"font-mono !text-[13px]"}
-                error={cidrError}
-                onChange={(e) => setNetworkRange(e.target.value)}
-              />
+              <Label>Route Type</Label>
+              <HelpText>
+                Select your route type to add either a network range or a list
+                of domains.
+              </HelpText>
+              <div className={"flex justify-between items-center w-full"}>
+                <ButtonGroup className={"w-full"}>
+                  <ButtonGroup.Button
+                    variant={routeType == "ip-range" ? "tertiary" : "secondary"}
+                    onClick={() => setRouteTyp("ip-range")}
+                    className={"w-full"}
+                  >
+                    <NetworkIcon size={16} />
+                    Network Range
+                  </ButtonGroup.Button>
+                  <ButtonGroup.Button
+                    variant={routeType == "domains" ? "tertiary" : "secondary"}
+                    onClick={() => setRouteTyp("domains")}
+                    className={"w-full"}
+                  >
+                    <GlobeIcon size={16} />
+                    Domains
+                  </ButtonGroup.Button>
+                </ButtonGroup>
+              </div>
+
+              <div
+                className={cn(
+                  "mt-5 mb-3",
+                  routeType !== "ip-range" && "hidden",
+                )}
+              >
+                <Label>Network Range</Label>
+                <HelpText>Add a private IPv4 address range</HelpText>
+                <Input
+                  ref={networkRangeRef}
+                  customPrefix={<NetworkIcon size={16} />}
+                  placeholder={"e.g., 172.16.0.0/16"}
+                  value={networkRange}
+                  className={"font-mono !text-[13px]"}
+                  error={cidrError}
+                  onChange={(e) => setNetworkRange(e.target.value)}
+                />
+              </div>
+
+              <div
+                className={cn("mt-5 mb-3", routeType !== "domains" && "hidden")}
+              >
+                <Label>Domains</Label>
+                <HelpText>
+                  Add domains that dynamically resolve to one or more IPv4
+                  addresses
+                </HelpText>
+                <div>
+                  {domainRoutes.length > 0 && (
+                    <div className={"flex gap-3 w-full mb-3"}>
+                      <div className={"flex flex-col gap-2 w-full"}>
+                        {domainRoutes.map((domain, i) => {
+                          return (
+                            <InputDomain
+                              key={domain.id}
+                              value={domain}
+                              onChange={(d) =>
+                                setDomainRoutes({
+                                  type: "UPDATE",
+                                  index: i,
+                                  d,
+                                })
+                              }
+                              onError={(err) => {
+                                setDomainError(err);
+                              }}
+                              onRemove={() =>
+                                setDomainRoutes({
+                                  type: "REMOVE",
+                                  index: i,
+                                })
+                              }
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+                  <Button
+                    variant={"dotted"}
+                    className={"w-full"}
+                    size={"sm"}
+                    onClick={() => setDomainRoutes({ type: "ADD" })}
+                  >
+                    <PlusIcon size={14} />
+                    Add Domain
+                  </Button>
+                </div>
+                <div className={cn("mt-6 w-full")}>
+                  <FullTooltip
+                    side={"top"}
+                    content={
+                      <div className={"text-xs max-w-xs"}>
+                        DNS records for load-balanced systems often change.
+                        Keeping resolved addresses ensures ongoing connections
+                        to active resources remain uninterrupted.
+                      </div>
+                    }
+                  >
+                    <FancyToggleSwitch
+                      value={keepRoute}
+                      onChange={setKeepRoute}
+                      label={
+                        <>
+                          <div className={"flex gap-2"}>
+                            <GlobeLockIcon size={14} />
+                            Keep Routes
+                            <CircleHelp
+                              size={12}
+                              className={"top-[1px] relative text-nb-gray-300"}
+                            />
+                          </div>
+                        </>
+                      }
+                      helpText={
+                        <div>
+                          Retain previously resolved routes after IP address
+                          updates to maintain stable connections.
+                        </div>
+                      }
+                    />
+                  </FullTooltip>
+                </div>
+              </div>
             </div>
+
             {exitNode && peer ? (
               <></>
             ) : (
@@ -317,7 +477,7 @@ export function RouteModalContent({
                   <div>
                     <HelpText>
                       Assign a single peer as a routing peer for the
-                      {exitNode ? " exit node." : " Network CIDR."}
+                      {exitNode ? " exit node." : " network route."}
                     </HelpText>
                     <PeerSelector
                       onChange={setRoutingPeer}
@@ -402,19 +562,36 @@ export function RouteModalContent({
               helpText={"Use this switch to enable or disable the route."}
             />
             {!exitNode && (
-              <FancyToggleSwitch
-                value={masquerade}
-                onChange={setMasquerade}
-                label={
-                  <>
-                    <VenetianMask size={15} />
-                    Masquerade
-                  </>
+              <FullTooltip
+                content={
+                  <div className={"text-xs max-w-xs"}>
+                    If choosing the domain route type, masquerade is
+                    automatically enabled and cannot be disabled.
+                  </div>
                 }
-                helpText={
-                  "Allow access to your private networks without configuring routes on your local routers or other devices."
-                }
-              />
+                disabled={!isMasqueradeDisabled}
+              >
+                <div
+                  className={cn(
+                    "w-full",
+                    isMasqueradeDisabled && "opacity-40 pointer-events-none",
+                  )}
+                >
+                  <FancyToggleSwitch
+                    value={masquerade}
+                    onChange={setMasquerade}
+                    label={
+                      <>
+                        <VenetianMask size={15} />
+                        Masquerade
+                      </>
+                    }
+                    helpText={
+                      "Allow access to your private networks without configuring routes on your local routers or other devices."
+                    }
+                  />
+                </div>
+              </FullTooltip>
             )}
 
             <div className={cn("flex justify-between")}>

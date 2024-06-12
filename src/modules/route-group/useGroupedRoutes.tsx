@@ -53,15 +53,26 @@ export default function useGroupedRoutes({ routes }: Props) {
       });
 
       const allGroupNames = [...peerGroupNames, ...distributionGroupNames];
+      const hasDomains = routes[0].domains
+        ? routes[0].domains.length > 0
+        : false;
+
+      const childDescriptions =
+        routes?.map((r) => r?.description).join(", ") || "";
+      const domainString = routes?.map((r) => r.domains?.join(", ")).join(", ");
 
       results.push({
         id,
         enabled: routes.find((r) => r.enabled) != undefined,
-        network: routes[0].network,
+        network: !hasDomains ? routes[0].network : undefined,
+        domains: hasDomains ? routes[0].domains || undefined : undefined,
+        domain_search: domainString,
+        keep_route: routes[0].keep_route || false,
         network_id: routes[0].network_id,
         high_availability_count: allPeers,
         is_using_route_groups: !!groupPeerRoute,
         description: groupPeerRoute ? groupPeerRoute?.description : undefined,
+        description_search: childDescriptions,
         routes: routes,
         group_names: allGroupNames,
       });

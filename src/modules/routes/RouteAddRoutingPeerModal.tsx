@@ -89,6 +89,11 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
       .map((g) => g.id)
       .filter((id) => id !== undefined) as string[];
 
+    let useRange = false;
+    if (routeNetwork?.domains) {
+      useRange = routeNetwork.domains.length <= 0;
+    }
+
     createRoute(
       {
         network_id: routeNetwork.network_id,
@@ -96,7 +101,9 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
         enabled: true,
         peer: routingPeer?.id || undefined,
         peer_groups: undefined,
-        network: routeNetwork.network,
+        network: useRange ? routeNetwork.network : undefined,
+        domains: useRange ? undefined : routeNetwork.domains,
+        keep_route: routeNetwork.keep_route || false,
         metric: 9999,
         masquerade: true,
         groups: groupIds,
@@ -139,7 +146,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
         <div>
           <Label>Routing Peer</Label>
           <HelpText>
-            Assign a single peer as a routing peer for the Network CIDR.
+            Assign a single peer as a routing peer for the network route.
           </HelpText>
           <PeerSelector
             onChange={setRoutingPeer}

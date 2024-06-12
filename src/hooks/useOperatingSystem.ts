@@ -19,6 +19,8 @@ export const getOperatingSystem = (os: string) => {
   if (os.toLowerCase().includes("android"))
     return OperatingSystem.ANDROID as const;
   if (os.toLowerCase().includes("ios")) return OperatingSystem.IOS as const;
+  if (os.toLowerCase().includes("ipad")) return OperatingSystem.IOS as const;
+  if (os.toLowerCase().includes("iphone")) return OperatingSystem.IOS as const;
   if (os.toLowerCase().includes("windows"))
     return OperatingSystem.WINDOWS as const;
   return OperatingSystem.LINUX as const;

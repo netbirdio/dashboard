@@ -34,6 +34,8 @@ export default function RoutesProvider({ children }: Props) {
     onSuccess?: (route: Route) => void,
     message?: string,
   ) => {
+    const hasDomains = route.domains ? route.domains.length > 0 : false;
+
     notify({
       title: "Network " + route.network_id + "-" + route.network,
       description: message
@@ -48,7 +50,9 @@ export default function RoutesProvider({ children }: Props) {
             peer: toUpdate.peer ?? (route.peer || undefined),
             peer_groups:
               toUpdate.peer_groups ?? (route.peer_groups || undefined),
-            network: route.network,
+            network: !hasDomains ? route.network : undefined,
+            domains: hasDomains ? route.domains : undefined,
+            keep_route: route.keep_route,
             metric: toUpdate.metric ?? route.metric ?? 9999,
             masquerade: toUpdate.masquerade ?? route.masquerade ?? true,
             groups: toUpdate.groups ?? route.groups ?? [],
@@ -80,7 +84,9 @@ export default function RoutesProvider({ children }: Props) {
           enabled: route.enabled,
           peer: route.peer || undefined,
           peer_groups: route.peer_groups || undefined,
-          network: route.network,
+          network: route?.network || undefined,
+          domains: route?.domains || undefined,
+          keep_route: route?.keep_route || false,
           metric: route.metric || 9999,
           masquerade: route.masquerade,
           groups: route.groups || [],

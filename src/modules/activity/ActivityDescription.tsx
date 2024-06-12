@@ -118,29 +118,38 @@ export default function ActivityDescription({ event }: Props) {
    * Route
    */
 
-  if (event.activity_code == "route.delete")
+  if (event.activity_code == "route.delete") {
+    let hasDomains = m?.domains && m?.domains.length > 0;
     return (
       <div className={"inline"}>
-        Route <Value>{m.name}</Value> with the <Value>{m.network_range}</Value>{" "}
-        range was deleted
+        Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
+        <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
+        {hasDomains ? "" : "range"} was deleted
       </div>
     );
+  }
 
-  if (event.activity_code == "route.update")
+  if (event.activity_code == "route.update") {
+    let hasDomains = m?.domains && m?.domains.length > 0;
     return (
       <div className={"inline"}>
-        Route <Value>{m.name}</Value> with the <Value>{m.network_range}</Value>{" "}
-        range was updated
+        Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
+        <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
+        {hasDomains ? "" : "range"} was updated
       </div>
     );
+  }
 
-  if (event.activity_code == "route.add")
+  if (event.activity_code == "route.add") {
+    let hasDomains = m?.domains && m?.domains.length > 0;
     return (
       <div className={"inline"}>
-        Route <Value>{m.name}</Value> with the <Value>{m.network_range}</Value>{" "}
-        range was created
+        Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
+        <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
+        {hasDomains ? "" : "range"} was created
       </div>
     );
+  }
 
   /**
    * User

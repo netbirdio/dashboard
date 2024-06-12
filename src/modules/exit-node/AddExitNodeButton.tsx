@@ -26,7 +26,7 @@ export const AddExitNodeButton = ({ peer, firstTime = false }: Props) => {
           ) : (
             <>
               <IconDirectionSign size={16} className={"text-yellow-400"} />
-              Setup Exit Node
+              Set Up Exit Node
             </>
           )}
         </Button>

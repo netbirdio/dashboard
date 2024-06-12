@@ -2,6 +2,7 @@
 
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
+import FullTooltip from "@components/FullTooltip";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -18,6 +19,7 @@ import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { PeerSelector } from "@components/PeerSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
+import { DomainsTooltip } from "@components/ui/DomainListBadge";
 import { cn } from "@utils/helpers";
 import { uniqBy } from "lodash";
 import {
@@ -84,6 +86,23 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
   // General
   const [description, setDescription] = useState(route.description || "");
 
+  const isExitNode = useMemo(() => {
+    return route?.network === "0.0.0.0/0";
+  }, [route]);
+
+  const isUsingDomains = useMemo(() => {
+    try {
+      return route?.domains && route.domains.length > 0;
+    } catch (e) {
+      return false;
+    }
+  }, [route]);
+
+  const routeType = useMemo(() => {
+    if (isUsingDomains) return "domains";
+    return "ip-range";
+  }, [isUsingDomains]);
+
   // Network
   const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(() => {
     if (route.peer && peers) {
@@ -91,6 +110,11 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
     }
     return undefined;
   });
+
+  const isMasqueradeDisabled = useMemo(() => {
+    if (isExitNode) return true;
+    return routeType === "domains";
+  }, [isExitNode, routeType]);
 
   const initialRoutingPeerGroups = useMemo(() => {
     if (!route) return [];
@@ -217,14 +241,36 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
     cell && cell == "metric" ? "settings" : "network",
   );
 
+  const routeInfo = useMemo(() => {
+    let hasDomains = route?.domains ? route.domains.length > 0 : false;
+    try {
+      if (hasDomains && route?.domains) {
+        return route?.domains.join(", ");
+      } else {
+        return route.network;
+      }
+    } catch (e) {
+      return route.network;
+    }
+  }, [route]);
+
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
         title={"Update " + route.network_id}
-        description={route.network}
+        description={routeInfo}
         color={"netbird"}
-      />
+        truncate={true}
+      >
+        {route?.domains && (
+          <DomainsTooltip domains={route.domains} className={"block"}>
+            <Paragraph className={cn("text-sm", "!block truncate")}>
+              {routeInfo}
+            </Paragraph>
+          </DomainsTooltip>
+        )}
+      </ModalHeader>
 
       <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)}>
         <TabsList justify={"start"} className={"px-8"}>
@@ -269,7 +315,8 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               <div>
                 <Label>Routing Peer</Label>
                 <HelpText>
-                  Assign a single peer as a routing peer for the Network CIDR.
+                  Assign a single peer as a routing peer for the
+                  {isExitNode ? " exit node." : " network route."}
                 </HelpText>
                 <PeerSelector
                   onChange={setRoutingPeer}
@@ -281,8 +328,8 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               <div>
                 <Label>Peer Group</Label>
                 <HelpText>
-                  Assign peer group with Linux machines to be used as routing
-                  peers.
+                  Assign a peer group with Linux machines to be used as
+                  {isExitNode ? " exit nodes." : "routing peers."}
                 </HelpText>
                 <PeerGroupSelector
                   max={1}
@@ -333,19 +380,38 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               }
               helpText={"Use this switch to enable or disable the route."}
             />
-            <FancyToggleSwitch
-              value={masquerade}
-              onChange={setMasquerade}
-              label={
-                <>
-                  <VenetianMask size={15} />
-                  Masquerade
-                </>
-              }
-              helpText={
-                "Allow access to your private networks without configuring routes on your local routers or other devices."
-              }
-            />
+            {!isExitNode && (
+              <FullTooltip
+                content={
+                  <div className={"text-xs max-w-xs"}>
+                    If choosing the domain route type, masquerade is
+                    automatically enabled and cannot be disabled.
+                  </div>
+                }
+                disabled={!isMasqueradeDisabled}
+              >
+                <div
+                  className={cn(
+                    "w-full",
+                    isMasqueradeDisabled && "opacity-40 pointer-events-none",
+                  )}
+                >
+                  <FancyToggleSwitch
+                    value={masquerade}
+                    onChange={setMasquerade}
+                    label={
+                      <>
+                        <VenetianMask size={15} />
+                        Masquerade
+                      </>
+                    }
+                    helpText={
+                      "Allow access to your private networks without configuring routes on your local routers or other devices."
+                    }
+                  />
+                </div>
+              </FullTooltip>
+            )}
             <div className={cn("flex justify-between")}>
               <div>
                 <Label>Metrics</Label>

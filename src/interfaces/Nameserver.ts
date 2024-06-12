@@ -17,11 +17,6 @@ export interface Nameserver {
   id?: string;
 }
 
-export interface Domain {
-  id?: string;
-  name: string;
-}
-
 export const NameserverPresets: Record<string, NameserverGroup> = {
   Default: {
     name: "",

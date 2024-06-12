@@ -9,7 +9,6 @@ import RouteActiveCell from "@/modules/routes/RouteActiveCell";
 import RouteDistributionGroupsCell from "@/modules/routes/RouteDistributionGroupsCell";
 import RouteMetricCell from "@/modules/routes/RouteMetricCell";
 import RoutePeerCell from "@/modules/routes/RoutePeerCell";
-import RouteUpdateModal from "@/modules/routes/RouteUpdateModal";
 
 type Props = {
   row: GroupedRoute;
@@ -26,6 +25,16 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
   {
     accessorKey: "description",
     sortingFn: "text",
+  },
+  {
+    accessorKey: "domain_search",
+    sortingFn: "text",
+  },
+  {
+    id: "domains",
+    accessorFn: (row) => {
+      return row.domains?.map((name) => name).join(", ");
+    },
   },
   {
     accessorKey: "metric",
@@ -82,10 +91,6 @@ export default function RouteTable({ row }: Props) {
     },
   ]);
 
-  const [editModal, setEditModal] = useState(false);
-  const [currentRow, setCurrentRow] = useState<Route>();
-  const [currentCellClicked, setCurrentCellClicked] = useState("");
-
   const data = useMemo(() => {
     if (!row.routes) return [];
     // Get the group names for better search results
@@ -99,23 +104,17 @@ export default function RouteTable({ row }: Props) {
           return groups?.find((g) => g.id === id)?.name || "";
         }) || [];
       const allGroupNames = [...distributionGroupNames, ...peerGroupNames];
+      const domainString = route?.domains?.join(", ") || "";
       return {
         ...route,
         group_names: allGroupNames,
+        domain_search: domainString,
       } as Route;
     });
   }, [row.routes, groups]);
 
   return (
     <>
-      {editModal && currentRow && (
-        <RouteUpdateModal
-          route={currentRow}
-          open={editModal}
-          onOpenChange={setEditModal}
-          cell={currentCellClicked}
-        />
-      )}
       <DataTable
         tableClassName={"mt-0"}
         minimal={true}
@@ -127,11 +126,8 @@ export default function RouteTable({ row }: Props) {
         columnVisibility={{
           group_names: false,
           description: false,
-        }}
-        onRowClick={(row, cell) => {
-          setCurrentRow(row.original);
-          setEditModal(true);
-          setCurrentCellClicked(cell);
+          domains: false,
+          domain_search: false,
         }}
         setSorting={setSorting}
         columns={RouteTableColumns}
