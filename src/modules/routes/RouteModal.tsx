@@ -395,9 +395,7 @@ export function RouteModalContent({
                                   d,
                                 })
                               }
-                              onError={(err) => {
-                                setDomainError(err);
-                              }}
+                              onError={setDomainError}
                               onRemove={() =>
                                 setDomainRoutes({
                                   type: "REMOVE",
@@ -562,36 +560,19 @@ export function RouteModalContent({
               helpText={"Use this switch to enable or disable the route."}
             />
             {!exitNode && (
-              <FullTooltip
-                content={
-                  <div className={"text-xs max-w-xs"}>
-                    If choosing the domain route type, masquerade is
-                    automatically enabled and cannot be disabled.
-                  </div>
+              <FancyToggleSwitch
+                value={masquerade}
+                onChange={setMasquerade}
+                label={
+                  <>
+                    <VenetianMask size={15} />
+                    Masquerade
+                  </>
                 }
-                disabled={!isMasqueradeDisabled}
-              >
-                <div
-                  className={cn(
-                    "w-full",
-                    isMasqueradeDisabled && "opacity-40 pointer-events-none",
-                  )}
-                >
-                  <FancyToggleSwitch
-                    value={masquerade}
-                    onChange={setMasquerade}
-                    label={
-                      <>
-                        <VenetianMask size={15} />
-                        Masquerade
-                      </>
-                    }
-                    helpText={
-                      "Allow access to your private networks without configuring routes on your local routers or other devices."
-                    }
-                  />
-                </div>
-              </FullTooltip>
+                helpText={
+                  "Allow access to your private networks without configuring routes on your local routers or other devices."
+                }
+              />
             )}
 
             <div className={cn("flex justify-between")}>

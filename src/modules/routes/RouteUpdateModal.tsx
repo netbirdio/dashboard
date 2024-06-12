@@ -2,7 +2,6 @@
 
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
-import FullTooltip from "@components/FullTooltip";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -381,36 +380,19 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               helpText={"Use this switch to enable or disable the route."}
             />
             {!isExitNode && (
-              <FullTooltip
-                content={
-                  <div className={"text-xs max-w-xs"}>
-                    If choosing the domain route type, masquerade is
-                    automatically enabled and cannot be disabled.
-                  </div>
+              <FancyToggleSwitch
+                value={masquerade}
+                onChange={setMasquerade}
+                label={
+                  <>
+                    <VenetianMask size={15} />
+                    Masquerade
+                  </>
                 }
-                disabled={!isMasqueradeDisabled}
-              >
-                <div
-                  className={cn(
-                    "w-full",
-                    isMasqueradeDisabled && "opacity-40 pointer-events-none",
-                  )}
-                >
-                  <FancyToggleSwitch
-                    value={masquerade}
-                    onChange={setMasquerade}
-                    label={
-                      <>
-                        <VenetianMask size={15} />
-                        Masquerade
-                      </>
-                    }
-                    helpText={
-                      "Allow access to your private networks without configuring routes on your local routers or other devices."
-                    }
-                  />
-                </div>
-              </FullTooltip>
+                helpText={
+                  "Allow access to your private networks without configuring routes on your local routers or other devices."
+                }
+              />
             )}
             <div className={cn("flex justify-between")}>
               <div>
