@@ -1,8 +1,9 @@
 import loadConfig from "@utils/config";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const config = loadConfig();
+
 export const useRedirect = (
   url: string,
   replace: boolean = false,
@@ -10,24 +11,43 @@ export const useRedirect = (
 ) => {
   const router = useRouter();
   const currentPath = usePathname();
-  const callBackUrls = [config.redirectURI, config.silentRedirectURI];
+  const callBackUrls = useRef([config.redirectURI, config.silentRedirectURI]);
+  const isRedirecting = useRef(false);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    if (!enable) return;
-    if (callBackUrls.includes(url)) return; // Don't redirect to the callback urls to avoid infinite loop
-    if (url === currentPath) return; // Don't redirect to the current page
+    // If redirect is disabled or the url is already in the callback urls or the url is the current path then do not redirect
+    if (!enable || callBackUrls.current.includes(url) || url === currentPath)
+      return;
 
-    const redirect = replace ? router.replace : router.push; // Replace the current history or add a new one
+    const performRedirect = () => {
+      if (!isRedirecting.current) {
+        isRedirecting.current = true;
+        router.refresh();
+        if (replace) {
+          router.replace(url);
+        } else {
+          router.push(url);
+        }
+        isRedirecting.current = false;
+      }
+    };
 
-    router.refresh();
-    redirect(url);
+    performRedirect();
 
-    // Timer in case the user has his browser tab open but not focused
-    const interval = setInterval(() => {
-      router.refresh();
-      redirect(url);
-    }, 1000);
+    // Try to redirect after 1.25 seconds if for whatever reason the redirect did not happen (network change, browser tab open but not focused etc.)
+    intervalRef.current = setInterval(() => {
+      if (!isRedirecting.current) {
+        performRedirect();
+      }
+    }, 1250);
 
-    return () => clearInterval(interval);
-  }, [replace, router, url, enable]);
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [replace, router, url, enable, currentPath]);
 };
+
+export default useRedirect;

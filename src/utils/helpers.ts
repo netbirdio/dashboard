@@ -41,10 +41,20 @@ export const sleep = (ms: number) => {
 
 export const validator = {
   isValidDomain: (domain: string) => {
-    const regExp =
-      /^(?!.*\s)[a-zA-Z0-9](?!.*\s$)(?!.*\.$)(?:(?!-)[a-zA-Z0-9-]{1,63}(?<!-)\.){1,126}(?!-)[a-zA-Z0-9-]{1,63}(?<!-)$/;
+    const unicodeDomain =
+      /^(?!.*\s)(\.?[a-zA-Z0-9\u00A1-\uFFFF](?!.*\s$)(?!.*\.$)(?:(?!-)[a-zA-Z0-9\u00A1-\uFFFF-]{1,63}(?<!-)\.){0,126}(?!-)[a-zA-Z0-9\u00A1-\uFFFF-]{1,63}(?<!-))$/u;
     try {
-      return domain.match(regExp);
+      const minMaxChars = [1, 255];
+      const isValidDomainLength =
+        domain.length >= minMaxChars[0] && domain.length <= minMaxChars[1];
+      const includesDot = domain.includes(".");
+      const hasNoWhitespace = !domain.includes(" ");
+      return (
+        unicodeDomain.test(domain) &&
+        includesDot &&
+        hasNoWhitespace &&
+        isValidDomainLength
+      );
     } catch (e) {
       return false;
     }

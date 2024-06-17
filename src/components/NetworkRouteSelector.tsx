@@ -1,4 +1,5 @@
 import { CommandItem } from "@components/Command";
+import FullTooltip from "@components/FullTooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { IconArrowBack } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
@@ -62,8 +63,13 @@ export function NetworkRouteSelector({
     const isSearching = search.length > 0;
     const found =
       dropdownOptions.filter((item) => {
+        const hasDomains = item?.domains ? item.domains.length > 0 : false;
+        const domains =
+          hasDomains && item?.domains ? item?.domains.join(" ") : "";
         return (
-          item.network_id.includes(search) || item.network.includes(search)
+          item.network_id.includes(search) ||
+          item.network?.includes(search) ||
+          domains.includes(search)
         );
       }).length > 0;
     return isSearching && !found;
@@ -117,6 +123,7 @@ export function NetworkRouteSelector({
                 >
                   {value.network}
                 </div>
+                <DomainList domains={value?.domains} />
               </div>
             ) : (
               <span>Select an existing network...</span>
@@ -208,7 +215,11 @@ export function NetworkRouteSelector({
                     return (
                       <CommandItem
                         key={option.network + option.network_id}
-                        value={option.network + option.network_id}
+                        value={
+                          option.network +
+                          option.network_id +
+                          option?.domains?.join(", ")
+                        }
                         onSelect={() => {
                           togglePeer(option);
                           setOpen(false);
@@ -226,6 +237,7 @@ export function NetworkRouteSelector({
                         >
                           {option.network}
                         </div>
+                        <DomainList domains={option?.domains} />
                       </CommandItem>
                     );
                   })}
@@ -236,5 +248,21 @@ export function NetworkRouteSelector({
         </Command>
       </PopoverContent>
     </Popover>
+  );
+}
+
+function DomainList({ domains }: { domains?: string[] }) {
+  const firstDomain = domains ? domains[0] : "";
+  return (
+    domains &&
+    domains.length > 0 && (
+      <FullTooltip
+        content={<div className={"text-xs max-w-sm"}>{domains.join(", ")}</div>}
+      >
+        <div className={"text-xs text-nb-gray-300"}>
+          {firstDomain} {domains.length > 1 && "+" + (domains.length - 1)}
+        </div>
+      </FullTooltip>
+    )
   );
 }

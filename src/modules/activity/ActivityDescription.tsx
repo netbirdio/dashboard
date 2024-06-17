@@ -3,7 +3,11 @@ import { Label } from "@components/Label";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { isLocalDev, isProduction } from "@utils/netbird";
+import { isEmpty } from "lodash";
+import { GlobeIcon } from "lucide-react";
 import React, { useMemo } from "react";
+import RoundedFlag from "@/assets/countries/RoundedFlag";
+import { useCountries } from "@/contexts/CountryProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 
 type Props = {
@@ -54,7 +58,8 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "setupkey.peer.add")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> with ip <Value>{m.ip}</Value> was added
+        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
+        with the NetBird IP <Value>{m.ip}</Value>
       </div>
     );
 
@@ -113,29 +118,38 @@ export default function ActivityDescription({ event }: Props) {
    * Route
    */
 
-  if (event.activity_code == "route.delete")
+  if (event.activity_code == "route.delete") {
+    let hasDomains = m?.domains && m?.domains.length > 0;
     return (
       <div className={"inline"}>
-        Route <Value>{m.name}</Value> with the <Value>{m.network_range}</Value>{" "}
-        range was deleted
+        Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
+        <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
+        {hasDomains ? "" : "range"} was deleted
       </div>
     );
+  }
 
-  if (event.activity_code == "route.update")
+  if (event.activity_code == "route.update") {
+    let hasDomains = m?.domains && m?.domains.length > 0;
     return (
       <div className={"inline"}>
-        Route <Value>{m.name}</Value> with the <Value>{m.network_range}</Value>{" "}
-        range was updated
+        Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
+        <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
+        {hasDomains ? "" : "range"} was updated
       </div>
     );
+  }
 
-  if (event.activity_code == "route.add")
+  if (event.activity_code == "route.add") {
+    let hasDomains = m?.domains && m?.domains.length > 0;
     return (
       <div className={"inline"}>
-        Route <Value>{m.name}</Value> with the <Value>{m.network_range}</Value>{" "}
-        range was created
+        Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
+        <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
+        {hasDomains ? "" : "range"} was created
       </div>
     );
+  }
 
   /**
    * User
@@ -144,21 +158,24 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "user.peer.delete")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> with ip <Value>{m.ip}</Value> was deleted
+        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> with
+        NetBird IP <Value>{m.ip}</Value> was deleted
       </div>
     );
 
   if (event.activity_code == "user.peer.add")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> with ip <Value>{m.ip}</Value> was added
+        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
+        with the NetBird IP <Value>{m.ip}</Value>
       </div>
     );
 
   if (event.activity_code == "user.peer.update")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> with ip <Value>{m.ip}</Value> was updated
+        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> with
+        NetBird IP <Value>{m.ip}</Value> was updated
       </div>
     );
 
@@ -252,15 +269,15 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "peer.group.delete")
     return (
       <div className={"inline"}>
-        Group <Value>{m.group}</Value> was removed from the peer with the ip{" "}
-        <Value>{m.peer_ip}</Value>
+        Group <Value>{m.group}</Value> was removed from the peer with the
+        NetBird IP <Value>{m.peer_ip}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.group.add")
     return (
       <div className={"inline"}>
-        Group <Value>{m.group}</Value> was added to the peer with the ip{" "}
+        Group <Value>{m.group}</Value> was added to the peer with the NetBird IP{" "}
         <Value>{m.peer_ip}</Value>
       </div>
     );
@@ -303,7 +320,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "peer.rename")
     return (
       <div className={"inline"}>
-        Peer with the ip <Value>{m.ip}</Value> was renamed to{" "}
+        Peer with the NetBird IP <Value>{m.ip}</Value> was renamed to{" "}
         <Value>{m.name}</Value>
       </div>
     );
@@ -311,7 +328,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "peer.approve")
     return (
       <div className={"inline"}>
-        Peer with the ip <Value>{m.ip}</Value> was approved
+        Peer with the NetBird IP <Value>{m.ip}</Value> was approved
       </div>
     );
 
@@ -559,11 +576,48 @@ function Value({
   return children ? (
     <span
       className={cn(
-        "text-nb-gray-200 inline font-medium bg-nb-gray-900 py-[3px] text-[11px] px-[5px] border border-nb-gray-800 rounded-[4px]",
+        "text-nb-gray-200 inline-flex gap-1 items-center max-h-[22px] font-medium bg-nb-gray-900 py-[3px] text-[11px] px-[5px] border border-nb-gray-800 rounded-[4px]",
         className,
       )}
     >
       {children}
     </span>
+  ) : null;
+}
+
+function PeerConnectionInfo({ meta }: { meta: any }) {
+  const hasMeta =
+    !isEmpty(meta?.location_country_code) ||
+    !isEmpty(meta?.location_connection_ip);
+  const { countries } = useCountries();
+
+  const countryText = useMemo(() => {
+    if (!countries) return "Unknown";
+    const country = countries.find(
+      (c) => c.country_code === meta?.location_country_code,
+    );
+    if (!country) return "Unknown";
+    if (!meta?.location_city_name) return country.country_name;
+    return `${country.country_name}, ${meta?.location_city_name}`;
+  }, [countries, meta]);
+
+  return hasMeta ? (
+    <>
+      {" "}
+      from{" "}
+      {meta?.location_connection_ip && (
+        <Value>{meta?.location_connection_ip}</Value>
+      )}{" "}
+      {meta?.location_country_code && (
+        <Value>
+          {isEmpty(meta?.location_country_code) ? (
+            <GlobeIcon size={9} className={"text-nb-gray-300"} />
+          ) : (
+            <RoundedFlag country={meta?.location_country_code} size={9} />
+          )}
+          {countryText}
+        </Value>
+      )}
+    </>
   ) : null;
 }

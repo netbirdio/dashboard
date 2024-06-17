@@ -10,6 +10,7 @@ import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import Separator from "@components/Separator";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
+import useRedirect from "@hooks/useRedirect";
 import { IconCirclePlus, IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { generateColorFromString } from "@utils/helpers";
@@ -41,6 +42,8 @@ export default function UserPage() {
   const user = useMemo(() => {
     return users?.find((u) => u.id === userId);
   }, [users, userId]);
+
+  useRedirect("/team/users", false, !userId);
 
   return !isLoading && user ? (
     <UserOverview user={user} />

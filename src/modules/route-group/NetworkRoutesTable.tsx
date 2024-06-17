@@ -40,6 +40,14 @@ export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
     sortingFn: "text",
   },
   {
+    accessorKey: "description_search",
+    sortingFn: "text",
+  },
+  {
+    accessorKey: "domain_search",
+    sortingFn: "text",
+  },
+  {
     id: "enabled",
     accessorKey: "enabled",
     sortingFn: "basic",
@@ -51,12 +59,21 @@ export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
     },
   },
   {
+    id: "domains",
+    accessorFn: (row) => {
+      return row.domains?.map((name) => name).join(", ");
+    },
+  },
+  {
     accessorKey: "network",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Network Range</DataTableHeader>;
+      return <DataTableHeader column={column}>Network</DataTableHeader>;
     },
     cell: ({ row }) => (
-      <GroupedRouteNetworkRangeCell network={row.original.network} />
+      <GroupedRouteNetworkRangeCell
+        network={row.original.network}
+        domains={row.original?.domains}
+      />
     ),
   },
   {
@@ -132,7 +149,10 @@ export default function NetworkRoutesTable({
       columnVisibility={{
         enabled: false,
         description: false,
+        description_search: false,
         group_names: false,
+        domains: false,
+        domain_search: false,
       }}
       renderExpandedRow={(row) => {
         const data = cloneDeep(row);

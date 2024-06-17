@@ -35,6 +35,6 @@ export default function NotFound() {
 }
 
 const Redirect = ({ url, queryParams }: Props) => {
-  useRedirect(url == "/" ? "/peers" : url + (queryParams && `?${queryParams}`));
+  useRedirect("/peers" + (queryParams && `?${queryParams}`));
   return <FullScreenLoading />;
 };

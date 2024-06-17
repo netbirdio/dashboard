@@ -17,8 +17,9 @@ import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
+import InputDomain, { domainReducer } from "@components/ui/InputDomain";
 import { useApiCall } from "@utils/api";
-import { cn, validator } from "@utils/helpers";
+import { cn } from "@utils/helpers";
 import cidr from "ip-cidr";
 import { uniqueId } from "lodash";
 import {
@@ -35,7 +36,7 @@ import {
 import React, { useEffect, useMemo, useReducer, useState } from "react";
 import { useSWRConfig } from "swr";
 import DNSIcon from "@/assets/icons/DNSIcon";
-import { Domain, Nameserver, NameserverGroup } from "@/interfaces/Nameserver";
+import { Nameserver, NameserverGroup } from "@/interfaces/Nameserver";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
 type Props = {
@@ -96,19 +97,6 @@ enum ActionType {
   REMOVE = "REMOVE",
   UPDATE = "UPDATE",
 }
-
-export const domainReducer = (state: Domain[], action: any) => {
-  switch (action.type) {
-    case ActionType.ADD:
-      return [...state, { name: "", id: uniqueId("ns") }];
-    case ActionType.REMOVE:
-      return state.filter((_, i) => i !== action.index);
-    case ActionType.UPDATE:
-      return state.map((n, i) => (i === action.index ? action.d : n));
-    default:
-      return state;
-  }
-};
 
 export function NameserverModalContent({
   onSuccess,
@@ -199,7 +187,7 @@ export function NameserverModalContent({
   // Domains
   const [domains, setDomains] = useReducer(domainReducer, [], () => {
     if (preset?.domains?.length) {
-      return preset.domains.map((d) => ({ name: d, id: uniqueId("ns") }));
+      return preset.domains.map((d) => ({ name: d, id: uniqueId("domain") }));
     }
     return [];
   });
@@ -370,7 +358,7 @@ export function NameserverModalContent({
                     <div className={"flex flex-col gap-2 w-full"}>
                       {domains.map((domain, i) => {
                         return (
-                          <DomainInput
+                          <InputDomain
                             key={domain.id}
                             value={domain}
                             onChange={(d) =>
@@ -609,66 +597,6 @@ function NameserverInput({
         type={"number"}
         onChange={handlePortChange}
       />
-      <Button
-        className={"h-[42px]"}
-        variant={"default-outline"}
-        onClick={onRemove}
-      >
-        <MinusCircleIcon size={15} />
-      </Button>
-    </div>
-  );
-}
-
-function DomainInput({
-  value,
-  onChange,
-  onRemove,
-  onError,
-}: {
-  value: Domain;
-  onChange: (d: Domain) => void;
-  onRemove: () => void;
-  onError?: (error: boolean) => void;
-  error?: string;
-}) {
-  const [name, setName] = useState(value.name);
-
-  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setName(e.target.value);
-    onChange({ ...value, name: e.target.value });
-  };
-
-  const domainError = useMemo(() => {
-    if (name == "") {
-      return "";
-    }
-    const valid = validator.isValidDomain(name);
-    if (!valid) {
-      onError && onError(true);
-      return "Please enter a valid domain, e.g. example.com or intra.example.com";
-    }
-    onError && onError(false);
-  }, [name, onError]);
-
-  useEffect(() => {
-    return () => onError && onError(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  return (
-    <div className={"flex gap-2 w-full"}>
-      <div className={"w-full"}>
-        <Input
-          customPrefix={<GlobeIcon size={15} />}
-          placeholder={"e.g., example.com"}
-          maxWidthClass={"w-full"}
-          value={name}
-          error={domainError}
-          onChange={handleNameChange}
-        />
-      </div>
-
       <Button
         className={"h-[42px]"}
         variant={"default-outline"}
