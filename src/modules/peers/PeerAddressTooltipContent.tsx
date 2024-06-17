@@ -25,9 +25,16 @@ export const PeerAddressTooltipContent = ({ peer }: Props) => {
     >
       <ListItem
         icon={<MapPin size={14} />}
-        label={"NetBird IP"}
+        label={"NetBird IPv4"}
         value={peer.ip}
       />
+      {peer.ip6 != null ? (
+        <ListItem
+          icon={<MapPin size={14} />}
+          label={"NetBird IPv6"}
+          value={peer.ip6}
+        />
+      ) : null}
       <ListItem
         icon={<NetworkIcon size={14} />}
         label={"Public IP"}

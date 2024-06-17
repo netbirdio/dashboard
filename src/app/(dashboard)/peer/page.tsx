@@ -63,6 +63,7 @@ import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import AddRouteDropdownButton from "@/modules/peer/AddRouteDropdownButton";
 import PeerRoutesTable from "@/modules/peer/PeerRoutesTable";
+import {SelectDropdown} from "@components/select/SelectDropdown";
 
 export default function PeerPage() {
   const queryParameter = useSearchParams();
@@ -90,6 +91,9 @@ function PeerOverview() {
   const [loginExpiration, setLoginExpiration] = useState(
     peer.login_expiration_enabled,
   );
+  const [ipv6Enabled, setIpv6Enabled] = useState(
+      peer.ipv6_enabled,
+  );
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
       initial: peerGroups,
@@ -112,10 +116,11 @@ function PeerOverview() {
     ssh,
     selectedGroups,
     loginExpiration,
+    ipv6Enabled
   ]);
 
   const updatePeer = async () => {
-    const updateRequest = update(name, ssh, loginExpiration);
+    const updateRequest = update(name, ssh, loginExpiration, ipv6Enabled);
     const groupCalls = getAllGroupCalls();
     const batchCall = groupCalls
       ? [...groupCalls, updateRequest]
@@ -126,7 +131,7 @@ function PeerOverview() {
       promise: Promise.all(batchCall).then(() => {
         mutate("/peers/" + peer.id);
         mutate("/groups");
-        updateHasChangedRef([name, ssh, selectedGroups, loginExpiration]);
+        updateHasChangedRef([name, ssh, selectedGroups, loginExpiration, ipv6Enabled]);
       }),
       loadingMessage: "Saving the peer...",
     });
@@ -141,11 +146,11 @@ function PeerOverview() {
         <div className={"p-default py-6 mb-4"}>
           <Breadcrumbs>
             <Breadcrumbs.Item
-              href={"/peers"}
-              label={"Peers"}
-              icon={<PeerIcon size={13} />}
+                href={"/peers"}
+                label={"Peers"}
+                icon={<PeerIcon size={13}/>}
             />
-            <Breadcrumbs.Item label={peer.ip} active />
+            <Breadcrumbs.Item label={peer.ip} active/>
           </Breadcrumbs>
 
           <div className={"flex justify-between max-w-6xl items-start"}>
@@ -153,11 +158,11 @@ function PeerOverview() {
               <div className={"flex items-center gap-3"}>
                 <h1 className={"flex items-center gap-3"}>
                   <CircleIcon
-                    active={peer.connected}
-                    size={12}
-                    className={"mb-[3px] shrink-0"}
+                      active={peer.connected}
+                      size={12}
+                      className={"mb-[3px] shrink-0"}
                   />
-                  <TextWithTooltip text={name} maxChars={30} />
+                  <TextWithTooltip text={name} maxChars={30}/>
 
                   {!isUser && (
                     <Modal
@@ -185,7 +190,7 @@ function PeerOverview() {
                     </Modal>
                   )}
                 </h1>
-                <LoginExpiredBadge loginExpired={peer.login_expired} />
+                <LoginExpiredBadge loginExpired={peer.login_expired}/>
               </div>
               <div className={"flex items-center gap-8"}>
                 <Paragraph className={"flex items-center"}>
@@ -195,9 +200,9 @@ function PeerOverview() {
             </div>
             <div className={"flex gap-4"}>
               <Button
-                variant={"default"}
-                className={"w-full"}
-                onClick={() => router.push("/peers")}
+                  variant={"default"}
+                  className={"w-full"}
+                  onClick={() => router.push("/peers")}
               >
                 Cancel
               </Button>
@@ -213,7 +218,7 @@ function PeerOverview() {
           </div>
 
           <div className={"flex gap-10 w-full mt-5 max-w-6xl"}>
-            <PeerInformationCard peer={peer} />
+            <PeerInformationCard peer={peer}/>
 
             <div className={"flex flex-col gap-6 w-1/2"}>
               <FullTooltip
@@ -226,7 +231,7 @@ function PeerOverview() {
                     {!peer.user_id ? (
                       <>
                         <>
-                          <IconInfoCircle size={14} />
+                          <IconInfoCircle size={14}/>
                           <span>
                             Login expiration is disabled for all peers added
                             with an setup-key.
@@ -235,7 +240,7 @@ function PeerOverview() {
                       </>
                     ) : (
                       <>
-                        <LockIcon size={14} />
+                        <LockIcon size={14}/>
                         <span>
                           {`You don't have the required permissions to update this
                           setting.`}
@@ -253,7 +258,7 @@ function PeerOverview() {
                   onChange={setLoginExpiration}
                   label={
                     <>
-                      <IconCloudLock size={16} />
+                      <IconCloudLock size={16}/>
                       Login Expiration
                     </>
                   }
@@ -269,7 +274,7 @@ function PeerOverview() {
                       "flex gap-2 items-center !text-nb-gray-300 text-xs"
                     }
                   >
-                    <LockIcon size={14} />
+                    <LockIcon size={14}/>
                     <span>
                       {`You don't have the required permissions to update this
                           setting.`}
@@ -290,7 +295,7 @@ function PeerOverview() {
                   }
                   label={
                     <>
-                      <TerminalSquare size={16} />
+                      <TerminalSquare size={16}/>
                       SSH Access
                     </>
                   }
@@ -312,7 +317,7 @@ function PeerOverview() {
                         "flex gap-2 items-center !text-nb-gray-300 text-xs"
                       }
                     >
-                      <LockIcon size={14} />
+                      <LockIcon size={14}/>
                       <span>
                         {`You don't have the required permissions to update this
                           setting.`}
@@ -331,11 +336,47 @@ function PeerOverview() {
                   />
                 </FullTooltip>
               </div>
+              <div>
+                <Label>IPv6 Support</Label>
+                <HelpText>
+                  Whether to enable IPv6, disable it, or enable IPv6 automatically.
+                  Overrides groupwide setting if set to something else than Automatic. <br/>
+                  Automatic enables IPv6 if it is enabled by at least one group or if the peer is used in at least one
+                  IPv6 route.
+                </HelpText>
+                <FullTooltip
+                  content={
+                    <div
+                      className={
+                        "flex gap-2 items-center !text-nb-gray-300 text-xs"
+                      }
+                    >
+                      <IconInfoCircle size={14}/>
+                      <span>
+                      IPv6 Support requires a recent version of the NetBird client as well as a supported OS (Linux with nftables).
+                    </span>
+                    </div>
+                  }
+                  className={"w-full block"}
+                  disabled={peer.ipv6_supported}
+                >
+                  <SelectDropdown
+                    disabled={!peer.ipv6_supported}
+                    value={ipv6Enabled}
+                    onChange={setIpv6Enabled}
+                    options={[
+                      {label: "Force enabled", value: "enabled"},
+                      {label: "Automatic", value: "auto"},
+                      {label: "Force disabled", value: "disabled"},
+                    ]}
+                  />
+                </FullTooltip>
+              </div>
             </div>
           </div>
         </div>
 
-        <Separator />
+        <Separator/>
 
         {isLinux && !isUser ? (
           <div className={"px-8 py-6"}>
@@ -350,12 +391,12 @@ function PeerOverview() {
                 </div>
                 <div className={"inline-flex gap-4 justify-end"}>
                   <div className={"gap-4 flex"}>
-                    <AddExitNodeButton peer={peer} firstTime={!hasExitNodes} />
-                    <AddRouteDropdownButton />
+                    <AddExitNodeButton peer={peer} firstTime={!hasExitNodes}/>
+                    <AddRouteDropdownButton/>
                   </div>
                 </div>
               </div>
-              <PeerRoutesTable peer={peer} />
+              <PeerRoutesTable peer={peer}/>
             </div>
           </div>
         ) : null}
@@ -364,8 +405,8 @@ function PeerOverview() {
   );
 }
 
-function PeerInformationCard({ peer }: { peer: Peer }) {
-  const { isLoading, getRegionByPeer } = useCountries();
+function PeerInformationCard({peer}: { peer: Peer }) {
+  const {isLoading, getRegionByPeer} = useCountries();
 
   const countryText = useMemo(() => {
     return getRegionByPeer(peer);
@@ -379,12 +420,22 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
           copyText={"NetBird IP-Address"}
           label={
             <>
-              <MapPin size={16} />
-              NetBird IP-Address
+              <MapPin size={16}/>
+              NetBird IPv4-Address
             </>
           }
           value={peer.ip}
         />
+
+        <Card.ListItem
+          label={
+            <>
+              <MapPin size={16}/>
+                  NetBird IPv6-Address
+                </>
+              }
+              value={peer.ip6}
+          />
 
         <Card.ListItem
           copy

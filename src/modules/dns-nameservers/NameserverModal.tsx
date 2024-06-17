@@ -320,6 +320,11 @@ export function NameserverModalContent({
                 <PlusIcon size={14} />
                 Add Nameserver
               </Button>
+
+              <HelpText>
+                Note that if the IP address is an IPv6 address, it will only be distributed to IPv6-enabled peers.<br />
+                To ensure best reliability, always include at least one IPv4 address when adding nameservers.
+              </HelpText>
             </div>
 
             <div>

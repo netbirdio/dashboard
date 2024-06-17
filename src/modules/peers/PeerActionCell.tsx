@@ -35,6 +35,7 @@ export default function PeerActionCell() {
         peer.name,
         peer.ssh_enabled,
         !peer.login_expiration_enabled,
+        peer.ipv6_enabled,
       ).then(() => {
         mutate("/peers");
         mutate("/groups");
@@ -52,6 +53,7 @@ export default function PeerActionCell() {
         peer.name,
         !peer.ssh_enabled,
         peer.login_expiration_enabled,
+        peer.ipv6_enabled,
       ).then(() => {
         mutate("/peers");
         mutate("/groups");

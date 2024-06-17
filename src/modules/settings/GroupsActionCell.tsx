@@ -3,11 +3,13 @@ import FullTooltip from "@components/FullTooltip";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import { Trash2 } from "lucide-react";
-import React from "react";
+import React, {useMemo} from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { SetupKey } from "@/interfaces/SetupKey";
 import { GroupUsage } from "@/modules/settings/useGroupsUsage";
+import {ToggleSwitch} from "@components/ToggleSwitch";
+import type {Group, GroupPeer} from "@/interfaces/Group";
 
 type Props = {
   group: GroupUsage;
