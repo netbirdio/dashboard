@@ -42,7 +42,7 @@ export const sleep = (ms: number) => {
 export const validator = {
   isValidDomain: (domain: string) => {
     const unicodeDomain =
-        /^(?!.*\s)(\.?[a-zA-Z0-9\u00A1-\uFFFF](?!.*\s$)(?!.*\.$)(?:(?!-)[a-zA-Z0-9\u00A1-\uFFFF-]{0,63}(?<!-)\.){0,126}(?!-)[a-zA-Z0-9\u00A1-\uFFFF-]{1,63}(?<!-))$/u;
+        /^(?!.*\.\.)(?!.*\.$)(?!.*\s)(?:(?!-)(?!.*--)[a-zA-Z0-9\u00A1-\uFFFF-]{1,63}(?<!-)\.)+(?!-)(?!.*--)[a-zA-Z0-9\u00A1-\uFFFF-]{2,63}$/u;
     try {
       const minMaxChars = [1, 255];
       const isValidDomainLength =
