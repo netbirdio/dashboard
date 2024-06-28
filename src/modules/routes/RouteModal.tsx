@@ -488,7 +488,7 @@ export function RouteModalContent({
                   <div>
                     <HelpText>
                       Assign a peer group with Linux machines to be used as
-                      {exitNode ? " exit nodes." : "routing peers."}
+                      {exitNode ? " exit nodes." : " routing peers."}
                     </HelpText>
                     <PeerGroupSelector
                       max={1}
