@@ -396,9 +396,9 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
             )}
             <div className={cn("flex justify-between")}>
               <div>
-                <Label>Metrics</Label>
+                <Label>Metric</Label>
                 <HelpText className={"max-w-[200px]"}>
-                  Lower metrics indicating higher priority routes.
+                  A lower metric indicates a higher priority route.
                 </HelpText>
               </div>
 
