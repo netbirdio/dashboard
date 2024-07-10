@@ -42,3 +42,5 @@ else
     echo "No certificates or Letsencrypt domain was provided. Exiting."
     exit 0
 fi
+
+/usr/sbin/nginx -s reload
