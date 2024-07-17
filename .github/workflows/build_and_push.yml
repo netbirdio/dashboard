@@ -44,7 +44,7 @@ jobs:
           images: ${{ env.IMAGE_NAME }}
       -
         name: Login to DockerHub
-        if: github.event_name != 'pull_request'
+        if: true
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.NB_DOCKER_USER }}
