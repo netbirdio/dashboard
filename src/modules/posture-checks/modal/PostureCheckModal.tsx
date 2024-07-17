@@ -39,7 +39,7 @@ export default function PostureCheckModal({
   onSuccess,
   postureCheck,
 }: Props) {
-  const postureCheckRequest = useApiCall("/posture-checks");
+  const postureCheckRequest = useApiCall<PostureCheck>("/posture-checks");
   const { mutate } = useSWRConfig();
 
   const [name, setName] = useState(postureCheck?.name || "");
@@ -145,159 +145,148 @@ export default function PostureCheckModal({
   const [tab, setTab] = useState("checks");
 
   return (
-    <>
-      <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
-        <ModalContent
-          maxWidthClass={cn("relative", "max-w-2xl")}
-          showClose={true}
-        >
-          <ModalHeader
-            icon={<ShieldCheck size={19} />}
-            title={
-              postureCheck ? "Update Posture Check" : "Create Posture Check"
-            }
-            description={
-              "Use posture checks to further restrict access in your network."
-            }
-            color={"netbird"}
-          />
+    <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
+      <ModalContent
+        maxWidthClass={cn("relative", "max-w-2xl")}
+        showClose={true}
+      >
+        <ModalHeader
+          icon={<ShieldCheck size={19} />}
+          title={postureCheck ? "Update Posture Check" : "Create Posture Check"}
+          description={
+            "Use posture checks to further restrict access in your network."
+          }
+          color={"netbird"}
+        />
 
-          <Tabs onValueChange={(v) => setTab(v)} defaultValue={tab} value={tab}>
-            <TabsList justify={"start"} className={"px-8"}>
-              <TabsTrigger value={"checks"}>
-                <LayoutList size={16} />
-                Checks
-              </TabsTrigger>
+        <Tabs onValueChange={(v) => setTab(v)} defaultValue={tab} value={tab}>
+          <TabsList justify={"start"} className={"px-8"}>
+            <TabsTrigger value={"checks"}>
+              <LayoutList size={16} />
+              Checks
+            </TabsTrigger>
 
-              <TabsTrigger
-                value={"general"}
-                disabled={!isAtLeastOneCheckEnabled}
-              >
-                <Text
-                  size={16}
-                  className={
-                    "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
-                  }
-                />
-                Name & Description
-              </TabsTrigger>
-            </TabsList>
+            <TabsTrigger value={"general"} disabled={!isAtLeastOneCheckEnabled}>
+              <Text
+                size={16}
+                className={
+                  "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+                }
+              />
+              Name & Description
+            </TabsTrigger>
+          </TabsList>
 
-            <TabsContent value={"checks"} className={"pb-6 px-8"}>
-              <>
-                <PostureCheckNetBirdVersion
-                  value={nbVersionCheck}
-                  onChange={setNbVersionCheck}
+          <TabsContent value={"checks"} className={"pb-6 px-8"}>
+            <>
+              <PostureCheckNetBirdVersion
+                value={nbVersionCheck}
+                onChange={setNbVersionCheck}
+              />
+              <PostureCheckGeoLocation
+                value={geoLocationCheck}
+                onChange={setGeoLocationCheckCheck}
+              />
+              <PostureCheckPeerNetworkRange
+                value={peerNetworkRangeCheck}
+                onChange={setPeerNetworkRangeCheck}
+              />
+              <PostureCheckOperatingSystem
+                value={osVersionCheck}
+                onChange={setOsVersionCheck}
+              />
+              <PostureCheckProcess
+                value={processCheck}
+                onChange={setProcessCheck}
+              />
+            </>
+          </TabsContent>
+          <TabsContent value={"general"} className={"pb-8 px-8"}>
+            <div className={"flex flex-col gap-6"}>
+              <div>
+                <Label>Name of the Posture Check</Label>
+                <HelpText>
+                  Set an easily identifiable name for your posture check.
+                </HelpText>
+                <Input
+                  autoFocus={true}
+                  tabIndex={0}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder={"e.g., NetBird Version > 0.25.0"}
                 />
-                <PostureCheckGeoLocation
-                  value={geoLocationCheck}
-                  onChange={setGeoLocationCheckCheck}
-                />
-                <PostureCheckPeerNetworkRange
-                  value={peerNetworkRangeCheck}
-                  onChange={setPeerNetworkRangeCheck}
-                />
-                <PostureCheckOperatingSystem
-                  value={osVersionCheck}
-                  onChange={setOsVersionCheck}
-                />
-                <PostureCheckProcess
-                  value={processCheck}
-                  onChange={setProcessCheck}
-                />
-              </>
-            </TabsContent>
-            <TabsContent value={"general"} className={"pb-8 px-8"}>
-              <div className={"flex flex-col gap-6"}>
-                <div>
-                  <Label>Name of the Posture Check</Label>
-                  <HelpText>
-                    Set an easily identifiable name for your posture check.
-                  </HelpText>
-                  <Input
-                    autoFocus={true}
-                    tabIndex={0}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    placeholder={"e.g., NetBird Version > 0.25.0"}
-                  />
-                </div>
-                <div>
-                  <Label>Description (optional)</Label>
-                  <HelpText>
-                    Write a short description to add more context to this
-                    policy.
-                  </HelpText>
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder={
-                      "e.g., Check if the NetBird version is bigger than 0.25.0"
-                    }
-                    rows={3}
-                  />
-                </div>
               </div>
-            </TabsContent>
-          </Tabs>
+              <div>
+                <Label>Description (optional)</Label>
+                <HelpText>
+                  Write a short description to add more context to this policy.
+                </HelpText>
+                <Textarea
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder={
+                    "e.g., Check if the NetBird version is bigger than 0.25.0"
+                  }
+                  rows={3}
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
 
-          <ModalFooter className={"items-center"}>
-            <div className={"w-full"}>
-              <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={"https://docs.netbird.io/how-to/manage-posture-checks"}
-                  target={"_blank"}
+        <ModalFooter className={"items-center"}>
+          <div className={"w-full"}>
+            <Paragraph className={"text-sm mt-auto"}>
+              Learn more about
+              <InlineLink
+                href={"https://docs.netbird.io/how-to/manage-posture-checks"}
+                target={"_blank"}
+              >
+                Posture Checks
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
+            </Paragraph>
+          </div>
+          <div className={"flex gap-3 w-full justify-end"}>
+            <>
+              {tab == "checks" && (
+                <Button
+                  variant={"secondary"}
+                  onClick={() => onOpenChange(false)}
                 >
-                  Posture Checks
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </Paragraph>
-            </div>
-            <div className={"flex gap-3 w-full justify-end"}>
-              <>
-                {tab == "checks" && (
-                  <Button
-                    variant={"secondary"}
-                    onClick={() => onOpenChange(false)}
-                  >
-                    Cancel
-                  </Button>
-                )}
+                  Cancel
+                </Button>
+              )}
 
-                {tab == "general" && (
-                  <Button
-                    variant={"secondary"}
-                    onClick={() => setTab("checks")}
-                  >
-                    Back
-                  </Button>
-                )}
+              {tab == "general" && (
+                <Button variant={"secondary"} onClick={() => setTab("checks")}>
+                  Back
+                </Button>
+              )}
 
-                {!postureCheck && tab == "checks" && (
-                  <Button
-                    variant={"primary"}
-                    onClick={() => setTab("general")}
-                    disabled={!isAtLeastOneCheckEnabled}
-                  >
-                    Continue
-                  </Button>
-                )}
+              {!postureCheck && tab == "checks" && (
+                <Button
+                  variant={"primary"}
+                  onClick={() => setTab("general")}
+                  disabled={!isAtLeastOneCheckEnabled}
+                >
+                  Continue
+                </Button>
+              )}
 
-                {((!postureCheck && tab == "general") || postureCheck) && (
-                  <Button
-                    variant={"primary"}
-                    disabled={!canCreate}
-                    onClick={updateOrCreatePostureCheck}
-                  >
-                    {postureCheck ? "Save Changes" : "Create Posture Check"}
-                  </Button>
-                )}
-              </>
-            </div>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-    </>
+              {((!postureCheck && tab == "general") || postureCheck) && (
+                <Button
+                  variant={"primary"}
+                  disabled={!canCreate}
+                  onClick={updateOrCreatePostureCheck}
+                >
+                  {postureCheck ? "Save Changes" : "Create Posture Check"}
+                </Button>
+              )}
+            </>
+          </div>
+        </ModalFooter>
+      </ModalContent>
+    </Modal>
   );
 }
