@@ -13,7 +13,7 @@
     "cypress:open": "cypress open"
   },
   "dependencies": {
-    "@axa-fr/react-oidc": "^5.14.0",
+    "@axa-fr/react-oidc": "^7.22.18",
     "@radix-ui/react-accordion": "^1.1.2",
     "@radix-ui/react-checkbox": "^1.0.4",
     "@radix-ui/react-collapsible": "^1.0.3",
