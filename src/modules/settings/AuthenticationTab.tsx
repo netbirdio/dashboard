@@ -99,6 +99,7 @@ export default function AuthenticationTab({ account }: Props) {
         .put({
           id: account.id,
           settings: {
+            ...account.settings,
             peer_login_expiration_enabled: loginExpiration,
             peer_login_expiration: loginExpiration ? expiration : 86400,
             extra: {
