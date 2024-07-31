@@ -108,10 +108,8 @@ export default function GroupsTab({ account }: Props) {
         .put({
           id: account.id,
           settings: {
+            ...account.settings,
             groups_propagation_enabled: groupsPropagation,
-            peer_login_expiration_enabled:
-              account.settings.peer_login_expiration_enabled,
-            peer_login_expiration: account.settings.peer_login_expiration,
             jwt_groups_enabled: jwtGroupSync,
             jwt_groups_claim_name: isEmpty(jwtGroupsClaimName)
               ? undefined

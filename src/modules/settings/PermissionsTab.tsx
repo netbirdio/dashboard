@@ -33,15 +33,8 @@ export default function PermissionsTab({ account }: Props) {
         .put({
           id: account.id,
           settings: {
+            ...account.settings,
             regular_users_view_blocked: userViewBlocked,
-            groups_propagation_enabled:
-              account.settings?.groups_propagation_enabled,
-            peer_login_expiration_enabled:
-              account.settings?.peer_login_expiration_enabled,
-            peer_login_expiration: account.settings?.peer_login_expiration,
-            jwt_groups_enabled: account.settings?.jwt_groups_enabled,
-            jwt_groups_claim_name: account.settings?.jwt_groups_claim_name,
-            jwt_allow_groups: account.settings?.jwt_allow_groups,
           },
         })
         .then(() => {
