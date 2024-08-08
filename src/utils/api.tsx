@@ -50,7 +50,9 @@ async function apiRequest<T>(
   }
 }
 
-export function useNetBirdFetch(ignoreError: boolean = false) {
+export function useNetBirdFetch(ignoreError: boolean = false): {
+  fetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
+} {
   const tokenSource = config.tokenSource || "accessToken";
   const { idToken } = useOidcIdToken();
   const { accessToken } = useOidcAccessToken();
@@ -69,7 +71,10 @@ export function useNetBirdFetch(ignoreError: boolean = false) {
   const nativeFetch = async (input: RequestInfo, init?: RequestInit) => {
     const tokenExpired = await isTokenExpired();
     if (tokenExpired) {
-      return handleErrors({ code: 401, message: "token expired" });
+      return handleErrors({
+        code: 401,
+        message: "token expired",
+      } as ErrorResponse);
     }
 
     const headers = {
@@ -85,7 +90,10 @@ export function useNetBirdFetch(ignoreError: boolean = false) {
   };
 
   return {
-    fetch: nativeFetch,
+    fetch: nativeFetch as (
+      input: RequestInfo,
+      init?: RequestInit,
+    ) => Promise<Response>,
   };
 }
 
@@ -131,22 +139,22 @@ export function useApiCall<T>(url: string, ignoreError = false) {
     post: async (data: any, suffix = "") => {
       return apiRequest<T>(fetch, "POST", url + suffix, data)
         .then((res) => Promise.resolve(res as T))
-        .catch((err) => handleErrors(err as ErrorResponse));
+        .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
     put: async (data: any, suffix = "") => {
       return apiRequest<T>(fetch, "PUT", url + suffix, data)
         .then((res) => Promise.resolve(res as T))
-        .catch((err) => handleErrors(err as ErrorResponse));
+        .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
     del: async (data: any = "", suffix = "") => {
       return apiRequest<T>(fetch, "DELETE", url + suffix, data)
         .then((res) => Promise.resolve(res as T))
-        .catch((err) => handleErrors(err as ErrorResponse));
+        .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
     get: async (suffix = "") => {
       return apiRequest<T>(fetch, "GET", url + suffix)
         .then((res) => Promise.resolve(res as T))
-        .catch((err) => handleErrors(err as ErrorResponse));
+        .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
   };
 }

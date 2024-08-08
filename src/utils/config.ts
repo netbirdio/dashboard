@@ -1,4 +1,4 @@
-import { StringMap } from "@axa-fr/react-oidc/dist/vanilla/oidc";
+import { StringMap } from "@axa-fr/react-oidc";
 import { validator } from "@utils/helpers";
 
 interface Config {

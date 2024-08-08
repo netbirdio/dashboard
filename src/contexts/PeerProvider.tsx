@@ -80,7 +80,7 @@ export default function PeerProvider({ children, peer }: Props) {
           approval_required == undefined ? undefined : approval_required,
       },
       `/${peer.id}`,
-    );
+    ) as Promise<Peer>;
   };
 
   const openSSHDialog = async (): Promise<boolean> => {
