@@ -1,10 +1,10 @@
 "use client";
 
-import { OidcProvider } from "@axa-fr/react-oidc";
 import {
   AuthorityConfiguration,
   OidcConfiguration,
-} from "@axa-fr/react-oidc/dist/vanilla/oidc";
+  OidcProvider,
+} from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import { useRedirect } from "@hooks/useRedirect";
@@ -30,7 +30,7 @@ const auth0AuthorityConfig: AuthorityConfiguration = {
   revocation_endpoint: new URL("oauth/revoke", config.authority).href,
   end_session_endpoint: new URL("v2/logout", config.authority).href,
   userinfo_endpoint: new URL("userinfo", config.authority).href,
-  //issuer: new URL("", config.authority).href,
+  issuer: new URL("", config.authority).href,
 };
 
 const onEvent = (configurationName: any, eventName: any, data: any) => {
