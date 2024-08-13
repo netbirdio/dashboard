@@ -39,7 +39,7 @@ export default function PostureCheckModal({
   onSuccess,
   postureCheck,
 }: Props) {
-  const postureCheckRequest = useApiCall("/posture-checks");
+  const postureCheckRequest = useApiCall<PostureCheck>("/posture-checks");
   const { mutate } = useSWRConfig();
 
   const [name, setName] = useState(postureCheck?.name || "");

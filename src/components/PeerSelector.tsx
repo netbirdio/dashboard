@@ -1,20 +1,30 @@
-import { CommandItem } from "@components/Command";
+import { DropdownInfoText } from "@components/DropdownInfoText";
+import { DropdownInput } from "@components/DropdownInput";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
-import { ScrollArea } from "@components/ScrollArea";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
-import { IconArrowBack } from "@tabler/icons-react";
+import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
+import { useSearch } from "@hooks/useSearch";
 import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
-import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
-import { sortBy, trim, unionBy } from "lodash";
-import { ChevronsUpDown, MapPin, SearchIcon } from "lucide-react";
+import { sortBy, unionBy } from "lodash";
+import { ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { FcLinux } from "react-icons/fc";
 import { useElementSize } from "@/hooks/useElementSize";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
+
+const MapPinIcon = memo(() => <MapPin size={12} />);
+MapPinIcon.displayName = "MapPinIcon";
+
+const LinuxIcon = memo(() => (
+  <span className={"grayscale brightness-[100%] contrast-[40%]"}>
+    <FcLinux className={"text-white text-lg min-w-[20px] brightness-150"} />
+  </span>
+));
+LinuxIcon.displayName = "LinuxIcon";
 
 interface MultiSelectProps {
   value?: Peer;
@@ -23,6 +33,13 @@ interface MultiSelectProps {
   disabled?: boolean;
 }
 
+const searchPredicate = (item: Peer, query: string) => {
+  const lowerCaseQuery = query.toLowerCase();
+  if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
+  if (item.hostname.toLowerCase().includes(lowerCaseQuery)) return true;
+  return item.ip.toLowerCase().startsWith(lowerCaseQuery);
+};
+
 export function PeerSelector({
   onChange,
   value,
@@ -30,13 +47,16 @@ export function PeerSelector({
   disabled = false,
 }: MultiSelectProps) {
   const { data: peers } = useFetchApi<Peer[]>("/peers");
-
-  const [dropdownOptions, setDropdownOptions] = useState<Peer[]>([]);
-  const searchRef = React.useRef<HTMLInputElement>(null);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
-  const [search, setSearch] = useState("");
 
-  // Update dropdown options when peers change
+  const [unfilteredItems, setUnfilteredItems] = useState<Peer[]>([]);
+  const [filteredItems, search, setSearch] = useSearch(
+    unfilteredItems,
+    searchPredicate,
+    { filter: true, debounce: 150 },
+  );
+
+  // Update unfiltered items when peers change
   useEffect(() => {
     if (!peers) return;
 
@@ -56,7 +76,7 @@ export function PeerSelector({
       });
     }
 
-    setDropdownOptions(unionBy(options, dropdownOptions, "id"));
+    setUnfilteredItems(unionBy(options, unfilteredItems, "id"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [peers]);
 
@@ -68,43 +88,10 @@ export function PeerSelector({
       onChange(peer);
       setSearch("");
     }
+    setOpen(false);
   };
 
-  const peerNotFound = useMemo(() => {
-    const isSearching = search.length > 0;
-
-    // Search peer by ip or name
-    const peerFound =
-      dropdownOptions.filter((item) => {
-        return (
-          item.name.includes(search) ||
-          item.hostname.includes(search) ||
-          item.ip.includes(search)
-        );
-      }).length > 0;
-
-    return isSearching && !peerFound;
-  }, [search, dropdownOptions]);
-
   const [open, setOpen] = useState(false);
-
-  const [slice, setSlice] = useState(10);
-
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        setSlice(dropdownOptions.length);
-      }, 100);
-    } else {
-      setSlice(10);
-    }
-  }, [open, dropdownOptions]);
-
-  const LinuxIcon = (
-    <span className={"grayscale brightness-[100%] contrast-[40%]"}>
-      <FcLinux className={"text-white text-lg min-w-[20px] brightness-150"} />
-    </span>
-  );
 
   return (
     <Popover
@@ -141,7 +128,7 @@ export function PeerSelector({
                 }
               >
                 <div className={"flex items-center gap-2.5 text-sm"}>
-                  {LinuxIcon}
+                  <LinuxIcon />
                   <TextWithTooltip text={value.name} maxChars={20} />
                 </div>
 
@@ -150,7 +137,7 @@ export function PeerSelector({
                     "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-1 font-mono text-[10px]"
                   }
                 >
-                  <MapPin size={12} />
+                  <MapPinIcon />
                   {value.ip}
                 </div>
               </div>
@@ -168,113 +155,67 @@ export function PeerSelector({
         style={{
           width: width,
         }}
-        forceMount={true}
         align="start"
         side={"top"}
         sideOffset={10}
       >
-        <Command
-          className={"w-full flex"}
-          loop
-          filter={(value, search) => {
-            const formatValue = trim(value.toLowerCase());
-            const formatSearch = trim(search.toLowerCase());
-            if (formatValue.includes(formatSearch)) return 1;
-            return 0;
-          }}
-        >
-          <CommandList className={"w-full"}>
-            <div className={"relative"}>
-              <CommandInput
-                className={cn(
-                  "min-h-[42px] w-full relative",
-                  "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
-                  "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
-                  "dark:placeholder:text-neutral-500 font-light placeholder:text-neutral-500 pl-10",
-                )}
-                ref={searchRef}
-                value={search}
-                onValueChange={setSearch}
-                placeholder={"Search for peers by name or ip..."}
-              />
-              <div
-                className={
-                  "absolute left-0 top-0 h-full flex items-center pl-4"
-                }
-              >
-                <div className={"flex items-center"}>
-                  <SearchIcon size={14} />
-                </div>
-              </div>
-              <div
-                className={
-                  "absolute right-0 top-0 h-full flex items-center pr-4"
-                }
-              >
-                <div
-                  className={
-                    "flex items-center bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-nb-gray-500"
-                  }
-                >
-                  <IconArrowBack size={10} />
-                </div>
-              </div>
-            </div>
+        <div className={"w-full"}>
+          <DropdownInput
+            value={search}
+            onChange={setSearch}
+            placeholder={"Search for peers by name or ip..."}
+          />
 
-            <div className={""}>
-              {dropdownOptions.length == 0 && !peerNotFound && (
-                <div
-                  className={
-                    "text-center pb-2 text-nb-gray-500 max-w-xs mx-auto"
-                  }
-                >
-                  {
-                    "Seems like you don't have any linux peers to assign as a routing peer."
-                  }
-                </div>
-              )}
-              {peerNotFound && (
-                <div className={"text-center pb-2 text-nb-gray-500"}>
-                  There are no peers matching your search.
-                </div>
-              )}
-              <CommandGroup>
-                <ScrollArea
-                  className={
-                    "max-h-[180px] overflow-y-auto flex flex-col gap-1 pl-2 py-2 pr-3"
-                  }
-                >
-                  {dropdownOptions.slice(0, slice).map((option) => {
-                    return (
-                      <CommandItem
-                        key={option.name}
-                        value={option.name + option.id}
-                        onSelect={() => {
-                          togglePeer(option);
-                          setOpen(false);
-                        }}
-                      >
-                        <div className={"flex items-center gap-2.5 text-sm"}>
-                          {LinuxIcon}
-                          <TextWithTooltip text={option.name} maxChars={20} />
-                        </div>
+          {unfilteredItems.length == 0 && (
+            <DropdownInfoText>
+              {
+                "Seems like you don't have any linux peers to assign as a routing peer."
+              }
+            </DropdownInfoText>
+          )}
 
-                        <div
-                          className={
-                            "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-1 font-mono text-[10px]"
-                          }
-                        >
-                          <MapPin size={12} />
-                          {option.ip}
-                        </div>
-                      </CommandItem>
-                    );
-                  })}
-                </ScrollArea>
-              </CommandGroup>
-            </div>
-          </CommandList>
-        </Command>
+          {filteredItems.length == 0 && (
+            <DropdownInfoText>
+              There are no peers matching your search.
+            </DropdownInfoText>
+          )}
+
+          {filteredItems.length > 0 && (
+            <VirtualScrollAreaList
+              items={filteredItems}
+              onSelect={togglePeer}
+              renderItem={(option) => {
+                return (
+                  <>
+                    <div
+                      className={cn(
+                        "flex items-center gap-2.5 text-sm",
+                        value && value.id == option.id
+                          ? "text-white"
+                          : "text-nb-gray-300",
+                      )}
+                    >
+                      <LinuxIcon />
+                      <TextWithTooltip text={option.name} maxChars={20} />
+                    </div>
+
+                    <div
+                      className={cn(
+                        "font-medium flex items-center gap-1 font-mono text-[10px]",
+                        value && value.id == option.id
+                          ? "text-white"
+                          : "text-nb-gray-300",
+                      )}
+                    >
+                      <MapPinIcon />
+                      {option.ip}
+                    </div>
+                  </>
+                );
+              }}
+            />
+          )}
+        </div>
       </PopoverContent>
     </Popover>
   );

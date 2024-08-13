@@ -4,13 +4,12 @@ import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
-import useFetchApi from "@utils/api";
+import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
-import React, { lazy, Suspense, useEffect } from "react";
+import React, { lazy, Suspense } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
-import { useGroups } from "@/contexts/GroupsProvider";
+import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
 import { useLoggedInUser, useUsers } from "@/contexts/UsersProvider";
-import { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
 
@@ -21,24 +20,22 @@ export default function Peers() {
 
   return (
     <PageContainer>
-      {permission?.dashboard_view === "blocked" ? (
+      {permission.dashboard_view === "blocked" ? (
         <PeersBlockedView />
       ) : (
-        <PeersView />
+        <PeersProvider>
+          <PeersView />
+        </PeersProvider>
       )}
     </PageContainer>
   );
 }
 
 function PeersView() {
-  const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
+  const { peers, isLoading } = usePeers();
   const { users } = useUsers();
-  const { refresh } = useGroups();
-
-  useEffect(() => {
-    refresh();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
 
   const peersWithUser = peers?.map((peer) => {
     if (!users) return peer;
@@ -58,7 +55,7 @@ function PeersView() {
             icon={<PeerIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1>{peers && peers.length > 1 ? `${peers.length} Peers` : "Peers"}</h1>
+        <h1 ref={headingRef}>Peers</h1>
         <Paragraph>
           A list of all machines and devices connected to your private network.
           Use this view to manage peers.
@@ -76,7 +73,11 @@ function PeersView() {
         </Paragraph>
       </div>
       <Suspense fallback={<SkeletonTable />}>
-        <PeersTable isLoading={isLoading} peers={peersWithUser} />
+        <PeersTable
+          isLoading={isLoading}
+          peers={peersWithUser}
+          headingTarget={portalTarget}
+        />
       </Suspense>
     </>
   );

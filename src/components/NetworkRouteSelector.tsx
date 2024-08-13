@@ -1,6 +1,7 @@
 import { CommandItem } from "@components/Command";
 import FullTooltip from "@components/FullTooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
+import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { IconArrowBack } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
@@ -108,12 +109,12 @@ export function NetworkRouteSelector({
             {value ? (
               <div
                 className={
-                  "flex items-center justify-between text-sm text-white w-full pr-4 pl-1"
+                  "flex items-center justify-between text-sm text-white w-full pr-4 pl-1 gap-2"
                 }
               >
                 <div className={"flex items-center gap-2.5 text-sm"}>
                   <NetworkRoutesIcon size={16} />
-                  {value.network_id}
+                  <TextWithTooltip text={value.network_id} maxChars={15} />
                 </div>
 
                 <div
@@ -224,10 +225,14 @@ export function NetworkRouteSelector({
                           togglePeer(option);
                           setOpen(false);
                         }}
+                        className={"gap-2"}
                       >
                         <div className={"flex items-center gap-2.5 text-sm"}>
                           <NetworkRoutesIcon size={14} />
-                          {option.network_id}
+                          <TextWithTooltip
+                            text={option.network_id}
+                            maxChars={15}
+                          />
                         </div>
 
                         <div
@@ -259,7 +264,11 @@ function DomainList({ domains }: { domains?: string[] }) {
       <FullTooltip
         content={<div className={"text-xs max-w-sm"}>{domains.join(", ")}</div>}
       >
-        <div className={"text-xs text-nb-gray-300"}>
+        <div
+          className={
+            "text-xs text-nb-gray-300 block min-w-0 truncate max-w-[180px]"
+          }
+        >
           {firstDomain} {domains.length > 1 && "+" + (domains.length - 1)}
         </div>
       </FullTooltip>

@@ -6,4 +6,5 @@ export enum OperatingSystem {
   DOCKER,
   IOS,
   UNKNOWN,
+  FREEBSD,
 }

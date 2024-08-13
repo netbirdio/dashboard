@@ -8,9 +8,10 @@ import { ChevronsUpDown, Cog, User2 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
-import { Role } from "@/interfaces/User";
+import { Role, User } from "@/interfaces/User";
 
 interface MultiSelectProps {
   value?: Role;
@@ -18,6 +19,7 @@ interface MultiSelectProps {
   disabled?: boolean;
   popoverWidth?: "auto" | number;
   hideOwner?: boolean;
+  currentUser?: User;
 }
 
 const UserRoles = [
@@ -44,11 +46,39 @@ export function UserRoleSelector({
   disabled = false,
   popoverWidth = "auto",
   hideOwner = false,
+  currentUser,
 }: MultiSelectProps) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
   const { isOwner } = useLoggedInUser();
+  const { confirm } = useDialog();
 
-  const toggle = (item: Role) => {
+  const toggle = async (item: Role) => {
+    if (item === Role.Owner) {
+      let ok = await confirm({
+        title: "Transfer Ownership?",
+        type: "warning",
+        description: (
+          <div className={"inline-block"}>
+            This action will transfer the{" "}
+            <span className={"text-netbird inline font-medium"}>Owner</span>{" "}
+            role to{" "}
+            {currentUser ? (
+              <span className={"text-netbird inline font-medium"}>
+                {currentUser.name}
+              </span>
+            ) : (
+              "this user"
+            )}{" "}
+            and leave you with the{" "}
+            <span className={"text-netbird inline font-medium"}>Admin</span>{" "}
+            role. This action can only be undone if the new owner transfers the
+            role back to you.
+          </div>
+        ),
+      });
+      if (!ok) return;
+    }
+
     const isSelected = value == item;
     if (isSelected) {
     } else {

@@ -1,6 +1,7 @@
 "use client";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import DataTableGlobalSearch from "@components/table/DataTableGlobalSearch";
+import { DataTableHeadingPortal } from "@components/table/DataTableHeadingPortal";
 import { DataTablePagination } from "@components/table/DataTablePagination";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
@@ -28,6 +29,7 @@ import {
   getSortedRowModel,
   PaginationState,
   Row,
+  RowSelectionState,
   SortingState,
   Table as TanStackTable,
   useReactTable,
@@ -105,6 +107,7 @@ interface DataTableProps<TData, TValue> {
   aboveTable?: (table: TanStackTable<TData>) => React.ReactNode;
   searchPlaceholder?: string;
   columnVisibility?: VisibilityState;
+  setColumnVisibility?: React.Dispatch<React.SetStateAction<VisibilityState>>;
   sorting?: SortingState;
   setSorting?: React.Dispatch<React.SetStateAction<SortingState>>;
   text?: string;
@@ -126,6 +129,11 @@ interface DataTableProps<TData, TValue> {
   rightSide?: (table: TanStackTable<TData>) => React.ReactNode;
   manualPagination?: boolean;
   showHeader?: boolean;
+  rowSelection?: RowSelectionState;
+  setRowSelection?: React.Dispatch<React.SetStateAction<RowSelectionState>>;
+  useRowId?: boolean;
+  headingTarget?: HTMLHeadingElement | null;
+  showResetFilterButton?: boolean;
 }
 
 export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
@@ -139,6 +147,7 @@ export function DataTableContent<TData, TValue>({
   children,
   searchPlaceholder = "Search...",
   columnVisibility = {},
+  setColumnVisibility,
   sorting = [],
   setSorting,
   text = "rows",
@@ -159,6 +168,11 @@ export function DataTableContent<TData, TValue>({
   rightSide,
   manualPagination = false,
   showHeader = true,
+  rowSelection,
+  setRowSelection,
+  useRowId,
+  headingTarget,
+  showResetFilterButton = true,
 }: DataTableProps<TData, TValue>) {
   const path = usePathname();
   const [columnFilters, setColumnFilters] = useLocalStorage<ColumnFiltersState>(
@@ -175,9 +189,6 @@ export function DataTableContent<TData, TValue>({
       pageIndex: 0,
       pageSize: 10,
     });
-
-  const [tableColumnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>(columnVisibility);
 
   const hasInitialData = !!(data && data.length > 0);
 
@@ -196,8 +207,9 @@ export function DataTableContent<TData, TValue>({
     manualPagination: manualPagination,
     state: {
       sorting,
+      rowSelection: rowSelection ?? {},
       columnFilters,
-      columnVisibility: tableColumnVisibility,
+      columnVisibility: columnVisibility,
       globalFilter: globalSearch,
       pagination: paginationState,
     },
@@ -207,6 +219,8 @@ export function DataTableContent<TData, TValue>({
         pageSize: 10,
       },
     },
+    getRowId: useRowId ? (row) => row.id : undefined,
+    onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
     onPaginationChange: setPaginationState,
     onColumnFiltersChange: setColumnFilters,
@@ -235,6 +249,7 @@ export function DataTableContent<TData, TValue>({
     table.setPageIndex(0);
     setColumnFilters([]);
     setGlobalSearch("");
+    setRowSelection?.({});
   };
 
   return (
@@ -248,11 +263,14 @@ export function DataTableContent<TData, TValue>({
             setGlobalSearch={(val) => {
               table.setPageIndex(0);
               setGlobalSearch(val);
+              setRowSelection?.({});
             }}
             placeholder={searchPlaceholder}
           />
           {children && children(table)}
-          <DataTableResetFilterButton onClick={resetFilters} table={table} />
+          {showResetFilterButton && (
+            <DataTableResetFilterButton onClick={resetFilters} table={table} />
+          )}
           <div className={"flex gap-4 flex-wrap grow"}>
             <div className={"flex gap-4 flex-wrap"}></div>
             {rightSide && rightSide(table)}
@@ -412,6 +430,11 @@ export function DataTableContent<TData, TValue>({
       <div className={paginationClassName}>
         <DataTablePagination table={table} text={text} />
       </div>
+      <DataTableHeadingPortal
+        table={table}
+        headingTarget={headingTarget}
+        text={text}
+      />
     </div>
   );
 }

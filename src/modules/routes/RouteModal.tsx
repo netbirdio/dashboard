@@ -579,7 +579,7 @@ export function RouteModalContent({
               <div>
                 <Label>Metric</Label>
                 <HelpText className={"max-w-[200px]"}>
-                  A lower metric indicates a higher priority route.
+                  A lower metric indicates higher priority routes.
                 </HelpText>
               </div>
 

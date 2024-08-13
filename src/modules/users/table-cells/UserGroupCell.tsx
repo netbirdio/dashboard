@@ -1,4 +1,5 @@
 import MultipleGroups from "@components/ui/MultipleGroups";
+import { uniq } from "lodash";
 import React, { useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { Group } from "@/interfaces/Group";
@@ -12,7 +13,7 @@ export default function UserGroupCell({ user }: Props) {
   const { groups } = useGroups();
 
   const [allGroups] = useState(() => {
-    return user.auto_groups
+    return uniq(user.auto_groups)
       .map((group) => {
         return groups?.find((g) => g.id == group);
       })

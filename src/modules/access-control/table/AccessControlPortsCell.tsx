@@ -5,7 +5,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@components/Tooltip";
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { Policy } from "@/interfaces/Policy";
 
 type Props = {
@@ -19,15 +19,15 @@ export default function AccessControlPortsCell({ policy }: Props) {
 
   const hasPorts = firstRule?.ports && firstRule?.ports.length > 0;
 
-  const [firstTwoPorts] = useState(() => {
+  const firstTwoPorts = useMemo(() => {
     if (!hasPorts) return [];
     return firstRule?.ports.slice(0, 2) ?? [];
-  });
+  }, [hasPorts, firstRule]);
 
-  const [otherPorts] = useState(() => {
+  const otherPorts = useMemo(() => {
     if (!hasPorts) return [];
     return firstRule?.ports.slice(2) ?? [];
-  });
+  }, [hasPorts, firstRule]);
 
   return (
     <div className={"flex-1"}>

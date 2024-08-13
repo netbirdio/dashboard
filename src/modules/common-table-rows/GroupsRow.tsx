@@ -30,6 +30,7 @@ type Props = {
   description?: string;
   peer?: Peer;
   showAddGroupButton?: boolean;
+  hideAllGroup?: boolean;
 };
 
 export default function GroupsRow({
@@ -41,6 +42,7 @@ export default function GroupsRow({
   description = "Use groups to control what this peer can access",
   peer,
   showAddGroupButton = false,
+  hideAllGroup = false,
 }: Props) {
   const { groups: allGroups } = useGroups();
   const { isUser } = useLoggedInUser();
@@ -78,6 +80,7 @@ export default function GroupsRow({
         label={label}
         description={description}
         peer={peer}
+        hideAllGroup={hideAllGroup}
       />
     </Modal>
   );
@@ -89,6 +92,7 @@ type EditGroupsModalProps = {
   label?: string;
   description?: string;
   peer?: Peer;
+  hideAllGroup?: boolean;
 };
 
 export function EditGroupsModal({
@@ -97,6 +101,7 @@ export function EditGroupsModal({
   label,
   description,
   peer,
+  hideAllGroup = false,
 }: EditGroupsModalProps) {
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
@@ -125,6 +130,7 @@ export function EditGroupsModal({
             onChange={setSelectedGroups}
             values={selectedGroups}
             peer={peer}
+            hideAllGroup={hideAllGroup}
           />
         </div>
       </div>

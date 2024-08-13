@@ -327,6 +327,7 @@ function PeerOverview() {
                     disabled={isUser}
                     onChange={setSelectedGroups}
                     values={selectedGroups}
+                    hideAllGroup={true}
                     peer={peer}
                   />
                 </FullTooltip>

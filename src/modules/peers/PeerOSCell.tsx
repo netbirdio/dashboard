@@ -10,6 +10,7 @@ import { FaWindows } from "react-icons/fa6";
 import { FcAndroidOs, FcLinux } from "react-icons/fc";
 import IOSIcon from "@/assets/icons/IOSIcon";
 import AppleLogo from "@/assets/os-icons/apple.svg";
+import FreeBSDLogo from "@/assets/os-icons/FreeBSD.png";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
@@ -49,6 +50,8 @@ export function OSLogo({ os }: { os: string }) {
     return <FaWindows className={"text-white text-lg"} />;
   if (icon === OperatingSystem.APPLE)
     return <Image src={AppleLogo} alt={""} width={14} />;
+  if (icon === OperatingSystem.FREEBSD)
+    return <Image src={FreeBSDLogo} alt={""} width={18} />;
   if (icon === OperatingSystem.IOS)
     return <IOSIcon className={"fill-white"} size={20} />;
   if (icon === OperatingSystem.ANDROID)
