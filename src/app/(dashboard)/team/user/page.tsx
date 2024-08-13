@@ -187,7 +187,7 @@ function UserOverview({ user }: Props) {
           )}
         </div>
 
-        <div className={"flex gap-10 w-full mt-8 max-w-6xl"}>
+        <div className={"flex gap-10 w-full mt-8 max-w-6xl items-start"}>
           <UserInformationCard user={user} />
           <div className={"flex flex-col gap-8 w-1/2 "}>
             {!user.is_service_user && (
@@ -200,6 +200,7 @@ function UserOverview({ user }: Props) {
                   disabled={isUser}
                   onChange={setSelectedGroups}
                   values={selectedGroups}
+                  hideAllGroup={true}
                 />
               </div>
             )}
@@ -214,6 +215,8 @@ function UserOverview({ user }: Props) {
                 <UserRoleSelector
                   value={role}
                   onChange={setRole}
+                  hideOwner={user.is_service_user}
+                  currentUser={user}
                   disabled={
                     isLoggedInUser ||
                     !isOwnerOrAdmin ||
@@ -301,15 +304,18 @@ function UserInformationCard({ user }: { user: User }) {
 
         {!isServiceUser && (
           <>
-            <Card.ListItem
-              label={
-                <>
-                  <Ban size={16} />
-                  Block User
-                </>
-              }
-              value={<UserBlockCell user={user} isUserPage={true} />}
-            />
+            {!user.is_current && user.role != Role.Owner && (
+              <Card.ListItem
+                label={
+                  <>
+                    <Ban size={16} />
+                    Block User
+                  </>
+                }
+                value={<UserBlockCell user={user} isUserPage={true} />}
+              />
+            )}
+
             <Card.ListItem
               label={
                 <>

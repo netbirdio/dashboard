@@ -4,10 +4,14 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { useLocalStorage } from "@hooks/useLocalStorage";
-import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  RowSelectionState,
+  SortingState,
+} from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckChecksCell } from "@/modules/posture-checks/table/cells/PostureCheckChecksCell";
@@ -17,7 +21,7 @@ type Props = {
   onAdd: (checks: PostureCheck[]) => void;
 };
 
-export default function PostureCheckBrowseTable({ onAdd }: Props) {
+export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
   const { mutate } = useSWRConfig();
@@ -34,9 +38,14 @@ export default function PostureCheckBrowseTable({ onAdd }: Props) {
     ],
   );
 
+  const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
+
   return (
     <div className={""}>
       <DataTable
+        showResetFilterButton={false}
+        rowSelection={selectedRows}
+        setRowSelection={setSelectedRows}
         isLoading={isLoading}
         text={"Posture Check"}
         sorting={sorting}
@@ -73,14 +82,12 @@ export default function PostureCheckBrowseTable({ onAdd }: Props) {
       >
         {() => {
           return (
-            <>
-              <DataTableRefreshButton
-                isDisabled={postureChecks?.length == 0}
-                onClick={() => {
-                  mutate("/posture-checks");
-                }}
-              />
-            </>
+            <DataTableRefreshButton
+              isDisabled={postureChecks?.length == 0}
+              onClick={() => {
+                mutate("/posture-checks");
+              }}
+            />
           );
         }}
       </DataTable>
