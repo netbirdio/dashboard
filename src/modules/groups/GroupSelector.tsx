@@ -174,7 +174,7 @@ export function GroupSelector({
                                   "flex items-center gap-2 whitespace-nowrap text-sm"
                                 }
                               >
-                                <FolderGit2 size={15} />
+                                <FolderGit2 size={13} className={"shrink-0"} />
                                 <TextWithTooltip text={value} maxChars={15} />
                               </div>
                               <div

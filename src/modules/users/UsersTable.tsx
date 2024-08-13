@@ -7,6 +7,7 @@ import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
+import useFetchApi from "@utils/api";
 import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
 import { ExternalLinkIcon, MailPlus, PlusCircle } from "lucide-react";
@@ -100,6 +101,7 @@ type Props = {
 };
 
 export default function UsersTable({ users, isLoading }: Props) {
+  useFetchApi("/groups");
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -196,7 +198,8 @@ export default function UsersTable({ users, isLoading }: Props) {
             <DataTableRefreshButton
               isDisabled={users?.length == 0}
               onClick={() => {
-                mutate("/users?service_user=false").then();
+                mutate("/users?service_user=false");
+                mutate("/groups");
               }}
             />
           </>

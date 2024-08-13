@@ -6,6 +6,7 @@ import Paragraph from "@components/Paragraph";
 import SmallParagraph from "@components/SmallParagraph";
 import { Tabs, TabsList, TabsTrigger } from "@components/Tabs";
 import { ExternalLinkIcon } from "lucide-react";
+import { usePathname } from "next/navigation";
 import React from "react";
 import AndroidIcon from "@/assets/icons/AndroidIcon";
 import AppleIcon from "@/assets/icons/AppleIcon";
@@ -53,23 +54,25 @@ export function SetupModalContent({
 }) {
   const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
+  const pathname = usePathname();
+  const isInstallPage = pathname === "/install";
 
   return (
     <>
       {header && (
         <div className={"text-center pb-8 pt-4 px-8"}>
           <h2 className={"text-3xl max-w-lg mx-auto"}>
-            {isFirstRun ? (
+            {isFirstRun && !isInstallPage ? (
               <>
                 Hello {user?.given_name || "there"}! 👋 <br />
                 {`It's time to add your first device.`}
               </>
             ) : (
-              <>Add new peer</>
+              <>Install NetBird</>
             )}
           </h2>
           <Paragraph className={"max-w-xs mx-auto mt-3"}>
-            To get started, install NetBird and log in using your email account.
+            To get started, install NetBird and log in with your email account.
           </Paragraph>
         </div>
       )}

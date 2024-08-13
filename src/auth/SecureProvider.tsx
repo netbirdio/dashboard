@@ -11,9 +11,17 @@ export const SecureProvider = ({ children }: Props) => {
   const currentPath = usePathname();
 
   useEffect(() => {
+    let timeout: NodeJS.Timeout | undefined = undefined;
     if (!isAuthenticated) {
-      login(currentPath);
+      timeout = setTimeout(async () => {
+        if (!isAuthenticated) {
+          await login(currentPath);
+        }
+      }, 1500);
     }
+    return () => {
+      clearTimeout(timeout);
+    };
   }, [currentPath, isAuthenticated, login]);
 
   return (

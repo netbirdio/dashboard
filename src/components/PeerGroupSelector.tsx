@@ -29,6 +29,7 @@ interface MultiSelectProps {
   max?: number;
   disabled?: boolean;
   popoverWidth?: "auto" | number;
+  hideAllGroup?: boolean;
 }
 export function PeerGroupSelector({
   onChange,
@@ -37,6 +38,7 @@ export function PeerGroupSelector({
   max,
   disabled = false,
   popoverWidth = "auto",
+  hideAllGroup = false,
 }: MultiSelectProps) {
   const { groups, dropdownOptions, setDropdownOptions } = useGroups();
   const searchRef = React.useRef<HTMLInputElement>(null);
@@ -47,7 +49,13 @@ export function PeerGroupSelector({
   useEffect(() => {
     if (!groups) return;
     const sortedGroups = sortBy([...groups], "name") as Group[];
-    setDropdownOptions(unionBy(sortedGroups, dropdownOptions, "name"));
+
+    let uniqueGroups = unionBy(sortedGroups, dropdownOptions, "name");
+    uniqueGroups = hideAllGroup
+      ? uniqueGroups.filter((group) => group.name !== "All")
+      : uniqueGroups;
+
+    setDropdownOptions(uniqueGroups);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [groups]);
 
@@ -66,8 +74,11 @@ export function PeerGroupSelector({
     const option = dropdownOptions.find((option) => option.name == name);
     const groupPeers: GroupPeer[] | undefined =
       (group?.peers as GroupPeer[]) || [];
-    groupPeers &&
-      groupPeers.push({ id: peer?.id as string, name: peer?.name as string });
+
+    if (peer) {
+      groupPeers &&
+        groupPeers.push({ id: peer?.id as string, name: peer?.name as string });
+    }
 
     if (!group && !option) {
       setDropdownOptions((previous) => [
@@ -100,17 +111,18 @@ export function PeerGroupSelector({
     const isSearching = search.length > 0;
     const groupDoesNotExist =
       dropdownOptions.filter((item) => item.name == trim(search)).length == 0;
-    return isSearching && groupDoesNotExist;
+    const isAllGroup = search.toLowerCase() == "all";
+    return isSearching && groupDoesNotExist && !isAllGroup;
   }, [search, dropdownOptions]);
 
   const [open, setOpen] = useState(false);
 
   const folderIcon = useMemo(() => {
-    return <FolderGit2 size={12} />;
+    return <FolderGit2 size={12} className={"shrink-0"} />;
   }, []);
 
   const peerIcon = useMemo(() => {
-    return <MonitorSmartphoneIcon size={14} />;
+    return <MonitorSmartphoneIcon size={14} className={"shrink-0"} />;
   }, []);
 
   const [slice, setSlice] = useState(10);
@@ -203,7 +215,7 @@ export function PeerGroupSelector({
                   "min-h-[42px] w-full relative",
                   "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
                   "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
-                  "dark:placeholder:text-neutral-500 font-light placeholder:text-neutral-500 pl-10",
+                  "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
                 )}
                 ref={searchRef}
                 value={search}
@@ -238,9 +250,7 @@ export function PeerGroupSelector({
 
             <CommandGroup>
               <ScrollArea
-                className={
-                  "max-h-[195px]  overflow-y-auto flex flex-col gap-1 pl-2 py-2 pr-3"
-                }
+                className={"max-h-[195px] flex flex-col gap-1 pl-2 py-2 pr-3"}
               >
                 {searchedGroupNotFound && (
                   <CommandItem

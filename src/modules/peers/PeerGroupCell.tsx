@@ -34,6 +34,7 @@ export default function PeerGroupCell() {
       label={"Assigned Groups"}
       description={"Use groups to control what this peer can access"}
       groups={groupIDs || []}
+      hideAllGroup={true}
       onSave={handleSave}
       modal={modal}
       peer={peer}

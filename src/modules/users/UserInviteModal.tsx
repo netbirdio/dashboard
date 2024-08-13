@@ -155,6 +155,7 @@ export function UserInviteModalContent({ onSuccess }: ModalProps) {
           <PeerGroupSelector
             onChange={setSelectedGroups}
             values={selectedGroups}
+            hideAllGroup={true}
           />
         </div>
       </div>

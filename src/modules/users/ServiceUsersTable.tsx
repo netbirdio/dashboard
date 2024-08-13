@@ -8,6 +8,7 @@ import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { IconSettings2 } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
+import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
@@ -65,6 +66,7 @@ type Props = {
 };
 
 export default function ServiceUsersTable({ users, isLoading }: Props) {
+  useFetchApi("/groups");
   const { mutate } = useSWRConfig();
   const router = useRouter();
   const path = usePathname();
@@ -161,7 +163,8 @@ export default function ServiceUsersTable({ users, isLoading }: Props) {
             <DataTableRefreshButton
               isDisabled={users?.length == 0}
               onClick={() => {
-                mutate("/users?service_user=true").then();
+                mutate("/users?service_user=true");
+                mutate("/groups");
               }}
             />
           </>

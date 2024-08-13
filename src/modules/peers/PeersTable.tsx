@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
+import { Checkbox } from "@components/Checkbox";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -9,11 +10,15 @@ import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import AddPeerButton from "@components/ui/AddPeerButton";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
-import { ColumnDef, SortingState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  RowSelectionState,
+  SortingState,
+} from "@tanstack/react-table";
 import { uniqBy } from "lodash";
 import { ExternalLinkIcon } from "lucide-react";
-import { usePathname, useRouter } from "next/navigation";
-import React from "react";
+import { usePathname } from "next/navigation";
+import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import PeerProvider from "@/contexts/PeerProvider";
@@ -26,12 +31,36 @@ import PeerActionCell from "@/modules/peers/PeerActionCell";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerGroupCell from "@/modules/peers/PeerGroupCell";
 import PeerLastSeenCell from "@/modules/peers/PeerLastSeenCell";
+import { PeerMultiSelect } from "@/modules/peers/PeerMultiSelect";
 import PeerNameCell from "@/modules/peers/PeerNameCell";
 import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 import PeerStatusCell from "@/modules/peers/PeerStatusCell";
 import PeerVersionCell from "@/modules/peers/PeerVersionCell";
 
 const PeersTableColumns: ColumnDef<Peer>[] = [
+  {
+    id: "select",
+    header: ({ table }) => (
+      <div className={"min-w-[20px] max-w-[20px]"}>
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+          aria-label="Select all"
+        />
+      </div>
+    ),
+    cell: ({ row }) => (
+      <div className={"min-w-[20px] max-w-[20px]"}>
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Select row"
+        />
+      </div>
+    ),
+    enableSorting: false,
+    enableHiding: false,
+  },
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -148,10 +177,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
 type Props = {
   peers?: Peer[];
   isLoading: boolean;
+  headingTarget?: HTMLHeadingElement | null;
 };
-export default function PeersTable({ peers, isLoading }: Props) {
+
+export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
   const { mutate } = useSWRConfig();
-  const router = useRouter();
   const path = usePathname();
 
   // Default sorting state of the table
@@ -180,193 +210,248 @@ export default function PeersTable({ peers, isLoading }: Props) {
 
   const { isUser } = useLoggedInUser();
 
+  const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
+
+  const resetSelectedRows = () => {
+    if (Object.keys(selectedRows).length > 0) {
+      setSelectedRows({});
+    }
+  };
+
   return (
-    <DataTable
-      onRowClick={(row) => router.push("/peer?id=" + row.original.id)}
-      text={"Peers"}
-      sorting={sorting}
-      setSorting={setSorting}
-      columns={PeersTableColumns}
-      data={peers}
-      searchPlaceholder={"Search by name, IP, owner or group..."}
-      columnVisibility={{
-        connected: false,
-        approval_required: false,
-        group_name_strings: false,
-        group_names: false,
-        ip: false,
-        user_name: false,
-        user_email: false,
-        actions: !isUser,
-      }}
-      isLoading={isLoading}
-      getStartedCard={
-        <GetStartedTest
-          icon={
-            <SquareIcon
-              icon={<PeerIcon className={"fill-nb-gray-200"} size={20} />}
-              color={"gray"}
-              size={"large"}
-            />
-          }
-          title={"Get Started with NetBird"}
-          description={
-            "It looks like you don't have any connected machines.\n" +
-            "Get started by adding one to your network."
-          }
-          button={<AddPeerButton />}
-          learnMore={
-            <>
-              Learn more in our{" "}
-              <InlineLink
-                href={"https://docs.netbird.io/how-to/getting-started"}
-                target={"_blank"}
-              >
-                Getting Started Guide
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </>
-          }
-        />
-      }
-      rightSide={() => <>{peers && peers.length > 0 && <AddPeerButton />}</>}
-    >
-      {(table) => (
-        <>
-          <ButtonGroup disabled={peers?.length == 0}>
-            <ButtonGroup.Button
-              disabled={peers?.length == 0}
-              onClick={() => {
-                table.setPageIndex(0);
-                table.setColumnFilters([
-                  {
-                    id: "connected",
-                    value: undefined,
-                  },
-                  {
-                    id: "approval_required",
-                    value: undefined,
-                  },
-                ]);
-              }}
-              variant={
-                table.getColumn("connected")?.getFilterValue() == undefined
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              All
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.setColumnFilters([
-                  {
-                    id: "connected",
-                    value: true,
-                  },
-                  {
-                    id: "approval_required",
-                    value: undefined,
-                  },
-                ]);
-              }}
-              disabled={peers?.length == 0}
-              variant={
-                table.getColumn("connected")?.getFilterValue() == true
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Online
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.setColumnFilters([
-                  {
-                    id: "connected",
-                    value: false,
-                  },
-                  {
-                    id: "approval_required",
-                    value: undefined,
-                  },
-                ]);
-              }}
-              disabled={peers?.length == 0}
-              variant={
-                table.getColumn("connected")?.getFilterValue() == false
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Offline
-            </ButtonGroup.Button>
-          </ButtonGroup>
-
-          {pendingApprovalCount > 0 && (
-            <Button
-              disabled={peers?.length == 0}
-              onClick={() => {
-                table.setPageIndex(0);
-                let current =
-                  table.getColumn("approval_required")?.getFilterValue() ===
-                  undefined
-                    ? true
-                    : undefined;
-
-                table.setColumnFilters([
-                  {
-                    id: "connected",
-                    value: undefined,
-                  },
-                  {
-                    id: "approval_required",
-                    value: current,
-                  },
-                ]);
-              }}
-              variant={
-                table.getColumn("approval_required")?.getFilterValue() === true
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Pending Approvals
-              <NotificationCountBadge count={pendingApprovalCount} />
-            </Button>
-          )}
-          <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
-
-          <GroupSelector
-            disabled={peers?.length == 0}
-            values={
-              (table.getColumn("group_names")?.getFilterValue() as string[]) ||
-              []
+    <>
+      <PeerMultiSelect
+        selectedPeers={selectedRows}
+        onCanceled={() => setSelectedRows({})}
+      />
+      <DataTable
+        headingTarget={headingTarget}
+        rowSelection={selectedRows}
+        setRowSelection={setSelectedRows}
+        useRowId={true}
+        text={"Peers"}
+        sorting={sorting}
+        setSorting={setSorting}
+        columns={PeersTableColumns}
+        data={peers}
+        searchPlaceholder={"Search by name, IP, owner or group..."}
+        columnVisibility={{
+          connected: false,
+          approval_required: false,
+          group_name_strings: false,
+          group_names: false,
+          ip: false,
+          user_name: false,
+          user_email: false,
+          actions: !isUser,
+        }}
+        isLoading={isLoading}
+        getStartedCard={
+          <GetStartedTest
+            icon={
+              <SquareIcon
+                icon={<PeerIcon className={"fill-nb-gray-200"} size={20} />}
+                color={"gray"}
+                size={"large"}
+              />
             }
-            onChange={(groups) => {
-              table.setPageIndex(0);
-              if (groups.length == 0) {
-                table.getColumn("group_names")?.setFilterValue(undefined);
-                return;
-              } else {
-                table.getColumn("group_names")?.setFilterValue(groups);
-              }
-            }}
-            groups={tableGroups}
+            title={"Get Started with NetBird"}
+            description={
+              "It looks like you don't have any connected machines.\n" +
+              "Get started by adding one to your network."
+            }
+            button={<AddPeerButton />}
+            learnMore={
+              <>
+                Learn more in our{" "}
+                <InlineLink
+                  href={"https://docs.netbird.io/how-to/getting-started"}
+                  target={"_blank"}
+                >
+                  Getting Started Guide
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </>
+            }
           />
+        }
+        rightSide={() => <>{peers && peers.length > 0 && <AddPeerButton />}</>}
+      >
+        {(table) => (
+          <>
+            <ButtonGroup disabled={peers?.length == 0}>
+              <ButtonGroup.Button
+                disabled={peers?.length == 0}
+                onClick={() => {
+                  table.setPageIndex(0);
+                  let groupFilters = table
+                    .getColumn("group_names")
+                    ?.getFilterValue();
+                  table.setColumnFilters([
+                    {
+                      id: "connected",
+                      value: undefined,
+                    },
+                    {
+                      id: "approval_required",
+                      value: undefined,
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                  ]);
+                  resetSelectedRows();
+                }}
+                variant={
+                  table.getColumn("connected")?.getFilterValue() == undefined
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                All
+              </ButtonGroup.Button>
+              <ButtonGroup.Button
+                onClick={() => {
+                  table.setPageIndex(0);
+                  let groupFilters = table
+                    .getColumn("group_names")
+                    ?.getFilterValue();
+                  table.setColumnFilters([
+                    {
+                      id: "connected",
+                      value: true,
+                    },
+                    {
+                      id: "approval_required",
+                      value: undefined,
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                  ]);
+                  resetSelectedRows();
+                }}
+                disabled={peers?.length == 0}
+                variant={
+                  table.getColumn("connected")?.getFilterValue() == true
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                Online
+              </ButtonGroup.Button>
+              <ButtonGroup.Button
+                onClick={() => {
+                  table.setPageIndex(0);
+                  let groupFilters = table
+                    .getColumn("group_names")
+                    ?.getFilterValue();
+                  table.setColumnFilters([
+                    {
+                      id: "connected",
+                      value: false,
+                    },
+                    {
+                      id: "approval_required",
+                      value: undefined,
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                  ]);
+                  resetSelectedRows();
+                }}
+                disabled={peers?.length == 0}
+                variant={
+                  table.getColumn("connected")?.getFilterValue() == false
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                Offline
+              </ButtonGroup.Button>
+            </ButtonGroup>
 
-          <DataTableRefreshButton
-            isDisabled={peers?.length == 0}
-            onClick={() => {
-              mutate("/groups").then();
-              mutate("/users").then();
-              mutate("/peers").then();
-            }}
-          />
-        </>
-      )}
-    </DataTable>
+            {pendingApprovalCount > 0 && (
+              <Button
+                disabled={peers?.length == 0}
+                onClick={() => {
+                  table.setPageIndex(0);
+                  let current =
+                    table.getColumn("approval_required")?.getFilterValue() ===
+                    undefined
+                      ? true
+                      : undefined;
+
+                  table.setColumnFilters([
+                    {
+                      id: "connected",
+                      value: undefined,
+                    },
+                    {
+                      id: "approval_required",
+                      value: current,
+                    },
+                  ]);
+
+                  resetSelectedRows();
+                }}
+                variant={
+                  table.getColumn("approval_required")?.getFilterValue() ===
+                  true
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                Pending Approvals
+                <NotificationCountBadge count={pendingApprovalCount} />
+              </Button>
+            )}
+
+            <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
+
+            <GroupSelector
+              disabled={peers?.length == 0}
+              values={
+                (table
+                  .getColumn("group_names")
+                  ?.getFilterValue() as string[]) || []
+              }
+              onChange={(groups) => {
+                table.setPageIndex(0);
+                if (groups.length == 0) {
+                  table.getColumn("group_names")?.setFilterValue(undefined);
+                  return;
+                } else {
+                  table.getColumn("group_names")?.setFilterValue(groups);
+                }
+                resetSelectedRows();
+              }}
+              groups={tableGroups}
+            />
+
+            <DataTableRefreshButton
+              isDisabled={peers?.length == 0}
+              onClick={() => {
+                mutate("/groups").then();
+                mutate("/users").then();
+                mutate("/peers").then();
+              }}
+            />
+          </>
+        )}
+      </DataTable>
+    </>
   );
 }

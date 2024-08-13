@@ -23,6 +23,7 @@ import GroupedRouteHighAvailabilityCell from "@/modules/route-group/GroupedRoute
 import GroupedRouteNameCell from "@/modules/route-group/GroupedRouteNameCell";
 import GroupedRouteNetworkRangeCell from "@/modules/route-group/GroupedRouteNetworkRangeCell";
 import GroupedRouteTypeCell from "@/modules/route-group/GroupedRouteTypeCell";
+import { RouteAddRoutingPeerProvider } from "@/modules/routes/RouteAddRoutingPeerProvider";
 import RouteModal from "@/modules/routes/RouteModal";
 import RouteTable from "@/modules/routes/RouteTable";
 
@@ -138,130 +139,135 @@ export default function NetworkRoutesTable({
   );
 
   return (
-    <DataTable
-      isLoading={isLoading}
-      text={"Network Routes"}
-      sorting={sorting}
-      setSorting={setSorting}
-      columns={GroupedRouteTableColumns}
-      data={groupedRoutes}
-      searchPlaceholder={"Search by network, range, name or groups..."}
-      columnVisibility={{
-        enabled: false,
-        description: false,
-        description_search: false,
-        group_names: false,
-        domains: false,
-        domain_search: false,
-      }}
-      renderExpandedRow={(row) => {
-        const data = cloneDeep(row);
-        return (
-          <GroupRouteProvider groupedRoute={data}>
-            <RouteTable row={data} />
-          </GroupRouteProvider>
-        );
-      }}
-      getStartedCard={
-        <GetStartedTest
-          icon={
-            <SquareIcon
-              icon={
-                <NetworkRoutesIcon className={"fill-nb-gray-200"} size={20} />
-              }
-              color={"gray"}
-              size={"large"}
-            />
-          }
-          title={"Create New Route"}
-          description={
-            "It looks like you don't have any routes. Access LANs and VPC by adding a network route."
-          }
-          button={
-            <div className={"gap-x-4 flex items-center justify-center"}>
-              <AddExitNodeButton />
-              <RouteModal>
-                <Button variant={"primary"} className={""}>
-                  <PlusCircle size={16} />
-                  Add Route
-                </Button>
-              </RouteModal>
-            </div>
-          }
-          learnMore={
-            <>
-              Learn more about
-              <InlineLink
-                href={
-                  "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+    <RouteAddRoutingPeerProvider>
+      <DataTable
+        isLoading={isLoading}
+        text={"Network Routes"}
+        sorting={sorting}
+        setSorting={setSorting}
+        columns={GroupedRouteTableColumns}
+        data={groupedRoutes}
+        searchPlaceholder={"Search by network, range, name or groups..."}
+        columnVisibility={{
+          enabled: false,
+          description: false,
+          description_search: false,
+          group_names: false,
+          domains: false,
+          domain_search: false,
+        }}
+        renderExpandedRow={(row) => {
+          const data = cloneDeep(row);
+          return (
+            <GroupRouteProvider groupedRoute={data}>
+              <RouteTable row={data} />
+            </GroupRouteProvider>
+          );
+        }}
+        getStartedCard={
+          <GetStartedTest
+            icon={
+              <SquareIcon
+                icon={
+                  <NetworkRoutesIcon className={"fill-nb-gray-200"} size={20} />
                 }
-                target={"_blank"}
-              >
-                Network Routes
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </>
-          }
-        />
-      }
-      rightSide={() => (
-        <>
-          {routes && routes?.length > 0 && (
-            <div className={"gap-x-4 ml-auto flex"}>
-              <AddExitNodeButton />
-              <RouteModal>
-                <Button variant={"primary"} className={""}>
-                  <PlusCircle size={16} />
-                  Add Route
-                </Button>
-              </RouteModal>
-            </div>
-          )}
-        </>
-      )}
-    >
-      {(table) => (
-        <>
-          <ButtonGroup disabled={routes?.length == 0}>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(true);
-              }}
-              disabled={routes?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() == true
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Enabled
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(undefined);
-              }}
-              disabled={routes?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() == undefined
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              All
-            </ButtonGroup.Button>
-          </ButtonGroup>
-          <DataTableRowsPerPage table={table} disabled={routes?.length == 0} />
-          <DataTableRefreshButton
-            isDisabled={routes?.length == 0}
-            onClick={() => {
-              mutate("/setup-keys").then();
-              mutate("/groups").then();
-            }}
+                color={"gray"}
+                size={"large"}
+              />
+            }
+            title={"Create New Route"}
+            description={
+              "It looks like you don't have any routes. Access LANs and VPC by adding a network route."
+            }
+            button={
+              <div className={"gap-x-4 flex items-center justify-center"}>
+                <AddExitNodeButton />
+                <RouteModal>
+                  <Button variant={"primary"} className={""}>
+                    <PlusCircle size={16} />
+                    Add Route
+                  </Button>
+                </RouteModal>
+              </div>
+            }
+            learnMore={
+              <>
+                Learn more about
+                <InlineLink
+                  href={
+                    "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                  }
+                  target={"_blank"}
+                >
+                  Network Routes
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </>
+            }
           />
-        </>
-      )}
-    </DataTable>
+        }
+        rightSide={() => (
+          <>
+            {routes && routes?.length > 0 && (
+              <div className={"gap-x-4 ml-auto flex"}>
+                <AddExitNodeButton />
+                <RouteModal>
+                  <Button variant={"primary"} className={""}>
+                    <PlusCircle size={16} />
+                    Add Route
+                  </Button>
+                </RouteModal>
+              </div>
+            )}
+          </>
+        )}
+      >
+        {(table) => (
+          <>
+            <ButtonGroup disabled={routes?.length == 0}>
+              <ButtonGroup.Button
+                onClick={() => {
+                  table.setPageIndex(0);
+                  table.getColumn("enabled")?.setFilterValue(true);
+                }}
+                disabled={routes?.length == 0}
+                variant={
+                  table.getColumn("enabled")?.getFilterValue() == true
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                Enabled
+              </ButtonGroup.Button>
+              <ButtonGroup.Button
+                onClick={() => {
+                  table.setPageIndex(0);
+                  table.getColumn("enabled")?.setFilterValue(undefined);
+                }}
+                disabled={routes?.length == 0}
+                variant={
+                  table.getColumn("enabled")?.getFilterValue() == undefined
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                All
+              </ButtonGroup.Button>
+            </ButtonGroup>
+            <DataTableRowsPerPage
+              table={table}
+              disabled={routes?.length == 0}
+            />
+            <DataTableRefreshButton
+              isDisabled={routes?.length == 0}
+              onClick={() => {
+                mutate("/setup-keys").then();
+                mutate("/groups").then();
+              }}
+            />
+          </>
+        )}
+      </DataTable>
+    </RouteAddRoutingPeerProvider>
   );
 }

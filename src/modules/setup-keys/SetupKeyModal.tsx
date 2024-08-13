@@ -297,6 +297,7 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
           <PeerGroupSelector
             onChange={setSelectedGroups}
             values={selectedGroups}
+            hideAllGroup={true}
           />
         </div>
       </div>
