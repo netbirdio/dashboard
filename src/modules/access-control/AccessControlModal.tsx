@@ -272,6 +272,16 @@ export function AccessControlModalContent({
     if (continuePostureChecksDisabled) return true;
   }, [name, continuePostureChecksDisabled]);
 
+  const handleProtocolChange = (p: Protocol) => {
+    setProtocol(p);
+    if (p == "icmp") {
+      setPorts([]);
+    }
+    if (p == "all") {
+      setPorts([]);
+    }
+  };
+
   return (
     <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
@@ -322,7 +332,7 @@ export function AccessControlModalContent({
               </div>
               <Select
                 value={protocol}
-                onValueChange={(v) => setProtocol(v as Protocol)}
+                onValueChange={(v) => handleProtocolChange(v as Protocol)}
               >
                 <SelectTrigger className="w-[140px]">
                   <div className={"flex items-center gap-3"}>
