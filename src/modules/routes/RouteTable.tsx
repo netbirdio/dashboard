@@ -4,6 +4,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import React, { useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { GroupedRoute, Route } from "@/interfaces/Route";
+import RouteAccessControlGroups from "@/modules/routes/RouteAccessControlGroups";
 import RouteActionCell from "@/modules/routes/RouteActionCell";
 import RouteActiveCell from "@/modules/routes/RouteActiveCell";
 import RouteDistributionGroupsCell from "@/modules/routes/RouteDistributionGroupsCell";
@@ -64,6 +65,16 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     cell: ({ row }) => <RouteDistributionGroupsCell route={row.original} />,
   },
   {
+    id: "access_control_groups",
+    accessorFn: (r) => r?.access_control_groups?.length,
+    header: ({ column }) => {
+      return (
+        <DataTableHeader column={column}>Access Control Groups</DataTableHeader>
+      );
+    },
+    cell: ({ row }) => <RouteAccessControlGroups route={row.original} />,
+  },
+  {
     id: "group_names",
     accessorFn: (row) => {
       return row.group_names?.map((name) => name).join(", ");
@@ -118,6 +129,7 @@ export default function RouteTable({ row }: Props) {
       <DataTable
         tableClassName={"mt-0"}
         minimal={true}
+        showSearchAndFilters={false}
         className={"bg-neutral-900/50 py-2"}
         inset={true}
         text={"Network Routes"}

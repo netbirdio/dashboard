@@ -11,7 +11,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cloneDeep } from "lodash";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import GroupRouteProvider from "@/contexts/GroupRouteProvider";
@@ -110,11 +110,14 @@ type Props = {
   isLoading: boolean;
   groupedRoutes?: GroupedRoute[];
   routes?: Route[];
+  headingTarget?: HTMLHeadingElement | null;
 };
+
 export default function NetworkRoutesTable({
   isLoading,
   groupedRoutes,
   routes,
+  headingTarget,
 }: Props) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -138,9 +141,13 @@ export default function NetworkRoutesTable({
     ],
   );
 
+  const [routeModal, setRouteModal] = useState(false);
+
   return (
     <RouteAddRoutingPeerProvider>
+      <RouteModal open={routeModal} setOpen={setRouteModal} />
       <DataTable
+        headingTarget={headingTarget}
         isLoading={isLoading}
         text={"Network Routes"}
         sorting={sorting}
@@ -182,12 +189,14 @@ export default function NetworkRoutesTable({
             button={
               <div className={"gap-x-4 flex items-center justify-center"}>
                 <AddExitNodeButton />
-                <RouteModal>
-                  <Button variant={"primary"} className={""}>
-                    <PlusCircle size={16} />
-                    Add Route
-                  </Button>
-                </RouteModal>
+                <Button
+                  variant={"primary"}
+                  className={""}
+                  onClick={() => setRouteModal(true)}
+                >
+                  <PlusCircle size={16} />
+                  Add Route
+                </Button>
               </div>
             }
             learnMore={
@@ -211,12 +220,14 @@ export default function NetworkRoutesTable({
             {routes && routes?.length > 0 && (
               <div className={"gap-x-4 ml-auto flex"}>
                 <AddExitNodeButton />
-                <RouteModal>
-                  <Button variant={"primary"} className={""}>
-                    <PlusCircle size={16} />
-                    Add Route
-                  </Button>
-                </RouteModal>
+                <Button
+                  variant={"primary"}
+                  className={""}
+                  onClick={() => setRouteModal(true)}
+                >
+                  <PlusCircle size={16} />
+                  Add Route
+                </Button>
               </div>
             )}
           </>

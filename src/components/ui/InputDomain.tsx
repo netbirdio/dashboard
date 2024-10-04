@@ -70,6 +70,7 @@ export default function InputDomain({
           customPrefix={<GlobeIcon size={15} />}
           placeholder={"e.g., example.com"}
           maxWidthClass={"w-full"}
+          data-cy={"domain-input"}
           value={name}
           error={domainError}
           onChange={handleNameChange}

@@ -109,8 +109,14 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
 type Props = {
   setupKeys?: SetupKey[];
   isLoading: boolean;
+  headingTarget?: HTMLHeadingElement | null;
 };
-export default function SetupKeysTable({ setupKeys, isLoading }: Props) {
+
+export default function SetupKeysTable({
+  setupKeys,
+  isLoading,
+  headingTarget,
+}: Props) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -139,6 +145,7 @@ export default function SetupKeysTable({ setupKeys, isLoading }: Props) {
     <>
       {open && <SetupKeyModal open={open} setOpen={setOpen} />}
       <DataTable
+        headingTarget={headingTarget}
         isLoading={isLoading}
         text={"Setup Keys"}
         sorting={sorting}

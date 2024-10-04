@@ -185,7 +185,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
   },
 ];
 
-export default function GroupsTable() {
+type Props = {
+  headingTarget?: HTMLHeadingElement | null;
+};
+
+export default function GroupsTable({ headingTarget }: Props) {
   const groups = useGroupsUsage();
   const path = usePathname();
 
@@ -204,9 +208,8 @@ export default function GroupsTable() {
     <>
       {groups && groups.length > 0 ? (
         <DataTable
-          showSearch={true}
+          headingTarget={headingTarget}
           text={"Groups"}
-          minimal={false}
           inset={false}
           sorting={sorting}
           setSorting={setSorting}
@@ -268,8 +271,9 @@ export default function GroupsTable() {
           )}
         </DataTable>
       ) : (
-        <div className={"py-3 bg-nb-gray-950 overflow-hidden"}>
+        <div className={"bg-nb-gray-950 overflow-hidden"}>
           <NoResults
+            className={"py-3"}
             title={"No groups"}
             description={"You don't have any groups created yet."}
             icon={<FolderGit2Icon size={20} className={"fill-nb-gray-300"} />}

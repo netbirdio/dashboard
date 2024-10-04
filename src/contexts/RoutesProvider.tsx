@@ -56,6 +56,7 @@ export default function RoutesProvider({ children }: Props) {
             metric: toUpdate.metric ?? route.metric ?? 9999,
             masquerade: toUpdate.masquerade ?? route.masquerade ?? true,
             groups: toUpdate.groups ?? route.groups ?? [],
+            access_control_groups: toUpdate.access_control_groups ?? undefined,
           },
           `/${route.id}`,
         )
@@ -90,6 +91,7 @@ export default function RoutesProvider({ children }: Props) {
           metric: route.metric || 9999,
           masquerade: route.masquerade,
           groups: route.groups || [],
+          access_control_groups: route?.access_control_groups || undefined,
         })
         .then((route) => {
           mutate("/routes");

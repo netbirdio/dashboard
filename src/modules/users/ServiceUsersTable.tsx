@@ -63,9 +63,14 @@ export const ServiceUsersTableColumns: ColumnDef<User>[] = [
 type Props = {
   users?: User[];
   isLoading?: boolean;
+  headingTarget?: HTMLHeadingElement | null;
 };
 
-export default function ServiceUsersTable({ users, isLoading }: Props) {
+export default function ServiceUsersTable({
+  users,
+  isLoading,
+  headingTarget,
+}: Props) {
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
   const router = useRouter();
@@ -89,6 +94,7 @@ export default function ServiceUsersTable({ users, isLoading }: Props) {
   return (
     <>
       <DataTable
+        headingTarget={headingTarget}
         isLoading={isLoading}
         text={"Service Users"}
         sorting={sorting}

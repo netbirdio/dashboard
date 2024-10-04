@@ -151,6 +151,31 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
     initial: initialGroups,
   });
 
+  /**
+   * Access Control Groups
+   */
+
+  const initialAccessControlGroups = useMemo(() => {
+    if (!route) return [];
+    if (route?.access_control_groups && allGroups) {
+      return allGroups.filter((g) => {
+        if (!route?.access_control_groups) return [];
+        return route?.access_control_groups && g.id
+          ? route.access_control_groups.includes(g.id)
+          : false;
+      });
+    }
+    return [];
+  }, [route, allGroups]);
+
+  const [
+    accessControlGroups,
+    setAccessControlGroups,
+    { getGroupsToUpdate: getAccessControlGroupsToUpdate },
+  ] = useGroupHelper({
+    initial: initialAccessControlGroups,
+  });
+
   // Additional Settings
   const [enabled, setEnabled] = useState<boolean>(route?.enabled ?? true);
   const [metric, setMetric] = useState(route?.metric || "9999");
@@ -170,18 +195,28 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
   const updateRouteHandler = async () => {
     const g1 = getAllRoutingGroupsToUpdate();
     const g2 = getGroupsToUpdate();
-    const createOrUpdateGroups = uniqBy([...g1, ...g2], "name").map(
+    const g3 = getAccessControlGroupsToUpdate();
+    const createOrUpdateGroups = uniqBy([...g1, ...g2, ...g3], "name").map(
       (g) => g.promise,
     );
     const createdGroups = await Promise.all(
       createOrUpdateGroups.map((call) => call()),
     );
-    const peerGroups = routingPeerGroups
-      .map((g) => {
-        const find = createdGroups.find((group) => group.name === g.name);
-        return find?.id;
-      })
-      .filter((g) => g !== undefined) as string[];
+    // Check if routing peer is selected
+    const useSinglePeer = peerTab === "routing-peer";
+
+    // Get group ids of peer groups
+    let peerGroups: string[] = [];
+    if (!useSinglePeer) {
+      peerGroups = routingPeerGroups
+        .map((g) => {
+          const find = createdGroups.find((group) => group.name === g.name);
+          return find?.id;
+        })
+        .filter((g) => g !== undefined) as string[];
+    }
+
+    // Get distribution group ids
     const groupIds = groups
       .map((g) => {
         const find = createdGroups.find((group) => group.name === g.name);
@@ -189,7 +224,15 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
       })
       .filter((g) => g !== undefined) as string[];
 
-    const useSinglePeer = peerTab === "routing-peer";
+    let accessControlGroupIds: string[] | undefined = undefined;
+    if (accessControlGroups.length > 0) {
+      accessControlGroupIds = accessControlGroups
+        .map((g) => {
+          const find = createdGroups.find((group) => group.name === g.name);
+          return find?.id;
+        })
+        .filter((g) => g !== undefined) as string[];
+    }
 
     updateRoute(
       route,
@@ -202,6 +245,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
         metric: Number(metric) || 9999,
         masquerade: masquerade,
         groups: groupIds,
+        access_control_groups: accessControlGroupIds || undefined,
       },
       (r) => {
         onSuccess && onSuccess(r);
@@ -253,8 +297,13 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
     }
   }, [route]);
 
+  const singleRoutingPeerGroups = useMemo(() => {
+    if (!routingPeer) return [];
+    return routingPeer?.groups;
+  }, [routingPeer]);
+
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
+    <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
         title={"Update " + route.network_id}
@@ -328,7 +377,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
                 <Label>Peer Group</Label>
                 <HelpText>
                   Assign a peer group with Linux machines to be used as
-                  {isExitNode ? " exit nodes." : "routing peers."}
+                  {isExitNode ? " exit nodes." : " routing peers."}
                 </HelpText>
                 <PeerGroupSelector
                   max={1}
@@ -345,6 +394,19 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
                 groups
               </HelpText>
               <PeerGroupSelector onChange={setGroups} values={groups} />
+            </div>
+
+            <div>
+              <Label>Access Control Groups (optional)</Label>
+              <HelpText>
+                These groups offer a more granular control of internal services
+                in your network. They can be used in access control policies to
+                limit and control access of this route.
+              </HelpText>
+              <PeerGroupSelector
+                onChange={setAccessControlGroups}
+                values={accessControlGroups}
+              />
             </div>
           </div>
         </TabsContent>

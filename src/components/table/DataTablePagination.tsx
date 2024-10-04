@@ -1,5 +1,6 @@
 import ButtonGroup from "@components/ButtonGroup";
 import { Table } from "@tanstack/react-table";
+import { cn } from "@utils/helpers";
 import {
   ChevronLeft,
   ChevronRight,
@@ -10,11 +11,13 @@ import {
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   text?: string;
+  paginationPadding?: string;
 }
 
 export function DataTablePagination<TData>({
   table,
   text = "rows",
+  paginationPadding = "px-8 py-8",
 }: DataTablePaginationProps<TData>) {
   const allRows = table.getFilteredRowModel().rows.length;
   const rowsPerPage = table.getState().pagination.pageSize;
@@ -25,8 +28,8 @@ export function DataTablePagination<TData>({
   const pageCount = table.getPageCount();
 
   return pageCount > 1 ? (
-    <div className="flex items-center justify-between px-8 py-8">
-      <div className=" text-nb-gray-400">
+    <div className={cn("flex items-center justify-between", paginationPadding)}>
+      <div className="text-nb-gray-400">
         Showing{" "}
         <span className={"font-medium text-white"}>
           {showingFrom} to {showingTo}

@@ -175,7 +175,7 @@ export function ActivityUserSelector({
 
             <ScrollArea
               className={
-                "max-h-[380px] overflow-y-auto flex flex-col gap-1 pl-2 py-2 pr-3"
+                "max-h-[380px] overflow-y-hidden flex flex-col gap-1 pl-2 py-2 pr-3"
               }
             >
               <CommandGroup>

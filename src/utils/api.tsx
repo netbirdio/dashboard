@@ -19,17 +19,23 @@ export type ErrorResponse = {
 
 const config = loadConfig();
 
+type RequestOptions = {
+  signal?: AbortSignal;
+};
+
 async function apiRequest<T>(
   oidcFetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>,
   method: Method,
   url: string,
   data?: any,
+  options?: RequestOptions,
 ) {
   const origin = config.apiOrigin;
 
   const res = await oidcFetch(`${origin}/api${url}`, {
     method,
     body: JSON.stringify(data),
+    signal: options?.signal,
   });
 
   try {
@@ -136,23 +142,23 @@ export function useApiCall<T>(url: string, ignoreError = false) {
   const handleErrors = useApiErrorHandling(ignoreError);
 
   return {
-    post: async (data: any, suffix = "") => {
-      return apiRequest<T>(fetch, "POST", url + suffix, data)
+    post: async (data: any, suffix = "", options?: RequestOptions) => {
+      return apiRequest<T>(fetch, "POST", url + suffix, data, options)
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
-    put: async (data: any, suffix = "") => {
-      return apiRequest<T>(fetch, "PUT", url + suffix, data)
+    put: async (data: any, suffix = "", options?: RequestOptions) => {
+      return apiRequest<T>(fetch, "PUT", url + suffix, data, options)
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
-    del: async (data: any = "", suffix = "") => {
-      return apiRequest<T>(fetch, "DELETE", url + suffix, data)
+    del: async (data: any = "", suffix = "", options?: RequestOptions) => {
+      return apiRequest<T>(fetch, "DELETE", url + suffix, data, options)
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
-    get: async (suffix = "") => {
-      return apiRequest<T>(fetch, "GET", url + suffix)
+    get: async (suffix = "", options?: RequestOptions) => {
+      return apiRequest<T>(fetch, "GET", url + suffix, undefined, options)
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },

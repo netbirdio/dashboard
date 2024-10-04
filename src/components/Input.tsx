@@ -74,9 +74,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           )}
 
           <div
-            className={
-              "absolute left-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pl-3 leading-[0]"
-            }
+            className={cn(
+              "absolute left-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pl-3 leading-[0]",
+              props.disabled && "opacity-30",
+            )}
           >
             {icon}
           </div>
@@ -99,9 +100,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           />
 
           <div
-            className={
-              "absolute right-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pr-4 leading-[0]"
-            }
+            className={cn(
+              "absolute right-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pr-4 leading-[0] select-none",
+              props.disabled && "opacity-30",
+            )}
           >
             {customSuffix}
           </div>

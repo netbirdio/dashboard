@@ -16,6 +16,7 @@ import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { PeerSelector } from "@components/PeerSelector";
 import Separator from "@components/Separator";
+import { uniqBy } from "lodash";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
@@ -62,7 +63,18 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
   const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(
     peer || undefined,
   );
-  const [groups, setGroups, { save }] = useGroupHelper({
+  const [groups, setGroups, { getGroupsToUpdate }] = useGroupHelper({
+    initial: [],
+  });
+
+  /**
+   * Access Control Groups
+   */
+  const [
+    accessControlGroups,
+    setAccessControlGroups,
+    { getGroupsToUpdate: getAccessControlGroupsToUpdate },
+  ] = useGroupHelper({
     initial: [],
   });
 
@@ -84,10 +96,32 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
   // Add peer to route
   const createRouteHandler = async () => {
     if (!routeNetwork) return;
-    const saveGroups = await save();
-    const groupIds = saveGroups
-      .map((g) => g.id)
-      .filter((id) => id !== undefined) as string[];
+    // Create groups that do not exist
+    const g2 = getGroupsToUpdate();
+    const g3 = getAccessControlGroupsToUpdate();
+    const createOrUpdateGroups = uniqBy([...g2, ...g3], "name").map(
+      (g) => g.promise,
+    );
+    const createdGroups = await Promise.all(
+      createOrUpdateGroups.map((call) => call()),
+    );
+    // Get distribution group ids
+    const groupIds = groups
+      .map((g) => {
+        const find = createdGroups.find((group) => group.name === g.name);
+        return find?.id;
+      })
+      .filter((g) => g !== undefined) as string[];
+
+    let accessControlGroupIds: string[] | undefined = undefined;
+    if (accessControlGroups.length > 0) {
+      accessControlGroupIds = accessControlGroups
+        .map((g) => {
+          const find = createdGroups.find((group) => group.name === g.name);
+          return find?.id;
+        })
+        .filter((g) => g !== undefined) as string[];
+    }
 
     let useRange = false;
     if (routeNetwork?.domains) {
@@ -109,6 +143,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
         metric: 9999,
         masquerade: true,
         groups: groupIds,
+        access_control_groups: accessControlGroupIds || undefined,
       },
       onSuccess,
       "Peer was successfully added to the route",
@@ -120,8 +155,13 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
     return !routingPeer || groups.length == 0 || !routeNetwork;
   }, [routingPeer, groups, routeNetwork]);
 
+  const singleRoutingPeerGroups = useMemo(() => {
+    if (!routingPeer) return [];
+    return routingPeer?.groups;
+  }, [routingPeer]);
+
   return (
-    <ModalContent maxWidthClass={"max-w-lg"}>
+    <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
         title={"Add New Routing Peer"}
@@ -163,6 +203,18 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
             Advertise this route to peers that belong to the following groups
           </HelpText>
           <PeerGroupSelector onChange={setGroups} values={groups} />
+        </div>
+        <div>
+          <Label>Access Control Groups (optional)</Label>
+          <HelpText>
+            These groups offer a more granular control of internal services in
+            your network. They can be used in access control policies to limit
+            and control access of this route.
+          </HelpText>
+          <PeerGroupSelector
+            onChange={setAccessControlGroups}
+            values={accessControlGroups}
+          />
         </div>
       </div>
       <ModalFooter className={"items-center"}>

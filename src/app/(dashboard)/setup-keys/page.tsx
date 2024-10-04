@@ -5,6 +5,7 @@ import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
+import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense, useMemo } from "react";
@@ -38,6 +39,9 @@ export default function SetupKeys() {
     });
   }, [setupKeys, groups]);
 
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
+
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
@@ -48,11 +52,7 @@ export default function SetupKeys() {
             icon={<SetupKeysIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1>
-          {setupKeys && setupKeys.length > 1
-            ? `${setupKeys.length} Setup Keys`
-            : "Setup Keys"}
-        </h1>
+        <h1 ref={headingRef}>Setup Keys</h1>
         <Paragraph>
           Setup keys are pre-authentication keys that allow to register new
           machines in your network.
@@ -74,6 +74,7 @@ export default function SetupKeys() {
       <RestrictedAccess page={"Setup Keys"}>
         <Suspense fallback={<SkeletonTable />}>
           <SetupKeysTable
+            headingTarget={portalTarget}
             setupKeys={setupKeysWithGroups}
             isLoading={isLoading}
           />

@@ -1,6 +1,7 @@
 "use client";
 
 import "../app/globals.css";
+import { DisableDarkReader } from "@components/DisableDarkReader";
 import { TooltipProvider } from "@components/Tooltip";
 import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
@@ -52,6 +53,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
             }}
           />
           <NavigationEvents />
+          <DisableDarkReader />
         </AnalyticsProvider>
       </body>
     </html>

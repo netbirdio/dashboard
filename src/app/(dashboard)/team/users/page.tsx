@@ -5,6 +5,7 @@ import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
+import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, User2 } from "lucide-react";
 import React, { lazy, Suspense } from "react";
@@ -18,6 +19,9 @@ export default function TeamUsers() {
   const { data: users, isLoading } = useFetchApi<User[]>(
     "/users?service_user=false",
   );
+
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
 
   return (
     <PageContainer>
@@ -35,7 +39,7 @@ export default function TeamUsers() {
             icon={<User2 size={16} />}
           />
         </Breadcrumbs>
-        <h1>{users && users.length > 1 ? `${users.length} Users` : "Users"}</h1>
+        <h1 ref={headingRef}>Users</h1>
         <Paragraph>
           Manage users and their permissions. Same-domain email users are added
           automatically on first sign-in.
@@ -54,7 +58,11 @@ export default function TeamUsers() {
       </div>
       <RestrictedAccess page={"Users"}>
         <Suspense fallback={<SkeletonTable />}>
-          <UsersTable users={users} isLoading={isLoading} />
+          <UsersTable
+            users={users}
+            isLoading={isLoading}
+            headingTarget={portalTarget}
+          />
         </Suspense>
       </RestrictedAccess>
     </PageContainer>

@@ -4,6 +4,7 @@ import Breadcrumbs from "@components/Breadcrumbs";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
+import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
@@ -15,6 +16,9 @@ import ActivityTable from "@/modules/activity/ActivityTable";
 export default function Activity() {
   const { data: events, isLoading } = useFetchApi<ActivityEvent[]>("/events");
 
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
+
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
@@ -25,11 +29,7 @@ export default function Activity() {
             icon={<ActivityIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1>
-          {events && events.length > 1
-            ? `${events.length} Activity Events`
-            : "Activity Events"}
-        </h1>
+        <h1 ref={headingRef}>Activity Events</h1>
         <Paragraph>
           Here you can see all the account and network activity events.
         </Paragraph>
@@ -48,7 +48,11 @@ export default function Activity() {
         </Paragraph>
       </div>
       <RestrictedAccess page={"Activity"}>
-        <ActivityTable events={events} isLoading={isLoading} />
+        <ActivityTable
+          events={events}
+          isLoading={isLoading}
+          headingTarget={portalTarget}
+        />
       </RestrictedAccess>
     </PageContainer>
   );

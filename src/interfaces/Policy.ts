@@ -1,13 +1,14 @@
 import { Group } from "@/interfaces/Group";
+import { PostureCheck } from "@/interfaces/PostureCheck";
 
 export interface Policy {
   id?: string;
   name: string;
   description: string;
   enabled: boolean;
-  query: string;
+  query?: string;
   rules: PolicyRule[];
-  source_posture_checks: string[];
+  source_posture_checks: string[] | PostureCheck[];
 }
 
 export interface PolicyRule {

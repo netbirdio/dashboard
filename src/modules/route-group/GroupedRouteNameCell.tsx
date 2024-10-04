@@ -6,7 +6,9 @@ import ActiveInactiveRow from "@/modules/common-table-rows/ActiveInactiveRow";
 type Props = {
   groupedRoute: GroupedRoute;
 };
-export default function GroupedRouteNameCell({ groupedRoute }: Props) {
+export default function GroupedRouteNameCell({
+  groupedRoute,
+}: Readonly<Props>) {
   return (
     <div className={"flex gap-6 items-center min-w-[270px] max-w-[270px]"}>
       <ChevronRightIcon
@@ -25,6 +27,7 @@ export default function GroupedRouteNameCell({ groupedRoute }: Props) {
         active={groupedRoute.enabled}
         inactiveDot={"gray"}
         text={groupedRoute.network_id}
+        dataCy={groupedRoute.network_id}
       >
         <DescriptionWithTooltip
           className={"mt-1"}

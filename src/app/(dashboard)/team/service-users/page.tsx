@@ -5,6 +5,7 @@ import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
+import { usePortalElement } from "@hooks/usePortalElement";
 import { IconSettings2 } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
@@ -22,6 +23,9 @@ export default function ServiceUsers() {
     "/users?service_user=true",
   );
 
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
+
   return (
     <PageContainer>
       <div className={"p-default py-6"}>
@@ -38,11 +42,7 @@ export default function ServiceUsers() {
             icon={<IconSettings2 size={17} />}
           />
         </Breadcrumbs>
-        <h1>
-          {users && users.length > 1
-            ? `${users.length} Service Users`
-            : "Service Users"}
-        </h1>
+        <h1 ref={headingRef}>Service Users</h1>
         <Paragraph>
           Use service users to create API tokens and avoid losing automated
           access.
@@ -61,7 +61,11 @@ export default function ServiceUsers() {
       </div>
       <RestrictedAccess page={"Service Users"}>
         <Suspense fallback={<SkeletonTable />}>
-          <ServiceUsersTable users={users} isLoading={isLoading} />
+          <ServiceUsersTable
+            users={users}
+            isLoading={isLoading}
+            headingTarget={portalTarget}
+          />
         </Suspense>
       </RestrictedAccess>
     </PageContainer>

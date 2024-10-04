@@ -24,6 +24,7 @@ import { ActivityUserSelector } from "@/modules/activity/ActivityUserSelector";
 type Props = {
   events?: ActivityEvent[];
   isLoading: boolean;
+  headingTarget?: HTMLHeadingElement | null;
 };
 
 const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
@@ -52,7 +53,14 @@ const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
   },
 ];
 
-export default function ActivityTable({ events, isLoading }: Props) {
+const defaultFromDate = dayjs().subtract(14, "day").toDate();
+const defaultToDate = dayjs().toDate();
+
+export default function ActivityTable({
+  events,
+  isLoading,
+  headingTarget,
+}: Props) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -68,8 +76,8 @@ export default function ActivityTable({ events, isLoading }: Props) {
   const [initialDateRange, setInitialDateRange] = useLocalStorage<
     DateRange | undefined
   >("netbird-table-range" + path, {
-    from: dayjs().subtract(14, "day").toDate(),
-    to: dayjs().toDate(),
+    from: defaultFromDate,
+    to: defaultToDate,
   });
 
   // Range for DatePicker
@@ -80,6 +88,7 @@ export default function ActivityTable({ events, isLoading }: Props) {
 
   return (
     <DataTable
+      headingTarget={headingTarget}
       wrapperClassName={"gap-0 flex flex-col"}
       tableClassName={"px-8 mt-10"}
       paginationClassName={"max-w-[800px]"}
@@ -125,6 +134,11 @@ export default function ActivityTable({ events, isLoading }: Props) {
           }
         />
       }
+      onFilterReset={() => {
+        const date = { from: defaultFromDate, to: defaultToDate };
+        setInitialDateRange(date);
+        setDateRange(date);
+      }}
     >
       {(table) => {
         return (

@@ -11,14 +11,26 @@ import { ProcessTooltip } from "@/modules/posture-checks/checks/tooltips/Process
 
 type Props = {
   check: PostureCheck;
+  children?: React.ReactNode;
+  disableHover?: boolean;
+  className?: string;
+  onClick?: () => void;
 };
-export const PostureCheckChecksCell = ({ check }: Props) => {
+export const PostureCheckChecksCell = ({
+  check,
+  children,
+  disableHover = false,
+  className,
+  onClick,
+}: Props) => {
   return (
-    <div className={"flex"}>
+    <div className={"flex"} onClick={onClick}>
       <div
-        className={
-          "flex items-center gap-3 bg-nb-gray-900/80 hover:bg-nb-gray-800 border border-nb-gray-800/50 py-1 rounded-full px-1 transition-all"
-        }
+        className={cn(
+          "flex items-center gap-3 bg-nb-gray-900/80  border border-nb-gray-800/50 py-1 rounded-full px-1 transition-all",
+          !disableHover && "hover:bg-nb-gray-800",
+          className,
+        )}
       >
         <div className={"flex -space-x-2 "}>
           {check.checks.nb_version_check && (
@@ -85,6 +97,7 @@ export const PostureCheckChecksCell = ({ check }: Props) => {
             </ProcessTooltip>
           )}
         </div>
+        {children}
       </div>
     </div>
   );

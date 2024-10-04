@@ -5,6 +5,7 @@ import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
+import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
@@ -20,6 +21,9 @@ const AccessControlTable = lazy(
 export default function AccessControlPage() {
   const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
 
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
+
   return (
     <PageContainer>
       <GroupsProvider>
@@ -31,12 +35,7 @@ export default function AccessControlPage() {
               icon={<AccessControlIcon size={14} />}
             />
           </Breadcrumbs>
-
-          <h1>
-            {policies && policies.length > 1
-              ? `${policies.length} Access Control Policies`
-              : "Access Control Policies"}
-          </h1>
+          <h1 ref={headingRef}>Access Control Policies</h1>
           <Paragraph>
             Create rules to manage access in your network and define what peers
             can connect.
@@ -57,7 +56,11 @@ export default function AccessControlPage() {
         <RestrictedAccess page={"Access Control"}>
           <PoliciesProvider>
             <Suspense fallback={<SkeletonTable />}>
-              <AccessControlTable isLoading={isLoading} policies={policies} />
+              <AccessControlTable
+                isLoading={isLoading}
+                policies={policies}
+                headingTarget={portalTarget}
+              />
             </Suspense>
           </PoliciesProvider>
         </RestrictedAccess>

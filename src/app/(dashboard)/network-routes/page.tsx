@@ -5,6 +5,7 @@ import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
+import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
@@ -23,6 +24,9 @@ export default function NetworkRoutes() {
   const { data: routes, isLoading } = useFetchApi<Route[]>("/routes");
   const groupedRoutes = useGroupedRoutes({ routes });
 
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
+
   return (
     <PageContainer>
       <RoutesProvider>
@@ -35,11 +39,7 @@ export default function NetworkRoutes() {
                 icon={<NetworkRoutesIcon size={13} />}
               />
             </Breadcrumbs>
-            <h1>
-              {groupedRoutes && groupedRoutes.length > 1
-                ? `${groupedRoutes.length} Network Routes`
-                : "Network Routes"}
-            </h1>
+            <h1 ref={headingRef}>Network Routes</h1>
             <Paragraph>
               Network routes allow you to access other networks like LANs and
               VPCs without installing NetBird on every resource.
@@ -65,6 +65,7 @@ export default function NetworkRoutes() {
                 isLoading={isLoading}
                 groupedRoutes={groupedRoutes}
                 routes={routes}
+                headingTarget={portalTarget}
               />
             </Suspense>
           </RestrictedAccess>

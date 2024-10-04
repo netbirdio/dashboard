@@ -2,7 +2,7 @@ import { cn } from "@utils/helpers";
 import { cva, VariantProps } from "class-variance-authority";
 import * as React from "react";
 
-type BadgeVariants = VariantProps<typeof variants>;
+export type BadgeVariants = VariantProps<typeof variants>;
 
 interface Props extends React.HTMLAttributes<HTMLDivElement>, BadgeVariants {
   children: React.ReactNode;
@@ -22,6 +22,9 @@ const variants = cva("", {
       purple: ["bg-purple-950/50 border-purple-500 border text-purple-500"],
       yellow: ["bg-yellow-950 border-yellow-500 border text-yellow-400"],
       gray: ["bg-nb-gray-930/60 border-nb-gray-800/40 text-nb-gray-300 border"],
+      grayer: [
+        "bg-nb-gray-900/40 border-nb-gray-800/40 text-nb-gray-300 border",
+      ],
       "gray-ghost": [
         "bg-nb-gray-900 border-nb-gray-800 text-nb-gray-300 border border-nb-gray-800/50",
       ],
@@ -37,6 +40,7 @@ const variants = cva("", {
       "blue-darker": ["hover:bg-sky-800"],
       red: ["hover:bg-red-950/40"],
       gray: ["hover:bg-nb-gray-900"],
+      grayer: ["hover:bg-nb-gray-900"],
       "gray-ghost": ["hover:bg-nb-gray-900"],
       green: ["hover:bg-green-950/50"],
       netbird: ["hover:bg-netbird-950/50"],
@@ -50,7 +54,7 @@ export default function Badge({
   variant = "blue",
   useHover = false,
   ...props
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div
       className={cn(

@@ -98,9 +98,10 @@ export const UsersTableColumns: ColumnDef<User>[] = [
 type Props = {
   users?: User[];
   isLoading?: boolean;
+  headingTarget?: HTMLHeadingElement | null;
 };
 
-export default function UsersTable({ users, isLoading }: Props) {
+export default function UsersTable({ users, isLoading, headingTarget }: Props) {
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -125,6 +126,7 @@ export default function UsersTable({ users, isLoading }: Props) {
   return (
     <>
       <DataTable
+        headingTarget={headingTarget}
         isLoading={isLoading}
         text={"Users"}
         sorting={sorting}
