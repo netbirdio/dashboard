@@ -53,6 +53,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
       <div className={"min-w-[20px] max-w-[20px]"}>
         <Checkbox
           checked={row.getIsSelected()}
+          variant={"tableCell"}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
         />
@@ -236,6 +237,7 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
         data={peers}
         searchPlaceholder={"Search by name, IP, owner or group..."}
         columnVisibility={{
+          select: !isUser,
           connected: false,
           approval_required: false,
           group_name_strings: false,

@@ -4,6 +4,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@components/Tooltip";
+import { TooltipProps } from "@radix-ui/react-tooltip";
 import { cn } from "@utils/helpers";
 import React, { useState } from "react";
 
@@ -19,7 +20,9 @@ type Props = {
   align?: "end" | "center" | "start";
   side?: "top" | "bottom" | "left" | "right";
   keepOpen?: boolean;
-};
+  customOpen?: boolean;
+  customOnOpenChange?: React.Dispatch<React.SetStateAction<boolean>>;
+} & TooltipProps;
 export default function FullTooltip({
   children,
   content,
@@ -32,6 +35,8 @@ export default function FullTooltip({
   align = "center",
   side = "top",
   keepOpen = false,
+  customOpen,
+  customOnOpenChange,
 }: Props) {
   const [open, setOpen] = useState(!!keepOpen);
 
@@ -42,7 +47,11 @@ export default function FullTooltip({
 
   return !disabled ? (
     <TooltipProvider disableHoverableContent={!interactive}>
-      <Tooltip delayDuration={1} open={open} onOpenChange={handleOpen}>
+      <Tooltip
+        delayDuration={1}
+        open={customOpen || open}
+        onOpenChange={customOnOpenChange || handleOpen}
+      >
         {children && (
           <TooltipTrigger asChild={true}>
             {hoverButton ? (

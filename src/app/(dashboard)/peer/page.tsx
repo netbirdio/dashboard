@@ -23,6 +23,7 @@ import Separator from "@components/Separator";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import LoginExpiredBadge from "@components/ui/LoginExpiredBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import useRedirect from "@hooks/useRedirect";
 import { IconCloudLock, IconInfoCircle } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
@@ -54,15 +55,12 @@ import PeerProvider, { usePeer } from "@/contexts/PeerProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
-import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
-import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
-import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import AddRouteDropdownButton from "@/modules/peer/AddRouteDropdownButton";
-import PeerRoutesTable from "@/modules/peer/PeerRoutesTable";
+import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
+import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSection";
 
 export default function PeerPage() {
   const queryParameter = useSearchParams();
@@ -72,7 +70,7 @@ export default function PeerPage() {
   useRedirect("/peers", false, !peerId);
 
   return peer && !isLoading ? (
-    <PeerProvider peer={peer}>
+    <PeerProvider peer={peer} key={peerId}>
       <PeerOverview />
     </PeerProvider>
   ) : (
@@ -133,7 +131,6 @@ function PeerOverview() {
   };
 
   const { isUser } = useLoggedInUser();
-  const hasExitNodes = useHasExitNodes(peer);
 
   return (
     <PageContainer>
@@ -336,30 +333,19 @@ function PeerOverview() {
           </div>
         </div>
 
-        <Separator />
-
         {isLinux && !isUser ? (
-          <div className={"px-8 py-6"}>
-            <div className={"max-w-6xl"}>
-              <div className={"flex justify-between items-center"}>
-                <div>
-                  <h2>Network Routes</h2>
-                  <Paragraph>
-                    Access other networks without installing NetBird on every
-                    resource.
-                  </Paragraph>
-                </div>
-                <div className={"inline-flex gap-4 justify-end"}>
-                  <div className={"gap-4 flex"}>
-                    <AddExitNodeButton peer={peer} firstTime={!hasExitNodes} />
-                    <AddRouteDropdownButton />
-                  </div>
-                </div>
-              </div>
-              <PeerRoutesTable peer={peer} />
-            </div>
-          </div>
+          <>
+            <Separator />
+            <PeerNetworkRoutesSection peer={peer} />
+          </>
         ) : null}
+
+        {peer?.id && (
+          <>
+            <Separator />
+            <AccessiblePeersSection peerID={peer.id} />
+          </>
+        )}
       </RoutesProvider>
     </PageContainer>
   );

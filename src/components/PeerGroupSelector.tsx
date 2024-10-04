@@ -1,10 +1,13 @@
 import Badge from "@components/Badge";
 import { Checkbox } from "@components/Checkbox";
 import { CommandItem } from "@components/Command";
+import FullTooltip from "@components/FullTooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
+import { AccessControlGroupCount } from "@components/ui/AccessControlGroupCount";
 import GroupBadge from "@components/ui/GroupBadge";
-import TextWithTooltip from "@components/ui/TextWithTooltip";
+import GroupBadgeWithEditPeers from "@components/ui/GroupBadgeWithEditPeers";
+import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
 import { IconArrowBack } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
@@ -30,6 +33,12 @@ interface MultiSelectProps {
   disabled?: boolean;
   popoverWidth?: "auto" | number;
   hideAllGroup?: boolean;
+  showPeerCount?: boolean;
+  disableInlineRemoveGroup?: boolean;
+  saveGroupAssignments?: boolean;
+  showRoutes?: boolean;
+  disabledGroups?: Group[];
+  dataCy?: string;
 }
 export function PeerGroupSelector({
   onChange,
@@ -39,8 +48,15 @@ export function PeerGroupSelector({
   disabled = false,
   popoverWidth = "auto",
   hideAllGroup = false,
-}: MultiSelectProps) {
-  const { groups, dropdownOptions, setDropdownOptions } = useGroups();
+  showPeerCount = false,
+  disableInlineRemoveGroup = false,
+  saveGroupAssignments = true,
+  showRoutes = false,
+  disabledGroups,
+  dataCy = "group-selector-dropdown",
+}: Readonly<MultiSelectProps>) {
+  const { groups, dropdownOptions, setDropdownOptions, addDropdownOptions } =
+    useGroups();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
   const [search, setSearch] = useState("");
@@ -48,9 +64,14 @@ export function PeerGroupSelector({
   // Update dropdown options when groups change
   useEffect(() => {
     if (!groups) return;
-    const sortedGroups = sortBy([...groups], "name") as Group[];
+    const sortedGroups = sortBy([...groups], "name");
 
+    const clientGroups = dropdownOptions.filter(
+      (group) => group.keepClientState,
+    );
     let uniqueGroups = unionBy(sortedGroups, dropdownOptions, "name");
+    uniqueGroups = unionBy(clientGroups, uniqueGroups, "name");
+
     uniqueGroups = hideAllGroup
       ? uniqueGroups.filter((group) => group.name !== "All")
       : uniqueGroups;
@@ -75,16 +96,10 @@ export function PeerGroupSelector({
     const groupPeers: GroupPeer[] | undefined =
       (group?.peers as GroupPeer[]) || [];
 
-    if (peer) {
-      groupPeers &&
-        groupPeers.push({ id: peer?.id as string, name: peer?.name as string });
-    }
+    if (peer) groupPeers?.push({ id: peer?.id as string, name: peer?.name });
 
     if (!group && !option) {
-      setDropdownOptions((previous) => [
-        ...previous,
-        { name: name, peers: groupPeers },
-      ]);
+      addDropdownOptions([{ name: name, peers: groupPeers }]);
     }
 
     if (max == 1 && values.length == 1) {
@@ -137,6 +152,18 @@ export function PeerGroupSelector({
     }
   }, [open, dropdownOptions]);
 
+  const onPeerAssignmentChange = (oldGroup: Group, newGroup: Group) => {
+    const filtered = values.filter((group) => group.name !== oldGroup.name);
+    const union = unionBy([newGroup], filtered, "name");
+    onChange(union);
+  };
+
+  const sortedDropdownOptions = useSortedDropdownOptions(
+    dropdownOptions,
+    values,
+    open,
+  );
+
   return (
     <Popover
       open={open}
@@ -152,12 +179,13 @@ export function PeerGroupSelector({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "min-h-[46px] w-full relative items-center",
+            "min-h-[46px] w-full relative items-center group",
             "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
             "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
-            "disabled:pointer-events-none disabled:opacity-30",
+            "disabled:pointer-events-none disabled:opacity-30 transition-all",
           )}
           disabled={disabled}
+          data-cy={dataCy}
           ref={inputRef}
         >
           <div
@@ -165,18 +193,48 @@ export function PeerGroupSelector({
               "flex items-center gap-2 border-nb-gray-700 flex-wrap h-full"
             }
           >
-            {values.map((group) => (
-              <GroupBadge
-                className={"py-[3px]"}
-                group={group}
-                key={group.name}
-                onClick={() => {
-                  if (peer != undefined && group.name == "All") return; // Prevent removing the "All" group
-                  toggleGroupByName(group.name);
-                }}
-                showX={peer != undefined ? group.name !== "All" : true}
-              />
-            ))}
+            {values.map((group) => {
+              return (
+                <div
+                  key={group.name}
+                  className={cn(
+                    showPeerCount
+                      ? "flex gap-x-1 gap-y-2 items-center justify-between w-full"
+                      : "",
+                  )}
+                >
+                  {showPeerCount ? (
+                    <GroupBadgeWithEditPeers
+                      className={"py-[3px]"}
+                      group={group}
+                      key={group.name}
+                      showNewBadge={true}
+                      onPeerAssignmentChange={onPeerAssignmentChange}
+                      useSave={saveGroupAssignments}
+                    />
+                  ) : (
+                    <GroupBadge
+                      className={"py-[3px]"}
+                      group={group}
+                      key={group.name}
+                      showNewBadge={true}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        if (disableInlineRemoveGroup) return;
+                        if (peer != undefined && group.name == "All") return; // Prevent removing the "All" group
+                        toggleGroupByName(group.name);
+                      }}
+                      showX={
+                        peer != undefined
+                          ? group.name !== "All"
+                          : !disableInlineRemoveGroup
+                      }
+                    />
+                  )}
+                </div>
+              );
+            })}
 
             {values.length == 0 && (
               <span className={"pl-1"}>Add or select group(s)...</span>
@@ -184,7 +242,10 @@ export function PeerGroupSelector({
           </div>
 
           <div className={"pl-2"}>
-            <ChevronsUpDown size={18} className={"shrink-0"} />
+            <ChevronsUpDown
+              size={18}
+              className={"shrink-0 group-hover:text-nb-gray-300 transition-all"}
+            />
           </div>
         </button>
       </PopoverTrigger>
@@ -275,38 +336,64 @@ export function PeerGroupSelector({
                   </CommandItem>
                 )}
 
-                {dropdownOptions.slice(0, slice).map((option) => {
+                {sortedDropdownOptions.slice(0, slice).map((option) => {
                   const isSelected =
                     values.find((group) => group.name == option.name) !=
                     undefined;
-                  return (
-                    <CommandItem
-                      key={option.name}
-                      value={option.name + option.id}
-                      onSelect={() => {
-                        if (peer != undefined && option.name == "All") return; // Prevent removing the "All" group
-                        toggleGroupByName(option.name);
-                        searchRef.current?.focus();
-                      }}
-                      onClick={(e) => e.preventDefault()}
-                    >
-                      <div className={"flex items-center gap-2"}>
-                        <Badge variant={"gray-ghost"}>
-                          {folderIcon}
-                          <TextWithTooltip text={option.name} maxChars={30} />
-                        </Badge>
-                      </div>
+                  const peerCount =
+                    option.peers?.length ?? option?.peers_count ?? 0;
 
-                      <div
-                        className={
-                          "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
-                        }
+                  const isDisabled = disabledGroups
+                    ? disabledGroups?.findIndex((g) => g.id === option.id) !==
+                      -1
+                    : false;
+
+                  return (
+                    <FullTooltip
+                      content={
+                        <div className={"text-xs max-w-xs"}>
+                          This group is already part of the routing peer and can
+                          not be used for the access control groups.
+                        </div>
+                      }
+                      disabled={!isDisabled}
+                      className={"w-full block"}
+                      key={option.name}
+                    >
+                      <CommandItem
+                        key={option.name}
+                        value={option.name + option.id}
+                        disabled={isDisabled}
+                        onSelect={() => {
+                          if (peer != undefined && option.name == "All") return; // Prevent removing the "All" group
+                          if (isDisabled) return;
+                          toggleGroupByName(option.name);
+                          searchRef.current?.focus();
+                        }}
+                        className={cn(isDisabled && "opacity-40")}
+                        onClick={(e) => e.preventDefault()}
                       >
-                        {peerIcon}
-                        {option.peers_count || 0} Peer(s)
-                        <Checkbox checked={isSelected} />
-                      </div>
-                    </CommandItem>
+                        <div className={"flex items-center gap-2"}>
+                          <GroupBadge group={option} showNewBadge={true} />
+                        </div>
+
+                        <div className={"flex items-center gap-5"}>
+                          {option?.id && showRoutes && (
+                            <AccessControlGroupCount group_id={option.id} />
+                          )}
+
+                          <div
+                            className={
+                              "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
+                            }
+                          >
+                            {peerIcon}
+                            {peerCount} Peer(s)
+                            <Checkbox checked={isSelected} />
+                          </div>
+                        </div>
+                      </CommandItem>
+                    </FullTooltip>
                   );
                 })}
               </ScrollArea>

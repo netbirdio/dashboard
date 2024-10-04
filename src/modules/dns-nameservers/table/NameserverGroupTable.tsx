@@ -85,14 +85,17 @@ export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
     cell: ({ cell }) => <NameserverActionCell ns={cell.row.original} />,
   },
 ];
+
 type Props = {
   nameserverGroups?: NameserverGroup[];
   isLoading?: boolean;
+  headingTarget?: HTMLHeadingElement | null;
 };
 
 export default function NameserverGroupTable({
   nameserverGroups,
   isLoading,
+  headingTarget,
 }: Props) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -123,6 +126,7 @@ export default function NameserverGroupTable({
         />
       )}
       <DataTable
+        headingTarget={headingTarget}
         isLoading={isLoading}
         text={"Network Routes"}
         sorting={sorting}

@@ -81,7 +81,7 @@ export default function MacOSTab() {
               >
                 <Button variant={"outline"}>
                   <DownloadIcon size={14} />
-                  Download for M1 & M2
+                  Download for Apple Silicon
                 </Button>
               </Link>
             </div>

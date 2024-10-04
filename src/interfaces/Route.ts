@@ -11,6 +11,7 @@ export interface Route {
   masquerade: boolean;
   groups: string[];
   keep_route?: boolean;
+  access_control_groups?: string[];
   // Frontend only
   peer_groups?: string[];
   routesGroups?: string[];
@@ -25,6 +26,7 @@ export interface GroupedRoute {
   network?: string;
   domains?: string[];
   keep_route?: boolean;
+  access_control_groups?: string[];
   network_id: string;
   high_availability_count: number;
   is_using_route_groups: boolean;

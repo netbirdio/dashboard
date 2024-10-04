@@ -16,8 +16,9 @@ const ScrollArea = React.forwardRef<
   <ScrollAreaPrimitive.Root
     ref={ref}
     className={cn(
-      "relative overflow-hidden will-change-scroll webkit-scroll",
+      "relative will-change-scroll webkit-scroll",
       className,
+      "overflow-hidden",
     )}
     {...props}
   >

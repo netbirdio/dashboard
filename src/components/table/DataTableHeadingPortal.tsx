@@ -6,24 +6,20 @@ import { createPortal } from "react-dom";
 type Props<TData> = {
   table: Table<TData> | null;
   headingTarget?: HTMLHeadingElement | null;
-  text: string;
 };
+
 export const DataTableHeadingPortal = function <TData>({
   table,
   headingTarget,
-  text = "Items",
 }: Props<TData>) {
   const hasMounted = useRef(false);
 
   if (!headingTarget) return;
-
-  if (!hasMounted.current) {
-    headingTarget.innerHTML = "";
-    hasMounted.current = true;
-  }
+  if (!hasMounted.current) hasMounted.current = true;
 
   const totalItems = table?.getPreFilteredRowModel().rows.length;
   const filteredItems = table?.getFilteredRowModel().rows.length;
+  if (!totalItems || totalItems == 1) return;
 
   const hasAnyFiltersActive =
     table &&
@@ -32,14 +28,16 @@ export const DataTableHeadingPortal = function <TData>({
       table?.getState().globalFilter === ""
     );
 
+  const portalContainer = document.createElement("span");
+  headingTarget.prepend(portalContainer);
+
   return createPortal(
     <Heading
-      text={text}
       hasAnyFilterActive={hasAnyFiltersActive}
       totalItems={totalItems}
       filteredItems={filteredItems}
     />,
-    headingTarget,
+    portalContainer,
   );
 };
 
@@ -47,27 +45,20 @@ type HeadingProps = {
   hasAnyFilterActive: boolean | null;
   filteredItems?: number;
   totalItems?: number;
-  text: string;
 };
 
 const Heading = ({
   hasAnyFilterActive,
   filteredItems,
   totalItems,
-  text,
 }: HeadingProps) => {
-  if (!totalItems || totalItems == 1) {
-    return text;
-  }
-
   if (hasAnyFilterActive) {
     return (
       <>
         <span className={"text-netbird"}>{filteredItems}</span> of {totalItems}{" "}
-        {text}
       </>
     );
   }
 
-  return `${totalItems} ${text}`;
+  return `${totalItems} `;
 };

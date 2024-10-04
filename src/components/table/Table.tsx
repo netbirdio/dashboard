@@ -1,6 +1,25 @@
 import { cn } from "@utils/helpers";
 import * as React from "react";
 
+type TableWrapperProps = {
+  wrapperComponent?: React.ElementType;
+  wrapperProps?: any;
+  children: React.ReactNode;
+};
+
+const TableWrapper = ({
+  wrapperComponent,
+  children,
+  wrapperProps,
+}: TableWrapperProps) => {
+  if (!wrapperComponent) return <>{children}</>;
+  return React.createElement(
+    wrapperComponent,
+    wrapperProps ? wrapperProps : {},
+    children,
+  );
+};
+
 type TableProps = {
   minimal?: boolean;
 };
@@ -164,4 +183,5 @@ export {
   TableHead,
   TableHeader,
   TableRow,
+  TableWrapper,
 };

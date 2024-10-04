@@ -11,7 +11,9 @@ type Props = {
   text?: string | React.ReactNode;
   className?: string;
   additionalInfo?: React.ReactNode;
+  dataCy?: string;
 };
+
 export default function ActiveInactiveRow({
   active,
   children,
@@ -20,13 +22,15 @@ export default function ActiveInactiveRow({
   inactiveDot = "gray",
   className,
   additionalInfo,
-}: Props) {
+  dataCy,
+}: Readonly<Props>) {
   return (
     <div
       className={cn(
         "gap-3 dark:text-neutral-300 text-neutral-500 min-w-0",
         className,
       )}
+      data-cy={dataCy}
     >
       {leftSection}
       <div className={"flex flex-col gap-1"}>

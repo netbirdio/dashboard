@@ -8,6 +8,7 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import Separator from "@components/Separator";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
+import { usePortalElement } from "@hooks/usePortalElement";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
@@ -269,27 +270,36 @@ export default function GroupsTab({ account }: Props) {
           </AnimatePresence>
         )}
       </div>
-      <>
-        <Separator />
-        <div className={"px-8 py-6"}>
-          <div className={"max-w-6xl"}>
-            <div className={"flex justify-between items-center"}>
-              <div>
-                <h2>Groups</h2>
-                <Paragraph>
-                  Here is the overview of the groups of your account. You can
-                  delete the unused ones.
-                </Paragraph>
-              </div>
-            </div>
-          </div>
-        </div>
-        <div className={"pb-10"}>
-          <Suspense fallback={<SkeletonTable />}>
-            <GroupsTable />
-          </Suspense>
-        </div>
-      </>
+      <GroupsSection />
     </Tabs.Content>
   );
 }
+
+const GroupsSection = () => {
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
+
+  return (
+    <>
+      <Separator />
+      <div className={"px-8 py-6"}>
+        <div className={"max-w-6xl"}>
+          <div className={"flex justify-between items-center"}>
+            <div>
+              <h2 ref={headingRef}>Groups</h2>
+              <Paragraph>
+                Here is the overview of the groups of your account. You can
+                delete the unused ones.
+              </Paragraph>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div className={"pb-10"}>
+        <Suspense fallback={<SkeletonTable />}>
+          <GroupsTable headingTarget={portalTarget} />
+        </Suspense>
+      </div>
+    </>
+  );
+};

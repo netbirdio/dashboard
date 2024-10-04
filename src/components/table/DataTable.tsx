@@ -11,6 +11,7 @@ import {
   TableHead,
   TableHeader,
   TableRow,
+  TableWrapper,
 } from "@components/table/Table";
 import NoResults from "@components/ui/NoResults";
 import {
@@ -30,6 +31,7 @@ import {
   PaginationState,
   Row,
   RowSelectionState,
+  SortingFn,
   SortingState,
   Table as TanStackTable,
   useReactTable,
@@ -53,6 +55,9 @@ declare module "@tanstack/table-core" {
   }
   interface FilterMeta {
     itemRank: RankingInfo;
+  }
+  interface SortingFns {
+    checkbox: SortingFn<unknown>;
   }
 }
 
@@ -100,6 +105,20 @@ const arrIncludesSomeExact: FilterFn<any> = (
   return value.some((val) => val === rowValue);
 };
 
+const checkboxSort: SortingFn<any> = (rowA, rowB, columnId) => {
+  const valueA =
+    columnId === "select" ? rowA.getIsSelected() : rowA.getValue(columnId);
+  const valueB =
+    columnId === "select" ? rowB.getIsSelected() : rowB.getValue(columnId);
+  if (valueA && !valueB) {
+    return -1;
+  }
+  if (!valueA && valueB) {
+    return 1;
+  }
+  return 0;
+};
+
 interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[] | undefined;
@@ -125,7 +144,7 @@ interface DataTableProps<TData, TValue> {
   wrapperClassName?: string;
   tableClassName?: string;
   searchClassName?: string;
-  showSearch?: boolean;
+  showSearchAndFilters?: boolean;
   rightSide?: (table: TanStackTable<TData>) => React.ReactNode;
   manualPagination?: boolean;
   showHeader?: boolean;
@@ -134,6 +153,16 @@ interface DataTableProps<TData, TValue> {
   useRowId?: boolean;
   headingTarget?: HTMLHeadingElement | null;
   showResetFilterButton?: boolean;
+  onFilterReset?: () => void;
+  wrapperComponent?: React.ElementType;
+  wrapperProps?: any;
+  keepStateInLocalStorage?: boolean;
+  paginationPaddingClassName?: string;
+  tableCellClassName?: string;
+  initialSelectionState?: RowSelectionState;
+  initialPageSize?: number;
+  uniqueKey?: string;
+  resetRowSelectionOnSearch?: boolean;
 }
 
 export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
@@ -173,22 +202,41 @@ export function DataTableContent<TData, TValue>({
   useRowId,
   headingTarget,
   showResetFilterButton = true,
+  onFilterReset,
+  showSearchAndFilters = true,
+  wrapperProps,
+  wrapperComponent,
+  keepStateInLocalStorage = true,
+  paginationPaddingClassName,
+  tableCellClassName,
+  initialPageSize = 10,
+  uniqueKey,
+  resetRowSelectionOnSearch = true,
 }: DataTableProps<TData, TValue>) {
   const path = usePathname();
+
   const [columnFilters, setColumnFilters] = useLocalStorage<ColumnFiltersState>(
-    "netbird-table-columns" + path,
+    `netbird-table-columns${uniqueKey ? "/" + (uniqueKey as string) : path}`,
     [],
+    keepStateInLocalStorage,
   );
   const [globalSearch, setGlobalSearch] = useLocalStorage(
-    "netbird-table-search" + path,
+    `netbird-table-search${uniqueKey ? "/" + (uniqueKey as string) : path}`,
     "",
+    keepStateInLocalStorage,
   );
 
   const [paginationState, setPaginationState] =
-    useLocalStorage<PaginationState>("netbird-table-pagination" + path, {
-      pageIndex: 0,
-      pageSize: 10,
-    });
+    useLocalStorage<PaginationState>(
+      `netbird-table-pagination${
+        uniqueKey ? "/" + (uniqueKey as string) : path
+      }`,
+      {
+        pageIndex: 0,
+        pageSize: 10,
+      },
+      keepStateInLocalStorage,
+    );
 
   const hasInitialData = !!(data && data.length > 0);
 
@@ -216,8 +264,11 @@ export function DataTableContent<TData, TValue>({
     initialState: {
       pagination: {
         pageIndex: 0,
-        pageSize: 10,
+        pageSize: initialPageSize || 10,
       },
+    },
+    sortingFns: {
+      checkbox: checkboxSort,
     },
     getRowId: useRowId ? (row) => row.id : undefined,
     onRowSelectionChange: setRowSelection,
@@ -250,12 +301,18 @@ export function DataTableContent<TData, TValue>({
     setColumnFilters([]);
     setGlobalSearch("");
     setRowSelection?.({});
+    onFilterReset?.();
   };
 
   return (
     <div className={cn("relative table-fixed-scroll", className)}>
-      {!minimal && (
-        <div className={"flex gap-x-4 gap-y-6 p-default flex-wrap"}>
+      {showSearchAndFilters && (
+        <div
+          className={cn(
+            "flex gap-x-4 gap-y-6 flex-wrap",
+            !minimal && "p-default",
+          )}
+        >
           <DataTableGlobalSearch
             className={searchClassName}
             disabled={!hasInitialData}
@@ -263,7 +320,7 @@ export function DataTableContent<TData, TValue>({
             setGlobalSearch={(val) => {
               table.setPageIndex(0);
               setGlobalSearch(val);
-              setRowSelection?.({});
+              resetRowSelectionOnSearch && setRowSelection?.({});
             }}
             placeholder={searchPlaceholder}
           />
@@ -277,164 +334,179 @@ export function DataTableContent<TData, TValue>({
           </div>
         </div>
       )}
+
       {aboveTable && aboveTable(table)}
-      {!hasInitialData && !isLoading && getStartedCard}
+
+      {!hasInitialData && !isLoading && (
+        <TableWrapper
+          wrapperComponent={wrapperComponent}
+          wrapperProps={wrapperProps}
+        >
+          {getStartedCard}
+        </TableWrapper>
+      )}
 
       {hasInitialData && !isLoading && (
-        <TableComponent
-          className={cn("relative mt-8", tableClassName)}
-          minimal={minimal}
+        <TableWrapper
+          wrapperComponent={wrapperComponent}
+          wrapperProps={wrapperProps}
         >
-          {showHeader && as == "table" && (
-            <TableHeaderComponent minimal={minimal}>
-              {table.getHeaderGroups().map((headerGroup) => (
-                <TableRowComponent key={headerGroup.id} minimal={minimal}>
-                  {headerGroup.headers.map((header) => {
-                    return (
-                      <TableHead
-                        key={header.id}
-                        minimal={minimal}
-                        inset={inset}
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </TableHead>
-                    );
-                  })}
-                </TableRowComponent>
-              ))}
-            </TableHeaderComponent>
-          )}
-
-          <Accordion
-            asChild={true}
-            type={"multiple"}
-            value={accordion}
-            onValueChange={setAccordion}
+          <TableComponent
+            className={cn("relative mt-8", tableClassName)}
+            minimal={minimal}
           >
-            <TableBodyComponent
-              className={cn(
-                "relative",
-                data == undefined && "blur-sm",
-                wrapperClassName,
-              )}
-            >
-              {table.getRowModel().rows?.length ? (
-                table.getRowModel().rows.map((row) => (
-                  <AccordionItem
-                    value={row.original.id}
-                    asChild={true}
-                    key={row.original.id}
-                  >
-                    <>
-                      <TableRowComponent
-                        minimal={minimal}
-                        data-row-id={row.original.id}
-                        className={cn(
-                          (onRowClick || renderExpandedRow) &&
-                            "cursor-pointer relative group/accordion",
-                          rowClassName,
-                        )}
-                        data-state={row.getIsSelected() && "selected"}
-                        data-accordion={
-                          accordion?.includes(row.original.id)
-                            ? "opened"
-                            : "closed"
-                        }
-                        onClick={(e) => {
-                          if (renderExpandedRow) {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            setAccordion((prev) => {
-                              if (prev?.includes(row.original.id)) {
-                                return prev.filter(
-                                  (item) => item !== row.original.id,
-                                );
-                              } else {
-                                return [...(prev ?? []), row.original.id];
-                              }
-                            });
-                          }
-                        }}
-                      >
-                        <>
-                          {row.getVisibleCells().map((cell) => (
-                            <TableCellComponent
-                              key={cell.id}
-                              className={"relative"}
-                              minimal={minimal}
-                              inset={inset}
-                              onClick={() => {
-                                onRowClick && onRowClick(row, cell.column.id);
-                              }}
-                            >
-                              <div
-                                className={
-                                  "absolute left-0 top-0 w-full h-full z-0"
-                                }
-                              ></div>
-                              <div className={"relative z-[1]"}>
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext(),
-                                )}
-                              </div>
-                            </TableCellComponent>
-                          ))}
-                        </>
-                      </TableRowComponent>
+            {showHeader && as == "table" && (
+              <TableHeaderComponent minimal={minimal}>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRowComponent key={headerGroup.id} minimal={minimal}>
+                    {headerGroup.headers.map((header) => {
+                      return (
+                        <TableHead
+                          key={header.id}
+                          minimal={minimal}
+                          inset={inset}
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </TableHead>
+                      );
+                    })}
+                  </TableRowComponent>
+                ))}
+              </TableHeaderComponent>
+            )}
 
-                      {renderExpandedRow && (
-                        <AccordionContent asChild={true}>
-                          <TableRowComponent
-                            data-row-id={row.id + "-expanded-row"}
-                            key={row.id + "-expanded-row"}
-                            minimal={minimal}
-                            className={cn(
-                              onRowClick && "cursor-pointer relative",
-                              rowClassName,
-                            )}
-                            data-state={row.getIsSelected() && "selected"}
-                          >
-                            <TableDataUnstyledComponent
-                              className={"w-full"}
-                              colSpan={row.getVisibleCells().length}
+            <Accordion
+              asChild={true}
+              type={"multiple"}
+              value={accordion}
+              onValueChange={setAccordion}
+            >
+              <TableBodyComponent
+                className={cn(
+                  "relative",
+                  data == undefined && "blur-sm",
+                  wrapperClassName,
+                )}
+              >
+                {table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row) => (
+                    <AccordionItem
+                      value={row.original.id}
+                      asChild={true}
+                      key={row.original.id}
+                    >
+                      <>
+                        <TableRowComponent
+                          minimal={minimal}
+                          data-row-id={row.original.id}
+                          className={cn(
+                            (onRowClick || renderExpandedRow) &&
+                              "cursor-pointer relative group/accordion",
+                            rowClassName,
+                          )}
+                          data-state={row.getIsSelected() && "selected"}
+                          data-accordion={
+                            accordion?.includes(row.original.id)
+                              ? "opened"
+                              : "closed"
+                          }
+                          onClick={(e) => {
+                            if (renderExpandedRow) {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setAccordion((prev) => {
+                                if (prev?.includes(row.original.id)) {
+                                  return prev.filter(
+                                    (item) => item !== row.original.id,
+                                  );
+                                } else {
+                                  return [...(prev ?? []), row.original.id];
+                                }
+                              });
+                            }
+                          }}
+                        >
+                          <>
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCellComponent
+                                key={cell.id}
+                                className={cn("relative", tableCellClassName)}
+                                minimal={minimal}
+                                inset={inset}
+                                onClick={() => {
+                                  onRowClick && onRowClick(row, cell.column.id);
+                                }}
+                              >
+                                <div
+                                  className={
+                                    "absolute left-0 top-0 w-full h-full z-0"
+                                  }
+                                ></div>
+                                <div className={"relative z-[1]"}>
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext(),
+                                  )}
+                                </div>
+                              </TableCellComponent>
+                            ))}
+                          </>
+                        </TableRowComponent>
+
+                        {renderExpandedRow && (
+                          <AccordionContent asChild={true}>
+                            <TableRowComponent
+                              data-row-id={row.id + "-expanded-row"}
+                              key={row.id + "-expanded-row"}
+                              minimal={minimal}
+                              className={cn(
+                                onRowClick && "cursor-pointer relative",
+                                rowClassName,
+                              )}
+                              data-state={row.getIsSelected() && "selected"}
                             >
-                              {renderExpandedRow(row.original)}
-                            </TableDataUnstyledComponent>
-                          </TableRowComponent>
-                        </AccordionContent>
-                      )}
-                    </>
-                  </AccordionItem>
-                ))
-              ) : (
-                <TableRowUnstyledComponent>
-                  <TableCellComponent
-                    colSpan={columns.length}
-                    className="!py-4 !px-0 text-center"
-                  >
-                    <NoResults />
-                  </TableCellComponent>
-                </TableRowUnstyledComponent>
-              )}
-            </TableBodyComponent>
-          </Accordion>
-        </TableComponent>
+                              <TableDataUnstyledComponent
+                                className={"w-full"}
+                                colSpan={row.getVisibleCells().length}
+                              >
+                                {renderExpandedRow(row.original)}
+                              </TableDataUnstyledComponent>
+                            </TableRowComponent>
+                          </AccordionContent>
+                        )}
+                      </>
+                    </AccordionItem>
+                  ))
+                ) : (
+                  <TableRowUnstyledComponent>
+                    <TableCellComponent
+                      colSpan={columns.length}
+                      className="!py-0 !px-0 text-center"
+                    >
+                      <NoResults className={"py-4"} />
+                    </TableCellComponent>
+                  </TableRowUnstyledComponent>
+                )}
+              </TableBodyComponent>
+            </Accordion>
+          </TableComponent>
+        </TableWrapper>
       )}
 
       <div className={paginationClassName}>
-        <DataTablePagination table={table} text={text} />
+        <DataTablePagination
+          table={table}
+          text={text}
+          paginationPadding={paginationPaddingClassName}
+        />
       </div>
-      <DataTableHeadingPortal
-        table={table}
-        headingTarget={headingTarget}
-        text={text}
-      />
+
+      <DataTableHeadingPortal table={table} headingTarget={headingTarget} />
     </div>
   );
 }

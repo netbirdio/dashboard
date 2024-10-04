@@ -7,11 +7,12 @@ import { Route } from "@/interfaces/Route";
 type Props = {
   peer: Peer;
 };
+
 export default function usePeerRoutes({ peer }: Props) {
-  const { data: routes } = useFetchApi<Route[]>("/routes");
+  const { data: routes, isLoading } = useFetchApi<Route[]>("/routes");
   const { peerGroups } = usePeerGroups(peer);
 
-  return useMemo(() => {
+  const peerRoutes = useMemo(() => {
     if (!routes) return undefined;
     return routes.filter((route) => {
       const foundPeer = route.peer === peer.id;
@@ -24,4 +25,6 @@ export default function usePeerRoutes({ peer }: Props) {
         : false;
     });
   }, [routes, peer.id, peerGroups]);
+
+  return { peerRoutes, isLoading };
 }

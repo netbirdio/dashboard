@@ -1,12 +1,13 @@
 import Badge from "@components/Badge";
-import {cn} from "@utils/helpers";
-import React, {useEffect} from "react";
+import { cn } from "@utils/helpers";
+import React, { useEffect } from "react";
 import LongArrowLeftIcon from "@/assets/icons/LongArrowLeftIcon";
 
 type Props = {
   disabled?: boolean;
   value: Direction;
   onChange: (value: Direction) => void;
+  className?: string;
 };
 
 export type Direction = "bi" | "in" | "out";
@@ -15,6 +16,7 @@ export default function PolicyDirection({
   disabled = false,
   value,
   onChange,
+  className,
 }: Props) {
   const toggleIn = () => {
     if (value == "in") {
@@ -40,6 +42,14 @@ export default function PolicyDirection({
     }
   };
 
+  const toggleDirection = () => {
+    if (value == "bi") {
+      onChange("in");
+    } else {
+      onChange("bi");
+    }
+  };
+
   useEffect(() => {
     if (disabled) onChange("bi");
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -48,15 +58,17 @@ export default function PolicyDirection({
   return (
     <div
       className={cn(
-        "flex flex-col gap-2 mt-[23px] cursor-pointer",
+        "flex flex-col gap-2 mt-[23px] cursor-pointer select-none",
         disabled && "opacity-50 pointer-events-none",
+        "hover:opacity-80 transition-all",
+        className,
       )}
+      onClick={toggleDirection}
+      data-cy={"policy-direction"}
     >
       <Badge
         variant={value == "bi" ? "green" : value == "in" ? "blueDark" : "gray"}
         className={"px-4 py-1"}
-        onClick={toggleIn}
-        useHover={true}
       >
         <LongArrowLeftIcon
           size={40}
@@ -72,10 +84,8 @@ export default function PolicyDirection({
         />
       </Badge>
       <Badge
-        useHover={true}
         variant={value == "bi" ? "green" : value == "out" ? "blueDark" : "gray"}
         className={"px-4 py-1"}
-        onClick={toggleOut}
       >
         <LongArrowLeftIcon
           size={40}

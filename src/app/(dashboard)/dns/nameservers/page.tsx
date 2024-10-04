@@ -5,6 +5,7 @@ import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
+import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, ServerIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
@@ -19,6 +20,9 @@ const NameserverGroupTable = lazy(
 export default function NameServers() {
   const { data: nameserverGroups, isLoading } =
     useFetchApi<NameserverGroup[]>("/dns/nameservers");
+
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
 
   return (
     <PageContainer>
@@ -36,11 +40,7 @@ export default function NameServers() {
             icon={<ServerIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1>
-          {nameserverGroups && nameserverGroups.length > 1
-            ? `${nameserverGroups.length} Nameservers`
-            : "Nameservers"}
-        </h1>
+        <h1 ref={headingRef}>Nameservers</h1>
         <Paragraph>
           Add nameservers for domain name resolution in your NetBird network.
         </Paragraph>
@@ -62,6 +62,7 @@ export default function NameServers() {
           <NameserverGroupTable
             nameserverGroups={nameserverGroups}
             isLoading={isLoading}
+            headingTarget={portalTarget}
           />
         </Suspense>
       </RestrictedAccess>

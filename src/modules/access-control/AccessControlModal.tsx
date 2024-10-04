@@ -14,7 +14,6 @@ import {
   ModalTrigger,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { PortSelector } from "@components/PortSelector";
@@ -27,10 +26,8 @@ import {
 } from "@components/Select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
-import PolicyDirection, { Direction } from "@components/ui/PolicyDirection";
-import useFetchApi, { useApiCall } from "@utils/api";
+import PolicyDirection from "@components/ui/PolicyDirection";
 import { cn } from "@utils/helpers";
-import { uniqBy } from "lodash";
 import {
   ArrowRightLeft,
   ExternalLinkIcon,
@@ -42,14 +39,11 @@ import {
   Shield,
   Text,
 } from "lucide-react";
-import React, { useEffect, useMemo, useRef, useState } from "react";
-import { useSWRConfig } from "swr";
+import React, { useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
-import { usePolicies } from "@/contexts/PoliciesProvider";
-import { Group } from "@/interfaces/Group";
 import { Policy, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useAccessControl } from "@/modules/access-control/useAccessControl";
 import { PostureCheckTab } from "@/modules/posture-checks/ui/PostureCheckTab";
 import { PostureCheckTabTrigger } from "@/modules/posture-checks/ui/PostureCheckTabTrigger";
 
@@ -62,20 +56,20 @@ type UpdateModalProps = {
   open: boolean;
   onOpenChange?: (open: boolean) => void;
   cell?: string;
+  postureCheckTemplates?: PostureCheck[];
+  onSuccess?: (policy: Policy) => void;
+  useSave?: boolean;
+  allowEditPeers?: boolean;
 };
 
-export default function AccessControlModal({ children }: Props) {
+export default function AccessControlModal({ children }: Readonly<Props>) {
   const [modal, setModal] = useState(false);
 
   return (
-    <>
-      <Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
-        {children && <ModalTrigger asChild>{children}</ModalTrigger>}
-        {modal && (
-          <AccessControlModalContent onSuccess={() => setModal(false)} />
-        )}
-      </Modal>
-    </>
+    <Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
+      {children && <ModalTrigger asChild>{children}</ModalTrigger>}
+      {modal && <AccessControlModalContent onSuccess={() => setModal(false)} />}
+    </Modal>
   );
 }
 
@@ -84,19 +78,27 @@ export function AccessControlUpdateModal({
   open,
   onOpenChange,
   cell,
-}: UpdateModalProps) {
+  postureCheckTemplates,
+  onSuccess,
+  useSave = true,
+  allowEditPeers,
+}: Readonly<UpdateModalProps>) {
   return (
-    <>
-      <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
-        {open && (
-          <AccessControlModalContent
-            onSuccess={() => onOpenChange && onOpenChange(false)}
-            policy={policy}
-            cell={cell}
-          />
-        )}
-      </Modal>
-    </>
+    <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
+      {open && (
+        <AccessControlModalContent
+          onSuccess={(p) => {
+            onOpenChange && onOpenChange(false);
+            onSuccess && onSuccess(p);
+          }}
+          policy={policy}
+          cell={cell}
+          postureCheckTemplates={postureCheckTemplates}
+          useSave={useSave}
+          allowEditPeers={allowEditPeers}
+        />
+      )}
+    </Modal>
   );
 }
 
@@ -104,18 +106,43 @@ type ModalProps = {
   onSuccess?: (p: Policy) => void;
   policy?: Policy;
   cell?: string;
+  postureCheckTemplates?: PostureCheck[];
+  useSave?: boolean;
+  allowEditPeers?: boolean;
 };
 
 export function AccessControlModalContent({
   onSuccess,
   policy,
   cell,
-}: ModalProps) {
-  const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
-    useFetchApi<PostureCheck[]>("/posture-checks");
-
-  const { updatePolicy } = usePolicies();
-  const firstRule = policy?.rules ? policy.rules[0] : undefined;
+  postureCheckTemplates,
+  useSave = true,
+  allowEditPeers = false,
+}: Readonly<ModalProps>) {
+  const {
+    portAndDirectionDisabled,
+    destinationGroups,
+    direction,
+    ports,
+    sourceGroups,
+    setSourceGroups,
+    setDestinationGroups,
+    setPorts,
+    setDirection,
+    setProtocol,
+    enabled,
+    setEnabled,
+    setName,
+    setDescription,
+    setPostureChecks,
+    name,
+    protocol,
+    description,
+    postureChecks,
+    submit,
+    isPostureChecksLoading,
+    getPolicyData,
+  } = useAccessControl({ policy, postureCheckTemplates, onSuccess });
 
   const [tab, setTab] = useState(() => {
     if (!cell) return "policy";
@@ -123,144 +150,6 @@ export function AccessControlModalContent({
     if (cell == "name") return "general";
     return "policy";
   });
-
-  const [enabled, setEnabled] = useState<boolean>(policy?.enabled ?? true);
-  const [ports, setPorts] = useState<number[]>(() => {
-    if (!firstRule) return [];
-    if (firstRule.ports == undefined) return [];
-    if (firstRule.ports.length > 0) {
-      return firstRule.ports.map((p) => Number(p));
-    }
-    return [];
-  });
-  const [protocol, setProtocol] = useState<Protocol>(
-    firstRule ? firstRule.protocol : "all",
-  );
-  const [direction, setDirection] = useState<Direction>(() => {
-    if (firstRule && firstRule?.bidirectional) return "bi";
-    if (firstRule && firstRule?.bidirectional == false) return "in";
-    return "bi";
-  });
-  const [name, setName] = useState(policy?.name || "");
-  const [description, setDescription] = useState(policy?.description || "");
-  const { mutate } = useSWRConfig();
-
-  const policyRequest = useApiCall<Policy>("/policies");
-
-  const [
-    sourceGroups,
-    setSourceGroups,
-    { getGroupsToUpdate: getSourceGroupsToUpdate },
-  ] = useGroupHelper({
-    initial: firstRule ? (firstRule.sources as Group[]) : [],
-  });
-
-  const [
-    destinationGroups,
-    setDestinationGroups,
-    { getGroupsToUpdate: getDestinationGroupsToUpdate },
-  ] = useGroupHelper({
-    initial: firstRule ? (firstRule.destinations as Group[]) : [],
-  });
-
-  const submit = async () => {
-    const g1 = getSourceGroupsToUpdate();
-    const g2 = getDestinationGroupsToUpdate();
-    const createOrUpdateGroups = uniqBy([...g1, ...g2], "name").map(
-      (g) => g.promise,
-    );
-    const groups = await Promise.all(
-      createOrUpdateGroups.map((call) => call()),
-    );
-
-    let sources = sourceGroups
-      .map((g) => {
-        const find = groups.find((group) => group.name === g.name);
-        return find?.id;
-      })
-      .filter((g) => g !== undefined) as string[];
-    let destinations = destinationGroups
-      .map((g) => {
-        const find = groups.find((group) => group.name === g.name);
-        return find?.id;
-      })
-      .filter((g) => g !== undefined) as string[];
-
-    if (direction == "out") {
-      const tmp = sources;
-      sources = destinations;
-      destinations = tmp;
-    }
-
-    const policyObj = {
-      name,
-      description,
-      enabled,
-      source_posture_checks: postureChecks
-        ? postureChecks.map((c) => c.id)
-        : undefined,
-      rules: [
-        {
-          bidirectional: direction == "bi",
-          description,
-          name,
-          action: "accept",
-          protocol,
-          enabled,
-          sources,
-          destinations,
-          ports: ports.length > 0 ? ports.map((p) => p.toString()) : undefined,
-        },
-      ],
-    } as Policy;
-
-    if (policy) {
-      updatePolicy(
-        policy,
-        policyObj,
-        () => {
-          mutate("/policies");
-          onSuccess && onSuccess(policy);
-        },
-        "The policy was successfully saved",
-      );
-    } else {
-      notify({
-        title: "Create Access Control Policy",
-        description: "Policy was created successfully.",
-        loadingMessage: "Creating your policy...",
-        promise: policyRequest.post(policyObj).then((policy) => {
-          mutate("/policies");
-          onSuccess && onSuccess(policy);
-        }),
-      });
-    }
-  };
-
-  const portAndDirectionDisabled = protocol == "icmp" || protocol == "all";
-
-  const [postureChecks, setPostureChecks] = useState<PostureCheck[]>([]);
-  const postureChecksLoaded = useRef(false);
-
-  const initialPostureChecks = useMemo(() => {
-    return (
-      allPostureChecks?.filter((check) => {
-        if (policy?.source_posture_checks) {
-          return policy.source_posture_checks.includes(check.id);
-        }
-        return false;
-      }) || []
-    );
-  }, [policy, allPostureChecks]);
-
-  useEffect(() => {
-    if (postureChecksLoaded.current) return;
-
-    if (initialPostureChecks.length > 0) {
-      postureChecksLoaded.current = true;
-      setPostureChecks(initialPostureChecks);
-    }
-  }, [initialPostureChecks]);
 
   const continuePostureChecksDisabled = useMemo(() => {
     if (sourceGroups.length == 0 || destinationGroups.length == 0) return true;
@@ -280,10 +169,18 @@ export function AccessControlModalContent({
     if (p == "all") {
       setPorts([]);
     }
+    if (p == "tcp" || p == "udp") {
+      setDirection("in");
+    }
+  };
+
+  const close = () => {
+    const data = getPolicyData();
+    onSuccess && onSuccess(data);
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-2xl"}>
+    <ModalContent maxWidthClass={"max-w-3xl"}>
       <ModalHeader
         icon={<AccessControlIcon className={"fill-netbird"} />}
         title={
@@ -320,7 +217,10 @@ export function AccessControlModalContent({
 
         <TabsContent value={"policy"} className={"pb-8"}>
           <div className={"px-8 flex-col flex gap-6"}>
-            <div className={"flex justify-between items-center"}>
+            <div
+              className={"flex justify-between items-center"}
+              data-cy={"protocol-wrapper"}
+            >
               <div>
                 <Label>Protocol</Label>
                 <HelpText className={"max-w-sm"}>
@@ -335,12 +235,15 @@ export function AccessControlModalContent({
                 onValueChange={(v) => handleProtocolChange(v as Protocol)}
               >
                 <SelectTrigger className="w-[140px]">
-                  <div className={"flex items-center gap-3"}>
+                  <div
+                    className={"flex items-center gap-3"}
+                    data-cy={"protocol-select-button"}
+                  >
                     <Share2 size={15} className={"text-nb-gray-300"} />
                     <SelectValue placeholder="Select protocol..." />
                   </div>
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent data-cy={"protocol-selection"}>
                   <SelectItem value="all">ALL</SelectItem>
                   <SelectItem value="tcp">TCP</SelectItem>
                   <SelectItem value="udp">UDP</SelectItem>
@@ -356,9 +259,14 @@ export function AccessControlModalContent({
                   Source
                 </Label>
                 <PeerGroupSelector
+                  dataCy={"source-group-selector"}
+                  showPeerCount={allowEditPeers}
+                  disableInlineRemoveGroup={false}
                   popoverWidth={500}
+                  showRoutes={false}
                   onChange={setSourceGroups}
                   values={sourceGroups}
+                  saveGroupAssignments={useSave}
                 />
               </div>
               <PolicyDirection
@@ -373,9 +281,14 @@ export function AccessControlModalContent({
                   Destination
                 </Label>
                 <PeerGroupSelector
+                  dataCy={"destination-group-selector"}
+                  showRoutes={true}
+                  showPeerCount={allowEditPeers}
+                  disableInlineRemoveGroup={false}
                   popoverWidth={500}
                   onChange={setDestinationGroups}
                   values={destinationGroups}
+                  saveGroupAssignments={useSave}
                 />
               </div>
             </div>
@@ -435,6 +348,7 @@ export function AccessControlModalContent({
                 autoFocus={true}
                 tabIndex={0}
                 value={name}
+                data-cy={"policy-name"}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={"e.g., Devs to Servers"}
               />
@@ -446,6 +360,7 @@ export function AccessControlModalContent({
               </HelpText>
               <Textarea
                 value={description}
+                data-cy={"policy-description"}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder={
                   "e.g., Devs are allowed to access servers and servers are allowed to access Devs."
@@ -520,6 +435,7 @@ export function AccessControlModalContent({
                     variant={"primary"}
                     disabled={submitDisabled}
                     onClick={submit}
+                    data-cy={"submit-policy"}
                   >
                     <PlusCircle size={16} />
                     Add Policy
@@ -535,7 +451,13 @@ export function AccessControlModalContent({
               <Button
                 variant={"primary"}
                 disabled={submitDisabled}
-                onClick={submit}
+                onClick={() => {
+                  if (useSave) {
+                    submit();
+                  } else {
+                    close();
+                  }
+                }}
               >
                 Save Changes
               </Button>

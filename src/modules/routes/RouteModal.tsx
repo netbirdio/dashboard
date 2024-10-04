@@ -44,25 +44,91 @@ import {
   Text,
   VenetianMask,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { useDialog } from "@/contexts/DialogProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
 import { Peer } from "@/interfaces/Peer";
+import { Policy } from "@/interfaces/Policy";
 import { Route } from "@/interfaces/Route";
+import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
 type Props = {
   children?: React.ReactNode;
+  open?: boolean;
+  setOpen?: (open: boolean) => void;
 };
 
-export default function RouteModal({ children }: Props) {
-  const [modal, setModal] = useState(false);
+export default function RouteModal({ children, open, setOpen }: Props) {
+  const { confirm } = useDialog();
+  const router = useRouter();
+  const [routePolicyModal, setRoutePolicyModal] = useState(false);
+  const [newPolicy, setNewPolicy] = useState<Policy>();
+
+  const handleCreatePolicyPrompt = async (r: Route) => {
+    console.log(r);
+    if (!r?.access_control_groups) return;
+
+    const choice = await confirm({
+      title: `Do you want to create a new access control policy for the route '${r.network_id}'?`,
+      description:
+        "You have one or more access control groups added to this route. These groups allow you to limit access to this route by using them in access policies.",
+      confirmText: "Create Policy",
+      cancelText: "Later",
+      type: "default",
+    });
+    if (!choice) return;
+
+    const name = `${r.network_id} Policy`;
+    const newPolicy: Policy = {
+      name,
+      description: "",
+      enabled: true,
+      source_posture_checks: [],
+      rules: [
+        {
+          name,
+          description: "",
+          sources: r?.groups || [],
+          destinations: r?.access_control_groups || [],
+          enabled: true,
+          bidirectional: false,
+          action: "accept",
+          protocol: "all",
+          ports: [],
+        },
+      ],
+    };
+    console.log(newPolicy);
+    setNewPolicy(newPolicy);
+    setRoutePolicyModal(true);
+  };
 
   return (
     <>
-      <Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
+      <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
         {children && <ModalTrigger asChild>{children}</ModalTrigger>}
-        {modal && <RouteModalContent onSuccess={() => setModal(false)} />}
+        {open && (
+          <RouteModalContent
+            onSuccess={async (r) => {
+              await handleCreatePolicyPrompt(r);
+              setOpen?.(false);
+            }}
+          />
+        )}
+      </Modal>
+
+      <Modal open={routePolicyModal} onOpenChange={setRoutePolicyModal}>
+        {routePolicyModal && newPolicy != undefined && (
+          <AccessControlModalContent
+            onSuccess={() => {
+              router.push("/access-control");
+            }}
+            policy={newPolicy}
+          />
+        )}
       </Modal>
     </>
   );
@@ -82,7 +148,9 @@ export function RouteModalContent({
   isFirstExitNode = false,
 }: ModalProps) {
   const { createRoute } = useRoutes();
-  const [tab, setTab] = useState("network");
+  const [tab, setTab] = useState(
+    exitNode && peer ? "access-control" : "network",
+  );
 
   /**
    * Network Identifier, Description & Network Range
@@ -143,6 +211,17 @@ export function RouteModalContent({
   });
 
   /**
+   * Access Control Groups
+   */
+  const [
+    accessControlGroups,
+    setAccessControlGroups,
+    { getGroupsToUpdate: getAccessControlGroupsToUpdate },
+  ] = useGroupHelper({
+    initial: [],
+  });
+
+  /**
    * Additional Settings
    */
   const [enabled, setEnabled] = useState<boolean>(true);
@@ -153,20 +232,32 @@ export function RouteModalContent({
    * Create Route
    */
   const createRouteHandler = async () => {
+    // Create groups that do not exist
     const g1 = getAllRoutingGroupsToUpdate();
     const g2 = getGroupsToUpdate();
-    const createOrUpdateGroups = uniqBy([...g1, ...g2], "name").map(
+    const g3 = getAccessControlGroupsToUpdate();
+    const createOrUpdateGroups = uniqBy([...g1, ...g2, ...g3], "name").map(
       (g) => g.promise,
     );
     const createdGroups = await Promise.all(
       createOrUpdateGroups.map((call) => call()),
     );
-    const peerGroups = routingPeerGroups
-      .map((g) => {
-        const find = createdGroups.find((group) => group.name === g.name);
-        return find?.id;
-      })
-      .filter((g) => g !== undefined) as string[];
+
+    // Check if routing peer is selected
+    const useSinglePeer = peerTab === "routing-peer";
+
+    // Get group ids of peer groups
+    let peerGroups: string[] = [];
+    if (!useSinglePeer) {
+      peerGroups = routingPeerGroups
+        .map((g) => {
+          const find = createdGroups.find((group) => group.name === g.name);
+          return find?.id;
+        })
+        .filter((g) => g !== undefined) as string[];
+    }
+
+    // Get distribution group ids
     const groupIds = groups
       .map((g) => {
         const find = createdGroups.find((group) => group.name === g.name);
@@ -174,7 +265,16 @@ export function RouteModalContent({
       })
       .filter((g) => g !== undefined) as string[];
 
-    const useSinglePeer = peerTab === "routing-peer";
+    let accessControlGroupIds: string[] | undefined = undefined;
+    if (accessControlGroups.length > 0) {
+      accessControlGroupIds = accessControlGroups
+        .map((g) => {
+          const find = createdGroups.find((group) => group.name === g.name);
+          return find?.id;
+        })
+        .filter((g) => g !== undefined) as string[];
+    }
+
     const domainRouteNames =
       routeType === "domains"
         ? domainRoutes.map((d) => d.name).filter((d) => d !== "")
@@ -194,6 +294,7 @@ export function RouteModalContent({
         metric: Number(metric) || 9999,
         masquerade: masquerade,
         groups: groupIds,
+        access_control_groups: accessControlGroupIds || undefined,
       },
       onSuccess,
     );
@@ -215,6 +316,10 @@ export function RouteModalContent({
     if (!validCIDR) return "Please enter a valid CIDR, e.g., 192.168.1.0/24";
   }, [networkRange]);
 
+  const isGroupsEntered = useMemo(() => {
+    return groups.length > 0;
+  }, [groups]);
+
   /**
    * Allow to create route only when all fields are filled
    */
@@ -223,7 +328,6 @@ export function RouteModalContent({
       (cidrError && cidrError.length > 1) ||
       (peerTab === "peer-group" && routingPeerGroups.length == 0) ||
       (peerTab === "routing-peer" && !routingPeer) ||
-      groups.length == 0 ||
       !isDomainOrRangeEntered
     );
   }, [
@@ -231,7 +335,6 @@ export function RouteModalContent({
     peerTab,
     routingPeerGroups.length,
     routingPeer,
-    groups,
     isDomainOrRangeEntered,
   ]);
 
@@ -255,8 +358,13 @@ export function RouteModalContent({
     return isNetworkEntered && isNameEntered && metricError == "";
   }, [isNetworkEntered, isNameEntered, metricError]);
 
+  const singleRoutingPeerGroups = useMemo(() => {
+    if (!routingPeer) return [];
+    return routingPeer?.groups;
+  }, [routingPeer]);
+
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
+    <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         icon={
           exitNode ? (
@@ -285,21 +393,33 @@ export function RouteModalContent({
 
       <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
         <TabsList justify={"start"} className={"px-8"}>
-          <TabsTrigger
-            value={"network"}
-            onClick={() => networkRangeRef.current?.focus()}
-          >
-            <RouteIcon
+          {!(exitNode && peer) && (
+            <TabsTrigger
+              value={"network"}
+              onClick={() => networkRangeRef.current?.focus()}
+            >
+              <RouteIcon
+                size={16}
+                className={
+                  "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+                }
+              />
+              Route
+            </TabsTrigger>
+          )}
+
+          <TabsTrigger value={"access-control"} disabled={!isNetworkEntered}>
+            <FolderGit2
               size={16}
               className={
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Route
+            Groups
           </TabsTrigger>
           <TabsTrigger
             value={"general"}
-            disabled={!isNetworkEntered}
+            disabled={!isGroupsEntered}
             onClick={() => nameRef.current?.focus()}
           >
             <Text
@@ -312,7 +432,7 @@ export function RouteModalContent({
           </TabsTrigger>
           <TabsTrigger
             value={"settings"}
-            disabled={!isNetworkEntered || !isNameEntered}
+            disabled={!isNetworkEntered || !isNameEntered || !isGroupsEntered}
           >
             <Settings2
               size={16}
@@ -324,7 +444,7 @@ export function RouteModalContent({
           </TabsTrigger>
         </TabsList>
         <TabsContent value={"network"} className={"pb-8"}>
-          <div className={"px-8 flex-col flex gap-6"}>
+          <div className={"px-8 flex-col flex gap-4"}>
             <div className={cn(exitNode && "hidden")}>
               <Label>Route Type</Label>
               <HelpText>
@@ -365,6 +485,7 @@ export function RouteModalContent({
                   customPrefix={<NetworkIcon size={16} />}
                   placeholder={"e.g., 172.16.0.0/16"}
                   value={networkRange}
+                  data-cy={"network-range"}
                   className={"font-mono !text-[13px]"}
                   error={cidrError}
                   onChange={(e) => setNetworkRange(e.target.value)}
@@ -377,7 +498,7 @@ export function RouteModalContent({
                 <Label>Domains</Label>
                 <HelpText>
                   Add domains that dynamically resolve to one or more IPv4
-                  addresses
+                  addresses. <br /> A maximum of 32 domains can be added.
                 </HelpText>
                 <div>
                   {domainRoutes.length > 0 && (
@@ -388,6 +509,7 @@ export function RouteModalContent({
                             <InputDomain
                               key={domain.id}
                               value={domain}
+                              data-cy={`domain-input-${i}`}
                               onChange={(d) =>
                                 setDomainRoutes({
                                   type: "UPDATE",
@@ -412,6 +534,8 @@ export function RouteModalContent({
                     variant={"dotted"}
                     className={"w-full"}
                     size={"sm"}
+                    disabled={domainRoutes.length === 32}
+                    data-cy={"add-domain"}
                     onClick={() => setDomainRoutes({ type: "ADD" })}
                   >
                     <PlusIcon size={14} />
@@ -428,6 +552,7 @@ export function RouteModalContent({
                         to active resources remain uninterrupted.
                       </div>
                     }
+                    className={"w-full block"}
                   >
                     <FancyToggleSwitch
                       value={keepRoute}
@@ -499,7 +624,10 @@ export function RouteModalContent({
                 </SegmentedTabs.Content>
               </SegmentedTabs>
             )}
-
+          </div>
+        </TabsContent>
+        <TabsContent value={"access-control"} className={"pb-8"}>
+          <div className={"px-8 flex-col flex gap-6"}>
             <div>
               <Label>Distribution Groups</Label>
               <HelpText>
@@ -510,6 +638,18 @@ export function RouteModalContent({
                   : "Advertise this route to peers that belong to the following groups"}
               </HelpText>
               <PeerGroupSelector onChange={setGroups} values={groups} />
+            </div>
+            <div>
+              <Label>Access Control Groups (optional)</Label>
+              <HelpText>
+                These groups allow you to limit access to this route. Simply use
+                these groups as a destination when creating access policies.
+              </HelpText>
+              <PeerGroupSelector
+                dataCy={"access-control-groups-selector"}
+                onChange={setAccessControlGroups}
+                values={accessControlGroups}
+              />
             </div>
           </div>
         </TabsContent>
@@ -523,6 +663,7 @@ export function RouteModalContent({
               <Input
                 error={networkIdentifierError}
                 autoFocus={true}
+                data-cy={"network-identifier"}
                 tabIndex={0}
                 ref={nameRef}
                 placeholder={"e.g., aws-eu-central-1-vpc"}
@@ -536,6 +677,7 @@ export function RouteModalContent({
                 Write a short description to add more context to this route.
               </HelpText>
               <Textarea
+                data-cy={"description"}
                 placeholder={
                   "e.g., Route to access all devices in the AWS VPC, located in Frankfurt."
                 }
@@ -589,6 +731,7 @@ export function RouteModalContent({
                 maxWidthClass={"max-w-[200px]"}
                 value={metric}
                 error={metricError}
+                data-cy={"metric"}
                 errorTooltip={true}
                 type={"number"}
                 onChange={(e) => setMetric(e.target.value)}
@@ -628,8 +771,17 @@ export function RouteModalContent({
             </ModalClose>
           )}
 
-          {tab == "general" && (
+          {tab == "access-control" && (
             <Button variant={"secondary"} onClick={() => setTab("network")}>
+              Back
+            </Button>
+          )}
+
+          {tab == "general" && (
+            <Button
+              variant={"secondary"}
+              onClick={() => setTab("access-control")}
+            >
               Back
             </Button>
           )}
@@ -643,8 +795,17 @@ export function RouteModalContent({
           {tab == "network" && (
             <Button
               variant={"primary"}
-              onClick={() => setTab("general")}
+              onClick={() => setTab("access-control")}
               disabled={!isNetworkEntered}
+            >
+              Continue
+            </Button>
+          )}
+          {tab == "access-control" && (
+            <Button
+              variant={"primary"}
+              onClick={() => setTab("general")}
+              disabled={!isGroupsEntered}
             >
               Continue
             </Button>
@@ -662,6 +823,7 @@ export function RouteModalContent({
             <Button
               variant={"primary"}
               disabled={!canCreateOrSave}
+              data-cy={"submit-route"}
               onClick={createRouteHandler}
             >
               <PlusCircle size={16} />

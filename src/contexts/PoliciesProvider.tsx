@@ -15,11 +15,14 @@ const PoliciesContext = React.createContext(
       onSuccess?: (p: Policy) => void,
       message?: string,
     ) => void;
+    createPolicy: (policy: Policy) => Promise<Policy>;
   },
 );
 
 export default function PoliciesProvider({ children }: Props) {
   const request = useApiCall<Policy>("/policies");
+
+  const createPolicy = async (policy: Policy) => request.post(policy);
 
   const updatePolicy = async (
     policy: Policy,
@@ -29,9 +32,8 @@ export default function PoliciesProvider({ children }: Props) {
   ) => {
     notify({
       title: "Access Control Policy " + policy.name,
-      description: message
-        ? message
-        : "The access control policy was successfully updated",
+      description:
+        message || "The access control policy was successfully updated",
       promise: request
         .put(
           {
@@ -55,7 +57,7 @@ export default function PoliciesProvider({ children }: Props) {
   };
 
   return (
-    <PoliciesContext.Provider value={{ updatePolicy }}>
+    <PoliciesContext.Provider value={{ updatePolicy, createPolicy }}>
       {children}
     </PoliciesContext.Provider>
   );

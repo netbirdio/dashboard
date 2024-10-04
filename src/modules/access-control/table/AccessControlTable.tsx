@@ -31,6 +31,7 @@ import AccessControlSourcesCell from "@/modules/access-control/table/AccessContr
 type Props = {
   policies?: Policy[];
   isLoading: boolean;
+  headingTarget?: HTMLHeadingElement | null;
 };
 
 export const AccessControlTableColumns: ColumnDef<Policy>[] = [
@@ -161,7 +162,11 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
   },
 ];
 
-export default function AccessControlTable({ policies, isLoading }: Props) {
+export default function AccessControlTable({
+  policies,
+  isLoading,
+  headingTarget,
+}: Props) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -191,8 +196,9 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
         />
       )}
       <DataTable
+        headingTarget={headingTarget}
         isLoading={isLoading}
-        text={"Access Control"}
+        text={"Access Control Policies"}
         sorting={sorting}
         setSorting={setSorting}
         columns={AccessControlTableColumns}
@@ -222,12 +228,14 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
               "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports."
             }
             button={
-              <AccessControlModal>
-                <Button variant={"primary"} className={""}>
-                  <PlusCircle size={16} />
-                  Add Policy
-                </Button>
-              </AccessControlModal>
+              <div className={"flex gap-4 items-center justify-center"}>
+                <AccessControlModal>
+                  <Button variant={"primary"} className={""}>
+                    <PlusCircle size={16} />
+                    Add Policy
+                  </Button>
+                </AccessControlModal>
+              </div>
             }
             learnMore={
               <>
@@ -246,12 +254,14 @@ export default function AccessControlTable({ policies, isLoading }: Props) {
         rightSide={() => (
           <>
             {policies && policies?.length > 0 && (
-              <AccessControlModal>
-                <Button variant={"primary"} className={"ml-auto"}>
-                  <PlusCircle size={16} />
-                  Add Policy
-                </Button>
-              </AccessControlModal>
+              <div className={"flex ml-auto gap-4"}>
+                <AccessControlModal>
+                  <Button variant={"primary"} className={"ml-auto"}>
+                    <PlusCircle size={16} />
+                    Add Policy
+                  </Button>
+                </AccessControlModal>
+              </div>
             )}
           </>
         )}

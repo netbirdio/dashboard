@@ -31,7 +31,7 @@ export default function FancyToggleSwitch({
         value
           ? "border-nb-gray-800 bg-nb-gray-900/70"
           : "border-nb-gray-800 bg-nb-gray-900/30 hover:bg-nb-gray-900/40",
-        disabled && "opacity-30 pointer-events-none",
+        disabled && "opacity-50 pointer-events-none",
       )}
     >
       <div className={"flex justify-between gap-10  "}>

@@ -5,32 +5,27 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
-import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import { isEmpty } from "lodash";
 import { ExternalLinkIcon, LayoutList, ShieldCheck, Text } from "lucide-react";
 import React, { useState } from "react";
-import { useSWRConfig } from "swr";
-import {
-  GeoLocationCheck,
-  OperatingSystemVersionCheck,
-  PostureCheck,
-} from "@/interfaces/PostureCheck";
+import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckGeoLocation } from "@/modules/posture-checks/checks/PostureCheckGeoLocation";
 import { PostureCheckNetBirdVersion } from "@/modules/posture-checks/checks/PostureCheckNetBirdVersion";
 import { PostureCheckOperatingSystem } from "@/modules/posture-checks/checks/PostureCheckOperatingSystem";
 import { PostureCheckPeerNetworkRange } from "@/modules/posture-checks/checks/PostureCheckPeerNetworkRange";
 import { PostureCheckProcess } from "@/modules/posture-checks/checks/PostureCheckProcess";
+import { usePostureCheck } from "@/modules/posture-checks/usePostureCheck";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSuccess?: (check: PostureCheck) => void;
   postureCheck?: PostureCheck;
+  useSave?: boolean;
 };
 
 export default function PostureCheckModal({
@@ -38,109 +33,28 @@ export default function PostureCheckModal({
   onOpenChange,
   onSuccess,
   postureCheck,
+  useSave = true,
 }: Props) {
-  const postureCheckRequest = useApiCall<PostureCheck>("/posture-checks");
-  const { mutate } = useSWRConfig();
+  const {
+    state: check,
+    dispatch: setCheck,
+    updateOrCreateAndNotify: updateOrCreate,
+  } = usePostureCheck({
+    postureCheck,
+    onSuccess,
+  });
 
-  const [name, setName] = useState(postureCheck?.name || "");
-  const [description, setDescription] = useState(
-    postureCheck?.description || "",
-  );
-
-  const [nbVersionCheck, setNbVersionCheck] = useState(
-    postureCheck?.checks.nb_version_check || undefined,
-  );
-  const [geoLocationCheck, setGeoLocationCheckCheck] = useState(
-    postureCheck?.checks.geo_location_check || undefined,
-  );
-  const [osVersionCheck, setOsVersionCheck] = useState(
-    postureCheck?.checks.os_version_check || undefined,
-  );
-  const [peerNetworkRangeCheck, setPeerNetworkRangeCheck] = useState(
-    postureCheck?.checks.peer_network_range_check || undefined,
-  );
-  const [processCheck, setProcessCheck] = useState(
-    postureCheck?.checks.process_check || undefined,
-  );
-
-  const validateOSCheck = (osCheck?: OperatingSystemVersionCheck) => {
-    if (!osCheck) return;
-    const os = osCheck;
-    if (os.darwin && os.darwin.min_version == "") os.darwin.min_version = "0";
-    if (os.android && os.android.min_version == "")
-      os.android.min_version = "0";
-    if (os.windows && os.windows.min_kernel_version == "")
-      os.windows.min_kernel_version = "0";
-    if (os.linux && os.linux.min_kernel_version == "")
-      os.linux.min_kernel_version = "0";
-    if (os.ios && os.ios.min_version == "") os.ios.min_version = "0";
-    return os;
-  };
-
-  const validateLocationCheck = (locationCheck?: GeoLocationCheck) => {
-    if (!locationCheck) return;
-    if (!locationCheck.locations) return;
-    return {
-      action: locationCheck.action,
-      locations: locationCheck.locations.map((location) => {
-        if (location.city_name == "")
-          return { country_code: location.country_code };
-        return {
-          country_code: location.country_code,
-          city_name: location.city_name,
-        };
-      }),
-    };
-  };
-
-  const updateOrCreatePostureCheck = () => {
-    const newData = {
-      name,
-      description,
-      checks: {
-        nb_version_check: nbVersionCheck,
-        geo_location_check: validateLocationCheck(geoLocationCheck),
-        os_version_check: validateOSCheck(osVersionCheck),
-        peer_network_range_check: peerNetworkRangeCheck,
-        process_check: processCheck,
-      },
-    };
-
-    const updateOrCreate = !postureCheck
-      ? () =>
-          postureCheckRequest.post(newData).then((check: PostureCheck) => {
-            mutate("/posture-checks");
-            onSuccess?.(check);
-            onOpenChange(false);
-          })
-      : () =>
-          postureCheckRequest
-            .put({ ...newData, id: postureCheck.id }, `/${postureCheck.id}`)
-            .then((check: PostureCheck) => {
-              mutate("/posture-checks").then();
-              onSuccess?.(check);
-              onOpenChange(false);
-            });
-
-    notify({
-      title: `Posture Check ${newData.name}`,
-      description: `Posture Check was ${
-        postureCheck ? "updated" : "created"
-      } successfully.`,
-      loadingMessage: `${
-        postureCheck ? "Updating" : "Creating"
-      } your posture check...`,
-      promise: updateOrCreate(),
-    });
+  const close = () => {
+    onSuccess && onSuccess(check);
   };
 
   const isAtLeastOneCheckEnabled =
-    !!nbVersionCheck ||
-    !!geoLocationCheck ||
-    !!osVersionCheck ||
-    !!peerNetworkRangeCheck ||
-    !!processCheck;
-  const canCreate = !isEmpty(name) && isAtLeastOneCheckEnabled;
+    !!check?.checks?.nb_version_check ||
+    !!check?.checks?.geo_location_check ||
+    !!check?.checks?.os_version_check ||
+    !!check?.checks?.peer_network_range_check ||
+    !!check?.checks.process_check;
+  const canCreate = !isEmpty(check?.name) && isAtLeastOneCheckEnabled;
 
   const [tab, setTab] = useState("checks");
 
@@ -186,24 +100,49 @@ export default function PostureCheckModal({
             <TabsContent value={"checks"} className={"pb-6 px-8"}>
               <>
                 <PostureCheckNetBirdVersion
-                  value={nbVersionCheck}
-                  onChange={setNbVersionCheck}
+                  value={check?.checks?.nb_version_check}
+                  onChange={(v) =>
+                    setCheck({
+                      type: "version",
+                      payload: v,
+                    })
+                  }
                 />
                 <PostureCheckGeoLocation
-                  value={geoLocationCheck}
-                  onChange={setGeoLocationCheckCheck}
+                  value={check?.checks?.geo_location_check}
+                  onChange={(v) =>
+                    setCheck({
+                      type: "location",
+                      payload: v,
+                    })
+                  }
                 />
                 <PostureCheckPeerNetworkRange
-                  value={peerNetworkRangeCheck}
-                  onChange={setPeerNetworkRangeCheck}
+                  value={check?.checks?.peer_network_range_check}
+                  onChange={(v) =>
+                    setCheck({
+                      type: "network_range",
+                      payload: v,
+                    })
+                  }
                 />
                 <PostureCheckOperatingSystem
-                  value={osVersionCheck}
-                  onChange={setOsVersionCheck}
+                  value={check?.checks?.os_version_check}
+                  onChange={(v) =>
+                    setCheck({
+                      type: "os",
+                      payload: v,
+                    })
+                  }
                 />
                 <PostureCheckProcess
-                  value={processCheck}
-                  onChange={setProcessCheck}
+                  value={check?.checks?.process_check}
+                  onChange={(v) =>
+                    setCheck({
+                      type: "process_check",
+                      payload: v,
+                    })
+                  }
                 />
               </>
             </TabsContent>
@@ -217,8 +156,13 @@ export default function PostureCheckModal({
                   <Input
                     autoFocus={true}
                     tabIndex={0}
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
+                    value={check?.name}
+                    onChange={(e) =>
+                      setCheck({
+                        type: "name",
+                        payload: e.target.value,
+                      })
+                    }
                     placeholder={"e.g., NetBird Version > 0.25.0"}
                   />
                 </div>
@@ -229,8 +173,13 @@ export default function PostureCheckModal({
                     policy.
                   </HelpText>
                   <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
+                    value={check?.description}
+                    onChange={(e) =>
+                      setCheck({
+                        type: "description",
+                        payload: e.target.value,
+                      })
+                    }
                     placeholder={
                       "e.g., Check if the NetBird version is bigger than 0.25.0"
                     }
@@ -288,7 +237,13 @@ export default function PostureCheckModal({
                   <Button
                     variant={"primary"}
                     disabled={!canCreate}
-                    onClick={updateOrCreatePostureCheck}
+                    onClick={() => {
+                      if (useSave) {
+                        updateOrCreate();
+                      } else {
+                        close();
+                      }
+                    }}
                   >
                     {postureCheck ? "Save Changes" : "Create Posture Check"}
                   </Button>

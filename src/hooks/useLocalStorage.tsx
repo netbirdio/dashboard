@@ -19,7 +19,10 @@ type SetValue<T> = Dispatch<SetStateAction<T>>;
 export function useLocalStorage<T>(
   key: string,
   initialValue: T,
+  enabled: boolean = true,
 ): [T, SetValue<T>] {
+  const [tempValue, setTempValue] = useState(initialValue);
+
   // Get from local storage then
   // parse stored json or return initialValue
   const readValue = useCallback((): T => {
@@ -39,11 +42,18 @@ export function useLocalStorage<T>(
 
   // State to store our value
   // Pass initial state function to useState so logic is only executed once
-  const [storedValue, setStoredValue] = useState<T>(readValue);
+  const [storedValue, setStoredValue] = useState<T>(
+    enabled ? readValue : initialValue,
+  );
 
   // Return a wrapped version of useState's setter function that ...
   // ... persists the new value to localStorage.
   const setValue: SetValue<T> = useEventCallback((value) => {
+    if (!enabled) {
+      setStoredValue(value);
+      return;
+    }
+
     // Prevent build error "window is undefined" but keeps working
     if (typeof window === "undefined") {
       console.warn(
@@ -69,12 +79,14 @@ export function useLocalStorage<T>(
   });
 
   useEffect(() => {
+    if (!enabled) return;
     setStoredValue(readValue());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleStorageChange = useCallback(
     (event: StorageEvent | CustomEvent) => {
+      if (!enabled) return;
       if ((event as StorageEvent)?.key && (event as StorageEvent).key !== key) {
         return;
       }
@@ -90,6 +102,9 @@ export function useLocalStorage<T>(
   // See: useLocalStorage()
   useEventListener("local-storage", handleStorageChange);
 
+  if (!enabled) {
+    return [tempValue, setTempValue];
+  }
   return [storedValue, setValue];
 }
 

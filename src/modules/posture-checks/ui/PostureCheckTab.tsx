@@ -43,53 +43,59 @@ export const PostureCheckTab = ({
   const [browseModal, setBrowseModal] = useState(false);
   const [currentEditCheck, setCurrentEditCheck] = useState<PostureCheck>();
 
-  return isLoading ? (
-    <TabsContent
-      value={"posture_checks"}
-      className={"px-8 pb-8 mt-3 gap-2 flex flex-col"}
-    >
-      <Skeleton width={"100%"} height={41} />
-      <Skeleton width={"100%"} height={42} />
-      <Skeleton width={"100%"} height={42} />
-      <Skeleton width={"100%"} height={41} />
-    </TabsContent>
-  ) : (
-    <TabsContent value={"posture_checks"} className={"px-8 pb-8 mt-3"}>
-      {checkModal && (
-        <PostureCheckModal
-          open={checkModal}
-          onOpenChange={setCheckModal}
-          onSuccess={(check) => addPostureChecks([check])}
-          postureCheck={currentEditCheck}
-        />
+  return (
+    <TabsContent value={"posture_checks"} className={"px-8 pb-8 mt-3 relative"}>
+      {isLoading && (
+        <div className={"flex flex-col gap-2"}>
+          <Skeleton width={"100%"} height={41} />
+          <Skeleton width={"100%"} height={42} />
+          <Skeleton width={"100%"} height={42} />
+          <Skeleton width={"100%"} height={41} />
+        </div>
       )}
 
-      {browseModal && (
-        <PostureCheckBrowseModal
-          open={browseModal}
-          onOpenChange={setBrowseModal}
-          onSuccess={(check) => addPostureChecks(check)}
-        />
-      )}
+      {!isLoading && (
+        <>
+          {checkModal && (
+            <PostureCheckModal
+              open={checkModal}
+              onOpenChange={setCheckModal}
+              onSuccess={(check) => {
+                addPostureChecks([check]);
+                setCheckModal(false);
+              }}
+              postureCheck={currentEditCheck}
+            />
+          )}
 
-      <div className={"flex flex-col gap-3"}>
-        <PostureCheckMinimalTable
-          data={postureChecks}
-          onEditClick={(check) => {
-            setCurrentEditCheck(check);
-            setCheckModal(true);
-          }}
-          onAddClick={() => {
-            setCurrentEditCheck(undefined);
-            setCheckModal(true);
-          }}
-          onBrowseClick={() => {
-            setCurrentEditCheck(undefined);
-            setBrowseModal(true);
-          }}
-          onRemoveClick={removePostureCheck}
-        />
-      </div>
+          {browseModal && (
+            <PostureCheckBrowseModal
+              open={browseModal}
+              onOpenChange={setBrowseModal}
+              onSuccess={(check) => addPostureChecks(check)}
+            />
+          )}
+
+          <div className={"flex flex-col gap-3"}>
+            <PostureCheckMinimalTable
+              data={postureChecks}
+              onEditClick={(check) => {
+                setCurrentEditCheck(check);
+                setCheckModal(true);
+              }}
+              onAddClick={() => {
+                setCurrentEditCheck(undefined);
+                setCheckModal(true);
+              }}
+              onBrowseClick={() => {
+                setCurrentEditCheck(undefined);
+                setBrowseModal(true);
+              }}
+              onRemoveClick={removePostureCheck}
+            />
+          </div>
+        </>
+      )}
     </TabsContent>
   );
 };

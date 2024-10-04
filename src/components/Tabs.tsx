@@ -57,15 +57,15 @@ const TabsList = React.forwardRef<
     )}
     {...props}
   >
-    <ScrollArea>
-      <div className={"relative z-[1] flex flex-nowrap"}>{props.children}</div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
     <span
       className={
         "absolute left-0 dark:bg-nb-gray-900 bg-nb-gray-100 w-full h-[1px] bottom-0 z-0"
       }
     />
+    <ScrollArea>
+      <div className={"relative z-[1] flex flex-nowrap"}>{props.children}</div>
+      <ScrollBar orientation="horizontal" />
+    </ScrollArea>
   </TabsPrimitive.List>
 ));
 TabsList.displayName = TabsPrimitive.List.displayName;

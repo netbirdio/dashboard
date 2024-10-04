@@ -16,6 +16,7 @@ export interface NotifyProps<T> {
   duration?: number;
   icon?: React.ReactNode;
   backgroundColor?: string;
+  preventSuccessToast?: boolean;
 }
 interface NotificationProps<T> extends NotifyProps<T> {
   t: Toast;
@@ -29,11 +30,14 @@ export default function Notification<T>({
   promise,
   loadingMessage,
   duration = 3500,
+  preventSuccessToast = false,
 }: NotificationProps<T>) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(!!promise);
 
   const [toastDuration] = useState(duration);
+
+  const [preventSuccess, setPreventSuccess] = useState(false);
 
   const closeToast = () => {
     setTimeout(() => {
@@ -47,6 +51,7 @@ export default function Notification<T>({
     if (promise) {
       promise
         .then(() => {
+          if (preventSuccessToast) setPreventSuccess(true);
           setLoading(false);
           closeToast();
         })
@@ -66,7 +71,7 @@ export default function Notification<T>({
 
   return (
     <AnimatePresence>
-      {t.visible && (
+      {t.visible && !preventSuccess && (
         <motion.div
           initial={{ opacity: 1, y: -50 }}
           animate={{ opacity: 1, y: 0 }}

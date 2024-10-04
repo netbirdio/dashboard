@@ -91,6 +91,7 @@ export default function AccessTokensTable({ user }: Props) {
               text={"Access Tokens"}
               tableClassName={"mt-0"}
               minimal={true}
+              showSearchAndFilters={false}
               inset={false}
               sorting={sorting}
               setSorting={setSorting}
@@ -98,8 +99,9 @@ export default function AccessTokensTable({ user }: Props) {
               data={tokens}
             />
           ) : (
-            <div className={"py-3 bg-nb-gray-950 overflow-hidden"}>
+            <div className={"bg-nb-gray-950 overflow-hidden"}>
               <NoResults
+                className={"py-3"}
                 title={"No access tokens"}
                 description={
                   "You don't have any access tokens yet. You can add a token to access the NetBird API."

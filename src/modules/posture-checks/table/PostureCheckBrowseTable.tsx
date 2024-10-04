@@ -113,6 +113,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
+          variant={"tableCell"}
         />
       </div>
     ),

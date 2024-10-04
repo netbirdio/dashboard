@@ -1,4 +1,5 @@
 import { ToggleSwitch } from "@components/ToggleSwitch";
+import { cloneDeep } from "@utils/helpers";
 import React, { useMemo } from "react";
 import { mutate } from "swr";
 import { usePolicies } from "@/contexts/PoliciesProvider";
@@ -8,7 +9,7 @@ import { Policy } from "@/interfaces/Policy";
 type Props = {
   policy: Policy;
 };
-export default function AccessControlActiveCell({ policy }: Props) {
+export default function AccessControlActiveCell({ policy }: Readonly<Props>) {
   const { updatePolicy } = usePolicies();
 
   const isChecked = useMemo(() => {
@@ -16,7 +17,7 @@ export default function AccessControlActiveCell({ policy }: Props) {
   }, [policy]);
 
   const update = async (enabled: boolean) => {
-    const rules = [...policy.rules];
+    const rules = cloneDeep(policy.rules);
     rules.forEach((rule) => {
       rule.enabled = enabled;
       rule.sources = rule.sources
@@ -26,8 +27,8 @@ export default function AccessControlActiveCell({ policy }: Props) {
           }) as string[])
         : [];
       rule.destinations = rule.destinations
-        ? (rule.destinations.map((source) => {
-            const group = source as Group;
+        ? (rule.destinations.map((destination) => {
+            const group = destination as Group;
             return group.id;
           }) as string[])
         : [];

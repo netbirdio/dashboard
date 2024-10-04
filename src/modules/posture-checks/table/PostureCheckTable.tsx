@@ -26,6 +26,7 @@ import { PostureCheckPolicyUsageCell } from "@/modules/posture-checks/table/cell
 type Props = {
   isLoading: boolean;
   postureChecks: PostureCheck[] | undefined;
+  headingTarget?: HTMLHeadingElement | null;
 };
 
 const Columns: ColumnDef<PostureCheck>[] = [
@@ -64,7 +65,11 @@ const Columns: ColumnDef<PostureCheck>[] = [
   },
 ];
 
-export default function PostureCheckTable({ postureChecks, isLoading }: Props) {
+export default function PostureCheckTable({
+  postureChecks,
+  isLoading,
+  headingTarget,
+}: Props) {
   const { data: policies } = useFetchApi<Policy[]>("/policies");
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -76,7 +81,8 @@ export default function PostureCheckTable({ postureChecks, isLoading }: Props) {
       if (!policies) return check;
       const usage = policies?.filter((policy) => {
         if (!policy.source_posture_checks) return false;
-        return policy.source_posture_checks.includes(checkId);
+        let checks = policy.source_posture_checks as string[];
+        return checks.includes(checkId);
       });
       const isOnePolicyEnabled = usage.some((policy) => policy.enabled);
       return {
@@ -109,11 +115,13 @@ export default function PostureCheckTable({ postureChecks, isLoading }: Props) {
           open={postureCheckModal}
           key={currentRow ? 1 : 0}
           onOpenChange={setPostureCheckModal}
+          onSuccess={() => setPostureCheckModal(false)}
           postureCheck={currentRow}
         />
       )}
 
       <DataTable
+        headingTarget={headingTarget}
         isLoading={isLoading}
         text={"Posture Check"}
         sorting={sorting}
@@ -174,7 +182,10 @@ export default function PostureCheckTable({ postureChecks, isLoading }: Props) {
             learnMore={
               <>
                 Learn more about
-                <InlineLink href={"https://docs.netbird.io/how-to/manage-posture-checks"} target={"_blank"}>
+                <InlineLink
+                  href={"https://docs.netbird.io/how-to/manage-posture-checks"}
+                  target={"_blank"}
+                >
                   Posture Checks
                   <ExternalLinkIcon size={12} />
                 </InlineLink>

@@ -1,4 +1,5 @@
 import { type ClassValue, clsx } from "clsx";
+import deepClone from "lodash/cloneDeep";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -116,5 +117,17 @@ export function tryGetProcessNameFromPath(path: string) {
     return byForwardSlash || byBackSlash || path;
   } catch (e) {
     return path;
+  }
+}
+
+export function cloneDeep<T>(obj: T): T {
+  try {
+    return JSON.parse(JSON.stringify(obj));
+  } catch (e) {
+    try {
+      return deepClone(obj);
+    } catch (e) {
+      return obj;
+    }
   }
 }
