@@ -24,7 +24,7 @@ const RoutesContext = React.createContext(
   },
 );
 
-export default function RoutesProvider({ children }: Props) {
+export default function RoutesProvider({ children }: Readonly<Props>) {
   const routeRequest = useApiCall<Route>("/routes", true);
   const { mutate } = useSWRConfig();
 
@@ -38,9 +38,7 @@ export default function RoutesProvider({ children }: Props) {
 
     notify({
       title: "Network " + route.network_id + "-" + route.network,
-      description: message
-        ? message
-        : "The network route was successfully updated",
+      description: message ?? "The network route was successfully updated",
       promise: routeRequest
         .put(
           {
@@ -56,7 +54,10 @@ export default function RoutesProvider({ children }: Props) {
             metric: toUpdate.metric ?? route.metric ?? 9999,
             masquerade: toUpdate.masquerade ?? route.masquerade ?? true,
             groups: toUpdate.groups ?? route.groups ?? [],
-            access_control_groups: toUpdate.access_control_groups ?? undefined,
+            access_control_groups:
+              toUpdate.access_control_groups ??
+              route.access_control_groups ??
+              undefined,
           },
           `/${route.id}`,
         )
@@ -75,9 +76,7 @@ export default function RoutesProvider({ children }: Props) {
   ) => {
     notify({
       title: "Network " + route.network_id + "-" + route.network,
-      description: message
-        ? message
-        : "The network route was successfully created",
+      description: message ?? "The network route was successfully created",
       promise: routeRequest
         .post({
           network_id: route.network_id,

@@ -7,7 +7,7 @@ import { Route } from "@/interfaces/Route";
 type Props = {
   route: Route;
 };
-export default function RouteActiveCell({ route }: Props) {
+export default function RouteActiveCell({ route }: Readonly<Props>) {
   const { updateRoute } = useRoutes();
   const { mutate } = useSWRConfig();
 
