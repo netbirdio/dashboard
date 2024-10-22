@@ -9,7 +9,7 @@ export const getNetBirdUpCommand = () => {
     cmd += " --management-url " + GRPC_API_ORIGIN
   }
   if (!isNetBirdHosted()) {
-    let admin_url = window.location.protocol + "://" + window.location.hostname
+    let admin_url = window.location.protocol + "//" + window.location.hostname
     if (window.location.port != "") {
       admin_url += ":" + window.location.port
     }
