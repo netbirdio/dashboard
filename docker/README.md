@@ -7,11 +7,11 @@ NetBird Dashboard is NetBirds Management server UI. It allows users to signin, v
 ## How to use this image
 HTTP run:
 ```shell
-docker run -d --rm -p 80:80 wiretrustee/dashboard:main
+docker run -d --rm -p 80:8080 netbirdio/dashboard:main
 ```
 Using SSL certificate from Let's Encrypt®:
 ```shell
-docker run -d --rm -p 80:80 -p 443:443 \
+docker run -d --rm -p 80:8080 -p 443:8443 \
   -e LETSENCRYPT_DOMAIN=app.mydomain.com \
   -e LETSENCRYPT_EMAIL=hello@mydomain.com \
   netbirdio/dashboard:main
