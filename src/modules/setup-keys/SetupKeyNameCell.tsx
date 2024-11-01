@@ -5,7 +5,11 @@ type Props = {
   valid: boolean;
   secret?: string;
 };
-export default function SetupKeyNameCell({ name, valid, secret }: Props) {
+export default function SetupKeyNameCell({
+  name,
+  valid,
+  secret,
+}: Readonly<Props>) {
   return (
     <ActiveInactiveRow
       active={valid || false}

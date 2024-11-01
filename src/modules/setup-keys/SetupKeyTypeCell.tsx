@@ -5,7 +5,7 @@ import { Repeat1 } from "lucide-react";
 type Props = {
   reusable: boolean;
 };
-export default function SetupKeyTypeCell({ reusable }: Props) {
+export default function SetupKeyTypeCell({ reusable }: Readonly<Props>) {
   return (
     <div className={"flex"}>
       <Badge className={"text-xs"} variant={"gray"}>

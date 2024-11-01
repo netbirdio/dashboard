@@ -47,6 +47,14 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "setupkey.delete")
+    return (
+      <div className={"inline"}>
+        Setup-Key <Value> {m.name}</Value> with key <Value>{m.key}</Value> was
+        deleted
+      </div>
+    );
+
   if (event.activity_code == "setupkey.add")
     return (
       <div className={"inline"}>

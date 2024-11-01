@@ -8,6 +8,7 @@ import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
+import dayjs from "dayjs";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
@@ -15,6 +16,7 @@ import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { SetupKey } from "@/interfaces/SetupKey";
+import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import ExpirationDateRow from "@/modules/common-table-rows/ExpirationDateRow";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 import SetupKeyActionCell from "@/modules/setup-keys/SetupKeyActionCell";
@@ -94,7 +96,15 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Expires</DataTableHeader>;
     },
-    cell: ({ row }) => <ExpirationDateRow date={row.original.expires} />,
+    cell: ({ row }) => {
+      let expires = dayjs(row.original.expires);
+      let isNeverExpiring = expires?.year() == 1 || false;
+      return !isNeverExpiring ? (
+        <ExpirationDateRow date={row.original.expires} />
+      ) : (
+        <EmptyRow className={"px-3"} />
+      );
+    },
   },
 
   {
@@ -116,7 +126,7 @@ export default function SetupKeysTable({
   setupKeys,
   isLoading,
   headingTarget,
-}: Props) {
+}: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -219,6 +229,20 @@ export default function SetupKeysTable({
               <ButtonGroup.Button
                 onClick={() => {
                   table.setPageIndex(0);
+                  table.getColumn("valid")?.setFilterValue(undefined);
+                }}
+                disabled={setupKeys?.length == 0}
+                variant={
+                  table.getColumn("valid")?.getFilterValue() == undefined
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                All
+              </ButtonGroup.Button>
+              <ButtonGroup.Button
+                onClick={() => {
+                  table.setPageIndex(0);
                   table.getColumn("valid")?.setFilterValue(true);
                 }}
                 disabled={setupKeys?.length == 0}
@@ -233,16 +257,16 @@ export default function SetupKeysTable({
               <ButtonGroup.Button
                 onClick={() => {
                   table.setPageIndex(0);
-                  table.getColumn("valid")?.setFilterValue("");
+                  table.getColumn("valid")?.setFilterValue(false);
                 }}
                 disabled={setupKeys?.length == 0}
                 variant={
-                  table.getColumn("valid")?.getFilterValue() != true
+                  table.getColumn("valid")?.getFilterValue() == false
                     ? "tertiary"
                     : "secondary"
                 }
               >
-                All
+                Expired
               </ButtonGroup.Button>
             </ButtonGroup>
             <DataTableRowsPerPage

@@ -9,7 +9,7 @@ import GroupsRow from "@/modules/common-table-rows/GroupsRow";
 type Props = {
   setupKey: SetupKey;
 };
-export default function SetupKeyGroupsCell({ setupKey }: Props) {
+export default function SetupKeyGroupsCell({ setupKey }: Readonly<Props>) {
   const [modal, setModal] = useState(false);
   const request = useApiCall<SetupKey>("/setup-keys/" + setupKey.id);
   const { mutate } = useSWRConfig();
