@@ -5,7 +5,7 @@ type Props = {
   text: string;
 };
 
-export default function SetupKeyKeyCell({ text }: Props) {
+export default function SetupKeyKeyCell({ text }: Readonly<Props>) {
   return (
     <div className={"flex"}>
       <Badge variant={"gray"} className={"text-xs font-mono"}>

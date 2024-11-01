@@ -1,7 +1,7 @@
 import Button from "@components/Button";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
-import { Trash2 } from "lucide-react";
+import { Trash2, Undo2Icon } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -10,16 +10,26 @@ import { SetupKey } from "@/interfaces/SetupKey";
 type Props = {
   setupKey: SetupKey;
 };
-export default function SetupKeyActionCell({ setupKey }: Props) {
+export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
   const { confirm } = useDialog();
-  const deleteRequest = useApiCall<SetupKey>("/setup-keys/" + setupKey.id);
+  const request = useApiCall<SetupKey>("/setup-keys/" + setupKey.id);
   const { mutate } = useSWRConfig();
 
   const handleRevoke = async () => {
+    const choice = await confirm({
+      title: `Revoke '${setupKey?.name || "Setup Key"}'?`,
+      description:
+        "Are you sure you want to revoke the setup key? This action cannot be undone.",
+      confirmText: "Revoke",
+      cancelText: "Cancel",
+      type: "danger",
+    });
+    if (!choice) return;
+
     notify({
       title: setupKey?.name || "Setup Key",
       description: "Setup key was successfully revoked",
-      promise: deleteRequest
+      promise: request
         .put({
           name: setupKey?.name || "Setup Key",
           type: setupKey.type,
@@ -37,17 +47,26 @@ export default function SetupKeyActionCell({ setupKey }: Props) {
     });
   };
 
-  const handleConfirm = async () => {
+  const handleDelete = async () => {
     const choice = await confirm({
-      title: `Revoke '${setupKey?.name || "Setup Key"}'?`,
+      title: `Delete '${setupKey?.name || "Setup Key"}'?`,
       description:
-        "Are you sure you want to revoke the setup key? This action cannot be undone.",
-      confirmText: "Revoke",
+        "Are you sure you want to delete the setup key? This action cannot be undone.",
+      confirmText: "Delete",
       cancelText: "Cancel",
       type: "danger",
     });
     if (!choice) return;
-    handleRevoke().then();
+
+    notify({
+      title: setupKey?.name || "Setup Key",
+      description: "Setup key was successfully deleted",
+      promise: request.del().then(() => {
+        mutate("/setup-keys");
+        mutate("/groups");
+      }),
+      loadingMessage: "Deleting the setup key...",
+    });
   };
 
   return (
@@ -55,11 +74,15 @@ export default function SetupKeyActionCell({ setupKey }: Props) {
       <Button
         variant={"danger-outline"}
         size={"sm"}
-        onClick={handleConfirm}
+        onClick={handleRevoke}
         disabled={setupKey.revoked || !setupKey.valid}
       >
-        <Trash2 size={16} />
+        <Undo2Icon size={16} />
         Revoke
+      </Button>
+      <Button variant={"danger-outline"} size={"sm"} onClick={handleDelete}>
+        <Trash2 size={16} />
+        Delete
       </Button>
     </div>
   );

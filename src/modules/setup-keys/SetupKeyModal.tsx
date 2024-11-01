@@ -42,7 +42,11 @@ type Props = {
   setOpen: (open: boolean) => void;
 };
 const copyMessage = "Setup-Key was copied to your clipboard!";
-export default function SetupKeyModal({ children, open, setOpen }: Props) {
+export default function SetupKeyModal({
+  children,
+  open,
+  setOpen,
+}: Readonly<Props>) {
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const [, copy] = useCopyToClipboard(setupKey?.key);
@@ -131,7 +135,7 @@ type ModalProps = {
   onSuccess?: (setupKey: SetupKey) => void;
 };
 
-export function SetupKeyModalContent({ onSuccess }: ModalProps) {
+export function SetupKeyModalContent({ onSuccess }: Readonly<ModalProps>) {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { mutate } = useSWRConfig();
 
@@ -149,18 +153,10 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
     return reusable ? "Unlimited" : "1";
   }, [reusable]);
 
-  const expiresInError = useMemo(() => {
-    const expires = parseInt(expiresIn);
-    if (expires < 1 || expires > 365) {
-      return "Days should be between 1 and 365";
-    }
-    return "";
-  }, [expiresIn]);
-
   const isDisabled = useMemo(() => {
     const trimmedName = trim(name);
-    return trimmedName.length === 0 || expiresInError.length > 0;
-  }, [name, expiresInError]);
+    return trimmedName.length === 0;
+  }, [name]);
 
   const submit = () => {
     if (!selectedGroups) return;
@@ -174,7 +170,7 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
           .post({
             name,
             type: reusable ? "reusable" : "one-off",
-            expires_in: parseInt(expiresIn ? expiresIn : "7") * 24 * 60 * 60, // Days to seconds, defaults to 7 days
+            expires_in: parseInt(expiresIn || "0") * 24 * 60 * 60, // Days to seconds, defaults to 7 days
             revoked: false,
             auto_groups: groups.map((group) => group.id),
             usage_limit: reusable ? parseInt(usageLimit) : 1,
@@ -253,15 +249,16 @@ export function SetupKeyModalContent({ onSuccess }: ModalProps) {
         <div className={"flex justify-between"}>
           <div>
             <Label>Expires in</Label>
-            <HelpText>Should be between 1 and 365 days.</HelpText>
+            <HelpText>
+              Days until the key expires. <br />
+              Leave empty for no expiration.
+            </HelpText>
           </div>
           <Input
-            maxWidthClass={"max-w-[200px]"}
-            placeholder={"7"}
+            maxWidthClass={"max-w-[202px]"}
+            placeholder={"Unlimited"}
             min={1}
-            max={365}
             value={expiresIn}
-            error={expiresInError}
             errorTooltip={true}
             type={"number"}
             data-cy={"setup-key-expire-in-days"}
