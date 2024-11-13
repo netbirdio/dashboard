@@ -2,9 +2,10 @@ import Button from "@components/Button";
 import { CommandItem } from "@components/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
+import { isNetBirdHosted } from "@utils/netbird";
 import { Command, CommandGroup, CommandList } from "cmdk";
 import { trim } from "lodash";
-import { ChevronsUpDown, Cog, User2 } from "lucide-react";
+import { ChevronsUpDown, Cog, CreditCard, User2 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
@@ -37,6 +38,11 @@ const UserRoles = [
     name: "User",
     value: Role.User,
     icon: User2,
+  },
+  {
+    name: "Billing Admin",
+    value: Role.BillingAdmin,
+    icon: CreditCard,
   },
 ];
 
@@ -104,6 +110,7 @@ export function UserRoleSelector({
           disabled={disabled}
           ref={inputRef}
           className={"w-full"}
+          data-cy={"user-role-selector"}
         >
           <div className={"w-full flex justify-between items-center gap-2"}>
             {selectedRole && (
@@ -154,12 +161,15 @@ export function UserRoleSelector({
                 <div className={"grid grid-cols-1 gap-1"}>
                   {UserRoles.map((item) => {
                     if (!isOwner && item.value === Role.Owner) return null;
+                    if (item.value === Role.BillingAdmin && !isNetBirdHosted())
+                      return null;
                     if (hideOwner && item.value === Role.Owner) return null;
 
                     return (
                       <CommandItem
                         key={item.value}
                         value={item.value}
+                        data-cy={"user-role-selector-item"}
                         className={"py-1 px-2"}
                         onSelect={() => toggle(item.value)}
                         onClick={(e) => e.preventDefault()}

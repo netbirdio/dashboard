@@ -34,9 +34,8 @@ export default function UserDropdown() {
   };
 
   useHotkeys("shift+mod+l", () => logout(), []);
-
+  const { isOwnerOrAdmin, permission, isBillingAdmin } = useLoggedInUser();
   const [dropdownOpen, setDropdownOpen] = useState(false);
-  const { permission } = useLoggedInUser();
 
   return (
     <DropdownMenu

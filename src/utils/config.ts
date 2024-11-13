@@ -16,6 +16,7 @@ interface Config {
   dragQueryParams: boolean;
   hotjarTrackID: number;
   googleAnalyticsID: string;
+  authServiceUrl?: string;
 }
 
 /**
@@ -64,6 +65,7 @@ const loadConfig = (): Config => {
     dragQueryParams: configJson.dragQueryParams == "true", // Drags all the query params to the auth layer specified in the URL when accessing dashboard.
     hotjarTrackID: configJson.hotjarTrackID,
     googleAnalyticsID: configJson.googleAnalyticsID,
+    authServiceUrl: configJson?.authServiceUrl ?? undefined,
   } as Config;
 };
 

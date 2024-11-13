@@ -241,7 +241,7 @@ export function PeerGroupSelector({
             )}
           </div>
 
-          <div className={"pl-2"}>
+          <div className={"pl-2"} data-cy={"group-selector-open-close"}>
             <ChevronsUpDown
               size={18}
               className={"shrink-0 group-hover:text-nb-gray-300 transition-all"}
@@ -311,7 +311,10 @@ export function PeerGroupSelector({
 
             <CommandGroup>
               <ScrollArea
-                className={"max-h-[195px] flex flex-col gap-1 pl-2 py-2 pr-3"}
+                className={cn(
+                  "max-h-[195px] flex flex-col gap-1 pl-2 py-2 pr-3",
+                  sortedDropdownOptions.length == 0 && !search && "py-0",
+                )}
               >
                 {searchedGroupNotFound && (
                   <CommandItem

@@ -12,5 +12,6 @@
   "tokenSource": "$NETBIRD_TOKEN_SOURCE",
   "dragQueryParams": "$NETBIRD_DRAG_QUERY_PARAMS",
   "hotjarTrackID": "$NETBIRD_HOTJAR_TRACK_ID",
-  "googleAnalyticsID": "$NETBIRD_GOOGLE_ANALYTICS_ID"
+  "googleAnalyticsID": "$NETBIRD_GOOGLE_ANALYTICS_ID",
+  "authServiceUrl": "$NETBIRD_AUTH_SERVICE_URL"
 }

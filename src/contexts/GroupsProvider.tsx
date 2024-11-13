@@ -1,6 +1,5 @@
 import useFetchApi, { useApiCall } from "@utils/api";
 import { merge, sortBy, unionBy } from "lodash";
-import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
@@ -25,10 +24,9 @@ const GroupContext = React.createContext(
 );
 
 export default function GroupsProvider({ children }: Props) {
-  const path = usePathname();
   const { permission } = useLoggedInUser();
 
-  return path === "/peers" && permission.dashboard_view == "blocked" ? (
+  return permission.dashboard_view == "blocked" ? (
     <>{children}</>
   ) : (
     <GroupsProviderContent>{children}</GroupsProviderContent>

@@ -14,16 +14,23 @@ import { IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React from "react";
+import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { Group } from "@/interfaces/Group";
 import { NameserverSettings } from "@/interfaces/NameserverSettings";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useGroupIdsToGroups } from "@/modules/groups/useGroupIdsToGroups";
 
 export default function NameServerSettings() {
   const { data: settings, isLoading } =
     useFetchApi<NameserverSettings>("/dns/settings");
+
+  const initialDNSGroups = useGroupIdsToGroups(
+    settings?.disabled_management_groups,
+  );
 
   return (
     <PageContainer>
@@ -55,10 +62,16 @@ export default function NameServerSettings() {
           in our documentation.
         </Paragraph>
         <RestrictedAccess page={"DNS Settings"}>
-          {!isLoading && (
-            <SettingDisabledManagementGroups
-              initial={settings?.disabled_management_groups}
-            />
+          {!isLoading && initialDNSGroups !== undefined ? (
+            <SettingDisabledManagementGroups initialGroups={initialDNSGroups} />
+          ) : (
+            <div>
+              <Skeleton
+                width={"100%"}
+                className={"mt-8 max-w-xl"}
+                height={240}
+              />
+            </div>
           )}
         </RestrictedAccess>
       </div>
@@ -67,16 +80,16 @@ export default function NameServerSettings() {
 }
 
 const SettingDisabledManagementGroups = ({
-  initial,
+  initialGroups,
 }: {
-  initial: string[] | undefined;
+  initialGroups: Group[];
 }) => {
   const settingRequest = useApiCall<NameserverSettings>("/dns/settings");
   const { mutate } = useSWRConfig();
 
   const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
     useGroupHelper({
-      initial: initial || [],
+      initial: initialGroups,
     });
 
   const { hasChanges, updateRef: updateChangesRef } = useHasChanges([
@@ -108,6 +121,7 @@ const SettingDisabledManagementGroups = ({
           Peers in these groups will require manual domain name resolution
         </HelpText>
         <PeerGroupSelector
+          dataCy={"dns-groups-selector"}
           onChange={setSelectedGroups}
           values={selectedGroups}
         />
@@ -122,6 +136,7 @@ const SettingDisabledManagementGroups = ({
           size={"sm"}
           onClick={saveSettings}
           disabled={!hasChanges}
+          data-cy={"save-changes"}
         >
           Save Changes
         </Button>

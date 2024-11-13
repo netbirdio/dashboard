@@ -6,15 +6,15 @@ export const GRPC_API_ORIGIN = config.grpcApiOrigin;
 export const getNetBirdUpCommand = () => {
   let cmd = "netbird up";
   if (GRPC_API_ORIGIN) {
-    cmd += " --management-url " + GRPC_API_ORIGIN
+    cmd += " --management-url " + GRPC_API_ORIGIN;
   }
   if (!isNetBirdHosted()) {
-    let admin_url = window.location.protocol + "//" + window.location.hostname
+    let admin_url = window.location.protocol + "//" + window.location.hostname;
     if (window.location.port != "") {
-      admin_url += ":" + window.location.port
+      admin_url += ":" + window.location.port;
     }
-    cmd += " --admin-url " + admin_url
-  };
+    cmd += " --admin-url " + admin_url;
+  }
   return cmd;
 };
 

@@ -11,6 +11,7 @@ import {
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { Role } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 import { useAccount } from "@/modules/account/useAccount";
 import AuthenticationTab from "@/modules/settings/AuthenticationTab";
@@ -52,7 +53,10 @@ export default function NetBirdSettings() {
             Danger zone
           </VerticalTabs.Trigger>
         </VerticalTabs.List>
-        <RestrictedAccess page={"Settings"}>
+        <RestrictedAccess
+          page={"Settings"}
+          allow={[Role.Admin, Role.Owner, Role.BillingAdmin]}
+        >
           <div className={"border-l border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
             {account && <PermissionsTab account={account} />}

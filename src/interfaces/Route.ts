@@ -35,4 +35,5 @@ export interface GroupedRoute {
   description?: string;
   description_search?: string;
   domain_search?: string;
+  routes_search?: string;
 }
