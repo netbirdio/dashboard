@@ -23,8 +23,8 @@ interface Config {
  */
 const loadConfig = (): Config => {
   let configJson: any;
-  let redirectURI = "/#callback";
-  let silentRedirectURI = "/#silent-callback";
+  let redirectURI = "/peers";
+  let silentRedirectURI = "/add-peer";
   let tokenSource = "accessToken";
 
   if (process.env.APP_ENV === "test") {
