@@ -297,29 +297,12 @@ function PeerOverview() {
                 />
               </FullTooltip>
 
-              <div>
-                <Label>Assigned Groups</Label>
-                <HelpText>
-                  Use groups to control what this peer can access.
-                </HelpText>
-                <FullTooltip
-                  content={
-                    <div
-                      className={
-                        "flex gap-2 items-center !text-nb-gray-300 text-xs"
-                      }
-                    >
-                      <LockIcon size={14} />
-                      <span>
-                        {`You don't have the required permissions to update this
-                          setting.`}
-                      </span>
-                    </div>
-                  }
-                  interactive={false}
-                  className={"w-full block"}
-                  disabled={!isUser}
-                >
+              {!isUser && (
+                <div>
+                  <Label>Assigned Groups</Label>
+                  <HelpText>
+                    Use groups to control what this peer can access.
+                  </HelpText>
                   <PeerGroupSelector
                     disabled={isUser}
                     onChange={setSelectedGroups}
@@ -327,8 +310,8 @@ function PeerOverview() {
                     hideAllGroup={true}
                     peer={peer}
                   />
-                </FullTooltip>
-              </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
