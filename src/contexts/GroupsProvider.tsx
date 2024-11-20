@@ -1,6 +1,5 @@
 import useFetchApi, { useApiCall } from "@utils/api";
 import { merge, sortBy, unionBy } from "lodash";
-import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
@@ -25,18 +24,29 @@ const GroupContext = React.createContext(
 );
 
 export default function GroupsProvider({ children }: Props) {
-  const path = usePathname();
-  const { permission } = useLoggedInUser();
+  const { permission, isUser } = useLoggedInUser();
 
-  return path === "/peers" && permission.dashboard_view == "blocked" ? (
+  return permission.dashboard_view == "blocked" ? (
     <>{children}</>
   ) : (
-    <GroupsProviderContent>{children}</GroupsProviderContent>
+    <GroupsProviderContent isUser={isUser}>{children}</GroupsProviderContent>
   );
 }
 
-export function GroupsProviderContent({ children }: Props) {
-  const { data: groups, mutate, isLoading } = useFetchApi<Group[]>("/groups");
+type ProviderContentProps = {
+  children: React.ReactNode;
+  isUser: boolean;
+};
+
+export function GroupsProviderContent({
+  children,
+  isUser,
+}: Readonly<ProviderContentProps>) {
+  const {
+    data: groups,
+    mutate,
+    isLoading,
+  } = useFetchApi<Group[]>("/groups", false, true, !isUser);
   const groupRequest = useApiCall<Group>("/groups", true);
   const [dropdownOptions, setDropdownOptions] = useState<Group[]>([]);
 

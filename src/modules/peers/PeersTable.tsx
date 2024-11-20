@@ -246,6 +246,7 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
           user_name: false,
           user_email: false,
           actions: !isUser,
+          groups: !isUser,
         }}
         isLoading={isLoading}
         getStartedCard={
@@ -423,30 +424,32 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
 
             <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
 
-            <GroupSelector
-              disabled={peers?.length == 0}
-              values={
-                (table
-                  .getColumn("group_names")
-                  ?.getFilterValue() as string[]) || []
-              }
-              onChange={(groups) => {
-                table.setPageIndex(0);
-                if (groups.length == 0) {
-                  table.getColumn("group_names")?.setFilterValue(undefined);
-                  return;
-                } else {
-                  table.getColumn("group_names")?.setFilterValue(groups);
+            {!isUser && (
+              <GroupSelector
+                disabled={peers?.length == 0}
+                values={
+                  (table
+                    .getColumn("group_names")
+                    ?.getFilterValue() as string[]) || []
                 }
-                resetSelectedRows();
-              }}
-              groups={tableGroups}
-            />
+                onChange={(groups) => {
+                  table.setPageIndex(0);
+                  if (groups.length == 0) {
+                    table.getColumn("group_names")?.setFilterValue(undefined);
+                    return;
+                  } else {
+                    table.getColumn("group_names")?.setFilterValue(groups);
+                  }
+                  resetSelectedRows();
+                }}
+                groups={tableGroups}
+              />
+            )}
 
             <DataTableRefreshButton
               isDisabled={peers?.length == 0}
               onClick={() => {
-                mutate("/groups").then();
+                if (!isUser) mutate("/groups").then();
                 mutate("/users").then();
                 mutate("/peers").then();
               }}
