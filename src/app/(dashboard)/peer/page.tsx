@@ -31,6 +31,7 @@ import dayjs from "dayjs";
 import { isEmpty, trim } from "lodash";
 import {
   Cpu,
+  Barcode,
   FlagIcon,
   Globe,
   History,
@@ -429,6 +430,17 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
           }
           value={peer.os}
         />
+
+        <Card.ListItem
+          label={
+            <>
+              <Barcode size={16} />
+              Serial Number
+            </>
+          }
+          value={peer.serial_number}
+        />
+
         <Card.ListItem
           label={
             <>
@@ -465,6 +477,7 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
           }
           value={peer.ui_version?.replace("netbird-desktop-ui/", "")}
         />
+
       </Card.List>
     </Card>
   );
