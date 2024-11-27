@@ -14,6 +14,7 @@ import {
   ColumnDef,
   RowSelectionState,
   SortingState,
+  VisibilityState,
 } from "@tanstack/react-table";
 import { uniqBy } from "lodash";
 import { ExternalLinkIcon } from "lucide-react";
@@ -21,6 +22,7 @@ import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import DataTableToolTipButton from "@/components/table/DataTableToolTipButton";
 import PeerProvider from "@/contexts/PeerProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -40,6 +42,7 @@ import PeerVersionCell from "@/modules/peers/PeerVersionCell";
 const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "select",
+    enableHiding: false,
     header: ({ table }) => (
       <div className={"min-w-[20px] max-w-[20px]"}>
         <Checkbox
@@ -60,10 +63,10 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
       </div>
     ),
     enableSorting: false,
-    enableHiding: false,
   },
   {
     accessorKey: "name",
+    enableHiding: false,
     header: ({ column }) => {
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
@@ -82,6 +85,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     accessorFn: (peer) => peer.connected,
   },
   {
+    id: "ip",
     accessorKey: "ip",
     sortingFn: "text",
   },
@@ -94,6 +98,8 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     accessorFn: (peer) => (peer.user ? peer.user?.email : "Unknown"),
   },
   {
+    id: "dns_label",
+    enableHiding: false,
     accessorKey: "dns_label",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Address</DataTableHeader>;
@@ -101,11 +107,21 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     cell: ({ row }) => <PeerAddressCell peer={row.original} />,
   },
   {
+    id: "group_name_strings",
     accessorKey: "group_name_strings",
     accessorFn: (peer) => peer.groups?.map((g) => g?.name || "").join(", "),
     sortingFn: "text",
   },
   {
+    // used for exact group matching
+    id: "exact_group_name_strings",
+    accessorKey: "exact_group_name_strings",
+    accessorFn: (peer) => peer.groups?.map((g) => g?.name || "").join("|"),
+    sortingFn: "text",
+    filterFn: "equals"
+  },
+  {
+    id: "group_names",
     accessorKey: "group_names",
     accessorFn: (peer) => peer.groups?.map((g) => g?.name || ""),
     sortingFn: "text",
@@ -124,6 +140,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     ),
   },
   {
+    id: "last_seen",
     accessorKey: "last_seen",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Last seen</DataTableHeader>;
@@ -132,13 +149,23 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
   },
   {
+    id: "os",
     accessorKey: "os",
     header: ({ column }) => {
       return <DataTableHeader column={column}>OS</DataTableHeader>;
     },
-    cell: ({ row }) => <PeerOSCell os={row.original.os} />,
+    cell: ({ row }) => <PeerOSCell os={row.original.os} serial={row.original.serial_number} />,
   },
   {
+    id: "serial",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Serial number</DataTableHeader>;
+    },
+    accessorFn: (peer) => peer.serial_number,
+    sortingFn: "text",
+  },
+  {
+    id: "version",
     accessorKey: "version",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Version</DataTableHeader>;
@@ -165,8 +192,10 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     id: "actions",
+    enableHiding: false,
     accessorKey: "id",
     header: "",
+
     cell: ({ row }) => (
       <PeerProvider peer={row.original}>
         <PeerActionCell />
@@ -213,6 +242,25 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
 
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
 
+  const colVisibility: VisibilityState = {
+    select: !isUser,
+    actions: !isUser,
+    groups: !isUser,
+    connected: false,
+    approval_required: false,
+
+    // hidden, but usefull for lookup
+    serial: false,
+    group_name_strings: false,
+    exact_group_name_strings: false,
+    group_names: false,
+    ip: false,
+    user_name: false,
+    user_email: false,
+  }
+
+  const [resultingColumnVisibility, setColumnVisibility] = useState(colVisibility);
+
   const resetSelectedRows = () => {
     if (Object.keys(selectedRows).length > 0) {
       setSelectedRows({});
@@ -226,6 +274,7 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
         onCanceled={() => setSelectedRows({})}
       />
       <DataTable
+        keepStateInLocalStorage={true}
         headingTarget={headingTarget}
         rowSelection={selectedRows}
         setRowSelection={setSelectedRows}
@@ -233,21 +282,11 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
         text={"Peers"}
         sorting={sorting}
         setSorting={setSorting}
+        setColumnVisibility={setColumnVisibility}
         columns={PeersTableColumns}
         data={peers}
-        searchPlaceholder={"Search by name, IP, owner or group..."}
-        columnVisibility={{
-          select: !isUser,
-          connected: false,
-          approval_required: false,
-          group_name_strings: false,
-          group_names: false,
-          ip: false,
-          user_name: false,
-          user_email: false,
-          actions: !isUser,
-          groups: !isUser,
-        }}
+        searchPlaceholder={"Search by name, IP, Serial, owner or group..."}
+        columnVisibility={resultingColumnVisibility}
         isLoading={isLoading}
         getStartedCard={
           <GetStartedTest
@@ -393,7 +432,7 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
                   table.setPageIndex(0);
                   let current =
                     table.getColumn("approval_required")?.getFilterValue() ===
-                    undefined
+                      undefined
                       ? true
                       : undefined;
 
@@ -412,7 +451,7 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
                 }}
                 variant={
                   table.getColumn("approval_required")?.getFilterValue() ===
-                  true
+                    true
                     ? "tertiary"
                     : "secondary"
                 }
@@ -445,6 +484,29 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
                 groups={tableGroups}
               />
             )}
+
+            <DataTableToolTipButton
+              disabled={peers?.length == 0}
+              onClick={() => {
+                table.setPageIndex(0);
+                if (table.getColumn("exact_group_name_strings")?.getFilterValue() !== undefined) {
+                  table.resetColumnFilters();
+                  return;
+                }
+                table.setColumnFilters([
+                  {
+                    id: "exact_group_name_strings",
+                    value: "All"
+                  }
+                ])
+              }}
+              variant={table.getColumn("exact_group_name_strings")?.getFilterValue() !== undefined
+                ? "tertiary"
+                : "secondary"}
+              title="filter peers assigned to the uniq group: 'All'"
+            >
+              All group only
+            </DataTableToolTipButton>
 
             <DataTableRefreshButton
               isDisabled={peers?.length == 0}
