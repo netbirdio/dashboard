@@ -23,4 +23,5 @@ export interface Peer {
   city_name: string;
   country_code: string;
   connection_ip: string;
+  serial_number: string;
 }
