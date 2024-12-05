@@ -5,6 +5,7 @@ const useSortedDropdownOptions = (
   dropdownOptions: Group[],
   values: Group[],
   isPopupOpen: boolean,
+  hideAllGroupOption = false,
 ): Group[] => {
   const sortOrderRef = useRef<Map<string, number>>(new Map());
   const prevValuesRef = useRef<Group[]>([]);
@@ -25,12 +26,15 @@ const useSortedDropdownOptions = (
   // Sort the dropdown options based on the current sort order
   return useMemo(() => {
     const sortOrder = sortOrderRef.current;
-    return [...dropdownOptions].sort((a, b) => {
-      const indexA = sortOrder.get(a.name) ?? Infinity;
-      const indexB = sortOrder.get(b.name) ?? Infinity;
-      return indexA - indexB;
-    });
-  }, [dropdownOptions, sortOrderRef.current]);
+    return [...dropdownOptions]
+      .sort((a, b) => {
+        const indexA = sortOrder.get(a.name) ?? Infinity;
+        const indexB = sortOrder.get(b.name) ?? Infinity;
+        if (a.name === "All") return -1; // Move "All" to the top
+        return indexA - indexB;
+      })
+      .filter((group) => !hideAllGroupOption || group.name !== "All");
+  }, [dropdownOptions, sortOrderRef.current, hideAllGroupOption]);
 };
 
 export default useSortedDropdownOptions;
