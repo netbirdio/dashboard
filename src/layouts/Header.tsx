@@ -26,12 +26,14 @@ export default function NavbarWithDropdown() {
           src={NetBirdLogoFull}
           height={22}
           alt={"NetBird Logo"}
+          priority={true}
           className={"hidden md:block"}
         />
         <Image
           src={NetBirdLogo}
           width={30}
           alt={"NetBird Logo"}
+          priority={true}
           className={"md:hidden"}
         />
       </>

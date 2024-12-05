@@ -13,6 +13,7 @@ function NetBirdIcon({ size = 16, className }: Props) {
       src={NetBirdLogo}
       alt={"Netbird Icon"}
       width={size}
+      priority={true}
       className={className}
     />
   );
