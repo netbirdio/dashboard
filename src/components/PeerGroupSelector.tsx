@@ -11,7 +11,7 @@ import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
 import { IconArrowBack } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
-import { sortBy, trim, unionBy } from "lodash";
+import { sortBy, trim, unionBy, uniqBy } from "lodash";
 import {
   ChevronsUpDown,
   FolderGit2,
@@ -55,8 +55,13 @@ export function PeerGroupSelector({
   disabledGroups,
   dataCy = "group-selector-dropdown",
 }: Readonly<MultiSelectProps>) {
-  const { groups, dropdownOptions, setDropdownOptions, addDropdownOptions } =
-    useGroups();
+  const {
+    groups,
+    dropdownOptions,
+    setDropdownOptions,
+    addDropdownOptions,
+    updateGroupDropdown,
+  } = useGroups();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
   const [search, setSearch] = useState("");
@@ -93,10 +98,18 @@ export function PeerGroupSelector({
   const selectGroup = (name: string) => {
     const group = groups?.find((group) => group.name == name);
     const option = dropdownOptions.find((option) => option.name == name);
-    const groupPeers: GroupPeer[] | undefined =
-      (group?.peers as GroupPeer[]) || [];
+    let groupPeers: GroupPeer[] = [...((group?.peers as GroupPeer[]) || [])];
 
-    if (peer) groupPeers?.push({ id: peer?.id as string, name: peer?.name });
+    if (peer) {
+      groupPeers.push({ id: peer.id as string, name: peer.name });
+      groupPeers = uniqBy(groupPeers, "id");
+      updateGroupDropdown(name, {
+        ...group,
+        name: name,
+        peers: groupPeers,
+        peers_count: groupPeers.length,
+      });
+    }
 
     if (!group && !option) {
       addDropdownOptions([{ name: name, peers: groupPeers }]);
@@ -117,6 +130,18 @@ export function PeerGroupSelector({
   // Remove group from the groupOptions if it does not have an id
   const deselectGroup = (name: string) => {
     onChange((previous) => {
+      if (peer) {
+        const option = dropdownOptions?.find((group) => group.name === name);
+        const groupPeers: GroupPeer[] = [
+          ...((option?.peers as GroupPeer[]) || []),
+        ].filter((p) => p?.id !== peer?.id);
+        updateGroupDropdown(name, {
+          ...option,
+          name,
+          peers: groupPeers,
+          peers_count: groupPeers.length,
+        });
+      }
       return previous.filter((group) => group.name != name);
     });
   };
@@ -162,6 +187,7 @@ export function PeerGroupSelector({
     dropdownOptions,
     values,
     open,
+    hideAllGroup,
   );
 
   return (
@@ -276,7 +302,7 @@ export function PeerGroupSelector({
                   "min-h-[42px] w-full relative",
                   "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
                   "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
-                  "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
+                  "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10 select-none",
                 )}
                 ref={searchRef}
                 value={search}
@@ -384,7 +410,7 @@ export function PeerGroupSelector({
 
                           <div
                             className={
-                              "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
+                              "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2 select-none"
                             }
                           >
                             {peerIcon}

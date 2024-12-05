@@ -166,7 +166,7 @@ export function PeerSelector({
             placeholder={"Search for peers by name or ip..."}
           />
 
-          {unfilteredItems.length == 0 && (
+          {unfilteredItems.length == 0 && search == "" && (
             <DropdownInfoText>
               {
                 "Seems like you don't have any linux peers to assign as a routing peer."
@@ -174,7 +174,7 @@ export function PeerSelector({
             </DropdownInfoText>
           )}
 
-          {filteredItems.length == 0 && (
+          {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
               There are no peers matching your search.
             </DropdownInfoText>
