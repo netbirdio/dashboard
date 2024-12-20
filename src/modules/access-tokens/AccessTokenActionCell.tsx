@@ -46,7 +46,12 @@ export default function AccessTokenActionCell({ access_token }: Props) {
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <Button variant={"danger-outline"} size={"sm"} onClick={handleConfirm}>
+      <Button
+        variant={"danger-outline"}
+        size={"sm"}
+        onClick={handleConfirm}
+        data-cy={"access-token-delete"}
+      >
         <Trash2 size={16} />
         Delete
       </Button>

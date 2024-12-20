@@ -60,6 +60,7 @@ export default function useGroupedRoutes({ routes }: Props) {
       const childDescriptions =
         routes?.map((r) => r?.description).join(", ") || "";
       const domainString = routes?.map((r) => r.domains?.join(", ")).join(", ");
+      const routesSearch = routes.map((r) => r?.network).join(", ");
 
       results.push({
         id,
@@ -73,6 +74,7 @@ export default function useGroupedRoutes({ routes }: Props) {
         is_using_route_groups: !!groupPeerRoute,
         description: groupPeerRoute ? groupPeerRoute?.description : undefined,
         description_search: childDescriptions,
+        routes_search: routesSearch,
         routes: routes,
         group_names: allGroupNames,
       });

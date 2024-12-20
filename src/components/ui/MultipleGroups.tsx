@@ -34,7 +34,10 @@ export default function MultipleGroups({
     <TooltipProvider disableHoverableContent={false}>
       <Tooltip delayDuration={1}>
         <TooltipTrigger asChild={true}>
-          <div className={"inline-flex items-center gap-2 z-0"}>
+          <div
+            className={"inline-flex items-center gap-2 z-0"}
+            data-cy={"multiple-groups"}
+          >
             {firstGroup && <GroupBadge group={firstGroup} />}
             {otherGroups && otherGroups.length > 0 && (
               <Badge

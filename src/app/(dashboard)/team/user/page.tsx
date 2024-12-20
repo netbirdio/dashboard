@@ -22,11 +22,13 @@ import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { Group } from "@/interfaces/Group";
 import { Role, User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 import AccessTokensTable from "@/modules/access-tokens/AccessTokensTable";
 import CreateAccessTokenModal from "@/modules/access-tokens/CreateAccessTokenModal";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useGroupIdsToGroups } from "@/modules/groups/useGroupIdsToGroups";
 import UserBlockCell from "@/modules/users/table-cells/UserBlockCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
@@ -45,8 +47,10 @@ export default function UserPage() {
 
   useRedirect("/team/users", false, !userId);
 
-  return !isLoading && user ? (
-    <UserOverview user={user} />
+  const userGroups = useGroupIdsToGroups(user?.auto_groups);
+
+  return !isLoading && user && userGroups !== undefined ? (
+    <UserOverview user={user} initialGroups={userGroups} />
   ) : (
     <FullScreenLoading />
   );
@@ -54,16 +58,16 @@ export default function UserPage() {
 
 type Props = {
   user: User;
+  initialGroups: Group[];
 };
 
-function UserOverview({ user }: Props) {
+function UserOverview({ user, initialGroups }: Readonly<Props>) {
   const router = useRouter();
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
   const { loggedInUser, isOwnerOrAdmin, isUser } = useLoggedInUser();
   const isLoggedInUser = loggedInUser ? loggedInUser?.id === user.id : false;
 
-  const initialGroups = user.auto_groups;
   const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
     useGroupHelper({
       initial: initialGroups,
@@ -180,6 +184,7 @@ function UserOverview({ user }: Props) {
                 className={"w-full"}
                 disabled={!hasChanges}
                 onClick={save}
+                data-cy={"save-changes"}
               >
                 Save Changes
               </Button>
@@ -201,6 +206,7 @@ function UserOverview({ user }: Props) {
                   onChange={setSelectedGroups}
                   values={selectedGroups}
                   hideAllGroup={true}
+                  dataCy={"user-group-selector"}
                 />
               </div>
             )}
@@ -244,7 +250,10 @@ function UserOverview({ user }: Props) {
                 <div className={"inline-flex gap-4 justify-end"}>
                   <div>
                     <CreateAccessTokenModal user={user}>
-                      <Button variant={"primary"}>
+                      <Button
+                        variant={"primary"}
+                        data-cy={"access-token-open-modal"}
+                      >
                         <IconCirclePlus size={16} />
                         Create Access Token
                       </Button>
@@ -293,6 +302,7 @@ function UserInformationCard({ user }: { user: User }) {
         )}
 
         <Card.ListItem
+          tooltip={false}
           label={
             <>
               <GalleryHorizontalEnd size={16} />

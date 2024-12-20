@@ -7,22 +7,31 @@ import { ScrollArea } from "@components/ScrollArea";
 import { AccessControlGroupCount } from "@components/ui/AccessControlGroupCount";
 import GroupBadge from "@components/ui/GroupBadge";
 import GroupBadgeWithEditPeers from "@components/ui/GroupBadgeWithEditPeers";
+import TextWithTooltip from "@components/ui/TextWithTooltip";
+import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
+import { useSearch } from "@hooks/useSearch";
 import useSortedDropdownOptions from "@hooks/useSortedDropdownOptions";
 import { IconArrowBack } from "@tabler/icons-react";
+import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
 import { sortBy, trim, unionBy } from "lodash";
 import {
   ChevronsUpDown,
   FolderGit2,
+  GlobeIcon,
+  Layers3,
   MonitorSmartphoneIcon,
+  NetworkIcon,
   SearchIcon,
+  WorkflowIcon,
 } from "lucide-react";
 import * as React from "react";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
 import type { Group, GroupPeer } from "@/interfaces/Group";
+import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 
 interface MultiSelectProps {
@@ -241,7 +250,7 @@ export function PeerGroupSelector({
             )}
           </div>
 
-          <div className={"pl-2"}>
+          <div className={"pl-2"} data-cy={"group-selector-open-close"}>
             <ChevronsUpDown
               size={18}
               className={"shrink-0 group-hover:text-nb-gray-300 transition-all"}
@@ -311,7 +320,10 @@ export function PeerGroupSelector({
 
             <CommandGroup>
               <ScrollArea
-                className={"max-h-[195px] flex flex-col gap-1 pl-2 py-2 pr-3"}
+                className={cn(
+                  "max-h-[195px] flex flex-col gap-1 pl-2 py-2 pr-3",
+                  sortedDropdownOptions.length == 0 && !search && "py-0",
+                )}
               >
                 {searchedGroupNotFound && (
                   <CommandItem
@@ -382,6 +394,8 @@ export function PeerGroupSelector({
                             <AccessControlGroupCount group_id={option.id} />
                           )}
 
+                          <ResourcesCounter group={option} />
+
                           <div
                             className={
                               "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
@@ -404,3 +418,99 @@ export function PeerGroupSelector({
     </Popover>
   );
 }
+
+const ResourcesCounter = ({ group }: { group: Group }) => {
+  return group?.resources_count && group.resources_count > 0 ? (
+    <div
+      className={
+        "text-nb-gray-300 font-medium flex items-center gap-2 transition-all"
+      }
+    >
+      <Layers3 size={14} className={"shrink-0"} />
+      {group.resources_count} Resource(s)
+    </div>
+  ) : null;
+};
+
+const resourcesSearchPredicate = (item: NetworkResource, query: string) => {
+  const lowerCaseQuery = query.toLowerCase();
+  if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
+  return item.address.toLowerCase().includes(lowerCaseQuery);
+};
+
+const ResourcesList = ({ search }: { search: string }) => {
+  const { data: resources, isLoading } = useFetchApi<NetworkResource[]>(
+    "/networks/resources",
+  );
+
+  const [filteredItems, _, setSearch] = useSearch(
+    resources || [],
+    resourcesSearchPredicate,
+    { filter: true, debounce: 150 },
+  );
+
+  useEffect(() => {
+    setSearch(search);
+  }, [search, setSearch]);
+
+  return isLoading ? (
+    <>Loading...</>
+  ) : (
+    filteredItems.length > 0 && (
+      <VirtualScrollAreaList
+        items={filteredItems}
+        onSelect={(option) => null}
+        renderItem={(res) => {
+          const isSelected = false;
+
+          return (
+            <Fragment key={res.id}>
+              <div className={"flex items-center gap-2"}>
+                <Badge
+                  useHover={true}
+                  data-cy={"group-badge"}
+                  variant={"gray-ghost"}
+                  className={cn("transition-all group whitespace-nowrap")}
+                  onClick={(e) => {
+                    e.preventDefault();
+                  }}
+                >
+                  {res.type === "host" && (
+                    <WorkflowIcon
+                      size={12}
+                      className={"text-yellow-400 shrink-0"}
+                    />
+                  )}
+                  {res.type === "domain" && (
+                    <GlobeIcon
+                      size={12}
+                      className={"text-yellow-400 shrink-0"}
+                    />
+                  )}
+                  {res.type === "subnet" && (
+                    <NetworkIcon
+                      size={12}
+                      className={"text-yellow-400 shrink-0"}
+                    />
+                  )}
+
+                  <TextWithTooltip text={res?.name || ""} maxChars={20} />
+                </Badge>
+              </div>
+
+              <div className={"flex items-center gap-5"}>
+                <div
+                  className={
+                    "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
+                  }
+                >
+                  <Checkbox checked={isSelected} />
+                </div>
+              </div>
+            </Fragment>
+          );
+        }}
+      />
+    )
+  );
+};

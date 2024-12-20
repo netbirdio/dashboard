@@ -21,6 +21,7 @@ const config = loadConfig();
 
 type RequestOptions = {
   signal?: AbortSignal;
+  origin?: string;
 };
 
 async function apiRequest<T>(
@@ -30,9 +31,9 @@ async function apiRequest<T>(
   data?: any,
   options?: RequestOptions,
 ) {
-  const origin = config.apiOrigin;
+  const origin = options?.origin ? options?.origin : config.apiOrigin + "/api";
 
-  const res = await oidcFetch(`${origin}/api${url}`, {
+  const res = await oidcFetch(`${origin}${url}`, {
     method,
     body: JSON.stringify(data),
     signal: options?.signal,
@@ -108,6 +109,7 @@ export default function useFetchApi<T>(
   ignoreError = false,
   revalidate = true,
   allowFetch = true,
+  options?: RequestOptions,
 ) {
   const { fetch } = useNetBirdFetch(ignoreError);
   const handleErrors = useApiErrorHandling(ignoreError);
@@ -116,7 +118,7 @@ export default function useFetchApi<T>(
     url,
     async (url) => {
       if (!allowFetch) return;
-      return apiRequest<T>(fetch, "GET", url).catch((err) =>
+      return apiRequest<T>(fetch, "GET", url, undefined, options).catch((err) =>
         handleErrors(err as ErrorResponse),
       );
     },
@@ -137,28 +139,56 @@ export default function useFetchApi<T>(
   } as const;
 }
 
-export function useApiCall<T>(url: string, ignoreError = false) {
+export function useApiCall<T>(
+  url: string,
+  ignoreError = false,
+  requestOptions?: RequestOptions,
+) {
   const { fetch } = useNetBirdFetch(ignoreError);
   const handleErrors = useApiErrorHandling(ignoreError);
 
   return {
     post: async (data: any, suffix = "", options?: RequestOptions) => {
-      return apiRequest<T>(fetch, "POST", url + suffix, data, options)
+      return apiRequest<T>(
+        fetch,
+        "POST",
+        url + suffix,
+        data,
+        options || requestOptions,
+      )
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
     put: async (data: any, suffix = "", options?: RequestOptions) => {
-      return apiRequest<T>(fetch, "PUT", url + suffix, data, options)
+      return apiRequest<T>(
+        fetch,
+        "PUT",
+        url + suffix,
+        data,
+        options || requestOptions,
+      )
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
     del: async (data: any = "", suffix = "", options?: RequestOptions) => {
-      return apiRequest<T>(fetch, "DELETE", url + suffix, data, options)
+      return apiRequest<T>(
+        fetch,
+        "DELETE",
+        url + suffix,
+        data,
+        options || requestOptions,
+      )
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
     get: async (suffix = "", options?: RequestOptions) => {
-      return apiRequest<T>(fetch, "GET", url + suffix, undefined, options)
+      return apiRequest<T>(
+        fetch,
+        "GET",
+        url + suffix,
+        undefined,
+        options || requestOptions,
+      )
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },

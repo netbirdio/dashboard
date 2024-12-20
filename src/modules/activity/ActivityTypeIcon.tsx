@@ -8,6 +8,7 @@ import {
   Globe,
   HelpCircleIcon,
   KeyRound,
+  Layers3Icon,
   LogIn,
   MonitorSmartphoneIcon,
   NetworkIcon,
@@ -88,6 +89,14 @@ export default function ActivityTypeIcon({
   } else if (code.startsWith("transferred")) {
     return (
       <RefreshCcw size={size} className={cn(DEFAULT_CLASSES, className)} />
+    );
+  } else if (code.startsWith("resource")) {
+    return (
+      <Layers3Icon size={size} className={cn(DEFAULT_CLASSES, className)} />
+    );
+  } else if (code.startsWith("network")) {
+    return (
+      <NetworkIcon size={size} className={cn(DEFAULT_CLASSES, className)} />
     );
   } else {
     return (

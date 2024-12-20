@@ -24,7 +24,7 @@ type DialogOptions = {
   description?: string | React.ReactNode;
   confirmText?: string;
   cancelText?: string;
-  type?: "default" | "warning" | "danger";
+  type?: "default" | "warning" | "danger" | "center";
   children?: React.ReactNode;
 };
 
@@ -51,6 +51,7 @@ export default function DialogProvider({ children }: Props) {
     default: "",
     warning: <AlertCircle size={18} />,
     danger: <AlertTriangle size={18} />,
+    center: "",
   };
 
   return (
@@ -61,8 +62,9 @@ export default function DialogProvider({ children }: Props) {
         onOpenChange={(open) => fn.current && fn.current(open)}
       >
         {dialogOptions && (
-          <ModalContent maxWidthClass={"max-w-lg"} showClose={false}>
+          <ModalContent maxWidthClass={"max-w-[400px]"} showClose={false}>
             <ModalHeader
+              center={dialogOptions.type == "center"}
               title={dialogOptions.title || "Confirmation"}
               margin={"mt-1"}
               description={

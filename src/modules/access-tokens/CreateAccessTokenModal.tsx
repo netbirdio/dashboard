@@ -98,6 +98,7 @@ export default function CreateAccessTokenModal({ children, user }: Props) {
                   variant={"secondary"}
                   className={"w-full"}
                   tabIndex={-1}
+                  data-cy={"access-token-copy-close"}
                 >
                   Close
                 </Button>
@@ -170,6 +171,7 @@ export function AccessTokenModalContent({ onSuccess, user }: ModalProps) {
           <Label>Name</Label>
           <HelpText>Set an easily identifiable name for your token</HelpText>
           <Input
+            data-cy={"access-token-name"}
             placeholder={"e.g., Infra token"}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -184,6 +186,7 @@ export function AccessTokenModalContent({ onSuccess, user }: ModalProps) {
           <Input
             maxWidthClass={"max-w-[200px]"}
             placeholder={"30"}
+            data-cy={"access-token-expires-in"}
             min={1}
             max={365}
             value={expiresIn}
@@ -215,7 +218,12 @@ export function AccessTokenModalContent({ onSuccess, user }: ModalProps) {
             <Button variant={"secondary"}>Cancel</Button>
           </ModalClose>
 
-          <Button variant={"primary"} onClick={submit} disabled={isDisabled}>
+          <Button
+            variant={"primary"}
+            onClick={submit}
+            disabled={isDisabled}
+            data-cy={"create-access-token"}
+          >
             <PlusCircle size={16} />
             Create Token
           </Button>

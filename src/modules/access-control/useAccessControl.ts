@@ -15,6 +15,9 @@ type Props = {
   policy?: Policy;
   postureCheckTemplates?: PostureCheck[];
   onSuccess?: (policy: Policy) => void;
+  initialDestinationGroups?: Group[] | string[];
+  initialName?: string;
+  initialDescription?: string;
 };
 
 // TODO add reducer
@@ -22,6 +25,9 @@ type Props = {
 export const useAccessControl = ({
   policy,
   postureCheckTemplates,
+  initialDestinationGroups,
+  initialName,
+  initialDescription,
   onSuccess,
 }: Props = {}) => {
   const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
@@ -85,8 +91,10 @@ export const useAccessControl = ({
     if (firstRule && firstRule?.bidirectional == false) return "in";
     return "bi";
   });
-  const [name, setName] = useState(policy?.name || "");
-  const [description, setDescription] = useState(policy?.description || "");
+  const [name, setName] = useState(policy?.name || initialName || "");
+  const [description, setDescription] = useState(
+    policy?.description || initialDescription || "",
+  );
   const { mutate } = useSWRConfig();
 
   const policyRequest = useApiCall<Policy>("/policies");
@@ -104,7 +112,9 @@ export const useAccessControl = ({
     setDestinationGroups,
     { getGroupsToUpdate: getDestinationGroupsToUpdate },
   ] = useGroupHelper({
-    initial: firstRule ? (firstRule.destinations as Group[]) : [],
+    initial: firstRule
+      ? (firstRule.destinations as Group[])
+      : initialDestinationGroups ?? [],
   });
 
   const { updateOrCreateAndNotify: checkToCreate } = usePostureCheck({});

@@ -251,6 +251,10 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
         onSuccess && onSuccess(r);
         mutate("/routes");
       },
+      undefined,
+      {
+        remove_access_control_groups: !accessControlGroupIds,
+      },
     );
   };
 

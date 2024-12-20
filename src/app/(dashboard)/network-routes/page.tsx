@@ -14,6 +14,7 @@ import PeersProvider from "@/contexts/PeersProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { Route } from "@/interfaces/Route";
 import PageContainer from "@/layouts/PageContainer";
+import { NetworkRoutesDeprecationInfo } from "@/modules/networks/misc/NetworkRoutesDeprecationInfo";
 import useGroupedRoutes from "@/modules/route-group/useGroupedRoutes";
 
 const NetworkRoutesTable = lazy(
@@ -39,7 +40,9 @@ export default function NetworkRoutes() {
                 icon={<NetworkRoutesIcon size={13} />}
               />
             </Breadcrumbs>
-            <h1 ref={headingRef}>Network Routes</h1>
+            <h1 ref={headingRef}>
+              Network Routes <NetworkRoutesDeprecationInfo size={18} />
+            </h1>
             <Paragraph>
               Network routes allow you to access other networks like LANs and
               VPCs without installing NetBird on every resource.

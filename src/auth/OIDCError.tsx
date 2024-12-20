@@ -15,7 +15,9 @@ export const OIDCError = () => {
   const params = useSearchParams();
   const errorParam = params.get("error");
   const accessDenied = errorParam === "access_denied";
+  const invalidRequest = errorParam === "invalid_request";
   const [title, setTitle] = useState(params.get("error_description"));
+  const errorDescription = params.get("error_description");
   const { logout, login } = useOidc();
 
   useEffect(() => {
@@ -72,9 +74,14 @@ export const OIDCError = () => {
         </>
       ) : (
         <>
-          <Paragraph className={"text-center mt-2"}>
+          <Paragraph className={"text-center mt-2 block"}>
             There was an error logging you in. <br />
-            Error: {oidcUserLoadingState}
+            Error:{" "}
+            <span className={"inline capitalize"}>
+              {invalidRequest && errorDescription
+                ? errorDescription
+                : oidcUserLoadingState}
+            </span>
           </Paragraph>
           <Button
             variant={"primary"}

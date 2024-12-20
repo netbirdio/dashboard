@@ -20,6 +20,7 @@ const RoutesContext = React.createContext(
       toUpdate: Partial<Route>,
       onSuccess?: (route: Route) => void,
       message?: string,
+      options?: { remove_access_control_groups?: boolean },
     ) => void;
   },
 );
@@ -33,6 +34,7 @@ export default function RoutesProvider({ children }: Readonly<Props>) {
     toUpdate: Partial<Route>,
     onSuccess?: (route: Route) => void,
     message?: string,
+    options?: { remove_access_control_groups?: boolean },
   ) => {
     const hasDomains = route.domains ? route.domains.length > 0 : false;
 
@@ -54,10 +56,11 @@ export default function RoutesProvider({ children }: Readonly<Props>) {
             metric: toUpdate.metric ?? route.metric ?? 9999,
             masquerade: toUpdate.masquerade ?? route.masquerade ?? true,
             groups: toUpdate.groups ?? route.groups ?? [],
-            access_control_groups:
-              toUpdate.access_control_groups ??
-              route.access_control_groups ??
-              undefined,
+            access_control_groups: options?.remove_access_control_groups
+              ? undefined
+              : toUpdate.access_control_groups ??
+                route.access_control_groups ??
+                undefined,
           },
           `/${route.id}`,
         )

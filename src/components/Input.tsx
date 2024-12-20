@@ -1,12 +1,15 @@
 import FullTooltip from "@components/FullTooltip";
 import Paragraph from "@components/Paragraph";
 import { cn } from "@utils/helpers";
-import { cva } from "class-variance-authority";
+import { cva, VariantProps } from "class-variance-authority";
 import { AlertCircle } from "lucide-react";
 import * as React from "react";
 
+type InputVariants = VariantProps<typeof inputVariants>;
+
 export interface InputProps
-  extends React.InputHTMLAttributes<HTMLInputElement> {
+  extends React.InputHTMLAttributes<HTMLInputElement>,
+    InputVariants {
   customPrefix?: React.ReactNode;
   customSuffix?: React.ReactNode;
   maxWidthClass?: string;
@@ -14,6 +17,7 @@ export interface InputProps
   error?: string;
   errorTooltip?: boolean;
   errorTooltipPosition?: "top" | "top-right";
+  prefixClassName?: string;
 }
 
 const inputVariants = cva("", {
@@ -21,6 +25,10 @@ const inputVariants = cva("", {
     variant: {
       default: [
         "dark:bg-nb-gray-900 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-200 dark:border-nb-gray-700",
+        "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50 dark:focus-visible:ring-neutral-500/20 focus-visible:ring-neutral-300/10",
+      ],
+      darker: [
+        "dark:bg-nb-gray-920 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-300 dark:border-nb-gray-800",
         "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50 dark:focus-visible:ring-neutral-500/20 focus-visible:ring-neutral-300/10",
       ],
       error: [
@@ -51,6 +59,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       error,
       errorTooltip = false,
       errorTooltipPosition = "top",
+      variant = "default",
+      prefixClassName,
       ...props
     },
     ref,
@@ -67,6 +77,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 "flex h-[42px] w-auto rounded-l-md bg-white px-3 py-2 text-sm ",
                 "border  items-center whitespace-nowrap",
                 props.disabled && "opacity-20",
+                prefixClassName,
               )}
             >
               {customPrefix}
@@ -87,7 +98,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             ref={ref}
             {...props}
             className={cn(
-              inputVariants({ variant: error ? "error" : "default" }),
+              inputVariants({ variant: error ? "error" : variant }),
               "flex h-[42px] w-full rounded-md  bg-white px-3 py-2 text-sm file:bg-transparent file:text-sm file:font-medium  focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-20  ",
               "file:border-0",
               "focus-visible:ring-2 focus-visible:ring-offset-2",

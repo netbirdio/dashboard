@@ -9,7 +9,10 @@ export default function UserStatusCell({ user }: Props) {
   const status = user.status;
 
   return (
-    <div className={cn("flex gap-2.5 items-center text-nb-gray-300 text-sm")}>
+    <div
+      className={cn("flex gap-2.5 items-center text-nb-gray-300 text-sm")}
+      data-cy={"user-status-cell"}
+    >
       <span
         className={cn(
           "h-2 w-2 rounded-full",

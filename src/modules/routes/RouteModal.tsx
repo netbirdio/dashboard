@@ -68,7 +68,6 @@ export default function RouteModal({ children, open, setOpen }: Props) {
   const [newPolicy, setNewPolicy] = useState<Policy>();
 
   const handleCreatePolicyPrompt = async (r: Route) => {
-    console.log(r);
     if (!r?.access_control_groups) return;
 
     const choice = await confirm({

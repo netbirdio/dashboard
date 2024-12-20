@@ -6,6 +6,7 @@ import {
   AlertOctagonIcon,
   FolderGit2Icon,
   LockIcon,
+  NetworkIcon,
   ShieldIcon,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -16,6 +17,7 @@ import { useAccount } from "@/modules/account/useAccount";
 import AuthenticationTab from "@/modules/settings/AuthenticationTab";
 import DangerZoneTab from "@/modules/settings/DangerZoneTab";
 import GroupsTab from "@/modules/settings/GroupsTab";
+import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 
 export default function NetBirdSettings() {
@@ -47,6 +49,10 @@ export default function NetBirdSettings() {
             <LockIcon size={14} />
             Permissions
           </VerticalTabs.Trigger>
+          <VerticalTabs.Trigger value="networks">
+            <NetworkIcon size={14} />
+            Networks
+          </VerticalTabs.Trigger>
           <VerticalTabs.Trigger value="danger-zone" disabled={!isOwner}>
             <AlertOctagonIcon size={14} />
             Danger zone
@@ -57,6 +63,7 @@ export default function NetBirdSettings() {
             {account && <AuthenticationTab account={account} />}
             {account && <PermissionsTab account={account} />}
             {account && <GroupsTab account={account} />}
+            {account && <NetworkSettingsTab account={account} />}
             {account && <DangerZoneTab account={account} />}
           </div>
         </RestrictedAccess>
