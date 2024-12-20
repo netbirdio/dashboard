@@ -4,7 +4,7 @@ export const GradientFadedBackground = () => {
   return (
     <div
       className={
-        "h-full w-full absolute left-0 top-0 rounded-md overflow-hidden z-0"
+        "h-full w-full absolute left-0 top-0 rounded-md overflow-hidden z-0 pointer-events-none"
       }
     >
       <div

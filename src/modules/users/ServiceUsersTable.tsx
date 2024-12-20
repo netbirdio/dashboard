@@ -126,7 +126,11 @@ export default function ServiceUsersTable({
               <div className={"flex flex-col"}>
                 <div>
                   <ServiceUserModal>
-                    <Button variant={"primary"} className={""}>
+                    <Button
+                      variant={"primary"}
+                      className={""}
+                      data-cy={"open-service-user-modal"}
+                    >
                       <PlusCircle size={16} />
                       Create Service User
                     </Button>
@@ -154,7 +158,11 @@ export default function ServiceUsersTable({
           <>
             {users && users?.length > 0 && (
               <ServiceUserModal>
-                <Button variant={"primary"} className={"ml-auto"}>
+                <Button
+                  variant={"primary"}
+                  className={"ml-auto"}
+                  data-cy={"open-service-user-modal"}
+                >
                   <PlusCircle size={16} />
                   Create Service User
                 </Button>

@@ -32,6 +32,9 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     sortingFn: "text",
   },
   {
+    accessorKey: "network",
+  },
+  {
     id: "domains",
     accessorFn: (row) => {
       return row.domains?.map((name) => name).join(", ");
@@ -140,6 +143,7 @@ export default function RouteTable({ row }: Props) {
           description: false,
           domains: false,
           domain_search: false,
+          network: false,
         }}
         setSorting={setSorting}
         columns={RouteTableColumns}

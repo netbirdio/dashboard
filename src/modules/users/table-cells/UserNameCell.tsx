@@ -11,7 +11,10 @@ export default function UserNameCell({ user }: Props) {
   const isCurrent = user.is_current;
 
   return (
-    <div className={cn("flex gap-4 px-2 py-1 items-center")}>
+    <div
+      className={cn("flex gap-4 px-2 py-1 items-center")}
+      data-cy={"user-name-cell"}
+    >
       <div
         className={
           "w-10 h-10 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"

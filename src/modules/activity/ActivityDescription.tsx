@@ -543,6 +543,98 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  /**
+   * Resource
+   */
+  if (event.activity_code == "resource.group.add")
+    return (
+      <div className={"inline"}>
+        Group <Value>{m.resource_name}</Value> added to resource{"  "}
+        <Value>{m.name}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "resource.group.delete")
+    return (
+      <div className={"inline"}>
+        Group <Value>{m.resource_name}</Value> removed from resource{"  "}
+        <Value>{m.name}</Value>
+      </div>
+    );
+
+  /**
+   * Networks
+   */
+
+  if (event.activity_code == "network.resource.create")
+    return (
+      <div className={"inline"}>
+        Resource <Value>{m.name}</Value> created for network{"  "}
+        <Value>{m.network_name}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "network.resource.update")
+    return (
+      <div className={"inline"}>
+        Resource <Value>{m.name}</Value> updated for network{"  "}
+        <Value>{m.network_name}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "network.resource.delete")
+    return (
+      <div className={"inline"}>
+        Resource <Value>{m.name}</Value> deleted from network{"  "}
+        <Value>{m.network_name}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "network.router.create")
+    return (
+      <div className={"inline"}>
+        Routing peer created for network{"  "}
+        <Value>{m.network_name}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "network.router.delete")
+    return (
+      <div className={"inline"}>
+        Routing peer deleted from network{"  "}
+        <Value>{m.network_name}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "network.router.update")
+    return (
+      <div className={"inline"}>
+        Routing peer updated from network{"  "}
+        <Value>{m.network_name}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "network.create")
+    return (
+      <div className={"inline"}>
+        Network with name <Value>{m.name}</Value> created
+      </div>
+    );
+
+  if (event.activity_code == "network.delete")
+    return (
+      <div className={"inline"}>
+        Network with name <Value>{m.name}</Value> deleted
+      </div>
+    );
+
+  if (event.activity_code == "network.update")
+    return (
+      <div className={"inline"}>
+        Network with name <Value>{m.name}</Value> updated
+      </div>
+    );
+
   return (
     <div className={"flex gap-2.5 items-center"}>
       <span className={"mb-[1px]"}>{event.activity}</span>

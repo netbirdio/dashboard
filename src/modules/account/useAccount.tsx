@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { Account } from "@/interfaces/Account";
 
 export const useAccount = () => {
-  const { data: accounts } = useFetchApi<Account[]>("/accounts");
+  const { data: accounts } = useFetchApi<Account[]>("/accounts", true, true);
 
   return useMemo(() => {
     if (!accounts) return;

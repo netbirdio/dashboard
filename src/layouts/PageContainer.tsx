@@ -11,6 +11,7 @@ export default function PageContainer({ children, className }: Props) {
       className={cn(
         className,
         "relative flex-auto overflow-auto bg-nb-gray z-1",
+        "focus:outline-none",
       )}
     >
       {children}
