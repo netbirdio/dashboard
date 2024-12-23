@@ -60,6 +60,9 @@ export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
     },
   },
   {
+    accessorKey: "routes_search",
+  },
+  {
     id: "domains",
     accessorFn: (row) => {
       return row.domains?.map((name) => name).join(", ");
@@ -162,6 +165,7 @@ export default function NetworkRoutesTable({
           group_names: false,
           domains: false,
           domain_search: false,
+          routes_search: false,
         }}
         renderExpandedRow={(row) => {
           const data = cloneDeep(row);

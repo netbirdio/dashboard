@@ -96,6 +96,7 @@ export function ServiceUserModalContent({ onSuccess }: ModalProps) {
               }
               placeholder={"John Doe"}
               value={name}
+              data-cy={"service-user-name"}
               onChange={(e) => setName(e.target.value)}
             />
           </div>
@@ -126,7 +127,12 @@ export function ServiceUserModalContent({ onSuccess }: ModalProps) {
             <Button variant={"secondary"}>Cancel</Button>
           </ModalClose>
 
-          <Button variant={"primary"} disabled={isDisabled} onClick={create}>
+          <Button
+            variant={"primary"}
+            disabled={isDisabled}
+            onClick={create}
+            data-cy={"create-service-user"}
+          >
             <PlusCircle size={16} />
             Create Service User
           </Button>

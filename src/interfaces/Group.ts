@@ -3,6 +3,9 @@ export interface Group {
   name: string;
   peers?: GroupPeer[] | string[];
   peers_count?: number;
+  resources?: string[];
+  resources_count?: number;
+
   // Frontend only
   keepClientState?: boolean;
 }

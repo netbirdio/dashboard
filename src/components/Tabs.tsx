@@ -39,7 +39,7 @@ const Tabs = React.forwardRef<
 Tabs.displayName = TabsPrimitive.Root.displayName;
 
 type TabListProps = {
-  justify?: "start" | "end" | "center";
+  justify?: "start" | "end" | "center" | "between";
 };
 
 const TabsList = React.forwardRef<
@@ -54,6 +54,7 @@ const TabsList = React.forwardRef<
       justify == "center" && "justify-center justify-items-end",
       justify == "start" && "justify-start",
       justify == "end" && "justify-end",
+      justify == "between" && "justify-between",
     )}
     {...props}
   >
@@ -63,7 +64,9 @@ const TabsList = React.forwardRef<
       }
     />
     <ScrollArea>
-      <div className={"relative z-[1] flex flex-nowrap"}>{props.children}</div>
+      <div className={"relative z-[1] flex flex-nowrap w-full "}>
+        {props.children}
+      </div>
       <ScrollBar orientation="horizontal" />
     </ScrollArea>
   </TabsPrimitive.List>

@@ -33,10 +33,9 @@ export default function UserDropdown() {
     logout("/", { client_id: config.clientId }).then();
   };
 
-  useHotkeys("shift+mod+l", () => logout(), []);
-
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  useHotkeys("shift+mod+l", () => logoutSession(), []);
   const { permission } = useLoggedInUser();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
 
   return (
     <DropdownMenu

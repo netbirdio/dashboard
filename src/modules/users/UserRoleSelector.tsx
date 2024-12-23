@@ -104,6 +104,7 @@ export function UserRoleSelector({
           disabled={disabled}
           ref={inputRef}
           className={"w-full"}
+          data-cy={"user-role-selector"}
         >
           <div className={"w-full flex justify-between items-center gap-2"}>
             {selectedRole && (
@@ -160,6 +161,7 @@ export function UserRoleSelector({
                       <CommandItem
                         key={item.value}
                         value={item.value}
+                        data-cy={"user-role-selector-item"}
                         className={"py-1 px-2"}
                         onSelect={() => toggle(item.value)}
                         onClick={(e) => e.preventDefault()}

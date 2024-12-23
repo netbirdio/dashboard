@@ -11,17 +11,36 @@ type Props = {
   onChange: (value: string) => void;
   children: React.ReactNode;
 };
+
+const TabSwitchContext = React.createContext<{
+  switchTab: (value: string) => void;
+}>({
+  switchTab: () => {},
+});
+
+export const useTabSwitchContext = () => {
+  return React.useContext(TabSwitchContext);
+};
+
 function VerticalTabs({ value, onChange, children }: Props) {
   return (
     <TabContext.Provider value={value || ""}>
-      <Tabs.Root
-        orientation={"vertical"}
-        className={"block lg:flex bg-nb-gray"}
-        value={value}
-        onValueChange={(value) => onChange(value)}
+      <TabSwitchContext.Provider
+        value={{
+          switchTab: (value: string) => {
+            onChange(value);
+          },
+        }}
       >
-        {children}
-      </Tabs.Root>
+        <Tabs.Root
+          orientation={"vertical"}
+          className={"block lg:flex bg-nb-gray"}
+          value={value}
+          onValueChange={(value) => onChange(value)}
+        >
+          {children}
+        </Tabs.Root>
+      </TabSwitchContext.Provider>
     </TabContext.Provider>
   );
 }

@@ -60,6 +60,29 @@ export const validator = {
       return false;
     }
   },
+  isValidDomainWithWildcard: (domain: string) => {
+    // Basic checks
+    if (!domain || domain.length > 255 || domain.includes(" ")) {
+      return false;
+    }
+
+    // Handle wildcard
+    if (domain.includes("*")) {
+      if (!domain.startsWith("*.") || domain.indexOf("*", 1) !== -1) {
+        return false;
+      }
+      domain = "sub" + domain.slice(1); // Replace * with valid subdomain for testing
+    }
+
+    // Split and validate each part
+    const parts = domain.split(".");
+    if (parts.length < 2) {
+      return false;
+    }
+
+    const validPart = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
+    return parts.every((part) => validPart.test(part));
+  },
   isValidEmail: (email: string) => {
     const regExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/i;
     try {

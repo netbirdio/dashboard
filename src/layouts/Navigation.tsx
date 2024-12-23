@@ -8,7 +8,6 @@ import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import ActivityIcon from "@/assets/icons/ActivityIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
-import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
@@ -17,6 +16,7 @@ import SidebarItem from "@/components/SidebarItem";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { headerHeight } from "@/layouts/Header";
+import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
 
 const customTheme: CustomFlowbiteTheme["sidebar"] = {
   root: {
@@ -34,6 +34,7 @@ export default function Navigation({
   hideOnMobile = false,
 }: Props) {
   const { isUser } = useLoggedInUser();
+  const { isOwnerOrAdmin } = useLoggedInUser();
   const { bannerHeight } = useAnnouncement();
 
   return (
@@ -104,11 +105,8 @@ export default function Navigation({
                       />
                     </SidebarItem>
 
-                    <SidebarItem
-                      icon={<NetworkRoutesIcon />}
-                      label="Network Routes"
-                      href={"/network-routes"}
-                    />
+                    <NetworkNavigation />
+
                     <SidebarItem
                       icon={<DNSIcon />}
                       label="DNS"
@@ -141,33 +139,24 @@ export default function Navigation({
                     />
                   </>
                 )}
-
-                {isUser && (
-                  <SidebarItem
-                    icon={<DocsIcon />}
-                    href={"https://docs.netbird.io/"}
-                    target={"_blank"}
-                    label="Documentation"
-                  />
-                )}
               </SidebarItemGroup>
-              {!isUser && (
-                <SidebarItemGroup>
+
+              <SidebarItemGroup>
+                {isOwnerOrAdmin && (
                   <SidebarItem
                     icon={<SettingsIcon />}
                     label="Settings"
                     href={"/settings"}
                     exactPathMatch={true}
                   />
-
-                  <SidebarItem
-                    icon={<DocsIcon />}
-                    href={"https://docs.netbird.io/"}
-                    target={"_blank"}
-                    label="Documentation"
-                  />
-                </SidebarItemGroup>
-              )}
+                )}
+                <SidebarItem
+                  icon={<DocsIcon />}
+                  href={"https://docs.netbird.io/"}
+                  target={"_blank"}
+                  label="Documentation"
+                />
+              </SidebarItemGroup>
             </div>
           </div>
         </ScrollArea>

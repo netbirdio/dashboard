@@ -53,6 +53,7 @@ export default function UserActionCell({ user, serviceUser = false }: Props) {
         variant={"danger-outline"}
         size={"sm"}
         onClick={openConfirm}
+        data-cy={"delete-user"}
         disabled={disabled}
       >
         <Trash2 size={16} />

@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import { Group } from "@/interfaces/Group";
 import { Policy, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { useAccessControl } from "@/modules/access-control/useAccessControl";
@@ -105,6 +106,9 @@ export function AccessControlUpdateModal({
 type ModalProps = {
   onSuccess?: (p: Policy) => void;
   policy?: Policy;
+  initialDestinationGroups?: Group[] | string[];
+  initialName?: string;
+  initialDescription?: string;
   cell?: string;
   postureCheckTemplates?: PostureCheck[];
   useSave?: boolean;
@@ -118,6 +122,9 @@ export function AccessControlModalContent({
   postureCheckTemplates,
   useSave = true,
   allowEditPeers = false,
+  initialDestinationGroups,
+  initialName,
+  initialDescription,
 }: Readonly<ModalProps>) {
   const {
     portAndDirectionDisabled,
@@ -142,7 +149,14 @@ export function AccessControlModalContent({
     submit,
     isPostureChecksLoading,
     getPolicyData,
-  } = useAccessControl({ policy, postureCheckTemplates, onSuccess });
+  } = useAccessControl({
+    policy,
+    postureCheckTemplates,
+    onSuccess,
+    initialDestinationGroups,
+    initialName,
+    initialDescription,
+  });
 
   const [tab, setTab] = useState(() => {
     if (!cell) return "policy";
