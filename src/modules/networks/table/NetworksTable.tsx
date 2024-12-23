@@ -147,7 +147,7 @@ export default function NetworksTable({
                 Learn more about
                 <InlineLink
                   href={
-                    "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                    "https://docs.netbird.io/how-to/networks-concept"
                   }
                   target={"_blank"}
                 >
