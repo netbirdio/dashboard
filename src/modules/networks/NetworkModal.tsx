@@ -131,7 +131,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
-            <InlineLink href={"#"} target={"_blank"}>
+            <InlineLink href={"https://docs.netbird.io/how-to/networks-concept"} target={"_blank"}>
               Networks
               <ExternalLinkIcon size={12} />
             </InlineLink>
