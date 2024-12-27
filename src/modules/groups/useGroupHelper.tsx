@@ -80,6 +80,7 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
     return groupRequest.put(
       {
         name: g.name,
+        resources: g.resources,
         peers: newPeerGroups
           ? newPeerGroups.map((p) => {
               const groupPeer = p as GroupPeer;
@@ -112,6 +113,7 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
         {
           name: selectedGroup.name,
           peers: peers,
+          resources: selectedGroup.resources,
         },
         `/${selectedGroup.id}`,
       );
@@ -122,6 +124,7 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
       .post({
         name: selectedGroup.name,
         peers: groupPeers || [],
+        resources: selectedGroup.resources,
       })
       .then((group) => {
         setSelectedGroups((prev) => {

@@ -3,7 +3,7 @@ export interface Group {
   name: string;
   peers?: GroupPeer[] | string[];
   peers_count?: number;
-  resources?: string[];
+  resources?: GroupResource[] | string[];
   resources_count?: number;
 
   // Frontend only
@@ -13,4 +13,9 @@ export interface Group {
 export interface GroupPeer {
   id: string;
   name: string;
+}
+
+export interface GroupResource {
+  id: string;
+  type: string;
 }

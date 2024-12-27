@@ -124,6 +124,7 @@ export const AssignGroupToPeerModalContent = ({
             } as GroupPeer;
           }),
           peers_count: selectedPeers.length,
+          resources: group.resources,
           keepClientState: true,
         });
       return;
@@ -138,6 +139,7 @@ export const AssignGroupToPeerModalContent = ({
           {
             name: group.name,
             peers: selectedPeers.map((peer) => peer.id),
+            resources: group.resources,
           },
           "/" + group?.id,
         );
@@ -146,6 +148,7 @@ export const AssignGroupToPeerModalContent = ({
         groupRequest.post({
           name: group.name,
           peers: selectedPeers.map((peer) => peer.id),
+          resources: group.resources,
         });
     }
     notify({
