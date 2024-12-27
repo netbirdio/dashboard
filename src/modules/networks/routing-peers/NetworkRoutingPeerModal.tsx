@@ -294,7 +294,7 @@ function RoutingPeerModalContent({
             Learn more about
             <InlineLink
               href={
-                "https://docs.netbird.io/how-to/networks-concept#routing-peers"
+                "https://docs.netbird.io/how-to/networks#routing-peers"
               }
               target={"_blank"}
             >

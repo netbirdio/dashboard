@@ -36,7 +36,7 @@ export default function Networks() {
         </Paragraph>
         <Paragraph>
           Learn more about
-          <InlineLink href={"https://docs.netbird.io/how-to/networks-concept"} target={"_blank"}>
+          <InlineLink href={"https://docs.netbird.io/how-to/networks"} target={"_blank"}>
             Networks
             <ExternalLinkIcon size={12} />
           </InlineLink>
