@@ -2,7 +2,7 @@ import useFetchApi, { useApiCall } from "@utils/api";
 import { merge, sortBy, unionBy } from "lodash";
 import React, { useEffect, useState } from "react";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
-import { Group } from "@/interfaces/Group";
+import {Group, GroupResource} from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 
 type Props = {
@@ -102,6 +102,13 @@ export function GroupsProviderContent({
       return peer.id;
     }) as string[];
 
+    let resources = group?.resources?.map((r) => {
+        let isString = typeof r === "string";
+        if (isString) return r;
+        let resource = r as GroupResource;
+        return resource.id;
+    }) as string[];
+
     if (group.name === "All") return Promise.resolve(group);
 
     const groupID =
@@ -112,6 +119,7 @@ export function GroupsProviderContent({
         {
           name: group.name,
           peers: peers,
+          resources: resources,
         },
         `/${group.id}`,
       );
@@ -119,6 +127,7 @@ export function GroupsProviderContent({
       return groupRequest.post({
         name: group.name,
         peers: peers,
+        resources: resources,
       });
     }
   };

@@ -30,7 +30,7 @@ import * as React from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
-import type { Group, GroupPeer } from "@/interfaces/Group";
+import type {Group, GroupPeer, GroupResource} from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 
@@ -104,19 +104,21 @@ export function PeerGroupSelector({
     const option = dropdownOptions.find((option) => option.name == name);
     const groupPeers: GroupPeer[] | undefined =
       (group?.peers as GroupPeer[]) || [];
+    const groupResources: GroupResource[] | undefined =
+        (group?.resources as GroupResource[]) || [];
 
     if (peer) groupPeers?.push({ id: peer?.id as string, name: peer?.name });
 
     if (!group && !option) {
-      addDropdownOptions([{ name: name, peers: groupPeers }]);
+      addDropdownOptions([{ name: name, peers: groupPeers, resources: groupResources }]);
     }
 
     if (max == 1 && values.length == 1) {
-      onChange([{ name: name, id: group?.id, peers: groupPeers }]);
+      onChange([{ name: name, id: group?.id, peers: groupPeers, resources: groupResources }]);
     } else {
       onChange((previous) => [
         ...previous,
-        { name: name, id: group?.id, peers: groupPeers },
+        { name: name, id: group?.id, peers: groupPeers, resources: groupResources },
       ]);
     }
 

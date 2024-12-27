@@ -182,6 +182,7 @@ const PeerGroupMassAssignmentContent = ({
               {
                 name: group.name,
                 peers: group.peers,
+                resources: group.resources,
               },
               "/" + group.id,
             );
