@@ -147,7 +147,7 @@ export default function NetworksTable({
                 Learn more about
                 <InlineLink
                   href={
-                    "https://docs.netbird.io/how-to/networks-concept"
+                    "https://docs.netbird.io/how-to/networks"
                   }
                   target={"_blank"}
                 >
