@@ -1,4 +1,5 @@
 import Badge from "@components/Badge";
+import { NewBadge } from "@components/ui/NewBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { cn } from "@utils/helpers";
 import { FolderGit2, XIcon } from "lucide-react";
@@ -39,16 +40,7 @@ export default function GroupBadge({
 
       <TextWithTooltip text={group?.name || ""} maxChars={20} />
       {children}
-      {isNew && showNewBadge && (
-        <span
-          className={
-            "text-[7px] relative top-[.25px] leading-[0] bg-green-900 border border-green-500/20 py-1.5 px-1 rounded-[3px] text-green-400"
-          }
-        >
-          NEW
-        </span>
-      )}
-
+      {isNew && showNewBadge && <NewBadge />}
       {showX && (
         <XIcon
           size={12}
