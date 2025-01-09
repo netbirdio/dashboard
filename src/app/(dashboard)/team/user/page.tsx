@@ -316,6 +316,7 @@ function UserInformationCard({ user }: { user: User }) {
           <>
             {!user.is_current && user.role != Role.Owner && (
               <Card.ListItem
+                tooltip={false}
                 label={
                   <>
                     <Ban size={16} />
