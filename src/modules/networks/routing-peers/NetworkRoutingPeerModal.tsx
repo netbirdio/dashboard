@@ -110,7 +110,7 @@ function RoutingPeerModalContent({
   });
 
   const [masquerade, setMasquerade] = useState<boolean>(
-    router?.masquerade || true,
+    router ? router.masquerade : true,
   );
   const [metric, setMetric] = useState(
     router?.metric ? router.metric.toString() : "9999",
@@ -293,9 +293,7 @@ function RoutingPeerModalContent({
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
             <InlineLink
-              href={
-                "https://docs.netbird.io/how-to/networks#routing-peers"
-              }
+              href={"https://docs.netbird.io/how-to/networks#routing-peers"}
               target={"_blank"}
             >
               Routing Peers
