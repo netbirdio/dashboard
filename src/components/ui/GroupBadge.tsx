@@ -1,6 +1,6 @@
 import Badge from "@components/Badge";
 import { NewBadge } from "@components/ui/NewBadge";
-import TextWithTooltip from "@components/ui/TextWithTooltip";
+import TruncatedText from "@components/ui/TruncatedText";
 import { cn } from "@utils/helpers";
 import { FolderGit2, XIcon } from "lucide-react";
 import * as React from "react";
@@ -38,7 +38,7 @@ export default function GroupBadge({
     >
       <FolderGit2 size={12} className={"shrink-0"} />
 
-      <TextWithTooltip text={group?.name || ""} maxChars={20} />
+      <TruncatedText text={group?.name || ""} maxChars={20} />
       {children}
       {isNew && showNewBadge && <NewBadge />}
       {showX && (
