@@ -31,12 +31,15 @@ export default function Networks() {
         </Breadcrumbs>
         <h1 ref={headingRef}>Networks</h1>
         <Paragraph>
-          Networks allow you to access other resources like LANs and VPCs
-          without installing NetBird on every device.
+          Networks allow you to access other resources in LANs and VPCs without
+          installing NetBird on every device.
         </Paragraph>
         <Paragraph>
           Learn more about
-          <InlineLink href={"https://docs.netbird.io/how-to/networks"} target={"_blank"}>
+          <InlineLink
+            href={"https://docs.netbird.io/how-to/networks"}
+            target={"_blank"}
+          >
             Networks
             <ExternalLinkIcon size={12} />
           </InlineLink>
