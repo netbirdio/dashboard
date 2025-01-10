@@ -60,10 +60,7 @@ export const NetworkInformationSquare = ({
           {name}
         </p>
         <DescriptionWithTooltip
-          className={cn(
-            "text-left",
-            size == "lg" && "text-md leading-none mt-0.5",
-          )}
+          className={cn("text-left", size == "lg" && "text-md mt-0.5")}
           maxChars={24}
           text={description}
         />
