@@ -151,7 +151,8 @@ export function ResourceModalContent({
         <div>
           <Label>Assigned Groups</Label>
           <HelpText>
-            Control access to this resource by assigning it to groups
+            Add this resource to groups and use them as destinations when
+            creating policies
           </HelpText>
           <PeerGroupSelector onChange={setGroups} values={groups} />
         </div>
@@ -161,7 +162,10 @@ export function ResourceModalContent({
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
-            <InlineLink href={"https://docs.netbird.io/how-to/networks#resources"} target={"_blank"}>
+            <InlineLink
+              href={"https://docs.netbird.io/how-to/networks#resources"}
+              target={"_blank"}
+            >
               Resources
               <ExternalLinkIcon size={12} />
             </InlineLink>
