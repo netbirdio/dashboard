@@ -9,6 +9,7 @@ import PeerIcon from "@/assets/icons/PeerIcon";
 import { NetworkRouter } from "@/interfaces/Network";
 import { NetworkRoutingPeerName } from "@/modules/networks/routing-peers/NetworkRoutingPeerName";
 import { RoutingPeersActionCell } from "@/modules/networks/routing-peers/RoutingPeersActionCell";
+import { RoutingPeersEnabledCell } from "@/modules/networks/routing-peers/RoutingPeersEnabledCell";
 import { RoutingPeersMasqueradeCell } from "@/modules/networks/routing-peers/RoutingPeersMasqueradeCell";
 import RouteMetricCell from "@/modules/routes/RouteMetricCell";
 
@@ -27,6 +28,14 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
     },
     sortingFn: "text",
     cell: ({ row }) => <NetworkRoutingPeerName router={row.original} />,
+  },
+  {
+    id: "enabled",
+    accessorKey: "enabled",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Active</DataTableHeader>;
+    },
+    cell: ({ row }) => <RoutingPeersEnabledCell router={row.original} />,
   },
   {
     id: "metric",

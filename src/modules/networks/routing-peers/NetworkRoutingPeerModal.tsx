@@ -28,6 +28,7 @@ import {
   FolderGit2,
   MonitorSmartphoneIcon,
   PlusCircle,
+  Power,
   Settings2,
   Share2Icon,
   VenetianMask,
@@ -112,6 +113,9 @@ function RoutingPeerModalContent({
   const [masquerade, setMasquerade] = useState<boolean>(
     router ? router.masquerade : true,
   );
+  const [enabled, setEnabled] = useState<boolean>(
+    router ? router.enabled : true,
+  );
   const [metric, setMetric] = useState(
     router?.metric ? router.metric.toString() : "9999",
   );
@@ -137,6 +141,7 @@ function RoutingPeerModalContent({
           ? createdGroups.map((g) => g.id)
           : undefined,
         metric: parseInt(metric),
+        enabled,
         masquerade,
       }).then((r) => {
         onCreated?.(r);
@@ -165,6 +170,7 @@ function RoutingPeerModalContent({
           ? createdGroups.map((g) => g.id)
           : undefined,
         metric: parseInt(metric),
+        enabled,
         masquerade,
       }).then((r) => {
         onUpdated?.(r);
@@ -245,6 +251,19 @@ function RoutingPeerModalContent({
 
         <TabsContent value={"settings"} className={"pb-4"}>
           <div className={"px-8 flex flex-col gap-6"}>
+            <FancyToggleSwitch
+              value={enabled}
+              onChange={setEnabled}
+              label={
+                <>
+                  <Power size={15} />
+                  Enable Routing Peer
+                </>
+              }
+              helpText={
+                "Use this switch to enable or disable the routing peer."
+              }
+            />
             <FancyToggleSwitch
               value={masquerade}
               onChange={setMasquerade}
