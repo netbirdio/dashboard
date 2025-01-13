@@ -1,12 +1,16 @@
+import Button from "@components/Button";
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
+import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import NoResults from "@components/ui/NoResults";
+import { IconCirclePlus } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import * as React from "react";
 import { useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { NetworkRouter } from "@/interfaces/Network";
+import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { NetworkRoutingPeerName } from "@/modules/networks/routing-peers/NetworkRoutingPeerName";
 import { RoutingPeersActionCell } from "@/modules/networks/routing-peers/RoutingPeersActionCell";
 import { RoutingPeersEnabledCell } from "@/modules/networks/routing-peers/RoutingPeersEnabledCell";
@@ -70,6 +74,8 @@ export default function NetworkRoutingPeersTable({
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const { openAddRoutingPeerModal, network } = useNetworksContext();
+
   const [sorting, setSorting] = useState<SortingState>([
     {
       id: "metric",
@@ -80,7 +86,7 @@ export default function NetworkRoutingPeersTable({
   return (
     <DataTable
       wrapperComponent={Card}
-      wrapperProps={{ className: "mt-6 w-full" }}
+      wrapperProps={{ className: "mt-6 pb-2 w-full" }}
       headingTarget={headingTarget}
       sorting={sorting}
       setSorting={setSorting}
@@ -88,11 +94,11 @@ export default function NetworkRoutingPeersTable({
       showSearchAndFilters={false}
       inset={false}
       tableClassName={"mt-0"}
-      text={"Peers"}
+      text={"Routing Peers"}
       columns={NetworkRouterColumns}
       keepStateInLocalStorage={false}
       data={routers}
-      searchPlaceholder={"Search by name, IP, owner or group..."}
+      searchPlaceholder={"Search by name..."}
       isLoading={isLoading}
       getStartedCard={
         <NoResults
@@ -106,6 +112,23 @@ export default function NetworkRoutingPeersTable({
       }
       columnVisibility={{}}
       paginationPaddingClassName={"px-0 pt-8"}
-    />
+      rightSide={() => (
+        <Button
+          variant={"primary"}
+          className={"ml-auto"}
+          onClick={() => network && openAddRoutingPeerModal(network)}
+        >
+          <IconCirclePlus size={16} />
+          Add Routing Peer
+        </Button>
+      )}
+    >
+      {(table) => (
+        <DataTableRowsPerPage
+          table={table}
+          disabled={!routers || routers?.length == 0}
+        />
+      )}
+    </DataTable>
   );
 }

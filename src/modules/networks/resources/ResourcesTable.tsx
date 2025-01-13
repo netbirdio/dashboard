@@ -91,62 +91,56 @@ export default function ResourcesTable({
   resources,
   isLoading,
   headingTarget,
-}: Props) {
+}: Readonly<Props>) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { openResourceModal, network } = useNetworksContext();
 
   return (
-    <>
-      <DataTable
-        wrapperComponent={Card}
-        wrapperProps={{ className: "mt-6 w-full" }}
-        headingTarget={headingTarget}
-        sorting={sorting}
-        setSorting={setSorting}
-        minimal={true}
-        showSearchAndFilters={true}
-        inset={false}
-        tableClassName={"mt-0"}
-        text={"Resources"}
-        columns={NetworkResourceColumns}
-        keepStateInLocalStorage={false}
-        data={resources}
-        searchPlaceholder={"Search by name, address or group..."}
-        isLoading={isLoading}
-        getStartedCard={
-          <NoResults
-            className={"py-4"}
-            title={"This network has no resources"}
-            description={
-              "Add resources to this network to control what peers can access. Resources can be anything from a single IP, a subnet, or a domain."
-            }
-            icon={<Layers3Icon size={20} />}
-          />
-        }
-        columnVisibility={{}}
-        paginationPaddingClassName={"px-0 pt-8"}
-        rightSide={() => (
-          <>
-            <Button
-              variant={"primary"}
-              className={"ml-auto"}
-              onClick={() => network && openResourceModal(network)}
-            >
-              <IconCirclePlus size={16} />
-              Add Resource
-            </Button>
-          </>
-        )}
-      >
-        {(table) => (
-          <>
-            <DataTableRowsPerPage
-              table={table}
-              disabled={!resources || resources?.length == 0}
-            />
-          </>
-        )}
-      </DataTable>
-    </>
+    <DataTable
+      wrapperComponent={Card}
+      wrapperProps={{ className: "mt-6 pb-2 w-full" }}
+      headingTarget={headingTarget}
+      sorting={sorting}
+      setSorting={setSorting}
+      minimal={true}
+      showSearchAndFilters={true}
+      inset={false}
+      tableClassName={"mt-0"}
+      text={"Resources"}
+      columns={NetworkResourceColumns}
+      keepStateInLocalStorage={false}
+      data={resources}
+      searchPlaceholder={"Search by name, address or group..."}
+      isLoading={isLoading}
+      getStartedCard={
+        <NoResults
+          className={"py-4"}
+          title={"This network has no resources"}
+          description={
+            "Add resources to this network to control what peers can access. Resources can be anything from a single IP, a subnet, or a domain."
+          }
+          icon={<Layers3Icon size={20} />}
+        />
+      }
+      columnVisibility={{}}
+      paginationPaddingClassName={"px-0 pt-8"}
+      rightSide={() => (
+        <Button
+          variant={"primary"}
+          className={"ml-auto"}
+          onClick={() => network && openResourceModal(network)}
+        >
+          <IconCirclePlus size={16} />
+          Add Resource
+        </Button>
+      )}
+    >
+      {(table) => (
+        <DataTableRowsPerPage
+          table={table}
+          disabled={!resources || resources?.length == 0}
+        />
+      )}
+    </DataTable>
   );
 }

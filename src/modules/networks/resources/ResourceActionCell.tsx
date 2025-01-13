@@ -17,7 +17,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
   const { deleteResource, network, openResourceModal } = useNetworksContext();
 
   return (
-    <div className={"flex justify-end pr-4"}>
+    <div className={"flex justify-end"}>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
           asChild={true}

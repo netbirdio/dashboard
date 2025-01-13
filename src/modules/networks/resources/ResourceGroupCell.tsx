@@ -8,14 +8,14 @@ type Props = {
   resource?: NetworkResource;
 };
 export const ResourceGroupCell = ({ resource }: Props) => {
-  const { network, openResourceModal } = useNetworksContext();
+  const { network, openResourceGroupModal } = useNetworksContext();
 
   return (
     <button
       className={"flex cursor-pointer"}
       onClick={() => {
         if (!network) return;
-        openResourceModal(network, resource);
+        openResourceGroupModal(network, resource);
       }}
     >
       <MultipleGroups groups={resource?.groups as Group[]} />
