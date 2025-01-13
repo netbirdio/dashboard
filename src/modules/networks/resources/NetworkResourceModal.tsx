@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -17,7 +18,12 @@ import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import Separator from "@components/Separator";
 import { useApiCall } from "@utils/api";
-import { ExternalLinkIcon, PlusCircle, WorkflowIcon } from "lucide-react";
+import {
+  ExternalLinkIcon,
+  PlusCircle,
+  Power,
+  WorkflowIcon,
+} from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -79,6 +85,9 @@ export function ResourceModalContent({
   const [groups, setGroups, { save: saveGroups }] = useGroupHelper({
     initial: resource?.groups || [],
   });
+  const [enabled, setEnabled] = useState<boolean>(
+    resource ? resource.enabled : true,
+  );
 
   const createResource = async () => {
     const savedGroups = await saveGroups();
@@ -91,6 +100,7 @@ export function ResourceModalContent({
         description,
         address,
         groups: savedGroups.map((g) => g.id),
+        enabled,
       }).then((r) => {
         onCreated?.(r);
       }),
@@ -108,6 +118,7 @@ export function ResourceModalContent({
         description,
         address,
         groups: savedGroups.map((g) => g.id),
+        enabled,
       }).then((r) => {
         onUpdated?.(r);
       }),
@@ -155,6 +166,19 @@ export function ResourceModalContent({
             creating policies
           </HelpText>
           <PeerGroupSelector onChange={setGroups} values={groups} />
+        </div>
+        <div className={"mt-3"}>
+          <FancyToggleSwitch
+            value={enabled}
+            onChange={setEnabled}
+            label={
+              <>
+                <Power size={15} />
+                Enable Resource
+              </>
+            }
+            helpText={"Use this switch to enable or disable the resource."}
+          />
         </div>
       </div>
 

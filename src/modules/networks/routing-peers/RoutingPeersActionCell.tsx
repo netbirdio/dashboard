@@ -1,5 +1,11 @@
 import Button from "@components/Button";
-import { SquarePenIcon, Trash2 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
+import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -13,28 +19,44 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <Button
-        variant={"default-outline"}
-        size={"sm"}
-        onClick={() => {
-          if (!network) return;
-          openAddRoutingPeerModal(network, router);
-        }}
-      >
-        <SquarePenIcon size={16} />
-        Edit
-      </Button>
-      <Button
-        variant={"danger-outline"}
-        size={"sm"}
-        onClick={() => {
-          if (!network) return;
-          deleteRouter(network, router);
-        }}
-      >
-        <Trash2 size={16} />
-        Remove
-      </Button>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger
+          asChild={true}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          <Button variant={"secondary"} className={"!px-3"}>
+            <MoreVertical size={16} className={"shrink-0"} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-auto" align="end">
+          <DropdownMenuItem
+            onClick={() => {
+              if (!network) return;
+              openAddRoutingPeerModal(network, router);
+            }}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <SquarePenIcon size={14} className={"shrink-0"} />
+              Edit
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => {
+              if (!network) return;
+              deleteRouter(network, router);
+            }}
+            variant={"danger"}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <Trash2 size={14} className={"shrink-0"} />
+              Remove
+            </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 };

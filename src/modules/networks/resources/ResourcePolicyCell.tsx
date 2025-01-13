@@ -89,7 +89,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
         <Button
           size={"xs"}
           variant={"secondary"}
-          className={"min-w-[110px]"}
+          className={"min-w-[100px]"}
           onClick={() => openPolicyModal(network, resource)}
         >
           <PlusCircle size={12} />

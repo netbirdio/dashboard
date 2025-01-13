@@ -43,7 +43,9 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Metric</DataTableHeader>;
     },
-    cell: ({ row }) => <RouteMetricCell metric={row.original.metric} />,
+    cell: ({ row }) => (
+      <RouteMetricCell metric={row.original.metric} useHoverStyle={false} />
+    ),
   },
   {
     id: "masquerade",
@@ -67,7 +69,7 @@ export default function NetworkRoutingPeersTable({
   routers,
   isLoading,
   headingTarget,
-}: Props) {
+}: Readonly<Props>) {
   const [sorting, setSorting] = useState<SortingState>([
     {
       id: "metric",

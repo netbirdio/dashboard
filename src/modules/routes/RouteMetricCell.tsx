@@ -3,11 +3,15 @@ import { ArrowUpDown, InfoIcon } from "lucide-react";
 
 type Props = {
   metric?: number;
+  useHoverStyle?: boolean;
 };
-export default function RouteMetricCell({ metric }: Props) {
+export default function RouteMetricCell({
+  metric,
+  useHoverStyle = true,
+}: Readonly<Props>) {
   return (
     <FullTooltip
-      hoverButton={true}
+      hoverButton={useHoverStyle}
       isAction={true}
       content={
         <div className={"text-xs max-w-xs flex gap-2 items-center"}>
