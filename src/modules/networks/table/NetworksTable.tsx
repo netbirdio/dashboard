@@ -13,7 +13,6 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
-import { useDialog } from "@/contexts/DialogProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Network } from "@/interfaces/Network";
 import {
@@ -39,14 +38,6 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
     accessorKey: "description",
   },
   {
-    accessorKey: "routers",
-    accessorFn: (network) => network?.routers?.length,
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Routing Peers</DataTableHeader>;
-    },
-    cell: ({ row }) => <NetworkRoutingPeerCell network={row.original} />,
-  },
-  {
     accessorKey: "resources",
     accessorFn: (network) => network?.resources?.length,
     header: ({ column }) => {
@@ -61,6 +52,14 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
       return <DataTableHeader column={column}>Policies</DataTableHeader>;
     },
     cell: ({ row }) => <NetworkPolicyCell network={row.original} />,
+  },
+  {
+    accessorKey: "routers",
+    accessorFn: (network) => network?.routers?.length,
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Routing Peers</DataTableHeader>;
+    },
+    cell: ({ row }) => <NetworkRoutingPeerCell network={row.original} />,
   },
   {
     accessorKey: "id",
@@ -93,20 +92,6 @@ export default function NetworksTable({
       },
     ],
   );
-
-  const { confirm } = useDialog();
-
-  const showConfirm = async () => {
-    const choice = await confirm({
-      title: `Do you want to add a resource to 'Office Network' now?`,
-      description:
-        "Peers will be able to access your network resources once you add them.",
-      confirmText: "Add Resource",
-      cancelText: "Later",
-      type: "default",
-    });
-    if (!choice) return;
-  };
 
   return (
     <NetworkProvider>
@@ -146,9 +131,7 @@ export default function NetworksTable({
               <>
                 Learn more about
                 <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/networks"
-                  }
+                  href={"https://docs.netbird.io/how-to/networks"}
                   target={"_blank"}
                 >
                   Networks

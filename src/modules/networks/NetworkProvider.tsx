@@ -232,7 +232,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
         network={currentNetwork}
         onCreated={async (network) => {
           mutate("/networks");
-          await askForRoutingPeer(network);
+          await askForResource(network);
         }}
         onUpdated={() => {
           mutate("/networks");
@@ -250,13 +250,15 @@ export const NetworkProvider = ({ children, network }: Props) => {
           initialDestinationGroups={policyDefaultSettings?.destinationGroups}
           initialName={policyDefaultSettings?.name}
           initialDescription={policyDefaultSettings?.description}
-          onSuccess={(p) => {
+          onSuccess={async (p) => {
             setPolicyModal(false);
             setPolicyDefaultSettings(undefined);
             mutate("/networks");
             if (network) {
               mutate(`/networks/${network.id}/resources`);
               mutate(`/networks/${network.id}`);
+            } else {
+              currentNetwork && (await askForRoutingPeer(currentNetwork));
             }
           }}
         />
@@ -275,8 +277,6 @@ export const NetworkProvider = ({ children, network }: Props) => {
               if (network) {
                 mutate(`/networks/${currentNetwork.id}/routers`);
                 mutate(`/networks/${network.id}`);
-              } else {
-                await askForResource(currentNetwork);
               }
             }}
             onUpdated={async () => {
