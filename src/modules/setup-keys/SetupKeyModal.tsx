@@ -23,7 +23,7 @@ import { cn } from "@utils/helpers";
 import { trim } from "lodash";
 import {
   AlarmClock,
-  CopyIcon,
+  DownloadIcon,
   ExternalLinkIcon,
   MonitorSmartphoneIcon,
   PlusCircle,
@@ -35,6 +35,7 @@ import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
   children?: React.ReactNode;
@@ -49,6 +50,7 @@ export default function SetupKeyModal({
 }: Readonly<Props>) {
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
+  const [installModal, setInstallModal] = useState(false);
   const [, copy] = useCopyToClipboard(setupKey?.key);
 
   const handleSuccess = (setupKey: SetupKey) => {
@@ -62,6 +64,15 @@ export default function SetupKeyModal({
         {children && <ModalTrigger asChild>{children}</ModalTrigger>}
         <SetupKeyModalContent onSuccess={handleSuccess} />
       </Modal>
+
+      <Modal
+        open={installModal}
+        onOpenChange={setInstallModal}
+        key={installModal ? 1 : 0}
+      >
+        <SetupModal showClose={true} setupKey={setupKey?.key} />
+      </Modal>
+
       <Modal
         open={successModal}
         onOpenChange={(open) => {
@@ -118,10 +129,10 @@ export default function SetupKeyModal({
                 variant={"primary"}
                 className={"w-full"}
                 data-cy={"setup-key-copy"}
-                onClick={() => copy(copyMessage)}
+                onClick={() => setInstallModal(true)}
               >
-                <CopyIcon size={14} />
-                Copy to clipboard
+                <DownloadIcon size={14} />
+                Install NetBird
               </Button>
             </div>
           </ModalFooter>

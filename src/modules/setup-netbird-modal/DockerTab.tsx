@@ -10,7 +10,11 @@ import Link from "next/link";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
-export default function DockerTab() {
+type Props = {
+  setupKey?: string;
+};
+
+export default function DockerTab({ setupKey }: Readonly<Props>) {
   return (
     <TabsContent value={String(OperatingSystem.DOCKER)}>
       <TabsContentPadding>
@@ -42,7 +46,10 @@ export default function DockerTab() {
               <Code.Line>
                 {" "}
                 -e NB_SETUP_KEY=
-                <span className={"text-netbird"}>SETUP_KEY</span> \
+                <span className={"text-netbird"}>
+                  {setupKey ?? "SETUP_KEY"}
+                </span>{" "}
+                \
               </Code.Line>
               <Code.Line> -v netbird-client:/etc/netbird \</Code.Line>
               {GRPC_API_ORIGIN && (
