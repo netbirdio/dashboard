@@ -31,8 +31,8 @@ export default function Networks() {
         </Breadcrumbs>
         <h1 ref={headingRef}>Networks</h1>
         <Paragraph>
-          Networks allow you to access other resources in LANs and VPCs without
-          installing NetBird on every device.
+          Networks allow you to access internal resources in LANs and VPCs without
+          installing NetBird on every machine.
         </Paragraph>
         <Paragraph>
           Learn more about
