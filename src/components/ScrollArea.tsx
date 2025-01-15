@@ -1,5 +1,3 @@
-"use client";
-
 import * as ScrollAreaPrimitive from "@radix-ui/react-scroll-area";
 import { cn } from "@utils/helpers";
 import * as React from "react";
@@ -15,46 +13,31 @@ const ScrollArea = React.forwardRef<
 >(({ className, children, withoutViewport = false, ...props }, ref) => (
   <ScrollAreaPrimitive.Root
     ref={ref}
-    className={cn(
-      "relative will-change-scroll webkit-scroll",
-      className,
-      "overflow-hidden",
-    )}
+    className={cn("relative overflow-hidden", className)}
     {...props}
   >
     {withoutViewport ? (
       children
     ) : (
-      <ScrollAreaViewport disableOverflowY={false}>
-        {children}
-      </ScrollAreaViewport>
+      <ScrollAreaViewport>{children}</ScrollAreaViewport>
     )}
-    <ScrollBar />
+    <ScrollBar orientation="horizontal" />
+    <ScrollBar orientation="vertical" />
     <ScrollAreaPrimitive.Corner />
   </ScrollAreaPrimitive.Root>
 ));
 ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName;
 
-type AdditionalScrollAreaViewportProps = {
-  disableOverflowY?: boolean;
-};
-
 const ScrollAreaViewport = React.forwardRef<
   React.ElementRef<typeof ScrollAreaPrimitive.Viewport>,
-  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Viewport> &
-    AdditionalScrollAreaViewportProps
->(({ disableOverflowY = true, ...props }, ref) => {
-  return (
-    <ScrollAreaPrimitive.Viewport
-      ref={ref}
-      className="h-full w-full rounded-[inherit] will-change-scroll webkit-scroll"
-      {...props}
-      style={
-        disableOverflowY ? { overflowY: undefined, ...props.style } : undefined
-      }
-    />
-  );
-});
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Viewport>
+>(({ className, ...props }, ref) => (
+  <ScrollAreaPrimitive.Viewport
+    ref={ref}
+    className={cn("h-full w-full rounded-[inherit]", className)}
+    {...props}
+  />
+));
 ScrollAreaViewport.displayName = ScrollAreaPrimitive.Viewport.displayName;
 
 const ScrollBar = React.forwardRef<
@@ -63,14 +46,11 @@ const ScrollBar = React.forwardRef<
 >(({ className, orientation = "vertical", ...props }, ref) => (
   <ScrollAreaPrimitive.ScrollAreaScrollbar
     ref={ref}
-    style={{ boxSizing: "unset", overflow: undefined }}
     orientation={orientation}
     className={cn(
-      "flex touch-none select-none transition-colors",
-      orientation === "vertical" &&
-        "h-full w-2.5 border-l border-l-transparent p-[1px]",
-      orientation === "horizontal" &&
-        "h-2.5 border-t border-t-transparent p-[1px]",
+      "flex select-none touch-none transition-colors",
+      orientation === "vertical" && "h-full w-2.5 p-[1px]",
+      orientation === "horizontal" && "w-full h-2.5 p-[1px] bottom-0",
       className,
     )}
     {...props}
@@ -79,6 +59,7 @@ const ScrollBar = React.forwardRef<
       className={cn(
         "relative rounded-full bg-neutral-200 dark:bg-nb-gray-800",
         orientation === "vertical" && "flex-1",
+        orientation === "horizontal" && "h-full",
       )}
     />
   </ScrollAreaPrimitive.ScrollAreaScrollbar>

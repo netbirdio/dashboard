@@ -23,8 +23,12 @@ import {
 import Link from "next/link";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import { SetupKeyParameter } from "@/modules/setup-netbird-modal/SetupModal";
 
-export default function MacOSTab() {
+type Props = {
+  setupKey?: string;
+};
+export default function MacOSTab({ setupKey }: Readonly<Props>) {
   return (
     <TabsContent value={String(OperatingSystem.APPLE)}>
       <TabsContentPadding>
@@ -98,15 +102,29 @@ export default function MacOSTab() {
             </Steps.Step>
           )}
 
-          <Steps.Step step={GRPC_API_ORIGIN ? 3 : 2}>
-            <p>
-              {/* eslint-disable-next-line react/no-unescaped-entities */}
-              Click on "Connect" from the NetBird icon in your system tray
-            </p>
-          </Steps.Step>
-          <Steps.Step step={GRPC_API_ORIGIN ? 4 : 3} line={false}>
-            <p>Sign up using your email address</p>
-          </Steps.Step>
+          {setupKey ? (
+            <Steps.Step step={GRPC_API_ORIGIN ? 3 : 2} line={false}>
+              <p>Open Terminal and run NetBird</p>
+              <Code>
+                <Code.Line>
+                  {getNetBirdUpCommand()}
+                  <SetupKeyParameter setupKey={setupKey} />
+                </Code.Line>
+              </Code>
+            </Steps.Step>
+          ) : (
+            <>
+              <Steps.Step step={GRPC_API_ORIGIN ? 3 : 2}>
+                <p>
+                  {/* eslint-disable-next-line react/no-unescaped-entities */}
+                  Click on "Connect" from the NetBird icon in your system tray
+                </p>
+              </Steps.Step>
+              <Steps.Step step={GRPC_API_ORIGIN ? 4 : 3} line={false}>
+                <p>Sign up using your email address</p>
+              </Steps.Step>
+            </>
+          )}
         </Steps>
       </TabsContentPadding>
       <Separator />
@@ -125,9 +143,12 @@ export default function MacOSTab() {
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={2} line={false}>
-                  <p>Run NetBird and log in the browser</p>
+                  <p>Run NetBird {!setupKey && "and log in the browser"}</p>
                   <Code>
-                    <Code.Line>{getNetBirdUpCommand()}</Code.Line>
+                    <Code.Line>
+                      {getNetBirdUpCommand()}
+                      <SetupKeyParameter setupKey={setupKey} />
+                    </Code.Line>
                   </Code>
                 </Steps.Step>
               </Steps>
@@ -179,9 +200,12 @@ export default function MacOSTab() {
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={4} line={false}>
-                  <p>Run NetBird and log in the browser</p>
+                  <p>Run NetBird {!setupKey && "and log in the browser"}</p>
                   <Code>
-                    <Code.Line>{getNetBirdUpCommand()}</Code.Line>
+                    <Code.Line>
+                      {getNetBirdUpCommand()}
+                      <SetupKeyParameter setupKey={setupKey} />
+                    </Code.Line>
                   </Code>
                 </Steps.Step>
               </Steps>

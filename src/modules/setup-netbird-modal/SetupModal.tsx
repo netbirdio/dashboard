@@ -5,6 +5,7 @@ import { ModalContent, ModalFooter } from "@components/modal/Modal";
 import Paragraph from "@components/Paragraph";
 import SmallParagraph from "@components/SmallParagraph";
 import { Tabs, TabsList, TabsTrigger } from "@components/Tabs";
+import { cn } from "@utils/helpers";
 import { ExternalLinkIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -31,27 +32,36 @@ type OidcUserInfo = {
 type Props = {
   showClose?: boolean;
   user?: OidcUserInfo;
+  setupKey?: string;
 };
 
-export default function SetupModal({ showClose = true, user }: Props) {
+export default function SetupModal({
+  showClose = true,
+  user,
+  setupKey,
+}: Readonly<Props>) {
   return (
     <ModalContent showClose={showClose}>
-      <SetupModalContent user={user} />
+      <SetupModalContent user={user} setupKey={setupKey} />
     </ModalContent>
   );
 }
+
+type SetupModalContentProps = {
+  user?: OidcUserInfo;
+  header?: boolean;
+  footer?: boolean;
+  tabAlignment?: "center" | "start" | "end";
+  setupKey?: string;
+};
 
 export function SetupModalContent({
   user,
   header = true,
   footer = true,
   tabAlignment = "center",
-}: {
-  user?: OidcUserInfo;
-  header?: boolean;
-  footer?: boolean;
-  tabAlignment?: "center" | "start" | "end";
-}) {
+  setupKey,
+}: Readonly<SetupModalContentProps>) {
   const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
   const pathname = usePathname();
@@ -60,24 +70,33 @@ export function SetupModalContent({
   return (
     <>
       {header && (
-        <div className={"text-center pb-8 pt-4 px-8"}>
-          <h2 className={"text-3xl max-w-lg mx-auto"}>
+        <div className={"text-center pb-5 pt-4 px-8"}>
+          <h2
+            className={cn(
+              "max-w-lg mx-auto",
+              setupKey ? "text-2xl" : "text-3xl",
+            )}
+          >
             {isFirstRun && !isInstallPage ? (
               <>
                 Hello {user?.given_name || "there"}! 👋 <br />
                 {`It's time to add your first device.`}
               </>
             ) : (
-              <>Install NetBird</>
+              <>Install NetBird{setupKey && " with Setup Key"}</>
             )}
           </h2>
-          <Paragraph className={"max-w-xs mx-auto mt-3"}>
-            To get started, install NetBird and log in with your email account.
+          <Paragraph
+            className={cn("mx-auto mt-3", setupKey ? "max-w-sm" : "max-w-xs")}
+          >
+            {setupKey
+              ? "To get started, install and run NetBird with your recently created setup key as a parameter."
+              : "To get started, install NetBird and log in with your email account."}
           </Paragraph>
         </div>
       )}
 
-      <Tabs defaultValue={String(os)}>
+      <Tabs defaultValue={String(setupKey ? OperatingSystem.LINUX : os)}>
         <TabsList justify={tabAlignment} className={"pt-2 px-3"}>
           <TabsTrigger value={String(OperatingSystem.LINUX)}>
             <ShellIcon
@@ -103,22 +122,28 @@ export function SetupModalContent({
             />
             macOS
           </TabsTrigger>
-          <TabsTrigger value={String(OperatingSystem.IOS)}>
-            <IOSIcon
-              className={
-                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-              }
-            />
-            iOS
-          </TabsTrigger>
-          <TabsTrigger value={String(OperatingSystem.ANDROID)}>
-            <AndroidIcon
-              className={
-                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-              }
-            />
-            Android
-          </TabsTrigger>
+
+          {!setupKey && (
+            <>
+              <TabsTrigger value={String(OperatingSystem.IOS)}>
+                <IOSIcon
+                  className={
+                    "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+                  }
+                />
+                iOS
+              </TabsTrigger>
+              <TabsTrigger value={String(OperatingSystem.ANDROID)}>
+                <AndroidIcon
+                  className={
+                    "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+                  }
+                />
+                Android
+              </TabsTrigger>
+            </>
+          )}
+
           <TabsTrigger value={String(OperatingSystem.DOCKER)}>
             <DockerIcon
               className={
@@ -128,12 +153,19 @@ export function SetupModalContent({
             Docker
           </TabsTrigger>
         </TabsList>
-        <LinuxTab />
-        <WindowsTab />
-        <MacOSTab />
-        <AndroidTab />
-        <IOSTab />
-        <DockerTab />
+
+        <LinuxTab setupKey={setupKey} />
+        <WindowsTab setupKey={setupKey} />
+        <MacOSTab setupKey={setupKey} />
+
+        {!setupKey && (
+          <>
+            <AndroidTab />
+            <IOSTab />
+          </>
+        )}
+
+        <DockerTab setupKey={setupKey} />
       </Tabs>
       {footer && (
         <ModalFooter variant={"setup"}>
@@ -158,3 +190,18 @@ export function SetupModalContent({
     </>
   );
 }
+
+type SetupKeyParameterProps = {
+  setupKey?: string;
+};
+
+export const SetupKeyParameter = ({ setupKey }: SetupKeyParameterProps) => {
+  return (
+    setupKey && (
+      <>
+        {" "}
+        --setup-key <span className={"text-netbird"}>{setupKey}</span>{" "}
+      </>
+    )
+  );
+};
