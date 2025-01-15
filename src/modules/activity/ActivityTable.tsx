@@ -38,6 +38,22 @@ const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
     cell: ({ row }) => <ActivityEntryRow event={row.original} />,
   },
   {
+    id: "activity_text",
+    accessorFn: (event) => {
+      try {
+        if (event.meta) {
+          return Object.keys(event.meta)
+            .map((key) => {
+              return `${event?.meta[key]}`;
+            })
+            .join(" ");
+        }
+      } catch (error) {
+        return "";
+      }
+    },
+  },
+  {
     accessorKey: "timestamp",
     id: "timestamp",
     filterFn: "dateRange",
@@ -103,6 +119,7 @@ export default function ActivityTable({
       columnVisibility={{
         timestamp: false,
         name: false,
+        activity_text: false,
         initiator_email: false,
       }}
       getStartedCard={
