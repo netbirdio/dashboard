@@ -83,7 +83,7 @@ export function SetupModalContent({
                 {`It's time to add your first device.`}
               </>
             ) : (
-              <>Install NetBird with Setup Key</>
+              <>Install NetBird{setupKey && " with Setup Key"}</>
             )}
           </h2>
           <Paragraph
