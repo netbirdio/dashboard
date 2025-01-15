@@ -3,6 +3,7 @@ import { ToggleSwitch } from "@components/ToggleSwitch";
 import { useApiCall } from "@utils/api";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
 import { User } from "@/interfaces/User";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
 export default function UserBlockCell({ user, isUserPage = false }: Props) {
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
+  const { confirm } = useDialog();
 
   const isChecked = useMemo(() => {
     return user.is_blocked;
@@ -21,6 +23,18 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
 
   const update = async (blocked: boolean) => {
     const name = user.name || "User";
+
+    if (blocked) {
+      const choice = await confirm({
+        title: `Block '${name}'?`,
+        description:
+          "This action will immediately revoke the user's access and disconnect all of their active peers.",
+        confirmText: "Block",
+        cancelText: "Cancel",
+        type: "danger",
+      });
+      if (!choice) return;
+    }
 
     notify({
       title: blocked ? "User blocked" : "User unblocked",
