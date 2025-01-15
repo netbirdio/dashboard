@@ -196,7 +196,7 @@ function RoutingPeerModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Routers
+            Routing Peers
           </TabsTrigger>
 
           <TabsTrigger value={"settings"} className={"ml-auto"}>
@@ -226,7 +226,7 @@ function RoutingPeerModalContent({
               <SegmentedTabs.Content value={"peer"}>
                 <div>
                   <HelpText>
-                    Assign a single or multiple peers as a routing peers for the
+                    Assign a single or multiple peers as routing peers for the
                     network.
                   </HelpText>
                   <PeerSelector onChange={setRoutingPeer} value={routingPeer} />
