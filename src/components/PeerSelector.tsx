@@ -166,15 +166,17 @@ export function PeerSelector({
             placeholder={"Search for peers by name or ip..."}
           />
 
-          {unfilteredItems.length == 0 && (
-            <DropdownInfoText>
-              {
-                "Seems like you don't have any linux peers to assign as a routing peer."
-              }
-            </DropdownInfoText>
+          {unfilteredItems.length == 0 && !search && (
+            <div className={"max-w-xs mx-auto"}>
+              <DropdownInfoText>
+                {
+                  "Seems like you don't have any linux peers to assign as a routing peer."
+                }
+              </DropdownInfoText>
+            </div>
           )}
 
-          {filteredItems.length == 0 && (
+          {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
               There are no peers matching your search.
             </DropdownInfoText>
