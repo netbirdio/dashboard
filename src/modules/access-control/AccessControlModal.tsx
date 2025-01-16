@@ -281,6 +281,7 @@ export function AccessControlModalContent({
                   onChange={setSourceGroups}
                   values={sourceGroups}
                   saveGroupAssignments={useSave}
+                  showResourceCounter={false}
                 />
               </div>
               <PolicyDirection
@@ -391,9 +392,7 @@ export function AccessControlModalContent({
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
             <InlineLink
-              href={
-                "https://docs.netbird.io/how-to/manage-network-access"
-              }
+              href={"https://docs.netbird.io/how-to/manage-network-access"}
               target={"_blank"}
             >
               Access Controls

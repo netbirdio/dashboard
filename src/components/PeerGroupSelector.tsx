@@ -30,7 +30,7 @@ import * as React from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
-import type {Group, GroupPeer, GroupResource} from "@/interfaces/Group";
+import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 
@@ -48,6 +48,7 @@ interface MultiSelectProps {
   showRoutes?: boolean;
   disabledGroups?: Group[];
   dataCy?: string;
+  showResourceCounter?: boolean;
 }
 export function PeerGroupSelector({
   onChange,
@@ -63,6 +64,7 @@ export function PeerGroupSelector({
   showRoutes = false,
   disabledGroups,
   dataCy = "group-selector-dropdown",
+  showResourceCounter = true,
 }: Readonly<MultiSelectProps>) {
   const { groups, dropdownOptions, setDropdownOptions, addDropdownOptions } =
     useGroups();
@@ -105,20 +107,34 @@ export function PeerGroupSelector({
     const groupPeers: GroupPeer[] | undefined =
       (group?.peers as GroupPeer[]) || [];
     const groupResources: GroupResource[] | undefined =
-        (group?.resources as GroupResource[]) || [];
+      (group?.resources as GroupResource[]) || [];
 
     if (peer) groupPeers?.push({ id: peer?.id as string, name: peer?.name });
 
     if (!group && !option) {
-      addDropdownOptions([{ name: name, peers: groupPeers, resources: groupResources }]);
+      addDropdownOptions([
+        { name: name, peers: groupPeers, resources: groupResources },
+      ]);
     }
 
     if (max == 1 && values.length == 1) {
-      onChange([{ name: name, id: group?.id, peers: groupPeers, resources: groupResources }]);
+      onChange([
+        {
+          name: name,
+          id: group?.id,
+          peers: groupPeers,
+          resources: groupResources,
+        },
+      ]);
     } else {
       onChange((previous) => [
         ...previous,
-        { name: name, id: group?.id, peers: groupPeers, resources: groupResources },
+        {
+          name: name,
+          id: group?.id,
+          peers: groupPeers,
+          resources: groupResources,
+        },
       ]);
     }
 
@@ -396,7 +412,9 @@ export function PeerGroupSelector({
                             <AccessControlGroupCount group_id={option.id} />
                           )}
 
-                          <ResourcesCounter group={option} />
+                          {showResourceCounter && (
+                            <ResourcesCounter group={option} />
+                          )}
 
                           <div
                             className={
