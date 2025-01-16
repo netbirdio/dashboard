@@ -32,7 +32,6 @@ import {
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
-import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
@@ -42,6 +41,7 @@ type Props = {
   open: boolean;
   setOpen: (open: boolean) => void;
   name?: string;
+  showOnlyRoutingPeerOS?: boolean;
 };
 const copyMessage = "Setup-Key was copied to your clipboard!";
 export default function SetupKeyModal({
@@ -49,12 +49,11 @@ export default function SetupKeyModal({
   open,
   setOpen,
   name,
+  showOnlyRoutingPeerOS,
 }: Readonly<Props>) {
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const [installModal, setInstallModal] = useState(false);
-  const [, copy] = useCopyToClipboard(setupKey?.key);
-
   const handleSuccess = (setupKey: SetupKey) => {
     setSetupKey(setupKey);
     setSuccessModal(true);
@@ -75,7 +74,11 @@ export default function SetupKeyModal({
         }}
         key={installModal ? 2 : 3}
       >
-        <SetupModal showClose={true} setupKey={setupKey?.key} />
+        <SetupModal
+          showClose={true}
+          setupKey={setupKey?.key}
+          showOnlyRoutingPeerOS={showOnlyRoutingPeerOS}
+        />
       </Modal>
 
       <Modal

@@ -33,16 +33,22 @@ type Props = {
   showClose?: boolean;
   user?: OidcUserInfo;
   setupKey?: string;
+  showOnlyRoutingPeerOS?: boolean;
 };
 
 export default function SetupModal({
   showClose = true,
   user,
   setupKey,
+  showOnlyRoutingPeerOS = false,
 }: Readonly<Props>) {
   return (
     <ModalContent showClose={showClose}>
-      <SetupModalContent user={user} setupKey={setupKey} />
+      <SetupModalContent
+        user={user}
+        setupKey={setupKey}
+        showOnlyRoutingPeerOS={showOnlyRoutingPeerOS}
+      />
     </ModalContent>
   );
 }
@@ -53,6 +59,7 @@ type SetupModalContentProps = {
   footer?: boolean;
   tabAlignment?: "center" | "start" | "end";
   setupKey?: string;
+  showOnlyRoutingPeerOS?: boolean;
 };
 
 export function SetupModalContent({
@@ -61,6 +68,7 @@ export function SetupModalContent({
   footer = true,
   tabAlignment = "center",
   setupKey,
+  showOnlyRoutingPeerOS,
 }: Readonly<SetupModalContentProps>) {
   const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
@@ -90,7 +98,7 @@ export function SetupModalContent({
             className={cn("mx-auto mt-3", setupKey ? "max-w-sm" : "max-w-xs")}
           >
             {setupKey
-              ? "To get started, install and run NetBird with your recently created setup key as a parameter."
+              ? "To get started, install and run NetBird with the setup key as a parameter."
               : "To get started, install NetBird and log in with your email account."}
           </Paragraph>
         </div>
@@ -106,22 +114,27 @@ export function SetupModalContent({
             />
             Linux
           </TabsTrigger>
-          <TabsTrigger value={String(OperatingSystem.WINDOWS)}>
-            <WindowsIcon
-              className={
-                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-              }
-            />
-            Windows
-          </TabsTrigger>
-          <TabsTrigger value={String(OperatingSystem.APPLE)}>
-            <AppleIcon
-              className={
-                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-              }
-            />
-            macOS
-          </TabsTrigger>
+
+          {!showOnlyRoutingPeerOS && (
+            <>
+              <TabsTrigger value={String(OperatingSystem.WINDOWS)}>
+                <WindowsIcon
+                  className={
+                    "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+                  }
+                />
+                Windows
+              </TabsTrigger>
+              <TabsTrigger value={String(OperatingSystem.APPLE)}>
+                <AppleIcon
+                  className={
+                    "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+                  }
+                />
+                macOS
+              </TabsTrigger>
+            </>
+          )}
 
           {!setupKey && (
             <>

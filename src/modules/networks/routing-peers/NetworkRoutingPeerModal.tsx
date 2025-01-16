@@ -24,6 +24,7 @@ import { cn } from "@utils/helpers";
 import { uniqBy } from "lodash";
 import {
   ArrowDownWideNarrow,
+  CirclePlusIcon,
   ExternalLinkIcon,
   FolderGit2,
   MonitorSmartphoneIcon,
@@ -37,6 +38,7 @@ import React, { useState } from "react";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import SetupKeyModal from "@/modules/setup-keys/SetupKeyModal";
 
 type Props = {
   network: Network;
@@ -178,6 +180,10 @@ function RoutingPeerModalContent({
     });
   };
 
+  const [setupKeyModal, setSetupKeyModal] = useState(false);
+
+  const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
+
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
@@ -209,43 +215,82 @@ function RoutingPeerModalContent({
             Advanced Settings
           </TabsTrigger>
         </TabsList>
-        <TabsContent value={"router"} className={"pb-8"}>
-          <div className={"flex flex-col gap-4 px-8 "}>
-            <SegmentedTabs value={type} onChange={setType}>
-              <SegmentedTabs.List>
-                <SegmentedTabs.Trigger value={"peer"}>
-                  <MonitorSmartphoneIcon size={16} />
-                  Routing Peers
-                </SegmentedTabs.Trigger>
+        <TabsContent value={"router"} className={"pb-6"}>
+          <div className={"flex flex-col gap-4 px-8"}>
+            <div className={"relative "}>
+              <SegmentedTabs
+                value={type}
+                onChange={(state) => {
+                  setType(state);
+                  setRoutingPeer(undefined);
+                  setRoutingPeerGroups([]);
+                }}
+              >
+                <SegmentedTabs.List>
+                  <SegmentedTabs.Trigger value={"peer"}>
+                    <MonitorSmartphoneIcon size={16} />
+                    Routing Peers
+                  </SegmentedTabs.Trigger>
 
-                <SegmentedTabs.Trigger value={"group"}>
-                  <FolderGit2 size={16} />
-                  Peer Group
-                </SegmentedTabs.Trigger>
-              </SegmentedTabs.List>
-              <SegmentedTabs.Content value={"peer"}>
-                <div>
-                  <HelpText>
-                    Assign a single or multiple peers as routing peers for the
-                    network.
-                  </HelpText>
-                  <PeerSelector onChange={setRoutingPeer} value={routingPeer} />
-                </div>
-              </SegmentedTabs.Content>
-              <SegmentedTabs.Content value={"group"}>
-                <div>
-                  <HelpText>
-                    Assign a peer group with Linux machines to be used as
-                    routing peers.
-                  </HelpText>
-                  <PeerGroupSelector
-                    max={1}
-                    onChange={setRoutingPeerGroups}
-                    values={routingPeerGroups}
-                  />
-                </div>
-              </SegmentedTabs.Content>
-            </SegmentedTabs>
+                  <SegmentedTabs.Trigger value={"group"}>
+                    <FolderGit2 size={16} />
+                    Peer Group
+                  </SegmentedTabs.Trigger>
+                </SegmentedTabs.List>
+                <SegmentedTabs.Content value={"peer"}>
+                  <div>
+                    <HelpText>
+                      Assign a single or multiple peers as routing peers for the
+                      network.
+                    </HelpText>
+                    <PeerSelector
+                      onChange={setRoutingPeer}
+                      value={routingPeer}
+                    />
+                  </div>
+                </SegmentedTabs.Content>
+                <SegmentedTabs.Content value={"group"}>
+                  <div>
+                    <HelpText>
+                      Assign a peer group with Linux machines to be used as
+                      routing peers.
+                    </HelpText>
+                    <PeerGroupSelector
+                      max={1}
+                      onChange={setRoutingPeerGroups}
+                      values={routingPeerGroups}
+                    />
+                  </div>
+                </SegmentedTabs.Content>
+              </SegmentedTabs>
+            </div>
+
+            <div className={cn("flex justify-between items-center mt-3")}>
+              <div>
+                <Label>Install Routing Peer</Label>
+                <HelpText className={""}>
+                  You can install NetBird with a Setup Key on one or more Linux
+                  machines to act as routing peers.
+                </HelpText>
+              </div>
+              <Button
+                variant={"secondary"}
+                size={"xs"}
+                className={"ml-8"}
+                onClick={() => setSetupKeyModal(true)}
+              >
+                <CirclePlusIcon size={14} />
+                Create Setup Key
+              </Button>
+              {setupKeyModal && (
+                <SetupKeyModal
+                  open={setupKeyModal}
+                  setOpen={setSetupKeyModal}
+                  showOnlyRoutingPeerOS={true}
+                  name={`Routing Peer (${network.name})`}
+                />
+              )}
+            </div>
           </div>
         </TabsContent>
 
@@ -321,31 +366,43 @@ function RoutingPeerModalContent({
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
-          </ModalClose>
           {tab == "router" && (
-            <Button variant={"primary"} onClick={() => setTab("settings")}>
-              Continue
-            </Button>
+            <>
+              <ModalClose asChild={true}>
+                <Button variant={"secondary"}>Cancel</Button>
+              </ModalClose>
+              <Button
+                variant={"primary"}
+                onClick={() => setTab("settings")}
+                disabled={!canContinue}
+              >
+                Continue
+              </Button>
+            </>
           )}
           {tab == "settings" && (
-            <Button
-              variant={"primary"}
-              disabled={
-                routingPeer == undefined && routingPeerGroups.length <= 0
-              }
-              onClick={router ? updateRouter : addRouter}
-            >
-              {router ? (
-                <>Save Changes</>
-              ) : (
-                <>
-                  <PlusCircle size={16} />
-                  Add Routing Peer
-                </>
-              )}
-            </Button>
+            <>
+              <Button variant={"secondary"} onClick={() => setTab("router")}>
+                Back
+              </Button>
+
+              <Button
+                variant={"primary"}
+                disabled={
+                  routingPeer == undefined && routingPeerGroups.length <= 0
+                }
+                onClick={router ? updateRouter : addRouter}
+              >
+                {router ? (
+                  <>Save Changes</>
+                ) : (
+                  <>
+                    <PlusCircle size={16} />
+                    Add Routing Peer
+                  </>
+                )}
+              </Button>
+            </>
           )}
         </div>
       </ModalFooter>

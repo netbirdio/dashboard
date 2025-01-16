@@ -170,7 +170,7 @@ export function PeerSelector({
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
                 {
-                  "Seems like you don't have any linux peers to assign as a routing peer."
+                  "Seems like you don't have any Linux peers to assign as a routing peer."
                 }
               </DropdownInfoText>
             </div>
