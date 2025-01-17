@@ -167,7 +167,10 @@ export function SetupModalContent({
           </TabsTrigger>
         </TabsList>
 
-        <LinuxTab setupKey={setupKey} />
+        <LinuxTab
+          setupKey={setupKey}
+          showSetupKeyInfo={showOnlyRoutingPeerOS}
+        />
         <WindowsTab setupKey={setupKey} />
         <MacOSTab setupKey={setupKey} />
 
@@ -178,7 +181,10 @@ export function SetupModalContent({
           </>
         )}
 
-        <DockerTab setupKey={setupKey} />
+        <DockerTab
+          setupKey={setupKey}
+          showSetupKeyInfo={showOnlyRoutingPeerOS}
+        />
       </Tabs>
       {footer && (
         <ModalFooter variant={"setup"}>
@@ -213,8 +219,22 @@ export const SetupKeyParameter = ({ setupKey }: SetupKeyParameterProps) => {
     setupKey && (
       <>
         {" "}
-        --setup-key <span className={"text-netbird"}>{setupKey}</span>{" "}
+        --setup-key <span className={"text-netbird"}>{setupKey}</span>
       </>
     )
+  );
+};
+
+export const RoutingPeerSetupKeyInfo = () => {
+  return (
+    <div
+      className={
+        "flex gap-2 mt-1 items-center text-xs text-nb-gray-300 font-normal mb-1"
+      }
+    >
+      This setup key can be used only once within the next 24 hours.
+      <br />
+      When expired, the same key can not be used again.
+    </div>
   );
 };

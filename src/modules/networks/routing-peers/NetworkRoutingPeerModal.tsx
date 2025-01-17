@@ -24,9 +24,10 @@ import { cn } from "@utils/helpers";
 import { uniqBy } from "lodash";
 import {
   ArrowDownWideNarrow,
-  CirclePlusIcon,
+  DownloadIcon,
   ExternalLinkIcon,
   FolderGit2,
+  Loader2,
   MonitorSmartphoneIcon,
   PlusCircle,
   Power,
@@ -35,10 +36,12 @@ import {
   VenetianMask,
 } from "lucide-react";
 import React, { useState } from "react";
+import { useSWRConfig } from "swr";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
+import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import SetupKeyModal from "@/modules/setup-keys/SetupKeyModal";
+import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
   network: Network;
@@ -240,8 +243,8 @@ function RoutingPeerModalContent({
                 <SegmentedTabs.Content value={"peer"}>
                   <div>
                     <HelpText>
-                      Assign a single or multiple peers as routing peers for the
-                      network.
+                      Assign a single or multiple Linux peers as routing peers
+                      for the network.
                     </HelpText>
                     <PeerSelector
                       onChange={setRoutingPeer}
@@ -267,29 +270,15 @@ function RoutingPeerModalContent({
 
             <div className={cn("flex justify-between items-center mt-3")}>
               <div>
-                <Label>Install Routing Peer</Label>
+                <Label>{"Don't have a routing peer?"}</Label>
                 <HelpText className={""}>
-                  You can install NetBird with a Setup Key on one or more Linux
+                  You can install NetBird with a setup key on one or more Linux
                   machines to act as routing peers.
                 </HelpText>
               </div>
-              <Button
-                variant={"secondary"}
-                size={"xs"}
-                className={"ml-8"}
-                onClick={() => setSetupKeyModal(true)}
-              >
-                <CirclePlusIcon size={14} />
-                Create Setup Key
-              </Button>
-              {setupKeyModal && (
-                <SetupKeyModal
-                  open={setupKeyModal}
-                  setOpen={setSetupKeyModal}
-                  showOnlyRoutingPeerOS={true}
-                  name={`Routing Peer (${network.name})`}
-                />
-              )}
+              <InstallNetBirdWithSetupKeyButton
+                name={`Routing Peer (${network.name})`}
+              />
             </div>
           </div>
         </TabsContent>
@@ -409,3 +398,74 @@ function RoutingPeerModalContent({
     </ModalContent>
   );
 }
+
+type InstallNetBirdWithSetupKeyButtonProps = {
+  name?: string;
+};
+
+const InstallNetBirdWithSetupKeyButton = ({
+  name,
+}: InstallNetBirdWithSetupKeyButtonProps) => {
+  const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
+  const { mutate } = useSWRConfig();
+
+  const [installModal, setInstallModal] = useState(false);
+  const [setupKey, setSetupKey] = useState<SetupKey>();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const createSetupKey = async () => {
+    const loadingTimeout = setTimeout(() => setIsLoading(true), 1000);
+
+    await setupKeyRequest
+      .post({
+        name,
+        type: "one-off",
+        expires_in: 24 * 60 * 60, // 1 day expiration
+        revoked: false,
+        auto_groups: [],
+        usage_limit: 1,
+        ephemeral: false,
+      })
+      .then((setupKey) => {
+        setInstallModal(true);
+        setSetupKey(setupKey);
+        mutate("/setup-keys");
+      })
+      .finally(() => {
+        setIsLoading(false);
+        clearTimeout(loadingTimeout);
+      });
+  };
+
+  return (
+    <>
+      <Button
+        variant={"secondary"}
+        size={"xs"}
+        className={"ml-8"}
+        onClick={createSetupKey}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <Loader2 size={14} className={"animate-spin delay-1000"} />
+        ) : (
+          <DownloadIcon size={14} />
+        )}
+        Install NetBird
+      </Button>
+      {setupKey && (
+        <Modal
+          open={installModal}
+          onOpenChange={setInstallModal}
+          key={setupKey.key}
+        >
+          <SetupModal
+            showClose={true}
+            setupKey={setupKey.key}
+            showOnlyRoutingPeerOS={true}
+          />
+        </Modal>
+      )}
+    </>
+  );
+};
