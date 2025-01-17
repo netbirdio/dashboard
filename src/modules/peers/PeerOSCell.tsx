@@ -4,7 +4,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@components/Tooltip";
-import { Barcode, Laptop } from "lucide-react";
+import { Barcode, CpuIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo } from "react";
 import { FaWindows } from "react-icons/fa6";
@@ -15,7 +15,11 @@ import FreeBSDLogo from "@/assets/os-icons/FreeBSD.png";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
-export function PeerOSCell({ os, serial }: { os: string, serial?: string }) {
+type Props = {
+  os: string;
+  serial?: string;
+};
+export function PeerOSCell({ os, serial }: Readonly<Props>) {
   return (
     <TooltipProvider>
       <Tooltip delayDuration={1}>
@@ -34,20 +38,17 @@ export function PeerOSCell({ os, serial }: { os: string, serial?: string }) {
             </div>
           </div>
         </TooltipTrigger>
-        <TooltipContent>
-          <ListItem
-            icon={<Laptop size={14} />}
-            label={"OS"}
-            value={os}
-          />
-          { (serial !== undefined) &&
-          <ListItem
-
-            icon={<Barcode size={14} />}
-            label={"Serial"}
-            value={serial}
-          />
-          }
+        <TooltipContent className={"!p-0"}>
+          <div>
+            <ListItem icon={<CpuIcon size={14} />} label={"OS"} value={os} />
+            {serial && serial !== "" && (
+              <ListItem
+                icon={<Barcode size={14} />}
+                label={"Serial Number"}
+                value={serial}
+              />
+            )}
+          </div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
@@ -77,7 +78,6 @@ const ListItem = ({
     </div>
   );
 };
-
 
 export function OSLogo({ os }: { os: string }) {
   const icon = useMemo(() => {
