@@ -4,7 +4,7 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
-import { FolderGit2Icon } from "lucide-react";
+import { FolderGit2Icon, Layers3Icon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
@@ -139,6 +139,29 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
     ),
   },
   {
+    accessorKey: "resources_count",
+    header: ({ column }) => {
+      return (
+        <DataTableHeader
+          column={column}
+          tooltip={
+            <div className={"text-sm normal-case"}>Network Resources</div>
+          }
+        >
+          <Layers3Icon size={12} />
+        </DataTableHeader>
+      );
+    },
+    cell: ({ row }) => (
+      <GroupsCountCell
+        icon={<Layers3Icon size={10} />}
+        groupName={row.original.name}
+        text={"Network Resource(s)"}
+        count={row.original.resources_count}
+      />
+    ),
+  },
+  {
     accessorKey: "users_count",
     header: ({ column }) => {
       return (
@@ -172,7 +195,8 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
         row.policies_count > 0 ||
         row.routes_count > 0 ||
         row.setup_keys_count > 0 ||
-        row.users_count > 0
+        row.users_count > 0 ||
+        row.resources_count > 0
       );
     },
   },
@@ -189,7 +213,7 @@ type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
-export default function GroupsTable({ headingTarget }: Props) {
+export default function GroupsTable({ headingTarget }: Readonly<Props>) {
   const groups = useGroupsUsage();
   const path = usePathname();
 

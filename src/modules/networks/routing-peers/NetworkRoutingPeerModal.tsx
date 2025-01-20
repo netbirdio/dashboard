@@ -24,18 +24,25 @@ import { cn } from "@utils/helpers";
 import { uniqBy } from "lodash";
 import {
   ArrowDownWideNarrow,
+  DownloadIcon,
   ExternalLinkIcon,
   FolderGit2,
+  Loader2,
   MonitorSmartphoneIcon,
   PlusCircle,
+  Power,
   Settings2,
   Share2Icon,
   VenetianMask,
 } from "lucide-react";
 import React, { useState } from "react";
+import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
+import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
   network: Network;
@@ -112,6 +119,9 @@ function RoutingPeerModalContent({
   const [masquerade, setMasquerade] = useState<boolean>(
     router ? router.masquerade : true,
   );
+  const [enabled, setEnabled] = useState<boolean>(
+    router ? router.enabled : true,
+  );
   const [metric, setMetric] = useState(
     router?.metric ? router.metric.toString() : "9999",
   );
@@ -137,6 +147,7 @@ function RoutingPeerModalContent({
           ? createdGroups.map((g) => g.id)
           : undefined,
         metric: parseInt(metric),
+        enabled,
         masquerade,
       }).then((r) => {
         onCreated?.(r);
@@ -165,12 +176,17 @@ function RoutingPeerModalContent({
           ? createdGroups.map((g) => g.id)
           : undefined,
         metric: parseInt(metric),
+        enabled,
         masquerade,
       }).then((r) => {
         onUpdated?.(r);
       }),
     });
   };
+
+  const [setupKeyModal, setSetupKeyModal] = useState(false);
+
+  const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
 
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
@@ -190,7 +206,7 @@ function RoutingPeerModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Routers
+            Routing Peers
           </TabsTrigger>
 
           <TabsTrigger value={"settings"} className={"ml-auto"}>
@@ -203,48 +219,86 @@ function RoutingPeerModalContent({
             Advanced Settings
           </TabsTrigger>
         </TabsList>
-        <TabsContent value={"router"} className={"pb-8"}>
-          <div className={"flex flex-col gap-4 px-8 "}>
-            <SegmentedTabs value={type} onChange={setType}>
-              <SegmentedTabs.List>
-                <SegmentedTabs.Trigger value={"peer"}>
-                  <MonitorSmartphoneIcon size={16} />
-                  Routing Peers
-                </SegmentedTabs.Trigger>
+        <TabsContent value={"router"} className={"pb-6"}>
+          <div className={"flex flex-col gap-4 px-8"}>
+            <div className={"relative "}>
+              <SegmentedTabs
+                value={type}
+                onChange={(state) => {
+                  setType(state);
+                  setRoutingPeer(undefined);
+                  setRoutingPeerGroups([]);
+                }}
+              >
+                <SegmentedTabs.List>
+                  <SegmentedTabs.Trigger value={"peer"}>
+                    <MonitorSmartphoneIcon size={16} />
+                    Routing Peers
+                  </SegmentedTabs.Trigger>
 
-                <SegmentedTabs.Trigger value={"group"}>
-                  <FolderGit2 size={16} />
-                  Peer Group
-                </SegmentedTabs.Trigger>
-              </SegmentedTabs.List>
-              <SegmentedTabs.Content value={"peer"}>
-                <div>
-                  <HelpText>
-                    Assign a single or multiple peers as a routing peers for the
-                    network.
-                  </HelpText>
-                  <PeerSelector onChange={setRoutingPeer} value={routingPeer} />
-                </div>
-              </SegmentedTabs.Content>
-              <SegmentedTabs.Content value={"group"}>
-                <div>
-                  <HelpText>
-                    Assign a peer group with Linux machines to be used as
-                    routing peers.
-                  </HelpText>
-                  <PeerGroupSelector
-                    max={1}
-                    onChange={setRoutingPeerGroups}
-                    values={routingPeerGroups}
-                  />
-                </div>
-              </SegmentedTabs.Content>
-            </SegmentedTabs>
+                  <SegmentedTabs.Trigger value={"group"}>
+                    <FolderGit2 size={16} />
+                    Peer Group
+                  </SegmentedTabs.Trigger>
+                </SegmentedTabs.List>
+                <SegmentedTabs.Content value={"peer"}>
+                  <div>
+                    <HelpText>
+                      Assign a single or multiple Linux peers as routing peers
+                      for the network.
+                    </HelpText>
+                    <PeerSelector
+                      onChange={setRoutingPeer}
+                      value={routingPeer}
+                    />
+                  </div>
+                </SegmentedTabs.Content>
+                <SegmentedTabs.Content value={"group"}>
+                  <div>
+                    <HelpText>
+                      Assign a peer group with Linux machines to be used as
+                      routing peers.
+                    </HelpText>
+                    <PeerGroupSelector
+                      max={1}
+                      onChange={setRoutingPeerGroups}
+                      values={routingPeerGroups}
+                    />
+                  </div>
+                </SegmentedTabs.Content>
+              </SegmentedTabs>
+            </div>
+
+            <div className={cn("flex justify-between items-center mt-3")}>
+              <div>
+                <Label>{"Don't have a routing peer?"}</Label>
+                <HelpText className={""}>
+                  You can install NetBird with a setup key on one or more Linux
+                  machines to act as routing peers.
+                </HelpText>
+              </div>
+              <InstallNetBirdWithSetupKeyButton
+                name={`Routing Peer (${network.name})`}
+              />
+            </div>
           </div>
         </TabsContent>
 
         <TabsContent value={"settings"} className={"pb-4"}>
           <div className={"px-8 flex flex-col gap-6"}>
+            <FancyToggleSwitch
+              value={enabled}
+              onChange={setEnabled}
+              label={
+                <>
+                  <Power size={15} />
+                  Enable Routing Peer
+                </>
+              }
+              helpText={
+                "Use this switch to enable or disable the routing peer."
+              }
+            />
             <FancyToggleSwitch
               value={masquerade}
               onChange={setMasquerade}
@@ -302,34 +356,128 @@ function RoutingPeerModalContent({
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
-          </ModalClose>
           {tab == "router" && (
-            <Button variant={"primary"} onClick={() => setTab("settings")}>
-              Continue
-            </Button>
+            <>
+              <ModalClose asChild={true}>
+                <Button variant={"secondary"}>Cancel</Button>
+              </ModalClose>
+              <Button
+                variant={"primary"}
+                onClick={() => setTab("settings")}
+                disabled={!canContinue}
+              >
+                Continue
+              </Button>
+            </>
           )}
           {tab == "settings" && (
-            <Button
-              variant={"primary"}
-              disabled={
-                routingPeer == undefined && routingPeerGroups.length <= 0
-              }
-              onClick={router ? updateRouter : addRouter}
-            >
-              {router ? (
-                <>Save Changes</>
-              ) : (
-                <>
-                  <PlusCircle size={16} />
-                  Add Routing Peer
-                </>
-              )}
-            </Button>
+            <>
+              <Button variant={"secondary"} onClick={() => setTab("router")}>
+                Back
+              </Button>
+
+              <Button
+                variant={"primary"}
+                disabled={
+                  routingPeer == undefined && routingPeerGroups.length <= 0
+                }
+                onClick={router ? updateRouter : addRouter}
+              >
+                {router ? (
+                  <>Save Changes</>
+                ) : (
+                  <>
+                    <PlusCircle size={16} />
+                    Add Routing Peer
+                  </>
+                )}
+              </Button>
+            </>
           )}
         </div>
       </ModalFooter>
     </ModalContent>
   );
 }
+
+type InstallNetBirdWithSetupKeyButtonProps = {
+  name?: string;
+};
+
+const InstallNetBirdWithSetupKeyButton = ({
+  name,
+}: InstallNetBirdWithSetupKeyButtonProps) => {
+  const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
+  const { mutate } = useSWRConfig();
+  const { confirm } = useDialog();
+
+  const [installModal, setInstallModal] = useState(false);
+  const [setupKey, setSetupKey] = useState<SetupKey>();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const createSetupKey = async () => {
+    const choice = await confirm({
+      title: `Create a Setup Key?`,
+      description:
+        "If you continue, a one-off setup key will be automatically created and you will be able to install NetBird on a Linux machine.",
+      confirmText: "Continue",
+      cancelText: "Cancel",
+      type: "default",
+    });
+    if (!choice) return;
+
+    const loadingTimeout = setTimeout(() => setIsLoading(true), 1000);
+
+    await setupKeyRequest
+      .post({
+        name,
+        type: "one-off",
+        expires_in: 24 * 60 * 60, // 1 day expiration
+        revoked: false,
+        auto_groups: [],
+        usage_limit: 1,
+        ephemeral: false,
+      })
+      .then((setupKey) => {
+        setInstallModal(true);
+        setSetupKey(setupKey);
+        mutate("/setup-keys");
+      })
+      .finally(() => {
+        setIsLoading(false);
+        clearTimeout(loadingTimeout);
+      });
+  };
+
+  return (
+    <>
+      <Button
+        variant={"secondary"}
+        size={"xs"}
+        className={"ml-8"}
+        onClick={createSetupKey}
+        disabled={isLoading}
+      >
+        {isLoading ? (
+          <Loader2 size={14} className={"animate-spin delay-1000"} />
+        ) : (
+          <DownloadIcon size={14} />
+        )}
+        Install NetBird
+      </Button>
+      {setupKey && (
+        <Modal
+          open={installModal}
+          onOpenChange={setInstallModal}
+          key={setupKey.key}
+        >
+          <SetupModal
+            showClose={true}
+            setupKey={setupKey.key}
+            showOnlyRoutingPeerOS={true}
+          />
+        </Modal>
+      )}
+    </>
+  );
+};

@@ -13,8 +13,20 @@ import { getNetBirdUpCommand } from "@utils/netbird";
 import { TerminalSquareIcon } from "lucide-react";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import {
+  RoutingPeerSetupKeyInfo,
+  SetupKeyParameter,
+} from "@/modules/setup-netbird-modal/SetupModal";
 
-export default function LinuxTab() {
+type Props = {
+  setupKey?: string;
+  showSetupKeyInfo?: boolean;
+};
+
+export default function LinuxTab({
+  setupKey,
+  showSetupKeyInfo = false,
+}: Readonly<Props>) {
   return (
     <TabsContent value={String(OperatingSystem.LINUX)}>
       <TabsContentPadding>
@@ -27,9 +39,15 @@ export default function LinuxTab() {
             <Code>curl -fsSL https://pkgs.netbird.io/install.sh | sh</Code>
           </Steps.Step>
           <Steps.Step step={2} line={false}>
-            <p>Run NetBird and log in the browser</p>
+            <p>
+              Run NetBird {!setupKey && "and log in the browser"}
+              {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
+            </p>
             <Code>
-              <Code.Line>{getNetBirdUpCommand()}</Code.Line>
+              <Code.Line>
+                {getNetBirdUpCommand()}
+                <SetupKeyParameter setupKey={setupKey} />
+              </Code.Line>
             </Code>
           </Steps.Step>
         </Steps>
@@ -78,9 +96,15 @@ export default function LinuxTab() {
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={3} line={false}>
-                  <p>Run NetBird and log in the browser</p>
+                  <p>
+                    Run NetBird {!setupKey && "and log in the browser"}
+                    {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
+                  </p>
                   <Code>
-                    <Code.Line>{getNetBirdUpCommand()}</Code.Line>
+                    <Code.Line>
+                      {getNetBirdUpCommand()}
+                      <SetupKeyParameter setupKey={setupKey} />
+                    </Code.Line>
                   </Code>
                 </Steps.Step>
               </Steps>

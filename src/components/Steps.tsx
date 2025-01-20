@@ -4,9 +4,18 @@ import React from "react";
 type Props = {
   children: React.ReactNode;
   className?: string;
+  horizontal?: boolean;
 };
-export default function Steps({ children, className }: Props) {
-  return <div className={cn("pt-4", className)}>{children}</div>;
+export default function Steps({
+  children,
+  className,
+  horizontal = false,
+}: Readonly<Props>) {
+  return (
+    <div className={cn("pt-4", horizontal && "flex", className)}>
+      {children}
+    </div>
+  );
 }
 
 type StepProps = {
@@ -14,21 +23,32 @@ type StepProps = {
   step: number;
   line?: boolean;
   center?: boolean;
+  horizontal?: boolean;
 };
 
-const Step = ({ children, step, line = true, center = false }: StepProps) => {
+const Step = ({
+  children,
+  step,
+  line = true,
+  center = false,
+  horizontal,
+}: StepProps) => {
   return (
     <div
       className={cn(
-        "flex gap-4 items-start min-w-full justify-start relative pb-6 -mx-1.5 group px-[2px]",
+        "flex gap-4 items-start  justify-start relative pb-6 -mx-1.5 group px-[2px]",
         center && "items-center",
+        horizontal ? "flex-col items-center" : "min-w-full",
       )}
     >
       {line && (
         <span
-          className={
-            "h-full w-[2px] bg-nb-gray-100 dark:bg-nb-gray-800 absolute left-0 ml-[18px] z-0 transition-all"
-          }
+          className={cn(
+            "bg-nb-gray-100 dark:bg-nb-gray-800  z-0 transition-all",
+            horizontal
+              ? "w-full h-[2px] absolute mt-[16px] transform translate-x-1/2"
+              : "h-full w-[2px] absolute left-0 ml-[18px]",
+          )}
         ></span>
       )}
 

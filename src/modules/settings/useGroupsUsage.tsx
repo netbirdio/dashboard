@@ -16,6 +16,7 @@ export interface GroupUsage {
   routes_count: number;
   setup_keys_count: number;
   users_count: number;
+  resources_count: number;
 }
 
 export default function useGroupsUsage() {
@@ -126,6 +127,7 @@ export default function useGroupsUsage() {
         id: group.id,
         name: group.name,
         peers_count: group.peers_count,
+        resources_count: group.resources_count,
         policies_count: policyCount,
         nameservers_count: nameserverCount,
         routes_count: routeCount,

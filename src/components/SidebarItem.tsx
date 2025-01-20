@@ -60,10 +60,12 @@ export default function SidebarItem({
         <li className={"px-4 cursor-pointer"}>
           <button
             className={classNames(
-              "rounded-lg text-[.95rem] w-full ",
+              "rounded-lg text-[.87rem] w-full ",
               "font-normal ",
               className,
-              isChild ? "pl-7 pr-2 py-2 mt-1 mb-0.5" : "py-2 px-3",
+              isChild
+                ? "pl-7 pr-2 py-[.45rem] mt-1 mb-0.5"
+                : "py-[.45rem] px-3",
               isActive
                 ? "text-gray-900 bg-gray-200 dark:text-white dark:bg-nb-gray-900"
                 : "text-gray-600 hover:bg-gray-200 dark:text-nb-gray-400 dark:hover:bg-nb-gray-900/50",

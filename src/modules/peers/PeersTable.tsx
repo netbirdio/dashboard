@@ -63,7 +63,8 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     enableHiding: false,
   },
   {
-    accessorKey: "name",
+    id: "name",
+    accessorFn: (peer) => `${peer?.name}${peer?.dns_label}`,
     header: ({ column }) => {
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
@@ -94,6 +95,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     accessorFn: (peer) => (peer.user ? peer.user?.email : "Unknown"),
   },
   {
+    id: "dns_label",
     accessorKey: "dns_label",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Address</DataTableHeader>;
@@ -192,6 +194,10 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
       {
         id: "connected",
         desc: true,
+      },
+      {
+        id: "name",
+        desc: false,
       },
       {
         id: "last_seen",

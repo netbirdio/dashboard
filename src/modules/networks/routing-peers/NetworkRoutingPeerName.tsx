@@ -44,13 +44,11 @@ export const NetworkRoutingPeerName = ({ router }: Props) => {
 
   if (routingPeerGroup) {
     return (
-      <>
-        <div className={"flex items-center gap-2 max-w-[295px] min-w-[295px]"}>
-          <GroupBadge group={routingPeerGroup} />
-          <ArrowRightIcon size={14} className={"shrink-0"} />
-          <PeerBadge> {routingPeerGroup.peers_count} Peer(s)</PeerBadge>
-        </div>
-      </>
+      <div className={"flex items-center gap-2 max-w-[295px] min-w-[295px]"}>
+        <GroupBadge group={routingPeerGroup} />
+        <ArrowRightIcon size={14} className={"shrink-0"} />
+        <PeerBadge> {routingPeerGroup.peers_count} Peer(s)</PeerBadge>
+      </div>
     );
   }
 };

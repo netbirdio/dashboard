@@ -16,6 +16,7 @@ export interface NetworkRouter {
   peer_groups?: string[];
   metric: number;
   masquerade: boolean;
+  enabled: boolean;
 }
 
 export interface NetworkResource {
@@ -25,4 +26,5 @@ export interface NetworkResource {
   address: string;
   groups?: string[] | Group[];
   type?: "domain" | "host" | "subnet";
+  enabled: boolean;
 }

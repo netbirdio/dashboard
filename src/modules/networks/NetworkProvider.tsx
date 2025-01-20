@@ -10,6 +10,7 @@ import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
 import NetworkModal from "@/modules/networks/NetworkModal";
 import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
+import { ResourceGroupModal } from "@/modules/networks/resources/ResourceGroupModal";
 import NetworkRoutingPeerModal from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
 
 type Props = {
@@ -23,6 +24,10 @@ const NetworksContext = React.createContext(
     openEditNetworkModal: (network: Network) => void;
     openCreateNetworkModal: () => void;
     openResourceModal: (network: Network, resource?: NetworkResource) => void;
+    openResourceGroupModal: (
+      network: Network,
+      resource?: NetworkResource,
+    ) => void;
     openPolicyModal: (network?: Network, resource?: NetworkResource) => void;
     deleteNetwork: (network: Network) => void;
     deleteResource: (network: Network, resource: NetworkResource) => void;
@@ -49,6 +54,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
   const [routingPeerModal, setRoutingPeerModal] = useState(false);
   const [networkModal, setNetworkModal] = useState(false);
   const [resourceModal, setResourceModal] = useState(false);
+  const [resourceGroupModal, setResourceGroupModal] = useState(false);
   const [policyModal, setPolicyModal] = useState(false);
 
   const openAddRoutingPeerModal = (
@@ -74,6 +80,15 @@ export const NetworkProvider = ({ children, network }: Props) => {
     setCurrentNetwork(network);
     resource && setCurrentResource(resource);
     setResourceModal(true);
+  };
+
+  const openResourceGroupModal = (
+    network: Network,
+    resource?: NetworkResource,
+  ) => {
+    setCurrentNetwork(network);
+    resource && setCurrentResource(resource);
+    setResourceGroupModal(true);
   };
 
   const openPolicyModal = (network?: Network, resource?: NetworkResource) => {
@@ -217,6 +232,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
         openEditNetworkModal,
         openCreateNetworkModal,
         openResourceModal,
+        openResourceGroupModal,
         openPolicyModal,
         deleteNetwork,
         deleteResource,
@@ -232,7 +248,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
         network={currentNetwork}
         onCreated={async (network) => {
           mutate("/networks");
-          await askForRoutingPeer(network);
+          await askForResource(network);
         }}
         onUpdated={() => {
           mutate("/networks");
@@ -250,13 +266,15 @@ export const NetworkProvider = ({ children, network }: Props) => {
           initialDestinationGroups={policyDefaultSettings?.destinationGroups}
           initialName={policyDefaultSettings?.name}
           initialDescription={policyDefaultSettings?.description}
-          onSuccess={(p) => {
+          onSuccess={async (p) => {
             setPolicyModal(false);
             setPolicyDefaultSettings(undefined);
             mutate("/networks");
             if (network) {
               mutate(`/networks/${network.id}/resources`);
               mutate(`/networks/${network.id}`);
+            } else {
+              currentNetwork && (await askForRoutingPeer(currentNetwork));
             }
           }}
         />
@@ -275,8 +293,6 @@ export const NetworkProvider = ({ children, network }: Props) => {
               if (network) {
                 mutate(`/networks/${currentNetwork.id}/routers`);
                 mutate(`/networks/${network.id}`);
-              } else {
-                await askForResource(currentNetwork);
               }
             }}
             onUpdated={async () => {
@@ -294,6 +310,26 @@ export const NetworkProvider = ({ children, network }: Props) => {
               setRoutingPeerModal(state);
             }}
           />
+
+          <ResourceGroupModal
+            network={currentNetwork}
+            resource={currentResource}
+            open={resourceGroupModal}
+            onOpenChange={(state) => {
+              setCurrentResource(undefined);
+              setResourceGroupModal(state);
+            }}
+            onUpdated={() => {
+              setResourceGroupModal(false);
+              setCurrentResource(undefined);
+              mutate("/groups");
+              if (network) {
+                mutate(`/networks/${network.id}/resources`);
+                mutate(`/networks/${network.id}`);
+              }
+            }}
+          />
+
           <NetworkResourceModal
             network={currentNetwork}
             resource={currentResource}

@@ -23,7 +23,7 @@ import { cn } from "@utils/helpers";
 import { trim } from "lodash";
 import {
   AlarmClock,
-  CopyIcon,
+  DownloadIcon,
   ExternalLinkIcon,
   MonitorSmartphoneIcon,
   PlusCircle,
@@ -32,25 +32,28 @@ import {
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
-import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
   children?: React.ReactNode;
   open: boolean;
   setOpen: (open: boolean) => void;
+  name?: string;
+  showOnlyRoutingPeerOS?: boolean;
 };
 const copyMessage = "Setup-Key was copied to your clipboard!";
 export default function SetupKeyModal({
   children,
   open,
   setOpen,
+  name,
+  showOnlyRoutingPeerOS,
 }: Readonly<Props>) {
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
-  const [, copy] = useCopyToClipboard(setupKey?.key);
-
+  const [installModal, setInstallModal] = useState(false);
   const handleSuccess = (setupKey: SetupKey) => {
     setSetupKey(setupKey);
     setSuccessModal(true);
@@ -60,8 +63,24 @@ export default function SetupKeyModal({
     <>
       <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
         {children && <ModalTrigger asChild>{children}</ModalTrigger>}
-        <SetupKeyModalContent onSuccess={handleSuccess} />
+        <SetupKeyModalContent onSuccess={handleSuccess} predefinedName={name} />
       </Modal>
+
+      <Modal
+        open={installModal}
+        onOpenChange={(state) => {
+          setInstallModal(state);
+          setOpen(false);
+        }}
+        key={installModal ? 2 : 3}
+      >
+        <SetupModal
+          showClose={true}
+          setupKey={setupKey?.key}
+          showOnlyRoutingPeerOS={showOnlyRoutingPeerOS}
+        />
+      </Modal>
+
       <Modal
         open={successModal}
         onOpenChange={(open) => {
@@ -118,10 +137,10 @@ export default function SetupKeyModal({
                 variant={"primary"}
                 className={"w-full"}
                 data-cy={"setup-key-copy"}
-                onClick={() => copy(copyMessage)}
+                onClick={() => setInstallModal(true)}
               >
-                <CopyIcon size={14} />
-                Copy to clipboard
+                <DownloadIcon size={14} />
+                Install NetBird
               </Button>
             </div>
           </ModalFooter>
@@ -133,13 +152,17 @@ export default function SetupKeyModal({
 
 type ModalProps = {
   onSuccess?: (setupKey: SetupKey) => void;
+  predefinedName?: string;
 };
 
-export function SetupKeyModalContent({ onSuccess }: Readonly<ModalProps>) {
+export function SetupKeyModalContent({
+  onSuccess,
+  predefinedName = "",
+}: Readonly<ModalProps>) {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { mutate } = useSWRConfig();
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState(predefinedName);
   const [reusable, setReusable] = useState(false);
   const [usageLimit, setUsageLimit] = useState("");
   const [expiresIn, setExpiresIn] = useState("7");

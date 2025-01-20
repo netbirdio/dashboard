@@ -9,8 +9,17 @@ import { ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import { RoutingPeerSetupKeyInfo } from "@/modules/setup-netbird-modal/SetupModal";
 
-export default function DockerTab() {
+type Props = {
+  setupKey?: string;
+  showSetupKeyInfo?: boolean;
+};
+
+export default function DockerTab({
+  setupKey,
+  showSetupKeyInfo = false,
+}: Readonly<Props>) {
   return (
     <TabsContent value={String(OperatingSystem.DOCKER)}>
       <TabsContentPadding>
@@ -35,14 +44,20 @@ export default function DockerTab() {
             </div>
           </Steps.Step>
           <Steps.Step step={2}>
-            <p>Run NetBird container</p>
+            <p>
+              Run NetBird container
+              {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
+            </p>
             <Code>
               <Code.Line>docker run --rm -d \</Code.Line>
               <Code.Line> --cap-add=NET_ADMIN \</Code.Line>
               <Code.Line>
                 {" "}
                 -e NB_SETUP_KEY=
-                <span className={"text-netbird"}>SETUP_KEY</span> \
+                <span className={"text-netbird"}>
+                  {setupKey ?? "SETUP_KEY"}
+                </span>{" "}
+                \
               </Code.Line>
               <Code.Line> -v netbird-client:/etc/netbird \</Code.Line>
               {GRPC_API_ORIGIN && (

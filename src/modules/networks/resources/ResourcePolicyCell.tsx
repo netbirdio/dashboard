@@ -22,13 +22,10 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
     const resourceGroups = resource?.groups as Group[];
     return policies?.filter((policy) => {
       if (!policy.enabled) return false;
-      const sourcePolicyGroups = policy.rules
-        ?.map((rule) => rule?.sources)
-        .flat() as Group[];
       const destinationPolicyGroups = policy.rules
         ?.map((rule) => rule?.destinations)
         .flat() as Group[];
-      const policyGroups = [...sourcePolicyGroups, ...destinationPolicyGroups];
+      const policyGroups = [...destinationPolicyGroups];
       return resourceGroups.some((resourceGroup) =>
         policyGroups.some((policyGroup) => policyGroup.id === resourceGroup.id),
       );
@@ -89,7 +86,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
         <Button
           size={"xs"}
           variant={"secondary"}
-          className={"min-w-[110px]"}
+          className={"min-w-[100px]"}
           onClick={() => openPolicyModal(network, resource)}
         >
           <PlusCircle size={12} />
