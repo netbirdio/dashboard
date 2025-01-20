@@ -37,6 +37,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import { SetupKey } from "@/interfaces/SetupKey";
@@ -408,12 +409,23 @@ const InstallNetBirdWithSetupKeyButton = ({
 }: InstallNetBirdWithSetupKeyButtonProps) => {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { mutate } = useSWRConfig();
+  const { confirm } = useDialog();
 
   const [installModal, setInstallModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const [isLoading, setIsLoading] = useState(false);
 
   const createSetupKey = async () => {
+    const choice = await confirm({
+      title: `Create a Setup Key?`,
+      description:
+        "If you continue, a one-off setup key will be automatically created and you will be able to install NetBird on a Linux machine.",
+      confirmText: "Continue",
+      cancelText: "Cancel",
+      type: "default",
+    });
+    if (!choice) return;
+
     const loadingTimeout = setTimeout(() => setIsLoading(true), 1000);
 
     await setupKeyRequest
