@@ -6,6 +6,7 @@ import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import NoResults from "@components/ui/NoResults";
 import { IconCirclePlus } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
+import { removeAllSpaces } from "@utils/helpers";
 import { Layers3Icon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
@@ -35,6 +36,12 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     cell: ({ row }) => {
       return <ResourceNameCell resource={row.original} />;
     },
+  },
+  {
+    id: "description",
+    accessorKey: "description",
+    accessorFn: (resource) =>
+      removeAllSpaces(resource?.description || "").toLowerCase(),
   },
   {
     id: "address",
@@ -122,7 +129,9 @@ export default function ResourcesTable({
           icon={<Layers3Icon size={20} />}
         />
       }
-      columnVisibility={{}}
+      columnVisibility={{
+        description: false,
+      }}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={() => (
         <Button
