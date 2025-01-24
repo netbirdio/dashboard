@@ -11,13 +11,15 @@ type Props<T extends { id?: string }> = {
   items: T[];
   onSelect: (item: T) => void;
   renderItem?: (item: T) => React.ReactNode;
+  itemClassName?: string;
 };
 
 export function VirtualScrollAreaList<T extends { id?: string }>({
   items,
   onSelect,
   renderItem,
-}: Props<T>) {
+  itemClassName,
+}: Readonly<Props<T>>) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [selected, setSelected] = useState(0);
 
@@ -81,8 +83,9 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
             <VirtualScrollListItemWrapper
               onMouseEnter={() => setSelected(index)}
               id={option.id}
-              onClick={() => onClick(option as T)}
+              onClick={() => onClick(option)}
               ariaSelected={selected === index}
+              className={itemClassName}
             >
               {renderMemoizedItem ? renderMemoizedItem(option) : option.id}
             </VirtualScrollListItemWrapper>
@@ -103,10 +106,18 @@ type ItemWrapperProps = {
   onMouseEnter?: () => void;
   onClick?: () => void;
   ariaSelected?: boolean;
+  className?: string;
 };
 
 export const VirtualScrollListItemWrapper = memo(
-  ({ id, children, onClick, onMouseEnter, ariaSelected }: ItemWrapperProps) => {
+  ({
+    id,
+    children,
+    onClick,
+    onMouseEnter,
+    ariaSelected,
+    className,
+  }: ItemWrapperProps) => {
     return (
       <div
         key={id ?? undefined}
@@ -118,6 +129,7 @@ export const VirtualScrollListItemWrapper = memo(
           className={cn(
             "text-xs flex justify-between py-2 px-3 cursor-pointer items-center rounded-md",
             "bg-transparent dark:aria-selected:bg-nb-gray-800/50",
+            className,
           )}
           aria-selected={ariaSelected}
           role={"listitem"}
