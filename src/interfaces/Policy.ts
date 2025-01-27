@@ -22,6 +22,13 @@ export interface PolicyRule {
   action: string;
   protocol: Protocol;
   ports: string[];
+  sourceResource?: PolicyRuleResource;
+  destinationResource?: PolicyRuleResource;
+}
+
+export interface PolicyRuleResource {
+  id: string;
+  type: "domain" | "host" | "subnet" | undefined;
 }
 
 export type Protocol = "all" | "tcp" | "udp" | "icmp";

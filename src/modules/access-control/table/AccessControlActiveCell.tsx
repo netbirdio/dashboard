@@ -32,6 +32,9 @@ export default function AccessControlActiveCell({ policy }: Readonly<Props>) {
             return group.id;
           }) as string[])
         : [];
+      if (rule.destinationResource) {
+        rule.destinations = null;
+      }
     });
 
     updatePolicy(

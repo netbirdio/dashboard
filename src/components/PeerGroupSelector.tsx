@@ -1,12 +1,16 @@
 import Badge from "@components/Badge";
 import { Checkbox } from "@components/Checkbox";
 import { CommandItem } from "@components/Command";
+import { DropdownInfoText } from "@components/DropdownInfoText";
 import FullTooltip from "@components/FullTooltip";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
+import { Radio, RadioItem } from "@components/Radio";
 import { ScrollArea } from "@components/ScrollArea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { AccessControlGroupCount } from "@components/ui/AccessControlGroupCount";
 import GroupBadge from "@components/ui/GroupBadge";
 import GroupBadgeWithEditPeers from "@components/ui/GroupBadgeWithEditPeers";
+import ResourceBadge from "@components/ui/ResourceBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import { useSearch } from "@hooks/useSearch";
@@ -21,6 +25,7 @@ import {
   FolderGit2,
   GlobeIcon,
   Layers3,
+  Layers3Icon,
   MonitorSmartphoneIcon,
   NetworkIcon,
   SearchIcon,
@@ -28,11 +33,13 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
+import Skeleton from "react-loading-skeleton";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { useElementSize } from "@/hooks/useElementSize";
 import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
+import { PolicyRuleResource } from "@/interfaces/Policy";
 
 interface MultiSelectProps {
   values: Group[];
@@ -49,6 +56,10 @@ interface MultiSelectProps {
   disabledGroups?: Group[];
   dataCy?: string;
   showResourceCounter?: boolean;
+  showResources?: boolean;
+  resource?: PolicyRuleResource;
+  onResourceChange?: (resource?: PolicyRuleResource) => void;
+  placeholder?: string;
 }
 export function PeerGroupSelector({
   onChange,
@@ -65,12 +76,19 @@ export function PeerGroupSelector({
   disabledGroups,
   dataCy = "group-selector-dropdown",
   showResourceCounter = true,
+  showResources = false,
+  resource,
+  onResourceChange,
+  placeholder = "Add or select group(s)...",
 }: Readonly<MultiSelectProps>) {
   const { groups, dropdownOptions, setDropdownOptions, addDropdownOptions } =
     useGroups();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
   const [search, setSearch] = useState("");
+  const { data: resources, isLoading } = useFetchApi<NetworkResource[]>(
+    "/networks/resources",
+  );
 
   // Update dropdown options when groups change
   useEffect(() => {
@@ -102,6 +120,7 @@ export function PeerGroupSelector({
 
   // Add group to the groupOptions if it does not exist
   const selectGroup = (name: string) => {
+    onResourceChange?.(undefined);
     const group = groups?.find((group) => group.name == name);
     const option = dropdownOptions.find((option) => option.name == name);
     const groupPeers: GroupPeer[] | undefined =
@@ -169,6 +188,8 @@ export function PeerGroupSelector({
 
   const [slice, setSlice] = useState(10);
 
+  const [tab, setTab] = useState("groups");
+
   useEffect(() => {
     if (open) {
       setTimeout(() => {
@@ -190,6 +211,31 @@ export function PeerGroupSelector({
     values,
     open,
   );
+
+  // Reset the search input when switching tabs
+  useEffect(() => {
+    setSearch("");
+    setTimeout(() => {
+      searchRef.current?.focus();
+    }, 0);
+  }, [tab]);
+
+  const searchPlaceholder =
+    tab === "groups"
+      ? 'Search groups or add new group by pressing "Enter"...'
+      : "Search resource...";
+
+  const selectResource = (resource?: NetworkResource) => {
+    onResourceChange?.(
+      resource
+        ? ({
+            id: resource?.id,
+            type: resource?.type,
+          } as PolicyRuleResource)
+        : undefined,
+    );
+    onChange([]);
+  };
 
   return (
     <Popover
@@ -220,6 +266,18 @@ export function PeerGroupSelector({
               "flex items-center gap-2 border-nb-gray-700 flex-wrap h-full"
             }
           >
+            {resource && showResources && (
+              <ResourceBadge
+                className={"py-[3px]"}
+                resource={resources?.find((r) => r.id === resource.id)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  selectResource();
+                }}
+                showX={true}
+              />
+            )}
             {values.map((group) => {
               return (
                 <div
@@ -263,8 +321,8 @@ export function PeerGroupSelector({
               );
             })}
 
-            {values.length == 0 && (
-              <span className={"pl-1"}>Add or select group(s)...</span>
+            {values.length == 0 && !resource && (
+              <span className={"pl-1"}>{placeholder}</span>
             )}
           </div>
 
@@ -277,7 +335,7 @@ export function PeerGroupSelector({
         </button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-sm  shadow-nb-gray-950"
+        className="w-full p-0 shadow-sm shadow-nb-gray-950"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}
@@ -308,9 +366,7 @@ export function PeerGroupSelector({
                 ref={searchRef}
                 value={search}
                 onValueChange={setSearch}
-                placeholder={
-                  'Search groups or add new group by pressing "Enter"...'
-                }
+                placeholder={searchPlaceholder}
               />
               <div
                 className={
@@ -336,108 +392,165 @@ export function PeerGroupSelector({
               </div>
             </div>
 
-            <CommandGroup>
-              <ScrollArea
-                className={cn(
-                  "max-h-[195px] flex flex-col gap-1 pl-2 py-2 pr-3",
-                  sortedDropdownOptions.length == 0 && !search && "py-0",
-                )}
-              >
-                {searchedGroupNotFound && (
-                  <CommandItem
-                    key={search}
-                    onSelect={() => {
-                      toggleGroupByName(search);
-                      searchRef.current?.focus();
-                    }}
-                    value={search}
-                    onClick={(e) => e.preventDefault()}
+            <Tabs defaultValue={"groups"} value={tab} onValueChange={setTab}>
+              {showResources && <TabTriggers searchRef={searchRef} />}
+              <TabsContent value={"groups"} className={"p-0 my-0"}>
+                <CommandGroup>
+                  <ScrollArea
+                    className={cn(
+                      "max-h-[195px] flex flex-col gap-1 pl-2 py-2 pr-3",
+                      sortedDropdownOptions.length == 0 && !search && "py-0",
+                    )}
                   >
-                    <Badge variant={"gray-ghost"}>
-                      {folderIcon}
-                      {search}
-                    </Badge>
-                    <div className={"text-neutral-500 dark:text-nb-gray-300"}>
-                      Add this group by pressing{" "}
-                      <span className={"font-bold text-netbird"}>
-                        {"'Enter'"}
-                      </span>
-                    </div>
-                  </CommandItem>
-                )}
-
-                {sortedDropdownOptions.slice(0, slice).map((option) => {
-                  const isSelected =
-                    values.find((group) => group.name == option.name) !=
-                    undefined;
-                  const peerCount =
-                    option.peers?.length ?? option?.peers_count ?? 0;
-
-                  const isDisabled = disabledGroups
-                    ? disabledGroups?.findIndex((g) => g.id === option.id) !==
-                      -1
-                    : false;
-
-                  return (
-                    <FullTooltip
-                      content={
-                        <div className={"text-xs max-w-xs"}>
-                          This group is already part of the routing peer and can
-                          not be used for the access control groups.
-                        </div>
-                      }
-                      disabled={!isDisabled}
-                      className={"w-full block"}
-                      key={option.name}
-                    >
+                    {searchedGroupNotFound && (
                       <CommandItem
-                        key={option.name}
-                        value={option.name + option.id}
-                        disabled={isDisabled}
+                        key={search}
                         onSelect={() => {
-                          if (peer != undefined && option.name == "All") return; // Prevent removing the "All" group
-                          if (isDisabled) return;
-                          toggleGroupByName(option.name);
+                          toggleGroupByName(search);
                           searchRef.current?.focus();
                         }}
-                        className={cn(isDisabled && "opacity-40")}
+                        value={search}
                         onClick={(e) => e.preventDefault()}
                       >
-                        <div className={"flex items-center gap-2"}>
-                          <GroupBadge group={option} showNewBadge={true} />
-                        </div>
-
-                        <div className={"flex items-center gap-5"}>
-                          {option?.id && showRoutes && (
-                            <AccessControlGroupCount group_id={option.id} />
-                          )}
-
-                          {showResourceCounter && (
-                            <ResourcesCounter group={option} />
-                          )}
-
-                          <div
-                            className={
-                              "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
-                            }
-                          >
-                            {peerIcon}
-                            {peerCount} Peer(s)
-                            <Checkbox checked={isSelected} />
-                          </div>
+                        <Badge variant={"gray-ghost"}>
+                          {folderIcon}
+                          {search}
+                        </Badge>
+                        <div
+                          className={"text-neutral-500 dark:text-nb-gray-300"}
+                        >
+                          Add this group by pressing{" "}
+                          <span className={"font-bold text-netbird"}>
+                            {"'Enter'"}
+                          </span>
                         </div>
                       </CommandItem>
-                    </FullTooltip>
-                  );
-                })}
-              </ScrollArea>
-            </CommandGroup>
+                    )}
+
+                    {sortedDropdownOptions.slice(0, slice).map((option) => {
+                      const isSelected =
+                        values.find((group) => group.name == option.name) !=
+                        undefined;
+                      const peerCount =
+                        option.peers?.length ?? option?.peers_count ?? 0;
+
+                      const isDisabled = disabledGroups
+                        ? disabledGroups?.findIndex(
+                            (g) => g.id === option.id,
+                          ) !== -1
+                        : false;
+
+                      return (
+                        <FullTooltip
+                          content={
+                            <div className={"text-xs max-w-xs"}>
+                              This group is already part of the routing peer and
+                              can not be used for the access control groups.
+                            </div>
+                          }
+                          disabled={!isDisabled}
+                          className={"w-full block"}
+                          key={option.name}
+                        >
+                          <CommandItem
+                            key={option.name}
+                            value={option.name + option.id}
+                            disabled={isDisabled}
+                            onSelect={() => {
+                              if (peer != undefined && option.name == "All")
+                                return; // Prevent removing the "All" group
+                              if (isDisabled) return;
+                              toggleGroupByName(option.name);
+                              searchRef.current?.focus();
+                            }}
+                            className={cn(isDisabled && "opacity-40")}
+                            onClick={(e) => e.preventDefault()}
+                          >
+                            <div className={"flex items-center gap-2"}>
+                              <GroupBadge group={option} showNewBadge={true} />
+                            </div>
+
+                            <div className={"flex items-center gap-5"}>
+                              {option?.id && showRoutes && (
+                                <AccessControlGroupCount group_id={option.id} />
+                              )}
+
+                              {showResourceCounter && (
+                                <ResourcesCounter group={option} />
+                              )}
+
+                              <div
+                                className={
+                                  "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
+                                }
+                              >
+                                {peerIcon}
+                                {peerCount} Peer(s)
+                                <Checkbox checked={isSelected} />
+                              </div>
+                            </div>
+                          </CommandItem>
+                        </FullTooltip>
+                      );
+                    })}
+                  </ScrollArea>
+                </CommandGroup>
+              </TabsContent>
+              {showResources && (
+                <TabsContent value={"resources"} className={"p-0 my-0"}>
+                  <ResourcesList
+                    search={search}
+                    resources={resources}
+                    isLoading={isLoading}
+                    value={resource}
+                    onChange={selectResource}
+                  />
+                </TabsContent>
+              )}
+            </Tabs>
           </CommandList>
         </Command>
       </PopoverContent>
     </Popover>
   );
 }
+
+const TabTriggers = ({
+  searchRef,
+}: {
+  searchRef: React.MutableRefObject<HTMLInputElement | null>;
+}) => {
+  return (
+    <TabsList justify={"start"} className={"px-3"}>
+      <TabsTrigger
+        value={"groups"}
+        className={"text-[.8rem] font-normal"}
+        onClick={() => searchRef.current?.focus()}
+      >
+        <FolderGit2
+          className={
+            "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+          }
+          size={14}
+        />
+        Groups
+      </TabsTrigger>
+      <TabsTrigger
+        value={"resources"}
+        className={"text-[.8rem] font-normal"}
+        onClick={() => searchRef.current?.focus()}
+      >
+        <Layers3Icon
+          className={
+            "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+          }
+          size={14}
+        />
+        Resource
+      </TabsTrigger>
+    </TabsList>
+  );
+};
 
 const ResourcesCounter = ({ group }: { group: Group }) => {
   return group?.resources_count && group.resources_count > 0 ? (
@@ -458,11 +571,19 @@ const resourcesSearchPredicate = (item: NetworkResource, query: string) => {
   return item.address.toLowerCase().includes(lowerCaseQuery);
 };
 
-const ResourcesList = ({ search }: { search: string }) => {
-  const { data: resources, isLoading } = useFetchApi<NetworkResource[]>(
-    "/networks/resources",
-  );
-
+const ResourcesList = ({
+  search,
+  resources,
+  isLoading,
+  value,
+  onChange,
+}: {
+  search: string;
+  resources?: NetworkResource[];
+  isLoading: boolean;
+  value?: PolicyRuleResource;
+  onChange: (resource: NetworkResource) => void;
+}) => {
   const [filteredItems, _, setSearch] = useSearch(
     resources || [],
     resourcesSearchPredicate,
@@ -473,16 +594,41 @@ const ResourcesList = ({ search }: { search: string }) => {
     setSearch(search);
   }, [search, setSearch]);
 
-  return isLoading ? (
-    <>Loading...</>
-  ) : (
-    filteredItems.length > 0 && (
+  if (isLoading) {
+    return (
+      <div className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}>
+        <Skeleton height={42} className={"rounded-md"} />
+        <Skeleton height={42} className={"rounded-md"} />
+        <Skeleton height={42} className={"rounded-md"} />
+        <Skeleton height={42} className={"rounded-md"} />
+      </div>
+    );
+  }
+
+  if (search != "" && filteredItems.length == 0) {
+    return (
+      <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
+        There are no resources matching your search. Please try a different
+        search term.
+      </DropdownInfoText>
+    );
+  }
+
+  if (resources && resources.length == 0) {
+    return (
+      <DropdownInfoText className={"mt-8"}>
+        There are no resources available.
+      </DropdownInfoText>
+    );
+  }
+
+  return (
+    <Radio defaultValue={value?.id} name={"resource"} value={value?.id}>
       <VirtualScrollAreaList
         items={filteredItems}
-        onSelect={(option) => null}
+        onSelect={onChange}
+        itemClassName={"dark:aria-selected:bg-nb-gray-800/20"}
         renderItem={(res) => {
-          const isSelected = false;
-
           return (
             <Fragment key={res.id}>
               <div className={"flex items-center gap-2"}>
@@ -496,22 +642,13 @@ const ResourcesList = ({ search }: { search: string }) => {
                   }}
                 >
                   {res.type === "host" && (
-                    <WorkflowIcon
-                      size={12}
-                      className={"text-yellow-400 shrink-0"}
-                    />
+                    <WorkflowIcon size={12} className={"shrink-0"} />
                   )}
                   {res.type === "domain" && (
-                    <GlobeIcon
-                      size={12}
-                      className={"text-yellow-400 shrink-0"}
-                    />
+                    <GlobeIcon size={12} className={"shrink-0"} />
                   )}
                   {res.type === "subnet" && (
-                    <NetworkIcon
-                      size={12}
-                      className={"text-yellow-400 shrink-0"}
-                    />
+                    <NetworkIcon size={12} className={"shrink-0"} />
                   )}
 
                   <TextWithTooltip text={res?.name || ""} maxChars={20} />
@@ -524,13 +661,14 @@ const ResourcesList = ({ search }: { search: string }) => {
                     "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
                   }
                 >
-                  <Checkbox checked={isSelected} />
+                  {res.address}
+                  <RadioItem value={res.id} />
                 </div>
               </div>
             </Fragment>
           );
         }}
       />
-    )
+    </Radio>
   );
 };

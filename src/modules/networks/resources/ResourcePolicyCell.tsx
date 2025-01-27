@@ -22,12 +22,18 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
     const resourceGroups = resource?.groups as Group[];
     return policies?.filter((policy) => {
       if (!policy.enabled) return false;
+      const destinationResource = policy.rules
+        ?.map((rule) => rule?.destinationResource?.id === resource?.id)
+        .some((id) => id);
+      if (destinationResource) return true;
       const destinationPolicyGroups = policy.rules
         ?.map((rule) => rule?.destinations)
         .flat() as Group[];
       const policyGroups = [...destinationPolicyGroups];
       return resourceGroups.some((resourceGroup) =>
-        policyGroups.some((policyGroup) => policyGroup.id === resourceGroup.id),
+        policyGroups.some(
+          (policyGroup) => policyGroup?.id === resourceGroup.id,
+        ),
       );
     });
   }, [policies, resource]);
