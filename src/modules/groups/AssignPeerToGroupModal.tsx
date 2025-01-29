@@ -370,6 +370,6 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>OS</DataTableHeader>;
     },
-    cell: ({ row }) => <PeerOSCell os={row.original.os} />,
+    cell: ({ row }) => <PeerOSCell os={row.original.os} serial={row.original.serial_number} />,
   },
 ];
