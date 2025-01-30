@@ -134,11 +134,20 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
   },
   {
+    id: "os",
     accessorKey: "os",
     header: ({ column }) => {
       return <DataTableHeader column={column}>OS</DataTableHeader>;
     },
-    cell: ({ row }) => <PeerOSCell os={row.original.os} />,
+    cell: ({ row }) => <PeerOSCell os={row.original.os} serial={row.original.serial_number} />,
+  },
+  {
+    id: "serial",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Serial number</DataTableHeader>;
+    },
+    accessorFn: (peer) => peer.serial_number,
+    sortingFn: "text",
   },
   {
     accessorKey: "version",
@@ -241,7 +250,7 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
         setSorting={setSorting}
         columns={PeersTableColumns}
         data={peers}
-        searchPlaceholder={"Search by name, IP, owner or group..."}
+        searchPlaceholder={"Search by name, IP, Serial, owner or group..."}
         columnVisibility={{
           select: !isUser,
           connected: false,
@@ -249,6 +258,7 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
           group_name_strings: false,
           group_names: false,
           ip: false,
+          serial: false,
           user_name: false,
           user_email: false,
           actions: !isUser,

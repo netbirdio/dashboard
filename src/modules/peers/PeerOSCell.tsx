@@ -4,6 +4,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@components/Tooltip";
+import { Barcode, CpuIcon } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo } from "react";
 import { FaWindows } from "react-icons/fa6";
@@ -14,7 +15,11 @@ import FreeBSDLogo from "@/assets/os-icons/FreeBSD.png";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
-export function PeerOSCell({ os }: { os: string }) {
+type Props = {
+  os: string;
+  serial?: string;
+};
+export function PeerOSCell({ os, serial }: Readonly<Props>) {
   return (
     <TooltipProvider>
       <Tooltip delayDuration={1}>
@@ -33,13 +38,46 @@ export function PeerOSCell({ os }: { os: string }) {
             </div>
           </div>
         </TooltipTrigger>
-        <TooltipContent>
-          <div className={"text-neutral-300 flex flex-col gap-1"}>{os}</div>
+        <TooltipContent className={"!p-0"}>
+          <div>
+            <ListItem icon={<CpuIcon size={14} />} label={"OS"} value={os} />
+            {serial && serial !== "" && (
+              <ListItem
+                icon={<Barcode size={14} />}
+                label={"Serial Number"}
+                value={serial}
+              />
+            )}
+          </div>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
   );
 }
+
+const ListItem = ({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string | React.ReactNode;
+}) => {
+  return (
+    <div
+      className={
+        "flex justify-between gap-5 border-b border-nb-gray-920 py-2 px-4 last:border-b-0 text-xs"
+      }
+    >
+      <div className={"flex items-center gap-2 text-nb-gray-100 font-medium"}>
+        {icon}
+        {label}
+      </div>
+      <div className={"text-nb-gray-400"}>{value}</div>
+    </div>
+  );
+};
 
 export function OSLogo({ os }: { os: string }) {
   const icon = useMemo(() => {
