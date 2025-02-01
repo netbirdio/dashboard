@@ -17,6 +17,7 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import Separator from "@components/Separator";
+import { Textarea } from "@components/Textarea";
 import { useApiCall } from "@utils/api";
 import {
   ExternalLinkIcon,
@@ -154,6 +155,18 @@ export function ResourceModalContent({
             placeholder={"e.g., Postgres Database"}
             value={name}
             onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+        <div>
+          <Label>Description (optional)</Label>
+          <HelpText>
+            Write a short description to add more context to this resource.
+          </HelpText>
+          <Textarea
+            placeholder={"e.g., Production, Development"}
+            value={description}
+            rows={1}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </div>
 
