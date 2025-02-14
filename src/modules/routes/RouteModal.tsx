@@ -611,7 +611,7 @@ export function RouteModalContent({
                 <SegmentedTabs.Content value={"peer-group"}>
                   <div>
                     <HelpText>
-                      Assign a peer group with Linux machines to be used as
+                      Assign a peer group with machines to be used as
                       {exitNode ? " exit nodes." : " routing peers."}
                     </HelpText>
                     <PeerGroupSelector
