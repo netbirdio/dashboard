@@ -149,6 +149,8 @@ export function AccessControlModalContent({
     submit,
     isPostureChecksLoading,
     getPolicyData,
+    destinationResource,
+    setDestinationResource,
   } = useAccessControl({
     policy,
     postureCheckTemplates,
@@ -166,9 +168,10 @@ export function AccessControlModalContent({
   });
 
   const continuePostureChecksDisabled = useMemo(() => {
-    if (sourceGroups.length == 0 || destinationGroups.length == 0) return true;
     if (direction != "bi" && ports.length == 0) return true;
-  }, [sourceGroups, destinationGroups, direction, ports]);
+    if (sourceGroups.length > 0 && destinationResource) return false;
+    if (sourceGroups.length == 0 || destinationGroups.length == 0) return true;
+  }, [sourceGroups, destinationGroups, direction, ports, destinationResource]);
 
   const submitDisabled = useMemo(() => {
     if (name.length == 0) return true;
@@ -304,6 +307,10 @@ export function AccessControlModalContent({
                   onChange={setDestinationGroups}
                   values={destinationGroups}
                   saveGroupAssignments={useSave}
+                  resource={destinationResource}
+                  onResourceChange={setDestinationResource}
+                  showResources={true}
+                  placeholder={"Select destination(s)..."}
                 />
               </div>
             </div>

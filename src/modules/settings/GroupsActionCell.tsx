@@ -7,13 +7,14 @@ import React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { SetupKey } from "@/interfaces/SetupKey";
+import { useGroupIdentification } from "@/modules/groups/useGroupIdentification";
 import { GroupUsage } from "@/modules/settings/useGroupsUsage";
 
 type Props = {
   group: GroupUsage;
   in_use: boolean;
 };
-export default function GroupsActionCell({ group, in_use }: Props) {
+export default function GroupsActionCell({ group, in_use }: Readonly<Props>) {
   const { confirm } = useDialog();
   const deleteRequest = useApiCall<SetupKey>("/groups/" + group.id);
   const { mutate } = useSWRConfig();
@@ -42,18 +43,35 @@ export default function GroupsActionCell({ group, in_use }: Props) {
     handleRevoke().then();
   };
 
+  const { isRegularGroup, isJWTGroup } = useGroupIdentification({
+    id: group?.id,
+    issued: group?.issued,
+  });
+
+  const isDisabled = in_use || !isRegularGroup;
+
+  const getDisabledText = () => {
+    if (isRegularGroup) {
+      return "Remove dependencies to this group to delete it.";
+    } else if (isJWTGroup) {
+      return "This group is issued by JWT and cannot be deleted.";
+    } else {
+      return "This group is issued by an IdP and cannot be deleted";
+    }
+  };
+
   return (
     <div className={"flex justify-end pr-4"}>
       <FullTooltip
-        content={"Remove dependencies to this group to delete it."}
+        content={<div className={"text-xs max-w-xs"}>{getDisabledText()}</div>}
         interactive={false}
-        disabled={!in_use}
+        disabled={!isDisabled}
       >
         <Button
           variant={"danger-outline"}
           size={"sm"}
           onClick={handleConfirm}
-          disabled={in_use}
+          disabled={isDisabled}
         >
           <Trash2 size={16} />
           Delete

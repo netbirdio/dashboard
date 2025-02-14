@@ -100,7 +100,6 @@ export default function RouteModal({ children, open, setOpen }: Props) {
         },
       ],
     };
-    console.log(newPolicy);
     setNewPolicy(newPolicy);
     setRoutePolicyModal(true);
   };

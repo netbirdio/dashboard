@@ -51,7 +51,7 @@ function List({ children }: { children: React.ReactNode }) {
     <Tabs.List
       className={cn(
         "px-4 py-4 whitespace-nowrap overflow-y-hidden shrink-0 no-scrollbar",
-        "lg:h-full items-start bg-nb-gray border-b border-nb-gray-930",
+        "lg:h-full items-start bg-nb-gray border-b-0 border-nb-gray-930",
         "flex lg:flex-col lg:gap-1",
       )}
       style={{

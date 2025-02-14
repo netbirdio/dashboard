@@ -36,29 +36,36 @@ const switchVariants = cva("", {
 
 const ToggleSwitch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitives.Root>,
-  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root> & SwitchVariants
->(({ className, size = "default", variant = "default", ...props }, ref) => (
-  <SwitchPrimitives.Root
-    className={cn(
-      "peer inline-flex  shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50  dark:focus-visible:ring-neutral-300 dark:focus-visible:ring-offset-neutral-950 ",
-      className,
-      switchVariants({ size, variant }),
-    )}
-    {...props}
-    onClick={(e) => {
-      e.stopPropagation();
-      props.onClick?.(e);
-    }}
-    ref={ref}
-  >
-    <SwitchPrimitives.Thumb
+  React.ComponentPropsWithoutRef<typeof SwitchPrimitives.Root> &
+    SwitchVariants & { dataCy?: string }
+>(
+  (
+    { className, size = "default", variant = "default", dataCy, ...props },
+    ref,
+  ) => (
+    <SwitchPrimitives.Root
       className={cn(
-        switchVariants({ "thumb-size": size }),
-        "pointer-events-none block  rounded-full bg-white shadow-lg ring-0 transition-transform  data-[state=unchecked]:translate-x-0 dark:bg-white",
+        "peer inline-flex  shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50  dark:focus-visible:ring-neutral-300 dark:focus-visible:ring-offset-neutral-950 ",
+        className,
+        switchVariants({ size, variant }),
       )}
-    />
-  </SwitchPrimitives.Root>
-));
+      {...props}
+      data-cy={dataCy}
+      onClick={(e) => {
+        e.stopPropagation();
+        props.onClick?.(e);
+      }}
+      ref={ref}
+    >
+      <SwitchPrimitives.Thumb
+        className={cn(
+          switchVariants({ "thumb-size": size }),
+          "pointer-events-none block  rounded-full bg-white shadow-lg ring-0 transition-transform  data-[state=unchecked]:translate-x-0 dark:bg-white",
+        )}
+      />
+    </SwitchPrimitives.Root>
+  ),
+);
 ToggleSwitch.displayName = SwitchPrimitives.Root.displayName;
 
 export { ToggleSwitch };

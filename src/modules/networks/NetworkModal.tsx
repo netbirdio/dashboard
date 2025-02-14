@@ -97,7 +97,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
         description={
           network
             ? network.name
-            : "Access resources like LANs and VPC by adding a network."
+            : "Access internal resources in LANs and VPC by adding a network."
         }
         color={"netbird"}
       />
@@ -131,7 +131,10 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
-            <InlineLink href={"https://docs.netbird.io/how-to/networks"} target={"_blank"}>
+            <InlineLink
+              href={"https://docs.netbird.io/how-to/networks"}
+              target={"_blank"}
+            >
               Networks
               <ExternalLinkIcon size={12} />
             </InlineLink>

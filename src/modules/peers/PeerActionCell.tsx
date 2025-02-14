@@ -8,11 +8,12 @@ import {
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
 import { notify } from "@components/Notification";
-import { IconCloudLock, IconInfoCircle } from "@tabler/icons-react";
+import { IconInfoCircle } from "@tabler/icons-react";
 import {
   MonitorIcon,
   MoreVertical,
   TerminalSquare,
+  TimerResetIcon,
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -28,18 +29,20 @@ export default function PeerActionCell() {
 
   const toggleLoginExpiration = async () => {
     const text = peer.login_expiration_enabled ? "disabled" : "enabled";
+    const disableLoginExpiration = peer.login_expiration_enabled;
     notify({
-      title: `Login expiration is ${text}`,
-      description: `The Login expiration for the peer ${peer.name} was successfully ${text}.`,
-      promise: update(
-        peer.name,
-        peer.ssh_enabled,
-        !peer.login_expiration_enabled,
-      ).then(() => {
+      title: `Session expiration is ${text}`,
+      description: `Session expiration for peer ${peer.name} was successfully ${text}.`,
+      promise: update({
+        loginExpiration: !peer.login_expiration_enabled,
+        inactivityExpiration: disableLoginExpiration
+          ? false
+          : peer.inactivity_expiration_enabled,
+      }).then(() => {
         mutate("/peers");
         mutate("/groups");
       }),
-      loadingMessage: "Updating login expiration...",
+      loadingMessage: "Updating session expiration...",
     });
   };
 
@@ -48,11 +51,9 @@ export default function PeerActionCell() {
     notify({
       title: `SSH Server is ${text}`,
       description: `The SSH Server for the peer ${peer.name} was successfully ${text}.`,
-      promise: update(
-        peer.name,
-        !peer.ssh_enabled,
-        peer.login_expiration_enabled,
-      ).then(() => {
+      promise: update({
+        ssh: !peer.ssh_enabled,
+      }).then(() => {
         mutate("/peers");
         mutate("/groups");
       }),
@@ -90,8 +91,7 @@ export default function PeerActionCell() {
               >
                 <IconInfoCircle size={14} />
                 <span>
-                  Login expiration is disabled for all peers added with an
-                  setup-key.
+                  Expiration is disabled for all peers added with an setup-key.
                 </span>
               </div>
             }
@@ -103,8 +103,8 @@ export default function PeerActionCell() {
               disabled={!peer.user_id}
             >
               <div className={"flex gap-3 items-center w-full"}>
-                <IconCloudLock size={14} className={"shrink-0"} />
-                {peer.login_expiration_enabled ? "Disable" : "Enable"} Login
+                <TimerResetIcon size={14} className={"shrink-0"} />
+                {peer.login_expiration_enabled ? "Disable" : "Enable"} Session
                 Expiration
               </div>
             </DropdownMenuItem>

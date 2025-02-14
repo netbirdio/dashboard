@@ -34,7 +34,7 @@ export default function ResourceNameCell({ resource }: Readonly<Props>) {
       <div
         className={cn(
           "flex flex-col gap-0 text-neutral-300  font-light truncate",
-          "group-hover:text-neutral-100",
+          "group-hover:text-neutral-100 text-left",
         )}
       >
         <TextWithTooltip
@@ -43,6 +43,7 @@ export default function ResourceNameCell({ resource }: Readonly<Props>) {
           className={"font-normal"}
         />
         <DescriptionWithTooltip
+          maxChars={25}
           className={cn("font-normal mt-0.5 ")}
           text={resource.description}
         />

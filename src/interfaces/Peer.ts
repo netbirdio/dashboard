@@ -19,6 +19,7 @@ export interface Peer {
   last_login: Date;
   login_expired: boolean;
   login_expiration_enabled: boolean;
+  inactivity_expiration_enabled: boolean;
   approval_required: boolean;
   city_name: string;
   country_code: string;

@@ -14,9 +14,9 @@ import PeerIcon from "@/assets/icons/PeerIcon";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import ActiveInactiveRow from "@/modules/common-table-rows/ActiveInactiveRow";
 import GroupsActionCell from "@/modules/settings/GroupsActionCell";
 import GroupsCountCell from "@/modules/settings/GroupsCountCell";
+import GroupsNameCell from "@/modules/settings/GroupsNameCell";
 import useGroupsUsage, { GroupUsage } from "@/modules/settings/useGroupsUsage";
 
 // Peers, Access Controls, DNS, Routes, Setup Keys, Users
@@ -28,7 +28,16 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
     },
     cell: ({ row }) => {
       const in_use = !!row.getValue("in_use");
-      return <ActiveInactiveRow active={in_use} text={row.original.name} />;
+      return (
+        <GroupsNameCell
+          active={in_use}
+          group={{
+            id: row.original?.id,
+            issued: row.original?.issued,
+            name: row.original?.name,
+          }}
+        />
+      );
     },
     sortingFn: "text",
   },

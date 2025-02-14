@@ -3,8 +3,7 @@ import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
 import { notify } from "@components/Notification";
 import LoginExpiredBadge from "@components/ui/LoginExpiredBadge";
-import { IconCloudLock } from "@tabler/icons-react";
-import { HelpCircle } from "lucide-react";
+import { HelpCircle, TimerResetIcon } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -36,12 +35,12 @@ export default function PeerStatusCell({ peer }: Props) {
       notify({
         title: `Peer ${peer.name} approved`,
         description: `This peer was approved and can now connect to other peers.`,
-        promise: update(
-          peer.name,
-          peer.ssh_enabled,
-          peer.login_expiration_enabled,
-          false,
-        ).then(() => {
+        promise: update({
+          name: peer.name,
+          ssh: peer.ssh_enabled,
+          loginExpiration: peer.login_expiration_enabled,
+          approval_required: false,
+        }).then(() => {
           mutate("/peers");
           mutate("/groups");
         }),
@@ -83,8 +82,8 @@ export default function PeerStatusCell({ peer }: Props) {
   ) : (
     <div className={"flex gap-3 items-center text-xs"}>
       {!peer.login_expiration_enabled && (
-        <Badge variant={"gray"} className={"px-3"}>
-          <IconCloudLock size={15} className={"mr-1"} />
+        <Badge variant={"gray"} className={"px-2"}>
+          <TimerResetIcon size={13} className={"relative -top-[1px]"} />
           Expiration disabled
         </Badge>
       )}

@@ -117,6 +117,10 @@ export const useAccessControl = ({
       : initialDestinationGroups ?? [],
   });
 
+  const [destinationResource, setDestinationResource] = useState(
+    firstRule?.destinationResource,
+  );
+
   const { updateOrCreateAndNotify: checkToCreate } = usePostureCheck({});
   const createPostureChecksWithoutID = async () => {
     const checks = postureChecks.filter(
@@ -146,7 +150,8 @@ export const useAccessControl = ({
           description,
           name,
           sources: sources,
-          destinations: destinations,
+          destinations: destinationResource ? undefined : destinations,
+          destinationResource: destinationResource || undefined,
           action: "accept",
           protocol,
           enabled,
@@ -214,7 +219,8 @@ export const useAccessControl = ({
           protocol,
           enabled,
           sources,
-          destinations,
+          destinations: destinationResource ? undefined : destinations,
+          destinationResource: destinationResource || undefined,
           ports: ports.length > 0 ? ports.map((p) => p.toString()) : undefined,
         },
       ],
@@ -268,5 +274,7 @@ export const useAccessControl = ({
     getPolicyData,
     portAndDirectionDisabled,
     isPostureChecksLoading,
+    destinationResource,
+    setDestinationResource,
   } as const;
 };

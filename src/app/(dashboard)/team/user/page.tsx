@@ -40,6 +40,7 @@ export default function UserPage() {
   const { data: users, isLoading } = useFetchApi<User[]>(
     `/users?service_user=${isServiceUser}`,
   );
+  const { isOwnerOrAdmin } = useLoggedInUser();
 
   const user = useMemo(() => {
     return users?.find((u) => u.id === userId);
@@ -49,11 +50,15 @@ export default function UserPage() {
 
   const userGroups = useGroupIdsToGroups(user?.auto_groups);
 
-  return !isLoading && user && userGroups !== undefined ? (
-    <UserOverview user={user} initialGroups={userGroups} />
-  ) : (
-    <FullScreenLoading />
-  );
+  if (!isOwnerOrAdmin && user && !isLoading) {
+    return <UserOverview user={user} initialGroups={[]} />;
+  }
+
+  if (isOwnerOrAdmin && user && !isLoading && userGroups) {
+    return <UserOverview user={user} initialGroups={userGroups} />;
+  }
+
+  return <FullScreenLoading />;
 }
 
 type Props = {
@@ -195,7 +200,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
         <div className={"flex gap-10 w-full mt-8 max-w-6xl items-start"}>
           <UserInformationCard user={user} />
           <div className={"flex flex-col gap-8 w-1/2 "}>
-            {!user.is_service_user && (
+            {!user.is_service_user && isOwnerOrAdmin && (
               <div>
                 <Label>Auto-assigned groups</Label>
                 <HelpText>
