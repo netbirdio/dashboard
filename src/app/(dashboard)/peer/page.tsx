@@ -23,7 +23,6 @@ import Separator from "@components/Separator";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import LoginExpiredBadge from "@components/ui/LoginExpiredBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import useRedirect from "@hooks/useRedirect";
 import { IconCloudLock, IconInfoCircle } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
@@ -94,14 +93,6 @@ function PeerOverview() {
       initial: peerGroups,
       peer,
     });
-
-  /**
-   * Check the operating system of the peer, if it is linux, then show the routes table, otherwise hide it.
-   */
-  const isLinux = useMemo(() => {
-    const operatingSystem = getOperatingSystem(peer.os);
-    return operatingSystem == OperatingSystem.LINUX;
-  }, [peer.os]);
 
   /**
    * Detect if there are changes in the peer information, if there are changes, then enable the save button.
@@ -317,7 +308,7 @@ function PeerOverview() {
           </div>
         </div>
 
-        {isLinux && !isUser ? (
+        {!isUser ? (
           <>
             <Separator />
             <PeerNetworkRoutesSection peer={peer} />

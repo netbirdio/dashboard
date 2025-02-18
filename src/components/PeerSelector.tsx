@@ -3,6 +3,7 @@ import { DropdownInput } from "@components/DropdownInput";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { useSearch } from "@hooks/useSearch";
 import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
@@ -10,21 +11,13 @@ import { sortBy, unionBy } from "lodash";
 import { ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
 import { memo, useEffect, useState } from "react";
-import { FcLinux } from "react-icons/fc";
 import { useElementSize } from "@/hooks/useElementSize";
-import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
+import { OSLogo } from "@/modules/peers/PeerOSCell";
 
 const MapPinIcon = memo(() => <MapPin size={12} />);
 MapPinIcon.displayName = "MapPinIcon";
-
-const LinuxIcon = memo(() => (
-  <span className={"grayscale brightness-[100%] contrast-[40%]"}>
-    <FcLinux className={"text-white text-lg min-w-[20px] brightness-150"} />
-  </span>
-));
-LinuxIcon.displayName = "LinuxIcon";
 
 interface MultiSelectProps {
   value?: Peer;
@@ -62,11 +55,6 @@ export function PeerSelector({
 
     // Sort
     let options = sortBy([...peers], "name") as Peer[];
-
-    // Filter out peers that are not linux
-    options = options.filter((peer) => {
-      return getOperatingSystem(peer.os) === OperatingSystem.LINUX;
-    });
 
     // Filter out excluded peers
     if (excludedPeers) {
@@ -128,7 +116,6 @@ export function PeerSelector({
                 }
               >
                 <div className={"flex items-center gap-2.5 text-sm"}>
-                  <LinuxIcon />
                   <TextWithTooltip text={value.name} maxChars={20} />
                 </div>
 
@@ -151,7 +138,7 @@ export function PeerSelector({
       </PopoverTrigger>
       <PopoverContent
         hideWhenDetached={false}
-        className="w-full p-0 shadow-sm  shadow-nb-gray-950"
+        className="w-full p-0 shadow-sm shadow-nb-gray-950"
         style={{
           width: width,
         }}
@@ -169,9 +156,7 @@ export function PeerSelector({
           {unfilteredItems.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {
-                  "Seems like you don't have any Linux peers to assign as a routing peer."
-                }
+                {"No peers available to select."}
               </DropdownInfoText>
             </div>
           )}
@@ -187,6 +172,7 @@ export function PeerSelector({
               items={filteredItems}
               onSelect={togglePeer}
               renderItem={(option) => {
+                const os = getOperatingSystem(option.os);
                 return (
                   <>
                     <div
@@ -197,7 +183,17 @@ export function PeerSelector({
                           : "text-nb-gray-300",
                       )}
                     >
-                      <LinuxIcon />
+                      <div
+                        className={cn(
+                          "flex items-center justify-center grayscale brightness-[100%] contrast-[40%]",
+                          "w-4 h-4 shrink-0",
+                          os === OperatingSystem.WINDOWS && "p-[2.5px]",
+                          os === OperatingSystem.APPLE && "p-[2.5px]",
+                          os === OperatingSystem.FREEBSD && "p-[1.5px]",
+                        )}
+                      >
+                        <OSLogo os={option.os} />
+                      </div>
                       <TextWithTooltip text={option.name} maxChars={20} />
                     </div>
 

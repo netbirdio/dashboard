@@ -16,10 +16,9 @@ type Props = {
 
 export const ExitNodeDropdownButton = ({ peer }: Props) => {
   const [modal, setModal] = useState(false);
-  const isLinux = getOperatingSystem(peer.os) === OperatingSystem.LINUX;
   const hasExitNodes = useHasExitNodes(peer);
 
-  return isLinux ? (
+  return (
     <>
       <DropdownMenuItem onClick={() => setModal(true)}>
         <div className={"flex gap-3 items-center w-full"}>
@@ -55,5 +54,5 @@ export const ExitNodeDropdownButton = ({ peer }: Props) => {
         )}
       </Modal>
     </>
-  ) : null;
+  );
 };
