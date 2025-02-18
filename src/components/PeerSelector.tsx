@@ -3,6 +3,7 @@ import { DropdownInput } from "@components/DropdownInput";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { useSearch } from "@hooks/useSearch";
 import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
@@ -11,7 +12,9 @@ import { ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
 import { memo, useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
+import { OSLogo } from "@/modules/peers/PeerOSCell";
 
 const MapPinIcon = memo(() => <MapPin size={12} />);
 MapPinIcon.displayName = "MapPinIcon";
@@ -169,6 +172,7 @@ export function PeerSelector({
               items={filteredItems}
               onSelect={togglePeer}
               renderItem={(option) => {
+                const os = getOperatingSystem(option.os);
                 return (
                   <>
                     <div
@@ -179,6 +183,17 @@ export function PeerSelector({
                           : "text-nb-gray-300",
                       )}
                     >
+                      <div
+                        className={cn(
+                          "flex items-center justify-center grayscale brightness-[100%] contrast-[40%]",
+                          "w-4 h-4 shrink-0",
+                          os === OperatingSystem.WINDOWS && "p-[2.5px]",
+                          os === OperatingSystem.APPLE && "p-[2.5px]",
+                          os === OperatingSystem.FREEBSD && "p-[1.5px]",
+                        )}
+                      >
+                        <OSLogo os={option.os} />
+                      </div>
                       <TextWithTooltip text={option.name} maxChars={20} />
                     </div>
 

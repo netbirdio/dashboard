@@ -380,7 +380,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               <div>
                 <Label>Peer Group</Label>
                 <HelpText>
-                  Assign a peer group with Linux machines to be used as
+                  Assign a peer group with machines to be used as
                   {isExitNode ? " exit nodes." : " routing peers."}
                 </HelpText>
                 <PeerGroupSelector

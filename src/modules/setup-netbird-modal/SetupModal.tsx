@@ -115,26 +115,22 @@ export function SetupModalContent({
             Linux
           </TabsTrigger>
 
-          {!showOnlyRoutingPeerOS && (
-            <>
-              <TabsTrigger value={String(OperatingSystem.WINDOWS)}>
-                <WindowsIcon
-                  className={
-                    "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-                  }
-                />
-                Windows
-              </TabsTrigger>
-              <TabsTrigger value={String(OperatingSystem.APPLE)}>
-                <AppleIcon
-                  className={
-                    "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-                  }
-                />
-                macOS
-              </TabsTrigger>
-            </>
-          )}
+          <TabsTrigger value={String(OperatingSystem.WINDOWS)}>
+            <WindowsIcon
+              className={
+                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+              }
+            />
+            Windows
+          </TabsTrigger>
+          <TabsTrigger value={String(OperatingSystem.APPLE)}>
+            <AppleIcon
+              className={
+                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+              }
+            />
+            macOS
+          </TabsTrigger>
 
           {!setupKey && (
             <>
@@ -171,8 +167,14 @@ export function SetupModalContent({
           setupKey={setupKey}
           showSetupKeyInfo={showOnlyRoutingPeerOS}
         />
-        <WindowsTab setupKey={setupKey} />
-        <MacOSTab setupKey={setupKey} />
+        <WindowsTab
+          setupKey={setupKey}
+          showSetupKeyInfo={showOnlyRoutingPeerOS}
+        />
+        <MacOSTab
+          setupKey={setupKey}
+          showSetupKeyInfo={showOnlyRoutingPeerOS}
+        />
 
         {!setupKey && (
           <>
