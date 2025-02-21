@@ -1,36 +1,31 @@
 import Badge from "@components/Badge";
-import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
-import { SmallBadge } from "@components/ui/SmallBadge";
 import TruncatedText from "@components/ui/TruncatedText";
 import { cn } from "@utils/helpers";
-import { XIcon } from "lucide-react";
+import { GlobeIcon, NetworkIcon, WorkflowIcon, XIcon } from "lucide-react";
 import * as React from "react";
-import { Group } from "@/interfaces/Group";
+import { NetworkResource } from "@/interfaces/Network";
 
 type Props = {
-  group: Group;
+  resource?: NetworkResource;
   onClick?: (e: React.MouseEvent<HTMLDivElement>) => void;
   showX?: boolean;
   children?: React.ReactNode;
   className?: string;
-  showNewBadge?: boolean;
 };
-
-export default function GroupBadge({
+export default function ResourceBadge({
   onClick,
-  group,
+  resource,
   showX = false,
   children,
   className,
-  showNewBadge = false,
 }: Readonly<Props>) {
-  const isNew = !group?.id;
+  if (!resource) return;
 
   return (
     <Badge
-      key={group.id || group.name}
+      key={resource.id || resource?.name}
       useHover={true}
-      data-cy={"group-badge"}
+      data-cy={"resource-badge"}
       variant={"gray-ghost"}
       className={cn("transition-all group whitespace-nowrap", className)}
       onClick={(e) => {
@@ -38,10 +33,18 @@ export default function GroupBadge({
         onClick?.(e);
       }}
     >
-      <GroupBadgeIcon id={group?.id} issued={group?.issued} />
-      <TruncatedText text={group?.name || ""} maxChars={20} />
+      {resource.type === "host" && (
+        <WorkflowIcon size={12} className={"shrink-0"} />
+      )}
+      {resource.type === "domain" && (
+        <GlobeIcon size={12} className={"shrink-0"} />
+      )}
+      {resource.type === "subnet" && (
+        <NetworkIcon size={12} className={"shrink-0"} />
+      )}
+
+      <TruncatedText text={resource?.name || ""} maxChars={20} />
       {children}
-      {isNew && showNewBadge && <SmallBadge />}
       {showX && (
         <XIcon
           size={12}

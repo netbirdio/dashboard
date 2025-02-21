@@ -2,7 +2,7 @@ import FullScreenLoading from "@components/ui/FullScreenLoading";
 import useFetchApi from "@utils/api";
 import React, { useMemo } from "react";
 import { Permission } from "@/interfaces/Permission";
-import { User } from "@/interfaces/User";
+import { Role, User } from "@/interfaces/User";
 
 type Props = {
   children: React.ReactNode;
@@ -40,8 +40,8 @@ export const useUsers = () => React.useContext(UsersContext);
 
 export const useLoggedInUser = () => {
   const { loggedInUser } = useUsers();
-  const isOwner = loggedInUser ? loggedInUser?.role === "owner" : false;
-  const isAdmin = loggedInUser ? loggedInUser?.role === "admin" : false;
+  const isOwner = loggedInUser ? loggedInUser?.role === Role.Owner : false;
+  const isAdmin = loggedInUser ? loggedInUser?.role === Role.Admin : false;
   const isUser = !isOwner && !isAdmin;
   const isOwnerOrAdmin = isOwner || isAdmin;
 

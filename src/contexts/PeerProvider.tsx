@@ -20,12 +20,13 @@ const PeerContext = React.createContext(
     peer: Peer;
     user?: User;
     peerGroups: Group[];
-    update: (
-      name: string,
-      ssh: boolean,
-      loginExpiration: boolean,
-      approval_required?: boolean,
-    ) => Promise<Peer>;
+    update: (props: {
+      name?: string;
+      ssh?: boolean;
+      loginExpiration?: boolean;
+      inactivityExpiration?: boolean;
+      approval_required?: boolean;
+    }) => Promise<Peer>;
     openSSHDialog: () => Promise<boolean>;
     deletePeer: () => void;
     isLoading: boolean;
@@ -61,23 +62,30 @@ export default function PeerProvider({ children, peer }: Props) {
     }
   };
 
-  const update = async (
-    name: string,
-    ssh: boolean,
-    loginExpiration: boolean,
-    approval_required?: boolean,
-  ) => {
+  const update = async (props: {
+    name?: string;
+    ssh?: boolean;
+    loginExpiration?: boolean;
+    inactivityExpiration?: boolean;
+    approval_required?: boolean;
+  }) => {
     return peerRequest.put(
       {
         peerId: peer?.id,
-        name: name != undefined ? name : peer.name,
-        ssh_enabled: ssh != undefined ? ssh : peer.ssh_enabled,
+        name: props.name != undefined ? props.name : peer.name,
+        ssh_enabled: props.ssh != undefined ? props.ssh : peer.ssh_enabled,
         login_expiration_enabled:
-          loginExpiration != undefined
-            ? loginExpiration
+          props.loginExpiration != undefined
+            ? props.loginExpiration
             : peer.login_expiration_enabled,
+        inactivity_expiration_enabled:
+          props?.inactivityExpiration == undefined
+            ? undefined
+            : props.inactivityExpiration,
         approval_required:
-          approval_required == undefined ? undefined : approval_required,
+          props?.approval_required == undefined
+            ? undefined
+            : props.approval_required,
       },
       `/${peer.id}`,
     );

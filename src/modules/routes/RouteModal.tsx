@@ -23,6 +23,7 @@ import { SegmentedTabs } from "@components/SegmentedTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
 import InputDomain, { domainReducer } from "@components/ui/InputDomain";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { IconDirectionSign } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import cidr from "ip-cidr";
@@ -42,18 +43,19 @@ import {
   RouteIcon,
   Settings2,
   Text,
-  VenetianMask,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
 import { Route } from "@/interfaces/Route";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { RoutingPeerMasqueradeSwitch } from "@/modules/networks/routing-peers/RoutingPeerMasqueradeSwitch";
 
 type Props = {
   children?: React.ReactNode;
@@ -100,7 +102,6 @@ export default function RouteModal({ children, open, setOpen }: Props) {
         },
       ],
     };
-    console.log(newPolicy);
     setNewPolicy(newPolicy);
     setRoutePolicyModal(true);
   };
@@ -227,6 +228,15 @@ export function RouteModalContent({
   const [metric, setMetric] = useState("9999");
   const [masquerade, setMasquerade] = useState<boolean>(true);
 
+  const isNonLinuxRoutingPeer = useMemo(() => {
+    if (!routingPeer) return false;
+    return getOperatingSystem(routingPeer.os) != OperatingSystem.LINUX;
+  }, [routingPeer]);
+
+  useEffect(() => {
+    if (isNonLinuxRoutingPeer) setMasquerade(true);
+  }, [isNonLinuxRoutingPeer]);
+
   /**
    * Create Route
    */
@@ -291,7 +301,7 @@ export function RouteModalContent({
         domains: domainRouteNames,
         keep_route: useKeepRoute,
         metric: Number(metric) || 9999,
-        masquerade: masquerade,
+        masquerade: useSinglePeer && isNonLinuxRoutingPeer ? true : masquerade,
         groups: groupIds,
         access_control_groups: accessControlGroupIds || undefined,
       },
@@ -583,7 +593,14 @@ export function RouteModalContent({
             {exitNode && peer ? (
               <></>
             ) : (
-              <SegmentedTabs value={peerTab} onChange={setPeerTab}>
+              <SegmentedTabs
+                value={peerTab}
+                onChange={(state) => {
+                  setPeerTab(state);
+                  setRoutingPeer(undefined);
+                  setRoutingPeerGroups([]);
+                }}
+              >
                 <SegmentedTabs.List>
                   <SegmentedTabs.Trigger value={"routing-peer"}>
                     <MonitorSmartphoneIcon size={16} />
@@ -611,7 +628,7 @@ export function RouteModalContent({
                 <SegmentedTabs.Content value={"peer-group"}>
                   <div>
                     <HelpText>
-                      Assign a peer group with Linux machines to be used as
+                      Assign a peer group with machines to be used as
                       {exitNode ? " exit nodes." : " routing peers."}
                     </HelpText>
                     <PeerGroupSelector
@@ -700,19 +717,12 @@ export function RouteModalContent({
               }
               helpText={"Use this switch to enable or disable the route."}
             />
+
             {!exitNode && (
-              <FancyToggleSwitch
+              <RoutingPeerMasqueradeSwitch
                 value={masquerade}
                 onChange={setMasquerade}
-                label={
-                  <>
-                    <VenetianMask size={15} />
-                    Masquerade
-                  </>
-                }
-                helpText={
-                  "Allow access to your private networks without configuring routes on your local routers or other devices."
-                }
+                disabled={isNonLinuxRoutingPeer}
               />
             )}
 

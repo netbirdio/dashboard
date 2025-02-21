@@ -3,7 +3,7 @@ import { cn } from "@utils/helpers";
 import { Cog, User2 } from "lucide-react";
 import React from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
-import { User } from "@/interfaces/User";
+import { Role, User } from "@/interfaces/User";
 
 type Props = {
   user: User;
@@ -15,19 +15,19 @@ export default function UserRoleCell({ user }: Props) {
   return (
     <div className={cn("flex gap-3 items-center text-nb-gray-200")}>
       <Badge variant={role == "owner" ? "netbird" : "gray"}>
-        {role == "user" && (
+        {role === Role.User && (
           <>
             <User2 size={14} />
             User
           </>
         )}
-        {role == "admin" && (
+        {role === Role.Admin && (
           <>
             <Cog size={14} />
             Admin
           </>
         )}
-        {role == "owner" && (
+        {role === Role.Owner && (
           <>
             <NetBirdIcon size={14} />
             Owner

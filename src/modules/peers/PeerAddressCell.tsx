@@ -15,7 +15,9 @@ export default function PeerAddressCell({ peer }: Props) {
   return (
     <FullTooltip
       side={"top"}
-      interactive={false}
+      interactive={true}
+      delayDuration={250}
+      skipDelayDuration={100}
       contentClassName={"p-0"}
       content={<PeerAddressTooltipContent peer={peer} />}
     >

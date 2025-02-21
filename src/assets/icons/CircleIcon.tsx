@@ -12,7 +12,7 @@ export default function CircleIcon({
   size = 11,
   inactiveDot = "gray",
   className,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <span
       style={{ width: size + "px", height: size + "px" }}

@@ -23,10 +23,9 @@ import Separator from "@components/Separator";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import LoginExpiredBadge from "@components/ui/LoginExpiredBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import useRedirect from "@hooks/useRedirect";
-import { IconCloudLock, IconInfoCircle } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
+import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
 import { isEmpty, trim } from "lodash";
 import {
@@ -41,6 +40,7 @@ import {
   NetworkIcon,
   PencilIcon,
   TerminalSquare,
+  TimerResetIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toASCII } from "punycode";
@@ -56,11 +56,11 @@ import PeerProvider, { usePeer } from "@/contexts/PeerProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
+import { PeerExpirationToggle } from "@/modules/peer/PeerExpirationToggle";
 import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSection";
 
 export default function PeerPage() {
@@ -70,9 +70,16 @@ export default function PeerPage() {
 
   useRedirect("/peers", false, !peerId);
 
+  const peerKey = useMemo(() => {
+    let id = peer?.id ?? "";
+    let ssh = peer?.ssh_enabled ? "1" : "0";
+    let expiration = peer?.login_expiration_enabled ? "1" : "0";
+    return `${id}-${ssh}-${expiration}`;
+  }, [peer]);
+
   return peer && !isLoading ? (
     <PeerProvider peer={peer} key={peerId}>
-      <PeerOverview />
+      <PeerOverview key={peerKey} />
     </PeerProvider>
   ) : (
     <FullScreenLoading />
@@ -89,19 +96,14 @@ function PeerOverview() {
   const [loginExpiration, setLoginExpiration] = useState(
     peer.login_expiration_enabled,
   );
+  const [inactivityExpiration, setInactivityExpiration] = useState(
+    peer.inactivity_expiration_enabled,
+  );
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
       initial: peerGroups,
       peer,
     });
-
-  /**
-   * Check the operating system of the peer, if it is linux, then show the routes table, otherwise hide it.
-   */
-  const isLinux = useMemo(() => {
-    const operatingSystem = getOperatingSystem(peer.os);
-    return operatingSystem == OperatingSystem.LINUX;
-  }, [peer.os]);
 
   /**
    * Detect if there are changes in the peer information, if there are changes, then enable the save button.
@@ -111,10 +113,16 @@ function PeerOverview() {
     ssh,
     selectedGroups,
     loginExpiration,
+    inactivityExpiration,
   ]);
 
   const updatePeer = async () => {
-    const updateRequest = update(name, ssh, loginExpiration);
+    const updateRequest = update({
+      name,
+      ssh,
+      loginExpiration,
+      inactivityExpiration,
+    });
     const groupCalls = getAllGroupCalls();
     const batchCall = groupCalls
       ? [...groupCalls, updateRequest]
@@ -125,13 +133,19 @@ function PeerOverview() {
       promise: Promise.all(batchCall).then(() => {
         mutate("/peers/" + peer.id);
         mutate("/groups");
-        updateHasChangedRef([name, ssh, selectedGroups, loginExpiration]);
+        updateHasChangedRef([
+          name,
+          ssh,
+          selectedGroups,
+          loginExpiration,
+          inactivityExpiration,
+        ]);
       }),
       loadingMessage: "Saving the peer...",
     });
   };
 
-  const { isUser } = useLoggedInUser();
+  const { isUser, isOwnerOrAdmin } = useLoggedInUser();
 
   return (
     <PageContainer>
@@ -213,53 +227,43 @@ function PeerOverview() {
           <div className={"flex gap-10 w-full mt-5 max-w-6xl"}>
             <PeerInformationCard peer={peer} />
 
-            <div className={"flex flex-col gap-6 w-1/2"}>
-              <FullTooltip
-                content={
-                  <div
-                    className={
-                      "flex gap-2 items-center !text-nb-gray-300 text-xs"
-                    }
-                  >
-                    {!peer.user_id ? (
-                      <>
-                        <>
-                          <IconInfoCircle size={14} />
-                          <span>
-                            Login expiration is disabled for all peers added
-                            with an setup-key.
-                          </span>
-                        </>
-                      </>
-                    ) : (
-                      <>
-                        <LockIcon size={14} />
-                        <span>
-                          {`You don't have the required permissions to update this
-                          setting.`}
-                        </span>
-                      </>
-                    )}
-                  </div>
-                }
-                className={"w-full block"}
-                disabled={!!peer.user_id && !isUser}
-              >
-                <FancyToggleSwitch
-                  disabled={!peer.user_id || isUser}
+            <div className={"flex flex-col gap-6 w-1/2 transition-all"}>
+              <div>
+                <PeerExpirationToggle
+                  peer={peer}
                   value={loginExpiration}
-                  onChange={setLoginExpiration}
-                  label={
-                    <>
-                      <IconCloudLock size={16} />
-                      Login Expiration
-                    </>
-                  }
-                  helpText={
-                    "Enable to require SSO login peers to re-authenticate when their login expires."
-                  }
+                  icon={<TimerResetIcon size={16} />}
+                  onChange={(state) => {
+                    setLoginExpiration(state);
+                    !state && setInactivityExpiration(false);
+                  }}
                 />
-              </FullTooltip>
+                {isOwnerOrAdmin && !!peer?.user_id && (
+                  <div
+                    className={cn(
+                      "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+                      !loginExpiration
+                        ? "opacity-50 pointer-events-none"
+                        : "bg-nb-gray-930/80",
+                    )}
+                  >
+                    <PeerExpirationToggle
+                      peer={peer}
+                      variant={"blank"}
+                      value={inactivityExpiration}
+                      onChange={setInactivityExpiration}
+                      title={"Require login after disconnect"}
+                      description={
+                        "Enable to require authentication after users disconnect from management for 10 minutes."
+                      }
+                      className={
+                        !loginExpiration ? "opacity-40 pointer-events-none" : ""
+                      }
+                    />
+                  </div>
+                )}
+              </div>
+
               <FullTooltip
                 content={
                   <div
@@ -317,7 +321,7 @@ function PeerOverview() {
           </div>
         </div>
 
-        {isLinux && !isUser ? (
+        {!isUser ? (
           <>
             <Separator />
             <PeerNetworkRoutesSection peer={peer} />
@@ -335,7 +339,7 @@ function PeerOverview() {
   );
 }
 
-function PeerInformationCard({ peer }: { peer: Peer }) {
+function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
   const { isLoading, getRegionByPeer } = useCountries();
 
   const countryText = useMemo(() => {
@@ -371,14 +375,20 @@ function PeerInformationCard({ peer }: { peer: Peer }) {
 
         <Card.ListItem
           copy
-          copyText={"Domain name"}
+          copyText={"DNS label"}
           label={
             <>
               <Globe size={16} />
               Domain Name
             </>
           }
+          className={
+            peer?.extra_dns_labels && peer.extra_dns_labels.length > 0
+              ? "items-start"
+              : ""
+          }
           value={peer.dns_label}
+          extraText={peer?.extra_dns_labels}
         />
 
         <Card.ListItem
@@ -489,7 +499,7 @@ interface ModalProps {
   peer: Peer;
   initialName: string;
 }
-function EditNameModal({ onSuccess, peer, initialName }: ModalProps) {
+function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
   const [name, setName] = useState(initialName);
 
   const isDisabled = useMemo(() => {

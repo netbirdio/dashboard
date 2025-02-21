@@ -5,6 +5,7 @@ export interface Group {
   peers_count?: number;
   resources?: GroupResource[] | string[];
   resources_count?: number;
+  issued?: GroupIssued;
 
   // Frontend only
   keepClientState?: boolean;
@@ -18,4 +19,10 @@ export interface GroupPeer {
 export interface GroupResource {
   id: string;
   type: string;
+}
+
+export enum GroupIssued {
+  API = "api",
+  INTEGRATION = "integration",
+  JWT = "jwt",
 }

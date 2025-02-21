@@ -1,11 +1,15 @@
 import { notify } from "@components/Notification";
 import { ToggleSwitch } from "@components/ToggleSwitch";
-import { useApiCall } from "@utils/api";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import useFetchApi, { useApiCall } from "@utils/api";
 import * as React from "react";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { NetworkRouter } from "@/interfaces/Network";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import type { Peer } from "@/interfaces/Peer";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
+import { RoutingPeerMasqueradeTooltip } from "@/modules/networks/routing-peers/RoutingPeerMasqueradeSwitch";
 
 type Props = {
   router: NetworkRouter;
@@ -13,6 +17,20 @@ type Props = {
 export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
   const { mutate } = useSWRConfig();
   const { network } = useNetworksContext();
+
+  const isRoutingPeer = router.peer != "";
+
+  const { data: peer, isLoading } = useFetchApi<Peer>(
+    "/peers/" + router.peer,
+    true,
+    false,
+    isRoutingPeer,
+  );
+
+  const isNonLinuxRoutingPeer = useMemo(() => {
+    if (!peer) return false;
+    return getOperatingSystem(peer.os) != OperatingSystem.LINUX;
+  }, [peer]);
 
   const update = useApiCall<NetworkRouter>(
     `/networks/${network?.id}/routers/${router?.id}`,
@@ -36,13 +54,19 @@ export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
     return router.masquerade;
   }, [router]);
 
+  const isToggleDisabled =
+    isLoading || (isRoutingPeer && isNonLinuxRoutingPeer);
+
   return (
     <div className={"flex"}>
-      <ToggleSwitch
-        checked={isChecked}
-        size={"small"}
-        onClick={() => toggle(!isChecked)}
-      />
+      <RoutingPeerMasqueradeTooltip show={isToggleDisabled}>
+        <ToggleSwitch
+          disabled={isToggleDisabled}
+          checked={isChecked}
+          size={"small"}
+          onClick={() => toggle(!isChecked)}
+        />
+      </RoutingPeerMasqueradeTooltip>
     </div>
   );
 };

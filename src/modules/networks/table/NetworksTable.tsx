@@ -120,7 +120,7 @@ export default function NetworksTable({
             }
             title={"Create New Network"}
             description={
-              "It looks like you don't have any networks. Access resources like LANs and VPC by adding a network."
+              "It looks like you don't have any networks. Access internal resources in your LANs and VPC by adding a network."
             }
             button={
               <div className={"gap-x-4 flex items-center justify-center"}>

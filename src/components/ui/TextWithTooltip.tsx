@@ -25,6 +25,8 @@ export default function TextWithTooltip({
       disabled={charCount <= maxChars || hideTooltip}
       interactive={false}
       className={"truncate w-full min-w-0"}
+      skipDelayDuration={350}
+      delayDuration={200}
       content={
         <div className={"max-w-xs break-all whitespace-normal text-xs"}>
           {text}

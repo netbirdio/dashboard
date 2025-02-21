@@ -7,13 +7,20 @@ import { DownloadIcon, PackageOpenIcon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
-import { SetupKeyParameter } from "@/modules/setup-netbird-modal/SetupModal";
+import {
+  RoutingPeerSetupKeyInfo,
+  SetupKeyParameter,
+} from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
   setupKey?: string;
+  showSetupKeyInfo?: boolean;
 };
 
-export default function WindowsTab({ setupKey }: Readonly<Props>) {
+export default function WindowsTab({
+  setupKey,
+  showSetupKeyInfo,
+}: Readonly<Props>) {
   return (
     <TabsContent value={String(OperatingSystem.WINDOWS)}>
       <TabsContentPadding>
@@ -51,7 +58,11 @@ export default function WindowsTab({ setupKey }: Readonly<Props>) {
 
           {setupKey ? (
             <Steps.Step step={GRPC_API_ORIGIN ? 3 : 2} line={false}>
-              <p>Open Command-line and run NetBird</p>
+              <p>
+                Open Command-line and run NetBird{" "}
+                {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
+              </p>
+
               <Code>
                 <Code.Line>
                   {getNetBirdUpCommand()}

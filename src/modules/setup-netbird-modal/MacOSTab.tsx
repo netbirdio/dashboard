@@ -23,12 +23,19 @@ import {
 import Link from "next/link";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
-import { SetupKeyParameter } from "@/modules/setup-netbird-modal/SetupModal";
+import {
+  RoutingPeerSetupKeyInfo,
+  SetupKeyParameter,
+} from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
   setupKey?: string;
+  showSetupKeyInfo?: boolean;
 };
-export default function MacOSTab({ setupKey }: Readonly<Props>) {
+export default function MacOSTab({
+  setupKey,
+  showSetupKeyInfo,
+}: Readonly<Props>) {
   return (
     <TabsContent value={String(OperatingSystem.APPLE)}>
       <TabsContentPadding>
@@ -104,7 +111,11 @@ export default function MacOSTab({ setupKey }: Readonly<Props>) {
 
           {setupKey ? (
             <Steps.Step step={GRPC_API_ORIGIN ? 3 : 2} line={false}>
-              <p>Open Terminal and run NetBird</p>
+              <p>
+                Open Terminal and run NetBird{" "}
+                {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
+              </p>
+
               <Code>
                 <Code.Line>
                   {getNetBirdUpCommand()}
@@ -143,7 +154,10 @@ export default function MacOSTab({ setupKey }: Readonly<Props>) {
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={2} line={false}>
-                  <p>Run NetBird {!setupKey && "and log in the browser"}</p>
+                  <p>
+                    Run NetBird {!setupKey && "and log in the browser"}
+                    {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
+                  </p>
                   <Code>
                     <Code.Line>
                       {getNetBirdUpCommand()}
@@ -196,11 +210,14 @@ export default function MacOSTab({ setupKey }: Readonly<Props>) {
                   <p>Start NetBird daemon</p>
                   <Code>
                     <Code.Line>sudo netbird service install</Code.Line>
-                    <Code.Line>sudo netbird service</Code.Line>
+                    <Code.Line>sudo netbird service start</Code.Line>
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={4} line={false}>
-                  <p>Run NetBird {!setupKey && "and log in the browser"}</p>
+                  <p>
+                    Run NetBird {!setupKey && "and log in the browser"}
+                    {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
+                  </p>
                   <Code>
                     <Code.Line>
                       {getNetBirdUpCommand()}

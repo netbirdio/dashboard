@@ -3,6 +3,7 @@ import { Checkbox } from "@components/Checkbox";
 import { CommandItem } from "@components/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
+import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { IconArrowBack } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
@@ -171,10 +172,13 @@ export function GroupSelector({
                             >
                               <div
                                 className={
-                                  "flex items-center gap-2 whitespace-nowrap text-sm"
+                                  "flex items-center gap-2 whitespace-nowrap text-sm font-normal"
                                 }
                               >
-                                <FolderGit2 size={13} className={"shrink-0"} />
+                                <GroupBadgeIcon
+                                  id={item?.id}
+                                  issued={item?.issued}
+                                />
                                 <TextWithTooltip text={value} maxChars={15} />
                               </div>
                               <div

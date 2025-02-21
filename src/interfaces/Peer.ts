@@ -16,9 +16,11 @@ export interface Peer {
   user?: User;
   ui_version?: string;
   dns_label: string;
+  extra_dns_labels?: string[];
   last_login: Date;
   login_expired: boolean;
   login_expiration_enabled: boolean;
+  inactivity_expiration_enabled: boolean;
   approval_required: boolean;
   city_name: string;
   country_code: string;

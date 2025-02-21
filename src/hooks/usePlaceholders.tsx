@@ -25,6 +25,7 @@ export function useSetupKeyPlaceholders() {
         expires_in: 0,
         usage_limit: null,
         ephemeral: randomBoolean(),
+        allow_extra_dns_labels: randomBoolean(),
       } as SetupKey);
     }
 

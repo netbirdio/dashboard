@@ -6,6 +6,8 @@ export interface Account {
     };
     peer_login_expiration_enabled: boolean;
     peer_login_expiration: number;
+    peer_inactivity_expiration_enabled: boolean;
+    peer_inactivity_expiration: number;
     groups_propagation_enabled: boolean;
     jwt_groups_enabled: boolean;
     jwt_groups_claim_name: string;
