@@ -58,12 +58,26 @@ export default function FancyToggleSwitch({
   className,
   variant = "default",
 }: Readonly<Props>) {
+  const handleToggle = () => {
+    if (disabled) return;
+    onChange(!value);
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (disabled) return;
+    if (event.key === "Enter" || event.key === " ") {
+      event.preventDefault();
+      handleToggle();
+    }
+  };
+
   return (
-    <button
-      onClick={() => {
-        if (disabled) return;
-        onChange(!value);
-      }}
+    <div
+      onClick={handleToggle}
+      onKeyDown={handleKeyDown}
+      tabIndex={-1}
+      role={"switch"}
+      aria-checked={value}
       className={cn(
         "cursor-pointer transition-all duration-300 relative z-[1]",
         "inline-block text-left w-full",
@@ -86,6 +100,6 @@ export default function FancyToggleSwitch({
         </div>
       </div>
       <div>{children && value ? children : null}</div>
-    </button>
+    </div>
   );
 }

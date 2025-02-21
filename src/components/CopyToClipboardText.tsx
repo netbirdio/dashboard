@@ -6,9 +6,18 @@ import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 type Props = {
   children: React.ReactNode;
   message?: string;
+  iconAlignment?: "left" | "right";
+  className?: string;
+  alwaysShowIcon?: boolean;
 };
 
-export default function CopyToClipboardText({ children, message }: Props) {
+export default function CopyToClipboardText({
+  children,
+  message,
+  iconAlignment = "right",
+  className,
+  alwaysShowIcon = false,
+}: Props) {
   const [wrapper, copyToClipboard, copied] = useCopyToClipboard();
 
   return (
@@ -16,6 +25,7 @@ export default function CopyToClipboardText({ children, message }: Props) {
       className={cn(
         "flex gap-2 items-center group cursor-pointer transition-all hover:underline underline-offset-4 decoration-dashed decoration-nb-gray-600",
         !copied && "hover:opacity-90",
+        className,
       )}
       onClick={(e) => {
         e.stopPropagation();
@@ -28,17 +38,21 @@ export default function CopyToClipboardText({ children, message }: Props) {
 
       {copied ? (
         <CheckIcon
-          className={
-            "text-nb-gray-100 opacity-0 group-hover:opacity-100 shrink-0"
-          }
-          size={12}
+          className={cn(
+            "text-nb-gray-100 group-hover:opacity-100 shrink-0",
+            iconAlignment === "left" ? "order-first" : "order-last",
+            !alwaysShowIcon && "opacity-0",
+          )}
+          size={11}
         />
       ) : (
         <CopyIcon
-          className={
-            "text-nb-gray-100 opacity-0 group-hover:opacity-100 shrink-0"
-          }
-          size={12}
+          className={cn(
+            "text-nb-gray-100 group-hover:opacity-100 shrink-0",
+            iconAlignment === "left" ? "order-first" : "order-last",
+            !alwaysShowIcon && "opacity-0",
+          )}
+          size={11}
         />
       )}
     </div>

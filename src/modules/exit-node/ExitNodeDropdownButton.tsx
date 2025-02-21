@@ -1,11 +1,9 @@
 import { DropdownMenuItem } from "@components/DropdownMenu";
 import { Modal } from "@components/modal/Modal";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { IconCirclePlus, IconDirectionSign } from "@tabler/icons-react";
 import * as React from "react";
 import { useState } from "react";
 import RoutesProvider from "@/contexts/RoutesProvider";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
 import { RouteModalContent } from "@/modules/routes/RouteModal";
@@ -16,10 +14,9 @@ type Props = {
 
 export const ExitNodeDropdownButton = ({ peer }: Props) => {
   const [modal, setModal] = useState(false);
-  const isLinux = getOperatingSystem(peer.os) === OperatingSystem.LINUX;
   const hasExitNodes = useHasExitNodes(peer);
 
-  return isLinux ? (
+  return (
     <>
       <DropdownMenuItem onClick={() => setModal(true)}>
         <div className={"flex gap-3 items-center w-full"}>
@@ -55,5 +52,5 @@ export const ExitNodeDropdownButton = ({ peer }: Props) => {
         )}
       </Modal>
     </>
-  ) : null;
+  );
 };

@@ -170,6 +170,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             variant={"primary"}
             disabled={!hasChanges}
             onClick={saveChanges}
+            data-cy={"save-authentication-settings"}
           >
             Save Changes
           </Button>

@@ -38,6 +38,7 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
           auto_groups: setupKey.auto_groups,
           usage_limit: setupKey.usage_limit,
           ephemeral: setupKey.ephemeral,
+          allow_extra_dns_labels: setupKey.allow_extra_dns_labels,
         })
         .then(() => {
           mutate("/setup-keys");

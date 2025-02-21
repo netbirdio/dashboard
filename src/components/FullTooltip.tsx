@@ -22,6 +22,8 @@ type Props = {
   keepOpen?: boolean;
   customOpen?: boolean;
   customOnOpenChange?: React.Dispatch<React.SetStateAction<boolean>>;
+  delayDuration?: number;
+  skipDelayDuration?: number;
 } & TooltipProps;
 export default function FullTooltip({
   children,
@@ -37,6 +39,8 @@ export default function FullTooltip({
   keepOpen = false,
   customOpen,
   customOnOpenChange,
+  delayDuration = 1,
+  skipDelayDuration = 300,
 }: Props) {
   const [open, setOpen] = useState(!!keepOpen);
 
@@ -46,9 +50,13 @@ export default function FullTooltip({
   };
 
   return !disabled ? (
-    <TooltipProvider disableHoverableContent={!interactive}>
+    <TooltipProvider
+      disableHoverableContent={!interactive}
+      delayDuration={delayDuration}
+      skipDelayDuration={skipDelayDuration}
+    >
       <Tooltip
-        delayDuration={1}
+        delayDuration={delayDuration}
         open={customOpen || open}
         onOpenChange={customOnOpenChange || handleOpen}
       >

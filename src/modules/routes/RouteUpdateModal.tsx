@@ -19,6 +19,7 @@ import { PeerSelector } from "@components/PeerSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
 import { DomainsTooltip } from "@components/ui/DomainListBadge";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { cn } from "@utils/helpers";
 import { uniqBy } from "lodash";
 import {
@@ -28,18 +29,19 @@ import {
   RouteIcon,
   Settings2,
   Text,
-  VenetianMask,
 } from "lucide-react";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { useGroupRoute } from "@/contexts/GroupRouteProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePeers } from "@/contexts/PeersProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { Route } from "@/interfaces/Route";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { RoutingPeerMasqueradeSwitch } from "@/modules/networks/routing-peers/RoutingPeerMasqueradeSwitch";
 
 type Props = {
   route: Route;
@@ -109,6 +111,15 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
     }
     return undefined;
   });
+
+  const isNonLinuxRoutingPeer = useMemo(() => {
+    if (!routingPeer) return false;
+    return getOperatingSystem(routingPeer.os) != OperatingSystem.LINUX;
+  }, [routingPeer]);
+
+  useEffect(() => {
+    if (isNonLinuxRoutingPeer) setMasquerade(true);
+  }, [isNonLinuxRoutingPeer]);
 
   const isMasqueradeDisabled = useMemo(() => {
     if (isExitNode) return true;
@@ -243,7 +254,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
         peer: useSinglePeer ? routingPeer?.id : undefined,
         peer_groups: useSinglePeer ? undefined : peerGroups || undefined,
         metric: Number(metric) || 9999,
-        masquerade: masquerade,
+        masquerade: useSinglePeer && isNonLinuxRoutingPeer ? true : masquerade,
         groups: groupIds,
         access_control_groups: accessControlGroupIds || undefined,
       },
@@ -380,7 +391,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               <div>
                 <Label>Peer Group</Label>
                 <HelpText>
-                  Assign a peer group with Linux machines to be used as
+                  Assign a peer group with machines to be used as
                   {isExitNode ? " exit nodes." : " routing peers."}
                 </HelpText>
                 <PeerGroupSelector
@@ -446,18 +457,10 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               helpText={"Use this switch to enable or disable the route."}
             />
             {!isExitNode && (
-              <FancyToggleSwitch
+              <RoutingPeerMasqueradeSwitch
                 value={masquerade}
                 onChange={setMasquerade}
-                label={
-                  <>
-                    <VenetianMask size={15} />
-                    Masquerade
-                  </>
-                }
-                helpText={
-                  "Allow access to your private networks without configuring routes on your local routers or other devices."
-                }
+                disabled={isNonLinuxRoutingPeer}
               />
             )}
             <div className={cn("flex justify-between")}>

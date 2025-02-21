@@ -28,6 +28,7 @@ export default function SetupKeyGroupsCell({ setupKey }: Readonly<Props>) {
           auto_groups: groups?.map((group) => group.id) || [],
           usage_limit: setupKey.usage_limit,
           ephemeral: setupKey.ephemeral,
+          allow_extra_dns_labels: setupKey.allow_extra_dns_labels,
         })
         .then(() => {
           setModal(false);

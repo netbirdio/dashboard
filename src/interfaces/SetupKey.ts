@@ -16,4 +16,5 @@ export interface SetupKey {
   expires_in: number;
   usage_limit: number | null;
   ephemeral: boolean;
+  allow_extra_dns_labels: boolean;
 }

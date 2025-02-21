@@ -23,7 +23,6 @@ import Separator from "@components/Separator";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import LoginExpiredBadge from "@components/ui/LoginExpiredBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
@@ -57,7 +56,6 @@ import PeerProvider, { usePeer } from "@/contexts/PeerProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -106,14 +104,6 @@ function PeerOverview() {
       initial: peerGroups,
       peer,
     });
-
-  /**
-   * Check the operating system of the peer, if it is linux, then show the routes table, otherwise hide it.
-   */
-  const isLinux = useMemo(() => {
-    const operatingSystem = getOperatingSystem(peer.os);
-    return operatingSystem == OperatingSystem.LINUX;
-  }, [peer.os]);
 
   /**
    * Detect if there are changes in the peer information, if there are changes, then enable the save button.
@@ -331,7 +321,7 @@ function PeerOverview() {
           </div>
         </div>
 
-        {isLinux && !isUser ? (
+        {!isUser ? (
           <>
             <Separator />
             <PeerNetworkRoutesSection peer={peer} />
@@ -385,14 +375,20 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
 
         <Card.ListItem
           copy
-          copyText={"Domain name"}
+          copyText={"DNS label"}
           label={
             <>
               <Globe size={16} />
               Domain Name
             </>
           }
+          className={
+            peer?.extra_dns_labels && peer.extra_dns_labels.length > 0
+              ? "items-start"
+              : ""
+          }
           value={peer.dns_label}
+          extraText={peer?.extra_dns_labels}
         />
 
         <Card.ListItem

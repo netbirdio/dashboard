@@ -25,6 +25,7 @@ import {
   AlarmClock,
   DownloadIcon,
   ExternalLinkIcon,
+  GlobeIcon,
   MonitorSmartphoneIcon,
   PlusCircle,
   PowerOffIcon,
@@ -43,7 +44,9 @@ type Props = {
   name?: string;
   showOnlyRoutingPeerOS?: boolean;
 };
+
 const copyMessage = "Setup-Key was copied to your clipboard!";
+
 export default function SetupKeyModal({
   children,
   open,
@@ -136,7 +139,6 @@ export default function SetupKeyModal({
               <Button
                 variant={"primary"}
                 className={"w-full"}
-                data-cy={"setup-key-copy"}
                 onClick={() => setInstallModal(true)}
               >
                 <DownloadIcon size={14} />
@@ -167,6 +169,8 @@ export function SetupKeyModalContent({
   const [usageLimit, setUsageLimit] = useState("");
   const [expiresIn, setExpiresIn] = useState("7");
   const [ephemeralPeers, setEphemeralPeers] = useState(false);
+  const [allowExtraDNSLabels, setAllowExtraDNSLabels] = useState(false);
+
   const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
     useGroupHelper({
       initial: [],
@@ -198,6 +202,7 @@ export function SetupKeyModalContent({
             auto_groups: groups.map((group) => group.id),
             usage_limit: reusable ? parseInt(usageLimit) : 1,
             ephemeral: ephemeralPeers,
+            allow_extra_dns_labels: allowExtraDNSLabels,
           })
           .then((setupKey) => {
             onSuccess && onSuccess(setupKey);
@@ -221,6 +226,7 @@ export function SetupKeyModalContent({
       <Separator />
 
       <div className={"px-8 py-6 flex flex-col gap-8"}>
+        {/* Name Field */}
         <div>
           <Label>Name</Label>
           <HelpText>Set an easily identifiable name for your key</HelpText>
@@ -231,6 +237,8 @@ export function SetupKeyModalContent({
             onChange={(e) => setName(e.target.value)}
           />
         </div>
+
+        {/* Reusable Toggle */}
         <div>
           <FancyToggleSwitch
             value={reusable}
@@ -245,6 +253,7 @@ export function SetupKeyModalContent({
           />
         </div>
 
+        {/* Usage Limit */}
         <div className={cn("flex justify-between", !reusable && "opacity-50")}>
           <div>
             <Label>Usage limit</Label>
@@ -269,11 +278,13 @@ export function SetupKeyModalContent({
           />
         </div>
 
+        {/* Expires in Days */}
         <div className={"flex justify-between"}>
           <div>
             <Label>Expires in</Label>
             <HelpText>
-              Days until the key expires. <br />
+              Days until the key expires.
+              <br />
               Leave empty for no expiration.
             </HelpText>
           </div>
@@ -293,6 +304,7 @@ export function SetupKeyModalContent({
           />
         </div>
 
+        {/* Ephemeral Peers Toggle */}
         <div>
           <FancyToggleSwitch
             value={ephemeralPeers}
@@ -308,6 +320,25 @@ export function SetupKeyModalContent({
             }
           />
         </div>
+
+        {/* Allow Extra DNS Labels Toggle */}
+        <div>
+          <FancyToggleSwitch
+            value={allowExtraDNSLabels}
+            onChange={setAllowExtraDNSLabels}
+            label={
+              <>
+                <GlobeIcon size={15} />
+                Allow Extra DNS Labels
+              </>
+            }
+            helpText={
+              "Enable multiple subdomain labels when enrolling peers (e.g., host.dev.example.com)."
+            }
+          />
+        </div>
+
+        {/* Auto-Assigned Groups */}
         <div>
           <Label>Auto-assigned groups</Label>
           <HelpText>
@@ -322,6 +353,7 @@ export function SetupKeyModalContent({
         </div>
       </div>
 
+      {/* Footer */}
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>

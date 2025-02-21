@@ -20,10 +20,10 @@ import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import ExpirationDateRow from "@/modules/common-table-rows/ExpirationDateRow";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 import SetupKeyActionCell from "@/modules/setup-keys/SetupKeyActionCell";
-import SetupKeyEphemeralCell from "@/modules/setup-keys/SetupKeyEphemeralCell";
 import SetupKeyGroupsCell from "@/modules/setup-keys/SetupKeyGroupsCell";
 import SetupKeyModal from "@/modules/setup-keys/SetupKeyModal";
 import SetupKeyNameCell from "@/modules/setup-keys/SetupKeyNameCell";
+import SetupKeyStatusCell from "@/modules/setup-keys/SetupKeyStatusCell";
 import SetupKeyUsageCell from "@/modules/setup-keys/SetupKeyUsageCell";
 
 export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
@@ -82,15 +82,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
     },
     cell: ({ row }) => <SetupKeyGroupsCell setupKey={row.original} />,
   },
-  {
-    accessorKey: "ephemeral",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Ephemeral</DataTableHeader>;
-    },
-    cell: ({ row }) => (
-      <SetupKeyEphemeralCell ephemeral={row.original.ephemeral} />
-    ),
-  },
+
   {
     accessorKey: "expires",
     header: ({ column }) => {
@@ -106,7 +98,12 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
       );
     },
   },
-
+  {
+    id: "status",
+    accessorKey: "id",
+    header: ({ column }) => "",
+    cell: ({ row }) => <SetupKeyStatusCell setupKey={row.original} />,
+  },
   {
     accessorKey: "id",
     header: "",

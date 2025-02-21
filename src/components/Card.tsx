@@ -7,6 +7,7 @@ import React from "react";
 interface Props extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
 }
+
 function Card({ children, className, ...props }: Props) {
   return (
     <div
@@ -32,6 +33,7 @@ type CardListItemProps = {
   copy?: boolean;
   copyText?: string;
   tooltip?: boolean;
+  extraText?: string[];
 };
 
 function CardListItem({
@@ -41,9 +43,8 @@ function CardListItem({
   copy = false,
   copyText,
   tooltip = true,
+  extraText = [],
 }: CardListItemProps) {
-  const [, copyToClipBoard] = useCopyToClipboard(value as string);
-
   return (
     <li
       className={cn(
@@ -52,28 +53,67 @@ function CardListItem({
       )}
     >
       <div className={"flex gap-2.5 items-center text-sm"}>{label}</div>
-      <div
-        className={cn(
-          "text-right text-nb-gray-400 text-sm flex items-center gap-2",
-          copy && "cursor-pointer hover:text-nb-gray-300 transition-all",
-        )}
-        onClick={() =>
-          copy &&
-          copyToClipBoard(
-            `${copyText ? copyText : label} has been copied to clipboard.`,
-          )
-        }
-      >
-        {tooltip ? (
-          <TextWithTooltip text={value as string} maxChars={40} />
-        ) : (
-          value
-        )}
-        {copy && <Copy size={13} className={"shrink-0"} />}
+      <div className={"flex flex-col gap-2"}>
+        <CardTextItem
+          label={label}
+          value={value}
+          copy={copy}
+          copyText={copyText}
+          tooltip={tooltip}
+        />
+        {extraText?.map((extraLabel, index) => (
+          <CardTextItem
+            key={index}
+            label={label}
+            value={extraLabel}
+            copy={copy}
+            copyText={copyText}
+            tooltip={tooltip}
+          />
+        ))}
       </div>
     </li>
   );
 }
+
+type CardTextItemProps = {
+  label: React.ReactNode;
+  value: React.ReactNode;
+  copy?: boolean;
+  copyText?: string;
+  tooltip?: boolean;
+};
+
+const CardTextItem = ({
+  label,
+  value,
+  copy = false,
+  copyText,
+  tooltip = true,
+}: CardTextItemProps) => {
+  const [, copyToClipBoard] = useCopyToClipboard(value as string);
+  return (
+    <div
+      className={cn(
+        "text-right text-nb-gray-400 text-sm flex items-center gap-2",
+        copy && "cursor-pointer hover:text-nb-gray-300 transition-all",
+      )}
+      onClick={() =>
+        copy &&
+        copyToClipBoard(
+          `${copyText ? copyText : label} has been copied to clipboard.`,
+        )
+      }
+    >
+      {tooltip ? (
+        <TextWithTooltip text={value as string} maxChars={40} />
+      ) : (
+        value
+      )}
+      {copy && <Copy size={13} className={"shrink-0"} />}
+    </div>
+  );
+};
 
 Card.List = CardList;
 Card.ListItem = CardListItem;

@@ -19,6 +19,7 @@ import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { PeerSelector } from "@components/PeerSelector";
 import { SegmentedTabs } from "@components/SegmentedTabs";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import { uniqBy } from "lodash";
@@ -33,15 +34,16 @@ import {
   Power,
   Settings2,
   Share2Icon,
-  VenetianMask,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { Network, NetworkRouter } from "@/interfaces/Network";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { RoutingPeerMasqueradeSwitch } from "@/modules/networks/routing-peers/RoutingPeerMasqueradeSwitch";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
@@ -122,9 +124,19 @@ function RoutingPeerModalContent({
   const [enabled, setEnabled] = useState<boolean>(
     router ? router.enabled : true,
   );
+
   const [metric, setMetric] = useState(
     router?.metric ? router.metric.toString() : "9999",
   );
+
+  const isNonLinuxRoutingPeer = useMemo(() => {
+    if (!routingPeer) return false;
+    return getOperatingSystem(routingPeer.os) != OperatingSystem.LINUX;
+  }, [routingPeer]);
+
+  useEffect(() => {
+    if (isNonLinuxRoutingPeer) setMasquerade(true);
+  }, [isNonLinuxRoutingPeer]);
 
   const addRouter = async () => {
     // Create groups that do not exist
@@ -148,7 +160,7 @@ function RoutingPeerModalContent({
           : undefined,
         metric: parseInt(metric),
         enabled,
-        masquerade,
+        masquerade: isRoutingPeer && isNonLinuxRoutingPeer ? true : masquerade,
       }).then((r) => {
         onCreated?.(r);
       }),
@@ -177,14 +189,12 @@ function RoutingPeerModalContent({
           : undefined,
         metric: parseInt(metric),
         enabled,
-        masquerade,
+        masquerade: isRoutingPeer && isNonLinuxRoutingPeer ? true : masquerade,
       }).then((r) => {
         onUpdated?.(r);
       }),
     });
   };
-
-  const [setupKeyModal, setSetupKeyModal] = useState(false);
 
   const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
 
@@ -244,8 +254,8 @@ function RoutingPeerModalContent({
                 <SegmentedTabs.Content value={"peer"}>
                   <div>
                     <HelpText>
-                      Assign a single or multiple Linux peers as routing peers
-                      for the network.
+                      Assign a single or multiple peers as routing peers for the
+                      network.
                     </HelpText>
                     <PeerSelector
                       onChange={setRoutingPeer}
@@ -256,8 +266,8 @@ function RoutingPeerModalContent({
                 <SegmentedTabs.Content value={"group"}>
                   <div>
                     <HelpText>
-                      Assign a peer group with Linux machines to be used as
-                      routing peers.
+                      Assign a peer group with machines to be used as routing
+                      peers.
                     </HelpText>
                     <PeerGroupSelector
                       max={1}
@@ -273,7 +283,7 @@ function RoutingPeerModalContent({
               <div>
                 <Label>{"Don't have a routing peer?"}</Label>
                 <HelpText className={""}>
-                  You can install NetBird with a setup key on one or more Linux
+                  You can install NetBird with a setup key on one or more
                   machines to act as routing peers.
                 </HelpText>
               </div>
@@ -299,18 +309,11 @@ function RoutingPeerModalContent({
                 "Use this switch to enable or disable the routing peer."
               }
             />
-            <FancyToggleSwitch
+
+            <RoutingPeerMasqueradeSwitch
               value={masquerade}
               onChange={setMasquerade}
-              label={
-                <>
-                  <VenetianMask size={15} />
-                  Masquerade
-                </>
-              }
-              helpText={
-                "Allow access to your private networks without configuring routes on your local routers or other devices."
-              }
+              disabled={isNonLinuxRoutingPeer}
             />
 
             <div className={cn("flex justify-between")}>
@@ -419,7 +422,7 @@ const InstallNetBirdWithSetupKeyButton = ({
     const choice = await confirm({
       title: `Create a Setup Key?`,
       description:
-        "If you continue, a one-off setup key will be automatically created and you will be able to install NetBird on a Linux machine.",
+        "If you continue, a one-off setup key will be automatically created and you will be able to install NetBird.",
       confirmText: "Continue",
       cancelText: "Cancel",
       type: "default",
@@ -437,6 +440,7 @@ const InstallNetBirdWithSetupKeyButton = ({
         auto_groups: [],
         usage_limit: 1,
         ephemeral: false,
+        allow_extra_dns_labels: false,
       })
       .then((setupKey) => {
         setInstallModal(true);
