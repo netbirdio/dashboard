@@ -113,6 +113,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     accessorKey: "group_name_strings",
     accessorFn: (peer) => peer.groups?.map((g) => g?.name || "").join(", "),
     sortingFn: "text",
+    filterFn: "equals" // hack to filter on a uniq item value in groups
   },
   {
     id: "group_names",
@@ -226,8 +227,18 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
     ],
   );
 
+  // Caveat: no clue if this name may change in the future
+  // By default server assign every peers to `All` group
+  const DEFAULT_GROUP_NAME = "All";
+
   const pendingApprovalCount =
     peers?.filter((p) => p.approval_required).length || 0;
+
+  // Count peers that are not assigned to other group than the default group
+  const unassignedCount = peers?.reduce(
+    (acc, p) => acc + ((p.groups?.length == 1 && p.groups.at(0)?.name == DEFAULT_GROUP_NAME) ? 1: 0),
+    0
+  );
 
   const tableGroups =
     (uniqBy(
@@ -428,9 +439,10 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
               </Button>
             )}
 
-            <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
-
-            {!isUser && (
+            {
+              !isUser
+              && tableGroups.length > 1 // if length == 1, it means only "All" group exists, case not relevant
+              && (
               <GroupSelector
                 disabled={peers?.length == 0}
                 values={
@@ -438,19 +450,32 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
                     .getColumn("group_names")
                     ?.getFilterValue() as string[]) || []
                 }
-                onChange={(anyOfValues) => {
+                exclusiveValue={
+                  (table
+                    .getColumn("group_name_strings")
+                    ?.getFilterValue() as string) || undefined
+                }
+                onChange={(anyOfValues, exclusiveValue) => {
                     const normalizedAnyOf = ( anyOfValues.length == 0 ) ? undefined : anyOfValues;
                     overrideTableFilter( table, [
                       {
                         id: "group_names",
                         value: normalizedAnyOf
                       },
+                      {
+                        id: "group_name_strings",
+                        value: exclusiveValue
+                      }
                     ]
                   );
                 }}
                 groups={tableGroups}
+                unassignedCount={unassignedCount}
+                defaultGroupName={DEFAULT_GROUP_NAME}
               />
             )}
+
+            <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
 
             <DataTableRefreshButton
               isDisabled={peers?.length == 0}
