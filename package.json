@@ -57,7 +57,7 @@
     "ip-cidr": "^3.1.0",
     "lodash": "^4.17.21",
     "lucide-react": "^0.460.0",
-    "next": "13.5.7",
+    "next": "15.1.2",
     "next-themes": "^0.2.1",
     "punycode": "^2.3.1",
     "react": "^18",
