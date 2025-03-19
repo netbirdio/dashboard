@@ -1,6 +1,6 @@
 FROM alpine:3.14
 
-RUN apk add --no-cache bash curl less ca-certificates git tzdata zip gettext \
+RUN apk add --no-cache bash curl less ca-certificates git tzdata zip gettext sed \
     nginx curl supervisor certbot-nginx && \
     rm -rf /var/cache/apk/* && mkdir -p /run/nginx
 
