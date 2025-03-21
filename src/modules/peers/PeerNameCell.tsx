@@ -40,7 +40,7 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
           }
         >
           <div className={"text-nb-gray-400 font-light truncate"}>
-            {!userOfPeer?.email && userOfPeer?.id}
+            {userOfPeer?.email || userOfPeer?.name || peer?.user_id || userOfPeer?.id}
           </div>
         </ActiveInactiveRow>
       </div>
