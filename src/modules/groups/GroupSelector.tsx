@@ -22,28 +22,45 @@ import { Group } from "@/interfaces/Group";
 
 interface MultiSelectProps {
   values: string[];
-  onChange: (items: string[]) => void;
+  exclusiveValue?: string;
+  onChange: (anyOfValues: string[], exclusiveValue?: string) => void;
   disabled?: boolean;
   popoverWidth?: "auto" | number;
   groups: Group[] | undefined;
+  unassignedCount?: number;
+  defaultGroupName?: string;
 }
 export function GroupSelector({
   onChange,
   values,
+  exclusiveValue,
   disabled = false,
   popoverWidth = 400,
   groups,
+  unassignedCount,
+  defaultGroupName = "All", //defined as a property, no clue if this value may change in the future
 }: MultiSelectProps) {
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
   const [search, setSearch] = useState("");
 
-  const toggle = (code: string) => {
+  const toggleAnyOf = (code: string) => {
     const isSelected = values.find((c) => c == code) != undefined;
     if (isSelected) {
-      onChange && onChange(values.filter((c) => c != code));
+      onChange && onChange(values.filter((c) => c != code), undefined);
     } else {
-      onChange && onChange([...values, code]);
+      onChange && onChange([...values, code], undefined);
+      setSearch("");
+    }
+  };
+
+  const toggleExclusive = (code: string) => {
+    const isSelected = exclusiveValue == code;
+    if (isSelected) {
+      onChange && onChange([], undefined);
+      setSearch("");
+    } else {
+      onChange && onChange([], code);
       setSearch("");
     }
   };
@@ -63,14 +80,16 @@ export function GroupSelector({
       }}
     >
       <PopoverTrigger asChild={true}>
-        <Button variant={"secondary"} disabled={disabled} ref={inputRef}>
+        <Button variant={"secondary"} disabled={disabled} ref={inputRef} className="w-[200px] justify-between">
           <FolderGit2 size={16} className={"shrink-0"} />
           <div className={"w-full flex justify-between"}>
-            {values.length > 0 ? (
-              <div>{values.length} Group(s)</div>
-            ) : (
-              "All Groups"
-            )}
+            {
+              exclusiveValue != undefined
+                ? ("Unassigned peers")
+                : values.length > 0
+                  ? (`${values.length} Group(s)`)
+                  : ("All Groups")
+            }
             <div className={"pl-2"}>
               <ChevronsUpDown size={18} className={"shrink-0"} />
             </div>
@@ -133,7 +152,6 @@ export function GroupSelector({
                 </div>
               </div>
             </div>
-
             <ScrollArea
               className={
                 "max-h-[380px] overflow-y-auto flex flex-col gap-1 pl-2 py-2 pr-3"
@@ -142,7 +160,48 @@ export function GroupSelector({
               <CommandGroup>
                 <div className={""}>
                   <div className={"grid grid-cols-1 gap-1"}>
-                    {orderBy(groups, "name")?.map((item) => {
+                    <CommandItem
+                      className={"p-1"}
+                      onSelect={() => {
+                        toggleExclusive(defaultGroupName);
+                        searchRef.current?.focus();
+                      }}
+                      onClick={(e) => e.preventDefault()}
+                      >
+                      <div
+                        className={
+                          "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-3 py-1 px-1 w-full"
+                        }
+                      >
+                        <Checkbox checked={exclusiveValue == defaultGroupName}/>
+                        <div
+                          className={
+                            "flex justify-between items-center w-full"
+                          }
+                        >
+                          <div
+                            className={
+                              "flex items-center gap-2 whitespace-nowrap text-sm"
+                            }
+                          >
+                            <FolderGit2 size={13} className={"shrink-0"} />
+                            <TextWithTooltip text={"Unassigned peers"} />
+                          </div>
+                          <div
+                                className={
+                                  "flex items-center gap-2 text-xs text-nb-gray-200/60"
+                                }
+                              >
+                                <MonitorSmartphoneIcon size={13} />
+                                {unassignedCount} Peer(s)
+                              </div>
+                        </div>
+                      </div>
+                    </CommandItem>
+                    <hr />
+                    {orderBy(groups, "name")
+                        ?.filter((group) => group.name != defaultGroupName) // Ignore default group
+                        ?.map((item) => {
                       const value = item?.name || "";
                       if (value === "") return null;
                       const isSelected =
@@ -154,7 +213,7 @@ export function GroupSelector({
                           value={value}
                           className={"p-1"}
                           onSelect={() => {
-                            toggle(value);
+                            toggleAnyOf(value);
                             searchRef.current?.focus();
                           }}
                           onClick={(e) => e.preventDefault()}

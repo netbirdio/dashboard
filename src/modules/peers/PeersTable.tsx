@@ -12,8 +12,11 @@ import GetStartedTest from "@components/ui/GetStartedTest";
 import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import {
   ColumnDef,
+  ColumnFiltersState,
   RowSelectionState,
   SortingState,
+  Table,
+  VisibilityState,
 } from "@tanstack/react-table";
 import { uniqBy } from "lodash";
 import { ExternalLinkIcon } from "lucide-react";
@@ -65,6 +68,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "name",
     accessorFn: (peer) => `${peer?.name}${peer?.dns_label}`,
+    enableHiding: false,
     header: ({ column }) => {
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
@@ -83,6 +87,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     accessorFn: (peer) => peer.connected,
   },
   {
+    id: "ip",
     accessorKey: "ip",
     sortingFn: "text",
   },
@@ -96,6 +101,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     id: "dns_label",
+    enableHiding: false,
     accessorKey: "dns_label",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Address</DataTableHeader>;
@@ -103,11 +109,14 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     cell: ({ row }) => <PeerAddressCell peer={row.original} />,
   },
   {
+    id: "group_name_strings",
     accessorKey: "group_name_strings",
     accessorFn: (peer) => peer.groups?.map((g) => g?.name || "").join(", "),
     sortingFn: "text",
+    filterFn: "equals" // hack to filter on a uniq item value in groups
   },
   {
+    id: "group_names",
     accessorKey: "group_names",
     accessorFn: (peer) => peer.groups?.map((g) => g?.name || ""),
     sortingFn: "text",
@@ -126,6 +135,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     ),
   },
   {
+    id: "last_seen",
     accessorKey: "last_seen",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Last seen</DataTableHeader>;
@@ -150,6 +160,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     sortingFn: "text",
   },
   {
+    id: "version",
     accessorKey: "version",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Version</DataTableHeader>;
@@ -176,6 +187,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     id: "actions",
+    enableHiding: false,
     accessorKey: "id",
     header: "",
     cell: ({ row }) => (
@@ -215,8 +227,18 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
     ],
   );
 
+  // Caveat: no clue if this name may change in the future
+  // By default server assign every peers to `All` group
+  const DEFAULT_GROUP_NAME = "All";
+
   const pendingApprovalCount =
     peers?.filter((p) => p.approval_required).length || 0;
+
+  // Count peers that are not assigned to other group than the default group
+  const unassignedCount = peers?.reduce(
+    (acc, p) => acc + ((p.groups?.length == 1 && p.groups.at(0)?.name == DEFAULT_GROUP_NAME) ? 1: 0),
+    0
+  );
 
   const tableGroups =
     (uniqBy(
@@ -232,6 +254,52 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
     if (Object.keys(selectedRows).length > 0) {
       setSelectedRows({});
     }
+  };
+
+  const filteredColunms = [
+    "connected",
+    "approval_required",
+    "group_name_strings",
+    "group_names",
+  ];
+
+  /**
+   *  This function overrides the given column filters and reuses the previous filters
+   *
+   *  Table index and selection is also cleared
+   */
+  const overrideTableFilter = (table: Table<Peer>, change: ColumnFiltersState) => {
+    let filters = [] as ColumnFiltersState;
+
+    filteredColunms.forEach((columnId) => {
+      let columnFilter = change.find((entry) => entry.id == columnId);
+      if (columnFilter === undefined) {
+        columnFilter = {
+          id: columnId,
+          value: table.getColumn(columnId)?.getFilterValue()
+        }
+      }
+      filters.push(columnFilter);
+    })
+    table.setPageIndex(0);
+    table.setColumnFilters( filters);
+    resetSelectedRows();
+  };
+
+  const columnVisibility: VisibilityState = {
+    select: !isUser,
+    actions: !isUser,
+    groups: !isUser,
+    connected: false,
+    approval_required: false,
+
+    // hidden, but usefull for lookup
+    serial: false,
+    group_name_strings: false,
+    group_names: false,
+    ip: false,
+    user_name: false,
+    user_email: false,
   };
 
   return (
@@ -251,19 +319,7 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
         columns={PeersTableColumns}
         data={peers}
         searchPlaceholder={"Search by name, IP, Serial, owner or group..."}
-        columnVisibility={{
-          select: !isUser,
-          connected: false,
-          approval_required: false,
-          group_name_strings: false,
-          group_names: false,
-          ip: false,
-          serial: false,
-          user_name: false,
-          user_email: false,
-          actions: !isUser,
-          groups: !isUser,
-        }}
+        columnVisibility={columnVisibility}
         isLoading={isLoading}
         getStartedCard={
           <GetStartedTest
@@ -302,29 +358,12 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
               <ButtonGroup.Button
                 disabled={peers?.length == 0}
                 onClick={() => {
-                  table.setPageIndex(0);
-                  let groupFilters = table
-                    .getColumn("group_names")
-                    ?.getFilterValue();
-                  table.setColumnFilters([
+                  overrideTableFilter( table, [
                     {
                       id: "connected",
                       value: undefined,
                     },
-                    {
-                      id: "approval_required",
-                      value: undefined,
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
                   ]);
-                  resetSelectedRows();
                 }}
                 variant={
                   table.getColumn("connected")?.getFilterValue() == undefined
@@ -336,29 +375,12 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
               </ButtonGroup.Button>
               <ButtonGroup.Button
                 onClick={() => {
-                  table.setPageIndex(0);
-                  let groupFilters = table
-                    .getColumn("group_names")
-                    ?.getFilterValue();
-                  table.setColumnFilters([
+                  overrideTableFilter( table, [
                     {
                       id: "connected",
                       value: true,
                     },
-                    {
-                      id: "approval_required",
-                      value: undefined,
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
                   ]);
-                  resetSelectedRows();
                 }}
                 disabled={peers?.length == 0}
                 variant={
@@ -371,25 +393,12 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
               </ButtonGroup.Button>
               <ButtonGroup.Button
                 onClick={() => {
-                  table.setPageIndex(0);
-                  let groupFilters = table
-                    .getColumn("group_names")
-                    ?.getFilterValue();
-                  table.setColumnFilters([
+                  overrideTableFilter( table, [
                     {
                       id: "connected",
                       value: false,
                     },
-                    {
-                      id: "approval_required",
-                      value: undefined,
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
                   ]);
-                  resetSelectedRows();
                 }}
                 disabled={peers?.length == 0}
                 variant={
@@ -406,29 +415,21 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
               <Button
                 disabled={peers?.length == 0}
                 onClick={() => {
-                  table.setPageIndex(0);
                   let current =
                     table.getColumn("approval_required")?.getFilterValue() ===
-                    undefined
+                      undefined
                       ? true
                       : undefined;
-
-                  table.setColumnFilters([
-                    {
-                      id: "connected",
-                      value: undefined,
-                    },
+                   overrideTableFilter( table, [
                     {
                       id: "approval_required",
                       value: current,
                     },
                   ]);
-
-                  resetSelectedRows();
                 }}
                 variant={
                   table.getColumn("approval_required")?.getFilterValue() ===
-                  true
+                    true
                     ? "tertiary"
                     : "secondary"
                 }
@@ -438,9 +439,10 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
               </Button>
             )}
 
-            <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
-
-            {!isUser && (
+            {
+              !isUser
+              && tableGroups.length > 1 // if length == 1, it means only "All" group exists, case not relevant
+              && (
               <GroupSelector
                 disabled={peers?.length == 0}
                 values={
@@ -448,19 +450,32 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
                     .getColumn("group_names")
                     ?.getFilterValue() as string[]) || []
                 }
-                onChange={(groups) => {
-                  table.setPageIndex(0);
-                  if (groups.length == 0) {
-                    table.getColumn("group_names")?.setFilterValue(undefined);
-                    return;
-                  } else {
-                    table.getColumn("group_names")?.setFilterValue(groups);
-                  }
-                  resetSelectedRows();
+                exclusiveValue={
+                  (table
+                    .getColumn("group_name_strings")
+                    ?.getFilterValue() as string) || undefined
+                }
+                onChange={(anyOfValues, exclusiveValue) => {
+                    const normalizedAnyOf = ( anyOfValues.length == 0 ) ? undefined : anyOfValues;
+                    overrideTableFilter( table, [
+                      {
+                        id: "group_names",
+                        value: normalizedAnyOf
+                      },
+                      {
+                        id: "group_name_strings",
+                        value: exclusiveValue
+                      }
+                    ]
+                  );
                 }}
                 groups={tableGroups}
+                unassignedCount={unassignedCount}
+                defaultGroupName={DEFAULT_GROUP_NAME}
               />
             )}
+
+            <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
 
             <DataTableRefreshButton
               isDisabled={peers?.length == 0}
