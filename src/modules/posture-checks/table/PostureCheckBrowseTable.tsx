@@ -3,14 +3,12 @@ import { Checkbox } from "@components/Checkbox";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { useLocalStorage } from "@hooks/useLocalStorage";
 import {
   ColumnDef,
   RowSelectionState,
   SortingState,
 } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
-import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import { PostureCheck } from "@/interfaces/PostureCheck";
@@ -25,18 +23,14 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
   const { mutate } = useSWRConfig();
-  const path = usePathname();
 
   // Default sorting state of the table
-  const [sorting, setSorting] = useLocalStorage<SortingState>(
-    "netbird-table-sort" + path,
-    [
-      {
-        id: "name",
-        desc: true,
-      },
-    ],
-  );
+  const [sorting, setSorting] = useState<SortingState>([
+    {
+      id: "name",
+      desc: true,
+    },
+  ]);
 
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
 
@@ -47,6 +41,7 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
         rowSelection={selectedRows}
         setRowSelection={setSelectedRows}
         isLoading={isLoading}
+        keepStateInLocalStorage={false}
         text={"Posture Check"}
         sorting={sorting}
         wrapperClassName={""}
