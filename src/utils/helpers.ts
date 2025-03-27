@@ -76,9 +76,6 @@ export const validator = {
 
     // Split and validate each part
     const parts = domain.split(".");
-    if (parts.length < 2) {
-      return false;
-    }
 
     const validPart = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
     return parts.every((part) => validPart.test(part));
