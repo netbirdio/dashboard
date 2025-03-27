@@ -20,6 +20,9 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
     return users?.find((user) => user.id === peer.user_id);
   }, [users, peer.user_id]);
 
+  const displayUserEmailOrName = userOfPeer?.email || userOfPeer?.name;
+  const displayUserId = userOfPeer?.id || peer?.user_id;
+
   return (
     <div>
       <div
@@ -40,7 +43,7 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
           }
         >
           <div className={"text-nb-gray-400 font-light truncate"}>
-            {userOfPeer?.email}
+            {displayUserEmailOrName || (displayUserId && `user: ${displayUserId}`)}
           </div>
         </ActiveInactiveRow>
       </div>
