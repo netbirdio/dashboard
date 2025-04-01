@@ -6,21 +6,30 @@ import {
   TooltipTrigger,
 } from "@components/Tooltip";
 import MemoizedNetBirdIcon from "@components/ui/MemoizedNetBirdIcon";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { parseVersionString } from "@utils/version";
 import { ArrowRightIcon, ArrowUpCircleIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
 type Props = {
   version: string;
+  os: string;
 };
-export default function PeerVersionCell({ version }: Props) {
+export default function PeerVersionCell({ version, os }: Props) {
   const { latestVersion, latestUrl } = useApplicationContext();
 
   const updateAvailable = useMemo(() => {
+    const operatingSystem = getOperatingSystem(os);
+    if (
+      operatingSystem === OperatingSystem.IOS ||
+      operatingSystem === OperatingSystem.ANDROID
+    )
+      return false;
     return parseVersionString(version) < parseVersionString(latestVersion);
-  }, [version, latestVersion]);
+  }, [os, version, latestVersion]);
 
   const updateIcon = useMemo(() => {
     return <ArrowUpCircleIcon size={15} className={"text-netbird"} />;
