@@ -17,7 +17,7 @@ export default function DescriptionWithTooltip({
     <TextWithTooltip
       text={text}
       maxChars={maxChars}
-      className={cn("text-sm text-nb-gray-400 whitespace-nowrap", className)}
+      className={cn("text-sm text-gray-500 dark:text-nb-gray-400 whitespace-nowrap", className)}
     />
   );
 }

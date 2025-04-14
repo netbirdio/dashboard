@@ -12,7 +12,7 @@ export default function ServiceUserNameCell({ user }: Props) {
     <div className={cn("flex gap-4 px-2 py-1 items-center")}>
       <div
         className={
-          "w-8 h-8 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
+          "w-8 h-8 rounded-full relative flex items-center justify-center text-gray-700 dark:text-white uppercase text-md font-medium bg-gray-200 dark:bg-nb-gray-900"
         }
       >
         <IconSettings2 size={14} />

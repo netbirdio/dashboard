@@ -20,16 +20,16 @@ export const NetworkInformationSquare = ({
   return (
     <button
       className={cn(
-        "flex w-full items-center max-w-[300px] gap-4 dark:text-neutral-300 text-neutral-500 transition-all group/network rounded-md",
+        "flex w-full items-center max-w-[300px] gap-4 group/network",
         onClick
-          ? "hover:text-neutral-100 hover:bg-nb-gray-910 cursor-pointer py-2 pl-3 pr-5 relative"
+          ? "interactive-cell pl-3 pr-5 relative"
           : "cursor-default",
       )}
       onClick={onClick}
     >
       <div
         className={cn(
-          "bg-nb-gray-800 text-nb-gray-100 rounded-md flex items-center justify-center font-medium relative",
+          "bg-gray-100 dark:bg-nb-gray-800 text-gray-600 dark:text-nb-gray-100 rounded-md flex items-center justify-center font-medium relative",
           "uppercase",
           size === "md" ? "h-10 w-10 text-md" : "h-12 w-12 text-lg",
           "shrink-0",
@@ -39,21 +39,21 @@ export const NetworkInformationSquare = ({
         <div
           className={cn(
             "h-2 w-2 rounded-full absolute bottom-0 right-0 z-10",
-            active ? "bg-green-500" : "bg-nb-gray-700",
+            active ? "bg-green-500" : "bg-gray-400 dark:bg-nb-gray-700",
           )}
         ></div>
         <div
           className={cn(
-            "h-3 w-3 bg-nb-gray-950 rounded-tl-[8px] rounded-br absolute bottom-0 right-0 transition-all",
-            onClick && "group-hover/network:bg-nb-gray-910",
-            onClick && "group-hover/table-row:bg-nb-gray-940",
+            "h-3 w-3 bg-default rounded-tl-[8px] rounded-br absolute bottom-0 right-0 transition-all",
+            onClick && "group-hover/network:bg-gray-100 dark:group-hover/network:bg-nb-gray-910",
+            onClick && "group-hover/table-row:bg-gray-50 dark:group-hover/table-row:bg-nb-gray-940",
           )}
         ></div>
       </div>
       <div className={"mt-[0px] flex items-center flex-wrap"}>
         <TruncatedText
           className={cn(
-            "font-medium text-white text-left",
+            "font-medium text-gray-800 dark:text-white text-left",
             size == "md" ? "text-sm" : "text-xl leading-none mb-0.5",
           )}
           maxChars={24}
@@ -61,7 +61,7 @@ export const NetworkInformationSquare = ({
         />
         <TruncatedText
           className={cn(
-            "text-left text-sm text-nb-gray-400",
+            "text-left text-sm text-gray-500 dark:text-nb-gray-400",
             size == "lg" && "text-md mt-0.5",
           )}
           maxChars={24}
@@ -71,7 +71,7 @@ export const NetworkInformationSquare = ({
       {onClick && (
         <div
           className={
-            "absolute right-0 top-0 h-full flex items-center pr-4 text-nb-gray-200 opacity-0 group-hover/network:opacity-100"
+            "absolute right-0 top-0 h-full flex items-center pr-4 text-gray-500 dark:text-nb-gray-200 opacity-0 group-hover/network:opacity-100"
           }
         >
           <ArrowRightIcon size={18} />

@@ -78,9 +78,9 @@ const menuItemVariants = cva("", {
   variants: {
     variant: {
       default:
-        "dark:focus:bg-nb-gray-900 dark:focus:text-gray-50 dark:text-gray-400",
+        "focus:bg-gray-100 focus:text-gray-900 text-gray-800 dark:focus:bg-nb-gray-900 dark:focus:text-gray-50 dark:text-gray-400",
       danger:
-        "dark:focus:bg-red-900/20 dark:focus:text-red-500 dark:text-red-500",
+        "focus:bg-red-100 focus:text-red-500 text-red-500 dark:focus:bg-red-900/20 dark:focus:text-red-500 dark:text-red-500",
     },
   },
 });

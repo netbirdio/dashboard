@@ -27,9 +27,8 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
     <div>
       <div
         className={cn(
-          "flex items-center max-w-[300px] gap-2 dark:text-neutral-300 text-neutral-500 transition-all py-2 px-3 rounded-md ",
-          linkToPeer &&
-            "hover:text-neutral-100 hover:bg-nb-gray-800/60 cursor-pointer",
+          "group flex items-center max-w-[300px] gap-2",
+          linkToPeer && "interactive-cell",
         )}
         data-testid="peer-name-cell"
         aria-label={`View details of peer ${peer.name}`}
@@ -42,7 +41,7 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
             isOwnerOrAdmin && <ExitNodePeerIndicator peer={peer} />
           }
         >
-          <div className={"text-nb-gray-400 font-light truncate"}>
+          <div className={"font-light truncate"}>
             {displayUserEmailOrName || (displayUserId && `user: ${displayUserId}`)}
           </div>
         </ActiveInactiveRow>

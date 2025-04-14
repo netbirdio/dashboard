@@ -23,7 +23,7 @@ export default function PeerAddressCell({ peer }: Props) {
     >
       <div
         className={
-          "flex gap-4 items-center min-w-[320px] max-w-[320px] group/cell transition-all hover:bg-nb-gray-800/10 py-2 px-3 rounded-md cursor-default"
+          "flex gap-4 items-center min-w-[320px] max-w-[320px] group/cell interactive-cell"
         }
         onClick={(e) => {
           e.stopPropagation();
@@ -32,7 +32,7 @@ export default function PeerAddressCell({ peer }: Props) {
       >
         <div
           className={cn(
-            "flex items-center justify-center rounded-full h-8 w-8 shrink-0 bg-nb-gray-920/80 transition-all",
+            "flex items-center justify-center rounded-full h-8 w-8 shrink-0 bg-transparent dark:bg-nb-gray-920/80 transition-all",
           )}
         >
           {isEmpty(peer.country_code) ? (

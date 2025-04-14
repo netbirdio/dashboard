@@ -23,10 +23,10 @@ export const SelectDropdownSearchInput = forwardRef<HTMLInputElement, Props>(
       <div className={"relative"}>
         <input
           className={cn(
-            "min-h-[42px] w-full relative",
-            "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
+            "min-h-[42px] w-full relative border-default items-center",
+            "border-b-0 border-t-0 border-r-0 border-l-0",
             "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
-            "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
+            "dark:placeholder:text-neutral-500 font-light placeholder:text-neutral-500 pl-10",
           )}
           ref={ref}
           value={search}
@@ -41,7 +41,7 @@ export const SelectDropdownSearchInput = forwardRef<HTMLInputElement, Props>(
         <div className={"absolute right-0 top-0 h-full flex items-center pr-4"}>
           <div
             className={
-              "flex items-center bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-nb-gray-500"
+              "flex items-center bg-gray-100 dark:bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-gray-300 dark:border-nb-gray-500"
             }
           >
             <IconArrowBack size={10} />

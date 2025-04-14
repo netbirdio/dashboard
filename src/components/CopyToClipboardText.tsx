@@ -39,7 +39,7 @@ export default function CopyToClipboardText({
       {copied ? (
         <CheckIcon
           className={cn(
-            "text-nb-gray-100 group-hover:opacity-100 shrink-0",
+            "text-gray-500 dark:text-nb-gray-100 group-hover:opacity-100 shrink-0",
             iconAlignment === "left" ? "order-first" : "order-last",
             !alwaysShowIcon && "opacity-0",
           )}
@@ -48,7 +48,7 @@ export default function CopyToClipboardText({
       ) : (
         <CopyIcon
           className={cn(
-            "text-nb-gray-100 group-hover:opacity-100 shrink-0",
+            "text-gray-500 dark:text-nb-gray-100 group-hover:opacity-100 shrink-0",
             iconAlignment === "left" ? "order-first" : "order-last",
             !alwaysShowIcon && "opacity-0",
           )}

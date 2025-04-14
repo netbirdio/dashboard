@@ -93,9 +93,9 @@ export function NetworkRouteSelector({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "min-h-[42px] w-full relative items-center group",
-            "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
-            "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer enabled:hover:dark:bg-nb-gray-900/50",
+            "min-h-[48px] w-full relative items-center border-default",
+            "border justify-between py-2 px-3",
+            "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex text-neutral-500 dark:text-neutral-400/70 cursor-pointer enabled:hover:bg-gray-50 enabled:hover:dark:bg-nb-gray-900/50",
             "disabled:opacity-40 disabled:cursor-default",
           )}
           disabled={disabled}
@@ -109,7 +109,7 @@ export function NetworkRouteSelector({
             {value ? (
               <div
                 className={
-                  "flex items-center justify-between text-sm text-white w-full pr-4 pl-1 gap-2"
+                  "flex items-center justify-between text-sm text-gray-700 dark:text-white w-full pr-4 pl-1 gap-2"
                 }
               >
                 <div className={"flex items-center gap-2.5 text-sm"}>
@@ -157,8 +157,8 @@ export function NetworkRouteSelector({
             <div className={"relative"}>
               <CommandInput
                 className={cn(
-                  "min-h-[42px] w-full relative",
-                  "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
+                  "min-h-[42px] w-full relative border-default items-center",
+                  "border-b-0 border-t-0 border-r-0 border-l-0",
                   "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
                   "dark:placeholder:text-neutral-500 font-light placeholder:text-neutral-500 pl-10",
                 )}
@@ -183,7 +183,7 @@ export function NetworkRouteSelector({
               >
                 <div
                   className={
-                    "flex items-center bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-nb-gray-500"
+                    "flex items-center bg-gray-100 dark:bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-gray-300 dark:border-nb-gray-500"
                   }
                 >
                   <IconArrowBack size={10} />
@@ -195,14 +195,14 @@ export function NetworkRouteSelector({
               {dropdownOptions.length == 0 && !notFound && (
                 <div
                   className={
-                    "text-center pb-2 text-nb-gray-500 max-w-xs mx-auto"
+                    "text-center pb-2 text-gray-500 dark:text-nb-gray-500 max-w-xs mx-auto"
                   }
                 >
                   {"Seems like you don't have any network routes created yet."}
                 </div>
               )}
               {notFound && (
-                <div className={"text-center pb-2 text-nb-gray-500"}>
+                <div className={"text-center pb-2 text-gray-500 dark:text-nb-gray-500"}>
                   There are no networks matching your search.
                 </div>
               )}
@@ -266,7 +266,7 @@ function DomainList({ domains }: { domains?: string[] }) {
       >
         <div
           className={
-            "text-xs text-nb-gray-300 block min-w-0 truncate max-w-[180px]"
+            "text-xs text-gray-500 dark:text-nb-gray-300 block min-w-0 truncate max-w-[180px]"
           }
         >
           {firstDomain} {domains.length > 1 && "+" + (domains.length - 1)}

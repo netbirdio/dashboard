@@ -5,7 +5,7 @@ import * as React from "react";
 const smallBadgeVariants = cva("", {
   variants: {
     variant: {
-      green: "bg-green-900 border border-green-500/20 text-green-400",
+      green: "border border-green-500/20 bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-400",
       white: "bg-white/20 border border-white/10 text-white",
       sky: "bg-sky-900 border border-sky-500/20 text-white",
     },

@@ -2,7 +2,43 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer components {
+  .interactive-cell {
+    @apply dark:text-neutral-300 text-neutral-500 py-2 px-3 rounded-md;
+    @apply transition-all hover:bg-gray-300 hover:text-neutral-800 dark:hover:text-neutral-100 dark:hover:bg-nb-gray-800/60 cursor-pointer;
+  }
 
+  .table-row-hoverable {
+    @apply transition-all hover:bg-gray-100 dark:hover:bg-nb-gray-940 cursor-pointer;
+  }
+
+  /* Semantic Text Classes */
+  .text-primary {
+    @apply text-gray-700 dark:text-nb-gray-100;
+  }
+
+  .text-muted {
+    @apply text-neutral-500 dark:text-neutral-400;
+  }
+
+  .text-highlight {
+    @apply text-netbird;
+  }
+
+  /* Semantic Border Class */
+  .border-default {
+    @apply border-neutral-200 dark:border-nb-gray-700;
+  }
+
+  /* Semantic Background Class */
+  .bg-subtle-emphasis {
+    @apply bg-gray-100 dark:bg-nb-gray-930/80;
+  }
+
+  .bg-default {
+    @apply bg-white dark:bg-nb-gray-950;
+  }
+}
 
 h1 {
     @apply text-2xl font-medium text-gray-700 dark:text-nb-gray-100 my-1;

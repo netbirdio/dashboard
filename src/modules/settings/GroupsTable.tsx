@@ -304,7 +304,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
           )}
         </DataTable>
       ) : (
-        <div className={"bg-nb-gray-950 overflow-hidden"}>
+        <div className={"bg-white dark:bg-nb-gray-950 overflow-hidden"}>
           <NoResults
             className={"py-3"}
             title={"No groups"}

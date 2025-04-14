@@ -119,15 +119,15 @@ const ListItem = ({
   return (
     <div
       className={cn(
-        "flex justify-between gap-12 border-b border-nb-gray-920 py-2 px-4 last:border-b-0",
+        "flex justify-between gap-12 border-b border-gray-200 dark:border-nb-gray-920 py-2 px-4 last:border-b-0",
         className,
       )}
     >
-      <div className={"flex items-center gap-2 text-nb-gray-100 font-medium"}>
+      <div className={"flex items-center gap-2 text-primary font-medium"}>
         {icon}
         {label}
       </div>
-      <div className={"text-nb-gray-300"}>{value}</div>
+      <div className={"text-gray-500 dark:text-nb-gray-300"}>{value}</div>
     </div>
   );
 };

@@ -59,7 +59,7 @@ export default function NetBirdSettings() {
           </VerticalTabs.Trigger>
         </VerticalTabs.List>
         <RestrictedAccess page={"Settings"}>
-          <div className={"border-l border-nb-gray-930 w-full"}>
+          <div className={"border-l border-gray-200 dark:border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
             {account && <PermissionsTab account={account} />}
             {account && <GroupsTab account={account} />}

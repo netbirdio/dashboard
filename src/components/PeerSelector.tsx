@@ -98,10 +98,10 @@ export function PeerSelector({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "min-h-[46px] w-full relative items-center group",
-            "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
-            "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer enabled:hover:dark:bg-nb-gray-900/50",
-            "disabled:opacity-40 disabled:cursor-default",
+            "min-h-[48px] w-full relative items-center border-default",
+            "border justify-between py-2 px-3",
+            "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex text-neutral-500 dark:text-neutral-400/70 cursor-pointer enabled:hover:bg-gray-50 enabled:hover:dark:bg-nb-gray-900/50",
+            "disabled:cursor-not-allowed disabled:opacity-40",
           )}
           disabled={disabled}
           ref={inputRef}
@@ -114,7 +114,7 @@ export function PeerSelector({
             {value ? (
               <div
                 className={
-                  "flex items-center justify-between text-sm text-white w-full pr-4 pl-1"
+                  "flex items-center justify-between text-sm text-gray-700 dark:text-white w-full pr-4 pl-1"
                 }
               >
                 <div className={"flex items-center gap-2.5 text-sm"}>
@@ -205,8 +205,8 @@ export function PeerSelector({
                       className={cn(
                         "flex items-center gap-2.5 text-sm",
                         value && value.id == option.id
-                          ? "text-white"
-                          : "text-nb-gray-300",
+                          ? "text-gray-700 dark:text-white"
+                          : "text-gray-600 dark:text-nb-gray-300",
                       )}
                     >
                       <div
@@ -244,8 +244,8 @@ export function PeerSelector({
                       className={cn(
                         "font-medium flex items-center gap-1 font-mono text-[10px]",
                         value && value.id == option.id
-                          ? "text-white"
-                          : "text-nb-gray-300",
+                          ? "text-gray-700 dark:text-white"
+                          : "text-gray-500 dark:text-nb-gray-300",
                         !isSupported && "opacity-50",
                       )}
                     >

@@ -55,8 +55,8 @@ export default function AddRouteDropdownButton() {
                 margin={""}
               />
               <div className={"flex flex-col text-left"}>
-                <div className={"text-left text-white"}>New Network Route</div>
-                <div className={"text-xs"}>
+                <div className={"text-left text-gray-700 dark:text-white"}>New Network Route</div>
+                <div className={"text-xs text-gray-500"}>
                   Create a new network route with this peer
                 </div>
               </div>
@@ -73,8 +73,8 @@ export default function AddRouteDropdownButton() {
                 margin={""}
               />
               <div className={"flex flex-col text-left"}>
-                <div className={"text-left text-white"}>Existing Network</div>
-                <div className={"text-xs"}>
+                <div className={"text-left text-gray-700 dark:text-white"}>Existing Network</div>
+                <div className={"text-xs text-gray-500"}>
                   Add this peer to an existing network
                 </div>
               </div>

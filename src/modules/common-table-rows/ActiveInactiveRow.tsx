@@ -27,7 +27,7 @@ export default function ActiveInactiveRow({
   return (
     <div
       className={cn(
-        "gap-3 dark:text-neutral-300 text-neutral-500 min-w-0",
+        "gap-3 text-neutral-500 dark:text-neutral-300 min-w-0",
         className,
       )}
       data-cy={dataCy}
@@ -42,12 +42,20 @@ export default function ActiveInactiveRow({
           />
           <div className={"flex flex-col min-w-0"}>
             <div
-              className={"font-medium flex gap-2 items-center justify-center"}
+              className={cn(
+                "font-medium flex gap-2 items-center justify-center",
+              )}
             >
-              <TextWithTooltip text={text as string} maxChars={25} />
+              <TextWithTooltip
+                text={text as string}
+                maxChars={25}
+                className=""
+              />
               {additionalInfo}
             </div>
-            {children}
+            <div className={"-mt-[1px]"}>
+              {children}
+            </div>
           </div>
         </div>
       </div>

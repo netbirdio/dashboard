@@ -11,6 +11,7 @@ import React from "react";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { Account } from "@/interfaces/Account";
+import classNames from "classnames";
 
 type Props = {
   account: Account;
@@ -69,15 +70,17 @@ export default function DangerZoneTab({ account }: Props) {
         <h1>Danger Zone</h1>
         <div className={"gap-6 mt-6 max-w-lg"}>
           <Card
-            className={
-              "w-full flex flex-col gap-2 border-red-600 bg-red-950/50"
-            }
+            className={classNames(
+              "w-full border border-transparent mt-4 rounded-lg",
+              "bg-red-50",
+              "dark:bg-nb-gray-900/50 dark:border-nb-gray-700/50",
+            )}
           >
             <div className={"px-8 py-6"}>
-              <p className={"text-xl font-medium mb-2 !text-red-50"}>
+              <p className={"text-xl font-medium mb-2 text-red-700 dark:text-red-50"}>
                 Delete NetBird account
               </p>
-              <p className={"!text-red-50/80"}>
+              <p className={"text-red-600 dark:text-red-50/80"}>
                 Before proceeding to delete your Netbird account, please be
                 aware that this action is irreversible. Once your account is
                 deleted, you will permanently lose access to all associated

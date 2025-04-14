@@ -221,7 +221,7 @@ export const SetupKeyParameter = ({ setupKey }: SetupKeyParameterProps) => {
     setupKey && (
       <>
         {" "}
-        --setup-key <span className={"text-netbird"}>{setupKey}</span>
+        --setup-key <span className={"text-highlight"}>{setupKey}</span>
       </>
     )
   );

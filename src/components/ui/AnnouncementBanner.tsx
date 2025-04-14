@@ -11,16 +11,16 @@ const variants = cva(
     variants: {
       variant: {
         default:
-          "bg-nb-gray-900/50 border-nb-gray-800/30 border-b text-nb-gray-200",
+          "bg-gray-100 dark:bg-nb-gray-900/50 border-gray-200/30 dark:border-nb-gray-800/30 border-b text-gray-700 dark:text-nb-gray-200",
         important: "from-netbird to-netbird-400 bg-gradient-to-b text-white",
       },
       tagBadge: {
-        default: "bg-nb-gray-200/10 text-nb-gray-100 font-medium",
+        default: "bg-gray-300/50 dark:bg-nb-gray-200/10 text-gray-600 dark:text-nb-gray-100 font-medium",
         important: "bg-white text-netbird font-medium",
       },
       closeButton: {
         default:
-          "bg-nb-gray-900 rounded-md p-1 text-nb-gray-300 hover:bg-nb-gray-800",
+          "bg-gray-200 dark:bg-nb-gray-900 rounded-md p-1 text-gray-500 dark:text-nb-gray-300 hover:bg-gray-300 dark:hover:bg-nb-gray-800",
         important:
           "bg-netbird-100 rounded-md p-1 text-netbird-600 hover:bg-white",
       },
@@ -50,7 +50,7 @@ export const AnnouncementBanner = () => {
         {announcement.tag && (
           <div
             className={cn(
-              "bg-nb-gray-200/10 backdrop-blur text-nb-gray-100 font-medium tracking-wide uppercase text-[10px] py-2.5 px-2 rounded-md leading-[0]",
+              "backdrop-blur font-medium tracking-wide uppercase text-[10px] py-2.5 px-2 rounded-md leading-[0]",
               variants({ tagBadge: announcement.variant }),
             )}
           >

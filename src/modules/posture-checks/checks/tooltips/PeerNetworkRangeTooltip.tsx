@@ -17,7 +17,9 @@ export const PeerNetworkRangeTooltip = ({ check, children }: Props) => {
       contentClassName={"p-0"}
       content={
         <div
-          className={"text-neutral-300 text-sm max-w-xs flex flex-col gap-1"}
+          className={
+            "text-gray-700 dark:text-neutral-300 text-sm max-w-xs flex flex-col gap-1"
+          }
         >
           <div className={"px-4 pt-3"}>
             {check.action == "allow" ? (

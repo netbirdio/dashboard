@@ -10,7 +10,7 @@ export default function PageContainer({ children, className }: Props) {
     <div
       className={cn(
         className,
-        "relative flex-auto overflow-auto bg-nb-gray z-1",
+        "relative flex-auto overflow-auto dark:bg-nb-gray bg-white z-1",
         "focus:outline-none",
       )}
     >

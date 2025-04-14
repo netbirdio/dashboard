@@ -26,7 +26,7 @@ export const SessionLost = () => {
     >
       <div
         className={
-          "bg-nb-gray-930 mb-3 border border-nb-gray-900 h-10 w-10 rounded-md flex items-center justify-center "
+          "bg-gray-100 dark:bg-nb-gray-930 mb-3 border border-gray-200 dark:border-nb-gray-900 h-10 w-10 rounded-md flex items-center justify-center "
         }
       >
         <NetBirdIcon size={20} />

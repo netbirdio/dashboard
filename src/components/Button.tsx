@@ -51,7 +51,7 @@ export const buttonVariants = cva(
           "dark:bg-nb-gray-900/30 dark:text-gray-400 dark:border-gray-500/40 dark:hover:text-white dark:hover:bg-zinc-800/50",
         ],
         tertiary: [
-          "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-gray-200 text-gray-900",
+          "bg-black text-white focus:ring-black/50",
           "dark:focus:ring-zinc-800/50 dark:bg-white dark:text-gray-800 dark:border-gray-700/40 dark:hover:bg-neutral-200 disabled:dark:bg-nb-gray-920 disabled:dark:text-nb-gray-300",
         ],
         white: [
@@ -63,7 +63,7 @@ export const buttonVariants = cva(
           "dark:focus:ring-zinc-800/50 dark:bg-transparent dark:text-netbird dark:border-netbird dark:hover:bg-nb-gray-900/30",
         ],
         "danger-outline": [
-          "", // TODO - add danger button styles for light mode
+          "bg-transparent focus:ring-red-400/20 hover:bg-red-50 text-red-500 border-red-500",
           "enabled:dark:focus:ring-red-800/20 enabled:dark:focus:bg-red-950/40 enabled:hover:dark:bg-red-950/50 enabled:dark:hover:border-red-800/50 dark:bg-transparent dark:text-red-500",
           "",
         ],
@@ -72,7 +72,7 @@ export const buttonVariants = cva(
           "dark:bg-transparent dark:text-nb-gray-400 dark:border-transparent dark:hover:text-white dark:hover:bg-zinc-800/50 dark:hover:border-nb-gray-800/50",
         ],
         danger: [
-          "", // TODO - add danger button styles for light mode
+          "bg-red-600 text-white hover:bg-red-700 focus:ring-red-400/50",
           "dark:focus:ring-red-700/20 dark:focus:bg-red-700 hover:dark:bg-red-700 dark:hover:border-red-800/50 dark:bg-red-600 dark:text-red-100",
         ],
       },

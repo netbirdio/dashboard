@@ -10,7 +10,7 @@ export const AIButton = () => {
     >
       <div
         className={
-          "flex items-center justify-center w-full h-full gap-2 bg-nb-gray-930/70 px-3 py-2.5 rounded-md"
+          "flex items-center justify-center w-full h-full gap-2 bg-gray-100/70 dark:bg-nb-gray-930/70 px-3 py-2.5 rounded-md"
         }
       >
         <Sparkles size={16} />

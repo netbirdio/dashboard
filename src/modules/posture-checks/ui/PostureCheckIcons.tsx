@@ -39,7 +39,7 @@ export const PostureCheckIcons = () => {
         </div>
       </Circle>
       <Circle className={"z-[1] top-2 "}>
-        <FaWindows className={"text-white text-md"} />
+        <FaWindows className={"text-gray-800 dark:text-white text-md"} />
       </Circle>
     </div>
   );
@@ -49,7 +49,7 @@ const Circle = ({ children, className }: Props) => {
   return (
     <div
       className={cn(
-        "h-10 w-10 rounded-full bg-nb-gray-900 flex items-center justify-center relative border-2 border-nb-gray",
+        "h-10 w-10 rounded-full bg-gray-100 dark:bg-nb-gray-900 flex items-center justify-center relative border-2 border-gray-300 dark:border-nb-gray",
         className,
       )}
     >

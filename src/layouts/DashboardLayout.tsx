@@ -54,7 +54,7 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
     <div className={cn("flex flex-col h-screen", mobileNavOpen && "flex")}>
       {mobileNavOpen && (
         <motion.div
-          className={"h-screen bg-nb-gray-950 w-11/12 max-w-[22rem]"}
+          className={"h-screen dark:bg-nb-gray-950 bg-gray-100 w-11/12 max-w-[22rem]"}
           layout={true}
           transition={{
             type: "spring",
@@ -105,7 +105,7 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
           layout={"position"}
           className={cn(
             mobileNavOpen
-              ? "border border-nb-gray-900 shadow-inner overflow-hidden rounded-xl fixed scale-75"
+              ? "border dark:border-nb-gray-900 border-gray-200 shadow-inner overflow-hidden rounded-xl fixed scale-75"
               : "",
           )}
           transition={{

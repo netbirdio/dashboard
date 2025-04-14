@@ -11,6 +11,7 @@ import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
 import NetBirdLogo from "@/assets/netbird.svg";
 import NetBirdLogoFull from "@/assets/netbird-full.svg";
+import NetBirdLogoFullLight from "@/assets/netbird-full-light.svg";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -23,16 +24,22 @@ export default function NavbarWithDropdown() {
     return (
       <>
         <Image
+          src={NetBirdLogoFullLight}
+          height={22}
+          alt={"NetBird Logo"}
+          className={"hidden dark:hidden md:block"}
+        />
+        <Image
           src={NetBirdLogoFull}
           height={22}
           alt={"NetBird Logo"}
-          className={"hidden md:block"}
+          className={"hidden dark:md:block"}
         />
         <Image
           src={NetBirdLogo}
           width={30}
           alt={"NetBird Logo"}
-          className={"md:hidden"}
+          className={"block md:hidden"}
         />
       </>
     );

@@ -21,7 +21,7 @@ export default function NoResultsCard({
       <Card className={"w-full relative overflow-hidden"}>
         <div
           className={
-            "absolute z-20 bg-gradient-to-b  dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
+            "absolute z-20 bg-gradient-to-b to-white from-white/70 dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
           }
         ></div>
         <div
@@ -40,14 +40,14 @@ export default function NoResultsCard({
         <div className={"max-w-md mx-auto relative z-20 py-8"}>
           <div
             className={
-              "mx-auto w-10 h-10 bg-nb-gray-930 flex items-center justify-center mb-3 rounded-md border border-nb-gray-800"
+              "mx-auto w-10 h-10 bg-gray-100 dark:bg-nb-gray-930 flex items-center justify-center mb-3 rounded-md border border-gray-200 dark:border-nb-gray-800"
             }
           >
             {icon || <FilterX size={24} />}
           </div>
           <div className={"text-center"}>
             <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title}</h1>
-            <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>
+            <Paragraph className={"justify-center my-2 text-gray-500 dark:!text-nb-gray-400"}>
               {description}
             </Paragraph>
             {children}

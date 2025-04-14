@@ -23,8 +23,8 @@ export default function ResourceNameCell({ resource }: Readonly<Props>) {
     >
       <div
         className={cn(
-          "flex items-center justify-center rounded-md h-9 w-9 shrink-0 bg-nb-gray-900 transition-all",
-          "group-hover:bg-nb-gray-800",
+          "flex items-center justify-center rounded-md h-9 w-9 shrink-0 bg-gray-100 dark:bg-nb-gray-900 transition-all",
+          "group-hover:bg-gray-200 dark:group-hover:bg-nb-gray-800",
         )}
       >
         {resource.type === "host" && <WorkflowIcon size={15} />}
@@ -34,7 +34,7 @@ export default function ResourceNameCell({ resource }: Readonly<Props>) {
       <div
         className={cn(
           "flex flex-col gap-0 text-neutral-300  font-light truncate",
-          "group-hover:text-neutral-100 text-left",
+          "group-hover:text-neutral-800 dark:group-hover:text-neutral-100 text-left",
         )}
       >
         <TextWithTooltip

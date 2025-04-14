@@ -52,7 +52,7 @@ export const PostureCheckCard = ({
       <ScaleIcon
         size={14}
         className={
-          "text-nb-gray-400 hover:text-nb-gray-200 transition-all cursor-pointer -top-[1px] relative"
+          "text-gray-400 hover:text-gray-600 dark:text-nb-gray-400 dark:hover:text-nb-gray-200 transition-all cursor-pointer -top-[1px] relative"
         }
       />
     </FullTooltip>
@@ -63,7 +63,7 @@ export const PostureCheckCard = ({
       <div
         onClick={() => setOpen(true)}
         className={
-          "hover:bg-nb-gray-920/80 border border-transparent hover:border-nb-gray-900 rounded-md flex flex-col items-center transition-all cursor-pointer w-full"
+          "hover:bg-gray-100 dark:hover:bg-nb-gray-920/80 border border-transparent hover:border-gray-300 dark:hover:border-nb-gray-900 rounded-md flex flex-col items-center transition-all cursor-pointer w-full"
         }
       >
         <div className={"flex gap-4 items-center w-full px-4 py-3"}>
@@ -86,7 +86,7 @@ export const PostureCheckCard = ({
                 {license && licenseToolTip}
               </span>
             </div>
-            <div className={"text-xs mt-0.5 text-nb-gray-300"}>
+            <div className={"text-xs mt-0.5 text-gray-500 dark:text-nb-gray-300"}>
               {description}
             </div>
           </div>
@@ -95,8 +95,8 @@ export const PostureCheckCard = ({
               className={cn(
                 "text-[10px] rounded-full px-1 py-1 flex items-center gap-1 w-[50px] justify-center uppercase font-medium",
                 active
-                  ? "text-green-400 bg-green-900 hover:bg-green-800 transition-all hover:text-green-200"
-                  : "text-nb-gray-400 bg-nb-gray-900",
+                  ? "text-green-600 bg-green-100 hover:bg-green-200 dark:text-green-400 dark:bg-green-900 dark:hover:bg-green-800 transition-all dark:hover:text-green-200"
+                  : "text-gray-500 bg-gray-200 dark:text-nb-gray-400 dark:bg-nb-gray-900",
               )}
               onClick={(e) => {
                 e.preventDefault();
@@ -140,7 +140,7 @@ export const PostureCheckCard = ({
                 {title}
                 {license && licenseToolTip}
               </div>
-              <div className={"text-xs mt-0.5 text-nb-gray-300"}>
+              <div className={"text-xs mt-0.5 text-gray-500 dark:text-nb-gray-300"}>
                 {description}
               </div>
             </div>

@@ -35,10 +35,10 @@ export const AccessControlGroupCount = ({ group_id }: Props) => {
               <div
                 key={route.id}
                 className={
-                  "w-full gap-10 flex text-nb-gray-300/80 justify-between"
+                  "w-full gap-10 flex text-gray-500/80 dark:text-nb-gray-300/80 justify-between"
                 }
               >
-                <span className={"flex items-center gap-2 text-nb-gray-200"}>
+                <span className={"flex items-center gap-2 text-gray-600 dark:text-nb-gray-200"}>
                   <RouteIcon size={12} /> {route.network_id}
                 </span>
                 {domains ? (
@@ -56,7 +56,7 @@ export const AccessControlGroupCount = ({ group_id }: Props) => {
     >
       <div
         className={
-          "text-nb-gray-300 font-medium flex items-center gap-2 hover:text-nb-gray-100 transition-all"
+          "text-gray-500 dark:text-nb-gray-300 font-medium flex items-center gap-2 hover:text-gray-700 dark:hover:text-nb-gray-100 transition-all"
         }
       >
         <RouteIcon size={14} className={"shrink-0"} />

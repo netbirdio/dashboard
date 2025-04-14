@@ -76,7 +76,7 @@ export default function GroupBadgeWithEditPeers({
         >
           <div
             className={
-              "text-nb-gray-200 flex gap-1.5 items-center z-10 relative"
+              "text-gray-700 dark:text-nb-gray-200 flex gap-1.5 items-center z-10 relative"
             }
           >
             <FolderGit2 size={12} className={"shrink-0"} />
@@ -93,13 +93,13 @@ export default function GroupBadgeWithEditPeers({
           </div>
           <span
             className={
-              "text-[0.7rem] relative leading-none mt-[2px] text-nb-gray-300 mb-[1px] font-normal flex gap-1.5 items-center group-hover/badge:text-netbird transition-all"
+              "text-[0.7rem] relative leading-none mt-[2px] text-gray-500 dark:text-nb-gray-300 mb-[1px] font-normal flex gap-1.5 items-center group-hover/badge:text-netbird transition-all"
             }
           >
             <span>
               <span
                 className={
-                  "font-medium text-nb-gray-200 group-hover/badge:text-netbird transition-all"
+                  "font-medium text-gray-600 dark:text-nb-gray-200 group-hover/badge:text-netbird transition-all"
                 }
               >
                 {peerCount}

@@ -17,6 +17,7 @@ import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import ExpirationDateRow from "@/modules/common-table-rows/ExpirationDateRow";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 import SetupKeyNameCell from "@/modules/setup-keys/SetupKeyNameCell";
+import { Popover, PopoverContent } from "@components/Popover";
 
 type Props = {
   user: User;
@@ -99,7 +100,7 @@ export default function AccessTokensTable({ user }: Props) {
               data={tokens}
             />
           ) : (
-            <div className={"bg-nb-gray-950 overflow-hidden"}>
+            <div className={"bg-default overflow-hidden"}>
               <NoResults
                 className={"py-3"}
                 title={"No access tokens"}

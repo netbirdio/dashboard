@@ -113,8 +113,8 @@ export function ActivityEventCodeSelector({
             <div className={"relative"}>
               <CommandInput
                 className={cn(
-                  "min-h-[42px] w-full relative",
-                  "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
+                  "min-h-[42px] w-full relative border-default items-center",
+                  "border-b-0 border-t-0 border-r-0 border-l-0",
                   "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
                   "dark:placeholder:text-neutral-500 font-light placeholder:text-neutral-500 pl-10",
                 )}

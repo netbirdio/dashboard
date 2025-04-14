@@ -143,7 +143,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
             <div className={"flex items-center gap-3"}>
               <div
                 className={
-                  "w-10 h-10 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
+                  "w-10 h-10 rounded-full relative flex items-center justify-center text-gray-700 dark:text-white uppercase text-md font-medium bg-gray-200 dark:bg-nb-gray-900"
                 }
                 style={
                   user.is_service_user

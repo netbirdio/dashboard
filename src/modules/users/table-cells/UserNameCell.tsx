@@ -17,7 +17,7 @@ export default function UserNameCell({ user }: Props) {
     >
       <div
         className={
-          "w-10 h-10 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
+          "w-10 h-10 rounded-full relative flex items-center justify-center text-gray-700 dark:text-white uppercase text-md font-medium bg-gray-200 dark:bg-nb-gray-900"
         }
         style={{
           color: user?.name
@@ -30,7 +30,7 @@ export default function UserNameCell({ user }: Props) {
         {(status == "invited" || status == "blocked") && (
           <div
             className={cn(
-              "w-5 h-5 absolute -right-1 -bottom-1 bg-nb-gray-930 rounded-full flex items-center justify-center border-2 border-nb-gray-950",
+              "w-5 h-5 absolute -right-1 -bottom-1 bg-gray-100 dark:bg-nb-gray-930 rounded-full flex items-center justify-center border-2 border-gray-200 dark:border-nb-gray-950",
               status == "invited" && "bg-yellow-400 text-yellow-900",
               status == "blocked" && "bg-red-500 text-red-100",
             )}
@@ -53,7 +53,7 @@ export default function UserNameCell({ user }: Props) {
             </span>
           )}
         </span>
-        <span className={cn("text-sm text-nb-gray-400")}>{user.email}</span>
+        <span className={cn("text-sm text-gray-500 dark:text-nb-gray-400")}>{user.email}</span>
       </div>
     </div>
   );

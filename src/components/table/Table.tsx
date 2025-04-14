@@ -33,7 +33,7 @@ const Table = React.forwardRef<
         ref={ref}
         className={cn(
           "caption-bottom text-sm min-w-full max-w-full w-full",
-          minimal ? "" : "border dark:border-zinc-700/40 border-l-0 border-r-0",
+          minimal ? "" : "border dark:border-zinc-700/40 border-gray-200 border-l-0 border-r-0",
           className,
         )}
         {...props}
@@ -53,7 +53,7 @@ const TableHeader = React.forwardRef<
   <thead
     ref={ref}
     className={cn(
-      !minimal && "[&_tr]:border-b dark:border-zinc-700/40",
+      !minimal && "[&_tr]:border-b dark:border-zinc-700/40 border-gray-200",
       className,
     )}
     {...props}
@@ -68,7 +68,7 @@ const TableBody = React.forwardRef<
   <tbody
     ref={ref}
     className={cn(
-      "[&_tr:last-child]:border-0 dark:border-zinc-700/40",
+      "[&_tr:last-child]:border-0 dark:border-zinc-700/40 border-gray-200",
       className,
     )}
     {...props}
@@ -101,11 +101,12 @@ const TableRow = React.forwardRef<
   <tr
     ref={ref}
     className={cn(
-      " transition-colors group/table-row data-[state=selected]:bg-neutral-100 dark:data-[state=selected]:bg-nb-gray-930/70",
-      "dark:data-[state=selected]:border-nb-gray-900",
+      "transition-colors group/table-row data-[state=selected]:bg-neutral-100 dark:data-[state=selected]:bg-nb-gray-930/70",
+      "data-[state=selected]:border-gray-200 dark:data-[state=selected]:border-nb-gray-900",
+      "table-row-hoverable",
       minimal
-        ? "dark:hover:bg-nb-gray-900/10"
-        : "border-b dark:border-zinc-700/40 dark:hover:bg-nb-gray-940 hover:bg-neutral-100/50",
+        ? ""
+        : "border-b dark:border-zinc-700/40 border-gray-200",
       className,
     )}
     {...props}
@@ -125,10 +126,10 @@ const TableHead = React.forwardRef<
   <th
     ref={ref}
     className={cn(
-      "h-12 px-4 text-left align-middle uppercase font-medium  [&:has([role=checkbox])]:pr-0 w-auto",
+      "h-12 px-4 text-left align-middle uppercase font-medium [&:has([role=checkbox])]:pr-0 w-auto",
       minimal
         ? "px-6"
-        : "text-neutral-500 dark:text-nb-gray-400 dark:bg-nb-gray-900",
+        : "text-neutral-500 bg-gray-50 dark:text-nb-gray-400 dark:bg-nb-gray-900",
       inset && "first:pl-[52px]",
       className,
     )}
@@ -166,7 +167,7 @@ const TableCaption = React.forwardRef<
   <caption
     ref={ref}
     className={cn(
-      "mt-4 text-sm text-neutral-500 dark:text-neutral-400 ",
+      "mt-4 text-sm text-muted ",
       className,
     )}
     {...props}

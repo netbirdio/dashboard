@@ -20,32 +20,31 @@ export interface InputProps
   prefixClassName?: string;
 }
 
-const inputVariants = cva("", {
-  variants: {
-    variant: {
-      default: [
-        "dark:bg-nb-gray-900 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-200 dark:border-nb-gray-700",
-        "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50 dark:focus-visible:ring-neutral-500/20 focus-visible:ring-neutral-300/10",
-      ],
-      darker: [
-        "dark:bg-nb-gray-920 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-300 dark:border-nb-gray-800",
-        "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50 dark:focus-visible:ring-neutral-500/20 focus-visible:ring-neutral-300/10",
-      ],
-      error: [
-        "dark:bg-nb-gray-900 dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500 border-neutral-200 dark:border-red-500 text-red-500",
-        "ring-offset-red-500/10 dark:ring-offset-red-500/10 dark:focus-visible:ring-red-500/10 focus-visible:ring-red-500/10",
-      ],
+const inputVariants = cva(
+  [
+    "flex w-full min-h-[42px] rounded-md bg-white px-3 pb-3 pt-2.5 text-sm file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 transition-colors",
+    "file:border-0",
+    "focus-visible:ring-2 focus-visible:ring-offset-2",
+    "dark:placeholder:text-neutral-400/70 placeholder:text-neutral-500",
+    "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50",
+  ],
+  {
+    variants: {
+      variant: {
+        default:
+          "border border-default dark:bg-nb-gray-900 focus-visible:ring-neutral-950 dark:focus-visible:ring-neutral-300",
+        error:
+          "border border-red-500/50 dark:border-red-500/50 dark:bg-nb-gray-900 focus-visible:ring-red-500/20 dark:focus-visible:ring-red-500/20",
+        grey:
+          "border border-default bg-gray-100 dark:bg-nb-gray-900 text-gray-500 dark:text-nb-gray-300 focus-visible:ring-neutral-950 dark:focus-visible:ring-neutral-300",
+        ghost: "border border-transparent",
+      },
     },
-    prefixSuffixVariant: {
-      default: [
-        "dark:bg-nb-gray-900 border-neutral-200 dark:border-nb-gray-700 text-nb-gray-300",
-      ],
-      error: [
-        "dark:bg-nb-gray-900 border-red-500 text-nb-gray-300 text-red-500",
-      ],
+    defaultVariants: {
+      variant: "default",
     },
   },
-});
+);
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
   (
@@ -71,11 +70,10 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           {customPrefix && (
             <div
               className={cn(
-                inputVariants({
-                  prefixSuffixVariant: error ? "error" : "default",
-                }),
-                "flex h-[42px] w-auto rounded-l-md bg-white px-3 py-2 text-sm ",
-                "border  items-center whitespace-nowrap",
+                "flex h-[42px] w-auto items-center whitespace-nowrap rounded-l-md border border-r-0 bg-white px-3 py-2 text-sm",
+                error
+                  ? "border-red-500/50 text-red-500 dark:border-red-500/50"
+                  : "border-default text-gray-500 dark:bg-nb-gray-900 dark:text-nb-gray-300",
                 props.disabled && "opacity-20",
                 prefixClassName,
               )}
@@ -86,7 +84,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           <div
             className={cn(
-              "absolute left-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pl-3 leading-[0]",
+              "absolute left-0 top-0 h-full flex items-center text-xs text-gray-500 dark:text-nb-gray-300 pl-3 leading-[0]",
               props.disabled && "opacity-30",
             )}
           >
@@ -112,7 +110,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
 
           <div
             className={cn(
-              "absolute right-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pr-4 leading-[0] select-none",
+              "absolute right-0 top-0 h-full flex items-center text-xs text-gray-500 dark:text-nb-gray-300 pr-4 leading-[0] select-none",
               props.disabled && "opacity-30",
             )}
           >
