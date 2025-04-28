@@ -14,5 +14,6 @@ export interface Account {
     jwt_allow_groups: string[];
     regular_users_view_blocked: boolean;
     routing_peer_dns_resolution_enabled: boolean;
+    dns_domain: string;
   };
 }

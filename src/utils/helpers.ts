@@ -41,47 +41,37 @@ export const sleep = (ms: number) => {
 };
 
 export const validator = {
-  isValidDomain: (domain: string) => {
-    const unicodeDomain =
-      /^(?!.*\.\.)(?!.*\.$)(?!.*\s)(?:(?!-)(?!.*--)[a-zA-Z0-9\u00A1-\uFFFF-]{1,63}(?<!-)\.)+(?!-)(?!.*--)[a-zA-Z0-9\u00A1-\uFFFF-]{2,63}$/u;
-    try {
-      const minMaxChars = [1, 255];
-      const isValidDomainLength =
-        domain.length >= minMaxChars[0] && domain.length <= minMaxChars[1];
-      const includesDot = domain.includes(".");
-      const hasNoWhitespace = !domain.includes(" ");
-      return (
-        unicodeDomain.test(domain) &&
-        includesDot &&
-        hasNoWhitespace &&
-        isValidDomainLength
-      );
-    } catch (e) {
-      return false;
-    }
-  },
-  isValidDomainWithWildcard: (domain: string) => {
-    // Basic checks
-    if (!domain || domain.length > 255 || domain.includes(" ")) {
-      return false;
-    }
+  isValidDomain: (
+    domain: string,
+    options?: { allowWildcard?: boolean; allowOnlyTld?: boolean },
+  ) => {
+    const { allowWildcard = true, allowOnlyTld = true } = options || {
+      allowWildcard: true,
+      allowOnlyTld: true,
+    };
 
-    // Handle wildcard
-    if (domain.includes("*")) {
-      if (!domain.startsWith("*.") || domain.indexOf("*", 1) !== -1) {
+    try {
+      const includesAtLeastOneDot = domain.includes(".");
+      const hasWhitespace = domain.includes(" ");
+      const domainRegex =
+        /^(?!-)[a-z0-9\u00a1-\uffff-*]{0,63}(?<!-)(\.[a-z0-9\u00a1-\uffff-*]{0,63})*$/i;
+      const isValidUnicodeDomain = domainRegex.test(domain);
+      if (domain.length < 1 || domain.length > 255) {
         return false;
       }
-      domain = "sub" + domain.slice(1); // Replace * with valid subdomain for testing
-    }
-
-    // Split and validate each part
-    const parts = domain.split(".");
-    if (parts.length < 2) {
+      if (!allowWildcard && domain.startsWith("*.")) {
+        return false;
+      }
+      if (allowWildcard && !domain.startsWith("*.") && domain.includes("*")) {
+        return false;
+      }
+      if (!allowOnlyTld && domain.startsWith(".")) {
+        return false;
+      }
+      return includesAtLeastOneDot && isValidUnicodeDomain && !hasWhitespace;
+    } catch (error) {
       return false;
     }
-
-    const validPart = /^[a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/;
-    return parts.every((part) => validPart.test(part));
   },
   isValidEmail: (email: string) => {
     const regExp = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,63}$/i;
