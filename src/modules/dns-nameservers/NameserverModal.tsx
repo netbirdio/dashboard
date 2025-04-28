@@ -590,7 +590,7 @@ function NameserverInput({
       </div>
 
       <Input
-        maxWidthClass={"max-w-[130px]"}
+        maxWidthClass={"min-w-[150px] max-w-[150px]"}
         customPrefix={"Port"}
         placeholder={"53"}
         value={port}
