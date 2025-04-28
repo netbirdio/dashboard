@@ -31,7 +31,7 @@ export const ResourceSingleAddressInput = ({ value, onChange }: Props) => {
 
     // Case 1: If it has characters (potential domain) but is not a CIDR block
     if (hasChars && !isCIDRBlock) {
-      if (!validator.isValidDomainWithWildcard(value)) {
+      if (!validator.isValidDomain(value)) {
         return "Please enter a valid domain, e.g. intra.example.com or *.example.com";
       }
       return ""; // Valid domain
