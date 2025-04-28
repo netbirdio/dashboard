@@ -154,7 +154,9 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Version</DataTableHeader>;
     },
-    cell: ({ row }) => <PeerVersionCell version={row.original.version} />,
+    cell: ({ row }) => (
+      <PeerVersionCell version={row.original.version} os={row.original.os} />
+    ),
   },
   {
     id: "status",
