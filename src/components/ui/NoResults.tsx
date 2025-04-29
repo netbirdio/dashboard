@@ -22,7 +22,7 @@ export default function NoResults({
     <div className={cn("relative overflow-hidden", className)}>
       <div
         className={
-          "absolute z-20 bg-gradient-to-b dark:to-nb-gray-950 dark:from-nb-gray-950/70 w-full h-full overflow-hidden top-0"
+          "absolute z-20 bg-gradient-to-b to-white from-white/70 dark:to-nb-gray-950 dark:from-nb-gray-950/70 w-full h-full overflow-hidden top-0"
         }
       ></div>
       <div
@@ -39,14 +39,14 @@ export default function NoResults({
       <div className={cn("max-w-md mx-auto relative z-20 py-6")}>
         <div
           className={
-            "mx-auto w-14 h-14 bg-nb-gray-930 flex items-center justify-center mb-3 rounded-md"
+            "mx-auto w-14 h-14 bg-gray-100 dark:bg-nb-gray-930 flex items-center justify-center mb-3 rounded-md"
           }
         >
           {icon ? icon : <FilterX size={24} />}
         </div>
         <div className={"text-center"}>
           <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title}</h1>
-          <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>
+          <Paragraph className={"justify-center my-2 text-gray-500 dark:!text-nb-gray-400"}>
             {description}
           </Paragraph>
           {children}

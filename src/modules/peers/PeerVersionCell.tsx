@@ -39,7 +39,7 @@ export default function PeerVersionCell({ version, os }: Props) {
     <TooltipProvider>
       <Tooltip delayDuration={10}>
         <TooltipTrigger>
-          <div className="flex gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md items-center">
+          <div className="flex gap-2 items-center interactive-cell">
             <MemoizedNetBirdIcon />
             {version == "development" ? "dev" : version}
             <div className={"relative"}>
@@ -64,7 +64,7 @@ export default function PeerVersionCell({ version, os }: Props) {
 
           <div
             className={
-              "text-neutral-300 flex flex-col gap-1 max-w-[300px] text-xs mt-1"
+              "flex flex-col gap-1 max-w-[300px] text-xs mt-1"
             }
           >
             A new version of Netbird is available. Please update your client to

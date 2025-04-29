@@ -51,8 +51,8 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
         columnVisibility={{
           description: false,
         }}
-        tableClassName={"mt-6 !border-0"}
-        rowClassName={"!border-b-0 px-10"}
+        tableClassName={"mt-6"}
+        rowClassName={undefined}
         data={postureChecks}
         searchPlaceholder={"Search by name and description..."}
         onRowClick={(row) => row.toggleSelected()}

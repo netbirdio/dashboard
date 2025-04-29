@@ -17,7 +17,7 @@ import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
 import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
 
-const inter = localFont({
+const interFont = localFont({
   src: "../assets/fonts/Inter.ttf",
   display: "swap",
 });
@@ -32,19 +32,19 @@ export const viewport: Viewport = {
 
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
-      <body className={cn(inter.className, "dark:bg-nb-gray bg-gray-50")}>
+    <html lang="en" className={cn("h-full")} suppressHydrationWarning>
+      <body className={cn(interFont.className, "bg-default transition-colors")}>
         <AnalyticsProvider>
           <DialogProvider>
-            <GlobalThemeProvider>
-              <ErrorBoundaryProvider>
-                <OIDCProvider>
+            <ErrorBoundaryProvider>
+              <OIDCProvider>
+                <GlobalThemeProvider>
                   <TooltipProvider delayDuration={0}>
                     {children}
                   </TooltipProvider>
-                </OIDCProvider>
-              </ErrorBoundaryProvider>
-            </GlobalThemeProvider>
+                </GlobalThemeProvider>
+              </OIDCProvider>
+            </ErrorBoundaryProvider>
           </DialogProvider>
           <Toaster
             position={"top-center"}

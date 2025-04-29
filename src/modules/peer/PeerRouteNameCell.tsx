@@ -7,8 +7,8 @@ type Props = {
 };
 export default function PeerRouteNameCell({ route }: Props) {
   return (
-    <div className={"flex items-center gap-2 text-nb-gray-200"}>
-      <NetworkRoutesIcon size={16} className={"shrink-0 fill-nb-gray-300"} />
+    <div className={"flex items-center gap-2 text-gray-700 dark:text-nb-gray-200"}>
+      <NetworkRoutesIcon size={16} className={"shrink-0 fill-gray-500 dark:fill-nb-gray-300"} />
       {route.network_id}
     </div>
   );

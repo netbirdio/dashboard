@@ -16,7 +16,7 @@ export const Lightbox = ({ image }: Props) => {
         <div
           onClick={() => setOpen(true)}
           className={
-            "bg-nb-gray-900 p-2 mt-2 select-none relative rounded-lg border border-nb-gray-800 cursor-pointer group/lightbox transition-all"
+            "bg-gray-100 dark:bg-nb-gray-900 p-2 mt-2 select-none relative rounded-lg border border-gray-200 dark:border-nb-gray-800 cursor-pointer group/lightbox transition-all"
           }
         >
           <div
@@ -53,7 +53,7 @@ export const Lightbox = ({ image }: Props) => {
             <div
               onClick={() => setOpen(false)}
               className={
-                "p-2 bg-nb-gray-900/80 backdrop-blur-2xl rounded-md border border-nb-gray-500 hover:bg-nb-gray-900/90 transition-all cursor-pointer"
+                "p-2 bg-gray-200/80 dark:bg-nb-gray-900/80 backdrop-blur-2xl rounded-md border border-gray-300 dark:border-nb-gray-500 hover:bg-gray-300/90 dark:hover:bg-nb-gray-900/90 transition-all cursor-pointer"
               }
             >
               <X size={20} />

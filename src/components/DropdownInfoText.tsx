@@ -8,7 +8,7 @@ type Props = {
 
 export const DropdownInfoText = ({ children, className }: Props) => {
   return (
-    <div className={cn("text-center pt-2 mb-6 text-nb-gray-400", className)}>
+    <div className={cn("text-center pt-2 mb-6 text-gray-500 dark:text-nb-gray-400", className)}>
       {children}
     </div>
   );

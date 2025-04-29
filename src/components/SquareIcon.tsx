@@ -11,7 +11,7 @@ const iconVariant = cva(
         blue: "bg-sky-950 border-sky-500 text-sky-100",
         "blue-darker": "bg-sky-950 border-sky-500 text-sky-500",
         red: "bg-red-950 border-red-500 text-red-500",
-        gray: "bg-nb-gray-930 border-nb-gray-800 text-gray-500",
+        gray: "bg-gray-100 border-gray-300 text-gray-500 dark:bg-nb-gray-930 dark:border-nb-gray-800 dark:text-gray-500",
         green: "bg-green-950 border-green-500 text-green-500",
         purple: "bg-purple-950 border-purple-500 text-purple-500",
         indigo: "bg-indigo-950 border-indigo-500 text-indigo-500",

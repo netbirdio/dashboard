@@ -15,16 +15,19 @@ const switchVariants = cva("", {
     },
     variant: {
       default: [
-        "dark:data-[state=checked]:bg-netbird dark:data-[state=unchecked]:bg-nb-gray-700",
-        "data-[state=checked]:bg-neutral-900 data-[state=unchecked]:bg-neutral-200",
+        "data-[state=checked]:bg-netbird data-[state=unchecked]:bg-neutral-200",
+        "dark:data-[state=unchecked]:bg-nb-gray-700",
+        "dark:data-[state=checked]:bg-netbird",
       ],
       "red-green": [
-        "dark:data-[state=checked]:bg-red-600 dark:data-[state=unchecked]:bg-nb-gray-700",
         "data-[state=checked]:bg-red-500 data-[state=unchecked]:bg-red-200",
+        "dark:data-[state=unchecked]:bg-nb-gray-700",
+        "dark:data-[state=checked]:bg-red-600",
       ],
       red: [
-        "dark:data-[state=checked]:bg-red-600 dark:data-[state=unchecked]:bg-nb-gray-700",
         "data-[state=checked]:bg-red-500 data-[state=unchecked]:bg-red-200",
+        "dark:data-[state=unchecked]:bg-nb-gray-700",
+        "dark:data-[state=checked]:bg-red-600",
       ],
     },
     "thumb-size": {
@@ -45,9 +48,12 @@ const ToggleSwitch = React.forwardRef<
   ) => (
     <SwitchPrimitives.Root
       className={cn(
-        "peer inline-flex  shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 focus-visible:ring-offset-white disabled:cursor-not-allowed disabled:opacity-50  dark:focus-visible:ring-neutral-300 dark:focus-visible:ring-offset-neutral-950 ",
-        className,
+        "peer inline-flex shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors",
+        "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 focus-visible:ring-offset-white",
+        "disabled:cursor-not-allowed disabled:opacity-50",
+        "dark:focus-visible:ring-neutral-300 dark:focus-visible:ring-offset-neutral-950",
         switchVariants({ size, variant }),
+        className,
       )}
       {...props}
       data-cy={dataCy}
@@ -60,7 +66,7 @@ const ToggleSwitch = React.forwardRef<
       <SwitchPrimitives.Thumb
         className={cn(
           switchVariants({ "thumb-size": size }),
-          "pointer-events-none block  rounded-full bg-white shadow-lg ring-0 transition-transform  data-[state=unchecked]:translate-x-0 dark:bg-white",
+          "pointer-events-none block rounded-full bg-white shadow-lg ring-0 transition-transform data-[state=unchecked]:translate-x-0 dark:bg-white",
         )}
       />
     </SwitchPrimitives.Root>

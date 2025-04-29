@@ -44,18 +44,13 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, InputProps>(
             ref={ref}
             {...props}
             className={cn(
-              inputVariants({ variant: error ? "error" : variant }),
-              "flex w-full min-h-[42px] rounded-md bg-white px-3 pb-3 pt-2.5 text-sm file:bg-transparent file:text-sm file:font-medium  focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50  ",
-              "file:border-0",
-              "focus-visible:ring-2 focus-visible:ring-offset-2",
-              "border",
-              "overflow-hidden",
-              className,
+              "flex min-h-[80px] w-full rounded-md border border-default bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-nb-gray-900 dark:ring-offset-neutral-950 dark:focus-visible:ring-neutral-300",
+              error
+                ? "dark:!border-red-500/50 !border-red-500/50 focus-visible:ring-red-500/20 dark:focus-visible:ring-red-500/20"
+                : "focus-visible:ring-neutral-950 dark:focus-visible:ring-neutral-300",
               resize ? "resize" : "resize-none",
+              className,
             )}
-            style={{
-              height: variant === "darker" ? "42px" : "auto",
-            }}
           />
           {customElement && customElement}
         </div>

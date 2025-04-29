@@ -21,7 +21,7 @@ export const ProcessTooltip = ({ check, children }: Props) => {
       content={
         <div
           className={
-            "text-neutral-300 text-sm max-w-xs flex flex-col gap-1 min-w-0"
+            "text-gray-700 dark:text-neutral-300 text-sm max-w-xs flex flex-col gap-1 min-w-0"
           }
         >
           <div className={"px-4 pt-3"}>

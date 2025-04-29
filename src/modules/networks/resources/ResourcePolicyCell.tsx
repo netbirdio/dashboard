@@ -55,7 +55,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
           <FullTooltip
             content={
               <div className={"text-xs max-w-lg"}>
-                <span className={"font-medium text-nb-gray-100 text-sm"}>
+                <span className={"font-medium text-primary text-sm"}>
                   Assigned Policies
                 </span>
                 <div className={"flex gap-2 pt-2 pb-2 flex-wrap"}>

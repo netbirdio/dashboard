@@ -21,7 +21,7 @@ export const GeoLocationTooltip = ({ children, check }: Props) => {
       content={
         <div
           className={
-            "text-neutral-300 flex flex-col items-start text-sm gap-1 justify-start min-w-[200px]"
+            "text-gray-700 dark:text-neutral-300 flex flex-col items-start text-sm gap-1 justify-start min-w-[200px]"
           }
         >
           <div className={"px-4 pt-3"}>

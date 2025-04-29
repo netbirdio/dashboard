@@ -201,10 +201,10 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 
             <div
               className={cn(
-                "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+                "border border-gray-200 dark:border-nb-gray-900 border-t-0 rounded-b-md bg-gray-50 dark:bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
                 !loginExpiration
                   ? "opacity-50 pointer-events-none"
-                  : "bg-nb-gray-930/80",
+                  : "bg-subtle-emphasis",
               )}
             >
               <div className={cn("flex justify-between gap-10 mt-2")}>

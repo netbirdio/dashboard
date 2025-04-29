@@ -196,7 +196,7 @@ export const AssignGroupToPeerModalContent = ({
                 {groupName !== "All" && (
                   <button
                     className={
-                      "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
+                      "flex items-center gap-2 interactive-cell"
                     }
                     onClick={() => setGroupNameModal(true)}
                   >
@@ -257,7 +257,7 @@ export const AssignGroupToPeerModalContent = ({
               <div className={"text-sm"}>
                 {Object.keys(selectedRows).length > 0 && (
                   <div className={"text-nb-gray-200"}>
-                    <span className={"text-netbird font-medium"}>
+                    <span className={"text-highlight font-medium"}>
                       {Object.keys(selectedRows).length}
                     </span>{" "}
                     Peer(s) selected

@@ -123,7 +123,7 @@ export function SelectDropdown({
                 <div className={"flex items-center gap-2.5"}>
                   {selected?.icon && <selected.icon size={14} width={14} />}
                   <div className={"flex flex-col text-sm font-medium"}>
-                    <span className={"text-nb-gray-200"}>
+                    <span className={"text-gray-700 dark:text-nb-gray-200"}>
                       {selected?.label}
                     </span>
                   </div>
@@ -133,7 +133,7 @@ export function SelectDropdown({
               <React.Fragment>
                 <div className={"flex items-center gap-2.5"}>
                   <div className={"flex flex-col text-sm font-medium"}>
-                    <span className={"text-nb-gray-200"}>{placeholder}</span>
+                    <span className={"text-gray-500 dark:text-nb-gray-200"}>{placeholder}</span>
                   </div>
                 </div>
               </React.Fragment>
@@ -171,7 +171,7 @@ export function SelectDropdown({
             )}
 
             {filteredItems.length == 0 && (
-              <div className={"text-center pb-2 px-3 text-nb-gray-400 text-xs"}>
+              <div className={"text-center pb-2 px-3 text-gray-500 dark:text-nb-gray-400 text-xs"}>
                 There are no results matching your search.
               </div>
             )}
@@ -236,7 +236,7 @@ const SelectDropdownItem = ({
           <div className={"flex items-center gap-2.5 p-1"}>
             {option.icon && <option.icon size={14} width={14} />}
             <div className={"flex flex-col text-sm font-medium"}>
-              <span className={"text-nb-gray-200"}>{option.label}</span>
+              <span className={"text-gray-700 dark:text-nb-gray-200"}>{option.label}</span>
             </div>
           </div>
           {showValue && (

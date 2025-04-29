@@ -40,11 +40,11 @@ export default function Code({
         className={cn(
           "rounded-md text-sm  transition-all relative duration-300 border",
           dark
-            ? "bg-gray-50  border-neutral-200 dark:border-nb-gray-800 hover:dark:bg-nb-gray-900/80 dark:bg-nb-gray-930"
-            : "bg-gray-50  border-neutral-200 dark:border-nb-gray-700 hover:dark:bg-nb-gray-900/80 dark:bg-nb-gray-900",
+            ? "bg-gray-50 border-neutral-200 dark:border-nb-gray-800 hover:bg-gray-100 dark:hover:bg-nb-gray-900/80 dark:bg-nb-gray-930"
+            : "bg-gray-50 border-default hover:bg-gray-100 dark:hover:bg-nb-gray-900/80 dark:bg-nb-gray-900",
           dark
-            ? "text-nb-gray-300 hover:text-nb-gray-300"
-            : "dark:text-nb-gray-200 hover:dark:text-nb-gray-200",
+            ? "text-gray-700 hover:text-gray-900 dark:text-nb-gray-300 dark:hover:text-nb-gray-300"
+            : "text-gray-700 hover:text-gray-900 dark:text-nb-gray-200 dark:hover:text-nb-gray-200",
           "overflow-x-auto relative z-0 w-full",
           className,
         )}
@@ -77,7 +77,7 @@ export default function Code({
 
 function CodeComment({ children }: Props) {
   return (
-    <pre className={"text-nb-gray-400 block w-full whitespace-pre"}>
+    <pre className={"text-gray-500 dark:text-nb-gray-400 block w-full whitespace-pre"}>
       {children}
     </pre>
   );

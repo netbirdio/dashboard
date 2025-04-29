@@ -24,7 +24,7 @@ export const UserAvatar = ({ size = "default" }: Props) => {
   ) : (
     <div
       className={cn(
-        "rounded-full flex items-center justify-center bg-nb-gray-900 text-netbird uppercase",
+        "rounded-full flex items-center justify-center bg-gray-200 dark:bg-nb-gray-900 text-gray-700 dark:text-netbird uppercase",
         size == "small" && "w-8 h-8",
         size == "default" && "w-10 h-10",
         size == "large" && "w-12 h-12",

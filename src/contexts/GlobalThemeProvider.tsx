@@ -7,11 +7,26 @@ import dynamic from "next/dynamic";
 import { type ThemeProviderProps } from "next-themes/dist/types";
 import * as React from "react";
 import { SkeletonTheme } from "react-loading-skeleton";
+import { useTheme } from "next-themes";
 
 const NextThemesProvider = dynamic(
   () => import("next-themes").then((mod) => mod.ThemeProvider),
   { ssr: false },
 );
+
+function ThemedSkeletonProvider({ children }: { children: React.ReactNode }) {
+  const { resolvedTheme, theme } = useTheme();
+  const isDark = resolvedTheme === "dark" || theme === "dark";
+
+  return (
+    <SkeletonTheme
+      baseColor={isDark ? "#25282d" : "#e4e7e9"}
+      highlightColor={isDark ? "#33373e" : "#f4f6f7"}
+    >
+      {children}
+    </SkeletonTheme>
+  );
+}
 
 export function GlobalThemeProvider({
   children,
@@ -22,14 +37,14 @@ export function GlobalThemeProvider({
       attribute="class"
       defaultTheme="dark"
       storageKey="netbird-theme"
-      enableSystem={false}
+      enableSystem={true}
       disableTransitionOnChange
       {...props}
     >
       <Flowbite theme={{ theme: netbirdTheme }}>
-        <SkeletonTheme baseColor={"#25282d"} highlightColor={"#33373e"}>
+        <ThemedSkeletonProvider>
           {children}
-        </SkeletonTheme>
+        </ThemedSkeletonProvider>
       </Flowbite>
     </NextThemesProvider>
   );

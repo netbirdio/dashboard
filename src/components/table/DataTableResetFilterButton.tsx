@@ -1,6 +1,7 @@
 import Button from "@components/Button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@components/Tooltip";
 import { Table } from "@tanstack/react-table";
+import { cn } from "@utils/helpers";
 import { FilterX } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
@@ -30,12 +31,16 @@ export default function DataTableResetFilterButton<TData>({
         }}
       >
         <Button
-          className={"h-[42px]"}
+          className={cn(
+            "h-[42px]",
+            // Override button styles for better contrast in light mode
+            "bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-nb-gray-900/30 dark:text-gray-400 dark:hover:bg-zinc-800/50"
+          )}
           variant={"secondary"}
           disabled={isDisabled}
           onClick={onClick}
         >
-          <FilterX size={16} />
+          <FilterX size={16} className="text-gray-700 dark:text-gray-300" />
         </Button>
       </TooltipTrigger>
 
@@ -46,7 +51,7 @@ export default function DataTableResetFilterButton<TData>({
           if (hovered) event.preventDefault();
         }}
       >
-        <span className={"text-xs text-neutral-300"}>
+        <span className={"text-xs text-gray-500 dark:text-neutral-300"}>
           Reset Filters & Search
         </span>
       </TooltipContent>

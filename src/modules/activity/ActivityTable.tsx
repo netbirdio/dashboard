@@ -106,7 +106,6 @@ export default function ActivityTable({
     <DataTable
       headingTarget={headingTarget}
       wrapperClassName={"gap-0 flex flex-col"}
-      tableClassName={"px-8 mt-10"}
       paginationClassName={"max-w-[800px]"}
       as={"div"}
       text={"Activity Events"}

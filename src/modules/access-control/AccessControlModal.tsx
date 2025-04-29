@@ -225,7 +225,7 @@ export function AccessControlModalContent({
             <Text
               size={16}
               className={
-                "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+                "text-gray-500 dark:text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
             Name & Description
@@ -243,8 +243,8 @@ export function AccessControlModalContent({
                 <HelpText className={"max-w-sm"}>
                   Allow only specified network protocols. To change traffic
                   direction and ports, select{" "}
-                  <b className={"text-white"}>TCP</b> or{" "}
-                  <b className={"text-white"}>UDP</b> protocol.
+                  <b className={"text-gray-700 dark:text-white"}>TCP</b> or{" "}
+                  <b className={"text-gray-700 dark:text-white"}>UDP</b> protocol.
                 </HelpText>
               </div>
               <Select
@@ -256,7 +256,7 @@ export function AccessControlModalContent({
                     className={"flex items-center gap-3"}
                     data-cy={"protocol-select-button"}
                   >
-                    <Share2 size={15} className={"text-nb-gray-300"} />
+                    <Share2 size={15} className={"text-gray-400 dark:text-nb-gray-300"} />
                     <SelectValue placeholder="Select protocol..." />
                   </div>
                 </SelectTrigger>

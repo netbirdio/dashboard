@@ -71,10 +71,10 @@ export const JSONFileUpload = ({ onChange }: Props) => {
   return (
     <div
       className={cn(
-        " flex gap-5 border border-dashed hover:border-nb-gray-600/50 rounded-md border-nb-gray-600/40 items-center justify-center group/upload",
-        "bg-nb-gray-930/50 hover:bg-nb-gray-930/40 cursor-pointer transition-all px-4 pb-8 pt-6",
-        dragActive && "border-nb-gray-600/80 hover:border-nb-gray-600/60",
-        dragActive && "bg-nb-gray-900/40 hover:bg-nb-gray-930/50",
+        " flex gap-5 border border-dashed hover:border-gray-400/50 rounded-md border-gray-400/40 items-center justify-center group/upload",
+        "bg-gray-100/50 dark:bg-nb-gray-930/50 hover:bg-gray-100 dark:hover:bg-nb-gray-930/40 cursor-pointer transition-all px-4 pb-8 pt-6",
+        dragActive && "border-gray-500/80 dark:border-nb-gray-600/80 hover:border-gray-500/60 dark:hover:border-nb-gray-600/60",
+        dragActive && "bg-gray-200/60 dark:bg-nb-gray-900/40 hover:bg-gray-200 dark:hover:bg-nb-gray-930/50",
       )}
       onDragEnter={handleDrag}
       onDragOver={handleDrag}
@@ -94,20 +94,20 @@ export const JSONFileUpload = ({ onChange }: Props) => {
       />
       <div
         className={
-          "bg-nb-gray-930 p-2.5 rounded-md mt-0.5 group-hover/upload:bg-nb-gray-930/80 transition-all"
+          "bg-gray-200/50 dark:bg-nb-gray-930 p-2.5 rounded-md mt-0.5 group-hover/upload:bg-gray-200 dark:group-hover/upload:bg-nb-gray-930/80 transition-all"
         }
       >
         <FileJson2 size={20} className={"text-netbird"} />
       </div>
 
       <div>
-        <p className={"text-[14px] font-medium text-nb-gray-100 "}>
+        <p className={"text-[14px] font-medium text-gray-800 dark:text-nb-gray-100 "}>
           Upload your service account key (.json)
         </p>
-        <p className={"text-xs !text-nb-gray-300 mt-1"}>
+        <p className={"text-xs !text-gray-500 dark:!text-nb-gray-300 mt-1"}>
           <span
             className={
-              "underline underline-offset-4 group-hover/upload:text-nb-gray-200 transition-all"
+              "underline underline-offset-4 group-hover/upload:text-gray-600 dark:group-hover/upload:text-nb-gray-200 transition-all"
             }
           >
             Click to upload

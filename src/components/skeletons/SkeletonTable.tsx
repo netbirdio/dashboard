@@ -35,7 +35,7 @@ export function TableSkeletonRow({ odd = false }: RowProps) {
   return (
     <div
       className={cn(
-        odd ? "bg-nb-gray-940/40" : "bg-nb-gray-940",
+        odd ? "bg-gray-100/40 dark:bg-nb-gray-940/40" : "bg-gray-100 dark:bg-nb-gray-940",
         "h-[55px] w-full flex items-center px-8 py-2 justify-between gap-10",
       )}
     >

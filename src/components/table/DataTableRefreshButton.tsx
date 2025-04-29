@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@components/Tooltip";
+import { cn } from "@utils/helpers";
 import { motion } from "framer-motion";
 import { RefreshCcw } from "lucide-react";
 import * as React from "react";
@@ -35,7 +36,11 @@ export default function DataTableRefreshButton({ onClick, isDisabled }: Props) {
         }}
       >
         <Button
-          className={"h-[42px]"}
+          className={cn(
+            "h-[42px]",
+            // Override button styles for better contrast in light mode
+            "bg-gray-200 hover:bg-gray-300 text-gray-700 dark:bg-nb-gray-900/30 dark:text-gray-400 dark:hover:bg-zinc-800/50"
+          )}
           variant={"secondary"}
           disabled={isDisabled == true ? true : disabled}
         >
@@ -44,7 +49,7 @@ export default function DataTableRefreshButton({ onClick, isDisabled }: Props) {
             animate={{ rotate: -360 }}
             transition={{ duration: 0.8 }}
           >
-            <RefreshCcw size={16} />
+            <RefreshCcw size={16} className="text-gray-700 dark:text-gray-300" />
           </motion.div>
         </Button>
       </TooltipTrigger>

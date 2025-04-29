@@ -179,7 +179,7 @@ function PeerOverview() {
                       <ModalTrigger>
                         <div
                           className={
-                            "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
+                            "flex items-center gap-2 interactive-cell"
                           }
                         >
                           <PencilIcon size={16} />
@@ -241,10 +241,10 @@ function PeerOverview() {
                 {isOwnerOrAdmin && !!peer?.user_id && (
                   <div
                     className={cn(
-                      "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+                      "border border-gray-200 dark:border-nb-gray-900 border-t-0 rounded-b-md bg-gray-50 dark:bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
                       !loginExpiration
                         ? "opacity-50 pointer-events-none"
-                        : "bg-nb-gray-930/80",
+                        : "bg-subtle-emphasis",
                     )}
                   >
                     <PeerExpirationToggle
@@ -548,7 +548,7 @@ function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
               If the domain name already exists, we add an increment number
               suffix to it.
             </HelpText>
-            <div className={"text-netbird text-sm break-all whitespace-normal"}>
+            <div className={"text-highlight text-sm break-all whitespace-normal"}>
               {domainNamePreview}
             </div>
           </Card>

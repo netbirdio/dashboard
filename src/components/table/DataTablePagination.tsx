@@ -29,12 +29,12 @@ export function DataTablePagination<TData>({
 
   return pageCount > 1 ? (
     <div className={cn("flex items-center justify-between", paginationPadding)}>
-      <div className="text-nb-gray-400">
+      <div className="text-gray-500 dark:text-nb-gray-400">
         Showing{" "}
-        <span className={"font-medium text-white"}>
+        <span className={"font-medium text-gray-700 dark:text-white"}>
           {showingFrom} to {showingTo}
         </span>{" "}
-        of <span className={"font-medium text-white"}>{allRows}</span> {text}
+        of <span className={"font-medium text-gray-700 dark:text-white"}>{allRows}</span> {text}
       </div>
       <div className={"flex items-center gap-3"}>
         <div className="flex items-center space-x-2">

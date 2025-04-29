@@ -169,7 +169,7 @@ export default function GroupsTab({ account }: Props) {
               </>
             }
             helpText={
-              "Allow group propagation from user’s auto-groups to peers, sharing membership information."
+              "Allow group propagation from user's auto-groups to peers, sharing membership information."
             }
           />
           {(!isNetBirdHosted() || isLocalDev()) && (
@@ -183,7 +183,7 @@ export default function GroupsTab({ account }: Props) {
                 </>
               }
               helpText={
-                "Extract & sync groups from JWT claims with user’s auto-groups, auto-creating groups from tokens."
+                "Extract & sync groups from JWT claims with user's auto-groups, auto-creating groups from tokens."
               }
             />
           )}
@@ -202,7 +202,7 @@ export default function GroupsTab({ account }: Props) {
                   <div
                     className={cn(
                       !jwtGroupSync && "opacity-50 pointer-events-none",
-                      "flex flex-col gap-6 bg-nb-gray-940 px-6 pt-5 pb-6 border border-nb-gray-930 rounded-b-md relative mx-3",
+                      "flex flex-col gap-6 bg-gray-50 dark:bg-nb-gray-940 px-6 pt-5 pb-6 border border-gray-200 dark:border-nb-gray-930 rounded-b-md relative mx-3",
                     )}
                   >
                     <div>

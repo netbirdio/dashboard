@@ -253,10 +253,10 @@ export function PeerGroupSelector({
       <PopoverTrigger asChild>
         <button
           className={cn(
-            "min-h-[46px] w-full relative items-center group",
-            "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
-            "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
-            "disabled:pointer-events-none disabled:opacity-30 transition-all",
+            "min-h-[48px] w-full relative items-center border-default",
+            "border justify-between py-2 px-3",
+            "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex text-neutral-500 dark:text-neutral-400/70 cursor-pointer enabled:hover:bg-gray-50 enabled:hover:dark:bg-nb-gray-900/50",
+            "disabled:cursor-not-allowed disabled:opacity-40",
           )}
           disabled={disabled}
           data-cy={dataCy}
@@ -330,7 +330,7 @@ export function PeerGroupSelector({
           <div className={"pl-2"} data-cy={"group-selector-open-close"}>
             <ChevronsUpDown
               size={18}
-              className={"shrink-0 group-hover:text-nb-gray-300 transition-all"}
+              className={"shrink-0 text-gray-400 dark:text-nb-gray-400 group-hover:text-gray-600 dark:group-hover:text-nb-gray-300 transition-all"}
             />
           </div>
         </button>
@@ -359,10 +359,10 @@ export function PeerGroupSelector({
               <CommandInput
                 data-cy={"group-search-input"}
                 className={cn(
-                  "min-h-[42px] w-full relative",
-                  "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
+                  "min-h-[42px] w-full relative border-default items-center",
+                  "border-b-0 border-t-0 border-r-0 border-l-0",
                   "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
-                  "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
+                  "dark:placeholder:text-neutral-500 font-light placeholder:text-neutral-500 pl-10",
                 )}
                 ref={searchRef}
                 value={search}
@@ -385,7 +385,7 @@ export function PeerGroupSelector({
               >
                 <div
                   className={
-                    "flex items-center bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-nb-gray-500"
+                    "flex items-center bg-gray-100 dark:bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-gray-300 dark:border-nb-gray-500"
                   }
                 >
                   <IconArrowBack size={10} />
