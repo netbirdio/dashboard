@@ -70,7 +70,7 @@ export default function NetBirdSettings() {
         </VerticalTabs.List>
         <RestrictedAccess
           page={"Settings"}
-          hasAccess={permission.billing.read || permission.settings.read}
+          hasAccess={permission.settings.read}
         >
           <div className={"border-l border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
