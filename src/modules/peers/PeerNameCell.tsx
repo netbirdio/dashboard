@@ -43,7 +43,8 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
           }
         >
           <div className={"text-nb-gray-400 font-light truncate"}>
-            {displayUserEmailOrName || (displayUserId && `user: ${displayUserId}`)}
+            {displayUserEmailOrName ||
+              (displayUserId && `user: ${displayUserId}`)}
           </div>
         </ActiveInactiveRow>
       </div>
