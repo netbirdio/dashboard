@@ -11,6 +11,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { Policy } from "@/interfaces/Policy";
 import PageContainer from "@/layouts/PageContainer";
@@ -19,6 +20,8 @@ const AccessControlTable = lazy(
   () => import("@/modules/access-control/table/AccessControlTable"),
 );
 export default function AccessControlPage() {
+  const { permission } = usePermissions();
+
   const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
 
   const { ref: headingRef, portalTarget } =
@@ -53,7 +56,10 @@ export default function AccessControlPage() {
           </Paragraph>
         </div>
 
-        <RestrictedAccess page={"Access Control"}>
+        <RestrictedAccess
+          page={"Access Control"}
+          hasAccess={permission.policies.read}
+        >
           <PoliciesProvider>
             <Suspense fallback={<SkeletonTable />}>
               <AccessControlTable

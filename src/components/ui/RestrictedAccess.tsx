@@ -4,28 +4,21 @@ import SquareIcon from "@components/SquareIcon";
 import { LockIcon } from "lucide-react";
 import * as React from "react";
 import Skeleton from "react-loading-skeleton";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
-import { Role } from "@/interfaces/User";
 
 type Props = {
-  children: React.ReactNode;
-  allow?: Role[];
+  children?: React.ReactNode;
+  hasAccess?: boolean;
   page?: string;
 };
+
 export const RestrictedAccess = ({
   children,
-  allow = [Role.Admin, Role.Owner],
+  hasAccess = false,
   page = "this page",
 }: Props) => {
-  const { loggedInUser } = useLoggedInUser();
+  if (hasAccess) return children;
 
-  const isAllowed = loggedInUser
-    ? allow.includes(loggedInUser?.role as Role)
-    : false;
-
-  return isAllowed ? (
-    <>{children}</>
-  ) : (
+  return (
     <div className={"px-8"}>
       <div
         className={
@@ -54,7 +47,7 @@ export const RestrictedAccess = ({
           <div className={"w-full h-full z-20 relative left-0 top-0 flex py-8"}>
             <div className={"inline-flex justify-center w-full"}>
               <div>
-                <div className={"max-w-lg relative z-50"}>
+                <div className={"max-w-xl relative z-50"}>
                   <div className={"text-center flex flex-col gap-2 p-8"}>
                     <div className={"mx-auto"}>
                       {" "}
@@ -66,13 +59,13 @@ export const RestrictedAccess = ({
                     </div>
                     <div className={"text-center"}>
                       <h1
-                        className={"text-3xl font-medium max-w-lg mx-auto mt-3"}
+                        className={"text-3xl font-medium max-w-xl mx-auto mt-3"}
                       >
                         {"You don't have access to"} <br /> {page}
                       </h1>
                       <Paragraph className={"justify-center my-3"}>
                         {
-                          "Seems like you don't have access to this page. Only users with admin access can visit this page. Please contact your network administrator for further information."
+                          "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information."
                         }
                       </Paragraph>
                     </div>

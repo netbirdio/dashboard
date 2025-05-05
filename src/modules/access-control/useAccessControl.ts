@@ -169,7 +169,10 @@ export const useAccessControl = ({
     );
     const groups = await Promise.all(
       createOrUpdateGroups.map((call) => call()),
-    );
+    ).then((groups) => {
+      mutate("/groups");
+      return groups;
+    });
 
     // Create posture checks if they don't have an ID
     let hasError = false;

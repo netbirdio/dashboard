@@ -12,12 +12,15 @@ export interface NotifyProps<T> {
   title: string;
   description: string;
   promise?: Promise<T | ErrorResponse>;
+  loadingTitle?: string;
   loadingMessage?: string;
   duration?: number;
   icon?: React.ReactNode;
   backgroundColor?: string;
   preventSuccessToast?: boolean;
+  errorMessages?: ErrorResponse[];
 }
+
 interface NotificationProps<T> extends NotifyProps<T> {
   t: Toast;
 }
@@ -28,9 +31,11 @@ export default function Notification<T>({
   backgroundColor,
   t,
   promise,
+  loadingTitle,
   loadingMessage,
   duration = 3500,
   preventSuccessToast = false,
+  errorMessages,
 }: NotificationProps<T>) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(!!promise);
@@ -51,15 +56,27 @@ export default function Notification<T>({
     if (promise) {
       promise
         .then(() => {
-          if (preventSuccessToast) setPreventSuccess(true);
           setLoading(false);
           closeToast();
+          if (preventSuccessToast) setPreventSuccess(true);
         })
         .catch((e) => {
           const err = e as ErrorResponse;
-          const message = err.message || "Something went wrong...";
+          let message = err.message || "Something went wrong...";
+          message = message.charAt(0).toUpperCase() + message.slice(1);
           const code: number = err.code || 418;
-          setError(`Code ${code}: ${message}`);
+
+          if (errorMessages) {
+            const errorMessage = errorMessages.find(
+              (error) => error.code === code,
+            );
+            if (errorMessage) {
+              setError(errorMessage.message);
+            }
+          } else {
+            setError(`Code ${code}: ${message}`);
+          }
+
           setLoading(false);
           closeToast();
         });
@@ -101,7 +118,9 @@ export default function Notification<T>({
             </div>
             <div className={"flex flex-col text-sm"}>
               <p>
-                <span className={"font-semibold"}>{title}</span>
+                <span className={"font-semibold"}>
+                  {loading ? loadingTitle || title : title}
+                </span>
               </p>
               <p
                 className={"text-xs dark:text-nb-gray-300 text-gray-600 mt-0.5"}

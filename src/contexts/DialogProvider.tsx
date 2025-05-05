@@ -26,6 +26,7 @@ type DialogOptions = {
   cancelText?: string;
   type?: "default" | "warning" | "danger" | "center";
   children?: React.ReactNode;
+  maxWidthClass?: string;
 };
 
 export default function DialogProvider({ children }: Props) {
@@ -62,7 +63,10 @@ export default function DialogProvider({ children }: Props) {
         onOpenChange={(open) => fn.current && fn.current(open)}
       >
         {dialogOptions && (
-          <ModalContent maxWidthClass={"max-w-[400px]"} showClose={false}>
+          <ModalContent
+            maxWidthClass={dialogOptions.maxWidthClass || "max-w-[400px]"}
+            showClose={false}
+          >
             <ModalHeader
               center={dialogOptions.type == "center"}
               title={dialogOptions.title || "Confirmation"}

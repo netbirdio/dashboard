@@ -1,36 +1,48 @@
-export function getColorFromCode(code: string) {
-  if (code.includes("add")) {
-    return "green";
-  } else if (code.includes("join")) {
-    return "green";
-  } else if (code.includes("invite")) {
-    return "green";
-  } else if (code.includes("create")) {
-    return "green";
-  } else if (code.includes("delete")) {
-    return "red";
-  } else if (code.includes("update")) {
-    return "blue-darker";
-  } else if (code.includes("revoke")) {
-    return "red";
-  } else if (code.includes("overuse")) {
-    return "netbird";
-  } else if (code.includes("overuse")) {
-    return "netbird";
-  } else if (code.includes("enable")) {
-    return "blue-darker";
-  } else if (code.includes("disable")) {
-    return "blue-darker";
-  } else if (code.includes("rename")) {
-    return "blue-darker";
-  } else if (code.includes("block")) {
-    return "red";
-  } else if (code.includes("unblock")) {
-    return "blue-darker";
-  } else if (code.includes("login")) {
-    return "blue-darker";
-  } else if (code.includes("expire")) {
-    return "netbird";
+enum ActionStatus {
+  SUCCESS = "green",
+  ERROR = "red",
+  INFO = "blue-darker",
+  WARNING = "netbird",
+}
+
+const ACTION_COLOR_MAPPING: Record<string, ActionStatus> = {
+  // Success actions
+  add: ActionStatus.SUCCESS,
+  join: ActionStatus.SUCCESS,
+  invite: ActionStatus.SUCCESS,
+  create: ActionStatus.SUCCESS,
+  approve: ActionStatus.SUCCESS,
+  complete: ActionStatus.SUCCESS,
+  activate: ActionStatus.SUCCESS,
+
+  // Error actions
+  delete: ActionStatus.ERROR,
+  revoke: ActionStatus.ERROR,
+  block: ActionStatus.ERROR,
+
+  // Warning actions
+  overuse: ActionStatus.WARNING,
+  expire: ActionStatus.WARNING,
+
+  // Info actions
+  update: ActionStatus.INFO,
+  enable: ActionStatus.INFO,
+  disable: ActionStatus.INFO,
+  rename: ActionStatus.INFO,
+  unblock: ActionStatus.INFO,
+  login: ActionStatus.INFO,
+};
+
+export function getColorFromCode(code: string): string {
+  try {
+    const matchingAction = Object.keys(ACTION_COLOR_MAPPING).find((action) =>
+      code.includes(action),
+    );
+
+    return matchingAction
+      ? ACTION_COLOR_MAPPING[matchingAction]
+      : ActionStatus.INFO;
+  } catch (error) {
+    return ActionStatus.INFO;
   }
-  return "blue-darker";
 }

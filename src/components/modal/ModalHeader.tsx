@@ -25,7 +25,7 @@ export default function ModalHeader({
   center,
 }: Props) {
   return (
-    <div className={cn(className, "min-w-0")}>
+    <div className={cn(className, "min-w-0 relative z-[1]")}>
       <div className={"flex items-start gap-5 min-w-0"}>
         {icon && <SquareIcon color={color} icon={icon} />}
         <div className={cn("min-w-0", center && "text-center")}>

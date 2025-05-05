@@ -11,6 +11,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense, useMemo } from "react";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 import PageContainer from "@/layouts/PageContainer";
@@ -21,6 +22,7 @@ const SetupKeysTable = lazy(
 
 export default function SetupKeys() {
   const { data: setupKeys, isLoading } = useFetchApi<SetupKey[]>("/setup-keys");
+  const { permission } = usePermissions();
   const { groups } = useGroups();
 
   const setupKeysWithGroups = useMemo(() => {
@@ -71,7 +73,10 @@ export default function SetupKeys() {
           in our documentation.
         </Paragraph>
       </div>
-      <RestrictedAccess page={"Setup Keys"}>
+      <RestrictedAccess
+        page={"Setup Keys"}
+        hasAccess={permission.setup_keys.read}
+      >
         <Suspense fallback={<SkeletonTable />}>
           <SetupKeysTable
             headingTarget={portalTarget}

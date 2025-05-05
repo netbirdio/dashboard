@@ -6,6 +6,7 @@ import { HelpCircle, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -13,6 +14,7 @@ type Props = {
   network: Network;
 };
 export default function NetworkRoutingPeerCell({ network }: Props) {
+  const { permission } = usePermissions();
   const router = useRouter();
   const disabledText = useMemo(
     () => (
@@ -99,6 +101,7 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
         variant={"secondary"}
         className={"min-w-[130px]"}
         onClick={() => openAddRoutingPeerModal(network)}
+        disabled={!permission.networks.update}
       >
         <PlusCircle size={12} />
         Add Routing Peer

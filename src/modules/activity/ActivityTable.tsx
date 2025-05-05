@@ -9,9 +9,10 @@ import AddPeerButton from "@components/ui/AddPeerButton";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
+import { uniqBy } from "lodash";
 import { ExternalLinkIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
@@ -19,7 +20,10 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import { ActivityEntryRow } from "@/modules/activity/ActivityEntryRow";
 import { ActivityEventCodeSelector } from "@/modules/activity/ActivityEventCodeSelector";
-import { ActivityUserSelector } from "@/modules/activity/ActivityUserSelector";
+import {
+  UsersDropdownSelector,
+  UserSelectOption,
+} from "@/modules/activity/UsersDropdownSelector";
 
 type Props = {
   events?: ActivityEvent[];
@@ -102,6 +106,18 @@ export default function ActivityTable({
     to: dayjs(initialDateRange?.to).toDate(),
   });
 
+  const userSelectOptions = useMemo(() => {
+    const uniqueUsers = uniqBy(events, (event) => event.initiator_email);
+    return uniqueUsers.map((event) => {
+      return {
+        name: event.initiator_name,
+        id: event.initiator_id,
+        email: event.initiator_email || "NetBird",
+        external: !!event?.meta?.external,
+      } as UserSelectOption;
+    });
+  }, [events]);
+
   return (
     <DataTable
       headingTarget={headingTarget}
@@ -109,12 +125,12 @@ export default function ActivityTable({
       tableClassName={"px-8 mt-10"}
       paginationClassName={"max-w-[800px]"}
       as={"div"}
-      text={"Activity Events"}
+      text={"Audit Events"}
       sorting={sorting}
       setSorting={setSorting}
       columns={ActivityFeedColumnsTable}
       data={events}
-      searchPlaceholder={"Search by activity name..."}
+      searchPlaceholder={"Search by audit name, user, peer, meta..."}
       isLoading={isLoading}
       columnVisibility={{
         timestamp: false,
@@ -191,8 +207,8 @@ export default function ActivityTable({
               />
             )}
             {events && (
-              <ActivityUserSelector
-                events={events}
+              <UsersDropdownSelector
+                options={userSelectOptions}
                 value={
                   (table
                     .getColumn("initiator_email")
@@ -211,7 +227,7 @@ export default function ActivityTable({
             <DataTableRefreshButton
               isDisabled={events?.length == 0}
               onClick={() => {
-                mutate("/events").then();
+                mutate("/events/audit").then();
               }}
             />
           </>

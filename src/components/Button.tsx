@@ -10,6 +10,7 @@ export interface ButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement>,
     ButtonVariants {
   disabled?: boolean;
+  stopPropagation?: boolean;
 }
 
 export const buttonVariants = cva(
@@ -45,6 +46,11 @@ export const buttonVariants = cva(
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
           "dark:bg-nb-gray-900  dark:text-gray-400  dark:border-nb-gray-700 dark:hover:bg-nb-gray-900/80",
         ],
+        dropdown: [
+          "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-neutral-200 text-gray-900",
+          "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
+          "dark:bg-nb-gray-900/40 dark:text-gray-400 dark:border-nb-gray-800 dark:hover:bg-nb-gray-900/50",
+        ],
         dotted: [
           "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-gray-200 text-gray-900 border-dashed",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
@@ -68,8 +74,8 @@ export const buttonVariants = cva(
           "",
         ],
         "default-outline": [
-          "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20",
-          "dark:bg-transparent dark:text-nb-gray-400 dark:border-transparent dark:hover:text-white dark:hover:bg-zinc-800/50 dark:hover:border-nb-gray-800/50",
+          "dark:ring-offset-nb-gray-950/50 dark:focus:ring-nb-gray-500/20",
+          "dark:bg-transparent dark:text-nb-gray-400 dark:border-transparent dark:hover:text-white dark:hover:bg-nb-gray-900/30 dark:hover:border-nb-gray-800/50",
         ],
         danger: [
           "", // TODO - add danger button styles for light mode
@@ -103,6 +109,7 @@ const Button = forwardRef(
       rounded = true,
       border = 1,
       size = "md",
+      stopPropagation = true,
       ...props
     }: ButtonProps,
     ref: React.ForwardedRef<HTMLButtonElement>,
@@ -122,7 +129,7 @@ const Button = forwardRef(
           props.className,
         )}
         onClick={(e) => {
-          e.stopPropagation();
+          stopPropagation && e.stopPropagation();
           props.onClick && props.onClick(e);
         }}
       >

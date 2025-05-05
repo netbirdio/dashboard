@@ -1,8 +1,9 @@
 "use client";
 
 import * as Collapsible from "@radix-ui/react-collapsible";
+import { cn } from "@utils/helpers";
 import classNames from "classnames";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { ChevronDownIcon, ChevronUpIcon, DotIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
@@ -18,7 +19,10 @@ export type SidebarItemProps = {
   href?: string;
   exactPathMatch?: boolean;
   target?: string;
+  labelClassName?: string;
+  visible: boolean;
 };
+
 export default function SidebarItem({
   icon,
   children,
@@ -29,11 +33,14 @@ export default function SidebarItem({
   href = "",
   exactPathMatch = false,
   target = "_self",
-}: SidebarItemProps) {
+  labelClassName,
+  visible,
+}: Readonly<SidebarItemProps>) {
   const [open, setOpen] = React.useState(false);
   const path = usePathname();
   const router = useRouter();
-  const { mobileNavOpen, toggleMobileNav } = useApplicationContext();
+  const { mobileNavOpen, toggleMobileNav, isNavigationCollapsed } =
+    useApplicationContext();
 
   const handleClick = () => {
     const preventRedirect = href
@@ -54,14 +61,15 @@ export default function SidebarItem({
     return href ? (exactPathMatch ? path == href : path.includes(href)) : false;
   }, [path, href, exactPathMatch, collapsible]);
 
+  if (!visible) return;
+
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen}>
       <Collapsible.Trigger asChild>
-        <li className={"px-4 cursor-pointer"}>
+        <li className={"px-4 cursor-pointer list-none"}>
           <button
             className={classNames(
-              "rounded-lg text-[.87rem] w-full ",
-              "font-normal ",
+              "rounded-lg text-[.87rem] w-full relative font-normal",
               className,
               isChild
                 ? "pl-7 pr-2 py-[.45rem] mt-1 mb-0.5"
@@ -72,22 +80,56 @@ export default function SidebarItem({
             )}
             onClick={handleClick}
           >
+            {isChild && isNavigationCollapsed && !mobileNavOpen && (
+              <div
+                className={
+                  "absolute left-0 top-0 w-full h-full flex items-center justify-center group-hover/navigation:hidden text-[10px]"
+                }
+              >
+                <DotIcon size={14} className={"shrink-0"} />
+              </div>
+            )}
             <div
               className={classNames(
-                "flex w-full items-center shrink-0",
+                "flex w-full items-center shrink-0 ",
                 href == "" ? "disabled pointer-events-none" : "",
               )}
             >
               <span className="peer/icon" data-active={isActive} />
               {icon}
-              <span className="px-4 whitespace-nowrap flex-1 w-full text-left">
+
+              <span
+                className={cn(
+                  "px-4 whitespace-nowrap flex-1 w-full text-left",
+                  labelClassName,
+                  isNavigationCollapsed &&
+                    !mobileNavOpen &&
+                    "opacity-0 group-hover/navigation:opacity-100",
+                )}
+              >
                 {label}
               </span>
               {collapsible &&
                 (open ? (
-                  <ChevronUpIcon className={"shrink-0"} />
+                  <ChevronUpIcon
+                    size={18}
+                    className={cn(
+                      "shrink-0",
+                      isNavigationCollapsed &&
+                        !mobileNavOpen &&
+                        "opacity-0 group-hover/navigation:opacity-100",
+                    )}
+                  />
                 ) : (
-                  <ChevronDownIcon className={"shrink-0"} />
+                  <ChevronDownIcon
+                    size={18}
+                    className={cn(
+                      "shrink-0",
+                      isNavigationCollapsed &&
+                        !mobileNavOpen &&
+                        "opacity-0 group-hover/navigation:opacity-100",
+                    )}
+                  />
                 ))}
             </div>
           </button>

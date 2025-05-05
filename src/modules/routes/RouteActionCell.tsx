@@ -6,6 +6,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Route } from "@/interfaces/Route";
 import RouteUpdateModal from "@/modules/routes/RouteUpdateModal";
 
@@ -13,6 +14,7 @@ type Props = {
   route: Route;
 };
 export default function RouteActionCell({ route }: Props) {
+  const { permission } = usePermissions();
   const { confirm } = useDialog();
   const routeRequest = useApiCall<Route>("/routes");
   const { mutate } = useSWRConfig();
@@ -55,11 +57,17 @@ export default function RouteActionCell({ route }: Props) {
         variant={"default-outline"}
         size={"sm"}
         onClick={() => setEditModal(true)}
+        disabled={!permission.routes.update}
       >
         <PenSquare size={16} />
         Edit
       </Button>
-      <Button variant={"danger-outline"} size={"sm"} onClick={handleConfirm}>
+      <Button
+        variant={"danger-outline"}
+        size={"sm"}
+        onClick={handleConfirm}
+        disabled={!permission.routes.delete}
+      >
         <Trash2 size={16} />
         Delete
       </Button>

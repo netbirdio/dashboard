@@ -5,7 +5,8 @@ import { User } from "@/interfaces/User";
 type Props = {
   user: User;
 };
-export default function UserStatusCell({ user }: Props) {
+
+export default function UserStatusCell({ user }: Readonly<Props>) {
   const status = user.status;
 
   return (

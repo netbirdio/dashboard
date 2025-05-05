@@ -25,6 +25,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePeers } from "@/contexts/PeersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group, GroupPeer } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -52,6 +53,7 @@ const PeerGroupMassAssignmentContent = ({
 }: Props) => {
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
+  const { permission } = usePermissions();
 
   const { peers } = usePeers();
 
@@ -388,6 +390,9 @@ const PeerGroupMassAssignmentContent = ({
                           variant={"default-outline"}
                           size={"xs"}
                           className={"!h-9 !w-9"}
+                          disabled={
+                            !permission.peers.read || !permission.groups.update
+                          }
                         >
                           <FolderGit2 size={16} className={"shrink-0"} />
                         </Button>
@@ -400,6 +405,7 @@ const PeerGroupMassAssignmentContent = ({
                           size={"xs"}
                           className={"!h-9 !w-9"}
                           onClick={deleteAllPeers}
+                          disabled={!permission.peers.delete}
                         >
                           <Trash2 size={16} className={"shrink-0"} />
                         </Button>

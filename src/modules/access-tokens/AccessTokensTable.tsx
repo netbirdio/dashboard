@@ -64,9 +64,10 @@ export const AccessTokensTableColumns: ColumnDef<AccessToken>[] = [
   },
 ];
 
-export default function AccessTokensTable({ user }: Props) {
+export default function AccessTokensTable({ user }: Readonly<Props>) {
   const { data: tokens } = useFetchApi<AccessToken[]>(
     `/users/${user.id}/tokens`,
+    true,
   );
 
   const path = usePathname();
@@ -83,35 +84,33 @@ export default function AccessTokensTable({ user }: Props) {
   );
 
   return (
-    <>
-      <UserProvider user={user}>
-        <Card className={"mt-5 w-full"}>
-          {tokens && tokens.length > 0 ? (
-            <DataTable
-              text={"Access Tokens"}
-              tableClassName={"mt-0"}
-              minimal={true}
-              showSearchAndFilters={false}
-              inset={false}
-              sorting={sorting}
-              setSorting={setSorting}
-              columns={AccessTokensTableColumns}
-              data={tokens}
+    <UserProvider user={user}>
+      <Card className={"mt-5 w-full"}>
+        {tokens && tokens.length > 0 ? (
+          <DataTable
+            text={"Access Tokens"}
+            tableClassName={"mt-0"}
+            minimal={true}
+            showSearchAndFilters={false}
+            inset={false}
+            sorting={sorting}
+            setSorting={setSorting}
+            columns={AccessTokensTableColumns}
+            data={tokens}
+          />
+        ) : (
+          <div className={"bg-nb-gray-950 overflow-hidden"}>
+            <NoResults
+              className={"py-3"}
+              title={"No access tokens"}
+              description={
+                "You don't have any access tokens yet. You can add a token to access the NetBird API."
+              }
+              icon={<IconApi size={20} className={"fill-nb-gray-300"} />}
             />
-          ) : (
-            <div className={"bg-nb-gray-950 overflow-hidden"}>
-              <NoResults
-                className={"py-3"}
-                title={"No access tokens"}
-                description={
-                  "You don't have any access tokens yet. You can add a token to access the NetBird API."
-                }
-                icon={<IconApi size={20} className={"fill-nb-gray-300"} />}
-              />
-            </div>
-          )}
-        </Card>
-      </UserProvider>
-    </>
+          </div>
+        )}
+      </Card>
+    </UserProvider>
   );
 }

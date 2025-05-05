@@ -8,6 +8,7 @@ import { sleep } from "@utils/helpers";
 import { usePathname } from "next/navigation";
 import { isExpired } from "react-jwt";
 import useSWR from "swr";
+import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { useErrorBoundary } from "@/contexts/ErrorBoundary";
 
 type Method = "GET" | "POST" | "PUT" | "DELETE";
@@ -20,9 +21,16 @@ export type ErrorResponse = {
 const config = loadConfig();
 
 type RequestOptions = {
+  key?: string;
   signal?: AbortSignal;
   origin?: string;
+  globalParams?: Params;
+  ignoreGlobalParams?: boolean;
+  blob?: boolean;
+  shouldRetryOnError?: boolean;
 };
+
+export type Params = Record<string, string | number | boolean>;
 
 async function apiRequest<T>(
   oidcFetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>,
@@ -32,8 +40,12 @@ async function apiRequest<T>(
   options?: RequestOptions,
 ) {
   const origin = options?.origin ? options?.origin : config.apiOrigin + "/api";
+  let newUrl = mergeUrlParams(
+    url,
+    options?.ignoreGlobalParams ? undefined : options?.globalParams,
+  );
 
-  const res = await oidcFetch(`${origin}${url}`, {
+  const res = await oidcFetch(`${origin}${newUrl}`, {
     method,
     body: JSON.stringify(data),
     signal: options?.signal,
@@ -44,6 +56,7 @@ async function apiRequest<T>(
       const error = (await res.json()) as ErrorResponse;
       return Promise.reject(error);
     }
+    if (options?.blob) return (await res.blob()) as T;
     return (await res.json()) as T;
   } catch (e) {
     if (!res.ok) {
@@ -113,20 +126,34 @@ export default function useFetchApi<T>(
 ) {
   const { fetch } = useNetBirdFetch(ignoreError);
   const handleErrors = useApiErrorHandling(ignoreError);
+  const { globalApiParams } = useApplicationContext();
+
+  const cacheKey = options?.key ? [url, options?.key] : url;
+  const fetchFn = options?.key
+    ? async ([url]: [url: string]) => {
+        if (!allowFetch) return;
+        return apiRequest<T>(fetch, "GET", url, undefined, {
+          ...options,
+          globalParams: globalApiParams,
+        }).catch((err) => handleErrors(err as ErrorResponse));
+      }
+    : async (url: string) => {
+        if (!allowFetch) return;
+        return apiRequest<T>(fetch, "GET", url, undefined, {
+          ...options,
+          globalParams: globalApiParams,
+        }).catch((err) => handleErrors(err as ErrorResponse));
+      };
 
   const { data, error, isLoading, isValidating, mutate } = useSWR(
-    url,
-    async (url) => {
-      if (!allowFetch) return;
-      return apiRequest<T>(fetch, "GET", url, undefined, options).catch((err) =>
-        handleErrors(err as ErrorResponse),
-      );
-    },
+    cacheKey,
+    fetchFn,
     {
       keepPreviousData: true,
       revalidateOnFocus: revalidate,
       revalidateIfStale: revalidate,
       revalidateOnReconnect: revalidate,
+      shouldRetryOnError: options?.shouldRetryOnError ?? true,
     },
   );
 
@@ -146,49 +173,38 @@ export function useApiCall<T>(
 ) {
   const { fetch } = useNetBirdFetch(ignoreError);
   const handleErrors = useApiErrorHandling(ignoreError);
+  const { globalApiParams } = useApplicationContext();
 
   return {
     post: async (data: any, suffix = "", options?: RequestOptions) => {
-      return apiRequest<T>(
-        fetch,
-        "POST",
-        url + suffix,
-        data,
-        options || requestOptions,
-      )
+      return apiRequest<T>(fetch, "POST", url + suffix, data, {
+        ...(options || requestOptions),
+        globalParams: globalApiParams,
+      })
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
     put: async (data: any, suffix = "", options?: RequestOptions) => {
-      return apiRequest<T>(
-        fetch,
-        "PUT",
-        url + suffix,
-        data,
-        options || requestOptions,
-      )
+      return apiRequest<T>(fetch, "PUT", url + suffix, data, {
+        ...(options || requestOptions),
+        globalParams: globalApiParams,
+      })
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
     del: async (data: any = "", suffix = "", options?: RequestOptions) => {
-      return apiRequest<T>(
-        fetch,
-        "DELETE",
-        url + suffix,
-        data,
-        options || requestOptions,
-      )
+      return apiRequest<T>(fetch, "DELETE", url + suffix, data, {
+        ...(options || requestOptions),
+        globalParams: globalApiParams,
+      })
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
     get: async (suffix = "", options?: RequestOptions) => {
-      return apiRequest<T>(
-        fetch,
-        "GET",
-        url + suffix,
-        undefined,
-        options || requestOptions,
-      )
+      return apiRequest<T>(fetch, "GET", url + suffix, undefined, {
+        ...(options || requestOptions),
+        globalParams: globalApiParams,
+      })
         .then((res) => Promise.resolve(res as T))
         .catch((err) => handleErrors(err as ErrorResponse)) as Promise<T>;
     },
@@ -224,4 +240,29 @@ export function useApiErrorHandling(ignoreError = false) {
 
     return Promise.reject(err);
   };
+}
+
+function mergeUrlParams(url: string, params?: Params): string {
+  try {
+    // Split the URL and query parts
+    const [basePath, existingQuery] = url.split("?");
+
+    // Create a search params object with existing query params
+    const searchParams = new URLSearchParams(existingQuery || "");
+
+    // Add new params if provided
+    if (params && typeof params === "object") {
+      Object.entries(params).forEach(([key, value]) => {
+        if (value !== undefined && value !== null) {
+          searchParams.set(key, String(value));
+        }
+      });
+    }
+
+    // Build the final URL
+    const queryString = searchParams.toString();
+    return queryString ? `${basePath}?${queryString}` : basePath;
+  } catch (error) {
+    return url;
+  }
 }

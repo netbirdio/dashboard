@@ -1,5 +1,6 @@
 import Card from "@components/Card";
 import Paragraph from "@components/Paragraph";
+import { cn } from "@utils/helpers";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
 
@@ -51,7 +52,9 @@ export default function GetStartedTest({
                     >
                       {title}
                     </h1>
-                    <Paragraph className={"justify-center my-3"}>
+                    <Paragraph
+                      className={cn("justify-center mt-3", button && "mb-3")}
+                    >
                       {description}
                     </Paragraph>
                   </div>

@@ -3,6 +3,7 @@ import { Modal } from "@components/modal/Modal";
 import { IconCirclePlus, IconDirectionSign } from "@tabler/icons-react";
 import * as React from "react";
 import { useState } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
 import { ExitNodeHelpTooltip } from "@/modules/exit-node/ExitNodeHelpTooltip";
 import { RouteModalContent } from "@/modules/routes/RouteModal";
@@ -13,11 +14,16 @@ type Props = {
 };
 export const AddExitNodeButton = ({ peer, firstTime = false }: Props) => {
   const [modal, setModal] = useState(false);
+  const { permission } = usePermissions();
 
   return (
     <>
       <ExitNodeHelpTooltip>
-        <Button variant={"secondary"} onClick={() => setModal(true)}>
+        <Button
+          variant={"secondary"}
+          onClick={() => setModal(true)}
+          disabled={!permission.routes.create}
+        >
           {!firstTime ? (
             <>
               <IconCirclePlus size={16} />

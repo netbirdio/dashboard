@@ -10,6 +10,7 @@ import { AlertOctagonIcon } from "lucide-react";
 import React from "react";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Account } from "@/interfaces/Account";
 
 type Props = {
@@ -20,19 +21,23 @@ const config = loadConfig();
 export default function DangerZoneTab({ account }: Props) {
   const { confirm } = useDialog();
   const deleteRequest = useApiCall<Account>("/accounts/" + account.id);
-  const { logout } = useOidc();
-
-  const logoutSession = async () => {
-    return logout("/", { client_id: config.clientId }).then();
-  };
+  const { logout } = useLoggedInUser();
 
   const deleteAccount = async () => {
+    const deletePromise = new Promise<void>((resolve, reject) => {
+      return deleteRequest
+        .del()
+        .catch((error) => reject(error))
+        .then(() => {
+          logout().then();
+          resolve();
+        });
+    });
+
     notify({
       title: "Delete NetBird account",
       description: "NetBird account was successfully deleted.",
-      promise: deleteRequest.del().then(() => {
-        logoutSession().then();
-      }),
+      promise: deletePromise,
       loadingMessage: "Deleting the account...",
     });
   };

@@ -11,6 +11,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import PeersProvider from "@/contexts/PeersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { Route } from "@/interfaces/Route";
 import PageContainer from "@/layouts/PageContainer";
@@ -21,6 +22,7 @@ const NetworkRoutesTable = lazy(
 );
 
 export default function NetworkRoutes() {
+  const { permission } = usePermissions();
   const { data: routes, isLoading } = useFetchApi<Route[]>("/routes");
   const groupedRoutes = useGroupedRoutes({ routes });
 
@@ -59,7 +61,7 @@ export default function NetworkRoutes() {
             </Paragraph>
           </div>
 
-          <RestrictedAccess>
+          <RestrictedAccess hasAccess={permission.routes.read}>
             <Suspense fallback={<SkeletonTable />}>
               <NetworkRoutesTable
                 isLoading={isLoading}

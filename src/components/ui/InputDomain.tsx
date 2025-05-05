@@ -13,6 +13,7 @@ type Props = {
   onRemove: () => void;
   onError?: (error: boolean) => void;
   error?: string;
+  disabled?: boolean;
 };
 enum ActionType {
   ADD = "ADD",
@@ -38,6 +39,7 @@ export default function InputDomain({
   onChange,
   onRemove,
   onError,
+  disabled,
 }: Readonly<Props>) {
   const [name, setName] = useState(value?.name || "");
 
@@ -74,6 +76,7 @@ export default function InputDomain({
           value={name}
           error={domainError}
           onChange={handleNameChange}
+          disabled={disabled}
         />
       </div>
 
@@ -81,6 +84,7 @@ export default function InputDomain({
         className={"h-[42px]"}
         variant={"default-outline"}
         onClick={onRemove}
+        disabled={disabled}
       >
         <MinusCircleIcon size={15} />
       </Button>

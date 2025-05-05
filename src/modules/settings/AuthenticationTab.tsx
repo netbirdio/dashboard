@@ -28,6 +28,7 @@ import {
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Account } from "@/interfaces/Account";
 
@@ -36,6 +37,8 @@ type Props = {
 };
 
 export default function AuthenticationTab({ account }: Readonly<Props>) {
+  const { permission } = usePermissions();
+
   const { mutate } = useSWRConfig();
 
   /**
@@ -113,6 +116,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               : false,
             peer_inactivity_expiration: 600,
             extra: {
+              ...account.settings?.extra,
               peer_approval_enabled: peerApproval,
             },
           },
@@ -168,7 +172,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 
           <Button
             variant={"primary"}
-            disabled={!hasChanges}
+            disabled={!hasChanges || !permission.settings.update}
             onClick={saveChanges}
             data-cy={"save-authentication-settings"}
           >
@@ -197,12 +201,13 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                   registered with SSO.
                 </>
               }
+              disabled={!permission.settings.update}
             />
 
             <div
               className={cn(
                 "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
-                !loginExpiration
+                !loginExpiration || !permission.settings.update
                   ? "opacity-50 pointer-events-none"
                   : "bg-nb-gray-930/80",
               )}
@@ -220,7 +225,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                     placeholder={"7"}
                     maxWidthClass={"min-w-[100px]"}
                     min={1}
-                    disabled={!loginExpiration}
+                    disabled={!loginExpiration || !permission.settings.update}
                     data-cy={"peer-login-expiration-input"}
                     max={180}
                     className={"w-full"}
@@ -229,7 +234,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                     onChange={(e) => setExpiresIn(e.target.value)}
                   />
                   <Select
-                    disabled={!loginExpiration}
+                    disabled={!loginExpiration || !permission.settings.update}
                     value={expireInterval}
                     onValueChange={(v) => setExpireInterval(v)}
                   >
@@ -263,6 +268,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                 onChange={setPeerInactivityExpirationEnabled}
                 dataCy={"peer-inactivity-expiration"}
                 label={<>Require login after disconnect</>}
+                disabled={!permission.settings.update}
                 helpText={
                   <>
                     Enable to require authentication after users disconnect from

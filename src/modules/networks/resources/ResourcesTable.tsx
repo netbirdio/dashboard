@@ -10,6 +10,7 @@ import { removeAllSpaces } from "@utils/helpers";
 import { Layers3Icon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -99,6 +100,8 @@ export default function ResourcesTable({
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const { permission } = usePermissions();
+
   const [sorting, setSorting] = useState<SortingState>([]);
   const { openResourceModal, network } = useNetworksContext();
 
@@ -138,6 +141,7 @@ export default function ResourcesTable({
           variant={"primary"}
           className={"ml-auto"}
           onClick={() => network && openResourceModal(network)}
+          disabled={!permission.networks.update}
         >
           <IconCirclePlus size={16} />
           Add Resource

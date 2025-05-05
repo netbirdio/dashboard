@@ -14,6 +14,9 @@ type Props = {
   children?: React.ReactNode;
   className?: string;
   showNewBadge?: boolean;
+  maxChars?: number;
+  maxWidth?: string;
+  hideTooltip?: boolean;
 };
 
 export default function GroupBadge({
@@ -23,12 +26,15 @@ export default function GroupBadge({
   children,
   className,
   showNewBadge = false,
+  maxChars = 20,
+  maxWidth,
+  hideTooltip = false,
 }: Readonly<Props>) {
   const isNew = !group?.id;
 
   return (
     <Badge
-      key={group.id || group.name}
+      key={group.id ?? group.name}
       useHover={true}
       data-cy={"group-badge"}
       variant={"gray-ghost"}
@@ -39,7 +45,12 @@ export default function GroupBadge({
       }}
     >
       <GroupBadgeIcon id={group?.id} issued={group?.issued} />
-      <TruncatedText text={group?.name || ""} maxChars={20} />
+      <TruncatedText
+        text={group?.name || ""}
+        maxChars={maxChars}
+        maxWidth={maxWidth}
+        hideTooltip={hideTooltip}
+      />
       {children}
       {isNew && showNewBadge && <SmallBadge />}
       {showX && (

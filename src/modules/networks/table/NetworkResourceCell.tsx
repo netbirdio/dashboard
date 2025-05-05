@@ -3,6 +3,7 @@ import Button from "@components/Button";
 import { LayersIcon, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -11,6 +12,8 @@ type Props = {
 };
 
 export const NetworkResourceCell = ({ network }: Props) => {
+  const { permission } = usePermissions();
+
   const { openResourceModal } = useNetworksContext();
   const router = useRouter();
 
@@ -35,6 +38,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
         variant={"secondary"}
         className={"min-w-[130px]"}
         onClick={() => openResourceModal(network)}
+        disabled={!permission.networks.update}
       >
         <PlusCircle size={12} />
         Add Resource

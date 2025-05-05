@@ -12,6 +12,7 @@ import { cn } from "@utils/helpers";
 import { isEmpty } from "lodash";
 import { ExternalLinkIcon, LayoutList, ShieldCheck, Text } from "lucide-react";
 import React, { useState } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckGeoLocation } from "@/modules/posture-checks/checks/PostureCheckGeoLocation";
 import { PostureCheckNetBirdVersion } from "@/modules/posture-checks/checks/PostureCheckNetBirdVersion";
@@ -35,6 +36,8 @@ export default function PostureCheckModal({
   postureCheck,
   useSave = true,
 }: Props) {
+  const { permission } = usePermissions();
+
   const {
     state: check,
     dispatch: setCheck,
@@ -54,7 +57,10 @@ export default function PostureCheckModal({
     !!check?.checks?.os_version_check ||
     !!check?.checks?.peer_network_range_check ||
     !!check?.checks.process_check;
-  const canCreate = !isEmpty(check?.name) && isAtLeastOneCheckEnabled;
+  const canCreate =
+    !isEmpty(check?.name) &&
+    isAtLeastOneCheckEnabled &&
+    (permission.policies.create || permission.policies.update);
 
   const [tab, setTab] = useState("checks");
 
@@ -107,6 +113,9 @@ export default function PostureCheckModal({
                       payload: v,
                     })
                   }
+                  disabled={
+                    !permission.policies.create || !permission.policies.update
+                  }
                 />
                 <PostureCheckGeoLocation
                   value={check?.checks?.geo_location_check}
@@ -115,6 +124,9 @@ export default function PostureCheckModal({
                       type: "location",
                       payload: v,
                     })
+                  }
+                  disabled={
+                    !permission.policies.create || !permission.policies.update
                   }
                 />
                 <PostureCheckPeerNetworkRange
@@ -125,6 +137,9 @@ export default function PostureCheckModal({
                       payload: v,
                     })
                   }
+                  disabled={
+                    !permission.policies.create || !permission.policies.update
+                  }
                 />
                 <PostureCheckOperatingSystem
                   value={check?.checks?.os_version_check}
@@ -134,6 +149,9 @@ export default function PostureCheckModal({
                       payload: v,
                     })
                   }
+                  disabled={
+                    !permission.policies.create || !permission.policies.update
+                  }
                 />
                 <PostureCheckProcess
                   value={check?.checks?.process_check}
@@ -142,6 +160,9 @@ export default function PostureCheckModal({
                       type: "process_check",
                       payload: v,
                     })
+                  }
+                  disabled={
+                    !permission.policies.create || !permission.policies.update
                   }
                 />
               </>
@@ -164,6 +185,9 @@ export default function PostureCheckModal({
                       })
                     }
                     placeholder={"e.g., NetBird Version > 0.25.0"}
+                    disabled={
+                      !permission.policies.create || !permission.policies.update
+                    }
                   />
                 </div>
                 <div>
@@ -184,6 +208,9 @@ export default function PostureCheckModal({
                       "e.g., Check if the NetBird version is bigger than 0.25.0"
                     }
                     rows={3}
+                    disabled={
+                      !permission.policies.create || !permission.policies.update
+                    }
                   />
                 </div>
               </div>

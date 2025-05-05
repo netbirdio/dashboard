@@ -101,7 +101,7 @@ const arrIncludesSomeExact: FilterFn<any> = (
   value: string[],
 ) => {
   const rowValue = row.getValue(columnId);
-  if (!rowValue) return false;
+  if (!rowValue && rowValue !== 0) return false;
   return value.some((val) => val === rowValue);
 };
 
@@ -302,7 +302,10 @@ export function DataTableContent<TData, TValue>({
     setGlobalSearch("");
     setRowSelection?.({});
     onFilterReset?.();
+    setSearchKey((prev) => (prev === 0 ? 1 : 0));
   };
+
+  const [searchKey, setSearchKey] = useState(0);
 
   return (
     <div className={cn("relative table-fixed-scroll", className)}>
@@ -316,6 +319,7 @@ export function DataTableContent<TData, TValue>({
           <DataTableGlobalSearch
             className={searchClassName}
             disabled={!hasInitialData}
+            key={searchKey}
             globalSearch={globalSearch}
             setGlobalSearch={(val) => {
               table.setPageIndex(0);

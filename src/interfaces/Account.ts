@@ -1,5 +1,9 @@
 export interface Account {
   id: string;
+  domain: string;
+  domain_category: string;
+  created_at: string;
+  created_by: string;
   settings: {
     extra: {
       peer_approval_enabled: boolean;

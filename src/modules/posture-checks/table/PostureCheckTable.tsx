@@ -15,6 +15,7 @@ import { ExternalLinkIcon, ShieldCheck } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Policy } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import PostureCheckModal from "@/modules/posture-checks/modal/PostureCheckModal";
@@ -70,6 +71,7 @@ export default function PostureCheckTable({
   isLoading,
   headingTarget,
 }: Props) {
+  const { permission } = usePermissions();
   const { data: policies } = useFetchApi<Policy[]>("/policies");
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -145,6 +147,7 @@ export default function PostureCheckTable({
               <Button
                 variant={"primary"}
                 className={"ml-auto"}
+                disabled={!permission.policies.create}
                 onClick={() => {
                   setCurrentRow(undefined);
                   setPostureCheckModal(true);

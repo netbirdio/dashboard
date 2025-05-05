@@ -9,6 +9,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import * as React from "react";
 import { useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { NetworkRoutingPeerName } from "@/modules/networks/routing-peers/NetworkRoutingPeerName";
@@ -74,6 +75,7 @@ export default function NetworkRoutingPeersTable({
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const { permission } = usePermissions();
   const { openAddRoutingPeerModal, network } = useNetworksContext();
 
   const [sorting, setSorting] = useState<SortingState>([
@@ -117,6 +119,7 @@ export default function NetworkRoutingPeersTable({
           variant={"primary"}
           className={"ml-auto"}
           onClick={() => network && openAddRoutingPeerModal(network)}
+          disabled={!permission.networks.update}
         >
           <IconCirclePlus size={16} />
           Add Routing Peer

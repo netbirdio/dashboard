@@ -34,7 +34,7 @@ export default function TextWithTooltip({
       }
     >
       <div
-        className={"w-full min-w-0 inline-block"}
+        className={"w-full min-w-0 inline-block leading-normal"}
         style={{
           maxWidth: `${maxChars - 2}ch`,
         }}

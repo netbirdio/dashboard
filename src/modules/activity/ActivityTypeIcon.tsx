@@ -10,6 +10,7 @@ import {
   KeyRound,
   Layers3Icon,
   LogIn,
+  type LucideIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
   RefreshCcw,
@@ -28,79 +29,44 @@ type Props = {
 
 const DEFAULT_CLASSES = "shrink-0";
 
+type ActivityTypeKey = keyof typeof ActivityTypeMappings;
+
+const ActivityTypeMappings = {
+  peer: MonitorSmartphoneIcon,
+  user: User,
+  account: Cog,
+  rule: ArrowLeftRight,
+  policy: Shield,
+  setupkey: KeyRound,
+  group: FolderGit2,
+  route: NetworkIcon,
+  dns: Globe,
+  nameserver: Server,
+  dashboard: LogIn,
+  integration: Blocks,
+  personal: User,
+  service: Cog,
+  billing: CreditCardIcon,
+  integrated: ShieldCheck,
+  posture: ShieldCheck,
+  transferred: RefreshCcw,
+  resource: Layers3Icon,
+  network: NetworkIcon,
+} as const satisfies Record<string, LucideIcon>;
+
 export default function ActivityTypeIcon({
   code,
   size = 18,
   className,
 }: Props) {
-  if (code.startsWith("peer")) {
-    return (
-      <MonitorSmartphoneIcon
-        size={size}
-        className={cn(DEFAULT_CLASSES, className)}
-      />
-    );
-  } else if (code.startsWith("user")) {
-    return <User size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("account")) {
-    return <User size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("rule")) {
-    return (
-      <ArrowLeftRight size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  } else if (code.startsWith("policy")) {
-    return <Shield size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("setupkey")) {
-    return <KeyRound size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("group")) {
-    return (
-      <FolderGit2 size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  } else if (code.startsWith("route")) {
-    return (
-      <NetworkIcon size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  } else if (code.startsWith("dns")) {
-    return <Globe size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("nameserver")) {
-    return <Server size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("dashboard")) {
-    return <LogIn size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("integration")) {
-    return <Blocks size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("account")) {
-    return <User size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("personal")) {
-    return <User size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("service")) {
-    return <Cog size={size} className={cn(DEFAULT_CLASSES, className)} />;
-  } else if (code.startsWith("billing")) {
-    return (
-      <CreditCardIcon size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  } else if (code.startsWith("integrated")) {
-    return (
-      <ShieldCheck size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  } else if (code.startsWith("posture")) {
-    return (
-      <ShieldCheck size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  } else if (code.startsWith("transferred")) {
-    return (
-      <RefreshCcw size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  } else if (code.startsWith("resource")) {
-    return (
-      <Layers3Icon size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  } else if (code.startsWith("network")) {
-    return (
-      <NetworkIcon size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  } else {
-    return (
-      <HelpCircleIcon size={size} className={cn(DEFAULT_CLASSES, className)} />
-    );
-  }
+  const prefixParts = code?.split(".") || [];
+  const prefix = (prefixParts[0] || "").toLowerCase();
+
+  // Check if prefix is a valid key, otherwise use fallback
+  const Icon =
+    prefix in ActivityTypeMappings
+      ? ActivityTypeMappings[prefix as ActivityTypeKey]
+      : HelpCircleIcon;
+
+  return <Icon size={size} className={cn(DEFAULT_CLASSES, className)} />;
 }

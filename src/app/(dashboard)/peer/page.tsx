@@ -19,9 +19,11 @@ import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
-import Separator from "@components/Separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import LoginExpiredBadge from "@components/ui/LoginExpiredBadge";
+import { PageNotFound } from "@components/ui/PageNotFound";
+import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
@@ -53,8 +55,8 @@ import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { useCountries } from "@/contexts/CountryProvider";
 import PeerProvider, { usePeer } from "@/contexts/PeerProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import type { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
@@ -65,10 +67,15 @@ import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSectio
 
 export default function PeerPage() {
   const queryParameter = useSearchParams();
+  const { isRestricted } = usePermissions();
   const peerId = queryParameter.get("id");
-  const { data: peer, isLoading } = useFetchApi<Peer>("/peers/" + peerId, true);
+  const {
+    data: peer,
+    isLoading,
+    error,
+  } = useFetchApi<Peer>("/peers/" + peerId, true);
 
-  useRedirect("/peers", false, !peerId);
+  useRedirect("/peers", false, !peerId || isRestricted);
 
   const peerKey = useMemo(() => {
     let id = peer?.id ?? "";
@@ -76,6 +83,24 @@ export default function PeerPage() {
     let expiration = peer?.login_expiration_enabled ? "1" : "0";
     return `${id}-${ssh}-${expiration}`;
   }, [peer]);
+
+  if (isRestricted) {
+    return (
+      <PageContainer>
+        <RestrictedAccess page={"Peer Information"} />
+      </PageContainer>
+    );
+  }
+
+  if (error)
+    return (
+      <PageNotFound
+        title={error?.message}
+        description={
+          "The peer you are attempting to access cannot be found. It may have been deleted, or you may not have permission to view it. Please verify the URL or return to the dashboard."
+        }
+      />
+    );
 
   return peer && !isLoading ? (
     <PeerProvider peer={peer} key={peerId}>
@@ -87,6 +112,29 @@ export default function PeerPage() {
 }
 
 function PeerOverview() {
+  const { peer } = usePeer();
+
+  return (
+    <PageContainer>
+      <RoutesProvider>
+        <div className={"p-default py-6 pb-0"}>
+          <Breadcrumbs>
+            <Breadcrumbs.Item
+              href={"/peers"}
+              label={"Peers"}
+              icon={<PeerIcon size={13} />}
+            />
+            <Breadcrumbs.Item label={peer.ip} active />
+          </Breadcrumbs>
+          <PeerGeneralInformation />
+        </div>
+        <PeerOverviewTabs />
+      </RoutesProvider>
+    </PageContainer>
+  );
+}
+
+const PeerGeneralInformation = () => {
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const { peer, user, peerGroups, openSSHDialog, update } = usePeer();
@@ -117,16 +165,21 @@ function PeerOverview() {
   ]);
 
   const updatePeer = async () => {
-    const updateRequest = update({
-      name,
-      ssh,
-      loginExpiration,
-      inactivityExpiration,
-    });
+    let batchCall: Promise<any>[] = [];
     const groupCalls = getAllGroupCalls();
-    const batchCall = groupCalls
-      ? [...groupCalls, updateRequest]
-      : [updateRequest];
+
+    if (permission.peers.update) {
+      const updateRequest = update({
+        name,
+        ssh,
+        loginExpiration,
+        inactivityExpiration,
+      });
+      batchCall = groupCalls ? [...groupCalls, updateRequest] : [updateRequest];
+    } else {
+      batchCall = [...groupCalls];
+    }
+
     notify({
       title: name,
       description: "Peer was successfully saved",
@@ -145,199 +198,220 @@ function PeerOverview() {
     });
   };
 
-  const { isUser, isOwnerOrAdmin } = useLoggedInUser();
+  const { permission } = usePermissions();
 
   return (
-    <PageContainer>
-      <RoutesProvider>
-        <div className={"p-default py-6 mb-4"}>
-          <Breadcrumbs>
-            <Breadcrumbs.Item
-              href={"/peers"}
-              label={"Peers"}
-              icon={<PeerIcon size={13} />}
-            />
-            <Breadcrumbs.Item label={peer.ip} active />
-          </Breadcrumbs>
+    <>
+      <div className={"flex justify-between max-w-6xl items-start"}>
+        <div>
+          <div className={"flex items-center gap-3"}>
+            <h1 className={"flex items-center gap-3"}>
+              <CircleIcon
+                active={peer.connected}
+                size={12}
+                className={"mb-[3px] shrink-0"}
+              />
+              <TextWithTooltip text={name} maxChars={30} />
 
-          <div className={"flex justify-between max-w-6xl items-start"}>
-            <div>
-              <div className={"flex items-center gap-3"}>
-                <h1 className={"flex items-center gap-3"}>
-                  <CircleIcon
-                    active={peer.connected}
-                    size={12}
-                    className={"mb-[3px] shrink-0"}
-                  />
-                  <TextWithTooltip text={name} maxChars={30} />
-
-                  {!isUser && (
-                    <Modal
-                      open={showEditNameModal}
-                      onOpenChange={setShowEditNameModal}
-                    >
-                      <ModalTrigger>
-                        <div
-                          className={
-                            "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
-                          }
-                        >
-                          <PencilIcon size={16} />
-                        </div>
-                      </ModalTrigger>
-                      <EditNameModal
-                        onSuccess={(newName) => {
-                          setName(newName);
-                          setShowEditNameModal(false);
-                        }}
-                        peer={peer}
-                        initialName={name}
-                        key={showEditNameModal ? 1 : 0}
-                      />
-                    </Modal>
-                  )}
-                </h1>
-                <LoginExpiredBadge loginExpired={peer.login_expired} />
-              </div>
-              <div className={"flex items-center gap-8"}>
-                <Paragraph className={"flex items-center"}>
-                  {user?.email}
-                </Paragraph>
-              </div>
-            </div>
-            <div className={"flex gap-4"}>
-              <Button
-                variant={"default"}
-                className={"w-full"}
-                onClick={() => router.push("/peers")}
-              >
-                Cancel
-              </Button>
-              <Button
-                variant={"primary"}
-                className={"w-full"}
-                onClick={() => updatePeer()}
-                disabled={!hasChanges || isUser}
-              >
-                Save Changes
-              </Button>
-            </div>
-          </div>
-
-          <div className={"flex gap-10 w-full mt-5 max-w-6xl"}>
-            <PeerInformationCard peer={peer} />
-
-            <div className={"flex flex-col gap-6 w-1/2 transition-all"}>
-              <div>
-                <PeerExpirationToggle
-                  peer={peer}
-                  value={loginExpiration}
-                  icon={<TimerResetIcon size={16} />}
-                  onChange={(state) => {
-                    setLoginExpiration(state);
-                    !state && setInactivityExpiration(false);
-                  }}
-                />
-                {isOwnerOrAdmin && !!peer?.user_id && (
-                  <div
-                    className={cn(
-                      "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
-                      !loginExpiration
-                        ? "opacity-50 pointer-events-none"
-                        : "bg-nb-gray-930/80",
-                    )}
-                  >
-                    <PeerExpirationToggle
-                      peer={peer}
-                      variant={"blank"}
-                      value={inactivityExpiration}
-                      onChange={setInactivityExpiration}
-                      title={"Require login after disconnect"}
-                      description={
-                        "Enable to require authentication after users disconnect from management for 10 minutes."
-                      }
+              {permission.peers.update && (
+                <Modal
+                  open={showEditNameModal}
+                  onOpenChange={setShowEditNameModal}
+                >
+                  <ModalTrigger>
+                    <div
                       className={
-                        !loginExpiration ? "opacity-40 pointer-events-none" : ""
+                        "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
                       }
-                    />
-                  </div>
-                )}
-              </div>
-
-              <FullTooltip
-                content={
-                  <div
-                    className={
-                      "flex gap-2 items-center !text-nb-gray-300 text-xs"
-                    }
-                  >
-                    <LockIcon size={14} />
-                    <span>
-                      {`You don't have the required permissions to update this
-                          setting.`}
-                    </span>
-                  </div>
-                }
-                interactive={false}
-                className={"w-full block"}
-                disabled={!isUser}
-              >
-                <FancyToggleSwitch
-                  value={ssh}
-                  disabled={isUser}
-                  onChange={(set) =>
-                    !set
-                      ? setSsh(false)
-                      : openSSHDialog().then((confirm) => setSsh(confirm))
-                  }
-                  label={
-                    <>
-                      <TerminalSquare size={16} />
-                      SSH Access
-                    </>
-                  }
-                  helpText={
-                    "Enable the SSH server on this peer to access the machine via an secure shell."
-                  }
-                />
-              </FullTooltip>
-
-              {!isUser && (
-                <div>
-                  <Label>Assigned Groups</Label>
-                  <HelpText>
-                    Use groups to control what this peer can access.
-                  </HelpText>
-                  <PeerGroupSelector
-                    disabled={isUser}
-                    onChange={setSelectedGroups}
-                    values={selectedGroups}
-                    hideAllGroup={true}
+                    >
+                      <PencilIcon size={16} />
+                    </div>
+                  </ModalTrigger>
+                  <EditNameModal
+                    onSuccess={(newName) => {
+                      setName(newName);
+                      setShowEditNameModal(false);
+                    }}
                     peer={peer}
+                    initialName={name}
+                    key={showEditNameModal ? 1 : 0}
                   />
-                </div>
+                </Modal>
               )}
-            </div>
+            </h1>
+            <LoginExpiredBadge loginExpired={peer.login_expired} />
+          </div>
+          <div className={"flex items-center gap-8"}>
+            <Paragraph className={"flex items-center"}>{user?.email}</Paragraph>
           </div>
         </div>
+        <div className={"flex gap-4"}>
+          <Button
+            variant={"default"}
+            className={"w-full"}
+            onClick={() => router.push("/peers")}
+          >
+            Cancel
+          </Button>
+          <Button
+            variant={"primary"}
+            className={"w-full"}
+            onClick={() => updatePeer()}
+            disabled={
+              !hasChanges || !permission.peers.read || !permission.groups.update
+            }
+          >
+            Save Changes
+          </Button>
+        </div>
+      </div>
 
-        {!isUser ? (
-          <>
-            <Separator />
-            <PeerNetworkRoutesSection peer={peer} />
-          </>
-        ) : null}
+      <div
+        className={
+          "flex-wrap xl:flex-nowrap flex gap-10 w-full mt-5 max-w-6xl items-start"
+        }
+      >
+        <PeerInformationCard peer={peer} />
 
-        {peer?.id && (
-          <>
-            <Separator />
-            <AccessiblePeersSection peerID={peer.id} />
-          </>
-        )}
-      </RoutesProvider>
-    </PageContainer>
+        <div className={"flex flex-col gap-6 lg:w-1/2 transition-all"}>
+          <div>
+            <PeerExpirationToggle
+              peer={peer}
+              value={loginExpiration}
+              icon={<TimerResetIcon size={16} />}
+              onChange={(state) => {
+                setLoginExpiration(state);
+                !state && setInactivityExpiration(false);
+              }}
+            />
+            {permission.peers.update && !!peer?.user_id && (
+              <div
+                className={cn(
+                  "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+                  !loginExpiration
+                    ? "opacity-50 pointer-events-none"
+                    : "bg-nb-gray-930/80",
+                )}
+              >
+                <PeerExpirationToggle
+                  peer={peer}
+                  variant={"blank"}
+                  value={inactivityExpiration}
+                  onChange={setInactivityExpiration}
+                  title={"Require login after disconnect"}
+                  description={
+                    "Enable to require authentication after users disconnect from management for 10 minutes."
+                  }
+                  className={
+                    !loginExpiration ? "opacity-40 pointer-events-none" : ""
+                  }
+                />
+              </div>
+            )}
+          </div>
+
+          <FullTooltip
+            content={
+              <div
+                className={"flex gap-2 items-center !text-nb-gray-300 text-xs"}
+              >
+                <LockIcon size={14} />
+                <span>
+                  {`You don't have the required permissions to update this
+                          setting.`}
+                </span>
+              </div>
+            }
+            interactive={false}
+            className={"w-full block"}
+            disabled={!permission.peers.update}
+          >
+            <FancyToggleSwitch
+              value={ssh}
+              disabled={!permission.peers.update}
+              onChange={(set) =>
+                !set
+                  ? setSsh(false)
+                  : openSSHDialog().then((confirm) => setSsh(confirm))
+              }
+              label={
+                <>
+                  <TerminalSquare size={16} />
+                  SSH Access
+                </>
+              }
+              helpText={
+                "Enable the SSH server on this peer to access the machine via an secure shell."
+              }
+            />
+          </FullTooltip>
+
+          {permission.groups.read && (
+            <div>
+              <Label>Assigned Groups</Label>
+              <HelpText>
+                Use groups to control what this peer can access.
+              </HelpText>
+              <PeerGroupSelector
+                disabled={!permission.groups.update}
+                onChange={setSelectedGroups}
+                values={selectedGroups}
+                hideAllGroup={true}
+                peer={peer}
+              />
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
-}
+};
+
+const PeerOverviewTabs = () => {
+  const { peer } = usePeer();
+  const { permission } = usePermissions();
+
+  const [tab, setTab] = useState(
+    permission.routes.read ? "network-routes" : "accessible-peers",
+  );
+
+  return (
+    <Tabs
+      defaultValue={tab}
+      onValueChange={(v) => setTab(v)}
+      value={tab}
+      className={"pt-10 pb-0 mb-0"}
+    >
+      <TabsList justify={"start"} className={"px-8"}>
+        {permission.routes.read && (
+          <TabsTrigger value={"network-routes"}>
+            <NetworkIcon size={16} />
+            Network Routes
+          </TabsTrigger>
+        )}
+
+        {peer?.id && permission.peers.read && (
+          <TabsTrigger value={"accessible-peers"}>
+            <MonitorSmartphoneIcon size={16} />
+            Accessible Peers
+          </TabsTrigger>
+        )}
+      </TabsList>
+
+      {permission.routes.read && (
+        <TabsContent value={"network-routes"} className={"pb-8"}>
+          <PeerNetworkRoutesSection peer={peer} />
+        </TabsContent>
+      )}
+
+      {peer?.id && permission.peers.read && (
+        <TabsContent value={"accessible-peers"} className={"pb-8"}>
+          <AccessiblePeersSection peerID={peer.id} />
+        </TabsContent>
+      )}
+    </Tabs>
+  );
+};
 
 function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
   const { isLoading, getRegionByPeer } = useCountries();
@@ -347,7 +421,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
   }, [getRegionByPeer, peer]);
 
   return (
-    <Card>
+    <Card className={"w-full xl:w-1/2"}>
       <Card.List>
         <Card.ListItem
           copy
@@ -480,15 +554,17 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
           value={peer.version}
         />
 
-        <Card.ListItem
-          label={
-            <>
-              <NetBirdIcon size={16} />
-              UI Version
-            </>
-          }
-          value={peer.ui_version?.replace("netbird-desktop-ui/", "")}
-        />
+        {peer.ui_version && (
+          <Card.ListItem
+            label={
+              <>
+                <NetBirdIcon size={16} />
+                UI Version
+              </>
+            }
+            value={peer.ui_version?.replace("netbird-desktop-ui/", "")}
+          />
+        )}
       </Card.List>
     </Card>
   );
@@ -499,6 +575,7 @@ interface ModalProps {
   peer: Peer;
   initialName: string;
 }
+
 function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
   const [name, setName] = useState(initialName);
 

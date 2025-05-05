@@ -26,16 +26,14 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default function ServiceUserModal({ children }: Props) {
+export default function ServiceUserModal({ children }: Readonly<Props>) {
   const [modal, setModal] = useState(false);
 
   return (
-    <>
-      <Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
-        <ModalTrigger asChild>{children}</ModalTrigger>
-        <ServiceUserModalContent onSuccess={() => setModal(false)} />
-      </Modal>
-    </>
+    <Modal open={modal} onOpenChange={setModal} key={modal ? 1 : 0}>
+      <ModalTrigger asChild>{children}</ModalTrigger>
+      <ServiceUserModalContent onSuccess={() => setModal(false)} />
+    </Modal>
   );
 }
 
@@ -43,7 +41,7 @@ type ModalProps = {
   onSuccess?: () => void;
 };
 
-export function ServiceUserModalContent({ onSuccess }: ModalProps) {
+export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
   const [name, setName] = useState("");
@@ -86,8 +84,8 @@ export function ServiceUserModalContent({ onSuccess }: ModalProps) {
       <Separator />
 
       <div className={"px-8 py-6 flex flex-col gap-8"}>
-        <div className={"grid grid-cols-3 gap-4"}>
-          <div className={"col-span-2"}>
+        <div className={"flex gap-4"}>
+          <div className={"w-full"}>
             <Input
               customPrefix={
                 <div className={"flex items-center gap-2"}>
@@ -100,12 +98,13 @@ export function ServiceUserModalContent({ onSuccess }: ModalProps) {
               onChange={(e) => setName(e.target.value)}
             />
           </div>
-
-          <UserRoleSelector
-            value={role as Role}
-            onChange={setRole}
-            hideOwner={true}
-          />
+          <div className={"w-[330px]"}>
+            <UserRoleSelector
+              value={role as Role}
+              onChange={setRole}
+              hideOwner={true}
+            />
+          </div>
         </div>
       </div>
 

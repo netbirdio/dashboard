@@ -17,6 +17,7 @@ import React from "react";
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Group } from "@/interfaces/Group";
 import { NameserverSettings } from "@/interfaces/NameserverSettings";
@@ -25,6 +26,8 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { useGroupIdsToGroups } from "@/modules/groups/useGroupIdsToGroups";
 
 export default function NameServerSettings() {
+  const { permission } = usePermissions();
+
   const { data: settings, isLoading } =
     useFetchApi<NameserverSettings>("/dns/settings");
 
@@ -61,7 +64,7 @@ export default function NameServerSettings() {
           </InlineLink>
           in our documentation.
         </Paragraph>
-        <RestrictedAccess page={"DNS Settings"}>
+        <RestrictedAccess page={"DNS Settings"} hasAccess={permission.dns.read}>
           {!isLoading && initialDNSGroups !== undefined ? (
             <SettingDisabledManagementGroups initialGroups={initialDNSGroups} />
           ) : (
@@ -86,6 +89,7 @@ const SettingDisabledManagementGroups = ({
 }) => {
   const settingRequest = useApiCall<NameserverSettings>("/dns/settings");
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
 
   const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
     useGroupHelper({
@@ -124,6 +128,7 @@ const SettingDisabledManagementGroups = ({
           dataCy={"dns-groups-selector"}
           onChange={setSelectedGroups}
           values={selectedGroups}
+          disabled={!permission.dns.update}
         />
       </div>
       <div
@@ -135,7 +140,7 @@ const SettingDisabledManagementGroups = ({
           variant={"primary"}
           size={"sm"}
           onClick={saveSettings}
-          disabled={!hasChanges}
+          disabled={!hasChanges || !permission.dns.update}
           data-cy={"save-changes"}
         >
           Save Changes

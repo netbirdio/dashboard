@@ -24,9 +24,10 @@ import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 type Props = {
   value?: ProcessCheck;
   onChange: (value: ProcessCheck | undefined) => void;
+  disabled?: boolean;
 };
 
-export const PostureCheckProcess = ({ value, onChange }: Props) => {
+export const PostureCheckProcess = ({ value, onChange, disabled }: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -50,12 +51,13 @@ export const PostureCheckProcess = ({ value, onChange }: Props) => {
           onChange(v);
           setOpen(false);
         }}
+        disabled={disabled}
       />
     </PostureCheckCard>
   );
 };
 
-const CheckContent = ({ value, onChange }: Props) => {
+const CheckContent = ({ value, onChange, disabled }: Props) => {
   const [processes, setProcesses] = useState<Process[]>(
     value?.processes
       ? value.processes.map((p) => {
@@ -183,6 +185,7 @@ const CheckContent = ({ value, onChange }: Props) => {
                           p?.windows_path || "",
                         )
                       }
+                      disabled={disabled}
                     />
                     <Input
                       customPrefix={
@@ -212,6 +215,7 @@ const CheckContent = ({ value, onChange }: Props) => {
                           p?.windows_path || "",
                         )
                       }
+                      disabled={disabled}
                     />
                     <Input
                       customPrefix={
@@ -239,6 +243,7 @@ const CheckContent = ({ value, onChange }: Props) => {
                           e.target.value,
                         )
                       }
+                      disabled={disabled}
                     />
                   </div>
 
@@ -246,6 +251,7 @@ const CheckContent = ({ value, onChange }: Props) => {
                     className={"h-[42px]"}
                     variant={"default-outline"}
                     onClick={() => removeProcess(p.id)}
+                    disabled={disabled}
                   >
                     <MinusCircleIcon size={15} />
                   </Button>
@@ -259,6 +265,7 @@ const CheckContent = ({ value, onChange }: Props) => {
           size={"sm"}
           onClick={addProcess}
           className={"mt-1"}
+          disabled={disabled}
         >
           <PlusCircle size={16} />
           Add Process
@@ -285,7 +292,7 @@ const CheckContent = ({ value, onChange }: Props) => {
           </ModalClose>
           <Button
             variant={"primary"}
-            disabled={hasErrorsOrIsEmpty}
+            disabled={hasErrorsOrIsEmpty || disabled}
             onClick={() => {
               if (isEmpty(processes)) {
                 onChange(undefined);

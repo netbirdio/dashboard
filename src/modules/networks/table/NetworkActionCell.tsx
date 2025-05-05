@@ -9,6 +9,7 @@ import {
 import { EyeIcon, MoreVertical, PencilLineIcon, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -16,6 +17,7 @@ type Props = {
   network: Network;
 };
 export default function NetworkActionCell({ network }: Props) {
+  const { permission } = usePermissions();
   const { deleteNetwork, openEditNetworkModal } = useNetworksContext();
   const router = useRouter();
 
@@ -42,7 +44,10 @@ export default function NetworkActionCell({ network }: Props) {
               View Details
             </div>
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => openEditNetworkModal(network)}>
+          <DropdownMenuItem
+            onClick={() => openEditNetworkModal(network)}
+            disabled={!permission.networks.update}
+          >
             <div className={"flex gap-3 items-center"}>
               <PencilLineIcon size={14} className={"shrink-0"} />
               Rename
@@ -54,6 +59,7 @@ export default function NetworkActionCell({ network }: Props) {
           <DropdownMenuItem
             onClick={() => deleteNetwork(network)}
             variant={"danger"}
+            disabled={!permission.networks.delete}
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />

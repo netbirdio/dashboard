@@ -5,6 +5,7 @@ import { Trash2 } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUserContext } from "@/contexts/UserProvider";
 import { AccessToken } from "@/interfaces/AccessToken";
 import { SetupKey } from "@/interfaces/SetupKey";
@@ -12,8 +13,11 @@ import { SetupKey } from "@/interfaces/SetupKey";
 type Props = {
   access_token: AccessToken;
 };
-export default function AccessTokenActionCell({ access_token }: Props) {
+export default function AccessTokenActionCell({
+  access_token,
+}: Readonly<Props>) {
   const { user } = useUserContext();
+  const { permission } = usePermissions();
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
   const deleteRequest = useApiCall<SetupKey>(
@@ -47,6 +51,7 @@ export default function AccessTokenActionCell({ access_token }: Props) {
   return (
     <div className={"flex justify-end pr-4"}>
       <Button
+        disabled={!permission.pats.delete}
         variant={"danger-outline"}
         size={"sm"}
         onClick={handleConfirm}

@@ -3,7 +3,6 @@ import { Checkbox } from "@components/Checkbox";
 import { CommandItem } from "@components/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
-import { IconArrowBack } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
 import { trim, uniqBy } from "lodash";
@@ -116,7 +115,7 @@ export function ActivityEventCodeSelector({
                   "min-h-[42px] w-full relative",
                   "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
                   "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
-                  "dark:placeholder:text-neutral-500 font-light placeholder:text-neutral-500 pl-10",
+                  "dark:placeholder:text-nb-gray-400 font-light placeholder:text-nb-gray-500 pl-10",
                 )}
                 ref={searchRef}
                 value={search}
@@ -130,19 +129,6 @@ export function ActivityEventCodeSelector({
               >
                 <div className={"flex items-center"}>
                   <SearchIcon size={14} />
-                </div>
-              </div>
-              <div
-                className={
-                  "absolute right-0 top-0 h-full flex items-center pr-4"
-                }
-              >
-                <div
-                  className={
-                    "flex items-center bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-nb-gray-500"
-                  }
-                >
-                  <IconArrowBack size={10} />
                 </div>
               </div>
             </div>

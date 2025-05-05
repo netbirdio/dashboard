@@ -7,6 +7,7 @@ import {
 } from "@components/DropdownMenu";
 import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -14,6 +15,7 @@ type Props = {
   router: NetworkRouter;
 };
 export const RoutingPeersActionCell = ({ router }: Props) => {
+  const { permission } = usePermissions();
   const { deleteRouter, network, openAddRoutingPeerModal } =
     useNetworksContext();
 
@@ -26,8 +28,15 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
             e.stopPropagation();
             e.preventDefault();
           }}
+          disabled={!permission.networks.update && !permission.networks.delete}
         >
-          <Button variant={"secondary"} className={"!px-3"}>
+          <Button
+            variant={"secondary"}
+            className={"!px-3"}
+            disabled={
+              !permission.networks.update && !permission.networks.delete
+            }
+          >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
@@ -37,6 +46,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
               if (!network) return;
               openAddRoutingPeerModal(network, router);
             }}
+            disabled={!permission.networks.update}
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
@@ -49,6 +59,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
               deleteRouter(network, router);
             }}
             variant={"danger"}
+            disabled={!permission.networks.delete}
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />

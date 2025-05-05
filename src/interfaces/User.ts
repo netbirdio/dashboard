@@ -1,4 +1,4 @@
-import { Permission } from "@/interfaces/Permission";
+import { Permissions } from "@/interfaces/Permission";
 
 export interface User {
   id: string;
@@ -11,11 +11,14 @@ export interface User {
   is_service_user?: boolean;
   is_blocked?: boolean;
   last_login?: Date;
-  permissions: Permission;
+  permissions: Permissions;
 }
 
 export enum Role {
   User = "user",
   Admin = "admin",
   Owner = "owner",
+  BillingAdmin = "billing_admin",
+  Auditor = "auditor",
+  NetworkAdmin = "network_admin",
 }

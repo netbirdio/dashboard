@@ -38,7 +38,7 @@ export default function ActiveInactiveRow({
           <CircleIcon
             active={active}
             inactiveDot={inactiveDot}
-            className={"mt-1 shrink-0"}
+            className={"mt-[0.34rem] shrink-0"}
           />
           <div className={"flex flex-col min-w-0"}>
             <div

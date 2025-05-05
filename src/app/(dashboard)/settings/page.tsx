@@ -10,7 +10,8 @@ import {
   ShieldIcon,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import PageContainer from "@/layouts/PageContainer";
 import { useAccount } from "@/modules/account/useAccount";
@@ -23,8 +24,15 @@ import PermissionsTab from "@/modules/settings/PermissionsTab";
 export default function NetBirdSettings() {
   const queryParams = useSearchParams();
   const queryTab = queryParams.get("tab");
-  const [tab, setTab] = useState(queryTab || "authentication");
-  const { isOwner } = useLoggedInUser();
+  const { permission } = usePermissions();
+
+  const initialTab = useMemo(() => {
+    if (permission.settings.read) return "authentication";
+    return "authentication";
+  }, [permission]);
+
+  const [tab, setTab] = useState(queryTab ?? initialTab);
+
   const account = useAccount();
 
   useEffect(() => {
@@ -37,28 +45,33 @@ export default function NetBirdSettings() {
     <PageContainer>
       <VerticalTabs value={tab} onChange={setTab}>
         <VerticalTabs.List>
-          <VerticalTabs.Trigger value="authentication">
-            <ShieldIcon size={14} />
-            Authentication
-          </VerticalTabs.Trigger>
-          <VerticalTabs.Trigger value="groups">
-            <FolderGit2Icon size={14} />
-            Groups
-          </VerticalTabs.Trigger>
-          <VerticalTabs.Trigger value="permissions">
-            <LockIcon size={14} />
-            Permissions
-          </VerticalTabs.Trigger>
-          <VerticalTabs.Trigger value="networks">
-            <NetworkIcon size={14} />
-            Networks
-          </VerticalTabs.Trigger>
-          <VerticalTabs.Trigger value="danger-zone" disabled={!isOwner}>
-            <AlertOctagonIcon size={14} />
-            Danger zone
-          </VerticalTabs.Trigger>
+          {permission.settings.read && (
+            <>
+              <VerticalTabs.Trigger value="authentication">
+                <ShieldIcon size={14} />
+                Authentication
+              </VerticalTabs.Trigger>
+              <VerticalTabs.Trigger value="groups">
+                <FolderGit2Icon size={14} />
+                Groups
+              </VerticalTabs.Trigger>
+              <VerticalTabs.Trigger value="permissions">
+                <LockIcon size={14} />
+                Permissions
+              </VerticalTabs.Trigger>
+              <VerticalTabs.Trigger value="networks">
+                <NetworkIcon size={14} />
+                Networks
+              </VerticalTabs.Trigger>
+            </>
+          )}
+
+          <DangerZoneTabTrigger />
         </VerticalTabs.List>
-        <RestrictedAccess page={"Settings"}>
+        <RestrictedAccess
+          page={"Settings"}
+          hasAccess={permission.settings.read}
+        >
           <div className={"border-l border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
             {account && <PermissionsTab account={account} />}
@@ -71,3 +84,16 @@ export default function NetBirdSettings() {
     </PageContainer>
   );
 }
+
+const DangerZoneTabTrigger = () => {
+  const { isOwner } = useLoggedInUser();
+
+  return (
+    isOwner && (
+      <VerticalTabs.Trigger value="danger-zone" disabled={!isOwner}>
+        <AlertOctagonIcon size={14} />
+        Danger zone
+      </VerticalTabs.Trigger>
+    )
+  );
+};

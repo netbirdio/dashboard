@@ -48,14 +48,24 @@ export default function OIDCProvider({ children }: Props) {
   const [, setQueryParams] = useLocalStorage("netbird-query-params", params);
 
   useEffect(() => {
-    if (
-      params?.includes("tab") ||
-      params?.includes("search") ||
-      params?.includes("id")
-    ) {
-      setQueryParams(params);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    const validParams = [
+      "tab",
+      "search",
+      "id",
+      "invite",
+      "utm_source",
+      "utm_medium",
+      "utm_content",
+      "utm_campaign",
+      "hs_id",
+    ];
+
+    try {
+      const urlParams = new URLSearchParams(params);
+      if (validParams.some((param) => urlParams.has(param))) {
+        setQueryParams(params);
+      }
+    } catch (e) {}
   }, []);
 
   const withCustomHistory = () => {

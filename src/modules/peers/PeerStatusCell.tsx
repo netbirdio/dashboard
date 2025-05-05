@@ -8,7 +8,7 @@ import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePeer } from "@/contexts/PeerProvider";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
 
 type Props = {
@@ -20,8 +20,8 @@ export default function PeerStatusCell({ peer }: Props) {
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
   const needsApproval = peer.approval_required;
-  const { isOwnerOrAdmin } = useLoggedInUser();
-  const canApprove = isOwnerOrAdmin;
+  const { permission } = usePermissions();
+  const canApprove = permission.peers.update;
 
   const approvePeer = async () => {
     const choice = await confirm({

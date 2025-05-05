@@ -1,6 +1,6 @@
 import useFetchApi from "@utils/api";
 import React, { useCallback } from "react";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Country } from "@/interfaces/Country";
 import { Peer } from "@/interfaces/Peer";
 
@@ -13,17 +13,24 @@ const CountryContext = React.createContext(
     countries: Country[] | undefined;
     isLoading: boolean;
     getRegionByPeer: (peer: Peer) => string;
+    getRegionText: (country_code: string, city_name: string) => string;
   },
 );
 
 export default function CountryProvider({ children }: Props) {
-  const { permission } = useLoggedInUser();
+  const { isRestricted } = usePermissions();
 
   const getRegionByPeer = (peer: Peer) => "Unknown";
+  const getRegionText = (country_code: string, city_name: string) => "Unknown";
 
-  return permission?.dashboard_view != "full" ? (
+  return isRestricted ? (
     <CountryContext.Provider
-      value={{ countries: [], isLoading: false, getRegionByPeer }}
+      value={{
+        countries: [],
+        isLoading: false,
+        getRegionByPeer,
+        getRegionText,
+      }}
     >
       {children}
     </CountryContext.Provider>
@@ -39,21 +46,28 @@ function CountryProviderContent({ children }: Props) {
     false,
   );
 
-  const getRegionByPeer = useCallback(
-    (peer: Peer) => {
+  const getRegionText = useCallback(
+    (country_code: string, city_name: string) => {
       if (!countries) return "Unknown";
-      const country = countries.find(
-        (c) => c.country_code === peer.country_code,
-      );
+      const country = countries.find((c) => c.country_code === country_code);
       if (!country) return "Unknown";
-      if (!peer.city_name) return country.country_name;
-      return `${country.country_name}, ${peer.city_name}`;
+      if (!city_name) return country.country_name;
+      return `${country.country_name}, ${city_name}`;
     },
     [countries],
   );
 
+  const getRegionByPeer = useCallback(
+    (peer: Peer) => {
+      return getRegionText(peer.country_code, peer.city_name);
+    },
+    [getRegionText],
+  );
+
   return (
-    <CountryContext.Provider value={{ countries, isLoading, getRegionByPeer }}>
+    <CountryContext.Provider
+      value={{ countries, isLoading, getRegionByPeer, getRegionText }}
+    >
       {children}
     </CountryContext.Provider>
   );

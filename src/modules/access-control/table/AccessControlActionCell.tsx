@@ -5,16 +5,18 @@ import { Trash2 } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Policy } from "@/interfaces/Policy";
 import { Route } from "@/interfaces/Route";
 
 type Props = {
   policy: Policy;
 };
-export default function AccessControlActionCell({ policy }: Props) {
+export default function AccessControlActionCell({ policy }: Readonly<Props>) {
   const { confirm } = useDialog();
   const policyRequest = useApiCall<Route>("/policies");
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
 
   const deleteRule = async () => {
     notify({
@@ -42,7 +44,12 @@ export default function AccessControlActionCell({ policy }: Props) {
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <Button variant={"danger-outline"} size={"sm"} onClick={openConfirm}>
+      <Button
+        variant={"danger-outline"}
+        size={"sm"}
+        onClick={openConfirm}
+        disabled={!permission.policies.delete}
+      >
         <Trash2 size={16} />
         Delete
       </Button>

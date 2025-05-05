@@ -10,6 +10,7 @@ import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import Separator from "@components/Separator";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
+import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import useRedirect from "@hooks/useRedirect";
 import { IconCirclePlus, IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
@@ -20,6 +21,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Group } from "@/interfaces/Group";
@@ -36,6 +38,7 @@ import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
 export default function UserPage() {
   const queryParameter = useSearchParams();
   const userId = queryParameter.get("id");
+  const { permission } = usePermissions();
   const isServiceUser = queryParameter.get("service_user") === "true";
   const { data: users, isLoading } = useFetchApi<User[]>(
     `/users?service_user=${isServiceUser}`,
@@ -49,6 +52,14 @@ export default function UserPage() {
   useRedirect("/team/users", false, !userId);
 
   const userGroups = useGroupIdsToGroups(user?.auto_groups);
+
+  if (!permission.users.read) {
+    return (
+      <PageContainer>
+        <RestrictedAccess page={"User Information"} />
+      </PageContainer>
+    );
+  }
 
   if (!isOwnerOrAdmin && user && !isLoading) {
     return <UserOverview user={user} initialGroups={[]} />;
@@ -72,6 +83,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { loggedInUser, isOwnerOrAdmin, isUser } = useLoggedInUser();
   const isLoggedInUser = loggedInUser ? loggedInUser?.id === user.id : false;
+  const { permission } = usePermissions();
 
   const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
     useGroupHelper({
@@ -116,7 +128,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           <Breadcrumbs.Item
             href={"/team"}
             label={"Team"}
-            disabled={isUser}
+            disabled={!permission.users.read}
             icon={<TeamIcon size={13} />}
           />
 
@@ -130,7 +142,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
             <Breadcrumbs.Item
               href={"/team/users"}
               label={"Users"}
-              disabled={isUser}
+              disabled={!permission.users.read}
               icon={<User2 size={16} />}
             />
           )}
@@ -187,7 +199,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
               <Button
                 variant={"primary"}
                 className={"w-full"}
-                disabled={!hasChanges}
+                disabled={!hasChanges || !permission.users.update}
                 onClick={save}
                 data-cy={"save-changes"}
               >
@@ -228,11 +240,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                   onChange={setRole}
                   hideOwner={user.is_service_user}
                   currentUser={user}
-                  disabled={
-                    isLoggedInUser ||
-                    !isOwnerOrAdmin ||
-                    user.role === Role.Owner
-                  }
+                  disabled={isLoggedInUser || !permission.users.update}
                 />
               </div>
             </div>
@@ -240,7 +248,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
         </div>
       </div>
 
-      {(user.is_current || user.is_service_user) && (
+      {(user.is_current || user.is_service_user) && permission.pats.read && (
         <>
           <Separator />
           <div className={"px-8 py-6"}>
@@ -258,6 +266,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                       <Button
                         variant={"primary"}
                         data-cy={"access-token-open-modal"}
+                        disabled={!permission.pats.create}
                       >
                         <IconCirclePlus size={16} />
                         Create Access Token
@@ -275,7 +284,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
   );
 }
 
-function UserInformationCard({ user }: { user: User }) {
+function UserInformationCard({ user }: Readonly<{ user: User }>) {
   const isServiceUser = user.is_service_user || false;
   const neverLoggedIn = dayjs(user.last_login).isBefore(
     dayjs().subtract(1000, "years"),

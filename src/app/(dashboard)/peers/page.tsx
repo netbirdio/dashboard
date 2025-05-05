@@ -9,18 +9,19 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
-import { useLoggedInUser, useUsers } from "@/contexts/UsersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useUsers } from "@/contexts/UsersProvider";
 import PageContainer from "@/layouts/PageContainer";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
 
 const PeersTable = lazy(() => import("@/modules/peers/PeersTable"));
 
 export default function Peers() {
-  const { permission } = useLoggedInUser();
+  const { isRestricted } = usePermissions();
 
   return (
     <PageContainer>
-      {permission.dashboard_view === "blocked" ? (
+      {isRestricted ? (
         <PeersBlockedView />
       ) : (
         <PeersProvider>

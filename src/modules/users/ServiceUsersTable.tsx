@@ -13,6 +13,7 @@ import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { User } from "@/interfaces/User";
 import ServiceUserModal from "@/modules/users/ServiceUserModal";
@@ -70,11 +71,12 @@ export default function ServiceUsersTable({
   users,
   isLoading,
   headingTarget,
-}: Props) {
+}: Readonly<Props>) {
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
   const router = useRouter();
   const path = usePathname();
+  const { permission } = usePermissions();
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -92,98 +94,98 @@ export default function ServiceUsersTable({
   );
 
   return (
-    <>
-      <DataTable
-        headingTarget={headingTarget}
-        isLoading={isLoading}
-        text={"Service Users"}
-        sorting={sorting}
-        setSorting={setSorting}
-        columns={ServiceUsersTableColumns}
-        data={users}
-        onRowClick={(row) => {
-          router.push(`/team/user?id=${row.original.id}&service_user=true`);
-        }}
-        rowClassName={"cursor-pointer"}
-        columnVisibility={{
-          is_current: false,
-        }}
-        searchPlaceholder={"Search by name or role..."}
-        getStartedCard={
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={<IconSettings2 size={24} />}
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Create Service User"}
-            description={
-              "It looks like you don't have any service users. Get started by creating a service user."
-            }
-            button={
-              <div className={"flex flex-col"}>
-                <div>
-                  <ServiceUserModal>
-                    <Button
-                      variant={"primary"}
-                      className={""}
-                      data-cy={"open-service-user-modal"}
-                    >
-                      <PlusCircle size={16} />
-                      Create Service User
-                    </Button>
-                  </ServiceUserModal>
-                </div>
-              </div>
-            }
-            learnMore={
-              <>
-                Learn more about
-                <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/access-netbird-public-api"
-                  }
-                  target={"_blank"}
-                >
-                  Service Users
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
-        }
-        rightSide={() => (
-          <>
-            {users && users?.length > 0 && (
-              <ServiceUserModal>
-                <Button
-                  variant={"primary"}
-                  className={"ml-auto"}
-                  data-cy={"open-service-user-modal"}
-                >
-                  <PlusCircle size={16} />
-                  Create Service User
-                </Button>
-              </ServiceUserModal>
-            )}
-          </>
-        )}
-      >
-        {(table) => (
-          <>
-            <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
-            <DataTableRefreshButton
-              isDisabled={users?.length == 0}
-              onClick={() => {
-                mutate("/users?service_user=true");
-                mutate("/groups");
-              }}
+    <DataTable
+      headingTarget={headingTarget}
+      isLoading={isLoading}
+      text={"Service Users"}
+      sorting={sorting}
+      setSorting={setSorting}
+      columns={ServiceUsersTableColumns}
+      data={users}
+      onRowClick={(row) => {
+        router.push(`/team/user?id=${row.original.id}&service_user=true`);
+      }}
+      rowClassName={"cursor-pointer"}
+      columnVisibility={{
+        is_current: false,
+      }}
+      searchPlaceholder={"Search by name or role..."}
+      getStartedCard={
+        <GetStartedTest
+          icon={
+            <SquareIcon
+              icon={<IconSettings2 size={24} />}
+              color={"gray"}
+              size={"large"}
             />
-          </>
-        )}
-      </DataTable>
-    </>
+          }
+          title={"Create Service User"}
+          description={
+            "It looks like you don't have any service users. Get started by creating a service user."
+          }
+          button={
+            <div className={"flex flex-col"}>
+              <div>
+                <ServiceUserModal>
+                  <Button
+                    variant={"primary"}
+                    className={""}
+                    data-cy={"open-service-user-modal"}
+                    disabled={!permission.users.create}
+                  >
+                    <PlusCircle size={16} />
+                    Create Service User
+                  </Button>
+                </ServiceUserModal>
+              </div>
+            </div>
+          }
+          learnMore={
+            <>
+              Learn more about
+              <InlineLink
+                href={
+                  "https://docs.netbird.io/how-to/access-netbird-public-api"
+                }
+                target={"_blank"}
+              >
+                Service Users
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
+            </>
+          }
+        />
+      }
+      rightSide={() => (
+        <>
+          {users && users?.length > 0 && (
+            <ServiceUserModal>
+              <Button
+                variant={"primary"}
+                className={"ml-auto"}
+                data-cy={"open-service-user-modal"}
+                disabled={!permission.users.create}
+              >
+                <PlusCircle size={16} />
+                Create Service User
+              </Button>
+            </ServiceUserModal>
+          )}
+        </>
+      )}
+    >
+      {(table) => (
+        <>
+          <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
+          <DataTableRefreshButton
+            isDisabled={users?.length == 0}
+            onClick={() => {
+              mutate("/users?service_user=true");
+              mutate("/groups");
+            }}
+          />
+        </>
+      )}
+    </DataTable>
   );
 }

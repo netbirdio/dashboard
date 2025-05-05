@@ -2,9 +2,11 @@
 
 import Button from "@components/Button";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
+import { AbsoluteDateTimeInput } from "@components/ui/AbsoluteDateTimeInput";
 import { Calendar } from "@components/ui/Calendar";
 import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
+import { debounce } from "lodash";
 import { Calendar as CalendarIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
@@ -28,6 +30,10 @@ const defaultRanges = {
     from: dayjs().subtract(14, "day").startOf("day").toDate(),
     to: dayjs().endOf("day").toDate(),
   },
+  last2Days: {
+    from: dayjs().subtract(2, "day").startOf("day").toDate(),
+    to: dayjs().endOf("day").toDate(),
+  },
   lastMonth: {
     from: dayjs().subtract(1, "month").startOf("day").toDate(),
     to: dayjs().endOf("day").toDate(),
@@ -47,12 +53,17 @@ const isEqualDateRange = (a: DateRange | undefined, b: DateRange) => {
   return aFromDay === bFromDay && aToDay === bToDay;
 };
 
-export function DatePickerWithRange({ className, value, onChange }: Props) {
+export function DatePickerWithRange({
+  className,
+  value,
+  onChange,
+}: Readonly<Props>) {
   const isActive = useMemo(() => {
     return {
       today: isEqualDateRange(value, defaultRanges.today),
       yesterday: isEqualDateRange(value, defaultRanges.yesterday),
       last14Days: isEqualDateRange(value, defaultRanges.last14Days),
+      last2Days: isEqualDateRange(value, defaultRanges.last2Days),
       lastMonth: isEqualDateRange(value, defaultRanges.lastMonth),
       allTime: isEqualDateRange(value, defaultRanges.allTime),
     };
@@ -64,6 +75,7 @@ export function DatePickerWithRange({ className, value, onChange }: Props) {
     if (isActive.allTime) return "All Time";
     if (isActive.lastMonth) return "Last Month";
     if (isActive.last14Days) return "Last 14 Days";
+    if (isActive.last2Days) return "Last 2 Days";
     if (isActive.yesterday) return "Yesterday";
     if (isActive.today) return "Today";
 
@@ -80,6 +92,22 @@ export function DatePickerWithRange({ className, value, onChange }: Props) {
     onChange?.(range);
   };
 
+  const debouncedOnChange = useMemo(() => {
+    return onChange ? debounce(onChange, 300) : undefined;
+  }, [onChange]);
+
+  const handleOnSelect = (range?: DateRange) => {
+    let from = range?.from
+      ? dayjs(range.from).startOf("day").toDate()
+      : undefined;
+    let to = range?.to ? dayjs(range.to).endOf("day").toDate() : undefined;
+    if (!from && !to) {
+      onChange?.(undefined);
+      return;
+    }
+    onChange?.({ from, to });
+  };
+
   return (
     <div className={cn("grid gap-2", className)}>
       <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
@@ -93,10 +121,16 @@ export function DatePickerWithRange({ className, value, onChange }: Props) {
             {displayDateValue}
           </Button>
         </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start" sideOffset={10}>
+        <PopoverContent
+          className="w-auto p-0"
+          align="start"
+          side={"right"}
+          sideOffset={10}
+          alignOffset={-100}
+        >
           <div
             className={
-              "px-4 py-3 flex flex-wrap gap-2 max-w-[280px] sm:max-w-none border-b border-nb-gray-800 items-center justify-between w-full"
+              "px-3 py-2 flex flex-wrap gap-2 max-w-[280px] sm:max-w-none border-b border-nb-gray-800 items-center justify-between w-full"
             }
           >
             <div>
@@ -139,23 +173,10 @@ export function DatePickerWithRange({ className, value, onChange }: Props) {
             mode="range"
             defaultMonth={value?.from}
             selected={value}
-            onSelect={(range) => {
-              let from =
-                range && range.from
-                  ? dayjs(range.from).startOf("day").toDate()
-                  : undefined;
-              let to =
-                range && range.to
-                  ? dayjs(range.to).endOf("day").toDate()
-                  : undefined;
-              if (!from && !to) {
-                onChange?.(undefined);
-                return;
-              }
-              onChange?.({ from, to });
-            }}
+            onSelect={handleOnSelect}
             numberOfMonths={2}
           />
+          <AbsoluteDateTimeInput value={value} onChange={debouncedOnChange} />
         </PopoverContent>
       </Popover>
     </div>
@@ -168,7 +189,11 @@ type CalendarButtonProps = {
   active?: boolean;
 };
 
-function CalendarButton({ label, onClick, active }: CalendarButtonProps) {
+function CalendarButton({
+  label,
+  onClick,
+  active,
+}: Readonly<CalendarButtonProps>) {
   return (
     <button
       className={cn(

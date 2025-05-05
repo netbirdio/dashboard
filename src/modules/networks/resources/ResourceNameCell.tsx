@@ -3,6 +3,7 @@ import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { cn } from "@utils/helpers";
 import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -11,13 +12,14 @@ type Props = {
 };
 
 export default function ResourceNameCell({ resource }: Readonly<Props>) {
+  const { permission } = usePermissions();
   const { network, openResourceModal } = useNetworksContext();
 
   return (
     <button
       className={"flex gap-4 items-center group"}
       onClick={() => {
-        if (!network) return;
+        if (!network || !permission.networks.update) return;
         openResourceModal(network, resource);
       }}
     >

@@ -4,6 +4,7 @@ import { useApiCall } from "@utils/api";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { User } from "@/interfaces/User";
 
 type Props = {
@@ -14,6 +15,7 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
+  const { permission } = usePermissions();
 
   const isChecked = useMemo(() => {
     return user.is_blocked;
@@ -62,6 +64,7 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
   return !disabled ? (
     <div className={"flex"}>
       <ToggleSwitch
+        disabled={!permission.users.update}
         variant={"red"}
         checked={isChecked}
         size={"small"}

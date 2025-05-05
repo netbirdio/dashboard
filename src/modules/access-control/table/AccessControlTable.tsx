@@ -13,6 +13,7 @@ import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { Policy } from "@/interfaces/Policy";
 import AccessControlModal, {
@@ -166,9 +167,10 @@ export default function AccessControlTable({
   policies,
   isLoading,
   headingTarget,
-}: Props) {
+}: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const { permission } = usePermissions();
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -230,7 +232,10 @@ export default function AccessControlTable({
             button={
               <div className={"flex gap-4 items-center justify-center"}>
                 <AccessControlModal>
-                  <Button variant={"primary"} className={""}>
+                  <Button
+                    variant={"primary"}
+                    disabled={!permission.policies.create}
+                  >
                     <PlusCircle size={16} />
                     Add Policy
                   </Button>
@@ -256,7 +261,11 @@ export default function AccessControlTable({
             {policies && policies?.length > 0 && (
               <div className={"flex ml-auto gap-4"}>
                 <AccessControlModal>
-                  <Button variant={"primary"} className={"ml-auto"}>
+                  <Button
+                    variant={"primary"}
+                    className={"ml-auto"}
+                    disabled={!permission.policies.create}
+                  >
                     <PlusCircle size={16} />
                     Add Policy
                   </Button>

@@ -2,6 +2,7 @@ import { ToggleSwitch } from "@components/ToggleSwitch";
 import { cloneDeep } from "@utils/helpers";
 import React, { useMemo } from "react";
 import { mutate } from "swr";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
 import { Policy } from "@/interfaces/Policy";
@@ -11,6 +12,7 @@ type Props = {
 };
 export default function AccessControlActiveCell({ policy }: Readonly<Props>) {
   const { updatePolicy } = usePolicies();
+  const { permission } = usePermissions();
 
   const isChecked = useMemo(() => {
     return policy.enabled;
@@ -52,6 +54,7 @@ export default function AccessControlActiveCell({ policy }: Readonly<Props>) {
   return (
     <div className={"flex min-w-[0px]"}>
       <ToggleSwitch
+        disabled={!permission.policies.update}
         checked={isChecked}
         size={"small"}
         onClick={() => update(!isChecked)}

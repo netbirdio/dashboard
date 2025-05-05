@@ -30,16 +30,22 @@ type Props = {
   children: React.ReactNode;
 };
 
-export default function UserInviteModal({ children }: Props) {
+export default function UserInviteModal({ children }: Readonly<Props>) {
   const [open, setOpen] = useState(false);
+  const { mutate } = useSWRConfig();
+
+  const handleOnSuccess = () => {
+    setOpen(false);
+    setTimeout(() => {
+      mutate("/users?service_user=false");
+    }, 1000);
+  };
 
   return (
-    <>
-      <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
-        <ModalTrigger asChild={true}>{children}</ModalTrigger>
-        <UserInviteModalContent onSuccess={() => setOpen(false)} />
-      </Modal>
-    </>
+    <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
+      <ModalTrigger asChild={true}>{children}</ModalTrigger>
+      <UserInviteModalContent onSuccess={handleOnSuccess} />
+    </Modal>
   );
 }
 
@@ -47,7 +53,7 @@ type ModalProps = {
   onSuccess: () => void;
 };
 
-export function UserInviteModalContent({ onSuccess }: ModalProps) {
+export function UserInviteModalContent({ onSuccess }: Readonly<ModalProps>) {
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
 
@@ -74,8 +80,8 @@ export function UserInviteModalContent({ onSuccess }: ModalProps) {
           is_service_user: false,
         })
         .then(() => {
-          onSuccess && onSuccess();
           mutate("/users?service_user=false");
+          onSuccess && onSuccess();
         }),
       loadingMessage: "Sending invite...",
     });

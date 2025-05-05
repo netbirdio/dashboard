@@ -5,6 +5,7 @@ import useFetchApi from "@utils/api";
 import { cn } from "@utils/helpers";
 import { FolderSearch } from "lucide-react";
 import * as React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 
 export function PostureCheckNoChecksInfo({
@@ -14,6 +15,8 @@ export function PostureCheckNoChecksInfo({
   onAddClick: () => void;
   onBrowseClick: () => void;
 }) {
+  const { permission } = usePermissions();
+
   const { data: postureChecks } =
     useFetchApi<PostureCheck[]>("/posture-checks");
 
@@ -37,13 +40,22 @@ export function PostureCheckNoChecksInfo({
         <Button
           variant={"secondary"}
           size={"xs"}
-          disabled={postureChecks?.length == 0}
+          disabled={
+            postureChecks?.length == 0 ||
+            !permission.policies.create ||
+            !permission.policies.update
+          }
           onClick={onBrowseClick}
         >
           <FolderSearch size={14} />
           Browse Checks
         </Button>
-        <Button variant={"primary"} size={"xs"} onClick={onAddClick}>
+        <Button
+          variant={"primary"}
+          size={"xs"}
+          onClick={onAddClick}
+          disabled={!permission.policies.create || !permission.policies.update}
+        >
           <IconCirclePlus size={14} />
           New Posture Check
         </Button>

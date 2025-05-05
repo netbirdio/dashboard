@@ -22,11 +22,12 @@ import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import PeerProvider from "@/contexts/PeerProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
-import { GroupSelector } from "@/modules/groups/GroupSelector";
+import { GroupFilterSelector } from "@/modules/groups/GroupFilterSelector";
 import PeerActionCell from "@/modules/peers/PeerActionCell";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerGroupCell from "@/modules/peers/PeerGroupCell";
@@ -134,12 +135,13 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
   },
   {
-    id: "os",
     accessorKey: "os",
     header: ({ column }) => {
       return <DataTableHeader column={column}>OS</DataTableHeader>;
     },
-    cell: ({ row }) => <PeerOSCell os={row.original.os} serial={row.original.serial_number} />,
+    cell: ({ row }) => (
+      <PeerOSCell os={row.original.os} serial={row.original.serial_number} />
+    ),
   },
   {
     id: "serial",
@@ -194,8 +196,13 @@ type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
-export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
+export default function PeersTable({
+  peers,
+  isLoading,
+  headingTarget,
+}: Readonly<Props>) {
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
   const path = usePathname();
 
   // Default sorting state of the table
@@ -252,9 +259,9 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
         setSorting={setSorting}
         columns={PeersTableColumns}
         data={peers}
-        searchPlaceholder={"Search by name, IP, Serial, owner or group..."}
+        searchPlaceholder={"Search by name, IP, owner or group..."}
         columnVisibility={{
-          select: !isUser,
+          select: permission.groups.read,
           connected: false,
           approval_required: false,
           group_name_strings: false,
@@ -263,8 +270,8 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
           serial: false,
           user_name: false,
           user_email: false,
-          actions: !isUser,
-          groups: !isUser,
+          actions: permission.peers.update,
+          groups: permission.groups.read,
         }}
         isLoading={isLoading}
         getStartedCard={
@@ -443,7 +450,7 @@ export default function PeersTable({ peers, isLoading, headingTarget }: Props) {
             <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
 
             {!isUser && (
-              <GroupSelector
+              <GroupFilterSelector
                 disabled={peers?.length == 0}
                 values={
                   (table

@@ -1,8 +1,8 @@
 import useFetchApi, { useApiCall } from "@utils/api";
 import { merge, sortBy, unionBy } from "lodash";
 import React, { useEffect, useState } from "react";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
-import {Group, GroupResource} from "@/interfaces/Group";
+import { usePermissions } from "@/contexts/PermissionsProvider";
+import { Group, GroupResource } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 
 type Props = {
@@ -24,29 +24,29 @@ const GroupContext = React.createContext(
 );
 
 export default function GroupsProvider({ children }: Props) {
-  const { permission, isUser } = useLoggedInUser();
+  const { isRestricted } = usePermissions();
 
-  return permission.dashboard_view == "blocked" ? (
+  return isRestricted ? (
     <>{children}</>
   ) : (
-    <GroupsProviderContent isUser={isUser}>{children}</GroupsProviderContent>
+    <GroupsProviderContent>{children}</GroupsProviderContent>
   );
 }
 
 type ProviderContentProps = {
   children: React.ReactNode;
-  isUser: boolean;
 };
 
 export function GroupsProviderContent({
   children,
-  isUser,
 }: Readonly<ProviderContentProps>) {
+  const { permission } = usePermissions();
+
   const {
     data: groups,
     mutate,
     isLoading,
-  } = useFetchApi<Group[]>("/groups", false, true, !isUser);
+  } = useFetchApi<Group[]>("/groups", false, true, permission.groups.read);
   const groupRequest = useApiCall<Group>("/groups", true);
   const [dropdownOptions, setDropdownOptions] = useState<Group[]>([]);
 
@@ -103,10 +103,10 @@ export function GroupsProviderContent({
     }) as string[];
 
     let resources = group?.resources?.map((r) => {
-        let isString = typeof r === "string";
-        if (isString) return r;
-        let resource = r as GroupResource;
-        return resource.id;
+      let isString = typeof r === "string";
+      if (isString) return r;
+      let resource = r as GroupResource;
+      return resource.id;
     }) as string[];
 
     if (group.name === "All") return Promise.resolve(group);

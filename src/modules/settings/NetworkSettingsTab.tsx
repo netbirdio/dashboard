@@ -15,6 +15,7 @@ import { ExternalLinkIcon, GlobeIcon, NetworkIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
 
 type Props = {
@@ -22,6 +23,8 @@ type Props = {
 };
 
 export default function NetworkSettingsTab({ account }: Readonly<Props>) {
+  const { permission } = usePermissions();
+
   const { mutate } = useSWRConfig();
   const saveRequest = useApiCall<Account>("/accounts/" + account.id, true);
 
@@ -109,7 +112,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
           </div>
           <Button
             variant={"primary"}
-            disabled={!hasChanges}
+            disabled={!hasChanges || !permission.settings.update}
             onClick={saveChanges}
           >
             Save Changes
@@ -139,6 +142,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
                   errorTooltipPosition={"top"}
                   error={domainError}
                   value={customDNSDomain}
+                  disabled={!permission.settings.update}
                   onChange={(e) => setCustomDNSDomain(e.target.value)}
                 />
               </div>
@@ -170,6 +174,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
                 </InlineLink>
               </>
             }
+            disabled={!permission.settings.update}
           />
         </div>
       </div>
