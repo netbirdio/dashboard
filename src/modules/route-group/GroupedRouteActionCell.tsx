@@ -5,12 +5,15 @@ import { Trash2 } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 
 type Props = {
   groupedRoute: GroupedRoute;
 };
 export default function GroupedRouteActionCell({ groupedRoute }: Props) {
+  const { permission } = usePermissions();
+
   const { confirm } = useDialog();
   const routeRequest = useApiCall<Route>("/routes");
   const { mutate } = useSWRConfig();
@@ -47,7 +50,12 @@ export default function GroupedRouteActionCell({ groupedRoute }: Props) {
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <Button variant={"danger-outline"} size={"sm"} onClick={handleConfirm}>
+      <Button
+        variant={"danger-outline"}
+        size={"sm"}
+        onClick={handleConfirm}
+        disabled={!permission.routes.delete}
+      >
         <Trash2 size={16} />
         Delete
       </Button>

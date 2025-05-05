@@ -2,31 +2,39 @@ import Button from "@components/Button";
 import { CommandItem } from "@components/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
-import { IconArrowBack } from "@tabler/icons-react";
 import { cn, generateColorFromString } from "@utils/helpers";
 import { Command, CommandGroup, CommandInput, CommandList } from "cmdk";
-import { trim, uniqBy } from "lodash";
+import { sortBy, trim, uniqBy } from "lodash";
 import { ChevronsUpDown, Cog, SearchIcon, UserCircle2 } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
-import { ActivityEvent } from "@/interfaces/ActivityEvent";
+import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
-interface MultiSelectProps {
+interface Props {
   value?: string;
   onChange: (item: string | undefined) => void;
   disabled?: boolean;
   popoverWidth?: "auto" | number;
-  events: ActivityEvent[];
+  options: UserSelectOption[];
 }
-export function ActivityUserSelector({
+
+export type UserSelectOption = {
+  id: string;
+  name: string;
+  email: string;
+  external?: boolean;
+};
+
+export function UsersDropdownSelector({
   onChange,
   value,
   disabled = false,
   popoverWidth = 250,
-  events,
-}: MultiSelectProps) {
+  options,
+}: Props) {
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
   const [search, setSearch] = useState("");
@@ -44,20 +52,16 @@ export function ActivityUserSelector({
 
   const [open, setOpen] = useState(false);
 
-  const users = useMemo(() => {
-    const uniqueUsers = uniqBy(events, (event) => event.initiator_email);
-    return uniqueUsers.map((event) => {
-      return {
-        name: event.initiator_name,
-        id: event.initiator_id,
-        email: event.initiator_email || "NetBird",
-      };
-    });
-  }, [events]);
+  const sortedOptions = useMemo(() => {
+    return sortBy(
+      uniqBy(options, (o) => o.email),
+      ["external", "name"],
+    );
+  }, [options]);
 
   const selectedUser = useMemo(() => {
-    return users.find((user) => user.email == value);
-  }, [value, users]);
+    return options.find((user) => user.email == value);
+  }, [value, options]);
 
   return (
     <Popover
@@ -86,13 +90,14 @@ export function ActivityUserSelector({
                     "w-5 h-5 rounded-full flex items-center justify-center text-white uppercase text-[9px] font-medium bg-nb-gray-900"
                   }
                   style={{
-                    color: selectedUser?.name
-                      ? generateColorFromString(
-                          selectedUser?.name ||
-                            selectedUser?.id ||
-                            "System User",
-                        )
-                      : "#808080",
+                    color:
+                      selectedUser?.email === "NetBird"
+                        ? "#808080"
+                        : generateColorFromString(
+                            selectedUser?.name ||
+                              selectedUser?.id ||
+                              "System User",
+                          ),
                   }}
                 >
                   {selectedUser?.email === "NetBird" ? (
@@ -103,8 +108,13 @@ export function ActivityUserSelector({
                 </div>
                 <div className={"flex items-center gap-2"}>
                   <TextWithTooltip
-                    text={selectedUser?.name || "System"}
+                    text={
+                      selectedUser?.email === "NetBird"
+                        ? "System"
+                        : selectedUser?.name
+                    }
                     maxChars={20}
+                    className={"leading-none"}
                   />
                 </div>
               </React.Fragment>
@@ -117,7 +127,7 @@ export function ActivityUserSelector({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-sm  shadow-nb-gray-950"
+        className="w-full p-0 shadow-sm  shadow-nb-gray-950 min-w-[300px]"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}
@@ -142,7 +152,7 @@ export function ActivityUserSelector({
                   "min-h-[42px] w-full relative",
                   "border-b-0 border-t-0 border-r-0 border-l-0 border-neutral-200 dark:border-nb-gray-700 items-center",
                   "bg-transparent text-sm outline-none focus-visible:outline-none ring-0 focus-visible:ring-0",
-                  "dark:placeholder:text-neutral-500 font-light placeholder:text-neutral-500 pl-10",
+                  "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
                 )}
                 ref={searchRef}
                 value={search}
@@ -156,19 +166,6 @@ export function ActivityUserSelector({
               >
                 <div className={"flex items-center"}>
                   <SearchIcon size={14} />
-                </div>
-              </div>
-              <div
-                className={
-                  "absolute right-0 top-0 h-full flex items-center pr-4"
-                }
-              >
-                <div
-                  className={
-                    "flex items-center bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-nb-gray-500"
-                  }
-                >
-                  <IconArrowBack size={10} />
                 </div>
               </div>
             </div>
@@ -207,11 +204,12 @@ export function ActivityUserSelector({
                     </div>
                   </CommandItem>
 
-                  {users.map((user) => {
-                    const searchValue =
-                      user.email === "NetBird"
-                        ? "NetBird System"
-                        : user.name + " " + user.id + " " + user.email;
+                  {sortedOptions.map((user) => {
+                    const isSystemUser = user.email === "NetBird";
+                    const searchValue = isSystemUser
+                      ? "NetBird System"
+                      : user.name + " " + user.id + " " + user.email;
+
                     return (
                       <CommandItem
                         key={user.id}
@@ -223,44 +221,52 @@ export function ActivityUserSelector({
                         }}
                         onClick={(e) => e.preventDefault()}
                       >
-                        <div className={"flex items-center gap-2"}>
-                          <div
-                            className={
-                              "w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white uppercase text-[12px] font-medium bg-nb-gray-800"
-                            }
-                            style={{
-                              color: user?.name
-                                ? generateColorFromString(
-                                    user?.name || user?.id || "System User",
-                                  )
-                                : "#808080",
-                            }}
-                          >
-                            {user?.email === "NetBird" ? (
-                              <Cog size={14} />
-                            ) : (
-                              user?.name?.charAt(0) || user?.id?.charAt(0)
-                            )}
-                          </div>
+                        <div className={"flex items-center gap-2 w-full"}>
+                          <SmallUserAvatar
+                            name={user?.name}
+                            email={user?.email}
+                            id={user?.id}
+                          />
 
-                          <div className={"flex flex-col text-xs"}>
-                            <span className={" text-nb-gray-200"}>
+                          <div className={"flex flex-col text-xs w-full"}>
+                            <span
+                              className={
+                                "text-nb-gray-200 flex items-center gap-1.5 w-full"
+                              }
+                            >
                               <TextWithTooltip
                                 text={
-                                  user?.email === "NetBird"
+                                  isSystemUser
                                     ? "System"
                                     : user?.name || user?.id
                                 }
                                 maxChars={20}
                               />
                             </span>
-                            <span className={"text-nb-gray-400 font-light"}>
+                            <span
+                              className={
+                                "text-nb-gray-400 font-light flex items-center gap-1"
+                              }
+                            >
                               <TextWithTooltip
                                 text={user?.email || "NetBird"}
                                 maxChars={20}
                               />
                             </span>
                           </div>
+                          {user.external && (
+                            <span
+                              className={"flex items-center ml-auto relative"}
+                            >
+                              <SmallBadge
+                                text={"External"}
+                                variant={"sky"}
+                                className={
+                                  "text-[8.5px] py-[0.15rem] px-[.32rem] leading-none rounded-full -top-0"
+                                }
+                              />
+                            </span>
+                          )}
                         </div>
                       </CommandItem>
                     );

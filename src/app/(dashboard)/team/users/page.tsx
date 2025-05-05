@@ -11,6 +11,7 @@ import { ExternalLinkIcon, User2 } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -18,6 +19,7 @@ const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 
 export default function TeamUsers() {
   const { isLoading: isGroupsLoading } = useGroups();
+  const { permission } = usePermissions();
   const { data: users, isLoading } = useFetchApi<User[]>(
     "/users?service_user=false",
   );
@@ -58,7 +60,7 @@ export default function TeamUsers() {
           in our documentation.
         </Paragraph>
       </div>
-      <RestrictedAccess page={"Users"}>
+      <RestrictedAccess page={"Users"} hasAccess={permission.users.read}>
         <Suspense fallback={<SkeletonTable />}>
           <UsersTable
             users={users}

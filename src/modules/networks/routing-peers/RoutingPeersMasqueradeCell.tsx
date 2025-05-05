@@ -5,6 +5,7 @@ import useFetchApi, { useApiCall } from "@utils/api";
 import * as React from "react";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
@@ -15,6 +16,7 @@ type Props = {
   router: NetworkRouter;
 };
 export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
+  const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { network } = useNetworksContext();
 
@@ -55,7 +57,9 @@ export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
   }, [router]);
 
   const isToggleDisabled =
-    isLoading || (isRoutingPeer && isNonLinuxRoutingPeer);
+    isLoading ||
+    (isRoutingPeer && isNonLinuxRoutingPeer) ||
+    !permission.networks.update;
 
   return (
     <div className={"flex"}>

@@ -2,7 +2,7 @@ import { AnnouncementVariant } from "@components/ui/AnnouncementBanner";
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import md5 from "crypto-js/md5";
 import React, { useEffect, useState } from "react";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 
 const initialAnnouncements: Announcement[] = [];
 
@@ -38,17 +38,18 @@ const AnnouncementContext = React.createContext(
 
 const bannerHeight = 40;
 
-export default function AnnouncementProvider({ children }: Props) {
+export default function AnnouncementProvider({ children }: Readonly<Props>) {
   const [height, setHeight] = useState(0);
   const [closedAnnouncements, setClosedAnnouncements] = useLocalStorage<
     string[]
   >("netbird-closed-announcements", []);
   const [announcements, setAnnouncements] = useState<AnnouncementInfo[]>();
-  const { permission } = useLoggedInUser();
+  const { isRestricted } = usePermissions();
 
   useEffect(() => {
     if (announcements && announcements.length > 0) return;
-    if (permission?.dashboard_view === "blocked") return;
+
+    if (isRestricted) return;
     const initial = initialAnnouncements.map((announcement) => {
       const hash = md5(announcement.text).toString();
       const isOpen = !closedAnnouncements.some((h) => h === hash);

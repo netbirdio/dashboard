@@ -10,12 +10,14 @@ import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { Suspense } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
 import NetworksTable from "@/modules/networks/table/NetworksTable";
 
 export default function Networks() {
   const { data: networks, isLoading } = useFetchApi<Network[]>("/networks");
+  const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -31,8 +33,8 @@ export default function Networks() {
         </Breadcrumbs>
         <h1 ref={headingRef}>Networks</h1>
         <Paragraph>
-          Networks allow you to access internal resources in LANs and VPCs without
-          installing NetBird on every machine.
+          Networks allow you to access internal resources in LANs and VPCs
+          without installing NetBird on every machine.
         </Paragraph>
         <Paragraph>
           Learn more about
@@ -47,7 +49,7 @@ export default function Networks() {
         </Paragraph>
       </div>
 
-      <RestrictedAccess>
+      <RestrictedAccess hasAccess={permission.networks.read}>
         <Suspense fallback={<SkeletonTable />}>
           <NetworksTable
             data={networks}

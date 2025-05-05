@@ -43,9 +43,14 @@ import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 type Props = {
   value?: OperatingSystemVersionCheck;
   onChange: (value: OperatingSystemVersionCheck | undefined) => void;
+  disabled?: boolean;
 };
 
-export const PostureCheckOperatingSystem = ({ value, onChange }: Props) => {
+export const PostureCheckOperatingSystem = ({
+  value,
+  onChange,
+  disabled,
+}: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -69,12 +74,13 @@ export const PostureCheckOperatingSystem = ({ value, onChange }: Props) => {
           onChange(v);
           setOpen(false);
         }}
+        disabled={disabled}
       />
     </PostureCheckCard>
   );
 };
 
-const CheckContent = ({ value, onChange }: Props) => {
+const CheckContent = ({ value, onChange, disabled }: Props) => {
   const [tab] = useState(String(OperatingSystem.LINUX));
 
   const firstTimeCheck = value === undefined;
@@ -118,7 +124,12 @@ const CheckContent = ({ value, onChange }: Props) => {
   const [androidError, setAndroidError] = useState("");
 
   const versionError =
-    linuxError || windowsError || macOSError || iOSError || androidError;
+    linuxError ||
+    windowsError ||
+    macOSError ||
+    iOSError ||
+    androidError ||
+    disabled;
 
   return (
     <>
@@ -171,6 +182,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             onChange={setLinuxVersion}
             os={OperatingSystem.LINUX}
             onError={setLinuxError}
+            disabled={disabled}
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.WINDOWS)} className={"px-8"}>
@@ -180,6 +192,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             onChange={setWindowsVersion}
             os={OperatingSystem.WINDOWS}
             onError={setWindowsError}
+            disabled={disabled}
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.APPLE)} className={"px-8"}>
@@ -189,6 +202,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             onChange={setMacOSVersion}
             os={OperatingSystem.APPLE}
             onError={setMacOSError}
+            disabled={disabled}
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.IOS)} className={"px-8"}>
@@ -198,6 +212,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             onChange={setIOSVersion}
             os={OperatingSystem.IOS}
             onError={setIOSError}
+            disabled={disabled}
           />
         </TabsContent>
         <TabsContent value={String(OperatingSystem.ANDROID)} className={"px-8"}>
@@ -207,6 +222,7 @@ const CheckContent = ({ value, onChange }: Props) => {
             onChange={setAndroidVersion}
             os={OperatingSystem.ANDROID}
             onError={setAndroidError}
+            disabled={disabled}
           />
         </TabsContent>
       </Tabs>
@@ -215,7 +231,12 @@ const CheckContent = ({ value, onChange }: Props) => {
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
-            <InlineLink href={"https://docs.netbird.io/how-to/manage-posture-checks#operating-system-version-check"} target={"_blank"}>
+            <InlineLink
+              href={
+                "https://docs.netbird.io/how-to/manage-posture-checks#operating-system-version-check"
+              }
+              target={"_blank"}
+            >
               Operating System Check
               <ExternalLinkIcon size={12} />
             </InlineLink>
@@ -268,6 +289,7 @@ type OperatingSystemTabProps = {
   versionList?: SelectOption[];
   os: OperatingSystem;
   onError: (error: string) => void;
+  disabled?: boolean;
 };
 
 const allOrMinOptions = [
@@ -289,6 +311,7 @@ export const OperatingSystemTab = ({
   versionList,
   os,
   onError,
+  disabled,
 }: OperatingSystemTabProps) => {
   const [allow, setAllow] = useState(value == "-" ? "block" : "allow");
   const [allOrMin, setAllOrMin] = useState(
@@ -370,7 +393,7 @@ export const OperatingSystemTab = ({
           value={allOrMin}
           onChange={changeAllOrMin}
           options={allOrMinOptions}
-          disabled={allow === "block"}
+          disabled={allow === "block" || disabled}
         />
         {versionList && !useCustomVersion ? (
           <SelectDropdown
@@ -379,7 +402,7 @@ export const OperatingSystemTab = ({
             placeholder={"Select version..."}
             onChange={onChange}
             options={versionList}
-            disabled={allOrMin === "all" || allow === "block"}
+            disabled={allOrMin === "all" || allow === "block" || disabled}
           />
         ) : (
           <Input
@@ -388,7 +411,7 @@ export const OperatingSystemTab = ({
             placeholder={"e.g., 6.0.0"}
             error={versionError}
             errorTooltip={true}
-            disabled={allOrMin === "all" || allow === "block"}
+            disabled={allOrMin === "all" || allow === "block" || disabled}
             onChange={(v) => {
               onChange(v.target.value);
             }}
@@ -398,7 +421,7 @@ export const OperatingSystemTab = ({
       {os !== OperatingSystem.LINUX && (
         <div className={"mt-4"}>
           <FancyToggleSwitch
-            disabled={allow === "block" || allOrMin === "all"}
+            disabled={allow === "block" || allOrMin === "all" || disabled}
             value={useCustomVersion}
             onChange={setUseCustomVersion}
             label={

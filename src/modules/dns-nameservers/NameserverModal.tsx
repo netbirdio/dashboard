@@ -36,6 +36,7 @@ import {
 import React, { useEffect, useMemo, useReducer, useState } from "react";
 import { useSWRConfig } from "swr";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Nameserver, NameserverGroup } from "@/interfaces/Nameserver";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
@@ -53,20 +54,18 @@ export default function NameserverModal({
   open,
   onOpenChange,
   cell,
-}: Props) {
+}: Readonly<Props>) {
   return (
-    <>
-      <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
-        {children && <ModalTrigger asChild>{children}</ModalTrigger>}
-        {open && (
-          <NameserverModalContent
-            onSuccess={() => onOpenChange(false)}
-            preset={preset}
-            cell={cell}
-          />
-        )}
-      </Modal>
-    </>
+    <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
+      {children && <ModalTrigger asChild>{children}</ModalTrigger>}
+      {open && (
+        <NameserverModalContent
+          onSuccess={() => onOpenChange(false)}
+          preset={preset}
+          cell={cell}
+        />
+      )}
+    </Modal>
   );
 }
 
@@ -102,7 +101,8 @@ export function NameserverModalContent({
   onSuccess,
   preset,
   cell,
-}: ModalProps) {
+}: Readonly<ModalProps>) {
+  const { permission } = usePermissions();
   const nsRequest = useApiCall<NameserverGroup>("/dns/nameservers", true);
   const { mutate } = useSWRConfig();
 
@@ -243,6 +243,12 @@ export function NameserverModalContent({
     return !(!canContinueToGeneral || nameLengthError !== "" || name == "");
   }, [canContinueToGeneral, nameLengthError, name]);
 
+  const canAction = useMemo(() => {
+    return isUpdate
+      ? permission.nameservers.update
+      : permission.nameservers.create;
+  }, [isUpdate, permission]);
+
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
@@ -294,6 +300,7 @@ export function NameserverModalContent({
                         <NameserverInput
                           key={ns.id}
                           value={ns}
+                          disabled={!canAction}
                           onChange={(ns) =>
                             setNameservers({ type: "UPDATE", index: i, ns })
                           }
@@ -311,7 +318,7 @@ export function NameserverModalContent({
               )}
 
               <Button
-                disabled={nameservers.length >= 3}
+                disabled={nameservers.length >= 3 || !canAction}
                 variant={"dotted"}
                 className={"w-full"}
                 size={"sm"}
@@ -328,7 +335,11 @@ export function NameserverModalContent({
                 Advertise this nameserver to peers that belong to the following
                 groups
               </HelpText>
-              <PeerGroupSelector onChange={setGroups} values={groups} />
+              <PeerGroupSelector
+                onChange={setGroups}
+                values={groups}
+                disabled={!canAction}
+              />
             </div>
 
             <FancyToggleSwitch
@@ -341,6 +352,7 @@ export function NameserverModalContent({
                 </>
               }
               helpText={"Use this switch to enable or disable the nameserver."}
+              disabled={!canAction}
             />
           </div>
         </TabsContent>
@@ -370,6 +382,7 @@ export function NameserverModalContent({
                             onRemove={() =>
                               setDomains({ type: "REMOVE", index: i })
                             }
+                            disabled={!canAction}
                           />
                         );
                       })}
@@ -382,6 +395,7 @@ export function NameserverModalContent({
                   className={"w-full"}
                   size={"sm"}
                   onClick={() => setDomains({ type: "ADD" })}
+                  disabled={!canAction}
                 >
                   <PlusIcon size={14} />
                   Add Domain
@@ -405,6 +419,7 @@ export function NameserverModalContent({
                 helpText={
                   "E.g., 'peer.example.com' will be accessible with 'peer'"
                 }
+                disabled={!canAction}
               />
             </div>
           </div>
@@ -421,6 +436,7 @@ export function NameserverModalContent({
                 placeholder={"e.g., Public DNS"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                disabled={!canAction}
               />
             </div>
             <div>
@@ -435,6 +451,7 @@ export function NameserverModalContent({
                 }
                 value={description}
                 rows={3}
+                disabled={!canAction}
                 onChange={(e) => setDescription(e.target.value)}
               />
             </div>
@@ -504,7 +521,7 @@ export function NameserverModalContent({
 
                   <Button
                     variant={"primary"}
-                    disabled={!canSubmit}
+                    disabled={!canSubmit || !canAction}
                     onClick={submit}
                   >
                     <PlusCircle size={16} />
@@ -520,7 +537,7 @@ export function NameserverModalContent({
               </ModalClose>
               <Button
                 variant={"primary"}
-                disabled={!canSubmit}
+                disabled={!canSubmit || !canAction}
                 onClick={submit}
               >
                 Save Changes
@@ -538,12 +555,14 @@ function NameserverInput({
   onChange,
   onRemove,
   onError,
-}: {
+  disabled,
+}: Readonly<{
   value: Nameserver;
   onChange: (ns: Nameserver) => void;
   onRemove: () => void;
   onError?: (error: boolean) => void;
-}) {
+  disabled?: boolean;
+}>) {
   const [ip, setIP] = useState(value.ip);
   const [port, setPort] = useState<string>(value.port.toString());
 
@@ -586,6 +605,7 @@ function NameserverInput({
           className={"font-mono !text-[13px]"}
           error={cidrError}
           onChange={handleIPChange}
+          disabled={disabled}
         />
       </div>
 
@@ -596,11 +616,13 @@ function NameserverInput({
         value={port}
         type={"number"}
         onChange={handlePortChange}
+        disabled={disabled}
       />
       <Button
         className={"h-[42px]"}
         variant={"default-outline"}
         onClick={onRemove}
+        disabled={disabled}
       >
         <MinusCircleIcon size={15} />
       </Button>

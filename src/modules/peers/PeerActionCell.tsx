@@ -20,12 +20,14 @@ import { useRouter } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
 import { usePeer } from "@/contexts/PeerProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
 
 export default function PeerActionCell() {
   const { peer, deletePeer, update, openSSHDialog } = usePeer();
   const router = useRouter();
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
 
   const toggleLoginExpiration = async () => {
     const text = peer.login_expiration_enabled ? "disabled" : "enabled";
@@ -76,7 +78,10 @@ export default function PeerActionCell() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end">
-          <DropdownMenuItem onClick={() => router.push("/peer?id=" + peer.id)}>
+          <DropdownMenuItem
+            onClick={() => router.push("/peer?id=" + peer.id)}
+            disabled={!permission.peers.read}
+          >
             <div className={"flex gap-3 items-center"}>
               <MonitorIcon size={14} className={"shrink-0"} />
               View Details
@@ -100,7 +105,7 @@ export default function PeerActionCell() {
           >
             <DropdownMenuItem
               onClick={toggleLoginExpiration}
-              disabled={!peer.user_id}
+              disabled={!peer.user_id || !permission.peers.update}
             >
               <div className={"flex gap-3 items-center w-full"}>
                 <TimerResetIcon size={14} className={"shrink-0"} />
@@ -118,6 +123,7 @@ export default function PeerActionCell() {
                     enable ? toggleSSH() : null,
                   )
             }
+            disabled={!permission.peers.update}
           >
             <div className={"flex gap-3 items-center w-full"}>
               <TerminalSquare size={14} className={"shrink-0"} />
@@ -131,7 +137,11 @@ export default function PeerActionCell() {
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuItem onClick={deletePeer} variant={"danger"}>
+          <DropdownMenuItem
+            onClick={deletePeer}
+            variant={"danger"}
+            disabled={!permission.peers.delete}
+          >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
               Delete

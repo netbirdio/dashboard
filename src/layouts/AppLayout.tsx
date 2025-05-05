@@ -11,7 +11,9 @@ import localFont from "next/font/local";
 import React from "react";
 import { Toaster } from "react-hot-toast";
 import OIDCProvider from "@/auth/OIDCProvider";
-import AnalyticsProvider from "@/contexts/AnalyticsProvider";
+import AnalyticsProvider, {
+  GoogleTagManagerHeadScript,
+} from "@/contexts/AnalyticsProvider";
 import DialogProvider from "@/contexts/DialogProvider";
 import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
 import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
@@ -30,9 +32,14 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function AppLayout({ children }: { children: React.ReactNode }) {
+export default function AppLayout({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en">
+      <head>
+        <GoogleTagManagerHeadScript />
+      </head>
       <body className={cn(inter.className, "dark:bg-nb-gray bg-gray-50")}>
         <AnalyticsProvider>
           <DialogProvider>

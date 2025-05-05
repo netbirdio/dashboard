@@ -21,7 +21,7 @@ import { useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
 import { NetworkInformationSquare } from "@/modules/networks/misc/NetworkInformationSquare";
@@ -48,7 +48,8 @@ export default function NetworkDetailPage() {
 }
 
 function NetworkOverview({ network }: Readonly<{ network: Network }>) {
-  const { isUser } = useLoggedInUser();
+  const { permission } = usePermissions();
+
   const [networkModal, setNetworkModal] = useState(false);
   const { mutate } = useSWRConfig();
 
@@ -64,7 +65,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
             <Breadcrumbs.Item
               href={"/networks"}
               label={"Networks"}
-              disabled={isUser}
+              disabled={!permission.networks.read}
               icon={<NetworkRoutesIcon size={13} />}
             />
             <Breadcrumbs.Item
@@ -87,14 +88,16 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                 size={"lg"}
                 description={network.description}
               />
-              <button
-                className={
-                  "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
-                }
-                onClick={() => setNetworkModal(true)}
-              >
-                <PencilLineIcon size={18} />
-              </button>
+              {permission.networks.update && (
+                <button
+                  className={
+                    "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
+                  }
+                  onClick={() => setNetworkModal(true)}
+                >
+                  <PencilLineIcon size={18} />
+                </button>
+              )}
               <NetworkModal
                 open={networkModal}
                 setOpen={setNetworkModal}

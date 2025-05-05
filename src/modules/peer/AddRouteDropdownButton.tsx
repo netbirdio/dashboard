@@ -11,6 +11,7 @@ import { ChevronDown, PlusCircle } from "lucide-react";
 import React, { useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePeer } from "@/contexts/PeerProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import RouteAddRoutingPeerModal from "@/modules/routes/RouteAddRoutingPeerModal";
 import { RouteModalContent } from "@/modules/routes/RouteModal";
 
@@ -18,6 +19,7 @@ export default function AddRouteDropdownButton() {
   const [modal, setModal] = useState(false);
   const [existingNetworkModal, setExistingNetworkModal] = useState(false);
   const { peer } = usePeer();
+  const { permission } = usePermissions();
 
   return (
     <>
@@ -47,7 +49,10 @@ export default function AddRouteDropdownButton() {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end" sideOffset={10}>
-          <DropdownMenuItem onClick={() => setModal(true)}>
+          <DropdownMenuItem
+            onClick={() => setModal(true)}
+            disabled={!permission.routes.create}
+          >
             <div className={"flex gap-3 items-center justify-center pr-3"}>
               <SquareIcon
                 icon={<PlusCircle size={14} />}
@@ -63,7 +68,10 @@ export default function AddRouteDropdownButton() {
             </div>
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={() => setExistingNetworkModal(true)}>
+          <DropdownMenuItem
+            onClick={() => setExistingNetworkModal(true)}
+            disabled={!permission.routes.update || !permission.peers.update}
+          >
             <div className={"flex gap-3 items-center justify-center pr-3"}>
               <SquareIcon
                 icon={

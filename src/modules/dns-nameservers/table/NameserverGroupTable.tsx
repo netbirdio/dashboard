@@ -13,6 +13,7 @@ import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns-nameservers/NameserverModal";
@@ -96,9 +97,10 @@ export default function NameserverGroupTable({
   nameserverGroups,
   isLoading,
   headingTarget,
-}: Props) {
+}: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const { permission } = usePermissions();
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -161,7 +163,11 @@ export default function NameserverGroupTable({
               <div className={"flex flex-col"}>
                 <div>
                   <NameserverTemplateModal>
-                    <Button variant={"primary"} className={""}>
+                    <Button
+                      variant={"primary"}
+                      className={""}
+                      disabled={!permission.nameservers.create}
+                    >
                       <PlusCircle size={16} />
                       Add Nameserver
                     </Button>
@@ -189,7 +195,11 @@ export default function NameserverGroupTable({
           <>
             {nameserverGroups && nameserverGroups?.length > 0 && (
               <NameserverTemplateModal>
-                <Button variant={"primary"} className={"ml-auto"}>
+                <Button
+                  variant={"primary"}
+                  className={"ml-auto"}
+                  disabled={!permission.nameservers.create}
+                >
                   <PlusCircle size={16} />
                   Add Nameserver
                 </Button>

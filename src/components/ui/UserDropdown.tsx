@@ -1,6 +1,5 @@
 "use client";
 
-import { useOidc } from "@axa-fr/react-oidc";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,25 +16,19 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import useOSDetection from "@/hooks/useOperatingSystem";
-import loadConfig from "@/utils/config";
-
-const config = loadConfig();
 
 export default function UserDropdown() {
-  const { logout } = useOidc();
+  const [dropdownOpen, setDropdownOpen] = useState(false);
   const { user } = useApplicationContext();
-  const { loggedInUser } = useLoggedInUser();
+  const { loggedInUser, logout } = useLoggedInUser();
+  const { isRestricted, permission } = usePermissions();
   const isMac = useOSDetection();
   const router = useRouter();
-  const logoutSession = async () => {
-    logout("/", { client_id: config.clientId }).then();
-  };
 
-  useHotkeys("shift+mod+l", () => logoutSession(), []);
-  const { permission } = useLoggedInUser();
-  const [dropdownOpen, setDropdownOpen] = useState(false);
+  useHotkeys("shift+mod+l", () => logout(), []);
 
   return (
     <DropdownMenu
@@ -44,7 +37,7 @@ export default function UserDropdown() {
       onOpenChange={setDropdownOpen}
     >
       <DropdownMenuTrigger>
-        <UserAvatar />
+        <UserAvatar size={"medium"} />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
@@ -68,23 +61,18 @@ export default function UserDropdown() {
 
         <DropdownMenuSeparator />
 
-        {permission.dashboard_view !== "blocked" && (
-          <DropdownMenuItem
+        {!isRestricted && (
+          <ProfileSettingsDropdownItem
             onClick={() => {
               setDropdownOpen(false);
               if (loggedInUser) {
                 router.push(`/team/user?id=${loggedInUser.id}`);
               }
             }}
-          >
-            <div className={"flex gap-3 items-center"}>
-              <User2 size={14} />
-              Profile Settings
-            </div>
-          </DropdownMenuItem>
+          />
         )}
 
-        <DropdownMenuItem onClick={logoutSession}>
+        <DropdownMenuItem onClick={logout}>
           <div className={"flex gap-3 items-center"}>
             <LogOutIcon size={14} />
             Log out
@@ -95,3 +83,14 @@ export default function UserDropdown() {
     </DropdownMenu>
   );
 }
+
+const ProfileSettingsDropdownItem = ({ onClick }: { onClick: () => void }) => {
+  return (
+    <DropdownMenuItem onClick={onClick}>
+      <div className={"flex gap-3 items-center"}>
+        <User2 size={14} />
+        Profile Settings
+      </div>
+    </DropdownMenuItem>
+  );
+};

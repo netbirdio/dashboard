@@ -16,7 +16,7 @@ import { FolderGit2 } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -31,6 +31,7 @@ type Props = {
   peer?: Peer;
   showAddGroupButton?: boolean;
   hideAllGroup?: boolean;
+  disabled: boolean;
 };
 
 export default function GroupsRow({
@@ -43,9 +44,10 @@ export default function GroupsRow({
   peer,
   showAddGroupButton = false,
   hideAllGroup = false,
-}: Props) {
+  disabled = false,
+}: Readonly<Props>) {
   const { groups: allGroups } = useGroups();
-  const { isUser } = useLoggedInUser();
+  const { permission } = usePermissions();
 
   // Get the group by the id
   const foundGroups = useMemo(() => {
@@ -62,7 +64,7 @@ export default function GroupsRow({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setModal && !isUser && setModal(true);
+          setModal && permission.groups.update && setModal(true);
         }}
       >
         {foundGroups?.length == 0 && showAddGroupButton ? (
@@ -81,6 +83,7 @@ export default function GroupsRow({
         description={description}
         peer={peer}
         hideAllGroup={hideAllGroup}
+        disabled={disabled}
       />
     </Modal>
   );
@@ -93,6 +96,7 @@ type EditGroupsModalProps = {
   description?: string;
   peer?: Peer;
   hideAllGroup?: boolean;
+  disabled: boolean;
 };
 
 export function EditGroupsModal({
@@ -102,7 +106,8 @@ export function EditGroupsModal({
   description,
   peer,
   hideAllGroup = false,
-}: EditGroupsModalProps) {
+  disabled,
+}: Readonly<EditGroupsModalProps>) {
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
       initial: groups,
@@ -141,7 +146,7 @@ export function EditGroupsModal({
             <Button variant={"secondary"}>Cancel</Button>
           </ModalClose>
 
-          <Button variant={"primary"} onClick={handleSave}>
+          <Button variant={"primary"} onClick={handleSave} disabled={disabled}>
             Save Groups
           </Button>
         </div>

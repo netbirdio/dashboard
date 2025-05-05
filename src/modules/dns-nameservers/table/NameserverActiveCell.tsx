@@ -3,14 +3,16 @@ import { ToggleSwitch } from "@components/ToggleSwitch";
 import { useApiCall } from "@utils/api";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 
 type Props = {
   ns: NameserverGroup;
 };
-export default function NameserverActiveCell({ ns }: Props) {
+export default function NameserverActiveCell({ ns }: Readonly<Props>) {
   const nsRequest = useApiCall<NameserverGroup>("/dns/nameservers");
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
 
   const update = async (enabled: boolean) => {
     notify({
@@ -47,6 +49,7 @@ export default function NameserverActiveCell({ ns }: Props) {
   return (
     <div className={"flex"}>
       <ToggleSwitch
+        disabled={!permission.nameservers.update}
         checked={isChecked}
         size={"small"}
         onClick={() => update(!isChecked)}

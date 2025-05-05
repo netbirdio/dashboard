@@ -27,6 +27,7 @@ import React, { lazy, Suspense, useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Account } from "@/interfaces/Account";
 
@@ -37,6 +38,8 @@ type Props = {
 };
 
 export default function GroupsTab({ account }: Props) {
+  const { permission } = usePermissions();
+
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
 
@@ -171,6 +174,7 @@ export default function GroupsTab({ account }: Props) {
             helpText={
               "Allow group propagation from user’s auto-groups to peers, sharing membership information."
             }
+            disabled={!permission.settings.update}
           />
           {(!isNetBirdHosted() || isLocalDev()) && (
             <FancyToggleSwitch
@@ -185,6 +189,7 @@ export default function GroupsTab({ account }: Props) {
               helpText={
                 "Extract & sync groups from JWT claims with user’s auto-groups, auto-creating groups from tokens."
               }
+              disabled={!permission.settings.update}
             />
           )}
         </div>

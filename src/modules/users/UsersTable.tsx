@@ -10,11 +10,12 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
 import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
-import { ExternalLinkIcon, MailPlus, PlusCircle } from "lucide-react";
+import { ExternalLinkIcon, MailPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { User } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
@@ -101,7 +102,11 @@ type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
-export default function UsersTable({ users, isLoading, headingTarget }: Props) {
+export default function UsersTable({
+  users,
+  isLoading,
+  headingTarget,
+}: Readonly<Props>) {
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -124,89 +129,102 @@ export default function UsersTable({ users, isLoading, headingTarget }: Props) {
   const router = useRouter();
 
   return (
-    <>
-      <DataTable
-        headingTarget={headingTarget}
-        isLoading={isLoading}
-        text={"Users"}
-        sorting={sorting}
-        setSorting={setSorting}
-        columns={UsersTableColumns}
-        data={users}
-        columnVisibility={{
-          is_current: false,
-        }}
-        onRowClick={(row) => {
-          router.push(`/team/user?id=${row.original.id}`);
-        }}
-        searchPlaceholder={"Search by name, email or role..."}
-        getStartedCard={
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Create Nameserver"}
-            description={
-              "It looks like you don't have any nameservers. Get started by adding one to your network. Select a predefined or add your custom nameservers."
-            }
-            button={
-              <div className={"flex flex-col"}>
-                <div>
-                  <Button variant={"primary"} className={""}>
-                    <PlusCircle size={16} />
-                    Add Nameserver
-                  </Button>
-                </div>
-              </div>
-            }
-            learnMore={
-              <>
-                Learn more about
-                <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/manage-dns-in-your-network"
-                  }
-                  target={"_blank"}
-                >
-                  DNS
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
-        }
-        rightSide={() => (
-          <>
-            {(isLocalDev() || isNetBirdHosted()) &&
-              users &&
-              users?.length > 0 && (
-                <UserInviteModal>
-                  <Button variant={"primary"} className={"ml-auto"}>
-                    <MailPlus size={16} />
-                    Invite User
-                  </Button>
-                </UserInviteModal>
-              )}
-          </>
-        )}
-      >
-        {(table) => (
-          <>
-            <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
-            <DataTableRefreshButton
-              isDisabled={users?.length == 0}
-              onClick={() => {
-                mutate("/users?service_user=false");
-                mutate("/groups");
-              }}
+    <DataTable
+      headingTarget={headingTarget}
+      isLoading={isLoading}
+      text={"Users"}
+      sorting={sorting}
+      setSorting={setSorting}
+      columns={UsersTableColumns}
+      data={users}
+      columnVisibility={{
+        is_current: false,
+      }}
+      onRowClick={(row) => {
+        router.push(`/team/user?id=${row.original.id}`);
+      }}
+      searchPlaceholder={"Search by name, email or role..."}
+      getStartedCard={
+        <GetStartedTest
+          icon={
+            <SquareIcon
+              icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
+              color={"gray"}
+              size={"large"}
             />
-          </>
-        )}
-      </DataTable>
-    </>
+          }
+          title={"Add New Users"}
+          description={
+            "It looks like you don't have any users yet. Get started by inviting users to your account."
+          }
+          button={
+            <div className={"flex flex-col items-center justify-center"}>
+              <InviteUserButton show={true} />
+            </div>
+          }
+          learnMore={
+            <>
+              Learn more about
+              <InlineLink
+                href={
+                  "https://docs.netbird.io/how-to/add-users-to-your-network"
+                }
+                target={"_blank"}
+              >
+                Users
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
+            </>
+          }
+        />
+      }
+      rightSide={() => (
+        <InviteUserButton
+          show={users && users?.length > 0}
+          className={"ml-auto"}
+        />
+      )}
+    >
+      {(table) => (
+        <>
+          <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
+          <DataTableRefreshButton
+            isDisabled={users?.length == 0}
+            onClick={() => {
+              mutate("/users?service_user=false");
+              mutate("/groups");
+            }}
+          />
+        </>
+      )}
+    </DataTable>
   );
 }
+
+type InviteUserButtonProps = {
+  show?: boolean;
+  className?: string;
+};
+
+const InviteUserButton = ({
+  show = false,
+  className,
+}: InviteUserButtonProps) => {
+  const { permission } = usePermissions();
+  if (!show) return null;
+
+  return (
+    (isLocalDev() || isNetBirdHosted()) && (
+      <UserInviteModal>
+        <Button
+          variant={"primary"}
+          className={className}
+          disabled={!permission.users.create}
+        >
+          <MailPlus size={16} />
+          Invite User
+        </Button>
+      </UserInviteModal>
+    )
+  );
+};

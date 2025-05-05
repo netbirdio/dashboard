@@ -5,6 +5,7 @@ import { Trash2, Undo2Icon } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { SetupKey } from "@/interfaces/SetupKey";
 
 type Props = {
@@ -14,6 +15,7 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
   const { confirm } = useDialog();
   const request = useApiCall<SetupKey>("/setup-keys/" + setupKey.id);
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
 
   const handleRevoke = async () => {
     const choice = await confirm({
@@ -76,12 +78,19 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
         variant={"danger-outline"}
         size={"sm"}
         onClick={handleRevoke}
-        disabled={setupKey.revoked || !setupKey.valid}
+        disabled={
+          setupKey.revoked || !setupKey.valid || !permission.setup_keys.update
+        }
       >
         <Undo2Icon size={16} />
         Revoke
       </Button>
-      <Button variant={"danger-outline"} size={"sm"} onClick={handleDelete}>
+      <Button
+        variant={"danger-outline"}
+        size={"sm"}
+        onClick={handleDelete}
+        disabled={!permission.setup_keys.delete}
+      >
         <Trash2 size={16} />
         Delete
       </Button>

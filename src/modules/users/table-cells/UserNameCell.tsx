@@ -1,4 +1,4 @@
-import { cn, generateColorFromString } from "@utils/helpers";
+import { cn, generateColorFromUser } from "@utils/helpers";
 import { Ban, Clock, Cog } from "lucide-react";
 import React from "react";
 import { User } from "@/interfaces/User";
@@ -6,7 +6,7 @@ import { User } from "@/interfaces/User";
 type Props = {
   user: User;
 };
-export default function UserNameCell({ user }: Props) {
+export default function UserNameCell({ user }: Readonly<Props>) {
   const status = user.status;
   const isCurrent = user.is_current;
 
@@ -20,9 +20,7 @@ export default function UserNameCell({ user }: Props) {
           "w-10 h-10 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
         }
         style={{
-          color: user?.name
-            ? generateColorFromString(user?.name || user?.id || "System User")
-            : "#808080",
+          color: generateColorFromUser(user),
         }}
       >
         {!user?.name && !user?.id && <Cog size={12} />}

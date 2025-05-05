@@ -41,6 +41,8 @@ import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { PolicyRuleResource } from "@/interfaces/Policy";
+import { User } from "@/interfaces/User";
+import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 
 interface MultiSelectProps {
   values: Group[];
@@ -61,6 +63,10 @@ interface MultiSelectProps {
   resource?: PolicyRuleResource;
   onResourceChange?: (resource?: PolicyRuleResource) => void;
   placeholder?: string;
+  customTrigger?: React.ReactNode;
+  align?: "start" | "end";
+  side?: "top" | "bottom";
+  users?: User[];
 }
 export function PeerGroupSelector({
   onChange,
@@ -81,11 +87,17 @@ export function PeerGroupSelector({
   resource,
   onResourceChange,
   placeholder = "Add or select group(s)...",
+  customTrigger,
+  align = "start",
+  side = "bottom",
+  users,
 }: Readonly<MultiSelectProps>) {
   const { groups, dropdownOptions, setDropdownOptions, addDropdownOptions } =
     useGroups();
   const searchRef = React.useRef<HTMLInputElement>(null);
-  const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
+  const [inputRef, { width }] = useElementSize<
+    HTMLButtonElement | HTMLSpanElement
+  >();
   const [search, setSearch] = useState("");
   const { data: resources, isLoading } = useFetchApi<NetworkResource[]>(
     "/networks/resources",
@@ -251,97 +263,105 @@ export function PeerGroupSelector({
       }}
     >
       <PopoverTrigger asChild>
-        <button
-          className={cn(
-            "min-h-[46px] w-full relative items-center group",
-            "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
-            "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
-            "disabled:pointer-events-none disabled:opacity-30 transition-all",
-          )}
-          disabled={disabled}
-          data-cy={dataCy}
-          ref={inputRef}
-        >
-          <div
-            className={
-              "flex items-center gap-2 border-nb-gray-700 flex-wrap h-full"
-            }
+        {customTrigger ? (
+          <div ref={inputRef} className={"w-full"}>
+            {customTrigger}
+          </div>
+        ) : (
+          <button
+            className={cn(
+              "min-h-[46px] w-full relative items-center group",
+              "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
+              "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
+              "disabled:pointer-events-none disabled:opacity-30 transition-all",
+            )}
+            disabled={disabled}
+            data-cy={dataCy}
+            ref={inputRef}
           >
-            {resource && showResources && (
-              <ResourceBadge
-                className={"py-[3px]"}
-                resource={resources?.find((r) => r.id === resource.id)}
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  selectResource();
-                }}
-                showX={true}
+            <div
+              className={
+                "flex items-center gap-2 border-nb-gray-700 flex-wrap h-full"
+              }
+            >
+              {resource && showResources && (
+                <ResourceBadge
+                  className={"py-[3px]"}
+                  resource={resources?.find((r) => r.id === resource.id)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectResource();
+                  }}
+                  showX={true}
+                />
+              )}
+              {values.map((group) => {
+                return (
+                  <div
+                    key={group.name}
+                    className={cn(
+                      showPeerCount
+                        ? "flex gap-x-1 gap-y-2 items-center justify-between w-full"
+                        : "",
+                    )}
+                  >
+                    {showPeerCount ? (
+                      <GroupBadgeWithEditPeers
+                        className={"py-[3px]"}
+                        group={group}
+                        key={group.name}
+                        showNewBadge={true}
+                        onPeerAssignmentChange={onPeerAssignmentChange}
+                        useSave={saveGroupAssignments}
+                      />
+                    ) : (
+                      <GroupBadge
+                        className={"py-[3px]"}
+                        group={group}
+                        key={group.name}
+                        showNewBadge={true}
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          if (disableInlineRemoveGroup) return;
+                          if (peer != undefined && group.name == "All") return; // Prevent removing the "All" group
+                          toggleGroupByName(group.name);
+                        }}
+                        showX={
+                          peer != undefined
+                            ? group.name !== "All"
+                            : !disableInlineRemoveGroup
+                        }
+                      />
+                    )}
+                  </div>
+                );
+              })}
+
+              {values.length == 0 && !resource && (
+                <span className={"pl-1"}>{placeholder}</span>
+              )}
+            </div>
+
+            <div className={"pl-2"} data-cy={"group-selector-open-close"}>
+              <ChevronsUpDown
+                size={18}
+                className={
+                  "shrink-0 group-hover:text-nb-gray-300 transition-all"
+                }
               />
-            )}
-            {values.map((group) => {
-              return (
-                <div
-                  key={group.name}
-                  className={cn(
-                    showPeerCount
-                      ? "flex gap-x-1 gap-y-2 items-center justify-between w-full"
-                      : "",
-                  )}
-                >
-                  {showPeerCount ? (
-                    <GroupBadgeWithEditPeers
-                      className={"py-[3px]"}
-                      group={group}
-                      key={group.name}
-                      showNewBadge={true}
-                      onPeerAssignmentChange={onPeerAssignmentChange}
-                      useSave={saveGroupAssignments}
-                    />
-                  ) : (
-                    <GroupBadge
-                      className={"py-[3px]"}
-                      group={group}
-                      key={group.name}
-                      showNewBadge={true}
-                      onClick={(e) => {
-                        e.preventDefault();
-                        e.stopPropagation();
-                        if (disableInlineRemoveGroup) return;
-                        if (peer != undefined && group.name == "All") return; // Prevent removing the "All" group
-                        toggleGroupByName(group.name);
-                      }}
-                      showX={
-                        peer != undefined
-                          ? group.name !== "All"
-                          : !disableInlineRemoveGroup
-                      }
-                    />
-                  )}
-                </div>
-              );
-            })}
-
-            {values.length == 0 && !resource && (
-              <span className={"pl-1"}>{placeholder}</span>
-            )}
-          </div>
-
-          <div className={"pl-2"} data-cy={"group-selector-open-close"}>
-            <ChevronsUpDown
-              size={18}
-              className={"shrink-0 group-hover:text-nb-gray-300 transition-all"}
-            />
-          </div>
-        </button>
+            </div>
+          </button>
+        )}
       </PopoverTrigger>
       <PopoverContent
         className="w-full p-0 shadow-sm shadow-nb-gray-950"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}
-        align="start"
-        side={"top"}
+        align={align}
+        side={side}
         sideOffset={10}
       >
         <Command
@@ -482,13 +502,24 @@ export function PeerGroupSelector({
                                 <ResourcesCounter group={option} />
                               )}
 
-                              <div
-                                className={
-                                  "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
-                                }
-                              >
-                                {peerIcon}
-                                {peerCount} Peer(s)
+                              <div className={"flex gap-3 items-center"}>
+                                {!users ? (
+                                  <div
+                                    className={
+                                      "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
+                                    }
+                                  >
+                                    {peerIcon}
+                                    {peerCount} Peer(s)
+                                  </div>
+                                ) : (
+                                  <UsersCounter
+                                    group={option}
+                                    users={users}
+                                    selected={isSelected}
+                                  />
+                                )}
+
                                 <Checkbox checked={isSelected} />
                               </div>
                             </div>
@@ -552,6 +583,34 @@ const TabTriggers = ({
         Resource
       </TabsTrigger>
     </TabsList>
+  );
+};
+
+const UsersCounter = ({
+  group,
+  users,
+  selected,
+}: {
+  group: Group;
+  users: User[];
+  selected: boolean;
+}) => {
+  const usersOfGroup =
+    users?.filter((user) => user.auto_groups.includes(group.id as string)) ||
+    [];
+
+  if (usersOfGroup.length === 0) return null;
+
+  return (
+    <HorizontalUsersStack
+      users={usersOfGroup}
+      max={3}
+      avatarClassName={cn(
+        "border-nb-gray-920",
+        "bg-nb-gray-800 group-hover/user-stack:bg-nb-gray-700",
+        "group-hover/command-item:border-nb-gray-910",
+      )}
+    />
   );
 };
 

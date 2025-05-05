@@ -7,6 +7,7 @@ import {
 } from "@components/DropdownMenu";
 import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -14,6 +15,7 @@ type Props = {
   resource: NetworkResource;
 };
 export const ResourceActionCell = ({ resource }: Props) => {
+  const { permission } = usePermissions();
   const { deleteResource, network, openResourceModal } = useNetworksContext();
 
   return (
@@ -25,8 +27,15 @@ export const ResourceActionCell = ({ resource }: Props) => {
             e.stopPropagation();
             e.preventDefault();
           }}
+          disabled={!permission.networks.update && !permission.networks.delete}
         >
-          <Button variant={"secondary"} className={"!px-3"}>
+          <Button
+            variant={"secondary"}
+            className={"!px-3"}
+            disabled={
+              !permission.networks.update && !permission.networks.delete
+            }
+          >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
@@ -36,6 +45,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
               if (!network) return;
               openResourceModal(network, resource);
             }}
+            disabled={!permission.networks.update}
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
@@ -48,6 +58,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
               deleteResource(network, resource);
             }}
             variant={"danger"}
+            disabled={!permission.networks.delete}
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />

@@ -11,26 +11,45 @@ interface Props extends LinkProps, InlineLinkProps {
   target?: "_blank" | "_self" | "_parent" | "_top";
 }
 
-const linkVariants = cva("", {
-  variants: {
-    variant: {
-      default: "text-netbird hover:underline font-normal",
-      faded: "text-nb-gray-400 hover:text-nb-gray-300 hover:underline",
+interface InlineButtonProps
+  extends React.ButtonHTMLAttributes<HTMLButtonElement>,
+    InlineLinkProps {
+  children: React.ReactNode;
+  className?: string;
+  target?: "_blank" | "_self" | "_parent" | "_top";
+}
+
+export const linkVariants = cva(
+  "underline-offset-4 items-center transition-all duration-200 inline-flex texts-inherit gap-1",
+  {
+    variants: {
+      variant: {
+        default: "text-netbird hover:underline font-normal",
+        faded: "text-nb-gray-400 hover:text-nb-gray-300 hover:underline",
+        white: "text-nb-gray-100 hover:text-white hover:underline",
+      },
     },
   },
-});
+);
 
 export default function InlineLink({ variant = "default", ...props }: Props) {
   return (
-    <Link
-      {...props}
-      className={cn(
-        "underline-offset-4 texts-inherit gap-1 items-center transition-all duration-200 inline-flex",
-        props.className,
-        linkVariants({ variant }),
-      )}
-    >
+    <Link {...props} className={cn(props.className, linkVariants({ variant }))}>
       {props.children}
     </Link>
+  );
+}
+
+export function InlineButtonLink({
+  variant = "default",
+  ...props
+}: InlineButtonProps) {
+  return (
+    <button
+      {...props}
+      className={cn(props.className, linkVariants({ variant }))}
+    >
+      {props.children}
+    </button>
   );
 }

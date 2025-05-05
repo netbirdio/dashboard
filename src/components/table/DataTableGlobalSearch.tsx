@@ -1,7 +1,8 @@
 import { Input } from "@components/Input";
 import Kbd from "@components/Kbd";
+import { useDebounce } from "@hooks/useDebounce";
 import { Search } from "lucide-react";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
 
 interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
@@ -17,9 +18,16 @@ export default function DataTableGlobalSearch({
   ...props
 }: Props) {
   const ref = React.useRef<HTMLInputElement>(null);
+  const [inputValue, setInputValue] = useState(globalSearch || "");
+  const debouncedValue = useDebounce(inputValue, 300);
+
+  // Call setGlobalSearch when debounced value changes
+  useEffect(() => {
+    setGlobalSearch(debouncedValue);
+  }, [debouncedValue]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setGlobalSearch(e.target.value);
+    setInputValue(e.target.value);
   };
 
   useHotkeys("mod+k", () => ref.current?.focus(), []);
@@ -29,7 +37,7 @@ export default function DataTableGlobalSearch({
       {...props}
       ref={ref}
       icon={<Search size={15} />}
-      value={globalSearch}
+      value={inputValue} // Shows immediate updates
       onChange={handleChange}
       maxWidthClass={className}
       customSuffix={<Kbd>⌘ K</Kbd>}

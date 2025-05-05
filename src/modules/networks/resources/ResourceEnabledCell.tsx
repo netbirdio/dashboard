@@ -4,6 +4,7 @@ import { useApiCall } from "@utils/api";
 import * as React from "react";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -12,6 +13,8 @@ type Props = {
   resource: NetworkResource;
 };
 export const ResourceEnabledCell = ({ resource }: Props) => {
+  const { permission } = usePermissions();
+
   const { mutate } = useSWRConfig();
   const { network } = useNetworksContext();
 
@@ -52,6 +55,7 @@ export const ResourceEnabledCell = ({ resource }: Props) => {
         checked={isChecked}
         size={"small"}
         onClick={() => toggle(!isChecked)}
+        disabled={!permission.networks.update}
       />
     </div>
   );

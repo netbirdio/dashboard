@@ -1,32 +1,58 @@
 import Card from "@components/Card";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
-import { cn, generateColorFromString } from "@utils/helpers";
+import { cn, generateColorFromUser } from "@utils/helpers";
 import dayjs from "dayjs";
 import { AlertCircle, ArrowUpRight, Cog, PlusIcon, XIcon } from "lucide-react";
 import React, { useMemo } from "react";
 import { useUsers } from "@/contexts/UsersProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
+import { User } from "@/interfaces/User";
 import ActivityDescription from "@/modules/activity/ActivityDescription";
 import ActivityTypeIcon from "@/modules/activity/ActivityTypeIcon";
 import { getColorFromCode } from "@/modules/activity/utils";
 
+export type ActionColor = "green" | "red" | "blue-darker" | "netbird";
+
+const ActionIcons: Record<ActionColor, React.ReactNode> = {
+  green: <PlusIcon size={12} />,
+  red: <XIcon size={12} />,
+  "blue-darker": <ArrowUpRight size={12} />,
+  netbird: <AlertCircle size={12} />,
+};
+
 export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
   const { users } = useUsers();
 
-  const user = users
-    ? users.find((user) => user.id === event.initiator_id)
-    : undefined;
+  const getActivityUser = () => {
+    let user;
+    const findFromCurrentUsers = users?.find(
+      (user) => user.id === event.initiator_id,
+    );
+    if (findFromCurrentUsers) {
+      user = findFromCurrentUsers;
+      return user;
+    }
 
-  const icons = {
-    green: <PlusIcon size={12} />,
-    "blue-darker": <ArrowUpRight size={12} />,
-    red: <XIcon size={12} />,
-    netbird: <AlertCircle size={12} />,
+    // Check if user has an email & name
+    if (event?.initiator_email && event?.initiator_name) {
+      return {
+        id: event.initiator_id,
+        email: event.initiator_email,
+        name: event.initiator_name,
+      } as User;
+    }
+
+    return undefined;
   };
+
+  const user = getActivityUser();
 
   const color = useMemo(() => {
     return getColorFromCode(event.activity_code);
   }, [event.activity_code]);
+
+  const isExternal = !!event?.meta?.external;
 
   return (
     <div className={"flex items-start gap-6 relative max-w-[735px] pb-10"}>
@@ -47,7 +73,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
             color == "netbird" && "bg-netbird-950 text-netbird-500",
           )}
         >
-          {color && icons[color]}
+          {color && ActionIcons[color as ActionColor]}
         </div>
       </div>
 
@@ -60,11 +86,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
                   "w-4 h-4 rounded-full flex items-center justify-center text-white uppercase text-[9px] font-medium bg-nb-gray-900"
                 }
                 style={{
-                  color: user?.name
-                    ? generateColorFromString(
-                        user?.name || user?.id || "System User",
-                      )
-                    : "#808080",
+                  color: generateColorFromUser(user),
                 }}
               >
                 {!user?.name && !user?.id && <Cog size={12} />}
@@ -80,6 +102,17 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
               <span className={"text-sm text-nb-gray-400 font-light"}>
                 <TextWithTooltip text={user?.email || ""} maxChars={20} />
               </span>
+              {isExternal && (
+                <span className={"flex items-center"}>
+                  <SmallBadge
+                    text={"External"}
+                    variant={"sky"}
+                    className={
+                      "text-[10px] py-[0.2rem] px-1.5 rounded-full leading-none -top-0"
+                    }
+                  />
+                </span>
+              )}
             </div>
           </div>
 

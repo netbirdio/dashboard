@@ -774,13 +774,13 @@ export function RouteModalContent({
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          {tab == "network" && (
+          {(tab == "network" || (tab == "access-control" && exitNode)) && (
             <ModalClose asChild={true}>
               <Button variant={"secondary"}>Cancel</Button>
             </ModalClose>
           )}
 
-          {tab == "access-control" && (
+          {tab == "access-control" && !exitNode && (
             <Button variant={"secondary"} onClick={() => setTab("network")}>
               Back
             </Button>

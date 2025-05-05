@@ -2,9 +2,17 @@ import Button from "@components/Button";
 import { CommandItem } from "@components/Command";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
 import { ScrollArea } from "@components/ScrollArea";
+import { isNetBirdHosted } from "@utils/netbird";
 import { Command, CommandGroup, CommandList } from "cmdk";
 import { trim } from "lodash";
-import { ChevronsUpDown, Cog, User2 } from "lucide-react";
+import {
+  ChevronsUpDown,
+  Cog,
+  CreditCard,
+  EyeIcon,
+  NetworkIcon,
+  User2,
+} from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
@@ -20,9 +28,10 @@ interface MultiSelectProps {
   popoverWidth?: "auto" | number;
   hideOwner?: boolean;
   currentUser?: User;
+  customTrigger?: React.ReactNode;
 }
 
-const UserRoles = [
+export const UserRoles = [
   {
     name: "Owner",
     value: Role.Owner,
@@ -32,6 +41,21 @@ const UserRoles = [
     name: "Admin",
     value: Role.Admin,
     icon: Cog,
+  },
+  {
+    name: "Network Admin",
+    value: Role.NetworkAdmin,
+    icon: NetworkIcon,
+  },
+  {
+    name: "Billing Admin",
+    value: Role.BillingAdmin,
+    icon: CreditCard,
+  },
+  {
+    name: "Auditor",
+    value: Role.Auditor,
+    icon: EyeIcon,
   },
   {
     name: "User",
@@ -47,8 +71,11 @@ export function UserRoleSelector({
   popoverWidth = "auto",
   hideOwner = false,
   currentUser,
-}: MultiSelectProps) {
-  const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
+  customTrigger,
+}: Readonly<MultiSelectProps>) {
+  const [inputRef, { width }] = useElementSize<
+    HTMLButtonElement | HTMLDivElement
+  >();
   const { isOwner } = useLoggedInUser();
   const { confirm } = useDialog();
 
@@ -80,10 +107,7 @@ export function UserRoleSelector({
     }
 
     const isSelected = value == item;
-    if (isSelected) {
-    } else {
-      onChange && onChange(item);
-    }
+    if (!isSelected) onChange && onChange(item);
     setOpen(false);
   };
 
@@ -99,35 +123,37 @@ export function UserRoleSelector({
       }}
     >
       <PopoverTrigger asChild={true}>
-        <Button
-          variant={"input"}
-          disabled={disabled}
-          ref={inputRef}
-          className={"w-full"}
-          data-cy={"user-role-selector"}
-        >
-          <div className={"w-full flex justify-between items-center gap-2"}>
-            {selectedRole && (
-              <React.Fragment>
+        {customTrigger ? (
+          <div ref={inputRef}>{customTrigger}</div>
+        ) : (
+          <Button
+            variant={"input"}
+            disabled={disabled}
+            ref={inputRef}
+            className={"w-full"} // [data-state] open
+            data-cy={"user-role-selector"}
+          >
+            <div className={"w-full flex justify-between items-center gap-2"}>
+              {selectedRole && (
                 <div className={"flex items-center gap-2.5"}>
                   <selectedRole.icon size={14} width={14} />
                   <div className={"flex flex-col text-sm font-medium"}>
-                    <span className={"text-nb-gray-200"}>
+                    <span className={"text-nb-gray-200 whitespace-nowrap"}>
                       {selectedRole?.name}
                     </span>
                   </div>
                 </div>
-              </React.Fragment>
-            )}
+              )}
 
-            <div className={"pl-2"}>
-              <ChevronsUpDown size={18} className={"shrink-0"} />
+              <div className={"pl-2"}>
+                <ChevronsUpDown size={18} className={"shrink-0"} />
+              </div>
             </div>
-          </div>
-        </Button>
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-sm  shadow-nb-gray-950"
+        className="w-full p-0 shadow-sm shadow-nb-gray-950"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}
@@ -157,6 +183,9 @@ export function UserRoleSelector({
                     if (!isOwner && item.value === Role.Owner) return null;
                     if (hideOwner && item.value === Role.Owner) return null;
 
+                    if (item.value === Role.BillingAdmin && !isNetBirdHosted())
+                      return null;
+
                     return (
                       <CommandItem
                         key={item.value}
@@ -168,10 +197,12 @@ export function UserRoleSelector({
                       >
                         <div className={"flex items-center gap-2.5 p-1"}>
                           <item.icon size={14} width={14} />
-                          <div className={"flex flex-col text-sm font-medium"}>
-                            <span className={"text-nb-gray-200"}>
-                              {item.name}
-                            </span>
+                          <div
+                            className={
+                              "flex flex-col text-sm font-medium text-nb-gray-200 whitespace-nowrap"
+                            }
+                          >
+                            {item.name}
                           </div>
                         </div>
                       </CommandItem>

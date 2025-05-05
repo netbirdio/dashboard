@@ -7,6 +7,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
 } from "lucide-react";
+import { useEffect } from "react";
 
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
@@ -26,6 +27,13 @@ export function DataTablePagination<TData>({
   const showingFrom = (currentPage - 1) * rowsPerPage + 1;
   const showingTo = isLastPage ? allRows : showingFrom + rowsPerPage - 1;
   const pageCount = table.getPageCount();
+
+  // Reset page index if it's greater than the page count
+  useEffect(() => {
+    if (currentPage > pageCount) {
+      table.setPageIndex(0);
+    }
+  }, []);
 
   return pageCount > 1 ? (
     <div className={cn("flex items-center justify-between", paginationPadding)}>
@@ -53,7 +61,7 @@ export function DataTablePagination<TData>({
             </ButtonGroup.Button>
             <ButtonGroup.Button>
               <div>
-                {table.getState().pagination.pageIndex + 1} of {pageCount}
+                {currentPage} of {pageCount}
               </div>
             </ButtonGroup.Button>
             <ButtonGroup.Button

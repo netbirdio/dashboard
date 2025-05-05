@@ -2,6 +2,7 @@ import { notify } from "@components/Notification";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePeer } from "@/contexts/PeerProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import GroupsRow from "@/modules/common-table-rows/GroupsRow";
 
@@ -9,6 +10,7 @@ export default function PeerGroupCell() {
   const { peer, peerGroups } = usePeer();
   const [modal, setModal] = useState(false);
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
 
   const handleSave = async (promises: Promise<Group>[]) => {
     notify({
@@ -35,6 +37,7 @@ export default function PeerGroupCell() {
       description={"Use groups to control what this peer can access"}
       groups={groupIDs || []}
       hideAllGroup={true}
+      disabled={!permission.groups.update}
       onSave={handleSave}
       modal={modal}
       peer={peer}

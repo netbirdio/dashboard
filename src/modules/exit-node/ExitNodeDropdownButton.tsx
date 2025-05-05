@@ -3,6 +3,7 @@ import { Modal } from "@components/modal/Modal";
 import { IconCirclePlus, IconDirectionSign } from "@tabler/icons-react";
 import * as React from "react";
 import { useState } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { Peer } from "@/interfaces/Peer";
 import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
@@ -15,10 +16,14 @@ type Props = {
 export const ExitNodeDropdownButton = ({ peer }: Props) => {
   const [modal, setModal] = useState(false);
   const hasExitNodes = useHasExitNodes(peer);
+  const { permission } = usePermissions();
 
   return (
     <>
-      <DropdownMenuItem onClick={() => setModal(true)}>
+      <DropdownMenuItem
+        onClick={() => setModal(true)}
+        disabled={!permission.routes.create}
+      >
         <div className={"flex gap-3 items-center w-full"}>
           {hasExitNodes ? (
             <>

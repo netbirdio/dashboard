@@ -5,7 +5,7 @@ import FullTooltip from "@components/FullTooltip";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { LockIcon } from "lucide-react";
 import * as React from "react";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
 
 type Props = {
@@ -28,7 +28,7 @@ export const PeerExpirationToggle = ({
   className,
   variant = "default",
 }: Props) => {
-  const { isUser } = useLoggedInUser();
+  const { permission } = usePermissions();
 
   return (
     <FullTooltip
@@ -52,11 +52,11 @@ export const PeerExpirationToggle = ({
         </div>
       }
       className={"w-full block"}
-      disabled={!!peer.user_id && !isUser}
+      disabled={!!peer.user_id && permission.peers.update}
     >
       <FancyToggleSwitch
         className={className}
-        disabled={!peer.user_id || isUser}
+        disabled={!peer.user_id || !permission.peers.update}
         value={value}
         onChange={onChange}
         variant={variant}

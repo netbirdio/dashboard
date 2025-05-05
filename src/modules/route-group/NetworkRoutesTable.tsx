@@ -15,6 +15,7 @@ import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import GroupRouteProvider from "@/contexts/GroupRouteProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
@@ -122,6 +123,7 @@ export default function NetworkRoutesTable({
   routes,
   headingTarget,
 }: Props) {
+  const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -197,6 +199,7 @@ export default function NetworkRoutesTable({
                   variant={"primary"}
                   className={""}
                   onClick={() => setRouteModal(true)}
+                  disabled={!permission.routes.create}
                 >
                   <PlusCircle size={16} />
                   Add Route
@@ -228,6 +231,7 @@ export default function NetworkRoutesTable({
                   variant={"primary"}
                   className={""}
                   onClick={() => setRouteModal(true)}
+                  disabled={!permission.routes.create}
                 >
                   <PlusCircle size={16} />
                   Add Route

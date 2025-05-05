@@ -74,3 +74,47 @@ p {
     -webkit-overflow-scrolling: touch;
     -webkit-transform: translate3d(0, 0, 0);
 }
+
+
+/**
+ * Timescape Root element
+ */
+.timescape {
+    @apply flex items-center gap-[1px] rounded-md py-2 px-3 select-none w-fit cursor-text bg-nb-gray-900;
+}
+
+/**
+ * Date and time input elements
+ */
+.timescape input {
+    @apply cursor-text px-0.5 py-1 bg-transparent h-fit border-0 outline-0 select-none box-content caret-transparent text-nb-gray-200 text-sm placeholder-nb-gray-300;
+    font-variant-numeric: tabular-nums;
+    /* For the calculation of the input width these are important */
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+}
+
+.timescape input:focus {
+    @apply bg-nb-gray-700 text-white rounded py-1 px-0.5 border-0 outline-0;
+}
+
+/**
+ * Separator elements
+ */
+.timescape .separator {
+    @apply text-gray-400 m-0 text-[80%] -top-[1px] relative;
+}
+
+
+/**
+ * Fade in animation
+ */
+.animate-fade-in {
+  animation: fadeIn 0.4s ease-in-out;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}

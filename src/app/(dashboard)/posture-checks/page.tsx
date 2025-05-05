@@ -11,6 +11,7 @@ import { ExternalLinkIcon, ShieldCheck } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import PageContainer from "@/layouts/PageContainer";
@@ -19,6 +20,7 @@ const PostureCheckTable = lazy(
   () => import("@/modules/posture-checks/table/PostureCheckTable"),
 );
 export default function PostureChecksPage() {
+  const { permission } = usePermissions();
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
 
@@ -59,7 +61,10 @@ export default function PostureChecksPage() {
           </Paragraph>
         </div>
 
-        <RestrictedAccess page={"Posture Checks"}>
+        <RestrictedAccess
+          page={"Posture Checks"}
+          hasAccess={permission.policies.read}
+        >
           <PoliciesProvider>
             <Suspense fallback={<SkeletonTable />}>
               <PostureCheckTable

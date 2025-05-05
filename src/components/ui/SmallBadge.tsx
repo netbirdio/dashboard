@@ -6,8 +6,10 @@ const smallBadgeVariants = cva("", {
   variants: {
     variant: {
       green: "bg-green-900 border border-green-500/20 text-green-400",
+      blue: "bg-blue-900 border border-blue-500/20 text-blue-400",
       white: "bg-white/20 border border-white/10 text-white",
       sky: "bg-sky-900 border border-sky-500/20 text-white",
+      netbird: "bg-netbird-900 border border-netbird-400 text-netbird-300",
     },
   },
 });
@@ -15,12 +17,14 @@ const smallBadgeVariants = cva("", {
 type Props = {
   text?: string;
   className?: string;
+  textClassName?: string;
   children?: React.ReactNode;
 } & VariantProps<typeof smallBadgeVariants>;
 
 export const SmallBadge = ({
   text = "NEW",
   className,
+  textClassName,
   variant = "green",
   children,
 }: Props) => {
@@ -33,7 +37,7 @@ export const SmallBadge = ({
       )}
     >
       {children}
-      <span className={"relative top-[0.4px]"}>{text}</span>
+      <span className={cn("relative top-[0.4px]", textClassName)}>{text}</span>
     </span>
   );
 };

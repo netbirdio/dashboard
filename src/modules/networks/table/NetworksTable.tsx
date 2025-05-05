@@ -13,6 +13,7 @@ import { usePathname } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Network } from "@/interfaces/Network";
 import {
@@ -167,9 +168,15 @@ export default function NetworksTable({
 }
 
 const AddNetworkButton = () => {
+  const { permission } = usePermissions();
+
   const { openCreateNetworkModal } = useNetworksContext();
   return (
-    <Button variant={"primary"} onClick={openCreateNetworkModal}>
+    <Button
+      variant={"primary"}
+      onClick={openCreateNetworkModal}
+      disabled={!permission.networks.create}
+    >
       <PlusCircle size={16} />
       Add Network
     </Button>

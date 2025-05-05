@@ -1,9 +1,17 @@
 import useFetchApi from "@utils/api";
 import { useMemo } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
 
 export const useAccount = () => {
-  const { data: accounts } = useFetchApi<Account[]>("/accounts", true, true);
+  const { permission } = usePermissions();
+
+  const { data: accounts } = useFetchApi<Account[]>(
+    "/accounts",
+    true,
+    true,
+    permission.accounts.read,
+  );
 
   return useMemo(() => {
     if (!accounts) return;

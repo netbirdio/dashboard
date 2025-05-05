@@ -24,9 +24,14 @@ import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 type Props = {
   value?: PeerNetworkRangeCheck;
   onChange: (value: PeerNetworkRangeCheck | undefined) => void;
+  disabled?: boolean;
 };
 
-export const PostureCheckPeerNetworkRange = ({ value, onChange }: Props) => {
+export const PostureCheckPeerNetworkRange = ({
+  value,
+  onChange,
+  disabled,
+}: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -50,6 +55,7 @@ export const PostureCheckPeerNetworkRange = ({ value, onChange }: Props) => {
           onChange(v);
           setOpen(false);
         }}
+        disabled={disabled}
       />
     </PostureCheckCard>
   );
@@ -60,7 +66,7 @@ interface NetworkRange {
   value: string;
 }
 
-const CheckContent = ({ value, onChange }: Props) => {
+const CheckContent = ({ value, onChange, disabled }: Props) => {
   const [allowOrDeny, setAllowOrDeny] = useState<string>(
     value?.action ? value.action : "allow",
   );
@@ -155,6 +161,7 @@ const CheckContent = ({ value, onChange }: Props) => {
                       onChange={(e) =>
                         handleNetworkRangeChange(ipRange.id, e.target.value)
                       }
+                      disabled={disabled}
                     />
                   </div>
 
@@ -162,6 +169,7 @@ const CheckContent = ({ value, onChange }: Props) => {
                     className={"h-[42px]"}
                     variant={"default-outline"}
                     onClick={() => removeNetworkRange(ipRange.id)}
+                    disabled={disabled}
                   >
                     <MinusCircleIcon size={15} />
                   </Button>
@@ -170,7 +178,12 @@ const CheckContent = ({ value, onChange }: Props) => {
             })}
           </div>
         )}
-        <Button variant={"dotted"} size={"sm"} onClick={addNetworkRange}>
+        <Button
+          variant={"dotted"}
+          size={"sm"}
+          onClick={addNetworkRange}
+          disabled={disabled}
+        >
           <PlusCircle size={16} />
           Add Network Range
         </Button>
@@ -196,7 +209,7 @@ const CheckContent = ({ value, onChange }: Props) => {
           </ModalClose>
           <Button
             variant={"primary"}
-            disabled={hasErrorsOrIsEmpty}
+            disabled={hasErrorsOrIsEmpty || disabled}
             onClick={() => {
               if (isEmpty(networkRanges)) {
                 onChange(undefined);

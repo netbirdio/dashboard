@@ -37,7 +37,10 @@ type Props = {
   user: User;
 };
 const copyMessage = "Access token was copied to your clipboard!";
-export default function CreateAccessTokenModal({ children, user }: Props) {
+export default function CreateAccessTokenModal({
+  children,
+  user,
+}: Readonly<Props>) {
   const [modal, setModal] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
   const [token, setToken] = useState<string>("");
@@ -125,7 +128,10 @@ type ModalProps = {
   user: User;
 };
 
-export function AccessTokenModalContent({ onSuccess, user }: ModalProps) {
+export function AccessTokenModalContent({
+  onSuccess,
+  user,
+}: Readonly<ModalProps>) {
   const tokenRequest = useApiCall<AccessToken>(`/users/${user.id}/tokens`);
   const { mutate } = useSWRConfig();
 

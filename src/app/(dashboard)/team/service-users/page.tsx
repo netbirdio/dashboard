@@ -11,6 +11,7 @@ import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -19,6 +20,7 @@ const ServiceUsersTable = lazy(
 );
 
 export default function ServiceUsers() {
+  const { permission } = usePermissions();
   const { data: users, isLoading } = useFetchApi<User[]>(
     "/users?service_user=true",
   );
@@ -59,7 +61,10 @@ export default function ServiceUsers() {
           in our documentation.
         </Paragraph>
       </div>
-      <RestrictedAccess page={"Service Users"}>
+      <RestrictedAccess
+        page={"Service Users"}
+        hasAccess={permission.users.read}
+      >
         <Suspense fallback={<SkeletonTable />}>
           <ServiceUsersTable
             users={users}

@@ -17,9 +17,14 @@ import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 type Props = {
   value?: NetBirdVersionCheck;
   onChange: (value: NetBirdVersionCheck | undefined) => void;
+  disabled?: boolean;
 };
 
-export const PostureCheckNetBirdVersion = ({ value, onChange }: Props) => {
+export const PostureCheckNetBirdVersion = ({
+  value,
+  onChange,
+  disabled,
+}: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -42,12 +47,13 @@ export const PostureCheckNetBirdVersion = ({ value, onChange }: Props) => {
           onChange(v);
           setOpen(false);
         }}
+        disabled={disabled}
       />
     </PostureCheckCard>
   );
 };
 
-const CheckContent = ({ value, onChange }: Props) => {
+const CheckContent = ({ value, onChange, disabled }: Props) => {
   const [version, setVersion] = useState(value?.min_version || "");
 
   const versionError = useMemo(() => {
@@ -58,8 +64,13 @@ const CheckContent = ({ value, onChange }: Props) => {
   }, [version]);
 
   const canSave = useMemo(() => {
-    return !versionError && version !== value?.min_version && !isEmpty(version);
-  }, [version, versionError, value]);
+    return (
+      !versionError &&
+      version !== value?.min_version &&
+      !isEmpty(version) &&
+      !disabled
+    );
+  }, [version, versionError, value, disabled]);
 
   return (
     <>
@@ -78,6 +89,7 @@ const CheckContent = ({ value, onChange }: Props) => {
               placeholder={"e.g., 0.25.0"}
               error={versionError}
               customPrefix={"Version"}
+              disabled={disabled}
             />
           </div>
         </div>
@@ -86,7 +98,12 @@ const CheckContent = ({ value, onChange }: Props) => {
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
-            <InlineLink href={"https://docs.netbird.io/how-to/manage-posture-checks#net-bird-client-version-check"} target={"_blank"}>
+            <InlineLink
+              href={
+                "https://docs.netbird.io/how-to/manage-posture-checks#net-bird-client-version-check"
+              }
+              target={"_blank"}
+            >
               Client Version Check
               <ExternalLinkIcon size={12} />
             </InlineLink>

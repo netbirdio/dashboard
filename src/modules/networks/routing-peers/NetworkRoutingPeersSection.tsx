@@ -8,6 +8,7 @@ import { IconCirclePlus } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import * as React from "react";
 import { Suspense } from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import NetworkRoutingPeersTable from "@/modules/networks/routing-peers/NetworkRoutingPeersTable";
@@ -17,6 +18,7 @@ export const NetworkRoutingPeersSection = ({
 }: {
   network: Network;
 }) => {
+  const { permission } = usePermissions();
   const { data: routers, isLoading } = useFetchApi<NetworkRouter[]>(
     `/networks/${network.id}/routers`,
   );
@@ -40,6 +42,7 @@ export const NetworkRoutingPeersSection = ({
               <Button
                 variant={"primary"}
                 onClick={() => openAddRoutingPeerModal(network)}
+                disabled={!permission.networks.update}
               >
                 <IconCirclePlus size={16} />
                 Add Routing Peer

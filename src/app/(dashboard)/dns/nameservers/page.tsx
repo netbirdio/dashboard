@@ -10,6 +10,7 @@ import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, ServerIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -18,6 +19,8 @@ const NameserverGroupTable = lazy(
 );
 
 export default function NameServers() {
+  const { permission } = usePermissions();
+
   const { data: nameserverGroups, isLoading } =
     useFetchApi<NameserverGroup[]>("/dns/nameservers");
 
@@ -57,7 +60,10 @@ export default function NameServers() {
         </Paragraph>
       </div>
 
-      <RestrictedAccess page={"Nameservers"}>
+      <RestrictedAccess
+        page={"Nameservers"}
+        hasAccess={permission.nameservers.read}
+      >
         <Suspense fallback={<SkeletonTable />}>
           <NameserverGroupTable
             nameserverGroups={nameserverGroups}

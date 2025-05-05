@@ -1,6 +1,6 @@
 import Badge from "@components/Badge";
 import { cn } from "@utils/helpers";
-import { Cog, User2 } from "lucide-react";
+import { Cog, CreditCardIcon, EyeIcon, NetworkIcon, User2 } from "lucide-react";
 import React from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { Role, User } from "@/interfaces/User";
@@ -9,7 +9,7 @@ type Props = {
   user: User;
 };
 
-export default function UserRoleCell({ user }: Props) {
+export default function UserRoleCell({ user }: Readonly<Props>) {
   const role = user.role;
 
   return (
@@ -31,6 +31,24 @@ export default function UserRoleCell({ user }: Props) {
           <>
             <NetBirdIcon size={14} />
             Owner
+          </>
+        )}
+        {role === Role.BillingAdmin && (
+          <>
+            <CreditCardIcon size={14} />
+            Billing Admin
+          </>
+        )}
+        {role === Role.Auditor && (
+          <>
+            <EyeIcon size={14} />
+            Auditor
+          </>
+        )}
+        {role === Role.NetworkAdmin && (
+          <>
+            <NetworkIcon size={14} />
+            Network Admin
           </>
         )}
       </Badge>

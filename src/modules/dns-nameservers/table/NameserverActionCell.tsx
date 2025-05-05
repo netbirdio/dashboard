@@ -5,15 +5,17 @@ import { Trash2 } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 
 type Props = {
   ns: NameserverGroup;
 };
-export default function NameserverActionCell({ ns }: Props) {
+export default function NameserverActionCell({ ns }: Readonly<Props>) {
   const { confirm } = useDialog();
   const nsRequest = useApiCall<NameserverGroup>("/dns/nameservers");
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
 
   const deleteRule = async () => {
     notify({
@@ -41,7 +43,12 @@ export default function NameserverActionCell({ ns }: Props) {
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <Button variant={"danger-outline"} size={"sm"} onClick={openConfirm}>
+      <Button
+        variant={"danger-outline"}
+        size={"sm"}
+        onClick={openConfirm}
+        disabled={!permission.nameservers.delete}
+      >
         <Trash2 size={16} />
         Delete
       </Button>

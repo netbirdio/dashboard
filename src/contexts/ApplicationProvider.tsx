@@ -1,6 +1,6 @@
 import { useOidcUser } from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
-import { useApiCall } from "@utils/api";
+import { Params, useApiCall } from "@utils/api";
 import { useIsMd } from "@utils/responsive";
 import { getLatestNetbirdRelease } from "@utils/version";
 import React, {
@@ -26,6 +26,10 @@ const ApplicationContext = React.createContext(
     toggleMobileNav: () => void;
     mobileNavOpen: boolean;
     user: any;
+    globalApiParams?: Params;
+    setGlobalApiParams?: (p?: Params) => void;
+    isNavigationCollapsed: boolean;
+    toggleNavigation: () => void;
   },
 );
 
@@ -36,10 +40,18 @@ export default function ApplicationProvider({ children }: Props) {
   const { oidcUser: user } = useOidcUser();
   const [mobileNavOpen, setMobileNavOpen] = useState(false);
   const isMd = useIsMd();
-  const userRequest = useApiCall<User[]>("/users", true);
+  const userRequest = useApiCall<User[]>(`/users`, true);
   const [show, setShow] = useState(false);
+  const [isNavigationCollapsed, setIsNavigationCollapsed] = useLocalStorage(
+    "netbird-nav-collapsed",
+    false,
+  );
   const requestCalled = useRef(false);
   const maxTries = 3;
+
+  const [globalApiParams, setGlobalApiParams] = useLocalStorage<
+    Params | undefined
+  >("netbird-api-params", undefined);
 
   const populateCache = useCallback(
     async (tries = 0) => {
@@ -56,6 +68,10 @@ export default function ApplicationProvider({ children }: Props) {
     },
     [userRequest, setShow],
   );
+
+  const toggleNavigation = useCallback(() => {
+    setIsNavigationCollapsed((prev) => !prev);
+  }, []);
 
   useEffect(() => {
     if (!requestCalled.current) {
@@ -98,7 +114,17 @@ export default function ApplicationProvider({ children }: Props) {
 
   return show ? (
     <ApplicationContext.Provider
-      value={{ latestVersion, toggleMobileNav, latestUrl, mobileNavOpen, user }}
+      value={{
+        latestVersion,
+        toggleMobileNav,
+        latestUrl,
+        mobileNavOpen,
+        user,
+        globalApiParams,
+        setGlobalApiParams,
+        isNavigationCollapsed,
+        toggleNavigation,
+      }}
     >
       {children}
     </ApplicationContext.Provider>

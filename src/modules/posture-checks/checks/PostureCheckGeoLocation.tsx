@@ -24,9 +24,14 @@ import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 type Props = {
   value?: GeoLocationCheck;
   onChange: (value: GeoLocationCheck | undefined) => void;
+  disabled?: boolean;
 };
 
-export const PostureCheckGeoLocation = ({ value, onChange }: Props) => {
+export const PostureCheckGeoLocation = ({
+  value,
+  onChange,
+  disabled,
+}: Props) => {
   const [open, setOpen] = useState(false);
 
   return (
@@ -57,12 +62,13 @@ export const PostureCheckGeoLocation = ({ value, onChange }: Props) => {
           onChange(v);
           setOpen(false);
         }}
+        disabled={disabled}
       />
     </PostureCheckCard>
   );
 };
 
-const CheckContent = ({ value, onChange }: Props) => {
+const CheckContent = ({ value, onChange, disabled }: Props) => {
   const [allowDenyLocation, setAllowDenyLocation] = useState<string>(
     value?.action ? value.action : "allow",
   );
@@ -159,7 +165,7 @@ const CheckContent = ({ value, onChange }: Props) => {
         <Button
           variant={"dotted"}
           size={"sm"}
-          disabled={allowDenyLocation == "all"}
+          disabled={allowDenyLocation == "all" || disabled}
           onClick={addLocation}
         >
           <PlusCircle size={16} />
@@ -171,7 +177,12 @@ const CheckContent = ({ value, onChange }: Props) => {
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
             Learn more about
-            <InlineLink href={"https://docs.netbird.io/how-to/manage-posture-checks#geolocation-check"} target={"_blank"}>
+            <InlineLink
+              href={
+                "https://docs.netbird.io/how-to/manage-posture-checks#geolocation-check"
+              }
+              target={"_blank"}
+            >
               Country & Region Check
               <ExternalLinkIcon size={12} />
             </InlineLink>
@@ -193,6 +204,7 @@ const CheckContent = ({ value, onChange }: Props) => {
                 });
               }
             }}
+            disabled={disabled}
           >
             Save
           </Button>

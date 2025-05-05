@@ -7,7 +7,7 @@ type Props = {
   user: User;
 };
 
-export default function ServiceUserNameCell({ user }: Props) {
+export default function ServiceUserNameCell({ user }: Readonly<Props>) {
   return (
     <div className={cn("flex gap-4 px-2 py-1 items-center")}>
       <div

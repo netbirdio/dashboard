@@ -10,15 +10,25 @@ import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
 type Props<T extends { id?: string }> = {
   items: T[];
   onSelect: (item: T) => void;
-  renderItem?: (item: T) => React.ReactNode;
+  renderItem?: (item: T, selected?: boolean) => React.ReactNode;
+  renderBeforeItem?: (item: T) => React.ReactNode;
   itemClassName?: string;
+  itemWrapperClassName?: string;
+  scrollAreaClassName?: string;
+  maxHeight?: number;
+  estimatedItemHeight?: number;
 };
 
 export function VirtualScrollAreaList<T extends { id?: string }>({
   items,
   onSelect,
   renderItem,
+  renderBeforeItem,
   itemClassName,
+  itemWrapperClassName,
+  scrollAreaClassName,
+  maxHeight,
+  estimatedItemHeight = 36,
 }: Readonly<Props<T>>) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [selected, setSelected] = useState(0);
@@ -67,31 +77,47 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
 
   const renderMemoizedItem = useMemo(() => renderItem, [renderItem]);
 
+  const scrollAreaHeight = { maxHeight: maxHeight ?? 195 };
+
+  const virtuosoHeight = {
+    height: Math.min(items.length * estimatedItemHeight + 8, maxHeight ?? 195),
+  };
+
   return (
     <MemoizedScrollArea
       withoutViewport={true}
-      className={"max-h-[195px] flex flex-col gap-1 py-2"}
+      className={cn("flex flex-col gap-1 pt-2", scrollAreaClassName)}
+      style={scrollAreaHeight}
     >
       <Virtuoso
         ref={virtuosoRef}
         overscan={50}
         data={items}
+        totalCount={items.length}
+        fixedItemHeight={estimatedItemHeight}
         computeItemKey={(index) => items[index].id as string}
         context={{ selected, setSelected, onClick: onSelect }}
         itemContent={(index, option, { selected, setSelected, onClick }) => {
           return (
-            <VirtualScrollListItemWrapper
-              onMouseEnter={() => setSelected(index)}
-              id={option.id}
-              onClick={() => onClick(option)}
-              ariaSelected={selected === index}
-              className={itemClassName}
-            >
-              {renderMemoizedItem ? renderMemoizedItem(option) : option.id}
-            </VirtualScrollListItemWrapper>
+            <div>
+              {renderBeforeItem?.(option)}
+              <VirtualScrollListItemWrapper
+                onMouseEnter={() => setSelected(index)}
+                id={option.id}
+                onClick={() => onClick(option)}
+                ariaSelected={selected === index}
+                itemClassName={itemClassName}
+                className={itemWrapperClassName}
+                isLast={index === items.length - 1}
+              >
+                {renderMemoizedItem
+                  ? renderMemoizedItem(option, selected === index)
+                  : option.id}
+              </VirtualScrollListItemWrapper>
+            </div>
           );
         }}
-        style={{ height: 195 }}
+        style={virtuosoHeight}
         components={{
           Scroller: MemoizedScrollAreaViewport,
         }}
@@ -107,6 +133,8 @@ type ItemWrapperProps = {
   onClick?: () => void;
   ariaSelected?: boolean;
   className?: string;
+  itemClassName?: string;
+  isLast?: boolean;
 };
 
 export const VirtualScrollListItemWrapper = memo(
@@ -117,11 +145,17 @@ export const VirtualScrollListItemWrapper = memo(
     onMouseEnter,
     ariaSelected,
     className,
+    itemClassName,
+    isLast,
   }: ItemWrapperProps) => {
     return (
       <div
         key={id ?? undefined}
-        className={"pr-3 pl-2 webkit-scroll"}
+        className={cn(
+          "pr-3 pl-2 webkit-scroll group/list-item",
+          isLast && "pb-2",
+          className,
+        )}
         onMouseEnter={onMouseEnter}
         onClick={onClick}
       >
@@ -129,7 +163,7 @@ export const VirtualScrollListItemWrapper = memo(
           className={cn(
             "text-xs flex justify-between py-2 px-3 cursor-pointer items-center rounded-md",
             "bg-transparent dark:aria-selected:bg-nb-gray-800/50",
-            className,
+            itemClassName,
           )}
           aria-selected={ariaSelected}
           role={"listitem"}

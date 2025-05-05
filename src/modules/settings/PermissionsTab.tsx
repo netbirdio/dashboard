@@ -8,6 +8,7 @@ import { GaugeIcon, LockIcon } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Account } from "@/interfaces/Account";
 
@@ -16,6 +17,8 @@ type Props = {
 };
 
 export default function PermissionsTab({ account }: Props) {
+  const { permission } = usePermissions();
+
   const { mutate } = useSWRConfig();
   const saveRequest = useApiCall<Account>("/accounts/" + account.id);
 
@@ -65,7 +68,7 @@ export default function PermissionsTab({ account }: Props) {
           <h1>Permissions</h1>
           <Button
             variant={"primary"}
-            disabled={!hasChanges}
+            disabled={!hasChanges || !permission.settings.update}
             onClick={saveChanges}
           >
             Save Changes
@@ -85,6 +88,7 @@ export default function PermissionsTab({ account }: Props) {
             helpText={
               "Access to the dashboard will be limited and regular users will not be able to view any peers."
             }
+            disabled={!permission.settings.update}
           />
         </div>
       </div>

@@ -3,7 +3,6 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { usePortalElement } from "@hooks/usePortalElement";
 import * as React from "react";
 import { lazy, Suspense } from "react";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
 import type { Peer } from "@/interfaces/Peer";
 import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
 import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
@@ -19,12 +18,11 @@ type Props = {
 export const PeerNetworkRoutesSection = ({ peer }: Props) => {
   const { peerRoutes, isLoading } = usePeerRoutes({ peer });
   const hasExitNodes = useHasExitNodes(peer);
-  const { isUser } = useLoggedInUser();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
   return (
-    <div className={"pt-7 pb-10 px-8"}>
+    <div className={"pb-10 px-8"}>
       <div className={"max-w-6xl"}>
         <div className={"flex justify-between items-center mb-5"}>
           <div>

@@ -2,10 +2,9 @@
 
 import Button from "@components/Button";
 import { AnnouncementBanner } from "@components/ui/AnnouncementBanner";
-import DarkModeToggle from "@components/ui/DarkModeToggle";
 import UserDropdown from "@components/ui/UserDropdown";
 import { cn } from "@utils/helpers";
-import { MenuIcon } from "lucide-react";
+import { MenuIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
@@ -13,7 +12,7 @@ import NetBirdLogo from "@/assets/netbird.svg";
 import NetBirdLogoFull from "@/assets/netbird-full.svg";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 
 export const headerHeight = 75;
 
@@ -32,7 +31,7 @@ export default function NavbarWithDropdown() {
           src={NetBirdLogo}
           width={30}
           alt={"NetBird Logo"}
-          className={"md:hidden"}
+          className={"md:hidden ml-4"}
         />
       </>
     );
@@ -40,7 +39,7 @@ export default function NavbarWithDropdown() {
 
   const { toggleMobileNav } = useApplicationContext();
   const { bannerHeight } = useAnnouncement();
-  const { permission } = useLoggedInUser();
+  const { isRestricted } = usePermissions();
 
   return (
     <>
@@ -62,8 +61,7 @@ export default function NavbarWithDropdown() {
             <Button
               className={cn(
                 "!px-3 md:hidden",
-                permission.dashboard_view == "blocked" &&
-                  "opacity-0 pointer-events-none",
+                isRestricted && "opacity-0 pointer-events-none",
               )}
               variant={"default-outline"}
               onClick={toggleMobileNav}
@@ -73,18 +71,19 @@ export default function NavbarWithDropdown() {
               </div>
             </Button>
           </div>
-          <div
-            onClick={() => router.push("/peers")}
-            className={"cursor-pointer hover:opacity-70 transition-all"}
-          >
-            {Logo}
+          <div className={"flex gap-4 mr-auto"}>
+            <button
+              onClick={() => router.push("/peers")}
+              className={
+                "cursor-pointer hover:opacity-70 transition-all mr-auto"
+              }
+            >
+              {Logo}
+            </button>
+            <ToggleCollapsableNavigationButton />
           </div>
 
-          <div className="flex md:order-2 gap-4">
-            <div className={"hidden md:block"}>
-              <DarkModeToggle />
-            </div>
-
+          <div className="flex md:order-2 gap-4 items-center">
             <UserDropdown />
           </div>
         </div>
@@ -97,3 +96,26 @@ export default function NavbarWithDropdown() {
     </>
   );
 }
+
+const ToggleCollapsableNavigationButton = () => {
+  const { isRestricted } = usePermissions();
+  const { toggleNavigation, isNavigationCollapsed } = useApplicationContext();
+
+  return (
+    !isRestricted && (
+      <button
+        onClick={toggleNavigation}
+        className={cn(
+          "h-10 w-10 hover:text-white flex items-center justify-center text-nb-gray-300 transition-all ml-2",
+          "hidden md:block",
+        )}
+      >
+        {isNavigationCollapsed ? (
+          <PanelLeftOpenIcon size={16} />
+        ) : (
+          <PanelLeftCloseIcon size={16} />
+        )}
+      </button>
+    )
+  );
+};

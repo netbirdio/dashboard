@@ -41,6 +41,7 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { Policy, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
@@ -126,6 +127,8 @@ export function AccessControlModalContent({
   initialName,
   initialDescription,
 }: Readonly<ModalProps>) {
+  const { permission } = usePermissions();
+
   const {
     portAndDirectionDisabled,
     destinationGroups,
@@ -250,6 +253,9 @@ export function AccessControlModalContent({
               <Select
                 value={protocol}
                 onValueChange={(v) => handleProtocolChange(v as Protocol)}
+                disabled={
+                  !permission.policies.update || !permission.policies.create
+                }
               >
                 <SelectTrigger className="w-[140px]">
                   <div
@@ -285,6 +291,9 @@ export function AccessControlModalContent({
                   values={sourceGroups}
                   saveGroupAssignments={useSave}
                   showResourceCounter={false}
+                  disabled={
+                    !permission.policies.update || !permission.policies.create
+                  }
                 />
               </div>
               <PolicyDirection
@@ -311,6 +320,9 @@ export function AccessControlModalContent({
                   onResourceChange={setDestinationResource}
                   showResources={true}
                   placeholder={"Select destination(s)..."}
+                  disabled={
+                    !permission.policies.update || !permission.policies.create
+                  }
                 />
               </div>
             </div>
@@ -344,6 +356,9 @@ export function AccessControlModalContent({
             <FancyToggleSwitch
               value={enabled}
               onChange={setEnabled}
+              disabled={
+                !permission.policies.update || !permission.policies.create
+              }
               label={
                 <>
                   <Power size={15} />
@@ -373,6 +388,9 @@ export function AccessControlModalContent({
                 data-cy={"policy-name"}
                 onChange={(e) => setName(e.target.value)}
                 placeholder={"e.g., Devs to Servers"}
+                disabled={
+                  !permission.policies.update || !permission.policies.create
+                }
               />
             </div>
             <div>
@@ -388,6 +406,9 @@ export function AccessControlModalContent({
                   "e.g., Devs are allowed to access servers and servers are allowed to access Devs."
                 }
                 rows={3}
+                disabled={
+                  !permission.policies.update || !permission.policies.create
+                }
               />
             </div>
           </div>
@@ -453,7 +474,7 @@ export function AccessControlModalContent({
 
                   <Button
                     variant={"primary"}
-                    disabled={submitDisabled}
+                    disabled={submitDisabled || !permission.policies.create}
                     onClick={submit}
                     data-cy={"submit-policy"}
                   >
@@ -470,7 +491,7 @@ export function AccessControlModalContent({
               </ModalClose>
               <Button
                 variant={"primary"}
-                disabled={submitDisabled}
+                disabled={submitDisabled || !permission.policies.update}
                 onClick={() => {
                   if (useSave) {
                     submit();

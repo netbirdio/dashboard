@@ -76,7 +76,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
                 }),
                 "flex h-[42px] w-auto rounded-l-md bg-white px-3 py-2 text-sm ",
                 "border  items-center whitespace-nowrap",
-                props.disabled && "opacity-20",
+                props.disabled && "opacity-40",
                 prefixClassName,
               )}
             >
@@ -87,7 +87,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           <div
             className={cn(
               "absolute left-0 top-0 h-full flex items-center text-xs dark:text-nb-gray-300 pl-3 leading-[0]",
-              props.disabled && "opacity-30",
+              props.disabled && "opacity-40",
             )}
           >
             {icon}
@@ -99,7 +99,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
             {...props}
             className={cn(
               inputVariants({ variant: error ? "error" : variant }),
-              "flex h-[42px] w-full rounded-md  bg-white px-3 py-2 text-sm file:bg-transparent file:text-sm file:font-medium  focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-20  ",
+              "flex h-[42px] w-full rounded-md  bg-white px-3 py-2 text-sm file:bg-transparent file:text-sm file:font-medium  focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-40  ",
               "file:border-0",
               "focus-visible:ring-2 focus-visible:ring-offset-2",
               customPrefix && "!border-l-0 !rounded-l-none",

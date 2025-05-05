@@ -33,7 +33,7 @@ export const AccessiblePeersSection = ({ peerID }: Props) => {
   });
 
   return (
-    <div className={"py-7 px-8"}>
+    <div className={"pb-10 px-8"}>
       <div className={"max-w-6xl"}>
         <div className={"flex justify-between items-center mb-5"}>
           <div>

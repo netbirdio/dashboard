@@ -1,3 +1,4 @@
+import chroma from "chroma-js";
 import { type ClassValue, clsx } from "clsx";
 import deepClone from "lodash/cloneDeep";
 import { twMerge } from "tailwind-merge";
@@ -24,6 +25,7 @@ export function removeAllSpaces(str: string) {
 }
 
 export const generateColorFromString = (str: string) => {
+  if (str.includes("System")) return "#808080";
   let hash = 0;
   str.split("").forEach((char) => {
     hash = char.charCodeAt(0) + ((hash << 5) - hash);
@@ -33,7 +35,21 @@ export const generateColorFromString = (str: string) => {
     const value = (hash >> (i * 8)) & 0xff;
     colour += value.toString(16).padStart(2, "0");
   }
-  return colour;
+  return chroma(colour).saturate(2).luminance(0.4).hex();
+};
+
+export const generateColorFromUser = (user?: {
+  id?: string;
+  name?: string;
+  email?: string;
+}) => {
+  if (user?.email === "NetBird") return "#9c9c9c";
+  return user?.name
+    ? chroma(generateColorFromString(user?.name || user?.id || "System User"))
+        .saturate(2)
+        .luminance(0.4)
+        .hex()
+    : "#9c9c9c";
 };
 
 export const sleep = (ms: number) => {
@@ -144,3 +160,25 @@ export function cloneDeep<T>(obj: T): T {
     }
   }
 }
+
+/**
+ * Converts bytes to human-readable format (B, KB, MB, GB, TB)
+ * @param bytes Number of bytes to convert
+ * @param decimals Number of decimal places to show
+ * @returns Formatted string with appropriate unit
+ */
+export const formatBytes = (bytes: number, decimals: number = 2): string => {
+  try {
+    if (bytes === 0) return "0 B";
+
+    const k = 1024;
+    const sizes = ["B", "KB", "MB", "GB", "TB"];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+
+    return (
+      parseFloat((bytes / Math.pow(k, i)).toFixed(decimals)) + " " + sizes[i]
+    );
+  } catch (e) {
+    return "0 B";
+  }
+};

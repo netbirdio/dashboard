@@ -6,6 +6,7 @@ import { Trash2 } from "lucide-react";
 import React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { SetupKey } from "@/interfaces/SetupKey";
 import { useGroupIdentification } from "@/modules/groups/useGroupIdentification";
 import { GroupUsage } from "@/modules/settings/useGroupsUsage";
@@ -15,6 +16,7 @@ type Props = {
   in_use: boolean;
 };
 export default function GroupsActionCell({ group, in_use }: Readonly<Props>) {
+  const { permission } = usePermissions();
   const { confirm } = useDialog();
   const deleteRequest = useApiCall<SetupKey>("/groups/" + group.id);
   const { mutate } = useSWRConfig();
@@ -48,7 +50,7 @@ export default function GroupsActionCell({ group, in_use }: Readonly<Props>) {
     issued: group?.issued,
   });
 
-  const isDisabled = in_use || !isRegularGroup;
+  const isDisabled = in_use || !isRegularGroup || !permission.groups.delete;
 
   const getDisabledText = () => {
     if (isRegularGroup) {

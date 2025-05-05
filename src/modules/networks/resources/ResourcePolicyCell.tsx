@@ -6,6 +6,7 @@ import { PlusCircle, ShieldIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import Skeleton from "react-loading-skeleton";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
@@ -15,6 +16,7 @@ type Props = {
   resource?: NetworkResource;
 };
 export const ResourcePolicyCell = ({ resource }: Props) => {
+  const { permission } = usePermissions();
   const { openPolicyModal, network } = useNetworksContext();
   const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
 
@@ -30,7 +32,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
         ?.map((rule) => rule?.destinations)
         .flat() as Group[];
       const policyGroups = [...destinationPolicyGroups];
-      return resourceGroups.some((resourceGroup) =>
+      return resourceGroups?.some((resourceGroup) =>
         policyGroups.some(
           (policyGroup) => policyGroup?.id === resourceGroup.id,
         ),
@@ -93,6 +95,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
           size={"xs"}
           variant={"secondary"}
           className={"min-w-[100px]"}
+          disabled={!permission.networks.update}
           onClick={() => openPolicyModal(network, resource)}
         >
           <PlusCircle size={12} />

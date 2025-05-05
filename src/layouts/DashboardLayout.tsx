@@ -17,15 +17,16 @@ import ApplicationProvider, {
 } from "@/contexts/ApplicationProvider";
 import CountryProvider from "@/contexts/CountryProvider";
 import GroupsProvider from "@/contexts/GroupsProvider";
-import UsersProvider, { useLoggedInUser } from "@/contexts/UsersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
+import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
-import Navbar, { headerHeight } from "./Header";
+import Header, { headerHeight } from "./Header";
 
 export default function DashboardLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
     <ApplicationProvider>
       <UsersProvider>
@@ -41,14 +42,16 @@ export default function DashboardLayout({
   );
 }
 
-function DashboardPageContent({ children }: { children: React.ReactNode }) {
+function DashboardPageContent({
+  children,
+}: Readonly<{ children: React.ReactNode }>) {
   const { oidcUser: user } = useOidcUser();
   const { mobileNavOpen, toggleMobileNav } = useApplicationContext();
   const isSm = useIsSm();
   const isXs = useIsXs();
-  const { permission } = useLoggedInUser();
+  const { isRestricted } = usePermissions();
 
-  const navOpenPageWidth = isSm ? "50%" : isXs ? "65%" : "80%";
+  const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
   const { bannerHeight } = useAnnouncement();
   return (
     <div className={cn("flex flex-col h-screen", mobileNavOpen && "flex")}>
@@ -117,7 +120,7 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
           }}
           animate={{
             x: mobileNavOpen ? navOpenPageWidth : 0,
-            width: mobileNavOpen ? "100%" : "100%",
+            width: "100%",
             height: mobileNavOpen ? "90vh" : "auto",
             y: mobileNavOpen ? "6.5%" : 0,
           }}
@@ -150,17 +153,14 @@ function DashboardPageContent({ children }: { children: React.ReactNode }) {
               mass: 0.1,
             }}
           >
-            <Navbar />
-
+            <Header />
             <div
               className={"flex flex-row flex-grow"}
               style={{
                 height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
               }}
             >
-              {permission.dashboard_view !== "blocked" && (
-                <Navigation hideOnMobile />
-              )}
+              {!isRestricted && <Navigation hideOnMobile />}
               {children}
             </div>
           </motion.div>

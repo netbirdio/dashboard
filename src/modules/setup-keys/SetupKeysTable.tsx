@@ -14,6 +14,7 @@ import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { SetupKey } from "@/interfaces/SetupKey";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
@@ -126,6 +127,7 @@ export default function SetupKeysTable({
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const { permission } = usePermissions();
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -184,6 +186,7 @@ export default function SetupKeysTable({
                 variant={"primary"}
                 className={""}
                 onClick={() => setOpen(true)}
+                disabled={!permission.setup_keys.create}
               >
                 <PlusCircle size={16} />
                 Create Setup Key
@@ -212,6 +215,7 @@ export default function SetupKeysTable({
                 variant={"primary"}
                 className={"ml-auto"}
                 onClick={() => setOpen(true)}
+                disabled={!permission.setup_keys.create}
               >
                 <PlusCircle size={16} />
                 Create Setup Key
