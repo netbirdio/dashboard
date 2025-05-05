@@ -6,12 +6,15 @@ import { Trash2 } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 
 type Props = {
   check: PostureCheck;
 };
 export const PostureCheckActionCell = ({ check }: Props) => {
+  const { permission } = usePermissions();
+
   const deleteRequest = useApiCall("/posture-checks");
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
@@ -56,7 +59,7 @@ export const PostureCheckActionCell = ({ check }: Props) => {
           variant={"danger-outline"}
           size={"sm"}
           onClick={handleDelete}
-          disabled={hasPolicies}
+          disabled={hasPolicies || !permission.policies.delete}
         >
           <Trash2 size={16} />
           Delete

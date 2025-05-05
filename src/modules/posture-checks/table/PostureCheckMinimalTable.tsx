@@ -15,6 +15,7 @@ import {
   PlusCircle,
 } from "lucide-react";
 import React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckChecksCell } from "@/modules/posture-checks/table/cells/PostureCheckChecksCell";
 import { PostureCheckNameCell } from "@/modules/posture-checks/table/cells/PostureCheckNameCell";
@@ -35,6 +36,8 @@ export default function PostureCheckMinimalTable({
   onRemoveClick,
   onEditClick,
 }: Props) {
+  const { permission } = usePermissions();
+
   return data && data.length > 0 ? (
     <div className={""}>
       <div className={"flex justify-between gap-10 mb-5 items-end"}>
@@ -48,11 +51,25 @@ export default function PostureCheckMinimalTable({
           </HelpText>
         </div>
         <div className={"flex items-center justify-center gap-4"}>
-          <Button variant={"secondary"} size={"xs"} onClick={onBrowseClick}>
+          <Button
+            variant={"secondary"}
+            size={"xs"}
+            onClick={onBrowseClick}
+            disabled={
+              !permission.policies.create || !permission.policies.update
+            }
+          >
             <FolderSearch size={14} />
             Browse Checks
           </Button>
-          <Button variant={"primary"} size={"xs"} onClick={onAddClick}>
+          <Button
+            variant={"primary"}
+            size={"xs"}
+            onClick={onAddClick}
+            disabled={
+              !permission.policies.create || !permission.policies.update
+            }
+          >
             <PlusCircle size={14} />
             New Posture Check
           </Button>
@@ -71,41 +88,52 @@ export default function PostureCheckMinimalTable({
               className={
                 "flex justify-between py-2 items-center hover:bg-nb-gray-900/30 rounded-md cursor-pointer px-4 transition-all"
               }
-              onClick={() => onEditClick(check)}
+              onClick={() =>
+                (permission.policies.update || permission.policies.create) &&
+                onEditClick(check)
+              }
             >
               <PostureCheckNameCell small={true} check={check} />
               <div className={"flex gap-4 items-center"}>
                 <PostureCheckChecksCell check={check} />
-                <DropdownMenu modal={false}>
-                  <DropdownMenuTrigger
-                    asChild={true}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      e.preventDefault();
-                    }}
-                  >
-                    <Button variant={"default-outline"} className={"!px-3"}>
-                      <MoreVertical size={16} className={"shrink-0"} />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    className="w-auto min-w-[200px]"
-                    align="end"
-                  >
-                    <DropdownMenuItem onClick={() => onEditClick(check)}>
-                      <div className={"flex gap-3 items-center"}>
-                        <Edit size={14} className={"shrink-0"} />
-                        Edit Posture Check
-                      </div>
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => onRemoveClick(check)}>
-                      <div className={"flex gap-3 items-center"}>
-                        <MinusCircleIcon size={14} className={"shrink-0"} />
-                        Remove Posture Check
-                      </div>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                {(permission.policies.update || permission.policies.create) && (
+                  <DropdownMenu modal={false}>
+                    <DropdownMenuTrigger
+                      asChild={true}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        e.preventDefault();
+                      }}
+                    >
+                      <Button variant={"default-outline"} className={"!px-3"}>
+                        <MoreVertical size={16} className={"shrink-0"} />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent
+                      className="w-auto min-w-[200px]"
+                      align="end"
+                    >
+                      <DropdownMenuItem
+                        onClick={() => onEditClick(check)}
+                        disabled={!permission.policies.update}
+                      >
+                        <div className={"flex gap-3 items-center"}>
+                          <Edit size={14} className={"shrink-0"} />
+                          Edit Posture Check
+                        </div>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
+                        onClick={() => onRemoveClick(check)}
+                        disabled={!permission.policies.delete}
+                      >
+                        <div className={"flex gap-3 items-center"}>
+                          <MinusCircleIcon size={14} className={"shrink-0"} />
+                          Remove Posture Check
+                        </div>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                )}
               </div>
             </div>
           );
