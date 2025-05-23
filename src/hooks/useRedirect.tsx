@@ -16,9 +16,8 @@ export const useRedirect = (
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
-    // If redirect is disabled or the url is already in the callback urls or the url is the current path then do not redirect
-    if (!enable || callBackUrls.current.includes(url) || url === currentPath)
-      return;
+    // If redirect is disabled or the url is already in the callback urls then do not redirect
+    if (!enable || callBackUrls.current.includes(url)) return;
 
     const performRedirect = () => {
       if (!isRedirecting.current) {

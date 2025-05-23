@@ -26,6 +26,7 @@ export function removeAllSpaces(str: string) {
 
 export const generateColorFromString = (str: string) => {
   if (str.includes("System")) return "#808080";
+  if (str.toLowerCase().startsWith("netbird")) return "#f68330";
   let hash = 0;
   str.split("").forEach((char) => {
     hash = char.charCodeAt(0) + ((hash << 5) - hash);
@@ -59,22 +60,49 @@ export const sleep = (ms: number) => {
 export const validator = {
   isValidDomain: (
     domain: string,
-    options?: { allowWildcard?: boolean; allowOnlyTld?: boolean },
+    options?: {
+      allowWildcard?: boolean;
+      allowOnlyTld?: boolean;
+      preventLeadingAndTrailingDots?: boolean;
+    },
   ) => {
-    const { allowWildcard = true, allowOnlyTld = true } = options || {
+    const {
+      allowWildcard = true,
+      allowOnlyTld = true,
+      preventLeadingAndTrailingDots = false,
+    } = options || {
       allowWildcard: true,
       allowOnlyTld: true,
+      preventLeadingAndTrailingDots: false,
     };
 
     try {
-      const includesAtLeastOneDot = domain.includes(".");
+      const includesAtLeastOneDot = allowOnlyTld ? true : domain.includes(".");
       const hasWhitespace = domain.includes(" ");
-      const domainRegex =
-        /^(?!-)[a-z0-9\u00a1-\uffff-*]{0,63}(?<!-)(\.[a-z0-9\u00a1-\uffff-*]{0,63})*$/i;
+      /**
+       * Do not start or end with hyphen
+       * Allow any Unicode character
+       * Allow any Unicode number
+       * Allow hyphen, dot and asterisks
+       */
+      const domainRegex = /^(?!-)[\p{L}\p{N}.*-]+(?<!-)$/u;
       const isValidUnicodeDomain = domainRegex.test(domain);
+
+      if (
+        preventLeadingAndTrailingDots &&
+        (domain.startsWith(".") || domain.endsWith("."))
+      ) {
+        return false;
+      }
+
       if (domain.length < 1 || domain.length > 255) {
         return false;
       }
+
+      if (!allowWildcard && domain.includes("*")) {
+        return false;
+      }
+
       if (!allowWildcard && domain.startsWith("*.")) {
         return false;
       }

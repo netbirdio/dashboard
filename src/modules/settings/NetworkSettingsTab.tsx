@@ -168,6 +168,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
                     "https://docs.netbird.io/how-to/accessing-entire-domains-within-networks#enabling-dns-wildcard-routing"
                   }
                   target={"_blank"}
+                  onClick={(e) => e.stopPropagation()}
                 >
                   Learn more
                   <ExternalLinkIcon size={12} />
