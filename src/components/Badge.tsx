@@ -8,6 +8,7 @@ interface Props extends React.HTMLAttributes<HTMLDivElement>, BadgeVariants {
   children: React.ReactNode;
   className?: string;
   useHover?: boolean;
+  disabled?: boolean;
 }
 
 const variants = cva("", {
@@ -53,6 +54,7 @@ export default function Badge({
   className,
   variant = "blue",
   useHover = false,
+  disabled = false,
   ...props
 }: Readonly<Props>) {
   return (
@@ -61,6 +63,7 @@ export default function Badge({
         "relative z-10 cursor-inherit whitespace-nowrap rounded-md text-[12px] py-1.5 px-3 font-normal flex gap-1.5 items-center justify-center transition-all",
         className,
         variants({ variant, hover: useHover ? variant : "none" }),
+        disabled && "cursor-not-allowed opacity-50 select-none",
       )}
       {...props}
     >

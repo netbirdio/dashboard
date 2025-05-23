@@ -157,20 +157,19 @@ const PeerGeneralInformation = () => {
    * Detect if there are changes in the peer information, if there are changes, then enable the save button.
    */
   const { hasChanges, updateRef: updateHasChangedRef } = useHasChanges([
-    name,
     ssh,
     selectedGroups,
     loginExpiration,
     inactivityExpiration,
   ]);
 
-  const updatePeer = async () => {
+  const updatePeer = async (newName?: string) => {
     let batchCall: Promise<any>[] = [];
     const groupCalls = getAllGroupCalls();
 
     if (permission.peers.update) {
       const updateRequest = update({
-        name,
+        name: newName ?? name,
         ssh,
         loginExpiration,
         inactivityExpiration,
@@ -187,7 +186,6 @@ const PeerGeneralInformation = () => {
         mutate("/peers/" + peer.id);
         mutate("/groups");
         updateHasChangedRef([
-          name,
           ssh,
           selectedGroups,
           loginExpiration,
@@ -229,8 +227,10 @@ const PeerGeneralInformation = () => {
                   </ModalTrigger>
                   <EditNameModal
                     onSuccess={(newName) => {
-                      setName(newName);
-                      setShowEditNameModal(false);
+                      updatePeer(newName).then(() => {
+                        setName(newName);
+                        setShowEditNameModal(false);
+                      });
                     }}
                     peer={peer}
                     initialName={name}

@@ -8,6 +8,7 @@ import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
+import { removeAllSpaces } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useState } from "react";
@@ -37,16 +38,20 @@ type Props = {
 
 export const AccessControlTableColumns: ColumnDef<Policy>[] = [
   {
-    accessorKey: "name",
+    id: "name",
+    accessorFn: (row) => removeAllSpaces(row?.name),
     header: ({ column }) => {
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
     sortingFn: "text",
+    filterFn: "fuzzy",
     cell: ({ cell }) => <AccessControlNameCell policy={cell.row.original} />,
   },
   {
-    accessorKey: "description",
+    id: "description",
+    accessorFn: (row) => removeAllSpaces(row?.description),
     sortingFn: "text",
+    filterFn: "fuzzy",
   },
   {
     id: "enabled",

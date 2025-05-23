@@ -173,7 +173,7 @@ export function ResourceModalContent({
         <ResourceSingleAddressInput value={address} onChange={setAddress} />
 
         <div>
-          <Label>Assigned Groups</Label>
+          <Label>Destination Groups</Label>
           <HelpText>
             Add this resource to groups and use them as destinations when
             creating policies

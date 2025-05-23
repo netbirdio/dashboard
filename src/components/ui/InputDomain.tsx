@@ -14,6 +14,8 @@ type Props = {
   onError?: (error: boolean) => void;
   error?: string;
   disabled?: boolean;
+  preventLeadingAndTrailingDots?: boolean;
+  allowWildcard?: boolean;
 };
 enum ActionType {
   ADD = "ADD",
@@ -40,6 +42,8 @@ export default function InputDomain({
   onRemove,
   onError,
   disabled,
+  preventLeadingAndTrailingDots,
+  allowWildcard = true,
 }: Readonly<Props>) {
   const [name, setName] = useState(value?.name || "");
 
@@ -52,7 +56,11 @@ export default function InputDomain({
     if (name == "") {
       return "";
     }
-    const valid = validator.isValidDomain(name);
+    const valid = validator.isValidDomain(name, {
+      allowOnlyTld: true,
+      allowWildcard,
+      preventLeadingAndTrailingDots,
+    });
     if (!valid) {
       return "Please enter a valid domain, e.g. example.com or intra.example.com";
     }

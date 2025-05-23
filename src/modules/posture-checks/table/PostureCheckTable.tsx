@@ -147,7 +147,9 @@ export default function PostureCheckTable({
               <Button
                 variant={"primary"}
                 className={"ml-auto"}
-                disabled={!permission.policies.create}
+                disabled={
+                  !permission.policies.create || !permission.policies.update
+                }
                 onClick={() => {
                   setCurrentRow(undefined);
                   setPostureCheckModal(true);
@@ -176,6 +178,9 @@ export default function PostureCheckTable({
               <Button
                 variant={"primary"}
                 className={"ml-auto"}
+                disabled={
+                  !permission.policies.create || !permission.policies.update
+                }
                 onClick={() => setPostureCheckModal(true)}
               >
                 <IconCirclePlus size={16} />

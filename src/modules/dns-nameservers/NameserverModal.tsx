@@ -371,6 +371,8 @@ export function NameserverModalContent({
                       {domains.map((domain, i) => {
                         return (
                           <InputDomain
+                            preventLeadingAndTrailingDots={true}
+                            allowWildcard={false}
                             key={domain.id}
                             value={domain}
                             onChange={(d) =>

@@ -2,6 +2,7 @@ import FullTooltip from "@components/FullTooltip";
 import { ScrollArea } from "@components/ScrollArea";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { cn, generateColorFromString } from "@utils/helpers";
+import { orderBy } from "lodash";
 import * as React from "react";
 import { User } from "@/interfaces/User";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
@@ -19,7 +20,7 @@ export const HorizontalUsersStack = ({
   avatarClassName,
   side = "top",
 }: Props) => {
-  let usersToDisplay = users?.slice(0, max) || [];
+  let usersToDisplay = orderBy(users?.slice(0, max) || [], ["name"]);
 
   return (
     <FullTooltip
@@ -33,7 +34,7 @@ export const HorizontalUsersStack = ({
             className={"flex flex-col gap-2.5"}
             onClick={(e) => e.stopPropagation()}
           >
-            {users?.map((user, index) => (
+            {orderBy(users, ["name"])?.map((user, index) => (
               <div
                 className={"flex items-center gap-2 first:pt-2 last:pb-2 pr-6"}
                 key={user?.id || index}
@@ -92,7 +93,7 @@ export const HorizontalUsersStack = ({
 
         <div
           className={cn(
-            "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2 text-xs ml-1.5 transition-colors",
+            "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2 text-xs ml-1.5 transition-colors whitespace-nowrap",
             users.length > 0 && "group-hover/user-stack:text-nb-gray-200 ",
           )}
         >

@@ -1,5 +1,5 @@
 import { useApiCall } from "@utils/api";
-import { isEmpty } from "lodash";
+import { isEmpty, orderBy } from "lodash";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useGroups } from "@/contexts/GroupsProvider";
@@ -20,13 +20,13 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
   const initialGroups = useMemo(() => {
     if (!initial) return [];
     const isArrayOfStrings = initial.every((item) => typeof item === "string");
-    if (!isArrayOfStrings) return initial as Group[];
+    if (!isArrayOfStrings) return orderBy(initial as Group[], ["name"]);
     const foundGroups = initial
       .map((id) => {
         return groups?.find((g) => g.id === id);
       })
       .filter((g) => g !== undefined) as Group[];
-    return foundGroups ?? [];
+    return orderBy(foundGroups, ["name"]) ?? [];
   }, [groups, initial]);
 
   const [selectedGroups, setSelectedGroups] = useState<Group[]>(initialGroups);

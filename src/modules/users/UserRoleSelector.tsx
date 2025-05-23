@@ -29,6 +29,8 @@ interface MultiSelectProps {
   hideOwner?: boolean;
   currentUser?: User;
   customTrigger?: React.ReactNode;
+  side?: "top" | "bottom" | "left" | "right";
+  align?: "start" | "center" | "end";
 }
 
 export const UserRoles = [
@@ -72,6 +74,8 @@ export function UserRoleSelector({
   hideOwner = false,
   currentUser,
   customTrigger,
+  side = "bottom",
+  align = "start",
 }: Readonly<MultiSelectProps>) {
   const [inputRef, { width }] = useElementSize<
     HTMLButtonElement | HTMLDivElement
@@ -124,13 +128,15 @@ export function UserRoleSelector({
     >
       <PopoverTrigger asChild={true}>
         {customTrigger ? (
-          <div ref={inputRef}>{customTrigger}</div>
+          <div ref={inputRef} className={"group/user-role-selector"}>
+            {customTrigger}
+          </div>
         ) : (
           <Button
             variant={"input"}
             disabled={disabled}
             ref={inputRef}
-            className={"w-full"} // [data-state] open
+            className={"w-full group/user-role-selector"}
             data-cy={"user-role-selector"}
           >
             <div className={"w-full flex justify-between items-center gap-2"}>
@@ -157,8 +163,8 @@ export function UserRoleSelector({
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}
-        align="start"
-        side={"bottom"}
+        align={align}
+        side={side}
         sideOffset={10}
       >
         <Command
