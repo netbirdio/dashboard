@@ -17,7 +17,8 @@ export const useRedirect = (
 
   useEffect(() => {
     // If redirect is disabled or the url is already in the callback urls then do not redirect
-    if (!enable || callBackUrls.current.includes(url)) return;
+    if (!enable || callBackUrls.current.includes(url) || url === currentPath)
+      return;
 
     const performRedirect = () => {
       if (!isRedirecting.current) {
