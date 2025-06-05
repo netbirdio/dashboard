@@ -101,7 +101,7 @@ export default function MacOSTab({
           {GRPC_API_ORIGIN && (
             <Steps.Step step={2}>
               <p>
-                {`Click on "Settings" from the NetBird icon in your system tray and enter the following "Management URL"`}
+                {`Click on "Settings" then "Advanced Settings" from the NetBird icon in your system tray and enter the following "Management URL"`}
               </p>
               <Code>
                 <Code.Line>{GRPC_API_ORIGIN}</Code.Line>

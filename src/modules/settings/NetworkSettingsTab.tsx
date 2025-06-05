@@ -129,8 +129,8 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
               <div className={"min-w-[330px]"}>
                 <Label>DNS Domain</Label>
                 <HelpText>
-                  Specify a custom DNS domain for your network. This will be
-                  used for all your peers.
+                  Specify a custom peer DNS domain for your network. This should
+                  not point to a domain that is already in use elsewhere, to avoid overriding DNS results.
                 </HelpText>
               </div>
               <div className={"w-full"}>
