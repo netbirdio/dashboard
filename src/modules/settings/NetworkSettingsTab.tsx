@@ -130,7 +130,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
                 <Label>DNS Domain</Label>
                 <HelpText>
                   Specify a custom peer DNS domain for your network. This should
-                  not point to a valid domain to avoid overriding DNS results.
+                  not point to a domain that is already in use elsewhere, to avoid overriding DNS results.
                 </HelpText>
               </div>
               <div className={"w-full"}>
