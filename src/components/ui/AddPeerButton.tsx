@@ -4,13 +4,11 @@ import { Modal, ModalTrigger } from "@components/modal/Modal";
 import useFetchApi from "@utils/api";
 import { PlusCircle } from "lucide-react";
 import React, { memo, useState } from "react";
-import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Peer } from "@/interfaces/Peer";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
 function AddPeerButton() {
-  const { permission } = usePermissions();
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const { oidcUser: user } = useOidcUser();
 
@@ -41,12 +39,7 @@ function AddPeerButton() {
     <>
       <Modal open={installModal} onOpenChange={handleOpenChange}>
         <ModalTrigger asChild>
-          <Button
-            variant={"primary"}
-            size={"sm"}
-            className={"ml-auto"}
-            disabled={!permission.peers.create}
-          >
+          <Button variant={"primary"} size={"sm"} className={"ml-auto"}>
             <PlusCircle size={16} />
             Add Peer
           </Button>
