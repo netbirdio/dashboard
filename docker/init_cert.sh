@@ -30,14 +30,14 @@ EOF
 elif [[ -n "${NGINX_SSL_CERT}" && -n "${NGINX_SSL_KEY}" ]]; then
     echo "Configuring the provided SSL certificate at ${NGINX_SSL_CERT}"
     remove_ssl_config
-    sed -i -E "s|listen [0-9]{1,5} (default_server\|ssl http2);|listen ${NGINX_SSL_PORT} ssl http2;|" "${NGINX_CONF}"
-    sed -i -E "s|listen \[::\]:[0-9]{1,5} (default_server\|ssl http2);|listen \[::\]:${NGINX_SSL_PORT} ssl http2;\n\n   ssl_certificate ${NGINX_SSL_CERT};\n   ssl_certificate_key ${NGINX_SSL_KEY};|" "${NGINX_CONF}"
+    sed -i -E "s|listen [0-9]{1,5} (default_server\|ssl);|listen ${NGINX_SSL_PORT} ssl;|" "${NGINX_CONF}"
+    sed -i -E "s|listen \[::\]:[0-9]{1,5} (default_server\|ssl);|listen \[::\]:${NGINX_SSL_PORT} ssl;\n\n   ssl_certificate ${NGINX_SSL_CERT};\n   ssl_certificate_key ${NGINX_SSL_KEY};|" "${NGINX_CONF}"
 # If the nginx port is provided but no other settings are, update the port
 elif [[ "${NGINX_SSL_PORT}" != 443 ]]; then
     echo "Setting nginx listen port."
     remove_ssl_config
-    sed -i -E "s|listen [0-9]{1,5} (default_server\|ssl http2);|listen ${NGINX_SSL_PORT} default_server;|" "${NGINX_CONF}"
-    sed -i -E "s|listen \[::\]:[0-9]{1,5} (default_server\|ssl http2);|listen \[::\]:${NGINX_SSL_PORT} default_server;|" "${NGINX_CONF}"
+    sed -i -E "s|listen [0-9]{1,5} (default_server\|ssl);|listen ${NGINX_SSL_PORT} default_server;|" "${NGINX_CONF}"
+    sed -i -E "s|listen \[::\]:[0-9]{1,5} (default_server\|ssl);|listen \[::\]:${NGINX_SSL_PORT} default_server;|" "${NGINX_CONF}"
 else
     echo "No certificates or Letsencrypt domain was provided. Exiting."
     exit 0
