@@ -1,4 +1,4 @@
-FROM alpine:3.14
+FROM alpine:3.22
 
 RUN apk add --no-cache bash curl less ca-certificates git tzdata zip gettext sed \
     nginx curl supervisor certbot-nginx && \
