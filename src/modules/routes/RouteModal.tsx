@@ -723,6 +723,7 @@ export function RouteModalContent({
                 value={masquerade}
                 onChange={setMasquerade}
                 disabled={isNonLinuxRoutingPeer}
+                routingPeerGroupId={routingPeerGroups?.[0]?.id}
               />
             )}
 

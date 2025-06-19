@@ -3,6 +3,7 @@ import {
   type SetStateAction,
   useCallback,
   useEffect,
+  useRef,
   useState,
 } from "react";
 import { useEventCallback } from "@/hooks/useEventCallback";
@@ -20,8 +21,10 @@ export function useLocalStorage<T>(
   key: string,
   initialValue: T,
   enabled: boolean = true,
+  overrideValue?: T,
 ): [T, SetValue<T>] {
-  const [tempValue, setTempValue] = useState(initialValue);
+  const [tempValue, setTempValue] = useState(overrideValue ?? initialValue);
+  const isInitialRender = useRef(true);
 
   // Get from local storage then
   // parse stored json or return initialValue
@@ -29,6 +32,11 @@ export function useLocalStorage<T>(
     // Prevent build error "window is undefined" but keeps working
     if (typeof window === "undefined") {
       return initialValue;
+    }
+
+    if (isInitialRender.current && overrideValue !== undefined) {
+      isInitialRender.current = false;
+      return overrideValue;
     }
 
     try {
@@ -94,6 +102,13 @@ export function useLocalStorage<T>(
     },
     [key, readValue],
   );
+
+  useEffect(() => {
+    if (overrideValue) {
+      setValue(overrideValue);
+      setStoredValue(overrideValue);
+    }
+  }, []);
 
   // this only works for other documents, not the current one
   useEventListener("storage", handleStorageChange);
