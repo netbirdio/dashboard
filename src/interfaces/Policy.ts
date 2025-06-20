@@ -22,8 +22,14 @@ export interface PolicyRule {
   action: string;
   protocol: Protocol;
   ports: string[];
+  port_ranges?: PortRange[];
   sourceResource?: PolicyRuleResource;
   destinationResource?: PolicyRuleResource;
+}
+
+export interface PortRange {
+  start: number;
+  end: number;
 }
 
 export interface PolicyRuleResource {

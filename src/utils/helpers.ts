@@ -24,7 +24,8 @@ export function removeAllSpaces(str: string) {
   return str.replace(/\s/g, "");
 }
 
-export const generateColorFromString = (str: string) => {
+export const generateColorFromString = (str?: string) => {
+  if (!str) return "#f68330";
   if (str.includes("System")) return "#808080";
   if (str.toLowerCase().startsWith("netbird")) return "#f68330";
   let hash = 0;

@@ -154,6 +154,8 @@ export function AccessControlModalContent({
     getPolicyData,
     destinationResource,
     setDestinationResource,
+    portRanges,
+    setPortRanges,
   } = useAccessControl({
     policy,
     postureCheckTemplates,
@@ -166,15 +168,13 @@ export function AccessControlModalContent({
   const [tab, setTab] = useState(() => {
     if (!cell) return "policy";
     if (cell == "posture_checks") return "posture_checks";
-    if (cell == "name") return "general";
     return "policy";
   });
 
   const continuePostureChecksDisabled = useMemo(() => {
-    if (direction != "bi" && ports.length == 0) return true;
     if (sourceGroups.length > 0 && destinationResource) return false;
     if (sourceGroups.length == 0 || destinationGroups.length == 0) return true;
-  }, [sourceGroups, destinationGroups, direction, ports, destinationResource]);
+  }, [sourceGroups, destinationGroups, destinationResource]);
 
   const submitDisabled = useMemo(() => {
     if (name.length == 0) return true;
@@ -185,9 +185,11 @@ export function AccessControlModalContent({
     setProtocol(p);
     if (p == "icmp") {
       setPorts([]);
+      setPortRanges([]);
     }
     if (p == "all") {
       setPorts([]);
+      setPortRanges([]);
     }
     if (p == "tcp" || p == "udp") {
       setDirection("in");
@@ -340,14 +342,16 @@ export function AccessControlModalContent({
                 </Label>
                 <HelpText>
                   Allow network traffic and access only to specified ports.
-                  Select ports between 1 and 65535.
+                  Select ports or port ranges between 1 and 65535.
                 </HelpText>
               </div>
               <div className={""}>
                 <PortSelector
-                  showAll={direction == "bi"}
-                  values={ports}
-                  onChange={setPorts}
+                  showAll={true}
+                  ports={ports}
+                  onPortsChange={setPorts}
+                  portRanges={portRanges}
+                  onPortRangesChange={setPortRanges}
                   disabled={portAndDirectionDisabled}
                 />
               </div>

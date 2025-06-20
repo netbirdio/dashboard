@@ -6,7 +6,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
-import { Policy, Protocol } from "@/interfaces/Policy";
+import { Policy, PortRange, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { usePostureCheck } from "@/modules/posture-checks/usePostureCheck";
@@ -83,6 +83,15 @@ export const useAccessControl = ({
     return [];
   });
 
+  const [portRanges, setPortRanges] = useState<PortRange[]>(() => {
+    if (!firstRule) return [];
+    if (firstRule.port_ranges == undefined) return [];
+    if (firstRule.port_ranges.length > 0) {
+      return firstRule.port_ranges;
+    }
+    return [];
+  });
+
   const [protocol, setProtocol] = useState<Protocol>(
     firstRule ? firstRule.protocol : "all",
   );
@@ -139,6 +148,11 @@ export const useAccessControl = ({
       destinations = tmp;
     }
 
+    const [newPorts, newPortRanges] = parseAccessControlPorts(
+      ports,
+      portRanges,
+    );
+
     return {
       name,
       description,
@@ -155,7 +169,8 @@ export const useAccessControl = ({
           action: "accept",
           protocol,
           enabled,
-          ports: ports.length > 0 ? ports.map((p) => p.toString()) : undefined,
+          ports: newPorts,
+          port_ranges: newPortRanges,
         },
       ],
     } as Policy;
@@ -206,6 +221,11 @@ export const useAccessControl = ({
       destinations = tmp;
     }
 
+    const [newPorts, newPortRanges] = parseAccessControlPorts(
+      ports,
+      portRanges,
+    );
+
     const policyObj = {
       name,
       description,
@@ -224,7 +244,8 @@ export const useAccessControl = ({
           sources,
           destinations: destinationResource ? undefined : destinations,
           destinationResource: destinationResource || undefined,
-          ports: ports.length > 0 ? ports.map((p) => p.toString()) : undefined,
+          ports: newPorts,
+          port_ranges: newPortRanges,
         },
       ],
     } as Policy;
@@ -267,6 +288,8 @@ export const useAccessControl = ({
     setEnabled,
     ports,
     setPorts,
+    portRanges,
+    setPortRanges,
     sourceGroups,
     setSourceGroups,
     destinationGroups,
@@ -280,4 +303,20 @@ export const useAccessControl = ({
     destinationResource,
     setDestinationResource,
   } as const;
+};
+
+const parseAccessControlPorts = (ports: number[], portRanges: PortRange[]) => {
+  const hasRanges = portRanges.length > 0;
+  const hasPorts = ports.length > 0;
+  if (!hasPorts && !hasRanges) return [undefined, undefined];
+  if (!hasRanges) return [ports.map(String), undefined];
+  if (!hasPorts) return [undefined, portRanges];
+
+  const portRangesFromPorts = ports.map((port) => ({
+    start: port,
+    end: port,
+  })) as PortRange[];
+
+  const allRanges = [...portRanges, ...portRangesFromPorts];
+  return [undefined, allRanges];
 };

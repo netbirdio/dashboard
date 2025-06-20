@@ -314,6 +314,7 @@ function RoutingPeerModalContent({
               value={masquerade}
               onChange={setMasquerade}
               disabled={isNonLinuxRoutingPeer}
+              routingPeerGroupId={routingPeerGroups?.[0]?.id}
             />
 
             <div className={cn("flex justify-between")}>
