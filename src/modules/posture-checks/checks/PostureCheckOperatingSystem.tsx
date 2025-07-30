@@ -366,7 +366,7 @@ export const OperatingSystemTab = ({
 
   useEffect(() => {
     onError(versionError);
-  }, [versionError]);
+  }, [versionError, onError]);
 
   return (
     <div className={""}>

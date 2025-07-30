@@ -61,9 +61,9 @@ export default function Badge({
     <div
       className={cn(
         "relative z-10 cursor-inherit whitespace-nowrap rounded-md text-[12px] py-1.5 px-3 font-normal flex gap-1.5 items-center justify-center transition-all",
-        className,
         variants({ variant, hover: useHover ? variant : "none" }),
         disabled && "cursor-not-allowed opacity-50 select-none",
+        className,
       )}
       {...props}
     >

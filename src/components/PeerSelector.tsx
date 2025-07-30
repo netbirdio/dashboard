@@ -172,6 +172,7 @@ export function PeerSelector({
           {filteredItems.length > 0 && (
             <VirtualScrollAreaList
               items={filteredItems}
+              estimatedItemHeight={37}
               onSelect={(item) => {
                 const isSupported = isRoutingPeerSupported(
                   item.version,

@@ -1,4 +1,4 @@
-import Button from "@components/Button";
+import Button, { ButtonVariants } from "@components/Button";
 import { CommandItem } from "@components/Command";
 import Paragraph from "@components/Paragraph";
 import { Popover, PopoverContent, PopoverTrigger } from "@components/Popover";
@@ -36,6 +36,7 @@ interface SelectDropdownProps {
   placeholder?: string;
   searchPlaceholder?: string;
   isLoading?: boolean;
+  variant?: ButtonVariants["variant"];
 }
 
 export function SelectDropdown({
@@ -49,15 +50,13 @@ export function SelectDropdown({
   placeholder = "Select...",
   searchPlaceholder = "Search...",
   isLoading = false,
-}: SelectDropdownProps) {
+  variant = "input",
+}: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const toggle = (selectedValue: string) => {
     const isSelected = value == selectedValue;
-    if (isSelected) {
-    } else {
-      onChange && onChange(selectedValue);
-    }
+    if (!isSelected) onChange?.(selectedValue);
     setTimeout(() => {
       setSearch("");
     }, 100);
@@ -65,18 +64,6 @@ export function SelectDropdown({
   };
 
   const [open, setOpen] = useState(false);
-
-  const [slice, setSlice] = useState(10);
-
-  useEffect(() => {
-    if (open) {
-      setTimeout(() => {
-        setSlice(options.length);
-      }, 100);
-    } else {
-      setSlice(10);
-    }
-  }, [open, options]);
 
   const selected = options.find((o) => o.value === value);
 
@@ -96,7 +83,6 @@ export function SelectDropdown({
     <Popover
       open={open}
       onOpenChange={(isOpen) => {
-        setSlice(10);
         if (!isOpen) {
           setTimeout(() => {
             setSearch("");
@@ -107,7 +93,7 @@ export function SelectDropdown({
     >
       <PopoverTrigger asChild={true} disabled={disabled || isLoading}>
         <Button
-          variant={"input"}
+          variant={variant}
           disabled={disabled || isLoading}
           ref={inputRef}
           className={"w-full"}
@@ -146,7 +132,7 @@ export function SelectDropdown({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-sm  shadow-nb-gray-950"
+        className="w-full p-0 shadow-sm  shadow-nb-gray-950 focus:outline-none"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}

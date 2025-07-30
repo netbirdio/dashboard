@@ -10,8 +10,11 @@ import {
 import ModalHeader from "@components/modal/ModalHeader";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import Separator from "@components/Separator";
-import MultipleGroups from "@components/ui/MultipleGroups";
+import MultipleGroups, {
+  TransparentEditIconButton,
+} from "@components/ui/MultipleGroups";
 import { IconCirclePlus } from "@tabler/icons-react";
+import { cn } from "@utils/helpers";
 import { FolderGit2 } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
@@ -64,7 +67,7 @@ export default function GroupsRow({
         onClick={(e) => {
           e.preventDefault();
           e.stopPropagation();
-          setModal && permission.groups.update && setModal(true);
+          setModal && permission.groups.update && !disabled && setModal(true);
         }}
       >
         {foundGroups?.length == 0 && showAddGroupButton ? (
@@ -73,7 +76,15 @@ export default function GroupsRow({
             Add Groups
           </Badge>
         ) : (
-          <MultipleGroups groups={foundGroups} label={label} />
+          <div
+            className={cn(
+              "flex items-center gap-1",
+              disabled ? "cursor-default" : "group",
+            )}
+          >
+            <MultipleGroups groups={foundGroups} label={label} />
+            {!disabled && <TransparentEditIconButton />}
+          </div>
         )}
       </ModalTrigger>
       <EditGroupsModal

@@ -104,4 +104,50 @@ export const NameserverPresets: Record<string, NameserverGroup> = {
     enabled: true,
     search_domains_enabled: false,
   },
+  DNS0: {
+    name: "DNS0.EU",
+    description: "DNS0.EU DNS Servers",
+    primary: true,
+    domains: [],
+    nameservers: [
+      {
+        ip: "193.110.81.0",
+        ns_type: "udp",
+        port: 53,
+        id: "1",
+      },
+      {
+        ip: "185.253.5.0",
+        ns_type: "udp",
+        port: 53,
+        id: "2",
+      },
+    ],
+    groups: [],
+    enabled: true,
+    search_domains_enabled: false,
+  },
+  DNS0Zero: {
+    name: "DNS0.EU Zero",
+    description: "DNS0.EU Zero DNS Servers",
+    primary: true,
+    domains: [],
+    nameservers: [
+      {
+        ip: "193.110.81.9",
+        ns_type: "udp",
+        port: 53,
+        id: "1",
+      },
+      {
+        ip: "185.253.5.9",
+        ns_type: "udp",
+        port: 53,
+        id: "2",
+      },
+    ],
+    groups: [],
+    enabled: true,
+    search_domains_enabled: false,
+  },
 };

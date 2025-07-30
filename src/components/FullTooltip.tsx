@@ -3,6 +3,7 @@ import {
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
+  TooltipVariants,
 } from "@components/Tooltip";
 import { TooltipProps } from "@radix-ui/react-tooltip";
 import { cn } from "@utils/helpers";
@@ -24,7 +25,9 @@ type Props = {
   customOnOpenChange?: React.Dispatch<React.SetStateAction<boolean>>;
   delayDuration?: number;
   skipDelayDuration?: number;
-} & TooltipProps;
+} & TooltipProps &
+  TooltipVariants;
+
 export default function FullTooltip({
   children,
   content,
@@ -41,6 +44,7 @@ export default function FullTooltip({
   customOnOpenChange,
   delayDuration = 1,
   skipDelayDuration = 300,
+  variant = "default",
 }: Props) {
   const [open, setOpen] = useState(!!keepOpen);
 
@@ -66,7 +70,7 @@ export default function FullTooltip({
               <div
                 className={cn(
                   isAction ? "cursor-pointer" : "cursor-default",
-                  "inline-flex  items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md",
+                  "inline-flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md",
                   className,
                 )}
               >
@@ -82,6 +86,7 @@ export default function FullTooltip({
             alignOffset={20}
             forceMount={true}
             className={contentClassName}
+            variant={variant}
             align={align}
             side={side}
           >

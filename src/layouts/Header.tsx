@@ -1,15 +1,13 @@
 "use client";
 
 import Button from "@components/Button";
+import { NetBirdLogo } from "@components/NetBirdLogo";
 import { AnnouncementBanner } from "@components/ui/AnnouncementBanner";
 import UserDropdown from "@components/ui/UserDropdown";
 import { cn } from "@utils/helpers";
 import { MenuIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
-import React, { useMemo } from "react";
-import NetBirdLogo from "@/assets/netbird.svg";
-import NetBirdLogoFull from "@/assets/netbird-full.svg";
+import React from "react";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -18,25 +16,6 @@ export const headerHeight = 75;
 
 export default function NavbarWithDropdown() {
   const router = useRouter();
-  const Logo = useMemo(() => {
-    return (
-      <>
-        <Image
-          src={NetBirdLogoFull}
-          height={22}
-          alt={"NetBird Logo"}
-          className={"hidden md:block"}
-        />
-        <Image
-          src={NetBirdLogo}
-          width={30}
-          alt={"NetBird Logo"}
-          className={"md:hidden ml-4"}
-        />
-      </>
-    );
-  }, []);
-
   const { toggleMobileNav } = useApplicationContext();
   const { bannerHeight } = useAnnouncement();
   const { isRestricted } = usePermissions();
@@ -78,7 +57,7 @@ export default function NavbarWithDropdown() {
                 "cursor-pointer hover:opacity-70 transition-all mr-auto"
               }
             >
-              {Logo}
+              <NetBirdLogo />
             </button>
             <ToggleCollapsableNavigationButton />
           </div>

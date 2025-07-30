@@ -1,4 +1,4 @@
-import TruncatedText from "@components/ui/TruncatedText";
+import DescriptionWithTooltip from "@components/ui/DescriptionWithTooltip";
 import { cn } from "@utils/helpers";
 import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
@@ -45,25 +45,22 @@ export const NetworkInformationSquare = ({
         <div
           className={cn(
             "h-3 w-3 bg-nb-gray-950 rounded-tl-[8px] rounded-br absolute bottom-0 right-0 transition-all",
-            onClick && "group-hover/network:bg-nb-gray-910",
             onClick && "group-hover/table-row:bg-nb-gray-940",
+            onClick && "group-hover/network:!bg-nb-gray-910",
           )}
         ></div>
       </div>
       <div className={"mt-[0px] flex items-center flex-wrap"}>
-        <TruncatedText
+        <p
           className={cn(
-            "font-medium text-white text-left",
+            "font-medium",
             size == "md" ? "text-sm" : "text-xl leading-none mb-0.5",
           )}
-          maxChars={24}
-          text={name}
-        />
-        <TruncatedText
-          className={cn(
-            "text-left text-sm text-nb-gray-400",
-            size == "lg" && "text-md mt-0.5",
-          )}
+        >
+          {name}
+        </p>
+        <DescriptionWithTooltip
+          className={cn("text-left", size == "lg" && "text-md mt-0.5")}
           maxChars={24}
           text={description}
         />

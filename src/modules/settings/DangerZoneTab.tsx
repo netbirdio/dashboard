@@ -1,4 +1,3 @@
-import { useOidc } from "@axa-fr/react-oidc";
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import Card from "@components/Card";
@@ -29,6 +28,13 @@ export default function DangerZoneTab({ account }: Props) {
         .del()
         .catch((error) => reject(error))
         .then(() => {
+          // Clear browser storage after account deletion
+          if (typeof window !== "undefined") {
+            localStorage.clear();
+            sessionStorage.clear();
+            // Optionally, clear cookies if needed
+            // document.cookie = ... (set cookies to expire)
+          }
           logout().then();
           resolve();
         });

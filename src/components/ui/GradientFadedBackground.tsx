@@ -1,11 +1,17 @@
+import { cn } from "@utils/helpers";
 import * as React from "react";
 
-export const GradientFadedBackground = () => {
+type Props = {
+  className?: string;
+};
+
+export const GradientFadedBackground = ({ className }: Props) => {
   return (
     <div
-      className={
-        "h-full w-full absolute left-0 top-0 rounded-md overflow-hidden z-0 pointer-events-none"
-      }
+      className={cn(
+        "h-full w-full absolute left-0 top-0 rounded-md overflow-hidden z-0 pointer-events-none",
+        className,
+      )}
     >
       <div
         className={

@@ -20,7 +20,8 @@ export function randomBoolean() {
   return Math.random() >= 0.5;
 }
 
-export function removeAllSpaces(str: string) {
+export function removeAllSpaces(str?: string) {
+  if (!str) return "";
   return str.replace(/\s/g, "");
 }
 

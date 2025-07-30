@@ -7,17 +7,20 @@ import { Policy } from "@/interfaces/Policy";
 type Props = {
   policy: Policy;
 };
-export default function AccessControlDirectionCell({ policy }: Props) {
+export default function AccessControlDirectionCell({
+  policy,
+}: Readonly<Props>) {
   const firstRule = useMemo(() => {
     if (policy.rules.length > 0) return policy.rules[0];
     return undefined;
   }, [policy]);
 
   const bidirectional = firstRule ? firstRule.bidirectional : false;
+  const isSingleResource = !!firstRule?.destinationResource;
 
   return (
     <div className={"flex h-full"}>
-      {bidirectional ? (
+      {bidirectional && !isSingleResource ? (
         <Badge variant={"green"} className={"py-2 px-4"}>
           <LongArrowBidirectionalIcon
             size={60}

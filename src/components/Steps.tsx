@@ -24,6 +24,8 @@ type StepProps = {
   line?: boolean;
   center?: boolean;
   horizontal?: boolean;
+  disabled?: boolean;
+  className?: string;
 };
 
 const Step = ({
@@ -32,6 +34,8 @@ const Step = ({
   line = true,
   center = false,
   horizontal,
+  disabled = false,
+  className,
 }: StepProps) => {
   return (
     <div
@@ -39,6 +43,8 @@ const Step = ({
         "flex gap-4 items-start  justify-start relative pb-6 -mx-1.5 group px-[2px]",
         center && "items-center",
         horizontal ? "flex-col items-center" : "min-w-full",
+        disabled && "opacity-40 pointer-events-none",
+        className,
       )}
     >
       {line && (
@@ -57,6 +63,7 @@ const Step = ({
           "h-[34px] w-[34px] shrink-0 rounded-full  flex items-center justify-center font-medium text-xs relative z-0 border-4  transition-all",
           "dark:bg-nb-gray-900 dark:text-nb-gray-400 dark:border-nb-gray dark:group-hover:bg-nb-gray-800",
           "bg-nb-gray-100 text-nb-gray-400 border-white group-hover:bg-nb-gray-200 step-circle",
+          "[.stepper-bg-variant]:border-nb-gray-940",
         )}
       >
         {step}

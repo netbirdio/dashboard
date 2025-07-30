@@ -1,4 +1,6 @@
-import MultipleGroups from "@components/ui/MultipleGroups";
+import MultipleGroups, {
+  TransparentEditIconButton,
+} from "@components/ui/MultipleGroups";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
@@ -15,13 +17,14 @@ export const ResourceGroupCell = ({ resource }: Props) => {
 
   return (
     <button
-      className={"flex cursor-pointer"}
+      className={"flex cursor-pointer items-center justify-center gap-1 group"}
       onClick={() => {
         if (!network || !permission.networks.update) return;
         openResourceGroupModal(network, resource);
       }}
     >
       <MultipleGroups groups={resource?.groups as Group[]} />
+      {permission.networks.update && <TransparentEditIconButton />}
     </button>
   );
 };

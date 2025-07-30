@@ -121,13 +121,13 @@ export default function ActivityTable({
   return (
     <DataTable
       headingTarget={headingTarget}
-      wrapperClassName={"gap-0 flex flex-col"}
-      tableClassName={"px-8 mt-10"}
       paginationClassName={"max-w-[800px]"}
       as={"div"}
       text={"Audit Events"}
       sorting={sorting}
       setSorting={setSorting}
+      wrapperClassName={"gap-0 flex flex-col"}
+      tableClassName={"px-8 pt-4"}
       columns={ActivityFeedColumnsTable}
       data={events}
       searchPlaceholder={"Search by audit name, user, peer, meta..."}

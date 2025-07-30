@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from "@components/Tabs";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useMemo } from "react";
 import AndroidIcon from "@/assets/icons/AndroidIcon";
 import AppleIcon from "@/assets/icons/AppleIcon";
 import DockerIcon from "@/assets/icons/DockerIcon";
@@ -34,6 +34,7 @@ type Props = {
   user?: OidcUserInfo;
   setupKey?: string;
   showOnlyRoutingPeerOS?: boolean;
+  className?: string;
 };
 
 export default function SetupModal({
@@ -41,9 +42,10 @@ export default function SetupModal({
   user,
   setupKey,
   showOnlyRoutingPeerOS = false,
+  className,
 }: Readonly<Props>) {
   return (
-    <ModalContent showClose={showClose}>
+    <ModalContent showClose={showClose} className={className}>
       <SetupModalContent
         user={user}
         setupKey={setupKey}
@@ -60,6 +62,9 @@ type SetupModalContentProps = {
   tabAlignment?: "center" | "start" | "end";
   setupKey?: string;
   showOnlyRoutingPeerOS?: boolean;
+  title?: string;
+  hostname?: string;
+  hideDocker?: boolean;
 };
 
 export function SetupModalContent({
@@ -69,11 +74,29 @@ export function SetupModalContent({
   tabAlignment = "center",
   setupKey,
   showOnlyRoutingPeerOS,
+  title,
+  hostname,
+  hideDocker = false,
 }: Readonly<SetupModalContentProps>) {
   const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
   const pathname = usePathname();
   const isInstallPage = pathname === "/install";
+
+  const titleMessage = useMemo(() => {
+    if (title) return title;
+
+    if (isFirstRun && !isInstallPage) {
+      let name = user?.given_name || "there";
+      return (
+        <>
+          Hello {name}! 👋 <br /> It&apos;s time to add your first device.
+        </>
+      );
+    }
+
+    return setupKey ? "Install NetBird with Setup Key" : "Install NetBird";
+  }, [isFirstRun, isInstallPage, setupKey, title, user?.given_name]);
 
   return (
     <>
@@ -85,14 +108,7 @@ export function SetupModalContent({
               setupKey ? "text-2xl" : "text-3xl",
             )}
           >
-            {isFirstRun && !isInstallPage ? (
-              <>
-                Hello {user?.given_name || "there"}! 👋 <br />
-                {`It's time to add your first device.`}
-              </>
-            ) : (
-              <>Install NetBird{setupKey && " with Setup Key"}</>
-            )}
+            {titleMessage}
           </h2>
           <Paragraph
             className={cn("mx-auto mt-3", setupKey ? "max-w-sm" : "max-w-xs")}
@@ -153,27 +169,32 @@ export function SetupModalContent({
             </>
           )}
 
-          <TabsTrigger value={String(OperatingSystem.DOCKER)}>
-            <DockerIcon
-              className={
-                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-              }
-            />
-            Docker
-          </TabsTrigger>
+          {!hideDocker && (
+            <TabsTrigger value={String(OperatingSystem.DOCKER)}>
+              <DockerIcon
+                className={
+                  "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+                }
+              />
+              Docker
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <LinuxTab
           setupKey={setupKey}
           showSetupKeyInfo={showOnlyRoutingPeerOS}
+          hostname={hostname}
         />
         <WindowsTab
           setupKey={setupKey}
           showSetupKeyInfo={showOnlyRoutingPeerOS}
+          hostname={hostname}
         />
         <MacOSTab
           setupKey={setupKey}
           showSetupKeyInfo={showOnlyRoutingPeerOS}
+          hostname={hostname}
         />
 
         {!setupKey && (
@@ -183,10 +204,13 @@ export function SetupModalContent({
           </>
         )}
 
-        <DockerTab
-          setupKey={setupKey}
-          showSetupKeyInfo={showOnlyRoutingPeerOS}
-        />
+        {!hideDocker && (
+          <DockerTab
+            setupKey={setupKey}
+            showSetupKeyInfo={showOnlyRoutingPeerOS}
+            hostname={hostname}
+          />
+        )}
       </Tabs>
       {footer && (
         <ModalFooter variant={"setup"}>
@@ -222,6 +246,22 @@ export const SetupKeyParameter = ({ setupKey }: SetupKeyParameterProps) => {
       <>
         {" "}
         --setup-key <span className={"text-netbird"}>{setupKey}</span>
+      </>
+    )
+  );
+};
+
+export const HostnameParameter = ({ hostname }: { hostname?: string }) => {
+  return (
+    hostname && (
+      <>
+        {" "}
+        --hostname{" "}
+        <span className={"text-netbird"}>
+          {"'"}
+          {hostname}
+          {"'"}
+        </span>
       </>
     )
   );

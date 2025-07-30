@@ -14,11 +14,13 @@ import { RoutingPeerSetupKeyInfo } from "@/modules/setup-netbird-modal/SetupModa
 type Props = {
   setupKey?: string;
   showSetupKeyInfo?: boolean;
+  hostname?: string;
 };
 
 export default function DockerTab({
   setupKey,
   showSetupKeyInfo = false,
+  hostname,
 }: Readonly<Props>) {
   return (
     <TabsContent value={String(OperatingSystem.DOCKER)}>
@@ -59,7 +61,16 @@ export default function DockerTab({
                 </span>{" "}
                 \
               </Code.Line>
-              <Code.Line> -v netbird-client:/etc/netbird \</Code.Line>
+
+              {hostname && (
+                <Code.Line>
+                  {" "}
+                  -e NB_HOSTNAME=
+                  <span className={"text-netbird"}>{`'${hostname}'`}</span> \
+                </Code.Line>
+              )}
+
+              <Code.Line> -v netbird-client:/var/lib/netbird \</Code.Line>
               {GRPC_API_ORIGIN && (
                 <Code.Line>
                   {" "}
@@ -73,9 +84,7 @@ export default function DockerTab({
           <Steps.Step step={3} line={false}>
             <p>Read our documentation</p>
             <InlineLink
-              href={
-                "https://docs.netbird.io/how-to/getting-started#running-net-bird-in-docker"
-              }
+              href={"https://docs.netbird.io/how-to/installation/docker"}
               passHref={true}
               target={"_blank"}
             >

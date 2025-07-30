@@ -8,14 +8,11 @@ export const getNetBirdUpCommand = () => {
   if (GRPC_API_ORIGIN) {
     cmd += " --management-url " + GRPC_API_ORIGIN;
   }
-  if (!isNetBirdHosted()) {
-    let admin_url = window.location.protocol + "//" + window.location.hostname;
-    if (window.location.port != "") {
-      admin_url += ":" + window.location.port;
-    }
-    cmd += " --admin-url " + admin_url;
-  }
   return cmd;
+};
+
+export const getInstallUrl = () => {
+  return window.location.origin + "/install";
 };
 
 export const isNetBirdHosted = () => {

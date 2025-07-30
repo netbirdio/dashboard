@@ -11,12 +11,16 @@ type Props<T extends { id?: string }> = {
   items: T[];
   onSelect: (item: T) => void;
   renderItem?: (item: T, selected?: boolean) => React.ReactNode;
+  renderHeading?: (item: T) => React.ReactNode;
   renderBeforeItem?: (item: T) => React.ReactNode;
   itemClassName?: string;
   itemWrapperClassName?: string;
   scrollAreaClassName?: string;
   maxHeight?: number;
   estimatedItemHeight?: number;
+  estimatedHeadingHeight?: number;
+  heightAdjustment?: number;
+  groupKey?: (item: T) => string | undefined;
 };
 
 export function VirtualScrollAreaList<T extends { id?: string }>({
@@ -24,13 +28,20 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
   onSelect,
   renderItem,
   renderBeforeItem,
+  renderHeading,
   itemClassName,
   itemWrapperClassName,
   scrollAreaClassName,
   maxHeight,
   estimatedItemHeight = 36,
+  estimatedHeadingHeight = 16,
+  heightAdjustment = 8,
+  groupKey,
 }: Readonly<Props<T>>) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
+  const [lastInputMethod, setLastInputMethod] = useState<"mouse" | "keyboard">(
+    "mouse",
+  );
   const [selected, setSelected] = useState(0);
 
   useEffect(() => {
@@ -47,6 +58,7 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
 
   const navigation = useCallback(
     (e: KeyboardEvent) => {
+      setLastInputMethod("keyboard");
       if (items.length === 0) return;
       const length = items.length - 1;
       if (e.code === "ArrowUp" || (e.key === "Tab" && e.shiftKey)) {
@@ -69,19 +81,53 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
   );
 
   useEffect(() => {
+    const handleMouse = () => setLastInputMethod("mouse");
+
     window.addEventListener("keydown", navigation);
+    window.addEventListener("mousemove", handleMouse);
     return () => {
       window.removeEventListener("keydown", navigation);
+      window.removeEventListener("mousemove", handleMouse);
     };
   }, [navigation]);
+
+  const headingCount = useMemo(() => {
+    if (!groupKey) return 0;
+
+    let count = 0;
+    let prev: string | undefined;
+
+    for (const item of items) {
+      const key = groupKey(item);
+      if (key !== prev) {
+        count++;
+        prev = key;
+      }
+    }
+
+    return count;
+  }, [items, groupKey]);
 
   const renderMemoizedItem = useMemo(() => renderItem, [renderItem]);
 
   const scrollAreaHeight = { maxHeight: maxHeight ?? 195 };
 
   const virtuosoHeight = {
-    height: Math.min(items.length * estimatedItemHeight + 8, maxHeight ?? 195),
+    height: Math.min(
+      items.length * estimatedItemHeight +
+        headingCount * estimatedHeadingHeight +
+        +(8 + heightAdjustment),
+      maxHeight ?? 195,
+    ),
   };
+
+  const fixedItemHeight = useMemo(() => {
+    if (!groupKey) return estimatedItemHeight;
+    if (items.length === 0) return 0;
+    const h = virtuosoHeight.height / items.length;
+    if (isNaN(h)) return estimatedItemHeight;
+    return h;
+  }, [estimatedItemHeight, groupKey, items.length, virtuosoHeight.height]);
 
   return (
     <MemoizedScrollArea
@@ -93,16 +139,26 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
         ref={virtuosoRef}
         overscan={50}
         data={items}
+        defaultItemHeight={fixedItemHeight}
         totalCount={items.length}
-        fixedItemHeight={estimatedItemHeight}
         computeItemKey={(index) => items[index].id as string}
         context={{ selected, setSelected, onClick: onSelect }}
         itemContent={(index, option, { selected, setSelected, onClick }) => {
+          const group = groupKey?.(option);
+          const prevGroup =
+            index > 0 ? groupKey?.(items[index - 1]) : undefined;
+          const showHeading = group && group !== prevGroup;
+
           return (
             <div>
+              {showHeading && renderHeading?.(option)}
               {renderBeforeItem?.(option)}
               <VirtualScrollListItemWrapper
-                onMouseEnter={() => setSelected(index)}
+                onMouseEnter={() => {
+                  if (lastInputMethod === "mouse") {
+                    setSelected(index);
+                  }
+                }}
                 id={option.id}
                 onClick={() => onClick(option)}
                 ariaSelected={selected === index}
@@ -151,17 +207,13 @@ export const VirtualScrollListItemWrapper = memo(
     return (
       <div
         key={id ?? undefined}
-        className={cn(
-          "pr-3 pl-2 webkit-scroll group/list-item",
-          isLast && "pb-2",
-          className,
-        )}
-        onMouseEnter={onMouseEnter}
+        className={cn("pr-3 pl-2 webkit-scroll", isLast && "pb-2", className)}
+        onMouseOver={onMouseEnter}
         onClick={onClick}
       >
         <div
           className={cn(
-            "text-xs flex justify-between py-2 px-3 cursor-pointer items-center rounded-md",
+            "text-xs flex justify-between py-2 px-3 cursor-pointer items-center rounded-md group/list-item",
             "bg-transparent dark:aria-selected:bg-nb-gray-800/50",
             itemClassName,
           )}

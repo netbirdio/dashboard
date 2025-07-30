@@ -1,7 +1,9 @@
+import Button from "@components/Button";
 import Paragraph from "@components/Paragraph";
 import { cn } from "@utils/helpers";
 import { FilterX } from "lucide-react";
-import React from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import React, { useCallback } from "react";
 import Skeleton from "react-loading-skeleton";
 
 type Props = {
@@ -10,6 +12,8 @@ type Props = {
   description?: string;
   children?: React.ReactNode;
   className?: string;
+  hasFiltersApplied?: boolean;
+  onResetFilters?: () => void;
 };
 export default function NoResults({
   icon,
@@ -17,7 +21,32 @@ export default function NoResults({
   description = "We couldn't find any results. Please try a different search term or change your filters.",
   children,
   className,
+  hasFiltersApplied = false,
+  onResetFilters,
 }: Props) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  const handleResetClick = useCallback(() => {
+    if (onResetFilters) {
+      onResetFilters();
+
+      const params = new URLSearchParams();
+
+      const page_size = searchParams.get("page_size");
+
+      params.set("page", "1");
+
+      if (page_size) {
+        params.set("page_size", page_size);
+      }
+
+      const newUrl = `${pathname}?${params.toString()}`;
+      router.push(newUrl);
+    }
+  }, [onResetFilters, router, pathname, searchParams]);
+
   return (
     <div className={cn("relative overflow-hidden", className)}>
       <div
@@ -49,6 +78,16 @@ export default function NoResults({
           <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>
             {description}
           </Paragraph>
+          {hasFiltersApplied && onResetFilters && (
+            <Button
+              onClick={handleResetClick}
+              variant="secondary"
+              className="mt-4"
+            >
+              <FilterX size={16} />
+              Reset Filters & Search
+            </Button>
+          )}
           {children}
         </div>
       </div>
