@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
@@ -29,6 +30,7 @@ import { Textarea } from "@components/Textarea";
 import PolicyDirection from "@components/ui/PolicyDirection";
 import { cn } from "@utils/helpers";
 import {
+  AlertCircleIcon,
   ArrowRightLeft,
   ExternalLinkIcon,
   FolderDown,
@@ -130,11 +132,13 @@ export function AccessControlModalContent({
   const { permission } = usePermissions();
 
   const {
-    portAndDirectionDisabled,
+    portDisabled,
     destinationGroups,
     direction,
     ports,
     sourceGroups,
+    destinationHasResources,
+    destinationOnlyResources,
     setSourceGroups,
     setDestinationGroups,
     setPorts,
@@ -156,6 +160,7 @@ export function AccessControlModalContent({
     setDestinationResource,
     portRanges,
     setPortRanges,
+    hasPortSupport,
   } = useAccessControl({
     policy,
     postureCheckTemplates,
@@ -183,16 +188,9 @@ export function AccessControlModalContent({
 
   const handleProtocolChange = (p: Protocol) => {
     setProtocol(p);
-    if (p == "icmp") {
+    if (!hasPortSupport(p)) {
       setPorts([]);
       setPortRanges([]);
-    }
-    if (p == "all") {
-      setPorts([]);
-      setPortRanges([]);
-    }
-    if (p == "tcp" || p == "udp") {
-      setDirection("in");
     }
   };
 
@@ -301,7 +299,8 @@ export function AccessControlModalContent({
               <PolicyDirection
                 value={direction}
                 onChange={setDirection}
-                disabled={portAndDirectionDisabled}
+                disabled={destinationOnlyResources}
+                destinationResource={destinationResource}
               />
 
               <div className={"w-full self-start"}>
@@ -329,10 +328,28 @@ export function AccessControlModalContent({
               </div>
             </div>
 
+            {destinationHasResources &&
+              !destinationOnlyResources &&
+              direction === "bi" && (
+                <Callout
+                  variant={"warning"}
+                  icon={
+                    <AlertCircleIcon
+                      size={14}
+                      className={"shrink-0 relative top-[3px] text-netbird"}
+                    />
+                  }
+                  className="mb-4"
+                >
+                  Some destination groups contain resources. Resources only
+                  support incoming traffic and cannot initiate connections.
+                </Callout>
+              )}
+
             <div
               className={cn(
                 "mb-2",
-                portAndDirectionDisabled && "opacity-30 pointer-events-none",
+                portDisabled && "opacity-30 pointer-events-none",
               )}
             >
               <div>
@@ -352,7 +369,7 @@ export function AccessControlModalContent({
                   onPortsChange={setPorts}
                   portRanges={portRanges}
                   onPortRangesChange={setPortRanges}
-                  disabled={portAndDirectionDisabled}
+                  disabled={portDisabled}
                 />
               </div>
             </div>

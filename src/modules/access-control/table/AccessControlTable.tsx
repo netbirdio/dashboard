@@ -10,7 +10,7 @@ import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
@@ -162,6 +162,12 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     ),
   },
   {
+    id: "id",
+    accessorKey: "id",
+    filterFn: "exactMatch",
+  },
+  {
+    id: "actions",
     accessorKey: "id",
     header: "",
     cell: ({ cell }) => <AccessControlActionCell policy={cell.row.original} />,
@@ -176,6 +182,8 @@ export default function AccessControlTable({
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
+  const params = useSearchParams();
+  const idParam = params.get("id") ?? undefined;
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -205,12 +213,25 @@ export default function AccessControlTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
+        keepStateInLocalStorage={!idParam}
+        initialSearch={idParam ? "" : undefined}
+        initialFilters={
+          idParam
+            ? [
+                {
+                  id: "id",
+                  value: idParam,
+                },
+              ]
+            : undefined
+        }
         text={"Access Control Policies"}
         sorting={sorting}
         setSorting={setSorting}
         columns={AccessControlTableColumns}
         columnVisibility={{
           description: false,
+          id: false,
         }}
         data={policies}
         onRowClick={(row, cell) => {

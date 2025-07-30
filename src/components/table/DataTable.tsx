@@ -1,5 +1,5 @@
 "use client";
-import SkeletonTable from "@components/skeletons/SkeletonTable";
+import { TableContentSkeleton } from "@components/skeletons/SkeletonTable";
 import DataTableGlobalSearch from "@components/table/DataTableGlobalSearch";
 import { DataTableHeadingPortal } from "@components/table/DataTableHeadingPortal";
 import { DataTablePagination } from "@components/table/DataTablePagination";
@@ -40,10 +40,10 @@ import {
 import { FilterFn } from "@tanstack/table-core";
 import { cn, removeAllSpaces } from "@utils/helpers";
 import dayjs from "dayjs";
-import { trim } from "lodash";
+import { isEqual, trim } from "lodash";
 import { usePathname } from "next/navigation";
 import * as React from "react";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 declare module "@tanstack/table-core" {
@@ -84,7 +84,6 @@ const isWithinRange: FilterFn<any> = (
 ) => {
   const date = dayjs(row.getValue(columnId));
   const [start, end] = value;
-  //If one filter defined and date is null filter it
   if ((start || end) && !date) return false;
   if (start && !end) {
     return date.isAfter(dayjs(start));
@@ -147,6 +146,8 @@ interface DataTableProps<TData, TValue> {
   showSearchAndFilters?: boolean;
   rightSide?: (table: TanStackTable<TData>) => React.ReactNode;
   manualPagination?: boolean;
+  manualFiltering?: boolean;
+  manualColumnFiltering?: boolean;
   showHeader?: boolean;
   rowSelection?: RowSelectionState;
   setRowSelection?: React.Dispatch<React.SetStateAction<RowSelectionState>>;
@@ -163,14 +164,23 @@ interface DataTableProps<TData, TValue> {
   initialPageSize?: number;
   uniqueKey?: string;
   resetRowSelectionOnSearch?: boolean;
+  pageCount?: number;
+  pagination?: { pageIndex: number; pageSize: number };
+  onPaginationChange?: (pagination: {
+    pageIndex: number;
+    pageSize: number;
+  }) => void;
+  totalRecords?: number;
+  globalFilter?: string;
+  onGlobalFilterChange?: (value: string) => void;
+  columnFilters?: ColumnFiltersState;
+  onColumnFiltersChange?: (filters: ColumnFiltersState) => void;
+  initialFilters?: ColumnFiltersState;
+  initialSearch?: string;
+  onSearchClick?: () => void;
 }
 
-export function DataTable<TData, TValue>(props: DataTableProps<TData, TValue>) {
-  if (props.isLoading) return <SkeletonTable withHeader={!props.minimal} />;
-  return <DataTableContent {...props} />;
-}
-
-export function DataTableContent<TData, TValue>({
+export function DataTable<TData, TValue>({
   columns,
   data,
   children,
@@ -196,6 +206,8 @@ export function DataTableContent<TData, TValue>({
   searchClassName,
   rightSide,
   manualPagination = false,
+  manualFiltering = false,
+  manualColumnFiltering = false,
   showHeader = true,
   rowSelection,
   setRowSelection,
@@ -212,18 +224,33 @@ export function DataTableContent<TData, TValue>({
   initialPageSize = 10,
   uniqueKey,
   resetRowSelectionOnSearch = true,
-}: DataTableProps<TData, TValue>) {
+  pageCount,
+  pagination,
+  onPaginationChange,
+  totalRecords,
+  globalFilter,
+  onGlobalFilterChange,
+  columnFilters: externalColumnFilters,
+  onColumnFiltersChange: externalOnColumnFiltersChange,
+  initialFilters,
+  initialSearch,
+  onSearchClick,
+}: Readonly<DataTableProps<TData, TValue>>) {
   const path = usePathname();
+  const isInitialRender = useRef(true);
 
-  const [columnFilters, setColumnFilters] = useLocalStorage<ColumnFiltersState>(
-    `netbird-table-columns${uniqueKey ? "/" + (uniqueKey as string) : path}`,
-    [],
-    keepStateInLocalStorage,
-  );
-  const [globalSearch, setGlobalSearch] = useLocalStorage(
+  const [localColumnFilters, setLocalColumnFilters] =
+    useLocalStorage<ColumnFiltersState>(
+      `netbird-table-columns${uniqueKey ? "/" + (uniqueKey as string) : path}`,
+      [],
+      keepStateInLocalStorage && !manualColumnFiltering,
+      initialFilters,
+    );
+  const [localGlobalSearch, setLocalGlobalSearch] = useLocalStorage(
     `netbird-table-search${uniqueKey ? "/" + (uniqueKey as string) : path}`,
-    "",
-    keepStateInLocalStorage,
+    globalFilter || "",
+    keepStateInLocalStorage && !manualFiltering,
+    initialSearch,
   );
 
   const [paginationState, setPaginationState] =
@@ -232,10 +259,10 @@ export function DataTableContent<TData, TValue>({
         uniqueKey ? "/" + (uniqueKey as string) : path
       }`,
       {
-        pageIndex: 0,
-        pageSize: 10,
+        pageIndex: pagination?.pageIndex ?? 0,
+        pageSize: pagination?.pageSize ?? initialPageSize,
       },
-      keepStateInLocalStorage,
+      keepStateInLocalStorage && !manualPagination,
     );
 
   const hasInitialData = !!(data && data.length > 0);
@@ -253,19 +280,30 @@ export function DataTableContent<TData, TValue>({
     autoResetAll: false,
     autoResetExpanded: false,
     manualPagination: manualPagination,
+    manualFiltering: manualFiltering || manualColumnFiltering,
+    pageCount: pageCount,
     state: {
       sorting,
       rowSelection: rowSelection ?? {},
-      columnFilters,
+      columnFilters: manualColumnFiltering
+        ? externalColumnFilters || []
+        : localColumnFilters,
       columnVisibility: columnVisibility,
-      globalFilter: globalSearch,
-      pagination: paginationState,
+      globalFilter: manualFiltering ? globalFilter : localGlobalSearch,
+      pagination: manualPagination
+        ? {
+            pageIndex: pagination?.pageIndex ?? 0,
+            pageSize: pagination?.pageSize ?? initialPageSize,
+          }
+        : paginationState,
     },
     initialState: {
       pagination: {
-        pageIndex: 0,
-        pageSize: initialPageSize || 10,
+        pageIndex: pagination?.pageIndex ?? 0,
+        pageSize: pagination?.pageSize ?? initialPageSize,
       },
+      columnFilters: initialFilters,
+      globalFilter: initialSearch,
     },
     sortingFns: {
       checkbox: checkboxSort,
@@ -273,8 +311,36 @@ export function DataTableContent<TData, TValue>({
     getRowId: useRowId ? (row) => row.id : undefined,
     onRowSelectionChange: setRowSelection,
     onSortingChange: setSorting,
-    onPaginationChange: setPaginationState,
-    onColumnFiltersChange: setColumnFilters,
+    onPaginationChange: (updater) => {
+      if (manualPagination) {
+        if (isInitialRender.current) {
+          isInitialRender.current = false;
+          return;
+        }
+        if (typeof updater === "function") {
+          const newState = updater(pagination!);
+          onPaginationChange?.(newState);
+        } else {
+          onPaginationChange?.(updater);
+        }
+      } else {
+        setPaginationState(updater);
+      }
+    },
+    onColumnFiltersChange: (filters) => {
+      if (manualColumnFiltering) {
+        externalOnColumnFiltersChange?.(filters as ColumnFiltersState);
+      } else {
+        setLocalColumnFilters(filters as ColumnFiltersState);
+      }
+    },
+    onGlobalFilterChange: (value) => {
+      if (manualFiltering) {
+        onGlobalFilterChange?.(value);
+      } else {
+        setLocalGlobalSearch(value);
+      }
+    },
     globalFilterFn: fuzzyFilter,
     onColumnVisibilityChange: setColumnVisibility,
     getCoreRowModel: getCoreRowModel(),
@@ -298,14 +364,52 @@ export function DataTableContent<TData, TValue>({
    */
   const resetFilters = () => {
     table.setPageIndex(0);
-    setColumnFilters([]);
-    setGlobalSearch("");
+    if (manualColumnFiltering) {
+      externalOnColumnFiltersChange?.([]);
+    } else {
+      setLocalColumnFilters([]);
+    }
+    if (manualFiltering) {
+      onGlobalFilterChange?.("");
+    } else {
+      setLocalGlobalSearch("");
+    }
     setRowSelection?.({});
     onFilterReset?.();
     setSearchKey((prev) => (prev === 0 ? 1 : 0));
   };
 
   const [searchKey, setSearchKey] = useState(0);
+
+  useEffect(() => {
+    if (manualPagination && pagination) {
+      const currentPagination = table.getState().pagination;
+      if (isEqual(currentPagination, pagination)) return;
+
+      table.setPagination({
+        pageIndex: pagination.pageIndex,
+        pageSize: pagination.pageSize,
+      });
+    }
+  }, [manualPagination, pagination, table]);
+
+  useEffect(() => {
+    if (manualFiltering && globalFilter !== undefined) {
+      const currentGlobalFilter = table.getState().globalFilter;
+      if (currentGlobalFilter !== globalFilter) {
+        table.setGlobalFilter(globalFilter);
+      }
+    }
+  }, [manualFiltering, globalFilter, table]);
+
+  useEffect(() => {
+    if (manualColumnFiltering && externalColumnFilters) {
+      const currentFilters = table.getState().columnFilters;
+      if (!isEqual(currentFilters, externalColumnFilters)) {
+        table.setColumnFilters(externalColumnFilters);
+      }
+    }
+  }, [manualColumnFiltering, externalColumnFilters, table]);
 
   return (
     <div className={cn("relative table-fixed-scroll", className)}>
@@ -318,45 +422,48 @@ export function DataTableContent<TData, TValue>({
         >
           <DataTableGlobalSearch
             className={searchClassName}
-            disabled={!hasInitialData}
+            disabled={false} // Never disable the search input
             key={searchKey}
-            globalSearch={globalSearch}
+            onClick={onSearchClick}
+            isLoading={isLoading}
+            globalSearch={
+              manualFiltering ? globalFilter || "" : localGlobalSearch
+            }
             setGlobalSearch={(val) => {
               table.setPageIndex(0);
-              setGlobalSearch(val);
+              if (manualFiltering) {
+                onGlobalFilterChange?.(val);
+              } else {
+                setLocalGlobalSearch(val);
+              }
               resetRowSelectionOnSearch && setRowSelection?.({});
             }}
             placeholder={searchPlaceholder}
           />
-          {children && children(table)}
+          {children?.(table)}
           {showResetFilterButton && (
             <DataTableResetFilterButton onClick={resetFilters} table={table} />
           )}
           <div className={"flex gap-4 flex-wrap grow"}>
             <div className={"flex gap-4 flex-wrap"}></div>
-            {rightSide && rightSide(table)}
+            {rightSide?.(table)}
           </div>
         </div>
       )}
 
-      {aboveTable && aboveTable(table)}
+      {aboveTable?.(table)}
 
-      {!hasInitialData && !isLoading && (
-        <TableWrapper
-          wrapperComponent={wrapperComponent}
-          wrapperProps={wrapperProps}
-        >
-          {getStartedCard}
-        </TableWrapper>
-      )}
-
-      {hasInitialData && !isLoading && (
-        <TableWrapper
-          wrapperComponent={wrapperComponent}
-          wrapperProps={wrapperProps}
-        >
+      <TableWrapper
+        wrapperComponent={wrapperComponent}
+        wrapperProps={wrapperProps}
+      >
+        {isLoading ? (
+          <TableContentSkeleton />
+        ) : !hasInitialData ? (
+          getStartedCard
+        ) : (
           <TableComponent
-            className={cn("relative mt-8", tableClassName)}
+            className={cn("relative mt-6", tableClassName)}
             minimal={minimal}
           >
             {showHeader && as == "table" && (
@@ -398,94 +505,99 @@ export function DataTableContent<TData, TValue>({
                 )}
               >
                 {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => (
-                    <AccordionItem
-                      value={row.original.id}
-                      asChild={true}
-                      key={row.original.id}
-                    >
-                      <>
-                        <TableRowComponent
-                          minimal={minimal}
-                          data-row-id={row.original.id}
-                          className={cn(
-                            (onRowClick || renderExpandedRow) &&
-                              "cursor-pointer relative group/accordion",
-                            rowClassName,
-                          )}
-                          data-state={row.getIsSelected() && "selected"}
-                          data-accordion={
-                            accordion?.includes(row.original.id)
-                              ? "opened"
-                              : "closed"
-                          }
-                          onClick={(e) => {
-                            if (renderExpandedRow) {
-                              e.preventDefault();
-                              e.stopPropagation();
-                              setAccordion((prev) => {
-                                if (prev?.includes(row.original.id)) {
-                                  return prev.filter(
-                                    (item) => item !== row.original.id,
-                                  );
-                                } else {
-                                  return [...(prev ?? []), row.original.id];
-                                }
-                              });
+                  table.getRowModel().rows.map((row) => {
+                    const expandedRow = renderExpandedRow?.(row.original);
+                    return (
+                      <AccordionItem
+                        value={row.original.id}
+                        asChild={true}
+                        key={row.id}
+                      >
+                        <>
+                          <TableRowComponent
+                            minimal={minimal}
+                            data-row-id={row.original.id}
+                            className={cn(
+                              (onRowClick || renderExpandedRow) &&
+                                "relative group/accordion",
+                              (onRowClick || expandedRow) && "cursor-pointer",
+                              rowClassName,
+                            )}
+                            data-state={row.getIsSelected() && "selected"}
+                            data-accordion={
+                              accordion?.includes(row.original.id)
+                                ? "opened"
+                                : "closed"
                             }
-                          }}
-                        >
-                          <>
-                            {row.getVisibleCells().map((cell) => (
-                              <TableCellComponent
-                                key={cell.id}
-                                className={cn("relative", tableCellClassName)}
-                                minimal={minimal}
-                                inset={inset}
-                                onClick={() => {
-                                  onRowClick && onRowClick(row, cell.column.id);
-                                }}
-                              >
-                                <div
-                                  className={
-                                    "absolute left-0 top-0 w-full h-full z-0"
+                            onClick={(e) => {
+                              if (expandedRow) {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                setAccordion((prev) => {
+                                  if (prev?.includes(row.original.id)) {
+                                    return prev.filter(
+                                      (item) => item !== row.original.id,
+                                    );
+                                  } else {
+                                    return [...(prev ?? []), row.original.id];
                                   }
-                                ></div>
-                                <div className={"relative z-[1]"}>
-                                  {flexRender(
-                                    cell.column.columnDef.cell,
-                                    cell.getContext(),
-                                  )}
-                                </div>
-                              </TableCellComponent>
-                            ))}
-                          </>
-                        </TableRowComponent>
+                                });
+                              }
+                            }}
+                          >
+                            <>
+                              {row.getVisibleCells().map((cell) => (
+                                <TableCellComponent
+                                  key={cell.id}
+                                  className={cn("relative", tableCellClassName)}
+                                  minimal={minimal}
+                                  inset={inset}
+                                  onClick={() => {
+                                    onRowClick &&
+                                      onRowClick(row, cell.column.id);
+                                  }}
+                                >
+                                  <div
+                                    className={
+                                      "absolute left-0 top-0 w-full h-full z-0"
+                                    }
+                                  ></div>
+                                  <div className={"relative z-[1]"}>
+                                    {flexRender(
+                                      cell.column.columnDef.cell,
+                                      cell.getContext(),
+                                    )}
+                                  </div>
+                                </TableCellComponent>
+                              ))}
+                            </>
+                          </TableRowComponent>
 
-                        {renderExpandedRow && (
-                          <AccordionContent asChild={true}>
-                            <TableRowComponent
-                              data-row-id={row.id + "-expanded-row"}
-                              key={row.id + "-expanded-row"}
-                              minimal={minimal}
-                              className={cn(
-                                onRowClick && "cursor-pointer relative",
-                                rowClassName,
-                              )}
-                              data-state={row.getIsSelected() && "selected"}
-                            >
-                              <TableDataUnstyledComponent
-                                className={"w-full"}
-                                colSpan={row.getVisibleCells().length}
+                          {expandedRow && (
+                            <AccordionContent asChild={true}>
+                              <TableRowComponent
+                                data-row-id={row.id + "-expanded-row"}
+                                key={row.id + "-expanded-row"}
+                                minimal={minimal}
+                                className={cn(
+                                  onRowClick && "cursor-pointer relative",
+                                  rowClassName,
+                                )}
+                                data-state={row.getIsSelected() && "selected"}
                               >
-                                {renderExpandedRow(row.original)}
-                              </TableDataUnstyledComponent>
-                            </TableRowComponent>
-                          </AccordionContent>
-                        )}
-                      </>
-                    </AccordionItem>
-                  ))
+                                <TableDataUnstyledComponent
+                                  className={"w-full"}
+                                  colSpan={row.getVisibleCells().length}
+                                >
+                                  {expandedRow}
+                                </TableDataUnstyledComponent>
+                              </TableRowComponent>
+                            </AccordionContent>
+                          )}
+                        </>
+                      </AccordionItem>
+                    );
+                  })
                 ) : (
                   <TableRowUnstyledComponent>
                     <TableCellComponent
@@ -499,14 +611,15 @@ export function DataTableContent<TData, TValue>({
               </TableBodyComponent>
             </Accordion>
           </TableComponent>
-        </TableWrapper>
-      )}
+        )}
+      </TableWrapper>
 
       <div className={paginationClassName}>
         <DataTablePagination
           table={table}
           text={text}
           paginationPadding={paginationPaddingClassName}
+          totalRecords={totalRecords}
         />
       </div>
 

@@ -14,6 +14,7 @@ type Props = {
   onError?: (error: boolean) => void;
   error?: string;
   disabled?: boolean;
+  showRemoveButton?: boolean;
   preventLeadingAndTrailingDots?: boolean;
   allowWildcard?: boolean;
 };
@@ -44,6 +45,7 @@ export default function InputDomain({
   disabled,
   preventLeadingAndTrailingDots,
   allowWildcard = true,
+  showRemoveButton = true,
 }: Readonly<Props>) {
   const [name, setName] = useState(value?.name || "");
 
@@ -88,14 +90,16 @@ export default function InputDomain({
         />
       </div>
 
-      <Button
-        className={"h-[42px]"}
-        variant={"default-outline"}
-        onClick={onRemove}
-        disabled={disabled}
-      >
-        <MinusCircleIcon size={15} />
-      </Button>
+      {showRemoveButton && (
+        <Button
+          className={"h-[42px]"}
+          variant={"default-outline"}
+          onClick={onRemove}
+          disabled={disabled}
+        >
+          <MinusCircleIcon size={15} />
+        </Button>
+      )}
     </div>
   );
 }

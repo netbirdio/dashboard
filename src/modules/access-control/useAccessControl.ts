@@ -96,9 +96,9 @@ export const useAccessControl = ({
     firstRule ? firstRule.protocol : "all",
   );
   const [direction, setDirection] = useState<Direction>(() => {
-    if (firstRule && firstRule?.bidirectional) return "bi";
-    if (firstRule && firstRule?.bidirectional == false) return "in";
-    return "bi";
+    if (!firstRule) return "bi";
+    if (firstRule.bidirectional) return "bi";
+    return "in";
   });
   const [name, setName] = useState(policy?.name || initialName || "");
   const [description, setDescription] = useState(
@@ -273,7 +273,52 @@ export const useAccessControl = ({
     }
   };
 
-  const portAndDirectionDisabled = protocol == "icmp" || protocol == "all";
+  const hasPortSupport = (p: Protocol) => p === "tcp" || p === "udp";
+  const portDisabled = !hasPortSupport(protocol);
+
+  const destinationHasResources = useMemo(() => {
+    if (destinationResource) return true;
+
+    return destinationGroups.some((group) => {
+      if (group.resources_count !== undefined) {
+        return group.resources_count > 0;
+      }
+      if (group.resources && Array.isArray(group.resources)) {
+        return group.resources.length > 0;
+      }
+      return false;
+    });
+  }, [destinationGroups, destinationResource]);
+
+  const destinationOnlyResources = useMemo(() => {
+    if (destinationResource) return true;
+
+    return (
+      destinationGroups.length > 0 &&
+      destinationGroups.every((group) => {
+        const hasPeers =
+          group.peers_count !== undefined
+            ? group.peers_count > 0
+            : group.peers &&
+              Array.isArray(group.peers) &&
+              group.peers.length > 0;
+        const hasResources =
+          group.resources_count !== undefined
+            ? group.resources_count > 0
+            : group.resources &&
+              Array.isArray(group.resources) &&
+              group.resources.length > 0;
+
+        return hasResources && !hasPeers;
+      })
+    );
+  }, [destinationGroups, destinationResource]);
+
+  useEffect(() => {
+    if (destinationOnlyResources && direction !== "in") {
+      setDirection("in");
+    }
+  }, [destinationOnlyResources, direction, setDirection]);
 
   return {
     protocol,
@@ -298,10 +343,13 @@ export const useAccessControl = ({
     setPostureChecks,
     submit,
     getPolicyData,
-    portAndDirectionDisabled,
+    portDisabled,
     isPostureChecksLoading,
     destinationResource,
     setDestinationResource,
+    destinationHasResources,
+    destinationOnlyResources,
+    hasPortSupport,
   } as const;
 };
 

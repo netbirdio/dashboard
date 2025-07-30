@@ -34,6 +34,10 @@ const defaultRanges = {
     from: dayjs().subtract(2, "day").startOf("day").toDate(),
     to: dayjs().endOf("day").toDate(),
   },
+  last7Days: {
+    from: dayjs().subtract(7, "day").startOf("day").toDate(),
+    to: dayjs().endOf("day").toDate(),
+  },
   lastMonth: {
     from: dayjs().subtract(1, "month").startOf("day").toDate(),
     to: dayjs().endOf("day").toDate(),
@@ -64,6 +68,7 @@ export function DatePickerWithRange({
       yesterday: isEqualDateRange(value, defaultRanges.yesterday),
       last14Days: isEqualDateRange(value, defaultRanges.last14Days),
       last2Days: isEqualDateRange(value, defaultRanges.last2Days),
+      last7Days: isEqualDateRange(value, defaultRanges.last7Days),
       lastMonth: isEqualDateRange(value, defaultRanges.lastMonth),
       allTime: isEqualDateRange(value, defaultRanges.allTime),
     };
@@ -76,6 +81,7 @@ export function DatePickerWithRange({
     if (isActive.lastMonth) return "Last Month";
     if (isActive.last14Days) return "Last 14 Days";
     if (isActive.last2Days) return "Last 2 Days";
+    if (isActive.last7Days) return "Last 7 Days";
     if (isActive.yesterday) return "Yesterday";
     if (isActive.today) return "Today";
 
@@ -88,12 +94,11 @@ export function DatePickerWithRange({
   const [calendarOpen, setCalendarOpen] = useState(false);
 
   const updateRangeAndClose = (range: DateRange) => {
-    setCalendarOpen(false);
     onChange?.(range);
   };
 
   const debouncedOnChange = useMemo(() => {
-    return onChange ? debounce(onChange, 300) : undefined;
+    return onChange ? debounce(onChange, 500) : undefined;
   }, [onChange]);
 
   const handleOnSelect = (range?: DateRange) => {

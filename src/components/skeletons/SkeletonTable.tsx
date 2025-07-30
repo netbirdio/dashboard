@@ -6,16 +6,26 @@ type Props = {
   withHeader?: boolean;
 };
 
-export default function SkeletonTable({ withHeader = true }: Props) {
+export default function SkeletonTable({ withHeader = true }: Readonly<Props>) {
   return (
     <div className={"w-full"}>
       {withHeader && <SkeletonTableHeader />}
-      <Skeleton
-        height={48}
-        containerClassName={"flex"}
-        className={cn(withHeader && "mt-8")}
-      />
-      <div>
+      <div className={"mt-6"}>
+        <TableSkeletonRow />
+        <TableSkeletonRow odd />
+        <TableSkeletonRow />
+        <TableSkeletonRow odd />
+        <TableSkeletonRow />
+        <TableSkeletonRow odd />
+      </div>
+    </div>
+  );
+}
+
+export function TableContentSkeleton() {
+  return (
+    <div className={"w-full"}>
+      <div className={"mt-6"}>
         <TableSkeletonRow />
         <TableSkeletonRow odd />
         <TableSkeletonRow />
@@ -31,7 +41,7 @@ type RowProps = {
   odd?: boolean;
 };
 
-export function TableSkeletonRow({ odd = false }: RowProps) {
+export function TableSkeletonRow({ odd = false }: Readonly<RowProps>) {
   return (
     <div
       className={cn(

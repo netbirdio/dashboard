@@ -32,7 +32,9 @@ export function useSearch<T>(
   string,
   (event: ChangeEvent<HTMLInputElement> | string) => void,
   (querty: string) => void,
+  boolean,
 ] {
+  const [isSearching, setIsSearching] = useState<boolean>(false);
   const isMounted = useRef<boolean>(false);
   const [query, setQuery] = useState<string>(initialQuery);
   const prevCollection = usePrevious(collection);
@@ -62,6 +64,7 @@ export function useSearch<T>(
           setFilteredCollection(
             filterCollection(collection, predicate, query, filter),
           );
+          setIsSearching(false);
         }
       },
       debounce,
@@ -75,8 +78,10 @@ export function useSearch<T>(
       !isEqual(predicate, prevPredicate) ||
       !isEqual(query, prevQuery) ||
       !isEqual(filter, prevFilter)
-    )
+    ) {
+      if (!isEqual(query, prevQuery)) setIsSearching(true);
       debouncedFilterCollection(collection, predicate, query, filter);
+    }
   }, [collection, predicate, query, filter]);
 
   useEffect(() => {
@@ -87,5 +92,5 @@ export function useSearch<T>(
     };
   }, []);
 
-  return [filteredCollection, query, handleChange, setQuery];
+  return [filteredCollection, query, handleChange, setQuery, isSearching];
 }

@@ -8,6 +8,7 @@ import { IconCirclePlus } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
 import { Layers3Icon } from "lucide-react";
+import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -30,6 +31,11 @@ type Props = {
 const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
   {
     id: "id",
+    accessorKey: "id",
+    filterFn: "exactMatch",
+  },
+  {
+    id: "name",
     accessorKey: "name",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Resource</DataTableHeader>;
@@ -101,6 +107,8 @@ export default function ResourcesTable({
   headingTarget,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
+  const params = useSearchParams();
+  const resourceId = params.get("resource") ?? undefined;
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const { openResourceModal, network } = useNetworksContext();
@@ -119,6 +127,10 @@ export default function ResourcesTable({
       text={"Resources"}
       columns={NetworkResourceColumns}
       keepStateInLocalStorage={false}
+      initialFilters={
+        resourceId ? [{ id: "id", value: resourceId }] : undefined
+      }
+      initialSearch={resourceId}
       data={resources}
       searchPlaceholder={"Search by name, address or group..."}
       isLoading={isLoading}
@@ -134,6 +146,7 @@ export default function ResourcesTable({
       }
       columnVisibility={{
         description: false,
+        id: false,
       }}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={() => (

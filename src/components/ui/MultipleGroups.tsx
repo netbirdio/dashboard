@@ -9,9 +9,9 @@ import {
 import GroupBadge from "@components/ui/GroupBadge";
 import PeerBadge from "@components/ui/PeerBadge";
 import { cn } from "@utils/helpers";
-import { orderBy } from "lodash";
-import { ArrowRightIcon } from "lucide-react";
+import { ArrowRightIcon, PencilLineIcon } from "lucide-react";
 import * as React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
@@ -30,8 +30,17 @@ export default function MultipleGroups({
   onClick,
   className,
 }: Readonly<Props>) {
-  if (!groups) return <EmptyRow />;
-  const orderedGroups = orderBy(groups, ["peers_count", "name"], ["desc"]);
+  const { permission } = usePermissions();
+
+  if (!groups || groups?.length === 0) return <EmptyRow />;
+  const orderedGroups = groups.sort((a, b) => {
+    if (a.name === "All") return 1;
+    if (b.name === "All") return -1;
+    const aPeerCount = a.peers_count ?? 0;
+    const bPeerCount = b.peers_count ?? 0;
+    if (aPeerCount !== bPeerCount) return bPeerCount - aPeerCount;
+    return a.name.localeCompare(b.name);
+  });
   const firstGroup = orderedGroups.length > 0 ? orderedGroups[0] : undefined;
   const otherGroups = orderedGroups.length > 0 ? orderedGroups.slice(1) : [];
 
@@ -48,12 +57,22 @@ export default function MultipleGroups({
             data-cy={"multiple-groups"}
             onClick={onClick}
           >
-            {firstGroup && <GroupBadge group={firstGroup} />}
+            {firstGroup && (
+              <GroupBadge
+                group={firstGroup}
+                className={
+                  permission.groups.update ? "group-hover:bg-nb-gray-800" : ""
+                }
+              />
+            )}
             {otherGroups && otherGroups.length > 0 && (
               <Badge
                 variant={"gray-ghost"}
                 useHover={true}
-                className={"px-3 gap-2 whitespace-nowrap"}
+                className={cn(
+                  "px-3 gap-2 whitespace-nowrap",
+                  permission.groups.update ? "group-hover:bg-nb-gray-800" : "",
+                )}
               >
                 + {otherGroups.length}
               </Badge>
@@ -98,3 +117,15 @@ export default function MultipleGroups({
     </TooltipProvider>
   );
 }
+
+export const TransparentEditIconButton = () => {
+  return (
+    <div
+      className={
+        "h-[34px] w-[34px] !p-0 opacity-0 group-hover:opacity-100 flex items-center justify-center text-nb-gray-400 hover:text-nb-gray-100"
+      }
+    >
+      <PencilLineIcon size={16} />
+    </div>
+  );
+};

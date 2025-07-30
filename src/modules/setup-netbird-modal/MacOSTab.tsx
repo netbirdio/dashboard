@@ -24,6 +24,7 @@ import Link from "next/link";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
+  HostnameParameter,
   RoutingPeerSetupKeyInfo,
   SetupKeyParameter,
 } from "@/modules/setup-netbird-modal/SetupModal";
@@ -31,10 +32,12 @@ import {
 type Props = {
   setupKey?: string;
   showSetupKeyInfo?: boolean;
+  hostname?: string;
 };
 export default function MacOSTab({
   setupKey,
   showSetupKeyInfo,
+  hostname,
 }: Readonly<Props>) {
   return (
     <TabsContent value={String(OperatingSystem.APPLE)}>
@@ -120,6 +123,7 @@ export default function MacOSTab({
                 <Code.Line>
                   {getNetBirdUpCommand()}
                   <SetupKeyParameter setupKey={setupKey} />
+                  <HostnameParameter hostname={hostname} />
                 </Code.Line>
               </Code>
             </Steps.Step>
@@ -162,6 +166,7 @@ export default function MacOSTab({
                     <Code.Line>
                       {getNetBirdUpCommand()}
                       <SetupKeyParameter setupKey={setupKey} />
+                      <HostnameParameter hostname={hostname} />
                     </Code.Line>
                   </Code>
                 </Steps.Step>
@@ -222,6 +227,7 @@ export default function MacOSTab({
                     <Code.Line>
                       {getNetBirdUpCommand()}
                       <SetupKeyParameter setupKey={setupKey} />
+                      <HostnameParameter hostname={hostname} />
                     </Code.Line>
                   </Code>
                 </Steps.Step>

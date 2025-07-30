@@ -14,6 +14,7 @@ import { TerminalSquareIcon } from "lucide-react";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
+  HostnameParameter,
   RoutingPeerSetupKeyInfo,
   SetupKeyParameter,
 } from "@/modules/setup-netbird-modal/SetupModal";
@@ -21,11 +22,13 @@ import {
 type Props = {
   setupKey?: string;
   showSetupKeyInfo?: boolean;
+  hostname?: string;
 };
 
 export default function LinuxTab({
   setupKey,
   showSetupKeyInfo = false,
+  hostname,
 }: Readonly<Props>) {
   return (
     <TabsContent value={String(OperatingSystem.LINUX)}>
@@ -47,6 +50,7 @@ export default function LinuxTab({
               <Code.Line>
                 {getNetBirdUpCommand()}
                 <SetupKeyParameter setupKey={setupKey} />
+                <HostnameParameter hostname={hostname} />
               </Code.Line>
             </Code>
           </Steps.Step>
@@ -104,6 +108,7 @@ export default function LinuxTab({
                     <Code.Line>
                       {getNetBirdUpCommand()}
                       <SetupKeyParameter setupKey={setupKey} />
+                      <HostnameParameter hostname={hostname} />
                     </Code.Line>
                   </Code>
                 </Steps.Step>

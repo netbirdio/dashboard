@@ -67,7 +67,7 @@ p {
 }
 
 .stepper-bg-variant .step-circle {
-    @apply !border-[#1d2024];
+    @apply !border-nb-gray-940;
 }
 
 .webkit-scroll{
@@ -117,4 +117,43 @@ p {
 @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
+}
+
+
+.animate-slow-ping {
+    animation: ping 1.6s cubic-bezier(0, 0, 0.2, 1) infinite
+}
+
+@keyframes ping {
+    75%, 100% {
+        transform: scale(2);
+        opacity: 0;
+    }
+}
+
+.animate-slow-pulse {
+    animation: pulse 2.5s cubic-bezier(0.4, 0, 0.6, 1) infinite
+}
+
+
+@keyframes pulse {
+    60% {
+        opacity: 0.5;
+    }
+}
+
+@keyframes bg-scroll {
+    0% {
+        background-position: 0% 100%;
+    }
+    100% {
+        background-position: 0% 0%;
+    }
+}
+
+.animate-bg-scroll {
+    animation: bg-scroll 4s linear infinite;
+}
+.animate-bg-scroll-faster {
+    animation: bg-scroll 1.8s linear infinite;
 }

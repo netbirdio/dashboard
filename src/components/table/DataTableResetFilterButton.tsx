@@ -8,48 +8,54 @@ import { useState } from "react";
 interface Props<TData> {
   table: Table<TData>;
   onClick: () => void;
+  hasServerSideFilters?: boolean;
 }
 
 export default function DataTableResetFilterButton<TData>({
   table,
   onClick,
+  hasServerSideFilters = undefined,
 }: Props<TData>) {
   const [hovered, setHovered] = useState(false);
-  const isDisabled =
-    table.getState().columnFilters.length <= 0 &&
-    table.getState().globalFilter === "";
 
-  return !isDisabled ? (
-    <Tooltip delayDuration={1}>
-      <TooltipTrigger
-        asChild={true}
-        onMouseOver={() => setHovered(true)}
-        onMouseLeave={() => setHovered(false)}
-        onClick={(e) => {
-          e.preventDefault();
-        }}
-      >
-        <Button
-          className={"h-[42px]"}
-          variant={"secondary"}
-          disabled={isDisabled}
-          onClick={onClick}
+  const hasClientSideFilters =
+    table.getState().globalFilter !== "" ||
+    table.getState().columnFilters.length > 0;
+
+  const showButton = hasServerSideFilters ?? hasClientSideFilters;
+
+  return (
+    showButton && (
+      <Tooltip delayDuration={1}>
+        <TooltipTrigger
+          asChild={true}
+          onMouseOver={() => setHovered(true)}
+          onMouseLeave={() => setHovered(false)}
+          onClick={(e) => {
+            e.preventDefault();
+          }}
         >
-          <FilterX size={16} />
-        </Button>
-      </TooltipTrigger>
+          <Button
+            className={"h-[42px]"}
+            variant={"secondary"}
+            onClick={onClick}
+          >
+            <FilterX size={16} />
+          </Button>
+        </TooltipTrigger>
 
-      <TooltipContent
-        sideOffset={10}
-        className={"px-3 py-2"}
-        onPointerDownOutside={(event) => {
-          if (hovered) event.preventDefault();
-        }}
-      >
-        <span className={"text-xs text-neutral-300"}>
-          Reset Filters & Search
-        </span>
-      </TooltipContent>
-    </Tooltip>
-  ) : null;
+        <TooltipContent
+          sideOffset={10}
+          className={"px-3 py-2"}
+          onPointerDownOutside={(event) => {
+            if (hovered) event.preventDefault();
+          }}
+        >
+          <span className={"text-xs text-neutral-300"}>
+            Reset Filters & Search
+          </span>
+        </TooltipContent>
+      </Tooltip>
+    )
+  );
 }

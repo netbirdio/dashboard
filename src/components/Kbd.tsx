@@ -12,6 +12,7 @@ const variants = cva("", {
   variants: {
     variant: {
       default: ["bg-nb-gray-800 border-nb-gray-700 text-nb-gray-300 "],
+      darker: ["bg-nb-gray-930 border-nb-gray-900 text-nb-gray-250 "],
       netbird: ["bg-netbird-100 text-netbird border-netbird "],
     },
     size: {
@@ -30,7 +31,7 @@ export default function Kbd({
   size = "default",
   disabled = false,
   className,
-}: Props) {
+}: Readonly<Props>) {
   return (
     <div
       className={cn(

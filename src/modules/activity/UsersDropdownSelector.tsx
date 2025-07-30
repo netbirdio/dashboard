@@ -10,6 +10,7 @@ import { sortBy, trim, uniqBy } from "lodash";
 import { ChevronsUpDown, Cog, SearchIcon, UserCircle2 } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
+import { useDebounce } from "@/hooks/useDebounce";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
@@ -37,7 +38,8 @@ export function UsersDropdownSelector({
 }: Props) {
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const search = useDebounce(searchInput, 500);
 
   const toggle = (item: string | undefined) => {
     const isSelected = value == item;
@@ -45,7 +47,7 @@ export function UsersDropdownSelector({
       onChange && onChange(undefined);
     } else {
       onChange && onChange(item);
-      setSearch("");
+      setSearchInput("");
     }
     setOpen(false);
   };
@@ -69,7 +71,7 @@ export function UsersDropdownSelector({
       onOpenChange={(isOpen) => {
         if (!isOpen) {
           setTimeout(() => {
-            setSearch("");
+            setSearchInput("");
           }, 100);
         }
         setOpen(isOpen);
@@ -155,8 +157,8 @@ export function UsersDropdownSelector({
                   "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
                 )}
                 ref={searchRef}
-                value={search}
-                onValueChange={setSearch}
+                value={searchInput}
+                onValueChange={setSearchInput}
                 placeholder={"Search user..."}
               />
               <div
@@ -182,7 +184,6 @@ export function UsersDropdownSelector({
                     className={"py-1 px-2"}
                     onSelect={() => {
                       toggle(undefined);
-                      searchRef.current?.focus();
                     }}
                     onClick={(e) => e.preventDefault()}
                   >
@@ -217,7 +218,6 @@ export function UsersDropdownSelector({
                         className={"py-1 px-2"}
                         onSelect={() => {
                           toggle(user.email);
-                          searchRef.current?.focus();
                         }}
                         onClick={(e) => e.preventDefault()}
                       >

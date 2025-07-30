@@ -10,7 +10,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -25,6 +25,7 @@ import NetworkNameCell from "@/modules/networks/table/NetworkNameCell";
 import { NetworkPolicyCell } from "@/modules/networks/table/NetworkPolicyCell";
 import { NetworkResourceCell } from "@/modules/networks/table/NetworkResourceCell";
 import NetworkRoutingPeerCell from "@/modules/networks/table/NetworkRoutingPeerCell";
+import { GlobalSearchModal } from "@/modules/search/GlobalSearchModal";
 
 export const NetworkTableColumns: ColumnDef<Network>[] = [
   {
@@ -79,9 +80,10 @@ export default function NetworksTable({
   isLoading,
   data,
   headingTarget,
-}: Props) {
+}: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const [searchModal, setSearchModal] = useState(false);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -95,75 +97,85 @@ export default function NetworksTable({
   );
 
   return (
-    <NetworkProvider>
-      <DataTable
-        headingTarget={headingTarget}
-        isLoading={isLoading}
-        text={"Networks"}
-        sorting={sorting}
-        setSorting={setSorting}
-        columns={NetworkTableColumns}
-        data={data}
-        searchPlaceholder={"Search by network name or description..."}
-        columnVisibility={{
-          description: false,
-        }}
-        getStartedCard={
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={
-                  <NetworkRoutesIcon className={"fill-nb-gray-200"} size={20} />
-                }
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Create New Network"}
-            description={
-              "It looks like you don't have any networks. Access internal resources in your LANs and VPC by adding a network."
-            }
-            button={
-              <div className={"gap-x-4 flex items-center justify-center"}>
+    <>
+      <GlobalSearchModal open={searchModal} setOpen={setSearchModal} />
+      <NetworkProvider>
+        <DataTable
+          headingTarget={headingTarget}
+          isLoading={isLoading}
+          text={"Networks"}
+          sorting={sorting}
+          setSorting={setSorting}
+          columns={NetworkTableColumns}
+          data={data}
+          searchPlaceholder={"Search by network name or description..."}
+          columnVisibility={{
+            description: false,
+          }}
+          onSearchClick={() => setSearchModal(true)}
+          getStartedCard={
+            <GetStartedTest
+              icon={
+                <SquareIcon
+                  icon={
+                    <NetworkRoutesIcon
+                      className={"fill-nb-gray-200"}
+                      size={20}
+                    />
+                  }
+                  color={"gray"}
+                  size={"large"}
+                />
+              }
+              title={"Create New Network"}
+              description={
+                "It looks like you don't have any networks. Access internal resources in your LANs and VPC by adding a network."
+              }
+              button={
+                <div className={"gap-x-4 flex items-center justify-center"}>
+                  <AddNetworkButton />
+                </div>
+              }
+              learnMore={
+                <>
+                  Learn more about
+                  <InlineLink
+                    href={"https://docs.netbird.io/how-to/networks"}
+                    target={"_blank"}
+                  >
+                    Networks
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </>
+              }
+            />
+          }
+          rightSide={() =>
+            data &&
+            data.length > 0 && (
+              <div className={cn("gap-x-4 ml-auto flex")}>
                 <AddNetworkButton />
               </div>
-            }
-            learnMore={
-              <>
-                Learn more about
-                <InlineLink
-                  href={"https://docs.netbird.io/how-to/networks"}
-                  target={"_blank"}
-                >
-                  Networks
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
-        }
-        rightSide={() =>
-          data &&
-          data.length > 0 && (
-            <div className={cn("gap-x-4 ml-auto flex")}>
-              <AddNetworkButton />
-            </div>
-          )
-        }
-      >
-        {(table) => (
-          <>
-            <DataTableRowsPerPage table={table} disabled={data?.length == 0} />
-            <DataTableRefreshButton
-              isDisabled={data?.length == 0}
-              onClick={() => {
-                mutate("/networks").then();
-              }}
-            />
-          </>
-        )}
-      </DataTable>
-    </NetworkProvider>
+            )
+          }
+        >
+          {(table) => (
+            <>
+              <DataTableRowsPerPage
+                table={table}
+                disabled={data?.length == 0}
+              />
+              <DataTableRefreshButton
+                isDisabled={data?.length == 0}
+                onClick={() => {
+                  mutate("/networks").then();
+                }}
+              />
+            </>
+          )}
+        </DataTable>
+      </NetworkProvider>
+    </>
   );
 }
 
