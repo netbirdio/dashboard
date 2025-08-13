@@ -29,6 +29,7 @@ function CardList({ children }: Props) {
 type CardListItemProps = {
   label: React.ReactNode;
   value: React.ReactNode;
+  valueToCopy?: string;
   className?: string;
   copy?: boolean;
   copyText?: string;
@@ -39,6 +40,7 @@ type CardListItemProps = {
 function CardListItem({
   label,
   value,
+  valueToCopy,
   className,
   copy = false,
   copyText,
@@ -57,6 +59,7 @@ function CardListItem({
         <CardTextItem
           label={label}
           value={value}
+          valueToCopy={valueToCopy}
           copy={copy}
           copyText={copyText}
           tooltip={tooltip}
@@ -79,6 +82,7 @@ function CardListItem({
 type CardTextItemProps = {
   label: React.ReactNode;
   value: React.ReactNode;
+  valueToCopy?: string;
   copy?: boolean;
   copyText?: string;
   tooltip?: boolean;
@@ -88,10 +92,11 @@ const CardTextItem = ({
   label,
   value,
   copy = false,
+  valueToCopy,
   copyText,
   tooltip = true,
 }: CardTextItemProps) => {
-  const [, copyToClipBoard] = useCopyToClipboard(value as string);
+  const [, copyToClipBoard] = useCopyToClipboard(valueToCopy ?? `${value}`);
   return (
     <div
       className={cn(

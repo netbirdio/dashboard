@@ -63,11 +63,12 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
-  if (event.activity_code == "setupkey.peer.add")
+  if (event.activity_code == "peer.setupkey.add")
     return (
       <div className={"inline"}>
         Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
-        with the NetBird IP <Value>{m.ip}</Value>
+        with the NetBird IP <Value>{m.ip}</Value> using the setup key{" "}
+        <Value>{m.setup_key_name}</Value>
       </div>
     );
 
@@ -340,6 +341,14 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "peer.ip.update")
+    return (
+      <div className={"inline"}>
+        Peer <Value>{m.name}</Value> IP address was updated from{" "}
+        <Value>{m.old_ip}</Value> to <Value>{m.ip}</Value>
+      </div>
+    );
+
   /**
    * Group
    */
@@ -377,6 +386,15 @@ export default function ActivityDescription({ event }: Props) {
 
   if (event.activity_code == "account.setting.peer.login.expiration.disable")
     return <div className={"inline"}>Global login expiration was disabled</div>;
+
+  if (event.activity_code == "account.network.range.update")
+    return (
+      <div className={"inline"}>
+        Account network range was updated from{" "}
+        <Value>{m.old_network_range}</Value> to{" "}
+        <Value>{m.new_network_range}</Value>
+      </div>
+    );
 
   /**
    * Nameserver

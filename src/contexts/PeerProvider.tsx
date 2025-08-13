@@ -26,6 +26,7 @@ const PeerContext = React.createContext(
       loginExpiration?: boolean;
       inactivityExpiration?: boolean;
       approval_required?: boolean;
+      ip?: string;
     }) => Promise<Peer>;
     openSSHDialog: () => Promise<boolean>;
     deletePeer: () => void;
@@ -36,7 +37,7 @@ const PeerContext = React.createContext(
 export default function PeerProvider({ children, peer }: Props) {
   const user = usePeerUser(peer);
   const { peerGroups, isLoading } = usePeerGroups(peer);
-  const peerRequest = useApiCall<Peer>("/peers");
+  const peerRequest = useApiCall<Peer>("/peers", true);
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
 
@@ -68,6 +69,7 @@ export default function PeerProvider({ children, peer }: Props) {
     loginExpiration?: boolean;
     inactivityExpiration?: boolean;
     approval_required?: boolean;
+    ip?: string;
   }) => {
     return peerRequest.put(
       {
@@ -86,6 +88,7 @@ export default function PeerProvider({ children, peer }: Props) {
           props?.approval_required == undefined
             ? undefined
             : props.approval_required,
+        ip: props.ip != undefined ? props.ip : undefined,
       },
       `/${peer.id}`,
     );
