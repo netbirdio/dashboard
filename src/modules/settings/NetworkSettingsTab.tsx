@@ -11,6 +11,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { validator } from "@utils/helpers";
 import { isNetBirdHosted } from "@utils/netbird";
+import cidr from "ip-cidr";
 import { ExternalLinkIcon, GlobeIcon, NetworkIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -33,6 +34,9 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
   );
   const [customDNSDomain, setCustomDNSDomain] = useState(
     account.settings.dns_domain || "",
+  );
+  const [networkRange, setNetworkRange] = useState(
+    account.settings.network_range || "",
   );
 
   const toggleNetworkDNSSetting = async (toggle: boolean) => {
@@ -57,25 +61,37 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
     });
   };
 
-  const { hasChanges, updateRef } = useHasChanges([customDNSDomain]);
+  const { hasChanges, updateRef } = useHasChanges([
+    customDNSDomain,
+    networkRange,
+  ]);
 
   const saveChanges = async () => {
+    const updatedSettings = {
+      ...account.settings,
+    };
+
+    if (customDNSDomain !== "" || account.settings.dns_domain) {
+      updatedSettings.dns_domain = customDNSDomain;
+    }
+
+    if (networkRange !== "") {
+      updatedSettings.network_range = networkRange;
+    }
+
     notify({
-      title: "Custom DNS Domain",
-      description: `Custom DNS Domain successfully updated.`,
+      title: "Network Settings",
+      description: `Network settings successfully updated.`,
       promise: saveRequest
         .put({
           id: account.id,
-          settings: {
-            ...account.settings,
-            dns_domain: customDNSDomain || "",
-          },
+          settings: updatedSettings,
         })
         .then(() => {
           mutate("/accounts");
-          updateRef([customDNSDomain]);
+          updateRef([customDNSDomain, networkRange]);
         }),
-      loadingMessage: "Updating Custom DNS domain...",
+      loadingMessage: "Updating network settings...",
     });
   };
 
@@ -89,6 +105,24 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
       return "Please enter a valid domain, e.g. example.com or intra.example.com";
     }
   }, [customDNSDomain]);
+
+  const networkRangeError = useMemo(() => {
+    if (networkRange == "") {
+      if (account.settings.network_range) {
+        return "Network range cannot be empty";
+      }
+      return "";
+    }
+
+    try {
+      const validCIDR = cidr.isValidCIDR(networkRange);
+      if (!validCIDR) {
+        return "Please enter a valid IPv4 CIDR range, e.g. 100.64.0.0/16 or 192.168.1.0/24";
+      }
+    } catch (error) {
+      return "Please enter a valid IPv4 CIDR range, e.g. 100.64.0.0/16 or 192.168.1.0/24";
+    }
+  }, [networkRange, account.settings.network_range]);
 
   return (
     <Tabs.Content value={"networks"}>
@@ -112,7 +146,12 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
           </div>
           <Button
             variant={"primary"}
-            disabled={!hasChanges || !permission.settings.update}
+            disabled={
+              !hasChanges ||
+              !permission.settings.update ||
+              !!domainError ||
+              !!networkRangeError
+            }
             onClick={saveChanges}
           >
             Save Changes
@@ -130,7 +169,8 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
                 <Label>DNS Domain</Label>
                 <HelpText>
                   Specify a custom peer DNS domain for your network. This should
-                  not point to a domain that is already in use elsewhere, to avoid overriding DNS results.
+                  not point to a domain that is already in use elsewhere, to
+                  avoid overriding DNS results.
                 </HelpText>
               </div>
               <div className={"w-full"}>
@@ -144,6 +184,33 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
                   value={customDNSDomain}
                   disabled={!permission.settings.update}
                   onChange={(e) => setCustomDNSDomain(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <div
+              className={
+                "flex flex-col gap-1 sm:flex-row w-full sm:gap-4 items-center"
+              }
+            >
+              <div className={"min-w-[330px]"}>
+                <Label>Network Range</Label>
+                <HelpText>
+                  Specify a custom IPv4 range for your network in CIDR format.
+                  All peer IPs will be re-allocated when changed.
+                </HelpText>
+              </div>
+              <div className={"w-full"}>
+                <Input
+                  placeholder={"e.g. 100.64.0.0/16"}
+                  errorTooltip={true}
+                  errorTooltipPosition={"top"}
+                  error={networkRangeError}
+                  value={networkRange}
+                  disabled={!permission.settings.update}
+                  onChange={(e) => setNetworkRange(e.target.value)}
                 />
               </div>
             </div>

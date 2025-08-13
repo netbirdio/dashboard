@@ -2,6 +2,7 @@
 
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import Card from "@components/Card";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import FullTooltip from "@components/FullTooltip";
@@ -219,7 +220,7 @@ const PeerGeneralInformation = () => {
                   <ModalTrigger>
                     <div
                       className={
-                        "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
+                        "flex h-8 w-8 items-center justify-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer"
                       }
                     >
                       <PencilIcon size={16} />
@@ -324,7 +325,7 @@ const PeerGeneralInformation = () => {
             }
             interactive={false}
             className={"w-full block"}
-            disabled={!permission.peers.update}
+            disabled={permission.peers.update}
           >
             <FancyToggleSwitch
               value={ssh}
@@ -415,158 +416,200 @@ const PeerOverviewTabs = () => {
 
 function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
   const { isLoading, getRegionByPeer } = useCountries();
+  const { update } = usePeer();
+  const { mutate } = useSWRConfig();
+  const [showEditIPModal, setShowEditIPModal] = useState(false);
+  const { permission } = usePermissions();
 
   const countryText = useMemo(() => {
     return getRegionByPeer(peer);
   }, [getRegionByPeer, peer]);
 
   return (
-    <Card className={"w-full xl:w-1/2"}>
-      <Card.List>
-        <Card.ListItem
-          copy
-          copyText={"NetBird IP-Address"}
-          label={
-            <>
-              <MapPin size={16} />
-              NetBird IP-Address
-            </>
-          }
-          value={peer.ip}
+    <>
+      <Modal open={showEditIPModal} onOpenChange={setShowEditIPModal}>
+        <EditIPModal
+          onSuccess={(newIP) => {
+            notify({
+              title: peer.name,
+              description: "Peer IP was successfully updated",
+              promise: update({ ip: newIP }).then(() => {
+                mutate("/peers/" + peer.id);
+                setShowEditIPModal(false);
+              }),
+              loadingMessage: "Updating peer IP...",
+            });
+          }}
+          peer={peer}
+          key={showEditIPModal ? 1 : 0}
         />
-
-        <Card.ListItem
-          copy
-          copyText={"Public IP-Address"}
-          label={
-            <>
-              <NetworkIcon size={16} />
-              Public IP-Address
-            </>
-          }
-          value={peer.connection_ip}
-        />
-
-        <Card.ListItem
-          copy
-          copyText={"DNS label"}
-          label={
-            <>
-              <Globe size={16} />
-              Domain Name
-            </>
-          }
-          className={
-            peer?.extra_dns_labels && peer.extra_dns_labels.length > 0
-              ? "items-start"
-              : ""
-          }
-          value={peer.dns_label}
-          extraText={peer?.extra_dns_labels}
-        />
-
-        <Card.ListItem
-          copy
-          copyText={"Hostname"}
-          label={
-            <>
-              <MonitorSmartphoneIcon size={16} />
-              Hostname
-            </>
-          }
-          value={peer.hostname}
-        />
-
-        <Card.ListItem
-          label={
-            <>
-              <FlagIcon size={16} />
-              Region
-            </>
-          }
-          tooltip={false}
-          value={
-            isEmpty(peer.country_code) ? (
-              "Unknown"
-            ) : (
+      </Modal>
+      <Card className={"w-full xl:w-1/2"}>
+        <Card.List>
+          <Card.ListItem
+            copy
+            tooltip={false}
+            copyText={"NetBird IP Address"}
+            label={
               <>
-                {isLoading ? (
-                  <Skeleton width={140} />
-                ) : (
-                  <div className={"flex gap-2 items-center"}>
-                    <div className={"border-0 border-nb-gray-800 rounded-full"}>
-                      <RoundedFlag country={peer.country_code} size={12} />
-                    </div>
-                    {countryText}
-                  </div>
-                )}
+                <MapPin size={16} />
+                NetBird IP Address
               </>
-            )
-          }
-        />
+            }
+            valueToCopy={peer.ip}
+            value={
+              <div className="flex items-center gap-2 justify-between w-full">
+                <span>{peer.ip}</span>
+                {permission.peers.update && (
+                  <button
+                    className="flex w-7 h-7 items-center justify-center gap-2 text-nb-gray-400 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEditIPModal(true);
+                    }}
+                  >
+                    <PencilIcon size={14} />
+                  </button>
+                )}
+              </div>
+            }
+          />
 
-        <Card.ListItem
-          label={
-            <>
-              <Cpu size={16} />
-              Operating System
-            </>
-          }
-          value={peer.os}
-        />
+          <Card.ListItem
+            copy
+            copyText={"Public IP Address"}
+            label={
+              <>
+                <NetworkIcon size={16} />
+                Public IP Address
+              </>
+            }
+            value={peer.connection_ip}
+          />
 
-        {peer.serial_number && peer.serial_number !== "" && (
+          <Card.ListItem
+            copy
+            copyText={"DNS label"}
+            label={
+              <>
+                <Globe size={16} />
+                Domain Name
+              </>
+            }
+            className={
+              peer?.extra_dns_labels && peer.extra_dns_labels.length > 0
+                ? "items-start"
+                : ""
+            }
+            value={peer.dns_label}
+            extraText={peer?.extra_dns_labels}
+          />
+
+          <Card.ListItem
+            copy
+            copyText={"Hostname"}
+            label={
+              <>
+                <MonitorSmartphoneIcon size={16} />
+                Hostname
+              </>
+            }
+            value={peer.hostname}
+          />
+
           <Card.ListItem
             label={
               <>
-                <Barcode size={16} />
-                Serial Number
+                <FlagIcon size={16} />
+                Region
               </>
             }
-            value={peer.serial_number}
+            tooltip={false}
+            value={
+              isEmpty(peer.country_code) ? (
+                "Unknown"
+              ) : (
+                <>
+                  {isLoading ? (
+                    <Skeleton width={140} />
+                  ) : (
+                    <div className={"flex gap-2 items-center"}>
+                      <div
+                        className={"border-0 border-nb-gray-800 rounded-full"}
+                      >
+                        <RoundedFlag country={peer.country_code} size={12} />
+                      </div>
+                      {countryText}
+                    </div>
+                  )}
+                </>
+              )
+            }
           />
-        )}
 
-        <Card.ListItem
-          label={
-            <>
-              <History size={16} />
-              Last seen
-            </>
-          }
-          value={
-            peer.connected
-              ? "just now"
-              : dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
-                " (" +
-                dayjs().to(peer.last_seen) +
-                ")"
-          }
-        />
+          <Card.ListItem
+            label={
+              <>
+                <Cpu size={16} />
+                Operating System
+              </>
+            }
+            value={peer.os}
+          />
 
-        <Card.ListItem
-          label={
-            <>
-              <NetBirdIcon size={16} />
-              Agent Version
-            </>
-          }
-          value={peer.version}
-        />
+          {peer.serial_number && peer.serial_number !== "" && (
+            <Card.ListItem
+              label={
+                <>
+                  <Barcode size={16} />
+                  Serial Number
+                </>
+              }
+              value={peer.serial_number}
+            />
+          )}
 
-        {peer.ui_version && (
+          <Card.ListItem
+            label={
+              <>
+                <History size={16} />
+                Last seen
+              </>
+            }
+            value={
+              peer.connected
+                ? "just now"
+                : dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
+                  " (" +
+                  dayjs().to(peer.last_seen) +
+                  ")"
+            }
+          />
+
           <Card.ListItem
             label={
               <>
                 <NetBirdIcon size={16} />
-                UI Version
+                Agent Version
               </>
             }
-            value={peer.ui_version?.replace("netbird-desktop-ui/", "")}
+            value={peer.version}
           />
-        )}
-      </Card.List>
-    </Card>
+
+          {peer.ui_version && (
+            <Card.ListItem
+              label={
+                <>
+                  <NetBirdIcon size={16} />
+                  UI Version
+                </>
+              }
+              value={peer.ui_version?.replace("netbird-desktop-ui/", "")}
+            />
+          )}
+        </Card.List>
+      </Card>
+    </>
   );
 }
 
@@ -645,6 +688,86 @@ function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
               onClick={() => onSuccess(name)}
               disabled={isDisabled}
               type={"submit"}
+            >
+              Save
+            </Button>
+          </div>
+        </ModalFooter>
+      </form>
+    </ModalContent>
+  );
+}
+
+interface EditIPModalProps {
+  onSuccess: (ip: string) => void;
+  peer: Peer;
+}
+
+function EditIPModal({ onSuccess, peer }: Readonly<EditIPModalProps>) {
+  const [ip, setIP] = useState(peer.ip);
+  const [error, setError] = useState("");
+
+  const validateIP = (ipAddress: string) => {
+    const ipRegex =
+      /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+    return ipRegex.test(ipAddress);
+  };
+
+  const isDisabled = useMemo(() => {
+    if (ip === peer.ip) return true;
+    const trimmedIP = trim(ip);
+    return trimmedIP.length === 0 || !validateIP(ip);
+  }, [ip, peer.ip]);
+
+  React.useEffect(() => {
+    switch (true) {
+      case ip === peer.ip:
+        setError("");
+        break;
+      case !validateIP(ip):
+        setError("Please enter a valid IP, e.g., 100.64.0.15");
+        break;
+      default:
+        setError("");
+        break;
+    }
+  }, [ip, peer.ip]);
+
+  return (
+    <ModalContent maxWidthClass={"max-w-md"}>
+      <form>
+        <ModalHeader
+          title={"Edit Peer IP Address"}
+          description={"Update the NetBird IP address for this peer."}
+          color={"blue"}
+        />
+
+        <div className={"p-default flex flex-col gap-4"}>
+          <div>
+            <Input
+              placeholder={"e.g., 100.64.0.15"}
+              value={ip}
+              onChange={(e) => setIP(e.target.value)}
+              error={error}
+            />
+          </div>
+
+          <Callout>Changes take effect when the peer reconnects.</Callout>
+        </div>
+
+        <ModalFooter className={"items-center"} separator={false}>
+          <div className={"flex gap-3 w-full justify-end"}>
+            <ModalClose asChild={true}>
+              <Button variant={"secondary"} className={"w-full"}>
+                Cancel
+              </Button>
+            </ModalClose>
+
+            <Button
+              variant={"primary"}
+              className={"w-full"}
+              onClick={() => onSuccess(ip)}
+              disabled={isDisabled}
             >
               Save
             </Button>

@@ -19,6 +19,7 @@ export interface Account {
     regular_users_view_blocked: boolean;
     routing_peer_dns_resolution_enabled: boolean;
     dns_domain: string;
+    network_range?: string;
     lazy_connection_enabled: boolean;
   };
 }
