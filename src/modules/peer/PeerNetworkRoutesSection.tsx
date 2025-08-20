@@ -17,7 +17,7 @@ type Props = {
 
 export const PeerNetworkRoutesSection = ({ peer }: Props) => {
   const { peerRoutes, isLoading } = usePeerRoutes({ peer });
-  const hasExitNodes = useHasExitNodes(peer);
+  const exitNodeInfo = useHasExitNodes(peer);
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -34,7 +34,7 @@ export const PeerNetworkRoutesSection = ({ peer }: Props) => {
           </div>
           <div className={"inline-flex gap-4 justify-end"}>
             <div className={"gap-4 flex"}>
-              <AddExitNodeButton peer={peer} firstTime={!hasExitNodes} />
+              <AddExitNodeButton peer={peer} firstTime={!exitNodeInfo.hasExitNode} />
               <AddRouteDropdownButton />
             </div>
           </div>

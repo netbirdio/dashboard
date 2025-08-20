@@ -8,18 +8,22 @@ type Props = {
   peer: Peer;
 };
 export const ExitNodePeerIndicator = ({ peer }: Props) => {
-  const hasExitNode = useHasExitNodes(peer);
+  const exitNodeInfo = useHasExitNodes(peer);
 
-  return hasExitNode ? (
-    <FullTooltip
-      content={
-        <div className={"text-xs max-w-xs"}>
-          This peer is an exit node. Traffic from the configured distribution
-          groups will be routed through this peer.
-        </div>
-      }
-    >
-      <IconDirectionSign size={15} className={"text-yellow-400 shrink-0"} />
+  if (!exitNodeInfo.hasExitNode) {
+    return null;
+  }
+
+  const tooltipContent = exitNodeInfo.skipAutoApply === false
+    ? "This peer is an auto-applied exit node. Traffic from the configured distribution groups will be routed through this peer."
+    : "This peer is an exit node. Traffic from the configured distribution groups will be routed through this peer.";
+
+  return (
+    <FullTooltip content={<div className={"text-xs max-w-xs"}>{tooltipContent}</div>}>
+      <IconDirectionSign 
+        size={15} 
+        className={`shrink-0 ${exitNodeInfo.skipAutoApply === false ? "text-green-400" : "text-yellow-400"}`} 
+      />
     </FullTooltip>
-  ) : null;
+  );
 };

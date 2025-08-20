@@ -15,7 +15,7 @@ type Props = {
 
 export const ExitNodeDropdownButton = ({ peer }: Props) => {
   const [modal, setModal] = useState(false);
-  const hasExitNodes = useHasExitNodes(peer);
+  const exitNodeInfo = useHasExitNodes(peer);
   const { permission } = usePermissions();
 
   return (
@@ -25,7 +25,7 @@ export const ExitNodeDropdownButton = ({ peer }: Props) => {
         disabled={!permission.routes.create}
       >
         <div className={"flex gap-3 items-center w-full"}>
-          {hasExitNodes ? (
+          {exitNodeInfo.hasExitNode ? (
             <>
               <IconCirclePlus size={14} className={"shrink-0"} />
               <div className={"flex justify-between items-center w-full"}>

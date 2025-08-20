@@ -12,6 +12,7 @@ export interface Route {
   groups: string[];
   keep_route?: boolean;
   access_control_groups?: string[];
+  skip_auto_apply?: boolean;
   // Frontend only
   peer_groups?: string[];
   routesGroups?: string[];
