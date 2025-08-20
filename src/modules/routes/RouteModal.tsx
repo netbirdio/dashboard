@@ -227,6 +227,7 @@ export function RouteModalContent({
   const [enabled, setEnabled] = useState<boolean>(true);
   const [metric, setMetric] = useState("9999");
   const [masquerade, setMasquerade] = useState<boolean>(true);
+  const [isForced, setIsForced] = useState<boolean>(true);
 
   const isNonLinuxRoutingPeer = useMemo(() => {
     if (!routingPeer) return false;
@@ -304,6 +305,7 @@ export function RouteModalContent({
         masquerade: useSinglePeer && isNonLinuxRoutingPeer ? true : masquerade,
         groups: groupIds,
         access_control_groups: accessControlGroupIds || undefined,
+        skip_auto_apply: !isForced,
       },
       onSuccess,
     );
@@ -717,6 +719,20 @@ export function RouteModalContent({
               }
               helpText={"Use this switch to enable or disable the route."}
             />
+
+            {exitNode && (
+                              <FancyToggleSwitch
+                  value={isForced}
+                  onChange={setIsForced}
+                  label={
+                    <>
+                      <IconDirectionSign size={15} />
+                      Auto Apply Route
+                    </>
+                  }
+                  helpText={"Automatically apply this exit node to your distribution groups. This requires NetBird client v0.55.0 or higher."}
+                />
+            )}
 
             {!exitNode && (
               <RoutingPeerMasqueradeSwitch

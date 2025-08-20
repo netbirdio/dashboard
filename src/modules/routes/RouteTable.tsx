@@ -7,6 +7,7 @@ import { GroupedRoute, Route } from "@/interfaces/Route";
 import RouteAccessControlGroups from "@/modules/routes/RouteAccessControlGroups";
 import RouteActionCell from "@/modules/routes/RouteActionCell";
 import RouteActiveCell from "@/modules/routes/RouteActiveCell";
+import RouteAutoApplyCell from "@/modules/routes/RouteAutoApplyCell";
 import RouteDistributionGroupsCell from "@/modules/routes/RouteDistributionGroupsCell";
 import RouteMetricCell from "@/modules/routes/RouteMetricCell";
 import RoutePeerCell from "@/modules/routes/RoutePeerCell";
@@ -78,6 +79,15 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     cell: ({ row }) => <RouteAccessControlGroups route={row.original} />,
   },
   {
+    id: "skipAutoApply",
+    accessorKey: "skip_auto_apply",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Auto Apply</DataTableHeader>;
+    },
+    cell: ({ row }) => <RouteAutoApplyCell route={row.original} />,
+    sortingFn: "basic",
+  },
+  {
     id: "group_names",
     accessorFn: (row) => {
       return row.group_names?.map((name) => name).join(", ");
@@ -104,6 +114,10 @@ export default function RouteTable({ row }: Props) {
       desc: true,
     },
   ]);
+  
+  const hasAtLeastOneExitNode = useMemo(() => {
+    return row.routes?.some((route) => route.network === "0.0.0.0/0");
+  }, [row.routes]);
 
   const data = useMemo(() => {
     if (!row.routes) return [];
@@ -144,6 +158,7 @@ export default function RouteTable({ row }: Props) {
           domains: false,
           domain_search: false,
           network: false,
+          skipAutoApply: !!hasAtLeastOneExitNode,
         }}
         setSorting={setSorting}
         columns={RouteTableColumns}

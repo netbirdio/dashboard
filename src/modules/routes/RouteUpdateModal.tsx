@@ -20,6 +20,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { Textarea } from "@components/Textarea";
 import { DomainsTooltip } from "@components/ui/DomainListBadge";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import { IconDirectionSign } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { uniqBy } from "lodash";
 import {
@@ -193,6 +194,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
   const [masquerade, setMasquerade] = useState<boolean>(
     route?.masquerade ?? true,
   );
+  const [isForced, setIsForced] = useState<boolean>(route?.skip_auto_apply === false);
 
   // Refs to manage focus on tab change
   const networkRangeRef = useRef<HTMLInputElement>(null);
@@ -257,6 +259,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
         masquerade: useSinglePeer && isNonLinuxRoutingPeer ? true : masquerade,
         groups: groupIds,
         access_control_groups: accessControlGroupIds || undefined,
+        skip_auto_apply: !isForced,
       },
       (r) => {
         onSuccess && onSuccess(r);
@@ -456,6 +459,21 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
               }
               helpText={"Use this switch to enable or disable the route."}
             />
+
+            {isExitNode && (
+                              <FancyToggleSwitch
+                  value={isForced}
+                  onChange={setIsForced}
+                  label={
+                    <>
+                      <IconDirectionSign size={15} />
+                      Auto Apply Route
+                    </>
+                  }
+                  helpText={"Automatically apply this exit node to your distribution groups. This requires NetBird client v0.55.0 or higher."}
+                />
+            )}
+
             {!isExitNode && (
               <RoutingPeerMasqueradeSwitch
                 value={masquerade}

@@ -61,6 +61,7 @@ export default function RoutesProvider({ children }: Readonly<Props>) {
               : toUpdate.access_control_groups ??
                 route.access_control_groups ??
                 undefined,
+            skip_auto_apply: toUpdate.skip_auto_apply ?? route.skip_auto_apply ?? true,
           },
           `/${route.id}`,
         )
@@ -94,6 +95,7 @@ export default function RoutesProvider({ children }: Readonly<Props>) {
           masquerade: route.masquerade,
           groups: route.groups || [],
           access_control_groups: route?.access_control_groups || undefined,
+          skip_auto_apply: route.skip_auto_apply ?? true,
         })
         .then((route) => {
           mutate("/routes");
