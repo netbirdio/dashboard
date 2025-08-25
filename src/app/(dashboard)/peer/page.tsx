@@ -42,6 +42,7 @@ import {
   MonitorSmartphoneIcon,
   NetworkIcon,
   PencilIcon,
+  RadioTowerIcon,
   TerminalSquare,
   TimerResetIcon,
 } from "lucide-react";
@@ -65,6 +66,7 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
 import { PeerExpirationToggle } from "@/modules/peer/PeerExpirationToggle";
 import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSection";
+import { PeerRemoteJobsSection } from "@/modules/peer/PeerRemoteJobsSection";
 
 export default function PeerPage() {
   const queryParameter = useSearchParams();
@@ -397,6 +399,13 @@ const PeerOverviewTabs = () => {
             Accessible Peers
           </TabsTrigger>
         )}
+
+        {peer?.id && permission.peers.delete && (
+          <TabsTrigger value={"peer-job"}>
+            <RadioTowerIcon size={16} />
+            Remote Job
+          </TabsTrigger>
+        )}
       </TabsList>
 
       {permission.routes.read && (
@@ -408,6 +417,11 @@ const PeerOverviewTabs = () => {
       {peer?.id && permission.peers.read && (
         <TabsContent value={"accessible-peers"} className={"pb-8"}>
           <AccessiblePeersSection peerID={peer.id} />
+        </TabsContent>
+      )}
+      {peer.id && permission.peers.delete && (
+        <TabsContent value={"peer-job"} className={"pb-8"}>
+          <PeerRemoteJobsSection peerID={peer.id} />
         </TabsContent>
       )}
     </Tabs>
@@ -580,9 +594,9 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
               peer.connected
                 ? "just now"
                 : dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
-                  " (" +
-                  dayjs().to(peer.last_seen) +
-                  ")"
+                " (" +
+                dayjs().to(peer.last_seen) +
+                ")"
             }
           />
 
