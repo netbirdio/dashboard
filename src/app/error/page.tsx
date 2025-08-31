@@ -62,7 +62,7 @@ export default function ErrorPage() {
 
   const getDescription = () => {
     if (isBlockedUser) {
-      return "Your account has been blocked by an administrator. You cannot access the dashboard at this time.";
+      return "Your access has been blocked by the NetBird account administrator, possibly due to new user approval requirements or security policies. Please contact your administrator to regain access.";
     }
     if (isPendingApproval) {
       return "Your account is pending approval from an administrator. Please wait for approval before accessing the dashboard.";
@@ -83,10 +83,11 @@ export default function ErrorPage() {
       </Paragraph>
 
       {error && (
-        <Paragraph className="text-center mt-4 block">
-          Error: <span className="inline capitalize">{error.message}</span>
-          {error.code && <span className="block text-sm text-nb-gray-400 mt-1">Code: {error.code}</span>}
-        </Paragraph>
+        <div className="bg-black border border-nb-gray-800 rounded-md p-4 mt-4 max-w-md font-mono">
+          <div className="text-center text-sm text-green-400">
+              <div>response_message: {error.message}</div>
+          </div>
+        </div>
       )}
 
       <Paragraph className="text-center mt-2 text-sm">

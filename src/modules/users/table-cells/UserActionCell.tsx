@@ -101,12 +101,12 @@ export default function UserActionCell({
       {isPendingApproval && canManageUsers && (
         <>
           <Button
-            variant={"outline"}
-            size={"sm"}
+            variant={"secondary"}
+            size={"xs"}
+            className={"h-[32px]"}
             onClick={approveUser}
             data-cy={"approve-user"}
           >
-            <CheckCircle size={16} />
             Approve
           </Button>
           <Button
