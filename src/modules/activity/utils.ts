@@ -19,6 +19,7 @@ const ACTION_COLOR_MAPPING: Record<string, ActionStatus> = {
   delete: ActionStatus.ERROR,
   revoke: ActionStatus.ERROR,
   block: ActionStatus.ERROR,
+  reject: ActionStatus.ERROR,
 
   // Warning actions
   overuse: ActionStatus.WARNING,

@@ -52,6 +52,17 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
     }
   });
 
+  /**
+   * User approval required
+   */
+  const [userApprovalRequired, setUserApprovalRequired] = useState<boolean>(() => {
+    try {
+      return account?.settings?.extra?.user_approval_required || false;
+    } catch (error) {
+      return false;
+    }
+  });
+
   // Peer Expiration
   const [
     loginExpiration,
@@ -86,6 +97,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 
   const { hasChanges, updateRef } = useHasChanges([
     peerApproval,
+    userApprovalRequired,
     loginExpiration,
     expiresIn,
     expireInterval,
@@ -118,6 +130,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             extra: {
               ...account.settings?.extra,
               peer_approval_enabled: peerApproval,
+              user_approval_required: userApprovalRequired,
             },
           },
         } as Account)
@@ -125,6 +138,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
           mutate("/accounts");
           updateRef([
             peerApproval,
+            userApprovalRequired,
             loginExpiration,
             expiresIn,
             expireInterval,
@@ -181,6 +195,27 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
         </div>
 
         <div className={"flex flex-col gap-6 w-full mt-8 mb-3"}>
+          <div className={"flex flex-col"}>
+            <FancyToggleSwitch
+              value={userApprovalRequired}
+              onChange={setUserApprovalRequired}
+              dataCy={"user-approval-required"}
+              label={
+                <>
+                  <ShieldIcon size={15} />
+                  User Approval Required
+                </>
+              }
+              helpText={
+                <>
+                  Require manual approval for new users joining via <br />
+                  domain matching. Users will be blocked until approved.
+                </>
+              }
+              disabled={!permission.settings.update}
+            />
+          </div>
+
           <div className={"flex flex-col"}>
             <FancyToggleSwitch
               value={loginExpiration}
