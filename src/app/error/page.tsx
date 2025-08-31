@@ -52,7 +52,7 @@ export default function ErrorPage() {
   }
 
   const isBlockedUser = error?.code === 403 && error?.message?.toLowerCase().includes("blocked");
-  const isPendingApproval = error?.code === 403 && error?.message?.toLowerCase().includes("pending");
+  const isPendingApproval = error?.code === 403 && error?.message?.toLowerCase().includes("pending approval");
 
   const getTitle = () => {
     if (isBlockedUser) return "User Account Blocked";
