@@ -41,7 +41,7 @@ export default function UserActionCell({
     notify({
       title: `'${name}' approved`,
       description: "User was successfully approved.",
-      promise: userRequest.post("", `/${user.id}/approve`).then(() => {
+      promise: userRequest.post({}, `/${user.id}/approve`).then(() => {
         mutate(`/users?service_user=${serviceUser}`);
       }),
       loadingMessage: "Approving the user...",
