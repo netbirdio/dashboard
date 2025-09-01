@@ -289,6 +289,7 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
   const neverLoggedIn = dayjs(user.last_login).isBefore(
     dayjs().subtract(1000, "years"),
   );
+  const isPendingApproval = user?.pending_approval;
 
   return (
     <Card>
@@ -328,18 +329,20 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
 
         {!isServiceUser && (
           <>
-            {!user.is_current && user.role != Role.Owner && (
-              <Card.ListItem
-                tooltip={false}
-                label={
-                  <>
-                    <Ban size={16} />
-                    Block User
-                  </>
-                }
-                value={<UserBlockCell user={user} isUserPage={true} />}
-              />
-            )}
+            {!user.is_current &&
+              user.role != Role.Owner &&
+              !isPendingApproval && (
+                <Card.ListItem
+                  tooltip={false}
+                  label={
+                    <>
+                      <Ban size={16} />
+                      Block User
+                    </>
+                  }
+                  value={<UserBlockCell user={user} isUserPage={true} />}
+                />
+              )}
 
             <Card.ListItem
               label={

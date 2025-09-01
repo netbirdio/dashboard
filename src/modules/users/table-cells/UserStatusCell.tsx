@@ -1,6 +1,7 @@
 import FullTooltip from "@components/FullTooltip";
+import InlineLink from "@components/InlineLink";
 import { cn } from "@utils/helpers";
-import { HelpCircle } from "lucide-react";
+import { ExternalLinkIcon, HelpCircle } from "lucide-react";
 import React from "react";
 import { User } from "@/interfaces/User";
 
@@ -14,7 +15,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
 
   const getStatusDisplay = () => {
     if (isPendingApproval) {
-      return { text: "Pending Approval", color: "bg-orange-400" };
+      return { text: "Pending Approval", color: "bg-netbird" };
     }
     if (status === "blocked") {
       return { text: "Blocked", color: "bg-red-500" };
@@ -31,32 +32,54 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
   const { text, color } = getStatusDisplay();
 
   return (
-    <div
-      className={cn("flex gap-2.5 items-center text-nb-gray-300 text-sm")}
-      data-cy={"user-status-cell"}
-    >
-      <span className={cn("h-2 w-2 rounded-full", color)}></span>
-      {text}
-      {isPendingApproval && (
-        <FullTooltip
-          content={
-            <div className={"max-w-xs text-xs"}>
-              <p>This user requires approval from an administrator.</p>
-              <p className="mt-2">
-                To disable user approval requirements for new users, go to the account{" "}
-                <span className="text-nb-gray-200 inline-flex gap-1 items-center max-h-[22px] font-medium bg-nb-gray-900 py-[3px] text-[11px] px-[5px] border border-nb-gray-800 rounded-[4px]">
-                  Settings
-                </span>{" "}
-                and disable "User Approval Required".
-              </p>
+    <div onClick={(e) => e.stopPropagation()}>
+      <FullTooltip
+        content={
+          <div className={"max-w-xs text-xs flex flex-col gap-2"}>
+            <div>
+              This user needs to be approved by an administrator before it can
+              join your organization.
             </div>
-          }
-          interactive={true}
-          side="right"
+
+            <div>
+              If you want to disable approval for new users, go to{" "}
+              <InlineLink href={"/settings?tab=authentication"}>
+                Settings
+              </InlineLink>{" "}
+              and disable{" "}
+              <span className={"font-medium text-white"}>
+                {"'User Approval Required'"}
+              </span>
+              .
+            </div>
+            <div>
+              Learn more about{" "}
+              <InlineLink
+                href={
+                  "https://docs.netbird.io/how-to/add-users-to-your-network#user-approval"
+                }
+                target={"_blank"}
+              >
+                User Approval <ExternalLinkIcon size={12} />
+              </InlineLink>
+            </div>
+          </div>
+        }
+        interactive={true}
+        side="right"
+        disabled={!isPendingApproval}
+      >
+        <div
+          className={cn("flex gap-2.5 items-center text-nb-gray-300 text-sm")}
+          data-cy={"user-status-cell"}
         >
-          <HelpCircle size={14} className="text-orange-400 cursor-help" />
-        </FullTooltip>
-      )}
+          <span className={cn("h-2 w-2 rounded-full", color)}></span>
+          {text}
+          {isPendingApproval && (
+            <HelpCircle size={14} className="text-netbird cursor-help" />
+          )}
+        </div>
+      </FullTooltip>
     </div>
   );
 }

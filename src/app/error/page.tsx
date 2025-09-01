@@ -51,8 +51,11 @@ export default function ErrorPage() {
     return null;
   }
 
-  const isBlockedUser = error?.code === 403 && error?.message?.toLowerCase().includes("blocked");
-  const isPendingApproval = error?.code === 403 && error?.message?.toLowerCase().includes("pending approval");
+  const isBlockedUser =
+    error?.code === 403 && error?.message?.toLowerCase().includes("blocked");
+  const isPendingApproval =
+    error?.code === 403 &&
+    error?.message?.toLowerCase().includes("pending approval");
 
   const getTitle = () => {
     if (isBlockedUser) return "User Account Blocked";
@@ -71,11 +74,11 @@ export default function ErrorPage() {
   };
 
   return (
-    <div className="flex items-center justify-center flex-col h-screen max-w-lg mx-auto">
+    <div className="flex items-center justify-center flex-col h-screen max-w-xl mx-auto">
       <div className="bg-nb-gray-930 mb-3 border border-nb-gray-900 h-12 w-12 rounded-md flex items-center justify-center">
         <NetBirdIcon size={23} />
       </div>
-      
+
       <h1 className="text-center mt-2">{getTitle()}</h1>
 
       <Paragraph className="text-center mt-2 block">
@@ -83,9 +86,9 @@ export default function ErrorPage() {
       </Paragraph>
 
       {error && (
-        <div className="bg-black border border-nb-gray-800 rounded-md p-4 mt-4 max-w-md font-mono">
-          <div className="text-center text-sm text-green-400">
-              <div>response_message: {error.message}</div>
+        <div className="bg-nb-gray-930 border border-nb-gray-800 rounded-md p-4 mt-4 max-w-md font-mono mb-2">
+          <div className="text-center text-sm text-netbird">
+            <div>response_message: {error.message}</div>
           </div>
         </div>
       )}
@@ -96,21 +99,13 @@ export default function ErrorPage() {
 
       <div className="mt-5 space-y-3">
         {!isBlockedUser && !isPendingApproval && (
-          <Button 
-            variant="default-outline"
-            size="sm"
-            onClick={handleRetry}
-          >
+          <Button variant="default-outline" size="sm" onClick={handleRetry}>
             <RefreshCw size={16} className="mr-2" />
             Try Again
           </Button>
         )}
-        
-        <Button 
-          variant="primary"
-          size="sm"
-          onClick={handleLogout}
-        >
+
+        <Button variant="primary" size="sm" onClick={handleLogout}>
           {isBlockedUser || isPendingApproval ? "Sign Out" : "Logout"}
           <ArrowRightIcon size={16} />
         </Button>
