@@ -23,6 +23,7 @@ import {
   CalendarClock,
   ExternalLinkIcon,
   ShieldIcon,
+  ShieldUserIcon,
   TimerResetIcon,
 } from "lucide-react";
 import React, { useState } from "react";
@@ -55,13 +56,15 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
   /**
    * User approval required
    */
-  const [userApprovalRequired, setUserApprovalRequired] = useState<boolean>(() => {
-    try {
-      return account?.settings?.extra?.user_approval_required || false;
-    } catch (error) {
-      return false;
-    }
-  });
+  const [userApprovalRequired, setUserApprovalRequired] = useState<boolean>(
+    () => {
+      try {
+        return account?.settings?.extra?.user_approval_required || false;
+      } catch (error) {
+        return false;
+      }
+    },
+  );
 
   // Peer Expiration
   const [
@@ -202,7 +205,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               dataCy={"user-approval-required"}
               label={
                 <>
-                  <ShieldIcon size={15} />
+                  <ShieldUserIcon size={15} />
                   User Approval Required
                 </>
               }
