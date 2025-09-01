@@ -6,6 +6,7 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
+import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
 import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
@@ -89,6 +90,12 @@ export const UsersTableColumns: ColumnDef<User>[] = [
     ),
   },
   {
+    id: "approval_required",
+    accessorKey: "approval_required",
+    sortingFn: "basic",
+    accessorFn: (u) => u?.pending_approval,
+  },
+  {
     accessorKey: "id",
     header: "",
     sortingFn: "text",
@@ -127,6 +134,8 @@ export default function UsersTable({
   );
 
   const router = useRouter();
+  const pendingApprovalCount =
+    users?.filter((u) => u.pending_approval).length || 0;
 
   return (
     <DataTable
@@ -139,6 +148,7 @@ export default function UsersTable({
       data={users}
       columnVisibility={{
         is_current: false,
+        approval_required: false,
       }}
       onRowClick={(row) => {
         router.push(`/team/user?id=${row.original.id}`);
@@ -187,6 +197,34 @@ export default function UsersTable({
     >
       {(table) => (
         <>
+          {pendingApprovalCount > 0 && (
+            <Button
+              disabled={users?.length == 0}
+              onClick={() => {
+                table.setPageIndex(0);
+                let current =
+                  table.getColumn("approval_required")?.getFilterValue() ===
+                  undefined
+                    ? true
+                    : undefined;
+
+                table.setColumnFilters([
+                  {
+                    id: "approval_required",
+                    value: current,
+                  },
+                ]);
+              }}
+              variant={
+                table.getColumn("approval_required")?.getFilterValue() === true
+                  ? "tertiary"
+                  : "secondary"
+              }
+            >
+              Pending Approvals
+              <NotificationCountBadge count={pendingApprovalCount} />
+            </Button>
+          )}
           <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
           <DataTableRefreshButton
             isDisabled={users?.length == 0}
