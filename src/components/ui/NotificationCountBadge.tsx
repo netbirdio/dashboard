@@ -4,8 +4,7 @@ import * as React from "react";
 type Props = {
   count?: number;
 };
-export const NotificationCountBadge = ({ count = 22 }: Props) => {
-  count = 1;
+export const NotificationCountBadge = ({ count = 0 }: Props) => {
   return count ? (
     <div
       className={cn(
