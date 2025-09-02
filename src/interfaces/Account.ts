@@ -7,6 +7,7 @@ export interface Account {
   settings: {
     extra: {
       peer_approval_enabled: boolean;
+      user_approval_required: boolean;
     };
     peer_login_expiration_enabled: boolean;
     peer_login_expiration: number;

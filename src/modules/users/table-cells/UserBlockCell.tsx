@@ -61,6 +61,8 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
     });
   };
 
+  if (user?.pending_approval) return;
+
   return !disabled ? (
     <div className={"flex"}>
       <ToggleSwitch

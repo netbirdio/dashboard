@@ -253,6 +253,22 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "user.approve")
+    return (
+      <div className={"inline"}>
+        User <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value> was approved
+      </div>
+    );
+
+  if (event.activity_code == "user.reject")
+    return (
+      <div className={"inline"}>
+        User <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value> was rejected
+      </div>
+    );
+
   /**
    * Service User
    */
