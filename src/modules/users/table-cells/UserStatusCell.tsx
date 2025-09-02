@@ -55,9 +55,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
             <div>
               Learn more about{" "}
               <InlineLink
-                href={
-                  "https://docs.netbird.io/how-to/add-users-to-your-network#user-approval"
-                }
+                href={"https://docs.netbird.io/how-to/approve-users"}
                 target={"_blank"}
               >
                 User Approval <ExternalLinkIcon size={12} />

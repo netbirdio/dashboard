@@ -195,46 +195,56 @@ export default function UsersTable({
         />
       )}
     >
-      {(table) => (
-        <>
-          {pendingApprovalCount > 0 && (
-            <Button
-              disabled={users?.length == 0}
-              onClick={() => {
-                table.setPageIndex(0);
-                let current =
-                  table.getColumn("approval_required")?.getFilterValue() ===
-                  undefined
-                    ? true
-                    : undefined;
+      {(table) => {
+        if (
+          pendingApprovalCount == 0 &&
+          table.getColumn("approval_required")?.getFilterValue() === true
+        ) {
+          table.setColumnFilters([]);
+        }
 
-                table.setColumnFilters([
-                  {
-                    id: "approval_required",
-                    value: current,
-                  },
-                ]);
+        return (
+          <>
+            {pendingApprovalCount > 0 && (
+              <Button
+                disabled={users?.length == 0}
+                onClick={() => {
+                  table.setPageIndex(0);
+                  let current =
+                    table.getColumn("approval_required")?.getFilterValue() ===
+                    undefined
+                      ? true
+                      : undefined;
+
+                  table.setColumnFilters([
+                    {
+                      id: "approval_required",
+                      value: current,
+                    },
+                  ]);
+                }}
+                variant={
+                  table.getColumn("approval_required")?.getFilterValue() ===
+                  true
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                Pending Approvals
+                <NotificationCountBadge count={pendingApprovalCount} />
+              </Button>
+            )}
+            <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
+            <DataTableRefreshButton
+              isDisabled={users?.length == 0}
+              onClick={() => {
+                mutate("/users?service_user=false");
+                mutate("/groups");
               }}
-              variant={
-                table.getColumn("approval_required")?.getFilterValue() === true
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Pending Approvals
-              <NotificationCountBadge count={pendingApprovalCount} />
-            </Button>
-          )}
-          <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
-          <DataTableRefreshButton
-            isDisabled={users?.length == 0}
-            onClick={() => {
-              mutate("/users?service_user=false");
-              mutate("/groups");
-            }}
-          />
-        </>
-      )}
+            />
+          </>
+        );
+      }}
     </DataTable>
   );
 }
