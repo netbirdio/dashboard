@@ -2,9 +2,10 @@ import Paragraph from '@/components/Paragraph';
 import SkeletonTable, { SkeletonTableHeader } from '@/components/skeletons/SkeletonTable';
 import { usePortalElement } from '@/hooks/usePortalElement';
 import React, { Suspense, lazy } from 'react'
-import { RemoteJobDropdownButton } from './RemoteJobDropdownButton';
 import useFetchApi from '@/utils/api';
 import { Job } from '@/interfaces/Job';
+import InlineLink from '@/components/InlineLink';
+import { ExternalLinkIcon } from 'lucide-react';
 const PeerRemoteJobsTable = lazy(
   () => import("@/modules/peer/PeerRemoteJobsTable"),
 );
@@ -26,10 +27,13 @@ export const PeerRemoteJobsSection = ({ peerID }: Props) => {
               Remotely trigger actions such as debug bundles or other tasks on
               this peer, without requiring CLI access.
             </Paragraph>
-          </div>
-
-          <div className="inline-flex gap-4 justify-end">
-            <RemoteJobDropdownButton />
+            <Paragraph>
+              Learn more about{" "}
+              <InlineLink href={"https://docs.netbird.io"} target={"_blank"} >
+                Remote Jobs <ExternalLinkIcon size={12} />
+              </InlineLink>
+              in our documentation.
+            </Paragraph>
           </div>
         </div>
 
@@ -47,7 +51,7 @@ export const PeerRemoteJobsSection = ({ peerID }: Props) => {
             peerID={peerID}
             jobs={jobs}
             isLoading={isLoading}
-            headingTarget={portalTarget} 
+            headingTarget={portalTarget}
           />
 
         </Suspense>

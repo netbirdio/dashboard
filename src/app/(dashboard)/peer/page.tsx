@@ -403,7 +403,7 @@ const PeerOverviewTabs = () => {
         {peer?.id && permission.peers.delete && (
           <TabsTrigger value={"peer-job"}>
             <RadioTowerIcon size={16} />
-            Remote Job
+            Remote Jobs
           </TabsTrigger>
         )}
       </TabsList>

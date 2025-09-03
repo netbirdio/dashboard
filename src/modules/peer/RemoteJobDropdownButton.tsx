@@ -17,7 +17,7 @@ export const RemoteJobDropdownButton = () => {
   const [modal, setModal] = useState(false);
   const { peer } = usePeer();
   const { permission } = usePermissions();
-  const disabled = !peer.connected || !permission.peers.delete;
+  const disabled = !permission.peers.delete;
 
   return (
     <>
