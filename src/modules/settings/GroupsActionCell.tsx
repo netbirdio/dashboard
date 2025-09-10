@@ -3,7 +3,7 @@ import FullTooltip from "@components/FullTooltip";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import { Trash2 } from "lucide-react";
-import React from "react";
+import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -50,7 +50,12 @@ export default function GroupsActionCell({ group, in_use }: Readonly<Props>) {
     issued: group?.issued,
   });
 
-  const isDisabled = in_use || !isRegularGroup || !permission.groups.delete;
+  const isDisabled = useMemo(() => {
+    if (!permission.groups.delete) return true;
+    if (in_use) return true;
+    if (isJWTGroup) return false;
+    return !isRegularGroup;
+  }, [permission, in_use, isJWTGroup, isRegularGroup]);
 
   const getDisabledText = () => {
     if (isRegularGroup) {
