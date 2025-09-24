@@ -1,17 +1,27 @@
-import FancyToggleSwitch from "@/components/FancyToggleSwitch";
-import { ModalClose, ModalContent, ModalFooter } from "@/components/modal/Modal";
-import ModalHeader from "@/components/modal/ModalHeader";
-import { AlarmClock, BugPlay, FileText, PlusCircle, Shield } from "lucide-react";
-import { Label } from "@/components/Label";
-import { Input } from "@/components/Input";
-import Button from "@/components/Button";
-import { useState, useMemo } from "react";
-import HelpText from "@/components/HelpText";
-import { useApiCall } from "@/utils/api";
+import {
+  AlarmClock,
+  BugPlay,
+  FileText,
+  PlusCircle,
+  Shield,
+} from "lucide-react";
+import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import Button from "@/components/Button";
+import FancyToggleSwitch from "@/components/FancyToggleSwitch";
+import HelpText from "@/components/HelpText";
+import { Input } from "@/components/Input";
+import { Label } from "@/components/Label";
+import {
+  ModalClose,
+  ModalContent,
+  ModalFooter,
+} from "@/components/modal/Modal";
+import ModalHeader from "@/components/modal/ModalHeader";
 import { notify } from "@/components/Notification";
 import Separator from "@/components/Separator";
 import { Workload } from "@/interfaces/Job";
+import { useApiCall } from "@/utils/api";
 
 type Props = {
   peerID: string;
@@ -22,20 +32,25 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
   const jobRequest = useApiCall<Workload>(`/peers/${peerID}/jobs`, true);
   const { mutate } = useSWRConfig();
 
-  const [bundleForTime, setBundleForTime] = useState<number | null>(null);
-  const [logFileCount, setLogFileCount] = useState<number>(10);
+  const [bundleForTimeEnabled, setBundleForTimeEnabled] = useState(false);
+  const [bundleForTime, setBundleForTime] = useState<string>("");
+  const [logFileCount, setLogFileCount] = useState<string>("10");
   const [anonymize, setAnonymize] = useState<boolean>(false);
 
   const isValid = useMemo(() => {
     let validBundleFor = true;
-    let validLogFileCount = true
+    let validLogFileCount = true;
+
+    const logFileCountNumber = Number(logFileCount);
+    const bundleForTimeNumber = Number(bundleForTime);
 
     if (bundleForTime) {
-      validBundleFor = bundleForTime >= 1 && bundleForTime <= 5
+      validBundleFor = bundleForTimeNumber >= 1 && bundleForTimeNumber <= 5;
     }
-    validLogFileCount = logFileCount >= 1 && logFileCount <= 1000
 
-    return validLogFileCount && validBundleFor
+    validLogFileCount = logFileCountNumber >= 1 && logFileCountNumber <= 1000;
+
+    return validLogFileCount && validBundleFor;
   }, [bundleForTime, logFileCount]);
 
   const createDebugJob = async () => {
@@ -49,9 +64,11 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
             type: "bundle",
             parameters: {
               anonymize,
-              bundle_for: !!bundleForTime,
-              bundle_for_time: bundleForTime,
-              log_file_count: logFileCount,
+              bundle_for: bundleForTimeEnabled,
+              bundle_for_time: bundleForTimeEnabled
+                ? Number(bundleForTime)
+                : undefined,
+              log_file_count: logFileCount ? Number(logFileCount) : 10,
             },
           },
         })
@@ -61,33 +78,36 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
           return job;
         }),
     });
-  }; return (
+  };
+  return (
     <ModalContent maxWidthClass="max-w-xl">
       <ModalHeader
         icon={<BugPlay size={20} />}
-        title="Create Debug Job"
+        title="Debug Bundle"
         description="Generate a debug bundle on this peer with logs and diagnostics. Useful for troubleshooting without CLI access."
         color="netbird"
       />
 
       <Separator />
-      <div className={"px-8 py-6 flex flex-col gap-8"}>
+      <div className={"px-8 py-6 flex flex-col gap-4"}>
         {/* Log File Count */}
-        <div className="flex justify-between">
-          <div>
+        <div className="flex justify-between gap-6">
+          <div className={"max-w-[300px]"}>
             <Label>Log File Count</Label>
             <HelpText>
-              Maximum number of log files to include in the bundle.
+              Sets the limit for how many individual log files will be included
+              in the debug bundle.
             </HelpText>
           </div>
 
           <Input
             type="number"
             min={1}
+            placeholder={"10"}
             max={50}
             value={logFileCount}
-            onChange={(e) => setLogFileCount(Number(e.target.value))}
-            maxWidthClass="max-w-[200px]"
+            onChange={(e) => setLogFileCount(e.target.value)}
+            maxWidthClass="w-[220px]"
             customPrefix={<FileText size={16} className="text-nb-gray-300" />}
             customSuffix="File(s)"
           />
@@ -95,28 +115,31 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
         {/* Bundle Duration */}
         <div>
           <FancyToggleSwitch
-            value={!!bundleForTime}
+            value={bundleForTimeEnabled}
             onChange={(enabled) => {
-              if (enabled) {
-                return setBundleForTime(2);
+              setBundleForTimeEnabled(enabled);
+              if (!enabled) {
+                setBundleForTime("");
+              } else {
+                setBundleForTime("2");
               }
-              setBundleForTime(null);
             }}
             label={
               <>
                 <AlarmClock size={15} />
-                Bundle Duration
+                Enable Bundle Duration
               </>
             }
-            helpText="Enable logs collection for a duration (minutes)."
+            helpText="When enabled, allows you to specify a time period for log collection before generating the debug bundle."
           />
 
-          {bundleForTime && (
-            <div className="mt-3 flex justify-between">
-              <div>
+          {bundleForTimeEnabled && (
+            <div className="flex justify-between gap-6 mt-6 mb-3">
+              <div className={"max-w-[300px]"}>
                 <Label>Duration</Label>
                 <HelpText>
-                  Defines how long logs will be collected for the debug bundle.
+                  Time period for which logs should be collected before creating
+                  the debug bundle.
                 </HelpText>
               </div>
 
@@ -125,8 +148,9 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
                 min={1}
                 max={60}
                 value={bundleForTime}
-                onChange={(e) => setBundleForTime(Number(e.target.value))}
-                maxWidthClass="max-w-[200px]"
+                onChange={(e) => setBundleForTime(e.target.value)}
+                maxWidthClass="w-[220px]"
+                placeholder={"2"}
                 customPrefix={
                   <AlarmClock size={16} className="text-nb-gray-300" />
                 }
@@ -143,13 +167,12 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
           label={
             <>
               <Shield size={15} />
-              Anonymize Data
+              Anonymize Log Data
             </>
           }
-          helpText="Remove sensitive information (IP addresses, peer IDs) from the bundle."
+          helpText="Remove sensitive information (IP addresses, domains etc.) before creating the debug bundle."
         />
       </div>
-
 
       <ModalFooter className="items-center">
         <div className="flex gap-3 w-full justify-end">
@@ -162,11 +185,10 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
             onClick={createDebugJob}
           >
             <PlusCircle size={16} />
-            Create Job
+            Create Debug Bundle
           </Button>
         </div>
       </ModalFooter>
     </ModalContent>
   );
 }
-

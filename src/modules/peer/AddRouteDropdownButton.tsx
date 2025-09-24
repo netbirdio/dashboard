@@ -58,6 +58,7 @@ export default function AddRouteDropdownButton() {
                 icon={<PlusCircle size={14} />}
                 color={"green"}
                 margin={""}
+                size={"small"}
               />
               <div className={"flex flex-col text-left"}>
                 <div className={"text-left text-white"}>New Network Route</div>
@@ -79,6 +80,7 @@ export default function AddRouteDropdownButton() {
                 }
                 color={"netbird"}
                 margin={""}
+                size={"small"}
               />
               <div className={"flex flex-col text-left"}>
                 <div className={"text-left text-white"}>Existing Network</div>

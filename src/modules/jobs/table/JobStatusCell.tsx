@@ -1,6 +1,6 @@
-import { Job } from "@/interfaces/Job";
 import { cn } from "@utils/helpers";
 import React from "react";
+import { Job } from "@/interfaces/Job";
 
 type Props = {
   job: Job;
@@ -8,7 +8,7 @@ type Props = {
 
 export default function JobStatusCell({ job }: Readonly<Props>) {
   const status = job.status;
-  console.log({ status })
+  console.log({ status });
 
   return (
     <div
@@ -25,7 +25,7 @@ export default function JobStatusCell({ job }: Readonly<Props>) {
       ></span>
       {status == "pending" && "Pending"}
       {status == "failed" && "Failed"}
-      {status == "succeeded" && "Succeeded"}
+      {status == "succeeded" && "Completed"}
     </div>
   );
 }

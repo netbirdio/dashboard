@@ -1,13 +1,16 @@
-import Paragraph from '@/components/Paragraph';
-import SkeletonTable, { SkeletonTableHeader } from '@/components/skeletons/SkeletonTable';
-import { usePortalElement } from '@/hooks/usePortalElement';
-import React, { Suspense, lazy } from 'react'
-import useFetchApi from '@/utils/api';
-import { Job } from '@/interfaces/Job';
-import InlineLink from '@/components/InlineLink';
-import { ExternalLinkIcon } from 'lucide-react';
+import { ExternalLinkIcon } from "lucide-react";
+import React, { lazy, Suspense } from "react";
+import InlineLink from "@/components/InlineLink";
+import Paragraph from "@/components/Paragraph";
+import SkeletonTable, {
+  SkeletonTableHeader,
+} from "@/components/skeletons/SkeletonTable";
+import { usePortalElement } from "@/hooks/usePortalElement";
+import { Job } from "@/interfaces/Job";
+import useFetchApi from "@/utils/api";
+
 const PeerRemoteJobsTable = lazy(
-  () => import("@/modules/peer/PeerRemoteJobsTable"),
+  () => import("@/modules/jobs/table/PeerRemoteJobsTable"),
 );
 type Props = {
   peerID: string;
@@ -15,7 +18,8 @@ type Props = {
 
 export const PeerRemoteJobsSection = ({ peerID }: Props) => {
   const { data: jobs, isLoading } = useFetchApi<Job[]>(`/peers/${peerID}/jobs`);
-  const { ref: headingRef, portalTarget } = usePortalElement<HTMLHeadingElement>();
+  const { ref: headingRef, portalTarget } =
+    usePortalElement<HTMLHeadingElement>();
 
   return (
     <div className="pb-10 px-8">
@@ -29,7 +33,7 @@ export const PeerRemoteJobsSection = ({ peerID }: Props) => {
             </Paragraph>
             <Paragraph>
               Learn more about{" "}
-              <InlineLink href={"https://docs.netbird.io"} target={"_blank"} >
+              <InlineLink href={"https://docs.netbird.io"} target={"_blank"}>
                 Remote Jobs <ExternalLinkIcon size={12} />
               </InlineLink>
               in our documentation.
@@ -53,8 +57,8 @@ export const PeerRemoteJobsSection = ({ peerID }: Props) => {
             isLoading={isLoading}
             headingTarget={portalTarget}
           />
-
         </Suspense>
       </div>
-    </div>)
-}
+    </div>
+  );
+};
