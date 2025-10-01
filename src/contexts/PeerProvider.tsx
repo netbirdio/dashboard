@@ -97,11 +97,22 @@ export default function PeerProvider({ children, peer }: Props) {
   const openSSHDialog = async (): Promise<boolean> => {
     return await confirm({
       title: `Enable SSH Server for ${peer.name}?`,
-      description:
-        "Experimental feature. Enabling this option allows remote SSH access to this machine from other connected network participants.",
+      description: (
+        <div className={"flex flex-col gap-2"}>
+          <div>
+            Enabling this option allows remote SSH access to this machine from
+            other connected network participants.
+          </div>
+          <div>
+            Make sure SSH is allowed in the NetBird Client under{" "}
+            <span className={"text-white"}>Settings &rarr; Allow SSH</span>
+          </div>
+        </div>
+      ),
       confirmText: "Enable",
       cancelText: "Cancel",
       type: "warning",
+      maxWidthClass: "max-w-lg",
     });
   };
 

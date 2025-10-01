@@ -54,3 +54,13 @@ export const isRoutingPeerSupported = (version: string, os: string) => {
   const versionNumber = parseVersionString(version);
   return versionNumber >= 366;
 };
+
+/**
+ * Check if native SSH is supported
+ * @param version
+ */
+export const isNativeSSHSupported = (version: string) => {
+  if (version == "development") return true;
+  const versionNumber = parseVersionString(version);
+  return versionNumber >= 999;
+};

@@ -15,6 +15,7 @@ export interface Peer {
   user_id?: string;
   user?: User;
   ui_version?: string;
+  kernel_version?: string;
   dns_label: string;
   extra_dns_labels?: string[];
   last_login: Date;

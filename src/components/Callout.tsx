@@ -26,7 +26,7 @@ export const calloutVariants = cva(
 
 export const Callout = ({
   children,
-  icon = <InfoIcon size={14} className={"shrink-0 relative top-[2px]"} />,
+  icon = <InfoIcon size={14} className={"shrink-0 relative top-[3px]"} />,
   className,
   variant = "default",
 }: Props) => {

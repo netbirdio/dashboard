@@ -365,6 +365,14 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "peer.user.add")
+    return (
+      <div className={"inline"}>
+        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
+        with the NetBird IP <Value>{m.ip}</Value>
+      </div>
+    );
+
   /**
    * Group
    */

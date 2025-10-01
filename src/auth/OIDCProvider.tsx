@@ -58,6 +58,8 @@ export default function OIDCProvider({ children }: Props) {
       "utm_content",
       "utm_campaign",
       "hs_id",
+      "user",
+      "port",
     ];
 
     try {
