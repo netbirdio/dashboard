@@ -27,4 +27,5 @@ export interface Peer {
   country_code: string;
   connection_ip: string;
   serial_number: string;
+  ephemeral: boolean;
 }

@@ -13,7 +13,7 @@ const config = loadConfig();
 
 const WASM_CONFIG = {
   SCRIPT_PATH: "/wasm_exec.js",
-  WASM_PATH: "https://pkgs.netbird.io/wasm/client",
+  WASM_PATH: "/netbird.wasm",
   INIT_TIMEOUT: 10000,
   RETRY_DELAY: 100,
 } as const;
