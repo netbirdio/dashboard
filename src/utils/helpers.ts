@@ -212,3 +212,34 @@ export const formatBytes = (bytes: number, decimals: number = 2): string => {
     return "0 B";
   }
 };
+
+/**
+ * Get browser name and version from user agent
+ * @returns Object with name and version
+ */
+export const getBrowserInfo = () => {
+  let name = "";
+  let version = "";
+
+  try {
+    const ua = navigator.userAgent;
+
+    if (/firefox\/\d+/i.test(ua)) {
+      name = "Firefox";
+      version = ua.match(/firefox\/(\d+)/i)?.[1] || version;
+    } else if (/chrome\/\d+/i.test(ua) && !/edg\//i.test(ua)) {
+      name = "Chrome";
+      version = ua.match(/chrome\/(\d+)/i)?.[1] || version;
+    } else if (/safari\/\d+/i.test(ua) && !/chrome\/\d+/i.test(ua)) {
+      name = "Safari";
+      version = ua.match(/version\/(\d+)/i)?.[1] || version;
+    } else if (/edg\/\d+/i.test(ua)) {
+      name = "Edge";
+      version = ua.match(/edg\/(\d+)/i)?.[1] || version;
+    }
+
+    return { name, version };
+  } catch (e) {
+    return { name, version };
+  }
+};

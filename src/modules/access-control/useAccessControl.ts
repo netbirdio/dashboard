@@ -126,6 +126,10 @@ export const useAccessControl = ({
       : initialDestinationGroups ?? [],
   });
 
+  const [sourceResource, setSourceResource] = useState(
+    firstRule?.sourceResource,
+  );
+
   const [destinationResource, setDestinationResource] = useState(
     firstRule?.destinationResource,
   );
@@ -163,8 +167,9 @@ export const useAccessControl = ({
           bidirectional: direction == "bi",
           description,
           name,
-          sources: sources,
+          sources: sourceResource ? undefined : sources,
           destinations: destinationResource ? undefined : destinations,
+          sourceResource: sourceResource || undefined,
           destinationResource: destinationResource || undefined,
           action: "accept",
           protocol,
@@ -241,8 +246,9 @@ export const useAccessControl = ({
           action: "accept",
           protocol,
           enabled,
-          sources,
+          sources: sourceResource ? undefined : sources,
           destinations: destinationResource ? undefined : destinations,
+          sourceResource: sourceResource || undefined,
           destinationResource: destinationResource || undefined,
           ports: newPorts,
           port_ranges: newPortRanges,
@@ -345,6 +351,8 @@ export const useAccessControl = ({
     getPolicyData,
     portDisabled,
     isPostureChecksLoading,
+    sourceResource,
+    setSourceResource,
     destinationResource,
     setDestinationResource,
     destinationHasResources,

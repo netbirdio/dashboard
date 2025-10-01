@@ -40,6 +40,8 @@
     "@types/react": "^18",
     "@types/react-dom": "^18",
     "@types/react-window": "^1.8.8",
+    "@xterm/addon-fit": "^0.10.0",
+    "@xterm/xterm": "^5.5.0",
     "autoprefixer": "^10",
     "chart.js": "^4.4.8",
     "chroma-js": "^3.1.2",

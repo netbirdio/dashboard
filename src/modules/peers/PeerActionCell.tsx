@@ -64,7 +64,7 @@ export default function PeerActionCell() {
   };
 
   return (
-    <div className={"flex justify-end pr-4"}>
+    <div className={"flex justify-end pr-4 gap-3"}>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
           asChild={true}

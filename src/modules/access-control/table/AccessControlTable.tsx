@@ -9,9 +9,9 @@ import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
-import { ExternalLinkIcon, PlusCircle } from "lucide-react";
+import { ClockFadingIcon, ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname, useSearchParams } from "next/navigation";
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -29,6 +29,7 @@ import AccessControlPortsCell from "@/modules/access-control/table/AccessControl
 import AccessControlPostureCheckCell from "@/modules/access-control/table/AccessControlPostureCheckCell";
 import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
+import FullTooltip from "@components/FullTooltip";
 
 type Props = {
   policies?: Policy[];
@@ -200,6 +201,41 @@ export default function AccessControlTable({
   const [currentRow, setCurrentRow] = useState<Policy>();
   const [currentCellClicked, setCurrentCellClicked] = useState("");
 
+    const [showTemporaryPolicies, setShowTemporaryPolicies] = useState(false);
+
+    const withTemporaryPolicies = useCallback(
+        (condition: boolean) =>
+            policies?.filter((policy) =>
+                condition
+                    ? policy?.name?.startsWith("Temporary") &&
+                    policy?.name?.endsWith("client") &&
+                    policy?.description?.startsWith("Temporary") &&
+                    policy?.description?.endsWith("client")
+                    : !(
+                        policy?.name?.startsWith("Temporary") &&
+                        policy?.name?.endsWith("client") &&
+                        policy?.description?.startsWith("Temporary") &&
+                        policy?.description?.endsWith("client")
+                    ),
+            ) ?? [],
+        [policies],
+    );
+
+    const tempPolicies = useMemo(
+        () => withTemporaryPolicies(true),
+        [withTemporaryPolicies],
+    );
+    const regularPolicies = useMemo(
+        () => withTemporaryPolicies(false),
+        [withTemporaryPolicies],
+    );
+
+    useEffect(() => {
+        if (showTemporaryPolicies && tempPolicies?.length === 0) {
+            setShowTemporaryPolicies(false);
+        }
+    }, [showTemporaryPolicies, tempPolicies]);
+
   return (
     <>
       {editModal && currentRow && (
@@ -232,8 +268,9 @@ export default function AccessControlTable({
         columnVisibility={{
           description: false,
           id: false,
+          temporary: false,
         }}
-        data={policies}
+        data={showTemporaryPolicies ? tempPolicies : regularPolicies}
         onRowClick={(row, cell) => {
           setCurrentRow(row.original);
           setEditModal(true);
@@ -301,65 +338,90 @@ export default function AccessControlTable({
           </>
         )}
       >
-        {(table) => (
-          <>
-            <ButtonGroup disabled={policies?.length == 0}>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("enabled")?.setFilterValue(undefined);
-                }}
-                disabled={policies?.length == 0}
-                variant={
-                  table.getColumn("enabled")?.getFilterValue() === undefined
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                All
-              </ButtonGroup.Button>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("enabled")?.setFilterValue(true);
-                }}
-                disabled={policies?.length == 0}
-                variant={
-                  table.getColumn("enabled")?.getFilterValue() === true
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Active
-              </ButtonGroup.Button>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("enabled")?.setFilterValue(false);
-                }}
-                disabled={policies?.length == 0}
-                variant={
-                  table.getColumn("enabled")?.getFilterValue() === false
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Inactive
-              </ButtonGroup.Button>
-            </ButtonGroup>
-            <DataTableRowsPerPage
-              table={table}
-              disabled={policies?.length == 0}
-            />
-            <DataTableRefreshButton
-              isDisabled={policies?.length == 0}
-              onClick={() => {
-                mutate("/policies").then();
-                mutate("/groups").then();
-              }}
-            />
-          </>
-        )}
+          {(table) => {
+              return (
+                  <>
+                      <ButtonGroup disabled={policies?.length == 0}>
+                          <ButtonGroup.Button
+                              onClick={() => {
+                                  table.setPageIndex(0);
+                                  table.getColumn("enabled")?.setFilterValue(undefined);
+                              }}
+                              disabled={policies?.length == 0}
+                              variant={
+                                  table.getColumn("enabled")?.getFilterValue() === undefined
+                                      ? "tertiary"
+                                      : "secondary"
+                              }
+                          >
+                              All
+                          </ButtonGroup.Button>
+                          <ButtonGroup.Button
+                              onClick={() => {
+                                  table.setPageIndex(0);
+                                  table.getColumn("enabled")?.setFilterValue(true);
+                              }}
+                              disabled={policies?.length == 0}
+                              variant={
+                                  table.getColumn("enabled")?.getFilterValue() === true
+                                      ? "tertiary"
+                                      : "secondary"
+                              }
+                          >
+                              Active
+                          </ButtonGroup.Button>
+                          <ButtonGroup.Button
+                              onClick={() => {
+                                  table.setPageIndex(0);
+                                  table.getColumn("enabled")?.setFilterValue(false);
+                              }}
+                              disabled={policies?.length == 0}
+                              variant={
+                                  table.getColumn("enabled")?.getFilterValue() === false
+                                      ? "tertiary"
+                                      : "secondary"
+                              }
+                          >
+                              Inactive
+                          </ButtonGroup.Button>
+                      </ButtonGroup>
+                      <DataTableRowsPerPage
+                          table={table}
+                          disabled={policies?.length == 0}
+                      />
+
+                      {tempPolicies?.length > 0 && (
+                          <FullTooltip
+                              content={
+                                  <div className={"max-w-sm text-xs"}>
+                                      Show temporary policies created by the NetBird browser
+                                      client. These policies are ephemeral and will be
+                                      deleted automatically after a short period of time.
+                                  </div>
+                              }
+                          >
+                              <Button
+                                  className={"h-[44px]"}
+                                  variant={showTemporaryPolicies ? "tertiary" : "secondary"}
+                                  onClick={() => {
+                                      setShowTemporaryPolicies(!showTemporaryPolicies);
+                                  }}
+                              >
+                                  <ClockFadingIcon size={16} />
+                              </Button>
+                          </FullTooltip>
+                      )}
+
+                      <DataTableRefreshButton
+                          isDisabled={policies?.length == 0}
+                          onClick={() => {
+                              mutate("/policies").then();
+                              mutate("/groups").then();
+                          }}
+                      />
+                  </>
+              );
+          }}
       </DataTable>
     </>
   );

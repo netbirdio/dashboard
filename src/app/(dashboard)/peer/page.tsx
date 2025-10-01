@@ -33,6 +33,7 @@ import dayjs from "dayjs";
 import { isEmpty, trim } from "lodash";
 import {
   Barcode,
+  CalendarDays,
   Cpu,
   FlagIcon,
   Globe,
@@ -65,6 +66,8 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
 import { PeerExpirationToggle } from "@/modules/peer/PeerExpirationToggle";
 import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSection";
+import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
+import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 
 export default function PeerPage() {
   const queryParameter = useSearchParams();
@@ -346,6 +349,16 @@ const PeerGeneralInformation = () => {
               }
             />
           </FullTooltip>
+
+            {/* Remote Access Buttons */}
+            <div>
+                <Label>Remote Access</Label>
+                <HelpText>Connect directly to this peer via SSH or RDP.</HelpText>
+                <div className="flex gap-3">
+                    <SSHButton peer={peer} />
+                    <RDPButton peer={peer} />
+                </div>
+            </div>
 
           {permission.groups.read && (
             <div>

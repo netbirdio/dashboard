@@ -34,7 +34,7 @@ export interface PortRange {
 
 export interface PolicyRuleResource {
   id: string;
-  type: "domain" | "host" | "subnet" | undefined;
+  type?: "domain" | "host" | "subnet" | "peer";
 }
 
 export type Protocol = "all" | "tcp" | "udp" | "icmp";

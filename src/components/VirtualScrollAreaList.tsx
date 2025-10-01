@@ -14,6 +14,7 @@ type Props<T extends { id?: string }> = {
   renderHeading?: (item: T) => React.ReactNode;
   renderBeforeItem?: (item: T) => React.ReactNode;
   itemClassName?: string;
+  itemClassNameWithItem?: (item: T) => string;
   itemWrapperClassName?: string;
   scrollAreaClassName?: string;
   maxHeight?: number;
@@ -21,6 +22,7 @@ type Props<T extends { id?: string }> = {
   estimatedHeadingHeight?: number;
   heightAdjustment?: number;
   groupKey?: (item: T) => string | undefined;
+  itemKey?: (item: T) => string;
 };
 
 export function VirtualScrollAreaList<T extends { id?: string }>({
@@ -30,6 +32,7 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
   renderBeforeItem,
   renderHeading,
   itemClassName,
+  itemClassNameWithItem,
   itemWrapperClassName,
   scrollAreaClassName,
   maxHeight,
@@ -37,6 +40,7 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
   estimatedHeadingHeight = 16,
   heightAdjustment = 8,
   groupKey,
+  itemKey,
 }: Readonly<Props<T>>) {
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [lastInputMethod, setLastInputMethod] = useState<"mouse" | "keyboard">(
@@ -159,10 +163,14 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
                     setSelected(index);
                   }
                 }}
-                id={option.id}
+                id={itemKey ? itemKey(option) : option?.id}
                 onClick={() => onClick(option)}
                 ariaSelected={selected === index}
-                itemClassName={itemClassName}
+                itemClassName={
+                  itemClassNameWithItem
+                    ? itemClassNameWithItem(option)
+                    : itemClassName
+                }
                 className={itemWrapperClassName}
                 isLast={index === items.length - 1}
               >

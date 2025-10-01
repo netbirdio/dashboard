@@ -24,7 +24,7 @@ export default function TextWithTooltip({
     <FullTooltip
       disabled={charCount <= maxChars || hideTooltip}
       interactive={false}
-      className={"truncate w-full min-w-0"}
+      className={"truncate w-auto min-w-0"}
       skipDelayDuration={350}
       delayDuration={200}
       content={

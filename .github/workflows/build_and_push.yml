@@ -28,6 +28,33 @@ jobs:
 
       - run: echo '{}' > .local-config.json
 
+      - name: Download IronRDP release TS files
+        uses: robinraju/release-downloader@v1.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: netbirdio/IronRDP
+          latest: true
+          fileName: "*.ts"
+          out-file-path: 'public/ironrdp-pkg'
+
+      - name: Download IronRDP release JS files
+        uses: robinraju/release-downloader@v1.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: netbirdio/IronRDP
+          latest: true
+          fileName: "*.js"
+          out-file-path: 'public/ironrdp-pkg'
+
+      - name: Download IronRDP release WASM file
+        uses: robinraju/release-downloader@v1.7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          repository: netbirdio/IronRDP
+          latest: true
+          fileName: "ironrdp_web_bg.wasm"
+          out-file-path: 'public/ironrdp-pkg'
+
       - name: Build
         run: npm run build
       -

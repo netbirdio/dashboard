@@ -41,3 +41,8 @@ next-env.d.ts
 .configs/.staging-config.json
 .configs/.temp-config.json
 .configs
+
+/public/ironrdp-pkg/
+/public/netbird.wasm
+.idea
+src/.local-config*
