@@ -25,6 +25,8 @@ type Props = {
   customOnOpenChange?: React.Dispatch<React.SetStateAction<boolean>>;
   delayDuration?: number;
   skipDelayDuration?: number;
+  alignOffset?: number;
+  sideOffset?: number;
 } & TooltipProps &
   TooltipVariants;
 
@@ -45,6 +47,8 @@ export default function FullTooltip({
   delayDuration = 1,
   skipDelayDuration = 300,
   variant = "default",
+  alignOffset = 20,
+  sideOffset,
 }: Props) {
   const [open, setOpen] = useState(!!keepOpen);
 
@@ -83,7 +87,8 @@ export default function FullTooltip({
         )}
         {!disabled && (
           <TooltipContent
-            alignOffset={20}
+            alignOffset={alignOffset}
+            sideOffset={sideOffset}
             forceMount={true}
             className={contentClassName}
             variant={variant}

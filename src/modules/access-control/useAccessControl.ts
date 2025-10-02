@@ -260,9 +260,9 @@ export const useAccessControl = ({
       updatePolicy(
         policy,
         policyObj,
-        () => {
+        (p) => {
           mutate("/policies");
-          onSuccess && onSuccess(policy);
+          onSuccess && onSuccess(p);
         },
         "The policy was successfully saved",
       );
