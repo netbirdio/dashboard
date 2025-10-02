@@ -31,7 +31,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Account } from "@/interfaces/Account";
 
-const GroupsTable = lazy(() => import("@/modules/settings/GroupsTable"));
+const GroupsTable = lazy(() => import("@/modules/groups/GroupsTable"));
 
 type Props = {
   account: Account;
