@@ -14,7 +14,7 @@ import {
   RowSelectionState,
   SortingState,
 } from "@tanstack/react-table";
-import { uniqBy } from "lodash";
+import { trim, uniqBy } from "lodash";
 import { MonitorDotIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
@@ -261,9 +261,7 @@ export default function PeersTable({
   const withBrowserPeers = useCallback(
     (condition: boolean) =>
       peers?.filter((peer) =>
-        condition
-          ? peer.kernel_version === "wasm"
-          : peer.kernel_version !== "wasm",
+        condition ? trim(peer.os) === "js" : trim(peer.os) !== "js",
       ) ?? [],
     [peers],
   );
