@@ -1,26 +1,24 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
 import { Checkbox } from "@components/Checkbox";
-import InlineLink from "@components/InlineLink";
-import SquareIcon from "@components/SquareIcon";
+import FullTooltip from "@components/FullTooltip";
+import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import AddPeerButton from "@components/ui/AddPeerButton";
-import GetStartedTest from "@components/ui/GetStartedTest";
 import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import {
   ColumnDef,
   RowSelectionState,
   SortingState,
 } from "@tanstack/react-table";
-import { uniqBy } from "lodash";
-import { ExternalLinkIcon } from "lucide-react";
+import { trim, uniqBy } from "lodash";
+import { MonitorDotIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import PeerIcon from "@/assets/icons/PeerIcon";
 import PeerProvider from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -30,6 +28,7 @@ import { Peer } from "@/interfaces/Peer";
 import { GroupFilterSelector } from "@/modules/groups/GroupFilterSelector";
 import PeerActionCell from "@/modules/peers/PeerActionCell";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
+import { PeerConnectButton } from "@/modules/peers/PeerConnectButton";
 import PeerGroupCell from "@/modules/peers/PeerGroupCell";
 import PeerLastSeenCell from "@/modules/peers/PeerLastSeenCell";
 import { PeerMultiSelect } from "@/modules/peers/PeerMultiSelect";
@@ -37,9 +36,6 @@ import PeerNameCell from "@/modules/peers/PeerNameCell";
 import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 import PeerStatusCell from "@/modules/peers/PeerStatusCell";
 import PeerVersionCell from "@/modules/peers/PeerVersionCell";
-import FullTooltip from "@components/FullTooltip";
-import { MonitorDotIcon } from "lucide-react";
-import { PeerConnectButton } from "@/modules/peers/PeerConnectButton";
 
 const PeersTableColumns: ColumnDef<Peer>[] = [
   {
@@ -76,14 +72,14 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     cell: ({ row }) => <PeerNameCell peer={row.original} />,
   },
   {
-      id: "connect",
-      accessorKey: "id",
-      header: "",
-      cell: ({ row }) => (
-          <PeerProvider peer={row.original}>
-              <PeerConnectButton />
-          </PeerProvider>
-      ),
+    id: "connect",
+    accessorKey: "id",
+    header: "",
+    cell: ({ row }) => (
+      <PeerProvider peer={row.original}>
+        <PeerConnectButton />
+      </PeerProvider>
+    ),
   },
   {
     id: "approval_required",
@@ -170,11 +166,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
       return <DataTableHeader column={column}>Version</DataTableHeader>;
     },
     cell: ({ row }) => (
-        <PeerVersionCell
-            version={row.original.version}
-            os={row.original.os}
-            serial={row.original.serial_number}
-        />
+      <PeerVersionCell
+        version={row.original.version}
+        os={row.original.os}
+        serial={row.original.serial_number}
+      />
     ),
   },
   {
@@ -260,31 +256,29 @@ export default function PeersTable({
     }
   };
 
-    const [showBrowserPeers, setShowBrowserPeers] = useState(false);
+  const [showBrowserPeers, setShowBrowserPeers] = useState(false);
 
-    const withBrowserPeers = useCallback(
-        (condition: boolean) =>
-            peers?.filter((peer) =>
-                condition
-                    ? peer.kernel_version === "wasm"
-                    : peer.kernel_version !== "wasm",
-            ) ?? [],
-        [peers],
-    );
+  const withBrowserPeers = useCallback(
+    (condition: boolean) =>
+      peers?.filter((peer) =>
+        condition ? trim(peer.os) === "js" : trim(peer.os) !== "js",
+      ) ?? [],
+    [peers],
+  );
 
-    const browserPeers = useMemo(() => {
-        return withBrowserPeers(true);
-    }, [withBrowserPeers]);
+  const browserPeers = useMemo(() => {
+    return withBrowserPeers(true);
+  }, [withBrowserPeers]);
 
-    const regularPeers = useMemo(() => {
-        return withBrowserPeers(false);
-    }, [withBrowserPeers]);
+  const regularPeers = useMemo(() => {
+    return withBrowserPeers(false);
+  }, [withBrowserPeers]);
 
-    useEffect(() => {
-        if (showBrowserPeers && browserPeers?.length === 0) {
-            setShowBrowserPeers(false);
-        }
-    }, [showBrowserPeers, browserPeers]);
+  useEffect(() => {
+    if (showBrowserPeers && browserPeers?.length === 0) {
+      setShowBrowserPeers(false);
+    }
+  }, [showBrowserPeers, browserPeers]);
 
   return (
     <>
@@ -319,35 +313,7 @@ export default function PeersTable({
           os: false,
         }}
         isLoading={isLoading}
-        getStartedCard={
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={<PeerIcon className={"fill-nb-gray-200"} size={20} />}
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Get Started with NetBird"}
-            description={
-              "It looks like you don't have any connected machines.\n" +
-              "Get started by adding one to your network."
-            }
-            button={<AddPeerButton />}
-            learnMore={
-              <>
-                Learn more in our{" "}
-                <InlineLink
-                  href={"https://docs.netbird.io/how-to/getting-started"}
-                  target={"_blank"}
-                >
-                  Getting Started Guide
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
-        }
+        getStartedCard={<NoPeersGettingStarted showBackground={true} />}
         rightSide={() => <>{peers && peers.length > 0 && <AddPeerButton />}</>}
       >
         {(table) => (
@@ -516,27 +482,27 @@ export default function PeersTable({
               />
             )}
 
-              {browserPeers?.length > 0 && (
-                  <FullTooltip
-                      content={
-                          <div className={"max-w-sm text-xs"}>
-                              Show temporary peers created by the NetBird browser client.
-                              These peers are ephemeral and will be deleted automatically
-                              after a short period of time.
-                          </div>
-                      }
-                  >
-                      <Button
-                          className={"h-[44px]"}
-                          variant={showBrowserPeers ? "tertiary" : "secondary"}
-                          onClick={() => {
-                              setShowBrowserPeers(!showBrowserPeers);
-                          }}
-                      >
-                          <MonitorDotIcon size={16} />
-                      </Button>
-                  </FullTooltip>
-              )}
+            {browserPeers?.length > 0 && (
+              <FullTooltip
+                content={
+                  <div className={"max-w-sm text-xs"}>
+                    Show temporary peers created by the NetBird browser client.
+                    These peers are ephemeral and will be deleted automatically
+                    after a short period of time.
+                  </div>
+                }
+              >
+                <Button
+                  className={"h-[44px]"}
+                  variant={showBrowserPeers ? "tertiary" : "secondary"}
+                  onClick={() => {
+                    setShowBrowserPeers(!showBrowserPeers);
+                  }}
+                >
+                  <MonitorDotIcon size={16} />
+                </Button>
+              </FullTooltip>
+            )}
 
             <DataTableRefreshButton
               isDisabled={peers?.length == 0}

@@ -37,6 +37,10 @@ interface SelectDropdownProps {
   searchPlaceholder?: string;
   isLoading?: boolean;
   variant?: ButtonVariants["variant"];
+  className?: string;
+  size?: "xs" | "sm";
+  children?: React.ReactNode;
+  maxHeight?: number;
 }
 
 export function SelectDropdown({
@@ -51,6 +55,10 @@ export function SelectDropdown({
   searchPlaceholder = "Search...",
   isLoading = false,
   variant = "input",
+  className,
+  size = "sm",
+  children,
+  maxHeight,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -79,6 +87,46 @@ export function SelectDropdown({
     });
   }, [options, debouncedSearch]);
 
+  const Loading = () => {
+    return (
+      <div className={"flex items-center gap-2"}>
+        <Skeleton width={20} />
+        <Skeleton width={100} />
+      </div>
+    );
+  };
+
+  const SelectedItem = () => {
+    return (
+      <div className={"flex items-center gap-2.5"}>
+        {selected?.icon && <selected.icon size={14} width={14} />}
+        <div
+          className={cn(
+            "flex flex-col text-sm font-medium",
+            size === "xs" && "text-xs",
+          )}
+        >
+          <span className={"text-nb-gray-200"}>{selected?.label}</span>
+        </div>
+      </div>
+    );
+  };
+
+  const PlaceholderItem = () => {
+    return (
+      <div className={"flex items-center gap-2.5"}>
+        <div
+          className={cn(
+            "flex flex-col text-sm font-medium",
+            size === "xs" && "text-xs",
+          )}
+        >
+          <span className={"text-nb-gray-200"}>{placeholder}</span>
+        </div>
+      </div>
+    );
+  };
+
   return (
     <Popover
       open={open}
@@ -91,45 +139,26 @@ export function SelectDropdown({
         setOpen(isOpen);
       }}
     >
-      <PopoverTrigger asChild={true} disabled={disabled || isLoading}>
-        <Button
-          variant={variant}
-          disabled={disabled || isLoading}
-          ref={inputRef}
-          className={"w-full"}
-        >
-          <div className={"w-full flex justify-between items-center gap-2"}>
-            {isLoading ? (
-              <div className={"flex gap-2"}>
-                <Skeleton width={20} />
-                <Skeleton width={100} />
+      <PopoverTrigger asChild={!children} disabled={disabled || isLoading}>
+        {children ? (
+          children
+        ) : (
+          <Button
+            variant={variant}
+            disabled={disabled || isLoading}
+            ref={inputRef}
+            className={cn("w-full", className)}
+          >
+            <div className={"w-full flex justify-between items-center gap-2"}>
+              {isLoading && <Loading />}
+              {!isLoading && selected && <SelectedItem />}
+              {!isLoading && !selected && <PlaceholderItem />}
+              <div className={"pl-2"}>
+                <ChevronsUpDown size={18} className={"shrink-0"} />
               </div>
-            ) : selected ? (
-              <React.Fragment>
-                <div className={"flex items-center gap-2.5"}>
-                  {selected?.icon && <selected.icon size={14} width={14} />}
-                  <div className={"flex flex-col text-sm font-medium"}>
-                    <span className={"text-nb-gray-200"}>
-                      {selected?.label}
-                    </span>
-                  </div>
-                </div>
-              </React.Fragment>
-            ) : (
-              <React.Fragment>
-                <div className={"flex items-center gap-2.5"}>
-                  <div className={"flex flex-col text-sm font-medium"}>
-                    <span className={"text-nb-gray-200"}>{placeholder}</span>
-                  </div>
-                </div>
-              </React.Fragment>
-            )}
-
-            <div className={"pl-2"}>
-              <ChevronsUpDown size={18} className={"shrink-0"} />
             </div>
-          </div>
-        </Button>
+          </Button>
+        )}
       </PopoverTrigger>
       <PopoverContent
         className="w-full p-0 shadow-sm  shadow-nb-gray-950 focus:outline-none"
@@ -164,18 +193,22 @@ export function SelectDropdown({
 
             <ScrollArea
               className={cn(
-                "max-h-[380px] overflow-y-auto flex flex-col gap-1 pl-2 pb-2 pr-3",
+                "overflow-y-auto flex flex-col gap-1 pl-2 pr-3",
                 !showSearch && "pt-2",
               )}
+              style={{
+                maxHeight: maxHeight ?? 380,
+              }}
             >
               <CommandGroup>
-                <div className={"grid grid-cols-1 gap-1"}>
+                <div className={"grid grid-cols-1 gap-1 pb-2"}>
                   {filteredItems.map((option) => (
                     <SelectDropdownItem
                       option={option}
                       toggle={toggle}
                       key={option.value}
                       showValue={showValues}
+                      size={size}
                     />
                   ))}
                 </div>
@@ -192,10 +225,12 @@ const SelectDropdownItem = ({
   option,
   toggle,
   showValue = false,
+  size = "sm",
 }: {
   option: SelectOption;
   toggle: (value: string) => void;
   showValue?: boolean;
+  size: "xs" | "sm";
 }) => {
   const value = option.value || "" + option.label || "";
   const elementRef = useRef<HTMLDivElement>(null);
@@ -221,13 +256,20 @@ const SelectDropdownItem = ({
         >
           <div className={"flex items-center gap-2.5 p-1"}>
             {option.icon && <option.icon size={14} width={14} />}
-            <div className={"flex flex-col text-sm font-medium"}>
+            <div
+              className={cn(
+                "flex flex-col text-sm font-medium",
+                size === "xs" && "text-xs",
+              )}
+            >
               <span className={"text-nb-gray-200"}>{option.label}</span>
             </div>
           </div>
           {showValue && (
             <div className={"flex items-center gap-2.5 p-1"}>
-              <Paragraph className={cn("text-sm text-right")}>
+              <Paragraph
+                className={cn("text-sm text-right", size === "xs" && "text-xs")}
+              >
                 {option.value}
               </Paragraph>
             </div>

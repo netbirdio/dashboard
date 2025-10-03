@@ -23,6 +23,7 @@ export default function useOperatingSystem() {
  * Falls back to Linux if the operating system is not recognized
  */
 export const getOperatingSystem = (os: string) => {
+  if (!os) return OperatingSystem.LINUX as const;
   if (os.toLowerCase().includes("freebsd"))
     return OperatingSystem.FREEBSD as const;
   if (os.toLowerCase().includes("darwin"))

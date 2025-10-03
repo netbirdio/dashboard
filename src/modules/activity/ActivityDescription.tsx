@@ -677,6 +677,20 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "account.settings.extra.flow.group.remove")
+    return (
+      <div className={"inline"}>
+        Limit traffic event group <Value>{m.group_name}</Value> removed
+      </div>
+    );
+
+  if (event.activity_code == "account.settings.extra.flow.group.add")
+    return (
+      <div className={"inline"}>
+        Limit traffic event group <Value>{m.group_name}</Value> added
+      </div>
+    );
+
   return (
     <div className={"flex gap-2.5 items-center"}>
       <span className={"mb-[1px]"}>{event.activity}</span>

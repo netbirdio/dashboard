@@ -37,7 +37,8 @@ export const RDPButton = ({ peer, isDropdown = false }: Props) => {
       <>
         <div>
           <RDPTooltip
-            disabled={!disabled}
+            //disabled={!disabled}
+            disabled={true}
             hasPermission={hasPermission}
             side={isDropdown ? "left" : "top"}
           >

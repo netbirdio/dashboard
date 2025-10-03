@@ -1,19 +1,19 @@
+import { useApiCall } from "@utils/api";
 import loadConfig from "@utils/config";
+import { getBrowserInfo } from "@utils/helpers";
+import { generateKeypair } from "@utils/wireguard";
+import { trim } from "lodash";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
 import { IronRDPInputHandler } from "@/modules/remote-access/rdp/ironrdp-input-handler";
 import { IronRDPWASMBridge } from "@/modules/remote-access/rdp/ironrdp-wasm-bridge";
 import { RDPCertificateHandler } from "@/modules/remote-access/rdp/rdp-certificate-handler";
 import { installWebSocketProxy } from "@/modules/remote-access/rdp/websocket-proxy";
-import { useApiCall } from "@utils/api";
-import { generateKeypair } from "@utils/wireguard";
-import { getBrowserInfo } from "@utils/helpers";
-import { trim } from "lodash";
 
 const config = loadConfig();
 
 const WASM_CONFIG = {
   SCRIPT_PATH: "/wasm_exec.js",
-  WASM_PATH: "/netbird.wasm",
+  WASM_PATH: "https://pkgs.netbird.io/wasm/client",
   INIT_TIMEOUT: 10000,
   RETRY_DELAY: 100,
 } as const;

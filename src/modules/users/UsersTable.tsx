@@ -20,6 +20,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { User } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
+import { PendingApprovalFilter } from "@/modules/users/PendingApprovalFilter";
 import UserActionCell from "@/modules/users/table-cells/UserActionCell";
 import UserBlockCell from "@/modules/users/table-cells/UserBlockCell";
 import UserGroupCell from "@/modules/users/table-cells/UserGroupCell";
@@ -134,8 +135,6 @@ export default function UsersTable({
   );
 
   const router = useRouter();
-  const pendingApprovalCount =
-    users?.filter((u) => u.pending_approval).length || 0;
 
   return (
     <DataTable
@@ -196,44 +195,13 @@ export default function UsersTable({
       )}
     >
       {(table) => {
-        if (
-          pendingApprovalCount == 0 &&
-          table.getColumn("approval_required")?.getFilterValue() === true
-        ) {
-          table.setColumnFilters([]);
-        }
-
         return (
           <>
-            {pendingApprovalCount > 0 && (
-              <Button
-                disabled={users?.length == 0}
-                onClick={() => {
-                  table.setPageIndex(0);
-                  let current =
-                    table.getColumn("approval_required")?.getFilterValue() ===
-                    undefined
-                      ? true
-                      : undefined;
-
-                  table.setColumnFilters([
-                    {
-                      id: "approval_required",
-                      value: current,
-                    },
-                  ]);
-                }}
-                variant={
-                  table.getColumn("approval_required")?.getFilterValue() ===
-                  true
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Pending Approvals
-                <NotificationCountBadge count={pendingApprovalCount} />
-              </Button>
-            )}
+            <PendingApprovalFilter
+              table={table}
+              data={users}
+              count={users?.filter((u) => u?.pending_approval)?.length}
+            />
             <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
             <DataTableRefreshButton
               isDisabled={users?.length == 0}

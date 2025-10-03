@@ -42,14 +42,14 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
           active={peer.connected}
           text={peer.name}
           additionalInfo={
-              isOwnerOrAdmin && (
-                  <>
-                      <ExitNodePeerIndicator peer={peer} />
-                      <EphemeralPeerIndicator peer={peer} />
-                      <ExpirationDisabledIndicator peer={peer} />
-                      <LoginRequiredIndicator peer={peer} />
-                  </>
-              )
+            isOwnerOrAdmin && (
+              <>
+                <ExitNodePeerIndicator peer={peer} />
+                <EphemeralPeerIndicator peer={peer} />
+                <ExpirationDisabledIndicator peer={peer} />
+                <LoginRequiredIndicator peer={peer} />
+              </>
+            )
           }
         >
           <div className={"text-nb-gray-400 font-light truncate"}>
