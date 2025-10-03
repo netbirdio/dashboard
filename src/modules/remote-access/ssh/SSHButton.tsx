@@ -41,7 +41,8 @@ export const SSHButton = ({ peer, isDropdown = false }: Props) => {
         )}
         <div>
           <SSHTooltip
-            disabled={!disabled}
+            //disabled={!disabled}
+            disabled={true}
             hasPermission={hasPermission}
             side={isDropdown ? "left" : "top"}
           >
