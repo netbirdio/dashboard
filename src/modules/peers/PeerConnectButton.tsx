@@ -22,44 +22,35 @@ export const PeerConnectButton = () => {
   if (isMobile) return;
 
   return isConnected ? (
-    // <>
-    //   <DropdownMenu modal={false}>
-    //     <DropdownMenuTrigger
-    //       asChild={true}
-    //       onClick={(e) => {
-    //         e.stopPropagation();
-    //         e.preventDefault();
-    //       }}
-    //     >
-    //       <div className={"group"}>
-    //         <ConnectButton />
-    //       </div>
-    //     </DropdownMenuTrigger>
-    //     <DropdownMenuContent
-    //       className="w-auto"
-    //       align="start"
-    //       side={"bottom"}
-    //       sideOffset={8}
-    //     >
-    //       <SSHButton peer={peer} isDropdown={true} />
-    //       <RDPButton peer={peer} isDropdown={true} />
-    //     </DropdownMenuContent>
-    //   </DropdownMenu>
-    // </>
-      <FullTooltip
-          content={
-              <div className={"max-w-[200px] text-xs"}>
-                  Connecting via SSH or RDP is coming soon.
-              </div>
-          }
-      >
-          <ConnectButton disabled={true} />
-      </FullTooltip>
+    <>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger
+          asChild={true}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          <div className={"group"}>
+            <ConnectButton />
+          </div>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent
+          className="w-auto"
+          align="start"
+          side={"bottom"}
+          sideOffset={8}
+        >
+          <SSHButton peer={peer} isDropdown={true} />
+          <RDPButton peer={peer} isDropdown={true} />
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </>
   ) : (
     <FullTooltip
       content={
         <div className={"max-w-[200px] text-xs"}>
-          Connecting via SSH or RDP is coming soon.
+            Connecting via SSH or RDP is only available when the peer is online.
         </div>
       }
     >
