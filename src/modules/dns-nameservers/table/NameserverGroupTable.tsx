@@ -24,6 +24,8 @@ import NameserverDistributionGroupsCell from "@/modules/dns-nameservers/table/Na
 import NameserverMatchDomainsCell from "@/modules/dns-nameservers/table/NameserverMatchDomainsCell";
 import NameserverNameCell from "@/modules/dns-nameservers/table/NameserverNameCell";
 import NameserverNameserversCell from "@/modules/dns-nameservers/table/NameserverNameserversCell";
+import Card from "@components/Card";
+import NoResults from "@/components/ui/NoResults";
 
 export const NameserverGroupTableColumns: ColumnDef<NameserverGroup>[] = [
   {
@@ -91,12 +93,14 @@ type Props = {
   nameserverGroups?: NameserverGroup[];
   isLoading?: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  inGroup?: boolean
 };
 
 export default function NameserverGroupTable({
   nameserverGroups,
   isLoading,
   headingTarget,
+  inGroup
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -133,6 +137,14 @@ export default function NameserverGroupTable({
         text={"Network Routes"}
         sorting={sorting}
         setSorting={setSorting}
+        wrapperComponent={inGroup ? Card : undefined}
+        wrapperProps={inGroup ? { className: "mt-6 w-full" } : undefined}
+        paginationPaddingClassName={inGroup ? "px-0 pt-8" : undefined}
+        tableClassName={inGroup ? "mt-0" : undefined}
+        inset={!inGroup}
+        minimal={inGroup}
+        showSearchAndFilters={inGroup}
+        keepStateInLocalStorage={!inGroup}
         columnVisibility={{
           description: false,
           domain_list: false,
@@ -146,7 +158,11 @@ export default function NameserverGroupTable({
         columns={NameserverGroupTableColumns}
         data={nameserverGroups}
         searchPlaceholder={"Search by name, domains or nameservers..."}
-        getStartedCard={
+        getStartedCard={inGroup ? <NoResults
+          icon={<DNSIcon className={"fill-nb-gray-200"} size={20} />}
+          className={"py-4"}
+          title={"No nameservers for this group"}
+        /> :
           <GetStartedTest
             icon={
               <SquareIcon
@@ -156,9 +172,7 @@ export default function NameserverGroupTable({
               />
             }
             title={"Create Nameserver"}
-            description={
-              "It looks like you don't have any nameservers. Get started by adding one to your network. Select a predefined or add your custom nameservers."
-            }
+            description={"It looks like you don't have any nameservers. Get started by adding one to your network. Select a predefined or add your custom nameservers."}
             button={
               <div className={"flex flex-col"}>
                 <div>
@@ -193,7 +207,7 @@ export default function NameserverGroupTable({
         }
         rightSide={() => (
           <>
-            {nameserverGroups && nameserverGroups?.length > 0 && (
+            {nameserverGroups && nameserverGroups?.length > 0 || inGroup && (
               <NameserverTemplateModal>
                 <Button
                   variant={"primary"}

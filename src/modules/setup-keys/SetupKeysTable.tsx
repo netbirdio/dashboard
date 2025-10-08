@@ -26,6 +26,8 @@ import SetupKeyModal from "@/modules/setup-keys/SetupKeyModal";
 import SetupKeyNameCell from "@/modules/setup-keys/SetupKeyNameCell";
 import SetupKeyStatusCell from "@/modules/setup-keys/SetupKeyStatusCell";
 import SetupKeyUsageCell from "@/modules/setup-keys/SetupKeyUsageCell";
+import Card from "@components/Card";
+import NoResults from "@/components/ui/NoResults";
 
 export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
   {
@@ -117,6 +119,7 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
 type Props = {
   setupKeys?: SetupKey[];
   isLoading: boolean;
+  inGroup?: boolean;
   headingTarget?: HTMLHeadingElement | null;
 };
 
@@ -124,6 +127,7 @@ export default function SetupKeysTable({
   setupKeys,
   isLoading,
   headingTarget,
+  inGroup,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -156,6 +160,14 @@ export default function SetupKeysTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
+        wrapperComponent={inGroup ? Card : undefined}
+        wrapperProps={inGroup ? { className: "mt-6 w-full" } : undefined}
+        paginationPaddingClassName={inGroup ? "px-0 pt-8" : undefined}
+        tableClassName={inGroup ? "mt-0" : undefined}
+        inset={!inGroup}
+        minimal={inGroup}
+        showSearchAndFilters={inGroup}
+        keepStateInLocalStorage={!inGroup}
         text={"Setup Keys"}
         sorting={sorting}
         setSorting={setSorting}
@@ -166,7 +178,11 @@ export default function SetupKeysTable({
           valid: false,
           group_strings: false,
         }}
-        getStartedCard={
+        getStartedCard={inGroup ? <NoResults
+          icon={<SetupKeysIcon className={"fill-nb-gray-200"} size={20} />}
+          className={"py-4"}
+          title={"No setup keys for this group"}
+        /> :
           <GetStartedTest
             icon={
               <SquareIcon
@@ -210,7 +226,7 @@ export default function SetupKeysTable({
         }
         rightSide={() => (
           <>
-            {setupKeys && setupKeys?.length > 0 && (
+            {setupKeys && setupKeys?.length > 0 || true && (
               <Button
                 variant={"primary"}
                 className={"ml-auto"}

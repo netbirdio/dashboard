@@ -27,6 +27,8 @@ import UserNameCell from "@/modules/users/table-cells/UserNameCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import UserInviteModal from "@/modules/users/UserInviteModal";
+import Card from "@components/Card";
+import NoResults from "@/components/ui/NoResults";
 
 export const UsersTableColumns: ColumnDef<User>[] = [
   {
@@ -103,16 +105,70 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   },
 ];
 
+
+export const GroupUsersTableColumns: ColumnDef<User>[] = [
+  {
+    accessorKey: "name",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Name</DataTableHeader>;
+    },
+    accessorFn: (row) => row.name + " " + row.email,
+    sortingFn: "text",
+    cell: ({ row }) => <UserNameCell user={row.original} />,
+  },
+  {
+    accessorKey: "is_current",
+    sortingFn: "basic",
+  },
+  {
+    accessorKey: "role",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Role</DataTableHeader>;
+    },
+    sortingFn: "text",
+    cell: ({ row }) => <UserRoleCell user={row.original} />,
+  },
+  {
+    accessorKey: "status",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Status</DataTableHeader>;
+    },
+    sortingFn: "text",
+    cell: ({ row }) => <UserStatusCell user={row.original} />,
+  },
+  {
+    accessorKey: "last_login",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Last Login</DataTableHeader>;
+    },
+    sortingFn: "text",
+    cell: ({ row }) => (
+      <LastTimeRow
+        date={dayjs(row.original.last_login).toDate()}
+        text={"Last login on"}
+      />
+    ),
+  },
+  {
+    id: "approval_required",
+    accessorKey: "approval_required",
+    sortingFn: "basic",
+    accessorFn: (u) => u?.pending_approval,
+  },
+];
+
 type Props = {
   users?: User[];
   isLoading?: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  inGroup?: boolean;
 };
 
 export default function UsersTable({
   users,
   isLoading,
   headingTarget,
+  inGroup,
 }: Readonly<Props>) {
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
@@ -139,13 +195,21 @@ export default function UsersTable({
 
   return (
     <DataTable
+      wrapperComponent={inGroup ? Card : undefined}
+      wrapperProps={inGroup ? { className: "mt-6 w-full" } : undefined}
+      tableClassName={inGroup ? "mt-0" : undefined}
+      inset={!inGroup}
+      minimal={inGroup}
+      showSearchAndFilters={inGroup}
+      keepStateInLocalStorage={!inGroup}
       headingTarget={headingTarget}
       isLoading={isLoading}
       text={"Users"}
       sorting={sorting}
       setSorting={setSorting}
-      columns={UsersTableColumns}
+      columns={inGroup ? GroupUsersTableColumns : UsersTableColumns}
       data={users}
+      paginationPaddingClassName={"px-0 pt-8"}
       columnVisibility={{
         is_current: false,
         approval_required: false,
@@ -154,46 +218,49 @@ export default function UsersTable({
         router.push(`/team/user?id=${row.original.id}`);
       }}
       searchPlaceholder={"Search by name, email or role..."}
-      getStartedCard={
-        <GetStartedTest
-          icon={
-            <SquareIcon
-              icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
-              color={"gray"}
-              size={"large"}
-            />
-          }
-          title={"Add New Users"}
-          description={
-            "It looks like you don't have any users yet. Get started by inviting users to your account."
-          }
-          button={
-            <div className={"flex flex-col items-center justify-center"}>
-              <InviteUserButton show={true} />
-            </div>
-          }
-          learnMore={
-            <>
-              Learn more about
-              <InlineLink
-                href={
-                  "https://docs.netbird.io/how-to/add-users-to-your-network"
-                }
-                target={"_blank"}
-              >
-                Users
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </>
-          }
-        />
+      getStartedCard={inGroup ? <NoResults
+        className={"py-4"}
+        title={"No Policies assigned to this group"}
+        icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
+      /> : <GetStartedTest
+        icon={
+          <SquareIcon
+            icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
+            color={"gray"}
+            size={"large"}
+          />
+        }
+        title={"Add New Users"}
+        description={
+          "It looks like you don't have any users yet. Get started by inviting users to your account."
+        }
+        button={
+          <div className={"flex flex-col items-center justify-center"}>
+            <InviteUserButton show={true} />
+          </div>
+        }
+        learnMore={
+          <>
+            Learn more about
+            <InlineLink
+              href={
+                "https://docs.netbird.io/how-to/add-users-to-your-network"
+              }
+              target={"_blank"}
+            >
+              Users
+              <ExternalLinkIcon size={12} />
+            </InlineLink>
+          </>
+        }
+      />
       }
-      rightSide={() => (
+      rightSide={!inGroup ?() => (
         <InviteUserButton
           show={users && users?.length > 0}
           className={"ml-auto"}
         />
-      )}
+      ): undefined}
     >
       {(table) => {
         if (
@@ -212,7 +279,7 @@ export default function UsersTable({
                   table.setPageIndex(0);
                   let current =
                     table.getColumn("approval_required")?.getFilterValue() ===
-                    undefined
+                      undefined
                       ? true
                       : undefined;
 
@@ -225,7 +292,7 @@ export default function UsersTable({
                 }}
                 variant={
                   table.getColumn("approval_required")?.getFilterValue() ===
-                  true
+                    true
                     ? "tertiary"
                     : "secondary"
                 }

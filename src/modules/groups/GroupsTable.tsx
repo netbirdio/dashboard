@@ -17,7 +17,8 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import GroupsActionCell from "@/modules/groups/GroupsActionCell";
 import GroupsCountCell from "@/modules/groups/GroupsCountCell";
 import GroupsNameCell from "@/modules/groups/GroupsNameCell";
-import useGroupsUsage, { GroupUsage } from "@/modules/settings/useGroupsUsage";
+import useGroupsUsage, { GroupUsage } from "@/modules/groups/useGroupsUsage";
+import { AddGroupButton } from "@/components/ui/AddGroupButton";
 
 // Peers, Access Controls, DNS, Routes, Setup Keys, Users
 export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
@@ -198,8 +199,7 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
     },
     sortingFn: "basic",
     accessorFn: (row) => {
-      return (
-        row.peers_count > 0 ||
+      return (row.peers_count > 0 ||
         row.nameservers_count > 0 ||
         row.policies_count > 0 ||
         row.routes_count > 0 ||
@@ -249,6 +249,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
           columns={GroupsTableColumns}
           data={groups}
           searchPlaceholder={"Search group..."}
+          rightSide={() => <AddGroupButton />}
           columnVisibility={{
             in_use: false,
           }}

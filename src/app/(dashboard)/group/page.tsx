@@ -1,24 +1,24 @@
 "use client";
 import { notify } from "@components/Notification";
 import Breadcrumbs from "@components/Breadcrumbs";
-import Button from "@components/Button";
 import Card from "@components/Card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
-import { PageNotFound } from "@components/ui/PageNotFound";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import useRedirect from "@hooks/useRedirect";
-import useFetchApi, { useApiCall } from "@utils/api";
+import { useApiCall } from "@utils/api";
 import {
-  ExternalLinkIcon,
   FolderGit2Icon,
+  GlobeIcon,
   KeyIcon,
   KeyRoundIcon,
-  MonitorSmartphoneIcon,
   PencilIcon,
+  RouteIcon,
   ServerIcon,
+  ShieldCheckIcon,
   UserCheckIcon,
+  UserIcon,
   UsersIcon,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -26,25 +26,22 @@ import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
-import type { Group } from "@/interfaces/Group";
 import PageContainer from "@/layouts/PageContainer";
 import { SetupKey } from "@/interfaces/SetupKey";
 import { EditGroupNameModal } from "@/modules/groups/EditGroupNameModal";
 import { useGroupIdentification } from "@/modules/groups/useGroupIdentification";
+import useGroupDetails, { GroupDetails } from "@/modules/groups/useGroupDetails";
+import TeamIcon from "@/assets/icons/TeamIcon";
+import { GroupNameserversSection, GroupNetworkRoutesSection, GroupPeersSection, GroupPoliciesSection, GroupResourcesSection, GroupSetupKeysSection, GroupUsersSection } from "@/modules/groups/GroupSections";
 
 export default function GroupPage() {
   const queryParameter = useSearchParams();
   const { isRestricted } = usePermissions();
   const groupId = queryParameter.get("id");
-  const {
-    data: group,
-    isLoading,
-    error,
-  } = useFetchApi<Group>("/groups/" + groupId, true);
 
   useRedirect("/team/groups", false, !groupId || isRestricted);
 
-  if (isRestricted) {
+  if (isRestricted || !groupId) {
     return (
       <PageContainer>
         <RestrictedAccess page={"Group Information"} />
@@ -52,29 +49,26 @@ export default function GroupPage() {
     );
   }
 
-  if (error)
-    return (
-      <PageNotFound
-        title={error?.message}
-        description={
-          "The Group you are attempting to access cannot be found. It may have been deleted, or you may not have permission to view it. Please verify the URL or return to the dashboard."
-        }
-      />
-    );
+  const group = useGroupDetails(groupId)
 
-  return group && !isLoading ? (
+  return group ? (
     <GroupOverview group={group} />
   ) : (
     <FullScreenLoading />
   );
 }
 
-function GroupOverview({ group }: { group: Group }) {
+function GroupOverview({ group }: { group: GroupDetails }) {
   return (
     <PageContainer>
       <RoutesProvider>
         <div className={"p-default py-6 pb-0"}>
           <Breadcrumbs>
+            <Breadcrumbs.Item
+              href={"/team"}
+              label={"Team"}
+              icon={<TeamIcon size={13} />}
+            />
             <Breadcrumbs.Item
               href={"/team/groups"}
               label={"Groups"}
@@ -91,7 +85,7 @@ function GroupOverview({ group }: { group: Group }) {
 }
 
 
-const GroupGeneralInformation = ({ group }: { group: Group }) => {
+const GroupGeneralInformation = ({ group }: { group: GroupDetails }) => {
   const { mutate } = useSWRConfig();
   const [showEditNameModal, setShowEditNameModal] = useState(false);
   const groupRequest = useApiCall<SetupKey>("/groups/" + group.id);
@@ -166,7 +160,7 @@ const GroupGeneralInformation = ({ group }: { group: Group }) => {
   );
 };
 
-function GroupInformationCard({ group }: { group: Group }) {
+function GroupInformationCard({ group }: { group: GroupDetails }) {
   return (
     <Card className={"w-full xl:w-1/2"}>
       <Card.List>
@@ -215,6 +209,56 @@ function GroupInformationCard({ group }: { group: Group }) {
         <Card.ListItem
           label={
             <>
+              <UserIcon size={16} />
+              Users
+            </>
+          }
+          value={group.users?.length?.toString() ?? "0"}
+        />
+
+        <Card.ListItem
+          label={
+            <>
+              <ShieldCheckIcon size={16} />
+              Policies
+            </>
+          }
+          value={group.policies?.length?.toString() ?? "0"}
+        />
+
+        <Card.ListItem
+          label={
+            <>
+              <RouteIcon size={16} />
+              Network Routes
+            </>
+          }
+          value={group.routes?.length?.toString() ?? "0"}
+        />
+
+        <Card.ListItem
+          label={
+            <>
+              <GlobeIcon size={16} />
+              Nameservers
+            </>
+          }
+          value={group.nameservers?.length?.toString() ?? "0"}
+        />
+
+        <Card.ListItem
+          label={
+            <>
+              <KeyRoundIcon size={16} />
+              Setup Keys
+            </>
+          }
+          value={group.setupKeys?.length?.toString() ?? "0"}
+        />
+
+        <Card.ListItem
+          label={
+            <>
               <KeyRoundIcon size={16} />
               Issued By
             </>
@@ -225,8 +269,7 @@ function GroupInformationCard({ group }: { group: Group }) {
     </Card>
   );
 }
-
-const GroupOverviewTabs = ({ group }: { group: Group }) => {
+const GroupOverviewTabs = ({ group }: { group: GroupDetails }) => {
   const [tab, setTab] = useState("peers");
 
   return (
@@ -239,113 +282,67 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
       <TabsList justify={"start"} className={"px-8"}>
         <TabsTrigger value={"peers"}>
           <UsersIcon size={16} />
-          Peers ({group.peers_count})
+          Peers
+        </TabsTrigger>
+
+        <TabsTrigger value={"users"}>
+          <UserIcon size={16} />
+          Users
+        </TabsTrigger>
+
+        <TabsTrigger value={"policies"}>
+          <ShieldCheckIcon size={16} />
+          Policies
         </TabsTrigger>
 
         <TabsTrigger value={"resources"}>
           <ServerIcon size={16} />
-          Resources ({group.resources_count})
+          Resources
+        </TabsTrigger>
+
+        <TabsTrigger value={"network-routes"}>
+          <RouteIcon size={16} />
+          Network Routes
+        </TabsTrigger>
+
+        <TabsTrigger value={"nameservers"}>
+          <GlobeIcon size={16} />
+          Nameservers
+        </TabsTrigger>
+
+        <TabsTrigger value={"setup-keys"}>
+          <KeyIcon size={16} />
+          Setup Keys
         </TabsTrigger>
       </TabsList>
 
       <TabsContent value={"peers"} className={"pb-8"}>
-        <GroupPeersSection group={group} />
+        <GroupPeersSection peers={group.peersGroup} users={group.users} />
+      </TabsContent>
+
+      <TabsContent value={"users"} className={"pb-8"}>
+        <GroupUsersSection users={group.users} />
+      </TabsContent>
+
+      <TabsContent value={"policies"} className={"pb-8"}>
+        <GroupPoliciesSection policies={group.policies} />
       </TabsContent>
 
       <TabsContent value={"resources"} className={"pb-8"}>
-        <GroupResourcesSection group={group} />
+        <GroupResourcesSection resources={group.networkResource} />
+      </TabsContent>
+
+      <TabsContent value={"network-routes"} className={"pb-8"}>
+        <GroupNetworkRoutesSection peerRoutes={group.routes}  />
+      </TabsContent>
+
+      <TabsContent value={"nameservers"} className={"pb-8"}>
+        <GroupNameserversSection nameserverGroups={group.nameservers} />
+      </TabsContent>
+
+      <TabsContent value={"setup-keys"} className={"pb-8"}>
+        <GroupSetupKeysSection setupKeys={group.setupKeys} />
       </TabsContent>
     </Tabs>
-  );
-};
-
-// Peer List Component for the Peers tab
-const GroupPeersSection = ({ group }: { group: Group }) => {
-  return (
-    <div className="p-default">
-      <div className="mb-6">
-        <h3 className="text-lg font-medium">Peers in this Group</h3>
-        <p className="text-nb-gray-300 text-sm">
-          List of all peers that are members of this group
-        </p>
-      </div>
-
-      <Card>
-        <Card.List>
-          {group.peers && group.peers.length > 0 ? (
-            group.peers.map((peer) => {
-              //todo : @Eduard can you check this
-              if (typeof peer === "string" || !peer?.id) return null;
-              return (<Card.ListItem
-                key={peer.id}
-                label={
-                  <div className="flex items-center gap-2">
-                    <MonitorSmartphoneIcon size={14} />
-                    <span>{peer.name}</span>
-                  </div>
-                }
-                value={
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-nb-gray-400">ID: {peer.id}</span>
-                  </div>
-                }
-              />
-              )
-            })) : (
-            <div className="p-8 text-center text-nb-gray-400">
-              <UsersIcon size={32} className="mx-auto mb-2 opacity-50" />
-              <p>No peers assigned to this group</p>
-            </div>
-          )}
-        </Card.List>
-      </Card>
-    </div>
-  );
-};
-// Resources List Component for the Resources tab
-const GroupResourcesSection = ({ group }: { group: Group }) => {
-  return (
-    <div className="p-default">
-      <div className="mb-6">
-        <h3 className="text-lg font-medium">Resources in this Group</h3>
-        <p className="text-nb-gray-300 text-sm">
-          List of all resources that are accessible through this group
-        </p>
-      </div>
-
-      <Card>
-        <Card.List>
-          {group.resources && group.resources.length > 0 ? (
-            group.resources.map((resource) => {
-              //todo : @Eduard can you check this 
-              if (typeof resource === "string" || !resource?.id) return null;
-              return (<Card.ListItem
-                key={resource.id}
-                label={
-                  <div className="flex items-center gap-2">
-                    <ServerIcon size={14} />
-                    <span className="capitalize">{resource.type}</span>
-                  </div>
-                }
-                value={
-                  <div className="flex items-center gap-2">
-                    <span className="text-xs text-nb-gray-400">ID: {resource.id}</span>
-                    <Button variant='secondary' size="sm">
-                      <ExternalLinkIcon size={12} />
-                    </Button>
-                  </div>
-                }
-              />
-              )
-            })
-          ) : (
-            <div className="p-8 text-center text-nb-gray-400">
-              <ServerIcon size={32} className="mx-auto mb-2 opacity-50" />
-              <p>No resources assigned to this group</p>
-            </div>
-          )}
-        </Card.List>
-      </Card>
-    </div>
   );
 };

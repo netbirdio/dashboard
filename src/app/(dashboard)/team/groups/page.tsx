@@ -34,7 +34,7 @@ export function GroupsView() {
           />
           <Breadcrumbs.Item
             href={"/team/groups"}
-            label={"User Groups"}
+            label={"Groups"}
             icon={<FolderGit2Icon size={14} />}
             active
           />

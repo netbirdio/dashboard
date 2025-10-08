@@ -6,7 +6,6 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import React, { useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
-import { Peer } from "@/interfaces/Peer";
 import { Route } from "@/interfaces/Route";
 import PeerRouteActionCell from "@/modules/peer/PeerRouteActionCell";
 import PeerRouteActiveCell from "@/modules/peer/PeerRouteActiveCell";
@@ -17,8 +16,8 @@ import RouteDistributionGroupsCell from "@/modules/routes/RouteDistributionGroup
 type Props = {
   peerRoutes?: Route[];
   isLoading: boolean;
+  inGroup?: boolean;
   headingTarget?: HTMLHeadingElement | null;
-  peer: Peer;
 };
 
 export const RouteTableColumns: ColumnDef<Route>[] = [
@@ -71,8 +70,8 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
 export default function PeerRoutesTable({
   peerRoutes,
   isLoading,
-  peer,
   headingTarget,
+  inGroup
 }: Props) {
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
@@ -86,7 +85,7 @@ export default function PeerRoutesTable({
     <>
       <DataTable
         wrapperComponent={Card}
-        wrapperProps={{
+        wrapperProps={inGroup ? { className: "mt-6 w-full" } : {
           className: cn("w-full"),
         }}
         headingTarget={headingTarget}
@@ -95,9 +94,10 @@ export default function PeerRoutesTable({
         getStartedCard={
           <NoResults
             className={"py-4"}
-            title={"This peer has no network routes"}
-            description={
+            title={inGroup ? "No network routes for this group" :"This peer has no network routes"}
+            description={!inGroup ?
               "You don't have any assigned network routes yet. You can add this peer to an existing network or create a new network route."
+              :""
             }
             icon={
               <NetworkRoutesIcon size={20} className={"fill-nb-gray-300"} />

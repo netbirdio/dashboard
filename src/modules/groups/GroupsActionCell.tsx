@@ -10,7 +10,7 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { SetupKey } from "@/interfaces/SetupKey";
 import { useGroupIdentification } from "@/modules/groups/useGroupIdentification";
-import { GroupUsage } from "@/modules/settings/useGroupsUsage";
+import { GroupUsage } from "@/modules/groups/useGroupsUsage";
 import {
   DropdownMenu,
   DropdownMenuContent,

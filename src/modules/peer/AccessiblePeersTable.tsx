@@ -18,9 +18,10 @@ import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 
 type Props = {
   peers?: Peer[];
-  peerID: string;
+  peerID?: string;
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  inGroup?: boolean
 };
 
 const AccessiblePeersColumns: ColumnDef<Peer>[] = [
@@ -78,6 +79,7 @@ export default function AccessiblePeersTable({
   isLoading,
   headingTarget,
   peerID,
+  inGroup
 }: Props) {
   const { mutate } = useSWRConfig();
   // Default sorting state of the table
@@ -117,9 +119,9 @@ export default function AccessiblePeersTable({
       getStartedCard={
         <NoResults
           className={"py-4"}
-          title={"This peer has no accessible peers"}
-          description={
-            "Add more peers to your network or check your access control policies."
+          title={inGroup ? "No peers assigned to this group" : "This peer has no accessible peers"}
+          description={!inGroup ?
+            "Add more peers to your network or check your access control policies." : ""
           }
           icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
         />
@@ -200,7 +202,11 @@ export default function AccessiblePeersTable({
             isDisabled={peers?.length == 0}
             onClick={() => {
               mutate("/users").then();
-              mutate(`/peers/${peerID}/accessible-peers`).then();
+              if (peerID) {
+                mutate(`/peers/${peerID}/accessible-peers`).then();
+                return;
+              }
+              mutate(`/peers`).then();
             }}
           />
         </>

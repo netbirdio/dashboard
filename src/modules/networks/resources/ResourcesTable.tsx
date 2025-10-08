@@ -26,6 +26,7 @@ type Props = {
   resources?: NetworkResource[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  inGroup?: boolean;
 };
 
 const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
@@ -105,6 +106,7 @@ export default function ResourcesTable({
   resources,
   isLoading,
   headingTarget,
+  inGroup,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
   const params = useSearchParams();
@@ -116,7 +118,7 @@ export default function ResourcesTable({
   return (
     <DataTable
       wrapperComponent={Card}
-      wrapperProps={{ className: "mt-6 pb-2 w-full" }}
+      wrapperProps={inGroup ? { className: "mt-6 w-full" } : { className: "mt-6 pb-2 w-full" }}
       headingTarget={headingTarget}
       sorting={sorting}
       setSorting={setSorting}
@@ -137,9 +139,11 @@ export default function ResourcesTable({
       getStartedCard={
         <NoResults
           className={"py-4"}
-          title={"This network has no resources"}
-          description={
+          title={inGroup ? "No resources assigned to this group":
+            "This network has no resources"}
+          description={!inGroup ?
             "Add resources to this network to control what peers can access. Resources can be anything from a single IP, a subnet, or a domain."
+            :""
           }
           icon={<Layers3Icon size={20} />}
         />
