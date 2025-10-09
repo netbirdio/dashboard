@@ -168,3 +168,9 @@ p {
 .xterm-viewport {
     @apply m-0 p-0 box-border;
 }
+
+
+/* Control Center */
+.react-flow__node-groupNode .selected{
+    @apply border-netbird;
+}

@@ -20,7 +20,8 @@ export enum SSHStatus {
   CONNECTING = 2,
 }
 
-export const SSH_DOCS_LINK = "https://docs.netbird.io/";
+export const SSH_DOCS_LINK =
+  "https://docs.netbird.io/how-to/browser-client#ssh-connection";
 
 export const useSSH = (client: any) => {
   const [status, setStatus] = useState(SSHStatus.DISCONNECTED);
