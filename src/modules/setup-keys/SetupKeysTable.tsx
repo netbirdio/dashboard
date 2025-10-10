@@ -226,7 +226,7 @@ export default function SetupKeysTable({
         }
         rightSide={() => (
           <>
-            {setupKeys && setupKeys?.length > 0 || true && (
+            {setupKeys && setupKeys?.length > 0 && (
               <Button
                 variant={"primary"}
                 className={"ml-auto"}
