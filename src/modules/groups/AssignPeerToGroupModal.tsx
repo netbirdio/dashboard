@@ -289,7 +289,7 @@ export const AssignGroupToPeerModalContent = ({
   );
 };
 
-const PeersTableColumns: ColumnDef<Peer>[] = [
+export const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "select",
     header: ({ table, column }) => (

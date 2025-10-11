@@ -10,8 +10,17 @@ import { NameserverGroup } from '@/interfaces/Nameserver'
 import { SetupKey } from '@/interfaces/SetupKey'
 import Paragraph from '@/components/Paragraph'
 import SkeletonTable, { SkeletonTableHeader } from '@/components/skeletons/SkeletonTable'
+import { AddItemsToGroup } from './AddItemsToGroupModal'
+import { GroupDetails } from './useGroupDetails'
+import { PeersTableColumns } from './AssignPeerToGroupModal'
+import useFetchApi, { useApiCall } from '@/utils/api'
+import { MonitorSmartphoneIcon } from 'lucide-react'
+import { notify } from '@/components/Notification'
+import { useSWRConfig } from 'swr'
+import { Group } from '@/interfaces/Group'
+import { RemoveItemsFromGroup } from './RemoveItemsFromGroup'
 
-const AccessiblePeersTable = lazy(
+const PeersTable = lazy(
   () => import("@/modules/peer/AccessiblePeersTable"),
 );
 const UsersTable = lazy(
@@ -34,27 +43,67 @@ const PeerRoutesTable = lazy(
   () => import("@/modules/peer/PeerRoutesTable"),
 );
 
-export const GroupPeersSection = ({ peers, users }: { peers: Peer[], users: User[] }) => {
+export const GroupPeersSection = ({ group }: { group: GroupDetails }) => {
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
-  const peersWithUser = peers?.map((peer) => {
-    if (!users) return peer;
-    return {
-      ...peer,
-      user: users?.find((user) => user.id === peer.user_id),
-    };
-  });
+  const { mutate } = useSWRConfig();
+  const groupRequest = useApiCall<Group>("/groups");
+
+
+
+  const handleAddPeers = async (selectedPeers: Peer[]) => {
+    const currentPeerIds = group.peers?.map(p => typeof p === 'string' ? p : p.id) || [];
+    const newPeerIds = [...currentPeerIds, ...selectedPeers.map(peer => peer.id)];
+    notify({
+      title: "Adding peers to group",
+      description: `Peers were successfully added to ${group.name}.`,
+      promise: groupRequest.put({ name: group.name, peers: newPeerIds }, "/" + group.id)
+        .then(() => {
+          mutate("/groups/" + group.id);
+        }),
+      loadingMessage: "Adding peers to group...",
+    });
+  };
+
+  const handleRemovePeer = (peer: Peer) => {
+    const currentPeerIds = group.peers?.map(p => typeof p === 'string' ? p : p.id) || [];
+    const newPeerIds = currentPeerIds.filter(pid => pid != peer.id!)
+    notify({
+      title: `Removing peer from ${group.name} group`,
+      description: `Peer were successfully removed to ${group.name}.`,
+      promise: groupRequest.put({ name: group.name, peers: newPeerIds }, "/" + group.id)
+        .then(() => {
+          mutate("/groups/" + group.id);
+        }),
+      loadingMessage: "Adding peers to group...",
+    });
+  }
+
   return (<GroupContainer
     headingRef={headingRef}
     title='Peers in this Group'
     description='List of all peers that are members of this group'
   >
-    <AccessiblePeersTable
+    <PeersTable
       isLoading={false}
-      peers={peersWithUser}
+      peers={group.peersGroup}
       headingTarget={portalTarget}
       inGroup={true}
+      removeFromGroupCell={(peer) => (<RemoveItemsFromGroup<Peer>
+        groupName={group.name}
+        item={peer}
+        itemName='Peer'
+        handleRemoveItem={handleRemovePeer}
+      />)}
+      rightSide={() => (<AddItemsToGroup<Peer>
+        groupName={group.name} items={group.peersGroup}
+        itemName='Peers'
+        itemTableColumns={PeersTableColumns}
+        fetchAllItems={() => useFetchApi<Peer[]>("/peers")}
+        handleAddItem={handleAddPeers}
+        itemIcon={<MonitorSmartphoneIcon size={20} />}
+      />)}
     />
   </GroupContainer>
   )
@@ -206,7 +255,6 @@ const GroupContainer = ({ title, description, headingRef, children }: Props) => 
             </div>
           }
         >
-
           {children}
         </Suspense>
       </div>

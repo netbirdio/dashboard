@@ -13,6 +13,7 @@ import {
   GlobeIcon,
   KeyIcon,
   KeyRoundIcon,
+  MonitorSmartphoneIcon,
   PencilIcon,
   RouteIcon,
   ServerIcon,
@@ -281,7 +282,7 @@ const GroupOverviewTabs = ({ group }: { group: GroupDetails }) => {
     >
       <TabsList justify={"start"} className={"px-8"}>
         <TabsTrigger value={"peers"}>
-          <UsersIcon size={16} />
+          <MonitorSmartphoneIcon size={16} />
           Peers
         </TabsTrigger>
 
@@ -317,7 +318,7 @@ const GroupOverviewTabs = ({ group }: { group: GroupDetails }) => {
       </TabsList>
 
       <TabsContent value={"peers"} className={"pb-8"}>
-        <GroupPeersSection peers={group.peersGroup} users={group.users} />
+        <GroupPeersSection group={group} />
       </TabsContent>
 
       <TabsContent value={"users"} className={"pb-8"}>
@@ -333,7 +334,7 @@ const GroupOverviewTabs = ({ group }: { group: GroupDetails }) => {
       </TabsContent>
 
       <TabsContent value={"network-routes"} className={"pb-8"}>
-        <GroupNetworkRoutesSection peerRoutes={group.routes}  />
+        <GroupNetworkRoutesSection peerRoutes={group.routes} />
       </TabsContent>
 
       <TabsContent value={"nameservers"} className={"pb-8"}>

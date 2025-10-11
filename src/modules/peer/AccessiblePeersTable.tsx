@@ -22,6 +22,8 @@ type Props = {
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
   inGroup?: boolean
+  rightSide?: () => React.ReactNode
+  removeFromGroupCell?: (peer: Peer) => React.ReactNode
 };
 
 const AccessiblePeersColumns: ColumnDef<Peer>[] = [
@@ -72,6 +74,13 @@ const AccessiblePeersColumns: ColumnDef<Peer>[] = [
     },
     cell: ({ row }) => <PeerOSCell os={row.original.os} />,
   },
+  {
+    accessorKey: "id",
+    header: "",
+    cell: ({ row }) => (
+      <button>{row.original.id}</button>
+    ),
+  },
 ];
 
 export default function AccessiblePeersTable({
@@ -79,7 +88,9 @@ export default function AccessiblePeersTable({
   isLoading,
   headingTarget,
   peerID,
-  inGroup
+  inGroup,
+  rightSide,
+  removeFromGroupCell,
 }: Props) {
   const { mutate } = useSWRConfig();
   // Default sorting state of the table
@@ -111,7 +122,11 @@ export default function AccessiblePeersTable({
       inset={false}
       tableClassName={"mt-0"}
       text={"Peers"}
-      columns={AccessiblePeersColumns}
+      columns={inGroup && removeFromGroupCell ? [...AccessiblePeersColumns, {
+        accessorKey: "id",
+        header:"",
+        cell: ({ row }) => removeFromGroupCell(row.original),
+      },] : AccessiblePeersColumns}
       keepStateInLocalStorage={false}
       data={peers}
       searchPlaceholder={"Search by name, IP, owner or group..."}
@@ -126,6 +141,7 @@ export default function AccessiblePeersTable({
           icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
         />
       }
+      rightSide={rightSide}
       columnVisibility={{
         connected: false,
         ip: false,
