@@ -178,6 +178,128 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
   },
 ];
 
+export const GroupAccessControlTableColumns: ColumnDef<Policy>[] = [
+  {
+    id: "name",
+    accessorFn: (row) => removeAllSpaces(row?.name),
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Name</DataTableHeader>;
+    },
+    sortingFn: "text",
+    filterFn: "fuzzy",
+    cell: ({ cell }) => <AccessControlNameCell policy={cell.row.original} />,
+  },
+  {
+    id: "description",
+    accessorFn: (row) => removeAllSpaces(row?.description),
+    sortingFn: "text",
+    filterFn: "fuzzy",
+  },
+  {
+    id: "enabled",
+    accessorKey: "enabled",
+    accessorFn: (row) => row.enabled,
+    sortingFn: "basic",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Active</DataTableHeader>;
+    },
+    cell: ({ cell }) => <AccessControlActiveCell policy={cell.row.original} />,
+  },
+  {
+    id: "sources",
+    accessorFn: (row) => {
+      try {
+        return row.rules[0].sources?.length || 0;
+      } catch (e) {
+        console.log(e);
+      }
+      return 0;
+    },
+    sortingFn: "basic",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Sources</DataTableHeader>;
+    },
+    cell: ({ cell }) => <AccessControlSourcesCell policy={cell.row.original} />,
+  },
+  {
+    id: "direction",
+    accessorFn: (row) => {
+      try {
+        return row.rules[0].bidirectional || true;
+      } catch (e) {
+        console.log(e);
+      }
+      return 0;
+    },
+    sortingFn: "basic",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Direction</DataTableHeader>;
+    },
+    cell: ({ cell }) => (
+      <AccessControlDirectionCell policy={cell.row.original} />
+    ),
+  },
+  {
+    id: "destinations",
+    accessorFn: (row) => {
+      try {
+        return row.rules[0].destinations?.length || 0;
+      } catch (e) {
+        console.log(e);
+      }
+      return 0;
+    },
+    sortingFn: "basic",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Destinations</DataTableHeader>;
+    },
+    cell: ({ cell }) => (
+      <AccessControlDestinationsCell policy={cell.row.original} />
+    ),
+  },
+
+  {
+    id: "protocol",
+    accessorFn: (row) => {
+      try {
+        return row.rules[0].protocol || 0;
+      } catch (e) {
+        console.log(e);
+      }
+      return 0;
+    },
+    sortingFn: "basic",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Protocol</DataTableHeader>;
+    },
+    cell: ({ cell }) => (
+      <AccessControlProtocolCell policy={cell.row.original} />
+    ),
+  },
+  {
+    id: "ports",
+    accessorFn: (row) => {
+      try {
+        return row.rules[0].ports?.length || 0;
+      } catch (e) {
+        console.log(e);
+      }
+      return 0;
+    },
+    sortingFn: "basic",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Ports</DataTableHeader>;
+    },
+    cell: ({ cell }) => <AccessControlPortsCell policy={cell.row.original} />,
+  },
+  {
+    id: "id",
+    accessorKey: "id",
+    filterFn: "exactMatch",
+  },
+];
+
+
 export default function AccessControlTable({
   policies,
   isLoading,
@@ -275,7 +397,7 @@ export default function AccessControlTable({
         text={"Access Control Policies"}
         sorting={sorting}
         setSorting={setSorting}
-        columns={AccessControlTableColumns}
+        columns={inGroup ? GroupAccessControlTableColumns : AccessControlTableColumns}
         columnVisibility={{
           description: false,
           id: false,

@@ -224,7 +224,7 @@ function GroupInformationCard({ group }: { group: GroupDetails }) {
               Policies
             </>
           }
-          value={group.policies?.length?.toString() ?? "0"}
+          value={group.policies?.all.length.toString() ?? "0"}
         />
 
         <Card.ListItem
@@ -322,7 +322,7 @@ const GroupOverviewTabs = ({ group }: { group: GroupDetails }) => {
       </TabsContent>
 
       <TabsContent value={"users"} className={"pb-8"}>
-        <GroupUsersSection users={group.users} />
+        <GroupUsersSection group={group} />
       </TabsContent>
 
       <TabsContent value={"policies"} className={"pb-8"}>

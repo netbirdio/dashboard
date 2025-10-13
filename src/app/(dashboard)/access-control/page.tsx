@@ -65,7 +65,7 @@ export default function AccessControlPage() {
               <AccessControlTable
                 isLoading={isLoading}
                 policies={policies}
-                headingTarget={portalTarget} 
+                headingTarget={portalTarget}
               />
             </Suspense>
           </PoliciesProvider>

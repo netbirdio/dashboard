@@ -2,7 +2,6 @@ import { usePortalElement } from '@/hooks/usePortalElement'
 import { Peer } from '@/interfaces/Peer'
 import React, { Suspense, lazy } from 'react'
 import { User } from '@/interfaces/User'
-import { Policy } from '@/interfaces/Policy'
 import PoliciesProvider from '@/contexts/PoliciesProvider'
 import { NetworkResource } from '@/interfaces/Network'
 import { Route } from "@/interfaces/Route";
@@ -11,14 +10,14 @@ import { SetupKey } from '@/interfaces/SetupKey'
 import Paragraph from '@/components/Paragraph'
 import SkeletonTable, { SkeletonTableHeader } from '@/components/skeletons/SkeletonTable'
 import { AddItemsToGroup } from './AddItemsToGroupModal'
-import { GroupDetails } from './useGroupDetails'
-import { PeersTableColumns } from './AssignPeerToGroupModal'
+import { GroupDetails, GroupPolices } from './useGroupDetails'
 import useFetchApi, { useApiCall } from '@/utils/api'
 import { MonitorSmartphoneIcon } from 'lucide-react'
 import { notify } from '@/components/Notification'
 import { useSWRConfig } from 'swr'
 import { Group } from '@/interfaces/Group'
 import { RemoveItemsFromGroup } from './RemoveItemsFromGroup'
+import { AssignPeersTableColumns, AssignUsersTableColumns } from './AssignItemTables'
 
 const PeersTable = lazy(
   () => import("@/modules/peer/AccessiblePeersTable"),
@@ -50,8 +49,6 @@ export const GroupPeersSection = ({ group }: { group: GroupDetails }) => {
   const { mutate } = useSWRConfig();
   const groupRequest = useApiCall<Group>("/groups");
 
-
-
   const handleAddPeers = async (selectedPeers: Peer[]) => {
     const currentPeerIds = group.peers?.map(p => typeof p === 'string' ? p : p.id) || [];
     const newPeerIds = [...currentPeerIds, ...selectedPeers.map(peer => peer.id)];
@@ -76,7 +73,7 @@ export const GroupPeersSection = ({ group }: { group: GroupDetails }) => {
         .then(() => {
           mutate("/groups/" + group.id);
         }),
-      loadingMessage: "Adding peers to group...",
+      loadingMessage: "Removing peers to group...",
     });
   }
 
@@ -99,7 +96,7 @@ export const GroupPeersSection = ({ group }: { group: GroupDetails }) => {
       rightSide={() => (<AddItemsToGroup<Peer>
         groupName={group.name} items={group.peersGroup}
         itemName='Peers'
-        itemTableColumns={PeersTableColumns}
+        itemTableColumns={AssignPeersTableColumns}
         fetchAllItems={() => useFetchApi<Peer[]>("/peers")}
         handleAddItem={handleAddPeers}
         itemIcon={<MonitorSmartphoneIcon size={20} />}
@@ -109,9 +106,46 @@ export const GroupPeersSection = ({ group }: { group: GroupDetails }) => {
   )
 }
 
-export const GroupUsersSection = ({ users }: { users: User[] }) => {
+export const GroupUsersSection = ({ group }: { group: GroupDetails }) => {
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
+
+  const { mutate } = useSWRConfig();
+  const updateUser = useApiCall<User>("/users").put;
+
+  const handleAddUsers = async (selectedUsers: User[]) => {
+    const addUserToGroupRequest = selectedUsers.map(user => {
+      const newAutoGroups = [...user.auto_groups, group.id!];
+      return updateUser(
+        { role: user.role, auto_groups: newAutoGroups },
+        "/" + user.id
+      );
+    });
+
+    notify({
+      title: "Adding users to group",
+      description: `Users were successfully added to ${group.name}.`,
+      promise: Promise.all(addUserToGroupRequest).then(() => {
+        mutate("/users");
+      }),
+      loadingMessage: "Adding users to group...",
+    });
+  };
+
+  const handleRemoveUser = (user: User) => {
+    const newAutoGroups = user.auto_groups.filter(id => id !== group.id!);
+    notify({
+      title: `Removing users from ${group.name}`,
+      description: `User were successfully removed from ${group.name}.`,
+      promise: updateUser(
+        { role: user.role, auto_groups: newAutoGroups },
+        "/" + user.id
+      ).then(() => {
+        mutate("/users");
+      }),
+      loadingMessage: "Removing user from group...",
+    });
+  };
 
   return (<GroupContainer
     headingRef={headingRef}
@@ -120,14 +154,29 @@ export const GroupUsersSection = ({ users }: { users: User[] }) => {
   >
     <UsersTable
       isLoading={false}
-      users={users}
+      users={group.users}
       headingTarget={portalTarget}
       inGroup={true}
+      removeFromGroupCell={(user) => (<RemoveItemsFromGroup<User>
+        groupName={group.name}
+        item={user}
+        itemName='User'
+        handleRemoveItem={handleRemoveUser}
+      />)}
+      rightSide={() => (<AddItemsToGroup<User>
+        groupName={group.name}
+        items={group.users}
+        itemName='User'
+        itemTableColumns={AssignUsersTableColumns}
+        fetchAllItems={() => useFetchApi<User[]>("/users")}
+        handleAddItem={handleAddUsers}
+        itemIcon={<MonitorSmartphoneIcon size={20} />}
+      />)}
     />
   </GroupContainer>
   )
 }
-export const GroupPoliciesSection = ({ policies }: { policies: Policy[] }) => {
+export const GroupPoliciesSection = ({ policies }: { policies: GroupPolices }) => {
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -139,7 +188,7 @@ export const GroupPoliciesSection = ({ policies }: { policies: Policy[] }) => {
     <PoliciesProvider>
       <AccessControlTable
         isLoading={false}
-        policies={policies}
+        policies={policies.all}
         headingTarget={portalTarget}
         inGroup={true}
       />

@@ -74,13 +74,6 @@ const AccessiblePeersColumns: ColumnDef<Peer>[] = [
     },
     cell: ({ row }) => <PeerOSCell os={row.original.os} />,
   },
-  {
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => (
-      <button>{row.original.id}</button>
-    ),
-  },
 ];
 
 export default function AccessiblePeersTable({

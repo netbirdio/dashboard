@@ -10,13 +10,19 @@ import useFetchApi from "@/utils/api";
 import { useMemo } from "react";
 
 export interface GroupDetails extends Group {
-  policies: Policy[];
+  policies: GroupPolices;
   nameservers: NameserverGroup[];
   routes: Route[];
   setupKeys: SetupKey[];
   users: User[];
   peersGroup: Peer[];
   networkResource: NetworkResource[]
+}
+
+export interface GroupPolices {
+  sources: Policy[],
+  destinations: Policy[]
+  all: Policy[]
 }
 
 export default function useGroupDetails(groupId: string) {
@@ -32,21 +38,32 @@ export default function useGroupDetails(groupId: string) {
 
 
   const linkedPolicies = useMemo(() => {
-    if (isPoliciesLoading) return [];
-    if (!policies) return [];
+    const emptyPolicies = { sources: [], destinations: [], all: [] };
 
-    return policies.filter((policy) => {
+    if (isPoliciesLoading) return emptyPolicies;
+    if (!policies) return emptyPolicies;
+
+    const sources: Policy[] = [];
+    const destinations: Policy[] = [];
+    const all: Policy[] = []
+
+    for (const policy of policies) {
       const rules = policy.rules || [];
-      return rules.some((rule) => {
-        const sourceGroups = rule.sources as Group[] || [];
-        const destinationGroups = rule.destinations as Group[] || [];
 
-        const inSources = sourceGroups.some((g) => g.id === groupId);
-        const inDestinations = destinationGroups.some((g) => g.id === groupId);
+      for (const rule of rules) {
+        const sourceGroups = (rule.sources as Group[]) || [];
+        const destinationGroups = (rule.destinations as Group[]) || [];
 
-        return inSources || inDestinations;
-      });
-    });
+        const isInSources = sourceGroups.some((g) => g.id === groupId);
+        const isInDestinations = destinationGroups.some((g) => g.id === groupId);
+
+        if (isInSources) sources.push(policy);
+        if (isInDestinations) destinations.push(policy);
+        if (isInSources || isInDestinations) all.push(policy)
+      }
+    }
+
+    return { sources, destinations, all };
   }, [policies, isPoliciesLoading, groupId]);
 
 

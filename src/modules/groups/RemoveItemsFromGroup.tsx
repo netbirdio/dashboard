@@ -16,17 +16,17 @@ type Props<T extends ItemType> = {
   groupName: string;
   handleRemoveItem: (item: T) => void
   item: T
-  itemName:string
+  itemName: string
 };
 
-export function RemoveItemsFromGroup<T extends ItemType>({item, itemName, handleRemoveItem}:Props<T>) {
+export function RemoveItemsFromGroup<T extends ItemType>({ item, itemName, groupName, handleRemoveItem }: Props<T>) {
   const { confirm } = useDialog();
 
   const handleConfirm = async () => {
     const choice = await confirm({
       title: `Remove this ${itemName}?`,
       description:
-        `Are you sure you want to delete this ${itemName}? This action cannot be undone.`,
+        `Are you sure you want to remove this ${itemName} from ${groupName}`,
       confirmText: "Delete",
       cancelText: "Cancel",
       type: "danger",
@@ -37,14 +37,14 @@ export function RemoveItemsFromGroup<T extends ItemType>({item, itemName, handle
 
   return (
     <div className={"flex justify-end pr-4"}>
-        <Button
-          variant={"danger-outline"}
-          size={"sm"}
-          onClick={handleConfirm}
-        >
-          <Trash2 size={16} />
-          Remove
-        </Button>
+      <Button
+        variant={"danger-outline"}
+        size={"sm"}
+        onClick={handleConfirm}
+      >
+        <Trash2 size={16} />
+        Remove
+      </Button>
     </div>
   );
 }

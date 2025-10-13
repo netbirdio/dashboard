@@ -162,6 +162,8 @@ type Props = {
   isLoading?: boolean;
   headingTarget?: HTMLHeadingElement | null;
   inGroup?: boolean;
+  rightSide?: () => React.ReactNode
+  removeFromGroupCell?: (user: User) => React.ReactNode
 };
 
 export default function UsersTable({
@@ -169,6 +171,8 @@ export default function UsersTable({
   isLoading,
   headingTarget,
   inGroup,
+  rightSide,
+  removeFromGroupCell,
 }: Readonly<Props>) {
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
@@ -207,7 +211,11 @@ export default function UsersTable({
       text={"Users"}
       sorting={sorting}
       setSorting={setSorting}
-      columns={inGroup ? GroupUsersTableColumns : UsersTableColumns}
+      columns={inGroup && removeFromGroupCell ? [...GroupUsersTableColumns, {
+        accessorKey: "id",
+        header: "",
+        cell: ({ row }) => removeFromGroupCell(row.original),
+      },] : UsersTableColumns}
       data={users}
       paginationPaddingClassName={"px-0 pt-8"}
       columnVisibility={{
@@ -220,7 +228,7 @@ export default function UsersTable({
       searchPlaceholder={"Search by name, email or role..."}
       getStartedCard={inGroup ? <NoResults
         className={"py-4"}
-        title={"No Policies assigned to this group"}
+        title={"No Users assigned to this group"}
         icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
       /> : <GetStartedTest
         icon={
@@ -255,12 +263,13 @@ export default function UsersTable({
         }
       />
       }
-      rightSide={!inGroup ?() => (
+      rightSide={rightSide ?? (() => (
         <InviteUserButton
           show={users && users?.length > 0}
           className={"ml-auto"}
         />
-      ): undefined}
+      ))
+      }
     >
       {(table) => {
         if (
