@@ -309,7 +309,7 @@ export function PeerGroupSelector({
                 "flex items-center gap-2 border-nb-gray-700 flex-wrap h-full"
               }
             >
-              {resource && showResources && (
+              {resource && (
                 <ResourceBadge
                   className={"py-[3px]"}
                   resource={resources?.find((r) => r.id === resource.id)}

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useIronRDPInputHandler } from "./useIronRDPInputHandler";
 import {
   CertificatePromptInfo,
   useRDPCertificateHandler,
@@ -14,6 +15,7 @@ interface RDPConfig {
   port: number;
   username: string;
   password: string;
+  domain?: string;
   width?: number;
   height?: number;
 }
@@ -21,6 +23,7 @@ interface RDPConfig {
 export interface RDPCredentials {
   username: string;
   password: string;
+  domain?: string;
   port: number;
 }
 
@@ -38,8 +41,7 @@ export enum RDPStatus {
   CONNECTING = 2,
 }
 
-export const RDP_DOCS_LINK =
-  "https://docs.netbird.io/how-to/browser-client#rdp-connection";
+export const RDP_DOCS_LINK = "https://docs.netbird.io/how-to/browser-client";
 
 export const useRemoteDesktop = (client: any) => {
   const [status, setStatus] = useState(RDPStatus.DISCONNECTED);
@@ -59,9 +61,19 @@ export const useRemoteDesktop = (client: any) => {
     reject: (reason?: any) => void;
   } | null>(null);
 
+  const [rdpSession, setRdpSession] = useState<any>(null);
+  const [ironrdpModule, setIronrdpModule] = useState<any>(null);
+
   const { handleRDCleanPathResponse, acceptCertificate } =
     useRDPCertificateHandler();
   const certificateAccepted = useRef(false);
+
+  const { isActive, focusCanvas } = useIronRDPInputHandler({
+    ironrdp: ironrdpModule,
+    session: rdpSession,
+    canvas: canvasRef.current,
+    isConnected: status === RDPStatus.CONNECTED,
+  });
 
   /**
    * Reset the RDP state, optionally preserving config and/or certificate state
@@ -75,6 +87,9 @@ export const useRemoteDesktop = (client: any) => {
     ) => {
       session.current = null;
       setStatus(RDPStatus.DISCONNECTED);
+      setRdpSession(null);
+      setIronrdpModule(null);
+
       if (!options.preserveConfig) {
         setConfig(null);
       }
@@ -172,10 +187,16 @@ export const useRemoteDesktop = (client: any) => {
             rdpConfig.port,
             rdpConfig.username,
             rdpConfig.password,
+            rdpConfig.domain,
             canvas,
             true,
             client.client,
           );
+
+          // Store the ironrdp module and session for the input handler hook
+          setIronrdpModule((client.ironRDPBridge as any).ironrdp || null);
+          const actualSession = client.ironRDPBridge.getSession(sessionId);
+          setRdpSession(actualSession);
 
           session.current = {
             id: sessionId,
@@ -192,6 +213,7 @@ export const useRemoteDesktop = (client: any) => {
           };
           setStatus(RDPStatus.CONNECTED);
           lastConnectedConfigRef.current = rdpConfig;
+          canvasRef?.current?.focus();
           return RDPStatus.CONNECTED;
         } catch (err) {
           const ironError = err as IronError;
@@ -232,6 +254,7 @@ export const useRemoteDesktop = (client: any) => {
       setPendingCertificate(null);
       certificatePromiseRef.current = null;
       certificateAccepted.current = true;
+      canvasRef?.current?.focus();
     },
     [pendingCertificate, acceptCertificate],
   );
@@ -287,6 +310,7 @@ export const useRemoteDesktop = (client: any) => {
           await connect(newConfig);
         } finally {
           setIsResizing(false);
+          canvasRef?.current?.focus();
         }
       }, 1000);
     };
@@ -317,6 +341,10 @@ export const useRemoteDesktop = (client: any) => {
     isResizing,
     session: session.current,
     canvasRef,
+
+    // Input handler
+    inputHandlerActive: isActive,
+    focusCanvas,
 
     // Certificate handling
     pendingCertificate,

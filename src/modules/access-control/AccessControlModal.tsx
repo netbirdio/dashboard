@@ -289,7 +289,7 @@ export function AccessControlModalContent({
                   showRoutes={true}
                   showResources={false}
                   showPeers={true}
-                  showResourceCounter={true}
+                  showResourceCounter={false}
                   showPeerCount={allowEditPeers}
                   disableInlineRemoveGroup={false}
                   values={sourceGroups}

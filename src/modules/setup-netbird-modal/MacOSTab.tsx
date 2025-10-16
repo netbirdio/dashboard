@@ -79,23 +79,23 @@ export default function MacOSTab({
             </div>
             <div className={"flex gap-4 mt-1 flex-wrap"}>
               <Link
-                href={"https://pkgs.netbird.io/macos/amd64"}
+                href={"https://pkgs.netbird.io/macos/arm64"}
                 passHref
                 target={"_blank"}
               >
                 <Button variant={"primary"}>
                   <DownloadIcon size={14} />
-                  Download for Intel
+                  Download for Apple Silicon
                 </Button>
               </Link>
               <Link
-                href={"https://pkgs.netbird.io/macos/arm64"}
+                href={"https://pkgs.netbird.io/macos/amd64"}
                 passHref
                 target={"_blank"}
               >
                 <Button variant={"outline"}>
                   <DownloadIcon size={14} />
-                  Download for Apple Silicon
+                  Download for Intel
                 </Button>
               </Link>
             </div>

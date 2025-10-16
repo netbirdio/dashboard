@@ -259,10 +259,17 @@ export default function PeersTable({
   const [showBrowserPeers, setShowBrowserPeers] = useState(false);
 
   const withBrowserPeers = useCallback(
-    (condition: boolean) =>
-      peers?.filter((peer) =>
-        condition ? trim(peer.os) === "js" : trim(peer.os) !== "js",
-      ) ?? [],
+    (condition: boolean) => {
+      const isWebClient = (peer: Peer) => {
+        return trim(peer?.os) == "js" || peer.kernel_version === "wasm";
+      };
+
+      return (
+        peers?.filter((peer) =>
+          condition ? isWebClient(peer) : !isWebClient(peer),
+        ) ?? []
+      );
+    },
     [peers],
   );
 

@@ -4,7 +4,6 @@ import { getBrowserInfo } from "@utils/helpers";
 import { generateKeypair } from "@utils/wireguard";
 import { trim } from "lodash";
 import { useCallback, useEffect, useRef, useSyncExternalStore } from "react";
-import { IronRDPInputHandler } from "@/modules/remote-access/rdp/ironrdp-input-handler";
 import { IronRDPWASMBridge } from "@/modules/remote-access/rdp/ironrdp-wasm-bridge";
 import { RDPCertificateHandler } from "@/modules/remote-access/rdp/rdp-certificate-handler";
 import { installWebSocketProxy } from "@/modules/remote-access/rdp/websocket-proxy";
@@ -13,7 +12,7 @@ const config = loadConfig();
 
 const WASM_CONFIG = {
   SCRIPT_PATH: "/wasm_exec.js",
-  WASM_PATH: "https://pkgs.netbird.io/wasm/client",
+  WASM_PATH: config.wasmPath,
   INIT_TIMEOUT: 10000,
   RETRY_DELAY: 100,
 } as const;
@@ -73,9 +72,8 @@ export const useNetBirdClient = () => {
 
   const rdpComponents = useRef<{
     bridge: IronRDPWASMBridge | null;
-    inputHandler: typeof IronRDPInputHandler | null;
     certificateHandler: typeof RDPCertificateHandler | null;
-  }>({ bridge: null, inputHandler: null, certificateHandler: null });
+  }>({ bridge: null, certificateHandler: null });
 
   const loadWASMRuntime = useCallback((): Promise<void> => {
     if (document.querySelector(`script[src="${WASM_CONFIG.SCRIPT_PATH}"]`)) {
@@ -117,7 +115,6 @@ export const useNetBirdClient = () => {
     installWebSocketProxy();
     rdpComponents.current = {
       bridge: new IronRDPWASMBridge(),
-      inputHandler: IronRDPInputHandler,
       certificateHandler: RDPCertificateHandler,
     };
   }, []);
@@ -209,8 +206,23 @@ export const useNetBirdClient = () => {
     return Promise.resolve();
   }, []);
 
+  const detectSSHServerType = useCallback(
+    async (host: string, port: number): Promise<boolean> => {
+      if (!netBirdClient.current?.detectSSHServerType) {
+        throw new Error("NetBird client not ready");
+      }
+      return netBirdClient.current.detectSSHServerType(host, port);
+    },
+    [],
+  );
+
   const createSSHConnection = useCallback(
-    async (host: string, port: number, username: string): Promise<any> => {
+    async (
+      host: string,
+      port: number,
+      username: string,
+      jwtToken?: string,
+    ): Promise<any> => {
       if (!netBirdClient.current?.createSSHConnection) {
         throw new Error("Go client not ready");
       }
@@ -268,7 +280,7 @@ export const useNetBirdClient = () => {
           {
             name,
             wg_pub_key: keyPairs.publicKey,
-            rules: rules ?? ["tcp/22", "tcp/3389", "tcp/44338"],
+            rules: rules ?? ["tcp/22022", "tcp/3389", "tcp/44338"],
           },
           `/${peerId}/temporary-access`,
         );
@@ -289,15 +301,15 @@ export const useNetBirdClient = () => {
     status,
     wasmStatus,
     error,
-    client: netBirdClient.current, // Expose the raw NetBird client
+    client: netBirdClient.current,
     ironRDPBridge: rdpComponents.current.bridge,
-    ironRDPInputHandler: rdpComponents.current.inputHandler,
     rdpCertificateHandler: rdpComponents.current.certificateHandler,
     initialize,
     initializeIronRDP,
     connect,
     connectTemporary,
     disconnect,
+    detectSSHServerType,
     createSSHConnection,
     makeRequest,
     proxyRequest,
