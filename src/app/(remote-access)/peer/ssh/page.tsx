@@ -2,6 +2,7 @@
 
 import { PageNotFound } from "@components/ui/PageNotFound";
 import useFetchApi, { ErrorResponse } from "@utils/api";
+import { isNativeSSHSupported } from "@utils/version";
 import { CircleXIcon, InfoIcon, Loader2Icon } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import type { Peer } from "@/interfaces/Peer";
@@ -86,7 +87,8 @@ function SSHTerminal({ username, port, peer }: Props) {
     if (isSSHConnected || isSSHConnecting) return;
     connected.current = false;
     try {
-      const rules = [`tcp/${port}`];
+      const aclPort = isNativeSSHSupported(peer.version) ? "22022" : port;
+      const rules = [`tcp/${aclPort}`];
       await client?.connectTemporary(peer.id, rules);
       await ssh({
         hostname: peer.ip,
@@ -107,7 +109,8 @@ function SSHTerminal({ username, port, peer }: Props) {
       if (connected.current) return;
       connected.current = true;
       try {
-        const rules = [`tcp/${port}`];
+        const aclPort = isNativeSSHSupported(peer.version) ? "22022" : port;
+        const rules = [`tcp/${aclPort}`];
         await client?.connectTemporary(peer.id, rules);
         const res = await ssh({
           hostname: peer.ip,

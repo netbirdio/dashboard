@@ -13,7 +13,7 @@ export default function NetworkNameCell({ network }: Readonly<Props>) {
   );
 
   return (
-    <div className={"flex gap-4 items-center min-w-[300px] max-w-[300px]"}>
+    <div className={"flex gap-4 items-center min-w-[300px] max-w-[450px]"}>
       <NetworkInformationSquare
         name={network.name}
         active={isActive}

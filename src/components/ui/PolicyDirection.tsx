@@ -34,31 +34,34 @@ export default function PolicyDirection({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [disabled]);
 
+  const isNetworkResource =
+    !!destinationResource && destinationResource?.type !== "peer";
+
   const topBadgeClass = useMemo(() => {
-    if (destinationResource) return "blueDark";
+    if (isNetworkResource) return "blueDark";
     if (value === "bi") return "green";
     if (value === "in") return "blueDark";
     return "gray";
-  }, [value, destinationResource]);
+  }, [value, isNetworkResource]);
 
   const topArrowClass = useMemo(() => {
-    if (destinationResource) return "fill-sky-500";
+    if (isNetworkResource) return "fill-sky-500";
     if (value === "bi") return "fill-green-500";
     if (value === "in") return "fill-sky-500";
     return "fill-gray-500";
-  }, [value, destinationResource]);
+  }, [value, isNetworkResource]);
 
   const bottomBadgeClass = useMemo(() => {
-    if (destinationResource) return "gray";
+    if (isNetworkResource) return "gray";
     if (value === "bi") return "green";
     return "gray";
-  }, [value, destinationResource]);
+  }, [value, isNetworkResource]);
 
   const bottomArrowClass = useMemo(() => {
-    if (destinationResource) return "fill-gray-500";
+    if (isNetworkResource) return "fill-gray-500";
     if (value === "bi") return "fill-green-500";
     return "fill-gray-500";
-  }, [value, destinationResource]);
+  }, [value, isNetworkResource]);
 
   return (
     <button

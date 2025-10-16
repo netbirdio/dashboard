@@ -282,7 +282,10 @@ export const useAccessControl = ({
   const hasPortSupport = (p: Protocol) => p === "tcp" || p === "udp";
   const portDisabled = !hasPortSupport(protocol);
 
+  const isDestinationPeer = destinationResource?.type === "peer";
+
   const destinationHasResources = useMemo(() => {
+    if (isDestinationPeer) return false;
     if (destinationResource) return true;
 
     return destinationGroups.some((group) => {
@@ -294,9 +297,10 @@ export const useAccessControl = ({
       }
       return false;
     });
-  }, [destinationGroups, destinationResource]);
+  }, [destinationGroups, destinationResource, isDestinationPeer]);
 
   const destinationOnlyResources = useMemo(() => {
+    if (isDestinationPeer) return false;
     if (destinationResource) return true;
 
     return (
@@ -318,13 +322,13 @@ export const useAccessControl = ({
         return hasResources && !hasPeers;
       })
     );
-  }, [destinationGroups, destinationResource]);
+  }, [destinationGroups, destinationResource, isDestinationPeer]);
 
   useEffect(() => {
-    if (destinationOnlyResources && direction !== "in") {
+    if (destinationOnlyResources && direction !== "in" && !isDestinationPeer) {
       setDirection("in");
     }
-  }, [destinationOnlyResources, direction, setDirection]);
+  }, [destinationOnlyResources, direction, setDirection, isDestinationPeer]);
 
   return {
     protocol,

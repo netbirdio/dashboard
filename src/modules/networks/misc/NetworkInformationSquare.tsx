@@ -50,7 +50,7 @@ export const NetworkInformationSquare = ({
           )}
         ></div>
       </div>
-      <div className={"mt-[0px] flex items-center flex-wrap"}>
+      <div className={"mt-[0px] flex items-start flex-wrap flex-col"}>
         <p
           className={cn(
             "font-medium text-left whitespace-nowrap",

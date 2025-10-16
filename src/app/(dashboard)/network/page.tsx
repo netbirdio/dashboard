@@ -1,7 +1,15 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
+import Button from "@components/Button";
 import Card from "@components/Card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import Separator from "@components/Separator";
@@ -12,12 +20,14 @@ import { cn } from "@utils/helpers";
 import {
   ArrowUpRightIcon,
   HelpCircle,
+  MoreVertical,
   PencilLineIcon,
   ServerIcon,
   ShieldCheckIcon,
   ShieldXIcon,
+  Trash2,
 } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
@@ -25,8 +35,10 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
 import { NetworkInformationSquare } from "@/modules/networks/misc/NetworkInformationSquare";
-import NetworkModal from "@/modules/networks/NetworkModal";
-import { NetworkProvider } from "@/modules/networks/NetworkProvider";
+import {
+  NetworkProvider,
+  useNetworksContext,
+} from "@/modules/networks/NetworkProvider";
 import { ResourcesSection } from "@/modules/networks/resources/ResourcesSection";
 import { NetworkRoutingPeersSection } from "@/modules/networks/routing-peers/NetworkRoutingPeersSection";
 
@@ -77,35 +89,24 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
 
           <div className={"flex justify-between max-w-6xl"}>
             <div
-              className={cn(
-                "flex items-center",
-                !network.description && "gap-2",
-              )}
+              className={"w-full lg:w-1/2 flex justify-between items-center"}
             >
-              <NetworkInformationSquare
-                name={network.name}
-                active={isActive}
-                size={"lg"}
-                description={network.description}
-              />
-              {permission.networks.update && (
-                <button
-                  className={
-                    "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
-                  }
-                  onClick={() => setNetworkModal(true)}
-                >
-                  <PencilLineIcon size={18} />
-                </button>
-              )}
-              <NetworkModal
-                open={networkModal}
-                setOpen={setNetworkModal}
-                onUpdated={() => {
-                  mutate(`/networks/${network.id}`);
-                }}
-                network={network}
-              />
+              <div
+                className={cn(
+                  "flex items-center w-full",
+                  !network.description && "gap-2",
+                )}
+              >
+                <NetworkInformationSquare
+                  name={network.name}
+                  active={isActive}
+                  size={"lg"}
+                  description={network.description}
+                />
+              </div>
+              <NetworkProvider network={network}>
+                <NetworkActions />
+              </NetworkProvider>
             </div>
           </div>
 
@@ -121,6 +122,56 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
         <NetworkRoutingPeersSection network={network} />
       </NetworkProvider>
     </PageContainer>
+  );
+}
+
+function NetworkActions() {
+  const { permission } = usePermissions();
+  const { deleteNetwork, openEditNetworkModal, network } = useNetworksContext();
+  const router = useRouter();
+
+  if (!network) return;
+
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger
+        asChild={true}
+        onClick={(e) => {
+          e.stopPropagation();
+          e.preventDefault();
+        }}
+      >
+        <Button variant={"secondary"} className={"!px-3"}>
+          <MoreVertical size={16} className={"shrink-0"} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent className="w-auto" align="end">
+        <DropdownMenuItem
+          onClick={() => openEditNetworkModal(network)}
+          disabled={!permission.networks.update}
+        >
+          <div className={"flex gap-3 items-center"}>
+            <PencilLineIcon size={14} className={"shrink-0"} />
+            Rename
+          </div>
+        </DropdownMenuItem>
+
+        <DropdownMenuSeparator />
+
+        <DropdownMenuItem
+          onClick={() =>
+            deleteNetwork(network).then(() => router.push("/networks"))
+          }
+          variant={"danger"}
+          disabled={!permission.networks.delete}
+        >
+          <div className={"flex gap-3 items-center"}>
+            <Trash2 size={14} className={"shrink-0"} />
+            Delete
+          </div>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -154,7 +205,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
   const policyCount = network.policies?.length ?? 0;
 
   return (
-    <Card>
+    <Card className={"w-full lg:w-1/2"}>
       <Card.List>
         <Card.ListItem
           tooltip={false}
