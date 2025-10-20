@@ -1,9 +1,3 @@
-import { Group } from "@/interfaces/Group";
-import { useApiCall } from "@/utils/api";
-import { useState } from "react";
-import ModalHeader from "../modal/ModalHeader";
-import { ExternalLinkIcon, FolderGit2Icon, PlusCircle } from "lucide-react";
-import Separator from "../Separator";
 import Button from "@components/Button";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
@@ -14,54 +8,63 @@ import {
   ModalClose,
   ModalContent,
   ModalFooter,
-  ModalTrigger
+  ModalTrigger,
 } from "@components/modal/Modal";
-import Paragraph from "../Paragraph";
-import { notify } from "../Notification";
+import { ExternalLinkIcon, FolderGit2Icon, PlusCircle } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useSWRConfig } from "swr";
+import { Group } from "@/interfaces/Group";
+import { useApiCall } from "@/utils/api";
+import ModalHeader from "../modal/ModalHeader";
+import { notify } from "../Notification";
+import Paragraph from "../Paragraph";
+import Separator from "../Separator";
 
 export const AddGroupButton = () => {
-  const create = useApiCall<Group>("/groups").post;
+  const create = useApiCall<Group>("/groups", true).post;
   const { mutate } = useSWRConfig();
   const [name, setName] = useState<string>("");
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(false);
+  const router = useRouter();
 
   const createGroup = () => {
     notify({
-      title: name,
-      description: "Group created successfully.",
-      loadingMessage: "Creating network...",
-      promise: create({ name }).then(() => {
-        setOpen(false)
-        setName("")
+      title: "Create Group",
+      description: `Group '${name}' successfully created`,
+      loadingMessage: "Creating group...",
+      promise: create({ name }).then((g) => {
+        setOpen(false);
+        setName("");
         mutate("/groups");
+        router.push(`/group?id=${g?.id}`);
       }),
     });
-  }
+  };
 
   return (
     <Modal open={open} onOpenChange={setOpen}>
       <ModalTrigger asChild>
         <Button variant={"primary"} size={"sm"} className={"ml-auto"}>
           <PlusCircle size={16} />
-          Add Group
+          Create Group
         </Button>
       </ModalTrigger>
       <ModalContent maxWidthClass={"max-w-xl"}>
         <ModalHeader
-          icon={<FolderGit2Icon size={20} />}
-          title="New Group"
-          description="Create New Group"
+          icon={<FolderGit2Icon size={18} />}
+          title="Create Group"
+          description="Create a group to manage and organize access in your network"
           color="netbird"
         />
         <Separator />
         <div className={"px-8 flex-col flex gap-6 py-6"}>
           <div>
-            <Label>Group Name</Label>
-            <HelpText>Provide a name for the group.</HelpText>
+            <Label>Name</Label>
+            <HelpText>Set an easily identifiable name for your group</HelpText>
             <Input
               tabIndex={0}
-              placeholder={"e.g., Dev"}
+              placeholder={"e.g., Developers"}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -91,14 +94,12 @@ export const AddGroupButton = () => {
               disabled={!name}
               onClick={createGroup}
             >
-              <>
-                <PlusCircle size={16} />
-                Add Group
-              </>
+              <PlusCircle size={16} />
+              Create Group
             </Button>
           </div>
         </ModalFooter>
       </ModalContent>
     </Modal>
-  )
-}
+  );
+};
