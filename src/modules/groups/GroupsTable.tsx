@@ -2,9 +2,8 @@ import ButtonGroup from "@components/ButtonGroup";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
-import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
-import { FolderGit2Icon, Layers3Icon } from "lucide-react";
+import { Layers3Icon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
@@ -13,12 +12,12 @@ import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
+import { AddGroupButton } from "@/components/ui/AddGroupButton";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import GroupsActionCell from "@/modules/groups/GroupsActionCell";
 import GroupsCountCell from "@/modules/groups/GroupsCountCell";
 import GroupsNameCell from "@/modules/groups/GroupsNameCell";
 import useGroupsUsage, { GroupUsage } from "@/modules/groups/useGroupsUsage";
-import { AddGroupButton } from "@/components/ui/AddGroupButton";
 
 // Peers, Access Controls, DNS, Routes, Setup Keys, Users
 export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
@@ -199,7 +198,8 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
     },
     sortingFn: "basic",
     accessorFn: (row) => {
-      return (row.peers_count > 0 ||
+      return (
+        row.peers_count > 0 ||
         row.nameservers_count > 0 ||
         row.policies_count > 0 ||
         row.routes_count > 0 ||
@@ -223,7 +223,7 @@ type Props = {
 };
 
 export default function GroupsTable({ headingTarget }: Readonly<Props>) {
-  const groups = useGroupsUsage();
+  const { data: groups, isLoading } = useGroupsUsage();
   const path = usePathname();
 
   // Default sorting state of the table
@@ -238,82 +238,63 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
   );
 
   return (
-    <>
-      {groups && groups.length > 0 ? (
-        <DataTable
-          headingTarget={headingTarget}
-          text={"Groups"}
-          inset={false}
-          sorting={sorting}
-          setSorting={setSorting}
-          columns={GroupsTableColumns}
-          data={groups}
-          searchPlaceholder={"Search group..."}
-          rightSide={() => <AddGroupButton />}
-          columnVisibility={{
-            in_use: false,
-          }}
-        >
-          {(table) => (
-            <>
-              <ButtonGroup disabled={groups?.length == 0}>
-                <ButtonGroup.Button
-                  onClick={() =>
-                    table.getColumn("in_use")?.setFilterValue(undefined)
-                  }
-                  disabled={groups?.length == 0}
-                  variant={
-                    table.getColumn("in_use")?.getFilterValue() === undefined
-                      ? "tertiary"
-                      : "secondary"
-                  }
-                >
-                  All
-                </ButtonGroup.Button>
-                <ButtonGroup.Button
-                  onClick={() =>
-                    table.getColumn("in_use")?.setFilterValue(true)
-                  }
-                  disabled={groups?.length == 0}
-                  variant={
-                    table.getColumn("in_use")?.getFilterValue() === true
-                      ? "tertiary"
-                      : "secondary"
-                  }
-                >
-                  Used
-                </ButtonGroup.Button>
-                <ButtonGroup.Button
-                  disabled={groups?.length == 0}
-                  onClick={() =>
-                    table.getColumn("in_use")?.setFilterValue(false)
-                  }
-                  variant={
-                    table.getColumn("in_use")?.getFilterValue() === false
-                      ? "tertiary"
-                      : "secondary"
-                  }
-                >
-                  Unused
-                </ButtonGroup.Button>
-              </ButtonGroup>
-              <DataTableRowsPerPage
-                table={table}
-                disabled={groups?.length == 0}
-              />
-            </>
-          )}
-        </DataTable>
-      ) : (
-        <div className={"bg-nb-gray-950 overflow-hidden"}>
-          <NoResults
-            className={"py-3"}
-            title={"No groups"}
-            description={"You don't have any groups created yet."}
-            icon={<FolderGit2Icon size={20} className={"fill-nb-gray-300"} />}
-          />
-        </div>
+    <DataTable
+      headingTarget={headingTarget}
+      text={"Groups"}
+      inset={false}
+      sorting={sorting}
+      isLoading={isLoading}
+      setSorting={setSorting}
+      columns={GroupsTableColumns}
+      data={groups}
+      searchPlaceholder={"Search group by name..."}
+      rightSide={() => <AddGroupButton />}
+      columnVisibility={{
+        in_use: false,
+      }}
+    >
+      {(table) => (
+        <>
+          <ButtonGroup disabled={groups?.length == 0}>
+            <ButtonGroup.Button
+              onClick={() =>
+                table.getColumn("in_use")?.setFilterValue(undefined)
+              }
+              disabled={groups?.length == 0}
+              variant={
+                table.getColumn("in_use")?.getFilterValue() === undefined
+                  ? "tertiary"
+                  : "secondary"
+              }
+            >
+              All
+            </ButtonGroup.Button>
+            <ButtonGroup.Button
+              onClick={() => table.getColumn("in_use")?.setFilterValue(true)}
+              disabled={groups?.length == 0}
+              variant={
+                table.getColumn("in_use")?.getFilterValue() === true
+                  ? "tertiary"
+                  : "secondary"
+              }
+            >
+              Used
+            </ButtonGroup.Button>
+            <ButtonGroup.Button
+              disabled={groups?.length == 0}
+              onClick={() => table.getColumn("in_use")?.setFilterValue(false)}
+              variant={
+                table.getColumn("in_use")?.getFilterValue() === false
+                  ? "tertiary"
+                  : "secondary"
+              }
+            >
+              Unused
+            </ButtonGroup.Button>
+          </ButtonGroup>
+          <DataTableRowsPerPage table={table} disabled={groups?.length == 0} />
+        </>
       )}
-    </>
+    </DataTable>
   );
 }
