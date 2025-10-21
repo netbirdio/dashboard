@@ -231,8 +231,12 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
     "netbird-table-sort" + path,
     [
       {
-        id: "name",
+        id: "in_use",
         desc: true,
+      },
+      {
+        id: "name",
+        desc: false,
       },
     ],
   );
@@ -241,7 +245,6 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
     <DataTable
       headingTarget={headingTarget}
       text={"Groups"}
-      inset={false}
       sorting={sorting}
       isLoading={isLoading}
       setSorting={setSorting}
