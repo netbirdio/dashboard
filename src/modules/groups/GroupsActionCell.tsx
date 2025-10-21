@@ -1,16 +1,4 @@
 import Button from "@components/Button";
-import FullTooltip from "@components/FullTooltip";
-import { notify } from "@components/Notification";
-import { useApiCall } from "@utils/api";
-import { FolderIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
-import React, { useMemo, useState } from "react";
-import { useSWRConfig } from "swr";
-import { useRouter } from "next/navigation";
-import { useDialog } from "@/contexts/DialogProvider";
-import { usePermissions } from "@/contexts/PermissionsProvider";
-import { SetupKey } from "@/interfaces/SetupKey";
-import { useGroupIdentification } from "@/modules/groups/useGroupIdentification";
-import { GroupUsage } from "@/modules/groups/useGroupsUsage";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -18,6 +6,18 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
+import FullTooltip from "@components/FullTooltip";
+import { notify } from "@components/Notification";
+import { useApiCall } from "@utils/api";
+import { FolderIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import React, { useMemo, useState } from "react";
+import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
+import { SetupKey } from "@/interfaces/SetupKey";
+import { useGroupIdentification } from "@/modules/groups/useGroupIdentification";
+import { GroupUsage } from "@/modules/groups/useGroupsUsage";
 import { EditGroupNameModal } from "./EditGroupNameModal";
 
 type Props = {
@@ -130,8 +130,8 @@ export default function GroupsActionCell({ group, in_use }: Readonly<Props>) {
           <DropdownMenuTrigger
             asChild
             onClick={(e) => {
-              e.stopPropagation()
-              e.preventDefault()
+              e.stopPropagation();
+              e.preventDefault();
             }}
           >
             <Button variant={"secondary"} className={"!px-3"}>
@@ -152,7 +152,11 @@ export default function GroupsActionCell({ group, in_use }: Readonly<Props>) {
 
             <DropdownMenuSeparator />
             <FullTooltip
-              content={<div className={"text-xs max-w-xs"}>{getDisabledText('rename')}</div>}
+              content={
+                <div className={"text-xs max-w-xs"}>
+                  {getDisabledText("rename")}
+                </div>
+              }
               interactive={false}
               disabled={!isDisabled.rename}
               className={"w-full block"}
@@ -163,12 +167,16 @@ export default function GroupsActionCell({ group, in_use }: Readonly<Props>) {
               >
                 <div className="flex gap-3 items-center">
                   <Pencil size={14} className="shrink-0" />
-                  Edit Name
+                  Rename
                 </div>
               </DropdownMenuItem>
             </FullTooltip>
             <FullTooltip
-              content={<div className={"text-xs max-w-xs"}>{getDisabledText('delete')}</div>}
+              content={
+                <div className={"text-xs max-w-xs"}>
+                  {getDisabledText("delete")}
+                </div>
+              }
               interactive={false}
               disabled={!isDisabled.del}
               className={"w-full block"}

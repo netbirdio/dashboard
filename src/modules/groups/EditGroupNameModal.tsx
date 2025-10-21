@@ -7,7 +7,6 @@ import {
   ModalFooter,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import { IconCornerDownLeft } from "@tabler/icons-react";
 import { trim } from "lodash";
 import * as React from "react";
 import { useMemo, useState } from "react";
@@ -36,7 +35,7 @@ export const EditGroupNameModal = ({
       <ModalContent maxWidthClass={"max-w-md"}>
         <form>
           <ModalHeader
-            title={"Edit Group Name"}
+            title={"Rename Group"}
             description={"Set an easily identifiable name for your group."}
             color={"blue"}
           />
@@ -44,7 +43,7 @@ export const EditGroupNameModal = ({
           <div className={"p-default flex flex-col gap-4"}>
             <div>
               <Input
-                placeholder={"e.g., AWS Servers"}
+                placeholder={"e.g., Developers"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
               />
@@ -66,8 +65,7 @@ export const EditGroupNameModal = ({
                 disabled={isDisabled}
                 type={"submit"}
               >
-                Confirm
-                <IconCornerDownLeft size={16} />
+                Save
               </Button>
             </div>
           </ModalFooter>
