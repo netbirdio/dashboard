@@ -62,7 +62,6 @@ const UserProfileProvider = ({ children }: Props) => {
     }
   }, [user, error, users, isLoading, isAllUsersLoading]);
 
-
   const data = useMemo(() => {
     return {
       loggedInUser,

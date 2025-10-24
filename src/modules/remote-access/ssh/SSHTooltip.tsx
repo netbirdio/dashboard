@@ -2,7 +2,6 @@ import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
-import { SSH_DOCS_LINK } from "@/modules/remote-access/ssh/useSSH";
 
 type Props = {
   disabled?: boolean;
@@ -34,7 +33,10 @@ export const SSHTooltip = ({
               </div>
               <div>
                 Learn more about{" "}
-                <InlineLink href={SSH_DOCS_LINK} target={"_blank"}>
+                <InlineLink
+                  href={"https://docs.netbird.io/how-to/ssh"}
+                  target={"_blank"}
+                >
                   SSH <ExternalLinkIcon size={12} />
                 </InlineLink>
               </div>

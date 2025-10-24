@@ -50,7 +50,7 @@ export const PeerConnectButton = () => {
     <FullTooltip
       content={
         <div className={"max-w-[200px] text-xs"}>
-          Connecting via SSH or RDP is only available when the peer is online.
+            Connecting via SSH or RDP is only available when the peer is online.
         </div>
       }
     >

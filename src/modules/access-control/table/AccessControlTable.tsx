@@ -1,7 +1,7 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
-import Card from "@components/Card";
 import FullTooltip from "@components/FullTooltip";
+import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -381,7 +381,6 @@ export default function AccessControlTable({
         tableClassName={isGroupPage ? "mt-0 mb-2" : undefined}
         inset={!isGroupPage}
         minimal={isGroupPage}
-        showSearchAndFilters={isGroupPage}
         keepStateInLocalStorage={!isGroupPage || !idParam}
         initialSearch={idParam ? "" : undefined}
         initialFilters={

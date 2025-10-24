@@ -8,31 +8,14 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { GroupIssued } from "@/interfaces/Group";
 import { useGroupIdentification } from "@/modules/groups/useGroupIdentification";
 
-const ICON_SIZE = {
-  default: {
-    google: 11,
-    entra: 13,
-    okta: 11,
-    jwt: 12,
-    default: 12,
-  },
-  large: {
-    google: 19,
-    entra: 21,
-    okta: 19,
-    jwt: 20,
-    default: 20,
-  },
-};
-
 export const GroupBadgeIcon = ({
   id,
   issued,
-  variant = "default",
+  size = 12,
 }: {
   id?: string;
   issued?: GroupIssued;
-  variant?: "default" | "large";
+  size?: number;
 }) => {
   const { groups } = useGroups();
   const group = groups?.find((g) => g.id === id);
@@ -41,27 +24,12 @@ export const GroupBadgeIcon = ({
     useGroupIdentification({ id, issued: issued ?? group?.issued });
 
   if (isGoogleGroup)
-    return (
-      <GoogleIcon
-        size={ICON_SIZE[variant].google}
-        className={"shrink-0 mr-0.5"}
-      />
-    );
+    return <GoogleIcon size={size - 1} className={"shrink-0 mr-0.5"} />;
   if (isAzureGroup)
-    return (
-      <EntraIcon
-        size={ICON_SIZE[variant].entra}
-        className={"shrink-0 mr-0.5"}
-      />
-    );
+    return <EntraIcon size={size + 1} className={"shrink-0 mr-0.5"} />;
   if (isOktaGroup)
-    return (
-      <OktaIcon size={ICON_SIZE[variant].okta} className={"shrink-0 mr-0.5"} />
-    );
-  if (isJWTGroup)
-    return <JWTIcon size={ICON_SIZE[variant].jwt} className={"shrink-0"} />;
+    return <OktaIcon size={size - 1} className={"shrink-0 mr-0.5"} />;
+  if (isJWTGroup) return <JWTIcon size={size} className={"shrink-0"} />;
 
-  return (
-    <FolderGit2 size={ICON_SIZE[variant].default} className={"shrink-0"} />
-  );
+  return <FolderGit2 size={size} className={"shrink-0"} />;
 };

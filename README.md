@@ -26,6 +26,7 @@ The dashboard makes it possible to:
 - NextJS
 - ReactJS
 - Tailwind CSS
+- [React Flow](https://reactflow.dev/) for the Control Center
 - Auth0
 - Nginx
 - Docker

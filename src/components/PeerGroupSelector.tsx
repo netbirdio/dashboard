@@ -42,13 +42,13 @@ import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { PolicyRuleResource } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
-import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
+import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 
 const groupsSearchPredicate = (item: Group, query: string) => {
-    const lowerCaseQuery = query.toLowerCase();
-    if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
-    return item?.id?.toLowerCase().includes(lowerCaseQuery) ?? false;
+  const lowerCaseQuery = query.toLowerCase();
+  if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
+  return item?.id?.toLowerCase().includes(lowerCaseQuery) ?? false;
 };
 
 interface MultiSelectProps {
@@ -104,11 +104,11 @@ export function PeerGroupSelector({
   placeholderForSearch = 'Search groups or add new group by pressing "Enter"...',
 }: Readonly<MultiSelectProps>) {
   const { data: resources, isLoading: isResourcesLoading } = useFetchApi<
-      NetworkResource[]
+    NetworkResource[]
   >("/networks/resources");
 
   const { data: peers, isLoading: isPeersLoading } =
-      useFetchApi<Peer[]>("/peers");
+    useFetchApi<Peer[]>("/peers");
 
   const { groups, dropdownOptions, setDropdownOptions, addDropdownOptions } =
     useGroups();
@@ -118,18 +118,19 @@ export function PeerGroupSelector({
   const [inputRef, { width }] = useElementSize<
     HTMLButtonElement | HTMLSpanElement
   >();
+
   const [open, setOpen] = useState(false);
 
   const sortedDropdownOptions = useSortedDropdownOptions(
-      dropdownOptions,
-      values,
-      open,
+    dropdownOptions,
+    values,
+    open,
   );
 
   const [filteredGroups, search, setSearch] = useSearch(
-      sortedDropdownOptions,
-      groupsSearchPredicate,
-      { filter: true, debounce: 150 },
+    sortedDropdownOptions,
+    groupsSearchPredicate,
+    { filter: true, debounce: 150 },
   );
 
   // Update dropdown options when groups change
@@ -247,10 +248,10 @@ export function PeerGroupSelector({
   }, [tab]);
 
   const searchPlaceholder = useMemo(() => {
-      if (tab === "groups") return placeholderForSearch;
-      if (tab === "resources") return "Search resource...";
-      if (tab === "peers") return "Search peer...";
-      return "Search...";
+    if (tab === "groups") return placeholderForSearch;
+    if (tab === "resources") return "Search resource...";
+    if (tab === "peers") return "Search peer...";
+    return "Search...";
   }, [tab, placeholderForSearch]);
 
   const selectResource = (resource?: NetworkResource) => {
@@ -266,12 +267,12 @@ export function PeerGroupSelector({
   };
 
   const selectPeer = (peer?: Peer) => {
-      if (!peer?.id) return;
-      onResourceChange?.({
-          id: peer.id,
-          type: "peer",
-      });
-      onChange([]);
+    if (!peer?.id) return;
+    onResourceChange?.({
+      id: peer.id,
+      type: "peer",
+    });
+    onChange([]);
   };
 
   return (
@@ -389,7 +390,7 @@ export function PeerGroupSelector({
         side={side}
         sideOffset={10}
       >
-          <Command className={"w-full flex"} loop shouldFilter={false}>
+        <Command className={"w-full flex"} loop shouldFilter={false}>
           <CommandList className={"w-full"}>
             <div className={"relative"}>
               <CommandInput
@@ -430,17 +431,17 @@ export function PeerGroupSelector({
             </div>
 
             <Tabs defaultValue={"groups"} value={tab} onValueChange={setTab}>
-                <TabTriggers
-                    searchRef={searchRef}
-                    showPeers={showPeers}
-                    showResources={showResources}
-                />
+              <TabTriggers
+                searchRef={searchRef}
+                showPeers={showPeers}
+                showResources={showResources}
+              />
               <TabsContent value={"groups"} className={"p-0 my-0"}>
                 <CommandGroup>
                   <ScrollArea
                     className={cn(
                       "max-h-[195px] flex flex-col gap-1 pl-2 py-2 pr-3",
-                        filteredGroups.length == 0 && !search && "py-0",
+                      filteredGroups.length == 0 && !search && "py-0",
                     )}
                   >
                     {searchedGroupNotFound && (
@@ -453,8 +454,8 @@ export function PeerGroupSelector({
                         value={search}
                         onClick={(e) => e.preventDefault()}
                       >
-                          <Badge variant={"gray-ghost"} className={"h-7"}>
-                              <FolderGit2 size={12} className={"shrink-0"} />
+                        <Badge variant={"gray-ghost"} className={"h-7"}>
+                          <FolderGit2 size={12} className={"shrink-0"} />
                           {search}
                         </Badge>
                         <div
@@ -510,11 +511,11 @@ export function PeerGroupSelector({
                             onClick={(e) => e.preventDefault()}
                           >
                             <div className={"flex items-center gap-2"}>
-                                <GroupBadge
-                                    group={option}
-                                    showNewBadge={true}
-                                    className={"h-7"}
-                                />
+                              <GroupBadge
+                                group={option}
+                                showNewBadge={true}
+                                className={"h-7"}
+                              />
                             </div>
 
                             <div className={"flex items-center gap-5"}>
@@ -533,10 +534,10 @@ export function PeerGroupSelector({
                                       "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
                                     }
                                   >
-                                      <MonitorSmartphoneIcon
-                                          size={14}
-                                          className={"shrink-0"}
-                                      />
+                                    <MonitorSmartphoneIcon
+                                      size={14}
+                                      className={"shrink-0"}
+                                    />
                                     {peerCount} Peer(s)
                                   </div>
                                 ) : (
@@ -568,17 +569,17 @@ export function PeerGroupSelector({
                   />
                 </TabsContent>
               )}
-                {showPeers && (
-                    <TabsContent value={"peers"} className={"p-0 my-0"}>
-                        <PeersList
-                            search={search}
-                            peers={peers}
-                            isLoading={isPeersLoading}
-                            value={resource}
-                            onChange={selectPeer}
-                        />
-                    </TabsContent>
-                )}
+              {showPeers && (
+                <TabsContent value={"peers"} className={"p-0 my-0"}>
+                  <PeersList
+                    search={search}
+                    peers={peers}
+                    isLoading={isPeersLoading}
+                    value={resource}
+                    onChange={selectPeer}
+                  />
+                </TabsContent>
+              )}
             </Tabs>
           </CommandList>
         </Command>
@@ -597,6 +598,7 @@ const TabTriggers = ({
   showPeers?: boolean;
 }) => {
   if (!showResources && !showPeers) return null;
+
   return (
     <TabsList justify={"start"} className={"px-3"}>
       <TabsTrigger
@@ -613,37 +615,37 @@ const TabTriggers = ({
         Groups
       </TabsTrigger>
 
-        {showResources && (
-            <TabsTrigger
-                value={"resources"}
-                className={"text-[.8rem] font-normal"}
-                onClick={() => searchRef.current?.focus()}
-            >
-                <Layers3Icon
-                    className={
-                        "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
-                    }
-                    size={14}
-                />
-                Resources
-            </TabsTrigger>
-        )}
+      {showResources && (
+        <TabsTrigger
+          value={"resources"}
+          className={"text-[.8rem] font-normal"}
+          onClick={() => searchRef.current?.focus()}
+        >
+          <Layers3Icon
+            className={
+              "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+            }
+            size={14}
+          />
+          Resources
+        </TabsTrigger>
+      )}
 
-        {showPeers && (
-            <TabsTrigger
-                value={"peers"}
-                className={"text-[.8rem] font-normal"}
-                onClick={() => searchRef.current?.focus()}
-            >
-                <MonitorSmartphoneIcon
-                    className={
-                        "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
-                    }
-                    size={14}
-                />
-                Peers
-            </TabsTrigger>
-        )}
+      {showPeers && (
+        <TabsTrigger
+          value={"peers"}
+          className={"text-[.8rem] font-normal"}
+          onClick={() => searchRef.current?.focus()}
+        >
+          <MonitorSmartphoneIcon
+            className={
+              "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+            }
+            size={14}
+          />
+          Peers
+        </TabsTrigger>
+      )}
     </TabsList>
   );
 };
@@ -800,105 +802,105 @@ const ResourcesList = ({
 };
 
 const peersSearchPredicate = (item: Peer, query: string) => {
-    const lowerCaseQuery = query.toLowerCase();
-    if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
-    return item.ip.toLowerCase().includes(lowerCaseQuery);
+  const lowerCaseQuery = query.toLowerCase();
+  if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
+  return item.ip.toLowerCase().includes(lowerCaseQuery);
 };
 
 const PeersList = ({
-                       search,
-                       peers,
-                       isLoading,
-                       value,
-                       onChange,
-                   }: {
-    search: string;
-    peers?: Peer[];
-    isLoading: boolean;
-    value?: PolicyRuleResource;
-    onChange: (peer: Peer) => void;
+  search,
+  peers,
+  isLoading,
+  value,
+  onChange,
+}: {
+  search: string;
+  peers?: Peer[];
+  isLoading: boolean;
+  value?: PolicyRuleResource;
+  onChange: (peer: Peer) => void;
 }) => {
-    const [filteredItems, _, setSearch] = useSearch(
-        peers || [],
-        peersSearchPredicate,
-        { filter: true, debounce: 150 },
-    );
+  const [filteredItems, _, setSearch] = useSearch(
+    peers || [],
+    peersSearchPredicate,
+    { filter: true, debounce: 150 },
+  );
 
-    useEffect(() => {
-        setSearch(search);
-    }, [search, setSearch]);
+  useEffect(() => {
+    setSearch(search);
+  }, [search, setSearch]);
 
-    if (isLoading) {
-        return (
-            <div className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}>
-                <Skeleton height={42} className={"rounded-md"} />
-                <Skeleton height={42} className={"rounded-md"} />
-                <Skeleton height={42} className={"rounded-md"} />
-                <Skeleton height={42} className={"rounded-md"} />
-            </div>
-        );
-    }
-
-    if (search != "" && filteredItems.length == 0) {
-        return (
-            <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
-                There are no peers matching your search. Please try a different search
-                term.
-            </DropdownInfoText>
-        );
-    }
-
-    if (search == "" && filteredItems.length == 0) {
-        return (
-            <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
-                There are no peers available yet. <br />
-                Go to <InlineLink href={"/peers"}>Peers</InlineLink> to add some peers.
-            </DropdownInfoText>
-        );
-    }
-
+  if (isLoading) {
     return (
-        <Radio defaultValue={value?.id} name={"peer"} value={value?.id}>
-            <VirtualScrollAreaList
-                items={filteredItems}
-                onSelect={onChange}
-                itemClassName={"dark:aria-selected:bg-nb-gray-800/20"}
-                renderItem={(res) => {
-                    if (!res?.id) return;
-
-                    return (
-                        <Fragment key={res.id}>
-                            <div className={"flex items-center gap-2"}>
-                                <Badge
-                                    useHover={true}
-                                    data-cy={"group-badge"}
-                                    variant={"gray-ghost"}
-                                    className={cn(
-                                        "transition-all group whitespace-nowrap h-7 px-2",
-                                    )}
-                                    onClick={(e) => {
-                                        e.preventDefault();
-                                    }}
-                                >
-                                    <PeerOperatingSystemIcon os={res.os} />
-                                    <TextWithTooltip text={res?.name || ""} maxChars={20} />
-                                </Badge>
-                            </div>
-
-                            <div className={"flex items-center gap-5"}>
-                                <div
-                                    className={
-                                        "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
-                                    }
-                                >
-                                    {res.ip}
-                                    <RadioItem value={res.id} />
-                                </div>
-                            </div>
-                        </Fragment>
-                    );
-                }}
-            />
-        </Radio>
+      <div className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}>
+        <Skeleton height={42} className={"rounded-md"} />
+        <Skeleton height={42} className={"rounded-md"} />
+        <Skeleton height={42} className={"rounded-md"} />
+        <Skeleton height={42} className={"rounded-md"} />
+      </div>
     );
+  }
+
+  if (search != "" && filteredItems.length == 0) {
+    return (
+      <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
+        There are no peers matching your search. Please try a different search
+        term.
+      </DropdownInfoText>
+    );
+  }
+
+  if (search == "" && filteredItems.length == 0) {
+    return (
+      <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
+        There are no peers available yet. <br />
+        Go to <InlineLink href={"/peers"}>Peers</InlineLink> to add some peers.
+      </DropdownInfoText>
+    );
+  }
+
+  return (
+    <Radio defaultValue={value?.id} name={"peer"} value={value?.id}>
+      <VirtualScrollAreaList
+        items={filteredItems}
+        onSelect={onChange}
+        itemClassName={"dark:aria-selected:bg-nb-gray-800/20"}
+        renderItem={(res) => {
+          if (!res?.id) return;
+
+          return (
+            <Fragment key={res.id}>
+              <div className={"flex items-center gap-2"}>
+                <Badge
+                  useHover={true}
+                  data-cy={"group-badge"}
+                  variant={"gray-ghost"}
+                  className={cn(
+                    "transition-all group whitespace-nowrap h-7 px-2",
+                  )}
+                  onClick={(e) => {
+                    e.preventDefault();
+                  }}
+                >
+                  <PeerOperatingSystemIcon os={res.os} />
+                  <TextWithTooltip text={res?.name || ""} maxChars={20} />
+                </Badge>
+              </div>
+
+              <div className={"flex items-center gap-5"}>
+                <div
+                  className={
+                    "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
+                  }
+                >
+                  {res.ip}
+                  <RadioItem value={res.id} />
+                </div>
+              </div>
+            </Fragment>
+          );
+        }}
+      />
+    </Radio>
+  );
 };

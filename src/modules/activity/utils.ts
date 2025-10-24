@@ -18,6 +18,7 @@ const ACTION_COLOR_MAPPING: Record<string, ActionStatus> = {
   // Error actions
   delete: ActionStatus.ERROR,
   revoke: ActionStatus.ERROR,
+  remove: ActionStatus.ERROR,
   block: ActionStatus.ERROR,
   reject: ActionStatus.ERROR,
 

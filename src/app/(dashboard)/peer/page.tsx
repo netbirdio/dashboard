@@ -66,8 +66,8 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
 import { PeerExpirationToggle } from "@/modules/peer/PeerExpirationToggle";
 import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSection";
-import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
+import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
 
 export default function PeerPage() {
   const queryParameter = useSearchParams();
@@ -350,15 +350,15 @@ const PeerGeneralInformation = () => {
             />
           </FullTooltip>
 
-            {/* Remote Access Buttons */}
-            <div>
-                <Label>Remote Access</Label>
-                <HelpText>Connect directly to this peer via SSH or RDP.</HelpText>
-                <div className="flex gap-3">
-                    <SSHButton peer={peer} />
-                    <RDPButton peer={peer} />
-                </div>
+          {/* Remote Access Buttons */}
+          <div>
+            <Label>Remote Access</Label>
+            <HelpText>Connect directly to this peer via SSH or RDP.</HelpText>
+            <div className="flex gap-3">
+              <SSHButton peer={peer} />
+              <RDPButton peer={peer} />
             </div>
+          </div>
 
           {permission.groups.read && (
             <div>
@@ -579,6 +579,23 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
                 </>
               }
               value={peer.serial_number}
+            />
+          )}
+
+          {peer.created_at && (
+            <Card.ListItem
+              label={
+                <>
+                  <CalendarDays size={16} />
+                  Registered on
+                </>
+              }
+              value={
+                dayjs(peer.created_at).format("D MMMM, YYYY [at] h:mm A") +
+                " (" +
+                dayjs().to(peer.created_at) +
+                ")"
+              }
             />
           )}
 
