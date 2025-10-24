@@ -99,44 +99,42 @@ const GroupDetailsName = () => {
   return (
     <div className={"w-full"}>
       <h1 className={"flex items-center gap-3 w-full whitespace-nowrap"}>
-        <GroupBadgeIcon
-          id={group?.id}
-          issued={group?.issued}
-          variant={"large"}
-        />
+        <GroupBadgeIcon id={group?.id} issued={group?.issued} size={20} />
         {group.name}
-        <div>
-          <FullTooltip
-            content={
-              <div className={"text-xs max-w-xs"}>
-                {isJWTGroup
-                  ? GROUP_TOOLTIP_TEXT.RENAME.JWT
-                  : GROUP_TOOLTIP_TEXT.RENAME.INTEGRATION}
-              </div>
-            }
-            interactive={false}
-            disabled={isAllowedToRename}
-            className={"w-full block"}
-          >
-            <div
-              className={cn(
-                "flex h-8 w-8 items-center justify-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer",
-                !isAllowedToRename &&
-                  "opacity-40 cursor-not-allowed pointer-events-none",
-              )}
-              onClick={openGroupRenameModal}
+        {group.name !== "All" && (
+          <div>
+            <FullTooltip
+              content={
+                <div className={"text-xs max-w-xs"}>
+                  {isJWTGroup
+                    ? GROUP_TOOLTIP_TEXT.RENAME.JWT
+                    : GROUP_TOOLTIP_TEXT.RENAME.INTEGRATION}
+                </div>
+              }
+              interactive={false}
+              disabled={isAllowedToRename}
+              className={"w-full block"}
             >
-              <PencilIcon size={16} />
-            </div>
-          </FullTooltip>
-        </div>
+              <div
+                className={cn(
+                  "flex h-8 w-8 items-center justify-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer",
+                  !isAllowedToRename &&
+                    "opacity-40 cursor-not-allowed pointer-events-none",
+                )}
+                onClick={openGroupRenameModal}
+              >
+                <PencilIcon size={16} />
+              </div>
+            </FullTooltip>
+          </div>
+        )}
       </h1>
     </div>
   );
 };
 
 const GroupOverviewTabs = ({ group }: { group: Group }) => {
-  const [tab, setTab] = useState("users");
+  const [tab, setTab] = useState(group.name === "All" ? "policies" : "users");
   const groupDetails = useGroupDetails(group?.id || "");
 
   const peersCount = groupDetails?.peers_count || 0;
@@ -155,25 +153,29 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
       className={"pt-4 pb-0 mb-0"}
     >
       <TabsList justify={"start"} className={"px-8"}>
-        <TabsTrigger value={"users"}>
-          <TeamIcon
-            size={12}
-            className={
-              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-            }
-          />
-          {singularize("Users", usersCount)}
-        </TabsTrigger>
+        {group.name !== "All" && (
+          <TabsTrigger value={"users"}>
+            <TeamIcon
+              size={12}
+              className={
+                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+              }
+            />
+            {singularize("Users", usersCount)}
+          </TabsTrigger>
+        )}
 
-        <TabsTrigger value={"peers"}>
-          <PeerIcon
-            size={12}
-            className={
-              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-            }
-          />
-          {singularize("Peers", peersCount)}
-        </TabsTrigger>
+        {group.name !== "All" && (
+          <TabsTrigger value={"peers"}>
+            <PeerIcon
+              size={12}
+              className={
+                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+              }
+            />
+            {singularize("Peers", peersCount)}
+          </TabsTrigger>
+        )}
 
         <TabsTrigger value={"policies"}>
           <AccessControlIcon
@@ -210,15 +212,17 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
           {singularize("Nameservers", nameserversCount)}
         </TabsTrigger>
 
-        <TabsTrigger value={"setup-keys"}>
-          <SetupKeysIcon
-            size={12}
-            className={
-              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-            }
-          />
-          {singularize("Setup Keys", setupKeysCount)}
-        </TabsTrigger>
+        {group.name !== "All" && (
+          <TabsTrigger value={"setup-keys"}>
+            <SetupKeysIcon
+              size={12}
+              className={
+                "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+              }
+            />
+            {singularize("Setup Keys", setupKeysCount)}
+          </TabsTrigger>
+        )}
       </TabsList>
 
       <TabsContent value={"users"} className={"pb-8"}>

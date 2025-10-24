@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
+import { cn } from "@utils/helpers";
 import { FolderIcon, MoreVertical, Pencil, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
@@ -37,7 +38,12 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
 
   return (
     <>
-      <div className={"flex justify-end pr-4 gap-3"}>
+      <div
+        className={cn(
+          "flex justify-end pr-4 gap-3",
+          group.name === "All" && "pointer-events-none opacity-0",
+        )}
+      >
         <DropdownMenu modal={false}>
           <DropdownMenuTrigger
             asChild
