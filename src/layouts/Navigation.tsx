@@ -39,7 +39,7 @@ export default function Navigation({
           ? "w-auto max-w-[22rem]"
           : "w-[15rem] max-w-[15rem] min-w-[15rem] overflow-y-auto",
         isNavigationCollapsed &&
-        "md:w-[70px] md:min-w-[70px] md:fixed md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
+          "md:w-[70px] md:min-w-[70px] md:fixed md:overflow-hidden md:hover:w-[15rem] md:hover:max-w-[15rem] md:hover:min-w-[15rem] md:z-50",
       )}
       style={{
         height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
@@ -57,7 +57,7 @@ export default function Navigation({
             className={cn(
               "flex flex-col pt-3 justify-between w-[15rem] max-w-[15rem] min-w-[15rem] transition-all",
               isNavigationCollapsed &&
-              "md:w-[70px] md:min-w-[70px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem] md:overflow-x-clip",
+                "md:w-[70px] md:min-w-[70px] md:group-hover/navigation:w-[15rem] md:group-hover/navigation:max-w-[15rem] md:group-hover/navigation:min-w-[15rem] md:overflow-x-clip",
             )}
             style={{
               height: !fullWidth

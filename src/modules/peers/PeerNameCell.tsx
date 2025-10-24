@@ -36,20 +36,25 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
         )}
         data-testid="peer-name-cell"
         aria-label={`View details of peer ${peer.name}`}
-        onClick={() => linkToPeer && router.push("/peer?id=" + peer.id)}
+        onClick={(e) => {
+          if (!linkToPeer) return;
+          e.preventDefault();
+          e.stopPropagation();
+          router.push("/peer?id=" + peer.id);
+        }}
       >
         <ActiveInactiveRow
           active={peer.connected}
           text={peer.name}
           additionalInfo={
-              isOwnerOrAdmin && (
-                  <>
-                      <ExitNodePeerIndicator peer={peer} />
-                      <EphemeralPeerIndicator peer={peer} />
-                      <ExpirationDisabledIndicator peer={peer} />
-                      <LoginRequiredIndicator peer={peer} />
-                  </>
-              )
+            isOwnerOrAdmin && (
+              <>
+                <ExitNodePeerIndicator peer={peer} />
+                <EphemeralPeerIndicator peer={peer} />
+                <ExpirationDisabledIndicator peer={peer} />
+                <LoginRequiredIndicator peer={peer} />
+              </>
+            )
           }
         >
           <div className={"text-nb-gray-400 font-light truncate"}>

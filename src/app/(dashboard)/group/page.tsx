@@ -1,48 +1,51 @@
 "use client";
-import { notify } from "@components/Notification";
+
 import Breadcrumbs from "@components/Breadcrumbs";
-import Card from "@components/Card";
+import FullTooltip from "@components/FullTooltip";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
+import { GroupBadgeIcon } from "@components/ui/GroupBadgeIcon";
+import { PageNotFound } from "@components/ui/PageNotFound";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
-import TextWithTooltip from "@components/ui/TextWithTooltip";
 import useRedirect from "@hooks/useRedirect";
-import { useApiCall } from "@utils/api";
-import {
-  FolderGit2Icon,
-  GlobeIcon,
-  KeyIcon,
-  KeyRoundIcon,
-  MonitorSmartphoneIcon,
-  PencilIcon,
-  RouteIcon,
-  ServerIcon,
-  ShieldCheckIcon,
-  UserCheckIcon,
-  UserIcon,
-  UsersIcon,
-} from "lucide-react";
+import useFetchApi from "@utils/api";
+import { cn, singularize } from "@utils/helpers";
+import { FolderGit2Icon, Layers3Icon, PencilIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import React, { useMemo, useState } from "react";
-import { useSWRConfig } from "swr";
+import React, { useState } from "react";
+import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import DNSIcon from "@/assets/icons/DNSIcon";
+import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import PeerIcon from "@/assets/icons/PeerIcon";
+import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
+import TeamIcon from "@/assets/icons/TeamIcon";
+import { GroupProvider, useGroupContext } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
+import { Group, GROUP_TOOLTIP_TEXT } from "@/interfaces/Group";
 import PageContainer from "@/layouts/PageContainer";
-import { SetupKey } from "@/interfaces/SetupKey";
-import { EditGroupNameModal } from "@/modules/groups/EditGroupNameModal";
-import { useGroupIdentification } from "@/modules/groups/useGroupIdentification";
-import useGroupDetails, { GroupDetails } from "@/modules/groups/useGroupDetails";
-import TeamIcon from "@/assets/icons/TeamIcon";
-import { GroupNameserversSection, GroupNetworkRoutesSection, GroupPeersSection, GroupPoliciesSection, GroupResourcesSection, GroupSetupKeysSection, GroupUsersSection } from "@/modules/groups/GroupSections";
+import { GroupNameserversSection } from "@/modules/groups/details/GroupNameserversSection";
+import { GroupNetworkRoutesSection } from "@/modules/groups/details/GroupNetworkRoutesSection";
+import { GroupPeersSection } from "@/modules/groups/details/GroupPeersSection";
+import { GroupPoliciesSection } from "@/modules/groups/details/GroupPoliciesSection";
+import { GroupResourcesSection } from "@/modules/groups/details/GroupResourcesSection";
+import { GroupSetupKeysSection } from "@/modules/groups/details/GroupSetupKeysSection";
+import { GroupUsersSection } from "@/modules/groups/details/GroupUsersSection";
+import useGroupDetails from "@/modules/groups/details/useGroupDetails";
 
 export default function GroupPage() {
   const queryParameter = useSearchParams();
   const { isRestricted } = usePermissions();
   const groupId = queryParameter.get("id");
+  const {
+    data: group,
+    isLoading,
+    error,
+  } = useFetchApi<Group>(`/groups/${groupId}`, true);
 
   useRedirect("/team/groups", false, !groupId || isRestricted);
 
-  if (isRestricted || !groupId) {
+  if (isRestricted) {
     return (
       <PageContainer>
         <RestrictedAccess page={"Group Information"} />
@@ -50,299 +53,200 @@ export default function GroupPage() {
     );
   }
 
-  const group = useGroupDetails(groupId)
+  if (error)
+    return (
+      <PageNotFound
+        title={error?.message}
+        description={
+          "The group you are attempting to access cannot be found. It may have been deleted, or you may not have permission to view it. Please verify the URL or return to the dashboard."
+        }
+      />
+    );
 
-  return group ? (
-    <GroupOverview group={group} />
+  return group && !isLoading ? (
+    <PageContainer>
+      <RoutesProvider>
+        <GroupProvider group={group} isDetailPage={true}>
+          <div className={"p-default py-6 pb-0 w-full"}>
+            <Breadcrumbs>
+              <Breadcrumbs.Item
+                href={"/team"}
+                label={"Team"}
+                icon={<TeamIcon size={13} />}
+              />
+              <Breadcrumbs.Item
+                href={"/team/groups"}
+                label={"Groups"}
+                icon={<FolderGit2Icon size={14} />}
+              />
+              <Breadcrumbs.Item label={group.name} active />
+            </Breadcrumbs>
+            <GroupDetailsName />
+          </div>
+          <GroupOverviewTabs group={group} />
+        </GroupProvider>
+      </RoutesProvider>
+    </PageContainer>
   ) : (
     <FullScreenLoading />
   );
 }
 
-function GroupOverview({ group }: { group: GroupDetails }) {
-  return (
-    <PageContainer>
-      <RoutesProvider>
-        <div className={"p-default py-6 pb-0"}>
-          <Breadcrumbs>
-            <Breadcrumbs.Item
-              href={"/team"}
-              label={"Team"}
-              icon={<TeamIcon size={13} />}
-            />
-            <Breadcrumbs.Item
-              href={"/team/groups"}
-              label={"Groups"}
-              icon={<FolderGit2Icon size={13} />}
-            />
-            <Breadcrumbs.Item label={group.name} active />
-          </Breadcrumbs>
-          <GroupGeneralInformation group={group} />
-        </div>
-        <GroupOverviewTabs group={group} />
-      </RoutesProvider>
-    </PageContainer>
-  );
-}
-
-
-const GroupGeneralInformation = ({ group }: { group: GroupDetails }) => {
-  const { mutate } = useSWRConfig();
-  const [showEditNameModal, setShowEditNameModal] = useState(false);
-  const groupRequest = useApiCall<SetupKey>("/groups/" + group.id);
-  const { permission } = usePermissions();
-  const { isRegularGroup, isJWTGroup } = useGroupIdentification({
-    id: group?.id,
-    issued: group?.issued,
-  });
-  const updatePermission = useMemo(() => {
-    //todo : @Eduard can you check the logic here for group rename
-    let rename = true;
-
-    // Rename logic
-    if (permission.groups.update) rename = false;
-    if (isJWTGroup) rename = true; // maybe JWT groups can't be renamed?
-    if (!isRegularGroup) rename = true;
-
-    return { rename };
-  }, [permission, isJWTGroup, isRegularGroup]);
-
-  const onGroupNameUpdate = (name: string) => {
-    notify({
-      title: "Group: " + group.name,
-      description: "Group was successfully Rename.",
-      promise: groupRequest.put({ name: name }).then(() => {
-        mutate("/groups/" + group.id);
-      }),
-      loadingMessage: "Renaming the group...",
-    });
-    setShowEditNameModal(false);
-  };
+const GroupDetailsName = () => {
+  const { group, isJWTGroup, isAllowedToRename, openGroupRenameModal } =
+    useGroupContext();
 
   return (
-    <>
-      {showEditNameModal && (
-        <EditGroupNameModal
-          initialName={group.name}
-          open={showEditNameModal}
-          onOpenChange={setShowEditNameModal}
-          onSuccess={onGroupNameUpdate}
+    <div className={"w-full"}>
+      <h1 className={"flex items-center gap-3 w-full whitespace-nowrap"}>
+        <GroupBadgeIcon
+          id={group?.id}
+          issued={group?.issued}
+          variant={"large"}
         />
-      )}
-      <div className={"flex justify-between max-w-6xl items-start"}>
+        {group.name}
         <div>
-          <div className={"flex items-center gap-3"}>
-            <h1 className={"flex items-center gap-3"}>
-              <FolderGit2Icon size={20} className={"mb-[3px] shrink-0"} />
-              <TextWithTooltip text={group.name} maxChars={30} />
-              {updatePermission && (
-                <div
-                  className={
-                    "flex h-8 w-8 items-center justify-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer"
-                  }
-                  onClick={() => setShowEditNameModal(true)}
-                >
-                  <PencilIcon size={16} />
-                </div>
+          <FullTooltip
+            content={
+              <div className={"text-xs max-w-xs"}>
+                {isJWTGroup
+                  ? GROUP_TOOLTIP_TEXT.RENAME.JWT
+                  : GROUP_TOOLTIP_TEXT.RENAME.INTEGRATION}
+              </div>
+            }
+            interactive={false}
+            disabled={isAllowedToRename}
+            className={"w-full block"}
+          >
+            <div
+              className={cn(
+                "flex h-8 w-8 items-center justify-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer",
+                !isAllowedToRename &&
+                  "opacity-40 cursor-not-allowed pointer-events-none",
               )}
-            </h1>
-          </div>
+              onClick={openGroupRenameModal}
+            >
+              <PencilIcon size={16} />
+            </div>
+          </FullTooltip>
         </div>
-      </div>
-
-      <div
-        className={
-          "flex-wrap xl:flex-nowrap flex gap-10 w-full mt-5 max-w-6xl items-start"
-        }
-      >
-        <GroupInformationCard group={group} />
-      </div>
-    </>
+      </h1>
+    </div>
   );
 };
 
-function GroupInformationCard({ group }: { group: GroupDetails }) {
-  return (
-    <Card className={"w-full xl:w-1/2"}>
-      <Card.List>
-        <Card.ListItem
-          copy
-          copyText={group.id}
-          label={
-            <>
-              <KeyIcon size={16} />
-              Group ID
-            </>
-          }
-          value={group.id}
-        />
+const GroupOverviewTabs = ({ group }: { group: Group }) => {
+  const [tab, setTab] = useState("users");
+  const groupDetails = useGroupDetails(group?.id || "");
 
-        <Card.ListItem
-          label={
-            <>
-              <UsersIcon size={16} />
-              Group Name
-            </>
-          }
-          value={group.name}
-        />
-
-        <Card.ListItem
-          label={
-            <>
-              <UserCheckIcon size={16} />
-              Total Peers
-            </>
-          }
-          value={group.peers_count?.toString() ?? "0"}
-        />
-
-        <Card.ListItem
-          label={
-            <>
-              <ServerIcon size={16} />
-              Total Resources
-            </>
-          }
-          value={group.resources_count?.toString() ?? "0"}
-        />
-
-        <Card.ListItem
-          label={
-            <>
-              <UserIcon size={16} />
-              Users
-            </>
-          }
-          value={group.users?.length?.toString() ?? "0"}
-        />
-
-        <Card.ListItem
-          label={
-            <>
-              <ShieldCheckIcon size={16} />
-              Policies
-            </>
-          }
-          value={group.policies?.all.length.toString() ?? "0"}
-        />
-
-        <Card.ListItem
-          label={
-            <>
-              <RouteIcon size={16} />
-              Network Routes
-            </>
-          }
-          value={group.routes?.length?.toString() ?? "0"}
-        />
-
-        <Card.ListItem
-          label={
-            <>
-              <GlobeIcon size={16} />
-              Nameservers
-            </>
-          }
-          value={group.nameservers?.length?.toString() ?? "0"}
-        />
-
-        <Card.ListItem
-          label={
-            <>
-              <KeyRoundIcon size={16} />
-              Setup Keys
-            </>
-          }
-          value={group.setupKeys?.length?.toString() ?? "0"}
-        />
-
-        <Card.ListItem
-          label={
-            <>
-              <KeyRoundIcon size={16} />
-              Issued By
-            </>
-          }
-          value={group.issued}
-        />
-      </Card.List>
-    </Card>
-  );
-}
-const GroupOverviewTabs = ({ group }: { group: GroupDetails }) => {
-  const [tab, setTab] = useState("peers");
+  const peersCount = groupDetails?.peers_count || 0;
+  const usersCount = groupDetails?.users?.length || 0;
+  const policiesCount = groupDetails?.policies?.all.length || 0;
+  const resourcesCount = groupDetails?.resources_count || 0;
+  const routesCount = groupDetails?.routes?.length || 0;
+  const nameserversCount = groupDetails?.nameservers?.length || 0;
+  const setupKeysCount = groupDetails?.setupKeys?.length || 0;
 
   return (
     <Tabs
       defaultValue={tab}
       onValueChange={(v) => setTab(v)}
       value={tab}
-      className={"pt-10 pb-0 mb-0"}
+      className={"pt-4 pb-0 mb-0"}
     >
       <TabsList justify={"start"} className={"px-8"}>
-        <TabsTrigger value={"peers"}>
-          <MonitorSmartphoneIcon size={16} />
-          Peers
+        <TabsTrigger value={"users"}>
+          <TeamIcon
+            size={12}
+            className={
+              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+            }
+          />
+          {singularize("Users", usersCount)}
         </TabsTrigger>
 
-        <TabsTrigger value={"users"}>
-          <UserIcon size={16} />
-          Users
+        <TabsTrigger value={"peers"}>
+          <PeerIcon
+            size={12}
+            className={
+              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+            }
+          />
+          {singularize("Peers", peersCount)}
         </TabsTrigger>
 
         <TabsTrigger value={"policies"}>
-          <ShieldCheckIcon size={16} />
-          Policies
+          <AccessControlIcon
+            size={12}
+            className={
+              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+            }
+          />
+          {singularize("Policies", policiesCount)}
         </TabsTrigger>
 
         <TabsTrigger value={"resources"}>
-          <ServerIcon size={16} />
-          Resources
+          <Layers3Icon size={14} />
+          {singularize("Resources", resourcesCount)}
         </TabsTrigger>
 
         <TabsTrigger value={"network-routes"}>
-          <RouteIcon size={16} />
-          Network Routes
+          <NetworkRoutesIcon
+            size={12}
+            className={
+              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+            }
+          />
+          {singularize("Network Routes", routesCount)}
         </TabsTrigger>
 
         <TabsTrigger value={"nameservers"}>
-          <GlobeIcon size={16} />
-          Nameservers
+          <DNSIcon
+            size={12}
+            className={
+              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+            }
+          />
+          {singularize("Nameservers", nameserversCount)}
         </TabsTrigger>
 
         <TabsTrigger value={"setup-keys"}>
-          <KeyIcon size={16} />
-          Setup Keys
+          <SetupKeysIcon
+            size={12}
+            className={
+              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+            }
+          />
+          {singularize("Setup Keys", setupKeysCount)}
         </TabsTrigger>
       </TabsList>
 
-      <TabsContent value={"peers"} className={"pb-8"}>
-        <GroupPeersSection group={group} />
+      <TabsContent value={"users"} className={"pb-8"}>
+        <GroupUsersSection users={groupDetails?.users} />
       </TabsContent>
 
-      <TabsContent value={"users"} className={"pb-8"}>
-        <GroupUsersSection group={group} />
+      <TabsContent value={"peers"} className={"pb-8"}>
+        <GroupPeersSection peers={groupDetails?.peersOfGroup} />
       </TabsContent>
 
       <TabsContent value={"policies"} className={"pb-8"}>
-        <GroupPoliciesSection policies={group.policies} />
+        <GroupPoliciesSection policies={groupDetails?.policies} />
       </TabsContent>
 
       <TabsContent value={"resources"} className={"pb-8"}>
-        <GroupResourcesSection resources={group.networkResource} />
+        <GroupResourcesSection resources={groupDetails?.networkResources} />
       </TabsContent>
 
       <TabsContent value={"network-routes"} className={"pb-8"}>
-        <GroupNetworkRoutesSection peerRoutes={group.routes} />
+        <GroupNetworkRoutesSection routes={groupDetails?.routes} />
       </TabsContent>
 
       <TabsContent value={"nameservers"} className={"pb-8"}>
-        <GroupNameserversSection nameserverGroups={group.nameservers} />
+        <GroupNameserversSection nameserverGroups={groupDetails?.nameservers} />
       </TabsContent>
 
       <TabsContent value={"setup-keys"} className={"pb-8"}>
-        <GroupSetupKeysSection setupKeys={group.setupKeys} />
+        <GroupSetupKeysSection setupKeys={groupDetails?.setupKeys} />
       </TabsContent>
     </Tabs>
   );

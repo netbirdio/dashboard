@@ -5,7 +5,13 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import NoResults from "@components/ui/NoResults";
-import { ColumnDef, SortingState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  Row,
+  RowSelectionState,
+  SortingState,
+  Table,
+} from "@tanstack/react-table";
 import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
@@ -21,12 +27,15 @@ type Props = {
   peerID?: string;
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
-  inGroup?: boolean
-  rightSide?: () => React.ReactNode
-  removeFromGroupCell?: (peer: Peer) => React.ReactNode
+  rightSide?: (table: Table<Peer>) => React.ReactNode;
+  getStartedCard?: React.ReactNode;
+  columns?: ColumnDef<Peer>[];
+  selectedRows?: RowSelectionState;
+  setSelectedRows?: (updater: React.SetStateAction<RowSelectionState>) => void;
+  onRowClick?: (row: Row<Peer>) => void;
 };
 
-const AccessiblePeersColumns: ColumnDef<Peer>[] = [
+const MinimalPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -76,16 +85,20 @@ const AccessiblePeersColumns: ColumnDef<Peer>[] = [
   },
 ];
 
-export default function AccessiblePeersTable({
+export default function MinimalPeersTable({
   peers,
   isLoading,
   headingTarget,
   peerID,
-  inGroup,
   rightSide,
-  removeFromGroupCell,
+  columns = MinimalPeersTableColumns,
+  selectedRows,
+  setSelectedRows,
+  onRowClick,
+  getStartedCard,
 }: Props) {
   const { mutate } = useSWRConfig();
+
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
     {
@@ -110,29 +123,32 @@ export default function AccessiblePeersTable({
       useRowId={true}
       sorting={sorting}
       setSorting={setSorting}
+      rowSelection={selectedRows}
+      setRowSelection={setSelectedRows}
+      onRowClick={onRowClick}
       minimal={true}
       showSearchAndFilters={true}
       inset={false}
       tableClassName={"mt-0"}
       text={"Peers"}
-      columns={inGroup && removeFromGroupCell ? [...AccessiblePeersColumns, {
-        accessorKey: "id",
-        header:"",
-        cell: ({ row }) => removeFromGroupCell(row.original),
-      },] : AccessiblePeersColumns}
+      columns={columns}
       keepStateInLocalStorage={false}
       data={peers}
       searchPlaceholder={"Search by name, IP, owner or group..."}
       isLoading={isLoading}
       getStartedCard={
-        <NoResults
-          className={"py-4"}
-          title={inGroup ? "No peers assigned to this group" : "This peer has no accessible peers"}
-          description={!inGroup ?
-            "Add more peers to your network or check your access control policies." : ""
-          }
-          icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
-        />
+        !getStartedCard ? (
+          <NoResults
+            className={"py-4"}
+            title={"This peer has no accessible peers"}
+            description={
+              "Add more peers to your network or check your access control policies."
+            }
+            icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
+          />
+        ) : (
+          getStartedCard
+        )
       }
       rightSide={rightSide}
       columnVisibility={{

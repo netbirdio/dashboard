@@ -33,6 +33,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
+import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
@@ -43,6 +44,7 @@ type Props = {
   setOpen: (open: boolean) => void;
   name?: string;
   showOnlyRoutingPeerOS?: boolean;
+  groups?: Group[];
 };
 
 const copyMessage = "Setup-Key was copied to your clipboard!";
@@ -53,6 +55,7 @@ export default function SetupKeyModal({
   setOpen,
   name,
   showOnlyRoutingPeerOS,
+  groups,
 }: Readonly<Props>) {
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
@@ -66,7 +69,11 @@ export default function SetupKeyModal({
     <>
       <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
         {children && <ModalTrigger asChild>{children}</ModalTrigger>}
-        <SetupKeyModalContent onSuccess={handleSuccess} predefinedName={name} />
+        <SetupKeyModalContent
+          onSuccess={handleSuccess}
+          predefinedName={name}
+          groups={groups}
+        />
       </Modal>
 
       <Modal
@@ -155,11 +162,13 @@ export default function SetupKeyModal({
 type ModalProps = {
   onSuccess?: (setupKey: SetupKey) => void;
   predefinedName?: string;
+  groups?: Group[];
 };
 
 export function SetupKeyModalContent({
   onSuccess,
   predefinedName = "",
+  groups,
 }: Readonly<ModalProps>) {
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { mutate } = useSWRConfig();
@@ -173,7 +182,7 @@ export function SetupKeyModalContent({
 
   const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
     useGroupHelper({
-      initial: [],
+      initial: groups ?? [],
     });
 
   const usageLimitPlaceholder = useMemo(() => {

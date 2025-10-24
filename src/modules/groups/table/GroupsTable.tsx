@@ -13,13 +13,13 @@ import PeerIcon from "@/assets/icons/PeerIcon";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { AddGroupButton } from "@/components/ui/AddGroupButton";
+import { GroupProvider } from "@/contexts/GroupProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import GroupsActionCell from "@/modules/groups/GroupsActionCell";
-import GroupsCountCell from "@/modules/groups/GroupsCountCell";
-import GroupsNameCell from "@/modules/groups/GroupsNameCell";
+import GroupsActionCell from "@/modules/groups/table/GroupsActionCell";
+import GroupsCountCell from "@/modules/groups/table/GroupsCountCell";
+import GroupsNameCell from "@/modules/groups/table/GroupsNameCell";
 import useGroupsUsage, { GroupUsage } from "@/modules/groups/useGroupsUsage";
 
-// Peers, Access Controls, DNS, Routes, Setup Keys, Users
 export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
   {
     accessorKey: "name",
@@ -42,24 +42,23 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
     sortingFn: "text",
   },
   {
-    accessorKey: "setup_keys_count",
+    accessorKey: "users_count",
     header: ({ column }) => {
       return (
         <DataTableHeader
           column={column}
-          center={true}
-          tooltip={<div className={"text-sm normal-case"}>Setup Keys</div>}
+          tooltip={<div className={"text-xs normal-case"}>Users</div>}
         >
-          <SetupKeysIcon size={12} />
+          <TeamIcon size={12} />
         </DataTableHeader>
       );
     },
     cell: ({ row }) => (
       <GroupsCountCell
-        icon={<SetupKeysIcon size={10} />}
+        icon={<TeamIcon size={10} />}
         groupName={row.original.name}
-        text={"Setup Key(s)"}
-        count={row.original.setup_keys_count}
+        text={"User(s)"}
+        count={row.original.users_count}
       />
     ),
   },
@@ -69,7 +68,7 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-sm normal-case"}>Peers</div>}
+          tooltip={<div className={"text-xs normal-case"}>Peers</div>}
         >
           <PeerIcon size={12} />
         </DataTableHeader>
@@ -85,33 +84,12 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
     ),
   },
   {
-    accessorKey: "nameservers_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          tooltip={<div className={"text-sm normal-case"}>DNS</div>}
-        >
-          <DNSIcon size={12} />
-        </DataTableHeader>
-      );
-    },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<DNSIcon size={10} />}
-        groupName={row.original.name}
-        text={"DNS"}
-        count={row.original.nameservers_count}
-      />
-    ),
-  },
-  {
     accessorKey: "policies_count",
     header: ({ column }) => {
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-sm normal-case"}>Access Controls</div>}
+          tooltip={<div className={"text-xs normal-case"}>Policies</div>}
         >
           <AccessControlIcon size={12} />
         </DataTableHeader>
@@ -121,29 +99,8 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       <GroupsCountCell
         icon={<AccessControlIcon size={10} />}
         groupName={row.original.name}
-        text={"Access Control(s)"}
+        text={row.original.policies_count === 1 ? "Policy" : "Policies"}
         count={row.original.policies_count}
-      />
-    ),
-  },
-  {
-    accessorKey: "routes_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader
-          column={column}
-          tooltip={<div className={"text-sm normal-case"}>Network Routes</div>}
-        >
-          <NetworkRoutesIcon size={12} />
-        </DataTableHeader>
-      );
-    },
-    cell: ({ row }) => (
-      <GroupsCountCell
-        icon={<NetworkRoutesIcon size={10} />}
-        groupName={row.original.name}
-        text={"Network Route(s)"}
-        count={row.original.routes_count}
       />
     ),
   },
@@ -154,7 +111,7 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
         <DataTableHeader
           column={column}
           tooltip={
-            <div className={"text-sm normal-case"}>Network Resources</div>
+            <div className={"text-xs normal-case"}>Network Resources</div>
           }
         >
           <Layers3Icon size={12} />
@@ -171,23 +128,66 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
     ),
   },
   {
-    accessorKey: "users_count",
+    accessorKey: "routes_count",
     header: ({ column }) => {
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-sm normal-case"}>Users</div>}
+          tooltip={<div className={"text-xs normal-case"}>Network Routes</div>}
         >
-          <TeamIcon size={12} />
+          <NetworkRoutesIcon size={12} />
         </DataTableHeader>
       );
     },
     cell: ({ row }) => (
       <GroupsCountCell
-        icon={<TeamIcon size={10} />}
+        icon={<NetworkRoutesIcon size={10} />}
         groupName={row.original.name}
-        text={"User(s)"}
-        count={row.original.users_count}
+        text={"Network Route(s)"}
+        count={row.original.routes_count}
+      />
+    ),
+  },
+  {
+    accessorKey: "nameservers_count",
+    header: ({ column }) => {
+      return (
+        <DataTableHeader
+          column={column}
+          tooltip={<div className={"text-xs normal-case"}>DNS</div>}
+        >
+          <DNSIcon size={12} />
+        </DataTableHeader>
+      );
+    },
+    cell: ({ row }) => (
+      <GroupsCountCell
+        icon={<DNSIcon size={10} />}
+        groupName={row.original.name}
+        text={"DNS"}
+        count={row.original.nameservers_count}
+      />
+    ),
+  },
+  {
+    accessorKey: "setup_keys_count",
+    header: ({ column }) => {
+      return (
+        <DataTableHeader
+          column={column}
+          center={true}
+          tooltip={<div className={"text-xs normal-case"}>Setup Keys</div>}
+        >
+          <SetupKeysIcon size={12} />
+        </DataTableHeader>
+      );
+    },
+    cell: ({ row }) => (
+      <GroupsCountCell
+        icon={<SetupKeysIcon size={10} />}
+        groupName={row.original.name}
+        text={"Setup Key(s)"}
+        count={row.original.setup_keys_count}
       />
     ),
   },
@@ -213,7 +213,9 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
     accessorKey: "id",
     header: "",
     cell: ({ row }) => (
-      <GroupsActionCell group={row.original} in_use={row.getValue("in_use")} />
+      <GroupProvider group={row.original} isDetailPage={false}>
+        <GroupsActionCell group={row.original} inUse={row.getValue("in_use")} />
+      </GroupProvider>
     ),
   },
 ];

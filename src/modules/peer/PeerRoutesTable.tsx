@@ -71,7 +71,7 @@ export default function PeerRoutesTable({
   peerRoutes,
   isLoading,
   headingTarget,
-  inGroup
+  inGroup,
 }: Props) {
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
@@ -85,19 +85,28 @@ export default function PeerRoutesTable({
     <>
       <DataTable
         wrapperComponent={Card}
-        wrapperProps={inGroup ? { className: "mt-6 w-full" } : {
-          className: cn("w-full"),
-        }}
+        wrapperProps={
+          inGroup
+            ? { className: "mt-6 w-full" }
+            : {
+                className: cn("w-full"),
+              }
+        }
         headingTarget={headingTarget}
         text={"Network Routes"}
         tableClassName={"mt-0"}
         getStartedCard={
           <NoResults
             className={"py-4"}
-            title={inGroup ? "No network routes for this group" :"This peer has no network routes"}
-            description={!inGroup ?
-              "You don't have any assigned network routes yet. You can add this peer to an existing network or create a new network route."
-              :""
+            title={
+              inGroup
+                ? "No network routes for this group"
+                : "This peer has no network routes"
+            }
+            description={
+              !inGroup
+                ? "You don't have any assigned network routes yet. You can add this peer to an existing network or create a new network route."
+                : ""
             }
             icon={
               <NetworkRoutesIcon size={20} className={"fill-nb-gray-300"} />

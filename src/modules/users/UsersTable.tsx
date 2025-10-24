@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -6,8 +7,13 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
-import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
-import { ColumnDef, SortingState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  Row,
+  RowSelectionState,
+  SortingState,
+  Table,
+} from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
 import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
@@ -18,8 +24,10 @@ import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { Group } from "@/interfaces/Group";
 import { User } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
+import { PendingApprovalFilter } from "@/modules/users/PendingApprovalFilter";
 import UserActionCell from "@/modules/users/table-cells/UserActionCell";
 import UserBlockCell from "@/modules/users/table-cells/UserBlockCell";
 import UserGroupCell from "@/modules/users/table-cells/UserGroupCell";
@@ -27,8 +35,6 @@ import UserNameCell from "@/modules/users/table-cells/UserNameCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import UserInviteModal from "@/modules/users/UserInviteModal";
-import Card from "@components/Card";
-import NoResults from "@/components/ui/NoResults";
 
 export const UsersTableColumns: ColumnDef<User>[] = [
   {
@@ -105,74 +111,32 @@ export const UsersTableColumns: ColumnDef<User>[] = [
   },
 ];
 
-
-export const GroupUsersTableColumns: ColumnDef<User>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
-    },
-    accessorFn: (row) => row.name + " " + row.email,
-    sortingFn: "text",
-    cell: ({ row }) => <UserNameCell user={row.original} />,
-  },
-  {
-    accessorKey: "is_current",
-    sortingFn: "basic",
-  },
-  {
-    accessorKey: "role",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserRoleCell user={row.original} />,
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserStatusCell user={row.original} />,
-  },
-  {
-    accessorKey: "last_login",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Last Login</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => (
-      <LastTimeRow
-        date={dayjs(row.original.last_login).toDate()}
-        text={"Last login on"}
-      />
-    ),
-  },
-  {
-    id: "approval_required",
-    accessorKey: "approval_required",
-    sortingFn: "basic",
-    accessorFn: (u) => u?.pending_approval,
-  },
-];
-
 type Props = {
   users?: User[];
   isLoading?: boolean;
   headingTarget?: HTMLHeadingElement | null;
-  inGroup?: boolean;
-  rightSide?: () => React.ReactNode
-  removeFromGroupCell?: (user: User) => React.ReactNode
+  minimal?: boolean;
+  rightSide?: (table: Table<User>) => React.ReactNode;
+  getStartedCard?: React.ReactNode;
+  columns?: ColumnDef<User>[];
+  selectedRows?: RowSelectionState;
+  setSelectedRows?: (updater: React.SetStateAction<RowSelectionState>) => void;
+  onRowClick?: (row: Row<User>) => void;
+  keepStateInLocalStorage?: boolean;
 };
 
 export default function UsersTable({
   users,
   isLoading,
   headingTarget,
-  inGroup,
+  minimal,
   rightSide,
-  removeFromGroupCell,
+  getStartedCard,
+  columns = UsersTableColumns,
+  selectedRows,
+  setSelectedRows,
+  onRowClick,
+  keepStateInLocalStorage = true,
 }: Readonly<Props>) {
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
@@ -191,125 +155,96 @@ export default function UsersTable({
         desc: true,
       },
     ],
+    keepStateInLocalStorage,
   );
 
   const router = useRouter();
-  const pendingApprovalCount =
-    users?.filter((u) => u.pending_approval).length || 0;
 
   return (
     <DataTable
-      wrapperComponent={inGroup ? Card : undefined}
-      wrapperProps={inGroup ? { className: "mt-6 w-full" } : undefined}
-      tableClassName={inGroup ? "mt-0" : undefined}
-      inset={!inGroup}
-      minimal={inGroup}
-      showSearchAndFilters={inGroup}
-      keepStateInLocalStorage={!inGroup}
       headingTarget={headingTarget}
       isLoading={isLoading}
+      keepStateInLocalStorage={keepStateInLocalStorage}
       text={"Users"}
       sorting={sorting}
       setSorting={setSorting}
-      columns={inGroup && removeFromGroupCell ? [...GroupUsersTableColumns, {
-        accessorKey: "id",
-        header: "",
-        cell: ({ row }) => removeFromGroupCell(row.original),
-      },] : UsersTableColumns}
+      columns={columns}
+      wrapperComponent={minimal ? Card : undefined}
+      wrapperProps={minimal && { className: "mt-6 w-full" }}
+      minimal={minimal}
       data={users}
-      paginationPaddingClassName={"px-0 pt-8"}
+      rowSelection={selectedRows}
+      setRowSelection={setSelectedRows}
+      tableClassName={minimal ? "mt-0" : ""}
       columnVisibility={{
         is_current: false,
         approval_required: false,
       }}
-      onRowClick={(row) => {
-        router.push(`/team/user?id=${row.original.id}`);
-      }}
-      searchPlaceholder={"Search by name, email or role..."}
-      getStartedCard={inGroup ? <NoResults
-        className={"py-4"}
-        title={"No Users assigned to this group"}
-        icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
-      /> : <GetStartedTest
-        icon={
-          <SquareIcon
-            icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
-            color={"gray"}
-            size={"large"}
-          />
-        }
-        title={"Add New Users"}
-        description={
-          "It looks like you don't have any users yet. Get started by inviting users to your account."
-        }
-        button={
-          <div className={"flex flex-col items-center justify-center"}>
-            <InviteUserButton show={true} />
-          </div>
-        }
-        learnMore={
-          <>
-            Learn more about
-            <InlineLink
-              href={
-                "https://docs.netbird.io/how-to/add-users-to-your-network"
-              }
-              target={"_blank"}
-            >
-              Users
-              <ExternalLinkIcon size={12} />
-            </InlineLink>
-          </>
-        }
-      />
+      onRowClick={
+        !onRowClick
+          ? (row) => {
+              router.push(`/team/user?id=${row.original.id}`);
+            }
+          : onRowClick
       }
-      rightSide={rightSide ?? (() => (
-        <InviteUserButton
-          show={users && users?.length > 0}
-          className={"ml-auto"}
-        />
-      ))
+      searchPlaceholder={"Search by name, email or role..."}
+      getStartedCard={
+        !getStartedCard ? (
+          <GetStartedTest
+            icon={
+              <SquareIcon
+                icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
+                color={"gray"}
+                size={"large"}
+              />
+            }
+            title={"Add New Users"}
+            description={
+              "It looks like you don't have any users yet. Get started by inviting users to your account."
+            }
+            button={
+              <div className={"flex flex-col items-center justify-center"}>
+                <InviteUserButton show={true} />
+              </div>
+            }
+            learnMore={
+              <>
+                Learn more about
+                <InlineLink
+                  href={
+                    "https://docs.netbird.io/how-to/add-users-to-your-network"
+                  }
+                  target={"_blank"}
+                >
+                  Users
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </>
+            }
+          />
+        ) : (
+          getStartedCard
+        )
+      }
+      rightSide={
+        !rightSide
+          ? () => (
+              <InviteUserButton
+                show={users && users?.length > 0}
+                className={"ml-auto"}
+              />
+            )
+          : rightSide
       }
     >
       {(table) => {
-        if (
-          pendingApprovalCount == 0 &&
-          table.getColumn("approval_required")?.getFilterValue() === true
-        ) {
-          table.setColumnFilters([]);
-        }
-
         return (
           <>
-            {pendingApprovalCount > 0 && (
-              <Button
-                disabled={users?.length == 0}
-                onClick={() => {
-                  table.setPageIndex(0);
-                  let current =
-                    table.getColumn("approval_required")?.getFilterValue() ===
-                      undefined
-                      ? true
-                      : undefined;
-
-                  table.setColumnFilters([
-                    {
-                      id: "approval_required",
-                      value: current,
-                    },
-                  ]);
-                }}
-                variant={
-                  table.getColumn("approval_required")?.getFilterValue() ===
-                    true
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Pending Approvals
-                <NotificationCountBadge count={pendingApprovalCount} />
-              </Button>
-            )}
+            <PendingApprovalFilter
+              table={table}
+              data={users}
+              count={users?.filter((u) => u?.pending_approval)?.length}
+            />
             <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
             <DataTableRefreshButton
               isDisabled={users?.length == 0}
@@ -328,18 +263,20 @@ export default function UsersTable({
 type InviteUserButtonProps = {
   show?: boolean;
   className?: string;
+  groups?: Group[];
 };
 
-const InviteUserButton = ({
+export const InviteUserButton = ({
   show = false,
   className,
+  groups,
 }: InviteUserButtonProps) => {
   const { permission } = usePermissions();
   if (!show) return null;
 
   return (
     (isLocalDev() || isNetBirdHosted()) && (
-      <UserInviteModal>
+      <UserInviteModal groups={groups}>
         <Button
           variant={"primary"}
           className={className}

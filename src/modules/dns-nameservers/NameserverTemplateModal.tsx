@@ -9,14 +9,19 @@ import DNS0Logo from "@/assets/nameservers/dns0.svg";
 import DNS0ZeroLogo from "@/assets/nameservers/dns0-zero.svg";
 import GoogleLogo from "@/assets/nameservers/google.svg";
 import Quad9Logo from "@/assets/nameservers/quad9.svg";
+import { Group } from "@/interfaces/Group";
 import { NameserverGroup, NameserverPresets } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns-nameservers/NameserverModal";
 
 type Props = {
   children: React.ReactNode;
+  distributionGroups?: Group[];
 };
 
-export default function NameserverTemplateModal({ children }: Readonly<Props>) {
+export default function NameserverTemplateModal({
+  children,
+  distributionGroups,
+}: Readonly<Props>) {
   const [open, setOpen] = useState(false);
   const [presetModal, setPresetModal] = useState(false);
   const [preset, setPreset] = useState(NameserverPresets.Default);
@@ -39,7 +44,14 @@ export default function NameserverTemplateModal({ children }: Readonly<Props>) {
             setPresetModal(o);
             if (!o) setOpen(false);
           }}
-          preset={preset}
+          preset={{
+            ...preset,
+            groups: distributionGroups
+              ? distributionGroups
+                  .map((group) => group.id)
+                  .filter((id): id is string => !!id)
+              : [],
+          }}
         />
       )}
     </>

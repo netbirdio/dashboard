@@ -1,5 +1,7 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
+import Card from "@components/Card";
+import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -14,6 +16,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import NoResults from "@/components/ui/NoResults";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { Policy } from "@/interfaces/Policy";
@@ -29,15 +32,12 @@ import AccessControlPortsCell from "@/modules/access-control/table/AccessControl
 import AccessControlPostureCheckCell from "@/modules/access-control/table/AccessControlPostureCheckCell";
 import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
-import FullTooltip from "@components/FullTooltip";
-import Card from "@components/Card";
-import NoResults from "@/components/ui/NoResults";
 
 type Props = {
   policies?: Policy[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
-  inGroup?: boolean;
+  isGroupPage?: boolean;
 };
 
 export const AccessControlTableColumns: ColumnDef<Policy>[] = [
@@ -299,18 +299,17 @@ export const GroupAccessControlTableColumns: ColumnDef<Policy>[] = [
   },
 ];
 
-
 export default function AccessControlTable({
   policies,
   isLoading,
   headingTarget,
-  inGroup
+  isGroupPage,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
   const params = useSearchParams();
-  const idParam = params.get("id") && !inGroup ? params.get("id"): undefined;
+  const idParam = !isGroupPage ? params.get("id") : undefined;
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -321,6 +320,7 @@ export default function AccessControlTable({
         desc: true,
       },
     ],
+    !isGroupPage,
   );
 
   const [editModal, setEditModal] = useState(false);
@@ -334,15 +334,15 @@ export default function AccessControlTable({
       policies?.filter((policy) =>
         condition
           ? policy?.name?.startsWith("Temporary") &&
-          policy?.name?.endsWith("client") &&
-          policy?.description?.startsWith("Temporary") &&
-          policy?.description?.endsWith("client")
-          : !(
-            policy?.name?.startsWith("Temporary") &&
             policy?.name?.endsWith("client") &&
             policy?.description?.startsWith("Temporary") &&
             policy?.description?.endsWith("client")
-          ),
+          : !(
+              policy?.name?.startsWith("Temporary") &&
+              policy?.name?.endsWith("client") &&
+              policy?.description?.startsWith("Temporary") &&
+              policy?.description?.endsWith("client")
+            ),
       ) ?? [],
     [policies],
   );
@@ -375,29 +375,33 @@ export default function AccessControlTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
-        wrapperComponent={inGroup ? Card : undefined}
-        wrapperProps={inGroup ? { className: "mt-6 w-full" } : undefined}
-        paginationPaddingClassName={inGroup ? "px-0 pt-8": undefined}
-        tableClassName={inGroup ? "mt-0" : undefined}
-        inset={!inGroup}
-        minimal={inGroup}
-        showSearchAndFilters={inGroup}
-        keepStateInLocalStorage={!inGroup || !idParam}
+        wrapperComponent={isGroupPage ? Card : undefined}
+        wrapperProps={isGroupPage ? { className: "mt-6 w-full" } : undefined}
+        paginationPaddingClassName={isGroupPage ? "px-0 pt-8" : undefined}
+        tableClassName={isGroupPage ? "mt-0 mb-2" : undefined}
+        inset={!isGroupPage}
+        minimal={isGroupPage}
+        showSearchAndFilters={isGroupPage}
+        keepStateInLocalStorage={!isGroupPage || !idParam}
         initialSearch={idParam ? "" : undefined}
         initialFilters={
           idParam
             ? [
-              {
-                id: "id",
-                value: idParam,
-              },
-            ]
+                {
+                  id: "id",
+                  value: idParam,
+                },
+              ]
             : undefined
         }
         text={"Access Control Policies"}
         sorting={sorting}
         setSorting={setSorting}
-        columns={inGroup ? GroupAccessControlTableColumns : AccessControlTableColumns}
+        columns={
+          isGroupPage
+            ? GroupAccessControlTableColumns
+            : AccessControlTableColumns
+        }
         columnVisibility={{
           description: false,
           id: false,
@@ -410,30 +414,23 @@ export default function AccessControlTable({
           setCurrentCellClicked(cell);
         }}
         searchPlaceholder={"Search by name and description..."}
-        getStartedCard={inGroup ? <NoResults
-          className={"py-4"}
-          title={"No Policy assigned to this group"}
-          icon={<AccessControlIcon className={"fill-nb-gray-200"} size={20} />}
-        /> :
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={
-                  <AccessControlIcon className={"fill-nb-gray-200"} size={20} />
-                }
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Create New Policy"}
-            description={
-              "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports."
-            }
-            button={
+        getStartedCard={
+          isGroupPage ? (
+            <NoResults
+              className={"py-4"}
+              title={"This group is not used within any policies yet"}
+              description={
+                "Assign this group as either a source or destination inside a policy to see them listed here."
+              }
+              icon={
+                <AccessControlIcon size={20} className={"fill-nb-gray-300"} />
+              }
+            >
               <div className={"flex gap-4 items-center justify-center"}>
                 <AccessControlModal>
                   <Button
                     variant={"primary"}
+                    className={"mt-4"}
                     disabled={!permission.policies.create}
                   >
                     <PlusCircle size={16} />
@@ -441,25 +438,59 @@ export default function AccessControlTable({
                   </Button>
                 </AccessControlModal>
               </div>
-            }
-            learnMore={
-              <>
-                Learn more about
-                <InlineLink
-                  href={"https://docs.netbird.io/how-to/manage-network-access"}
-                  target={"_blank"}
-                >
-                  Access Controls
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
+            </NoResults>
+          ) : (
+            <GetStartedTest
+              icon={
+                <SquareIcon
+                  icon={
+                    <AccessControlIcon
+                      className={"fill-nb-gray-200"}
+                      size={20}
+                    />
+                  }
+                  color={"gray"}
+                  size={"large"}
+                />
+              }
+              title={"Create New Policy"}
+              description={
+                "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports."
+              }
+              button={
+                <div className={"flex gap-4 items-center justify-center"}>
+                  <AccessControlModal>
+                    <Button
+                      variant={"primary"}
+                      disabled={!permission.policies.create}
+                    >
+                      <PlusCircle size={16} />
+                      Add Policy
+                    </Button>
+                  </AccessControlModal>
+                </div>
+              }
+              learnMore={
+                <>
+                  Learn more about
+                  <InlineLink
+                    href={
+                      "https://docs.netbird.io/how-to/manage-network-access"
+                    }
+                    target={"_blank"}
+                  >
+                    Access Controls
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </>
+              }
+            />
+          )
         }
         rightSide={() => (
           <>
             {policies && policies?.length > 0 && (
-              <div className={"flex ml-auto gap-4"}>
+              <div className={"flex items-center ml-auto"}>
                 <AccessControlModal>
                   <Button
                     variant={"primary"}
@@ -532,8 +563,8 @@ export default function AccessControlTable({
                   content={
                     <div className={"max-w-sm text-xs"}>
                       Show temporary policies created by the NetBird browser
-                      client. These policies are ephemeral and will be
-                      deleted automatically after a short period of time.
+                      client. These policies are ephemeral and will be deleted
+                      automatically after a short period of time.
                     </div>
                   }
                 >
