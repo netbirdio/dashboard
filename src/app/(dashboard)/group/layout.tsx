@@ -3,6 +3,6 @@ import type { Metadata } from "next";
 import BlankLayout from "@/layouts/BlankLayout";
 
 export const metadata: Metadata = {
-  title: `Group - Groups - ${globalMetaTitle}`,
+  title: `Group - ${globalMetaTitle}`,
 };
 export default BlankLayout;
