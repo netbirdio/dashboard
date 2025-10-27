@@ -16,6 +16,8 @@ import NetworkRoutingPeerModal from "@/modules/networks/routing-peers/NetworkRou
 type Props = {
   children: React.ReactNode;
   network?: Network;
+  onResourceUpdate?: () => void;
+  onResourceDelete?: () => void;
 };
 
 const NetworksContext = React.createContext(
@@ -36,7 +38,12 @@ const NetworksContext = React.createContext(
   },
 );
 
-export const NetworkProvider = ({ children, network }: Props) => {
+export const NetworkProvider = ({
+  children,
+  network,
+  onResourceDelete,
+  onResourceUpdate,
+}: Props) => {
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const deleteCall = useApiCall("/networks").del;
@@ -156,6 +163,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
       loadingMessage: "Deleting resource...",
       promise: deleteCall({}, `/${network.id}/resources/${resource.id}`).then(
         () => {
+          onResourceDelete?.();
           mutate(`/networks/${network.id}/resources`);
           mutate("/groups");
         },
@@ -271,6 +279,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
             setPolicyDefaultSettings(undefined);
             mutate("/networks");
             if (network) {
+              onResourceUpdate?.();
               mutate(`/networks/${network.id}/resources`);
               mutate(`/networks/${network.id}`);
             } else {
@@ -324,6 +333,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
               setCurrentResource(undefined);
               mutate("/groups");
               if (network) {
+                onResourceUpdate?.();
                 mutate(`/networks/${network.id}/resources`);
                 mutate(`/networks/${network.id}`);
               }
@@ -351,6 +361,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
               mutate("/networks");
               mutate("/groups");
               if (network) {
+                onResourceUpdate?.();
                 mutate(`/networks/${network.id}/resources`);
                 mutate(`/networks/${network.id}`);
               }

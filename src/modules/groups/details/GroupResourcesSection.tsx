@@ -9,6 +9,7 @@ import { removeAllSpaces } from "@utils/helpers";
 import { ArrowUpRightIcon, Layers3Icon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React, { useState } from "react";
+import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResourceWithNetwork } from "@/interfaces/Network";
@@ -59,7 +60,25 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
     header: ({ column }) => {
       return <DataTableHeader column={column}>Active</DataTableHeader>;
     },
-    cell: ({ row }) => <ResourceEnabledCell resource={row.original} />,
+    cell: ({ row }) => (
+      <ResourceEnabledCell
+        resource={row.original}
+        mutateAllResourcesOnUpdate={true}
+      />
+    ),
+  },
+  {
+    id: "groups",
+    accessorFn: (resource) => {
+      let groups = resource?.groups as Group[];
+      return groups.map((group) => group.name).join(", ");
+    },
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+    },
+    cell: ({ row }) => {
+      return <ResourceGroupCell resource={row.original} />;
+    },
   },
   {
     id: "policies",
@@ -69,6 +88,14 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
     },
     cell: ({ row }) => {
       return <ResourcePolicyCell resource={row.original} />;
+    },
+  },
+  {
+    id: "actions",
+    accessorKey: "id",
+    header: "",
+    cell: ({ row }) => {
+      return <ResourceActionCell resource={row.original} />;
     },
   },
 ];
@@ -81,6 +108,7 @@ export const GroupResourcesSection = ({
   const [sorting, setSorting] = useState<SortingState>([]);
   const { permission } = usePermissions();
   const router = useRouter();
+  const { mutate } = useSWRConfig();
 
   return (
     <GroupDetailsTableContainer>
@@ -91,6 +119,15 @@ export const GroupResourcesSection = ({
         setSorting={setSorting}
         minimal={true}
         showSearchAndFilters={true}
+        renderRow={(row, children) => (
+          <NetworkProvider
+            network={row.network}
+            onResourceUpdate={() => mutate("/networks/resources")}
+            onResourceDelete={() => mutate("/networks/resources")}
+          >
+            {children}
+          </NetworkProvider>
+        )}
         inset={false}
         tableClassName={"mt-0"}
         text={"Resources"}
