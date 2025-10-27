@@ -154,7 +154,10 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
     >
       <TabsList justify={"start"} className={"px-8"}>
         {group.name !== "All" && (
-          <TabsTrigger value={"users"}>
+          <TabsTrigger
+            value={"users"}
+            className={groupDetails === null ? "animate-pulse" : ""}
+          >
             <TeamIcon
               size={12}
               className={
@@ -166,7 +169,10 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
         )}
 
         {group.name !== "All" && (
-          <TabsTrigger value={"peers"}>
+          <TabsTrigger
+            value={"peers"}
+            className={groupDetails === null ? "animate-pulse" : ""}
+          >
             <PeerIcon
               size={12}
               className={
@@ -177,7 +183,10 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
           </TabsTrigger>
         )}
 
-        <TabsTrigger value={"policies"}>
+        <TabsTrigger
+          value={"policies"}
+          className={groupDetails === null ? "animate-pulse" : ""}
+        >
           <AccessControlIcon
             size={12}
             className={
@@ -187,12 +196,18 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
           {singularize("Policies", policiesCount)}
         </TabsTrigger>
 
-        <TabsTrigger value={"resources"}>
+        <TabsTrigger
+          value={"resources"}
+          className={groupDetails === null ? "animate-pulse" : ""}
+        >
           <Layers3Icon size={14} />
           {singularize("Resources", resourcesCount)}
         </TabsTrigger>
 
-        <TabsTrigger value={"network-routes"}>
+        <TabsTrigger
+          value={"network-routes"}
+          className={groupDetails === null ? "animate-pulse" : ""}
+        >
           <NetworkRoutesIcon
             size={12}
             className={
@@ -202,7 +217,10 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
           {singularize("Network Routes", routesCount)}
         </TabsTrigger>
 
-        <TabsTrigger value={"nameservers"}>
+        <TabsTrigger
+          value={"nameservers"}
+          className={groupDetails === null ? "animate-pulse" : ""}
+        >
           <DNSIcon
             size={12}
             className={
@@ -213,7 +231,10 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
         </TabsTrigger>
 
         {group.name !== "All" && (
-          <TabsTrigger value={"setup-keys"}>
+          <TabsTrigger
+            value={"setup-keys"}
+            className={groupDetails === null ? "animate-pulse" : ""}
+          >
             <SetupKeysIcon
               size={12}
               className={
