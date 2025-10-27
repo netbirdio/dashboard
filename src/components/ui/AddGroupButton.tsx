@@ -45,7 +45,7 @@ export const AddGroupButton = () => {
   return (
     <Modal open={open} onOpenChange={setOpen}>
       <ModalTrigger asChild>
-        <Button variant={"primary"} size={"sm"} className={"ml-auto h-[44px]"}>
+        <Button variant={"primary"} size={"sm"} className={"ml-auto h-[42px]"}>
           <PlusCircle size={16} />
           Create Group
         </Button>
