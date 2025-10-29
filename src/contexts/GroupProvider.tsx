@@ -89,10 +89,14 @@ export const GroupProvider = ({
   const renameGroup = (name: string) => {
     if (!isAllowedToRename) return Promise.reject("Not allowed to rename");
 
-    const promise = groupRequest.put({ name: name }).then(() => {
-      if (isDetailPage) mutate(`/groups/${group.id}`);
-      mutate("/groups");
-    });
+    const currentPeerIds =
+      group.peers?.map((p) => (typeof p === "string" ? p : p.id)) || [];
+    const promise = groupRequest
+      .put({ ...group, peers: currentPeerIds, name })
+      .then(() => {
+        if (isDetailPage) mutate(`/groups/${group.id}`);
+        mutate("/groups");
+      });
 
     notify({
       title: `Rename Group ${group.name}`,
