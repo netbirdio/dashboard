@@ -1,16 +1,13 @@
 import useFetchApi from "@utils/api";
 import { useMemo } from "react";
-import { Group, GroupIssued } from "@/interfaces/Group";
+import { Group } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import { Policy } from "@/interfaces/Policy";
 import { Route } from "@/interfaces/Route";
 import { SetupKey } from "@/interfaces/SetupKey";
 import { User } from "@/interfaces/User";
 
-export interface GroupUsage {
-  id: string;
-  name: string;
-  issued: GroupIssued;
+export interface GroupUsage extends Group {
   peers_count: number;
   policies_count: number;
   nameservers_count: number;
@@ -125,9 +122,7 @@ export default function useGroupsUsage() {
       }).length;
 
       return {
-        id: group.id,
-        issued: group.issued,
-        name: group.name,
+        ...group,
         peers_count: group.peers_count,
         resources_count: group.resources_count,
         policies_count: policyCount,
