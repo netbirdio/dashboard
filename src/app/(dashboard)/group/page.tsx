@@ -43,7 +43,7 @@ export default function GroupPage() {
     error,
   } = useFetchApi<Group>(`/groups/${groupId}`, true);
 
-  useRedirect("/team/groups", false, !groupId || isRestricted);
+  useRedirect("/groups", false, !groupId || isRestricted);
 
   if (isRestricted) {
     return (
@@ -67,15 +67,10 @@ export default function GroupPage() {
     <PageContainer>
       <RoutesProvider>
         <GroupProvider group={group} isDetailPage={true}>
-          <div className={"p-default py-6 pb-0 w-full"}>
+          <div className={"p-default py-6 pb-0 w-full mb-[6px]"}>
             <Breadcrumbs>
               <Breadcrumbs.Item
-                href={"/team"}
-                label={"Team"}
-                icon={<TeamIcon size={13} />}
-              />
-              <Breadcrumbs.Item
-                href={"/team/groups"}
+                href={"/groups"}
                 label={"Groups"}
                 icon={<FolderGit2Icon size={14} />}
               />
@@ -150,7 +145,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
       defaultValue={tab}
       onValueChange={(v) => setTab(v)}
       value={tab}
-      className={"pt-4 pb-0 mb-0"}
+      className={"pt-2 pb-0 mb-0"}
     >
       <TabsList justify={"start"} className={"px-8"}>
         {group.name !== "All" && (

@@ -6,7 +6,6 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon, FolderGit2Icon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
-import TeamIcon from "@/assets/icons/TeamIcon";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import InlineLink from "@/components/InlineLink";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -24,12 +23,7 @@ export default function GroupsPage() {
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            href={"/team"}
-            label={"Team"}
-            icon={<TeamIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/team/groups"}
+            href={"/groups"}
             label={"Groups"}
             icon={<FolderGit2Icon size={14} />}
             active

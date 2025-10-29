@@ -120,6 +120,12 @@ export default function Navigation({
                     exactPathMatch={true}
                     visible={permission.policies.read}
                   />
+                  <SidebarItem
+                    label="Groups"
+                    isChild
+                    href={"/groups"}
+                    visible={permission.policies.read}
+                  />
                 </SidebarItem>
 
                 <NetworkNavigation />
@@ -154,12 +160,6 @@ export default function Navigation({
                     label="Users"
                     isChild
                     href={"/team/users"}
-                    visible={permission.users.read}
-                  />
-                  <SidebarItem
-                    label="Groups"
-                    isChild
-                    href={"/team/groups"}
                     visible={permission.users.read}
                   />
                   <SidebarItem
