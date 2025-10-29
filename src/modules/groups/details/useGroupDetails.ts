@@ -78,8 +78,8 @@ export default function useGroupDetails(groupId: string) {
   }, [users, groupId]);
 
   const linkedPeers = useMemo(() => {
-    const groupPeerIds = (group?.peers as GroupPeer[]).map((p) => p.id);
-    return peers?.filter((p) => groupPeerIds.includes(p.id!)) || [];
+    const groupPeerIds = (group?.peers as GroupPeer[])?.map((p) => p.id);
+    return peers?.filter((p) => groupPeerIds?.includes(p.id!)) || [];
   }, [peers, group]);
 
   const linkedNetworkResources = useMemo(() => {
