@@ -1,23 +1,19 @@
 import React, { lazy } from "react";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
+import { Policy } from "@/interfaces/Policy";
 import { GroupDetailsTableContainer } from "@/modules/groups/details/GroupDetailsTableContainer";
-import { GroupPolices } from "@/modules/groups/details/useGroupDetails";
 
 const AccessControlTable = lazy(
   () => import("@/modules/access-control/table/AccessControlTable"),
 );
 
-export const GroupPoliciesSection = ({
-  policies,
-}: {
-  policies?: GroupPolices;
-}) => {
+export const GroupPoliciesSection = ({ policies }: { policies?: Policy[] }) => {
   return (
     <GroupDetailsTableContainer>
       <PoliciesProvider>
         <AccessControlTable
           isLoading={false}
-          policies={policies?.all}
+          policies={policies}
           isGroupPage={true}
         />
       </PoliciesProvider>

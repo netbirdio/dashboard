@@ -14,19 +14,13 @@ import { User } from "@/interfaces/User";
 import useFetchApi from "@/utils/api";
 
 export interface GroupDetails extends Group {
-  policies: GroupPolices;
+  policies: Policy[];
   nameservers: NameserverGroup[];
   routes: Route[];
   setupKeys: SetupKey[];
   users: User[];
   peersOfGroup: Peer[];
   networkResources: NetworkResourceWithNetwork[];
-}
-
-export interface GroupPolices {
-  sources: Policy[];
-  destinations: Policy[];
-  all: Policy[];
 }
 
 export default function useGroupDetails(groupId: string) {
@@ -53,61 +47,39 @@ export default function useGroupDetails(groupId: string) {
     useFetchApi<Network[]>("/networks");
 
   const linkedPolicies = useMemo(() => {
-    const emptyPolicies = { sources: [], destinations: [], all: [] };
-
-    if (isPoliciesLoading) return emptyPolicies;
-    if (!policies) return emptyPolicies;
-
-    const sources: Policy[] = [];
-    const destinations: Policy[] = [];
-    const all: Policy[] = [];
-
-    for (const policy of policies) {
-      const rules = policy.rules || [];
-
-      for (const rule of rules) {
+    return (
+      policies?.filter((policy) => {
+        let rule = policy.rules?.[0] ?? undefined;
         const sourceGroups = (rule.sources as Group[]) || [];
         const destinationGroups = (rule.destinations as Group[]) || [];
-
         const isInSources = sourceGroups.some((g) => g.id === groupId);
         const isInDestinations = destinationGroups.some(
           (g) => g.id === groupId,
         );
-
-        if (isInSources) sources.push(policy);
-        if (isInDestinations) destinations.push(policy);
-        if (isInSources || isInDestinations) all.push(policy);
-      }
-    }
-
-    return { sources, destinations, all };
-  }, [policies, isPoliciesLoading, groupId]);
+        return isInSources || isInDestinations;
+      }) || []
+    );
+  }, [policies, groupId]);
 
   const linkedNameservers = useMemo(() => {
-    if (!nameservers) return [];
-    return nameservers.filter((ns) => ns.groups?.includes(groupId));
+    return nameservers?.filter((ns) => ns.groups?.includes(groupId)) || [];
   }, [nameservers, groupId]);
 
   const linkedRoutes = useMemo(() => {
-    if (!routes) return [];
-    return routes.filter((route) => route.groups?.includes(groupId));
+    return routes?.filter((route) => route.groups?.includes(groupId)) || [];
   }, [routes, groupId]);
 
   const linkedSetupKeys = useMemo(() => {
-    if (!setupKeys) return [];
-    return setupKeys.filter((key) => key.auto_groups?.includes(groupId));
+    return setupKeys?.filter((key) => key.auto_groups?.includes(groupId)) || [];
   }, [setupKeys, groupId]);
 
   const linkedUsers = useMemo(() => {
-    if (!users) return [];
-    return users.filter((user) => user.auto_groups?.includes(groupId));
+    return users?.filter((user) => user.auto_groups?.includes(groupId)) || [];
   }, [users, groupId]);
 
   const linkedPeers = useMemo(() => {
-    if (!peers || !group?.peers) return [];
-
-    const groupPeerIds = (group.peers as GroupPeer[]).map((p) => p.id);
-    return peers.filter((p) => groupPeerIds.includes(p.id!));
+    const groupPeerIds = (group?.peers as GroupPeer[]).map((p) => p.id);
+    return peers?.filter((p) => groupPeerIds.includes(p.id!)) || [];
   }, [peers, group]);
 
   const linkedNetworkResources = useMemo(() => {

@@ -134,7 +134,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
 
   const peersCount = groupDetails?.peers_count || 0;
   const usersCount = groupDetails?.users?.length || 0;
-  const policiesCount = groupDetails?.policies?.all.length || 0;
+  const policiesCount = groupDetails?.policies?.length || 0;
   const resourcesCount = groupDetails?.resources_count || 0;
   const routesCount = groupDetails?.routes?.length || 0;
   const nameserversCount = groupDetails?.nameservers?.length || 0;
