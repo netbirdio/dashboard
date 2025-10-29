@@ -171,7 +171,15 @@ export function PeerGroupSelector({
     const groupResources: GroupResource[] | undefined =
       (group?.resources as GroupResource[]) || [];
 
-    if (peer) groupPeers?.push({ id: peer?.id as string, name: peer?.name });
+    if (peer) {
+      const peerInGroup = groupPeers?.find((p) => p?.id === peer?.id);
+      if (!peerInGroup) {
+        groupPeers?.push({
+          id: peer?.id as string,
+          name: peer?.name,
+        });
+      }
+    }
 
     if (!group && !option) {
       addDropdownOptions([
