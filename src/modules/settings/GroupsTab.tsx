@@ -22,6 +22,7 @@ import {
   FolderInput,
   FolderSync,
   ShieldCheck,
+  X,
 } from "lucide-react";
 import React, { lazy, Suspense, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -85,8 +86,14 @@ export default function GroupsTab({ account }: Props) {
     const showConfirm = jwtGroupSync && jwtGroupsEntered;
     const choice = showConfirm
       ? await confirm({
-          title: `JWT allow group - ${jwtAllowGroups[0]}`,
-          description: `Only users part of the ${jwtAllowGroups[0]} group will be able to access NetBird. Are you sure you want to save the changes?`,
+          title: `JWT allow group${
+            jwtAllowGroups.length > 1 ? "s" : ""
+          } - ${jwtAllowGroups.join(", ")}`,
+          description: `Only users part of ${
+            jwtAllowGroups.length > 1
+              ? `these groups (${jwtAllowGroups.join(", ")})`
+              : `the ${jwtAllowGroups[0]} group`
+          } will be able to access NetBird. Are you sure you want to save the changes?`,
           confirmText: "Save",
           children: (
             <div
@@ -172,7 +179,7 @@ export default function GroupsTab({ account }: Props) {
               </>
             }
             helpText={
-              "Allow group propagation from user’s auto-groups to peers, sharing membership information."
+              "Allow group propagation from user's auto-groups to peers, sharing membership information."
             }
             disabled={!permission.settings.update}
           />
@@ -187,7 +194,7 @@ export default function GroupsTab({ account }: Props) {
                 </>
               }
               helpText={
-                "Extract & sync groups from JWT claims with user’s auto-groups, auto-creating groups from tokens."
+                "Extract & sync groups from JWT claims with user's auto-groups, auto-creating groups from tokens."
               }
               disabled={!permission.settings.update}
             />
@@ -234,28 +241,63 @@ export default function GroupsTab({ account }: Props) {
                       />
                     </div>
                     <div>
-                      <Label>JWT allow group</Label>
+                      <Label>JWT allow groups</Label>
                       <HelpText>
-                        Limit access to NetBird for the specified group name,
-                        e.g., NetBird users. To use the group, you need to
-                        configure it first in your IdP.
+                        Limit access to NetBird for the specified group names,
+                        e.g., NetBird users. To use the groups, you need to
+                        configure them first in your IdP.
                       </HelpText>
-                      <Input
-                        customPrefix={
-                          <ShieldCheck
-                            size={16}
-                            className={"text-nb-gray-300"}
-                          />
-                        }
-                        placeholder={"e.g., NetBird users"}
-                        value={jwtAllowGroups[0]}
-                        onChange={(e) => {
-                          setJwtAllowGroups([e.target.value]);
-                          setJwtAllowGroupsWarning(true);
-                          if (e.target.value === "")
-                            setJwtAllowGroupsWarning(false);
-                        }}
-                      />
+                      <div>
+                        {jwtAllowGroups.length > 0 && (
+                          <div className="flex flex-wrap gap-2 mb-2">
+                            {jwtAllowGroups.map((group, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center gap-1 bg-nb-gray-900 px-2 py-1 rounded text-sm"
+                              >
+                                <span>{group}</span>
+                                <button
+                                  onClick={() => {
+                                    const newGroups = jwtAllowGroups.filter(
+                                      (_, i) => i !== index,
+                                    );
+                                    setJwtAllowGroups(newGroups);
+                                    setJwtAllowGroupsWarning(
+                                      newGroups.length > 0,
+                                    );
+                                  }}
+                                  className="hover:text-red-400 transition-colors"
+                                >
+                                  <X size={14} />
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                        <Input
+                          customPrefix={
+                            <ShieldCheck
+                              size={16}
+                              className={"text-nb-gray-300"}
+                            />
+                          }
+                          placeholder={"Add a group and press Enter"}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault();
+                              const input = e.currentTarget;
+                              if (input.value.trim()) {
+                                setJwtAllowGroups([
+                                  ...jwtAllowGroups,
+                                  input.value.trim(),
+                                ]);
+                                setJwtAllowGroupsWarning(true);
+                                input.value = "";
+                              }
+                            }
+                          }}
+                        />
+                      </div>
                     </div>
                     {jwtAllowGroupsWarning && (
                       <div
