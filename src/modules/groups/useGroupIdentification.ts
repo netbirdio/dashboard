@@ -14,11 +14,14 @@ export const useGroupIdentification = ({ id, issued }: Props) => {
   const isRegularGroup =
     !isJWTGroup && !isOktaGroup && !isGoogleGroup && !isAzureGroup;
 
+  const isIntegrationGroup = isOktaGroup || isGoogleGroup || isAzureGroup;
+
   return {
     isOktaGroup,
     isGoogleGroup,
     isAzureGroup,
     isJWTGroup,
     isRegularGroup,
+    isIntegrationGroup,
   };
 };

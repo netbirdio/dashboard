@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
+import Card from "@components/Card";
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
@@ -15,6 +16,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import NoResults from "@/components/ui/NoResults";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { Policy } from "@/interfaces/Policy";
@@ -35,6 +37,7 @@ type Props = {
   policies?: Policy[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  isGroupPage?: boolean;
 };
 
 export const AccessControlTableColumns: ColumnDef<Policy>[] = [
@@ -179,12 +182,13 @@ export default function AccessControlTable({
   policies,
   isLoading,
   headingTarget,
+  isGroupPage,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
   const params = useSearchParams();
-  const idParam = params.get("id") ?? undefined;
+  const idParam = !isGroupPage ? params.get("id") : undefined;
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -195,6 +199,7 @@ export default function AccessControlTable({
         desc: true,
       },
     ],
+    !isGroupPage,
   );
 
   const [editModal, setEditModal] = useState(false);
@@ -249,7 +254,13 @@ export default function AccessControlTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
-        keepStateInLocalStorage={!idParam}
+        wrapperComponent={isGroupPage ? Card : undefined}
+        wrapperProps={isGroupPage ? { className: "mt-6 w-full" } : undefined}
+        paginationPaddingClassName={isGroupPage ? "px-0 pt-8" : undefined}
+        tableClassName={isGroupPage ? "mt-0 mb-2" : undefined}
+        inset={!isGroupPage}
+        minimal={isGroupPage}
+        keepStateInLocalStorage={!isGroupPage || !idParam}
         initialSearch={idParam ? "" : undefined}
         initialFilters={
           idParam
@@ -278,25 +289,22 @@ export default function AccessControlTable({
         }}
         searchPlaceholder={"Search by name and description..."}
         getStartedCard={
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={
-                  <AccessControlIcon className={"fill-nb-gray-200"} size={20} />
-                }
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Create New Policy"}
-            description={
-              "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports."
-            }
-            button={
+          isGroupPage ? (
+            <NoResults
+              className={"py-4"}
+              title={"This group is not used within any policies yet"}
+              description={
+                "Assign this group as either a source or destination inside a policy to see them listed here."
+              }
+              icon={
+                <AccessControlIcon size={20} className={"fill-nb-gray-300"} />
+              }
+            >
               <div className={"flex gap-4 items-center justify-center"}>
                 <AccessControlModal>
                   <Button
                     variant={"primary"}
+                    className={"mt-4"}
                     disabled={!permission.policies.create}
                   >
                     <PlusCircle size={16} />
@@ -304,25 +312,59 @@ export default function AccessControlTable({
                   </Button>
                 </AccessControlModal>
               </div>
-            }
-            learnMore={
-              <>
-                Learn more about
-                <InlineLink
-                  href={"https://docs.netbird.io/how-to/manage-network-access"}
-                  target={"_blank"}
-                >
-                  Access Controls
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
+            </NoResults>
+          ) : (
+            <GetStartedTest
+              icon={
+                <SquareIcon
+                  icon={
+                    <AccessControlIcon
+                      className={"fill-nb-gray-200"}
+                      size={20}
+                    />
+                  }
+                  color={"gray"}
+                  size={"large"}
+                />
+              }
+              title={"Create New Policy"}
+              description={
+                "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports."
+              }
+              button={
+                <div className={"flex gap-4 items-center justify-center"}>
+                  <AccessControlModal>
+                    <Button
+                      variant={"primary"}
+                      disabled={!permission.policies.create}
+                    >
+                      <PlusCircle size={16} />
+                      Add Policy
+                    </Button>
+                  </AccessControlModal>
+                </div>
+              }
+              learnMore={
+                <>
+                  Learn more about
+                  <InlineLink
+                    href={
+                      "https://docs.netbird.io/how-to/manage-network-access"
+                    }
+                    target={"_blank"}
+                  >
+                    Access Controls
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </>
+              }
+            />
+          )
         }
         rightSide={() => (
           <>
             {policies && policies?.length > 0 && (
-              <div className={"flex ml-auto gap-4"}>
+              <div className={"flex items-center ml-auto"}>
                 <AccessControlModal>
                   <Button
                     variant={"primary"}

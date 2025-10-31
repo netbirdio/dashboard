@@ -20,6 +20,7 @@ const GroupContext = React.createContext(
     createOrUpdate: (group: Group) => Promise<Group>;
     reset: () => void;
     updateGroupDropdown: (oldGroupName: string, newGroup: Group) => void;
+    deleteGroupDropdownOption: (name: string) => void;
   },
 );
 
@@ -132,6 +133,13 @@ export function GroupsProviderContent({
     }
   };
 
+  const deleteGroupDropdownOption = (name: string) => {
+    setDropdownOptions((prev) => {
+      let updated = prev.filter((g) => g.name !== name);
+      return sortBy(updated, "name");
+    });
+  };
+
   return (
     <GroupContext.Provider
       value={{
@@ -144,6 +152,7 @@ export function GroupsProviderContent({
         createOrUpdate,
         reset,
         updateGroupDropdown,
+        deleteGroupDropdownOption,
       }}
     >
       {children}

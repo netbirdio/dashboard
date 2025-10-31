@@ -10,7 +10,7 @@ export default function SkeletonTable({ withHeader = true }: Readonly<Props>) {
   return (
     <div className={"w-full"}>
       {withHeader && <SkeletonTableHeader />}
-      <div className={"mt-6"}>
+      <div className={"mt-6 relative -top-1"}>
         <TableSkeletonRow />
         <TableSkeletonRow odd />
         <TableSkeletonRow />
@@ -68,7 +68,7 @@ export const SkeletonTableHeader = ({
   return (
     <div
       className={cn(
-        "flex gap-x-4 gap-y-6 p-default flex-wrap w-full justify-between",
+        "flex gap-x-4 gap-y-6 p-default flex-wrap w-full justify-between relative -top-1",
         className,
       )}
     >

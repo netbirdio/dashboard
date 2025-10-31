@@ -1,16 +1,13 @@
 import useFetchApi from "@utils/api";
 import { useMemo } from "react";
-import { Group, GroupIssued } from "@/interfaces/Group";
+import { Group } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import { Policy } from "@/interfaces/Policy";
 import { Route } from "@/interfaces/Route";
 import { SetupKey } from "@/interfaces/SetupKey";
 import { User } from "@/interfaces/User";
 
-export interface GroupUsage {
-  id: string;
-  name: string;
-  issued: GroupIssued;
+export interface GroupUsage extends Group {
   peers_count: number;
   policies_count: number;
   nameservers_count: number;
@@ -22,7 +19,7 @@ export interface GroupUsage {
 
 export default function useGroupsUsage() {
   const { data: groups, isLoading: isGroupsLoading } =
-    useFetchApi<Group[]>(`/groups`); // Groups , Peers count
+    useFetchApi<Group[]>(`/groups`); // Groups, Peers count
   const { data: policies, isLoading: isPoliciesLoading } =
     useFetchApi<Policy[]>(`/policies`); // Policies
   const { data: nameservers, isLoading: isNameserversLoading } =
@@ -100,7 +97,7 @@ export default function useGroupsUsage() {
     isUsersLoading,
   ]);
 
-  return useMemo(() => {
+  const groupsUsage = useMemo(() => {
     if (isLoading) return [];
     if (!groups) return [];
     return groups?.map((group) => {
@@ -125,9 +122,7 @@ export default function useGroupsUsage() {
       }).length;
 
       return {
-        id: group.id,
-        issued: group.issued,
-        name: group.name,
+        ...group,
         peers_count: group.peers_count,
         resources_count: group.resources_count,
         policies_count: policyCount,
@@ -146,4 +141,9 @@ export default function useGroupsUsage() {
     setupKeysGroups,
     usersGroups,
   ]);
+
+  return {
+    data: groupsUsage,
+    isLoading,
+  };
 }

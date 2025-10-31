@@ -11,7 +11,7 @@ type Props = {
 };
 export default function GroupsCountCell({
   icon,
-  count,
+  count = 0,
   groupName,
   text,
 }: Props) {
@@ -19,12 +19,13 @@ export default function GroupsCountCell({
     <FullTooltip
       className={"w-full"}
       content={
-        <div className={"text-sm"}>
+        <div className={"text-xs"}>
           Group <span className={"text-netbird font-medium"}>{groupName}</span>{" "}
           is used in <span className={"font-medium text-netbird"}>{count}</span>{" "}
           {text}
         </div>
       }
+      disabled={count === 0}
     >
       <Badge
         variant={"gray"}

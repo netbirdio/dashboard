@@ -36,7 +36,12 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
         )}
         data-testid="peer-name-cell"
         aria-label={`View details of peer ${peer.name}`}
-        onClick={() => linkToPeer && router.push("/peer?id=" + peer.id)}
+        onClick={(e) => {
+          if (!linkToPeer) return;
+          e.preventDefault();
+          e.stopPropagation();
+          router.push("/peer?id=" + peer.id);
+        }}
       >
         <ActiveInactiveRow
           active={peer.connected}
