@@ -72,6 +72,8 @@ export default function useGroupHelper({ initial = [], peer }: Props) {
   };
 
   const removePeerFromGroup = async (g: Group) => {
+    if (g.name === "All") return Promise.resolve(g);
+
     const newPeerGroups = g.peers?.filter((p) => {
       const groupPeer = p as GroupPeer;
       return groupPeer.id !== peer?.id;

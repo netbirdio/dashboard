@@ -16,7 +16,9 @@ export default function AccessControlDirectionCell({
   }, [policy]);
 
   const bidirectional = firstRule ? firstRule.bidirectional : false;
-  const isSingleResource = !!firstRule?.destinationResource;
+  const isSingleResource =
+    !!firstRule?.destinationResource &&
+    firstRule?.destinationResource?.type !== "peer";
 
   return (
     <div className={"flex h-full"}>
