@@ -10,6 +10,7 @@ import ModalHeader from "@components/modal/ModalHeader";
 import { trim } from "lodash";
 import * as React from "react";
 import { useMemo, useState } from "react";
+import { useGroups } from "@/contexts/GroupsProvider";
 
 type Props = {
   initialName: string;
@@ -24,11 +25,26 @@ export const EditGroupNameModal = ({
   onSuccess,
 }: Props) => {
   const [name, setName] = useState(initialName);
+  const { groups } = useGroups();
+  const [error, setError] = useState("");
+
   const isDisabled = useMemo(() => {
     if (name === initialName) return true;
+    if (error !== "") return true;
     const trimmedName = trim(name);
     return trimmedName.length === 0;
-  }, [name, initialName]);
+  }, [name, initialName, error]);
+
+  const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newName = trim(e.target.value);
+    const findGroup = groups?.find((g) => g.name === newName);
+    if (findGroup) {
+      setError("This group already exists. Please choose another name.");
+    } else {
+      setError("");
+    }
+    setName(newName);
+  };
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
@@ -44,7 +60,8 @@ export const EditGroupNameModal = ({
             <Input
               placeholder={"e.g., Developers"}
               value={name}
-              onChange={(e) => setName(e.target.value)}
+              onChange={handleNameChange}
+              error={error}
             />
           </div>
         </div>

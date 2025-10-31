@@ -4,6 +4,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
@@ -43,6 +44,7 @@ export const GroupProvider = ({
   const { permission } = usePermissions();
   const [groupNameModal, setGroupNameModal] = useState(false);
   const { mutate } = useSWRConfig();
+  const { deleteGroupDropdownOption, updateGroupDropdown } = useGroups();
   const groupRequest = useApiCall<Group>("/groups/" + group.id);
   const userRequest = useApiCall<User>("/users");
   const { confirm } = useDialog();
@@ -59,6 +61,7 @@ export const GroupProvider = ({
     if (!isAllowedToDelete) return Promise.reject("Not allowed to delete");
 
     const promise = groupRequest.del().then(() => {
+      deleteGroupDropdownOption(group.name);
       if (isDetailPage) mutate(`/groups/${group.id}`);
       mutate("/groups");
     });
@@ -94,6 +97,7 @@ export const GroupProvider = ({
     const promise = groupRequest
       .put({ ...group, peers: currentPeerIds, name })
       .then(() => {
+        updateGroupDropdown(group.name, { ...group, name });
         if (isDetailPage) mutate(`/groups/${group.id}`);
         mutate("/groups");
       });
