@@ -4,6 +4,7 @@ import { notify } from "@components/Notification";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { IconCircleX } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
+import { cn } from "@utils/helpers";
 import { Loader2Icon } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Peer } from "@/interfaces/Peer";
@@ -19,7 +20,6 @@ import {
   NetBirdStatus,
   useNetBirdClient,
 } from "@/modules/remote-access/useNetBirdClient";
-import { cn } from "@utils/helpers";
 
 export default function RDPPage() {
   const { peerId } = useRDPQueryParams();
@@ -31,7 +31,7 @@ export default function RDPPage() {
   } = useFetchApi<Peer>(`/peers/${peerId}`, true, false, !!peerId);
 
   return (
-    <div className={"w-screen h-screen overflow-hidden"}>
+    <div className={"w-screen h-screen overflow-hidden fixed inset-0"}>
       {peerId && peer && !isLoading ? (
         <RDPSession key={peer.id} peer={peer} />
       ) : (
@@ -55,7 +55,7 @@ function RDPSession({ peer }: Props) {
 
   useEffect(() => {
     document.title = `${peer.name} - ${peer.ip} - RDP`;
-  }, []);
+  }, [peer.ip, peer.name, connected, rdp]);
 
   const sendErrorNotification = (title: string, message: string) => {
     notify({
@@ -104,6 +104,7 @@ function RDPSession({ peer }: Props) {
         port: credentials.port,
         username: credentials.username,
         password: credentials.password,
+        domain: credentials.domain,
         width: window.innerWidth,
         height: window.innerHeight,
       });

@@ -29,7 +29,6 @@ export interface RDPSession {
   shutdown(): void;
   sendInput(input: unknown): void;
   onClipboardPaste?(content: ClipboardData): Promise<void>;
-  inputHandler?: IronRDPInputHandler;
 }
 interface TerminationInfo {
   reason(): string;
@@ -57,11 +56,6 @@ interface RDPConfig {
 declare global {
   interface Window {
     IronRDPBridge: IronRDPWASMBridge;
-    IronRDPInputHandler?: new (
-      ironrdp: IronRDPModule,
-      session: RDPSession,
-      canvas: HTMLCanvasElement,
-    ) => IronRDPInputHandler;
     initializeIronRDP: () => Promise<boolean>;
     onIronRDPReady?: () => void;
     createRDCleanPathProxy?: (
@@ -69,9 +63,6 @@ declare global {
       port: number,
     ) => Promise<string>;
   }
-}
-interface IronRDPInputHandler {
-  destroy(): void;
 }
 
 const IRON_RDP_PKG = "/ironrdp-pkg/ironrdp_web.js";
@@ -115,7 +106,8 @@ export class IronRDPWASMBridge {
     port: number,
     username: string,
     password: string,
-    canvas: HTMLCanvasElement,
+    domain?: string,
+    canvas?: HTMLCanvasElement,
     enableClipboard = true,
     netbirdClient?: {
       createRDPProxy: (hostname: string, port: string) => Promise<string>;
@@ -132,9 +124,9 @@ export class IronRDPWASMBridge {
       const config: RDPConfig = {
         username,
         password,
-        domain: "",
-        width: canvas.width || 1024,
-        height: canvas.height || 768,
+        domain: domain || "",
+        width: canvas?.width || 1024,
+        height: canvas?.height || 768,
         enable_tls: true,
         enable_credssp: true,
         enable_nla: true,
@@ -177,9 +169,6 @@ export class IronRDPWASMBridge {
       builder.authToken("");
       const session = await builder.connect();
       this.sessions.set(sessionId, session);
-      if (canvas) {
-        this.attachInputHandler(session, canvas);
-      }
       if (enableClipboard) {
         this.startClipboardEventListeners();
       }
@@ -203,24 +192,7 @@ export class IronRDPWASMBridge {
       this.handleLocalClipboardRequest();
     });
   }
-  private attachInputHandler(
-    session: RDPSession,
-    canvas: HTMLCanvasElement,
-  ): void {
-    if (!window.IronRDPInputHandler) {
-      console.warn("IronRDPInputHandler not loaded - input will not work");
-      return;
-    }
-    if (!this.ironrdp) {
-      console.warn("IronRDP module not available");
-      return;
-    }
-    session.inputHandler = new window.IronRDPInputHandler(
-      this.ironrdp,
-      session,
-      canvas,
-    );
-  }
+
   private startSession(session: RDPSession, sessionId: string): void {
     session
       .run()
@@ -234,9 +206,6 @@ export class IronRDPWASMBridge {
       });
   }
   private cleanupSession(session: RDPSession, sessionId: string): void {
-    if (session.inputHandler) {
-      session.inputHandler.destroy();
-    }
     this.sessions.delete(sessionId);
 
     // Stop clipboard event listeners if no active sessions
@@ -244,12 +213,82 @@ export class IronRDPWASMBridge {
       this.stopClipboardEventListeners();
     }
   }
+  private formatWSAError(wsaCode: number): string {
+    const wsaDescriptions: Record<number, string> = {
+      10004: "interrupted system call",
+      10009: "bad file descriptor",
+      10013: "permission denied",
+      10014: "bad address",
+      10022: "invalid argument",
+      10024: "too many open files",
+      10035: "resource temporarily unavailable",
+      10036: "operation now in progress",
+      10037: "operation already in progress",
+      10038: "socket operation on nonsocket",
+      10039: "destination address required",
+      10040: "message too long",
+      10041: "protocol wrong type for socket",
+      10042: "bad protocol option",
+      10043: "protocol not supported",
+      10044: "socket type not supported",
+      10045: "operation not supported",
+      10046: "protocol family not supported",
+      10047: "address family not supported by protocol family",
+      10048: "address already in use",
+      10049: "cannot assign requested address",
+      10050: "network is down",
+      10051: "network is unreachable",
+      10052: "network dropped connection on reset",
+      10053: "software caused connection abort",
+      10054: "connection reset by peer",
+      10055: "no buffer space available",
+      10056: "socket is already connected",
+      10057: "socket is not connected",
+      10058: "cannot send after socket shutdown",
+      10060: "connection timed out",
+      10061: "connection refused",
+      10064: "host is down",
+      10065: "no route to host",
+      10067: "too many processes",
+      10091: "network subsystem is unavailable",
+      10092: "Winsock version not supported",
+      10093: "successful WSAStartup not yet performed",
+      10101: "graceful shutdown in progress",
+      10109: "class type not found",
+      11001: "host not found",
+      11002: "nonauthoritative host not found",
+      11003: "this is a nonrecoverable error",
+      11004: "valid name, no data record of requested type",
+    };
+
+    return wsaDescriptions[wsaCode] || "unknown error";
+  }
+
+  private formatRDCleanPathError(backtraceMsg: string): string {
+    const wsaMatch = backtraceMsg.match(/WSA last error = (\d+)/);
+    if (wsaMatch) {
+      const wsaCode = parseInt(wsaMatch[1], 10);
+      const description = this.formatWSAError(wsaCode);
+      return `Connection failed: ${description} (WSA ${wsaCode})`;
+    }
+
+    const httpMatch = backtraceMsg.match(/HTTP status code = (\d+)/);
+    if (httpMatch) {
+      return `Connection failed: HTTP ${httpMatch[1]}`;
+    }
+
+    return backtraceMsg;
+  }
+
   private logIronError(error: unknown): void {
     const ironError = error as any;
     if (!ironError || !ironError.__wbg_ptr) return;
     try {
       if (ironError.backtrace) {
-        console.error("IronRDP backtrace:", ironError.backtrace());
+        const backtraceMsg = ironError.backtrace();
+        const formattedMsg = this.formatRDCleanPathError(backtraceMsg);
+        console.error("IronRDP error:", formattedMsg);
+        console.debug("IronRDP backtrace:", backtraceMsg);
       }
       if (ironError.kind) {
         const errorKind = ironError.kind();
@@ -269,13 +308,13 @@ export class IronRDPWASMBridge {
       console.error("Could not extract IronError details:", e);
     }
   }
+  getSession(sessionId: string): RDPSession | null {
+    return this.sessions.get(sessionId) || null;
+  }
+
   disconnect(sessionId: string): void {
     const session = this.sessions.get(sessionId);
     if (!session) return;
-    if (session.inputHandler) {
-      session.inputHandler.destroy();
-      session.inputHandler = undefined;
-    }
     if (session.shutdown) {
       session.shutdown();
     }

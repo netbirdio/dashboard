@@ -13,5 +13,6 @@
   "dragQueryParams": "$NETBIRD_DRAG_QUERY_PARAMS",
   "hotjarTrackID": "$NETBIRD_HOTJAR_TRACK_ID",
   "googleAnalyticsID": "$NETBIRD_GOOGLE_ANALYTICS_ID",
-  "googleTagManagerID": "$NETBIRD_GOOGLE_TAG_MANAGER_ID"
+  "googleTagManagerID": "$NETBIRD_GOOGLE_TAG_MANAGER_ID",
+  "wasmPath": "$NETBIRD_WASM_PATH"
 }

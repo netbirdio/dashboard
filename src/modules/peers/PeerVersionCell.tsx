@@ -9,7 +9,6 @@ import {
 import MemoizedNetBirdIcon from "@components/ui/MemoizedNetBirdIcon";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { parseVersionString } from "@utils/version";
-import { trim } from "lodash";
 import { ArrowRightIcon, ArrowUpCircleIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
@@ -38,8 +37,6 @@ export default function PeerVersionCell({ version, os, serial }: Props) {
   const updateIcon = useMemo(() => {
     return <ArrowUpCircleIcon size={15} className={"text-netbird"} />;
   }, []);
-
-  const isWasmClient = trim(os) === "js";
 
   return (
     <div className={"flex flex-col gap-1"}>
@@ -114,7 +111,7 @@ export default function PeerVersionCell({ version, os, serial }: Props) {
           >
             <PeerOperatingSystemIcon os={os} />
 
-            {isWasmClient ? "Web Client" : os}
+            {os}
           </div>
         </FullTooltip>
       )}
