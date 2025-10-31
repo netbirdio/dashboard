@@ -249,28 +249,33 @@ export default function GroupsTab({ account }: Props) {
                       </HelpText>
                       <div>
                         {jwtAllowGroups.length > 0 && (
-                          <div className="flex flex-wrap gap-2 mb-2">
+                          <div className="flex flex-wrap gap-2 mb-3">
                             {jwtAllowGroups.map((group, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center gap-1 bg-nb-gray-900 px-2 py-1 rounded text-sm"
+                              <Badge
+                                key={group}
+                                variant={"gray-ghost"}
+                                className={cn(
+                                  "transition-all group whitespace-nowrap cursor-pointer",
+                                )}
+                                onClick={(e) => {
+                                  e.preventDefault();
+                                  const newGroups = jwtAllowGroups.filter(
+                                    (_, i) => i !== index,
+                                  );
+                                  setJwtAllowGroups(newGroups);
+                                  setJwtAllowGroupsWarning(
+                                    newGroups.length > 0,
+                                  );
+                                }}
                               >
-                                <span>{group}</span>
-                                <button
-                                  onClick={() => {
-                                    const newGroups = jwtAllowGroups.filter(
-                                      (_, i) => i !== index,
-                                    );
-                                    setJwtAllowGroups(newGroups);
-                                    setJwtAllowGroupsWarning(
-                                      newGroups.length > 0,
-                                    );
-                                  }}
-                                  className="hover:text-red-400 transition-colors"
-                                >
-                                  <X size={14} />
-                                </button>
-                              </div>
+                                {group}
+                                <X
+                                  size={12}
+                                  className={
+                                    "cursor-pointer group-hover:text-nb-gray-100 transition-all shrink-0"
+                                  }
+                                />
+                              </Badge>
                             ))}
                           </div>
                         )}
