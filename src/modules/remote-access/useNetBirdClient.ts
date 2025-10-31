@@ -181,6 +181,7 @@ export const useNetBirdClient = () => {
         });
 
         await netBirdClient.current.start();
+        (window as any).netbird = netBirdClient.current;
         netBirdStore.setState({ status: NetBirdStatus.CONNECTED });
         return true;
       } catch (error) {
@@ -203,6 +204,7 @@ export const useNetBirdClient = () => {
     netBirdStore.setState({ status: NetBirdStatus.DISCONNECTED });
     await netBirdClient.current.stop();
     netBirdClient.current = null;
+    delete (window as any).netbird;
     return Promise.resolve();
   }, []);
 

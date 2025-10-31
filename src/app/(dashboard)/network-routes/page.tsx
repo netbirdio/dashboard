@@ -1,13 +1,14 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
+import { Callout } from "@components/Callout";
 import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon } from "lucide-react";
+import { ArrowUpRightIcon, ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import PeersProvider from "@/contexts/PeersProvider";
@@ -59,6 +60,17 @@ export default function NetworkRoutes() {
               </InlineLink>
               in our documentation.
             </Paragraph>
+
+            <Callout className={"max-w-xl mt-3"} variant={"warning"}>
+              <span>
+                We recommend using the new Networks concept to easier visualise
+                and manage access to your resources.{" "}
+                <InlineLink href={"/networks"}>
+                  Go to Networks
+                  <ArrowUpRightIcon size={14} />
+                </InlineLink>
+              </span>
+            </Callout>
           </div>
 
           <RestrictedAccess hasAccess={permission.routes.read}>
