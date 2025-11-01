@@ -34,7 +34,7 @@ const ButtonGroupButton = forwardRef(
         border={2}
         rounded={false}
         className={cn(
-          "first:border-l-0 last:border-r-0 border-t-0 border-b-0 h-[41px]",
+          "first:border-l-0 last:border-r-0 border-t-0 border-b-0 h-[40px]",
           "!py-2.5 !px-4",
           className,
         )}

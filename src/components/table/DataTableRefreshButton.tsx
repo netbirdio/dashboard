@@ -35,7 +35,7 @@ export default function DataTableRefreshButton({ onClick, isDisabled }: Props) {
         }}
       >
         <Button
-          className={"h-[44px]"}
+          className={"h-[42px]"}
           variant={"secondary"}
           disabled={isDisabled == true ? true : disabled}
         >

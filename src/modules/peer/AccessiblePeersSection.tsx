@@ -10,7 +10,7 @@ import { useUsers } from "@/contexts/UsersProvider";
 import type { Peer } from "@/interfaces/Peer";
 
 const AccessiblePeersTable = lazy(
-  () => import("@/modules/peer/AccessiblePeersTable"),
+  () => import("@/modules/peer/MinimalPeersTable"),
 );
 
 type Props = {

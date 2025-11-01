@@ -7,7 +7,6 @@ import {
   ModalFooter,
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import { IconCornerDownLeft } from "@tabler/icons-react";
 import { trim } from "lodash";
 import * as React from "react";
 import { useMemo, useState } from "react";
@@ -34,44 +33,41 @@ export const EditGroupNameModal = ({
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-md"}>
-        <form>
-          <ModalHeader
-            title={"Edit Group Name"}
-            description={"Set an easily identifiable name for your group."}
-            color={"blue"}
-          />
+        <ModalHeader
+          title={"Rename Group"}
+          description={"Set an easily identifiable name for your group."}
+          color={"blue"}
+        />
 
-          <div className={"p-default flex flex-col gap-4"}>
-            <div>
-              <Input
-                placeholder={"e.g., AWS Servers"}
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
+        <div className={"p-default flex flex-col gap-4"}>
+          <div>
+            <Input
+              placeholder={"e.g., Developers"}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+            />
           </div>
+        </div>
 
-          <ModalFooter className={"items-center"} separator={false}>
-            <div className={"flex gap-3 w-full justify-end"}>
-              <ModalClose asChild={true}>
-                <Button variant={"secondary"} className={"w-full"}>
-                  Cancel
-                </Button>
-              </ModalClose>
-
-              <Button
-                variant={"primary"}
-                className={"w-full"}
-                onClick={() => onSuccess(name)}
-                disabled={isDisabled}
-                type={"submit"}
-              >
-                Confirm
-                <IconCornerDownLeft size={16} />
+        <ModalFooter className={"items-center"} separator={false}>
+          <div className={"flex gap-3 w-full justify-end"}>
+            <ModalClose asChild={true}>
+              <Button variant={"secondary"} className={"w-full"}>
+                Cancel
               </Button>
-            </div>
-          </ModalFooter>
-        </form>
+            </ModalClose>
+
+            <Button
+              variant={"primary"}
+              className={"w-full"}
+              onClick={() => onSuccess(name)}
+              disabled={isDisabled}
+              type={"submit"}
+            >
+              Save
+            </Button>
+          </div>
+        </ModalFooter>
       </ModalContent>
     </Modal>
   );

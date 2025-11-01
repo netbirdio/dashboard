@@ -22,7 +22,7 @@ export interface GroupUsage {
 
 export default function useGroupsUsage() {
   const { data: groups, isLoading: isGroupsLoading } =
-    useFetchApi<Group[]>(`/groups`); // Groups , Peers count
+    useFetchApi<Group[]>(`/groups`); // Groups, Peers count
   const { data: policies, isLoading: isPoliciesLoading } =
     useFetchApi<Policy[]>(`/policies`); // Policies
   const { data: nameservers, isLoading: isNameserversLoading } =
@@ -100,7 +100,7 @@ export default function useGroupsUsage() {
     isUsersLoading,
   ]);
 
-  return useMemo(() => {
+  const groupsUsage = useMemo(() => {
     if (isLoading) return [];
     if (!groups) return [];
     return groups?.map((group) => {
@@ -146,4 +146,9 @@ export default function useGroupsUsage() {
     setupKeysGroups,
     usersGroups,
   ]);
+
+  return {
+    data: groupsUsage,
+    isLoading,
+  };
 }

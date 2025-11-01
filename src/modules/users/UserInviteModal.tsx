@@ -22,15 +22,17 @@ import Avatar1 from "@/assets/avatars/009.jpg";
 import Avatar2 from "@/assets/avatars/030.jpg";
 import Avatar3 from "@/assets/avatars/063.jpg";
 import Avatar4 from "@/assets/avatars/086.jpg";
+import { Group } from "@/interfaces/Group";
 import { Role, User } from "@/interfaces/User";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
 
 type Props = {
   children: React.ReactNode;
+  groups?: Group[];
 };
 
-export default function UserInviteModal({ children }: Readonly<Props>) {
+export default function UserInviteModal({ children, groups }: Readonly<Props>) {
   const [open, setOpen] = useState(false);
   const { mutate } = useSWRConfig();
 
@@ -44,16 +46,20 @@ export default function UserInviteModal({ children }: Readonly<Props>) {
   return (
     <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
       <ModalTrigger asChild={true}>{children}</ModalTrigger>
-      <UserInviteModalContent onSuccess={handleOnSuccess} />
+      <UserInviteModalContent onSuccess={handleOnSuccess} groups={groups} />
     </Modal>
   );
 }
 
 type ModalProps = {
   onSuccess: () => void;
+  groups?: Group[];
 };
 
-export function UserInviteModalContent({ onSuccess }: Readonly<ModalProps>) {
+export function UserInviteModalContent({
+  onSuccess,
+  groups = [],
+}: Readonly<ModalProps>) {
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
 
@@ -62,7 +68,7 @@ export function UserInviteModalContent({ onSuccess }: Readonly<ModalProps>) {
   const [role, setRole] = useState("user");
   const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
     useGroupHelper({
-      initial: [],
+      initial: groups,
     });
 
   const sendInvite = async () => {
@@ -95,7 +101,7 @@ export function UserInviteModalContent({ onSuccess }: Readonly<ModalProps>) {
   }, [name, isValidEmail]);
 
   return (
-    <ModalContent maxWidthClass={"max-w-md relative"} showClose={true}>
+    <ModalContent maxWidthClass={"max-w-lg relative"} showClose={true}>
       <div
         className={
           "h-full w-full absolute left-0 top-0 rounded-md overflow-hidden z-0"
@@ -161,6 +167,8 @@ export function UserInviteModalContent({ onSuccess }: Readonly<ModalProps>) {
           <PeerGroupSelector
             onChange={setSelectedGroups}
             values={selectedGroups}
+            showResources={false}
+            showRoutes={false}
             hideAllGroup={true}
           />
         </div>
