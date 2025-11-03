@@ -32,7 +32,7 @@ export default function NameServers() {
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            href={"/dns"}
+            href={"/dns/nameservers"}
             label={"DNS"}
             icon={<DNSIcon size={13} />}
           />
