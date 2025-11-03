@@ -214,7 +214,26 @@ export const GroupProvider = ({
   };
 
   const removeUsersFromGroup = async (users: User[]) => {
+    if (!permission?.groups?.update) return Promise.reject();
+    if (!permission?.users?.update) return Promise.reject();
     let promises = users.map((user) => removeUserFromGroup(user, true));
+
+    const user = users.length === 1 ? users[0] : undefined;
+
+    const choice = await confirm({
+      title: user
+        ? `Remove user '${user?.name ?? user?.id}' from '${group.name}'?`
+        : `Remove users from '${group.name}'?`,
+      description: user
+        ? `Are you sure you want to remove this user from the group? You can add it back later if needed.`
+        : `Are you sure you want to remove these users from the group? You can add them back later if needed.`,
+      confirmText: "Remove",
+      cancelText: "Cancel",
+      type: "warning",
+      maxWidthClass: "max-w-lg",
+    });
+    if (!choice) return Promise.resolve();
+
     const promise = Promise.all(promises).then(() => {
       if (isDetailPage) mutate(`/groups/${group.id}`);
       mutate("/groups");
