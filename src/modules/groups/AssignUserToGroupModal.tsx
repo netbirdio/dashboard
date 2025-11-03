@@ -120,9 +120,9 @@ export const AssignUserToGroupModalContent = ({
         getStartedCard={
           <NoResultsCard
             className={"mb-8"}
-            title={"Seems like you don't have any users"}
+            title={"You don't have any users to assign"}
             description={
-              "In order to view or assign users to a group, you need to have at least one user."
+              "In order to assign users to this group you need to have at least one user that is not already part of this group."
             }
             icon={<TeamIcon className={"fill-nb-gray-200"} size={14} />}
           />

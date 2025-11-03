@@ -283,9 +283,9 @@ export const AssignGroupToPeerModalContent = ({
           getStartedCard={
             <NoResultsCard
               className={"mb-8"}
-              title={"Seems like you don't have any peers"}
+              title={"You don't have any peers to assign"}
               description={
-                "In order to view or assign peers to a group, you need to have at least one peer."
+                "In order to assign peers to this group you need to have at least one peer that is not already part of this group."
               }
               icon={<PeerIcon className={"fill-nb-gray-200"} size={14} />}
             />
