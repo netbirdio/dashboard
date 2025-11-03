@@ -57,6 +57,8 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       <GroupsCountCell
         icon={<TeamIcon size={10} />}
         groupName={row.original.name}
+        href={`/group?id=${row.original.id}&tab=users`}
+        hidden={row.original.name === "All"}
         text={"User(s)"}
         count={row.original.users_count}
       />
@@ -78,6 +80,8 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       <GroupsCountCell
         icon={<PeerIcon size={10} />}
         groupName={row.original.name}
+        href={`/group?id=${row.original.id}&tab=peers`}
+        hidden={row.original.name === "All"}
         text={"Peer(s)"}
         count={row.original.peers_count}
       />
@@ -99,6 +103,7 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       <GroupsCountCell
         icon={<AccessControlIcon size={10} />}
         groupName={row.original.name}
+        href={`/group?id=${row.original.id}&tab=policies`}
         text={row.original.policies_count === 1 ? "Policy" : "Policies"}
         count={row.original.policies_count}
       />
@@ -122,6 +127,7 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       <GroupsCountCell
         icon={<Layers3Icon size={10} />}
         groupName={row.original.name}
+        href={`/group?id=${row.original.id}&tab=resources`}
         text={"Network Resource(s)"}
         count={row.original.resources_count}
       />
@@ -143,6 +149,7 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       <GroupsCountCell
         icon={<NetworkRoutesIcon size={10} />}
         groupName={row.original.name}
+        href={`/group?id=${row.original.id}&tab=network-routes`}
         text={"Network Route(s)"}
         count={row.original.routes_count}
       />
@@ -154,7 +161,7 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       return (
         <DataTableHeader
           column={column}
-          tooltip={<div className={"text-xs normal-case"}>DNS</div>}
+          tooltip={<div className={"text-xs normal-case"}>Nameservers</div>}
         >
           <DNSIcon size={12} />
         </DataTableHeader>
@@ -164,7 +171,8 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       <GroupsCountCell
         icon={<DNSIcon size={10} />}
         groupName={row.original.name}
-        text={"DNS"}
+        href={`/group?id=${row.original.id}&tab=nameservers`}
+        text={"Nameserver(s)"}
         count={row.original.nameservers_count}
       />
     ),
@@ -186,6 +194,8 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       <GroupsCountCell
         icon={<SetupKeysIcon size={10} />}
         groupName={row.original.name}
+        href={`/group?id=${row.original.id}&tab=setup-keys`}
+        hidden={row.original.name === "All"}
         text={"Setup Key(s)"}
         count={row.original.setup_keys_count}
       />

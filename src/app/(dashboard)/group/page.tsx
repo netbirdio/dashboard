@@ -128,8 +128,31 @@ const GroupDetailsName = () => {
   );
 };
 
+const validAllGroupTabs = [
+  "policies",
+  "resources",
+  "network-routes",
+  "nameservers",
+];
+const validOtherGroupTabs = ["users", "peers", "setup-keys"];
+
 const GroupOverviewTabs = ({ group }: { group: Group }) => {
-  const [tab, setTab] = useState(group.name === "All" ? "policies" : "users");
+  const searchParams = useSearchParams();
+
+  const getInitialTab = () => {
+    const isAllGroup = group.name === "All";
+    const tabParam = searchParams.get("tab");
+    const validTabs = isAllGroup
+      ? validAllGroupTabs
+      : [...validAllGroupTabs, ...validOtherGroupTabs];
+    if (tabParam === null) return isAllGroup ? "policies" : "users";
+    if (isAllGroup) {
+      return validTabs.includes(tabParam) ? tabParam : "policies";
+    }
+    return validTabs.includes(tabParam) ? tabParam : "users";
+  };
+
+  const [tab, setTab] = useState(getInitialTab());
   const groupDetails = useGroupDetails(group?.id || "");
 
   const peersCount = groupDetails?.peers_count || 0;
