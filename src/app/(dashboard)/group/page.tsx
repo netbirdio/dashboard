@@ -90,13 +90,14 @@ export default function GroupPage() {
 const GroupDetailsName = () => {
   const { group, isJWTGroup, isAllowedToRename, openGroupRenameModal } =
     useGroupContext();
+  const { permission } = usePermissions();
 
   return (
     <div className={"w-full"}>
       <h1 className={"flex items-center gap-3 w-full whitespace-nowrap"}>
         <GroupBadgeIcon id={group?.id} issued={group?.issued} size={20} />
         {group.name}
-        {group.name !== "All" && (
+        {group.name !== "All" && permission?.groups?.update && (
           <div>
             <FullTooltip
               content={

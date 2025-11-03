@@ -11,6 +11,7 @@ import * as React from "react";
 import { lazy, useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { useGroupContext } from "@/contexts/GroupProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
 import { AssignPeerToGroupModal } from "@/modules/groups/AssignPeerToGroupModal";
 import { GroupPeersRemoveCell } from "@/modules/groups/details/GroupDetailsRemoveCell";
@@ -106,6 +107,7 @@ export const GroupPeersSection = ({ peers }: { peers?: Peer[] }) => {
   const { group, addPeersToGroup, removePeersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
+  const { permission } = usePermissions();
 
   return (
     <GroupDetailsTableContainer>
@@ -124,17 +126,19 @@ export const GroupPeersSection = ({ peers }: { peers?: Peer[] }) => {
             }
             icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
           >
-            <div className={"flex items-center justify-center mt-4 gap-4"}>
-              <InstallNetBirdButton />
-              <Button
-                variant={"primary"}
-                size={"sm"}
-                onClick={() => setOpen(true)}
-              >
-                <PlusCircle size={16} />
-                Assign Peers
-              </Button>
-            </div>
+            {permission?.peers?.update && permission?.groups?.update && (
+              <div className={"flex items-center justify-center mt-4 gap-4"}>
+                <InstallNetBirdButton />
+                <Button
+                  variant={"primary"}
+                  size={"sm"}
+                  onClick={() => setOpen(true)}
+                >
+                  <PlusCircle size={16} />
+                  Assign Peers
+                </Button>
+              </div>
+            )}
           </NoResults>
         }
         onRowClick={(row) => row.toggleSelected()}
@@ -189,14 +193,16 @@ export const GroupPeersSection = ({ peers }: { peers?: Peer[] }) => {
               <div className={"ml-auto flex items-center"}>
                 <div className={"flex items-center justify-center gap-4"}>
                   <InstallNetBirdButton />
-                  <Button
-                    variant={"primary"}
-                    size={"sm"}
-                    onClick={() => setOpen(true)}
-                  >
-                    <PlusCircle size={16} />
-                    Assign Peers
-                  </Button>
+                  {permission?.peers?.update && permission?.groups?.update && (
+                    <Button
+                      variant={"primary"}
+                      size={"sm"}
+                      onClick={() => setOpen(true)}
+                    >
+                      <PlusCircle size={16} />
+                      Assign Peers
+                    </Button>
+                  )}
                 </div>
               </div>
             )}

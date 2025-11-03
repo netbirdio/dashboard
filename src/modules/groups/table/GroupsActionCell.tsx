@@ -68,52 +68,58 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
               </div>
             </DropdownMenuItem>
 
-            <DropdownMenuSeparator />
-            <FullTooltip
-              content={
-                <div className={"text-xs max-w-xs"}>
-                  {isJWTGroup
-                    ? GROUP_TOOLTIP_TEXT.RENAME.JWT
-                    : GROUP_TOOLTIP_TEXT.RENAME.INTEGRATION}
-                </div>
-              }
-              interactive={false}
-              disabled={isAllowedToRename}
-              className={"w-full block"}
-            >
-              <DropdownMenuItem
-                onClick={openGroupRenameModal}
-                disabled={!isAllowedToRename}
+            {permission?.groups?.update && (
+              <>
+                <DropdownMenuSeparator />
+                <FullTooltip
+                  content={
+                    <div className={"text-xs max-w-xs"}>
+                      {isJWTGroup
+                        ? GROUP_TOOLTIP_TEXT.RENAME.JWT
+                        : GROUP_TOOLTIP_TEXT.RENAME.INTEGRATION}
+                    </div>
+                  }
+                  interactive={false}
+                  disabled={isAllowedToRename}
+                  className={"w-full block"}
+                >
+                  <DropdownMenuItem
+                    onClick={openGroupRenameModal}
+                    disabled={!isAllowedToRename}
+                  >
+                    <div className="flex gap-3 items-center">
+                      <Pencil size={14} className="shrink-0" />
+                      Rename
+                    </div>
+                  </DropdownMenuItem>
+                </FullTooltip>
+              </>
+            )}
+            {permission?.groups?.delete && (
+              <FullTooltip
+                content={
+                  <div className={"text-xs max-w-xs"}>
+                    {isIntegrationGroup
+                      ? GROUP_TOOLTIP_TEXT.DELETE.INTEGRATION
+                      : GROUP_TOOLTIP_TEXT.IN_USE}
+                  </div>
+                }
+                interactive={false}
+                disabled={canDelete}
+                className={"w-full block"}
               >
-                <div className="flex gap-3 items-center">
-                  <Pencil size={14} className="shrink-0" />
-                  Rename
-                </div>
-              </DropdownMenuItem>
-            </FullTooltip>
-            <FullTooltip
-              content={
-                <div className={"text-xs max-w-xs"}>
-                  {isIntegrationGroup
-                    ? GROUP_TOOLTIP_TEXT.DELETE.INTEGRATION
-                    : GROUP_TOOLTIP_TEXT.IN_USE}
-                </div>
-              }
-              interactive={false}
-              disabled={canDelete}
-              className={"w-full block"}
-            >
-              <DropdownMenuItem
-                onClick={deleteGroup}
-                variant={"danger"}
-                disabled={!canDelete}
-              >
-                <div className="flex gap-3 items-center">
-                  <Trash2 size={14} className="shrink-0" />
-                  Delete
-                </div>
-              </DropdownMenuItem>
-            </FullTooltip>
+                <DropdownMenuItem
+                  onClick={deleteGroup}
+                  variant={"danger"}
+                  disabled={!canDelete}
+                >
+                  <div className="flex gap-3 items-center">
+                    <Trash2 size={14} className="shrink-0" />
+                    Delete
+                  </div>
+                </DropdownMenuItem>
+              </FullTooltip>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

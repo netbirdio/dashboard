@@ -2,6 +2,7 @@ import { MinusCircle } from "lucide-react";
 import * as React from "react";
 import Button from "@/components/Button";
 import { useGroupContext } from "@/contexts/GroupProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
 
@@ -26,14 +27,21 @@ export function GroupDetailsRemoveCell({ onRemove }: Props) {
 
 export const GroupPeersRemoveCell = ({ peer }: { peer: Peer }) => {
   const { removePeersFromGroup } = useGroupContext();
+  const { permission } = usePermissions();
   return (
-    <GroupDetailsRemoveCell onRemove={() => removePeersFromGroup([peer])} />
+    permission?.peers?.update &&
+    permission?.groups?.update && (
+      <GroupDetailsRemoveCell onRemove={() => removePeersFromGroup([peer])} />
+    )
   );
 };
 
 export const GroupUsersRemoveCell = ({ user }: { user: User }) => {
   const { removeUsersFromGroup } = useGroupContext();
+  const { permission } = usePermissions();
   return (
-    <GroupDetailsRemoveCell onRemove={() => removeUsersFromGroup([user])} />
+    permission?.users?.update && (
+      <GroupDetailsRemoveCell onRemove={() => removeUsersFromGroup([user])} />
+    )
   );
 };

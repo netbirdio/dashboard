@@ -159,6 +159,7 @@ export default function UsersTable({
   );
 
   const router = useRouter();
+  const { permission } = usePermissions();
 
   return (
     <DataTable
@@ -177,6 +178,7 @@ export default function UsersTable({
       setRowSelection={setSelectedRows}
       tableClassName={minimal ? "mt-0" : ""}
       columnVisibility={{
+        select: permission?.groups?.update,
         is_current: false,
         approval_required: false,
       }}

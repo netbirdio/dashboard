@@ -16,6 +16,7 @@ import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerLastSeenCell from "@/modules/peers/PeerLastSeenCell";
@@ -98,6 +99,7 @@ export default function MinimalPeersTable({
   getStartedCard,
 }: Props) {
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
 
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
@@ -152,6 +154,7 @@ export default function MinimalPeersTable({
       }
       rightSide={rightSide}
       columnVisibility={{
+        select: permission?.groups?.update && permission?.peers?.update,
         connected: false,
         ip: false,
         user_name: false,

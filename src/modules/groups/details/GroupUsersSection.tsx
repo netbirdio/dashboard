@@ -10,6 +10,7 @@ import { MinusCircle, PlusCircle } from "lucide-react";
 import React, { lazy, useState } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { useGroupContext } from "@/contexts/GroupProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { User } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 import { AssignUserToGroupModal } from "@/modules/groups/AssignUserToGroupModal";
@@ -116,6 +117,7 @@ export const GroupUsersSection = ({ users }: { users?: User[] }) => {
   const { group, addUsersToGroup, removeUsersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
+  const { permission } = usePermissions();
 
   return (
     <GroupDetailsTableContainer>
@@ -137,17 +139,19 @@ export const GroupUsersSection = ({ users }: { users?: User[] }) => {
             }
             icon={<TeamIcon size={20} className={"fill-nb-gray-300"} />}
           >
-            <div className={"flex gap-4 items-center justify-center mt-4"}>
-              <Button
-                variant={"secondary"}
-                size={"sm"}
-                onClick={() => setOpen(true)}
-              >
-                <PlusCircle size={16} />
-                Assign Users
-              </Button>
-              <InviteUserButton show={true} groups={[group]} />
-            </div>
+            {permission?.users?.update && (
+              <div className={"flex gap-4 items-center justify-center mt-4"}>
+                <Button
+                  variant={"secondary"}
+                  size={"sm"}
+                  onClick={() => setOpen(true)}
+                >
+                  <PlusCircle size={16} />
+                  Assign Users
+                </Button>
+                <InviteUserButton show={true} groups={[group]} />
+              </div>
+            )}
           </NoResults>
         }
         rightSide={(table) => {
@@ -196,7 +200,7 @@ export const GroupUsersSection = ({ users }: { users?: User[] }) => {
                   addUsersToGroup(newUsers).then();
                 }}
               />
-              {users && users?.length > 0 && (
+              {users && users?.length > 0 && permission?.users?.update && (
                 <div
                   className={"flex gap-4 items-center justify-center ml-auto"}
                 >
