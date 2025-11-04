@@ -4,6 +4,7 @@ import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ColumnDef } from "@tanstack/react-table";
 import React from "react";
+import { useGroupContext } from "@/contexts/GroupProvider";
 import { Route } from "@/interfaces/Route";
 import { GroupDetailsTableContainer } from "@/modules/groups/details/GroupDetailsTableContainer";
 import PeerRouteNameCell from "@/modules/peer/PeerRouteNameCell";
@@ -63,6 +64,7 @@ export const GroupNetworkRoutesTableColumns: ColumnDef<Route>[] = [
 
 export const GroupNetworkRoutesSection = ({ routes }: { routes?: Route[] }) => {
   const groupedRoutes = useGroupedRoutes({ routes });
+  const { group } = useGroupContext();
 
   return (
     <GroupDetailsTableContainer>
@@ -71,6 +73,7 @@ export const GroupNetworkRoutesSection = ({ routes }: { routes?: Route[] }) => {
         isLoading={false}
         groupedRoutes={groupedRoutes}
         routes={routes}
+        distributionGroups={[group]}
       />
     </GroupDetailsTableContainer>
   );
