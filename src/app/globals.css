@@ -157,3 +157,20 @@ p {
 .animate-bg-scroll-faster {
     animation: bg-scroll 1.8s linear infinite;
 }
+
+/**
+ * Terminal (xterm)
+ */
+.xterm {
+    @apply m-0 p-1 box-border h-full w-full;
+}
+
+.xterm-viewport {
+    @apply m-0 p-0 box-border;
+}
+
+
+/* Control Center */
+.react-flow__node-groupNode .selected{
+    @apply border-netbird;
+}

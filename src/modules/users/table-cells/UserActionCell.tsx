@@ -2,7 +2,7 @@ import Button from "@components/Button";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import { isNetBirdHosted } from "@utils/netbird";
-import { Trash2 } from "lucide-react";
+import { Trash2, XCircle } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
@@ -36,6 +36,42 @@ export default function UserActionCell({
     });
   };
 
+  const approveUser = async () => {
+    const name = user.name || "User";
+    notify({
+      title: `'${name}' approved`,
+      description: "User was successfully approved.",
+      promise: userRequest.post({}, `/${user.id}/approve`).then(() => {
+        mutate(`/users?service_user=${serviceUser}`);
+      }),
+      loadingMessage: "Approving the user...",
+    });
+  };
+
+  const rejectUser = async () => {
+    const name = user.name || "User";
+    const choice = await confirm({
+      title: `Reject '${name}'?`,
+      description:
+        "Rejecting this user will remove them from the account permanently. This action cannot be undone.",
+      confirmText: "Reject",
+      cancelText: "Cancel",
+      type: "danger",
+      maxWidthClass: "max-w-md",
+    });
+    if (!choice) return;
+
+    notify({
+      title: `'${name}' rejected`,
+      description: "User was successfully rejected and removed.",
+      promise: userRequest.del("", `/${user.id}/reject`).then(() => {
+        mutate(`/users?service_user=${serviceUser}`);
+      }),
+
+      loadingMessage: "Rejecting the user...",
+    });
+  };
+
   const openConfirm = async () => {
     const name = user.name || "User";
     const choice = await confirm({
@@ -44,6 +80,7 @@ export default function UserActionCell({
         "Deleting this user will remove their devices and remove dashboard access. This action cannot be undone.",
       confirmText: "Delete",
       cancelText: "Cancel",
+      maxWidthClass: "max-w-md",
       type: "danger",
     });
     if (!choice) return;
@@ -55,21 +92,50 @@ export default function UserActionCell({
     return user.is_current;
   }, [permission.users.delete, user.is_current]);
 
+  const isPendingApproval = user.pending_approval;
+  const canManageUsers = permission.users.update;
+
   return (
-    <div className={"flex justify-end pr-4 items-center gap-4"}>
-      {!serviceUser && isNetBirdHosted() && (
+    <div className={"flex justify-end pr-4 items-center gap-2"}>
+      {!serviceUser && isNetBirdHosted() && !isPendingApproval && (
         <UserResendInviteButton user={user} />
       )}
-      <Button
-        variant={"danger-outline"}
-        size={"sm"}
-        onClick={openConfirm}
-        data-cy={"delete-user"}
-        disabled={disabled}
-      >
-        <Trash2 size={16} />
-        Delete
-      </Button>
+
+      {isPendingApproval && canManageUsers && (
+        <>
+          <Button
+            variant={"secondary"}
+            size={"xs"}
+            onClick={approveUser}
+            data-cy={"approve-user"}
+          >
+            Approve
+          </Button>
+          <Button
+            variant={"danger-outline"}
+            size={"xs"}
+            className={"!px-3"}
+            onClick={rejectUser}
+            data-cy={"reject-user"}
+          >
+            <XCircle size={14} />
+            Reject
+          </Button>
+        </>
+      )}
+
+      {!isPendingApproval && (
+        <Button
+          variant={"danger-outline"}
+          size={"sm"}
+          onClick={openConfirm}
+          data-cy={"delete-user"}
+          disabled={disabled}
+        >
+          <Trash2 size={16} />
+          Delete
+        </Button>
+      )}
     </div>
   );
 }

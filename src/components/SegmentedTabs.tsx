@@ -44,10 +44,12 @@ function Trigger({
   children,
   value,
   disabled = false,
+  className,
 }: {
   children: React.ReactNode;
   value: string;
   disabled?: boolean;
+  className?: string;
 }) {
   const currentValue = useTabContext();
   return (
@@ -60,6 +62,7 @@ function Trigger({
           : disabled
           ? ""
           : "text-nb-gray-400 hover:bg-nb-gray-900/50",
+        className,
       )}
       value={value}
     >

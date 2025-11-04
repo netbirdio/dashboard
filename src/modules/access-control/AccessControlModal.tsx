@@ -156,6 +156,8 @@ export function AccessControlModalContent({
     submit,
     isPostureChecksLoading,
     getPolicyData,
+    sourceResource,
+    setSourceResource,
     destinationResource,
     setDestinationResource,
     portRanges,
@@ -176,15 +178,17 @@ export function AccessControlModalContent({
     return "policy";
   });
 
-  const continuePostureChecksDisabled = useMemo(() => {
-    if (sourceGroups.length > 0 && destinationResource) return false;
-    if (sourceGroups.length == 0 || destinationGroups.length == 0) return true;
-  }, [sourceGroups, destinationGroups, destinationResource]);
+  const canContinueToPostureChecks = useMemo(() => {
+    const hasSource = sourceGroups.length > 0 || !!sourceResource;
+    const hasDestination =
+      destinationGroups.length > 0 || !!destinationResource;
+    return hasSource && hasDestination;
+  }, [sourceGroups, destinationGroups, destinationResource, sourceResource]);
 
   const submitDisabled = useMemo(() => {
     if (name.length == 0) return true;
-    if (continuePostureChecksDisabled) return true;
-  }, [name, continuePostureChecksDisabled]);
+    if (!canContinueToPostureChecks) return true;
+  }, [name, canContinueToPostureChecks]);
 
   const handleProtocolChange = (p: Protocol) => {
     setProtocol(p);
@@ -220,11 +224,8 @@ export function AccessControlModalContent({
             <ArrowRightLeft size={16} />
             Policy
           </TabsTrigger>
-          <PostureCheckTabTrigger disabled={continuePostureChecksDisabled} />
-          <TabsTrigger
-            value={"general"}
-            disabled={continuePostureChecksDisabled}
-          >
+          <PostureCheckTabTrigger disabled={!canContinueToPostureChecks} />
+          <TabsTrigger value={"general"} disabled={!canContinueToPostureChecks}>
             <Text
               size={16}
               className={
@@ -283,14 +284,19 @@ export function AccessControlModalContent({
                 </Label>
                 <PeerGroupSelector
                   dataCy={"source-group-selector"}
+                  popoverWidth={500}
+                  placeholder={"Select source(s)..."}
+                  showRoutes={true}
+                  showResources={false}
+                  showPeers={true}
+                  showResourceCounter={false}
                   showPeerCount={allowEditPeers}
                   disableInlineRemoveGroup={false}
-                  popoverWidth={500}
-                  showRoutes={false}
-                  onChange={setSourceGroups}
                   values={sourceGroups}
+                  onChange={setSourceGroups}
+                  resource={sourceResource}
+                  onResourceChange={setSourceResource}
                   saveGroupAssignments={useSave}
-                  showResourceCounter={false}
                   disabled={
                     !permission.policies.update || !permission.policies.create
                   }
@@ -310,17 +316,19 @@ export function AccessControlModalContent({
                 </Label>
                 <PeerGroupSelector
                   dataCy={"destination-group-selector"}
+                  popoverWidth={500}
+                  placeholder={"Select destination(s)..."}
                   showRoutes={true}
+                  showResources={true}
+                  showPeers={true}
+                  showResourceCounter={true}
                   showPeerCount={allowEditPeers}
                   disableInlineRemoveGroup={false}
-                  popoverWidth={500}
-                  onChange={setDestinationGroups}
                   values={destinationGroups}
-                  saveGroupAssignments={useSave}
+                  onChange={setDestinationGroups}
                   resource={destinationResource}
                   onResourceChange={setDestinationResource}
-                  showResources={true}
-                  placeholder={"Select destination(s)..."}
+                  saveGroupAssignments={useSave}
                   disabled={
                     !permission.policies.update || !permission.policies.create
                   }
@@ -453,35 +461,36 @@ export function AccessControlModalContent({
           {!policy ? (
             <>
               {tab == "policy" && (
-                <ModalClose asChild={true}>
-                  <Button variant={"secondary"}>Cancel</Button>
-                </ModalClose>
+                <>
+                  <ModalClose asChild={true}>
+                    <Button variant={"secondary"}>Cancel</Button>
+                  </ModalClose>
+                  <Button
+                    variant={"primary"}
+                    onClick={() => setTab("posture_checks")}
+                    disabled={!canContinueToPostureChecks}
+                  >
+                    Continue
+                  </Button>
+                </>
               )}
 
               {tab == "posture_checks" && (
-                <Button variant={"secondary"} onClick={() => setTab("policy")}>
-                  Back
-                </Button>
-              )}
-
-              {tab == "policy" && (
-                <Button
-                  variant={"primary"}
-                  onClick={() => setTab("posture_checks")}
-                  disabled={continuePostureChecksDisabled}
-                >
-                  Continue
-                </Button>
-              )}
-
-              {tab == "posture_checks" && (
-                <Button
-                  variant={"primary"}
-                  onClick={() => setTab("general")}
-                  disabled={continuePostureChecksDisabled}
-                >
-                  Continue
-                </Button>
+                <>
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => setTab("policy")}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant={"primary"}
+                    onClick={() => setTab("general")}
+                    disabled={!canContinueToPostureChecks}
+                  >
+                    Continue
+                  </Button>
+                </>
               )}
 
               {tab == "general" && (

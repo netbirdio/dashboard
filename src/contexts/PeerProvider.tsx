@@ -1,18 +1,21 @@
 import { notify } from "@components/Notification";
 import SkeletonPeerDetail from "@components/skeletons/SkeletonPeerDetail";
 import { useApiCall } from "@utils/api";
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import { Group, GroupPeer } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
+import { PeerSSHInstructions } from "@/modules/peer/PeerSSHInstructions";
 
 type Props = {
   children: React.ReactNode;
   peer: Peer;
+  isPeerDetailPage?: boolean;
 };
 
 const PeerContext = React.createContext(
@@ -28,18 +31,25 @@ const PeerContext = React.createContext(
       approval_required?: boolean;
       ip?: string;
     }) => Promise<Peer>;
-    openSSHDialog: () => Promise<boolean>;
+    toggleSSH: (newState: boolean) => Promise<void>;
+    setSSHInstructionsModal: (open: boolean) => void;
     deletePeer: () => void;
     isLoading: boolean;
   },
 );
 
-export default function PeerProvider({ children, peer }: Props) {
+export default function PeerProvider({
+  children,
+  peer,
+  isPeerDetailPage = false,
+}: Props) {
   const user = usePeerUser(peer);
   const { peerGroups, isLoading } = usePeerGroups(peer);
   const peerRequest = useApiCall<Peer>("/peers", true);
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
+  const [sshInstructionsModal, setSSHInstructionsModal] = useState(false);
 
   const deletePeer = async () => {
     const choice = await confirm({
@@ -94,14 +104,20 @@ export default function PeerProvider({ children, peer }: Props) {
     );
   };
 
-  const openSSHDialog = async (): Promise<boolean> => {
-    return await confirm({
-      title: `Enable SSH Server for ${peer.name}?`,
-      description:
-        "Experimental feature. Enabling this option allows remote SSH access to this machine from other connected network participants.",
-      confirmText: "Enable",
-      cancelText: "Cancel",
-      type: "warning",
+  const toggleSSH = async (enable: boolean) => {
+    if (!permission.peers.update) return;
+    notify({
+      title: peer.name,
+      description: enable
+        ? "SSH Access successfully enabled"
+        : "SSH Access successfully disabled",
+      promise: update({ ssh: enable }).then(() => {
+        isPeerDetailPage ? mutate(`/peers/${peer.id}`) : mutate("/peers");
+        setSSHInstructionsModal(false);
+      }),
+      loadingMessage: enable
+        ? "Enabling SSH Access..."
+        : "Disabling SSH Access...",
     });
   };
 
@@ -112,16 +128,25 @@ export default function PeerProvider({ children, peer }: Props) {
         peerGroups,
         user,
         update,
-        openSSHDialog,
+        toggleSSH,
+        setSSHInstructionsModal,
         deletePeer,
         isLoading,
       }}
     >
+      {sshInstructionsModal && (
+        <PeerSSHInstructions
+          open={sshInstructionsModal}
+          onOpenChange={setSSHInstructionsModal}
+          onSuccess={() => toggleSSH(true)}
+        />
+      )}
+
       {children}
     </PeerContext.Provider>
-  ) : (
+  ) : isPeerDetailPage ? (
     <SkeletonPeerDetail />
-  );
+  ) : null;
 }
 
 /**

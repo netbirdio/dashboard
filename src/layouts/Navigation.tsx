@@ -1,9 +1,12 @@
 "use client";
 
 import { ScrollArea } from "@components/ScrollArea";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
+import * as React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import ActivityIcon from "@/assets/icons/ActivityIcon";
+import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
@@ -67,6 +70,23 @@ export default function Navigation({
           >
             <div>
               <SidebarItemGroup>
+                <SidebarItem
+                  icon={<ControlCenterIcon size={16} />}
+                  label={
+                    <div className={"flex items-center gap-2"}>
+                      Control Center
+                      <SmallBadge
+                        text={"Beta"}
+                        variant={"sky"}
+                        className={"text-[8px] leading-none py-[3px] px-[5px]"}
+                        textClassName={"top-0"}
+                      />
+                    </div>
+                  }
+                  href={"/control-center"}
+                  visible={permission.policies.read}
+                />
+
                 <SidebarItem
                   icon={<PeerIcon />}
                   label="Peers"

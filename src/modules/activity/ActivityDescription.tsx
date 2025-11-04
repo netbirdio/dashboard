@@ -253,6 +253,22 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "user.approve")
+    return (
+      <div className={"inline"}>
+        User <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value> was approved
+      </div>
+    );
+
+  if (event.activity_code == "user.reject")
+    return (
+      <div className={"inline"}>
+        User <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value> was rejected
+      </div>
+    );
+
   /**
    * Service User
    */
@@ -346,6 +362,14 @@ export default function ActivityDescription({ event }: Props) {
       <div className={"inline"}>
         Peer <Value>{m.name}</Value> IP address was updated from{" "}
         <Value>{m.old_ip}</Value> to <Value>{m.ip}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "peer.user.add")
+    return (
+      <div className={"inline"}>
+        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
+        with the NetBird IP <Value>{m.ip}</Value>
       </div>
     );
 
@@ -662,6 +686,20 @@ export default function ActivityDescription({ event }: Props) {
       Remote job <Value>{m.job_type}</Value> created for peer <Value>{m.for_peer_name}</Value>
     </div>
     )
+
+  if (event.activity_code == "account.settings.extra.flow.group.remove")
+    return (
+      <div className={"inline"}>
+        Limit traffic event group <Value>{m.group_name}</Value> removed
+      </div>
+    );
+
+  if (event.activity_code == "account.settings.extra.flow.group.add")
+    return (
+      <div className={"inline"}>
+        Limit traffic event group <Value>{m.group_name}</Value> added
+      </div>
+    );
 
   return (
     <div className={"flex gap-2.5 items-center"}>

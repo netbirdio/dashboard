@@ -126,6 +126,10 @@ export const useAccessControl = ({
       : initialDestinationGroups ?? [],
   });
 
+  const [sourceResource, setSourceResource] = useState(
+    firstRule?.sourceResource,
+  );
+
   const [destinationResource, setDestinationResource] = useState(
     firstRule?.destinationResource,
   );
@@ -163,8 +167,9 @@ export const useAccessControl = ({
           bidirectional: direction == "bi",
           description,
           name,
-          sources: sources,
+          sources: sourceResource ? undefined : sources,
           destinations: destinationResource ? undefined : destinations,
+          sourceResource: sourceResource || undefined,
           destinationResource: destinationResource || undefined,
           action: "accept",
           protocol,
@@ -241,8 +246,9 @@ export const useAccessControl = ({
           action: "accept",
           protocol,
           enabled,
-          sources,
+          sources: sourceResource ? undefined : sources,
           destinations: destinationResource ? undefined : destinations,
+          sourceResource: sourceResource || undefined,
           destinationResource: destinationResource || undefined,
           ports: newPorts,
           port_ranges: newPortRanges,
@@ -254,9 +260,9 @@ export const useAccessControl = ({
       updatePolicy(
         policy,
         policyObj,
-        () => {
+        (p) => {
           mutate("/policies");
-          onSuccess && onSuccess(policy);
+          onSuccess && onSuccess(p);
         },
         "The policy was successfully saved",
       );
@@ -276,7 +282,10 @@ export const useAccessControl = ({
   const hasPortSupport = (p: Protocol) => p === "tcp" || p === "udp";
   const portDisabled = !hasPortSupport(protocol);
 
+  const isDestinationPeer = destinationResource?.type === "peer";
+
   const destinationHasResources = useMemo(() => {
+    if (isDestinationPeer) return false;
     if (destinationResource) return true;
 
     return destinationGroups.some((group) => {
@@ -288,9 +297,10 @@ export const useAccessControl = ({
       }
       return false;
     });
-  }, [destinationGroups, destinationResource]);
+  }, [destinationGroups, destinationResource, isDestinationPeer]);
 
   const destinationOnlyResources = useMemo(() => {
+    if (isDestinationPeer) return false;
     if (destinationResource) return true;
 
     return (
@@ -312,13 +322,13 @@ export const useAccessControl = ({
         return hasResources && !hasPeers;
       })
     );
-  }, [destinationGroups, destinationResource]);
+  }, [destinationGroups, destinationResource, isDestinationPeer]);
 
   useEffect(() => {
-    if (destinationOnlyResources && direction !== "in") {
+    if (destinationOnlyResources && direction !== "in" && !isDestinationPeer) {
       setDirection("in");
     }
-  }, [destinationOnlyResources, direction, setDirection]);
+  }, [destinationOnlyResources, direction, setDirection, isDestinationPeer]);
 
   return {
     protocol,
@@ -345,6 +355,8 @@ export const useAccessControl = ({
     getPolicyData,
     portDisabled,
     isPostureChecksLoading,
+    sourceResource,
+    setSourceResource,
     destinationResource,
     setDestinationResource,
     destinationHasResources,

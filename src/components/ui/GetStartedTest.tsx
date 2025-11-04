@@ -10,6 +10,7 @@ type Props = {
   description?: string;
   button?: React.ReactNode;
   learnMore?: React.ReactNode;
+  showBackground?: boolean;
 };
 
 export default function GetStartedTest({
@@ -18,28 +19,33 @@ export default function GetStartedTest({
   description,
   button,
   learnMore,
+  showBackground = true,
 }: Props) {
   return (
     <div className={"px-8 mt-8"}>
       <Card className={"w-full relative overflow-hidden"}>
-        <div
-          className={
-            "absolute z-20 bg-gradient-to-b  dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
-          }
-        ></div>
-        <div
-          className={
-            "absolute w-full h-full left-0 top-0 z-10 px-5 py-3 overflow-hidden"
-          }
-        >
-          <div className={"flex flex-col gap-2"}>
-            <Skeleton className={"w-full"} height={70} duration={4} />
-            <Skeleton className={"w-full"} height={70} duration={4} />
-            <Skeleton className={"w-full"} height={70} duration={4} />
-            <Skeleton className={"w-full"} height={70} duration={4} />
-            <Skeleton className={"w-full"} height={70} duration={4} />
-          </div>
-        </div>
+        {showBackground && (
+          <>
+            <div
+              className={
+                "absolute z-20 bg-gradient-to-b  dark:to-nb-gray-950 dark:from-nb-gray-950/40 w-full h-full"
+              }
+            ></div>
+            <div
+              className={
+                "absolute w-full h-full left-0 top-0 z-10 px-5 py-3 overflow-hidden"
+              }
+            >
+              <div className={"flex flex-col gap-2"}>
+                <Skeleton className={"w-full"} height={70} duration={4} />
+                <Skeleton className={"w-full"} height={70} duration={4} />
+                <Skeleton className={"w-full"} height={70} duration={4} />
+                <Skeleton className={"w-full"} height={70} duration={4} />
+                <Skeleton className={"w-full"} height={70} duration={4} />
+              </div>
+            </div>
+          </>
+        )}
         <div className={"w-full h-full z-20 relative left-0 top-0 flex py-8"}>
           <div className={"inline-flex justify-center w-full"}>
             <div>

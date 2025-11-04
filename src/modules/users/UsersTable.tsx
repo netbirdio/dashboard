@@ -6,6 +6,7 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
+import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
 import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
@@ -19,6 +20,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { User } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
+import { PendingApprovalFilter } from "@/modules/users/PendingApprovalFilter";
 import UserActionCell from "@/modules/users/table-cells/UserActionCell";
 import UserBlockCell from "@/modules/users/table-cells/UserBlockCell";
 import UserGroupCell from "@/modules/users/table-cells/UserGroupCell";
@@ -89,6 +91,12 @@ export const UsersTableColumns: ColumnDef<User>[] = [
     ),
   },
   {
+    id: "approval_required",
+    accessorKey: "approval_required",
+    sortingFn: "basic",
+    accessorFn: (u) => u?.pending_approval,
+  },
+  {
     accessorKey: "id",
     header: "",
     sortingFn: "text",
@@ -139,6 +147,7 @@ export default function UsersTable({
       data={users}
       columnVisibility={{
         is_current: false,
+        approval_required: false,
       }}
       onRowClick={(row) => {
         router.push(`/team/user?id=${row.original.id}`);
@@ -185,18 +194,25 @@ export default function UsersTable({
         />
       )}
     >
-      {(table) => (
-        <>
-          <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
-          <DataTableRefreshButton
-            isDisabled={users?.length == 0}
-            onClick={() => {
-              mutate("/users?service_user=false");
-              mutate("/groups");
-            }}
-          />
-        </>
-      )}
+      {(table) => {
+        return (
+          <>
+            <PendingApprovalFilter
+              table={table}
+              data={users}
+              count={users?.filter((u) => u?.pending_approval)?.length}
+            />
+            <DataTableRowsPerPage table={table} disabled={users?.length == 0} />
+            <DataTableRefreshButton
+              isDisabled={users?.length == 0}
+              onClick={() => {
+                mutate("/users?service_user=false");
+                mutate("/groups");
+              }}
+            />
+          </>
+        );
+      }}
     </DataTable>
   );
 }

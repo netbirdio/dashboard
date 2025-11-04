@@ -24,7 +24,8 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
 
 export default function PeerActionCell() {
-  const { peer, deletePeer, update, openSSHDialog } = usePeer();
+  const { peer, deletePeer, update, toggleSSH, setSSHInstructionsModal } =
+    usePeer();
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
@@ -48,23 +49,8 @@ export default function PeerActionCell() {
     });
   };
 
-  const toggleSSH = async () => {
-    const text = peer.ssh_enabled ? "disabled" : "enabled";
-    notify({
-      title: `SSH Server is ${text}`,
-      description: `The SSH Server for the peer ${peer.name} was successfully ${text}.`,
-      promise: update({
-        ssh: !peer.ssh_enabled,
-      }).then(() => {
-        mutate("/peers");
-        mutate("/groups");
-      }),
-      loadingMessage: "Updating SSH access...",
-    });
-  };
-
   return (
-    <div className={"flex justify-end pr-4"}>
+    <div className={"flex justify-end pr-4 gap-3"}>
       <DropdownMenu modal={false}>
         <DropdownMenuTrigger
           asChild={true}
@@ -118,10 +104,8 @@ export default function PeerActionCell() {
           <DropdownMenuItem
             onClick={() =>
               peer.ssh_enabled
-                ? toggleSSH()
-                : openSSHDialog().then((enable) =>
-                    enable ? toggleSSH() : null,
-                  )
+                ? toggleSSH(false)
+                : setSSHInstructionsModal(true)
             }
             disabled={!permission.peers.update}
           >

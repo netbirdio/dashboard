@@ -68,12 +68,17 @@ const UserProfileProvider = ({ children }: Props) => {
     };
   }, [loggedInUser]);
 
-  return !isLoading && loggedInUser ? (
+  // Show loading only when we're still loading and don't have user data
+  if (isLoading || !loggedInUser) {
+    return <FullScreenLoading />;
+  }
+
+  // For blocked or pending approval users, we still need to provide the context
+  // so they can access their user data on the blocked page
+  return (
     <UserProfileContext.Provider value={data}>
       <PermissionsProvider user={loggedInUser}>{children}</PermissionsProvider>
     </UserProfileContext.Provider>
-  ) : (
-    <FullScreenLoading />
   );
 };
 

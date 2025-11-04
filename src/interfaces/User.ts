@@ -10,6 +10,7 @@ export interface User {
   is_current?: boolean;
   is_service_user?: boolean;
   is_blocked?: boolean;
+  pending_approval?: boolean;
   last_login?: Date;
   permissions: Permissions;
 }

@@ -4,8 +4,6 @@ import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
 import Card from "@components/Card";
-import FancyToggleSwitch from "@components/FancyToggleSwitch";
-import FullTooltip from "@components/FullTooltip";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -33,17 +31,16 @@ import dayjs from "dayjs";
 import { isEmpty, trim } from "lodash";
 import {
   Barcode,
+  CalendarDays,
   Cpu,
   FlagIcon,
   Globe,
   History,
-  LockIcon,
   MapPin,
   MonitorSmartphoneIcon,
   NetworkIcon,
   PencilIcon,
   RadioTowerIcon,
-  TerminalSquare,
   TimerResetIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -67,6 +64,9 @@ import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
 import { PeerExpirationToggle } from "@/modules/peer/PeerExpirationToggle";
 import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSection";
 import { PeerRemoteJobsSection } from "@/modules/peer/PeerRemoteJobsSection";
+import { PeerSSHToggle } from "@/modules/peer/PeerSSHToggle";
+import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
+import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
 
 export default function PeerPage() {
   const queryParameter = useSearchParams();
@@ -82,9 +82,8 @@ export default function PeerPage() {
 
   const peerKey = useMemo(() => {
     let id = peer?.id ?? "";
-    let ssh = peer?.ssh_enabled ? "1" : "0";
     let expiration = peer?.login_expiration_enabled ? "1" : "0";
-    return `${id}-${ssh}-${expiration}`;
+    return `${id}-${expiration}`;
   }, [peer]);
 
   if (isRestricted) {
@@ -106,7 +105,7 @@ export default function PeerPage() {
     );
 
   return peer && !isLoading ? (
-    <PeerProvider peer={peer} key={peerId}>
+    <PeerProvider peer={peer} key={peerId} isPeerDetailPage={true}>
       <PeerOverview key={peerKey} />
     </PeerProvider>
   ) : (
@@ -140,8 +139,7 @@ function PeerOverview() {
 const PeerGeneralInformation = () => {
   const router = useRouter();
   const { mutate } = useSWRConfig();
-  const { peer, user, peerGroups, openSSHDialog, update } = usePeer();
-  const [ssh, setSsh] = useState(peer.ssh_enabled);
+  const { peer, user, peerGroups, update } = usePeer();
   const [name, setName] = useState(peer.name);
   const [showEditNameModal, setShowEditNameModal] = useState(false);
   const [loginExpiration, setLoginExpiration] = useState(
@@ -160,7 +158,6 @@ const PeerGeneralInformation = () => {
    * Detect if there are changes in the peer information, if there are changes, then enable the save button.
    */
   const { hasChanges, updateRef: updateHasChangedRef } = useHasChanges([
-    ssh,
     selectedGroups,
     loginExpiration,
     inactivityExpiration,
@@ -173,7 +170,6 @@ const PeerGeneralInformation = () => {
     if (permission.peers.update) {
       const updateRequest = update({
         name: newName ?? name,
-        ssh,
         loginExpiration,
         inactivityExpiration,
       });
@@ -189,7 +185,6 @@ const PeerGeneralInformation = () => {
         mutate("/peers/" + peer.id);
         mutate("/groups");
         updateHasChangedRef([
-          ssh,
           selectedGroups,
           loginExpiration,
           inactivityExpiration,
@@ -313,41 +308,17 @@ const PeerGeneralInformation = () => {
             )}
           </div>
 
-          <FullTooltip
-            content={
-              <div
-                className={"flex gap-2 items-center !text-nb-gray-300 text-xs"}
-              >
-                <LockIcon size={14} />
-                <span>
-                  {`You don't have the required permissions to update this
-                          setting.`}
-                </span>
-              </div>
-            }
-            interactive={false}
-            className={"w-full block"}
-            disabled={permission.peers.update}
-          >
-            <FancyToggleSwitch
-              value={ssh}
-              disabled={!permission.peers.update}
-              onChange={(set) =>
-                !set
-                  ? setSsh(false)
-                  : openSSHDialog().then((confirm) => setSsh(confirm))
-              }
-              label={
-                <>
-                  <TerminalSquare size={16} />
-                  SSH Access
-                </>
-              }
-              helpText={
-                "Enable the SSH server on this peer to access the machine via an secure shell."
-              }
-            />
-          </FullTooltip>
+          <PeerSSHToggle />
+
+          {/* Remote Access Buttons */}
+          <div>
+            <Label>Remote Access</Label>
+            <HelpText>Connect directly to this peer via SSH or RDP.</HelpText>
+            <div className="flex gap-3">
+              <SSHButton peer={peer} />
+              <RDPButton peer={peer} />
+            </div>
+          </div>
 
           {permission.groups.read && (
             <div>
@@ -580,6 +551,23 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
                 </>
               }
               value={peer.serial_number}
+            />
+          )}
+
+          {peer.created_at && (
+            <Card.ListItem
+              label={
+                <>
+                  <CalendarDays size={16} />
+                  Registered on
+                </>
+              }
+              value={
+                dayjs(peer.created_at).format("D MMMM, YYYY [at] h:mm A") +
+                " (" +
+                dayjs().to(peer.created_at) +
+                ")"
+              }
             />
           )}
 

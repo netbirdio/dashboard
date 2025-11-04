@@ -17,6 +17,7 @@ interface Config {
   hotjarTrackID?: number;
   googleAnalyticsID?: string;
   googleTagManagerID?: string;
+  wasmPath: string;
 }
 
 /**
@@ -66,6 +67,7 @@ const loadConfig = (): Config => {
     hotjarTrackID: configJson?.hotjarTrackID || undefined,
     googleAnalyticsID: configJson?.googleAnalyticsID || undefined,
     googleTagManagerID: configJson?.googleTagManagerID || undefined,
+    wasmPath: configJson.wasmPath ?? "https://pkgs.netbird.io/wasm/client",
   } as Config;
 };
 

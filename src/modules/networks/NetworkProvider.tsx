@@ -29,7 +29,7 @@ const NetworksContext = React.createContext(
       resource?: NetworkResource,
     ) => void;
     openPolicyModal: (network?: Network, resource?: NetworkResource) => void;
-    deleteNetwork: (network: Network) => void;
+    deleteNetwork: (network: Network) => Promise<void>;
     deleteResource: (network: Network, resource: NetworkResource) => void;
     deleteRouter: (network: Network, router: NetworkRouter) => void;
     network?: Network;
@@ -124,15 +124,19 @@ export const NetworkProvider = ({ children, network }: Props) => {
 
     if (!choice) return;
 
+    const promise = deleteCall({}, `/${network.id}`).then(() => {
+      mutate("/networks");
+      mutate("/groups");
+    });
+
     notify({
       title: network.name,
       description: "Network deleted successfully.",
       loadingMessage: "Deleting network...",
-      promise: deleteCall({}, `/${network.id}`).then(() => {
-        mutate("/networks");
-        mutate("/groups");
-      }),
+      promise,
     });
+
+    return promise;
   };
 
   const deleteResource = async (
@@ -250,8 +254,9 @@ export const NetworkProvider = ({ children, network }: Props) => {
           mutate("/networks");
           await askForResource(network);
         }}
-        onUpdated={() => {
+        onUpdated={(n) => {
           mutate("/networks");
+          mutate(`/networks/${n.id}`);
         }}
       />
       <Modal

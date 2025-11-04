@@ -20,9 +20,9 @@ export const NetworkInformationSquare = ({
   return (
     <button
       className={cn(
-        "flex w-full items-center max-w-[300px] gap-4 dark:text-neutral-300 text-neutral-500 transition-all group/network rounded-md",
+        "flex w-full items-center max-w-[450px] gap-4 dark:text-neutral-300 text-neutral-500 transition-all group/network rounded-md",
         onClick
-          ? "hover:text-neutral-100 hover:bg-nb-gray-910 cursor-pointer py-2 pl-3 pr-5 relative"
+          ? "hover:text-neutral-100 hover:bg-nb-gray-910 cursor-pointer py-2 pl-3 pr-14 relative"
           : "cursor-default",
       )}
       onClick={onClick}
@@ -50,10 +50,10 @@ export const NetworkInformationSquare = ({
           )}
         ></div>
       </div>
-      <div className={"mt-[0px] flex items-center flex-wrap"}>
+      <div className={"mt-[0px] flex items-start flex-wrap flex-col"}>
         <p
           className={cn(
-            "font-medium",
+            "font-medium text-left whitespace-nowrap",
             size == "md" ? "text-sm" : "text-xl leading-none mb-0.5",
           )}
         >

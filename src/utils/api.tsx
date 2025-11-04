@@ -215,6 +215,7 @@ export function useApiErrorHandling(ignoreError = false) {
   const { login } = useOidc();
   const currentPath = usePathname();
   const { setError } = useErrorBoundary();
+
   if (ignoreError)
     return (err: ErrorResponse) => {
       console.log(err);
@@ -231,6 +232,22 @@ export function useApiErrorHandling(ignoreError = false) {
     if (err.code == 401 && err.message == "token invalid") {
       setError(err);
     }
+
+    // Handle user blocked/pending approval responses
+    if (
+      err.code == 403 &&
+      (err.message?.toLowerCase().includes("blocked") ||
+        err.message?.toLowerCase().includes("pending"))
+    ) {
+      const params = new URLSearchParams({
+        code: err.code.toString(),
+        message: encodeURIComponent(err.message),
+        type: "user-status",
+      });
+      window.location.href = `/error?${params.toString()}`;
+      return Promise.reject(err);
+    }
+
     if (err.code == 500 && err.message == "internal server error") {
       setError(err);
     }

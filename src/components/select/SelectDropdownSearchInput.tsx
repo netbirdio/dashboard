@@ -1,4 +1,3 @@
-import { IconArrowBack } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { SearchIcon } from "lucide-react";
 import * as React from "react";
@@ -38,15 +37,9 @@ export const SelectDropdownSearchInput = forwardRef<HTMLInputElement, Props>(
             <SearchIcon size={14} />
           </div>
         </div>
-        <div className={"absolute right-0 top-0 h-full flex items-center pr-4"}>
-          <div
-            className={
-              "flex items-center bg-nb-gray-800 py-1 px-1.5 rounded-[4px] border border-nb-gray-500"
-            }
-          >
-            <IconArrowBack size={10} />
-          </div>
-        </div>
+        <div
+          className={"absolute right-0 top-0 h-full flex items-center pr-4"}
+        ></div>
       </div>
     );
   },

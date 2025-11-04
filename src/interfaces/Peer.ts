@@ -6,6 +6,7 @@ export interface Peer {
   name: string;
   ip: string;
   connected: boolean;
+  created_at?: Date;
   last_seen: Date;
   os: string;
   version: string;
@@ -15,6 +16,7 @@ export interface Peer {
   user_id?: string;
   user?: User;
   ui_version?: string;
+  kernel_version?: string;
   dns_label: string;
   extra_dns_labels?: string[];
   last_login: Date;
@@ -26,4 +28,5 @@ export interface Peer {
   country_code: string;
   connection_ip: string;
   serial_number: string;
+  ephemeral: boolean;
 }

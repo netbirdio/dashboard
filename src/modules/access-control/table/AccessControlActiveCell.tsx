@@ -37,6 +37,9 @@ export default function AccessControlActiveCell({ policy }: Readonly<Props>) {
       if (rule.destinationResource) {
         rule.destinations = null;
       }
+      if (rule.sourceResource) {
+        rule.sources = null;
+      }
     });
 
     updatePolicy(
