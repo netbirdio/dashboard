@@ -8,7 +8,6 @@ type Props = {
 
 export default function JobStatusCell({ job }: Readonly<Props>) {
   const status = job.status;
-  console.log({ status });
 
   return (
     <div
