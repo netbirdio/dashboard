@@ -11,7 +11,7 @@ import useFetchApi, { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import { FolderGit2, PencilLineIcon } from "lucide-react";
 import * as React from "react";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { DataTable } from "@/components/table/DataTable";
@@ -28,6 +28,11 @@ type Props = {
   setOpen: (open: boolean) => void;
   onUpdate?: (g: Group) => void;
   useSave?: boolean;
+  excludedPeers?: Peer[];
+  showHeader?: boolean;
+  showClose?: boolean;
+  buttonText?: string;
+  selectInitialPeers?: boolean;
 };
 
 export const AssignPeerToGroupModal = ({
@@ -36,6 +41,11 @@ export const AssignPeerToGroupModal = ({
   setOpen,
   onUpdate,
   useSave = true,
+  excludedPeers,
+  showHeader,
+  showClose,
+  buttonText,
+  selectInitialPeers,
 }: Props) => {
   return (
     <Modal open={open} onOpenChange={setOpen} key={open ? "1" : "0"}>
@@ -47,6 +57,11 @@ export const AssignPeerToGroupModal = ({
             onUpdate && onUpdate(g);
           }}
           useSave={useSave}
+          excludedPeers={excludedPeers}
+          showHeader={showHeader}
+          showClose={showClose}
+          buttonText={buttonText}
+          selectInitialPeers={selectInitialPeers}
         />
       )}
     </Modal>
@@ -57,12 +72,22 @@ type ContentProps = {
   group: Group;
   onSuccess?: (g: Group) => void;
   useSave?: boolean;
+  excludedPeers?: Peer[];
+  showHeader?: boolean;
+  showClose?: boolean;
+  buttonText?: string;
+  selectInitialPeers?: boolean;
 };
 
 export const AssignGroupToPeerModalContent = ({
   group,
   onSuccess,
   useSave,
+  excludedPeers,
+  showHeader = true,
+  showClose = true,
+  buttonText = "Confirm Changes",
+  selectInitialPeers = true,
 }: ContentProps) => {
   const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
   const { mutate } = useSWRConfig();
@@ -89,8 +114,9 @@ export const AssignGroupToPeerModalContent = ({
     setGroupName(name);
   };
 
-  // Get initial selected peers
+  // Get initially selected peers
   const getInitialSelectedPeers = useCallback(() => {
+    if (!selectInitialPeers) return {};
     if (!group) return undefined;
     if (!peers) return undefined;
     let initialSelectedPeers = group?.peers
@@ -109,24 +135,23 @@ export const AssignGroupToPeerModalContent = ({
       },
       {} as Record<string, boolean>,
     );
-  }, [group, peers]);
+  }, [group, peers, selectInitialPeers]);
 
   const handleOnSave = async (selectedPeers: Peer[]) => {
     if (!useSave) {
-      onSuccess &&
-        onSuccess({
-          ...group,
-          name: groupName,
-          peers: selectedPeers.map((peer) => {
-            return {
-              id: peer.id,
-              name: peer.name,
-            } as GroupPeer;
-          }),
-          peers_count: selectedPeers.length,
-          resources: group.resources,
-          keepClientState: true,
-        });
+      onSuccess?.({
+        ...group,
+        name: groupName,
+        peers: selectedPeers.map((peer) => {
+          return {
+            id: peer.id,
+            name: peer.name,
+          } as GroupPeer;
+        }),
+        peers_count: selectedPeers.length,
+        resources: group.resources,
+        keepClientState: true,
+      });
       return;
     }
 
@@ -172,11 +197,19 @@ export const AssignGroupToPeerModalContent = ({
     setInitialPeersSet(true);
   }, [getInitialSelectedPeers, initialPeersSet]);
 
+  const data = useMemo(() => {
+    if (!initialPeersSet) return;
+    return peers?.filter((p) => {
+      if (!excludedPeers || excludedPeers.length === 0) return true;
+      return !excludedPeers.find((ep) => ep.id === p.id);
+    });
+  }, [initialPeersSet, peers, excludedPeers]);
+
   return (
     <ModalContent
       maxWidthClass={"max-w-4xl"}
       className={cn(peers && peers.length > 0 ? "pb-0" : "pb-8")}
-      showClose={true}
+      showClose={showClose}
     >
       {groupNameModal && (
         <EditGroupNameModal
@@ -186,34 +219,37 @@ export const AssignGroupToPeerModalContent = ({
           onSuccess={onGroupNameUpdate}
         />
       )}
-      <div className={"flex items-start justify-between pr-8"}>
-        <ModalHeader
-          title={
-            <div className={"flex items-center gap-2 mb-1 text-nb-gray-100"}>
-              <FolderGit2 size={16} className={"shrink-0"} />
-              <div className={"flex gap-2 items-center"}>
-                {groupName}
-                {groupName !== "All" && (
-                  <button
-                    className={
-                      "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
-                    }
-                    onClick={() => setGroupNameModal(true)}
-                  >
-                    <PencilLineIcon size={16} />
-                  </button>
-                )}
+
+      {showHeader && (
+        <div className={"flex items-start justify-between pr-8"}>
+          <ModalHeader
+            title={
+              <div className={"flex items-center gap-2 mb-1 text-nb-gray-100"}>
+                <FolderGit2 size={16} className={"shrink-0"} />
+                <div className={"flex gap-2 items-center"}>
+                  {groupName}
+                  {groupName !== "All" && (
+                    <button
+                      className={
+                        "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 py-2 px-3 rounded-md cursor-pointer"
+                      }
+                      onClick={() => setGroupNameModal(true)}
+                    >
+                      <PencilLineIcon size={16} />
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          }
-          description={
-            isAllGroup
-              ? "View assigned peers for this group"
-              : "Manage assigned peers for this group"
-          }
-          color={"blue"}
-        />
-      </div>
+            }
+            description={
+              isAllGroup
+                ? "View assigned peers for this group"
+                : "Manage assigned peers for this group"
+            }
+            color={"blue"}
+          />
+        </div>
+      )}
 
       {initialPeersSet ? (
         <DataTable
@@ -228,10 +264,11 @@ export const AssignGroupToPeerModalContent = ({
           keepStateInLocalStorage={false}
           setSorting={setSorting}
           columns={PeersTableColumns}
-          data={initialPeersSet ? peers : undefined}
+          data={data}
           isLoading={isLoading && !initialPeersSet}
           tableCellClassName={"!py-1 scale-[95%]"}
           searchPlaceholder={"Search by name, IP or owner..."}
+          searchClassName={"w-[350px]"}
           minimal={false}
           columnVisibility={{
             connected: false,
@@ -245,9 +282,10 @@ export const AssignGroupToPeerModalContent = ({
           }}
           getStartedCard={
             <NoResultsCard
-              title={"Seems like you don't have any peers"}
+              className={"mb-8"}
+              title={"You don't have any peers to assign"}
               description={
-                "In order to view or assign peers to a group, you need to have at least one peer."
+                "In order to assign peers to this group you need to have at least one peer that is not already part of this group."
               }
               icon={<PeerIcon className={"fill-nb-gray-200"} size={14} />}
             />
@@ -268,7 +306,10 @@ export const AssignGroupToPeerModalContent = ({
                 <Button
                   variant={"primary"}
                   className={"ml-auto"}
-                  disabled={peers?.length === 0}
+                  disabled={
+                    peers?.length === 0 ||
+                    Object.keys(selectedRows).length === 0
+                  }
                   onClick={() => {
                     const selectedPeers = table
                       .getSelectedRowModel()
@@ -276,7 +317,7 @@ export const AssignGroupToPeerModalContent = ({
                     handleOnSave(selectedPeers).then();
                   }}
                 >
-                  Confirm Changes
+                  {buttonText}
                 </Button>
               )}
             </div>
@@ -289,7 +330,7 @@ export const AssignGroupToPeerModalContent = ({
   );
 };
 
-const PeersTableColumns: ColumnDef<Peer>[] = [
+export const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "select",
     header: ({ table, column }) => (

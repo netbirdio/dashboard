@@ -36,7 +36,7 @@ export default function DataTableResetFilterButton<TData>({
           }}
         >
           <Button
-            className={"h-[44px]"}
+            className={"h-[42px]"}
             variant={"secondary"}
             onClick={onClick}
           >

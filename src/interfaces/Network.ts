@@ -28,3 +28,7 @@ export interface NetworkResource {
   type?: "domain" | "host" | "subnet";
   enabled: boolean;
 }
+
+export interface NetworkResourceWithNetwork extends NetworkResource {
+  network: Network;
+}

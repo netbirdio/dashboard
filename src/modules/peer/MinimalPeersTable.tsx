@@ -5,11 +5,18 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import NoResults from "@components/ui/NoResults";
-import { ColumnDef, SortingState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  Row,
+  RowSelectionState,
+  SortingState,
+  Table,
+} from "@tanstack/react-table";
 import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerLastSeenCell from "@/modules/peers/PeerLastSeenCell";
@@ -18,12 +25,18 @@ import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 
 type Props = {
   peers?: Peer[];
-  peerID: string;
+  peerID?: string;
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  rightSide?: (table: Table<Peer>) => React.ReactNode;
+  getStartedCard?: React.ReactNode;
+  columns?: ColumnDef<Peer>[];
+  selectedRows?: RowSelectionState;
+  setSelectedRows?: (updater: React.SetStateAction<RowSelectionState>) => void;
+  onRowClick?: (row: Row<Peer>) => void;
 };
 
-const AccessiblePeersColumns: ColumnDef<Peer>[] = [
+const MinimalPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -73,13 +86,21 @@ const AccessiblePeersColumns: ColumnDef<Peer>[] = [
   },
 ];
 
-export default function AccessiblePeersTable({
+export default function MinimalPeersTable({
   peers,
   isLoading,
   headingTarget,
   peerID,
+  rightSide,
+  columns = MinimalPeersTableColumns,
+  selectedRows,
+  setSelectedRows,
+  onRowClick,
+  getStartedCard,
 }: Props) {
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
+
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
     {
@@ -104,27 +125,36 @@ export default function AccessiblePeersTable({
       useRowId={true}
       sorting={sorting}
       setSorting={setSorting}
+      rowSelection={selectedRows}
+      setRowSelection={setSelectedRows}
+      onRowClick={onRowClick}
       minimal={true}
       showSearchAndFilters={true}
       inset={false}
       tableClassName={"mt-0"}
       text={"Peers"}
-      columns={AccessiblePeersColumns}
+      columns={columns}
       keepStateInLocalStorage={false}
       data={peers}
       searchPlaceholder={"Search by name, IP, owner or group..."}
       isLoading={isLoading}
       getStartedCard={
-        <NoResults
-          className={"py-4"}
-          title={"This peer has no accessible peers"}
-          description={
-            "Add more peers to your network or check your access control policies."
-          }
-          icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
-        />
+        !getStartedCard ? (
+          <NoResults
+            className={"py-4"}
+            title={"This peer has no accessible peers"}
+            description={
+              "Add more peers to your network or check your access control policies."
+            }
+            icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
+          />
+        ) : (
+          getStartedCard
+        )
       }
+      rightSide={rightSide}
       columnVisibility={{
+        select: permission?.groups?.update && permission?.peers?.update,
         connected: false,
         ip: false,
         user_name: false,
@@ -200,7 +230,11 @@ export default function AccessiblePeersTable({
             isDisabled={peers?.length == 0}
             onClick={() => {
               mutate("/users").then();
-              mutate(`/peers/${peerID}/accessible-peers`).then();
+              if (peerID) {
+                mutate(`/peers/${peerID}/accessible-peers`).then();
+                return;
+              }
+              mutate(`/peers`).then();
             }}
           />
         </>

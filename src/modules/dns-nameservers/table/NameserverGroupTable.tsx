@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
+import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -13,8 +14,10 @@ import { usePathname } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import NoResults from "@/components/ui/NoResults";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { Group } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns-nameservers/NameserverModal";
 import NameserverTemplateModal from "@/modules/dns-nameservers/NameserverTemplateModal";
@@ -91,12 +94,16 @@ type Props = {
   nameserverGroups?: NameserverGroup[];
   isLoading?: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  isGroupPage?: boolean;
+  distributionGroups?: Group[];
 };
 
 export default function NameserverGroupTable({
   nameserverGroups,
   isLoading,
   headingTarget,
+  isGroupPage,
+  distributionGroups,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -111,6 +118,7 @@ export default function NameserverGroupTable({
         desc: true,
       },
     ],
+    !isGroupPage,
   );
 
   const [editModal, setEditModal] = useState(false);
@@ -133,6 +141,14 @@ export default function NameserverGroupTable({
         text={"Network Routes"}
         sorting={sorting}
         setSorting={setSorting}
+        wrapperComponent={isGroupPage ? Card : undefined}
+        wrapperProps={isGroupPage ? { className: "mt-6 w-full" } : undefined}
+        paginationPaddingClassName={isGroupPage ? "px-0 pt-8" : undefined}
+        tableClassName={isGroupPage ? "mt-0" : undefined}
+        inset={!isGroupPage}
+        minimal={isGroupPage}
+        showSearchAndFilters={isGroupPage}
+        keepStateInLocalStorage={!isGroupPage}
         columnVisibility={{
           description: false,
           domain_list: false,
@@ -147,54 +163,78 @@ export default function NameserverGroupTable({
         data={nameserverGroups}
         searchPlaceholder={"Search by name, domains or nameservers..."}
         getStartedCard={
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={<DNSIcon className={"fill-nb-gray-200"} size={20} />}
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Create Nameserver"}
-            description={
-              "It looks like you don't have any nameservers. Get started by adding one to your network. Select a predefined or add your custom nameservers."
-            }
-            button={
-              <div className={"flex flex-col"}>
-                <div>
-                  <NameserverTemplateModal>
-                    <Button
-                      variant={"primary"}
-                      className={""}
-                      disabled={!permission.nameservers.create}
-                    >
-                      <PlusCircle size={16} />
-                      Add Nameserver
-                    </Button>
-                  </NameserverTemplateModal>
-                </div>
-              </div>
-            }
-            learnMore={
-              <>
-                Learn more about
-                <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/manage-dns-in-your-network"
-                  }
-                  target={"_blank"}
+          isGroupPage ? (
+            <NoResults
+              icon={<DNSIcon className={"fill-nb-gray-200"} size={20} />}
+              className={"py-4"}
+              title={"This group is not used within any nameservers yet"}
+              description={
+                "Assign this group as a distribution group in your nameservers to see them listed here."
+              }
+            >
+              <NameserverTemplateModal distributionGroups={distributionGroups}>
+                <Button
+                  variant={"primary"}
+                  className={"mt-4"}
+                  disabled={!permission.nameservers.create}
                 >
-                  DNS
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
+                  <PlusCircle size={16} />
+                  Add Nameserver
+                </Button>
+              </NameserverTemplateModal>
+            </NoResults>
+          ) : (
+            <GetStartedTest
+              icon={
+                <SquareIcon
+                  icon={<DNSIcon className={"fill-nb-gray-200"} size={20} />}
+                  color={"gray"}
+                  size={"large"}
+                />
+              }
+              title={"Create Nameserver"}
+              description={
+                "It looks like you don't have any nameservers. Get started by adding one to your network. Select a predefined or add your custom nameservers."
+              }
+              button={
+                <div className={"flex flex-col"}>
+                  <div>
+                    <NameserverTemplateModal
+                      distributionGroups={distributionGroups}
+                    >
+                      <Button
+                        variant={"primary"}
+                        className={""}
+                        disabled={!permission.nameservers.create}
+                      >
+                        <PlusCircle size={16} />
+                        Add Nameserver
+                      </Button>
+                    </NameserverTemplateModal>
+                  </div>
+                </div>
+              }
+              learnMore={
+                <>
+                  Learn more about
+                  <InlineLink
+                    href={
+                      "https://docs.netbird.io/how-to/manage-dns-in-your-network"
+                    }
+                    target={"_blank"}
+                  >
+                    DNS
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </>
+              }
+            />
+          )
         }
         rightSide={() => (
           <>
             {nameserverGroups && nameserverGroups?.length > 0 && (
-              <NameserverTemplateModal>
+              <NameserverTemplateModal distributionGroups={distributionGroups}>
                 <Button
                   variant={"primary"}
                   className={"ml-auto"}

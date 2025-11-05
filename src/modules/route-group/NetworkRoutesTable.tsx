@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
+import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -7,6 +8,7 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
+import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cloneDeep } from "lodash";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
@@ -17,6 +19,7 @@ import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import GroupRouteProvider from "@/contexts/GroupRouteProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { Group } from "@/interfaces/Group";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
 import GroupedRouteActionCell from "@/modules/route-group/GroupedRouteActionCell";
@@ -115,6 +118,8 @@ type Props = {
   groupedRoutes?: GroupedRoute[];
   routes?: Route[];
   headingTarget?: HTMLHeadingElement | null;
+  isGroupPage?: boolean;
+  distributionGroups?: Group[];
 };
 
 export default function NetworkRoutesTable({
@@ -122,6 +127,8 @@ export default function NetworkRoutesTable({
   groupedRoutes,
   routes,
   headingTarget,
+  isGroupPage = false,
+  distributionGroups,
 }: Props) {
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
@@ -144,13 +151,18 @@ export default function NetworkRoutesTable({
         desc: true,
       },
     ],
+    !isGroupPage,
   );
 
   const [routeModal, setRouteModal] = useState(false);
 
   return (
     <RouteAddRoutingPeerProvider>
-      <RouteModal open={routeModal} setOpen={setRouteModal} />
+      <RouteModal
+        open={routeModal}
+        setOpen={setRouteModal}
+        distributionGroups={distributionGroups}
+      />
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
@@ -159,6 +171,13 @@ export default function NetworkRoutesTable({
         setSorting={setSorting}
         columns={GroupedRouteTableColumns}
         data={groupedRoutes}
+        wrapperComponent={isGroupPage ? Card : undefined}
+        wrapperProps={isGroupPage ? { className: "mt-6 w-full" } : undefined}
+        paginationPaddingClassName={isGroupPage ? "px-0 pt-8" : undefined}
+        tableClassName={isGroupPage ? "mt-0 mb-2" : undefined}
+        inset={!isGroupPage}
+        minimal={isGroupPage}
+        keepStateInLocalStorage={!isGroupPage}
         searchPlaceholder={"Search by network, range, name or groups..."}
         columnVisibility={{
           enabled: false,
@@ -178,23 +197,19 @@ export default function NetworkRoutesTable({
           );
         }}
         getStartedCard={
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={
-                  <NetworkRoutesIcon className={"fill-nb-gray-200"} size={20} />
-                }
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Create New Route"}
-            description={
-              "It looks like you don't have any routes. Access LANs and VPC by adding a network route."
-            }
-            button={
-              <div className={"gap-x-4 flex items-center justify-center"}>
-                <AddExitNodeButton />
+          isGroupPage ? (
+            <NoResults
+              icon={
+                <NetworkRoutesIcon className={"fill-nb-gray-200"} size={20} />
+              }
+              className={"py-4"}
+              title={"This group is not used within any network routes yet"}
+              description={
+                "Assign this group when creating a new route to see them listed here."
+              }
+            >
+              <div className={"gap-x-4 flex items-center justify-center mt-4"}>
+                <AddExitNodeButton distributionGroups={distributionGroups} />
                 <Button
                   variant={"primary"}
                   className={""}
@@ -205,28 +220,61 @@ export default function NetworkRoutesTable({
                   Add Route
                 </Button>
               </div>
-            }
-            learnMore={
-              <>
-                Learn more about
-                <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+            </NoResults>
+          ) : (
+            <GetStartedTest
+              icon={
+                <SquareIcon
+                  icon={
+                    <NetworkRoutesIcon
+                      className={"fill-nb-gray-200"}
+                      size={20}
+                    />
                   }
-                  target={"_blank"}
-                >
-                  Network Routes
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
+                  color={"gray"}
+                  size={"large"}
+                />
+              }
+              title={"Create New Route"}
+              description={
+                "It looks like you don't have any routes. Access LANs and VPC by adding a network route."
+              }
+              button={
+                <div className={"gap-x-4 flex items-center justify-center"}>
+                  <AddExitNodeButton distributionGroups={distributionGroups} />
+                  <Button
+                    variant={"primary"}
+                    className={""}
+                    onClick={() => setRouteModal(true)}
+                    disabled={!permission.routes.create}
+                  >
+                    <PlusCircle size={16} />
+                    Add Route
+                  </Button>
+                </div>
+              }
+              learnMore={
+                <>
+                  Learn more about
+                  <InlineLink
+                    href={
+                      "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                    }
+                    target={"_blank"}
+                  >
+                    Network Routes
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </>
+              }
+            />
+          )
         }
         rightSide={() => (
           <>
             {routes && routes?.length > 0 && (
               <div className={"gap-x-4 ml-auto flex"}>
-                <AddExitNodeButton />
+                <AddExitNodeButton distributionGroups={distributionGroups} />
                 <Button
                   variant={"primary"}
                   className={""}

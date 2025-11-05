@@ -5,10 +5,6 @@ import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
-import Paragraph from "@components/Paragraph";
-import Separator from "@components/Separator";
-import SkeletonTable from "@components/skeletons/SkeletonTable";
-import { usePortalElement } from "@hooks/usePortalElement";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
@@ -24,7 +20,7 @@ import {
   ShieldCheck,
   X,
 } from "lucide-react";
-import React, { lazy, Suspense, useState } from "react";
+import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import Badge from "@/components/Badge";
@@ -33,13 +29,12 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Account } from "@/interfaces/Account";
 
-const GroupsTable = lazy(() => import("@/modules/settings/GroupsTable"));
 
 type Props = {
   account: Account;
 };
 
-export default function GroupsTab({ account }: Props) {
+export default function GroupsSettings({ account }: Props) {
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -87,28 +82,22 @@ export default function GroupsTab({ account }: Props) {
     const showConfirm = jwtGroupSync && jwtGroupsEntered;
     const choice = showConfirm
       ? await confirm({
-          title: `JWT allow group${
-            jwtAllowGroups.length > 1 ? "s" : ""
-          } - ${jwtAllowGroups.join(", ")}`,
-          description: `Only users part of ${
-            jwtAllowGroups.length > 1
-              ? `these groups (${jwtAllowGroups.join(", ")})`
-              : `the ${jwtAllowGroups[0]} group`
-          } will be able to access NetBird. Are you sure you want to save the changes?`,
-          confirmText: "Save",
-          children: (
-            <div
-              className={
-                "flex gap-2 items-center text-xs bg-netbird-950 px-4 justify-center py-3 rounded-md border border-netbird-500 text-netbird-200"
-              }
-            >
-              <AlertCircle size={14} />
-              To prevent losing access, ensure you are part of this group.
-            </div>
-          ),
-          cancelText: "Cancel",
-          type: "default",
-        })
+        title: `JWT allow group - ${jwtAllowGroups[0]}`,
+        description: `Only users part of the ${jwtAllowGroups[0]} group will be able to access NetBird. Are you sure you want to save the changes?`,
+        confirmText: "Save",
+        children: (
+          <div
+            className={
+              "flex gap-2 items-center text-xs bg-netbird-950 px-4 justify-center py-3 rounded-md border border-netbird-500 text-netbird-200"
+            }
+          >
+            <AlertCircle size={14} />
+            To prevent losing access, ensure you are part of this group.
+          </div>
+        ),
+        cancelText: "Cancel",
+        type: "default",
+      })
       : true;
 
     if (!choice) return;
@@ -323,36 +312,6 @@ export default function GroupsTab({ account }: Props) {
           </AnimatePresence>
         )}
       </div>
-      <GroupsSection />
     </Tabs.Content>
   );
 }
-
-const GroupsSection = () => {
-  const { ref: headingRef, portalTarget } =
-    usePortalElement<HTMLHeadingElement>();
-
-  return (
-    <>
-      <Separator />
-      <div className={"px-8 py-6"}>
-        <div className={"max-w-6xl"}>
-          <div className={"flex justify-between items-center"}>
-            <div>
-              <h2 ref={headingRef}>Groups</h2>
-              <Paragraph>
-                Here is the overview of the groups of your account. You can
-                delete the unused ones.
-              </Paragraph>
-            </div>
-          </div>
-        </div>
-      </div>
-      <div className={"pb-10"}>
-        <Suspense fallback={<SkeletonTable />}>
-          <GroupsTable headingTarget={portalTarget} />
-        </Suspense>
-      </div>
-    </>
-  );
-};

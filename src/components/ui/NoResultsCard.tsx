@@ -1,5 +1,6 @@
 import Card from "@components/Card";
 import Paragraph from "@components/Paragraph";
+import { cn } from "@utils/helpers";
 import { FilterX } from "lucide-react";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
@@ -9,15 +10,18 @@ type Props = {
   title?: string;
   description?: string;
   children?: React.ReactNode;
+  className?: string;
 };
+
 export default function NoResultsCard({
   icon,
   title = "Could not find any results",
   description = "We couldn't find any results. Please try a different search term or change your filters.",
   children,
+  className,
 }: Readonly<Props>) {
   return (
-    <div className={"px-8 mt-8"}>
+    <div className={cn("px-8 mt-8", className)}>
       <Card className={"w-full relative overflow-hidden"}>
         <div
           className={

@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
+import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -7,6 +8,7 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
+import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
@@ -16,6 +18,7 @@ import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import ExpirationDateRow from "@/modules/common-table-rows/ExpirationDateRow";
@@ -118,12 +121,16 @@ type Props = {
   setupKeys?: SetupKey[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  isGroupPage?: boolean;
+  groups?: Group[];
 };
 
 export default function SetupKeysTable({
   setupKeys,
   isLoading,
   headingTarget,
+  isGroupPage,
+  groups,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
@@ -146,16 +153,24 @@ export default function SetupKeysTable({
         desc: true,
       },
     ],
+    !isGroupPage,
   );
 
   const [open, setOpen] = useState(false);
 
   return (
     <>
-      {open && <SetupKeyModal open={open} setOpen={setOpen} />}
+      {open && <SetupKeyModal open={open} setOpen={setOpen} groups={groups} />}
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
+        wrapperComponent={isGroupPage ? Card : undefined}
+        wrapperProps={isGroupPage ? { className: "mt-6 w-full" } : undefined}
+        paginationPaddingClassName={isGroupPage ? "px-0 pt-8" : undefined}
+        tableClassName={isGroupPage ? "mt-0 mb-2" : undefined}
+        inset={!isGroupPage}
+        minimal={isGroupPage}
+        keepStateInLocalStorage={!isGroupPage}
         text={"Setup Keys"}
         sorting={sorting}
         setSorting={setSorting}
@@ -167,46 +182,67 @@ export default function SetupKeysTable({
           group_strings: false,
         }}
         getStartedCard={
-          <GetStartedTest
-            icon={
-              <SquareIcon
-                icon={
-                  <SetupKeysIcon className={"fill-nb-gray-200"} size={20} />
-                }
-                color={"gray"}
-                size={"large"}
-              />
-            }
-            title={"Create Setup Key"}
-            description={
-              "Add a setup key to register new machines in your network. The key links machines to your account during initial setup."
-            }
-            button={
+          isGroupPage ? (
+            <NoResults
+              icon={<SetupKeysIcon className={"fill-nb-gray-200"} size={20} />}
+              className={"py-4"}
+              title={"This group is not used within any setup keys yet"}
+              description={
+                "Assign this group when creating a new setup key to see them listed here."
+              }
+            >
               <Button
                 variant={"primary"}
-                className={""}
+                className={"mt-4"}
                 onClick={() => setOpen(true)}
                 disabled={!permission.setup_keys.create}
               >
                 <PlusCircle size={16} />
                 Create Setup Key
               </Button>
-            }
-            learnMore={
-              <>
-                Learn more about
-                <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+            </NoResults>
+          ) : (
+            <GetStartedTest
+              icon={
+                <SquareIcon
+                  icon={
+                    <SetupKeysIcon className={"fill-nb-gray-200"} size={20} />
                   }
-                  target={"_blank"}
+                  color={"gray"}
+                  size={"large"}
+                />
+              }
+              title={"Create Setup Key"}
+              description={
+                "Add a setup key to register new machines in your network. The key links machines to your account during initial setup."
+              }
+              button={
+                <Button
+                  variant={"primary"}
+                  className={""}
+                  onClick={() => setOpen(true)}
+                  disabled={!permission.setup_keys.create}
                 >
-                  Setup Keys
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </>
-            }
-          />
+                  <PlusCircle size={16} />
+                  Create Setup Key
+                </Button>
+              }
+              learnMore={
+                <>
+                  Learn more about
+                  <InlineLink
+                    href={
+                      "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
+                    }
+                    target={"_blank"}
+                  >
+                    Setup Keys
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </>
+              }
+            />
+          )
         }
         rightSide={() => (
           <>

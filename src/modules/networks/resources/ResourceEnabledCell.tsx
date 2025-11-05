@@ -11,8 +11,12 @@ import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
 type Props = {
   resource: NetworkResource;
+  mutateAllResourcesOnUpdate?: boolean;
 };
-export const ResourceEnabledCell = ({ resource }: Props) => {
+export const ResourceEnabledCell = ({
+  resource,
+  mutateAllResourcesOnUpdate,
+}: Props) => {
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -40,6 +44,7 @@ export const ResourceEnabledCell = ({ resource }: Props) => {
           .filter((g) => g !== undefined),
         enabled,
       }).then(() => {
+        mutateAllResourcesOnUpdate && mutate("/networks/resources");
         mutate(`/networks/${network?.id}/resources`);
       }),
     });

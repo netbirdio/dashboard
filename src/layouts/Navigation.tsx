@@ -114,6 +114,12 @@ export default function Navigation({
                     visible={permission.policies.read}
                   />
                   <SidebarItem
+                    label="Groups"
+                    isChild
+                    href={"/groups"}
+                    visible={permission.policies.read}
+                  />
+                  <SidebarItem
                     label="Posture Checks"
                     isChild
                     href={"/posture-checks"}

@@ -7,8 +7,8 @@ import NoResults from "@components/ui/NoResults";
 import { IconCirclePlus } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
-import { Layers3Icon } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { ArrowUpRightIcon, Layers3Icon } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -26,6 +26,7 @@ type Props = {
   resources?: NetworkResource[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  isGroupPage?: boolean;
 };
 
 const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
@@ -105,6 +106,7 @@ export default function ResourcesTable({
   resources,
   isLoading,
   headingTarget,
+  isGroupPage,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
   const params = useSearchParams();
@@ -112,6 +114,7 @@ export default function ResourcesTable({
 
   const [sorting, setSorting] = useState<SortingState>([]);
   const { openResourceModal, network } = useNetworksContext();
+  const router = useRouter();
 
   return (
     <DataTable
@@ -137,29 +140,52 @@ export default function ResourcesTable({
       getStartedCard={
         <NoResults
           className={"py-4"}
-          title={"This network has no resources"}
+          title={
+            isGroupPage
+              ? "This group has no assigned resources"
+              : "This network has no resources"
+          }
           description={
-            "Add resources to this network to control what peers can access. Resources can be anything from a single IP, a subnet, or a domain."
+            isGroupPage
+              ? "Assign this group to your resources inside your networks to see them listed here."
+              : "Add resources to this network to control what peers can access. Resources can be anything from a single IP, a subnet, or a domain."
           }
           icon={<Layers3Icon size={20} />}
-        />
+        >
+          {isGroupPage && permission?.networks?.create && (
+            <>
+              <Button
+                variant={"primary"}
+                className={"mt-4"}
+                onClick={() => router.push("/networks")}
+              >
+                Go to Networks
+                <ArrowUpRightIcon size={16} />
+              </Button>
+            </>
+          )}
+        </NoResults>
       }
       columnVisibility={{
         description: false,
         id: false,
       }}
       paginationPaddingClassName={"px-0 pt-8"}
-      rightSide={() => (
-        <Button
-          variant={"primary"}
-          className={"ml-auto"}
-          onClick={() => network && openResourceModal(network)}
-          disabled={!permission.networks.update}
-        >
-          <IconCirclePlus size={16} />
-          Add Resource
-        </Button>
-      )}
+      rightSide={
+        !isGroupPage
+          ? () => (
+              <Button
+                variant={"primary"}
+                className={"ml-auto"}
+                onClick={() => network && openResourceModal(network)}
+                disabled={!permission.networks.update}
+              >
+                <IconCirclePlus size={16} />
+                Add Resource
+              </Button>
+            )
+          : undefined
+      }
     >
       {(table) => (
         <DataTableRowsPerPage

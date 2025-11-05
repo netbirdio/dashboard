@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -6,8 +7,13 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
-import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
-import { ColumnDef, SortingState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  Row,
+  RowSelectionState,
+  SortingState,
+  Table,
+} from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
 import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
@@ -18,6 +24,7 @@ import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { Group } from "@/interfaces/Group";
 import { User } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 import { PendingApprovalFilter } from "@/modules/users/PendingApprovalFilter";
@@ -108,12 +115,28 @@ type Props = {
   users?: User[];
   isLoading?: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  minimal?: boolean;
+  rightSide?: (table: Table<User>) => React.ReactNode;
+  getStartedCard?: React.ReactNode;
+  columns?: ColumnDef<User>[];
+  selectedRows?: RowSelectionState;
+  setSelectedRows?: (updater: React.SetStateAction<RowSelectionState>) => void;
+  onRowClick?: (row: Row<User>) => void;
+  keepStateInLocalStorage?: boolean;
 };
 
 export default function UsersTable({
   users,
   isLoading,
   headingTarget,
+  minimal,
+  rightSide,
+  getStartedCard,
+  columns = UsersTableColumns,
+  selectedRows,
+  setSelectedRows,
+  onRowClick,
+  keepStateInLocalStorage = true,
 }: Readonly<Props>) {
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
@@ -132,67 +155,89 @@ export default function UsersTable({
         desc: true,
       },
     ],
+    keepStateInLocalStorage,
   );
 
   const router = useRouter();
+  const { permission } = usePermissions();
 
   return (
     <DataTable
       headingTarget={headingTarget}
       isLoading={isLoading}
+      keepStateInLocalStorage={keepStateInLocalStorage}
       text={"Users"}
       sorting={sorting}
       setSorting={setSorting}
-      columns={UsersTableColumns}
+      columns={columns}
+      wrapperComponent={minimal ? Card : undefined}
+      wrapperProps={minimal && { className: "mt-6 w-full" }}
+      minimal={minimal}
       data={users}
+      rowSelection={selectedRows}
+      setRowSelection={setSelectedRows}
+      tableClassName={minimal ? "mt-0" : ""}
       columnVisibility={{
+        select: permission?.groups?.update,
         is_current: false,
         approval_required: false,
       }}
-      onRowClick={(row) => {
-        router.push(`/team/user?id=${row.original.id}`);
-      }}
+      onRowClick={
+        !onRowClick
+          ? (row) => {
+              router.push(`/team/user?id=${row.original.id}`);
+            }
+          : onRowClick
+      }
       searchPlaceholder={"Search by name, email or role..."}
       getStartedCard={
-        <GetStartedTest
-          icon={
-            <SquareIcon
-              icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
-              color={"gray"}
-              size={"large"}
-            />
-          }
-          title={"Add New Users"}
-          description={
-            "It looks like you don't have any users yet. Get started by inviting users to your account."
-          }
-          button={
-            <div className={"flex flex-col items-center justify-center"}>
-              <InviteUserButton show={true} />
-            </div>
-          }
-          learnMore={
-            <>
-              Learn more about
-              <InlineLink
-                href={
-                  "https://docs.netbird.io/how-to/add-users-to-your-network"
-                }
-                target={"_blank"}
-              >
-                Users
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </>
-          }
-        />
+        !getStartedCard ? (
+          <GetStartedTest
+            icon={
+              <SquareIcon
+                icon={<TeamIcon className={"fill-nb-gray-200"} size={20} />}
+                color={"gray"}
+                size={"large"}
+              />
+            }
+            title={"Add New Users"}
+            description={
+              "It looks like you don't have any users yet. Get started by inviting users to your account."
+            }
+            button={
+              <div className={"flex flex-col items-center justify-center"}>
+                <InviteUserButton show={true} />
+              </div>
+            }
+            learnMore={
+              <>
+                Learn more about
+                <InlineLink
+                  href={
+                    "https://docs.netbird.io/how-to/add-users-to-your-network"
+                  }
+                  target={"_blank"}
+                >
+                  Users
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </>
+            }
+          />
+        ) : (
+          getStartedCard
+        )
       }
-      rightSide={() => (
-        <InviteUserButton
-          show={users && users?.length > 0}
-          className={"ml-auto"}
-        />
-      )}
+      rightSide={
+        !rightSide
+          ? () => (
+              <InviteUserButton
+                show={users && users?.length > 0}
+                className={"ml-auto"}
+              />
+            )
+          : rightSide
+      }
     >
       {(table) => {
         return (
@@ -220,18 +265,20 @@ export default function UsersTable({
 type InviteUserButtonProps = {
   show?: boolean;
   className?: string;
+  groups?: Group[];
 };
 
-const InviteUserButton = ({
+export const InviteUserButton = ({
   show = false,
   className,
+  groups,
 }: InviteUserButtonProps) => {
   const { permission } = usePermissions();
   if (!show) return null;
 
   return (
     (isLocalDev() || isNetBirdHosted()) && (
-      <UserInviteModal>
+      <UserInviteModal groups={groups}>
         <Button
           variant={"primary"}
           className={className}

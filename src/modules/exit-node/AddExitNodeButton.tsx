@@ -4,6 +4,7 @@ import { IconCirclePlus, IconDirectionSign } from "@tabler/icons-react";
 import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { ExitNodeHelpTooltip } from "@/modules/exit-node/ExitNodeHelpTooltip";
 import { RouteModalContent } from "@/modules/routes/RouteModal";
@@ -11,8 +12,13 @@ import { RouteModalContent } from "@/modules/routes/RouteModal";
 type Props = {
   peer?: Peer;
   firstTime?: boolean;
+  distributionGroups?: Group[];
 };
-export const AddExitNodeButton = ({ peer, firstTime = false }: Props) => {
+export const AddExitNodeButton = ({
+  peer,
+  firstTime = false,
+  distributionGroups,
+}: Props) => {
   const [modal, setModal] = useState(false);
   const { permission } = usePermissions();
 
@@ -42,6 +48,7 @@ export const AddExitNodeButton = ({ peer, firstTime = false }: Props) => {
           <RouteModalContent
             onSuccess={() => setModal(false)}
             peer={peer}
+            distributionGroups={distributionGroups}
             isFirstExitNode={firstTime}
             exitNode={true}
           />

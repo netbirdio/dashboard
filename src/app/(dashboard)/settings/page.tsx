@@ -19,9 +19,9 @@ import { useAccount } from "@/modules/account/useAccount";
 import AuthenticationTab from "@/modules/settings/AuthenticationTab";
 import ClientSettingsTab from "@/modules/settings/ClientSettingsTab";
 import DangerZoneTab from "@/modules/settings/DangerZoneTab";
-import GroupsTab from "@/modules/settings/GroupsTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
+import GroupsSettings from "@/modules/settings/GroupsSettings";
 
 export default function NetBirdSettings() {
   const queryParams = useSearchParams();
@@ -81,7 +81,7 @@ export default function NetBirdSettings() {
           <div className={"border-l border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
             {account && <PermissionsTab account={account} />}
-            {account && <GroupsTab account={account} />}
+            {account && <GroupsSettings account={account} />}
             {account && <NetworkSettingsTab account={account} />}
             {account && <ClientSettingsTab account={account} />}
             {account && <DangerZoneTab account={account} />}
