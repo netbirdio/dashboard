@@ -57,12 +57,6 @@ export default function useGroupsUsage() {
       .filter((u) => u !== undefined);
   }, [nameservers, isNameserversLoading]);
 
-  const routesGroups = useMemo(() => {
-    if (isRoutesLoading) return;
-    if (!routes) return [];
-    return routes?.map((route) => route.groups).filter((u) => u !== undefined);
-  }, [routes, isRoutesLoading]);
-
   const setupKeysGroups = useMemo(() => {
     if (isSetupKeysLoading) return;
     if (!setupKeys) return [];
@@ -99,6 +93,7 @@ export default function useGroupsUsage() {
 
   const groupsUsage = useMemo(() => {
     if (isLoading) return [];
+    if (isRoutesLoading) return [];
     if (!groups) return [];
     return groups?.map((group) => {
       const policyCount = policiesGroups?.filter((policy) => {
@@ -109,9 +104,20 @@ export default function useGroupsUsage() {
         return nameserver.includes(group.id as string);
       }).length;
 
-      const routeCount = routesGroups?.filter((route) => {
-        return route.includes(group.id as string);
-      }).length;
+      const routeCount = (
+        routes?.filter((route) => {
+          const groupId = group.id as string;
+          const isInDistributionGroups =
+            route.groups?.includes(groupId) ?? false;
+          const isInAccessControlGroups =
+            route.access_control_groups?.includes(groupId) ?? false;
+          const isInPeerGroups = route.peer_groups?.includes(groupId) ?? false;
+
+          return (
+            isInAccessControlGroups || isInDistributionGroups || isInPeerGroups
+          );
+        }) || []
+      ).length;
 
       const setupKeyCount = setupKeysGroups?.filter((setupKey) => {
         return setupKey.includes(group.id as string);
@@ -137,7 +143,8 @@ export default function useGroupsUsage() {
     groups,
     policiesGroups,
     nameserversGroups,
-    routesGroups,
+    routes,
+    isRoutesLoading,
     setupKeysGroups,
     usersGroups,
   ]);

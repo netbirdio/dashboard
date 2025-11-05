@@ -66,7 +66,18 @@ export default function useGroupDetails(groupId: string) {
   }, [nameservers, groupId]);
 
   const linkedRoutes = useMemo(() => {
-    return routes?.filter((route) => route.groups?.includes(groupId)) || [];
+    return (
+      routes?.filter((route) => {
+        const isInDistributionGroups = route.groups?.includes(groupId);
+        const isInAccessControlGroups =
+          route.access_control_groups?.includes(groupId);
+        const isInPeerGroups = route.peer_groups?.includes(groupId);
+
+        return (
+          isInAccessControlGroups || isInDistributionGroups || isInPeerGroups
+        );
+      }) || []
+    );
   }, [routes, groupId]);
 
   const linkedSetupKeys = useMemo(() => {
