@@ -3,6 +3,7 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
+import { removeAllSpaces } from "@utils/helpers";
 import { Layers3Icon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -228,6 +229,11 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
       </GroupProvider>
     ),
   },
+  {
+    accessorKey: "search",
+    accessorFn: (row) => removeAllSpaces(row.name),
+    filterFn: "fuzzy",
+  },
 ];
 
 type Props = {
@@ -266,6 +272,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
       rightSide={() => <AddGroupButton />}
       columnVisibility={{
         in_use: false,
+        search: false,
       }}
     >
       {(table) => (

@@ -391,6 +391,14 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "group.update")
+    return (
+      <div className={"inline"}>
+        Group <Value>{event.meta.old_name}</Value> was renamed to{" "}
+        <Value>{event.meta.new_name}</Value>
+      </div>
+    );
+
   /**
    * Account
    */
