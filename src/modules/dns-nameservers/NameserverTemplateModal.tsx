@@ -5,8 +5,6 @@ import { ExternalLinkIcon, GlobeIcon } from "lucide-react";
 import Image, { StaticImageData } from "next/image";
 import React, { useState } from "react";
 import CloudflareLogo from "@/assets/nameservers/cloudflare.svg";
-import DNS0Logo from "@/assets/nameservers/dns0.svg";
-import DNS0ZeroLogo from "@/assets/nameservers/dns0-zero.svg";
 import GoogleLogo from "@/assets/nameservers/google.svg";
 import Quad9Logo from "@/assets/nameservers/quad9.svg";
 import { Group } from "@/interfaces/Group";
@@ -66,9 +64,9 @@ export function NameserverTemplateModalContent({
   onePresetSelection,
 }: Readonly<ModalProps>) {
   return (
-    <ModalContent maxWidthClass={"max-w-5xl"} showClose={true}>
+    <ModalContent maxWidthClass={"max-w-xl"} showClose={true}>
       <div className={"px-8 py-3 flex flex-col gap-6 mt-4"}>
-        <div className={"grid grid-cols-1 md:grid-cols-2 gap-4"}>
+        <div className={"grid grid-cols-1 md:grid-cols-1 gap-4"}>
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Google)}
             src={GoogleLogo}
@@ -86,25 +84,6 @@ export function NameserverTemplateModalContent({
               "Enterprise-grade DNS service that offers the fastest response time, unparalleled redundancy, and advanced security with built-in DDoS mitigation and DNSSEC."
             }
             href={"https://www.cloudflare.com/learning/dns/what-is-1.1.1.1/"}
-          />
-
-          <NameserverTemplate
-            onClick={() => onePresetSelection(NameserverPresets.DNS0)}
-            src={DNS0Logo}
-            title={"DNS0.EU DNS"}
-            description={
-              "A free, sovereign and GDPR-compliant DNS resolver with a strong focus on security to protect the citizens and organizations of the European Union."
-            }
-            href={"https://www.dns0.eu/"}
-          />
-          <NameserverTemplate
-            onClick={() => onePresetSelection(NameserverPresets.DNS0Zero)}
-            src={DNS0ZeroLogo}
-            title={"DNS0.EU Zero DNS"}
-            description={
-              "Increase the catch rate for malicious domains by combining human-vetted threat intelligence with advanced heuristics that automatically identify high-risk patterns."
-            }
-            href={"https://www.dns0.eu/zero"}
           />
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Quad9)}
