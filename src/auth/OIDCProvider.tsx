@@ -130,6 +130,26 @@ const CallBackSuccess = () => {
   const params = useSearchParams();
   const errorParam = params.get("error");
   const currentPath = usePathname();
-  useRedirect(currentPath, true, !errorParam);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (!errorParam && currentPath === "/auth") {
+      // Redirect to /peers after a brief delay to ensure tokens are stored
+      const timer = setTimeout(() => {
+        let queryParams = "";
+        try {
+          const stored = localStorage.getItem("netbird-query-params");
+          if (stored) {
+            queryParams = `?${stored}`;
+            localStorage.removeItem("netbird-query-params");
+          }
+        } catch (e) { }
+
+        router.replace(`/peers${queryParams}`);
+      }, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [errorParam, currentPath, router]);
+
   return <FullScreenLoading />;
 };
