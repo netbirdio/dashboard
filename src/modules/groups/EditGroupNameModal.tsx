@@ -36,7 +36,7 @@ export const EditGroupNameModal = ({
   }, [name, initialName, error]);
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newName = trim(e.target.value);
+    const newName = e.target.value;
     const findGroup = groups?.find((g) => g.name === newName);
     if (findGroup) {
       setError("This group already exists. Please choose another name.");
