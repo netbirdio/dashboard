@@ -1,4 +1,3 @@
-import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import {
   Tooltip,
@@ -8,13 +7,14 @@ import {
 } from "@components/Tooltip";
 import MemoizedNetBirdIcon from "@components/ui/MemoizedNetBirdIcon";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
-import { parseVersionString } from "@utils/version";
+import { compareVersions } from "@utils/version";
 import { ArrowRightIcon, ArrowUpCircleIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
+import FullTooltip from "@components/FullTooltip";
 
 type Props = {
   version: string;
@@ -31,7 +31,8 @@ export default function PeerVersionCell({ version, os, serial }: Props) {
       operatingSystem === OperatingSystem.ANDROID
     )
       return false;
-    return parseVersionString(version) < parseVersionString(latestVersion);
+    if (!latestVersion) return false;
+    return !compareVersions(version, latestVersion);
   }, [os, version, latestVersion]);
 
   const updateIcon = useMemo(() => {
