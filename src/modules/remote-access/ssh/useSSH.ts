@@ -40,10 +40,16 @@ export const useSSH = (client: any) => {
       setConfig(config);
 
       try {
+        const requiresJwt = await client.detectSSHServerType(
+          config.hostname,
+          config.port,
+        );
+
         const ssh = await client.createSSHConnection(
           config.hostname,
           config.port,
           config.username,
+          requiresJwt ? accessToken : undefined,
         );
 
         ssh.onclose = () => {
@@ -65,7 +71,7 @@ export const useSSH = (client: any) => {
         return SSHStatus.DISCONNECTED;
       }
     },
-    [client, status],
+    [client, status, accessToken],
   );
 
   const disconnect = useCallback(() => {
