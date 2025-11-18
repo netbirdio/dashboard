@@ -62,5 +62,5 @@ export const isRoutingPeerSupported = (version: string, os: string) => {
 export const isNativeSSHSupported = (version: string) => {
   if (version == "development") return true;
   const versionNumber = parseVersionString(version);
-  return versionNumber >= 999999;
+  return versionNumber >= 600;
 };

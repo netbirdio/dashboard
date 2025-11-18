@@ -39,7 +39,7 @@ export const PeerSSHInstructions = ({
           icon={<TerminalSquare size={16} className={"text-netbird"} />}
           title={"Enable SSH Access"}
           description={
-            "Allow remote SSH access to this machine from other connected network participants. NetBird's embedded SSH server is running on port 44338."
+            "Allow remote SSH access to this machine from other connected network participants."
           }
           color={"netbird"}
         />
@@ -56,7 +56,7 @@ export const PeerSSHInstructions = ({
                 <Code.Line>{`netbird down # if NetBird is already running`}</Code.Line>
               </Code>
               <Code>
-                <Code.Line>{`netbird up --allow-server-ssh`}</Code.Line>
+                <Code.Line>{`netbird up --allow-server-ssh --enable-ssh-root`}</Code.Line>
               </Code>
             </Steps.Step>
 
