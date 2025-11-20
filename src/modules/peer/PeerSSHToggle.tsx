@@ -4,6 +4,7 @@ import { LockIcon, TerminalSquare } from "lucide-react";
 import * as React from "react";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { PeerSSHPolicyInfo } from "@/modules/peer/PeerSSHPolicyInfo";
 
 export const PeerSSHToggle = () => {
   const { permission } = usePermissions();
@@ -42,6 +43,7 @@ export const PeerSSHToggle = () => {
           }
         />
       </FullTooltip>
+      <PeerSSHPolicyInfo peer={peer} />
     </>
   );
 };

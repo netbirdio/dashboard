@@ -6,7 +6,12 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
-import { Policy, PortRange, Protocol } from "@/interfaces/Policy";
+import {
+  Policy,
+  PolicyRuleResource,
+  PortRange,
+  Protocol,
+} from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { usePostureCheck } from "@/modules/posture-checks/usePostureCheck";
@@ -18,6 +23,9 @@ type Props = {
   initialDestinationGroups?: Group[] | string[];
   initialName?: string;
   initialDescription?: string;
+  initialProtocol?: Protocol;
+  initialPorts?: number[];
+  initialDestinationResource?: PolicyRuleResource;
 };
 
 // TODO add reducer
@@ -29,6 +37,9 @@ export const useAccessControl = ({
   initialName,
   initialDescription,
   onSuccess,
+  initialProtocol,
+  initialPorts,
+  initialDestinationResource,
 }: Props = {}) => {
   const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
@@ -75,6 +86,7 @@ export const useAccessControl = ({
   const [enabled, setEnabled] = useState<boolean>(policy?.enabled ?? true);
 
   const [ports, setPorts] = useState<number[]>(() => {
+    if (initialPorts) return initialPorts;
     if (!firstRule) return [];
     if (firstRule.ports == undefined) return [];
     if (firstRule.ports.length > 0) {
@@ -93,7 +105,7 @@ export const useAccessControl = ({
   });
 
   const [protocol, setProtocol] = useState<Protocol>(
-    firstRule ? firstRule.protocol : "all",
+    firstRule ? firstRule.protocol : initialProtocol ?? "all",
   );
   const [direction, setDirection] = useState<Direction>(() => {
     if (!firstRule) return "bi";
@@ -131,7 +143,7 @@ export const useAccessControl = ({
   );
 
   const [destinationResource, setDestinationResource] = useState(
-    firstRule?.destinationResource,
+    firstRule?.destinationResource ?? initialDestinationResource,
   );
 
   const { updateOrCreateAndNotify: checkToCreate } = usePostureCheck({});

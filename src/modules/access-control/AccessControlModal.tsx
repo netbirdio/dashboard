@@ -45,7 +45,7 @@ import React, { useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
-import { Policy, Protocol } from "@/interfaces/Policy";
+import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { useAccessControl } from "@/modules/access-control/useAccessControl";
 import { PostureCheckTab } from "@/modules/posture-checks/ui/PostureCheckTab";
@@ -116,6 +116,9 @@ type ModalProps = {
   postureCheckTemplates?: PostureCheck[];
   useSave?: boolean;
   allowEditPeers?: boolean;
+  initialProtocol?: Protocol;
+  initialPorts?: number[];
+  initialDestinationResource?: PolicyRuleResource;
 };
 
 export function AccessControlModalContent({
@@ -128,6 +131,9 @@ export function AccessControlModalContent({
   initialDestinationGroups,
   initialName,
   initialDescription,
+  initialProtocol,
+  initialPorts,
+  initialDestinationResource,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
 
@@ -170,6 +176,9 @@ export function AccessControlModalContent({
     initialDestinationGroups,
     initialName,
     initialDescription,
+    initialPorts,
+    initialProtocol,
+    initialDestinationResource,
   });
 
   const [tab, setTab] = useState(() => {
