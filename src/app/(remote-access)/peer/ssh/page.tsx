@@ -108,6 +108,7 @@ function SSHTerminal({ username, port, peer }: Props) {
       if (!peer.id) return;
       if (connected.current) return;
       connected.current = true;
+
       try {
         const aclPort = isNativeSSHSupported(peer.version) ? "22022" : port;
         const rules = [`tcp/${aclPort}`];
@@ -121,7 +122,7 @@ function SSHTerminal({ username, port, peer }: Props) {
           sshConnectedOnce.current = true;
         }
       } catch (error) {
-        console.error("Connection failed:", error);
+        console.error("Connection error:", error);
       }
     };
 
