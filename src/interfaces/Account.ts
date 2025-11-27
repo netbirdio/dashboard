@@ -23,4 +23,10 @@ export interface Account {
     network_range?: string;
     lazy_connection_enabled: boolean;
   };
+  onboarding?: AccountOnboarding;
+}
+
+export interface AccountOnboarding {
+  onboarding_flow_pending: boolean;
+  signup_form_pending: boolean;
 }

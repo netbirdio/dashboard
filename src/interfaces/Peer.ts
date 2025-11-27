@@ -24,6 +24,7 @@ export interface Peer {
   login_expiration_enabled: boolean;
   inactivity_expiration_enabled: boolean;
   approval_required: boolean;
+  disapproval_reason?: string;
   city_name: string;
   country_code: string;
   connection_ip: string;
