@@ -5,6 +5,7 @@ import { useOidcUser } from "@axa-fr/react-oidc";
 import Button from "@components/Button";
 import { UserAvatar } from "@components/ui/UserAvatar";
 import { cn } from "@utils/helpers";
+import { isNetBirdHosted } from "@utils/netbird";
 import { useIsSm, useIsXs } from "@utils/responsive";
 import { AnimatePresence, motion } from "framer-motion";
 import { XIcon } from "lucide-react";
@@ -20,6 +21,7 @@ import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import UsersProvider from "@/contexts/UsersProvider";
 import Navigation from "@/layouts/Navigation";
+import { OnboardingProvider } from "@/modules/onboarding/OnboardingProvider";
 import Header, { headerHeight } from "./Header";
 
 export default function DashboardLayout({
@@ -33,6 +35,7 @@ export default function DashboardLayout({
         <AnnouncementProvider>
           <GroupsProvider>
             <CountryProvider>
+              {!isNetBirdHosted() && <OnboardingProvider />}
               <DashboardPageContent>{children}</DashboardPageContent>
             </CountryProvider>
           </GroupsProvider>
