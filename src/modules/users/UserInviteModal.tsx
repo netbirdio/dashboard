@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import Code from "@components/Code";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -14,10 +15,11 @@ import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { IconMailForward } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
-import { MailIcon, User2 } from "lucide-react";
+import { CopyIcon, MailIcon, User2 } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import Avatar1 from "@/assets/avatars/009.jpg";
 import Avatar2 from "@/assets/avatars/030.jpg";
 import Avatar3 from "@/assets/avatars/063.jpg";
@@ -32,27 +34,93 @@ type Props = {
   groups?: Group[];
 };
 
+const copyMessage = "Password was copied to your clipboard!";
+
 export default function UserInviteModal({ children, groups }: Readonly<Props>) {
   const [open, setOpen] = useState(false);
+  const [successModal, setSuccessModal] = useState(false);
+  const [createdUser, setCreatedUser] = useState<User>();
   const { mutate } = useSWRConfig();
+  const [, copyToClipboard] = useCopyToClipboard(createdUser?.password);
 
-  const handleOnSuccess = () => {
-    setOpen(false);
+  const handleOnSuccess = (user: User) => {
+    if (user.password) {
+      setCreatedUser(user);
+      setSuccessModal(true);
+    } else {
+      setOpen(false);
+    }
     setTimeout(() => {
       mutate("/users?service_user=false");
     }, 1000);
   };
 
+  const handleCopyAndClose = () => {
+    copyToClipboard(copyMessage).then(() => {
+      setSuccessModal(false);
+      setOpen(false);
+    });
+  };
+
   return (
-    <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
-      <ModalTrigger asChild={true}>{children}</ModalTrigger>
-      <UserInviteModalContent onSuccess={handleOnSuccess} groups={groups} />
-    </Modal>
+    <>
+      <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
+        <ModalTrigger asChild={true}>{children}</ModalTrigger>
+        <UserInviteModalContent onSuccess={handleOnSuccess} groups={groups} />
+      </Modal>
+
+      <Modal
+        open={successModal}
+        onOpenChange={(open) => {
+          setSuccessModal(open);
+          setOpen(open);
+        }}
+      >
+        <ModalContent
+          onEscapeKeyDown={(e) => e.preventDefault()}
+          onInteractOutside={(e) => e.preventDefault()}
+          onPointerDownOutside={(e) => e.preventDefault()}
+          maxWidthClass={"max-w-md"}
+          className={"mt-20"}
+          showClose={false}
+        >
+          <div className={"pb-6 px-8"}>
+            <div className={"flex flex-col items-center justify-center gap-3"}>
+              <div>
+                <h2 className={"text-2xl text-center mb-2"}>
+                  User created successfully!
+                </h2>
+                <Paragraph className={"mt-0 text-sm text-center"}>
+                  This password will not be shown again, so be sure to copy it
+                  and store in a secure location.
+                </Paragraph>
+              </div>
+            </div>
+          </div>
+
+          <div className={"px-8 pb-6"}>
+            <Code message={copyMessage}>
+              <Code.Line>{createdUser?.password || ""}</Code.Line>
+            </Code>
+          </div>
+          <ModalFooter className={"items-center"}>
+            <Button
+              variant={"primary"}
+              className={"w-full"}
+              onClick={handleCopyAndClose}
+            >
+              <CopyIcon size={14} />
+              Copy & Close
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
+    </>
   );
 }
 
 type ModalProps = {
-  onSuccess: () => void;
+  onSuccess: (user: User) => void;
   groups?: Group[];
 };
 
@@ -85,9 +153,9 @@ export function UserInviteModalContent({
           auto_groups: groupIds,
           is_service_user: false,
         })
-        .then(() => {
+        .then((user) => {
           mutate("/users?service_user=false");
-          onSuccess && onSuccess();
+          onSuccess && onSuccess(user);
         }),
       loadingMessage: "Sending invite...",
     });

@@ -13,6 +13,7 @@ export interface User {
   pending_approval?: boolean;
   last_login?: Date;
   permissions: Permissions;
+  password?: string;
 }
 
 export enum Role {
