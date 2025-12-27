@@ -139,6 +139,20 @@ export default function UserNameCell({ user }: Readonly<Props>) {
             {icon}
           </div>
         )}
+        {userIdp && status !== "invited" && status !== "blocked" && (
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <div className="w-5 h-5 absolute -right-1 -bottom-1 bg-nb-gray-930 rounded-full flex items-center justify-center border-2 border-nb-gray-950">
+                  {idpIcons[userIdp.type]}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={5}>
+                <span className="text-xs">{userIdp.name}</span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
       <div className={"flex flex-col justify-center"}>
         <span className={cn("text-base font-medium flex items-center gap-3")}>
@@ -153,23 +167,7 @@ export default function UserNameCell({ user }: Readonly<Props>) {
             </span>
           )}
         </span>
-        <span className={cn("text-sm text-nb-gray-400 flex items-center gap-2")}>
-          {user.email}
-          {userIdp && (
-            <TooltipProvider>
-              <Tooltip delayDuration={0}>
-                <TooltipTrigger asChild>
-                  <span className="flex items-center">
-                    {idpIcons[userIdp.type]}
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent side="right" sideOffset={5}>
-                  <span className="text-xs">{userIdp.name}</span>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )}
-        </span>
+        <span className={cn("text-sm text-nb-gray-400")}>{user.email}</span>
       </div>
     </div>
   );
