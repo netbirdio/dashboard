@@ -143,7 +143,7 @@ export default function UserNameCell({ user }: Readonly<Props>) {
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>
-                <div className="w-5 h-5 absolute -right-1 -bottom-1 bg-nb-gray-930 rounded-full flex items-center justify-center border-2 border-nb-gray-950">
+                <div className="w-5 h-5 absolute -right-1 -bottom-1 bg-nb-gray-930 rounded-full flex items-center justify-center border-2 border-nb-gray-950 text-nb-gray-50">
                   {idpIcons[userIdp.type]}
                 </div>
               </TooltipTrigger>
