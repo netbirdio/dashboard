@@ -282,6 +282,7 @@ export default function IdentityProvidersTab() {
         setSorting={setSorting}
         columns={columns}
         data={providers}
+        onRowClick={(row) => handleEdit(row.original)}
         searchPlaceholder={"Search by name or type..."}
         getStartedCard={
           <GetStartedTest

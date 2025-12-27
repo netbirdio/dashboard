@@ -46,6 +46,7 @@ export interface IdentityProvider {
   name: string;
   issuer: string;
   client_id: string;
+  redirect_url?: string;
 }
 
 export interface IdentityProviderRequest {
