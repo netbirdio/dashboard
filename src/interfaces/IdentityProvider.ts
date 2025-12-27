@@ -30,3 +30,28 @@ export interface IdentityProviderLog {
   level: string;
   timestamp: Date;
 }
+
+export type IdentityProviderType =
+  | "oidc"
+  | "zitadel"
+  | "entra"
+  | "google"
+  | "okta"
+  | "pocketid"
+  | "microsoft";
+
+export interface IdentityProvider {
+  id: string;
+  type: IdentityProviderType;
+  name: string;
+  issuer: string;
+  client_id: string;
+}
+
+export interface IdentityProviderRequest {
+  type: IdentityProviderType;
+  name: string;
+  issuer: string;
+  client_id: string;
+  client_secret: string;
+}
