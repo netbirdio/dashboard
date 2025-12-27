@@ -14,6 +14,7 @@ export interface User {
   last_login?: Date;
   permissions: Permissions;
   password?: string;
+  idp_id?: string;
 }
 
 export enum Role {
