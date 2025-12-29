@@ -28,6 +28,7 @@ import { Group } from "@/interfaces/Group";
 import { Role, User } from "@/interfaces/User";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
+import {isNetBirdHosted} from "@utils/netbird";
 
 type Props = {
   children: React.ReactNode;
@@ -189,10 +190,10 @@ export function UserInviteModalContent({
         }
       >
         <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-          Invite User
+            {isNetBirdHosted() ? "Invite User" : "Create User"}
         </h2>
         <Paragraph className={cn("text-sm text-center max-w-xs")}>
-          Invite a user to your network and set their permissions.
+            {isNetBirdHosted() ? "Invite a user to your network and set their permissions." : "Create a NetBird user account with email and password."}
         </Paragraph>
       </div>
 

@@ -277,7 +277,7 @@ export const InviteUserButton = ({
   if (!show) return null;
 
   return (
-    (isLocalDev() || isNetBirdHosted()) && (
+
       <UserInviteModal groups={groups}>
         <Button
           variant={"primary"}
@@ -285,9 +285,8 @@ export const InviteUserButton = ({
           disabled={!permission.users.create}
         >
           <MailPlus size={16} />
-          Invite User
+            {isNetBirdHosted() ? "Invite User" : "Create User"}
         </Button>
       </UserInviteModal>
-    )
   );
 };
