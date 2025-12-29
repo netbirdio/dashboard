@@ -42,8 +42,8 @@ import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { PolicyRuleResource } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
-import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
+import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
 const groupsSearchPredicate = (item: Group, query: string) => {
   const lowerCaseQuery = query.toLowerCase();
@@ -526,7 +526,7 @@ export function PeerGroupSelector({
                               />
                             </div>
 
-                            <div className={"flex items-center gap-5"}>
+                            <div className={"flex items-center gap-4"}>
                               {option?.id && showRoutes && (
                                 <AccessControlGroupCount group_id={option.id} />
                               )}
@@ -535,19 +535,12 @@ export function PeerGroupSelector({
                                 <ResourcesCounter group={option} />
                               )}
 
-                              <div className={"flex gap-3 items-center"}>
+                              <div className={"flex gap-4 items-center"}>
                                 {!users ? (
-                                  <div
-                                    className={
-                                      "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
-                                    }
-                                  >
-                                    <MonitorSmartphoneIcon
-                                      size={14}
-                                      className={"shrink-0"}
-                                    />
-                                    {peerCount} Peer(s)
-                                  </div>
+                                  <PeerCounter
+                                    group={option}
+                                    showResourceCounter={showResourceCounter}
+                                  />
                                 ) : (
                                   <UsersCounter
                                     group={option}
@@ -555,7 +548,6 @@ export function PeerGroupSelector({
                                     selected={isSelected}
                                   />
                                 )}
-
                                 <Checkbox checked={isSelected} />
                               </div>
                             </div>
@@ -671,7 +663,14 @@ const UsersCounter = ({
     users?.filter((user) => user.auto_groups.includes(group.id as string)) ||
     [];
 
-  if (usersOfGroup.length === 0) return null;
+  if (usersOfGroup.length === 0)
+    return (
+      <span
+        className={"group-hover/user-stack:text-nb-gray-200 text-nb-gray-300"}
+      >
+        0 User(s)
+      </span>
+    );
 
   return (
     <HorizontalUsersStack
@@ -683,6 +682,31 @@ const UsersCounter = ({
         "group-hover/command-item:border-nb-gray-910",
       )}
     />
+  );
+};
+
+const PeerCounter = ({
+  group,
+  showResourceCounter,
+}: {
+  group: Group;
+  showResourceCounter?: boolean;
+}) => {
+  const peerCount = group.peers?.length ?? group?.peers_count ?? 0;
+  const resourcesCount = group?.resources_count ?? 0;
+  const hidePeerCounter =
+    showResourceCounter && peerCount === 0 && resourcesCount > 0;
+
+  return (
+    <div
+      className={cn(
+        "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2",
+        hidePeerCounter && "hidden",
+      )}
+    >
+      <MonitorSmartphoneIcon size={14} className={"shrink-0"} />
+      {peerCount} Peer(s)
+    </div>
   );
 };
 

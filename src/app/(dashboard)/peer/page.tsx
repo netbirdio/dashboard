@@ -30,6 +30,7 @@ import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
 import { isEmpty, trim } from "lodash";
 import {
+  ArrowRightIcon,
   Barcode,
   CalendarDays,
   Cpu,
@@ -65,6 +66,7 @@ import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSectio
 import { PeerSSHToggle } from "@/modules/peer/PeerSSHToggle";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
+import Link from "next/link";
 
 export default function PeerPage() {
   const queryParameter = useSearchParams();
@@ -148,7 +150,7 @@ const PeerGeneralInformation = () => {
   );
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
-      initial: peerGroups,
+      initial: peerGroups?.filter((g) => g?.name !== "All"),
       peer,
     });
 
@@ -237,9 +239,21 @@ const PeerGeneralInformation = () => {
             </h1>
             <LoginExpiredBadge loginExpired={peer.login_expired} />
           </div>
-          <div className={"flex items-center gap-8"}>
-            <Paragraph className={"flex items-center"}>{user?.email}</Paragraph>
-          </div>
+          {(user?.id || user?.email) && (
+            <div className={"flex items-center gap-8"}>
+              <Paragraph className={"flex items-center"}>
+                <Link
+                  href={`/team/user?id=${user?.id}`}
+                  className={
+                    "hover:text-nb-gray-200 transition-all flex items-center gap-1"
+                  }
+                >
+                  {user?.email || user?.id}
+                  <ArrowRightIcon size={14} />
+                </Link>
+              </Paragraph>
+            </div>
+          )}
         </div>
         <div className={"flex gap-4"}>
           <Button

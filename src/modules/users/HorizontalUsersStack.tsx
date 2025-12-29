@@ -4,6 +4,7 @@ import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { cn, generateColorFromString } from "@utils/helpers";
 import { orderBy } from "lodash";
 import * as React from "react";
+import { useMemo } from "react";
 import { User } from "@/interfaces/User";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
@@ -12,6 +13,7 @@ type Props = {
   max?: number;
   avatarClassName?: string;
   side?: "left" | "right" | "top" | "bottom";
+  isAllGroup?: boolean;
 };
 
 export const HorizontalUsersStack = ({
@@ -19,8 +21,14 @@ export const HorizontalUsersStack = ({
   max = 3,
   avatarClassName,
   side = "top",
+  isAllGroup = false,
 }: Props) => {
   let usersToDisplay = orderBy(users?.slice(0, max) || [], ["name"]);
+
+  const userCountText = useMemo(() => {
+    if (isAllGroup) return "All Users";
+    return `${users?.length || 0} User(s)`;
+  }, [users, isAllGroup]);
 
   return (
     <FullTooltip
@@ -84,7 +92,7 @@ export const HorizontalUsersStack = ({
             }}
           >
             <UserAvatarCircle
-              name={user.name}
+              name={user?.name || user?.id}
               className={avatarClassName}
               hoverEffect={true}
             />
@@ -97,7 +105,7 @@ export const HorizontalUsersStack = ({
             users.length > 0 && "group-hover/user-stack:text-nb-gray-200 ",
           )}
         >
-          {users?.length || 0} User(s)
+          {userCountText}
         </div>
       </div>
     </FullTooltip>

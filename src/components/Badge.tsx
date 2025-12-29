@@ -32,6 +32,10 @@ const variants = cva("", {
       green: ["bg-green-950 border-green-500 border text-green-400"],
       netbird: ["bg-netbird-950 border-netbird-500 border text-netbird-500"],
     },
+    size: {
+      default: "text-[0.75rem] py-1.5 px-3",
+      xs: "text-[0.6rem] py-[0.3rem] px-2",
+    },
     hover: {
       none: [],
       blue: ["hover:bg-sky-200"],
@@ -42,7 +46,7 @@ const variants = cva("", {
       red: ["hover:bg-red-950/40"],
       gray: ["hover:bg-nb-gray-900"],
       grayer: ["hover:bg-nb-gray-900"],
-      "gray-ghost": ["hover:bg-nb-gray-900"],
+      "gray-ghost": ["hover:bg-nb-gray-800 cursor-pointer"],
       green: ["hover:bg-green-950/50"],
       netbird: ["hover:bg-netbird-950/50"],
     },
@@ -53,6 +57,7 @@ export default function Badge({
   children,
   className,
   variant = "blue",
+  size = "default",
   useHover = false,
   disabled = false,
   ...props
@@ -60,8 +65,8 @@ export default function Badge({
   return (
     <div
       className={cn(
-        "relative z-10 cursor-inherit whitespace-nowrap rounded-md text-[12px] py-1.5 px-3 font-normal flex gap-1.5 items-center justify-center transition-all",
-        variants({ variant, hover: useHover ? variant : "none" }),
+        "relative z-10 cursor-inherit whitespace-nowrap rounded-md font-normal flex gap-1.5 items-center justify-center transition-all",
+        variants({ variant, hover: useHover ? variant : "none", size }),
         disabled && "cursor-not-allowed opacity-50 select-none",
         className,
       )}

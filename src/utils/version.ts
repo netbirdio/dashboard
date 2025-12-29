@@ -84,3 +84,13 @@ export const isNativeSSHSupported = (version: string) => {
   if (version == "development") return true;
   return compareVersions(version, "0.60.0");
 };
+
+/**
+ * Check if NetBird SSH protocol is supported.
+ * Supported starting from NetBird v0.60.8+.
+ * @param version
+ */
+export const isNetbirdSSHProtocolSupported = (version: string) => {
+  if (version == "development") return true;
+  return compareVersions(version, "0.60.8");
+};

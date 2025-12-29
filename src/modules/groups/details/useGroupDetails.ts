@@ -123,7 +123,7 @@ export default function useGroupDetails(groupId: string) {
     isPeerLoading ||
     isLoadingResources;
 
-  return useMemo(() => {
+  const groupDetails = useMemo(() => {
     if (isLoading || !group) return null;
 
     return {
@@ -147,4 +147,9 @@ export default function useGroupDetails(groupId: string) {
     linkedPeers,
     linkedNetworkResources,
   ]);
+
+  return {
+    groupDetails,
+    isLoading,
+  };
 }

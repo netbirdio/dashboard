@@ -10,6 +10,7 @@ import FullTooltip from "@components/FullTooltip";
 import { notify } from "@components/Notification";
 import { IconInfoCircle } from "@tabler/icons-react";
 import {
+  ExternalLinkIcon,
   MonitorIcon,
   MoreVertical,
   TerminalSquare,
@@ -17,11 +18,13 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React from "react";
+import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
+import InlineLink from "@components/InlineLink";
+import { useDialog } from "@/contexts/DialogProvider";
 
 export default function PeerActionCell() {
   const { peer, deletePeer, update, toggleSSH, setSSHInstructionsModal } =
@@ -29,6 +32,14 @@ export default function PeerActionCell() {
   const router = useRouter();
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
+  const { confirm } = useDialog();
+
+  const showSSHButton = useMemo(() => {
+    const isClientSSHEnabled = peer?.local_flags?.server_ssh_allowed;
+    const isDashboardSSHEnabled = peer?.ssh_enabled;
+    if (isDashboardSSHEnabled) return true;
+    return !isClientSSHEnabled;
+  }, [peer]);
 
   const toggleLoginExpiration = async () => {
     const text = peer.login_expiration_enabled ? "disabled" : "enabled";
@@ -47,6 +58,34 @@ export default function PeerActionCell() {
       }),
       loadingMessage: "Updating session expiration...",
     });
+  };
+
+  const disableDashboardSSH = async () => {
+    const choice = await confirm({
+      title: `Disable SSH Access?`,
+      description: (
+        <div>
+          Starting from NetBird v0.60.0, once SSH access is disabled, you cannot
+          re-enable it again from the dashboard. You&apos;ll need to create an
+          explicit access control policy and update your NetBird client to
+          restore SSH functionality.{" "}
+          <InlineLink
+            href={"https://docs.netbird.io/manage/peers/ssh"}
+            target={"_blank"}
+            onClick={(e) => e.stopPropagation()}
+          >
+            Learn more
+            <ExternalLinkIcon size={12} />
+          </InlineLink>
+        </div>
+      ),
+      confirmText: "Disable",
+      cancelText: "Cancel",
+      type: "warning",
+      maxWidthClass: "max-w-xl",
+    });
+    if (!choice) return;
+    toggleSSH(false);
   };
 
   return (
@@ -101,21 +140,23 @@ export default function PeerActionCell() {
             </DropdownMenuItem>
           </FullTooltip>
 
-          <DropdownMenuItem
-            onClick={() =>
-              peer.ssh_enabled
-                ? toggleSSH(false)
-                : setSSHInstructionsModal(true)
-            }
-            disabled={!permission.peers.update}
-          >
-            <div className={"flex gap-3 items-center w-full"}>
-              <TerminalSquare size={14} className={"shrink-0"} />
-              <div className={"flex justify-between items-center w-full"}>
-                {peer.ssh_enabled ? "Disable" : "Enable"} SSH Access
+          {showSSHButton && (
+            <DropdownMenuItem
+              onClick={() =>
+                peer.ssh_enabled
+                  ? disableDashboardSSH()
+                  : setSSHInstructionsModal(true)
+              }
+              disabled={!permission.peers.update}
+            >
+              <div className={"flex gap-3 items-center w-full"}>
+                <TerminalSquare size={14} className={"shrink-0"} />
+                <div className={"flex justify-between items-center w-full"}>
+                  {peer.ssh_enabled ? "Disable" : "Enable"} SSH Access
+                </div>
               </div>
-            </div>
-          </DropdownMenuItem>
+            </DropdownMenuItem>
+          )}
 
           <ExitNodeDropdownButton peer={peer} />
 

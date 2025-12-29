@@ -203,6 +203,14 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "user.create")
+    return (
+      <div className={"inline"}>
+        <Value>{event.meta.username}</Value> <Value>{event.meta.email}</Value>{" "}
+        was created by <Value>{event?.initiator_name || "NetBird"}</Value>
+      </div>
+    );
+
   if (event.activity_code == "user.group.add")
     return (
       <div className={"inline"}>

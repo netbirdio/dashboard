@@ -9,6 +9,7 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import Separator from "@components/Separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import useRedirect from "@hooks/useRedirect";
@@ -16,7 +17,15 @@ import { IconCirclePlus, IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { generateColorFromString } from "@utils/helpers";
 import dayjs from "dayjs";
-import { Ban, GalleryHorizontalEnd, History, Mail, User2 } from "lucide-react";
+import {
+  Ban,
+  GalleryHorizontalEnd,
+  History,
+  KeyRoundIcon,
+  Mail,
+  MonitorSmartphoneIcon,
+  User2,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -33,6 +42,7 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { useGroupIdsToGroups } from "@/modules/groups/useGroupIdsToGroups";
 import UserBlockCell from "@/modules/users/table-cells/UserBlockCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
+import { UserPeersSection } from "@/modules/users/UserPeersSection";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
 
 export default function UserPage() {
@@ -80,6 +90,7 @@ type Props = {
 function UserOverview({ user, initialGroups }: Readonly<Props>) {
   const router = useRouter();
   const userRequest = useApiCall<User>("/users");
+  const isServiceUser = !!user?.is_service_user;
   const { mutate } = useSWRConfig();
   const { loggedInUser, isOwnerOrAdmin, isUser } = useLoggedInUser();
   const isLoggedInUser = loggedInUser ? loggedInUser?.id === user.id : false;
@@ -91,7 +102,6 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
     });
 
   const [role, setRole] = useState(user.role || Role.User);
-
   const { hasChanges, updateRef: updateChangesRef } = useHasChanges([
     role,
     selectedGroups,
@@ -114,12 +124,23 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           `/${user.id}`,
         )
         .then(() => {
-          mutate(`/users?service_user=${user.is_service_user}`);
+          mutate(`/users?service_user=${isServiceUser}`);
           updateChangesRef([role, selectedGroups]);
         }),
       loadingMessage: "Saving changes...",
     });
   };
+
+  const isProfilePage = !!user?.is_current && !isServiceUser;
+  const canViewTokens = permission?.pats?.read;
+  const canViewPeers = permission?.peers?.read;
+
+  const showAccessTokens = (user?.is_current || isServiceUser) && canViewTokens;
+  const showPeers = !isServiceUser && canViewPeers;
+  const showTabs = isProfilePage && showPeers && showAccessTokens;
+  const showSeparator = !showTabs;
+
+  const [tab, setTab] = useState(isServiceUser ? "access-tokens" : "peers");
 
   return (
     <PageContainer>
@@ -132,7 +153,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
             icon={<TeamIcon size={13} />}
           />
 
-          {user.is_service_user ? (
+          {isServiceUser ? (
             <Breadcrumbs.Item
               href={"/team/service-users"}
               label={"Service Users"}
@@ -158,7 +179,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                   "w-10 h-10 rounded-full relative flex items-center justify-center text-white uppercase text-md font-medium bg-nb-gray-900"
                 }
                 style={
-                  user.is_service_user
+                  isServiceUser
                     ? {
                         color: "white",
                       }
@@ -171,13 +192,13 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                       }
                 }
               >
-                {user.is_service_user ? (
+                {isServiceUser ? (
                   <IconSettings2 size={16} />
                 ) : (
                   user?.name?.charAt(0) || user?.id?.charAt(0)
                 )}
               </div>
-              <h1 className={"flex items-center gap-3"}>
+              <h1 className={"flex items-center gap-3"} title={user?.id}>
                 {user.name || user.id}
               </h1>
             </div>
@@ -188,7 +209,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                 variant={"default"}
                 className={"w-full"}
                 onClick={() => {
-                  user.is_service_user
+                  isServiceUser
                     ? router.push("/team/service-users")
                     : router.push("/team/users");
                 }}
@@ -212,7 +233,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
         <div className={"flex gap-10 w-full mt-8 max-w-6xl items-start"}>
           <UserInformationCard user={user} />
           <div className={"flex flex-col gap-8 w-1/2 "}>
-            {!user.is_service_user && isOwnerOrAdmin && (
+            {!isServiceUser && isOwnerOrAdmin && (
               <div>
                 <Label>Auto-assigned groups</Label>
                 <HelpText>
@@ -238,7 +259,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                 <UserRoleSelector
                   value={role}
                   onChange={setRole}
-                  hideOwner={user.is_service_user}
+                  hideOwner={isServiceUser}
                   currentUser={user}
                   disabled={isLoggedInUser || !permission.users.update}
                 />
@@ -248,38 +269,65 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
         </div>
       </div>
 
-      {(user.is_current || user.is_service_user) && permission.pats.read && (
-        <>
-          <Separator />
-          <div className={"px-8 py-6"}>
-            <div className={"max-w-6xl"}>
-              <div className={"flex justify-between items-center"}>
-                <div>
-                  <h2>Access Tokens</h2>
-                  <Paragraph>
-                    Access tokens give access to NetBird API.
-                  </Paragraph>
-                </div>
-                <div className={"inline-flex gap-4 justify-end"}>
+      {showSeparator && <Separator />}
+
+      <Tabs
+        defaultValue={tab}
+        onValueChange={setTab}
+        value={tab}
+        className={"pb-0 mb-0"}
+      >
+        <TabsList justify={"start"} className={"px-8"} hidden={!showTabs}>
+          {showPeers && (
+            <TabsTrigger value={"peers"}>
+              <MonitorSmartphoneIcon size={16} />
+              Peers
+            </TabsTrigger>
+          )}
+          {showAccessTokens && (
+            <TabsTrigger value={"access-tokens"}>
+              <KeyRoundIcon size={16} />
+              Access Tokens
+            </TabsTrigger>
+          )}
+        </TabsList>
+        {showPeers && (
+          <TabsContent value={"peers"} className={"pb-8"}>
+            <UserPeersSection user={user} />
+          </TabsContent>
+        )}
+        {showAccessTokens && (
+          <TabsContent value={"access-tokens"} className={"pb-8"}>
+            <div className={"px-8"}>
+              <div className={"max-w-6xl"}>
+                <div className={"flex justify-between items-center"}>
                   <div>
-                    <CreateAccessTokenModal user={user}>
-                      <Button
-                        variant={"primary"}
-                        data-cy={"access-token-open-modal"}
-                        disabled={!permission.pats.create}
-                      >
-                        <IconCirclePlus size={16} />
-                        Create Access Token
-                      </Button>
-                    </CreateAccessTokenModal>
+                    <h2>Access Tokens</h2>
+                    <Paragraph>
+                      Access tokens give access to NetBird API.
+                    </Paragraph>
+                  </div>
+                  <div className={"inline-flex gap-4 justify-end"}>
+                    <div>
+                      <CreateAccessTokenModal user={user}>
+                        <Button
+                          variant={"primary"}
+                          data-cy={"access-token-open-modal"}
+                          disabled={!permission.pats.create}
+                        >
+                          <IconCirclePlus size={16} />
+                          Create Access Token
+                        </Button>
+                      </CreateAccessTokenModal>
+                    </div>
                   </div>
                 </div>
+                <AccessTokensTable user={user} />
               </div>
-              <AccessTokensTable user={user} />
             </div>
-          </div>
-        </>
-      )}
+          </TabsContent>
+        )}
+      </Tabs>
     </PageContainer>
   );
 }

@@ -100,11 +100,15 @@ const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
   },
 ];
 
+type Props = {
+  resources?: NetworkResourceWithNetwork[];
+  isLoading?: boolean;
+};
+
 export const GroupResourcesSection = ({
   resources,
-}: {
-  resources?: NetworkResourceWithNetwork[];
-}) => {
+  isLoading = true,
+}: Props) => {
   const [sorting, setSorting] = useState<SortingState>([]);
   const { permission } = usePermissions();
   const router = useRouter();
@@ -118,6 +122,7 @@ export const GroupResourcesSection = ({
         sorting={sorting}
         setSorting={setSorting}
         minimal={true}
+        isLoading={isLoading}
         showSearchAndFilters={true}
         renderRow={(row, children) => (
           <NetworkProvider

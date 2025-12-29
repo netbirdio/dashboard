@@ -2,7 +2,7 @@ import Badge from "@components/Badge";
 import { cn } from "@utils/helpers";
 import React, { useEffect, useMemo } from "react";
 import LongArrowLeftIcon from "@/assets/icons/LongArrowLeftIcon";
-import { PolicyRuleResource } from "@/interfaces/Policy";
+import { PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 
 type Props = {
   disabled?: boolean;
@@ -10,6 +10,7 @@ type Props = {
   onChange: (value: Direction) => void;
   className?: string;
   destinationResource?: PolicyRuleResource;
+  protocol?: Protocol;
 };
 
 export type Direction = "bi" | "in" | "out";
@@ -20,8 +21,10 @@ export default function PolicyDirection({
   onChange,
   className,
   destinationResource,
+  protocol,
 }: Readonly<Props>) {
   const toggleDirection = () => {
+    if (protocol === "netbird-ssh") return;
     if (value == "bi") {
       onChange("in");
     } else {
@@ -30,9 +33,13 @@ export default function PolicyDirection({
   };
 
   useEffect(() => {
+    if (protocol === "netbird-ssh") {
+      onChange("in");
+      return;
+    }
     if (disabled) onChange("bi");
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [disabled]);
+  }, [disabled, protocol]);
 
   const isNetworkResource =
     !!destinationResource && destinationResource?.type !== "peer";
@@ -67,7 +74,8 @@ export default function PolicyDirection({
     <button
       className={cn(
         "flex flex-col gap-2 mt-[23px] cursor-pointer select-none",
-        disabled && "opacity-50 pointer-events-none",
+        (disabled || protocol === "netbird-ssh") &&
+          "opacity-50 pointer-events-none",
         "hover:opacity-80 transition-all",
         className,
       )}

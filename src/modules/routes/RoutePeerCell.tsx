@@ -1,6 +1,6 @@
 import DescriptionWithTooltip from "@components/ui/DescriptionWithTooltip";
 import GroupBadge from "@components/ui/GroupBadge";
-import PeerBadge from "@components/ui/PeerBadge";
+import PeerCountBadge from "@components/ui/PeerCountBadge";
 import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
@@ -44,9 +44,13 @@ export default function RoutePeerCell({ route }: Props) {
 
       {group && (
         <>
-          <GroupBadge group={group} />
+          <GroupBadge
+            group={group}
+            redirectToGroupPage={true}
+            redirectGroupTab={"peers"}
+          />
           <ArrowRightIcon size={14} className={"shrink-0"} />
-          <PeerBadge> {group.peers_count} Peer(s)</PeerBadge>
+          <PeerCountBadge group={group} />
         </>
       )}
     </div>

@@ -4,7 +4,6 @@ import { notify } from "@components/Notification";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { IconCircleX } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
-import { cn } from "@utils/helpers";
 import { Loader2Icon } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Peer } from "@/interfaces/Peer";
@@ -20,6 +19,8 @@ import {
   NetBirdStatus,
   useNetBirdClient,
 } from "@/modules/remote-access/useNetBirdClient";
+import { cn } from "@utils/helpers";
+import { isNetbirdSSHProtocolSupported } from "@utils/version";
 
 export default function RDPPage() {
   const { peerId } = useRDPQueryParams();
@@ -84,7 +85,12 @@ function RDPSession({ peer }: Props) {
       try {
         setCredentials(rdpCredentials);
         setIsNetBirdConnecting(true);
-        await client.connectTemporary(peer.id, [`tcp/${rdpCredentials.port}`]);
+        const protocol = isNetbirdSSHProtocolSupported(peer.version)
+          ? "netbird-ssh"
+          : "tcp";
+        await client.connectTemporary(peer.id, [
+          `${protocol}/${rdpCredentials.port}`,
+        ]);
         setIsNetBirdConnecting(false);
       } catch (error) {
         sendErrorNotification(
