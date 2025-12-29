@@ -58,6 +58,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
 
   const handleCopyAndClose = () => {
     copyToClipboard(copyMessage).then(() => {
+      setCreatedUser(undefined);
       setSuccessModal(false);
       setOpen(false);
     });
@@ -73,6 +74,9 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
       <Modal
         open={successModal}
         onOpenChange={(open) => {
+          if (!open) {
+            setCreatedUser(undefined);
+          }
           setSuccessModal(open);
           setOpen(open);
         }}
