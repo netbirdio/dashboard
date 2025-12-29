@@ -78,7 +78,7 @@ export const PeerSSHToggle = () => {
       title: `Disable SSH Access?`,
       description: (
         <div>
-          Starting from NetBird v0.60.0, once SSH access is disabled, you cannot
+          Starting from NetBird v0.61.0, once SSH access is disabled, you cannot
           re-enable it again from the dashboard. You&apos;ll need to create an
           explicit access control policy and update your NetBird client to
           restore SSH functionality.{" "}
@@ -193,7 +193,7 @@ export const PeerSSHToggle = () => {
           }
           className="my-3"
         >
-          Your SSH server is enabled, but starting from NetBird v0.60.0, SSH
+          Your SSH server is enabled, but starting from NetBird v0.61.0, SSH
           requires an explicit access control policy. Please create an SSH
           access control policy in order to allow SSH connections.
         </Callout>

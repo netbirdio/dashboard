@@ -20,7 +20,7 @@ export const PeerSSHPolicyInfo = ({ peer, className }: Props) => {
       <>
         <Callout className={cn("max-w-xl", className)} variant={"warning"}>
           <span>
-            Starting from NetBird v0.60.0, SSH requires an explicit access
+            Starting from NetBird v0.61.0, SSH requires an explicit access
             control policy to allow SSH connections to this machine.{" "}
             <InlineButtonLink onClick={() => setPolicyModal(true)}>
               Create SSH Policy

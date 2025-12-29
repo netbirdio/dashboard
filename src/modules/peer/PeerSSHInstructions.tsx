@@ -99,7 +99,7 @@ export const PeerSSHInstructions = ({
 
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Starting from NetBird v0.60.0, SSH requires an explicit access
+                Starting from NetBird v0.61.0, SSH requires an explicit access
                 control policy to allow SSH connections to this machine.
               </p>
               <div className={"mt-2"}>
