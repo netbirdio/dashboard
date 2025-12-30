@@ -23,7 +23,11 @@ export const ResourceGroupCell = ({ resource }: Props) => {
         openResourceGroupModal(network, resource);
       }}
     >
-      <MultipleGroups groups={resource?.groups as Group[]} />
+      <MultipleGroups
+        groups={resource?.groups as Group[]}
+        showResources={true}
+        redirectGroupTab={"resources"}
+      />
       {permission.networks.update && <TransparentEditIconButton />}
     </button>
   );

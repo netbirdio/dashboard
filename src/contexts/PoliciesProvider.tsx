@@ -1,7 +1,9 @@
+import { Modal } from "@components/modal/Modal";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
-import React from "react";
+import React, { useState } from "react";
 import { Policy } from "@/interfaces/Policy";
+import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
 
 type Props = {
   children: React.ReactNode;
@@ -16,11 +18,15 @@ const PoliciesContext = React.createContext(
       message?: string,
     ) => void;
     createPolicy: (policy: Policy) => Promise<Policy>;
+    openEditPolicyModal: (policy: Policy, tab?: string) => void;
   },
 );
 
 export default function PoliciesProvider({ children }: Props) {
   const request = useApiCall<Policy>("/policies");
+  const [policyModal, setPolicyModal] = useState(false);
+  const [currentPolicy, setCurrentPolicy] = useState<Policy>();
+  const [initialPolicyTab, setInitialPolicyTab] = useState("");
 
   const createPolicy = async (policy: Policy) => request.post(policy);
 
@@ -56,9 +62,34 @@ export default function PoliciesProvider({ children }: Props) {
     });
   };
 
+  const openEditPolicyModal = (policy: Policy, tab?: string) => {
+    setCurrentPolicy(policy);
+    tab && setInitialPolicyTab(tab);
+    setPolicyModal(true);
+  };
+
   return (
-    <PoliciesContext.Provider value={{ updatePolicy, createPolicy }}>
+    <PoliciesContext.Provider
+      value={{ updatePolicy, createPolicy, openEditPolicyModal }}
+    >
       {children}
+      <Modal
+        open={policyModal}
+        onOpenChange={(state) => {
+          setPolicyModal(state);
+          setCurrentPolicy(undefined);
+        }}
+      >
+        <AccessControlModalContent
+          key={policyModal ? "1" : "0"}
+          policy={currentPolicy}
+          initialTab={initialPolicyTab}
+          onSuccess={async (p) => {
+            setPolicyModal(false);
+            setCurrentPolicy(undefined);
+          }}
+        />
+      </Modal>
     </PoliciesContext.Provider>
   );
 }

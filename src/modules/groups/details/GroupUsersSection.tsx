@@ -113,7 +113,12 @@ export const GroupUsersTableColumns: ColumnDef<User>[] = [
   },
 ];
 
-export const GroupUsersSection = ({ users }: { users?: User[] }) => {
+type Props = {
+  users?: User[];
+  isLoading?: boolean;
+};
+
+export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
   const { group, addUsersToGroup, removeUsersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
@@ -122,7 +127,7 @@ export const GroupUsersSection = ({ users }: { users?: User[] }) => {
   return (
     <GroupDetailsTableContainer>
       <UsersTable
-        isLoading={false}
+        isLoading={isLoading}
         columns={GroupUsersTableColumns}
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}

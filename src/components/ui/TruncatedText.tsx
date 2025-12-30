@@ -1,4 +1,4 @@
-import * as HoverCard from "@radix-ui/react-hover-card";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@components/Tooltip";
 import { cn } from "@utils/helpers";
 import React, { useMemo, useState } from "react";
 
@@ -55,38 +55,28 @@ export default function TruncatedText({
   }
 
   return (
-    <HoverCard.Root
-      openDelay={650}
-      closeDelay={100}
-      open={open}
-      onOpenChange={setOpen}
-    >
-      <HoverCard.Trigger asChild={true}>
+    <Tooltip delayDuration={650} open={open} onOpenChange={setOpen}>
+      <TooltipTrigger asChild={true}>
         <div className="w-full min-w-0 inline-block" style={containerStyle}>
           <div ref={contentRef} className={cn(className, "truncate")}>
             {text}
           </div>
         </div>
-      </HoverCard.Trigger>
-      <HoverCard.Portal>
-        <HoverCard.Content
-          onMouseLeave={() => setOpen(false)}
-          onMouseEnter={() => setOpen(false)}
-          alignOffset={20}
-          sideOffset={4}
-          className={cn(
-            "z-[9999] overflow-hidden rounded-md border border-neutral-200 bg-white text-sm text-neutral-950 shadow-md animate-in fade-in-0 zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-nb-gray-930 dark:bg-nb-gray-940 dark:text-neutral-50",
-            className,
-            "px-3 py-1.5",
-          )}
-        >
-          <div className="text-neutral-300 flex flex-col gap-1">
-            <div className="max-w-xs break-all whitespace-normal text-xs">
-              {text}
-            </div>
+      </TooltipTrigger>
+      <TooltipContent
+        alignOffset={20}
+        sideOffset={4}
+        onClick={(e) => {
+          e.stopPropagation();
+        }}
+        className={cn(className, "px-3 py-1.5")}
+      >
+        <div className="text-neutral-300 flex flex-col gap-1">
+          <div className="max-w-xs break-all whitespace-normal text-xs">
+            {text}
           </div>
-        </HoverCard.Content>
-      </HoverCard.Portal>
-    </HoverCard.Root>
+        </div>
+      </TooltipContent>
+    </Tooltip>
   );
 }

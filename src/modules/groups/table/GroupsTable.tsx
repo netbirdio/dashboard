@@ -3,7 +3,6 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
-import { removeAllSpaces } from "@utils/helpers";
 import { Layers3Icon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React from "react";
@@ -20,6 +19,7 @@ import GroupsActionCell from "@/modules/groups/table/GroupsActionCell";
 import GroupsCountCell from "@/modules/groups/table/GroupsCountCell";
 import GroupsNameCell from "@/modules/groups/table/GroupsNameCell";
 import useGroupsUsage, { GroupUsage } from "@/modules/groups/useGroupsUsage";
+import { removeAllSpaces } from "@utils/helpers";
 
 export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
   {

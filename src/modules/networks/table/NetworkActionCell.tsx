@@ -16,7 +16,7 @@ import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 type Props = {
   network: Network;
 };
-export default function NetworkActionCell({ network }: Props) {
+export default function NetworkActionCell({ network }: Readonly<Props>) {
   const { permission } = usePermissions();
   const { deleteNetwork, openEditNetworkModal } = useNetworksContext();
   const router = useRouter();

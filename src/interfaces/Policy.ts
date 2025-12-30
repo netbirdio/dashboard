@@ -25,7 +25,10 @@ export interface PolicyRule {
   port_ranges?: PortRange[];
   sourceResource?: PolicyRuleResource;
   destinationResource?: PolicyRuleResource;
+  authorized_groups?: AuthorizedGroups;
 }
+
+export type AuthorizedGroups = Record<string, string[]>; // group_id, local machine usernames
 
 export interface PortRange {
   start: number;
@@ -37,4 +40,4 @@ export interface PolicyRuleResource {
   type?: "domain" | "host" | "subnet" | "peer";
 }
 
-export type Protocol = "all" | "tcp" | "udp" | "icmp";
+export type Protocol = "all" | "tcp" | "udp" | "icmp" | "netbird-ssh";
