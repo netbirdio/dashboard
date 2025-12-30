@@ -9,7 +9,6 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import Paragraph from "@components/Paragraph";
-import { SegmentedTabs } from "@components/SegmentedTabs";
 import Separator from "@components/Separator";
 import Steps from "@components/Steps";
 import { Lightbox } from "@components/ui/Lightbox";
@@ -18,11 +17,11 @@ import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle, TerminalSquare } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
-import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import sshImage from "@/assets/ssh/ssh-client.png";
+import { SegmentedTabs } from "@components/SegmentedTabs";
+import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { Peer } from "@/interfaces/Peer";
 import { PeerSSHPolicyModal } from "@/modules/peer/PeerSSHPolicyModal";
-import { Terminal } from "@/modules/remote-access/ssh/Terminal";
 
 type Props = {
   open?: boolean;
@@ -100,9 +99,8 @@ export const PeerSSHInstructions = ({
 
             <Steps.Step step={2}>
               <p className={"font-normal"}>
-                Starting from NetBird v0.60.0, SSH requires an explicit access
-                control policy that allows <Mark>TCP</Mark> traffic on port{" "}
-                <Mark>22</Mark>
+                Starting from NetBird v0.61.0, SSH requires an explicit access
+                control policy to allow SSH connections to this machine.
               </p>
               <div className={"mt-2"}>
                 <Button
@@ -142,7 +140,7 @@ export const PeerSSHInstructions = ({
             </ModalClose>
 
             <Button variant={"primary"} onClick={onSuccess}>
-              Confirm & Enable
+              Finish Setup
             </Button>
           </div>
         </ModalFooter>

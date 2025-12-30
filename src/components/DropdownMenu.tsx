@@ -81,7 +81,7 @@ const menuItemVariants = cva("", {
   variants: {
     variant: {
       default:
-        "dark:focus:bg-nb-gray-900 dark:focus:text-gray-50 dark:text-gray-400 dark:data-[state=open]:bg-nb-gray-900 dark:data-[state=open]:text-gray-50",
+        "dark:focus:bg-nb-gray-900 dark:focus:text-gray-50 dark:text-nb-gray-300 dark:data-[state=open]:bg-nb-gray-900 dark:data-[state=open]:text-gray-50",
       danger:
         "dark:focus:bg-red-900/20 dark:focus:text-red-500 dark:text-red-500",
     },

@@ -27,8 +27,13 @@ export default function PeerGroupCell() {
 
   const groupIDs = useMemo(() => {
     return peerGroups
-      ?.map((group) => group.id)
-      .filter((id) => id !== undefined) as string[];
+      ?.map((group) => {
+        if (group?.name === "All") return;
+        return group.id;
+      })
+      .filter((id) => {
+        return id !== undefined;
+      }) as string[];
   }, [peerGroups]);
 
   return (
@@ -37,6 +42,7 @@ export default function PeerGroupCell() {
       description={"Use groups to control what this peer can access"}
       groups={groupIDs || []}
       hideAllGroup={true}
+      showAddGroupButton={true}
       disabled={!permission.groups.update}
       onSave={handleSave}
       modal={modal}

@@ -7,17 +7,21 @@ const SetupKeysTable = lazy(
   () => import("@/modules/setup-keys/SetupKeysTable"),
 );
 
+type Props = {
+  setupKeys?: SetupKey[];
+  isLoading?: boolean;
+};
+
 export const GroupSetupKeysSection = ({
   setupKeys,
-}: {
-  setupKeys?: SetupKey[];
-}) => {
+  isLoading = true,
+}: Props) => {
   const { group } = useGroupContext();
 
   return (
     <GroupDetailsTableContainer>
       <SetupKeysTable
-        isLoading={false}
+        isLoading={isLoading}
         setupKeys={setupKeys}
         isGroupPage={true}
         groups={[group]}

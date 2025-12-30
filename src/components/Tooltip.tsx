@@ -22,14 +22,14 @@ export const tooltipVariants = cva(
     variants: {
       variant: {
         default: [
-          "bg-white dark:bg-nb-gray-940",
-          "text-neutral-950 dark:text-neutral-50",
-          "border-neutral-200 dark:border-nb-gray-930",
+          "bg-nb-gray-940",
+          "text-neutral-50",
+          "border-neutral-200 border-nb-gray-930",
         ],
         lighter: [
-          "bg-white dark:bg-nb-gray-920",
-          "text-neutral-950 dark:text-neutral-50",
-          "border-neutral-200 dark:border-nb-gray-900",
+          "bg-nb-gray-920",
+          "text-neutral-50",
+          "border-neutral-200 border-nb-gray-900",
         ],
       },
     },

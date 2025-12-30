@@ -145,7 +145,7 @@ export default function NameserverGroupTable({
         wrapperProps={isGroupPage ? { className: "mt-6 w-full" } : undefined}
         paginationPaddingClassName={isGroupPage ? "px-0 pt-8" : undefined}
         tableClassName={isGroupPage ? "mt-0" : undefined}
-        inset={!isGroupPage}
+        inset={false}
         minimal={isGroupPage}
         showSearchAndFilters={isGroupPage}
         keepStateInLocalStorage={!isGroupPage}

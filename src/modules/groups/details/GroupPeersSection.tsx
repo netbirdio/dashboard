@@ -103,7 +103,12 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
   },
 ];
 
-export const GroupPeersSection = ({ peers }: { peers?: Peer[] }) => {
+type Props = {
+  peers?: Peer[];
+  isLoading?: boolean;
+};
+
+export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
   const { group, addPeersToGroup, removePeersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
@@ -112,7 +117,7 @@ export const GroupPeersSection = ({ peers }: { peers?: Peer[] }) => {
   return (
     <GroupDetailsTableContainer>
       <GroupPeersTable
-        isLoading={false}
+        isLoading={isLoading}
         peers={peers}
         columns={GroupPeersTableColumns}
         selectedRows={selectedRows}

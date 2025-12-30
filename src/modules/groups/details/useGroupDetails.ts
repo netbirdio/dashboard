@@ -121,9 +121,10 @@ export default function useGroupDetails(groupId: string) {
     isSetupKeysLoading ||
     isUsersLoading ||
     isPeerLoading ||
-    isLoadingResources;
+    isLoadingResources ||
+    isNetworksLoading;
 
-  return useMemo(() => {
+  const groupDetails = useMemo(() => {
     if (isLoading || !group) return null;
 
     return {
@@ -147,4 +148,9 @@ export default function useGroupDetails(groupId: string) {
     linkedPeers,
     linkedNetworkResources,
   ]);
+
+  return {
+    groupDetails,
+    isLoading,
+  };
 }

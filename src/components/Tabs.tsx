@@ -39,38 +39,43 @@ const Tabs = React.forwardRef<
 Tabs.displayName = TabsPrimitive.Root.displayName;
 
 type TabListProps = {
+  hidden?: boolean;
   justify?: "start" | "end" | "center" | "between";
 };
 
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
   React.ComponentPropsWithoutRef<typeof TabsPrimitive.List> & TabListProps
->(({ className, justify = "center", ...props }, ref) => (
-  <TabsPrimitive.List
-    ref={ref}
-    className={cn(
-      "flex flex-nowrap text-neutral-500 dark:text-nb-gray-400 w-full relative",
-      className,
-      justify == "center" && "justify-center justify-items-end",
-      justify == "start" && "justify-start",
-      justify == "end" && "justify-end",
-      justify == "between" && "justify-between",
-    )}
-    {...props}
-  >
-    <span
-      className={
-        "absolute left-0 dark:bg-nb-gray-900 bg-nb-gray-100 w-full h-[1px] bottom-0 z-0"
-      }
-    />
-    <ScrollArea>
-      <div className={"relative z-[1] flex flex-nowrap w-full "}>
-        {props.children}
-      </div>
-      <ScrollBar orientation="horizontal" />
-    </ScrollArea>
-  </TabsPrimitive.List>
-));
+>(({ className, justify = "center", hidden = false, ...props }, ref) => {
+  return (
+    !hidden && (
+      <TabsPrimitive.List
+        ref={ref}
+        className={cn(
+          "flex flex-nowrap text-neutral-500 dark:text-nb-gray-400 w-full relative",
+          className,
+          justify == "center" && "justify-center justify-items-end",
+          justify == "start" && "justify-start",
+          justify == "end" && "justify-end",
+          justify == "between" && "justify-between",
+        )}
+        {...props}
+      >
+        <span
+          className={
+            "absolute left-0 dark:bg-nb-gray-900 bg-nb-gray-100 w-full h-[1px] bottom-0 z-0"
+          }
+        />
+        <ScrollArea>
+          <div className={"relative z-[1] flex flex-nowrap w-full "}>
+            {props.children}
+          </div>
+          <ScrollBar orientation="horizontal" />
+        </ScrollArea>
+      </TabsPrimitive.List>
+    )
+  );
+});
 TabsList.displayName = TabsPrimitive.List.displayName;
 
 const TabsTrigger = React.forwardRef<

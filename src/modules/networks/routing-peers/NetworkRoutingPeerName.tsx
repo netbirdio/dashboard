@@ -1,5 +1,5 @@
 import GroupBadge from "@components/ui/GroupBadge";
-import PeerBadge from "@components/ui/PeerBadge";
+import PeerCountBadge from "@components/ui/PeerCountBadge";
 import useFetchApi from "@utils/api";
 import { ArrowRightIcon } from "lucide-react";
 import * as React from "react";
@@ -45,9 +45,13 @@ export const NetworkRoutingPeerName = ({ router }: Props) => {
   if (routingPeerGroup) {
     return (
       <div className={"flex items-center gap-2 max-w-[295px] min-w-[295px]"}>
-        <GroupBadge group={routingPeerGroup} />
+        <GroupBadge
+          group={routingPeerGroup}
+          redirectToGroupPage={true}
+          redirectGroupTab={"peers"}
+        />
         <ArrowRightIcon size={14} className={"shrink-0"} />
-        <PeerBadge> {routingPeerGroup.peers_count} Peer(s)</PeerBadge>
+        <PeerCountBadge group={routingPeerGroup} />
       </div>
     );
   }

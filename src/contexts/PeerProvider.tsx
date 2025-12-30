@@ -139,7 +139,10 @@ export default function PeerProvider({
           open={sshInstructionsModal}
           onOpenChange={setSSHInstructionsModal}
           peer={peer}
-          onSuccess={() => toggleSSH(true)}
+          onSuccess={() => {
+            mutate(`/peers/${peer.id}`);
+            setSSHInstructionsModal(false);
+          }}
         />
       )}
 

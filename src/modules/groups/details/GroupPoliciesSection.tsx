@@ -6,13 +6,17 @@ import { GroupDetailsTableContainer } from "@/modules/groups/details/GroupDetail
 const AccessControlTable = lazy(
   () => import("@/modules/access-control/table/AccessControlTable"),
 );
+type Props = {
+  policies?: Policy[];
+  isLoading?: boolean;
+};
 
-export const GroupPoliciesSection = ({ policies }: { policies?: Policy[] }) => {
+export const GroupPoliciesSection = ({ policies, isLoading = true }: Props) => {
   return (
     <GroupDetailsTableContainer>
       <PoliciesProvider>
         <AccessControlTable
-          isLoading={false}
+          isLoading={isLoading}
           policies={policies}
           isGroupPage={true}
         />

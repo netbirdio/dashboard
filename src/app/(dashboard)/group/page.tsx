@@ -154,7 +154,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
   };
 
   const [tab, setTab] = useState(getInitialTab());
-  const groupDetails = useGroupDetails(group?.id || "");
+  const { groupDetails, isLoading } = useGroupDetails(group?.id || "");
 
   const peersCount = groupDetails?.peers_count || 0;
   const usersCount = groupDetails?.users?.length || 0;
@@ -266,31 +266,49 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
       </TabsList>
 
       <TabsContent value={"users"} className={"pb-8"}>
-        <GroupUsersSection users={groupDetails?.users} />
+        <GroupUsersSection users={groupDetails?.users} isLoading={isLoading} />
       </TabsContent>
 
       <TabsContent value={"peers"} className={"pb-8"}>
-        <GroupPeersSection peers={groupDetails?.peersOfGroup} />
+        <GroupPeersSection
+          peers={groupDetails?.peersOfGroup}
+          isLoading={isLoading}
+        />
       </TabsContent>
 
       <TabsContent value={"policies"} className={"pb-8"}>
-        <GroupPoliciesSection policies={groupDetails?.policies} />
+        <GroupPoliciesSection
+          policies={groupDetails?.policies}
+          isLoading={isLoading}
+        />
       </TabsContent>
 
       <TabsContent value={"resources"} className={"pb-8"}>
-        <GroupResourcesSection resources={groupDetails?.networkResources} />
+        <GroupResourcesSection
+          resources={groupDetails?.networkResources}
+          isLoading={isLoading}
+        />
       </TabsContent>
 
       <TabsContent value={"network-routes"} className={"pb-8"}>
-        <GroupNetworkRoutesSection routes={groupDetails?.routes} />
+        <GroupNetworkRoutesSection
+          routes={groupDetails?.routes}
+          isLoading={isLoading}
+        />
       </TabsContent>
 
       <TabsContent value={"nameservers"} className={"pb-8"}>
-        <GroupNameserversSection nameserverGroups={groupDetails?.nameservers} />
+        <GroupNameserversSection
+          nameserverGroups={groupDetails?.nameservers}
+          isLoading={isLoading}
+        />
       </TabsContent>
 
       <TabsContent value={"setup-keys"} className={"pb-8"}>
-        <GroupSetupKeysSection setupKeys={groupDetails?.setupKeys} />
+        <GroupSetupKeysSection
+          setupKeys={groupDetails?.setupKeys}
+          isLoading={isLoading}
+        />
       </TabsContent>
     </Tabs>
   );

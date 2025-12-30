@@ -15,8 +15,7 @@ export const PeerSSHPolicyModal = ({ open, onOpenChange, peer }: Props) => {
     <Modal open={open} onOpenChange={onOpenChange}>
       <AccessControlModalContent
         key={open ? "1" : "0"}
-        initialPorts={[22]}
-        initialProtocol={"tcp"}
+        initialProtocol={"netbird-ssh"}
         initialName={"SSH Access"}
         initialDestinationResource={
           peer

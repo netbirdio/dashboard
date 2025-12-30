@@ -8,17 +8,21 @@ const NameserverGroupTable = lazy(
   () => import("@/modules/dns-nameservers/table/NameserverGroupTable"),
 );
 
+type Props = {
+  nameserverGroups?: NameserverGroup[];
+  isLoading?: boolean;
+};
+
 export const GroupNameserversSection = ({
   nameserverGroups,
-}: {
-  nameserverGroups?: NameserverGroup[];
-}) => {
+  isLoading = true,
+}: Props) => {
   const { group } = useGroupContext();
 
   return (
     <GroupDetailsTableContainer>
       <NameserverGroupTable
-        isLoading={false}
+        isLoading={isLoading}
         nameserverGroups={nameserverGroups}
         isGroupPage={true}
         distributionGroups={[group]}
