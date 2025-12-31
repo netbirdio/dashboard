@@ -35,7 +35,7 @@ export default function InstanceSetupWizard() {
   });
   const [errors, setErrors] = useState<FormErrors>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(false);
   const [countdown, setCountdown] = useState(3);
   const [showPassword, setShowPassword] = useState(false);
 
@@ -109,7 +109,6 @@ export default function InstanceSetupWizard() {
   };
 
   useEffect(() => {
-    return;
     if (!isSuccess) return;
 
     const timer = setInterval(() => {
