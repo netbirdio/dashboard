@@ -4,8 +4,8 @@ import { Ban, Clock, Cog, KeyRound } from "lucide-react";
 import React, { useMemo } from "react";
 import { User } from "@/interfaces/User";
 import {
-  IdentityProvider,
-  IdentityProviderType,
+  SSOIdentityProvider,
+  SSOIdentityProviderType,
 } from "@/interfaces/IdentityProvider";
 import { useAccount } from "@/modules/account/useAccount";
 import {
@@ -69,7 +69,7 @@ const ZitadelIcon = () => (
   </svg>
 );
 
-const idpIcons: Record<IdentityProviderType, React.ReactNode> = {
+const idpIcons: Record<SSOIdentityProviderType, React.ReactNode> = {
   google: <GoogleIcon />,
   microsoft: <MicrosoftIcon />,
   entra: <EntraIcon />,
@@ -86,7 +86,7 @@ export default function UserNameCell({ user }: Readonly<Props>) {
   const account = useAccount();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
 
-  const { data: identityProviders } = useFetchApi<IdentityProvider[]>(
+  const { data: identityProviders } = useFetchApi<SSOIdentityProvider[]>(
     embeddedIdpEnabled ? "/identity-providers" : null,
   );
 

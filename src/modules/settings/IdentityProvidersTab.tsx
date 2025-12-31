@@ -26,8 +26,8 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
-  IdentityProvider,
-  IdentityProviderType,
+  SSOIdentityProvider,
+  SSOIdentityProviderType,
 } from "@/interfaces/IdentityProvider";
 import IdentityProviderModal from "@/modules/settings/IdentityProviderModal";
 import {
@@ -91,7 +91,7 @@ const ZitadelIcon = () => (
   </svg>
 );
 
-export const idpIcons: Record<IdentityProviderType, React.ReactNode> = {
+export const idpIcons: Record<SSOIdentityProviderType, React.ReactNode> = {
   google: <GoogleIcon />,
   microsoft: <MicrosoftIcon />,
   entra: <EntraIcon />,
@@ -101,7 +101,7 @@ export const idpIcons: Record<IdentityProviderType, React.ReactNode> = {
   oidc: <KeyRound size={16} className="text-nb-gray-400" />,
 };
 
-export const idpTypeLabels: Record<IdentityProviderType, string> = {
+export const idpTypeLabels: Record<SSOIdentityProviderType, string> = {
   oidc: "OIDC",
   zitadel: "Zitadel",
   entra: "Microsoft Entra",
@@ -112,14 +112,14 @@ export const idpTypeLabels: Record<IdentityProviderType, string> = {
 };
 
 type ActionCellProps = {
-  provider: IdentityProvider;
-  onEdit: (provider: IdentityProvider) => void;
+  provider: SSOIdentityProvider;
+  onEdit: (provider: SSOIdentityProvider) => void;
 };
 
 function ActionCell({ provider, onEdit }: ActionCellProps) {
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
-  const deleteRequest = useApiCall<IdentityProvider>(
+  const deleteRequest = useApiCall<SSOIdentityProvider>(
     "/identity-providers/" + provider.id,
   );
   const { permission } = usePermissions();
@@ -180,10 +180,10 @@ export default function IdentityProvidersTab() {
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { data: providers, isLoading } =
-    useFetchApi<IdentityProvider[]>("/identity-providers");
+    useFetchApi<SSOIdentityProvider[]>("/identity-providers");
 
   const [modalOpen, setModalOpen] = useState(false);
-  const [editProvider, setEditProvider] = useState<IdentityProvider | null>(
+  const [editProvider, setEditProvider] = useState<SSOIdentityProvider | null>(
     null,
   );
 
@@ -197,7 +197,7 @@ export default function IdentityProvidersTab() {
     ],
   );
 
-  const handleEdit = (provider: IdentityProvider) => {
+  const handleEdit = (provider: SSOIdentityProvider) => {
     setEditProvider(provider);
     setModalOpen(true);
   };
@@ -207,7 +207,7 @@ export default function IdentityProvidersTab() {
     setEditProvider(null);
   };
 
-  const columns: ColumnDef<IdentityProvider>[] = [
+  const columns: ColumnDef<SSOIdentityProvider>[] = [
     {
       accessorKey: "name",
       header: ({ column }) => (

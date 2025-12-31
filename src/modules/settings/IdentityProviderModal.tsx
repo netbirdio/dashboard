@@ -27,15 +27,15 @@ import React, { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import {
-  IdentityProvider,
-  IdentityProviderRequest,
-  IdentityProviderType,
+  SSOIdentityProvider,
+  SSOIdentityProviderRequest,
+  SSOIdentityProviderType,
 } from "@/interfaces/IdentityProvider";
 
 type Props = {
   open: boolean;
   onClose: () => void;
-  provider?: IdentityProvider | null;
+  provider?: SSOIdentityProvider | null;
 };
 
 const GoogleIcon = () => (
@@ -92,7 +92,7 @@ const ZitadelIcon = () => (
   </svg>
 );
 
-const idpIcons: Record<IdentityProviderType, React.ReactNode> = {
+const idpIcons: Record<SSOIdentityProviderType, React.ReactNode> = {
   google: <GoogleIcon />,
   microsoft: <MicrosoftIcon />,
   entra: <EntraIcon />,
@@ -102,7 +102,7 @@ const idpIcons: Record<IdentityProviderType, React.ReactNode> = {
   oidc: <KeyRound size={16} className="text-nb-gray-400" />,
 };
 
-const idpTypes: { value: IdentityProviderType; label: string }[] = [
+const idpTypes: { value: SSOIdentityProviderType; label: string }[] = [
   { value: "oidc", label: "OIDC (Generic)" },
   { value: "google", label: "Google" },
   { value: "microsoft", label: "Microsoft" },
@@ -122,19 +122,19 @@ export default function IdentityProviderModal({
   const { mutate } = useSWRConfig();
   const isEditing = !!provider;
 
-  const createRequest = useApiCall<IdentityProvider>("/identity-providers");
-  const updateRequest = useApiCall<IdentityProvider>(
+  const createRequest = useApiCall<SSOIdentityProvider>("/identity-providers");
+  const updateRequest = useApiCall<SSOIdentityProvider>(
     "/identity-providers/" + provider?.id,
   );
 
-  const [type, setType] = useState<IdentityProviderType>(provider?.type ?? "oidc");
+  const [type, setType] = useState<SSOIdentityProviderType>(provider?.type ?? "oidc");
   const [name, setName] = useState(provider?.name ?? "");
   const [issuer, setIssuer] = useState(provider?.issuer ?? "");
   const [clientId, setClientId] = useState(provider?.client_id ?? "");
   const [clientSecret, setClientSecret] = useState("");
 
   const [successModal, setSuccessModal] = useState(false);
-  const [createdProvider, setCreatedProvider] = useState<IdentityProvider>();
+  const [createdProvider, setCreatedProvider] = useState<SSOIdentityProvider>();
   const [, copyToClipboard] = useCopyToClipboard(createdProvider?.redirect_url);
 
 
@@ -162,7 +162,7 @@ export default function IdentityProviderModal({
   };
 
   const submit = () => {
-    const payload: IdentityProviderRequest = {
+    const payload: SSOIdentityProviderRequest = {
       type,
       name: trim(name),
       issuer: trim(issuer),
@@ -219,7 +219,7 @@ export default function IdentityProviderModal({
             <div>
               <Label>Provider Type</Label>
               <HelpText>Select the type of identity provider</HelpText>
-              <Select value={type} onValueChange={(v) => setType(v as IdentityProviderType)}>
+              <Select value={type} onValueChange={(v) => setType(v as SSOIdentityProviderType)}>
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select provider type..." />
                 </SelectTrigger>

@@ -31,7 +31,7 @@ export interface IdentityProviderLog {
   timestamp: Date;
 }
 
-export type IdentityProviderType =
+export type SSOIdentityProviderType =
   | "oidc"
   | "zitadel"
   | "entra"
@@ -40,17 +40,17 @@ export type IdentityProviderType =
   | "pocketid"
   | "microsoft";
 
-export interface IdentityProvider {
+export interface SSOIdentityProvider {
   id: string;
-  type: IdentityProviderType;
+  type: SSOIdentityProviderType;
   name: string;
   issuer: string;
   client_id: string;
   redirect_url?: string;
 }
 
-export interface IdentityProviderRequest {
-  type: IdentityProviderType;
+export interface SSOIdentityProviderRequest {
+  type: SSOIdentityProviderType;
   name: string;
   issuer: string;
   client_id: string;
