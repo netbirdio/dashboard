@@ -137,21 +137,6 @@ export default function IdentityProviderModal({
   const [createdProvider, setCreatedProvider] = useState<IdentityProvider>();
   const [, copyToClipboard] = useCopyToClipboard(createdProvider?.redirect_url);
 
-  useEffect(() => {
-    if (provider) {
-      setType(provider.type);
-      setName(provider.name);
-      setIssuer(provider.issuer);
-      setClientId(provider.client_id);
-      setClientSecret("");
-    } else {
-      setType("oidc");
-      setName("");
-      setIssuer("");
-      setClientId("");
-      setClientSecret("");
-    }
-  }, [provider, open]);
 
   const requiresIssuer = type !== "google" && type !== "microsoft";
 
