@@ -55,7 +55,7 @@ export default function NetBirdSettings() {
                 <ShieldIcon size={14} />
                 Authentication
               </VerticalTabs.Trigger>
-              {account?.settings.embedded_idp_enabled && (
+              {account?.settings?.embedded_idp_enabled && (
                 <VerticalTabs.Trigger value="identity-providers">
                   <FingerprintIcon size={14} />
                   Identity Providers
