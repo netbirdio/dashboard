@@ -127,10 +127,10 @@ export default function IdentityProviderModal({
     "/identity-providers/" + provider?.id,
   );
 
-  const [type, setType] = useState<IdentityProviderType>("oidc");
-  const [name, setName] = useState("");
-  const [issuer, setIssuer] = useState("");
-  const [clientId, setClientId] = useState("");
+  const [type, setType] = useState<IdentityProviderType>(provider?.type ?? "oidc");
+  const [name, setName] = useState(provider?.name ?? "");
+  const [issuer, setIssuer] = useState(provider?.issuer ?? "");
+  const [clientId, setClientId] = useState(provider?.client_id ?? "");
   const [clientSecret, setClientSecret] = useState("");
 
   const [successModal, setSuccessModal] = useState(false);
