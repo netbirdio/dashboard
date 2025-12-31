@@ -13,25 +13,20 @@ import useFetchApi, { useApiCall } from "@utils/api";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import {
   FingerprintIcon,
-  PlusCircle,
+  KeyRound,
   MoreVertical,
   PencilIcon,
+  PlusCircle,
   Trash2,
-  KeyRound,
 } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
-import EntraIcon from "@/assets/icons/EntraIcon";
-import GoogleIcon from "@/assets/icons/GoogleIcon";
-import MicrosoftIcon from "@/assets/icons/MicrosoftIcon";
-import OktaIcon from "@/assets/icons/OktaIcon";
-import PocketIdIcon from "@/assets/icons/PocketIdIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
-import ZitadelIcon from "@/assets/icons/ZitadelIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
+  getSSOIdentityProviderLabelByType,
   SSOIdentityProvider,
   SSOIdentityProviderType,
 } from "@/interfaces/IdentityProvider";
@@ -42,16 +37,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-
-export const idpIcons: Record<SSOIdentityProviderType, React.ReactNode> = {
-  google: <GoogleIcon size={16} />,
-  microsoft: <MicrosoftIcon size={16} />,
-  entra: <EntraIcon size={16} />,
-  okta: <OktaIcon size={16} className="text-nb-gray-300" />,
-  pocketid: <PocketIdIcon size={16} />,
-  zitadel: <ZitadelIcon size={16} />,
-  oidc: <KeyRound size={16} className="text-nb-gray-400" />,
-};
+import { idpIcon } from "@/assets/icons/IdentityProviderIcons";
 
 export const idpTypeLabels: Record<SSOIdentityProviderType, string> = {
   oidc: "OIDC",
@@ -131,8 +117,9 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
 export default function IdentityProvidersTab() {
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
-  const { data: providers, isLoading } =
-    useFetchApi<SSOIdentityProvider[]>("/identity-providers");
+  const { data: providers, isLoading } = useFetchApi<SSOIdentityProvider[]>(
+    "/identity-providers",
+  );
 
   const [modalOpen, setModalOpen] = useState(false);
   const [editProvider, setEditProvider] = useState<SSOIdentityProvider | null>(
@@ -168,7 +155,9 @@ export default function IdentityProvidersTab() {
       sortingFn: "text",
       cell: ({ row }) => (
         <div className="flex items-center gap-3">
-          {idpIcons[row.original.type] || <KeyRound size={16} className="text-nb-gray-400" />}
+          {idpIcon(row.original.type) || (
+            <KeyRound size={16} className="text-nb-gray-400" />
+          )}
           <span className="font-medium">{row.original.name}</span>
         </div>
       ),
@@ -180,7 +169,7 @@ export default function IdentityProvidersTab() {
       ),
       cell: ({ row }) => (
         <span className="text-nb-gray-400">
-          {idpTypeLabels[row.original.type] || row.original.type}
+          {getSSOIdentityProviderLabelByType(row.original.type)}
         </span>
       ),
     },

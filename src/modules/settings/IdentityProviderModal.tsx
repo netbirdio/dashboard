@@ -22,47 +22,32 @@ import {
 import Separator from "@components/Separator";
 import { useApiCall } from "@utils/api";
 import { trim } from "lodash";
-import { CopyIcon, FingerprintIcon, GlobeIcon, IdCard, KeyIcon, KeyRound, PlusCircle, SaveIcon, TagIcon } from "lucide-react";
-import React, { useEffect, useMemo, useState } from "react";
+import {
+  CopyIcon,
+  FingerprintIcon,
+  GlobeIcon,
+  IdCard,
+  KeyIcon,
+  PlusCircle,
+  SaveIcon,
+  TagIcon,
+} from "lucide-react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import {
   SSOIdentityProvider,
+  SSOIdentityProviderOptions,
   SSOIdentityProviderRequest,
   SSOIdentityProviderType,
 } from "@/interfaces/IdentityProvider";
-import EntraIcon from "@/assets/icons/EntraIcon";
-import GoogleIcon from "@/assets/icons/GoogleIcon";
-import MicrosoftIcon from "@/assets/icons/MicrosoftIcon";
-import OktaIcon from "@/assets/icons/OktaIcon";
-import PocketIdIcon from "@/assets/icons/PocketIdIcon";
-import ZitadelIcon from "@/assets/icons/ZitadelIcon";
+import { idpIcon } from "@/assets/icons/IdentityProviderIcons";
 
 type Props = {
   open: boolean;
   onClose: () => void;
   provider?: SSOIdentityProvider | null;
 };
-
-const idpIcons: Record<SSOIdentityProviderType, React.ReactNode> = {
-  google: <GoogleIcon size={16} />,
-  microsoft: <MicrosoftIcon size={16} />,
-  entra: <EntraIcon size={16} />,
-  okta: <OktaIcon size={16} className="text-nb-gray-300" />,
-  pocketid: <PocketIdIcon size={16} />,
-  zitadel: <ZitadelIcon size={16} />,
-  oidc: <KeyRound size={16} className="text-nb-gray-400" />,
-};
-
-const idpTypes: { value: SSOIdentityProviderType; label: string }[] = [
-  { value: "oidc", label: "OIDC (Generic)" },
-  { value: "google", label: "Google" },
-  { value: "microsoft", label: "Microsoft" },
-  { value: "entra", label: "Microsoft Entra" },
-  { value: "okta", label: "Okta" },
-  { value: "zitadel", label: "Zitadel" },
-  { value: "pocketid", label: "PocketID" },
-];
 
 const copyMessage = "Redirect URL was copied to your clipboard!";
 
@@ -79,7 +64,9 @@ export default function IdentityProviderModal({
     "/identity-providers/" + provider?.id,
   );
 
-  const [type, setType] = useState<SSOIdentityProviderType>(provider?.type ?? "oidc");
+  const [type, setType] = useState<SSOIdentityProviderType>(
+    provider?.type ?? "oidc",
+  );
   const [name, setName] = useState(provider?.name ?? "");
   const [issuer, setIssuer] = useState(provider?.issuer ?? "");
   const [clientId, setClientId] = useState(provider?.client_id ?? "");
@@ -88,7 +75,6 @@ export default function IdentityProviderModal({
   const [successModal, setSuccessModal] = useState(false);
   const [createdProvider, setCreatedProvider] = useState<SSOIdentityProvider>();
   const [, copyToClipboard] = useCopyToClipboard(createdProvider?.redirect_url);
-
 
   const requiresIssuer = type !== "google" && type !== "microsoft";
 
@@ -152,11 +138,17 @@ export default function IdentityProviderModal({
 
   return (
     <>
-      <Modal open={open} onOpenChange={(state) => !state && onClose()} key={open ? 1 : 0}>
+      <Modal
+        open={open}
+        onOpenChange={(state) => !state && onClose()}
+        key={open ? 1 : 0}
+      >
         <ModalContent maxWidthClass={"max-w-xl"}>
           <ModalHeader
             icon={<FingerprintIcon size={20} />}
-            title={isEditing ? "Edit Identity Provider" : "Add Identity Provider"}
+            title={
+              isEditing ? "Edit Identity Provider" : "Add Identity Provider"
+            }
             description={
               isEditing
                 ? "Update the identity provider configuration"
@@ -171,15 +163,18 @@ export default function IdentityProviderModal({
             <div>
               <Label>Provider Type</Label>
               <HelpText>Select the type of identity provider</HelpText>
-              <Select value={type} onValueChange={(v) => setType(v as SSOIdentityProviderType)}>
+              <Select
+                value={type}
+                onValueChange={(v) => setType(v as SSOIdentityProviderType)}
+              >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select provider type..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {idpTypes.map((idp) => (
+                  {SSOIdentityProviderOptions.map((idp) => (
                     <SelectItem key={idp.value} value={idp.value}>
                       <div className="flex items-center gap-2">
-                        {idpIcons[idp.value]}
+                        {idpIcon(idp.value)}
                         <span>{idp.label}</span>
                       </div>
                     </SelectItem>
@@ -195,7 +190,9 @@ export default function IdentityProviderModal({
                 placeholder={"e.g., Corporate SSO"}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                customPrefix={<TagIcon size={16} className="text-nb-gray-300" />}
+                customPrefix={
+                  <TagIcon size={16} className="text-nb-gray-300" />
+                }
               />
             </div>
 
@@ -207,7 +204,9 @@ export default function IdentityProviderModal({
                   placeholder={"e.g., https://login.example.com"}
                   value={issuer}
                   onChange={(e) => setIssuer(e.target.value)}
-                  customPrefix={<GlobeIcon size={16} className="text-nb-gray-300" />}
+                  customPrefix={
+                    <GlobeIcon size={16} className="text-nb-gray-300" />
+                  }
                 />
               </div>
             )}
@@ -235,18 +234,19 @@ export default function IdentityProviderModal({
                 placeholder={isEditing ? "••••••••" : "Enter client secret"}
                 value={clientSecret}
                 onChange={(e) => setClientSecret(e.target.value)}
-                customPrefix={<KeyIcon size={16} className="text-nb-gray-300" />}
+                customPrefix={
+                  <KeyIcon size={16} className="text-nb-gray-300" />
+                }
               />
             </div>
 
             {isEditing && provider?.redirect_url && (
               <div>
                 <Label>Redirect URL</Label>
-                <HelpText>Configure this URL in your identity provider</HelpText>
-                <Code
-                  codeToCopy={provider.redirect_url}
-                  message={copyMessage}
-                >
+                <HelpText>
+                  Configure this URL in your identity provider
+                </HelpText>
+                <Code codeToCopy={provider.redirect_url} message={copyMessage}>
                   <Code.Line>{provider.redirect_url}</Code.Line>
                 </Code>
               </div>
@@ -259,7 +259,11 @@ export default function IdentityProviderModal({
                 <Button variant={"secondary"}>Cancel</Button>
               </ModalClose>
 
-              <Button variant={"primary"} onClick={submit} disabled={isDisabled}>
+              <Button
+                variant={"primary"}
+                onClick={submit}
+                disabled={isDisabled}
+              >
                 {isEditing ? (
                   <>
                     <SaveIcon size={16} />
