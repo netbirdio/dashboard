@@ -271,6 +271,7 @@ export default function IdentityProvidersTab() {
 
       <IdentityProviderModal
         open={modalOpen}
+        key={modalOpen ? 1 : 0}
         onClose={handleCloseModal}
         provider={editProvider}
       />
