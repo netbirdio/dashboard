@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@utils/helpers";
-import { CheckCircle2, Eye, EyeOff, Loader2 } from "lucide-react";
+import { CheckCircle2, Loader2 } from "lucide-react";
 import React, { useCallback, useEffect, useState } from "react";
 import { ApiError, SetupRequest } from "@/interfaces/Instance";
 import { submitSetup } from "@/utils/unauthenticatedApi";
@@ -37,7 +37,6 @@ export default function InstanceSetupWizard() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
   const [countdown, setCountdown] = useState(3);
-  const [showPassword, setShowPassword] = useState(false);
 
   const validateForm = useCallback((): boolean => {
     const newErrors: FormErrors = {};
@@ -222,23 +221,14 @@ export default function InstanceSetupWizard() {
           <div>
             <Label htmlFor={"password"}>Password</Label>
             <Input
-              type={showPassword ? "text" : "password"}
+              type={"password"}
               id="password"
               value={formData.password}
               onChange={handleInputChange("password")}
               placeholder="Enter a strong password"
               disabled={isSubmitting}
               error={errors.password}
-              customSuffix={
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  tabIndex={-1}
-                  className={"hover:text-white transition-all"}
-                >
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              }
+              showPasswordToggle={true}
             />
             <HelpText className={"mt-2"}>
               Must be at least 8 characters
