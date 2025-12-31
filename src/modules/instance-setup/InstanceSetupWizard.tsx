@@ -317,15 +317,14 @@ function NetBirdLogo() {
 
 const styles = `
   .nb-container {
-    max-width: 820px;
-    margin: 0 auto;
+    width: 100%;
     padding: 40px 20px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     min-height: 100vh;
-    background-color: #18191d;
+    background-color: #181a1d;
     font-family: ui-sans-serif, system-ui, sans-serif, Apple Color Emoji, Segoe UI Emoji;
     font-size: 14px;
     line-height: 1.5;
