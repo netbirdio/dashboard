@@ -167,6 +167,25 @@ export default function InstanceSetupWizard() {
           {errors.general && <div className="nb-error">{errors.general}</div>}
 
           <div className="nb-form-group">
+            <label className="nb-label" htmlFor="name">
+              Name
+            </label>
+            <input
+              type="text"
+              id="name"
+              value={formData.name}
+              onChange={handleInputChange("name")}
+              placeholder="Your name"
+              className={cn("nb-input", errors.name && "nb-input-error")}
+              disabled={isSubmitting}
+              autoFocus
+            />
+            {errors.name && (
+              <span className="nb-field-error">{errors.name}</span>
+            )}
+          </div>
+
+          <div className="nb-form-group">
             <label className="nb-label" htmlFor="email">
               Email
             </label>
@@ -178,7 +197,6 @@ export default function InstanceSetupWizard() {
               placeholder="admin@example.com"
               className={cn("nb-input", errors.email && "nb-input-error")}
               disabled={isSubmitting}
-              autoFocus
             />
             {errors.email && (
               <span className="nb-field-error">{errors.email}</span>
@@ -211,24 +229,6 @@ export default function InstanceSetupWizard() {
             <span className="nb-hint">Must be at least 8 characters</span>
             {errors.password && (
               <span className="nb-field-error">{errors.password}</span>
-            )}
-          </div>
-
-          <div className="nb-form-group">
-            <label className="nb-label" htmlFor="name">
-              Name
-            </label>
-            <input
-              type="text"
-              id="name"
-              value={formData.name}
-              onChange={handleInputChange("name")}
-              placeholder="Your name"
-              className={cn("nb-input", errors.name && "nb-input-error")}
-              disabled={isSubmitting}
-            />
-            {errors.name && (
-              <span className="nb-field-error">{errors.name}</span>
             )}
           </div>
 
