@@ -91,7 +91,7 @@ const ZitadelIcon = () => (
   </svg>
 );
 
-const idpIcons: Record<IdentityProviderType, React.ReactNode> = {
+export const idpIcons: Record<IdentityProviderType, React.ReactNode> = {
   google: <GoogleIcon />,
   microsoft: <MicrosoftIcon />,
   entra: <EntraIcon />,
@@ -101,7 +101,7 @@ const idpIcons: Record<IdentityProviderType, React.ReactNode> = {
   oidc: <KeyRound size={16} className="text-nb-gray-400" />,
 };
 
-const idpTypeLabels: Record<IdentityProviderType, string> = {
+export const idpTypeLabels: Record<IdentityProviderType, string> = {
   oidc: "OIDC",
   zitadel: "Zitadel",
   entra: "Microsoft Entra",
