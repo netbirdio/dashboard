@@ -254,7 +254,7 @@ export function UserInviteModalContent({
           disabled={isDisabled}
           onClick={sendInvite}
         >
-          Send Invitation
+            {isNetBirdHosted() ? "Send Invitation" : "Create User"}
           <IconMailForward size={16} />
         </Button>
       </ModalFooter>

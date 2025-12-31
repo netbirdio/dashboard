@@ -7,6 +7,7 @@ import {
   IdentityProvider,
   IdentityProviderType,
 } from "@/interfaces/IdentityProvider";
+import { useAccount } from "@/modules/account/useAccount";
 import {
   Tooltip,
   TooltipContent,
@@ -82,8 +83,11 @@ type Props = {
   user: User;
 };
 export default function UserNameCell({ user }: Readonly<Props>) {
+  const account = useAccount();
+  const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
+
   const { data: identityProviders } = useFetchApi<IdentityProvider[]>(
-    "/identity-providers",
+    embeddedIdpEnabled ? "/identity-providers" : null,
   );
 
   const userIdp = useMemo(() => {
