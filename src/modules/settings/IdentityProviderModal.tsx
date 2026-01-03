@@ -292,7 +292,7 @@ export default function IdentityProviderModal({
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
-          maxWidthClass={"max-w-md"}
+          maxWidthClass={"max-w-xl"}
           className={"mt-20"}
           showClose={false}
         >
