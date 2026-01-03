@@ -15,7 +15,7 @@ import {
   Table,
 } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
-import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
 import { ExternalLinkIcon, MailPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
@@ -35,6 +35,7 @@ import UserNameCell from "@/modules/users/table-cells/UserNameCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import UserInviteModal from "@/modules/users/UserInviteModal";
+import { useAccount } from "@/modules/account/useAccount";
 
 export const UsersTableColumns: ColumnDef<User>[] = [
   {
@@ -274,20 +275,27 @@ export const InviteUserButton = ({
   groups,
 }: InviteUserButtonProps) => {
   const { permission } = usePermissions();
+  const account = useAccount();
+
   if (!show) return null;
 
+  // On cloud: always show "Invite User"
+  // On self-hosted: only show when embedded_idp_enabled is true
+  const isCloud = isNetBirdHosted();
+  const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
+
+  if (!isCloud && !embeddedIdpEnabled) return null;
+
   return (
-    (isLocalDev() || isNetBirdHosted()) && (
-      <UserInviteModal groups={groups}>
-        <Button
-          variant={"primary"}
-          className={className}
-          disabled={!permission.users.create}
-        >
-          <MailPlus size={16} />
-          Invite User
-        </Button>
-      </UserInviteModal>
-    )
+    <UserInviteModal groups={groups}>
+      <Button
+        variant={"primary"}
+        className={className}
+        disabled={!permission.users.create}
+      >
+        <MailPlus size={16} />
+        {isCloud ? "Invite User" : "Create User"}
+      </Button>
+    </UserInviteModal>
   );
 };
