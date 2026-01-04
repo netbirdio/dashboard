@@ -38,7 +38,9 @@ export type SSOIdentityProviderType =
   | "google"
   | "okta"
   | "pocketid"
-  | "microsoft";
+  | "microsoft"
+  | "authentik"
+  | "keycloak";
 
 export const SSOIdentityProviderOptions: {
   value: SSOIdentityProviderType;
@@ -51,6 +53,8 @@ export const SSOIdentityProviderOptions: {
   { value: "okta", label: "Okta" },
   { value: "zitadel", label: "Zitadel" },
   { value: "pocketid", label: "PocketID" },
+  { value: "authentik", label: "Authentik" },
+  { value: "keycloak", label: "Keycloak" },
 ];
 
 export const getSSOIdentityProviderLabelByType = (

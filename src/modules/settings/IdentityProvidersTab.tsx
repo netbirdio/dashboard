@@ -47,6 +47,8 @@ export const idpTypeLabels: Record<SSOIdentityProviderType, string> = {
   okta: "Okta",
   pocketid: "PocketID",
   microsoft: "Microsoft",
+  authentik: "Authentik",
+  keycloak: "Keycloak",
 };
 
 type ActionCellProps = {
