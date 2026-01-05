@@ -5,6 +5,7 @@ import { useEffect, useRef } from "react";
 const config = loadConfig();
 
 const RETRY_DELAY = 1250;
+const MAX_RETRIES = 10;
 
 export const useRedirect = (
   url: string,
@@ -15,6 +16,7 @@ export const useRedirect = (
   const currentPath = usePathname();
   const callBackUrls = useRef([config.redirectURI, config.silentRedirectURI]);
   const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const retryCountRef = useRef(0);
 
   useEffect(() => {
     // Parse URL to separate path and query params
@@ -38,13 +40,17 @@ export const useRedirect = (
         router.push(url);
       }
 
-      // Retry if navigation hasn't occurred
-      timeoutRef.current = setTimeout(() => {
-        // Check again if we're still not on the target path
-        if (window.location.pathname !== targetPath) {
-          performRedirect();
-        }
-      }, RETRY_DELAY);
+      retryCountRef.current += 1;
+
+      // Retry if navigation hasn't occurred and we haven't exceeded max retries
+      if (retryCountRef.current < MAX_RETRIES) {
+        timeoutRef.current = setTimeout(() => {
+          // Check again if we're still not on the target path
+          if (window.location.pathname !== targetPath) {
+            performRedirect();
+          }
+        }, RETRY_DELAY);
+      }
     };
 
     performRedirect();
@@ -53,6 +59,7 @@ export const useRedirect = (
       if (timeoutRef.current) {
         clearTimeout(timeoutRef.current);
       }
+      retryCountRef.current = 0;
     };
   }, [replace, router, url, enable, currentPath]);
 };
