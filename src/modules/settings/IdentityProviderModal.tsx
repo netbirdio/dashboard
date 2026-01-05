@@ -43,6 +43,27 @@ import {
 } from "@/interfaces/IdentityProvider";
 import { idpIcon } from "@/assets/icons/IdentityProviderIcons";
 
+const issuerHints: Partial<Record<SSOIdentityProviderType, string>> = {
+  keycloak: "https://keycloak.example.com/realms/{REALM}",
+  authentik: "https://authentik.example.com/application/o/{APP_SLUG}/",
+  zitadel: "https://{INSTANCE}.zitadel.cloud",
+  okta: "https://{ORG}.okta.com",
+  entra: "https://login.microsoftonline.com/{TENANT_ID}/v2.0",
+  pocketid: "https://pocketid.example.com",
+};
+
+const defaultNames: Record<SSOIdentityProviderType, string> = {
+  oidc: "Generic OIDC",
+  google: "Google",
+  microsoft: "Microsoft",
+  entra: "Microsoft Entra",
+  okta: "Okta",
+  zitadel: "Zitadel",
+  pocketid: "PocketID",
+  authentik: "Authentik",
+  keycloak: "Keycloak",
+};
+
 type Props = {
   open: boolean;
   onClose: () => void;
@@ -165,7 +186,13 @@ export default function IdentityProviderModal({
               <HelpText>Select the type of identity provider</HelpText>
               <Select
                 value={type}
-                onValueChange={(v) => setType(v as SSOIdentityProviderType)}
+                onValueChange={(v) => {
+                  const newType = v as SSOIdentityProviderType;
+                  setType(newType);
+                  if (!isEditing) {
+                    setName(defaultNames[newType]);
+                  }
+                }}
               >
                 <SelectTrigger className="w-full">
                   <SelectValue placeholder="Select provider type..." />
@@ -201,7 +228,7 @@ export default function IdentityProviderModal({
                 <Label>Issuer URL</Label>
                 <HelpText>The OIDC issuer URL for this provider</HelpText>
                 <Input
-                  placeholder={"e.g., https://login.example.com"}
+                  placeholder={issuerHints[type] ?? "https://login.example.com"}
                   value={issuer}
                   onChange={(e) => setIssuer(e.target.value)}
                   customPrefix={
@@ -213,9 +240,9 @@ export default function IdentityProviderModal({
 
             <div>
               <Label>Client ID</Label>
-              <HelpText>The OAuth2 client ID</HelpText>
+              <HelpText>The OAuth2 confidential client ID</HelpText>
               <Input
-                placeholder={"e.g., 123456789.apps.googleusercontent.com"}
+                placeholder={"Enter client ID"}
                 value={clientId}
                 onChange={(e) => setClientId(e.target.value)}
                 customPrefix={<IdCard size={16} className="text-nb-gray-300" />}
