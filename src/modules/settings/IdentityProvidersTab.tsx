@@ -97,14 +97,14 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
         <DropdownMenuContent align="end">
           <DropdownMenuItem
             onClick={() => onEdit(provider)}
-            disabled={!permission.settings.update}
+            disabled={!permission.identity_providers.update}
           >
             <PencilIcon size={14} className="mr-2" />
             Edit
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={handleDelete}
-            disabled={!permission.settings.update}
+            disabled={!permission.identity_providers.delete}
             className="text-red-500 focus:text-red-500"
           >
             <Trash2 size={14} className="mr-2" />
@@ -245,7 +245,7 @@ export default function IdentityProvidersTab() {
               <Button
                 variant={"primary"}
                 onClick={() => setModalOpen(true)}
-                disabled={!permission.settings.update}
+                disabled={!permission.identity_providers.create}
               >
                 <PlusCircle size={16} />
                 Add Identity Provider
@@ -260,7 +260,7 @@ export default function IdentityProvidersTab() {
                 variant={"primary"}
                 className={"ml-auto"}
                 onClick={() => setModalOpen(true)}
-                disabled={!permission.settings.update}
+                disabled={!permission.identity_providers.create}
               >
                 <PlusCircle size={16} />
                 Add Identity Provider

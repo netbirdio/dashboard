@@ -35,6 +35,7 @@ import {
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import {
   SSOIdentityProvider,
   SSOIdentityProviderOptions,
@@ -78,6 +79,7 @@ export default function IdentityProviderModal({
   provider,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
+  const { permission } = usePermissions();
   const isEditing = !!provider;
 
   const createRequest = useApiCall<SSOIdentityProvider>("/identity-providers");
@@ -289,7 +291,12 @@ export default function IdentityProviderModal({
               <Button
                 variant={"primary"}
                 onClick={submit}
-                disabled={isDisabled}
+                disabled={
+                  isDisabled ||
+                  (isEditing
+                    ? !permission.identity_providers.update
+                    : !permission.identity_providers.create)
+                }
               >
                 {isEditing ? (
                   <>
