@@ -4,6 +4,8 @@ import { useEffect, useRef } from "react";
 
 const config = loadConfig();
 
+const RETRY_DELAY = 1250;
+
 export const useRedirect = (
   url: string,
   replace: boolean = false,
@@ -12,39 +14,44 @@ export const useRedirect = (
   const router = useRouter();
   const currentPath = usePathname();
   const callBackUrls = useRef([config.redirectURI, config.silentRedirectURI]);
-  const isRedirecting = useRef(false);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
+    // Parse URL to separate path and query params
+    const [targetPath] = url.split("?");
+    const currentFullPath = window.location.pathname;
+
     // If redirect is disabled or the url is already in the callback urls then do not redirect
-    if (!enable || callBackUrls.current.includes(url) || url === currentPath)
+    if (!enable || callBackUrls.current.includes(url)) {
       return;
+    }
+
+    // Check if we're already on the target path
+    if (targetPath === currentFullPath || targetPath === currentPath) {
+      return;
+    }
 
     const performRedirect = () => {
-      if (!isRedirecting.current) {
-        isRedirecting.current = true;
-        router.refresh();
-        if (replace) {
-          router.replace(url);
-        } else {
-          router.push(url);
-        }
-        isRedirecting.current = false;
+      if (replace) {
+        router.replace(url);
+      } else {
+        router.push(url);
       }
+
+      // Retry if navigation hasn't occurred
+      timeoutRef.current = setTimeout(() => {
+        // Check again if we're still not on the target path
+        if (window.location.pathname !== targetPath) {
+          performRedirect();
+        }
+      }, RETRY_DELAY);
     };
 
     performRedirect();
 
-    // Try to redirect after 1.25 seconds if for whatever reason the redirect did not happen (network change, browser tab open but not focused etc.)
-    intervalRef.current = setInterval(() => {
-      if (!isRedirecting.current) {
-        performRedirect();
-      }
-    }, 1250);
-
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
       }
     };
   }, [replace, router, url, enable, currentPath]);

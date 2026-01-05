@@ -7,7 +7,6 @@ import {
 } from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import { useLocalStorage } from "@hooks/useLocalStorage";
-import { useRedirect } from "@hooks/useRedirect";
 import loadConfig, { buildExtras } from "@utils/config";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
@@ -75,8 +74,7 @@ export default function OIDCProvider({ children }: Props) {
   const withCustomHistory = () => {
     return {
       replaceState: (url: any) => {
-        router.replace(url);
-        window.dispatchEvent(new Event("popstate"));
+        window?.location?.replace(url);
       },
     };
   };
@@ -111,11 +109,11 @@ export default function OIDCProvider({ children }: Props) {
   return mounted && providerConfig ? (
     <OidcProvider
       configuration={providerConfig}
-      //withCustomHistory={withCustomHistory}
+      withCustomHistory={withCustomHistory}
       authenticatingComponent={FullScreenLoading}
       authenticatingErrorComponent={OIDCError}
       loadingComponent={FullScreenLoading}
-      callbackSuccessComponent={CallBackSuccess}
+      callbackSuccessComponent={FullScreenLoading}
       onEvent={onEvent}
       onSessionLost={() => void 0}
       //sessionLostComponent={SessionLost}
@@ -126,11 +124,3 @@ export default function OIDCProvider({ children }: Props) {
     <FullScreenLoading />
   );
 }
-
-const CallBackSuccess = () => {
-  const params = useSearchParams();
-  const errorParam = params.get("error");
-  const currentPath = usePathname();
-  useRedirect(currentPath, true, !errorParam);
-  return <FullScreenLoading />;
-};
