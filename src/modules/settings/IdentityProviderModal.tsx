@@ -11,7 +11,6 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
-import Paragraph from "@components/Paragraph";
 import {
   Select,
   SelectContent,
@@ -21,9 +20,9 @@ import {
 } from "@components/Select";
 import Separator from "@components/Separator";
 import { useApiCall } from "@utils/api";
+import loadConfig from "@utils/config";
 import { trim } from "lodash";
 import {
-  CopyIcon,
   FingerprintIcon,
   GlobeIcon,
   IdCard,
@@ -34,7 +33,6 @@ import {
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
-import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import {
   SSOIdentityProvider,
@@ -72,6 +70,8 @@ type Props = {
 };
 
 const copyMessage = "Redirect URL was copied to your clipboard!";
+const config = loadConfig();
+const redirectUrl = `${config.apiOrigin}/oauth2/callback`;
 
 export default function IdentityProviderModal({
   open,
@@ -95,10 +95,6 @@ export default function IdentityProviderModal({
   const [clientId, setClientId] = useState(provider?.client_id ?? "");
   const [clientSecret, setClientSecret] = useState("");
 
-  const [successModal, setSuccessModal] = useState(false);
-  const [createdProvider, setCreatedProvider] = useState<SSOIdentityProvider>();
-  const [, copyToClipboard] = useCopyToClipboard(createdProvider?.redirect_url);
-
   const requiresIssuer = type !== "google" && type !== "microsoft";
 
   const clientIdChanged = isEditing && trim(clientId) !== provider?.client_id;
@@ -118,13 +114,6 @@ export default function IdentityProviderModal({
 
     return false;
   }, [name, issuer, clientId, clientSecret, isEditing, clientIdChanged, requiresIssuer]);
-
-  const handleCopyAndClose = () => {
-    copyToClipboard(copyMessage).then(() => {
-      setSuccessModal(false);
-      onClose();
-    });
-  };
 
   const submit = () => {
     const payload: SSOIdentityProviderRequest = {
@@ -149,14 +138,9 @@ export default function IdentityProviderModal({
       notify({
         title: "Create Identity Provider",
         description: "Identity provider was created successfully.",
-        promise: createRequest.post(payload).then((idp) => {
+        promise: createRequest.post(payload).then(() => {
           mutate("/identity-providers");
-          if (idp.redirect_url) {
-            setCreatedProvider(idp);
-            setSuccessModal(true);
-          } else {
-            onClose();
-          }
+          onClose();
         }),
         loadingMessage: "Creating identity provider...",
       });
@@ -275,17 +259,17 @@ export default function IdentityProviderModal({
               />
             </div>
 
-            {isEditing && provider?.redirect_url && (
-              <div>
-                <Label>Redirect URL</Label>
-                <HelpText>
-                  Configure this URL in your identity provider
-                </HelpText>
-                <Code codeToCopy={provider.redirect_url} message={copyMessage}>
-                  <Code.Line>{provider.redirect_url}</Code.Line>
-                </Code>
-              </div>
-            )}
+            <Separator />
+
+            <div>
+              <Label>Redirect / Callback URL</Label>
+              <HelpText>
+                Copy this URL to your identity provider configuration
+              </HelpText>
+              <Code codeToCopy={redirectUrl} message={copyMessage}>
+                <Code.Line>{redirectUrl}</Code.Line>
+              </Code>
+            </div>
           </div>
 
           <ModalFooter className={"items-center"}>
@@ -317,53 +301,6 @@ export default function IdentityProviderModal({
                 )}
               </Button>
             </div>
-          </ModalFooter>
-        </ModalContent>
-      </Modal>
-
-      <Modal
-        open={successModal}
-        onOpenChange={(open) => {
-          setSuccessModal(open);
-          if (!open) onClose();
-        }}
-      >
-        <ModalContent
-          onEscapeKeyDown={(e) => e.preventDefault()}
-          onInteractOutside={(e) => e.preventDefault()}
-          onPointerDownOutside={(e) => e.preventDefault()}
-          maxWidthClass={"max-w-xl"}
-          className={"mt-20"}
-          showClose={false}
-        >
-          <div className={"pb-6 px-8"}>
-            <div className={"flex flex-col items-center justify-center gap-3"}>
-              <div>
-                <h2 className={"text-2xl text-center mb-2"}>
-                  Identity Provider Created
-                </h2>
-                <Paragraph className={"mt-0 text-sm text-center"}>
-                  Configure the following redirect URL in your identity provider
-                  settings.
-                </Paragraph>
-              </div>
-            </div>
-          </div>
-
-          <div className={"px-8 pb-6"}>
-            <Code message={copyMessage}>
-              <Code.Line>{createdProvider?.redirect_url || ""}</Code.Line>
-            </Code>
-          </div>
-          <ModalFooter className={"items-center"}>
-            <Button
-              variant={"primary"}
-              className={"w-full"}
-              onClick={handleCopyAndClose}
-            >
-              <CopyIcon size={14} />
-              Copy & Close
-            </Button>
           </ModalFooter>
         </ModalContent>
       </Modal>
