@@ -101,6 +101,8 @@ export default function IdentityProviderModal({
 
   const requiresIssuer = type !== "google" && type !== "microsoft";
 
+  const clientIdChanged = isEditing && trim(clientId) !== provider?.client_id;
+
   const isDisabled = useMemo(() => {
     const trimmedName = trim(name);
     const trimmedIssuer = trim(issuer);
@@ -110,10 +112,12 @@ export default function IdentityProviderModal({
     if (trimmedName.length === 0) return true;
     if (requiresIssuer && trimmedIssuer.length === 0) return true;
     if (trimmedClientId.length === 0) return true;
-    if (!isEditing && trimmedClientSecret.length === 0) return true;
+    // Client secret required for new providers, or when client ID changed during edit
+    if ((!isEditing || clientIdChanged) && trimmedClientSecret.length === 0)
+      return true;
 
     return false;
-  }, [name, issuer, clientId, clientSecret, isEditing, requiresIssuer]);
+  }, [name, issuer, clientId, clientSecret, isEditing, clientIdChanged, requiresIssuer]);
 
   const handleCopyAndClose = () => {
     copyToClipboard(copyMessage).then(() => {
@@ -255,7 +259,9 @@ export default function IdentityProviderModal({
               <Label>Client Secret</Label>
               <HelpText>
                 {isEditing
-                  ? "Leave empty to keep the existing secret, or enter a new one"
+                  ? clientIdChanged
+                    ? "Required when client ID is changed"
+                    : "Leave empty to keep the existing secret, or enter a new one"
                   : "The OAuth2 client secret"}
               </HelpText>
               <Input
