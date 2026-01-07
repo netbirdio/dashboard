@@ -26,6 +26,7 @@ import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
+import { SmallBadge } from "@components/ui/SmallBadge";
 
 type Props = {
   account: Account;
@@ -182,6 +183,12 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
             <Label>
               <RefreshCcw size={15} />
               Automatic Updates
+              <SmallBadge
+                text={"Beta"}
+                variant={"sky"}
+                className={"text-[9px] leading-none py-[3px] px-[5px]"}
+                textClassName={"top-0"}
+              />
             </Label>
             <HelpText>
               Select how NetBird clients handle automatic updates by choosing

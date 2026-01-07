@@ -600,7 +600,9 @@ export function DataTable<TData, TValue>({
                       </AccordionItem>
                     );
 
-                    return renderRow ? renderRow(row.original, rowContent) : rowContent;
+                    return renderRow
+                      ? renderRow(row.original, rowContent)
+                      : rowContent;
                   })
                 ) : (
                   <TableRowUnstyledComponent>

@@ -1,4 +1,3 @@
-import { usePortalElement } from "@hooks/usePortalElement";
 import React, { lazy } from "react";
 import { useGroupContext } from "@/contexts/GroupProvider";
 import { NameserverGroup } from "@/interfaces/Nameserver";

@@ -9,23 +9,28 @@ type PeerNodeProps = Node<
   {
     peer: Peer;
     enabled?: boolean;
+    onClick?: (p: Peer) => void;
   },
   "peerNode"
 >;
 
 export const PeerNode = ({ data, id }: PeerNodeProps) => {
-  const { peer, enabled } = data;
-  const isEnabled = useAnySourceGroupEnabled(id);
+  const { peer, enabled, onClick } = data;
+  const sourceGroupEnabled = useAnySourceGroupEnabled(id);
+  const isEnabled = enabled ?? sourceGroupEnabled;
 
   return (
     <div
-      className={
-        "border-0 border-nb-gray-800 rounded-lg overflow-hidden transition-all"
-      }
+      className={cn(
+        "border-0 border-nb-gray-800 rounded-lg overflow-hidden transition-all",
+        onClick &&
+          "border-transparent border hover:border-nb-gray-800 rounded-lg hover:bg-nb-gray-930 cursor-pointer pl-3 py-1 pr-5",
+      )}
+      onClick={() => onClick?.(peer)}
     >
       <DeviceCard
         device={peer}
-        className={cn("p-0", !isEnabled && "opacity-60")}
+        className={cn("p-0", !isEnabled && "opacity-60", onClick && "w-auto")}
       />
       <Handle
         type="source"

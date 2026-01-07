@@ -8,7 +8,7 @@ interface SimulationNode extends Node {
   vy?: number;
 }
 
-export const DEFAULT_MAX_ZOOM = 0.8;
+export const DEFAULT_MAX_ZOOM = 1.6;
 export const DEFAULT_MIN_ZOOM = 0.2;
 
 export const applyD3ForceLayout = (nodes: Node[], edges: Edge[]) => {
@@ -97,12 +97,18 @@ export const applyD3HierarchicalLayout = (
   const startX = 0;
   const centerY = 0;
 
+  const sourcePeerNodes = simulationNodes.filter(
+    (n) => n.type === "sourcePeerNode",
+  );
   const groupNodes = simulationNodes.filter((n) => n.type === "groupNode");
   const sourceGroupNodes = simulationNodes.filter(
     (n) => n.type === "sourceGroupNode",
   );
   const destinationGroupNodes = simulationNodes.filter(
     (n) => n.type === "destinationGroupNode",
+  );
+  const destinationResourceNodes = simulationNodes.filter(
+    (n) => n.type === "destinationResourceNode",
   );
   const policyNodes = simulationNodes.filter((n) => n.type === "policyNode");
   const networkNodes = simulationNodes.filter((n) => n.type === "networkNode");
@@ -126,6 +132,14 @@ export const applyD3HierarchicalLayout = (
       ...expandedGroupPeers,
     ];
   }
+
+  // Source Peer
+  centerNodesVertically(
+    sourcePeerNodes,
+    startX - 100,
+    nodeSpacing / 1.5,
+    centerY,
+  );
 
   // Peers
   if (peerNodes.length > 0 && view !== "group") {
@@ -156,7 +170,7 @@ export const applyD3HierarchicalLayout = (
 
   // Destination Groups
   centerNodesVertically(
-    destinationGroupNodes,
+    [...destinationGroupNodes, ...destinationResourceNodes],
     startX + (options?.destinationGroup?.width ?? columnWidth),
     options?.destinationGroup?.spacing ?? nodeSpacing,
     centerY,

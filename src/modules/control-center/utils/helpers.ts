@@ -114,7 +114,7 @@ export function useAnySourceGroupEnabled(sourceId: string) {
   const sourceNodes = incomingEdges
     .map((edge) => nodes.find((n) => n.id === edge.source))
     .filter(Boolean);
-  const sourceEnabledStates = sourceNodes.map((n) => n?.data?.enabled);
+  const sourceEnabledStates = incomingEdges.map((e) => e?.data?.enabled);
   return sourceEnabledStates.some(Boolean);
 }
 

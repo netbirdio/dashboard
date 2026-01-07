@@ -7,10 +7,10 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 const initialAnnouncements: Announcement[] = [
   {
     tag: "New",
-    text: "NetBird v0.60.0 - Identity-aware, private SSH over your NetBird network.",
-    link: "https://docs.netbird.io/how-to/ssh",
-    linkText: "Documentation",
-    variant: "default", // "default" or "important"
+    text: "NetBird v0.61 Released - Granular SSH Access Control and Automatic Updates",
+    link: "https://netbird.io/knowledge-hub/granular-ssh-access-automatic-updates",
+    linkText: "Read Release Article",
+    variant: "important", // "default" or "important"
     isExternal: true,
     closeable: true,
     isCloudOnly: false,
