@@ -707,6 +707,31 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  /**
+   * Identity Provider
+   */
+
+  if (event.activity_code == "identityprovider.create")
+    return (
+      <div className={"inline"}>
+        Identity provider <Value>{m.name}</Value> was created
+      </div>
+    );
+
+  if (event.activity_code == "identityprovider.update")
+    return (
+      <div className={"inline"}>
+        Identity provider <Value>{m.name}</Value> was updated
+      </div>
+    );
+
+  if (event.activity_code == "identityprovider.delete")
+    return (
+      <div className={"inline"}>
+        Identity provider <Value>{m.name}</Value> was deleted
+      </div>
+    );
+
   return (
     <div className={"flex gap-2.5 items-center"}>
       <span className={"mb-[1px]"}>{event.activity}</span>
