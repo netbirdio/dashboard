@@ -1,12 +1,37 @@
 import { cn, generateColorFromUser } from "@utils/helpers";
+import useFetchApi from "@utils/api";
 import { Ban, Clock, Cog } from "lucide-react";
-import React from "react";
+import React, { useMemo } from "react";
 import { User } from "@/interfaces/User";
+import { SSOIdentityProvider } from "@/interfaces/IdentityProvider";
+import { useAccount } from "@/modules/account/useAccount";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@components/Tooltip";
+import { idpIcon } from "@/assets/icons/IdentityProviderIcons";
 
 type Props = {
   user: User;
 };
+
 export default function UserNameCell({ user }: Readonly<Props>) {
+  const account = useAccount();
+  const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
+
+  const { data: identityProviders } = useFetchApi<SSOIdentityProvider[]>(
+    "/identity-providers",
+    false,
+    true,
+    embeddedIdpEnabled === true,
+  );
+
+  const userIdp = useMemo(() => {
+    if (!user.idp_id || !identityProviders) return null;
+    return identityProviders.find((idp) => idp.id === user.idp_id);
+  }, [user.idp_id, identityProviders]);
   const status = user.status;
   const isCurrent = user.is_current;
 
@@ -55,6 +80,20 @@ export default function UserNameCell({ user }: Readonly<Props>) {
           >
             {icon}
           </div>
+        )}
+        {userIdp && status !== "invited" && status !== "blocked" && (
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <div className="w-5 h-5 absolute -right-1 -bottom-1 bg-nb-gray-930 rounded-full flex items-center justify-center border-2 border-nb-gray-950 text-nb-gray-50">
+                  {idpIcon(userIdp.type, 14)}
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="right" sideOffset={5}>
+                <span className="text-xs">{userIdp.name}</span>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </div>
       <div className={"flex flex-col justify-center"}>

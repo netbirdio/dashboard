@@ -22,6 +22,7 @@ export interface Permissions {
     settings: Permission;
     accounts: Permission;
     billing: Permission;
+    identity_providers: Permission;
 
     edr: Permission;
     event_streaming: Permission;

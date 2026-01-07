@@ -4,6 +4,7 @@ import {
   Blocks,
   Cog,
   CreditCardIcon,
+  FingerprintIcon,
   FolderGit2,
   Globe,
   HelpCircleIcon,
@@ -52,6 +53,7 @@ const ActivityTypeMappings = {
   transferred: RefreshCcw,
   resource: Layers3Icon,
   network: NetworkIcon,
+  identityprovider: FingerprintIcon,
 } as const satisfies Record<string, LucideIcon>;
 
 export default function ActivityTypeIcon({
