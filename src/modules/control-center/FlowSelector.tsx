@@ -1,11 +1,17 @@
 import { SegmentedTabs } from "@components/SegmentedTabs";
-import { FolderGit2, MonitorSmartphoneIcon, NetworkIcon } from "lucide-react";
+import {
+  FolderGit2,
+  MonitorSmartphoneIcon,
+  NetworkIcon,
+  UsersIcon,
+} from "lucide-react";
 import * as React from "react";
 
 export enum FlowView {
   NETWORKS = "networks",
   GROUPS = "groups",
   PEERS = "peers",
+  USERS = "users",
 }
 
 type Props = {
@@ -26,14 +32,21 @@ export const FlowSelector = ({ value, onChange }: Props) => {
           className={"text-xs px-3 py-1"}
         >
           <MonitorSmartphoneIcon size={12} />
-          Peers
+          Peer
+        </SegmentedTabs.Trigger>
+        <SegmentedTabs.Trigger
+          value={FlowView.USERS}
+          className={"text-xs px-3 py-1"}
+        >
+          <UsersIcon size={12} />
+          User
         </SegmentedTabs.Trigger>
         <SegmentedTabs.Trigger
           value={FlowView.GROUPS}
           className={"text-xs px-3 py-1"}
         >
           <FolderGit2 size={12} />
-          Groups
+          Group
         </SegmentedTabs.Trigger>
         <SegmentedTabs.Trigger
           value={FlowView.NETWORKS}

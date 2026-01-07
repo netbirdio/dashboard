@@ -258,7 +258,7 @@ export default function AccessControlTable({
         wrapperProps={isGroupPage ? { className: "mt-6 w-full" } : undefined}
         paginationPaddingClassName={isGroupPage ? "px-0 pt-8" : undefined}
         tableClassName={isGroupPage ? "mt-0 mb-2" : undefined}
-        inset={!isGroupPage}
+        inset={false}
         minimal={isGroupPage}
         keepStateInLocalStorage={!isGroupPage || !idParam}
         initialSearch={idParam ? "" : undefined}

@@ -4,11 +4,12 @@ import { Handle, type Node, Position } from "@xyflow/react";
 import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";
+import { useAnySourceGroupEnabled } from "@/modules/control-center/utils/helpers";
 
 type GroupNodeProps = Node<
   {
     group: Group;
-    enabled: boolean;
+    enabled?: boolean;
     hoverable?: boolean;
     onClick?: (g: Group) => void;
   },
@@ -16,7 +17,9 @@ type GroupNodeProps = Node<
 >;
 
 export const GroupNode = ({ data, id }: GroupNodeProps) => {
-  const { enabled = true, group, hoverable = true, onClick } = data;
+  const { enabled, group, hoverable = true, onClick } = data;
+  const sourceGroupEnabled = useAnySourceGroupEnabled(id);
+  const isEnabled = enabled ?? sourceGroupEnabled;
 
   const countLabel = useMemo(() => {
     const peerCount = group?.peers_count || 0;
@@ -34,7 +37,7 @@ export const GroupNode = ({ data, id }: GroupNodeProps) => {
     <div
       className={cn(
         "cc-group-node bg-nb-gray-940  border border-nb-gray-800 rounded-lg overflow-hidden transition-all",
-        !enabled && "opacity-60",
+        !isEnabled && "opacity-60",
         hoverable && "hover:bg-nb-gray-930 cursor-pointer",
       )}
       onClick={() => onClick?.(group)}

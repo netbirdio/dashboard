@@ -28,7 +28,9 @@ import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import { Account } from "@/interfaces/Account";
-
+import { Callout } from "@components/Callout";
+import { InlineButtonLink } from "@components/InlineLink";
+import { useRouter } from "next/navigation";
 
 type Props = {
   account: Account;
@@ -36,7 +38,7 @@ type Props = {
 
 export default function GroupsSettings({ account }: Props) {
   const { permission } = usePermissions();
-
+  const router = useRouter();
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
 
@@ -82,22 +84,22 @@ export default function GroupsSettings({ account }: Props) {
     const showConfirm = jwtGroupSync && jwtGroupsEntered;
     const choice = showConfirm
       ? await confirm({
-        title: `JWT allow group - ${jwtAllowGroups[0]}`,
-        description: `Only users part of the ${jwtAllowGroups[0]} group will be able to access NetBird. Are you sure you want to save the changes?`,
-        confirmText: "Save",
-        children: (
-          <div
-            className={
-              "flex gap-2 items-center text-xs bg-netbird-950 px-4 justify-center py-3 rounded-md border border-netbird-500 text-netbird-200"
-            }
-          >
-            <AlertCircle size={14} />
-            To prevent losing access, ensure you are part of this group.
-          </div>
-        ),
-        cancelText: "Cancel",
-        type: "default",
-      })
+          title: `JWT allow group - ${jwtAllowGroups[0]}`,
+          description: `Only users part of the ${jwtAllowGroups[0]} group will be able to access NetBird. Are you sure you want to save the changes?`,
+          confirmText: "Save",
+          children: (
+            <div
+              className={
+                "flex gap-2 items-center text-xs bg-netbird-950 px-4 justify-center py-3 rounded-md border border-netbird-500 text-netbird-200"
+              }
+            >
+              <AlertCircle size={14} />
+              To prevent losing access, ensure you are part of this group.
+            </div>
+          ),
+          cancelText: "Cancel",
+          type: "default",
+        })
       : true;
 
     if (!choice) return;
@@ -189,6 +191,16 @@ export default function GroupsSettings({ account }: Props) {
               disabled={!permission.settings.update}
             />
           )}
+          <Callout variant={"info"} className={""}>
+            Looking to view and manage your groups? You can find group
+            management under{"  "}
+            <InlineButtonLink
+              onClick={() => router.push("/groups")}
+              variant={"dashed"}
+            >
+              {`Access Control › Groups`}
+            </InlineButtonLink>
+          </Callout>
         </div>
 
         {(!isNetBirdHosted() || isLocalDev()) && (

@@ -23,6 +23,8 @@ export interface SelectOption {
     width?: number;
     country?: string;
   }>;
+  renderItem?: () => React.ReactNode;
+  searchValue?: string;
 }
 
 interface SelectDropdownProps {
@@ -41,6 +43,7 @@ interface SelectDropdownProps {
   size?: "xs" | "sm";
   children?: React.ReactNode;
   maxHeight?: number;
+  triggerClassName?: string;
 }
 
 export function SelectDropdown({
@@ -59,6 +62,7 @@ export function SelectDropdown({
   size = "sm",
   children,
   maxHeight,
+  triggerClassName,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -82,7 +86,7 @@ export function SelectDropdown({
   const filteredItems = React.useMemo(() => {
     if (isEmpty(debouncedSearch)) return options;
     return options.filter((item) => {
-      const value = `${item.label}${item.value}` || "";
+      const value = item?.searchValue || `${item.label}${item.value}` || "";
       return value.toLowerCase().includes(debouncedSearch.toLowerCase());
     });
   }, [options, debouncedSearch]);
@@ -139,7 +143,11 @@ export function SelectDropdown({
         setOpen(isOpen);
       }}
     >
-      <PopoverTrigger asChild={!children} disabled={disabled || isLoading}>
+      <PopoverTrigger
+        asChild={!children}
+        disabled={disabled || isLoading}
+        className={triggerClassName}
+      >
         {children ? (
           children
         ) : (
@@ -147,7 +155,7 @@ export function SelectDropdown({
             variant={variant}
             disabled={disabled || isLoading}
             ref={inputRef}
-            className={cn("w-full", className)}
+            className={cn("w-full focus:outline-none", className)}
           >
             <div className={"w-full flex justify-between items-center gap-2"}>
               {isLoading && <Loading />}
@@ -248,7 +256,7 @@ const SelectDropdownItem = ({
     <div ref={elementRef} className={"transition-all"}>
       {visible ? (
         <CommandItem
-          value={value}
+          value={option?.searchValue ?? value}
           ref={elementRef}
           className={"py-1 px-2"}
           onSelect={() => toggle(option.value)}
@@ -256,14 +264,17 @@ const SelectDropdownItem = ({
         >
           <div className={"flex items-center gap-2.5 p-1"}>
             {option.icon && <option.icon size={14} width={14} />}
-            <div
-              className={cn(
-                "flex flex-col text-sm font-medium",
-                size === "xs" && "text-xs",
-              )}
-            >
-              <span className={"text-nb-gray-200"}>{option.label}</span>
-            </div>
+            {option?.renderItem && option.renderItem()}
+            {!option?.renderItem && (
+              <div
+                className={cn(
+                  "flex flex-col text-sm font-medium",
+                  size === "xs" && "text-xs",
+                )}
+              >
+                <span className={"text-nb-gray-200"}>{option.label}</span>
+              </div>
+            )}
           </div>
           {showValue && (
             <div className={"flex items-center gap-2.5 p-1"}>

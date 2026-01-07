@@ -12,21 +12,22 @@ const variants = cva(
       variant: {
         default:
           "bg-nb-gray-900/50 border-nb-gray-800/30 border-b text-nb-gray-200",
-        important: "from-netbird to-netbird-400 bg-gradient-to-b text-white",
+        important:
+          "from-netbird to-netbird-400 bg-gradient-to-b text-black font-normal",
       },
       tagBadge: {
         default: "bg-nb-gray-200/10 text-nb-gray-100 font-medium",
-        important: "bg-white text-netbird font-medium",
+        important: "bg-nb-gray-900 text-nb-gray-200 font-medium",
       },
       closeButton: {
         default:
           "bg-nb-gray-900 rounded-md p-1 text-nb-gray-300 hover:bg-nb-gray-800",
         important:
-          "bg-netbird-100 rounded-md p-1 text-netbird-600 hover:bg-white",
+          "bg-netbird rounded-md p-1 text-nb-gray-900 hover:bg-nb-gray-900 hover:text-nb-gray-200",
       },
       inlineLink: {
         default: "text-nb-blue-400 hover:underline",
-        important: "!text-white underline hover:opacity-80",
+        important: "!text-black underline hover:opacity-80",
       },
     },
   },
