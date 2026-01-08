@@ -36,9 +36,8 @@ export default function InstanceSetupProvider({
   const pathname = usePathname();
 
   // Routes that don't need setup check
-  const bypassRoutes = ["/setup", "/install"];
-  const shouldBypass =
-    bypassRoutes.includes(pathname) || isOIDCCallback();
+  const bypassRoutes = ["/install"];
+  const shouldBypass = bypassRoutes.includes(pathname) || isOIDCCallback();
 
   // Skip setup check for NetBird hosted (cloud) deployments
   const isCloud = isNetBirdHosted();
