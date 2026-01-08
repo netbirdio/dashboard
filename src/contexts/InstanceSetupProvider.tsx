@@ -41,6 +41,7 @@ export default function InstanceSetupProvider({
 
   // Skip setup check for NetBird hosted (cloud) deployments
   const isCloud = isNetBirdHosted();
+  const isSetupPage = pathname === "/setup";
 
   // Check instance status on mount
   useEffect(() => {
@@ -69,10 +70,10 @@ export default function InstanceSetupProvider({
 
   // Handle redirect separately to avoid setState during render conflicts
   useEffect(() => {
-    if (setupRequired && !shouldBypass && pathname !== "/setup") {
+    if (setupRequired && !shouldBypass && !isSetupPage) {
       router.replace("/setup");
     }
-  }, [setupRequired, shouldBypass, router]);
+  }, [setupRequired, shouldBypass, router, isSetupPage]);
 
   // Show loading while checking (only for non-cloud, non-bypass routes)
   if (loading && !shouldBypass && !isCloud) {
@@ -80,7 +81,7 @@ export default function InstanceSetupProvider({
   }
 
   // If setup required and not on setup page, wait for redirect
-  if (setupRequired && !shouldBypass) {
+  if (setupRequired && !shouldBypass && !isSetupPage) {
     return <FullScreenLoading />;
   }
 
