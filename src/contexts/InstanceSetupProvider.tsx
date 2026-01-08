@@ -69,7 +69,7 @@ export default function InstanceSetupProvider({
 
   // Handle redirect separately to avoid setState during render conflicts
   useEffect(() => {
-    if (setupRequired && !shouldBypass) {
+    if (setupRequired && !shouldBypass && pathname !== "/setup") {
       router.replace("/setup");
     }
   }, [setupRequired, shouldBypass, router]);
