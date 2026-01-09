@@ -41,6 +41,7 @@ import {
   MonitorSmartphoneIcon,
   NetworkIcon,
   PencilIcon,
+  RadioTowerIcon,
   TimerResetIcon,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -63,6 +64,7 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
 import { PeerExpirationToggle } from "@/modules/peer/PeerExpirationToggle";
 import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSection";
+import { PeerRemoteJobsSection } from "@/modules/peer/PeerRemoteJobsSection";
 import { PeerSSHToggle } from "@/modules/peer/PeerSSHToggle";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
@@ -382,6 +384,13 @@ const PeerOverviewTabs = () => {
             Accessible Peers
           </TabsTrigger>
         )}
+
+        {peer?.id && permission.peers.delete && (
+          <TabsTrigger value={"peer-job"}>
+            <RadioTowerIcon size={16} />
+            Remote Jobs
+          </TabsTrigger>
+        )}
       </TabsList>
 
       {permission.routes.read && (
@@ -393,6 +402,11 @@ const PeerOverviewTabs = () => {
       {peer?.id && permission.peers.read && (
         <TabsContent value={"accessible-peers"} className={"pb-8"}>
           <AccessiblePeersSection peerID={peer.id} />
+        </TabsContent>
+      )}
+      {peer.id && permission.peers.delete && (
+        <TabsContent value={"peer-job"} className={"pb-8"}>
+          <PeerRemoteJobsSection peerID={peer.id} />
         </TabsContent>
       )}
     </Tabs>
@@ -582,9 +596,9 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
               peer.connected
                 ? "just now"
                 : dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
-                  " (" +
-                  dayjs().to(peer.last_seen) +
-                  ")"
+                " (" +
+                dayjs().to(peer.last_seen) +
+                ")"
             }
           />
 
