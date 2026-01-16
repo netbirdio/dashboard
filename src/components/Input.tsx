@@ -17,7 +17,7 @@ export interface InputProps
   icon?: React.ReactNode;
   error?: string;
   errorTooltip?: boolean;
-  errorTooltipPosition?: "top" | "top-right";
+  errorTooltipPosition?: "top" | "top-right" | "bottom";
   prefixClassName?: string;
   showPasswordToggle?: boolean;
 }

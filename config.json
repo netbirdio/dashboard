@@ -1,18 +1,10 @@
 {
-  "auth0Auth": "$USE_AUTH0",
-  "authAuthority": "$AUTH_AUTHORITY",
-  "authClientId": "$AUTH_CLIENT_ID",
-  "authClientSecret": "$AUTH_CLIENT_SECRET",
-  "authScopesSupported": "$AUTH_SUPPORTED_SCOPES",
-  "authAudience": "$AUTH_AUDIENCE",
-  "apiOrigin": "$NETBIRD_MGMT_API_ENDPOINT",
-  "grpcApiOrigin": "$NETBIRD_MGMT_GRPC_API_ENDPOINT",
-  "redirectURI": "$AUTH_REDIRECT_URI",
-  "silentRedirectURI": "$AUTH_SILENT_REDIRECT_URI",
-  "tokenSource": "$NETBIRD_TOKEN_SOURCE",
-  "dragQueryParams": "$NETBIRD_DRAG_QUERY_PARAMS",
-  "hotjarTrackID": "$NETBIRD_HOTJAR_TRACK_ID",
-  "googleAnalyticsID": "$NETBIRD_GOOGLE_ANALYTICS_ID",
-  "googleTagManagerID": "$NETBIRD_GOOGLE_TAG_MANAGER_ID",
-  "wasmPath": "$NETBIRD_WASM_PATH"
+  "auth0Auth": "true",
+  "authAuthority": "https://netbird-localdev.eu.auth0.com",
+  "authClientId": "kBRMAOqIZ7hvpVCaypQLCJvTzkYYIXVt",
+  "authScopesSupported": "openid profile email api offline_access email_verified",
+  "authAudience": "http://localhost:3000/",
+  "apiOrigin": "http://localhost",
+  "grpcApiOrigin": "http://localhost:80",
+  "latestVersion": "v0.6.3"
 }

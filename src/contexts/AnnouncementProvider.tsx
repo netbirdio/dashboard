@@ -7,8 +7,8 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 const initialAnnouncements: Announcement[] = [
   {
     tag: "New",
-    text: "NetBird v0.61 Released - Granular SSH Access Control and Automatic Updates",
-    link: "https://netbird.io/knowledge-hub/granular-ssh-access-automatic-updates",
+    text: "NetBird v0.62 Released - Local Users and Simplified IdP Integration",
+    link: "https://netbird.io/knowledge-hub/local-users-simplified-idp",
     linkText: "Read Release Article",
     variant: "important", // "default" or "important"
     isExternal: true,

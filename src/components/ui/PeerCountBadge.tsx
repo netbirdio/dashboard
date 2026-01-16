@@ -19,11 +19,12 @@ export default function PeerCountBadge({
   className,
 }: Props) {
   const router = useRouter();
-  const { dropdownOptions } = useGroups();
+  const { dropdownOptions, groups } = useGroups();
 
   const currentGroup = useMemo(() => {
-    return dropdownOptions?.find((g) => g.name === group?.name);
-  }, [group, dropdownOptions]);
+    const options = dropdownOptions?.find((g) => g.name === group?.name);
+    return options ?? groups?.find((g) => g.name === group?.name);
+  }, [group, dropdownOptions, groups]);
 
   const peerCount = useMemo(() => {
     let peerCount = currentGroup?.peers_count ?? 0;

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { DNSZone } from "@/interfaces/DNS";
 import { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import {
@@ -16,6 +17,7 @@ import useFetchApi from "@/utils/api";
 export interface GroupDetails extends Group {
   policies: Policy[];
   nameservers: NameserverGroup[];
+  zones?: DNSZone[];
   routes: Route[];
   setupKeys: SetupKey[];
   users: User[];
@@ -31,6 +33,8 @@ export default function useGroupDetails(groupId: string) {
     useFetchApi<Policy[]>(`/policies`);
   const { data: nameservers, isLoading: isNameserversLoading } =
     useFetchApi<NameserverGroup[]>(`/dns/nameservers`);
+  const { data: zones, isLoading: isZonesLoading } =
+    useFetchApi<DNSZone[]>(`/dns/zones`);
   const { data: routes, isLoading: isRoutesLoading } =
     useFetchApi<Route[]>(`/routes`);
   const { data: setupKeys, isLoading: isSetupKeysLoading } =
@@ -64,6 +68,12 @@ export default function useGroupDetails(groupId: string) {
   const linkedNameservers = useMemo(() => {
     return nameservers?.filter((ns) => ns.groups?.includes(groupId)) || [];
   }, [nameservers, groupId]);
+
+  const linkedZones = useMemo(() => {
+    return (
+      zones?.filter((ns) => ns.distribution_groups?.includes(groupId)) || []
+    );
+  }, [zones, groupId]);
 
   const linkedRoutes = useMemo(() => {
     return (
@@ -117,6 +127,7 @@ export default function useGroupDetails(groupId: string) {
     isGroupsLoading ||
     isPoliciesLoading ||
     isNameserversLoading ||
+    isZonesLoading ||
     isRoutesLoading ||
     isSetupKeysLoading ||
     isUsersLoading ||
@@ -131,6 +142,7 @@ export default function useGroupDetails(groupId: string) {
       ...group,
       policies: linkedPolicies,
       nameservers: linkedNameservers,
+      zones: linkedZones,
       routes: linkedRoutes,
       setupKeys: linkedSetupKeys,
       users: linkedUsers,
@@ -142,6 +154,7 @@ export default function useGroupDetails(groupId: string) {
     group,
     linkedPolicies,
     linkedNameservers,
+    linkedZones,
     linkedRoutes,
     linkedSetupKeys,
     linkedUsers,

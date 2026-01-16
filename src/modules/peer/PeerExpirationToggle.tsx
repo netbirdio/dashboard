@@ -3,10 +3,13 @@ import FancyToggleSwitch, {
 } from "@components/FancyToggleSwitch";
 import FullTooltip from "@components/FullTooltip";
 import { IconInfoCircle } from "@tabler/icons-react";
-import { LockIcon } from "lucide-react";
+import { ArrowUpRightIcon, LockIcon } from "lucide-react";
 import * as React from "react";
+import { useMemo } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Peer } from "@/interfaces/Peer";
+import InlineLink from "@components/InlineLink";
+import { useAccount } from "@/modules/account/useAccount";
 
 type Props = {
   peer: Peer;
@@ -16,6 +19,7 @@ type Props = {
   description?: string;
   icon?: React.ReactNode;
   className?: string;
+  type?: "login-expiration" | "inactivity-expiration";
 } & FancyToggleSwitchVariants;
 
 export const PeerExpirationToggle = ({
@@ -27,12 +31,26 @@ export const PeerExpirationToggle = ({
   icon,
   className,
   variant = "default",
+  type = "login-expiration",
 }: Props) => {
   const { permission } = usePermissions();
+  const account = useAccount();
 
-  return (
-    <FullTooltip
-      content={
+  const noPermissionOrNoUser = !peer.user_id || !permission?.peers.update;
+
+  const isAccountLoginExpirationDisabled =
+    account && account?.settings?.peer_login_expiration_enabled === false;
+  const isAccountInactivityExpirationDisabled =
+    account && account?.settings?.peer_inactivity_expiration_enabled === false;
+
+  const isGlobalSettingDisabled =
+    type === "login-expiration"
+      ? isAccountLoginExpirationDisabled
+      : isAccountInactivityExpirationDisabled;
+
+  const tooltipContent = useMemo(() => {
+    if (noPermissionOrNoUser) {
+      return (
         <div className={"flex gap-2 items-center !text-nb-gray-300 text-xs"}>
           {!peer.user_id ? (
             <>
@@ -50,14 +68,37 @@ export const PeerExpirationToggle = ({
             </>
           )}
         </div>
-      }
+      );
+    }
+    if (isGlobalSettingDisabled) {
+      const text =
+        type === "login-expiration"
+          ? "'Peer Session Expiration'"
+          : "'Require login after disconnect'";
+      return (
+        <div className={"flex flex-col gap-2 text-xs max-w-xs"}>
+          <div>
+            Global setting {text} is currently disabled. Enable the global
+            setting to be able to toggle it individually per peer.{"  "}
+            <InlineLink href={"/settings"}>
+              Go to Settings <ArrowUpRightIcon size={12} />
+            </InlineLink>
+          </div>
+        </div>
+      );
+    }
+  }, [noPermissionOrNoUser, peer, type, isGlobalSettingDisabled]);
+
+  return (
+    <FullTooltip
+      content={tooltipContent}
       className={"w-full block"}
-      disabled={!!peer.user_id && permission.peers.update}
+      disabled={tooltipContent === undefined}
     >
       <FancyToggleSwitch
         className={className}
-        disabled={!peer.user_id || !permission.peers.update}
-        value={value}
+        disabled={isGlobalSettingDisabled || noPermissionOrNoUser}
+        value={isGlobalSettingDisabled ? false : value}
         onChange={onChange}
         variant={variant}
         label={

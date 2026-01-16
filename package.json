@@ -61,6 +61,7 @@
     "flowbite": "^1.8.1",
     "flowbite-react": "^0.6.4",
     "framer-motion": "^10.16.4",
+    "ip-address": "^10.1.0",
     "ip-cidr": "^3.1.0",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
