@@ -41,7 +41,7 @@ export default function UserDropdown() {
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col space-y-0.5 px-1">
             <div className="text-sm font-medium leading-none dark:text-gray-300">
               <TextWithTooltip
                 text={user?.name}

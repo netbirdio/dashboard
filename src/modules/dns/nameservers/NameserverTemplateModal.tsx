@@ -9,7 +9,7 @@ import GoogleLogo from "@/assets/nameservers/google.svg";
 import Quad9Logo from "@/assets/nameservers/quad9.svg";
 import { Group } from "@/interfaces/Group";
 import { NameserverGroup, NameserverPresets } from "@/interfaces/Nameserver";
-import NameserverModal from "@/modules/dns-nameservers/NameserverModal";
+import NameserverModal from "@/modules/dns/nameservers/NameserverModal";
 
 type Props = {
   children: React.ReactNode;

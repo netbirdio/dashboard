@@ -144,6 +144,12 @@ export default function Navigation({
                     visible={permission.nameservers.read}
                   />
                   <SidebarItem
+                    label="Zones"
+                    isChild
+                    href={"/dns/zones"}
+                    visible={permission?.dns?.read}
+                  />
+                  <SidebarItem
                     label="DNS Settings"
                     isChild
                     href={"/dns/settings"}

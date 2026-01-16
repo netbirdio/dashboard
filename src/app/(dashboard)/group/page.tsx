@@ -15,6 +15,7 @@ import { useSearchParams } from "next/navigation";
 import React, { useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import DNSZoneIcon from "@/assets/icons/DNSZoneIcon";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
@@ -24,6 +25,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import RoutesProvider from "@/contexts/RoutesProvider";
 import { Group, GROUP_TOOLTIP_TEXT } from "@/interfaces/Group";
 import PageContainer from "@/layouts/PageContainer";
+import { GroupDNSZonesSection } from "@/modules/groups/details/GroupDNSZonesSection";
 import { GroupNameserversSection } from "@/modules/groups/details/GroupNameserversSection";
 import { GroupNetworkRoutesSection } from "@/modules/groups/details/GroupNetworkRoutesSection";
 import { GroupPeersSection } from "@/modules/groups/details/GroupPeersSection";
@@ -134,7 +136,9 @@ const validAllGroupTabs = [
   "resources",
   "network-routes",
   "nameservers",
+  "zones",
 ];
+
 const validOtherGroupTabs = ["users", "peers", "setup-keys"];
 
 const GroupOverviewTabs = ({ group }: { group: Group }) => {
@@ -162,6 +166,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
   const resourcesCount = groupDetails?.resources_count || 0;
   const routesCount = groupDetails?.routes?.length || 0;
   const nameserversCount = groupDetails?.nameservers?.length || 0;
+  const zonesCount = groupDetails?.zones?.length || 0;
   const setupKeysCount = groupDetails?.setupKeys?.length || 0;
 
   return (
@@ -249,6 +254,19 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
           {singularize("Nameservers", nameserversCount)}
         </TabsTrigger>
 
+        <TabsTrigger
+          value={"zones"}
+          className={groupDetails === null ? "animate-pulse" : ""}
+        >
+          <DNSZoneIcon
+            size={16}
+            className={
+              "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+            }
+          />
+          {singularize("Zones", zonesCount)}
+        </TabsTrigger>
+
         {group.name !== "All" && (
           <TabsTrigger
             value={"setup-keys"}
@@ -300,6 +318,13 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
       <TabsContent value={"nameservers"} className={"pb-8"}>
         <GroupNameserversSection
           nameserverGroups={groupDetails?.nameservers}
+          isLoading={isLoading}
+        />
+      </TabsContent>
+
+      <TabsContent value={"zones"} className={"pb-8"}>
+        <GroupDNSZonesSection
+          zones={groupDetails?.zones}
           isLoading={isLoading}
         />
       </TabsContent>

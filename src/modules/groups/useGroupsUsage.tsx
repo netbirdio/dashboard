@@ -1,5 +1,6 @@
 import useFetchApi from "@utils/api";
 import { useMemo } from "react";
+import { DNSZone } from "@/interfaces/DNS";
 import { Group } from "@/interfaces/Group";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import { Policy } from "@/interfaces/Policy";
@@ -11,6 +12,7 @@ export interface GroupUsage extends Group {
   peers_count: number;
   policies_count: number;
   nameservers_count: number;
+  zones_count: number;
   routes_count: number;
   setup_keys_count: number;
   users_count: number;
@@ -24,6 +26,8 @@ export default function useGroupsUsage() {
     useFetchApi<Policy[]>(`/policies`); // Policies
   const { data: nameservers, isLoading: isNameserversLoading } =
     useFetchApi<NameserverGroup[]>(`/dns/nameservers`); // DNS
+  const { data: zones, isLoading: isZonesLoading } =
+    useFetchApi<DNSZone[]>(`/dns/zones`); // DNS Zones
   const { data: routes, isLoading: isRoutesLoading } =
     useFetchApi<Route[]>(`/routes`); // Routes
   const { data: setupKeys, isLoading: isSetupKeysLoading } =
@@ -57,6 +61,14 @@ export default function useGroupsUsage() {
       .filter((u) => u !== undefined);
   }, [nameservers, isNameserversLoading]);
 
+  const zonesGroups = useMemo(() => {
+    if (isZonesLoading) return;
+    if (!zones) return [];
+    return zones
+      ?.map((zone) => zone.distribution_groups)
+      .filter((u) => u !== undefined);
+  }, [zones, isZonesLoading]);
+
   const setupKeysGroups = useMemo(() => {
     if (isSetupKeysLoading) return;
     if (!setupKeys) return [];
@@ -78,6 +90,7 @@ export default function useGroupsUsage() {
       isGroupsLoading ||
       isPoliciesLoading ||
       isNameserversLoading ||
+      isZonesLoading ||
       isRoutesLoading ||
       isSetupKeysLoading ||
       isUsersLoading
@@ -86,6 +99,7 @@ export default function useGroupsUsage() {
     isGroupsLoading,
     isPoliciesLoading,
     isNameserversLoading,
+    isZonesLoading,
     isRoutesLoading,
     isSetupKeysLoading,
     isUsersLoading,
@@ -102,6 +116,10 @@ export default function useGroupsUsage() {
 
       const nameserverCount = nameserversGroups?.filter((nameserver) => {
         return nameserver.includes(group.id as string);
+      }).length;
+
+      const zonesCount = zonesGroups?.filter((zone) => {
+        return zone.includes(group.id as string);
       }).length;
 
       const routeCount = (
@@ -133,6 +151,7 @@ export default function useGroupsUsage() {
         resources_count: group.resources_count,
         policies_count: policyCount,
         nameservers_count: nameserverCount,
+        zones_count: zonesCount,
         routes_count: routeCount,
         setup_keys_count: setupKeyCount,
         users_count: userCount,
@@ -143,6 +162,7 @@ export default function useGroupsUsage() {
     groups,
     policiesGroups,
     nameserversGroups,
+    zonesGroups,
     routes,
     isRoutesLoading,
     setupKeysGroups,

@@ -4,7 +4,7 @@ import { NameserverGroup } from "@/interfaces/Nameserver";
 import { GroupDetailsTableContainer } from "@/modules/groups/details/GroupDetailsTableContainer";
 
 const NameserverGroupTable = lazy(
-  () => import("@/modules/dns-nameservers/table/NameserverGroupTable"),
+  () => import("@/modules/dns/nameservers/table/NameserverGroupTable"),
 );
 
 type Props = {

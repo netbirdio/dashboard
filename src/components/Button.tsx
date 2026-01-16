@@ -76,6 +76,7 @@ export const buttonVariants = cva(
         "default-outline": [
           "dark:ring-offset-nb-gray-950/50 dark:focus:ring-nb-gray-500/20",
           "dark:bg-transparent dark:text-nb-gray-400 dark:border-transparent dark:hover:text-white dark:hover:bg-nb-gray-900/30 dark:hover:border-nb-gray-800/50",
+          "data-[state=open]:dark:text-white data-[state=open]:dark:bg-nb-gray-900/30 data-[state=open]:dark:border-nb-gray-800/50",
         ],
         danger: [
           "", // TODO - add danger button styles for light mode

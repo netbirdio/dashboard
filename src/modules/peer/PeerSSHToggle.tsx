@@ -37,7 +37,12 @@ import { isNetbirdSSHProtocolSupported } from "@utils/version";
 export const PeerSSHToggle = () => {
   const { permission } = usePermissions();
   const { peer, toggleSSH, setSSHInstructionsModal } = usePeer();
-  const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
+  const { data: policies } = useFetchApi<Policy[]>(
+    "/policies",
+    true,
+    true,
+    permission?.policies.read,
+  );
   const [tooltipOpen, setTooltipOpen] = useState(false);
   const [policyModal, setPolicyModal] = useState(false);
   const [sshPolicyModal, setSshPolicyModal] = useState(false);
@@ -201,7 +206,11 @@ export const PeerSSHToggle = () => {
 
       <div className={"flex gap-3"}>
         {isSSHClientEnabled ? (
-          <Button variant={"secondary"} onClick={() => setSshPolicyModal(true)}>
+          <Button
+            variant={"secondary"}
+            onClick={() => setSshPolicyModal(true)}
+            disabled={!permission?.policies.create}
+          >
             <CirclePlusIcon size={14} />
             Create SSH Policy
           </Button>
@@ -301,29 +310,31 @@ export const PeerSSHToggle = () => {
         )}
       </div>
 
-      <PoliciesProvider>
-        <Modal
-          open={policyModal}
-          onOpenChange={(state) => {
-            setPolicyModal(state);
-            setCurrentPolicy(undefined);
-          }}
-        >
-          <AccessControlModalContent
-            key={policyModal ? "1" : "0"}
-            policy={currentPolicy}
-            onSuccess={async (p) => {
-              setPolicyModal(false);
+      {permission?.policies.create && (
+        <PoliciesProvider>
+          <Modal
+            open={policyModal}
+            onOpenChange={(state) => {
+              setPolicyModal(state);
               setCurrentPolicy(undefined);
             }}
+          >
+            <AccessControlModalContent
+              key={policyModal ? "1" : "0"}
+              policy={currentPolicy}
+              onSuccess={async (p) => {
+                setPolicyModal(false);
+                setCurrentPolicy(undefined);
+              }}
+            />
+          </Modal>
+          <PeerSSHPolicyModal
+            open={sshPolicyModal}
+            onOpenChange={setSshPolicyModal}
+            peer={peer}
           />
-        </Modal>
-        <PeerSSHPolicyModal
-          open={sshPolicyModal}
-          onOpenChange={setSshPolicyModal}
-          peer={peer}
-        />
-      </PoliciesProvider>
+        </PoliciesProvider>
+      )}
     </div>
   );
 };

@@ -66,6 +66,8 @@ export default function DialogProvider({ children }: Props) {
           <ModalContent
             maxWidthClass={dialogOptions.maxWidthClass || "max-w-[400px]"}
             showClose={false}
+            onInteractOutside={(e) => e.preventDefault()}
+            onPointerDownOutside={(e) => e.preventDefault()}
           >
             <ModalHeader
               center={dialogOptions.type == "center"}

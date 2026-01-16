@@ -14,7 +14,9 @@ type Props = {
   className?: string;
   hasFiltersApplied?: boolean;
   onResetFilters?: () => void;
+  contentClassName?: string;
 };
+
 export default function NoResults({
   icon,
   title = "Could not find any results",
@@ -23,6 +25,7 @@ export default function NoResults({
   className,
   hasFiltersApplied = false,
   onResetFilters,
+  contentClassName,
 }: Props) {
   const router = useRouter();
   const pathname = usePathname();
@@ -65,7 +68,9 @@ export default function NoResults({
           <Skeleton className={"w-full"} height={70} duration={4} />
         </div>
       </div>
-      <div className={cn("max-w-md mx-auto relative z-20 py-6")}>
+      <div
+        className={cn("max-w-md mx-auto relative z-20 py-6", contentClassName)}
+      >
         <div
           className={
             "mx-auto w-14 h-14 bg-nb-gray-930 flex items-center justify-center mb-3 rounded-md"

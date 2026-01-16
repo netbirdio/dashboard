@@ -11,18 +11,19 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { NameserverGroup } from "@/interfaces/Nameserver";
+import { DNS_ZONE_DOCS_LINK, DNSZone } from "@/interfaces/DNS";
 import PageContainer from "@/layouts/PageContainer";
+import { DNSZonesProvider } from "@/modules/dns/zones/DNSZonesProvider";
+import DNSZoneIcon from "@/assets/icons/DNSZoneIcon";
 
-const NameserverGroupTable = lazy(
-  () => import("@/modules/dns/nameservers/table/NameserverGroupTable"),
+const DNSZonesTable = lazy(
+  () => import("@/modules/dns/zones/table/DNSZonesTable"),
 );
 
-export default function NameServers() {
+export default function DNSZonePage() {
   const { permission } = usePermissions();
 
-  const { data: nameserverGroups, isLoading } =
-    useFetchApi<NameserverGroup[]>("/dns/nameservers");
+  const { data: zones, isLoading } = useFetchApi<DNSZone[]>("/dns/zones");
 
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
@@ -31,45 +32,37 @@ export default function NameServers() {
     <PageContainer>
       <div className={"p-default py-6"}>
         <Breadcrumbs>
+          <Breadcrumbs.Item label={"DNS"} icon={<DNSIcon size={13} />} />
           <Breadcrumbs.Item
-            href={"/dns/nameservers"}
-            label={"DNS"}
-            icon={<DNSIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/dns/nameservers"}
-            label={"Nameservers"}
+            href={"/dns/zones"}
+            label={"Zones"}
             active
-            icon={<DNSIcon size={13} />}
+            icon={<DNSZoneIcon size={16} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Nameservers</h1>
+        <h1 ref={headingRef}>Zones</h1>
         <Paragraph>
-          Add nameservers for domain name resolution in your NetBird network.
+          Manage DNS zones to control domain name resolution for your network.
         </Paragraph>
         <Paragraph>
           Learn more about
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
-            target={"_blank"}
-          >
-            DNS
+          <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
+            DNS Zones
             <ExternalLinkIcon size={12} />
           </InlineLink>
           in our documentation.
         </Paragraph>
       </div>
 
-      <RestrictedAccess
-        page={"Nameservers"}
-        hasAccess={permission.nameservers.read}
-      >
+      <RestrictedAccess page={"DNS Zones"} hasAccess={permission?.dns?.read}>
         <Suspense fallback={<SkeletonTable />}>
-          <NameserverGroupTable
-            nameserverGroups={nameserverGroups}
-            isLoading={isLoading}
-            headingTarget={portalTarget}
-          />
+          <DNSZonesProvider>
+            <DNSZonesTable
+              isLoading={isLoading}
+              headingTarget={portalTarget}
+              data={zones}
+            />
+          </DNSZonesProvider>
         </Suspense>
       </RestrictedAccess>
     </PageContainer>
