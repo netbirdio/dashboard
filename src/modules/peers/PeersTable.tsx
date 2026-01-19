@@ -170,6 +170,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
         version={row.original.version}
         os={row.original.os}
         serial={row.original.serial_number}
+        ephemeral={row.original.ephemeral}
       />
     ),
   },

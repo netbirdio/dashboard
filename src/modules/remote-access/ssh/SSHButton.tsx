@@ -26,9 +26,7 @@ export const SSHButton = ({ peer, isDropdown = false }: Props) => {
   const hasPermission = permission.peers.update;
 
   const os = getOperatingSystem(peer?.os);
-  const isWindows = os === OperatingSystem.WINDOWS;
-  const isMobile = os === OperatingSystem.ANDROID || os === OperatingSystem.IOS;
-  const isSSHSupported = !isWindows && !isMobile;
+  const isSSHSupported = os !== OperatingSystem.IOS;
 
   return (
     isSSHSupported && (

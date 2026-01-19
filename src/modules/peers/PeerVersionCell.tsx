@@ -20,11 +20,13 @@ type Props = {
   version: string;
   os: string;
   serial?: string;
+  ephemeral?: boolean;
 };
-export default function PeerVersionCell({ version, os, serial }: Props) {
+export default function PeerVersionCell({ version, os, serial, ephemeral }: Props) {
   const { latestVersion, latestUrl } = useApplicationContext();
 
   const updateAvailable = useMemo(() => {
+    if (ephemeral) return false;
     const operatingSystem = getOperatingSystem(os);
     if (
       operatingSystem === OperatingSystem.IOS ||
@@ -33,7 +35,7 @@ export default function PeerVersionCell({ version, os, serial }: Props) {
       return false;
     if (!latestVersion) return false;
     return !compareVersions(version, latestVersion);
-  }, [os, version, latestVersion]);
+  }, [os, version, latestVersion, ephemeral]);
 
   const updateIcon = useMemo(() => {
     return <ArrowUpCircleIcon size={15} className={"text-netbird"} />;
