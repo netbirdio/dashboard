@@ -20,7 +20,6 @@ import {
   useNetBirdClient,
 } from "@/modules/remote-access/useNetBirdClient";
 import { cn } from "@utils/helpers";
-import { isNetbirdSSHProtocolSupported } from "@utils/version";
 
 export default function RDPPage() {
   const { peerId } = useRDPQueryParams();
@@ -85,11 +84,8 @@ function RDPSession({ peer }: Props) {
       try {
         setCredentials(rdpCredentials);
         setIsNetBirdConnecting(true);
-        const protocol = isNetbirdSSHProtocolSupported(peer.version)
-          ? "netbird-ssh"
-          : "tcp";
         await client.connectTemporary(peer.id, [
-          `${protocol}/${rdpCredentials.port}`,
+          `tcp/${rdpCredentials.port}`,
         ]);
         setIsNetBirdConnecting(false);
       } catch (error) {
