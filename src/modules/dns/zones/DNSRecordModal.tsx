@@ -101,8 +101,9 @@ export function DNSRecordModalContent({
 
   const domainError = useMemo(() => {
     if (domain == "") return "";
+    if (domain === "*") return "";
     const valid = validator.isValidDomain(domain, {
-      allowWildcard: false,
+      allowWildcard: true,
       allowOnlyTld: true,
     });
     if (!valid) {
@@ -210,12 +211,13 @@ export function DNSRecordModalContent({
         <div className={"w-full mb-3"}>
           <Label>Hostname</Label>
           <HelpText>
-            Enter a subdomain or leave empty to use the primary domain.
+            Enter a subdomain, wildcard or leave empty to use the primary
+            domain.
           </HelpText>
           <div className={"flex w-full"}>
             <Input
               autoFocus={true}
-              placeholder={"Subdomain (leave empty for primary domain)"}
+              placeholder={"E.g., dev, * or leave empty for primary domain"}
               errorTooltip={true}
               errorTooltipPosition={"bottom"}
               error={domainError}
