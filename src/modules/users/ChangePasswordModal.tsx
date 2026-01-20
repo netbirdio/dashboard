@@ -85,7 +85,7 @@ export function ChangePasswordModalContent({
 
     setIsLoading(true);
     notify({
-      title: "Password changed",
+      title: "Change Password",
       description: "Your password has been successfully changed.",
       promise: passwordRequest
         .put({
