@@ -277,6 +277,14 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "user.password.change")
+    return (
+      <div className={"inline"}>
+        Password was changed for user <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value>
+      </div>
+    );
+
   /**
    * Service User
    */
