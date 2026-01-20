@@ -166,7 +166,7 @@ export function ChangePasswordModalContent({
             customPrefix={<LockIcon size={16} className={"text-nb-gray-300"} />}
           />
         </div>
-      </div>
+      </form>
 
       <ModalFooter className={"items-center"}>
         <div className={"flex gap-3 w-full justify-end"}>
