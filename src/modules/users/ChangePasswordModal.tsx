@@ -179,7 +179,6 @@ export function ChangePasswordModalContent({
             disabled={isDisabled || isLoading}
             onClick={changePassword}
           >
-            <KeyRound size={16} />
             Change Password
           </Button>
         </div>
