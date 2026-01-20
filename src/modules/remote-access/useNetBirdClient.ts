@@ -209,11 +209,11 @@ export const useNetBirdClient = () => {
   }, []);
 
   const detectSSHServerType = useCallback(
-    async (host: string, port: number): Promise<boolean> => {
+    async (host: string, port: number, timeoutMs: number): Promise<boolean> => {
       if (!netBirdClient.current?.detectSSHServerType) {
         throw new Error("NetBird client not ready");
       }
-      return netBirdClient.current.detectSSHServerType(host, port);
+      return netBirdClient.current.detectSSHServerType(host, port, timeoutMs);
     },
     [],
   );
@@ -228,7 +228,12 @@ export const useNetBirdClient = () => {
       if (!netBirdClient.current?.createSSHConnection) {
         throw new Error("Go client not ready");
       }
-      return netBirdClient.current.createSSHConnection(host, port, username);
+      return netBirdClient.current.createSSHConnection(
+        host,
+        port,
+        username,
+        jwtToken,
+      );
     },
     [],
   );
@@ -282,7 +287,12 @@ export const useNetBirdClient = () => {
           {
             name,
             wg_pub_key: keyPairs.publicKey,
-            rules: rules ?? ["tcp/22022", "tcp/3389", "tcp/44338"],
+            rules: rules ?? [
+              "tcp/22022",
+              "tcp/3389",
+              "tcp/44338",
+              "netbird-ssh/22",
+            ],
           },
           `/${peerId}/temporary-access`,
         );

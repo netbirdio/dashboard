@@ -56,17 +56,17 @@
     "date-fns": "^2.30.0",
     "dayjs": "^1.11.10",
     "elkjs": "^0.10.0",
-    "eslint": "^8",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-simple-import-sort": "^10.0.0",
     "flowbite": "^1.8.1",
     "flowbite-react": "^0.6.4",
     "framer-motion": "^10.16.4",
+    "ip-address": "^10.1.0",
     "ip-cidr": "^3.1.0",
     "js-cookie": "^3.0.5",
     "lodash": "^4.17.21",
     "lucide-react": "^0.539.0",
-    "next": "^14.2.28",
+    "next": "^14.2.35",
     "next-themes": "^0.2.1",
     "punycode": "^2.3.1",
     "react": "^18.3.1",
@@ -90,10 +90,10 @@
     "@faker-js/faker": "^9.5.1",
     "@types/chroma-js": "^3.1.1",
     "@types/js-cookie": "^3.0.6",
-    "eslint-config-next": "^14.2.28",
-    "cypress": "^13.13.0",
+    "eslint": "^9.39.1",
+    "eslint-config-next": "^16.0.5",
     "postcss": "^8",
     "prettier": "3.0.3",
-    "tailwindcss": "^3"
+    "tailwindcss": "^3.4.17"
   }
 }

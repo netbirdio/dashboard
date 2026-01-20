@@ -4,7 +4,18 @@ import md5 from "crypto-js/md5";
 import React, { useEffect, useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 
-const initialAnnouncements: Announcement[] = [];
+const initialAnnouncements: Announcement[] = [
+  {
+    tag: "New",
+    text: "NetBird v0.62 Released - Local Users and Simplified IdP Integration",
+    link: "https://netbird.io/knowledge-hub/local-users-simplified-idp",
+    linkText: "Read Release Article",
+    variant: "important", // "default" or "important"
+    isExternal: true,
+    closeable: true,
+    isCloudOnly: false,
+  },
+];
 
 export interface Announcement extends AnnouncementVariant {
   tag: string;

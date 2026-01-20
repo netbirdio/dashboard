@@ -11,7 +11,7 @@ import {
 } from "@components/DropdownMenu";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { UserAvatar } from "@components/ui/UserAvatar";
-import { LogOutIcon, User2 } from "lucide-react";
+import { KeyRound, LogOutIcon, User2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
@@ -19,9 +19,13 @@ import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import useOSDetection from "@/hooks/useOperatingSystem";
+import { ChangePasswordModalContent } from "@/modules/users/ChangePasswordModal";
+import { isNetBirdHosted } from "@utils/netbird";
+import { Modal } from "@components/modal/Modal";
 
 export default function UserDropdown() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [changePasswordModal, setChangePasswordModal] = useState(false);
   const { user } = useApplicationContext();
   const { loggedInUser, logout } = useLoggedInUser();
   const { isRestricted, permission } = usePermissions();
@@ -31,17 +35,28 @@ export default function UserDropdown() {
   useHotkeys("shift+mod+l", () => logout(), []);
 
   return (
-    <DropdownMenu
-      modal={false}
-      open={dropdownOpen}
-      onOpenChange={setDropdownOpen}
-    >
+    <>
+      <Modal
+        open={changePasswordModal}
+        onOpenChange={setChangePasswordModal}
+        key={changePasswordModal ? 1 : 0}
+      >
+        <ChangePasswordModalContent
+          userId={loggedInUser?.id}
+          onSuccess={() => setChangePasswordModal(false)}
+        />
+      </Modal>
+      <DropdownMenu
+        modal={false}
+        open={dropdownOpen}
+        onOpenChange={setDropdownOpen}
+      >
       <DropdownMenuTrigger>
         <UserAvatar size={"medium"} />
       </DropdownMenuTrigger>
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
-          <div className="flex flex-col space-y-1">
+          <div className="flex flex-col space-y-0.5 px-1">
             <div className="text-sm font-medium leading-none dark:text-gray-300">
               <TextWithTooltip
                 text={user?.name}
@@ -72,6 +87,20 @@ export default function UserDropdown() {
           />
         )}
 
+        {!isNetBirdHosted() && loggedInUser?.idp_id === "local" && (
+            <DropdownMenuItem
+              onClick={() => {
+                setDropdownOpen(false);
+                setChangePasswordModal(true);
+              }}
+            >
+              <div className={"flex gap-3 items-center"}>
+                <KeyRound size={14} />
+                Change Password
+              </div>
+            </DropdownMenuItem>
+          )}
+
         <DropdownMenuItem onClick={logout}>
           <div className={"flex gap-3 items-center"}>
             <LogOutIcon size={14} />
@@ -81,6 +110,7 @@ export default function UserDropdown() {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
+    </>
   );
 }
 

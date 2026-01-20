@@ -84,9 +84,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
     peerInactivityExpirationEnabled,
     setPeerInactivityExpirationEnabled,
     peerInactivityExpiresIn,
-    setPeerInactivityExpiresIn,
     peerInactivityExpireInterval,
-    setPeerInactivityExpireInterval,
   ] = useExpirationState({
     enabled: account.settings.peer_inactivity_expiration_enabled,
     expirationInSeconds: account.settings.peer_inactivity_expiration || 600,
@@ -111,10 +109,6 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 
   const saveChanges = async () => {
     const expiration = convertToSeconds(expiresIn, expireInterval);
-    const peerInactivityExpiration = convertToSeconds(
-      peerInactivityExpiresIn,
-      peerInactivityExpireInterval,
-    );
 
     notify({
       title: "Save Authentication Settings",

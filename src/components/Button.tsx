@@ -34,7 +34,7 @@ export const buttonVariants = cva(
         secondary: [
           "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-gray-200 text-gray-900",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
-          "dark:bg-nb-gray-920 dark:text-gray-400 dark:border-gray-700/40 dark:hover:text-white dark:hover:bg-zinc-800/50",
+          "dark:bg-nb-gray-920 dark:text-gray-400 dark:border-gray-700/40 dark:hover:text-white dark:hover:bg-nb-gray-910",
         ],
         secondaryLighter: [
           "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-gray-200 text-gray-900",
@@ -76,6 +76,7 @@ export const buttonVariants = cva(
         "default-outline": [
           "dark:ring-offset-nb-gray-950/50 dark:focus:ring-nb-gray-500/20",
           "dark:bg-transparent dark:text-nb-gray-400 dark:border-transparent dark:hover:text-white dark:hover:bg-nb-gray-900/30 dark:hover:border-nb-gray-800/50",
+          "data-[state=open]:dark:text-white data-[state=open]:dark:bg-nb-gray-900/30 data-[state=open]:dark:border-nb-gray-800/50",
         ],
         danger: [
           "", // TODO - add danger button styles for light mode

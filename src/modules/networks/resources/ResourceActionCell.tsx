@@ -62,7 +62,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Remove
+              Delete
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

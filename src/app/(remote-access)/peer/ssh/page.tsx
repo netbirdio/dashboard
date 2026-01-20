@@ -2,7 +2,6 @@
 
 import { PageNotFound } from "@components/ui/PageNotFound";
 import useFetchApi, { ErrorResponse } from "@utils/api";
-import { isNativeSSHSupported } from "@utils/version";
 import { CircleXIcon, InfoIcon, Loader2Icon } from "lucide-react";
 import React, { useEffect, useRef } from "react";
 import type { Peer } from "@/interfaces/Peer";
@@ -13,6 +12,10 @@ import {
   NetBirdStatus,
   useNetBirdClient,
 } from "@/modules/remote-access/useNetBirdClient";
+import {
+  isNativeSSHSupported,
+  isNetbirdSSHProtocolSupported,
+} from "@utils/version";
 
 export default function SSHPage() {
   const { peerId, username, port } = useSSHQueryParams();
@@ -88,7 +91,10 @@ function SSHTerminal({ username, port, peer }: Props) {
     connected.current = false;
     try {
       const aclPort = isNativeSSHSupported(peer.version) ? "22022" : port;
-      const rules = [`tcp/${aclPort}`];
+      const protocol = isNetbirdSSHProtocolSupported(peer.version)
+        ? "netbird-ssh"
+        : "tcp";
+      const rules = [`${protocol}/${aclPort}`];
       await client?.connectTemporary(peer.id, rules);
       await ssh({
         hostname: peer.ip,
@@ -108,9 +114,13 @@ function SSHTerminal({ username, port, peer }: Props) {
       if (!peer.id) return;
       if (connected.current) return;
       connected.current = true;
+
       try {
         const aclPort = isNativeSSHSupported(peer.version) ? "22022" : port;
-        const rules = [`tcp/${aclPort}`];
+        const protocol = isNetbirdSSHProtocolSupported(peer.version)
+          ? "netbird-ssh"
+          : "tcp";
+        const rules = [`${protocol}/${aclPort}`];
         await client?.connectTemporary(peer.id, rules);
         const res = await ssh({
           hostname: peer.ip,
@@ -121,7 +131,7 @@ function SSHTerminal({ username, port, peer }: Props) {
           sshConnectedOnce.current = true;
         }
       } catch (error) {
-        console.error("Connection failed:", error);
+        console.error("Connection error:", error);
       }
     };
 

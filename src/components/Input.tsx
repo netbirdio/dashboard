@@ -2,8 +2,9 @@ import FullTooltip from "@components/FullTooltip";
 import Paragraph from "@components/Paragraph";
 import { cn } from "@utils/helpers";
 import { cva, VariantProps } from "class-variance-authority";
-import { AlertCircle } from "lucide-react";
+import { AlertCircle, Eye, EyeOff } from "lucide-react";
 import * as React from "react";
+import { useState } from "react";
 
 type InputVariants = VariantProps<typeof inputVariants>;
 
@@ -16,8 +17,9 @@ export interface InputProps
   icon?: React.ReactNode;
   error?: string;
   errorTooltip?: boolean;
-  errorTooltipPosition?: "top" | "top-right";
+  errorTooltipPosition?: "top" | "top-right" | "bottom";
   prefixClassName?: string;
+  showPasswordToggle?: boolean;
 }
 
 const inputVariants = cva("", {
@@ -61,10 +63,29 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
       errorTooltipPosition = "top",
       variant = "default",
       prefixClassName,
+      showPasswordToggle = false,
       ...props
     },
     ref,
   ) => {
+    const [showPassword, setShowPassword] = useState(false);
+    const isPasswordType = type === "password";
+    const inputType = isPasswordType && showPassword ? "text" : type;
+
+    const passwordToggle =
+      isPasswordType && showPasswordToggle ? (
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className={"hover:text-white transition-all"}
+          aria-label={"Toggle password visibility"}
+        >
+          {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      ) : null;
+
+    const suffix = passwordToggle || customSuffix;
+
     return (
       <>
         <div className={cn("flex relative h-[42px]", maxWidthClass)}>
@@ -94,7 +115,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           </div>
 
           <input
-            type={type}
+            type={inputType}
             ref={ref}
             {...props}
             className={cn(
@@ -103,7 +124,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               "file:border-0",
               "focus-visible:ring-2 focus-visible:ring-offset-2",
               customPrefix && "!border-l-0 !rounded-l-none",
-              customSuffix && "!pr-16",
+              suffix && "!pr-16",
               icon && "!pl-10",
               "border",
               className,
@@ -116,7 +137,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               props.disabled && "opacity-30",
             )}
           >
-            {customSuffix}
+            {suffix}
           </div>
           {error && errorTooltip && (
             <div

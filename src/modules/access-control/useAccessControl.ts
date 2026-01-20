@@ -1,12 +1,19 @@
 import { notify } from "@components/Notification";
 import { Direction } from "@components/ui/PolicyDirection";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { merge, uniqBy } from "lodash";
+import { merge, orderBy, uniqBy } from "lodash";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Group } from "@/interfaces/Group";
-import { Policy, PortRange, Protocol } from "@/interfaces/Policy";
+import {
+  AuthorizedGroups,
+  Policy,
+  PolicyRule,
+  PolicyRuleResource,
+  PortRange,
+  Protocol,
+} from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { usePostureCheck } from "@/modules/posture-checks/usePostureCheck";
@@ -18,6 +25,9 @@ type Props = {
   initialDestinationGroups?: Group[] | string[];
   initialName?: string;
   initialDescription?: string;
+  initialProtocol?: Protocol;
+  initialPorts?: number[];
+  initialDestinationResource?: PolicyRuleResource;
 };
 
 // TODO add reducer
@@ -29,6 +39,9 @@ export const useAccessControl = ({
   initialName,
   initialDescription,
   onSuccess,
+  initialProtocol,
+  initialPorts,
+  initialDestinationResource,
 }: Props = {}) => {
   const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
@@ -75,6 +88,7 @@ export const useAccessControl = ({
   const [enabled, setEnabled] = useState<boolean>(policy?.enabled ?? true);
 
   const [ports, setPorts] = useState<number[]>(() => {
+    if (initialPorts) return initialPorts;
     if (!firstRule) return [];
     if (firstRule.ports == undefined) return [];
     if (firstRule.ports.length > 0) {
@@ -93,7 +107,7 @@ export const useAccessControl = ({
   });
 
   const [protocol, setProtocol] = useState<Protocol>(
-    firstRule ? firstRule.protocol : "all",
+    firstRule ? firstRule.protocol : initialProtocol ?? "all",
   );
   const [direction, setDirection] = useState<Direction>(() => {
     if (!firstRule) return "bi";
@@ -131,8 +145,23 @@ export const useAccessControl = ({
   );
 
   const [destinationResource, setDestinationResource] = useState(
-    firstRule?.destinationResource,
+    firstRule?.destinationResource ?? initialDestinationResource,
   );
+
+  const [sshAccessType, setSshAccessType] = useState<"full" | "limited">(() => {
+    if (protocol === "netbird-ssh") {
+      return firstRule?.authorized_groups !== undefined &&
+        Object.keys(firstRule?.authorized_groups).length > 0
+        ? "limited"
+        : "full";
+    } else {
+      return "full";
+    }
+  });
+
+  const [sshAuthorizedGroups, setSshAuthorizedGroups] = useState<
+    AuthorizedGroups | undefined
+  >(firstRule?.authorized_groups);
 
   const { updateOrCreateAndNotify: checkToCreate } = usePostureCheck({});
   const createPostureChecksWithoutID = async () => {
@@ -176,6 +205,7 @@ export const useAccessControl = ({
           enabled,
           ports: newPorts,
           port_ranges: newPortRanges,
+          authorized_groups: sshAuthorizedGroups,
         },
       ],
     } as Policy;
@@ -226,10 +256,34 @@ export const useAccessControl = ({
       destinations = tmp;
     }
 
-    const [newPorts, newPortRanges] = parseAccessControlPorts(
-      ports,
-      portRanges,
-    );
+    let [newPorts, newPortRanges] = parseAccessControlPorts(ports, portRanges);
+
+    let authorizedGroups: AuthorizedGroups = {};
+    if (protocol === "netbird-ssh") {
+      // Set port 22 for SSH protocol
+      newPorts = ["22"];
+      newPortRanges = [];
+
+      const isEmpty =
+        !sshAuthorizedGroups ||
+        Object.keys(sshAuthorizedGroups).length === 0 ||
+        sshAccessType === "full";
+
+      if (!isEmpty) {
+        Object.entries(sshAuthorizedGroups).reduce(
+          (acc, [groupName, usernames]) => {
+            const group = groups?.find((group) => group.name === groupName);
+            if (group?.id) {
+              authorizedGroups[group.id] = usernames;
+            }
+            return acc;
+          },
+          {} as AuthorizedGroups,
+        );
+      } else {
+        authorizedGroups = {};
+      }
+    }
 
     const policyObj = {
       name,
@@ -252,6 +306,8 @@ export const useAccessControl = ({
           destinationResource: destinationResource || undefined,
           ports: newPorts,
           port_ranges: newPortRanges,
+          authorized_groups:
+            protocol === "netbird-ssh" ? authorizedGroups : undefined,
         },
       ],
     } as Policy;
@@ -362,6 +418,10 @@ export const useAccessControl = ({
     destinationHasResources,
     destinationOnlyResources,
     hasPortSupport,
+    sshAccessType,
+    setSshAccessType,
+    sshAuthorizedGroups,
+    setSshAuthorizedGroups,
   } as const;
 };
 
@@ -379,4 +439,19 @@ const parseAccessControlPorts = (ports: number[], portRanges: PortRange[]) => {
 
   const allRanges = [...portRanges, ...portRangesFromPorts];
   return [undefined, allRanges];
+};
+
+export const parsePortsToStrings = (rule?: PolicyRule): string[] => {
+  if (!rule) return [];
+  const ports = rule?.ports ?? [];
+  const portRanges =
+    rule?.port_ranges?.map((r) => {
+      if (r.start === r.end) return `${r.start}`;
+      return `${r.start}-${r.end}`;
+    }) ?? [];
+  return orderBy(
+    [...portRanges, ...ports],
+    [(p) => Number(p.split("-")[0])],
+    ["asc"],
+  );
 };

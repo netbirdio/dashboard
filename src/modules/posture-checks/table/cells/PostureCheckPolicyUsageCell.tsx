@@ -2,81 +2,101 @@ import Badge from "@components/Badge";
 import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
 import { cn } from "@utils/helpers";
-import { ArrowUpRightSquareIcon } from "lucide-react";
+import { ArrowUpRightIcon, ShieldIcon, SquarePenIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
-import AccessControlIcon from "@/assets/icons/AccessControlIcon";
+import { useState } from "react";
+import CircleIcon from "@/assets/icons/CircleIcon";
+import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Policy } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 
 type Props = {
   check: PostureCheck;
 };
+
 export const PostureCheckPolicyUsageCell = ({ check }: Props) => {
   const router = useRouter();
+  const [tooltipOpen, setTooltipOpen] = useState(false);
+  const policyCount = check?.policies?.length || 0;
+  const policies = check?.policies;
+  const { openEditPolicyModal } = usePolicies();
 
   return (
     <div className={cn("flex gap-4")}>
-      <FullTooltip
-        disabled={!(check.policies && check.policies?.length > 0)}
-        content={
-          <div className={"text-xs max-w-lg"}>
-            <span className={"font-medium text-nb-gray-100 text-sm"}>
-              Assigned
-              {check.policies && check.policies?.length > 1
-                ? " Policies"
-                : " Policy"}
-            </span>
-            <div className={"flex gap-2 pt-3 pb-2 flex-wrap"}>
-              {check.policies &&
-                check.policies?.length > 0 &&
-                check.policies?.map((policy: Policy, index: number) => {
-                  return (
-                    <Badge
-                      variant={"gray-ghost"}
-                      useHover={false}
-                      key={index}
-                      className={"justify-start font-medium"}
+      {policyCount > 0 && (
+        <FullTooltip
+          contentClassName={"p-0"}
+          delayDuration={200}
+          skipDelayDuration={200}
+          customOpen={tooltipOpen}
+          customOnOpenChange={setTooltipOpen}
+          className={"border-nb-gray-800"}
+          content={
+            <div className={"text-xs flex flex-col p-1"}>
+              {policies?.map((policy: Policy) => {
+                const rule = policy?.rules?.[0];
+                if (!rule) return;
+                return (
+                  <button
+                    key={policy.id}
+                    className={
+                      "m-0 pl-3 py-2.5 leading-none flex justify-between group hover:bg-nb-gray-900 rounded-md"
+                    }
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      setTooltipOpen(false);
+                      openEditPolicyModal(policy, "posture_checks");
+                    }}
+                  >
+                    <div
+                      className={
+                        " flex items-center gap-2 leading-none font-medium text-nb-gray-300 group-hover:text-nb-gray-200 whitespace-nowrap"
+                      }
                     >
-                      <AccessControlIcon size={12} />
+                      <CircleIcon
+                        size={8}
+                        active={policy.enabled}
+                        className={"shrink-0"}
+                      />
                       {policy.name}
-                    </Badge>
-                  );
-                })}
+                    </div>
+
+                    <div
+                      className={
+                        "text-nb-gray-300 px-2 ml-4 uppercase font-mono opacity-0 group-hover:opacity-100"
+                      }
+                    >
+                      <SquarePenIcon size={12} />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-          </div>
-        }
-        interactive={false}
-      >
-        <Badge
-          onClick={(e) => {
-            e.stopPropagation();
-            router.push("/access-control");
-          }}
-          variant={"gray"}
-          useHover={!!(check.policies && check.policies?.length > 0)}
-          className={cn(
-            "min-w-[110px] font-medium cursor-pointer",
-            check.policies &&
-              check.policies.length == 0 &&
-              "opacity-30 pointer-events-none",
-          )}
+          }
+          interactive={true}
+          align={"start"}
+          alignOffset={0}
+          sideOffset={14}
         >
-          <AccessControlIcon size={12} />
-          <span>
-            <span className={"font-bold"}>
-              {check.policies && check.policies?.length > 0
-                ? check.policies && check.policies?.length
-                : ""}
-            </span>{" "}
-            {check.policies && check.policies?.length == 0
-              ? "No Policies"
-              : check.policies && check.policies?.length > 1
-              ? "Policies"
-              : "Policy"}
-          </span>
-        </Badge>
-      </FullTooltip>
+          <Badge
+            variant={"gray"}
+            useHover={false}
+            className={"select-none hover:bg-nb-gray-910"}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              if (!tooltipOpen) setTooltipOpen(true);
+            }}
+          >
+            <ShieldIcon size={14} className={"text-green-500"} />
+            <div>
+              <span className={"font-medium text-xs"}>{policyCount}</span>
+            </div>
+          </Badge>
+        </FullTooltip>
+      )}
       <FullTooltip
         content={
           <div className={"text-xs max-w-[260px]"}>
@@ -93,8 +113,8 @@ export const PostureCheckPolicyUsageCell = ({ check }: Props) => {
           onClick={() => router.push("/access-control")}
         >
           <>
-            <ArrowUpRightSquareIcon size={12} />
             Go to Policies
+            <ArrowUpRightIcon size={12} />
           </>
         </Button>
       </FullTooltip>

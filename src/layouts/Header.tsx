@@ -11,8 +11,9 @@ import React from "react";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import HelpAndSupportButton from "@components/ui/HelpAndSupportButton";
 
-export const headerHeight = 75;
+export const headerHeight = 65;
 
 export default function NavbarWithDropdown() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function NavbarWithDropdown() {
         <AnnouncementBanner />
         <div
           className={cn(
-            "bg-white px-2 py-4 dark:border-gray-700 dark:bg-nb-gray backdrop-blur-lg sm:px-6",
+            "bg-white px-2 py-3 dark:border-gray-700 dark:bg-nb-gray backdrop-blur-lg sm:px-6",
             "border-b dark:border-zinc-700/40 px-3 md:px-4 w-full",
             "flex justify-between items-center transition-all",
           )}
@@ -62,7 +63,8 @@ export default function NavbarWithDropdown() {
             <ToggleCollapsableNavigationButton />
           </div>
 
-          <div className="flex md:order-2 gap-4 items-center">
+          <div className="flex md:order-2 gap-5 items-center">
+            <HelpAndSupportButton />
             <UserDropdown />
           </div>
         </div>

@@ -139,7 +139,11 @@ export function PortSelector({
                 <Badge
                   key={x}
                   variant={"gray"}
-                  onClick={() => toggle(x)}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    toggle(x);
+                  }}
                   className={"uppercase tracking-wider font-medium py-1"}
                 >
                   {x}

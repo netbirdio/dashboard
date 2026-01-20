@@ -133,6 +133,7 @@ interface DataTableProps<TData, TValue> {
   getStartedCard?: React.ReactNode;
   placeholders?: TData[];
   renderExpandedRow?: (row: TData) => React.ReactNode;
+  renderRow?: (row: TData, children: React.ReactNode) => React.ReactNode;
   minimal?: boolean;
   className?: string;
   inset?: boolean;
@@ -193,6 +194,7 @@ export function DataTable<TData, TValue>({
   onRowClick,
   getStartedCard,
   renderExpandedRow,
+  renderRow,
   minimal,
   className,
   tableClassName,
@@ -507,7 +509,7 @@ export function DataTable<TData, TValue>({
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => {
                     const expandedRow = renderExpandedRow?.(row.original);
-                    return (
+                    const rowContent = (
                       <AccordionItem
                         value={row.original.id}
                         asChild={true}
@@ -597,6 +599,10 @@ export function DataTable<TData, TValue>({
                         </>
                       </AccordionItem>
                     );
+
+                    return renderRow
+                      ? renderRow(row.original, rowContent)
+                      : rowContent;
                   })
                 ) : (
                   <TableRowUnstyledComponent>

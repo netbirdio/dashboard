@@ -12,10 +12,14 @@ import NetworkModal from "@/modules/networks/NetworkModal";
 import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
 import { ResourceGroupModal } from "@/modules/networks/resources/ResourceGroupModal";
 import NetworkRoutingPeerModal from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
+import { Policy } from "@/interfaces/Policy";
+import PoliciesProvider from "@/contexts/PoliciesProvider";
 
 type Props = {
   children: React.ReactNode;
   network?: Network;
+  onResourceUpdate?: () => void;
+  onResourceDelete?: () => void;
 };
 
 const NetworksContext = React.createContext(
@@ -29,6 +33,7 @@ const NetworksContext = React.createContext(
       resource?: NetworkResource,
     ) => void;
     openPolicyModal: (network?: Network, resource?: NetworkResource) => void;
+    openEditPolicyModal: (policy: Policy) => void;
     deleteNetwork: (network: Network) => Promise<void>;
     deleteResource: (network: Network, resource: NetworkResource) => void;
     deleteRouter: (network: Network, router: NetworkRouter) => void;
@@ -36,7 +41,12 @@ const NetworksContext = React.createContext(
   },
 );
 
-export const NetworkProvider = ({ children, network }: Props) => {
+export const NetworkProvider = ({
+  children,
+  network,
+  onResourceDelete,
+  onResourceUpdate,
+}: Props) => {
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const deleteCall = useApiCall("/networks").del;
@@ -50,6 +60,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
     description?: string;
     destinationGroups?: Group[] | string[];
   }>();
+  const [currentPolicy, setCurrentPolicy] = useState<Policy>();
 
   const [routingPeerModal, setRoutingPeerModal] = useState(false);
   const [networkModal, setNetworkModal] = useState(false);
@@ -112,6 +123,11 @@ export const NetworkProvider = ({ children, network }: Props) => {
     setPolicyModal(true);
   };
 
+  const openEditPolicyModal = (policy: Policy) => {
+    setCurrentPolicy(policy);
+    setPolicyModal(true);
+  };
+
   const deleteNetwork = async (network: Network) => {
     const choice = await confirm({
       title: `Delete network '${network.name}'?`,
@@ -160,6 +176,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
       loadingMessage: "Deleting resource...",
       promise: deleteCall({}, `/${network.id}/resources/${resource.id}`).then(
         () => {
+          onResourceDelete?.();
           mutate(`/networks/${network.id}/resources`);
           mutate("/groups");
         },
@@ -238,6 +255,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
         openResourceModal,
         openResourceGroupModal,
         openPolicyModal,
+        openEditPolicyModal,
         deleteNetwork,
         deleteResource,
         deleteRouter,
@@ -259,31 +277,37 @@ export const NetworkProvider = ({ children, network }: Props) => {
           mutate(`/networks/${n.id}`);
         }}
       />
-      <Modal
-        open={policyModal}
-        onOpenChange={(state) => {
-          setPolicyModal(state);
-          setPolicyDefaultSettings(undefined);
-        }}
-      >
-        <AccessControlModalContent
-          key={policyModal ? "1" : "0"}
-          initialDestinationGroups={policyDefaultSettings?.destinationGroups}
-          initialName={policyDefaultSettings?.name}
-          initialDescription={policyDefaultSettings?.description}
-          onSuccess={async (p) => {
-            setPolicyModal(false);
+      <PoliciesProvider>
+        <Modal
+          open={policyModal}
+          onOpenChange={(state) => {
+            setPolicyModal(state);
             setPolicyDefaultSettings(undefined);
-            mutate("/networks");
-            if (network) {
-              mutate(`/networks/${network.id}/resources`);
-              mutate(`/networks/${network.id}`);
-            } else {
-              currentNetwork && (await askForRoutingPeer(currentNetwork));
-            }
+            setCurrentPolicy(undefined);
           }}
-        />
-      </Modal>
+        >
+          <AccessControlModalContent
+            key={policyModal ? "1" : "0"}
+            initialDestinationGroups={policyDefaultSettings?.destinationGroups}
+            initialName={policyDefaultSettings?.name}
+            initialDescription={policyDefaultSettings?.description}
+            policy={currentPolicy}
+            onSuccess={async (p) => {
+              setPolicyModal(false);
+              setPolicyDefaultSettings(undefined);
+              setCurrentPolicy(undefined);
+              mutate("/networks");
+              if (network) {
+                onResourceUpdate?.();
+                mutate(`/networks/${network.id}/resources`);
+                mutate(`/networks/${network.id}`);
+              } else {
+                currentNetwork && (await askForRoutingPeer(currentNetwork));
+              }
+            }}
+          />
+        </Modal>
+      </PoliciesProvider>
       {currentNetwork && (
         <>
           <NetworkRoutingPeerModal
@@ -329,6 +353,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
               setCurrentResource(undefined);
               mutate("/groups");
               if (network) {
+                onResourceUpdate?.();
                 mutate(`/networks/${network.id}/resources`);
                 mutate(`/networks/${network.id}`);
               }
@@ -356,6 +381,7 @@ export const NetworkProvider = ({ children, network }: Props) => {
               mutate("/networks");
               mutate("/groups");
               if (network) {
+                onResourceUpdate?.();
                 mutate(`/networks/${network.id}/resources`);
                 mutate(`/networks/${network.id}`);
               }

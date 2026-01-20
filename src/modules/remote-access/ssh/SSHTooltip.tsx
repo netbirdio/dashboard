@@ -78,7 +78,8 @@ const SSHDisabledText = ({
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
       <div>
         SSH Access is currently disabled for this peer. Please enable SSH access
-        for this peer and make sure SSH is allowed in the NetBird Client.
+        for this peer and make sure to add an explicit access control policy
+        allowing SSH access.
       </div>
       <div>
         <InlineLink

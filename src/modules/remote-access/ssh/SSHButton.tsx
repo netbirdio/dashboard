@@ -1,14 +1,14 @@
 import Button from "@components/Button";
 import { DropdownMenuItem } from "@components/DropdownMenu";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { CircleHelpIcon, TerminalIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { SSHCredentialsModal } from "@/modules/remote-access/ssh/SSHCredentialsModal";
 import { SSHTooltip } from "@/modules/remote-access/ssh/SSHTooltip";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 
 type Props = {
   peer: Peer;
@@ -19,15 +19,14 @@ export const SSHButton = ({ peer, isDropdown = false }: Props) => {
   const [modal, setModal] = useState(false);
   const { permission } = usePermissions();
 
-  const disabled =
-    !peer.connected || !peer.ssh_enabled || !permission.peers.update;
+  const isSSHEnabled =
+    peer?.local_flags?.server_ssh_allowed || peer?.ssh_enabled;
+  const disabled = !peer.connected || !permission.peers.update || !isSSHEnabled;
 
   const hasPermission = permission.peers.update;
 
   const os = getOperatingSystem(peer?.os);
-  const isWindows = os === OperatingSystem.WINDOWS;
-  const isMobile = os === OperatingSystem.ANDROID || os === OperatingSystem.IOS;
-  const isSSHSupported = !isWindows && !isMobile;
+  const isSSHSupported = os !== OperatingSystem.IOS;
 
   return (
     isSSHSupported && (
@@ -42,7 +41,7 @@ export const SSHButton = ({ peer, isDropdown = false }: Props) => {
         <div>
           <SSHTooltip
             isOnline={peer.connected}
-            isSSHEnabled={peer.ssh_enabled}
+            isSSHEnabled={isSSHEnabled}
             hasPermission={hasPermission}
             side={isDropdown ? "left" : "top"}
           >

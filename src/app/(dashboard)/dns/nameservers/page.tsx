@@ -7,7 +7,7 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon, ServerIcon } from "lucide-react";
+import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -15,7 +15,7 @@ import { NameserverGroup } from "@/interfaces/Nameserver";
 import PageContainer from "@/layouts/PageContainer";
 
 const NameserverGroupTable = lazy(
-  () => import("@/modules/dns-nameservers/table/NameserverGroupTable"),
+  () => import("@/modules/dns/nameservers/table/NameserverGroupTable"),
 );
 
 export default function NameServers() {
@@ -32,7 +32,7 @@ export default function NameServers() {
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            href={"/dns"}
+            href={"/dns/nameservers"}
             label={"DNS"}
             icon={<DNSIcon size={13} />}
           />
@@ -40,7 +40,7 @@ export default function NameServers() {
             href={"/dns/nameservers"}
             label={"Nameservers"}
             active
-            icon={<ServerIcon size={13} />}
+            icon={<DNSIcon size={13} />}
           />
         </Breadcrumbs>
         <h1 ref={headingRef}>Nameservers</h1>

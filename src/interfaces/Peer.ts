@@ -24,9 +24,24 @@ export interface Peer {
   login_expiration_enabled: boolean;
   inactivity_expiration_enabled: boolean;
   approval_required: boolean;
+  disapproval_reason?: string;
   city_name: string;
   country_code: string;
   connection_ip: string;
   serial_number: string;
   ephemeral: boolean;
+  local_flags?: PeerLocalFlags;
+}
+
+export interface PeerLocalFlags {
+  block_inbound: boolean;
+  block_lan_access: boolean;
+  disable_client_routes: boolean;
+  disable_dns: boolean;
+  disable_firewall: boolean;
+  disable_server_routes: boolean;
+  lazy_connection_enabled: boolean;
+  rosenpass_enabled: boolean;
+  rosenpass_permissive: boolean;
+  server_ssh_allowed: boolean;
 }

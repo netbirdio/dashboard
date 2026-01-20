@@ -2,10 +2,15 @@
 
 import "@xyflow/react/dist/style.css";
 import Button from "@components/Button";
+import InlineLink from "@components/InlineLink";
+import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
 import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
+import SquareIcon from "@components/SquareIcon";
+import GetStartedTest from "@components/ui/GetStartedTest";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import useFetchApi from "@utils/api";
 import {
   Background,
@@ -15,6 +20,8 @@ import {
   NodeTypes,
   ReactFlow,
   ReactFlowProvider,
+  useEdgesState,
+  useNodesState,
   useReactFlow,
 } from "@xyflow/react";
 import { forEach, orderBy, sortBy } from "lodash";
@@ -25,9 +32,23 @@ import {
   MessageSquareShareIcon,
   NetworkIcon,
 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
+import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import PeersProvider from "@/contexts/PeersProvider";
+import { usePermissions } from "@/contexts/PermissionsProvider";
+import PoliciesProvider from "@/contexts/PoliciesProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { Group } from "@/interfaces/Group";
+import { Network, NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
+import { Policy } from "@/interfaces/Policy";
+import { User } from "@/interfaces/User";
+import PageContainer from "@/layouts/PageContainer";
+import { AccessControlUpdateModal } from "@/modules/access-control/AccessControlModal";
 import { FlowSelector, FlowView } from "@/modules/control-center/FlowSelector";
 import { NetworkRoutingPeerCount } from "@/modules/control-center/NetworkRoutingPeerCount";
+import { ControlCenterCurrentUserBadge } from "@/modules/control-center/user/ControlCenterCurrentUserBadge";
 import { EDGE_TYPES } from "@/modules/control-center/utils/edges";
 import {
   getFirstGroup,
@@ -41,24 +62,6 @@ import {
   DEFAULT_MIN_ZOOM,
 } from "@/modules/control-center/utils/layouts";
 import { NODE_TYPES } from "@/modules/control-center/utils/nodes";
-import PeersProvider from "@/contexts/PeersProvider";
-import PoliciesProvider from "@/contexts/PoliciesProvider";
-import { Group } from "@/interfaces/Group";
-import { Network, NetworkResource } from "@/interfaces/Network";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
-import { Peer } from "@/interfaces/Peer";
-import { Policy } from "@/interfaces/Policy";
-import PageContainer from "@/layouts/PageContainer";
-import { useLoggedInUser } from "@/contexts/UsersProvider";
-import { AccessControlUpdateModal } from "@/modules/access-control/AccessControlModal";
-import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
-import GetStartedTest from "@components/ui/GetStartedTest";
-import SquareIcon from "@components/SquareIcon";
-import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
-import InlineLink from "@components/InlineLink";
-import { usePermissions } from "@/contexts/PermissionsProvider";
-import { useRouter, useSearchParams } from "next/navigation";
-import { SmallBadge } from "@components/ui/SmallBadge";
 
 export default function ControlCenter() {
   return (
@@ -71,8 +74,8 @@ export default function ControlCenter() {
 }
 
 function ControlCenterView() {
-  const [nodes, setNodes] = useState<Node[]>([]);
-  const [edges, setEdges] = useState<Edge[]>([]);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
   const reactFlow = useReactFlow();
   const [layoutInitialized, setLayoutInitialized] = useState(false);
   const [forceLayoutChange, setForceLayoutChange] = useState(false);
@@ -82,6 +85,7 @@ function ControlCenterView() {
   const queryTab = queryParams.get("tab");
   const initialTab = useMemo(() => {
     if (queryTab === "peers") return FlowView.PEERS;
+    if (queryTab === "users") return FlowView.USERS;
     if (queryTab === "groups") return FlowView.GROUPS;
     if (queryTab === "networks") return FlowView.NETWORKS;
     return FlowView.PEERS;
@@ -99,17 +103,24 @@ function ControlCenterView() {
   >("/networks/resources");
   const { data: groups, isLoading: isGroupsLoading } =
     useFetchApi<Group[]>("/groups");
+  const { data: users, isLoading: isUsersLoading } = useFetchApi<User[]>(
+    "/users?service_user=false",
+  );
 
   const isLoading =
     isPoliciesLoading ||
     isPeersLoading ||
     isNetworksLoading ||
     isResourcesLoading ||
-    isGroupsLoading;
+    isGroupsLoading ||
+    isUsersLoading;
 
   const [selectedNetwork, setSelectedNetwork] = useState("");
   const [selectedGroup, setSelectedGroup] = useState("");
   const [selectedPeer, setSelectedPeer] = useState("");
+  const [selectedUser, setSelectedUser] = useState("");
+  const [previousSelectedUser, setPreviousSelectedUser] = useState("");
+
   const [selectedPolicy, setSelectedPolicy] = useState("");
   const [selectedDestinationGroup, setSelectedDestinationGroup] = useState("");
 
@@ -138,14 +149,149 @@ function ControlCenterView() {
 
   const onDestinationGroupSelect = useCallback(
     (groupId: string) => {
-      setLayoutInitialized(false);
-      if (selectedDestinationGroup == groupId) {
-        setSelectedDestinationGroup("");
-      } else {
-        setSelectedDestinationGroup(groupId);
+      const isTogglingSameGroup = selectedDestinationGroup === groupId;
+      const newSelectedGroup = isTogglingSameGroup ? "" : groupId;
+
+      setSelectedDestinationGroup(newSelectedGroup);
+
+      if (
+        currentView !== FlowView.PEERS &&
+        currentView !== FlowView.GROUPS &&
+        currentView !== FlowView.USERS
+      ) {
+        setLayoutInitialized(false);
+        return;
       }
+
+      const getPeersAndResources = (groupId: string) => {
+        const resources =
+          networkResources?.filter((n) => {
+            const resourceGroupIds =
+              n.groups?.map((g) => (g as Group)?.id) || [];
+            return resourceGroupIds.includes(groupId);
+          }) || [];
+
+        const groupPeers =
+          peers?.filter((p) => {
+            const peerGroupIds = p.groups?.map((g) => g.id) || [];
+            return peerGroupIds.includes(groupId);
+          }) || [];
+
+        return { resources, peers: groupPeers };
+      };
+
+      const addExpandedNodes = (groupId: string, baseNodes: Node[]) => {
+        const { resources, peers } = getPeersAndResources(groupId);
+        const destinationGroupNode = baseNodes.find(
+          (node) => node.id === `group-${groupId}`,
+        );
+
+        if (!destinationGroupNode) return [];
+
+        const baseX = destinationGroupNode.position.x + 300;
+        const groupCenterY = destinationGroupNode.position.y;
+        const nodeSpacing = 80;
+        const totalNodes = peers.length + resources.length;
+        const totalHeight = (totalNodes - 1) * nodeSpacing;
+        const startY = groupCenterY - totalHeight / 2;
+
+        const newNodes: Node[] = [];
+        let currentY = startY;
+
+        // Add peer nodes
+        peers.forEach((peer) => {
+          newNodes.push({
+            id: `peer-${peer.id}`,
+            type:
+              currentView === FlowView.PEERS ? "expandedGroupPeer" : "peerNode",
+            data: { peer },
+            position: { x: baseX, y: currentY },
+          });
+          currentY += nodeSpacing;
+        });
+
+        // Add resource nodes
+        resources.forEach((resource) => {
+          newNodes.push({
+            id: `resource-${resource.id}`,
+            type: "resourceNode",
+            data: { resource },
+            position: { x: baseX, y: currentY },
+          });
+          currentY += nodeSpacing;
+        });
+
+        return newNodes;
+      };
+
+      const addExpandedEdges = (groupId: string) => {
+        const { resources, peers } = getPeersAndResources(groupId);
+        const newEdges: Edge[] = [];
+
+        // Add peer edges
+        peers.forEach((peer) => {
+          newEdges.push({
+            id: `group-peer-${groupId}-${peer.id}`,
+            source: `group-${groupId}`,
+            target: `peer-${peer.id}`,
+            type: "simple",
+            data: { enabled: true },
+          });
+        });
+
+        // Add resource edges
+        resources.forEach((resource) => {
+          newEdges.push({
+            id: `group-resource-${groupId}-${resource.id}`,
+            source: `group-${groupId}`,
+            target: `resource-${resource.id}`,
+            type: "simple",
+            data: { enabled: true },
+          });
+        });
+
+        return newEdges;
+      };
+
+      // Update nodes
+      setNodes((prevNodes) => {
+        // Remove previous nodes
+        const baseNodes = prevNodes.filter(
+          (node) =>
+            !node.id.startsWith(`peer-`) && !node.id.startsWith(`resource-`),
+        );
+        // If toggling a new group, add its nodes
+        if (!isTogglingSameGroup) {
+          const expandedNodes = addExpandedNodes(groupId, baseNodes);
+          return [...baseNodes, ...expandedNodes];
+        }
+        return baseNodes;
+      });
+
+      // Update edges
+      setEdges((prevEdges) => {
+        // Remove all previously expanded peer/resource edges
+        const baseEdges = prevEdges.filter(
+          (edge) =>
+            !edge.id.includes(`group-peer-`) &&
+            !edge.id.includes(`group-resource-`),
+        );
+        // If expanding a new group, add its edges
+        if (!isTogglingSameGroup) {
+          const expandedEdges = addExpandedEdges(groupId);
+          return [...baseEdges, ...expandedEdges];
+        }
+        return baseEdges;
+      });
     },
-    [selectedDestinationGroup],
+    [
+      selectedDestinationGroup,
+      currentView,
+      setNodes,
+      setEdges,
+      networkResources,
+      peers,
+    ],
   );
 
   const applySingleGroupView = (groupId: string) => {
@@ -211,7 +357,6 @@ function ControlCenterView() {
             type: "destinationGroupNode",
             data: {
               group: destination,
-              enabled,
             },
             position: { x: 0, y: 0 },
           });
@@ -235,7 +380,7 @@ function ControlCenterView() {
                 allNodes.push({
                   id: peerNodeId,
                   type: "peerNode",
-                  data: { peer, enabled },
+                  data: { peer },
                   position: { x: 0, y: 0 },
                 });
               } else {
@@ -281,7 +426,7 @@ function ControlCenterView() {
                 allNodes.push({
                   id: resourceNodeId,
                   type: "resourceNode",
-                  data: { resource, enabled },
+                  data: { resource },
                   position: { x: 0, y: 0 },
                 });
               } else {
@@ -356,6 +501,9 @@ function ControlCenterView() {
           });
         }
       });
+
+      // Add destination resource nodes
+      addDestinationResourceNodes(policy, allNodes, allEdges);
     });
 
     return applyD3HierarchicalLayout(allNodes, allEdges, 400, 120, "group", {
@@ -645,7 +793,6 @@ function ControlCenterView() {
     if (!groups || isGroupsLoading) return;
     if (!networks || isNetworksLoading) return;
     if (!networkResources || isResourcesLoading) return;
-    if (layoutInitialized) return;
 
     const allNodes: Node[] = [];
     const allEdges: Edge[] = [];
@@ -704,7 +851,6 @@ function ControlCenterView() {
             type: "destinationGroupNode",
             data: {
               group: destination,
-              enabled,
             },
             position: { x: 0, y: 0 },
           });
@@ -848,9 +994,289 @@ function ControlCenterView() {
           });
         }
       });
+
+      // Add destination resource nodes
+      addDestinationResourceNodes(policy, allNodes, allEdges);
     });
 
     return applyD3HierarchicalLayout(allNodes, allEdges, 400, 120, "peer", {
+      policy: { width: 500, spacing: 60 },
+      destinationGroup: { width: 1000, spacing: 100 },
+      peersAndResources: { width: 1400, spacing: 80 },
+    });
+  };
+
+  const addDestinationResourceNodes = (
+    policy: Policy,
+    nodes: Node[],
+    edges: Edge[],
+  ) => {
+    const destinationPolicyResource = policy?.rules?.[0].destinationResource;
+    const enabled = policy.enabled;
+
+    if (destinationPolicyResource) {
+      const type = destinationPolicyResource.type;
+      const peer = peers?.find((p) => p.id === destinationPolicyResource.id);
+      const resource = networkResources?.find(
+        (r) => r.id === destinationPolicyResource.id,
+      );
+      const nodeId = `destination-resource-${destinationPolicyResource.id}`;
+      const nodeExists = nodes.some((n) => n.id === nodeId);
+      if (!nodeExists) {
+        if (type === "peer" && peer) {
+          nodes.push({
+            id: nodeId,
+            type: "destinationResourceNode",
+            data: {
+              peer: peer,
+              enabled,
+              className: "pl-3",
+            },
+            position: { x: 0, y: 0 },
+          });
+        } else if (resource) {
+          nodes.push({
+            id: nodeId,
+            type: "destinationResourceNode",
+            data: {
+              resource: resource,
+              enabled,
+              className: "pl-3",
+            },
+            position: { x: 0, y: 0 },
+          });
+        }
+      } else {
+        nodes.forEach((n) => {
+          if (n.id === nodeId) {
+            n.data = {
+              ...n.data,
+              enabled,
+            };
+          }
+        });
+      }
+
+      const edgeExists = edges.some(
+        (e) => e.id === `policy-dest-resource-${policy.id}-${nodeId}`,
+      );
+      if (!edgeExists) {
+        edges.push({
+          id: `policy-dest-resource-${policy.id}-${nodeId}`,
+          source: `policy-${policy.id}`,
+          target: nodeId,
+          type: "in",
+          data: { enabled, type: "bezier" },
+        });
+      }
+    }
+  };
+
+  const applyUserView = (userId: string) => {
+    if (!policies || isLoading) return;
+    if (!groups || isGroupsLoading) return;
+    if (!networks || isNetworksLoading) return;
+    if (!networkResources || isResourcesLoading) return;
+
+    const allNodes: Node[] = [];
+    const allEdges: Edge[] = [];
+
+    // Get all peers for this user
+    const userPeers = peers?.filter((p) => p.user_id === userId) || [];
+    if (userPeers.length === 0) {
+      return applyD3HierarchicalLayout([], [], 400, 120, "user", {
+        policy: { width: 500, spacing: 60 },
+        destinationGroup: { width: 1000, spacing: 100 },
+        peersAndResources: { width: 1400, spacing: 80 },
+      });
+    }
+
+    // Add peer nodes
+    userPeers.forEach((peer, index) => {
+      allNodes.push({
+        id: `source-peer-${peer.id}`,
+        type: "sourcePeerNode",
+        data: {
+          peer,
+          enabled: true,
+          onClick: () => {
+            setPreviousSelectedUser(userId);
+            forceSinglePeerView(peer.id || "", userId);
+          },
+        },
+        position: { x: 0, y: 0 },
+      });
+
+      allEdges.push({
+        id: `user-peer-${userId}-${peer.id}`,
+        source: `select-user-node`,
+        target: `source-peer-${peer.id}`,
+        type: "simple",
+        data: { enabled: true },
+      });
+    });
+
+    const allUserGroups = [
+      ...new Set(userPeers.flatMap((p) => p.groups?.map((g) => g.id) || [])),
+    ];
+    const userPolicies = sortBy(
+      policies?.filter((p) => {
+        const rule = p.rules?.[0];
+        if (!rule) return false;
+        const sources = rule.sources as Group[];
+        return sources?.some((d) => allUserGroups.includes(d.id));
+      }),
+      "enabled",
+      "desc",
+    );
+
+    // Add policies and their connections
+    userPolicies?.forEach((policy, policyIndex) => {
+      const enabled = policy.enabled;
+      const policyNodeId = `policy-${policy.id}`;
+
+      allNodes.push({
+        id: policyNodeId,
+        type: "policyNode",
+        data: { policy },
+        position: { x: 600, y: policyIndex * 120 },
+      });
+
+      // Add peer to policy edges
+      const rule = policy.rules?.[0];
+      const sourcesIds = (rule?.sources as Group[])?.map((g) => g.id) || [];
+
+      userPeers.forEach((peer) => {
+        const peerGroupIds = peer.groups?.map((g) => g.id) || [];
+        const hasSharedGroup = sourcesIds.some((sourceId) =>
+          peerGroupIds.includes(sourceId),
+        );
+
+        if (hasSharedGroup) {
+          allEdges.push({
+            id: `peer-policy-${peer.id}-${policy.id}`,
+            source: `source-peer-${peer.id}`,
+            target: policyNodeId,
+            type: "in",
+            data: { enabled, type: "bezier" },
+          });
+        }
+      });
+
+      // Add destination groups
+      const destinations = (rule?.destinations as Group[]) || [];
+      destinations.forEach((destination, destIndex) => {
+        const destinationNodeId = `group-${destination.id}`;
+        const destinationNodeExists = allNodes.some(
+          (n) => n.id === destinationNodeId,
+        );
+
+        if (!destinationNodeExists) {
+          allNodes.push({
+            id: destinationNodeId,
+            type: "destinationGroupNode",
+            data: {
+              group: destination,
+            },
+            position: { x: 900, y: policyIndex * 120 + destIndex * 60 },
+          });
+        }
+
+        const destinationEdgeExists = allEdges.some(
+          (e) => e.id === `policy-group-${policy.id}-${destination.id}`,
+        );
+        if (!destinationEdgeExists) {
+          allEdges.push({
+            id: `policy-group-${policy.id}-${destination.id}`,
+            source: policyNodeId,
+            target: destinationNodeId,
+            type: "in",
+            data: { enabled, type: "bezier" },
+          });
+        }
+
+        // Add expanded destination group content if selected
+        if (selectedDestinationGroup === destination.id) {
+          const resources = networkResources.filter((n) => {
+            const resourceGroupIds =
+              n.groups?.map((g) => (g as Group)?.id) || [];
+            return resourceGroupIds.includes(destination.id);
+          });
+
+          const destinationPeers = peers?.filter((p) => {
+            const peerGroupIds = p.groups?.map((g) => g.id) || [];
+            return peerGroupIds.includes(destination.id);
+          });
+
+          // Add peer nodes
+          destinationPeers?.forEach((peer, peerIndex) => {
+            const peerNodeId = `dest-peer-${peer.id}`;
+            const peerNodeExists = allNodes.some((n) => n.id === peerNodeId);
+            if (!peerNodeExists) {
+              allNodes.push({
+                id: peerNodeId,
+                type: "peerNode",
+                data: { peer },
+                position: { x: 1200, y: policyIndex * 120 + peerIndex * 80 },
+              });
+            }
+
+            const peerEdgeExists = allEdges.some(
+              (e) => e.id === `group-peer-${destination.id}-${peer.id}`,
+            );
+            if (!peerEdgeExists) {
+              allEdges.push({
+                id: `group-peer-${destination.id}-${peer.id}`,
+                source: destinationNodeId,
+                target: peerNodeId,
+                type: "simple",
+                data: { enabled },
+              });
+            }
+          });
+
+          // Add resource nodes
+          resources.forEach((resource, resourceIndex) => {
+            const resourceNodeId = `resource-${resource.id}`;
+            const resourceNodeExists = allNodes.some(
+              (n) => n.id === resourceNodeId,
+            );
+            if (!resourceNodeExists) {
+              allNodes.push({
+                id: resourceNodeId,
+                type: "resourceNode",
+                data: { resource },
+                position: {
+                  x: 1200,
+                  y:
+                    policyIndex * 120 +
+                    (destinationPeers?.length || 0) * 80 +
+                    resourceIndex * 80,
+                },
+              });
+            }
+
+            const resourceEdgeExists = allEdges.some(
+              (e) => e.id === `group-resource-${destination.id}-${resource.id}`,
+            );
+            if (!resourceEdgeExists) {
+              allEdges.push({
+                id: `group-resource-${destination.id}-${resource.id}`,
+                source: destinationNodeId,
+                target: resourceNodeId,
+                type: "simple",
+                data: { enabled },
+              });
+            }
+          });
+        }
+      });
+
+      // Add destination resource nodes
+      addDestinationResourceNodes(policy, allNodes, allEdges);
+    });
+
+    return applyD3HierarchicalLayout(allNodes, allEdges, 400, 120, "user", {
       policy: { width: 500, spacing: 60 },
       destinationGroup: { width: 1000, spacing: 100 },
       peersAndResources: { width: 1400, spacing: 80 },
@@ -863,7 +1289,7 @@ function ControlCenterView() {
         nodes: newNodes ?? nodes,
         padding: 0.1,
         duration: 750,
-        maxZoom: DEFAULT_MAX_ZOOM,
+        maxZoom: 0.8,
         minZoom: DEFAULT_MIN_ZOOM,
       }),
     );
@@ -903,6 +1329,76 @@ function ControlCenterView() {
     });
   };
 
+  const handlePeerChange = (newPeerId: string) => {
+    setNodes((prev) => {
+      const shouldRecalculate = selectedPeer !== newPeerId;
+      shouldRecalculate && setSelectedPeer(newPeerId);
+
+      let selectPeerNode;
+      const previousNodes = prev.map((node) => {
+        if (node.id === `select-peer-node`) {
+          selectPeerNode = shouldRecalculate
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  currentPeer: newPeerId,
+                },
+              }
+            : node;
+          return selectPeerNode;
+        }
+        return node;
+      });
+      const result = applyPeerView(newPeerId);
+      if (result && selectPeerNode) {
+        let nodesWithCurrentPeer = result.updatedNodes;
+        nodesWithCurrentPeer.push(selectPeerNode);
+        setEdges(result.updatedEdges);
+        setLayoutInitialized(true);
+        shouldRecalculate && fitView(nodesWithCurrentPeer);
+        return nodesWithCurrentPeer;
+      } else {
+        return previousNodes;
+      }
+    });
+  };
+
+  const handleUserChange = (newUserId: string) => {
+    setNodes((prev) => {
+      const shouldRecalculate = selectedUser !== newUserId;
+      shouldRecalculate && setSelectedUser(newUserId);
+
+      let selectUserNode;
+      const previousNodes = prev.map((node) => {
+        if (node.id === `select-user-node`) {
+          selectUserNode = shouldRecalculate
+            ? {
+                ...node,
+                data: {
+                  ...node.data,
+                  currentUser: newUserId,
+                },
+              }
+            : node;
+          return selectUserNode;
+        }
+        return node;
+      });
+      const result = applyUserView(newUserId);
+      if (result && selectUserNode) {
+        let nodesWithCurrentUser = result.updatedNodes;
+        nodesWithCurrentUser.push(selectUserNode);
+        setEdges(result.updatedEdges);
+        setLayoutInitialized(true);
+        shouldRecalculate && fitView(nodesWithCurrentUser);
+        return nodesWithCurrentUser;
+      } else {
+        return previousNodes;
+      }
+    });
+  };
+
   const forceSingleGroupView = (groupId: string) => {
     setSelectedGroup(groupId);
     setSelectedNetwork("");
@@ -928,54 +1424,76 @@ function ControlCenterView() {
     }
   };
 
+  const forceSingleUserView = (userId: string) => {
+    setSelectedPeer("");
+    setSelectedUser("");
+    setPreviousSelectedUser("");
+    setCurrentView(FlowView.USERS);
+
+    const selectUserNode = {
+      id: `select-user-node`,
+      type: "selectUserNode",
+      position: { x: -550, y: 0 },
+      data: {
+        currentUser: userId,
+        onUserChange: handleUserChange,
+      },
+    };
+
+    setNodes([selectUserNode]);
+
+    const result = applyUserView(userId);
+    if (result) {
+      let nodesWithUser = result.updatedNodes;
+      nodesWithUser.push(selectUserNode);
+      setEdges(result.updatedEdges);
+      setNodes(nodesWithUser);
+      setLayoutInitialized(true);
+      fitView(nodesWithUser);
+    }
+  };
+
+  const forceSinglePeerView = (peerId: string, userId?: string) => {
+    setSelectedPeer(peerId);
+    setSelectedNetwork("");
+    setSelectedUser("");
+    setCurrentView(FlowView.PEERS);
+    const selectPeerNode = {
+      id: `select-peer-node`,
+      type: "selectPeerNode",
+      position: { x: 0, y: 0 },
+      data: {
+        currentPeer: peerId,
+        onPeerChange: handlePeerChange,
+        userId: userId,
+        placeholder: "Search peers of user...",
+      },
+    };
+    setNodes([selectPeerNode]);
+    const result = applyPeerView(peerId);
+    if (result) {
+      let nodesWithCurrentPeer = result.updatedNodes;
+      nodesWithCurrentPeer.push(selectPeerNode);
+      setEdges(result.updatedEdges);
+      setNodes(nodesWithCurrentPeer);
+      setLayoutInitialized(true);
+      fitView(nodesWithCurrentPeer);
+    }
+  };
+
   useEffect(() => {
     if (isLoading) return;
     if (layoutInitialized) return;
 
     switch (currentView) {
       case FlowView.PEERS:
-        if (peers?.length === 0) {
+        if (!peers || peers.length === 0) {
           setEdges([]);
           setNodes([]);
           setLayoutInitialized(true);
           fitView([]);
           return;
         }
-
-        const handlePeerChange = (newPeerId: string) => {
-          setNodes((prev) => {
-            const shouldRecalculate = selectedPeer !== newPeerId;
-            shouldRecalculate && setSelectedPeer(newPeerId);
-
-            let selectPeerNode;
-            const previousNodes = prev.map((node) => {
-              if (node.id === `select-peer-node`) {
-                selectPeerNode = shouldRecalculate
-                  ? {
-                      ...node,
-                      data: {
-                        ...node.data,
-                        currentPeer: newPeerId,
-                      },
-                    }
-                  : node;
-                return selectPeerNode;
-              }
-              return node;
-            });
-            const result = applyPeerView(newPeerId);
-            if (result && selectPeerNode) {
-              let nodesWithCurrentPeer = result.updatedNodes;
-              nodesWithCurrentPeer.push(selectPeerNode);
-              setEdges(result.updatedEdges);
-              setLayoutInitialized(true);
-              shouldRecalculate && fitView(nodesWithCurrentPeer);
-              return nodesWithCurrentPeer;
-            } else {
-              return previousNodes;
-            }
-          });
-        };
 
         if (selectedPeer === "") {
           const userPeer = peers?.find((p) => p.user_id === loggedInUser?.id);
@@ -996,6 +1514,50 @@ function ControlCenterView() {
         } else {
           resetView();
           handlePeerChange(selectedPeer);
+        }
+
+        break;
+      case FlowView.USERS:
+        if (!users || users.length === 0) {
+          setEdges([]);
+          setNodes([]);
+          setLayoutInitialized(true);
+          fitView([]);
+          return;
+        }
+
+        if (selectedUser === "") {
+          let initialUser = users?.find((u) => u.id === loggedInUser?.id);
+
+          if (
+            !initialUser ||
+            !peers?.some((p) => p.user_id === initialUser?.id)
+          ) {
+            initialUser = users?.find(
+              (u) => peers?.some((p) => p.user_id === u.id),
+            );
+          }
+
+          if (!initialUser) {
+            initialUser = users?.[0];
+          }
+
+          const initialUserId = initialUser?.id ?? "";
+          setNodes([
+            {
+              id: `select-user-node`,
+              type: "selectUserNode",
+              position: { x: -550, y: 0 },
+              data: {
+                currentUser: initialUserId,
+                onUserChange: handleUserChange,
+              },
+            },
+          ]);
+          if (initialUserId !== "") handleUserChange(initialUserId);
+        } else {
+          resetView();
+          handleUserChange(selectedUser);
         }
 
         break;
@@ -1023,7 +1585,7 @@ function ControlCenterView() {
         }
         break;
       case FlowView.NETWORKS:
-        if (networks?.length === 0) {
+        if (!networks || networks.length === 0) {
           setEdges([]);
           setNodes([]);
           setLayoutInitialized(true);
@@ -1051,6 +1613,7 @@ function ControlCenterView() {
     selectedNetwork,
     selectedPeer,
     selectedGroup,
+    selectedUser,
     isLoading,
     layoutInitialized,
   ]);
@@ -1077,6 +1640,7 @@ function ControlCenterView() {
     setSelectedPeer("");
     setSelectedGroup("");
     setSelectedNetwork("");
+    setSelectedUser("");
     setCurrentView(view);
 
     try {
@@ -1108,7 +1672,11 @@ function ControlCenterView() {
       if (networkId && currentView === FlowView.NETWORKS) {
         onNetworkSelect(networkId);
       }
-      if (currentView === FlowView.PEERS || currentView === FlowView.GROUPS) {
+      if (
+        currentView === FlowView.PEERS ||
+        currentView === FlowView.GROUPS ||
+        currentView === FlowView.USERS
+      ) {
         groupId && onGroupSelect(groupId);
         destinationGroupId && onDestinationGroupSelect(destinationGroupId);
       }
@@ -1206,10 +1774,6 @@ function ControlCenterView() {
         <div className={"absolute left-0 top-0 z-10"}>
           <div className={"flex justify-between px-6 py-4 text-sm w-full"}>
             <div className={"flex gap-4"}>
-              {selectedNetwork === "" && (
-                <FlowSelector value={currentView} onChange={onViewChange} />
-              )}
-
               {selectedNetwork !== "" && (
                 <Button
                   variant={"secondary"}
@@ -1219,6 +1783,28 @@ function ControlCenterView() {
                 >
                   <ArrowLeftIcon size={14} />
                 </Button>
+              )}
+
+              {previousSelectedUser !== "" && (
+                <>
+                  <Button
+                    variant={"secondary"}
+                    size={"xs"}
+                    className={"!bg-nb-gray-930"}
+                    onClick={() => {
+                      forceSingleUserView(previousSelectedUser);
+                    }}
+                  >
+                    <ArrowLeftIcon size={14} />
+                  </Button>
+                  <ControlCenterCurrentUserBadge
+                    userId={previousSelectedUser}
+                  />
+                </>
+              )}
+
+              {selectedNetwork === "" && previousSelectedUser === "" && (
+                <FlowSelector value={currentView} onChange={onViewChange} />
               )}
 
               {currentView === "networks" && (
@@ -1270,6 +1856,8 @@ function ControlCenterView() {
           <ReactFlow
             edges={edges}
             nodes={nodes}
+            onNodesChange={onNodesChange}
+            onEdgesChange={onEdgesChange}
             proOptions={{
               hideAttribution: true,
             }}

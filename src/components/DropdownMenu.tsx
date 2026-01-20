@@ -81,7 +81,7 @@ const menuItemVariants = cva("", {
   variants: {
     variant: {
       default:
-        "dark:focus:bg-nb-gray-900 dark:focus:text-gray-50 dark:text-gray-400 dark:data-[state=open]:bg-nb-gray-900 dark:data-[state=open]:text-gray-50",
+        "dark:focus:bg-nb-gray-900 dark:focus:text-gray-50 dark:text-nb-gray-300 dark:data-[state=open]:bg-nb-gray-900 dark:data-[state=open]:text-gray-50",
       danger:
         "dark:focus:bg-red-900/20 dark:focus:text-red-500 dark:text-red-500",
     },
@@ -93,25 +93,53 @@ const DropdownMenuItem = React.forwardRef<
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean;
     variant?: "default" | "danger";
+    href?: string;
+    target?: string;
+    rel?: string;
   }
->(({ className, inset, variant = "default", onClick, ...props }, ref) => (
-  <DropdownMenuPrimitive.Item
-    ref={ref}
-    className={cn(
-      "relative flex select-none items-center rounded-md pr-2 pl-3 py-1.5 text-sm outline-none",
-      "transition-colors focus:bg-gray-100 focus:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50  cursor-pointer ",
-      inset && "pl-8",
-      menuItemVariants({ variant }),
+>(
+  (
+    {
       className,
-    )}
-    onClick={(e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      onClick && onClick(e);
-    }}
-    {...props}
-  />
-));
+      inset,
+      variant = "default",
+      onClick,
+      href,
+      target,
+      rel,
+      ...props
+    },
+    ref,
+  ) => {
+    return (
+      <DropdownMenuPrimitive.Item
+        ref={ref}
+        className={cn(
+          "relative flex select-none items-center rounded-md pr-2 pl-3 py-1.5 text-sm outline-none",
+          "transition-colors focus:bg-gray-100 focus:text-gray-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50  cursor-pointer ",
+          inset && "pl-8",
+          menuItemVariants({ variant }),
+          className,
+        )}
+        onClick={(e) => {
+          if (href) return;
+          e.preventDefault();
+          e.stopPropagation();
+          onClick && onClick(e);
+        }}
+        {...props}
+      >
+        {href ? (
+          <a href={href} target={target} rel={rel}>
+            {props.children}
+          </a>
+        ) : (
+          props.children
+        )}
+      </DropdownMenuPrimitive.Item>
+    );
+  },
+);
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
 
 const DropdownMenuCheckboxItem = React.forwardRef<

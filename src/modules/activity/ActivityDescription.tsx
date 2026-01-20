@@ -203,6 +203,14 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  if (event.activity_code == "user.create")
+    return (
+      <div className={"inline"}>
+        <Value>{event.meta.username}</Value> <Value>{event.meta.email}</Value>{" "}
+        was created by <Value>{event?.initiator_name || "NetBird"}</Value>
+      </div>
+    );
+
   if (event.activity_code == "user.group.add")
     return (
       <div className={"inline"}>
@@ -266,6 +274,14 @@ export default function ActivityDescription({ event }: Props) {
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
         <Value>{event.meta.email}</Value> was rejected
+      </div>
+    );
+
+  if (event.activity_code == "user.password.change")
+    return (
+      <div className={"inline"}>
+        Password was changed for user <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value>
       </div>
     );
 
@@ -388,6 +404,14 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         Group <Value>{event.meta.name}</Value> was deleted
+      </div>
+    );
+
+  if (event.activity_code == "group.update")
+    return (
+      <div className={"inline"}>
+        Group <Value>{event.meta.old_name}</Value> was renamed to{" "}
+        <Value>{event.meta.new_name}</Value>
       </div>
     );
 
@@ -698,6 +722,31 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         Limit traffic event group <Value>{m.group_name}</Value> added
+      </div>
+    );
+
+  /**
+   * Identity Provider
+   */
+
+  if (event.activity_code == "identityprovider.create")
+    return (
+      <div className={"inline"}>
+        Identity provider <Value>{m.name}</Value> was created
+      </div>
+    );
+
+  if (event.activity_code == "identityprovider.update")
+    return (
+      <div className={"inline"}>
+        Identity provider <Value>{m.name}</Value> was updated
+      </div>
+    );
+
+  if (event.activity_code == "identityprovider.delete")
+    return (
+      <div className={"inline"}>
+        Identity provider <Value>{m.name}</Value> was deleted
       </div>
     );
 

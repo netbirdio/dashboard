@@ -243,3 +243,17 @@ export const getBrowserInfo = () => {
     return { name, version };
   }
 };
+
+export const singularize = (
+  word: string,
+  count?: number,
+  showZero?: boolean,
+) => {
+  if (!count) return showZero ? `0 ${word}` : word;
+  if (word.endsWith("ies") && count === 1) {
+    return count + " " + word.slice(0, -3) + "y";
+  } else if (word.endsWith("s") && count === 1) {
+    return count + " " + word.slice(0, -1);
+  }
+  return count + " " + word;
+};

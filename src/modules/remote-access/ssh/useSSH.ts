@@ -24,6 +24,8 @@ export enum SSHStatus {
 export const SSH_DOCS_LINK =
   "https://docs.netbird.io/how-to/browser-client#ssh-connection";
 
+const SSH_DETECTION_TIMEOUT_MS = 20000;
+
 export const useSSH = (client: any) => {
   const [status, setStatus] = useState(SSHStatus.DISCONNECTED);
   const [config, setConfig] = useState<SSHConfig | null>(null);
@@ -38,12 +40,37 @@ export const useSSH = (client: any) => {
 
       setStatus(SSHStatus.CONNECTING);
       setConfig(config);
+      setError("");
 
       try {
+        let requiresJwt = false;
+        try {
+          requiresJwt = await client.detectSSHServerType(
+            config.hostname,
+            config.port,
+            SSH_DETECTION_TIMEOUT_MS,
+          );
+          console.log("Detection:", { requiresJwt, hasToken: !!accessToken });
+        } catch (detectionErr) {
+          console.error(
+            "Detection failed, falling back to pubkey:",
+            detectionErr,
+          );
+        }
+
+        if (requiresJwt && !accessToken) {
+          console.error("No access token available");
+          setError("No access token available");
+          setStatus(SSHStatus.DISCONNECTED);
+          setConfig(null);
+          return SSHStatus.DISCONNECTED;
+        }
+
         const ssh = await client.createSSHConnection(
           config.hostname,
           config.port,
           config.username,
+          requiresJwt ? accessToken : undefined,
         );
 
         ssh.onclose = () => {
@@ -57,7 +84,7 @@ export const useSSH = (client: any) => {
         setStatus(SSHStatus.CONNECTED);
         return SSHStatus.CONNECTED;
       } catch (err) {
-        console.error("SSH connection failed:", err);
+        console.error("Connection failed:", err);
         session.current = null;
         setStatus(SSHStatus.DISCONNECTED);
         setError("SSH connection failed. Check the console for details.");
@@ -65,7 +92,7 @@ export const useSSH = (client: any) => {
         return SSHStatus.DISCONNECTED;
       }
     },
-    [client, status],
+    [client, status, accessToken],
   );
 
   const disconnect = useCallback(() => {

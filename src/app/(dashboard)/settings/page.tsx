@@ -4,6 +4,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { VerticalTabs } from "@components/VerticalTabs";
 import {
   AlertOctagonIcon,
+  FingerprintIcon,
   FolderGit2Icon,
   LockIcon,
   MonitorSmartphoneIcon,
@@ -19,9 +20,10 @@ import { useAccount } from "@/modules/account/useAccount";
 import AuthenticationTab from "@/modules/settings/AuthenticationTab";
 import ClientSettingsTab from "@/modules/settings/ClientSettingsTab";
 import DangerZoneTab from "@/modules/settings/DangerZoneTab";
-import GroupsTab from "@/modules/settings/GroupsTab";
+import IdentityProvidersTab from "@/modules/settings/IdentityProvidersTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
+import GroupsSettings from "@/modules/settings/GroupsSettings";
 
 export default function NetBirdSettings() {
   const queryParams = useSearchParams();
@@ -53,6 +55,13 @@ export default function NetBirdSettings() {
                 <ShieldIcon size={14} />
                 Authentication
               </VerticalTabs.Trigger>
+              {account?.settings?.embedded_idp_enabled &&
+                permission.identity_providers.read && (
+                  <VerticalTabs.Trigger value="identity-providers">
+                    <FingerprintIcon size={14} />
+                    Identity Providers
+                  </VerticalTabs.Trigger>
+                )}
               <VerticalTabs.Trigger value="groups">
                 <FolderGit2Icon size={14} />
                 Groups
@@ -80,8 +89,10 @@ export default function NetBirdSettings() {
         >
           <div className={"border-l border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
+            {account?.settings?.embedded_idp_enabled &&
+              permission.identity_providers.read && <IdentityProvidersTab />}
             {account && <PermissionsTab account={account} />}
-            {account && <GroupsTab account={account} />}
+            {account && <GroupsSettings account={account} />}
             {account && <NetworkSettingsTab account={account} />}
             {account && <ClientSettingsTab account={account} />}
             {account && <DangerZoneTab account={account} />}

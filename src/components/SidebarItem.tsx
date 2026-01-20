@@ -79,6 +79,7 @@ export default function SidebarItem({
                 : "text-gray-600 hover:bg-gray-200 dark:text-nb-gray-400 dark:hover:bg-nb-gray-900/50",
             )}
             onClick={handleClick}
+            data-cy={"left-navigation-item"}
           >
             {isChild && isNavigationCollapsed && !mobileNavOpen && (
               <div

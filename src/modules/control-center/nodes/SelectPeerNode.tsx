@@ -17,6 +17,8 @@ type PeerNodeProps = Node<
   {
     currentPeer: string;
     onPeerChange: (peerId: string) => void;
+    userId?: string;
+    placeholder?: string;
   },
   "selectPeerNode"
 >;
@@ -25,10 +27,13 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
   const { data: peers, isLoading: isPeersLoading } =
     useFetchApi<Peer[]>("/peers");
 
+  const userId = data?.userId;
+
   const peerSelectOptions: SelectOption[] = sortBy(
-    peers?.map(
-      (p) =>
-        ({
+    peers
+      ?.filter((p) => !userId || p.user_id === userId)
+      .map((p) => {
+        return {
           value: p.id,
           label: p.name,
           icon: () => {
@@ -47,9 +52,9 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
               </div>
             );
           },
-        }) as SelectOption,
-    ) || [],
-    "label",
+        } as SelectOption;
+      }) || [],
+    ["label", "value"],
     "asc",
   );
 
@@ -67,7 +72,7 @@ export const SelectPeerNode = ({ data, id }: PeerNodeProps) => {
         onChange={data.onPeerChange}
         options={peerSelectOptions}
         showSearch={true}
-        searchPlaceholder={"Search peers..."}
+        searchPlaceholder={data?.placeholder ?? "Search peers..."}
         popoverWidth={280}
         className={"!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300"}
         size={"xs"}

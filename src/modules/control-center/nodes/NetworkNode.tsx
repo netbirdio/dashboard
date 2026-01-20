@@ -4,8 +4,8 @@ import { Handle, type Node, Position } from "@xyflow/react";
 import { NetworkIcon } from "lucide-react";
 import * as React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
-import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 import { Network, NetworkResource } from "@/interfaces/Network";
+import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
 
 type NetworkNodeType = {
   network: Network;
@@ -14,13 +14,13 @@ type NetworkNodeType = {
 type NetworkNodeProps = Node<NetworkNodeType, "networkNode">;
 
 export const NetworkNode = ({ data }: NetworkNodeProps) => {
-  const { data: networkResources, isLoading: isLoadingResources } = useFetchApi<
-    NetworkResource[]
-  >("/networks/resources");
+  const { data: networkResources } = useFetchApi<NetworkResource[]>(
+    "/networks/resources",
+  );
 
   const n = data.network as Network;
+  const routingPeersCount = n?.routing_peers_count ?? 0;
   const resourceIds = n?.resources || [];
-  const routingPeers = n?.routers || [];
   const resources =
     networkResources?.filter((r) => resourceIds.includes(r?.id || "")) || [];
 
@@ -56,12 +56,12 @@ export const NetworkNode = ({ data }: NetworkNodeProps) => {
             size={8}
             className={cn(
               "shrink-0 block",
-              routingPeers?.length === 0 && "bg-nb-gray-500",
-              routingPeers?.length === 1 && "bg-yellow-400",
-              routingPeers?.length > 1 && "bg-green-400",
+              routingPeersCount === 0 && "bg-nb-gray-500",
+              routingPeersCount === 1 && "bg-yellow-400",
+              routingPeersCount > 1 && "bg-green-400",
             )}
           />
-          {routingPeers?.length || 0} Routing Peer(s)
+          {routingPeersCount} Routing Peer(s)
         </div>
       </div>
 

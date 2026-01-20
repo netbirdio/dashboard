@@ -22,5 +22,13 @@ export interface Account {
     dns_domain: string;
     network_range?: string;
     lazy_connection_enabled: boolean;
+    embedded_idp_enabled?: boolean;
+    auto_update_version: string;
   };
+  onboarding?: AccountOnboarding;
+}
+
+export interface AccountOnboarding {
+  onboarding_flow_pending: boolean;
+  signup_form_pending: boolean;
 }

@@ -5,9 +5,9 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@components/Tooltip";
-import { orderBy } from "lodash";
 import React, { useMemo } from "react";
 import { Policy } from "@/interfaces/Policy";
+import { parsePortsToStrings } from "@/modules/access-control/useAccessControl";
 
 type Props = {
   policy: Policy;
@@ -23,19 +23,7 @@ export default function AccessControlPortsCell({ policy }: Readonly<Props>) {
   const hasPortRanges = rule?.port_ranges && rule?.port_ranges?.length > 0;
   const hasAnyPorts = hasPorts || hasPortRanges;
 
-  const allPorts = useMemo(() => {
-    const ports = rule?.ports ?? [];
-    const portRanges =
-      rule?.port_ranges?.map((r) => {
-        if (r.start === r.end) return `${r.start}`;
-        return `${r.start}-${r.end}`;
-      }) ?? [];
-    return orderBy(
-      [...portRanges, ...ports],
-      [(p) => Number(p.split("-")[0])],
-      ["asc"],
-    );
-  }, [rule]);
+  const allPorts = useMemo(() => parsePortsToStrings(rule), [rule]);
 
   const firstTwoPorts = useMemo(() => {
     return allPorts?.slice(0, 2) ?? [];

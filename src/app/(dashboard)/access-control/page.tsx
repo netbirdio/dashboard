@@ -33,7 +33,7 @@ export default function AccessControlPage() {
         <div className={"p-default py-6"}>
           <Breadcrumbs>
             <Breadcrumbs.Item
-              href={"/policies"}
+              href={"/access-control"}
               label={"Access Control"}
               icon={<AccessControlIcon size={14} />}
             />

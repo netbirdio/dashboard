@@ -39,17 +39,21 @@ import {
   Power,
   Share2,
   Shield,
+  SquareTerminalIcon,
   Text,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
-import { Policy, Protocol } from "@/interfaces/Policy";
+import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { useAccessControl } from "@/modules/access-control/useAccessControl";
 import { PostureCheckTab } from "@/modules/posture-checks/ui/PostureCheckTab";
 import { PostureCheckTabTrigger } from "@/modules/posture-checks/ui/PostureCheckTabTrigger";
+import { SSHAccessType } from "@/modules/access-control/ssh/SSHAccessType";
+import { SSHAuthorizedGroups } from "@/modules/access-control/ssh/SSHAuthorizedGroups";
+import { useUsers } from "@/contexts/UsersProvider";
 
 type Props = {
   children?: React.ReactNode;
@@ -116,6 +120,10 @@ type ModalProps = {
   postureCheckTemplates?: PostureCheck[];
   useSave?: boolean;
   allowEditPeers?: boolean;
+  initialProtocol?: Protocol;
+  initialPorts?: number[];
+  initialDestinationResource?: PolicyRuleResource;
+  initialTab?: string;
 };
 
 export function AccessControlModalContent({
@@ -128,8 +136,13 @@ export function AccessControlModalContent({
   initialDestinationGroups,
   initialName,
   initialDescription,
+  initialProtocol,
+  initialPorts,
+  initialDestinationResource,
+  initialTab,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
+  const { users } = useUsers();
 
   const {
     portDisabled,
@@ -163,6 +176,10 @@ export function AccessControlModalContent({
     portRanges,
     setPortRanges,
     hasPortSupport,
+    sshAccessType,
+    setSshAccessType,
+    sshAuthorizedGroups,
+    setSshAuthorizedGroups,
   } = useAccessControl({
     policy,
     postureCheckTemplates,
@@ -170,9 +187,13 @@ export function AccessControlModalContent({
     initialDestinationGroups,
     initialName,
     initialDescription,
+    initialPorts,
+    initialProtocol,
+    initialDestinationResource,
   });
 
   const [tab, setTab] = useState(() => {
+    if (initialTab && initialTab !== "") return initialTab;
     if (!cell) return "policy";
     if (cell == "posture_checks") return "posture_checks";
     return "policy";
@@ -239,10 +260,10 @@ export function AccessControlModalContent({
         <TabsContent value={"policy"} className={"pb-8"}>
           <div className={"px-8 flex-col flex gap-6"}>
             <div
-              className={"flex justify-between items-center"}
+              className={"flex justify-between items-center gap-10"}
               data-cy={"protocol-wrapper"}
             >
-              <div>
+              <div className={"w-full"}>
                 <Label>Protocol</Label>
                 <HelpText className={"max-w-sm"}>
                   Allow only specified network protocols. To change traffic
@@ -258,7 +279,7 @@ export function AccessControlModalContent({
                   !permission.policies.update || !permission.policies.create
                 }
               >
-                <SelectTrigger className="w-[140px]">
+                <SelectTrigger className="w-[280px]">
                   <div
                     className={"flex items-center gap-3"}
                     data-cy={"protocol-select-button"}
@@ -272,6 +293,7 @@ export function AccessControlModalContent({
                   <SelectItem value="tcp">TCP</SelectItem>
                   <SelectItem value="udp">UDP</SelectItem>
                   <SelectItem value="icmp">ICMP</SelectItem>
+                  <SelectItem value="netbird-ssh">NetBird SSH</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -286,14 +308,15 @@ export function AccessControlModalContent({
                   dataCy={"source-group-selector"}
                   popoverWidth={500}
                   placeholder={"Select source(s)..."}
-                  showRoutes={true}
+                  showRoutes={protocol !== "netbird-ssh"}
                   showResources={false}
-                  showPeers={true}
+                  showPeers={protocol !== "netbird-ssh"}
                   showResourceCounter={false}
                   showPeerCount={allowEditPeers}
                   disableInlineRemoveGroup={false}
                   values={sourceGroups}
                   onChange={setSourceGroups}
+                  users={protocol === "netbird-ssh" ? users : undefined}
                   resource={sourceResource}
                   onResourceChange={setSourceResource}
                   saveGroupAssignments={useSave}
@@ -306,6 +329,7 @@ export function AccessControlModalContent({
                 value={direction}
                 onChange={setDirection}
                 disabled={destinationOnlyResources}
+                protocol={protocol}
                 destinationResource={destinationResource}
               />
 
@@ -319,7 +343,7 @@ export function AccessControlModalContent({
                   popoverWidth={500}
                   placeholder={"Select destination(s)..."}
                   showRoutes={true}
-                  showResources={true}
+                  showResources={protocol !== "netbird-ssh"}
                   showPeers={true}
                   showResourceCounter={true}
                   showPeerCount={allowEditPeers}
@@ -354,33 +378,79 @@ export function AccessControlModalContent({
                 </Callout>
               )}
 
-            <div
-              className={cn(
-                "mb-2",
-                portDisabled && "opacity-30 pointer-events-none",
-              )}
-            >
+            {protocol === "netbird-ssh" ? (
               <div>
-                <Label className={"flex items-center gap-2"}>
-                  <Shield size={14} />
-                  Ports
-                </Label>
-                <HelpText>
-                  Allow network traffic and access only to specified ports.
-                  Select ports or port ranges between 1 and 65535.
-                </HelpText>
-              </div>
-              <div className={""}>
-                <PortSelector
-                  showAll={true}
-                  ports={ports}
-                  onPortsChange={setPorts}
-                  portRanges={portRanges}
-                  onPortRangesChange={setPortRanges}
-                  disabled={portDisabled}
+                {destinationHasResources && (
+                  <Callout
+                    variant={"warning"}
+                    icon={
+                      <AlertCircleIcon
+                        size={14}
+                        className={"shrink-0 relative top-[3px] text-netbird"}
+                      />
+                    }
+                    className="mb-6"
+                  >
+                    SSH access only works on peers, not on routed resources.
+                    Please ensure your destination groups contain peers for SSH
+                    connectivity.
+                  </Callout>
+                )}
+                <div
+                  className={"flex justify-between items-center gap-10 mt-2"}
+                >
+                  <div className={"w-full"}>
+                    <Label className={"flex items-center gap-2"}>
+                      <SquareTerminalIcon size={15} />
+                      SSH Access
+                    </Label>
+                    <HelpText>
+                      Select {`'Full Access'`} to allow SSH as any local user,
+                      or {`'Limited Access'`} to specify which local users each
+                      group is allowed to use.
+                    </HelpText>
+                  </div>
+                  <SSHAccessType
+                    value={sshAccessType}
+                    onChange={setSshAccessType}
+                  />
+                </div>
+                <SSHAuthorizedGroups
+                  sourceGroups={sourceGroups}
+                  authorizedGroups={sshAuthorizedGroups}
+                  setAuthorizedGroups={setSshAuthorizedGroups}
+                  accessType={sshAccessType}
                 />
               </div>
-            </div>
+            ) : (
+              <div
+                className={cn(
+                  "mb-2 mt-2",
+                  portDisabled && "opacity-30 pointer-events-none",
+                )}
+              >
+                <div>
+                  <Label className={"flex items-center gap-2"}>
+                    <Shield size={14} />
+                    Ports
+                  </Label>
+                  <HelpText>
+                    Allow network traffic and access only to specified ports.
+                    Select ports or port ranges between 1 and 65535.
+                  </HelpText>
+                </div>
+                <div className={""}>
+                  <PortSelector
+                    showAll={true}
+                    ports={ports}
+                    onPortsChange={setPorts}
+                    portRanges={portRanges}
+                    onPortRangesChange={setPortRanges}
+                    disabled={portDisabled}
+                  />
+                </div>
+              </div>
+            )}
 
             <FancyToggleSwitch
               value={enabled}

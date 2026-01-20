@@ -49,6 +49,7 @@ import React, { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useRoutes } from "@/contexts/RoutesProvider";
+import { Group } from "@/interfaces/Group";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { Policy } from "@/interfaces/Policy";
@@ -61,9 +62,15 @@ type Props = {
   children?: React.ReactNode;
   open?: boolean;
   setOpen?: (open: boolean) => void;
+  distributionGroups?: Group[];
 };
 
-export default function RouteModal({ children, open, setOpen }: Props) {
+export default function RouteModal({
+  children,
+  open,
+  setOpen,
+  distributionGroups,
+}: Props) {
   const { confirm } = useDialog();
   const router = useRouter();
   const [routePolicyModal, setRoutePolicyModal] = useState(false);
@@ -116,6 +123,7 @@ export default function RouteModal({ children, open, setOpen }: Props) {
               await handleCreatePolicyPrompt(r);
               setOpen?.(false);
             }}
+            distributionGroups={distributionGroups}
           />
         )}
       </Modal>
@@ -139,6 +147,7 @@ type ModalProps = {
   peer?: Peer;
   exitNode?: boolean;
   isFirstExitNode?: boolean;
+  distributionGroups?: Group[];
 };
 
 export function RouteModalContent({
@@ -146,6 +155,7 @@ export function RouteModalContent({
   peer,
   exitNode,
   isFirstExitNode = false,
+  distributionGroups,
 }: ModalProps) {
   const { createRoute } = useRoutes();
   const [tab, setTab] = useState(
@@ -207,7 +217,7 @@ export function RouteModalContent({
    * Distribution Groups
    */
   const [groups, setGroups, { getGroupsToUpdate }] = useGroupHelper({
-    initial: [],
+    initial: distributionGroups ?? [],
   });
 
   /**
@@ -721,17 +731,19 @@ export function RouteModalContent({
             />
 
             {exitNode && (
-                              <FancyToggleSwitch
-                  value={isForced}
-                  onChange={setIsForced}
-                  label={
-                    <>
-                      <IconDirectionSign size={15} />
-                      Auto Apply Route
-                    </>
-                  }
-                  helpText={"Automatically apply this exit node to your distribution groups. This requires NetBird client v0.55.0 or higher."}
-                />
+              <FancyToggleSwitch
+                value={isForced}
+                onChange={setIsForced}
+                label={
+                  <>
+                    <IconDirectionSign size={15} />
+                    Auto Apply Route
+                  </>
+                }
+                helpText={
+                  "Automatically apply this exit node to your distribution groups. This requires NetBird client v0.55.0 or higher."
+                }
+              />
             )}
 
             {!exitNode && (

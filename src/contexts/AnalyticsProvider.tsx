@@ -17,6 +17,12 @@ declare global {
   }
 }
 
+export type HubspotFormField = {
+  objectTypeId?: string;
+  name: string;
+  value: string;
+};
+
 const AnalyticsContext = React.createContext(
   {} as {
     initialized: boolean;

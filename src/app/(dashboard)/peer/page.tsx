@@ -26,10 +26,10 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
-import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
 import { isEmpty, trim } from "lodash";
 import {
+  ArrowRightIcon,
   Barcode,
   CalendarDays,
   Cpu,
@@ -61,12 +61,13 @@ import type { Peer } from "@/interfaces/Peer";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
-import { PeerExpirationToggle } from "@/modules/peer/PeerExpirationToggle";
 import { PeerNetworkRoutesSection } from "@/modules/peer/PeerNetworkRoutesSection";
 import { PeerRemoteJobsSection } from "@/modules/peer/PeerRemoteJobsSection";
 import { PeerSSHToggle } from "@/modules/peer/PeerSSHToggle";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
+import Link from "next/link";
+import { PeerExpirationSettings } from "@/modules/peer/PeerExpirationSettings";
 
 export default function PeerPage() {
   const queryParameter = useSearchParams();
@@ -79,12 +80,6 @@ export default function PeerPage() {
   } = useFetchApi<Peer>("/peers/" + peerId, true);
 
   useRedirect("/peers", false, !peerId || isRestricted);
-
-  const peerKey = useMemo(() => {
-    let id = peer?.id ?? "";
-    let expiration = peer?.login_expiration_enabled ? "1" : "0";
-    return `${id}-${expiration}`;
-  }, [peer]);
 
   if (isRestricted) {
     return (
@@ -106,7 +101,7 @@ export default function PeerPage() {
 
   return peer && !isLoading ? (
     <PeerProvider peer={peer} key={peerId} isPeerDetailPage={true}>
-      <PeerOverview key={peerKey} />
+      <PeerOverview key={peer?.id} />
     </PeerProvider>
   ) : (
     <FullScreenLoading />
@@ -142,15 +137,9 @@ const PeerGeneralInformation = () => {
   const { peer, user, peerGroups, update } = usePeer();
   const [name, setName] = useState(peer.name);
   const [showEditNameModal, setShowEditNameModal] = useState(false);
-  const [loginExpiration, setLoginExpiration] = useState(
-    peer.login_expiration_enabled,
-  );
-  const [inactivityExpiration, setInactivityExpiration] = useState(
-    peer.inactivity_expiration_enabled,
-  );
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
-      initial: peerGroups,
+      initial: peerGroups?.filter((g) => g?.name !== "All"),
       peer,
     });
 
@@ -159,8 +148,6 @@ const PeerGeneralInformation = () => {
    */
   const { hasChanges, updateRef: updateHasChangedRef } = useHasChanges([
     selectedGroups,
-    loginExpiration,
-    inactivityExpiration,
   ]);
 
   const updatePeer = async (newName?: string) => {
@@ -170,8 +157,6 @@ const PeerGeneralInformation = () => {
     if (permission.peers.update) {
       const updateRequest = update({
         name: newName ?? name,
-        loginExpiration,
-        inactivityExpiration,
       });
       batchCall = groupCalls ? [...groupCalls, updateRequest] : [updateRequest];
     } else {
@@ -184,11 +169,7 @@ const PeerGeneralInformation = () => {
       promise: Promise.all(batchCall).then(() => {
         mutate("/peers/" + peer.id);
         mutate("/groups");
-        updateHasChangedRef([
-          selectedGroups,
-          loginExpiration,
-          inactivityExpiration,
-        ]);
+        updateHasChangedRef([selectedGroups]);
       }),
       loadingMessage: "Saving the peer...",
     });
@@ -239,9 +220,21 @@ const PeerGeneralInformation = () => {
             </h1>
             <LoginExpiredBadge loginExpired={peer.login_expired} />
           </div>
-          <div className={"flex items-center gap-8"}>
-            <Paragraph className={"flex items-center"}>{user?.email}</Paragraph>
-          </div>
+          {(user?.id || user?.email) && (
+            <div className={"flex items-center gap-8"}>
+              <Paragraph className={"flex items-center"}>
+                <Link
+                  href={`/team/user?id=${user?.id}`}
+                  className={
+                    "hover:text-nb-gray-200 transition-all flex items-center gap-1"
+                  }
+                >
+                  {user?.email || user?.id}
+                  <ArrowRightIcon size={14} />
+                </Link>
+              </Paragraph>
+            </div>
+          )}
         </div>
         <div className={"flex gap-4"}>
           <Button
@@ -272,41 +265,7 @@ const PeerGeneralInformation = () => {
         <PeerInformationCard peer={peer} />
 
         <div className={"flex flex-col gap-6 lg:w-1/2 transition-all"}>
-          <div>
-            <PeerExpirationToggle
-              peer={peer}
-              value={loginExpiration}
-              icon={<TimerResetIcon size={16} />}
-              onChange={(state) => {
-                setLoginExpiration(state);
-                !state && setInactivityExpiration(false);
-              }}
-            />
-            {permission.peers.update && !!peer?.user_id && (
-              <div
-                className={cn(
-                  "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
-                  !loginExpiration
-                    ? "opacity-50 pointer-events-none"
-                    : "bg-nb-gray-930/80",
-                )}
-              >
-                <PeerExpirationToggle
-                  peer={peer}
-                  variant={"blank"}
-                  value={inactivityExpiration}
-                  onChange={setInactivityExpiration}
-                  title={"Require login after disconnect"}
-                  description={
-                    "Enable to require authentication after users disconnect from management for 10 minutes."
-                  }
-                  className={
-                    !loginExpiration ? "opacity-40 pointer-events-none" : ""
-                  }
-                />
-              </div>
-            )}
-          </div>
+          <PeerExpirationSettings />
 
           <PeerSSHToggle />
 

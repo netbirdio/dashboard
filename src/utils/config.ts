@@ -67,7 +67,8 @@ const loadConfig = (): Config => {
     hotjarTrackID: configJson?.hotjarTrackID || undefined,
     googleAnalyticsID: configJson?.googleAnalyticsID || undefined,
     googleTagManagerID: configJson?.googleTagManagerID || undefined,
-    wasmPath: configJson.wasmPath ?? "https://pkgs.netbird.io/wasm/client",
+    wasmPath:
+      configJson?.wasmPath || "https://pkgs.netbird.io/wasm/client/v0.63.0",
   } as Config;
 };
 

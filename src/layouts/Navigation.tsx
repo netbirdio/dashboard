@@ -114,6 +114,12 @@ export default function Navigation({
                     visible={permission.policies.read}
                   />
                   <SidebarItem
+                    label="Groups"
+                    isChild
+                    href={"/groups"}
+                    visible={permission.policies.read}
+                  />
+                  <SidebarItem
                     label="Posture Checks"
                     isChild
                     href={"/posture-checks"}
@@ -136,6 +142,12 @@ export default function Navigation({
                     isChild
                     href={"/dns/nameservers"}
                     visible={permission.nameservers.read}
+                  />
+                  <SidebarItem
+                    label="Zones"
+                    isChild
+                    href={"/dns/zones"}
+                    visible={permission?.dns?.read}
                   />
                   <SidebarItem
                     label="DNS Settings"
