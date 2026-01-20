@@ -151,6 +151,8 @@ export function ChangePasswordModalContent({
             showPasswordToggle
             error={newPasswordError}
             customPrefix={<LockIcon size={16} className={"text-nb-gray-300"} />}
+            name={"new-password"}
+            autoComplete={"new-password"}
           />
         </div>
 
