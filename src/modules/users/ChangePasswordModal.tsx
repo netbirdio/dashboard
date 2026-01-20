@@ -111,7 +111,7 @@ export function ChangePasswordModalContent({
   return (
     <ModalContent maxWidthClass={"max-w-lg"}>
       <ModalHeader
-        icon={<KeyRound />}
+        icon={<KeyRound size={18} />}
         title={"Change Password"}
         description={"Update your account password."}
         color={"netbird"}
