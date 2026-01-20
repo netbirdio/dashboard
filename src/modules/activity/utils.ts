@@ -33,6 +33,7 @@ const ACTION_COLOR_MAPPING: Record<string, ActionStatus> = {
   rename: ActionStatus.INFO,
   unblock: ActionStatus.INFO,
   login: ActionStatus.INFO,
+  change: ActionStatus.INFO,
 };
 
 export function getColorFromCode(code: string): string {
