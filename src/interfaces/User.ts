@@ -52,6 +52,17 @@ export interface UserInviteAcceptResponse {
   success: boolean;
 }
 
+export interface UserInviteListItem {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  auto_groups: string[];
+  expires_at: string;
+  created_at: string;
+  expired: boolean;
+}
+
 export enum Role {
   User = "user",
   Admin = "admin",

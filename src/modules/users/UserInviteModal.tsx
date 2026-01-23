@@ -84,6 +84,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
     setSuccessModal(true);
     setTimeout(() => {
       mutate("/users?service_user=false");
+      mutate("/users/invites");
     }, 1000);
   };
 
