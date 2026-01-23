@@ -5,6 +5,7 @@ import {
   SetupRequest,
   SetupResponse,
 } from "@/interfaces/Instance";
+import { UserInviteInfo, UserInviteAcceptResponse } from "@/interfaces/User";
 
 const config = loadConfig();
 
@@ -51,4 +52,19 @@ export async function fetchInstanceStatus(): Promise<InstanceStatus> {
 
 export async function submitSetup(data: SetupRequest): Promise<SetupResponse> {
   return unauthenticatedRequest<SetupResponse>("POST", "/setup", data);
+}
+
+export async function fetchInviteInfo(token: string): Promise<UserInviteInfo> {
+  return unauthenticatedRequest<UserInviteInfo>("GET", `/users/invites/${token}`);
+}
+
+export async function acceptInvite(
+  token: string,
+  password: string,
+): Promise<UserInviteAcceptResponse> {
+  return unauthenticatedRequest<UserInviteAcceptResponse>(
+    "POST",
+    `/users/invites/${token}/accept`,
+    { password },
+  );
 }

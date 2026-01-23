@@ -36,6 +36,21 @@ export interface UserInviteCreateResponse {
   invite_expires_at: string;
 }
 
+export interface UserInviteInfo {
+  email: string;
+  name: string;
+  expires_at: string;
+  valid: boolean;
+}
+
+export interface UserInviteAcceptRequest {
+  password: string;
+}
+
+export interface UserInviteAcceptResponse {
+  success: boolean;
+}
+
 export enum Role {
   User = "user",
   Admin = "admin",
