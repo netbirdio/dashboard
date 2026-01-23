@@ -50,13 +50,21 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
   const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const { mutate } = useSWRConfig();
 
-  const copyValue =
-    successData?.type === "password"
-      ? successData.user.password
-      : successData?.type === "invite"
-        ? successData.invite.invite_link
-        : undefined;
-  const [, copyToClipboard] = useCopyToClipboard(copyValue);
+  const isPasswordSuccess = successData?.type === "password";
+  const isInviteSuccess = successData?.type === "invite";
+
+  const getInviteFullUrl = () => {
+    if (!isInviteSuccess) return "";
+    const origin = typeof window !== "undefined" ? window.location.origin : "";
+    return `${origin}/invite/${successData.invite.invite_link}`;
+  };
+
+  const getCopyValue = () => {
+    if (successData?.type === "password") return successData.user.password;
+    if (successData?.type === "invite") return getInviteFullUrl();
+    return undefined;
+  };
+  const [, copyToClipboard] = useCopyToClipboard(getCopyValue());
 
   const handleUserCreated = (user: User) => {
     if (user.password) {
@@ -90,9 +98,6 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
     });
   };
 
-  const isPasswordSuccess = successData?.type === "password";
-  const isInviteSuccess = successData?.type === "invite";
-
   return (
     <>
       <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
@@ -118,7 +123,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
           onEscapeKeyDown={(e) => e.preventDefault()}
           onInteractOutside={(e) => e.preventDefault()}
           onPointerDownOutside={(e) => e.preventDefault()}
-          maxWidthClass={"max-w-md"}
+          maxWidthClass={isInviteSuccess ? "max-w-xl" : "max-w-md"}
           className={"mt-20"}
           showClose={false}
         >
@@ -144,11 +149,16 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
               message={
                 isPasswordSuccess ? passwordCopyMessage : inviteLinkCopyMessage
               }
+              codeToCopy={getCopyValue()}
             >
-              <Code.Line>
-                {isPasswordSuccess && successData.user.password}
-                {isInviteSuccess && successData.invite.invite_link}
-              </Code.Line>
+              {isPasswordSuccess && (
+                <Code.Line>{successData.user.password}</Code.Line>
+              )}
+              {isInviteSuccess && (
+                <span className="break-all whitespace-normal block">
+                  {getInviteFullUrl()}
+                </span>
+              )}
             </Code>
             {isInviteSuccess && (
               <Paragraph className={"mt-3 text-xs text-nb-gray-400 text-center"}>
