@@ -12,6 +12,7 @@ import {
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
+import { SegmentedTabs } from "@components/SegmentedTabs";
 import { IconMailForward, IconLink, IconUserPlus } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
@@ -327,34 +328,21 @@ export function UserInviteModalContent({
 
       <div className={"px-8 py-3 flex flex-col gap-6 mt-4 relative z-10"}>
         {!isCloud && (
-          <div className="bg-nb-gray-930/70 p-1.5 rounded-lg flex justify-center gap-1 border border-nb-gray-900">
-            <button
-              type="button"
-              onClick={() => setMode("invite")}
-              className={cn(
-                "px-4 py-2 text-sm rounded-md w-full transition-all flex items-center justify-center gap-2",
-                mode === "invite"
-                  ? "bg-nb-gray-900"
-                  : "text-nb-gray-400 hover:bg-nb-gray-900/50"
-              )}
-            >
-              <IconLink size={16} />
-              Invite User
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode("create")}
-              className={cn(
-                "px-4 py-2 text-sm rounded-md w-full transition-all flex items-center justify-center gap-2",
-                mode === "create"
-                  ? "bg-nb-gray-900"
-                  : "text-nb-gray-400 hover:bg-nb-gray-900/50"
-              )}
-            >
-              <IconUserPlus size={16} />
-              Create User
-            </button>
-          </div>
+          <SegmentedTabs
+            value={mode}
+            onChange={(value) => setMode(value as UserCreationMode)}
+          >
+            <SegmentedTabs.List className="rounded-lg border">
+              <SegmentedTabs.Trigger value="invite">
+                <IconLink size={16} />
+                Invite User
+              </SegmentedTabs.Trigger>
+              <SegmentedTabs.Trigger value="create">
+                <IconUserPlus size={16} />
+                Create User
+              </SegmentedTabs.Trigger>
+            </SegmentedTabs.List>
+          </SegmentedTabs>
         )}
 
         <div className={"flex flex-col gap-4"}>
