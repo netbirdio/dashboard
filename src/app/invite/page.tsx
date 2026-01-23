@@ -12,6 +12,7 @@ import {
   Mail,
   User2,
 } from "lucide-react";
+import dayjs from "dayjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
@@ -58,7 +59,12 @@ function InviteAcceptContent() {
   }, [token]);
 
   const passwordsMatch = password === confirmPassword;
-  const passwordValid = password.length >= 8;
+  const hasMinLength = password.length >= 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /[0-9]/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
+  const passwordValid = hasMinLength && hasUppercase && hasLowercase && hasNumber && hasSpecialChar;
   const canSubmit = passwordValid && passwordsMatch && !submitting;
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -179,10 +185,9 @@ function InviteAcceptContent() {
           <h1 className="text-2xl font-semibold text-white mb-2">
             Welcome to NetBird
           </h1>
-          <Paragraph className="text-nb-gray-400">
-            You&apos;ve been invited to join the network. Set your password to
-            complete your account setup.
-          </Paragraph>
+          <p className="dark:text-nb-gray-400 text-nb-gray-500 text-base">
+            You&apos;ve been invited by <span className="dark:text-white text-nb-gray-900 font-medium">{inviteInfo.invited_by}</span> to join the network. Set your password to complete your account setup.
+          </p>
         </div>
 
         <div className="bg-nb-gray-930 border border-nb-gray-900 rounded-lg p-6 mb-6">
@@ -210,10 +215,14 @@ function InviteAcceptContent() {
                   <KeyRound size={16} className="text-nb-gray-400" />
                 }
               />
-              {password && !passwordValid && (
-                <p className="text-xs text-yellow-500 mt-1">
-                  Password must be at least 8 characters
-                </p>
+              {password && (
+                <div className="mt-2 space-y-1">
+                  <PasswordRule met={hasMinLength} text="At least 8 characters" />
+                  <PasswordRule met={hasUppercase} text="One uppercase letter" />
+                  <PasswordRule met={hasLowercase} text="One lowercase letter" />
+                  <PasswordRule met={hasNumber} text="One number" />
+                  <PasswordRule met={hasSpecialChar} text="One special character (!@#$%^&*)" />
+                </div>
               )}
             </div>
 
@@ -252,9 +261,22 @@ function InviteAcceptContent() {
         </div>
 
         <p className="text-center text-xs text-nb-gray-500">
-          Invite expires on {new Date(inviteInfo.expires_at).toLocaleString()}
+          Invite expires on {dayjs(inviteInfo.expires_at).format("D MMMM, YYYY [at] h:mm A")}
         </p>
       </div>
+    </div>
+  );
+}
+
+function PasswordRule({ met, text }: { met: boolean; text: string }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      {met ? (
+        <CheckCircle2 className="w-3 h-3 text-green-500" />
+      ) : (
+        <AlertCircle className="w-3 h-3 text-nb-gray-500" />
+      )}
+      <span className={met ? "text-green-500" : "text-nb-gray-500"}>{text}</span>
     </div>
   );
 }

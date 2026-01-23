@@ -41,6 +41,7 @@ export interface UserInviteInfo {
   name: string;
   expires_at: string;
   valid: boolean;
+  invited_by: string;
 }
 
 export interface UserInviteAcceptRequest {
