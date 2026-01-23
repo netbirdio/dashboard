@@ -294,7 +294,7 @@ export const InviteUserButton = ({
         disabled={!permission.users.create}
       >
         <MailPlus size={16} />
-        {isCloud ? "Invite User" : "Create User"}
+        {isCloud ? "Invite User" : "Add User"}
       </Button>
     </UserInviteModal>
   );

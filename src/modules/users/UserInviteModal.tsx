@@ -12,7 +12,7 @@ import {
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
-import { IconMailForward } from "@tabler/icons-react";
+import { IconMailForward, IconLink, IconUserPlus } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
 import { CopyIcon, MailIcon, User2 } from "lucide-react";
@@ -25,28 +25,42 @@ import Avatar2 from "@/assets/avatars/030.jpg";
 import Avatar3 from "@/assets/avatars/063.jpg";
 import Avatar4 from "@/assets/avatars/086.jpg";
 import { Group } from "@/interfaces/Group";
-import { Role, User } from "@/interfaces/User";
+import { Role, User, UserInviteCreateResponse } from "@/interfaces/User";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
-import {isNetBirdHosted} from "@utils/netbird";
+import { isNetBirdHosted } from "@utils/netbird";
+
+type UserCreationMode = "create" | "invite";
 
 type Props = {
   children: React.ReactNode;
   groups?: Group[];
 };
 
-const copyMessage = "Password was copied to your clipboard!";
+const passwordCopyMessage = "Password was copied to your clipboard!";
+const inviteLinkCopyMessage = "Invite link was copied to your clipboard!";
+
+type SuccessData =
+  | { type: "password"; user: User }
+  | { type: "invite"; invite: UserInviteCreateResponse };
 
 export default function UserInviteModal({ children, groups }: Readonly<Props>) {
   const [open, setOpen] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
-  const [createdUser, setCreatedUser] = useState<User>();
+  const [successData, setSuccessData] = useState<SuccessData | null>(null);
   const { mutate } = useSWRConfig();
-  const [, copyToClipboard] = useCopyToClipboard(createdUser?.password);
 
-  const handleOnSuccess = (user: User) => {
+  const copyValue =
+    successData?.type === "password"
+      ? successData.user.password
+      : successData?.type === "invite"
+        ? successData.invite.invite_link
+        : undefined;
+  const [, copyToClipboard] = useCopyToClipboard(copyValue);
+
+  const handleUserCreated = (user: User) => {
     if (user.password) {
-      setCreatedUser(user);
+      setSuccessData({ type: "password", user });
       setSuccessModal(true);
     } else {
       setOpen(false);
@@ -56,26 +70,45 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
     }, 1000);
   };
 
+  const handleInviteCreated = (invite: UserInviteCreateResponse) => {
+    setSuccessData({ type: "invite", invite });
+    setSuccessModal(true);
+    setTimeout(() => {
+      mutate("/users?service_user=false");
+    }, 1000);
+  };
+
   const handleCopyAndClose = () => {
-    copyToClipboard(copyMessage).then(() => {
-      setCreatedUser(undefined);
+    const message =
+      successData?.type === "password"
+        ? passwordCopyMessage
+        : inviteLinkCopyMessage;
+    copyToClipboard(message).then(() => {
+      setSuccessData(null);
       setSuccessModal(false);
       setOpen(false);
     });
   };
 
+  const isPasswordSuccess = successData?.type === "password";
+  const isInviteSuccess = successData?.type === "invite";
+
   return (
     <>
       <Modal open={open} onOpenChange={setOpen} key={open ? 1 : 0}>
         <ModalTrigger asChild={true}>{children}</ModalTrigger>
-        <UserInviteModalContent onSuccess={handleOnSuccess} groups={groups} />
+        <UserInviteModalContent
+          onUserCreated={handleUserCreated}
+          onInviteCreated={handleInviteCreated}
+          groups={groups}
+        />
       </Modal>
 
       <Modal
         open={successModal}
         onOpenChange={(open) => {
           if (!open) {
-            setCreatedUser(undefined);
+            setSuccessData(null);
           }
           setSuccessModal(open);
           setOpen(open);
@@ -93,20 +126,36 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
             <div className={"flex flex-col items-center justify-center gap-3"}>
               <div>
                 <h2 className={"text-2xl text-center mb-2"}>
-                  User created successfully!
+                  {isPasswordSuccess && "User created successfully!"}
+                  {isInviteSuccess && "Invite link created!"}
                 </h2>
                 <Paragraph className={"mt-0 text-sm text-center"}>
-                  This password will not be shown again, so be sure to copy it
-                  and store in a secure location.
+                  {isPasswordSuccess &&
+                    "This password will not be shown again, so be sure to copy it and store in a secure location."}
+                  {isInviteSuccess &&
+                    "Share this link with the user. They will be able to set their own password."}
                 </Paragraph>
               </div>
             </div>
           </div>
 
           <div className={"px-8 pb-6"}>
-            <Code message={copyMessage}>
-              <Code.Line>{createdUser?.password || ""}</Code.Line>
+            <Code
+              message={
+                isPasswordSuccess ? passwordCopyMessage : inviteLinkCopyMessage
+              }
+            >
+              <Code.Line>
+                {isPasswordSuccess && successData.user.password}
+                {isInviteSuccess && successData.invite.invite_link}
+              </Code.Line>
             </Code>
+            {isInviteSuccess && (
+              <Paragraph className={"mt-3 text-xs text-nb-gray-400 text-center"}>
+                Expires on{" "}
+                {new Date(successData.invite.invite_expires_at).toLocaleString()}
+              </Paragraph>
+            )}
           </div>
           <ModalFooter className={"items-center"}>
             <Button
@@ -125,15 +174,18 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
 }
 
 type ModalProps = {
-  onSuccess: (user: User) => void;
+  onUserCreated: (user: User) => void;
+  onInviteCreated: (invite: UserInviteCreateResponse) => void;
   groups?: Group[];
 };
 
 export function UserInviteModalContent({
-  onSuccess,
+  onUserCreated,
+  onInviteCreated,
   groups = [],
 }: Readonly<ModalProps>) {
   const userRequest = useApiCall<User>("/users");
+  const inviteRequest = useApiCall<UserInviteCreateResponse>("/users/invites");
   const { mutate } = useSWRConfig();
 
   const [name, setName] = useState("");
@@ -144,12 +196,15 @@ export function UserInviteModalContent({
       initial: groups,
     });
 
-  const sendInvite = async () => {
+  const isCloud = isNetBirdHosted();
+  const [mode, setMode] = useState<UserCreationMode>("invite");
+
+  const createUser = async () => {
     const groups = await saveGroups();
     const groupIds = groups.map((group) => group.id) as string[];
     notify({
-      title: "User Invitation",
-      description: `${name} was invited to join your network.`,
+      title: "Create User",
+      description: `Creating user account for ${name}...`,
       promise: userRequest
         .post({
           name,
@@ -160,11 +215,45 @@ export function UserInviteModalContent({
         })
         .then((user) => {
           mutate("/users?service_user=false");
-          onSuccess && onSuccess(user);
+          onUserCreated && onUserCreated(user);
         }),
-      loadingMessage: "Sending invite...",
+      loadingMessage: "Creating user...",
     });
   };
+
+  const createInvite = async () => {
+    const groups = await saveGroups();
+    const groupIds = groups.map((group) => group.id) as string[];
+    notify({
+      title: "Create Invite",
+      description: `Creating invite link for ${name}...`,
+      promise: inviteRequest
+        .post({
+          name,
+          email,
+          role,
+          auto_groups: groupIds,
+        })
+        .then((invite) => {
+          mutate("/users?service_user=false");
+          onInviteCreated && onInviteCreated(invite);
+        }),
+      loadingMessage: "Creating invite...",
+    });
+  };
+
+  const handleSubmit = async () => {
+    if (isCloud) {
+      await createUser();
+    } else {
+      if (mode === "create") {
+        await createUser();
+      } else {
+        await createInvite();
+      }
+    }
+  };
+
   const isValidEmail = useMemo(() => {
     return email.length > 0 && validator.isValidEmail(email);
   }, [email]);
@@ -172,6 +261,33 @@ export function UserInviteModalContent({
   const isDisabled = useMemo(() => {
     return name.length === 0 || !isValidEmail;
   }, [name, isValidEmail]);
+
+  const getTitle = () => {
+    if (isCloud) return "Invite User";
+    return mode === "create" ? "Create User" : "Invite User";
+  };
+
+  const getDescription = () => {
+    if (isCloud) return "Invite a user to your network and set their permissions.";
+    if (mode === "create") {
+      return "Create a NetBird user account with email and password.";
+    }
+    return "Generate an invite link that the user can use to set their own password.";
+  };
+
+  const getButtonText = () => {
+    if (isCloud) return "Send Invitation";
+    return mode === "create" ? "Create User" : "Create Invite Link";
+  };
+
+  const getButtonIcon = () => {
+    if (isCloud) return <IconMailForward size={16} />;
+    return mode === "create" ? (
+      <IconUserPlus size={16} />
+    ) : (
+      <IconLink size={16} />
+    );
+  };
 
   return (
     <ModalContent maxWidthClass={"max-w-lg relative"} showClose={true}>
@@ -193,15 +309,44 @@ export function UserInviteModalContent({
           "mx-auto text-center flex flex-col items-center justify-center mt-6"
         }
       >
-        <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-            {isNetBirdHosted() ? "Invite User" : "Create User"}
-        </h2>
+        <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>{getTitle()}</h2>
         <Paragraph className={cn("text-sm text-center max-w-xs")}>
-            {isNetBirdHosted() ? "Invite a user to your network and set their permissions." : "Create a NetBird user account with email and password."}
+          {getDescription()}
         </Paragraph>
       </div>
 
-      <div className={"px-8 py-3 flex flex-col gap-6 mt-4"}>
+      <div className={"px-8 py-3 flex flex-col gap-6 mt-4 relative z-10"}>
+        {!isCloud && (
+          <div className="bg-nb-gray-930/70 p-1.5 rounded-lg flex justify-center gap-1 border border-nb-gray-900">
+            <button
+              type="button"
+              onClick={() => setMode("invite")}
+              className={cn(
+                "px-4 py-2 text-sm rounded-md w-full transition-all flex items-center justify-center gap-2",
+                mode === "invite"
+                  ? "bg-nb-gray-900"
+                  : "text-nb-gray-400 hover:bg-nb-gray-900/50"
+              )}
+            >
+              <IconLink size={16} />
+              Invite User
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode("create")}
+              className={cn(
+                "px-4 py-2 text-sm rounded-md w-full transition-all flex items-center justify-center gap-2",
+                mode === "create"
+                  ? "bg-nb-gray-900"
+                  : "text-nb-gray-400 hover:bg-nb-gray-900/50"
+              )}
+            >
+              <IconUserPlus size={16} />
+              Create User
+            </button>
+          </div>
+        )}
+
         <div className={"flex flex-col gap-4"}>
           <Input
             customPrefix={
@@ -252,10 +397,10 @@ export function UserInviteModalContent({
           variant={"primary"}
           className={"w-full"}
           disabled={isDisabled}
-          onClick={sendInvite}
+          onClick={handleSubmit}
         >
-            {isNetBirdHosted() ? "Send Invitation" : "Create User"}
-          <IconMailForward size={16} />
+          {getButtonText()}
+          {getButtonIcon()}
         </Button>
       </ModalFooter>
     </ModalContent>

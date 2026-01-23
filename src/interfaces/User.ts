@@ -17,6 +17,25 @@ export interface User {
   idp_id?: string;
 }
 
+export interface UserInviteCreateRequest {
+  email: string;
+  name: string;
+  role: string;
+  auto_groups: string[];
+  expires_in?: number;
+}
+
+export interface UserInviteCreateResponse {
+  id: string;
+  email: string;
+  name: string;
+  role: string;
+  auto_groups: string[];
+  status: string;
+  invite_link: string;
+  invite_expires_at: string;
+}
+
 export enum Role {
   User = "user",
   Admin = "admin",
