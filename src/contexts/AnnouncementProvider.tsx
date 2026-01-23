@@ -119,10 +119,11 @@ export default function AnnouncementProvider({ children }: Readonly<Props>) {
   const fetchingRef = useRef(false);
 
   useEffect(() => {
-    if (announcements?.length || isRestricted || fetchingRef.current) return;
+    if (announcements !== undefined || isRestricted || fetchingRef.current)
+      return;
     fetchingRef.current = true;
     getAnnouncements()
-      .then((a) => a.length && setAnnouncements(a))
+      .then((a) => setAnnouncements(a))
       .finally(() => (fetchingRef.current = false));
   }, [announcements, isRestricted]);
 
