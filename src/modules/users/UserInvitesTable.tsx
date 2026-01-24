@@ -445,6 +445,11 @@ export default function UserInvitesTable({
           description={
             "There are no pending invites. Create an invite to add users to your network."
           }
+          button={
+            <div className={"flex flex-col items-center justify-center"}>
+              <InviteUserButton show={true} />
+            </div>
+          }
           learnMore={
             <>
               Learn more about
