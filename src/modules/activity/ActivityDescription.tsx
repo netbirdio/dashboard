@@ -286,6 +286,42 @@ export default function ActivityDescription({ event }: Props) {
     );
 
   /**
+   * User Invite Link
+   */
+
+  if (event.activity_code == "user.invite.link.create")
+    return (
+      <div className={"inline"}>
+        Invite link was created for <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "user.invite.link.accept")
+    return (
+      <div className={"inline"}>
+        Invite link was accepted by <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "user.invite.link.regenerate")
+    return (
+      <div className={"inline"}>
+        Invite link was regenerated for <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "user.invite.link.delete")
+    return (
+      <div className={"inline"}>
+        Invite link was deleted for <Value>{event.meta.username}</Value>{" "}
+        <Value>{event.meta.email}</Value>
+      </div>
+    );
+
+  /**
    * Service User
    */
 
