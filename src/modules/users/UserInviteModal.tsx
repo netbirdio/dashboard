@@ -16,7 +16,7 @@ import { SegmentedTabs } from "@components/SegmentedTabs";
 import { IconMailForward, IconLink, IconUserPlus } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
-import { CopyIcon, MailIcon, User2 } from "lucide-react";
+import { AlarmClock, CopyIcon, MailIcon, User2 } from "lucide-react";
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -203,6 +203,7 @@ export function UserInviteModalContent({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [role, setRole] = useState("user");
+  const [expiresIn, setExpiresIn] = useState("3");
   const [selectedGroups, setSelectedGroups, { save: saveGroups }] =
     useGroupHelper({
       initial: groups,
@@ -245,6 +246,7 @@ export function UserInviteModalContent({
           email,
           role,
           auto_groups: groupIds,
+          expires_in: parseInt(expiresIn || "3") * 24 * 60 * 60, // Days to seconds
         })
         .then((invite) => {
           mutate("/users?service_user=false");
@@ -374,6 +376,26 @@ export function UserInviteModalContent({
             onChange={setRole}
             hideOwner={true}
           />
+          {!isCloud && mode === "invite" && (
+            <div className={"flex justify-between mt-3"}>
+              <div>
+                <Label>Expires in</Label>
+                <HelpText>Days until the invite expires.</HelpText>
+              </div>
+              <Input
+                maxWidthClass={"max-w-[200px]"}
+                placeholder={"3"}
+                min={1}
+                value={expiresIn}
+                type={"number"}
+                onChange={(e) => setExpiresIn(e.target.value)}
+                customPrefix={
+                  <AlarmClock size={16} className={"text-nb-gray-300"} />
+                }
+                customSuffix={"Day(s)"}
+              />
+            </div>
+          )}
         </div>
 
         <div className={"mb-4"}>
