@@ -8,6 +8,7 @@ import { acceptInvite, fetchInviteInfo } from "@utils/unauthenticatedApi";
 import {
   AlertCircle,
   CheckCircle2,
+  Clock,
   KeyRound,
   Mail,
   User2,
@@ -34,6 +35,7 @@ function InviteAcceptContent() {
   const [loading, setLoading] = useState(true);
   const [inviteInfo, setInviteInfo] = useState<UserInviteInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isRateLimited, setIsRateLimited] = useState(false);
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -53,7 +55,13 @@ function InviteAcceptContent() {
         setLoading(false);
       })
       .catch((err) => {
-        setError(err.message || "Invalid or expired invite link");
+        if (err.code === 429) {
+          setError("Too many attempts. Please wait a moment and try again.");
+          setIsRateLimited(true);
+        } else {
+          setError(err.message || "Invalid or expired invite link");
+          setIsRateLimited(false);
+        }
         setLoading(false);
       });
   }, [token]);
@@ -94,6 +102,34 @@ function InviteAcceptContent() {
   }
 
   if (error && !inviteInfo) {
+    if (isRateLimited) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-nb-gray-950 p-4">
+          <div className="max-w-md w-full text-center">
+            <div className="mb-6 flex justify-center">
+              <div className="w-16 h-16 bg-yellow-500/10 rounded-full flex items-center justify-center">
+                <Clock className="w-8 h-8 text-yellow-500" />
+              </div>
+            </div>
+            <h1 className="text-2xl font-semibold text-white mb-2">
+              Too Many Requests
+            </h1>
+            <Paragraph className="text-nb-gray-400 text-base">
+              You&apos;ve made too many requests. Please wait a moment and try
+              again.
+            </Paragraph>
+            <Button
+              variant="secondary"
+              className="mt-6"
+              onClick={() => window.location.reload()}
+            >
+              Try Again
+            </Button>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="min-h-screen flex items-center justify-center bg-nb-gray-950 p-4">
         <div className="max-w-md w-full text-center">
