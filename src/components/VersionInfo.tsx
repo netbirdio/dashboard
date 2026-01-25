@@ -64,10 +64,13 @@ const NavigationVersionInfoContent = () => {
 
   if (!versionInfo) return null;
 
-  const managementUpdateAvailable = compareVersions(
-    versionInfo.management_current_version,
-    versionInfo.management_version,
+  // Use API field for management, detect in code for dashboard
+  const managementUpdateAvailable = versionInfo.management_update_available;
+  const dashboardUpdateAvailable = compareVersions(
+    dashboardVersion,
+    versionInfo.dashboard_version,
   );
+  const hasUpdate = managementUpdateAvailable || dashboardUpdateAvailable;
 
   return (
     <div
@@ -76,13 +79,6 @@ const NavigationVersionInfoContent = () => {
         "bg-nb-gray-900/20 py-3 px-3 border-nb-gray-800/30",
       )}
     >
-      {managementUpdateAvailable && (
-        <div className="flex items-center gap-1.5 text-green-500 font-medium">
-          <ArrowUpCircle size={12} />
-          <span>Update available</span>
-        </div>
-      )}
-
       <div className="flex flex-col gap-1 text-nb-gray-400">
         <div className="flex items-center justify-between">
           <span>Management</span>
@@ -97,6 +93,18 @@ const NavigationVersionInfoContent = () => {
           </span>
         </div>
       </div>
+
+      {hasUpdate && (
+        <a
+          href="https://docs.netbird.io/selfhosted/selfhosted-quickstart#upgrade"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-1.5 text-white font-medium bg-netbird hover:bg-netbird-500 transition-colors rounded-md py-1.5 px-2 mt-1"
+        >
+          <ArrowUpCircle size={12} />
+          <span>Update available</span>
+        </a>
+      )}
     </div>
   );
 };

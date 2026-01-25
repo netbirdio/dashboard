@@ -22,4 +22,5 @@ export interface VersionInfo {
   management_current_version: string;
   dashboard_version: string;
   management_version: string;
+  management_update_available: boolean;
 }
