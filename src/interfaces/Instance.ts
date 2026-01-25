@@ -17,3 +17,9 @@ export interface ApiError {
   code: number;
   message: string;
 }
+
+export interface VersionInfo {
+  management_current_version: string;
+  management_available_version: string;
+  dashboard_available_version: string;
+}
