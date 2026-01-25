@@ -7,6 +7,8 @@ const nextConfig = {
   reactStrictMode: false,
   env: {
     APP_ENV: process.env.APP_ENV || "production",
+    NEXT_PUBLIC_DASHBOARD_VERSION:
+      process.env.NEXT_PUBLIC_DASHBOARD_VERSION || "development",
   },
 };
 

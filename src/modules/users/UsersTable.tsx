@@ -17,9 +17,9 @@ import {
 import useFetchApi from "@utils/api";
 import { isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
-import { ExternalLinkIcon, MailPlus } from "lucide-react";
+import { ExternalLinkIcon, Link2, MailPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import React from "react";
+import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -35,6 +35,7 @@ import UserNameCell from "@/modules/users/table-cells/UserNameCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import UserInviteModal from "@/modules/users/UserInviteModal";
+import UserInvitesTable from "@/modules/users/UserInvitesTable";
 import { useAccount } from "@/modules/account/useAccount";
 
 export const UsersTableColumns: ColumnDef<User>[] = [
@@ -142,6 +143,13 @@ export default function UsersTable({
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const account = useAccount();
+
+  const isCloud = isNetBirdHosted();
+  const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
+  const showInvitesToggle = !isCloud && embeddedIdpEnabled;
+
+  const [showInvites, setShowInvites] = useState(false);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -161,6 +169,15 @@ export default function UsersTable({
 
   const router = useRouter();
   const { permission } = usePermissions();
+
+  if (showInvites) {
+    return (
+      <UserInvitesTable
+        headingTarget={headingTarget}
+        onShowUsers={() => setShowInvites(false)}
+      />
+    );
+  }
 
   return (
     <DataTable
@@ -256,6 +273,15 @@ export default function UsersTable({
                 mutate("/groups");
               }}
             />
+            {showInvitesToggle && (
+              <Button
+                variant={"secondary"}
+                onClick={() => setShowInvites(true)}
+              >
+                <Link2 size={14} />
+                Show Invites
+              </Button>
+            )}
           </>
         );
       }}
@@ -294,8 +320,9 @@ export const InviteUserButton = ({
         disabled={!permission.users.create}
       >
         <MailPlus size={16} />
-        {isCloud ? "Invite User" : "Create User"}
+        {isCloud ? "Invite User" : "Add User"}
       </Button>
     </UserInviteModal>
   );
 };
+

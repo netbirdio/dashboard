@@ -14,6 +14,7 @@ import SettingsIcon from "@/assets/icons/SettingsIcon";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import SidebarItem from "@/components/SidebarItem";
+import { NavigationVersionInfo } from "@/components/VersionInfo";
 import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -201,6 +202,7 @@ export default function Navigation({
                 />
               </SidebarItemGroup>
             </div>
+            <NavigationVersionInfo />
           </div>
         </ScrollArea>
       </div>

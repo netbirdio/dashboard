@@ -104,7 +104,9 @@ export default function OIDCProvider({ children }: Props) {
   // We bypass authentication for pages that do not require auth.
   // E.g., when we just want to show installation steps for public.
   // Or the instance setup wizard for first-time setup.
-  if (path === "/install" || path === "/setup") return children;
+  // Or the invite acceptance page for new users.
+  if (path === "/install" || path === "/setup" || path?.startsWith("/invite"))
+    return children;
 
   return mounted && providerConfig ? (
     <OidcProvider
