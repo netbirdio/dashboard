@@ -1,5 +1,6 @@
 "use client";
 
+import FullTooltip from "@components/FullTooltip";
 import { cn } from "@utils/helpers";
 import { ArrowUpCircle } from "lucide-react";
 import * as React from "react";
@@ -64,11 +65,14 @@ const NavigationVersionInfoContent = () => {
 
   if (!versionInfo) return null;
 
-  // Use API field for management, detect in code for dashboard
-  const managementUpdateAvailable = versionInfo.management_update_available;
+  // Compare versions to detect updates (returns false for "development" versions)
+  const managementUpdateAvailable = compareVersions(
+    versionInfo.management_current_version,
+    versionInfo.management_available_version,
+  );
   const dashboardUpdateAvailable = compareVersions(
     dashboardVersion,
-    versionInfo.dashboard_version,
+    versionInfo.dashboard_available_version,
   );
   const hasUpdate = managementUpdateAvailable || dashboardUpdateAvailable;
 
@@ -80,18 +84,38 @@ const NavigationVersionInfoContent = () => {
       )}
     >
       <div className="flex flex-col gap-1 text-nb-gray-400">
-        <div className="flex items-center justify-between">
-          <span>Management</span>
-          <span className="text-nb-gray-300 font-medium">
-            {formatVersion(versionInfo.management_current_version)}
-          </span>
-        </div>
-        <div className="flex items-center justify-between">
-          <span>Dashboard</span>
-          <span className="text-nb-gray-300 font-medium">
-            {formatVersion(dashboardVersion)}
-          </span>
-        </div>
+        <FullTooltip
+          content={
+            <span className="text-xs">
+              Latest: {formatVersion(versionInfo.management_available_version)}
+            </span>
+          }
+          side="top"
+          className="w-full"
+        >
+          <div className="flex items-center justify-between w-full cursor-default">
+            <span>Management</span>
+            <span className="text-nb-gray-300 font-medium">
+              {formatVersion(versionInfo.management_current_version)}
+            </span>
+          </div>
+        </FullTooltip>
+        <FullTooltip
+          content={
+            <span className="text-xs">
+              Latest: {formatVersion(versionInfo.dashboard_available_version)}
+            </span>
+          }
+          side="top"
+          className="w-full"
+        >
+          <div className="flex items-center justify-between w-full cursor-default">
+            <span>Dashboard</span>
+            <span className="text-nb-gray-300 font-medium">
+              {formatVersion(dashboardVersion)}
+            </span>
+          </div>
+        </FullTooltip>
       </div>
 
       {hasUpdate && (
