@@ -105,7 +105,10 @@ function InviteAcceptContent() {
           <h1 className="text-2xl font-semibold text-white mb-2">
             Invalid Invite
           </h1>
-          <Paragraph className="text-nb-gray-400">{error}</Paragraph>
+          <Paragraph className="text-nb-gray-400 text-base">
+            This invite link is invalid or has expired. Please contact your
+            administrator to receive a new invitation.
+          </Paragraph>
           <Button
             variant="secondary"
             className="mt-6"
