@@ -41,12 +41,12 @@ import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { cn, generateColorFromString } from "@utils/helpers";
 import { Group } from "@/interfaces/Group";
-import { Role, UserInviteListItem } from "@/interfaces/User";
+import { Role, UserInvite, UserInviteRegenerateResponse } from "@/interfaces/User";
 import UserInviteModal from "@/modules/users/UserInviteModal";
 import { useAccount } from "@/modules/account/useAccount";
 
 // Name cell for invites - same styling as UserNameCell but for invites
-function InviteNameCell({ invite }: { invite: UserInviteListItem }) {
+function InviteNameCell({ invite }: { invite: UserInvite }) {
   return (
     <div
       className={cn("flex gap-4 px-2 py-1 items-center")}
@@ -73,7 +73,7 @@ function InviteNameCell({ invite }: { invite: UserInviteListItem }) {
 }
 
 // Role cell for invites - same styling as UserRoleCell but for invites
-function InviteRoleCell({ invite }: { invite: UserInviteListItem }) {
+function InviteRoleCell({ invite }: { invite: UserInvite }) {
   const role = invite.role as Role;
 
   return (
@@ -121,18 +121,13 @@ function InviteRoleCell({ invite }: { invite: UserInviteListItem }) {
 }
 
 // Regenerate cell for invites - button to regenerate invite link with modal
-type RegenerateResponse = {
-  invite_link: string;
-  invite_expires_at: string;
-};
-
-function InviteRegenerateCell({ invite }: { invite: UserInviteListItem }) {
+function InviteRegenerateCell({ invite }: { invite: UserInvite }) {
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const [modalOpen, setModalOpen] = useState(false);
-  const [regeneratedData, setRegeneratedData] = useState<RegenerateResponse | null>(null);
+  const [regeneratedData, setRegeneratedData] = useState<UserInviteRegenerateResponse | null>(null);
 
-  const regenerateRequest = useApiCall<RegenerateResponse>(
+  const regenerateRequest = useApiCall<UserInviteRegenerateResponse>(
     `/users/invites/${invite.id}/regenerate`,
   );
 
@@ -238,7 +233,7 @@ function InviteRegenerateCell({ invite }: { invite: UserInviteListItem }) {
 }
 
 // Groups cell for invites - read-only display of auto_groups
-function InviteGroupCell({ invite }: { invite: UserInviteListItem }) {
+function InviteGroupCell({ invite }: { invite: UserInvite }) {
   const { groups, isLoading } = useGroups();
 
   const foundGroups = useMemo(() => {
@@ -266,7 +261,7 @@ function InviteGroupCell({ invite }: { invite: UserInviteListItem }) {
 }
 
 // Status cell for invites - shows Valid/Expired based on expired field
-function InviteStatusCell({ invite }: { invite: UserInviteListItem }) {
+function InviteStatusCell({ invite }: { invite: UserInvite }) {
   const isExpired = invite.expired;
   const text = isExpired ? "Expired" : "Valid";
   const color = isExpired ? "bg-red-500" : "bg-green-500";
@@ -283,10 +278,10 @@ function InviteStatusCell({ invite }: { invite: UserInviteListItem }) {
 }
 
 // Action cell for invites - delete invite
-function InviteActionCell({ invite }: { invite: UserInviteListItem }) {
+function InviteActionCell({ invite }: { invite: UserInvite }) {
   const { confirm } = useDialog();
   const { permission } = usePermissions();
-  const inviteRequest = useApiCall<UserInviteListItem>("/users/invites");
+  const inviteRequest = useApiCall<UserInvite>("/users/invites");
   const { mutate } = useSWRConfig();
 
   const deleteInvite = async () => {
@@ -332,7 +327,7 @@ function InviteActionCell({ invite }: { invite: UserInviteListItem }) {
   );
 }
 
-export const InvitesTableColumns: ColumnDef<UserInviteListItem>[] = [
+export const InvitesTableColumns: ColumnDef<UserInvite>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
@@ -403,7 +398,7 @@ export default function UserInvitesTable({
   onShowUsers,
 }: Readonly<Props>) {
   useFetchApi("/groups");
-  const { data: invites, isLoading } = useFetchApi<UserInviteListItem[]>("/users/invites");
+  const { data: invites, isLoading } = useFetchApi<UserInvite[]>("/users/invites");
   const { mutate } = useSWRConfig();
   const path = usePathname();
 

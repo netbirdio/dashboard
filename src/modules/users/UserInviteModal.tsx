@@ -26,7 +26,7 @@ import Avatar2 from "@/assets/avatars/030.jpg";
 import Avatar3 from "@/assets/avatars/063.jpg";
 import Avatar4 from "@/assets/avatars/086.jpg";
 import { Group } from "@/interfaces/Group";
-import { Role, User, UserInviteCreateResponse } from "@/interfaces/User";
+import { Role, User, UserInvite } from "@/interfaces/User";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
 import { isNetBirdHosted } from "@utils/netbird";
@@ -43,7 +43,7 @@ const inviteLinkCopyMessage = "Invite link was copied to your clipboard!";
 
 type SuccessData =
   | { type: "password"; user: User }
-  | { type: "invite"; invite: UserInviteCreateResponse };
+  | { type: "invite"; invite: UserInvite };
 
 export default function UserInviteModal({ children, groups }: Readonly<Props>) {
   const [open, setOpen] = useState(false);
@@ -79,7 +79,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
     }, 1000);
   };
 
-  const handleInviteCreated = (invite: UserInviteCreateResponse) => {
+  const handleInviteCreated = (invite: UserInvite) => {
     setSuccessData({ type: "invite", invite });
     setSuccessModal(true);
     setTimeout(() => {
@@ -165,7 +165,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
             {isInviteSuccess && (
               <Paragraph className={"mt-3 text-xs text-nb-gray-400 text-center"}>
                 Expires on{" "}
-                {new Date(successData.invite.invite_expires_at).toLocaleString()}
+                {new Date(successData.invite.expires_at).toLocaleString()}
               </Paragraph>
             )}
           </div>
@@ -187,7 +187,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
 
 type ModalProps = {
   onUserCreated: (user: User) => void;
-  onInviteCreated: (invite: UserInviteCreateResponse) => void;
+  onInviteCreated: (invite: UserInvite) => void;
   groups?: Group[];
 };
 
@@ -197,7 +197,7 @@ export function UserInviteModalContent({
   groups = [],
 }: Readonly<ModalProps>) {
   const userRequest = useApiCall<User>("/users");
-  const inviteRequest = useApiCall<UserInviteCreateResponse>("/users/invites");
+  const inviteRequest = useApiCall<UserInvite>("/users/invites");
   const { mutate } = useSWRConfig();
 
   const [name, setName] = useState("");
