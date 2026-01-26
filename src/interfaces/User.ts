@@ -25,15 +25,16 @@ export interface UserInviteCreateRequest {
   expires_in?: number;
 }
 
-export interface UserInviteCreateResponse {
+export interface UserInvite {
   id: string;
   email: string;
   name: string;
   role: string;
   auto_groups: string[];
-  status: string;
-  invite_link: string;
-  invite_expires_at: string;
+  expires_at: string;
+  created_at: string;
+  expired: boolean;
+  invite_token?: string;
 }
 
 export interface UserInviteInfo {
@@ -52,15 +53,13 @@ export interface UserInviteAcceptResponse {
   success: boolean;
 }
 
-export interface UserInviteListItem {
-  id: string;
-  email: string;
-  name: string;
-  role: string;
-  auto_groups: string[];
-  expires_at: string;
-  created_at: string;
-  expired: boolean;
+export interface UserInviteRegenerateRequest {
+  expires_in?: number;
+}
+
+export interface UserInviteRegenerateResponse {
+  invite_token: string;
+  invite_expires_at: string;
 }
 
 export enum Role {
