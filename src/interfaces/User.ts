@@ -34,7 +34,7 @@ export interface UserInvite {
   expires_at: string;
   created_at: string;
   expired: boolean;
-  invite_link?: string;
+  invite_token?: string;
 }
 
 export interface UserInviteInfo {
@@ -58,7 +58,7 @@ export interface UserInviteRegenerateRequest {
 }
 
 export interface UserInviteRegenerateResponse {
-  invite_link: string;
+  invite_token: string;
   invite_expires_at: string;
 }
 

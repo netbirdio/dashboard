@@ -57,7 +57,7 @@ export default function UserInviteModal({ children, groups }: Readonly<Props>) {
   const getInviteFullUrl = () => {
     if (!isInviteSuccess) return "";
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    return `${origin}/invite?token=${successData.invite.invite_link}`;
+    return `${origin}/invite?token=${successData.invite.invite_token}`;
   };
 
   const getCopyValue = () => {

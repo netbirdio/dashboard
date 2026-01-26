@@ -134,7 +134,7 @@ function InviteRegenerateCell({ invite }: { invite: UserInvite }) {
   const getInviteFullUrl = () => {
     if (!regeneratedData) return "";
     const origin = typeof window !== "undefined" ? window.location.origin : "";
-    return `${origin}/invite?token=${regeneratedData.invite_link}`;
+    return `${origin}/invite?token=${regeneratedData.invite_token}`;
   };
 
   const [, copyToClipboard] = useCopyToClipboard(getInviteFullUrl());
