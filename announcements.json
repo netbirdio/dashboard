@@ -1,0 +1,12 @@
+[
+  {
+    "tag": "New",
+    "text": "Custom DNS Zones for Private Network Resolution",
+    "link": "https://netbird.io/knowledge-hub/custom-dns-zones",
+    "linkText": "Read Release Article",
+    "variant": "important",
+    "isExternal": true,
+    "closeable": true,
+    "isCloudOnly": false
+  }
+]
