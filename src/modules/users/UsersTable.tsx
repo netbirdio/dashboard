@@ -151,7 +151,10 @@ export default function UsersTable({
   const showInvitesToggle = !isCloud && embeddedIdpEnabled;
 
   const { data: invites } = useFetchApi<UserInvite[]>(
-    showInvitesToggle ? "/users/invites" : null,
+    "/users/invites",
+    false,
+    true,
+    showInvitesToggle,
   );
   const validInvitesCount = invites?.filter((i) => !i.expired).length ?? 0;
 
