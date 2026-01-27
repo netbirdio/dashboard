@@ -22,8 +22,16 @@ function compareVersions(current: string, latest: string): boolean {
   if (!current || !latest) return false;
   if (current === "development") return false;
 
-  const currentParts = current.split(".").map((p) => parseInt(p, 10) || 0);
-  const latestParts = latest.split(".").map((p) => parseInt(p, 10) || 0);
+  // Strip "v" prefix if present
+  const normalizedCurrent = current.replace(/^v/, "");
+  const normalizedLatest = latest.replace(/^v/, "");
+
+  const currentParts = normalizedCurrent
+    .split(".")
+    .map((p) => parseInt(p, 10) || 0);
+  const latestParts = normalizedLatest
+    .split(".")
+    .map((p) => parseInt(p, 10) || 0);
 
   for (let i = 0; i < Math.max(currentParts.length, latestParts.length); i++) {
     const c = currentParts[i] || 0;
