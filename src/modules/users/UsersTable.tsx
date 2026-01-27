@@ -7,6 +7,7 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
+import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import {
   ColumnDef,
   Row,
@@ -25,7 +26,7 @@ import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
-import { User } from "@/interfaces/User";
+import { User, UserInvite } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 import { PendingApprovalFilter } from "@/modules/users/PendingApprovalFilter";
 import UserActionCell from "@/modules/users/table-cells/UserActionCell";
@@ -148,6 +149,14 @@ export default function UsersTable({
   const isCloud = isNetBirdHosted();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
   const showInvitesToggle = !isCloud && embeddedIdpEnabled;
+
+  const { data: invites } = useFetchApi<UserInvite[]>(
+    "/users/invites",
+    false,
+    true,
+    showInvitesToggle,
+  );
+  const validInvitesCount = invites?.filter((i) => !i.expired).length ?? 0;
 
   const [showInvites, setShowInvites] = useState(false);
 
@@ -280,6 +289,7 @@ export default function UsersTable({
               >
                 <Link2 size={14} />
                 Show Invites
+                <NotificationCountBadge count={validInvitesCount} />
               </Button>
             )}
           </>
