@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import Card from "@components/Card";
+import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -319,20 +320,52 @@ export const InviteUserButton = ({
   // On self-hosted: only show when embedded_idp_enabled is true
   const isCloud = isNetBirdHosted();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
+  const localAuthDisabled = account?.settings.local_auth_disabled;
 
   if (!isCloud && !embeddedIdpEnabled) return null;
 
-  return (
-    <UserInviteModal groups={groups}>
-      <Button
-        variant={"primary"}
-        className={className}
-        disabled={!permission.users.create}
-      >
-        <MailPlus size={16} />
-        {isCloud ? "Invite User" : "Add User"}
-      </Button>
-    </UserInviteModal>
+  const isDisabled = !permission.users.create || localAuthDisabled;
+
+  const button = (
+    <Button
+      variant={"primary"}
+      className={className}
+      disabled={isDisabled}
+    >
+      <MailPlus size={16} />
+      {isCloud ? "Invite User" : "Add User"}
+    </Button>
   );
+
+  if (localAuthDisabled) {
+    return (
+      <FullTooltip
+        className={"ml-auto"}
+        interactive={true}
+        content={
+          <div className={"flex flex-col"}>
+            <p className={"max-w-[200px] text-xs"}>
+              Local authentication is disabled. Adding users locally is not
+              available, use your IdP for authentication.
+            </p>
+            <div className={"text-xs mt-1.5"}>
+              <InlineLink
+                href={"https://docs.netbird.io/selfhosted/identity-providers/disable-local-authentication"}
+                target={"_blank"}
+                className={"flex gap-1 items-center"}
+              >
+                Learn more
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
+            </div>
+          </div>
+        }
+      >
+        {button}
+      </FullTooltip>
+    );
+  }
+
+  return <UserInviteModal groups={groups}>{button}</UserInviteModal>;
 };
 

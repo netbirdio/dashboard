@@ -24,6 +24,7 @@ export interface Account {
     lazy_connection_enabled: boolean;
     embedded_idp_enabled?: boolean;
     auto_update_version: string;
+    local_auth_disabled?: boolean;
   };
   onboarding?: AccountOnboarding;
 }
