@@ -340,13 +340,12 @@ export const InviteUserButton = ({
   if (localAuthDisabled) {
     return (
       <FullTooltip
-        className={"ml-auto"}
+        className={className}
         interactive={true}
         content={
           <div className={"flex flex-col"}>
             <p className={"max-w-[200px] text-xs"}>
-              Local authentication is disabled. Adding users locally is not
-              available, use your IdP for authentication.
+              Local authentication is disabled. Use your IdP for authentication.
             </p>
             <div className={"text-xs mt-1.5"}>
               <InlineLink
