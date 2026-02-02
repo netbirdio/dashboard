@@ -2,6 +2,9 @@
   "name": "netbird-dashboard",
   "version": "2.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.9.0"
+  },
   "scripts": {
     "copy": "copyfiles -f ./node_modules/@axa-fr/react-oidc/dist/OidcServiceWorker.js ./public",
     "copytrusted": "copyfiles -f ./public/local/OidcTrustedDomains.js ./public",
