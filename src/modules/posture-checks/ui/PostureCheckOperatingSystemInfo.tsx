@@ -7,7 +7,7 @@ type Props = {
   version?: string;
   versionText?: string;
   versionList?: SelectOption[];
-  icon: React.FunctionComponent<{ size: number }>;
+  icon: (props: { size: number }) => React.ReactElement;
   os: string;
 };
 export const PostureCheckOperatingSystemInfo = ({
