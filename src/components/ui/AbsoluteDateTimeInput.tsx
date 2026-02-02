@@ -64,8 +64,16 @@ const Time = ({
     }
   }, [value]);
 
+  const { ref, ...rootProps } = getRootProps();
+
   return (
-    <div className={"timescape w-full"} {...getRootProps()}>
+    <div
+      className={"timescape w-full"}
+      ref={(element) => {
+        ref(element);
+      }}
+      {...rootProps}
+    >
       <div>
         <input {...getInputProps("years")} />
         <span className={"separator"}>/</span>

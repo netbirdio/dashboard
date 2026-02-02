@@ -191,16 +191,6 @@ export default function GroupsSettings({ account }: Props) {
               disabled={!permission.settings.update}
             />
           )}
-          <Callout variant={"info"} className={""}>
-            Looking to view and manage your groups? You can find group
-            management under{"  "}
-            <InlineButtonLink
-              onClick={() => router.push("/groups")}
-              variant={"dashed"}
-            >
-              {`Access Control › Groups`}
-            </InlineButtonLink>
-          </Callout>
         </div>
 
         {(!isNetBirdHosted() || isLocalDev()) && (
@@ -323,6 +313,17 @@ export default function GroupsSettings({ account }: Props) {
             )}
           </AnimatePresence>
         )}
+
+        <Callout variant={"info"} className={"mt-6"}>
+          Looking to view and manage your groups? You can find group management
+          under{"  "}
+          <InlineButtonLink
+            onClick={() => router.push("/groups")}
+            variant={"dashed"}
+          >
+            {`Access Control › Groups`}
+          </InlineButtonLink>
+        </Callout>
       </div>
     </Tabs.Content>
   );

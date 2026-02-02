@@ -34,7 +34,7 @@ export default function DialogProvider({ children }: Props) {
     isOpen: false,
   });
   const [dialogOptions, setDialogOptions] = useState<DialogOptions>();
-  const fn = useRef<Function>();
+  const fn = useRef<Function>(undefined);
 
   const confirm = useCallback((data: DialogOptions): Promise<boolean> => {
     return new Promise((resolve) => {

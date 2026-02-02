@@ -53,13 +53,10 @@ const TooltipContent = React.forwardRef<
     <TooltipPrimitive.Portal>
       <TooltipPrimitive.Content
         ref={ref}
-        asChild={true}
         sideOffset={sideOffset}
         className={cn(tooltipVariants({ variant }), className)}
         {...props}
-      >
-        <div>{props.children}</div>
-      </TooltipPrimitive.Content>
+      />
     </TooltipPrimitive.Portal>
   ),
 );

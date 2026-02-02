@@ -14,11 +14,6 @@ import {
   TableWrapper,
 } from "@components/table/Table";
 import NoResults from "@components/ui/NoResults";
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-} from "@radix-ui/react-accordion";
 import { RankingInfo } from "@tanstack/match-sorter-utils";
 import {
   ColumnDef,
@@ -493,117 +488,97 @@ export function DataTable<TData, TValue>({
               </TableHeaderComponent>
             )}
 
-            <Accordion
-              asChild={true}
-              type={"multiple"}
-              value={accordion}
-              onValueChange={setAccordion}
+            <TableBodyComponent
+              className={cn(
+                "relative",
+                data == undefined && "blur-sm",
+                wrapperClassName,
+              )}
             >
-              <TableBodyComponent
-                className={cn(
-                  "relative",
-                  data == undefined && "blur-sm",
-                  wrapperClassName,
-                )}
-              >
-                {table.getRowModel().rows?.length ? (
-                  table.getRowModel().rows.map((row) => {
-                    const expandedRow = renderExpandedRow?.(row.original);
-                    const rowContent = (
-                      <AccordionItem
-                        value={row.original.id}
-                        asChild={true}
-                        key={row.id}
-                      >
-                        <>
-                          <TableRowComponent
-                            minimal={minimal}
-                            data-row-id={row.original.id}
-                            className={cn(
-                              (onRowClick || renderExpandedRow) &&
-                                "relative group/accordion",
-                              (onRowClick || expandedRow) && "cursor-pointer",
-                              rowClassName,
-                            )}
-                            data-state={row.getIsSelected() && "selected"}
-                            data-accordion={
-                              accordion?.includes(row.original.id)
-                                ? "opened"
-                                : "closed"
-                            }
-                            onClick={(e) => {
-                              if (expandedRow) {
-                                e.preventDefault();
-                                e.stopPropagation();
-                                setAccordion((prev) => {
-                                  if (prev?.includes(row.original.id)) {
-                                    return prev.filter(
-                                      (item) => item !== row.original.id,
-                                    );
-                                  } else {
-                                    return [...(prev ?? []), row.original.id];
-                                  }
-                                });
+              {table.getRowModel().rows?.length ? (
+                table.getRowModel().rows.map((row) => {
+                  const expandedRow = renderExpandedRow?.(row.original);
+                  const rowId = row.original.id ?? row.id;
+                  const isExpanded = accordion?.includes(rowId);
+                  const rowContent = (
+                    <React.Fragment key={row.id}>
+                      <TableRowComponent
+                        minimal={minimal}
+                        data-row-id={rowId}
+                        className={cn(
+                          (onRowClick || renderExpandedRow) &&
+                            "relative group/accordion",
+                          (onRowClick || expandedRow) && "cursor-pointer",
+                          rowClassName,
+                        )}
+                        data-state={row.getIsSelected() && "selected"}
+                        data-accordion={isExpanded ? "opened" : "closed"}
+                        onClick={(e) => {
+                          if (expandedRow) {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            setAccordion((prev) => {
+                              if (prev?.includes(rowId)) {
+                                return prev.filter(
+                                  (item) => item !== rowId,
+                                );
+                              } else {
+                                return [...(prev ?? []), rowId];
                               }
+                            });
+                          }
+                        }}
+                      >
+                        {row.getVisibleCells().map((cell) => (
+                          <TableCellComponent
+                            key={cell.id}
+                            className={cn("relative", tableCellClassName)}
+                            minimal={minimal}
+                            inset={inset}
+                            onClick={() => {
+                              onRowClick && onRowClick(row, cell.column.id);
                             }}
                           >
-                            <>
-                              {row.getVisibleCells().map((cell) => (
-                                <TableCellComponent
-                                  key={cell.id}
-                                  className={cn("relative", tableCellClassName)}
-                                  minimal={minimal}
-                                  inset={inset}
-                                  onClick={() => {
-                                    onRowClick &&
-                                      onRowClick(row, cell.column.id);
-                                  }}
-                                >
-                                  <div
-                                    className={
-                                      "absolute left-0 top-0 w-full h-full z-0"
-                                    }
-                                  ></div>
-                                  <div className={"relative z-[1]"}>
-                                    {flexRender(
-                                      cell.column.columnDef.cell,
-                                      cell.getContext(),
-                                    )}
-                                  </div>
-                                </TableCellComponent>
-                              ))}
-                            </>
-                          </TableRowComponent>
+                            <div
+                              className={
+                                "absolute left-0 top-0 w-full h-full z-0"
+                              }
+                            ></div>
+                            <div className={"relative z-[1]"}>
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext(),
+                              )}
+                            </div>
+                          </TableCellComponent>
+                        ))}
+                      </TableRowComponent>
 
-                          {expandedRow && (
-                            <AccordionContent asChild={true}>
-                              <TableRowComponent
-                                data-row-id={row.id + "-expanded-row"}
-                                key={row.id + "-expanded-row"}
-                                minimal={minimal}
-                                className={cn(
-                                  onRowClick && "cursor-pointer relative",
-                                  rowClassName,
-                                )}
-                                data-state={row.getIsSelected() && "selected"}
-                              >
-                                <TableDataUnstyledComponent
-                                  className={"w-full"}
-                                  colSpan={row.getVisibleCells().length}
-                                >
-                                  {expandedRow}
-                                </TableDataUnstyledComponent>
-                              </TableRowComponent>
-                            </AccordionContent>
+                      {expandedRow && isExpanded && (
+                        <TableRowComponent
+                          data-row-id={row.id + "-expanded-row"}
+                          minimal={minimal}
+                          className={cn(
+                            onRowClick && "cursor-pointer relative",
+                            rowClassName,
                           )}
-                        </>
-                      </AccordionItem>
-                    );
+                          data-state={row.getIsSelected() && "selected"}
+                        >
+                          <TableDataUnstyledComponent
+                            className={"w-full"}
+                            colSpan={row.getVisibleCells().length}
+                          >
+                            {expandedRow}
+                          </TableDataUnstyledComponent>
+                        </TableRowComponent>
+                      )}
+                    </React.Fragment>
+                  );
 
-                    return renderRow
-                      ? renderRow(row.original, rowContent)
-                      : rowContent;
-                  })
+                  return renderRow
+                    ? renderRow(row.original, rowContent)
+                    : rowContent;
+                })
                 ) : (
                   <TableRowUnstyledComponent>
                     <TableCellComponent
@@ -614,8 +589,7 @@ export function DataTable<TData, TValue>({
                     </TableCellComponent>
                   </TableRowUnstyledComponent>
                 )}
-              </TableBodyComponent>
-            </Accordion>
+            </TableBodyComponent>
           </TableComponent>
         )}
       </TableWrapper>
