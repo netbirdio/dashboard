@@ -1,11 +1,24 @@
 import {
   MemoizedScrollArea,
-  MemoizedScrollAreaViewport,
+  ScrollAreaViewport,
 } from "@components/ScrollArea";
 import { cn } from "@utils/helpers";
 import * as React from "react";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  forwardRef,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { Virtuoso, VirtuosoHandle } from "react-virtuoso";
+
+const VirtuosoScroller = forwardRef<
+  HTMLDivElement,
+  React.HTMLAttributes<HTMLDivElement>
+>((props, ref) => <ScrollAreaViewport ref={ref} {...props} />);
 
 type Props<T extends { id?: string }> = {
   items: T[];
@@ -183,7 +196,7 @@ export function VirtualScrollAreaList<T extends { id?: string }>({
         }}
         style={virtuosoHeight}
         components={{
-          Scroller: MemoizedScrollAreaViewport,
+          Scroller: VirtuosoScroller,
         }}
       />
     </MemoizedScrollArea>

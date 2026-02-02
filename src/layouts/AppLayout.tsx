@@ -42,7 +42,7 @@ export default function AppLayout({
       <head>
         <GoogleTagManagerHeadScript />
       </head>
-      <body className={cn(inter.className, "dark:bg-nb-gray bg-gray-50")}>
+      <body className={cn(inter.className)}>
         <Suspense fallback={<FullScreenLoading />}>
           <AnalyticsProvider>
             <DialogProvider>

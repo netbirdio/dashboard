@@ -56,7 +56,7 @@ export default function AnalyticsProvider({ children }: Readonly<Props>) {
       });
     }
     if (hjid && window._DATADOG_SYNTHETICS_BROWSER === undefined) {
-      hotjar.initialize(hjid, 6);
+      hotjar.initialize({ id: hjid, sv: 6 });
     }
     setInitialized(true);
   }, []);

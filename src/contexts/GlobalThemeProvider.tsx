@@ -1,8 +1,6 @@
 "use client";
 
 import "react-loading-skeleton/dist/skeleton.css";
-import { netbirdTheme } from "@utils/theme";
-import { Flowbite } from "flowbite-react";
 import dynamic from "next/dynamic";
 import { type ThemeProviderProps } from "next-themes/dist/types";
 import * as React from "react";
@@ -26,11 +24,9 @@ export function GlobalThemeProvider({
       disableTransitionOnChange
       {...props}
     >
-      <Flowbite theme={{ theme: netbirdTheme }}>
-        <SkeletonTheme baseColor={"#25282d"} highlightColor={"#33373e"}>
-          {children}
-        </SkeletonTheme>
-      </Flowbite>
+      <SkeletonTheme baseColor={"#25282d"} highlightColor={"#33373e"}>
+        {children}
+      </SkeletonTheme>
     </NextThemesProvider>
   );
 }

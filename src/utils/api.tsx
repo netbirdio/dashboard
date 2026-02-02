@@ -80,7 +80,7 @@ export function useNetBirdFetch(ignoreError: boolean = false): {
   const handleErrors = useApiErrorHandling(ignoreError);
 
   const isTokenExpired = async () => {
-    let attempts = 20;
+    let attempts = 4;
     while (isExpired(token) && attempts > 0) {
       await sleep(500);
       attempts = attempts - 1;

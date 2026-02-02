@@ -2,7 +2,9 @@
 @tailwind components;
 @tailwind utilities;
 
-
+html{
+    @apply bg-nb-gray
+}
 
 h1 {
     @apply text-2xl font-medium text-gray-700 dark:text-nb-gray-100 my-1;
