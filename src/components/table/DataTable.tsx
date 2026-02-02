@@ -498,12 +498,13 @@ export function DataTable<TData, TValue>({
               {table.getRowModel().rows?.length ? (
                 table.getRowModel().rows.map((row) => {
                   const expandedRow = renderExpandedRow?.(row.original);
-                  const isExpanded = accordion?.includes(row.original.id);
+                  const rowId = row.original.id ?? row.id;
+                  const isExpanded = accordion?.includes(rowId);
                   const rowContent = (
                     <React.Fragment key={row.id}>
                       <TableRowComponent
                         minimal={minimal}
-                        data-row-id={row.original.id}
+                        data-row-id={rowId}
                         className={cn(
                           (onRowClick || renderExpandedRow) &&
                             "relative group/accordion",
@@ -517,12 +518,12 @@ export function DataTable<TData, TValue>({
                             e.preventDefault();
                             e.stopPropagation();
                             setAccordion((prev) => {
-                              if (prev?.includes(row.original.id)) {
+                              if (prev?.includes(rowId)) {
                                 return prev.filter(
-                                  (item) => item !== row.original.id,
+                                  (item) => item !== rowId,
                                 );
                               } else {
-                                return [...(prev ?? []), row.original.id];
+                                return [...(prev ?? []), rowId];
                               }
                             });
                           }
