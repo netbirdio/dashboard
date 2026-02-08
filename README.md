@@ -56,7 +56,7 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
      -e AUTH0_DOMAIN=<SET YOUR AUTH DOMAIN> \
      -e AUTH0_CLIENT_ID=<SET YOUR CLIENT ID> \
      -e AUTH0_AUDIENCE=<SET YOUR AUDIENCE> \
-     -e NETBIRD_MGMT_API_ENDPOINT=<SET YOUR MANAGEMETN API URL> \
+     -e NETBIRD_MGMT_API_ENDPOINT=<SET YOUR MANAGEMENT API URL> \
      netbirdio/dashboard:main
    ```
 
@@ -71,7 +71,7 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
      -e AUTH0_DOMAIN=<SET YOUR AUTH DOMAIN> \
      -e AUTH0_CLIENT_ID=<SET YOUR CLEITN ID> \
      -e AUTH0_AUDIENCE=<SET YOUR AUDIENCE> \
-     -e NETBIRD_MGMT_API_ENDPOINT=<SET YOUR MANAGEMETN API URL> \
+     -e NETBIRD_MGMT_API_ENDPOINT=<SET YOUR MANAGEMENT API URL> \
      netbirdio/dashboard:main
    ```
 
