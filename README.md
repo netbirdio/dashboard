@@ -10,6 +10,7 @@ See [NetBird repo](https://github.com/netbirdio/netbird)
 
 The purpose of this project is simple - make it easy to manage VPN built with [NetBird](https://github.com/netbirdio/netbird).
 The dashboard makes it possible to:
+
 - track the status of your peers
 - remove peers
 - manage Setup Keys (to authenticate new peers)
@@ -17,9 +18,9 @@ The dashboard makes it possible to:
 - define access controls
 
 ## Some Screenshots
+
 <img src="./src/assets/screenshots/peers.png" alt="peers"/>
 <img src="./src/assets/screenshots/add-peer.png" alt="add-peer"/>
-
 
 ## Technologies Used
 
@@ -33,6 +34,7 @@ The dashboard makes it possible to:
 - Let's Encrypt
 
 ## How to run
+
 Disclaimer. We believe that proper user management system is not a trivial task and requires quite some effort to make it right. Therefore we decided to
 use Auth0 service that covers all our needs (user management, social login, JTW for the management API).
 Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
@@ -43,7 +45,7 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
 
    `AUTH0_DOMAIN` `AUTH0_CLIENT_ID` `AUTH0_AUDIENCE`
 
-   To obtain these, please use [Auth0 React SDK Guide](https://auth0.com/docs/quickstart/spa/react/01-login#configure-auth0) up until "Configure Allowed Web Origins"
+   To obtain these, please use [Auth0 React SDK Guide](https://auth0.com/docs/quickstart/spa/react) up until "Configure Allowed Web Origins"
 
 4. NetBird UI Dashboard uses NetBirds Management Service HTTP API, so setting `NETBIRD_MGMT_API_ENDPOINT` is required. Most likely it will be `http://localhost:33071` if you are hosting Management API on the same server.
 5. Run docker container without SSL (Let's Encrypt):
@@ -57,6 +59,7 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
      -e NETBIRD_MGMT_API_ENDPOINT=<SET YOUR MANAGEMETN API URL> \
      netbirdio/dashboard:main
    ```
+
 6. Run docker container with SSL (Let's Encrypt):
 
    ```shell
@@ -84,7 +87,7 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 You can start editing by modifying the code inside `src/..`  
 The page auto-updates as you edit the file.
 
-## How to migrate from old dashboard (v1) 
+## How to migrate from old dashboard (v1)
 
 The new dashboard comes with a new docker image `netbirdio/dashboard:main`.  
 To migrate from the old dashboard (v1) `wiretrustee/dashboard:main` to the new one, please follow the steps below.
