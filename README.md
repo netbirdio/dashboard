@@ -36,7 +36,7 @@ The dashboard makes it possible to:
 ## How to run
 
 Disclaimer. We believe that proper user management system is not a trivial task and requires quite some effort to make it right. Therefore we decided to
-use Auth0 service that covers all our needs (user management, social login, JTW for the management API).
+use Auth0 service that covers all our needs (user management, social login, JWT for the management API).
 Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
 
 1. Install [Docker](https://docs.docker.com/get-docker/)
@@ -47,7 +47,7 @@ Auth0 so far is the only 3rd party dependency that can't be really self-hosted.
 
    To obtain these, please use [Auth0 React SDK Guide](https://auth0.com/docs/quickstart/spa/react) up until "Configure Allowed Web Origins"
 
-4. NetBird UI Dashboard uses NetBirds Management Service HTTP API, so setting `NETBIRD_MGMT_API_ENDPOINT` is required. Most likely it will be `http://localhost:33071` if you are hosting Management API on the same server.
+4. NetBird UI Dashboard uses NetBird's Management Service HTTP API, so setting `NETBIRD_MGMT_API_ENDPOINT` is required. Most likely it will be `http://localhost:33071` if you are hosting Management API on the same server.
 5. Run docker container without SSL (Let's Encrypt):
 
    ```shell
