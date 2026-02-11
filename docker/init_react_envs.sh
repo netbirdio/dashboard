@@ -110,7 +110,7 @@ if [[ -n "${NETBIRD_MGMT_API_ENDPOINT}" ]]; then
 fi
 
 # Add LETSENCRYPT_DOMAIN to CSP
-if [[ -n "${LETSENCRYPT_DOMAIN}" ]]; then
+if [[ -n "${LETSENCRYPT_DOMAIN}" && "${LETSENCRYPT_DOMAIN}" != "none" ]]; then
     if [[ "$LETSENCRYPT_DOMAIN" == *"localhost"* ]]; then
         CSP_DOMAINS="$CSP_DOMAINS http://$LETSENCRYPT_DOMAIN"
         CSP_DOMAINS_CONNECT_SRC="$CSP_DOMAINS_CONNECT_SRC ws://$LETSENCRYPT_DOMAIN ws://*.$LETSENCRYPT_DOMAIN"
