@@ -50,32 +50,6 @@ export default function MacOSTab({
           <Steps.Step step={1}>
             <div className={"flex items-center gap-1 text-sm font-light"}>
               Download and run macOS Installer
-              <Tooltip>
-                <TooltipTrigger>
-                  <HelpCircle
-                    size={16}
-                    className={"inline-block ml-1 text-netbird"}
-                  />
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p className={"max-w-[200px] text-xs"}>
-                    {`If you don't know what chip your Mac has, you can find out
-                    by clicking on the Apple logo in the top left corner of your
-                    screen and selecting 'About This Mac'.`}
-                  </p>
-                  <div className={"text-xs mt-1.5"}>
-                    <InlineLink
-                      href={"https://support.apple.com/en-us/HT211814"}
-                      passHref
-                      target={"_blank"}
-                      className={"flex gap-1 items-center"}
-                    >
-                      Learn more
-                      <ExternalLinkIcon size={12} />
-                    </InlineLink>
-                  </div>
-                </TooltipContent>
-              </Tooltip>
             </div>
             <div className={"flex gap-4 mt-1 flex-wrap"}>
               <Link
