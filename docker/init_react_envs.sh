@@ -153,3 +153,6 @@ for f in $(grep -R -l AUTH_SUPPORTED_SCOPES /usr/share/nginx/html); do
     envsubst "$ENV_STR" < "$f".copy > "$f"
     rm "$f".copy
 done
+
+# Reload nginx to pick up the updated CSP and config
+nginx -s reload
