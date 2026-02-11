@@ -6,17 +6,14 @@ import {
 } from "@components/Accordion";
 import Button from "@components/Button";
 import Code from "@components/Code";
-import InlineLink from "@components/InlineLink";
 import Separator from "@components/Separator";
 import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@components/Tooltip";
 import { getNetBirdUpCommand, GRPC_API_ORIGIN } from "@utils/netbird";
 import {
   BeerIcon,
   DownloadIcon,
   ExternalLinkIcon,
-  HelpCircle,
   PackageOpenIcon,
   TerminalSquareIcon,
 } from "lucide-react";
