@@ -87,8 +87,12 @@ if [[ -n "${AUTH_AUTHORITY}" ]]; then
 fi
 
 # Add AUTH_AUDIENCE to CSP
-if [[ -n "${AUTH_AUDIENCE}" && ("${AUTH_AUDIENCE}" == *"http://"* || "${AUTH_AUDIENCE}" == *"https://"*) ]]; then
-    CSP_DOMAINS="$CSP_DOMAINS $AUTH_AUDIENCE"
+if [[ -n "${AUTH_AUDIENCE}" && "${AUTH_AUDIENCE}" != "none" && "${AUTH_AUDIENCE}" == *.* ]]; then
+    if [[ "${AUTH_AUDIENCE}" == *"http://"* || "${AUTH_AUDIENCE}" == *"https://"* ]]; then
+        CSP_DOMAINS="$CSP_DOMAINS $AUTH_AUDIENCE"
+    else
+        CSP_DOMAINS="$CSP_DOMAINS https://$AUTH_AUDIENCE"
+    fi
 fi
 
 # Add NETBIRD_MGMT_API_ENDPOINT to CSP
