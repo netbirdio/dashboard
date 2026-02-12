@@ -4,16 +4,24 @@ import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, HelpCircle } from "lucide-react";
 import React from "react";
 import { User } from "@/interfaces/User";
+import { useAccount } from "@/modules/account/useAccount";
 
 type Props = {
   user: User;
 };
 
 export default function UserStatusCell({ user }: Readonly<Props>) {
+  const account = useAccount();
   const status = user.status;
   const isPendingApproval = user.pending_approval;
+  const isLocalAuthDisabled =
+    account?.settings.local_auth_disabled === true &&
+    user.idp_id === "local";
 
   const getStatusDisplay = () => {
+    if (isLocalAuthDisabled) {
+      return { text: "Disabled", color: "bg-gray-400" };
+    }
     if (isPendingApproval) {
       return { text: "Pending Approval", color: "bg-netbird" };
     }
@@ -29,43 +37,63 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
     return { text: status || "Unknown", color: "bg-gray-400" };
   };
 
+  const tooltipContent = isLocalAuthDisabled ? (
+    <div className={"max-w-xs text-xs flex flex-col gap-2"}>
+      <div>
+        Local authentication is disabled. This user can no longer log in.
+        Use your IdP for authentication.
+      </div>
+      <div>
+        <InlineLink
+          href={
+            "https://docs.netbird.io/selfhosted/identity-providers/disable-local-authentication"
+          }
+          target={"_blank"}
+        >
+          Learn more <ExternalLinkIcon size={12} />
+        </InlineLink>
+      </div>
+    </div>
+  ) : (
+    <div className={"max-w-xs text-xs flex flex-col gap-2"}>
+      <div>
+        This user needs to be approved by an administrator before it can
+        join your organization.
+      </div>
+
+      <div>
+        If you want to disable approval for new users, go to{" "}
+        <InlineLink href={"/settings?tab=authentication"}>
+          Settings
+        </InlineLink>{" "}
+        and disable{" "}
+        <span className={"font-medium text-white"}>
+          {"'User Approval Required'"}
+        </span>
+        .
+      </div>
+      <div>
+        Learn more about{" "}
+        <InlineLink
+          href={"https://docs.netbird.io/how-to/approve-users"}
+          target={"_blank"}
+        >
+          User Approval <ExternalLinkIcon size={12} />
+        </InlineLink>
+      </div>
+    </div>
+  );
+
+  const showTooltip = isLocalAuthDisabled || isPendingApproval;
   const { text, color } = getStatusDisplay();
 
   return (
     <div onClick={(e) => e.stopPropagation()}>
       <FullTooltip
-        content={
-          <div className={"max-w-xs text-xs flex flex-col gap-2"}>
-            <div>
-              This user needs to be approved by an administrator before it can
-              join your organization.
-            </div>
-
-            <div>
-              If you want to disable approval for new users, go to{" "}
-              <InlineLink href={"/settings?tab=authentication"}>
-                Settings
-              </InlineLink>{" "}
-              and disable{" "}
-              <span className={"font-medium text-white"}>
-                {"'User Approval Required'"}
-              </span>
-              .
-            </div>
-            <div>
-              Learn more about{" "}
-              <InlineLink
-                href={"https://docs.netbird.io/how-to/approve-users"}
-                target={"_blank"}
-              >
-                User Approval <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </div>
-          </div>
-        }
+        content={tooltipContent}
         interactive={true}
         side="right"
-        disabled={!isPendingApproval}
+        disabled={!showTooltip}
       >
         <div
           className={cn("flex gap-2.5 items-center text-nb-gray-300 text-sm")}
@@ -73,7 +101,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
         >
           <span className={cn("h-2 w-2 rounded-full", color)}></span>
           {text}
-          {isPendingApproval && (
+          {showTooltip && (
             <HelpCircle size={14} className="text-netbird cursor-help" />
           )}
         </div>
