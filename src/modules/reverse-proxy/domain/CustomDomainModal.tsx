@@ -116,7 +116,6 @@ export const CustomDomainModal = ({
             <>
               <div>
                 <Label>Domain</Label>
-                <HelpText></HelpText>
                 <Input
                   autoFocus
                   value={domain}

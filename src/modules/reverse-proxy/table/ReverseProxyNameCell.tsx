@@ -57,9 +57,13 @@ export default function ReverseProxyNameCell({
           )}
         />
         <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 truncate">
-          <ExternalLinkText href={`https://${displayDomain}`}>
+          {displayDomain ? (
+            <ExternalLinkText href={`https://${displayDomain}`}>
+              <span className="font-medium truncate">{displayDomain}</span>
+            </ExternalLinkText>
+          ) : (
             <span className="font-medium truncate">{displayDomain}</span>
-          </ExternalLinkText>
+          )}
         </div>
       </div>
     </div>

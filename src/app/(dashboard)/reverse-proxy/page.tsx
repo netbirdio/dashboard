@@ -8,7 +8,7 @@ export default function ReverseProxyRedirectPage() {
   const router = useRouter();
 
   useEffect(() => {
-    router.push("/reverse-proxy/services");
+    router.replace("/reverse-proxy/services");
   }, [router]);
 
   return <FullScreenLoading height={"auto"} />;

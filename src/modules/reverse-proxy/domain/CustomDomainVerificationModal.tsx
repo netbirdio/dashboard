@@ -147,7 +147,11 @@ export const CustomDomainVerificationModal = ({
               <Button variant={"secondary"}>Verify Later</Button>
             </ModalClose>
 
-            <Button variant={"primary"} onClick={handleStartVerification}>
+            <Button
+              variant={"primary"}
+              onClick={handleStartVerification}
+              disabled={!cnameTarget}
+            >
               Start Verification
             </Button>
           </div>

@@ -307,7 +307,7 @@ const PeerHeader = () => {
               onClick={() => updatePeer()}
               disabled={
                 !hasChanges ||
-                !permission.peers.read ||
+                !permission.peers.update ||
                 !permission.groups.update
               }
             >
@@ -358,7 +358,7 @@ const PeerOverviewTabs = () => {
           </TabsTrigger>
         )}
 
-        {peer?.id && permission.routes.read && (
+        {peer?.id && permission.services?.read && (
           <TabsTrigger value={"reverse-proxies"}>
             <ReverseProxyIcon
               size={16}

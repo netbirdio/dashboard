@@ -23,7 +23,15 @@ function SettingCardItem({
 }: Readonly<SettingCardItemProps>) {
   return (
     <div
+      role="button"
+      tabIndex={0}
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick();
+        }
+      }}
       className={
         "flex justify-between gap-10 px-6 border-t border-nb-gray-920 first:border-t-0 py-5 hover:bg-nb-gray-935 cursor-pointer transition-colors"
       }
@@ -87,6 +95,9 @@ function SettingCard({ children, className }: Readonly<SettingCardProps>) {
   );
 }
 
-SettingCard.Item = SettingCardItem;
+const SettingCardWithItem = SettingCard as React.FC<Readonly<SettingCardProps>> & {
+  Item: typeof SettingCardItem;
+};
+SettingCardWithItem.Item = SettingCardItem;
 
-export default SettingCard;
+export default SettingCardWithItem;

@@ -1,7 +1,6 @@
 import * as RadixRadioGroup from "@radix-ui/react-radio-group";
 import { cn } from "@utils/helpers";
 import * as React from "react";
-import { useState } from "react";
 
 type Props = {
   value: string;
@@ -10,10 +9,8 @@ type Props = {
 };
 
 export const RadioGroup = ({ value, onChange, children }: Props) => {
-  const [defaultValue] = useState(value);
   return (
     <RadixRadioGroup.Root
-      defaultValue={defaultValue}
       value={value}
       onValueChange={onChange}
       className={

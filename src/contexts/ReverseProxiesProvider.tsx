@@ -19,7 +19,7 @@ import {
   ReverseProxyFlatTarget,
   ReverseProxyTarget,
   ReverseProxyTargetProtocol,
-  ReversProxyTargetType,
+  ReverseProxyTargetType,
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyModal from "@/modules/reverse-proxy/ReverseProxyModal";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
@@ -191,12 +191,7 @@ export default function ReverseProxiesProvider({
       if (isEditing) {
         // Update existing target - match against the original target before editing
         updatedTargets = targetModalProxy.targets.map((t) => {
-          const isSameTarget =
-            t.path === editingTarget.path &&
-            t.host === editingTarget.host &&
-            t.port === editingTarget.port &&
-            t.protocol === editingTarget.protocol;
-          return isSameTarget ? target : t;
+          return isSameTarget(t, editingTarget) ? target : t;
         });
       } else {
         // Add new target
@@ -304,12 +299,7 @@ export default function ReverseProxiesProvider({
     async (proxy: ReverseProxy, target: ReverseProxyTarget) => {
       const newEnabled = !target.enabled;
       const updatedTargets = proxy.targets.map((t) => {
-        // Match by unique combination: path, host, and port
-        const isSameTarget =
-          t.path === target.path &&
-          t.host === target.host &&
-          t.port === target.port;
-        return isSameTarget ? { ...t, enabled: newEnabled } : t;
+        return isSameTarget(t, target) ? { ...t, enabled: newEnabled } : t;
       });
 
       notify({
@@ -379,11 +369,7 @@ export default function ReverseProxiesProvider({
         });
       } else {
         const updatedTargets = proxy.targets.filter((t) => {
-          const isSameTarget =
-            t.path === target.path &&
-            t.host === target.host &&
-            t.port === target.port;
-          return !isSameTarget;
+          return !isSameTarget(t, target);
         });
 
         notify({
@@ -550,7 +536,7 @@ export function flattenReverseProxies({
       // Filter by peer if provided
       if (peer) {
         if (
-          target.target_type !== ReversProxyTargetType.PEER ||
+          target.target_type !== ReverseProxyTargetType.PEER ||
           target.target_id !== peer.id
         ) {
           return;
@@ -580,21 +566,31 @@ export function flattenReverseProxies({
   return flattened;
 }
 
+function isSameTarget(a: ReverseProxyTarget, b: ReverseProxyTarget): boolean {
+  return (
+    a.path === b.path &&
+    a.host === b.host &&
+    a.port === b.port &&
+    a.protocol === b.protocol
+  );
+}
+
 export function sanitizeTargets(
   targets: ReverseProxyTarget[],
 ): ReverseProxyTarget[] {
   return targets.map((t) => {
-    if (t.target_type === ReversProxyTargetType.SUBNET) return t;
-    const { host: _, ...rest } = t;
+    const { destination: _, ...target } = t;
+    if (t.target_type === ReverseProxyTargetType.SUBNET) return target as ReverseProxyTarget;
+    const { host: __, ...rest } = target;
     return rest as ReverseProxyTarget;
   });
 }
 
-export function isResourceTargetType(type: ReversProxyTargetType): boolean {
+export function isResourceTargetType(type: ReverseProxyTargetType): boolean {
   return (
-    type === ReversProxyTargetType.HOST ||
-    type === ReversProxyTargetType.DOMAIN ||
-    type === ReversProxyTargetType.SUBNET
+    type === ReverseProxyTargetType.HOST ||
+    type === ReverseProxyTargetType.DOMAIN ||
+    type === ReverseProxyTargetType.SUBNET
   );
 }
 
@@ -624,7 +620,7 @@ function resolveTargetHost(
   resources?: NetworkResource[],
 ): string {
   if (target.host) return "";
-  if (target.target_type === ReversProxyTargetType.PEER) {
+  if (target.target_type === ReverseProxyTargetType.PEER) {
     return peers?.find((p) => p.id === target.target_id)?.ip ?? "";
   }
   if (isResourceTargetType(target.target_type)) {

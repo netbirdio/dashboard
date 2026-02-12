@@ -26,7 +26,7 @@ export const ResourcesTabContent = ({
             Add resources to this network to control what peers can access.
           </Paragraph>
           <Paragraph>
-            Learn more about
+            Learn more about{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/networks#resources"}
               target={"_blank"}

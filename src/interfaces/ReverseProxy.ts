@@ -12,9 +12,9 @@ export interface ReverseProxy {
 }
 
 export interface ReverseProxyMeta {
-  created_at: Date;
+  created_at: string;
   status: ReverseProxyStatus;
-  certificate_issued_at?: Date;
+  certificate_issued_at?: string;
 }
 
 export enum ReverseProxyStatus {
@@ -22,13 +22,13 @@ export enum ReverseProxyStatus {
   ACTIVE = "active",
   TUNNEL_NOT_CREATED = "tunnel_not_created",
   CERTIFICATE_PENDING = "certificate_pending",
-  CERTIFICATED_FAILED = "certificate_failed",
+  CERTIFICATE_FAILED = "certificate_failed",
   ERROR = "error",
 }
 
 export interface ReverseProxyTarget {
   target_id?: string;
-  target_type: ReversProxyTargetType;
+  target_type: ReverseProxyTargetType;
   path?: string;
   protocol: ReverseProxyTargetProtocol;
   host?: string;
@@ -70,7 +70,7 @@ export enum ReverseProxyDomainType {
   CUSTOM = "custom",
 }
 
-export enum ReversProxyTargetType {
+export enum ReverseProxyTargetType {
   PEER = "peer",
   HOST = "host",
   DOMAIN = "domain",

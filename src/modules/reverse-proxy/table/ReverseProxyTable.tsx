@@ -19,8 +19,6 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxy,
-  ReverseProxyTargetProtocol,
-  ReversProxyTargetType,
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyActionCell from "@/modules/reverse-proxy/table/ReverseProxyActionCell";
 import ReverseProxyActiveCell from "@/modules/reverse-proxy/table/ReverseProxyActiveCell";
@@ -100,97 +98,6 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   },
 ];
 
-// Example data for development/demo purposes
-const exampleReverseProxies: ReverseProxy[] = [
-  {
-    id: "rp-1",
-    name: "grafana.netbird.cloud",
-    domain: "grafana.netbird.cloud",
-    proxy_cluster: "eu.proxy.netbird.io",
-    targets: [
-      {
-        target_id: "t1",
-        target_type: ReversProxyTargetType.PEER,
-        protocol: ReverseProxyTargetProtocol.HTTP,
-        host: "localhost",
-        port: 3000,
-        enabled: true,
-      },
-    ],
-    enabled: true,
-    auth: {
-      password_auth: { enabled: true, password: "secret" },
-    },
-  },
-  {
-    id: "rp-2",
-    name: "jenkins.netbird.cloud",
-    domain: "jenkins.netbird.cloud",
-    proxy_cluster: "us.proxy.netbird.io",
-    targets: [
-      {
-        target_id: "t2",
-        target_type: ReversProxyTargetType.PEER,
-        protocol: ReverseProxyTargetProtocol.HTTP,
-        host: "localhost",
-        port: 8080,
-        enabled: true,
-      },
-      {
-        target_id: "t3",
-        target_type: ReversProxyTargetType.PEER,
-        protocol: ReverseProxyTargetProtocol.HTTP,
-        host: "localhost",
-        port: 8080,
-        enabled: true,
-      },
-    ],
-    enabled: true,
-    auth: {
-      bearer_auth: { enabled: true, distribution_groups: ["developers"] },
-      pin_auth: { enabled: true, pin: "1234" },
-    },
-  },
-  {
-    id: "rp-3",
-    name: "internal-api.netbird.io",
-    domain: "internal-api.netbird.io",
-    proxy_cluster: "eu.proxy.netbird.io",
-    targets: [
-      {
-        target_id: "t4",
-        target_type: ReversProxyTargetType.HOST,
-        protocol: ReverseProxyTargetProtocol.HTTPS,
-        host: "api.internal",
-        port: 443,
-        path: "/v1",
-        enabled: true,
-      },
-    ],
-    enabled: false,
-    auth: {
-      link_auth: { enabled: true },
-    },
-  },
-  {
-    id: "rp-4",
-    name: "docs.netbird.app",
-    domain: "docs.netbird.app",
-    targets: [
-      {
-        target_id: "t5",
-        target_type: ReversProxyTargetType.PEER,
-        protocol: ReverseProxyTargetProtocol.HTTP,
-        host: "localhost",
-        port: 4000,
-        enabled: true,
-      },
-    ],
-    enabled: true,
-    // No auth - public access, no cluster (broadcasts to all)
-  },
-];
-
 type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
@@ -211,8 +118,6 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
     ],
   );
 
-  const data = reverseProxies ?? exampleReverseProxies;
-
   return (
     <DataTable
       headingTarget={headingTarget}
@@ -222,7 +127,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       sorting={sorting}
       setSorting={setSorting}
       columns={ReverseProxyColumns}
-      data={data}
+      data={reverseProxies}
       useRowId={true}
       searchPlaceholder={"Search by URL, domain, or target..."}
       columnVisibility={{ searchString: false }}
@@ -275,7 +180,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       }
       rightSide={() => (
         <>
-          {data && data?.length > 0 && (
+          {reverseProxies && reverseProxies?.length > 0 && (
             <Button
               variant={"primary"}
               className={"ml-auto"}
@@ -291,13 +196,13 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
     >
       {(table) => (
         <>
-          <ButtonGroup disabled={data?.length == 0}>
+          <ButtonGroup disabled={reverseProxies?.length == 0}>
             <ButtonGroup.Button
               onClick={() => {
                 table.setPageIndex(0);
                 table.getColumn("enabled")?.setFilterValue(undefined);
               }}
-              disabled={data?.length == 0}
+              disabled={reverseProxies?.length == 0}
               variant={
                 table.getColumn("enabled")?.getFilterValue() === undefined
                   ? "tertiary"
@@ -311,7 +216,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
                 table.setPageIndex(0);
                 table.getColumn("enabled")?.setFilterValue(true);
               }}
-              disabled={data?.length == 0}
+              disabled={reverseProxies?.length == 0}
               variant={
                 table.getColumn("enabled")?.getFilterValue() === true
                   ? "tertiary"
@@ -325,7 +230,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
                 table.setPageIndex(0);
                 table.getColumn("enabled")?.setFilterValue(false);
               }}
-              disabled={data?.length == 0}
+              disabled={reverseProxies?.length == 0}
               variant={
                 table.getColumn("enabled")?.getFilterValue() === false
                   ? "tertiary"
@@ -335,9 +240,12 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
               Inactive
             </ButtonGroup.Button>
           </ButtonGroup>
-          <DataTableRowsPerPage table={table} disabled={data?.length == 0} />
+          <DataTableRowsPerPage
+            table={table}
+            disabled={reverseProxies?.length == 0}
+          />
           <DataTableRefreshButton
-            isDisabled={data?.length == 0}
+            isDisabled={reverseProxies?.length == 0}
             onClick={() => {
               mutate("/reverse-proxies").then();
             }}

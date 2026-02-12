@@ -32,7 +32,7 @@ import {
   ReverseProxy,
   ReverseProxyTarget,
   ReverseProxyTargetProtocol,
-  ReversProxyTargetType,
+  ReverseProxyTargetType,
 } from "@/interfaces/ReverseProxy";
 import {
   defaultPortForProtocol,
@@ -90,15 +90,15 @@ export default function ReverseProxyTargetModal({
   );
   const { data: peers } = useFetchApi<Peer[]>("/peers");
 
-  const [targetType, setTargetType] = useState<ReversProxyTargetType>(
+  const [targetType, setTargetType] = useState<ReverseProxyTargetType>(
     currentTarget?.target_type ??
       (initialResource
-        ? (initialResource.type as ReversProxyTargetType) ??
-          ReversProxyTargetType.HOST
-        : ReversProxyTargetType.PEER),
+        ? (initialResource.type as ReverseProxyTargetType) ??
+          ReverseProxyTargetType.HOST
+        : ReverseProxyTargetType.PEER),
   );
   const [targetPeerId, setTargetPeerId] = useState<string | undefined>(
-    currentTarget?.target_type === ReversProxyTargetType.PEER
+    currentTarget?.target_type === ReverseProxyTargetType.PEER
       ? currentTarget?.target_id
       : initialPeer?.id,
   );
@@ -177,13 +177,7 @@ export default function ReverseProxyTargetModal({
   const isPathDuplicate = useMemo(() => {
     const normalizedCurrentPath = normalizePath(targetPath);
     return existingTargets.some((t) => {
-      // Skip the target being edited - match by path, host, and port
-      if (
-        currentTarget &&
-        normalizePath(t.path) === normalizePath(currentTarget.path) &&
-        t.host === currentTarget.host &&
-        t.port === currentTarget.port
-      ) {
+      if (currentTarget && t === currentTarget) {
         return false;
       }
       return normalizePath(t.path) === normalizedCurrentPath;
@@ -205,7 +199,7 @@ export default function ReverseProxyTargetModal({
     if (initialPeer) {
       return true;
     }
-    if (targetType === ReversProxyTargetType.PEER) {
+    if (targetType === ReverseProxyTargetType.PEER) {
       return !!targetPeerId;
     }
     if (isResourceTargetType(targetType)) {
@@ -227,20 +221,20 @@ export default function ReverseProxyTargetModal({
     initialResource || initialPeer || targetPeerId || targetResourceId;
 
   const handleSave = () => {
-    const resolvedType = initialPeer ? ReversProxyTargetType.PEER : targetType;
+    const resolvedType = initialPeer ? ReverseProxyTargetType.PEER : targetType;
     const isResource = isResourceTargetType(resolvedType) || !!initialResource;
     const targetData: ReverseProxyTarget = {
       target_type: resolvedType,
       target_id:
-        resolvedType === ReversProxyTargetType.PEER
+        resolvedType === ReverseProxyTargetType.PEER
           ? targetPeerId
           : targetResourceId,
       protocol: targetProtocol,
       host:
-        resolvedType === ReversProxyTargetType.SUBNET ? targetHost : undefined,
+        resolvedType === ReverseProxyTargetType.SUBNET ? targetHost : undefined,
       port: targetPort,
       path: targetPath || undefined,
-      enabled: true,
+      enabled: currentTarget?.enabled ?? true,
       access_local: isResource ? accessLocal : undefined,
     };
     onSave(targetData);
@@ -358,7 +352,7 @@ export default function ReverseProxyTargetModal({
                   resource={
                     isResourceTargetType(targetType) && targetResourceId
                       ? { id: targetResourceId, type: "host" }
-                      : targetType === ReversProxyTargetType.PEER &&
+                      : targetType === ReverseProxyTargetType.PEER &&
                         targetPeerId
                       ? { id: targetPeerId, type: "peer" }
                       : undefined
@@ -366,7 +360,7 @@ export default function ReverseProxyTargetModal({
                   onResourceChange={(res) => {
                     if (res) {
                       if (res.type === "peer") {
-                        setTargetType(ReversProxyTargetType.PEER);
+                        setTargetType(ReverseProxyTargetType.PEER);
                         setTargetPeerId(res.id);
                         setTargetResourceId(undefined);
                         const peer = peers?.find((p) => p.id === res.id);
@@ -376,8 +370,8 @@ export default function ReverseProxyTargetModal({
                           (r) => r.id === res.id,
                         );
                         setTargetType(
-                          (selectedResource?.type as ReversProxyTargetType) ??
-                            ReversProxyTargetType.HOST,
+                          (selectedResource?.type as ReverseProxyTargetType) ??
+                            ReverseProxyTargetType.HOST,
                         );
                         setTargetResourceId(res.id);
                         setTargetPeerId(undefined);

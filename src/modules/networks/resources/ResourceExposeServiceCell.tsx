@@ -41,7 +41,8 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
           onClick={(e) => {
             e.preventDefault();
             e.stopPropagation();
-            router.push(`/network?id=${network?.id}&tab=services&target=${resource.id}`);
+            if (!network?.id) return;
+            router.push(`/network?id=${network.id}&tab=services&target=${resource.id}`);
           }}
         >
           <ReverseProxyIcon size={14} className={"fill-green-500"} />
@@ -60,11 +61,12 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
             initialResource: resource,
             initialNetwork: network,
             onSuccess: () => {
-              router.push(`/network?id=${network?.id}&tab=services`);
+              if (!network?.id) return;
+              router.push(`/network?id=${network.id}&tab=services`);
             },
           });
         }}
-        disabled={!permission.routes?.create}
+        disabled={!permission.services?.create}
       >
         <CirclePlusIcon size={12} />
         Expose Service

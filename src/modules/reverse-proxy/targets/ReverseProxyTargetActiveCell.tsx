@@ -1,5 +1,6 @@
 import { ToggleSwitch } from "@components/ToggleSwitch";
 import * as React from "react";
+import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxyTarget } from "@/interfaces/ReverseProxy";
 import { useReverseProxyTarget } from "./ReverseProxyTargetContext";
@@ -13,6 +14,7 @@ export default function ReverseProxyTargetActiveCell({
 }: Readonly<Props>) {
   const reverseProxy = useReverseProxyTarget();
   const { handleToggleTarget } = useReverseProxies();
+  const { permission } = usePermissions();
 
   return (
     <div
@@ -21,8 +23,9 @@ export default function ReverseProxyTargetActiveCell({
       }}
     >
       <ToggleSwitch
-        checked={target.enabled !== false}
+        checked={target.enabled}
         size={"small"}
+        disabled={!permission?.services?.update}
         onCheckedChange={() => {
           handleToggleTarget(reverseProxy, target);
         }}

@@ -6,7 +6,7 @@ import { DeviceCard } from "@components/DeviceCard";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import {
   ReverseProxyTarget,
-  ReversProxyTargetType,
+  ReverseProxyTargetType,
 } from "@/interfaces/ReverseProxy";
 import { isResourceTargetType } from "@/contexts/ReverseProxiesProvider";
 import { cn } from "@utils/helpers";
@@ -31,7 +31,7 @@ export const ReverseProxyTargetDevice = ({
   const { data: networks, isLoading: isNetworksLoading } =
     useFetchApi<Network[]>(`/networks`);
 
-  const isPeer = target.target_type === ReversProxyTargetType.PEER;
+  const isPeer = target.target_type === ReverseProxyTargetType.PEER;
   const isResource = isResourceTargetType(target.target_type);
 
   const peer = isPeer

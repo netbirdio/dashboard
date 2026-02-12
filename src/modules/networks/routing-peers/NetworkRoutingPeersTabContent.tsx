@@ -27,14 +27,14 @@ export const NetworkRoutingPeersTabContent = ({
   const data = useMemo(() => {
     return routers?.map((router) => {
       const peer = peers?.find((peer) => peer.id === router.peer);
-      const user = users?.find((user) => user.id === router.peer);
+      const user = peer ? users?.find((user) => user.id === peer.user_id) : undefined;
       const group = groups?.find(
         (group) => group.id === router?.peer_groups?.[0],
       );
 
       return {
         ...router,
-        search: `${peer?.name} ${peer?.ip} ${user?.name} ${user?.id} ${group?.name}`,
+        search: `${peer?.name ?? ""} ${peer?.ip ?? ""} ${user?.name ?? ""} ${user?.id ?? ""} ${group?.name ?? ""}`,
       };
     });
   }, [users, peers, routers, groups]);

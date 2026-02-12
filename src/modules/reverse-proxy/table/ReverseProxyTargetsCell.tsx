@@ -42,7 +42,7 @@ export default function ReverseProxyTargetsCell({
           openTargetModal({ proxy: reverseProxy });
         }}
         className={"!px-3"}
-        disabled={!permission?.routes?.create}
+        disabled={!permission?.services?.create}
       >
         <PlusCircle size={12} />
         Add Target

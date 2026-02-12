@@ -41,7 +41,7 @@ export default function SidebarItem({
   // Check if any child route is active (for collapsible items)
   const hasActiveChild = useMemo(() => {
     if (!collapsible || !href) return false;
-    return path.startsWith(href);
+    return path === href || path.startsWith(href + "/");
   }, [collapsible, href, path]);
 
   const [open, setOpen] = React.useState(hasActiveChild);

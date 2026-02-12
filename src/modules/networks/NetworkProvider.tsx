@@ -109,10 +109,12 @@ export const NetworkProvider = ({
       destinationGroups: hasResourceGroups ? resource?.groups : undefined,
       destinationResource: hasResourceGroups
         ? undefined
-        : ({
-            id: resource?.id,
-            type: resource?.type,
-          } as PolicyRuleResource),
+        : resource
+          ? ({
+              id: resource.id,
+              type: resource.type,
+            } as PolicyRuleResource)
+          : undefined,
       name:
         network && !resource
           ? `${network?.name} Policy`

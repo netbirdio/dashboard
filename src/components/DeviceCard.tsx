@@ -37,8 +37,11 @@ export const DeviceCard = ({
           "group-hover:bg-nb-gray-800 relative",
         )}
       >
-        {device && <PeerOSIcon os={device.os} />}
-        {resource?.type && <ResourceIcon type={resource.type} />}
+        {device ? (
+          <PeerOSIcon os={device.os} />
+        ) : resource?.type ? (
+          <ResourceIcon type={resource.type} />
+        ) : null}
 
         {device?.country_code && (
           <div className={"absolute -bottom-[4px] -right-[4px]"}>

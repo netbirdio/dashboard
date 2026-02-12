@@ -17,7 +17,6 @@ import RouteDistributionGroupsCell from "@/modules/routes/RouteDistributionGroup
 type Props = {
   peerRoutes?: Route[];
   isLoading: boolean;
-  headingTarget?: HTMLHeadingElement | null;
   peer: Peer;
 };
 
@@ -72,7 +71,6 @@ export default function PeerRoutesTable({
   peerRoutes,
   isLoading,
   peer,
-  headingTarget,
 }: Props) {
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
@@ -89,7 +87,6 @@ export default function PeerRoutesTable({
         wrapperProps={{
           className: cn("w-full"),
         }}
-        headingTarget={headingTarget}
         text={"Network Routes"}
         tableClassName={"mt-0"}
         getStartedCard={

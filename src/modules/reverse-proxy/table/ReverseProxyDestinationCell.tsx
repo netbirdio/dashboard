@@ -11,7 +11,8 @@ type Props = {
 export default function ReverseProxyDestinationCell({
   target,
 }: Readonly<Props>) {
-  if (target.destination === "unknown") return <EmptyRow />;
+  if (!target.destination || target.destination === "unknown")
+    return <EmptyRow />;
 
   return (
     <div
