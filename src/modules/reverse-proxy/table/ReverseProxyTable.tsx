@@ -247,7 +247,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
           <DataTableRefreshButton
             isDisabled={reverseProxies?.length == 0}
             onClick={() => {
-              mutate("/reverse-proxies").then();
+              mutate("/reverse-proxies/services").then();
             }}
           />
         </>

@@ -567,6 +567,9 @@ export function flattenReverseProxies({
 }
 
 function isSameTarget(a: ReverseProxyTarget, b: ReverseProxyTarget): boolean {
+  if (a.target_id && b.target_id) {
+    return a.target_id === b.target_id;
+  }
   return (
     a.path === b.path &&
     a.host === b.host &&

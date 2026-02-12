@@ -176,8 +176,13 @@ export default function ReverseProxyTargetModal({
   // Check if path already exists in other targets
   const isPathDuplicate = useMemo(() => {
     const normalizedCurrentPath = normalizePath(targetPath);
+    const targetKey = (target: typeof currentTarget) => {
+      if (!target) return "";
+      return target.target_id || normalizePath(target.path);
+    };
+    const currentKey = targetKey(currentTarget);
     return existingTargets.some((t) => {
-      if (currentTarget && t === currentTarget) {
+      if (currentTarget && targetKey(t) === currentKey) {
         return false;
       }
       return normalizePath(t.path) === normalizedCurrentPath;

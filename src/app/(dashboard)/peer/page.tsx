@@ -392,7 +392,7 @@ const PeerOverviewTabs = () => {
         </TabsContent>
       )}
 
-      {peer?.id && permission.routes.read && (
+      {peer?.id && permission.services?.read && (
         <TabsContent value={"reverse-proxies"} className={"pb-8"}>
           <ReverseProxyFlatTargetsTabContent
             targets={flatTargets}

@@ -191,6 +191,7 @@ p {
 /* Override stacked toast removal to move up instead of down */
 [data-sonner-toast][data-removed='true'][data-front='false'][data-swipe-out='false'][data-expanded='false'] {
     --y: translateY(calc(var(--lift) * -20%)) !important;
+
     opacity: 0 !important;
     transition: transform 400ms ease, opacity 300ms ease !important;
 }
