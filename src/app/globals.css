@@ -188,6 +188,13 @@ p {
     --lift-amount: calc(var(--lift) * 10px) !important;
 }
 
+/* Override stacked toast removal to move up instead of down */
+[data-sonner-toast][data-removed='true'][data-front='false'][data-swipe-out='false'][data-expanded='false'] {
+    --y: translateY(calc(var(--lift) * -20%)) !important;
+    opacity: 0 !important;
+    transition: transform 400ms ease, opacity 300ms ease !important;
+}
+
 /* Control Center */
 .react-flow__node-groupNode .selected{
     @apply border-netbird;
