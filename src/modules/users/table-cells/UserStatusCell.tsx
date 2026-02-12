@@ -15,7 +15,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
   const status = user.status;
   const isPendingApproval = user.pending_approval;
   const isLocalAuthDisabled =
-    account?.settings.local_auth_disabled === true &&
+    account?.settings?.local_auth_disabled === true &&
     user.idp_id === "local";
 
   const getStatusDisplay = () => {
