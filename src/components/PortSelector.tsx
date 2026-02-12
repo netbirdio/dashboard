@@ -188,7 +188,6 @@ export function PortSelector({
                     "dark:placeholder:text-nb-gray-400 font-light placeholder:text-neutral-500 pl-10",
                   )}
                   data-cy={"port-input"}
-                  typeof={"number"}
                   ref={searchRef}
                   value={search}
                   onValueChange={setSearch}

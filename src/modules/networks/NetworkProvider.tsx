@@ -12,7 +12,7 @@ import NetworkModal from "@/modules/networks/NetworkModal";
 import NetworkResourceModal from "@/modules/networks/resources/NetworkResourceModal";
 import { ResourceGroupModal } from "@/modules/networks/resources/ResourceGroupModal";
 import NetworkRoutingPeerModal from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
-import { Policy } from "@/interfaces/Policy";
+import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
 
 type Props = {
@@ -59,6 +59,7 @@ export const NetworkProvider = ({
     name?: string;
     description?: string;
     destinationGroups?: Group[] | string[];
+    destinationResource?: PolicyRuleResource;
   }>();
   const [currentPolicy, setCurrentPolicy] = useState<Policy>();
 
@@ -103,8 +104,15 @@ export const NetworkProvider = ({
   };
 
   const openPolicyModal = (network?: Network, resource?: NetworkResource) => {
+    const hasResourceGroups = (resource?.groups?.length || 0) > 0;
     setPolicyDefaultSettings({
-      destinationGroups: resource?.groups,
+      destinationGroups: hasResourceGroups ? resource?.groups : undefined,
+      destinationResource: hasResourceGroups
+        ? undefined
+        : ({
+            id: resource?.id,
+            type: resource?.type,
+          } as PolicyRuleResource),
       name:
         network && !resource
           ? `${network?.name} Policy`
@@ -178,6 +186,7 @@ export const NetworkProvider = ({
         () => {
           onResourceDelete?.();
           mutate(`/networks/${network.id}/resources`);
+          mutate(`/networks/${network.id}`);
           mutate("/groups");
         },
       ),
@@ -289,6 +298,9 @@ export const NetworkProvider = ({
           <AccessControlModalContent
             key={policyModal ? "1" : "0"}
             initialDestinationGroups={policyDefaultSettings?.destinationGroups}
+            initialDestinationResource={
+              policyDefaultSettings?.destinationResource
+            }
             initialName={policyDefaultSettings?.name}
             initialDescription={policyDefaultSettings?.description}
             policy={currentPolicy}

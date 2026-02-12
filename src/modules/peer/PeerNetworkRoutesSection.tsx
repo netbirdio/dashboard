@@ -1,6 +1,5 @@
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
-import { usePortalElement } from "@hooks/usePortalElement";
 import * as React from "react";
 import { lazy, Suspense } from "react";
 import type { Peer } from "@/interfaces/Peer";
@@ -8,6 +7,8 @@ import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
 import { useHasExitNodes } from "@/modules/exit-node/useHasExitNodes";
 import AddRouteDropdownButton from "@/modules/peer/AddRouteDropdownButton";
 import usePeerRoutes from "@/modules/peer/usePeerRoutes";
+import InlineLink from "@components/InlineLink";
+import { ExternalLinkIcon } from "lucide-react";
 
 const PeerRoutesTable = lazy(() => import("@/modules/peer/PeerRoutesTable"));
 
@@ -18,23 +19,36 @@ type Props = {
 export const PeerNetworkRoutesSection = ({ peer }: Props) => {
   const { peerRoutes, isLoading } = usePeerRoutes({ peer });
   const exitNodeInfo = useHasExitNodes(peer);
-  const { ref: headingRef, portalTarget } =
-    usePortalElement<HTMLHeadingElement>();
 
   return (
     <div className={"pb-10 px-8"}>
-      <div className={"max-w-6xl"}>
+      <div className={""}>
         <div className={"flex justify-between items-center mb-5"}>
           <div>
-            <h2 ref={headingRef}>Network Routes</h2>
             <Paragraph>
               Access other networks without installing NetBird on every
               resource.
             </Paragraph>
+            <Paragraph>
+              Learn more about
+              <InlineLink
+                href={
+                  "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
+                }
+                target={"_blank"}
+              >
+                Network Routes
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
+              in our documentation.
+            </Paragraph>
           </div>
           <div className={"inline-flex gap-4 justify-end"}>
             <div className={"gap-4 flex"}>
-              <AddExitNodeButton peer={peer} firstTime={!exitNodeInfo.hasExitNode} />
+              <AddExitNodeButton
+                peer={peer}
+                firstTime={!exitNodeInfo.hasExitNode}
+              />
               <AddRouteDropdownButton />
             </div>
           </div>
@@ -53,7 +67,6 @@ export const PeerNetworkRoutesSection = ({ peer }: Props) => {
             peer={peer}
             isLoading={isLoading}
             peerRoutes={peerRoutes}
-            headingTarget={portalTarget}
           />
         </Suspense>
       </div>

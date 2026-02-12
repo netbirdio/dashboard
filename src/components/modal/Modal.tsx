@@ -59,6 +59,7 @@ const ModalContent = React.forwardRef<
       children,
       showClose = true,
       maxWidthClass = "max-w-3xl",
+      onPointerDownOutside,
       ...props
     },
     ref,
@@ -72,6 +73,19 @@ const ModalContent = React.forwardRef<
             className,
             maxWidthClass,
           )}
+          onPointerDownOutside={(e) => {
+            // Prevent closing modal when clicking on toast notifications
+            try {
+              const target = e.target as HTMLElement;
+              if (target?.closest("[data-toast-notification]")) {
+                e.preventDefault();
+                return;
+              }
+            } catch {
+              // Ignore errors
+            }
+            onPointerDownOutside?.(e);
+          }}
           {...props}
           onClick={(e) => e.stopPropagation()}
         >

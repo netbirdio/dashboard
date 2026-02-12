@@ -10,7 +10,7 @@ import { ChevronsUpDown } from "lucide-react";
 import * as React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
-import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import { DeviceCard } from "@components/DeviceCard";
 import { OSLogo } from "@/modules/peers/PeerOSCell";
 
 type PeerNodeProps = Node<

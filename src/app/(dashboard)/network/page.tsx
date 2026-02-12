@@ -12,14 +12,14 @@ import {
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
-import Separator from "@components/Separator";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
-import { cn } from "@utils/helpers";
+import { cn, singularize } from "@utils/helpers";
 import {
   ArrowUpRightIcon,
   HelpCircle,
+  Layers3Icon,
   MoreVertical,
   PencilLineIcon,
   ServerIcon,
@@ -28,19 +28,27 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useMemo, useState } from "react";
-import { useSWRConfig } from "swr";
+import React, { useMemo } from "react";
+import useUrlTab from "@/hooks/useUrlTab";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { Network } from "@/interfaces/Network";
+import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
 import { NetworkInformationSquare } from "@/modules/networks/misc/NetworkInformationSquare";
 import {
   NetworkProvider,
   useNetworksContext,
 } from "@/modules/networks/NetworkProvider";
-import { ResourcesSection } from "@/modules/networks/resources/ResourcesSection";
-import { NetworkRoutingPeersSection } from "@/modules/networks/routing-peers/NetworkRoutingPeersSection";
+import { ResourcesTabContent } from "@/modules/networks/resources/ResourcesTabContent";
+import { NetworkRoutingPeersTabContent } from "@/modules/networks/routing-peers/NetworkRoutingPeersTabContent";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import PeerIcon from "@/assets/icons/PeerIcon";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
+import { ReverseProxyFlatTargetsTabContent } from "@/modules/reverse-proxy/targets/flat/ReverseProxyFlatTargetsTabContent";
+import ReverseProxiesProvider, {
+  flattenReverseProxies,
+  useReverseProxies,
+} from "@/contexts/ReverseProxiesProvider";
 
 export default function NetworkDetailPage() {
   const queryParameter = useSearchParams();
@@ -53,7 +61,9 @@ export default function NetworkDetailPage() {
   useRedirect("/networks", false, !networkId);
 
   return network && !isLoading ? (
-    <NetworkOverview network={network} />
+    <ReverseProxiesProvider initialNetwork={network}>
+      <NetworkOverview network={network} />
+    </ReverseProxiesProvider>
   ) : (
     <FullScreenLoading />
   );
@@ -62,8 +72,23 @@ export default function NetworkDetailPage() {
 function NetworkOverview({ network }: Readonly<{ network: Network }>) {
   const { permission } = usePermissions();
 
-  const [networkModal, setNetworkModal] = useState(false);
-  const { mutate } = useSWRConfig();
+  const { data: resources, isLoading: isResourcesLoading } = useFetchApi<
+    NetworkResource[]
+  >(`/networks/${network.id}/resources`);
+  const { data: routers, isLoading: isRoutersLoading } = useFetchApi<
+    NetworkRouter[]
+  >(`/networks/${network.id}/routers`);
+
+  const { reverseProxies, isLoading: isServicesLoading } = useReverseProxies();
+  const services = useMemo(
+    () => flattenReverseProxies({ reverseProxies, network }),
+    [reverseProxies, network],
+  );
+
+  const [tab, setTab] = useUrlTab(
+    ["resources", "routing-peers", "services"],
+    "resources",
+  );
 
   const isActive = !!(
     network?.routing_peers_count && network.routing_peers_count > 0
@@ -72,7 +97,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
   return (
     <PageContainer>
       <NetworkProvider network={network}>
-        <div className={"p-default py-6 mb-4"}>
+        <div className={"p-default py-6"}>
           <Breadcrumbs>
             <Breadcrumbs.Item
               href={"/networks"}
@@ -115,11 +140,58 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
           </div>
         </div>
 
-        <Separator />
-        <ResourcesSection network={network} />
-        <div className={"h-3"} />
-        <Separator />
-        <NetworkRoutingPeersSection network={network} />
+        <Tabs
+          defaultValue={tab}
+          onValueChange={setTab}
+          value={tab}
+          className={"pb-0 mb-0"}
+        >
+          <TabsList justify={"start"} className={"px-8"}>
+            <TabsTrigger value={"resources"}>
+              <Layers3Icon size={14} />
+              {singularize("Resources", network?.resources?.length)}
+            </TabsTrigger>
+            <TabsTrigger value={"routing-peers"}>
+              <PeerIcon
+                size={12}
+                className={
+                  "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+                }
+              />
+              {singularize("Routing Peers", network?.routing_peers_count)}
+            </TabsTrigger>
+            <TabsTrigger value={"services"}>
+              <ReverseProxyIcon
+                size={16}
+                className={
+                  "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+                }
+              />
+              {singularize("Services", services.length)}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value={"resources"} className={"pb-8"}>
+            <ResourcesTabContent
+              data={resources}
+              isLoading={isResourcesLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value={"routing-peers"} className={"pb-8"}>
+            <NetworkRoutingPeersTabContent
+              routers={routers}
+              isLoading={isRoutersLoading}
+            />
+          </TabsContent>
+
+          <TabsContent value={"services"} className={"pb-8"}>
+            <ReverseProxyFlatTargetsTabContent
+              targets={services}
+              isLoading={isServicesLoading}
+            />
+          </TabsContent>
+        </Tabs>
       </NetworkProvider>
     </PageContainer>
   );

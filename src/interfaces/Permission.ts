@@ -33,6 +33,8 @@ export interface Permissions {
 
     proxy: Permission;
     proxy_configuration: Permission;
+
+    services: Permission;
   };
 }
 

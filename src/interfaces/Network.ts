@@ -17,6 +17,7 @@ export interface NetworkRouter {
   metric: number;
   masquerade: boolean;
   enabled: boolean;
+  search?: string;
 }
 
 export interface NetworkResource {

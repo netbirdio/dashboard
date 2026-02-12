@@ -61,7 +61,7 @@ export default function NetworkRoutes() {
               in our documentation.
             </Paragraph>
 
-            <Callout className={"max-w-xl mt-3"} variant={"warning"}>
+            <Callout className={"max-w-xl mt-5"} variant={"warning"}>
               <span>
                 We recommend using the new Networks concept to easier visualise
                 and manage access to your resources.{" "}

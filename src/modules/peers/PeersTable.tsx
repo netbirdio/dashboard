@@ -36,6 +36,7 @@ import PeerNameCell from "@/modules/peers/PeerNameCell";
 import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 import PeerStatusCell from "@/modules/peers/PeerStatusCell";
 import PeerVersionCell from "@/modules/peers/PeerVersionCell";
+import { removeAllSpaces } from "@utils/helpers";
 
 const PeersTableColumns: ColumnDef<Peer>[] = [
   {
@@ -144,7 +145,8 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
   },
   {
-    accessorKey: "os",
+    id: "os",
+    accessorFn: (peer) => removeAllSpaces(peer?.os),
     header: ({ column }) => {
       return <DataTableHeader column={column}>OS</DataTableHeader>;
     },

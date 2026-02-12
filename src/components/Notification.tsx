@@ -2,11 +2,11 @@ import { IconCircleX } from "@tabler/icons-react";
 import type { ErrorResponse } from "@utils/api";
 import { cn } from "@utils/helpers";
 import classNames from "classnames";
-import { AnimatePresence, motion } from "framer-motion";
+import { motion } from "framer-motion";
 import { CheckIcon, Loader2, XIcon } from "lucide-react";
 import * as React from "react";
-import { useEffect, useState } from "react";
-import toast, { type Toast } from "react-hot-toast";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { toast } from "sonner";
 
 export interface NotifyProps<T> {
   title: string;
@@ -22,14 +22,15 @@ export interface NotifyProps<T> {
 }
 
 interface NotificationProps<T> extends NotifyProps<T> {
-  t: Toast;
+  toastId: string | number;
 }
+
 export default function Notification<T>({
   title,
   description,
   icon,
   backgroundColor,
-  t,
+  toastId,
   promise,
   loadingTitle,
   loadingMessage,
@@ -39,17 +40,65 @@ export default function Notification<T>({
 }: NotificationProps<T>) {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(!!promise);
+  const [readyToDismiss, setReadyToDismiss] = useState(!promise);
 
-  const [toastDuration] = useState(duration);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const remainingRef = useRef(duration);
+  const startTimeRef = useRef<number | null>(null);
 
-  const [preventSuccess, setPreventSuccess] = useState(false);
+  const startTimer = useCallback(() => {
+    if (timerRef.current) return;
+    startTimeRef.current = Date.now();
+    timerRef.current = setTimeout(() => {
+      timerRef.current = null;
+      toast.dismiss(toastId);
+    }, Math.max(0, remainingRef.current));
+  }, [toastId]);
 
-  const closeToast = () => {
-    setTimeout(() => {
-      setLoading(false);
-      toast.dismiss(t.id);
-    }, toastDuration);
-  };
+  const pauseTimer = useCallback(() => {
+    if (!timerRef.current || !startTimeRef.current) return;
+    clearTimeout(timerRef.current);
+    timerRef.current = null;
+    remainingRef.current = Math.max(
+      0,
+      remainingRef.current - (Date.now() - startTimeRef.current),
+    );
+  }, []);
+
+  const notificationRef = useRef<HTMLDivElement>(null);
+
+  // Watch for sonner's expanded state to pause/resume timer
+  useEffect(() => {
+    if (!readyToDismiss) return;
+
+    const toastEl = notificationRef.current?.closest(
+      "[data-sonner-toast]",
+    ) as HTMLElement | null;
+    if (!toastEl) {
+      startTimer();
+      return;
+    }
+
+    const observer = new MutationObserver(() => {
+      const expanded = toastEl.getAttribute("data-expanded") === "true";
+      if (expanded) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    });
+
+    observer.observe(toastEl, { attributes: true, attributeFilter: ["data-expanded"] });
+
+    // Start immediately if not expanded
+    const expanded = toastEl.getAttribute("data-expanded") === "true";
+    if (!expanded) startTimer();
+
+    return () => {
+      observer.disconnect();
+      if (timerRef.current) clearTimeout(timerRef.current);
+    };
+  }, [readyToDismiss, toastId, startTimer, pauseTimer]);
 
   useEffect(() => {
     // Run the promise
@@ -57,8 +106,11 @@ export default function Notification<T>({
       promise
         .then(() => {
           setLoading(false);
-          closeToast();
-          if (preventSuccessToast) setPreventSuccess(true);
+          if (preventSuccessToast) {
+            toast.dismiss(toastId);
+          } else {
+            setReadyToDismiss(true);
+          }
         })
         .catch((e) => {
           const err = e as ErrorResponse;
@@ -78,78 +130,76 @@ export default function Notification<T>({
           }
 
           setLoading(false);
-          closeToast();
+          setReadyToDismiss(true);
         });
-    } else {
-      closeToast();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <AnimatePresence>
-      {t.visible && !preventSuccess && (
-        <motion.div
-          initial={{ opacity: 1, y: -50 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: -50 }}
-          className={cn(
-            "max-w-md w-full justify-between bg-white dark:bg-nb-gray-940 shadow-lg rounded-md px-4 py-2.5 pointer-events-auto flex border dark:border-nb-gray-900",
-          )}
-        >
-          <div className={"flex items-center gap-4"}>
-            <div
-              className={classNames(
-                "h-8 w-8  shadow-sm text-white flex items-center justify-center rounded-md shrink-0",
-                loading
-                  ? "bg-nb-gray-900"
-                  : error
-                  ? "bg-red-500"
-                  : backgroundColor || "bg-green-500",
-              )}
-            >
-              {loading ? (
-                <Loader2 size={14} className={"animate-spin"} />
-              ) : error ? (
-                <IconCircleX size={24} />
-              ) : (
-                icon || <CheckIcon size={14} />
-              )}
-            </div>
-            <div className={"flex flex-col text-sm"}>
-              <p>
-                <span className={"font-semibold"}>
-                  {loading ? loadingTitle || title : title}
-                </span>
-              </p>
-              <p
-                className={"text-xs dark:text-nb-gray-300 text-gray-600 mt-0.5"}
-              >
-                {loading ? loadingMessage : error ? error : description}
-              </p>
-            </div>
-          </div>
-
-          <button
-            className="flex dark:border-nb-gray-900 items-center cursor-pointer group"
-            onClick={() => toast.dismiss(t.id)}
+    <motion.div
+      ref={notificationRef}
+      initial={{ y: -20 }}
+      animate={{ y: 0 }}
+      transition={{ type: "spring", stiffness: 400, damping: 20 }}
+      data-toast-notification
+      className="w-[28rem] pb-2"
+    >
+      <div
+        className={cn(
+          "w-full justify-between bg-white dark:bg-nb-gray-940 shadow-lg rounded-md px-4 py-2.5 pointer-events-auto flex border dark:border-nb-gray-900",
+        )}
+      >
+        <div className={"flex items-center gap-4"}>
+          <div
+            className={classNames(
+              "h-8 w-8  shadow-sm text-white flex items-center justify-center rounded-md shrink-0",
+              loading
+                ? "bg-nb-gray-900"
+                : error
+                ? "bg-red-500"
+                : backgroundColor || "bg-green-500",
+            )}
           >
-            <div
-              className={
-                "p-2 hover:bg-nb-gray-900 rounded-md opacity-50 group-hover:opacity-100"
-              }
-            >
-              <XIcon size={16} />
-            </div>
-          </button>
-        </motion.div>
-      )}
-    </AnimatePresence>
+            {loading ? (
+              <Loader2 size={14} className={"animate-spin"} />
+            ) : error ? (
+              <IconCircleX size={24} />
+            ) : (
+              icon || <CheckIcon size={14} />
+            )}
+          </div>
+          <div className={"flex flex-col text-sm"}>
+            <p>
+              <span className={"font-semibold"}>
+                {loading ? loadingTitle || title : title}
+              </span>
+            </p>
+            <p className={"text-xs dark:text-nb-gray-300 text-gray-600 mt-0.5"}>
+              {loading ? loadingMessage : error ? error : description}
+            </p>
+          </div>
+        </div>
+
+        <button
+          className="flex dark:border-nb-gray-900 items-center cursor-pointer group"
+          onClick={() => toast.dismiss(toastId)}
+        >
+          <div
+            className={
+              "p-2 hover:bg-nb-gray-900 rounded-md opacity-50 group-hover:opacity-100"
+            }
+          >
+            <XIcon size={16} />
+          </div>
+        </button>
+      </div>
+    </motion.div>
   );
 }
 
 export function notify<T>(props: NotifyProps<T>) {
-  return toast.custom((t) => <Notification {...props} t={t} />, {
+  return toast.custom((id) => <Notification {...props} toastId={id} />, {
     duration: Infinity,
   });
 }

@@ -17,7 +17,6 @@ import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import Separator from "@components/Separator";
-import { Textarea } from "@components/Textarea";
 import { useApiCall } from "@utils/api";
 import {
   ExternalLinkIcon,
@@ -100,7 +99,7 @@ export function ResourceModalContent({
         name,
         description,
         address,
-        groups: savedGroups.map((g) => g.id),
+        groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
         enabled,
       }).then((r) => {
         onCreated?.(r);
@@ -118,7 +117,7 @@ export function ResourceModalContent({
         name,
         description,
         address,
-        groups: savedGroups.map((g) => g.id),
+        groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
         enabled,
       }).then((r) => {
         onUpdated?.(r);
@@ -128,7 +127,7 @@ export function ResourceModalContent({
 
   // TODO:  Address validation is missing for proper handling of submit button
   const canCreate = useMemo(() => {
-    return name.length > 0 && address.length > 0 && groups.length > 0;
+    return name.length > 0 && address.length > 0;
   }, [name, address, groups]);
 
   return (
@@ -162,10 +161,9 @@ export function ResourceModalContent({
           <HelpText>
             Write a short description to add more context to this resource.
           </HelpText>
-          <Textarea
+          <Input
             placeholder={"e.g., Production, Development"}
             value={description}
-            rows={1}
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
@@ -173,14 +171,14 @@ export function ResourceModalContent({
         <ResourceSingleAddressInput value={address} onChange={setAddress} />
 
         <div>
-          <Label>Destination Groups</Label>
+          <Label>Destination Groups (optional)</Label>
           <HelpText>
             Add this resource to groups and use them as destinations when
             creating policies
           </HelpText>
           <PeerGroupSelector onChange={setGroups} values={groups} />
         </div>
-        <div className={"mt-3"}>
+        <div className={"mt-2 mb-2"}>
           <FancyToggleSwitch
             value={enabled}
             onChange={setEnabled}

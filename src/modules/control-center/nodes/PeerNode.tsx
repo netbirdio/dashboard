@@ -2,7 +2,7 @@ import { cn } from "@utils/helpers";
 import { Handle, type Node, Position } from "@xyflow/react";
 import * as React from "react";
 import type { Peer } from "@/interfaces/Peer";
-import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import { DeviceCard } from "@components/DeviceCard";
 import { useAnySourceGroupEnabled } from "@/modules/control-center/utils/helpers";
 
 type PeerNodeProps = Node<

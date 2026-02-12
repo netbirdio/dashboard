@@ -68,6 +68,12 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
       return <RoutingPeersActionCell router={row.original} />;
     },
   },
+  {
+    id: "search",
+    accessorKey: "search",
+    header: "",
+    filterFn: "fuzzy",
+  },
 ];
 
 export default function NetworkRoutingPeersTable({
@@ -93,14 +99,14 @@ export default function NetworkRoutingPeersTable({
       sorting={sorting}
       setSorting={setSorting}
       minimal={true}
-      showSearchAndFilters={false}
+      showSearchAndFilters={true}
       inset={false}
       tableClassName={"mt-0"}
       text={"Routing Peers"}
       columns={NetworkRouterColumns}
       keepStateInLocalStorage={false}
       data={routers}
-      searchPlaceholder={"Search by name..."}
+      searchPlaceholder={"Search by peer name, group name..."}
       isLoading={isLoading}
       getStartedCard={
         <NoResults
@@ -109,10 +115,10 @@ export default function NetworkRoutingPeersTable({
           description={
             "Add routing peers to this network to access resources inside this network."
           }
-          icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
+          icon={<PeerIcon size={18} className={"fill-nb-gray-400"} />}
         />
       }
-      columnVisibility={{}}
+      columnVisibility={{ search: false }}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={() => (
         <Button

@@ -10,6 +10,12 @@ const smallBadgeVariants = cva("", {
       white: "bg-white/20 border border-white/10 text-white",
       sky: "bg-sky-900 border border-sky-500/20 text-white",
       netbird: "bg-netbird-900 border border-netbird-400 text-netbird-300",
+      yellow: "bg-yellow-900 border border-yellow-500/20 text-yellow-400",
+    },
+    size: {
+      default:
+        "text-[0.4rem] relative -top-[.25px] leading-[0] py-[0.39rem] px-1 rounded-[3px]",
+      md: "text-[0.55rem] relative -top-[.25px] leading-[0] py-[0.45rem] px-1 rounded-[3px]",
     },
   },
 });
@@ -27,15 +33,10 @@ export const SmallBadge = ({
   textClassName,
   variant = "green",
   children,
+  size = "default",
 }: Props) => {
   return (
-    <span
-      className={cn(
-        smallBadgeVariants({ variant }),
-        "text-[7px] relative -top-[.25px] leading-[0] py-[0.39rem] px-1 rounded-[3px]",
-        className,
-      )}
-    >
+    <span className={cn(smallBadgeVariants({ variant, size }), className)}>
       {children}
       <span className={cn("relative top-[0.4px]", textClassName)}>{text}</span>
     </span>

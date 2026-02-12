@@ -5,7 +5,7 @@ import { cn } from "@utils/helpers";
 import classNames from "classnames";
 import { ChevronDownIcon, ChevronUpIcon, DotIcon } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useMemo } from "react";
+import React, { useEffect, useMemo } from "react";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 
 export type SidebarItemProps = {
@@ -36,8 +36,22 @@ export default function SidebarItem({
   labelClassName,
   visible,
 }: Readonly<SidebarItemProps>) {
-  const [open, setOpen] = React.useState(false);
   const path = usePathname();
+
+  // Check if any child route is active (for collapsible items)
+  const hasActiveChild = useMemo(() => {
+    if (!collapsible || !href) return false;
+    return path.startsWith(href);
+  }, [collapsible, href, path]);
+
+  const [open, setOpen] = React.useState(hasActiveChild);
+
+  // Open the collapsible if a child route becomes active
+  useEffect(() => {
+    if (hasActiveChild && !open) {
+      setOpen(true);
+    }
+  }, [hasActiveChild]);
   const router = useRouter();
   const { mobileNavOpen, toggleMobileNav, isNavigationCollapsed } =
     useApplicationContext();
@@ -48,6 +62,7 @@ export default function SidebarItem({
         ? path == href
         : path.includes(href)
       : false;
+    if (collapsible && href) return;
     if (collapsible && mobileNavOpen) return;
     if (collapsible && open) return;
     if (preventRedirect) return;
@@ -66,7 +81,7 @@ export default function SidebarItem({
   return (
     <Collapsible.Root open={open} onOpenChange={setOpen}>
       <Collapsible.Trigger asChild>
-        <li className={"px-4 cursor-pointer list-none"}>
+        <li className={"px-3 cursor-pointer list-none"}>
           <button
             className={classNames(
               "rounded-lg text-[.87rem] w-full relative font-normal",
@@ -101,7 +116,7 @@ export default function SidebarItem({
 
               <span
                 className={cn(
-                  "px-4 whitespace-nowrap flex-1 w-full text-left",
+                  "px-3 whitespace-nowrap flex-1 w-full text-left",
                   labelClassName,
                   isNavigationCollapsed &&
                     !mobileNavOpen &&

@@ -45,7 +45,13 @@ export const Item = ({
         )}
       >
         {icon && icon}
-        {href ? <span onClick={() => router.push(href)}>{label}</span> : label}
+        {href ? (
+          <span onClick={() => router.push(href)} data-cy={"breadcrumb-item"}>
+            {label}
+          </span>
+        ) : (
+          label
+        )}
       </div>
     </div>
   );

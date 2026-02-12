@@ -14,6 +14,7 @@ import * as React from "react";
 import { useEffect, useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useElementSize } from "@/hooks/useElementSize";
+import { DropdownInfoText } from "@components/DropdownInfoText";
 
 export interface SelectOption {
   label: string | React.ReactNode;
@@ -25,13 +26,16 @@ export interface SelectOption {
   }>;
   renderItem?: () => React.ReactNode;
   searchValue?: string;
+  className?: string;
+  disabled?: boolean;
 }
 
 interface SelectDropdownProps {
   value: string;
   onChange: (value: string) => void;
   disabled?: boolean;
-  popoverWidth?: "auto" | number;
+  popoverWidth?: "auto" | "content" | number;
+  popoverMinWidth?: number;
   options: SelectOption[];
   showSearch?: boolean;
   showValues?: boolean;
@@ -51,6 +55,7 @@ export function SelectDropdown({
   value,
   disabled = false,
   popoverWidth = "auto",
+  popoverMinWidth,
   options,
   showSearch = false,
   showValues = false,
@@ -169,9 +174,18 @@ export function SelectDropdown({
         )}
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-sm  shadow-nb-gray-950 focus:outline-none"
+        className={cn(
+          "p-0 shadow-sm shadow-nb-gray-950 focus:outline-none",
+          popoverWidth !== "content" && "w-full",
+        )}
         style={{
-          width: popoverWidth === "auto" ? width : popoverWidth,
+          width:
+            popoverWidth === "content"
+              ? "auto"
+              : popoverWidth === "auto"
+              ? width
+              : popoverWidth,
+          minWidth: popoverMinWidth,
         }}
         align="start"
         side={"bottom"}
@@ -194,9 +208,10 @@ export function SelectDropdown({
             )}
 
             {filteredItems.length == 0 && (
-              <div className={"text-center pb-2 px-3 text-nb-gray-400 text-xs"}>
-                There are no results matching your search.
-              </div>
+              <DropdownInfoText className={"max-w-sm mx-auto px-4"}>
+                There are no results matching your search. Please try a
+                different search term.
+              </DropdownInfoText>
             )}
 
             <ScrollArea
@@ -209,7 +224,7 @@ export function SelectDropdown({
               }}
             >
               <CommandGroup>
-                <div className={"grid grid-cols-1 gap-1 pb-2"}>
+                <div className={"grid grid-cols-1 gap-1 pb-2 w-full"}>
                   {filteredItems.map((option) => (
                     <SelectDropdownItem
                       option={option}
@@ -253,22 +268,29 @@ const SelectDropdownItem = ({
   }, [isVisible]);
 
   return (
-    <div ref={elementRef} className={"transition-all"}>
+    <div ref={elementRef} className={"transition-all w-full"}>
       {visible ? (
         <CommandItem
           value={option?.searchValue ?? value}
           ref={elementRef}
-          className={"py-1 px-2"}
-          onSelect={() => toggle(option.value)}
+          className={"py-1 px-2 w-full"}
+          onSelect={() => !option?.disabled && toggle(option.value)}
           onClick={(e) => e.preventDefault()}
+          disabled={option?.disabled}
         >
-          <div className={"flex items-center gap-2.5 p-1"}>
+          <div
+            className={cn(
+              "flex items-center gap-2.5 p-1 w-full",
+              option?.className,
+              option?.disabled && "cursor-not-allowed",
+            )}
+          >
             {option.icon && <option.icon size={14} width={14} />}
             {option?.renderItem && option.renderItem()}
             {!option?.renderItem && (
               <div
                 className={cn(
-                  "flex flex-col text-sm font-medium",
+                  "flex flex-col text-sm font-medium w-full",
                   size === "xs" && "text-xs",
                 )}
               >

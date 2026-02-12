@@ -1,36 +1,39 @@
 import TruncatedText from "@components/ui/TruncatedText";
-import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { cn } from "@utils/helpers";
-import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import * as React from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
+import { PeerOSIcon } from "@/assets/icons/PeerOSIcon";
+import { ResourceIcon } from "@/assets/icons/ResourceIcon";
 import { NetworkResource } from "@/interfaces/Network";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
-import { OSLogo } from "@/modules/peers/PeerOSCell";
 
 type DeviceCardProps = {
   device?: Peer;
   resource?: NetworkResource;
   className?: string;
+  address?: string;
+  description?: string;
 };
 
 export const DeviceCard = ({
   device,
   resource,
   className,
+  address,
+  description,
 }: DeviceCardProps) => {
-  if (!device && !resource) return;
+  if (!device && !resource) return null;
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center gap-2.5 text-nb-gray-300 text-left py-1 pl-3 pr-4 rounded-md group/machine my-0 w-[200px]",
+        "flex shrink-0 items-center gap-2.5 text-nb-gray-200 text-left py-1 pl-3 pr-4 rounded-md group/machine my-0 w-[200px]",
+        (description === undefined || description === "") && "py-2",
         className,
       )}
     >
       <div
         className={cn(
-          "flex items-center justify-center rounded-md h-9 w-9 shrink-0 bg-nb-gray-850 transition-all",
+          "flex items-center justify-center rounded-md h-9 w-9 shrink-0 bg-nb-gray-900 transition-all",
           "group-hover:bg-nb-gray-800 relative",
         )}
       >
@@ -50,7 +53,11 @@ export const DeviceCard = ({
           </div>
         )}
       </div>
-      <div className={"flex flex-col gap-0 justify-center mt-2 leading-tight"}>
+      <div
+        className={
+          "flex flex-col gap-0 justify-center top-0.5 leading-tight relative"
+        }
+      >
         <span
           className={
             "mb-1.5 font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2"
@@ -64,48 +71,14 @@ export const DeviceCard = ({
         </span>
         <span
           className={
-            "text-sm font-normal text-nb-gray-400 -top-[0.3rem] relative"
+            "text-sm font-normal text-nb-gray-400 -top-[0.3rem] relative whitespace-nowrap"
           }
         >
-          {device?.ip || resource?.address}
+          {description !== undefined
+            ? description
+            : address || device?.ip || resource?.address}
         </span>
       </div>
     </div>
   );
-};
-
-const PeerOSIcon = ({ os }: { os: string }) => {
-  const osType = getOperatingSystem(os);
-  return (
-    <div
-      className={cn(
-        "flex items-center justify-center grayscale brightness-[100%] contrast-[40%]",
-        "w-4 h-4 shrink-0",
-        osType === OperatingSystem.WINDOWS && "p-[2.5px]",
-        osType === OperatingSystem.APPLE && "p-[2.7px]",
-        osType === OperatingSystem.FREEBSD && "p-[1.5px]",
-      )}
-    >
-      <OSLogo os={os} />
-    </div>
-  );
-};
-
-const ResourceIcon = ({
-  type,
-  size = 15,
-}: {
-  type: "domain" | "host" | "subnet";
-  size?: number;
-}) => {
-  switch (type) {
-    case "domain":
-      return <GlobeIcon size={size} />;
-    case "subnet":
-      return <NetworkIcon size={size} />;
-    case "host":
-      return <WorkflowIcon size={size} />;
-    default:
-      return <WorkflowIcon size={size} />;
-  }
 };

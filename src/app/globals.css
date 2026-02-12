@@ -2,6 +2,11 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+    --toasts-before: 0;
+    --lift: 1;
+}
+
 html{
     @apply bg-nb-gray;
 }
@@ -171,6 +176,17 @@ p {
     @apply m-0 p-0 box-border;
 }
 
+/* Disable sonner's opacity fade-in for custom toasts, but respect visibility */
+[data-sonner-toast][data-visible="true"] {
+    opacity: 1 !important;
+}
+
+
+/* Adjust sonner stacking: less shrink and less lift per toast */
+[data-sonner-toast][data-expanded="false"][data-front="false"] {
+    --scale: calc(var(--toasts-before) * 0.03 - 1) !important;
+    --lift-amount: calc(var(--lift) * 10px) !important;
+}
 
 /* Control Center */
 .react-flow__node-groupNode .selected{
