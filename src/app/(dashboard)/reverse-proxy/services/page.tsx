@@ -14,6 +14,7 @@ import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
 import { REVERSE_PROXY_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 import { Callout } from "@components/Callout";
+import { isNetBirdHosted } from "@utils/netbird";
 
 const ReverseProxyTable = lazy(
   () => import("@/modules/reverse-proxy/table/ReverseProxyTable"),
@@ -53,14 +54,24 @@ export default function ReverseProxyServicesPage() {
           in our documentation.
         </Paragraph>
 
-        <Callout className={"max-w-xl mt-5"} variant={"info"}>
-          NetBird&apos;s Reverse Proxy is currently in beta and available at no
-          cost during this period. Features, functionality, and pricing are
-          subject to change upon release.
-        </Callout>
+        {isNetBirdHosted() ? (
+          <Callout className={"max-w-xl mt-5"} variant={"info"}>
+            NetBird&apos;s Reverse Proxy is currently in beta and available at
+            no cost during this period. Features, functionality, and pricing are
+            subject to change upon release.
+          </Callout>
+        ) : (
+          <Callout className={"max-w-xl mt-5"} variant={"info"}>
+            NetBird&apos;s Reverse Proxy is currently in beta. <br /> Features
+            and functionality are subject to change upon release.
+          </Callout>
+        )}
       </div>
 
-      <RestrictedAccess page={"Services"} hasAccess={permission?.services?.read}>
+      <RestrictedAccess
+        page={"Services"}
+        hasAccess={permission?.services?.read}
+      >
         <ReverseProxiesProvider>
           <Suspense fallback={<SkeletonTable />}>
             <ReverseProxyTable headingTarget={portalTarget} />
