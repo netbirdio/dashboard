@@ -191,9 +191,10 @@ export default function ReverseProxiesProvider({
       const proxyId = targetModalProxy.id;
 
       if (isEditing) {
-        // Update existing target - match against the original target before editing
-        updatedTargets = targetModalProxy.targets.map((t) => {
-          return isSameTarget(t, editingTarget) ? target : t;
+        // Update existing target - match by index against the original target
+        const targetIndex = targetModalProxy.targets.indexOf(editingTarget);
+        updatedTargets = targetModalProxy.targets.map((t, i) => {
+          return i === targetIndex ? target : t;
         });
       } else {
         // Add new target
@@ -274,6 +275,14 @@ export default function ReverseProxiesProvider({
   const handleToggle = useCallback(
     async (proxy: ReverseProxy) => {
       const newEnabled = !proxy.enabled;
+      mutate(
+        "/reverse-proxies/services",
+        (current: ReverseProxy[] | undefined) =>
+          current?.map((p) =>
+            p.id === proxy.id ? { ...p, enabled: newEnabled } : p,
+          ),
+        false,
+      );
       notify({
         title: proxy.domain,
         description: `Reverse proxy ${newEnabled ? "enabled" : "disabled"}`,
@@ -300,10 +309,18 @@ export default function ReverseProxiesProvider({
   const handleToggleTarget = useCallback(
     async (proxy: ReverseProxy, target: ReverseProxyTarget) => {
       const newEnabled = !target.enabled;
-      const updatedTargets = proxy.targets.map((t) => {
-        return isSameTarget(t, target) ? { ...t, enabled: newEnabled } : t;
+      const targetIndex = proxy.targets.indexOf(target);
+      const updatedTargets = proxy.targets.map((t, i) => {
+        return i === targetIndex ? { ...t, enabled: newEnabled } : t;
       });
-
+      mutate(
+        "/reverse-proxies/services",
+        (current: ReverseProxy[] | undefined) =>
+          current?.map((p) =>
+            p.id === proxy.id ? { ...p, targets: updatedTargets } : p,
+          ),
+        false,
+      );
       notify({
         title: proxy.domain,
         description: `Target ${newEnabled ? "enabled" : "disabled"}`,
@@ -370,9 +387,8 @@ export default function ReverseProxiesProvider({
           loadingMessage: "Deleting service...",
         });
       } else {
-        const updatedTargets = proxy.targets.filter((t) => {
-          return !isSameTarget(t, target);
-        });
+        const targetIndex = proxy.targets.indexOf(target);
+        const updatedTargets = proxy.targets.filter((_, i) => i !== targetIndex);
 
         notify({
           title: proxy.domain,
@@ -574,17 +590,6 @@ export function flattenReverseProxies({
   return flattened;
 }
 
-function isSameTarget(a: ReverseProxyTarget, b: ReverseProxyTarget): boolean {
-  if (a.target_id && b.target_id) {
-    return a.target_id === b.target_id;
-  }
-  return (
-    a.path === b.path &&
-    a.host === b.host &&
-    a.port === b.port &&
-    a.protocol === b.protocol
-  );
-}
 
 export function sanitizeTargets(
   targets: ReverseProxyTarget[],
