@@ -275,14 +275,6 @@ export default function ReverseProxiesProvider({
   const handleToggle = useCallback(
     async (proxy: ReverseProxy) => {
       const newEnabled = !proxy.enabled;
-      mutate(
-        "/reverse-proxies/services",
-        (current: ReverseProxy[] | undefined) =>
-          current?.map((p) =>
-            p.id === proxy.id ? { ...p, enabled: newEnabled } : p,
-          ),
-        false,
-      );
       notify({
         title: proxy.domain,
         description: `Reverse proxy ${newEnabled ? "enabled" : "disabled"}`,
@@ -313,14 +305,6 @@ export default function ReverseProxiesProvider({
       const updatedTargets = proxy.targets.map((t, i) => {
         return i === targetIndex ? { ...t, enabled: newEnabled } : t;
       });
-      mutate(
-        "/reverse-proxies/services",
-        (current: ReverseProxy[] | undefined) =>
-          current?.map((p) =>
-            p.id === proxy.id ? { ...p, targets: updatedTargets } : p,
-          ),
-        false,
-      );
       notify({
         title: proxy.domain,
         description: `Target ${newEnabled ? "enabled" : "disabled"}`,
@@ -388,7 +372,9 @@ export default function ReverseProxiesProvider({
         });
       } else {
         const targetIndex = proxy.targets.indexOf(target);
-        const updatedTargets = proxy.targets.filter((_, i) => i !== targetIndex);
+        const updatedTargets = proxy.targets.filter(
+          (_, i) => i !== targetIndex,
+        );
 
         notify({
           title: proxy.domain,
@@ -589,7 +575,6 @@ export function flattenReverseProxies({
 
   return flattened;
 }
-
 
 export function sanitizeTargets(
   targets: ReverseProxyTarget[],
