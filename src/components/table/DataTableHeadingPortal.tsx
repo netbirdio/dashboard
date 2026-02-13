@@ -32,12 +32,22 @@ export const DataTableHeadingPortal = function <TData>({
   if (!headingTarget) return;
   if (!hasMounted.current) hasMounted.current = true;
 
-  const totalItems = manualPagination
-    ? initialTotalRecords.current
-    : table?.getPreFilteredRowModel().rows.length;
   const filteredItems = manualPagination
     ? totalRecords
     : table?.getFilteredRowModel().rows.length;
+
+  const getTotalRecords = () => {
+    if (Number(initialTotalRecords.current) < Number(filteredItems)) {
+      initialTotalRecords.current = filteredItems;
+      return filteredItems;
+    }
+    return initialTotalRecords.current;
+  };
+
+  const totalItems = manualPagination
+    ? getTotalRecords()
+    : table?.getPreFilteredRowModel().rows.length;
+
   if (!totalItems || totalItems == 1) return;
 
   const hasAnyFiltersActive = manualPagination
