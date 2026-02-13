@@ -74,7 +74,6 @@ export const CustomDomainModal = ({
   const addDomain = () => {
     if (canSubmit && domain && selectedCluster) {
       onDomainSubmit(domain, selectedCluster);
-      onOpenChange(false);
     }
   };
 

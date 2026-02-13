@@ -48,7 +48,7 @@ type ReverseProxiesContextValue = {
   createDomain: (
     domain: string,
     targetCluster: string,
-  ) => Promise<ReverseProxyDomain | undefined>;
+  ) => Promise<ReverseProxyDomain>;
 };
 
 type OpenModalOptions = {
@@ -90,8 +90,9 @@ export default function ReverseProxiesProvider({
   const { confirm } = useDialog();
 
   // Reverse Proxies
-  const { data: rawReverseProxies, isLoading } =
-    useFetchApi<ReverseProxy[]>("/reverse-proxies/services");
+  const { data: rawReverseProxies, isLoading } = useFetchApi<ReverseProxy[]>(
+    "/reverse-proxies/services",
+  );
   const request = useApiCall<ReverseProxy>("/reverse-proxies/services");
 
   // Peers & Resources for resolving target destinations
@@ -125,6 +126,7 @@ export default function ReverseProxiesProvider({
   >("/reverse-proxies/domains");
   const domainRequest = useApiCall<ReverseProxyDomain>(
     "/reverse-proxies/domains",
+    true,
   );
 
   const [modalOpen, setModalOpen] = useState(false);
@@ -394,17 +396,23 @@ export default function ReverseProxiesProvider({
     async (
       domain: string,
       targetCluster: string,
-    ): Promise<ReverseProxyDomain | undefined> => {
-      try {
-        const result = await domainRequest.post({
+    ): Promise<ReverseProxyDomain> => {
+      const promise = domainRequest
+        .post({
           domain,
           target_cluster: targetCluster,
+        })
+        .then((d) => {
+          mutate("/reverse-proxies/domains");
+          return d;
         });
-        mutate("/reverse-proxies/domains");
-        return result;
-      } catch {
-        return undefined;
-      }
+      notify({
+        title: "Add Custom Domain",
+        description: "Domain successfully added",
+        promise,
+        loadingMessage: "Adding domain...",
+      });
+      return promise;
     },
     [domainRequest, mutate],
   );
@@ -583,7 +591,8 @@ export function sanitizeTargets(
 ): ReverseProxyTarget[] {
   return targets.map((t) => {
     const { destination: _, ...target } = t;
-    if (t.target_type === ReverseProxyTargetType.SUBNET) return target as ReverseProxyTarget;
+    if (t.target_type === ReverseProxyTargetType.SUBNET)
+      return target as ReverseProxyTarget;
     const { host: __, ...rest } = target;
     return rest as ReverseProxyTarget;
   });

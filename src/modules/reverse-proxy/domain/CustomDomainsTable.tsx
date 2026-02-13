@@ -34,7 +34,6 @@ import CustomDomainClusterCell from "@/modules/reverse-proxy/domain/CustomDomain
 import { CustomDomainModal } from "./CustomDomainModal";
 import { CustomDomainVerificationModal } from "./CustomDomainVerificationModal";
 
-
 const CustomDomainsColumns: ColumnDef<ReverseProxyDomain>[] = [
   {
     accessorKey: "domain",
@@ -109,12 +108,12 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
         open={addModalOpen}
         onOpenChange={setAddModalOpen}
         onDomainSubmit={async (domainName, targetCluster) => {
-          const result = await createDomain(domainName, targetCluster);
-          if (result) {
-            setSelectedDomain(result);
+          createDomain(domainName, targetCluster).then((d) => {
+            setSelectedDomain(d);
             setSelectedTargetCluster(targetCluster);
+            setAddModalOpen(false);
             setVerificationModalOpen(true);
-          }
+          });
         }}
         key={addModalOpen ? 1 : 0}
       />
