@@ -12,6 +12,7 @@ type Props = {
   tooltip?: string | React.ReactNode;
   center?: boolean;
   className?: string;
+  sorting?: boolean;
 };
 export default function DataTableHeader({
   children,
@@ -19,23 +20,31 @@ export default function DataTableHeader({
   tooltip,
   center,
   className,
+  sorting = true,
 }: Props) {
   return (
     <FullTooltip content={tooltip} disabled={!tooltip}>
       <div
-        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+        onClick={
+          sorting
+            ? () => column.toggleSorting(column.getIsSorted() === "asc")
+            : undefined
+        }
         className={cn(
-          "flex items-center whitespace-nowrap cursor-pointer gap-2 dark:text-gray-400 dark:hover:text-gray-300 transition-all select-none hover:text-nb-gray text-xs tracking-wide",
+          "flex items-center whitespace-nowrap gap-2 dark:text-gray-400 transition-all select-none text-xs tracking-wide",
+          sorting &&
+            "cursor-pointer dark:hover:text-gray-300 hover:text-nb-gray",
           center && "justify-center w-full",
           className,
         )}
       >
         {children}
-        {column.getIsSorted() === "desc" ? (
-          <IconSortAscending size={16} />
-        ) : (
-          <IconSortDescending size={16} />
-        )}
+        {sorting &&
+          (column.getIsSorted() === "desc" ? (
+            <IconSortAscending size={16} />
+          ) : (
+            <IconSortDescending size={16} />
+          ))}
       </div>
     </FullTooltip>
   );

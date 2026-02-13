@@ -6,6 +6,7 @@ import {
 import useFetchApi from "@utils/api";
 import Badge from "@components/Badge";
 import { Loader2 } from "lucide-react";
+import { useMemo } from "react";
 
 type Props = {
   serviceId: string;
@@ -21,9 +22,13 @@ export default function ReverseProxyStatusCell({
   enabled,
 }: Readonly<Props>) {
   const status = meta?.status;
+  const certificateIssued = !!meta?.certificate_issued_at;
 
   const isSettingUp =
-    enabled && status !== undefined && status !== ReverseProxyStatus.ACTIVE;
+    enabled &&
+    status !== undefined &&
+    status !== ReverseProxyStatus.ACTIVE &&
+    !certificateIssued;
 
   const { data } = useFetchApi<ReverseProxy>(
     `/reverse-proxies/services/${serviceId}`,
@@ -35,15 +40,19 @@ export default function ReverseProxyStatusCell({
 
   const currentStatus = data?.meta?.status ?? status;
 
+  const currentCertificateIssued = useMemo(() => {
+    if (data && data?.meta) return !!data?.meta?.certificate_issued_at;
+    return certificateIssued;
+  }, [data]);
+
   if (
     !enabled ||
-    !currentStatus ||
-    currentStatus === ReverseProxyStatus.ACTIVE
+    (currentStatus === ReverseProxyStatus.ACTIVE && currentCertificateIssued)
   ) {
     return null;
   }
 
-  if (currentStatus === ReverseProxyStatus.CERTIFICATE_PENDING) {
+  if (!currentCertificateIssued) {
     return (
       <div className={"flex"}>
         <Badge variant={"yellow"}>

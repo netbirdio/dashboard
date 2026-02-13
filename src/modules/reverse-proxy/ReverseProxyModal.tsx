@@ -406,18 +406,11 @@ export default function ReverseProxyModal({
               </div>
 
               {reverseProxy?.proxy_cluster && (
-                <div className="rounded-md bg-nb-gray-920 border border-nb-gray-900 px-4 py-3">
-                  <div className="flex items-center gap-2 text-sm text-nb-gray-300">
-                    <Server size={14} className="text-nb-gray-400" />
-                    <span className="text-nb-gray-400">Proxy Cluster:</span>
-                    <span className="font-medium text-nb-gray-200">
-                      {reverseProxy.proxy_cluster}
-                    </span>
-                    {!isClusterConnected && (
-                      <span className="text-amber-400">(disconnected)</span>
-                    )}
-                  </div>
-                </div>
+                <Callout variant={"error"}>
+                  Cluster {reverseProxy.proxy_cluster} is offline. Make sure the
+                  proxy server is running and connected to the right management
+                  address.
+                </Callout>
               )}
 
               <div>

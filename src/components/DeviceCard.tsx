@@ -1,6 +1,7 @@
 import TruncatedText from "@components/ui/TruncatedText";
 import { cn } from "@utils/helpers";
 import * as React from "react";
+import { useMemo } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { PeerOSIcon } from "@/assets/icons/PeerOSIcon";
 import { ResourceIcon } from "@/assets/icons/ResourceIcon";
@@ -23,11 +24,18 @@ export const DeviceCard = ({
   description,
 }: DeviceCardProps) => {
   if (!device && !resource) return null;
+
+  const descriptionText = useMemo(() => {
+    return description !== undefined
+      ? description
+      : address || device?.ip || resource?.address;
+  }, [description, address, device]);
+
   return (
     <div
       className={cn(
-        "flex shrink-0 items-center gap-2.5 text-nb-gray-200 text-left py-1 pl-3 pr-4 rounded-md group/machine my-0 w-[200px]",
-        (description === undefined || description === "") && "py-2",
+        "flex shrink-0 items-center gap-2.5 text-nb-gray-200 text-left py-1 pl-3 pr-4 rounded-md group/machine my-0 w-[230px]",
+        !descriptionText && "py-2",
         className,
       )}
     >
@@ -58,12 +66,12 @@ export const DeviceCard = ({
       </div>
       <div
         className={
-          "flex flex-col gap-0 justify-center top-0.5 leading-tight relative"
+          "flex flex-col gap-0 justify-center top-[0.15rem] leading-tight relative"
         }
       >
         <span
           className={
-            "mb-1.5 font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2"
+            "font-normal text-[0.85rem] text-nb-gray-100 flex items-center gap-2"
           }
         >
           <TruncatedText
@@ -74,12 +82,10 @@ export const DeviceCard = ({
         </span>
         <span
           className={
-            "text-sm font-normal text-nb-gray-400 -top-[0.3rem] relative whitespace-nowrap"
+            "text-sm font-normal text-nb-gray-400 relative whitespace-nowrap"
           }
         >
-          {description !== undefined
-            ? description
-            : address || device?.ip || resource?.address}
+          <TruncatedText text={descriptionText} maxWidth={"160px"} />
         </span>
       </div>
     </div>

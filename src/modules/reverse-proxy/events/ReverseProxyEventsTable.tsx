@@ -38,7 +38,7 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
   {
     id: "timestamp",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Time</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>Time</DataTableHeader>
     ),
     cell: ({ row }) => (
       <ReverseProxyEventsTimeCell timestamp={row.original.timestamp} />
@@ -52,7 +52,7 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
     accessorFn: (row) =>
       `${row.source_ip} ${row.city_name || ""} ${row.country_code || ""}`,
     header: ({ column }) => (
-      <DataTableHeader column={column}>Location / IP</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>Location / IP</DataTableHeader>
     ),
     cell: ({ row }) => (
       <ReverseProxyEventsLocationIpCell event={row.original} />
@@ -62,7 +62,7 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
     id: "method",
     accessorKey: "method",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Method</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>Method</DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsMethodCell event={row.original} />,
     filterFn: "arrIncludesSomeExact",
@@ -71,7 +71,7 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
     id: "url",
     accessorFn: (row) => `${row.host} ${row.path}`,
     header: ({ column }) => (
-      <DataTableHeader column={column}>URL</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>URL</DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsUrlCell event={row.original} />,
   },
@@ -79,7 +79,7 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
     id: "status",
     accessorKey: "status_code",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Status</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>Status</DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsStatusCell event={row.original} />,
     size: 80,
@@ -94,7 +94,7 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
     id: "duration",
     accessorKey: "duration_ms",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Duration</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>Duration</DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsDurationCell event={row.original} />,
   },
@@ -102,7 +102,7 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
     id: "auth_method",
     accessorKey: "auth_method_used",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Auth Method</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>Auth Method</DataTableHeader>
     ),
     cell: ({ row }) => (
       <ReverseProxyEventsAuthMethodCell event={row.original} />
@@ -112,7 +112,7 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
     id: "reason",
     accessorKey: "reason",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Reason</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>Reason</DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsReasonCell event={row.original} />,
   },
@@ -120,7 +120,7 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
     id: "user",
     accessorFn: (row) => row.user_id || "",
     header: ({ column }) => (
-      <DataTableHeader column={column}>User</DataTableHeader>
+      <DataTableHeader column={column} sorting={false}>User</DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsUserCell event={row.original} />,
   },
