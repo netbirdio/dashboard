@@ -18,6 +18,7 @@ import { SelectDropdown } from "@components/select/SelectDropdown";
 import useFetchApi from "@utils/api";
 import {
   AlertTriangle,
+  ExternalLinkIcon,
   HelpCircle,
   PlusCircle,
   Server,
@@ -29,6 +30,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
+  REVERSE_PROXY_TARGETS_DOCS_LINK,
   ReverseProxy,
   ReverseProxyTarget,
   ReverseProxyTargetProtocol,
@@ -44,6 +46,7 @@ import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 import FullTooltip from "@components/FullTooltip";
+import Paragraph from "@components/Paragraph";
 
 /** Get initial host value based on target, resource, or peer */
 function getInitialHost(
@@ -563,7 +566,19 @@ export default function ReverseProxyTargetModal({
             )}
           </div>
 
-          <ModalFooter>
+          <ModalFooter className={"items-center"}>
+            <div className={"w-full"}>
+              <Paragraph className={"text-sm mt-auto"}>
+                Learn more about
+                <InlineLink
+                  href={REVERSE_PROXY_TARGETS_DOCS_LINK}
+                  target={"_blank"}
+                >
+                  Targets
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </Paragraph>
+            </div>
             <div className="flex gap-3 w-full justify-end">
               <Button variant="secondary" onClick={() => onOpenChange(false)}>
                 Cancel

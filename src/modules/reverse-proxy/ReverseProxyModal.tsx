@@ -51,6 +51,9 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
+  REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
+  REVERSE_PROXY_SERVICES_DOCS_LINK,
+  REVERSE_PROXY_SETTINGS_DOCS_LINK,
   ReverseProxy,
   ReverseProxyAuth,
   ReverseProxyDomain,
@@ -636,16 +639,44 @@ export default function ReverseProxyModal({
 
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
-            <Paragraph className={"text-sm mt-auto"}>
-              Learn more about
-              <InlineLink
-                href={"https://docs.netbird.io/how-to/reverse-proxy"}
-                target={"_blank"}
-              >
-                Services
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </Paragraph>
+            {tab === "targets" && (
+              <Paragraph className={"text-sm mt-auto"}>
+                Learn more about
+                <InlineLink
+                  href={REVERSE_PROXY_SERVICES_DOCS_LINK}
+                  target={"_blank"}
+                >
+                  Services
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </Paragraph>
+            )}
+
+            {tab === "auth" && (
+              <Paragraph className={"text-sm mt-auto"}>
+                Learn more about
+                <InlineLink
+                  href={REVERSE_PROXY_AUTHENTICATION_DOCS_LINK}
+                  target={"_blank"}
+                >
+                  Authentication
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </Paragraph>
+            )}
+
+            {tab === "settings" && (
+              <Paragraph className={"text-sm mt-auto"}>
+                Learn more about
+                <InlineLink
+                  href={REVERSE_PROXY_SETTINGS_DOCS_LINK}
+                  target={"_blank"}
+                >
+                  Settings
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </Paragraph>
+            )}
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             {!reverseProxy ? (

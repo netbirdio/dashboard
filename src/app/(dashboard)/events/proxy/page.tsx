@@ -14,16 +14,20 @@ import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
 import PageContainer from "@/layouts/PageContainer";
 import ReverseProxyEventsTable from "@/modules/reverse-proxy/events/ReverseProxyEventsTable";
 import { usePortalElement } from "@hooks/usePortalElement";
+import { REVERSE_PROXY_EVENTS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 
 export default function ProxyEventsPage() {
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
-  const defaultFilters = useMemo(() => ({
-    start_date: dayjs().subtract(7, "day").startOf("day").toISOString(),
-    end_date: dayjs().endOf("day").toISOString(),
-  }), []);
+  const defaultFilters = useMemo(
+    () => ({
+      start_date: dayjs().subtract(7, "day").startOf("day").toISOString(),
+      end_date: dayjs().endOf("day").toISOString(),
+    }),
+    [],
+  );
 
   return (
     <PageContainer>
@@ -50,10 +54,7 @@ export default function ProxyEventsPage() {
 
         <Paragraph>
           Learn more about{" "}
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/reverse-proxy"}
-            target="_blank"
-          >
+          <InlineLink href={REVERSE_PROXY_EVENTS_DOCS_LINK} target="_blank">
             Proxy Events <ExternalLinkIcon size={12} />
           </InlineLink>{" "}
           in our documentation.
@@ -64,7 +65,11 @@ export default function ProxyEventsPage() {
         page="Proxy Events"
         hasAccess={permission?.services?.read}
       >
-        <ServerPaginationProvider url="/events/proxy" defaultPageSize={10} defaultFilters={defaultFilters}>
+        <ServerPaginationProvider
+          url="/events/proxy"
+          defaultPageSize={10}
+          defaultFilters={defaultFilters}
+        >
           <ReverseProxyEventsTable headingTarget={portalTarget} />
         </ServerPaginationProvider>
       </RestrictedAccess>

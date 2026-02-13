@@ -104,13 +104,28 @@ export interface ReverseProxyFlatTarget extends ReverseProxyTarget {
 }
 
 export const REVERSE_PROXY_DOCS_LINK =
-  "https://docs.netbird.io/how-to/reverse-proxy";
+  "https://docs.netbird.io/manage/reverse-proxy";
+
+export const REVERSE_PROXY_SERVICES_DOCS_LINK =
+  "https://docs.netbird.io/manage/reverse-proxy#services";
+
+export const REVERSE_PROXY_TARGETS_DOCS_LINK =
+  "https://docs.netbird.io/manage/reverse-proxy#targets";
+
+export const REVERSE_PROXY_AUTHENTICATION_DOCS_LINK =
+  "https://docs.netbird.io/manage/reverse-proxy/authentication";
+
+export const REVERSE_PROXY_SETTINGS_DOCS_LINK =
+  "https://docs.netbird.io/manage/reverse-proxy#step-4-configure-advanced-settings";
 
 export const REVERSE_PROXY_CLUSTERS_DOCS_LINK =
-  "https://docs.netbird.io/how-to/reverse-proxy";
+  "https://docs.netbird.io/manage/reverse-proxy#self-hosted-proxy-setup";
 
 export const REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK =
-  "https://docs.netbird.io/how-to/reverse-proxy";
+  "https://docs.netbird.io/manage/reverse-proxy/custom-domains";
 
 export const REVERSE_PROXY_DOMAIN_VERIFICATION_LINK =
-  "https://docs.netbird.io/how-to/reverse-proxy";
+  "https://docs.netbird.io/manage/reverse-proxy/custom-domains#validating-a-custom-domain";
+
+export const REVERSE_PROXY_EVENTS_DOCS_LINK =
+  "https://docs.netbird.io/manage/reverse-proxy/access-logs";

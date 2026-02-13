@@ -19,7 +19,7 @@ import { DatePickerWithRange } from "@components/DatePickerWithRange";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import {
-  REVERSE_PROXY_DOCS_LINK,
+  REVERSE_PROXY_EVENTS_DOCS_LINK,
   ReverseProxyEvent,
 } from "@/interfaces/ReverseProxy";
 import { ReverseProxyEventsStatusCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsStatusCell";
@@ -33,7 +33,6 @@ import { ReverseProxyEventsTimeCell } from "@/modules/reverse-proxy/events/Rever
 import { ReverseProxyEventsAuthMethodCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsAuthMethodCell";
 import { ReverseProxyEventsReasonCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsReasonCell";
 import { ReverseProxyEventsDurationCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsDurationCell";
-
 
 export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
   {
@@ -213,7 +212,10 @@ export default function ReverseProxyEventsTable({
           learnMore={
             <>
               Learn more about
-              <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
+              <InlineLink
+                href={REVERSE_PROXY_EVENTS_DOCS_LINK}
+                target={"_blank"}
+              >
                 Proxy Events
                 <ExternalLinkIcon size={12} />
               </InlineLink>
