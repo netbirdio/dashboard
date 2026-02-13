@@ -76,7 +76,7 @@ export default function ServerPaginationProvider({
       const params = new URLSearchParams();
       params.set("page", String(p));
       params.set("page_size", String(ps));
-      if (s) params.set("search", s);
+      if (s) params.set("search", s.toLowerCase());
       Object.entries(f).forEach(([key, value]) => {
         if (value !== undefined) params.set(key, value);
       });

@@ -470,7 +470,7 @@ export function DataTable<TData, TValue>({
 
       <div className="relative">
         {showOverlay && (
-          <div className="absolute inset-0 bg-nb-gray-950/50 z-10 rounded-md" />
+          <div className="absolute inset-0 bg-nb-gray-950/60 z-10 rounded-md animate-pulse" />
         )}
         <TableWrapper
           wrapperComponent={wrapperComponent}

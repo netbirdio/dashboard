@@ -124,6 +124,9 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
     ),
     cell: ({ row }) => <ReverseProxyEventsUserCell event={row.original} />,
   },
+  {
+    accessorKey: "id",
+  },
 ];
 
 type Props = {
@@ -193,7 +196,7 @@ export default function ReverseProxyEventsTable({
       sorting={sorting}
       setSorting={setSorting}
       columns={ReverseProxyEventsTableColumns}
-      columnVisibility={{ is_success: false }}
+      columnVisibility={{ is_success: false, id: false }}
       searchPlaceholder={"Search by IP, host, path, user..."}
       getStartedCard={
         <GetStartedTest
