@@ -9,7 +9,7 @@ import * as React from "react";
 import { useMemo } from "react";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxyDomainType } from "@/interfaces/ReverseProxy";
-import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
+import { isNetBirdHosted } from "@utils/netbird";
 
 interface DomainSelectorProps {
   value: string;
@@ -67,20 +67,6 @@ export function CustomDomainSelector({
           ),
         });
       });
-
-    // Add placeholder domain for local development
-    if (isLocalDev()) {
-      opts.push({
-        value: "example.com",
-        label: ".example.com",
-        renderItem: () => (
-          <div className="flex items-center gap-2 w-full text-sm justify-between">
-            <span>.example.com</span>
-            <SmallBadge text="Test" variant="sky" size="md" />
-          </div>
-        ),
-      });
-    }
 
     // Add "Add Custom Domain" option
     opts.push({

@@ -9,9 +9,7 @@ type Props = {
   domain: ReverseProxyDomain;
 };
 
-export default function CustomDomainClusterCell({
-  domain,
-}: Readonly<Props>) {
+export default function CustomDomainClusterCell({ domain }: Readonly<Props>) {
   const hasCluster = !!domain.target_cluster;
 
   if (!hasCluster) {
@@ -28,7 +26,7 @@ export default function CustomDomainClusterCell({
   return (
     <div className="flex items-center gap-2">
       <Badge variant={"gray"} className={"font-normal"}>
-        <Server size={11} className={"text-green-500"} />
+        <Server size={11} className={"text-nb-gray-400"} />
         {domain.target_cluster}
       </Badge>
     </div>
