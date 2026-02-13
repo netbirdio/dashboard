@@ -1,7 +1,4 @@
-import {
-  MemoizedScrollArea,
-  ScrollAreaViewport,
-} from "@components/ScrollArea";
+import { MemoizedScrollArea, ScrollAreaViewport } from "@components/ScrollArea";
 import { cn } from "@utils/helpers";
 import * as React from "react";
 import {

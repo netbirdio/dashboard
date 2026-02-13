@@ -5,7 +5,6 @@ import Paragraph from "@/components/Paragraph";
 import SkeletonTable, {
   SkeletonTableHeader,
 } from "@/components/skeletons/SkeletonTable";
-import { usePortalElement } from "@/hooks/usePortalElement";
 import { Job } from "@/interfaces/Job";
 import useFetchApi from "@/utils/api";
 
@@ -18,15 +17,12 @@ type Props = {
 
 export const PeerRemoteJobsSection = ({ peerID }: Props) => {
   const { data: jobs, isLoading } = useFetchApi<Job[]>(`/peers/${peerID}/jobs`);
-  const { ref: headingRef, portalTarget } =
-    usePortalElement<HTMLHeadingElement>();
 
   return (
     <div className="pb-10 px-8">
-      <div className="max-w-6xl">
+      <div className="">
         <div className="flex justify-between items-center mb-5">
           <div>
-            <h2 ref={headingRef}>Remote Jobs</h2>
             <Paragraph>
               Remotely trigger actions such as debug bundles or other tasks on
               this peer, without requiring CLI access.
@@ -55,7 +51,6 @@ export const PeerRemoteJobsSection = ({ peerID }: Props) => {
             peerID={peerID}
             jobs={jobs}
             isLoading={isLoading}
-            headingTarget={portalTarget}
           />
         </Suspense>
       </div>

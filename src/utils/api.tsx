@@ -26,6 +26,7 @@ type RequestOptions = {
   origin?: string;
   globalParams?: Params;
   ignoreGlobalParams?: boolean;
+  refreshInterval?: number;
   blob?: boolean;
   shouldRetryOnError?: boolean;
 };
@@ -154,6 +155,7 @@ export default function useFetchApi<T>(
       revalidateIfStale: revalidate,
       revalidateOnReconnect: revalidate,
       shouldRetryOnError: options?.shouldRetryOnError ?? true,
+      refreshInterval: options?.refreshInterval,
     },
   );
 

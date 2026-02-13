@@ -1,11 +1,8 @@
 "use client";
 
 import { ScrollArea } from "@components/ScrollArea";
-import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
-import * as React from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
-import ActivityIcon from "@/assets/icons/ActivityIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
@@ -20,6 +17,10 @@ import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { headerHeight } from "@/layouts/Header";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
+import { SmallBadge } from "@components/ui/SmallBadge";
+import * as React from "react";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
+import ActivityIcon from "@/assets/icons/ActivityIcon";
 
 type Props = {
   fullWidth?: boolean;
@@ -132,6 +133,41 @@ export default function Navigation({
                 <NetworkNavigation />
 
                 <SidebarItem
+                  icon={<ReverseProxyIcon size={16} />}
+                  labelClassName={"pr-0"}
+                  label={
+                    <div className={"flex items-center gap-2"}>
+                      Reverse Proxy
+                      <SmallBadge
+                        text={"Beta"}
+                        variant={"sky"}
+                        className={"text-[8px] leading-none py-[3px] px-[5px]"}
+                        textClassName={"top-0"}
+                      />
+                    </div>
+                  }
+                  href={"/reverse-proxy"}
+                  collapsible
+                  exactPathMatch={false}
+                  visible={permission?.services?.read}
+                >
+                  <SidebarItem
+                    label="Services"
+                    isChild
+                    href={"/reverse-proxy/services"}
+                    exactPathMatch={true}
+                    visible={permission?.services?.read}
+                  />
+                  <SidebarItem
+                    label="Custom Domains"
+                    isChild
+                    href={"/reverse-proxy/custom-domains"}
+                    exactPathMatch={true}
+                    visible={permission?.services?.read}
+                  />
+                </SidebarItem>
+
+                <SidebarItem
                   icon={<DNSIcon />}
                   label="DNS"
                   collapsible
@@ -176,13 +212,7 @@ export default function Navigation({
                     visible={permission.users.read}
                   />
                 </SidebarItem>
-                <SidebarItem
-                  icon={<ActivityIcon />}
-                  label="Activity"
-                  href={"/events/audit"}
-                  exactPathMatch={true}
-                  visible={permission.events.read}
-                />
+                <ActivityNavigationItem />
               </SidebarItemGroup>
 
               <SidebarItemGroup>
@@ -225,3 +255,31 @@ export function SidebarItemGroup({ children }: SidebarItemGroupProps) {
     </div>
   );
 }
+
+const ActivityNavigationItem = () => {
+  const { permission } = usePermissions();
+
+  return (
+    <SidebarItem
+      icon={<ActivityIcon />}
+      label="Activity"
+      collapsible
+      visible={permission.events.read}
+    >
+      <SidebarItem
+        label="Audit Events"
+        href={"/events/audit"}
+        isChild
+        exactPathMatch={true}
+        visible={permission.events.read}
+      />
+      <SidebarItem
+        label="Proxy Events"
+        isChild
+        href={"/events/proxy"}
+        exactPathMatch={true}
+        visible={permission.events.read}
+      />
+    </SidebarItem>
+  );
+};

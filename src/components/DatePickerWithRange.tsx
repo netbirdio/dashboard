@@ -15,6 +15,7 @@ interface Props {
   value?: DateRange;
   onChange?: (range: DateRange | undefined) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 const defaultRanges = {
@@ -61,6 +62,7 @@ export function DatePickerWithRange({
   className,
   value,
   onChange,
+  disabled = false,
 }: Readonly<Props>) {
   const isActive = useMemo(() => {
     return {
@@ -120,6 +122,7 @@ export function DatePickerWithRange({
           <Button
             id="date"
             variant={"secondary"}
+            disabled={disabled}
             className={cn("max-w-[260px] justify-start text-left font-normal")}
           >
             <CalendarIcon size={16} className={"shrink-0"} />

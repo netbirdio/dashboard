@@ -5,7 +5,7 @@ import { NetworkIcon } from "lucide-react";
 import * as React from "react";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { Network, NetworkResource } from "@/interfaces/Network";
-import { DeviceCard } from "@/modules/control-center/nodes/DeviceCard";
+import { DeviceCard } from "@components/DeviceCard";
 
 type NetworkNodeType = {
   network: Network;

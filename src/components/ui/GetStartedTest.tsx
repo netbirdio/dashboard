@@ -64,7 +64,7 @@ export default function GetStartedTest({
                       {description}
                     </Paragraph>
                   </div>
-                  <div>{button}</div>
+                  {button && <div>{button}</div>}
                 </div>
               </div>
               <Paragraph className={"text-sm justify-center pb-5 px-8"}>

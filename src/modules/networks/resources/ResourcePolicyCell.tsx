@@ -139,7 +139,6 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
         <Button
           size={"xs"}
           variant={"secondary"}
-          className={"min-w-[100px]"}
           disabled={!permission.networks.update}
           onClick={() => openPolicyModal(network, resource)}
         >

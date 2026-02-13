@@ -77,7 +77,7 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
               "inline-flex gap-2  min-w-[110px] font-medium items-center justify-center min-h-[34px] cursor-pointer",
             )}
             onClick={() =>
-              router.push(`/network?id=${network.id}#routing-peers`)
+              router.push(`/network?id=${network.id}&tab=routing-peers`)
             }
             useHover={true}
           >

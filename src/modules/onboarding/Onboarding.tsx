@@ -3,7 +3,8 @@ import { Modal, ModalPortal } from "@components/modal/Modal";
 import { NetBirdLogo } from "@components/NetBirdLogo";
 import { notify } from "@components/Notification";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
-import { DialogContent } from "@radix-ui/react-dialog";
+import { DialogContent, DialogTitle } from "@radix-ui/react-dialog";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
 import { isNetBirdHosted } from "@utils/netbird";
@@ -304,6 +305,9 @@ export const Onboarding = ({
           }
         >
           <div>
+            <VisuallyHidden asChild>
+              <DialogTitle>Onboarding</DialogTitle>
+            </VisuallyHidden>
             <div
               className={cn(
                 "sm:px-4 py-10 max-w-6xl mx-auto flex flex-col items-center",

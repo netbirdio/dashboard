@@ -37,6 +37,8 @@ next-env.d.ts
 
 # config
 .local-config.json
+.test-config.json
+cypress.env.json
 .configs/.local-config.zitadel.json
 .configs/.staging-config.json
 .configs/.temp-config.json

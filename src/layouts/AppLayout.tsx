@@ -9,7 +9,7 @@ import relativeTime from "dayjs/plugin/relativeTime";
 import { Viewport } from "next";
 import localFont from "next/font/local";
 import React, { Suspense } from "react";
-import { Toaster } from "react-hot-toast";
+import { Toaster } from "sonner";
 import OIDCProvider from "@/auth/OIDCProvider";
 import FullScreenLoading from "@/components/ui/FullScreenLoading";
 import AnalyticsProvider, {
@@ -59,10 +59,13 @@ export default function AppLayout({
               </GlobalThemeProvider>
             </DialogProvider>
             <Toaster
-              position={"top-center"}
-              toastOptions={{
-                duration: 3000,
-              }}
+              position="top-center"
+              duration={3000}
+              toastOptions={{ unstyled: true }}
+              style={{ "--width": "28rem" } as React.CSSProperties}
+              gap={0}
+              visibleToasts={5}
+              offset="12px"
             />
             <NavigationEvents />
             <DisableDarkReader />

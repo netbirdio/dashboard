@@ -23,7 +23,7 @@ export const NetworkRoutingPeerCount = ({ network }: Props) => {
   }, [network, routerCount]);
 
   const openNetworkPage = () => {
-    router.push(`/network?id=${network.id}#routing-peers`);
+    router.push(`/network?id=${network.id}&tab=routing-peers`);
   };
 
   return (

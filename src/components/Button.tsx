@@ -54,7 +54,7 @@ export const buttonVariants = cva(
         dotted: [
           "bg-white hover:text-black focus:ring-zinc-200/50 hover:bg-gray-100 border-gray-200 text-gray-900 border-dashed",
           "dark:ring-offset-neutral-950/50 dark:focus:ring-neutral-500/20  ",
-          "dark:bg-nb-gray-900/30 dark:text-gray-400 dark:border-gray-500/40 dark:hover:text-white dark:hover:bg-zinc-800/50",
+          "dark:bg-nb-gray-900/30 dark:text-gray-400 dark:border-gray-500/40 dark:hover:text-white dark:hover:bg-nb-gray-900/50",
         ],
         tertiary: [
           "bg-white hover:text-black focus:ring-zinc-200/50  hover:bg-gray-100 border-gray-200 text-gray-900",
@@ -72,6 +72,9 @@ export const buttonVariants = cva(
           "", // TODO - add danger button styles for light mode
           "enabled:dark:focus:ring-red-800/20 enabled:dark:focus:bg-red-950/40 enabled:hover:dark:bg-red-950/50 enabled:dark:hover:border-red-800/50 dark:bg-transparent dark:text-red-500",
           "",
+        ],
+        "danger-text": [
+          "dark:bg-transparent dark:text-red-500 dark:hover:text-red-600 dark:border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 dark:ring-offset-neutral-950/50",
         ],
         "default-outline": [
           "dark:ring-offset-nb-gray-950/50 dark:focus:ring-nb-gray-500/20",

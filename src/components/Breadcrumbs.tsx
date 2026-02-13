@@ -1,6 +1,6 @@
 import { cn } from "@utils/helpers";
 import { ChevronRightIcon } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Link from "next/link";
 import React from "react";
 
 type Props = {
@@ -25,8 +25,6 @@ export const Item = ({
   active,
   disabled = false,
 }: ItemProps) => {
-  const router = useRouter();
-
   return (
     <div
       className={cn(
@@ -45,7 +43,13 @@ export const Item = ({
         )}
       >
         {icon && icon}
-        {href ? <span onClick={() => router.push(href)}>{label}</span> : label}
+        {href ? (
+          <Link href={href} data-cy={"breadcrumb-item"}>
+            {label}
+          </Link>
+        ) : (
+          label
+        )}
       </div>
     </div>
   );

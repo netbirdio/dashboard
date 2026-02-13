@@ -16,6 +16,7 @@ import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { ResourceActionCell } from "@/modules/networks/resources/ResourceActionCell";
+import { ResourceExposeServiceCell } from "@/modules/networks/resources/ResourceExposeServiceCell";
 import ResourceAddressCell from "@/modules/networks/resources/ResourceAddressCell";
 import { ResourceEnabledCell } from "@/modules/networks/resources/ResourceEnabledCell";
 import { ResourceGroupCell } from "@/modules/networks/resources/ResourceGroupCell";
@@ -72,7 +73,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
   {
     id: "groups",
     accessorFn: (resource) => {
-      let groups = resource?.groups as Group[];
+      let groups = (resource?.groups ?? []) as Group[];
       return groups.map((group) => group.name).join(", ");
     },
     header: ({ column }) => {
@@ -90,6 +91,14 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     },
     cell: ({ row }) => {
       return <ResourcePolicyCell resource={row.original} />;
+    },
+  },
+  {
+    id: "expose_service",
+    accessorKey: "id",
+    header: "",
+    cell: ({ row }) => {
+      return <ResourceExposeServiceCell resource={row.original} />;
     },
   },
   {
@@ -116,6 +125,13 @@ export default function ResourcesTable({
   const { openResourceModal, network } = useNetworksContext();
   const router = useRouter();
 
+  const removeResourceParam = React.useCallback(() => {
+    if (!resourceId) return;
+    const newParams = new URLSearchParams(params.toString());
+    newParams.delete("resource");
+    router.replace(`?${newParams.toString()}`, { scroll: false });
+  }, [resourceId, params, router]);
+
   return (
     <DataTable
       wrapperComponent={Card}
@@ -134,6 +150,7 @@ export default function ResourcesTable({
         resourceId ? [{ id: "id", value: resourceId }] : undefined
       }
       initialSearch={resourceId}
+      onFilterReset={removeResourceParam}
       data={resources}
       searchPlaceholder={"Search by name, address or group..."}
       isLoading={isLoading}
@@ -150,7 +167,7 @@ export default function ResourcesTable({
               ? "Assign this group to your resources inside your networks to see them listed here."
               : "Add resources to this network to control what peers can access. Resources can be anything from a single IP, a subnet, or a domain."
           }
-          icon={<Layers3Icon size={20} />}
+          icon={<Layers3Icon size={20} className={"text-nb-gray-400"} />}
         >
           {isGroupPage && permission?.networks?.create && (
             <>

@@ -12,7 +12,6 @@ import Separator from "@components/Separator";
 import { useApiCall } from "@utils/api";
 import { FolderGit2 } from "lucide-react";
 import * as React from "react";
-import { useMemo } from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 
@@ -78,10 +77,6 @@ const ResourceGroupModalContent = ({
     });
   };
 
-  const canSave = useMemo(() => {
-    return groups.length > 0;
-  }, [groups]);
-
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
@@ -107,11 +102,7 @@ const ResourceGroupModalContent = ({
             <Button variant={"secondary"}>Cancel</Button>
           </ModalClose>
 
-          <Button
-            variant={"primary"}
-            onClick={updateResource}
-            disabled={!canSave}
-          >
+          <Button variant={"primary"} onClick={updateResource}>
             Save Groups
           </Button>
         </div>

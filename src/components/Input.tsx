@@ -127,6 +127,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
               suffix && "!pr-16",
               icon && "!pl-10",
               "border",
+              props.readOnly &&
+                "!bg-nb-gray-920 text-nb-gray-400 !border-nb-gray-800",
               className,
             )}
           />

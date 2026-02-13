@@ -193,7 +193,15 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
             <HelpText>
               Select how NetBird clients handle automatic updates by choosing
               the latest version, a custom version, or disabling updates
-              altogether.
+              altogether. Automatic Updates require at least NetBird{" "}
+              <span className={"text-white font-medium"}>v0.61.0</span>.{" "}
+              <InlineLink
+                href={"https://docs.netbird.io/manage/peers/auto-update"}
+                target={"_blank"}
+              >
+                Learn more
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
             </HelpText>
             <div className={"gap-4 items-center grid grid-cols-2"}>
               <SelectDropdown
@@ -216,14 +224,12 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
           </div>
 
           <div className={"mt-3"}>
-            <h2 className={"text-lg font-medium"}>
+            <Label>
+              <FlaskConicalIcon size={15} />
               Experimental
-              <FlaskConicalIcon
-                size={16}
-                className={"inline ml-1.5 relative -top-[2px]"}
-              />
-            </h2>
-            <div className={"text-sm text-gray-400"}>
+            </Label>
+
+            <HelpText>
               Lazy connections are an experimental feature. Functionality and
               behavior may evolve. Instead of maintaining always-on connections,
               NetBird activates them on-demand based on activity or signaling.{" "}
@@ -234,7 +240,7 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
                 Learn more
                 <ExternalLinkIcon size={12} />
               </InlineLink>
-            </div>
+            </HelpText>
           </div>
           <FancyToggleSwitch
             value={lazyConnection}

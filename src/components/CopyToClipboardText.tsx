@@ -22,11 +22,7 @@ export default function CopyToClipboardText({
 
   return (
     <div
-      className={cn(
-        "flex gap-2 items-center group cursor-pointer transition-all hover:underline underline-offset-4 decoration-dashed decoration-nb-gray-600",
-        !copied && "hover:opacity-90",
-        className,
-      )}
+      className={cn("flex gap-2 items-center group cursor-pointer", className)}
       onClick={(e) => {
         e.stopPropagation();
         e.preventDefault();
@@ -34,27 +30,34 @@ export default function CopyToClipboardText({
       }}
       ref={wrapper}
     >
-      {children}
+      <span className="relative truncate">
+        {children}
+        <span className="absolute bottom-0 left-0 right-0 border-b border-dashed border-transparent group-hover:border-nb-gray-500 pointer-events-none" />
+      </span>
 
-      {copied ? (
+      <span
+        className={cn(
+          "shrink-0",
+          iconAlignment === "left" ? "order-first" : "order-last",
+        )}
+      >
         <CheckIcon
           className={cn(
-            "text-nb-gray-100 group-hover:opacity-100 shrink-0",
-            iconAlignment === "left" ? "order-first" : "order-last",
-            !alwaysShowIcon && "opacity-0",
+            "text-nb-gray-100 group-hover:opacity-100",
+            !copied && "hidden",
+            !alwaysShowIcon && !copied && "opacity-0",
           )}
           size={11}
         />
-      ) : (
         <CopyIcon
           className={cn(
-            "text-nb-gray-100 group-hover:opacity-100 shrink-0",
-            iconAlignment === "left" ? "order-first" : "order-last",
+            "text-nb-gray-100 group-hover:opacity-100",
+            copied && "hidden",
             !alwaysShowIcon && "opacity-0",
           )}
           size={11}
         />
-      )}
+      </span>
     </div>
   );
 }

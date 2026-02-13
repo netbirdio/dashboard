@@ -44,6 +44,9 @@ import { PolicyRuleResource } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
+import TruncatedText from "@components/ui/TruncatedText";
+
+type PeerGroupSelectorTab = "peers" | "groups" | "resources";
 
 const groupsSearchPredicate = (item: Group, query: string) => {
   const lowerCaseQuery = query.toLowerCase();
@@ -68,6 +71,9 @@ interface MultiSelectProps {
   showResourceCounter?: boolean;
   showResources?: boolean;
   showPeers?: boolean;
+  hideGroupsTab?: boolean;
+  tabOrder?: ("groups" | "peers" | "resources")[];
+  closeOnSelect?: boolean;
   resource?: PolicyRuleResource;
   onResourceChange?: (resource?: PolicyRuleResource) => void;
   placeholder?: string;
@@ -76,6 +82,7 @@ interface MultiSelectProps {
   side?: "top" | "bottom";
   users?: User[];
   placeholderForSearch?: string;
+  resourceIds?: string[];
 }
 export function PeerGroupSelector({
   onChange,
@@ -94,6 +101,9 @@ export function PeerGroupSelector({
   showResourceCounter = true,
   showResources = false,
   showPeers = false,
+  hideGroupsTab = false,
+  tabOrder,
+  closeOnSelect = false,
   resource,
   onResourceChange,
   placeholder = "Add or select group(s)...",
@@ -102,6 +112,7 @@ export function PeerGroupSelector({
   side = "bottom",
   users,
   placeholderForSearch = 'Search groups or add new group by pressing "Enter"...',
+  resourceIds,
 }: Readonly<MultiSelectProps>) {
   const { data: resources, isLoading: isResourcesLoading } = useFetchApi<
     NetworkResource[]
@@ -229,7 +240,13 @@ export function PeerGroupSelector({
 
   const [slice, setSlice] = useState(10);
 
-  const [tab, setTab] = useState("groups");
+  const getDefaultTab = (): PeerGroupSelectorTab => {
+    if (tabOrder?.[0]) return tabOrder[0];
+    if (hideGroupsTab) return showPeers ? "peers" : "resources";
+    return "groups";
+  };
+
+  const [tab, setTab] = useState<PeerGroupSelectorTab>(getDefaultTab);
 
   useEffect(() => {
     if (open) {
@@ -272,6 +289,9 @@ export function PeerGroupSelector({
         : undefined,
     );
     onChange([]);
+    if (closeOnSelect) {
+      setOpen(false);
+    }
   };
 
   const selectPeer = (peer?: Peer) => {
@@ -281,6 +301,9 @@ export function PeerGroupSelector({
       type: "peer",
     });
     onChange([]);
+    if (closeOnSelect) {
+      setOpen(false);
+    }
   };
 
   return (
@@ -438,11 +461,20 @@ export function PeerGroupSelector({
               </div>
             </div>
 
-            <Tabs defaultValue={"groups"} value={tab} onValueChange={setTab}>
+            <Tabs
+              defaultValue={
+                tabOrder?.[0] ??
+                (hideGroupsTab ? (showPeers ? "peers" : "resources") : "groups")
+              }
+              value={tab}
+              onValueChange={(v) => setTab(v as PeerGroupSelectorTab)}
+            >
               <TabTriggers
                 searchRef={searchRef}
                 showPeers={showPeers}
                 showResources={showResources}
+                hideGroupsTab={hideGroupsTab}
+                tabOrder={tabOrder}
               />
               <TabsContent value={"groups"} className={"p-0 my-0"}>
                 <CommandGroup>
@@ -562,7 +594,11 @@ export function PeerGroupSelector({
                 <TabsContent value={"resources"} className={"p-0 my-0"}>
                   <ResourcesList
                     search={search}
-                    resources={resources}
+                    resources={
+                      resourceIds
+                        ? resources?.filter((r) => resourceIds.includes(r.id))
+                        : resources
+                    }
                     isLoading={isResourcesLoading}
                     value={resource}
                     onChange={selectResource}
@@ -592,60 +628,89 @@ const TabTriggers = ({
   searchRef,
   showResources = false,
   showPeers = false,
+  hideGroupsTab = false,
+  tabOrder,
 }: {
   searchRef: React.MutableRefObject<HTMLInputElement | null>;
   showResources?: boolean;
   showPeers?: boolean;
+  hideGroupsTab?: boolean;
+  tabOrder?: ("groups" | "peers" | "resources")[];
 }) => {
-  if (!showResources && !showPeers) return null;
+  const tabCount =
+    (!hideGroupsTab ? 1 : 0) + (showResources ? 1 : 0) + (showPeers ? 1 : 0);
+  if (tabCount <= 1) return null;
+
+  const groupsTab = !hideGroupsTab && (
+    <TabsTrigger
+      key="groups"
+      value={"groups"}
+      className={"text-[.8rem] font-normal"}
+      onClick={() => searchRef.current?.focus()}
+    >
+      <FolderGit2
+        className={
+          "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+        }
+        size={14}
+      />
+      Groups
+    </TabsTrigger>
+  );
+
+  const resourcesTab = showResources && (
+    <TabsTrigger
+      key="resources"
+      value={"resources"}
+      className={"text-[.8rem] font-normal"}
+      onClick={() => searchRef.current?.focus()}
+    >
+      <Layers3Icon
+        className={
+          "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+        }
+        size={14}
+      />
+      Resources
+    </TabsTrigger>
+  );
+
+  const peersTab = showPeers && (
+    <TabsTrigger
+      key="peers"
+      value={"peers"}
+      className={"text-[.8rem] font-normal"}
+      onClick={() => searchRef.current?.focus()}
+    >
+      <MonitorSmartphoneIcon
+        className={
+          "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+        }
+        size={14}
+      />
+      Peers
+    </TabsTrigger>
+  );
+
+  const tabMap = {
+    groups: groupsTab,
+    peers: peersTab,
+    resources: resourcesTab,
+  };
+
+  if (tabOrder) {
+    return (
+      <TabsList justify={"start"} className={"px-3"}>
+        {tabOrder.map((tab) => tabMap[tab])}
+      </TabsList>
+    );
+  }
 
   return (
     <TabsList justify={"start"} className={"px-3"}>
-      <TabsTrigger
-        value={"groups"}
-        className={"text-[.8rem] font-normal"}
-        onClick={() => searchRef.current?.focus()}
-      >
-        <FolderGit2
-          className={
-            "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
-          }
-          size={14}
-        />
-        Groups
-      </TabsTrigger>
-
-      {showResources && (
-        <TabsTrigger
-          value={"resources"}
-          className={"text-[.8rem] font-normal"}
-          onClick={() => searchRef.current?.focus()}
-        >
-          <Layers3Icon
-            className={
-              "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
-            }
-            size={14}
-          />
-          Resources
-        </TabsTrigger>
-      )}
-
-      {showPeers && (
-        <TabsTrigger
-          value={"peers"}
-          className={"text-[.8rem] font-normal"}
-          onClick={() => searchRef.current?.focus()}
-        >
-          <MonitorSmartphoneIcon
-            className={
-              "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
-            }
-            size={14}
-          />
-          Peers
-        </TabsTrigger>
-      )}
+      {groupsTab}
+      {resourcesTab}
+      {peersTab}
     </TabsList>
   );
 };
@@ -787,6 +852,7 @@ const ResourcesList = ({
       <VirtualScrollAreaList
         items={filteredItems}
         onSelect={onChange}
+        estimatedItemHeight={42}
         itemClassName={"dark:aria-selected:bg-nb-gray-800/20"}
         renderItem={(res) => {
           return (
@@ -896,6 +962,7 @@ const PeersList = ({
       <VirtualScrollAreaList
         items={filteredItems}
         onSelect={onChange}
+        estimatedItemHeight={42}
         itemClassName={"dark:aria-selected:bg-nb-gray-800/20"}
         renderItem={(res) => {
           if (!res?.id) return;
@@ -904,7 +971,7 @@ const PeersList = ({
             <Fragment key={res.id}>
               <div className={"flex items-center gap-2"}>
                 <Badge
-                  useHover={true}
+                  useHover={false}
                   data-cy={"group-badge"}
                   variant={"gray-ghost"}
                   className={cn(
@@ -915,7 +982,7 @@ const PeersList = ({
                   }}
                 >
                   <PeerOperatingSystemIcon os={res.os} />
-                  <TextWithTooltip text={res?.name || ""} maxChars={20} />
+                  <TruncatedText text={res?.name || ""} maxWidth={"270px"} />
                 </Badge>
               </div>
 

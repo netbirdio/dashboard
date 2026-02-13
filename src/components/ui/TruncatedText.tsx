@@ -4,22 +4,38 @@ import React, { useMemo, useState } from "react";
 
 type Props = {
   text?: string;
+  children?: React.ReactNode;
+  tooltipContent?: React.ReactNode;
   className?: string;
   maxChars?: number;
   maxWidth?: string; // Optional CSS width value
   hideTooltip?: boolean;
+  align?: "start" | "center" | "end";
+  alignOffset?: number;
+  side?: "top" | "right" | "bottom" | "left";
+  sideOffset?: number;
 };
 
 export default function TruncatedText({
   text,
+  children,
+  tooltipContent,
   className,
   maxChars = 40,
   maxWidth,
   hideTooltip = false,
+  align,
+  alignOffset = 20,
+  side,
+  sideOffset = 4,
 }: Readonly<Props>) {
   const [isOverflowing, setIsOverflowing] = useState(false);
   const [open, setOpen] = useState(false);
   const contentRef = React.useRef<HTMLDivElement>(null);
+  const measureRef = React.useRef<HTMLSpanElement>(null);
+
+  const hasCustomChildren = !!children;
+  const content = children ?? text;
 
   const charCount = useMemo(() => {
     if (!text) return 0;
@@ -27,12 +43,17 @@ export default function TruncatedText({
   }, [text]);
 
   // Check for overflow on mount and when text/maxWidth changes
+  // When custom children are provided, use a hidden measurement element
+  // to detect overflow independently of children's own truncation
   React.useEffect(() => {
-    const element = contentRef.current;
-    if (element) {
-      setIsOverflowing(element.scrollWidth > element.clientWidth);
+    const container = contentRef.current;
+    const measure = measureRef.current;
+    if (hasCustomChildren && container && measure) {
+      setIsOverflowing(measure.scrollWidth > container.clientWidth);
+    } else if (container) {
+      setIsOverflowing(container.scrollWidth > container.clientWidth);
     }
-  }, [text, maxWidth]);
+  }, [text, children, maxWidth, hasCustomChildren]);
 
   // If maxWidth is provided, use overflow detection
   // Otherwise, fall back to character count logic
@@ -44,11 +65,28 @@ export default function TruncatedText({
     ? { maxWidth }
     : { maxWidth: `${maxChars - 2}ch` };
 
+  const measureElement = hasCustomChildren && text && (
+    <span
+      ref={measureRef}
+      className="absolute invisible whitespace-nowrap pointer-events-none h-0 overflow-hidden"
+      aria-hidden="true"
+    >
+      {text}
+    </span>
+  );
+
   if (isDisabled) {
     return (
-      <div className="w-full min-w-0 inline-block" style={containerStyle}>
+      <div
+        className={cn(
+          "w-full min-w-0 inline-block",
+          hasCustomChildren && "relative",
+        )}
+        style={containerStyle}
+      >
+        {measureElement}
         <div ref={contentRef} className={cn(className, "truncate")}>
-          {text}
+          {content}
         </div>
       </div>
     );
@@ -57,25 +95,36 @@ export default function TruncatedText({
   return (
     <Tooltip delayDuration={650} open={open} onOpenChange={setOpen}>
       <TooltipTrigger asChild={true}>
-        <div className="w-full min-w-0 inline-block" style={containerStyle}>
+        <div
+          className={cn(
+            "w-full min-w-0 inline-block",
+            hasCustomChildren && "relative",
+          )}
+          style={containerStyle}
+        >
+          {measureElement}
           <div ref={contentRef} className={cn(className, "truncate")}>
-            {text}
+            {content}
           </div>
         </div>
       </TooltipTrigger>
       <TooltipContent
-        alignOffset={20}
-        sideOffset={4}
+        align={align}
+        alignOffset={alignOffset}
+        side={side}
+        sideOffset={sideOffset}
         onClick={(e) => {
           e.stopPropagation();
         }}
         className={cn(className, "px-3 py-1.5")}
       >
-        <div className="text-neutral-300 flex flex-col gap-1">
-          <div className="max-w-xs break-all whitespace-normal text-xs">
-            {text}
+        {tooltipContent ?? (
+          <div className="text-neutral-300 flex flex-col gap-1">
+            <div className="max-w-xs break-all whitespace-normal text-xs">
+              {text}
+            </div>
           </div>
-        </div>
+        )}
       </TooltipContent>
     </Tooltip>
   );

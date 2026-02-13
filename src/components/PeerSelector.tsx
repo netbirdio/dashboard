@@ -13,7 +13,6 @@ import { ArrowUpCircleIcon, ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
 import { memo, useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
-import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 

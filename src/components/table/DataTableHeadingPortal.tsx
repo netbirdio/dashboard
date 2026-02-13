@@ -6,27 +6,57 @@ import { createPortal } from "react-dom";
 type Props<TData> = {
   table: Table<TData> | null;
   headingTarget?: HTMLHeadingElement | null;
+  totalRecords?: number;
+  manualPagination?: boolean;
+  hasActiveFilters?: boolean;
 };
 
 export const DataTableHeadingPortal = function <TData>({
   table,
   headingTarget,
+  totalRecords,
+  manualPagination,
+  hasActiveFilters,
 }: Props<TData>) {
   const hasMounted = useRef(false);
+  const initialTotalRecords = useRef<number | undefined>(undefined);
+
+  if (
+    manualPagination &&
+    totalRecords !== undefined &&
+    initialTotalRecords.current === undefined
+  ) {
+    initialTotalRecords.current = totalRecords;
+  }
 
   if (!headingTarget) return;
   if (!hasMounted.current) hasMounted.current = true;
 
-  const totalItems = table?.getPreFilteredRowModel().rows.length;
-  const filteredItems = table?.getFilteredRowModel().rows.length;
+  const filteredItems = manualPagination
+    ? totalRecords
+    : table?.getFilteredRowModel().rows.length;
+
+  const getTotalRecords = () => {
+    if (Number(initialTotalRecords.current) < Number(filteredItems)) {
+      initialTotalRecords.current = filteredItems;
+      return filteredItems;
+    }
+    return initialTotalRecords.current;
+  };
+
+  const totalItems = manualPagination
+    ? getTotalRecords()
+    : table?.getPreFilteredRowModel().rows.length;
+
   if (!totalItems || totalItems == 1) return;
 
-  const hasAnyFiltersActive =
-    table &&
-    !(
-      table?.getState().columnFilters.length <= 0 &&
-      table?.getState().globalFilter === ""
-    );
+  const hasAnyFiltersActive = manualPagination
+    ? hasActiveFilters ?? totalRecords !== initialTotalRecords.current
+    : table &&
+      !(
+        table?.getState().columnFilters.length <= 0 &&
+        table?.getState().globalFilter === ""
+      );
 
   const portalContainer = document.createElement("span");
   headingTarget.prepend(portalContainer);

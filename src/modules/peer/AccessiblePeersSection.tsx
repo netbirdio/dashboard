@@ -2,7 +2,6 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable, {
   SkeletonTableHeader,
 } from "@components/skeletons/SkeletonTable";
-import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import * as React from "react";
 import { lazy, Suspense } from "react";
@@ -21,8 +20,6 @@ export const AccessiblePeersSection = ({ peerID }: Props) => {
     `/peers/${peerID}/accessible-peers`,
   );
   const { users } = useUsers();
-  const { ref: headingRef, portalTarget } =
-    usePortalElement<HTMLHeadingElement>();
 
   const peersWithUser = peers?.map((peer) => {
     if (!users) return peer;
@@ -34,10 +31,9 @@ export const AccessiblePeersSection = ({ peerID }: Props) => {
 
   return (
     <div className={"pb-10 px-8"}>
-      <div className={"max-w-6xl"}>
+      <div className={""}>
         <div className={"flex justify-between items-center mb-5"}>
           <div>
-            <h2 ref={headingRef}>Accessible Peers</h2>
             <Paragraph>
               This peer can connect to the following peers within the NetBird
               network.
@@ -59,7 +55,6 @@ export const AccessiblePeersSection = ({ peerID }: Props) => {
             peerID={peerID}
             isLoading={isLoading}
             peers={peersWithUser}
-            headingTarget={portalTarget}
           />
         </Suspense>
       </div>

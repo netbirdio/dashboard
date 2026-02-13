@@ -742,10 +742,16 @@ export default function ActivityDescription({ event }: Props) {
    */
 
   if (event.activity_code == "peer.job.create")
-    return (<div className={"inline"}>
-      Remote job <Value>{m.job_type}</Value> created for peer <Value>{m.for_peer_name}</Value>
-    </div>
-    )
+    return (
+      <div className={"inline"}>
+        Remote job <Value>{m.job_type}</Value> created for peer{" "}
+        <Value>{m.for_peer_name}</Value>
+      </div>
+    );
+
+  /**
+   * Flow Settings
+   */
 
   if (event.activity_code == "account.settings.extra.flow.group.remove")
     return (

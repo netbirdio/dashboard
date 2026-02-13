@@ -5,6 +5,7 @@ import { FilterX } from "lucide-react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback } from "react";
 import Skeleton from "react-loading-skeleton";
+import SquareIcon from "@components/SquareIcon";
 
 type Props = {
   icon?: React.ReactNode;
@@ -54,7 +55,7 @@ export default function NoResults({
     <div className={cn("relative overflow-hidden", className)}>
       <div
         className={
-          "absolute z-20 bg-gradient-to-b dark:to-nb-gray-950 dark:from-nb-gray-950/70 w-full h-full overflow-hidden top-0"
+          "absolute z-20 bg-gradient-to-b dark:to-nb-gray-950 dark:from-nb-gray-950/50 w-full h-full overflow-hidden top-0"
         }
       ></div>
       <div
@@ -66,18 +67,21 @@ export default function NoResults({
           <Skeleton className={"w-full"} height={70} duration={4} />
           <Skeleton className={"w-full"} height={70} duration={4} />
           <Skeleton className={"w-full"} height={70} duration={4} />
+          <Skeleton className={"w-full"} height={70} duration={4} />
+          <Skeleton className={"w-full"} height={70} duration={4} />
         </div>
       </div>
       <div
         className={cn("max-w-md mx-auto relative z-20 py-6", contentClassName)}
       >
-        <div
-          className={
-            "mx-auto w-14 h-14 bg-nb-gray-930 flex items-center justify-center mb-3 rounded-md"
-          }
-        >
-          {icon ? icon : <FilterX size={24} />}
+        <div className={"flex items-center justify-center mb-6"}>
+          <SquareIcon
+            icon={icon ? icon : <FilterX size={24} />}
+            color={"gray"}
+            size={"large"}
+          />
         </div>
+
         <div className={"text-center"}>
           <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title}</h1>
           <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>

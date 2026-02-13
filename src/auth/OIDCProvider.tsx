@@ -6,9 +6,8 @@ import {
   OidcProvider,
 } from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
-import { useLocalStorage } from "@hooks/useLocalStorage";
 import loadConfig, { buildExtras } from "@utils/config";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { OIDCError } from "@/auth/OIDCError";
 import { SecureProvider } from "@/auth/SecureProvider";
@@ -43,33 +42,6 @@ export default function OIDCProvider({ children }: Props) {
   const [mounted, setMounted] = useState(false);
   const router = useRouter();
   const path = usePathname();
-  const params = useSearchParams()?.toString();
-  const [, setQueryParams] = useLocalStorage("netbird-query-params", params);
-
-  useEffect(() => {
-    const validParams = [
-      "tab",
-      "search",
-      "id",
-      "invite",
-      "utm_source",
-      "utm_medium",
-      "utm_content",
-      "utm_campaign",
-      "hs_id",
-      "page",
-      "page_size",
-      "user",
-      "port",
-    ];
-
-    try {
-      const urlParams = new URLSearchParams(params);
-      if (validParams.some((param) => urlParams.has(param))) {
-        setQueryParams(params);
-      }
-    } catch (e) {}
-  }, []);
 
   const withCustomHistory = () => {
     return {

@@ -22,7 +22,12 @@ type Props = {
   serial?: string;
   ephemeral?: boolean;
 };
-export default function PeerVersionCell({ version, os, serial, ephemeral }: Props) {
+export default function PeerVersionCell({
+  version,
+  os,
+  serial,
+  ephemeral,
+}: Props) {
   const { latestVersion, latestUrl } = useApplicationContext();
 
   const updateAvailable = useMemo(() => {

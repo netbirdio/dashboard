@@ -99,7 +99,11 @@ export default function FancyToggleSwitch({
           />
         </div>
       </div>
-      <div>{children && value ? children : null}</div>
+      {children && value ? (
+        <div className="mt-4" onClick={(e) => e.stopPropagation()}>
+          {children}
+        </div>
+      ) : null}
     </div>
   );
 }
