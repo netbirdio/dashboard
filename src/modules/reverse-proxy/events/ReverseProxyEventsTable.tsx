@@ -141,6 +141,7 @@ export default function ReverseProxyEventsTable({
     mutate,
     setFilter,
     getFilter,
+    hasActiveFilters,
     ...paginationProps
   } = useServerPagination<ReverseProxyEvent[]>();
 
@@ -226,24 +227,21 @@ export default function ReverseProxyEventsTable({
     >
       {(table) => (
         <>
-          <ButtonGroup disabled={!events?.length}>
+          <ButtonGroup disabled={!events?.length && !hasActiveFilters}>
             <ButtonGroup.Button
               onClick={() => setFilter("status", undefined)}
-              disabled={!events?.length}
               variant={activeStatus === undefined ? "tertiary" : "secondary"}
             >
               All
             </ButtonGroup.Button>
             <ButtonGroup.Button
               onClick={() => setFilter("status", "success")}
-              disabled={!events?.length}
               variant={activeStatus === "success" ? "tertiary" : "secondary"}
             >
               Success
             </ButtonGroup.Button>
             <ButtonGroup.Button
               onClick={() => setFilter("status", "failed")}
-              disabled={!events?.length}
               variant={activeStatus === "failed" ? "tertiary" : "secondary"}
             >
               Failed
@@ -253,13 +251,16 @@ export default function ReverseProxyEventsTable({
           <DatePickerWithRange
             value={dateRange}
             onChange={handleDateFilterChange}
-            disabled={!events?.length}
+            disabled={!events?.length && !hasActiveFilters}
           />
 
-          <DataTableRowsPerPage table={table} disabled={!events?.length} />
+          <DataTableRowsPerPage
+            table={table}
+            disabled={!events?.length && !hasActiveFilters}
+          />
 
           <DataTableRefreshButton
-            isDisabled={!events?.length}
+            isDisabled={!events?.length && !hasActiveFilters}
             onClick={() => mutate()}
           />
         </>
