@@ -1,9 +1,9 @@
 [
   {
     "tag": "New",
-    "text": "Custom DNS Zones for Private Network Resolution",
-    "link": "https://netbird.io/knowledge-hub/custom-dns-zones",
-    "linkText": "Read Release Article",
+    "text": "NetBird Reverse Proxy - Expose internal services to the public with automatic TLS and optional authentication.",
+    "link": "https://docs.netbird.io/manage/reverse-proxy",
+    "linkText": "Learn more",
     "variant": "important",
     "isExternal": true,
     "closeable": true,

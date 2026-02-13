@@ -8,7 +8,8 @@ import React, {
   useState,
 } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { isNetBirdHosted } from "@utils/netbird";
+import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
+import announcementFile from "../../announcements.json";
 
 const ANNOUNCEMENTS_URL =
   "https://raw.githubusercontent.com/netbirdio/dashboard/main/announcements.json";
@@ -64,7 +65,9 @@ const getAnnouncements = async (): Promise<AnnouncementInfo[]> => {
 
     let raw: Announcement[];
 
-    if (stored && now - stored.timestamp < CACHE_DURATION_MS) {
+    if (isLocalDev()) {
+      raw = announcementFile as Announcement[];
+    } else if (stored && now - stored.timestamp < CACHE_DURATION_MS) {
       raw = stored.announcements;
     } else {
       const response = await fetch(ANNOUNCEMENTS_URL);
