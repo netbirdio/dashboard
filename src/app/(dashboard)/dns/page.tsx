@@ -11,5 +11,5 @@ export default function DNS() {
     router.push("/dns/nameservers");
   }, [router]);
 
-  return <FullScreenLoading height={"auto"} />;
+  return <FullScreenLoading fullScreen={false} />;
 }
