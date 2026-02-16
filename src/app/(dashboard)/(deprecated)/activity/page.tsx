@@ -6,5 +6,5 @@ import React from "react";
 
 export default function Redirect() {
   useRedirect("/events/audit");
-  return <FullScreenLoading height={"auto"} />;
+  return <FullScreenLoading fullScreen={false} />;
 }

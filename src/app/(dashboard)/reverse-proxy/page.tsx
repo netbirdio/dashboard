@@ -11,5 +11,5 @@ export default function ReverseProxyRedirectPage() {
     router.replace("/reverse-proxy/services");
   }, [router]);
 
-  return <FullScreenLoading height={"auto"} />;
+  return <FullScreenLoading fullScreen={false} />;
 }
