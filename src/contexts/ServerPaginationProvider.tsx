@@ -147,17 +147,14 @@ export default function ServerPaginationProvider({
 
   const getFilter = useCallback((key: string) => filters[key], [filters]);
 
-  const setSort = useCallback(
-    (name: string, direction: "asc" | "desc") => {
-      setFilters((prev) => ({
-        ...prev,
-        sort_by: name,
-        sort_order: direction,
-      }));
-      setPage(1);
-    },
-    [],
-  );
+  const setSort = useCallback((name: string, direction: "asc" | "desc") => {
+    setFilters((prev) => ({
+      ...prev,
+      sort_by: name,
+      sort_order: direction,
+    }));
+    setPage(1);
+  }, []);
 
   const hasActiveFilters =
     search !== "" ||
@@ -234,4 +231,9 @@ export function useServerPagination<T>() {
     );
   }
   return context as ServerPaginationContextValue<T>;
+}
+
+export function useOptionalServerPagination<T>() {
+  const context = useContext(ServerPaginationContext);
+  return context as ServerPaginationContextValue<T> | null;
 }

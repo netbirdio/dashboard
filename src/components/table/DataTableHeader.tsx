@@ -5,7 +5,7 @@ import { IconSortAscending, IconSortDescending } from "@tabler/icons-react";
 import type { Column } from "@tanstack/table-core";
 import { cn } from "@utils/helpers";
 import React from "react";
-import { useServerPagination } from "@/contexts/ServerPaginationProvider";
+import { useOptionalServerPagination } from "@/contexts/ServerPaginationProvider";
 
 type Props = {
   column: Column<any>;
@@ -57,12 +57,4 @@ export default function DataTableHeader({
       </div>
     </FullTooltip>
   );
-}
-
-function useOptionalServerPagination() {
-  try {
-    return useServerPagination();
-  } catch {
-    return null;
-  }
 }
