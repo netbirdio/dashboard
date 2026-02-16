@@ -62,8 +62,12 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
     const encodedUsername = encodeURIComponent(username.trim());
     const encodedPort = encodeURIComponent(port.trim());
 
+    const queryString = `id=${peer.id}&user=${encodedUsername}&port=${encodedPort}`;
+
+    localStorage.setItem("netbird-ssh-query-params", queryString);
+
     window.open(
-      `peer/ssh?id=${peer.id}&user=${encodedUsername}&port=${encodedPort}`,
+      `peer/ssh?${queryString}`,
       "_blank",
       "noopener,noreferrer,width=800,height=450,left=100,top=100,location=no,toolbar=no,menubar=no,status=no",
     );
