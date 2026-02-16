@@ -4,6 +4,7 @@ import * as React from "react";
 import { useEffect } from "react";
 
 const QUERY_PARAMS_KEY = "netbird-query-params";
+const PRESERVE_QUERY_PARAMS_PATHS = ["/peer/ssh", "/peer/rdp"];
 const VALID_PARAMS = [
   "tab",
   "search",
@@ -28,9 +29,9 @@ export const SecureProvider = ({ children }: Props) => {
   const currentPath = usePathname();
 
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !PRESERVE_QUERY_PARAMS_PATHS.includes(currentPath)) {
       localStorage.removeItem(QUERY_PARAMS_KEY);
-    } else {
+    } else if (!isAuthenticated) {
       try {
         const params = window.location.search.substring(1);
         if (params) {
@@ -41,7 +42,7 @@ export const SecureProvider = ({ children }: Props) => {
         }
       } catch (e) {}
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, currentPath]);
 
   useEffect(() => {
     let timeout: NodeJS.Timeout | undefined = undefined;
