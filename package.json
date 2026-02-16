@@ -11,6 +11,7 @@
     "dev": "next dev -p 3000",
     "turbo": "next dev -p 3000 --turbo",
     "build": "next build",
+    "postbuild": "node postbuild.js",
     "start": "next start",
     "lint": "next lint",
     "cypress:open": "cypress open"
