@@ -5,6 +5,7 @@ import { IconSortAscending, IconSortDescending } from "@tabler/icons-react";
 import type { Column } from "@tanstack/table-core";
 import { cn } from "@utils/helpers";
 import React from "react";
+import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 
 type Props = {
   column: Column<any>;
@@ -13,6 +14,7 @@ type Props = {
   center?: boolean;
   className?: string;
   sorting?: boolean;
+  name?: string;
 };
 export default function DataTableHeader({
   children,
@@ -21,15 +23,22 @@ export default function DataTableHeader({
   center,
   className,
   sorting = true,
+  name,
 }: Props) {
+  const serverPagination = useOptionalServerPagination();
+
+  const handleSort = () => {
+    const direction = column.getIsSorted() === "asc" ? "desc" : "asc";
+    column.toggleSorting(direction === "desc");
+    if (name && serverPagination?.setSort) {
+      serverPagination.setSort(name, direction);
+    }
+  };
+
   return (
     <FullTooltip content={tooltip} disabled={!tooltip}>
       <div
-        onClick={
-          sorting
-            ? () => column.toggleSorting(column.getIsSorted() === "asc")
-            : undefined
-        }
+        onClick={sorting ? handleSort : undefined}
         className={cn(
           "flex items-center whitespace-nowrap gap-2 dark:text-gray-400 transition-all select-none text-xs tracking-wide",
           sorting &&
@@ -48,4 +57,12 @@ export default function DataTableHeader({
       </div>
     </FullTooltip>
   );
+}
+
+function useOptionalServerPagination() {
+  try {
+    return useServerPagination();
+  } catch {
+    return null;
+  }
 }
