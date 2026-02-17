@@ -75,7 +75,7 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   {
     accessorKey: "auth",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Authentication</DataTableHeader>;
+      return <DataTableHeader column={column}>Auth Methods</DataTableHeader>;
     },
     cell: ({ row }) => <ReverseProxyAuthCell reverseProxy={row.original} />,
   },
