@@ -161,7 +161,7 @@ export default function SidebarItem({
           type="button"
           className={"w-full"}
           onClick={handleClick}
-          disabled={href === ""}
+          disabled={!collapsible && href === ""}
         >
           {content}
         </button>
