@@ -25,6 +25,8 @@ export default function ProxyEventsPage() {
     () => ({
       start_date: dayjs().subtract(7, "day").startOf("day").toISOString(),
       end_date: dayjs().endOf("day").toISOString(),
+      sort_by: "timestamp",
+      sort_order: "desc",
     }),
     [],
   );
