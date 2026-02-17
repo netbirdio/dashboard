@@ -5,11 +5,15 @@ import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import React, { useState } from "react";
 import { Group } from "@/interfaces/Group";
+import { useUsers } from "@/contexts/UsersProvider";
+import Badge from "@components/Badge";
+import { CircleUser } from "lucide-react";
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentGroups: Group[];
+  isEnabled: boolean;
   onSave: (groups: Group[]) => void;
   onRemove: () => void;
 };
@@ -18,17 +22,17 @@ export default function AuthSSOModal({
   open,
   onOpenChange,
   currentGroups,
+  isEnabled,
   onSave,
   onRemove,
 }: Readonly<Props>) {
+  const { users } = useUsers();
   const [groups, setGroups] = useState<Group[]>(currentGroups);
-  const isEditing = currentGroups.length > 0;
+  const isEditing = isEnabled;
 
   const handleSave = () => {
-    if (groups.length > 0) {
-      onOpenChange(false);
-      onSave(groups);
-    }
+    onOpenChange(false);
+    onSave(groups);
   };
 
   const handleRemove = () => {
@@ -51,7 +55,17 @@ export default function AuthSSOModal({
           <PeerGroupSelector
             values={groups}
             onChange={setGroups}
-            placeholder="Select distribution groups..."
+            placeholder={
+              <div className={"flex items-center gap-2"}>
+                <Badge className={"py-[3px]"} variant={"gray-ghost"}>
+                  <CircleUser size={12} />
+                  All Users
+                </Badge>
+                Select user groups...
+              </div>
+            }
+            users={users}
+            hideAllGroup={true}
           />
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
@@ -63,11 +77,7 @@ export default function AuthSSOModal({
                   <ModalClose asChild>
                     <Button variant="secondary">Cancel</Button>
                   </ModalClose>
-                  <Button
-                    variant="primary"
-                    onClick={handleSave}
-                    disabled={groups.length === 0}
-                  >
+                  <Button variant="primary" onClick={handleSave}>
                     Save
                   </Button>
                 </div>
@@ -79,12 +89,8 @@ export default function AuthSSOModal({
                   <ModalClose asChild>
                     <Button variant="secondary">Cancel</Button>
                   </ModalClose>
-                  <Button
-                    variant="primary"
-                    onClick={handleSave}
-                    disabled={groups.length === 0}
-                  >
-                    Add Groups
+                  <Button variant="primary" onClick={handleSave}>
+                    Add SSO
                   </Button>
                 </div>
               </>
