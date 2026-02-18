@@ -791,6 +791,7 @@ export default function ReverseProxyModal({
         onOpenChange={setSsoModalOpen}
         key={ssoModalOpen ? "sso1" : "sso0"}
         currentGroups={bearerGroups}
+        isEnabled={bearerEnabled}
         onSave={(groups) => {
           setTimeout(() => {
             setBearerGroups(groups);
