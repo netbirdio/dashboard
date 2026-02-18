@@ -28,14 +28,30 @@ const UserProfileContext = React.createContext(
 );
 
 export default function UsersProvider({ children }: Readonly<Props>) {
-  const { data: users, mutate, isLoading } = useFetchApi<User[]>("/users");
+  const { data: users, mutate, isLoading } = useFetchApi<User[]>(
+    "/users?service_user=false",
+  );
+  const { data: serviceUsers, mutate: mutateServiceUsers, isLoading: isLoadingServiceUsers } = useFetchApi<
+    User[]
+  >("/users?service_user=true");
 
   const refresh = () => {
     mutate().then();
+    mutateServiceUsers().then();
   };
 
+  const allUsers = useMemo(() => {
+    return [...(users ?? []), ...(serviceUsers ?? [])];
+  }, [users, serviceUsers]);
+
   return (
-    <UsersContext.Provider value={{ users, refresh, isLoading }}>
+    <UsersContext.Provider
+      value={{
+        users: allUsers,
+        refresh,
+        isLoading: isLoading || isLoadingServiceUsers,
+      }}
+    >
       <UserProfileProvider>{children}</UserProfileProvider>
     </UsersContext.Provider>
   );

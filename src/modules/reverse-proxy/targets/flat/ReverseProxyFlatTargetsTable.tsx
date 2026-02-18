@@ -104,7 +104,7 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
   {
     accessorKey: "auth",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Authentication</DataTableHeader>
+      <DataTableHeader column={column}>Auth Methods</DataTableHeader>
     ),
     cell: ({ row }) => (
       <ReverseProxyAuthCell reverseProxy={row.original.proxy} />
