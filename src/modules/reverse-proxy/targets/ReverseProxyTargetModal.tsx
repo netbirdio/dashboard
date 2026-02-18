@@ -19,7 +19,6 @@ import useFetchApi from "@utils/api";
 import {
   AlertTriangle,
   ExternalLinkIcon,
-  HelpCircle,
   PlusCircle,
   Server,
   Settings,
@@ -45,7 +44,6 @@ import { cn } from "@utils/helpers";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
-import FullTooltip from "@components/FullTooltip";
 import Paragraph from "@components/Paragraph";
 
 /** Get initial host value based on target, resource, or peer */
@@ -282,8 +280,9 @@ export default function ReverseProxyTargetModal({
                     <>
                       Select{" "}
                       <HelpTooltip
+                        className={"max-w-sm"}
                         content={
-                          <div className="max-w-sm text-xs">
+                          <>
                             A{" "}
                             <span className={"text-white font-medium"}>
                               peer
@@ -300,15 +299,17 @@ export default function ReverseProxyTargetModal({
                               </InlineButtonLink>
                               .
                             </span>
-                          </div>
+                          </>
                         }
+                        interactive={true}
                       >
                         Peer
                       </HelpTooltip>{" "}
                       or{" "}
                       <HelpTooltip
+                        className={"max-w-sm"}
                         content={
-                          <div className="max-w-sm text-xs">
+                          <>
                             A{" "}
                             <span className={"text-white font-medium"}>
                               resource
@@ -324,8 +325,9 @@ export default function ReverseProxyTargetModal({
                               </InlineLink>{" "}
                               to create some.
                             </span>
-                          </div>
+                          </>
                         }
+                        interactive={true}
                       >
                         Resource
                       </HelpTooltip>
@@ -501,20 +503,11 @@ export default function ReverseProxyTargetModal({
               <div className="w-[150px]">
                 <Label>
                   Port
-                  <FullTooltip
+                  <HelpTooltip
                     content={
-                      <div className={"text-xs max-w-xs"}>
-                        Enter the port where your service (e.g., webserver, app,
-                        API) is currently listening. If left empty, defaults to
-                        port 80 for HTTP or 443 for HTTPS.
-                      </div>
+                      "Enter the port where your service (e.g., webserver, app, API) is currently listening. If left empty, defaults to port 80 for HTTP or 443 for HTTPS."
                     }
-                  >
-                    <HelpCircle
-                      size={12}
-                      className="cursor-help hover:text-nb-gray-100 transition-colors"
-                    />
-                  </FullTooltip>
+                  />
                 </Label>
                 {cidrInfo && <HelpText className="!mt-1">&nbsp;</HelpText>}
                 <div className="mt-2">
