@@ -405,7 +405,7 @@ export default function ReverseProxyModal({
                 </div>
               </div>
 
-              {reverseProxy?.proxy_cluster && (
+              {reverseProxy?.proxy_cluster && !isClusterConnected && (
                 <Callout variant={"error"}>
                   Cluster {reverseProxy.proxy_cluster} is offline. Make sure the
                   proxy server is running and connected to the right management
@@ -791,6 +791,7 @@ export default function ReverseProxyModal({
         onOpenChange={setSsoModalOpen}
         key={ssoModalOpen ? "sso1" : "sso0"}
         currentGroups={bearerGroups}
+        isEnabled={bearerEnabled}
         onSave={(groups) => {
           setTimeout(() => {
             setBearerGroups(groups);

@@ -240,7 +240,7 @@ export const GroupsTableColumns: ColumnDef<GroupUsage>[] = [
         row.setup_keys_count > 0 ||
         row.users_count > 0 ||
         row.resources_count > 0 ||
-        row.zones_count
+        row.zones_count > 0
       );
     },
   },

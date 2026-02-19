@@ -11,5 +11,5 @@ export default function Team() {
     router.push("/team/users");
   }, [router]);
 
-  return <FullScreenLoading height={"auto"} />;
+  return <FullScreenLoading fullScreen={false} />;
 }
