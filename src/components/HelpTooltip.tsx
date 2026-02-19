@@ -20,7 +20,7 @@ export const HelpTooltip = ({
   children,
   interactive = false,
   className,
-  variant = "lighter",
+  variant = "default",
   triggerClassName,
   align = "start",
   side = "top",

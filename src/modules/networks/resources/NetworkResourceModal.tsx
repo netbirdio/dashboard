@@ -15,16 +15,18 @@ import {
 import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
+import { HelpTooltip } from "@components/HelpTooltip";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
-import Separator from "@components/Separator";
-import { useApiCall } from "@utils/api";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import useFetchApi, { useApiCall } from "@utils/api";
 import {
   ExternalLinkIcon,
   PlusCircle,
   Power,
+  Text,
   WorkflowIcon,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
@@ -79,6 +81,9 @@ export function ResourceModalContent({
     `/networks/${network.id}/resources/${resource?.id}`,
   ).put;
 
+  const { data: allResources } =
+    useFetchApi<NetworkResource[]>(`/networks/resources`);
+
   const [name, setName] = useState(resource?.name || "");
   const [description, setDescription] = useState(resource?.description || "");
   const [address, setAddress] = useState(resource?.address || "");
@@ -88,6 +93,22 @@ export function ResourceModalContent({
   const [enabled, setEnabled] = useState<boolean>(
     resource ? resource.enabled : true,
   );
+  const nameRef = useRef<HTMLInputElement>(null);
+  const [tab, setTab] = useState("resource");
+  const [addressError, setAddressError] = useState("");
+
+  const isAddressValid = address.length > 0 && addressError === "";
+
+  const nameError = useMemo(() => {
+    if (name === "") return "";
+    const duplicate = allResources?.find(
+      (r) =>
+        r.name.toLowerCase() === name.toLowerCase() && r.id !== resource?.id,
+    );
+    if (duplicate)
+      return "A resource with this name already exists. Please use another name.";
+    return "";
+  }, [name, allResources, resource?.id]);
 
   const createResource = async () => {
     const savedGroups = await saveGroups();
@@ -125,10 +146,9 @@ export function ResourceModalContent({
     });
   };
 
-  // TODO:  Address validation is missing for proper handling of submit button
   const canCreate = useMemo(() => {
-    return name.length > 0 && address.length > 0;
-  }, [name, address, groups]);
+    return name.length > 0 && isAddressValid && nameError === "";
+  }, [name, isAddressValid, nameError]);
 
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
@@ -143,55 +163,118 @@ export function ResourceModalContent({
         color={"yellow"}
       />
 
-      <Separator />
+      <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
+        <TabsList justify={"start"} className={"px-8"}>
+          <TabsTrigger value={"resource"}>
+            <WorkflowIcon size={16} />
+            Resource
+          </TabsTrigger>
+          <TabsTrigger value={"general"}>
+            <Text
+              size={16}
+              className={
+                "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+              }
+            />
+            Name & Description
+          </TabsTrigger>
+        </TabsList>
 
-      <div className={"px-8 flex-col flex gap-6 py-6"}>
-        <div>
-          <Label>Name</Label>
-          <HelpText>Provide a name for your resource</HelpText>
-          <Input
-            tabIndex={0}
-            placeholder={"e.g., Postgres Database"}
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-          />
-        </div>
-        <div>
-          <Label>Description (optional)</Label>
-          <HelpText>
-            Write a short description to add more context to this resource.
-          </HelpText>
-          <Input
-            placeholder={"e.g., Production, Development"}
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
+        <TabsContent value={"resource"} className={"pb-8"}>
+          <div className={"px-8 flex-col flex gap-8"}>
+            <ResourceSingleAddressInput
+              value={address}
+              onChange={setAddress}
+              onError={setAddressError}
+              autoFocus={true}
+              description={
+                <>
+                  Enter a single{" "}
+                  <HelpTooltip
+                    content={
+                      "A single host address, e.g., 10.0.0.1 or 192.168.1.5. Use this to give access to a specific machine or service."
+                    }
+                  >
+                    IP Address
+                  </HelpTooltip>
+                  ,{" "}
+                  <HelpTooltip
+                    content={
+                      "To give access to an entire subnet, use a CIDR block. For example, 10.0.0.0/24 or 192.168.1.0/24."
+                    }
+                  >
+                    CIDR Block
+                  </HelpTooltip>{" "}
+                  or{" "}
+                  <HelpTooltip
+                    content={
+                      "A DNS domain name, e.g., service.internal, example.com or *.example.com to match all subdomains."
+                    }
+                  >
+                    Domain Name
+                  </HelpTooltip>
+                </>
+              }
+            />
 
-        <ResourceSingleAddressInput value={address} onChange={setAddress} />
+            <div>
+              <Label>Resource Groups (optional)</Label>
+              <HelpText>
+                Assign this resource to a related group (e.g., Databases, Web
+                Servers) and use it as the destination in access control
+                policies.
+              </HelpText>
+              <PeerGroupSelector
+                onChange={setGroups}
+                values={groups}
+                showPeerCounter={false}
+                placeholder={"Add or select resource group(s)..."}
+              />
+            </div>
+            <FancyToggleSwitch
+              value={enabled}
+              onChange={setEnabled}
+              label={
+                <>
+                  <Power size={15} />
+                  Enable Resource
+                </>
+              }
+              helpText={"Use this switch to enable or disable the resource."}
+            />
+          </div>
+        </TabsContent>
 
-        <div>
-          <Label>Destination Groups (optional)</Label>
-          <HelpText>
-            Add this resource to groups and use them as destinations when
-            creating policies
-          </HelpText>
-          <PeerGroupSelector onChange={setGroups} values={groups} />
-        </div>
-        <div className={"mt-2 mb-2"}>
-          <FancyToggleSwitch
-            value={enabled}
-            onChange={setEnabled}
-            label={
-              <>
-                <Power size={15} />
-                Enable Resource
-              </>
-            }
-            helpText={"Use this switch to enable or disable the resource."}
-          />
-        </div>
-      </div>
+        <TabsContent value={"general"} className={"px-8 pb-8"}>
+          <div className={"flex flex-col gap-6"}>
+            <div>
+              <Label>Name</Label>
+              <HelpText>
+                Set an easily identifiable name for your resource
+              </HelpText>
+              <Input
+                ref={nameRef}
+                tabIndex={0}
+                placeholder={"e.g., Postgres Database"}
+                value={name}
+                error={nameError}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
+            <div>
+              <Label>Description (optional)</Label>
+              <HelpText>
+                Write a short description to add more context to this resource.
+              </HelpText>
+              <Input
+                placeholder={"e.g., Production, Development"}
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
+          </div>
+        </TabsContent>
+      </Tabs>
 
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
@@ -207,25 +290,61 @@ export function ResourceModalContent({
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
-          <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
-          </ModalClose>
+          {!resource ? (
+            <>
+              {tab === "resource" && (
+                <>
+                  <ModalClose asChild={true}>
+                    <Button variant={"secondary"}>Cancel</Button>
+                  </ModalClose>
+                  <Button
+                    variant={"primary"}
+                    onClick={() => {
+                      setTab("general");
+                      setTimeout(() => nameRef.current?.focus(), 0);
+                    }}
+                    disabled={!isAddressValid}
+                  >
+                    Continue
+                  </Button>
+                </>
+              )}
 
-          <Button
-            variant={"primary"}
-            data-cy={"submit-route"}
-            onClick={resource ? updateResource : createResource}
-            disabled={!canCreate}
-          >
-            {resource ? (
-              <>Save Changes</>
-            ) : (
-              <>
-                <PlusCircle size={16} />
-                Add Resource
-              </>
-            )}
-          </Button>
+              {tab === "general" && (
+                <>
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => setTab("resource")}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant={"primary"}
+                    data-cy={"submit-route"}
+                    onClick={createResource}
+                    disabled={!canCreate}
+                  >
+                    <PlusCircle size={16} />
+                    Add Resource
+                  </Button>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <ModalClose asChild={true}>
+                <Button variant={"secondary"}>Cancel</Button>
+              </ModalClose>
+              <Button
+                variant={"primary"}
+                data-cy={"submit-route"}
+                onClick={updateResource}
+                disabled={!canCreate}
+              >
+                Save Changes
+              </Button>
+            </>
+          )}
         </div>
       </ModalFooter>
     </ModalContent>

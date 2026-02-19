@@ -46,7 +46,7 @@ export default function ResourceNameCell({ resource }: Readonly<Props>) {
         />
         <DescriptionWithTooltip
           maxChars={25}
-          className={cn("font-normal mt-0.5 ")}
+          className={cn("font-normal")}
           text={resource.description}
         />
       </div>

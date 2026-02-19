@@ -81,9 +81,9 @@ const ResourceGroupModalContent = ({
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<FolderGit2 size={18} />}
-        title={"Assigned Groups"}
+        title={"Resource Groups"}
         description={
-          "Add this resource to groups and use them as destinations when creating policies"
+          "Assign this resource to a related group (e.g., Databases, Web Servers) and use it as the destination in access control policies."
         }
         color={"blue"}
       />
@@ -92,7 +92,12 @@ const ResourceGroupModalContent = ({
 
       <div className={"px-8 py-6 flex flex-col gap-8"}>
         <div>
-          <PeerGroupSelector onChange={setGroups} values={groups} />
+          <PeerGroupSelector
+            onChange={setGroups}
+            values={groups}
+            showPeerCounter={false}
+            placeholder={"Add or select resource group(s)..."}
+          />
         </div>
       </div>
 

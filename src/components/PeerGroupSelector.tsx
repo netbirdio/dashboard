@@ -71,6 +71,7 @@ interface MultiSelectProps {
   showResourceCounter?: boolean;
   showResources?: boolean;
   showPeers?: boolean;
+  showPeerCounter?: boolean;
   hideGroupsTab?: boolean;
   tabOrder?: ("groups" | "peers" | "resources")[];
   closeOnSelect?: boolean;
@@ -101,6 +102,7 @@ export function PeerGroupSelector({
   showResourceCounter = true,
   showResources = false,
   showPeers = false,
+  showPeerCounter = true,
   hideGroupsTab = false,
   tabOrder,
   closeOnSelect = false,
@@ -569,10 +571,12 @@ export function PeerGroupSelector({
 
                               <div className={"flex gap-4 items-center"}>
                                 {!users ? (
-                                  <PeerCounter
-                                    group={option}
-                                    showResourceCounter={showResourceCounter}
-                                  />
+                                  showPeerCounter && (
+                                    <PeerCounter
+                                      group={option}
+                                      showResourceCounter={showResourceCounter}
+                                    />
+                                  )
                                 ) : (
                                   <UsersCounter
                                     group={option}
