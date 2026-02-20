@@ -1,18 +1,16 @@
 import Badge from "@components/Badge";
 import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
-import useFetchApi from "@utils/api";
-import { orderBy } from "lodash";
 import { PlusCircle, ShieldIcon, SquarePenIcon } from "lucide-react";
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
+import useResourcePolicies from "@/modules/networks/resources/useResourcePolicies";
 
 type Props = {
   resource?: NetworkResource;
@@ -21,31 +19,9 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
   const { permission } = usePermissions();
   const { openPolicyModal, network, openEditPolicyModal } =
     useNetworksContext();
-  const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
+  const { policies: assignedPolicies, enabledPolicies, isLoading, policyCount } =
+    useResourcePolicies(resource);
   const [tooltipOpen, setTooltipOpen] = useState(false);
-
-  const assignedPolicies = useMemo(() => {
-    const resourceGroups = resource?.groups as Group[];
-    return orderBy(
-      policies?.filter((policy) => {
-        const destinationResource = policy.rules
-          ?.map((rule) => rule?.destinationResource?.id === resource?.id)
-          .some((id) => id);
-        if (destinationResource) return true;
-        const destinationPolicyGroups = policy.rules
-          ?.map((rule) => rule?.destinations)
-          .flat() as Group[];
-        const policyGroups = [...destinationPolicyGroups];
-        return resourceGroups?.some((resourceGroup) =>
-          policyGroups.some(
-            (policyGroup) => policyGroup?.id === resourceGroup.id,
-          ),
-        );
-      }),
-      "enabled",
-      "desc",
-    );
-  }, [policies, resource]);
 
   if (isLoading) {
     return (
@@ -54,10 +30,6 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
       </div>
     );
   }
-
-  const enabledPolicies = assignedPolicies?.filter((policy) => policy?.enabled);
-
-  const policyCount = assignedPolicies?.length || 0;
 
   return (
     network && (

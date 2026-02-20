@@ -97,3 +97,4 @@ export default function PoliciesProvider({ children }: Props) {
 export const usePolicies = () => {
   return React.useContext(PoliciesContext);
 };
+

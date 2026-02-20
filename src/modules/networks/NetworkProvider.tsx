@@ -273,6 +273,7 @@ export const NetworkProvider = ({
         network,
       }}
     >
+      <PoliciesProvider>
       {children}
 
       <NetworkModal
@@ -288,7 +289,6 @@ export const NetworkProvider = ({
           mutate(`/networks/${n.id}`);
         }}
       />
-      <PoliciesProvider>
         <Modal
           open={policyModal}
           onOpenChange={(state) => {
@@ -321,7 +321,6 @@ export const NetworkProvider = ({
             }}
           />
         </Modal>
-      </PoliciesProvider>
       {currentNetwork && (
         <>
           <NetworkRoutingPeerModal
@@ -408,6 +407,7 @@ export const NetworkProvider = ({
           />
         </>
       )}
+      </PoliciesProvider>
     </NetworksContext.Provider>
   );
 };

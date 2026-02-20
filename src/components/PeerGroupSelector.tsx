@@ -331,7 +331,7 @@ export function PeerGroupSelector({
               "min-h-[46px] w-full relative items-center group",
               "border border-neutral-200 dark:border-nb-gray-700 justify-between py-2 px-3",
               "rounded-md bg-white text-sm dark:bg-nb-gray-900/40 flex dark:text-neutral-400/70 text-neutral-500 cursor-pointer hover:dark:bg-nb-gray-900/50",
-              "disabled:pointer-events-none disabled:opacity-30 transition-all",
+              "disabled:pointer-events-none disabled:opacity-60 transition-all",
             )}
             disabled={disabled}
             data-cy={dataCy}
@@ -345,7 +345,16 @@ export function PeerGroupSelector({
               {resource && (
                 <ResourceBadge
                   className={"py-[3px]"}
-                  resource={resources?.find((r) => r.id === resource.id)}
+                  resource={
+                    resources?.find((r) => r.id === resource.id) ??
+                    (resource.id
+                      ? ({
+                          id: resource.id,
+                          name: resource.id,
+                          type: resource.type,
+                        } as NetworkResource)
+                      : undefined)
+                  }
                   peer={peers?.find((p) => p.id === resource.id)}
                   onClick={(e) => {
                     e.preventDefault();

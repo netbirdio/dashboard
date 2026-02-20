@@ -19,16 +19,21 @@ import { HelpTooltip } from "@components/HelpTooltip";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import useFetchApi, { useApiCall } from "@utils/api";
+import { usePolicies } from "@/contexts/PoliciesProvider";
+import useResourcePolicies from "@/modules/networks/resources/useResourcePolicies";
 import {
   ExternalLinkIcon,
   PlusCircle,
   Power,
+  ShieldCheck,
   Text,
   WorkflowIcon,
 } from "lucide-react";
 import React, { useMemo, useRef, useState } from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
+import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import NetworkResourceAccessControlTabContent from "@/modules/networks/resources/NetworkResourceAccessControlTabContent";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
 
 type Props = {
@@ -97,6 +102,15 @@ export function ResourceModalContent({
   const [tab, setTab] = useState("resource");
   const [addressError, setAddressError] = useState("");
 
+  // Access control state
+  const { policies: existingPolicies } = useResourcePolicies(resource);
+  const [policies, setPolicies] = useState<Policy[]>([]);
+  const { createPolicy } = usePolicies();
+
+  const allPolicies = useMemo(() => {
+    return [...(existingPolicies || []), ...policies];
+  }, [existingPolicies, policies]);
+
   const isAddressValid = address.length > 0 && addressError === "";
 
   const nameError = useMemo(() => {
@@ -122,7 +136,22 @@ export function ResourceModalContent({
         address,
         groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
         enabled,
-      }).then((r) => {
+      }).then(async (r) => {
+        // Save policies with the real resource ID
+        if (policies.length > 0) {
+          const policyPromises = policies.map((policy) =>
+            createPolicy({
+              ...policy,
+              rules: policy.rules.map((rule) => ({
+                ...rule,
+                destinationResource: rule.destinationResource
+                  ? { ...rule.destinationResource, id: r.id }
+                  : undefined,
+              })),
+            }),
+          );
+          await Promise.all(policyPromises);
+        }
         onCreated?.(r);
       }),
     });
@@ -151,7 +180,7 @@ export function ResourceModalContent({
   }, [name, isAddressValid, nameError]);
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
+    <ModalContent maxWidthClass={"max-w-[720px]"}>
       <ModalHeader
         icon={<WorkflowIcon size={20} />}
         title={resource ? "Edit Resource" : "Add Resource"}
@@ -169,7 +198,17 @@ export function ResourceModalContent({
             <WorkflowIcon size={16} />
             Resource
           </TabsTrigger>
-          <TabsTrigger value={"general"}>
+          <TabsTrigger
+            value={"access-control"}
+            disabled={!resource && !isAddressValid}
+          >
+            <ShieldCheck size={16} />
+            Access Control
+          </TabsTrigger>
+          <TabsTrigger
+            value={"general"}
+            disabled={!resource && !isAddressValid}
+          >
             <Text
               size={16}
               className={
@@ -244,6 +283,15 @@ export function ResourceModalContent({
           </div>
         </TabsContent>
 
+        <TabsContent value={"access-control"} className={"pb-8"}>
+          <NetworkResourceAccessControlTabContent
+            policies={allPolicies}
+            onChange={setPolicies}
+            address={address}
+            resource={resource}
+          />
+        </TabsContent>
+
         <TabsContent value={"general"} className={"px-8 pb-8"}>
           <div className={"flex flex-col gap-6"}>
             <div>
@@ -298,11 +346,28 @@ export function ResourceModalContent({
                   </ModalClose>
                   <Button
                     variant={"primary"}
+                    onClick={() => setTab("access-control")}
+                    disabled={!isAddressValid}
+                  >
+                    Continue
+                  </Button>
+                </>
+              )}
+
+              {tab === "access-control" && (
+                <>
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => setTab("resource")}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant={"primary"}
                     onClick={() => {
                       setTab("general");
                       setTimeout(() => nameRef.current?.focus(), 0);
                     }}
-                    disabled={!isAddressValid}
                   >
                     Continue
                   </Button>
@@ -313,7 +378,7 @@ export function ResourceModalContent({
                 <>
                   <Button
                     variant={"secondary"}
-                    onClick={() => setTab("resource")}
+                    onClick={() => setTab("access-control")}
                   >
                     Back
                   </Button>

@@ -14,6 +14,7 @@ type Props = {
   side?: "top" | "right" | "bottom" | "left";
   alignOffset?: number;
   sideOffset?: number;
+  iconSize?: number;
 } & TooltipVariants;
 export const HelpTooltip = ({
   content,
@@ -26,6 +27,7 @@ export const HelpTooltip = ({
   side = "top",
   alignOffset = 0,
   sideOffset,
+  iconSize = 12,
 }: Props) => {
   return (
     <>
@@ -54,7 +56,7 @@ export const HelpTooltip = ({
             )}
           >
             <HelpCircle
-              size={12}
+              size={iconSize}
               className={"text-nb-gray-300 group-hover/help:text-nb-gray-100"}
             />
           </span>
