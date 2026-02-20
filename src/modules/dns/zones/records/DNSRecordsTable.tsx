@@ -66,6 +66,7 @@ export default function DNSRecordsTable({ zone }: Props) {
         className={"bg-nb-gray-960 py-2"}
         inset={true}
         text={"DNS Records"}
+        initialPageSize={zone?.records?.length}
         manualPagination={true}
         sorting={sorting}
         columnVisibility={{}}
