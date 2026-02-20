@@ -220,9 +220,8 @@ export function ResourceModalContent({
             <div>
               <Label>Resource Groups (optional)</Label>
               <HelpText>
-                Assign this resource to a related group (e.g., Databases, Web
-                Servers) and use it as the destination in access control
-                policies.
+                Assign this resource to a group (e.g., Databases, Web Servers)
+                and use it as the destination in access control policies.
               </HelpText>
               <PeerGroupSelector
                 onChange={setGroups}

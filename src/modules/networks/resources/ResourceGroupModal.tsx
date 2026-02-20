@@ -83,7 +83,7 @@ const ResourceGroupModalContent = ({
         icon={<FolderGit2 size={18} />}
         title={"Resource Groups"}
         description={
-          "Assign this resource to a related group (e.g., Databases, Web Servers) and use it as the destination in access control policies."
+          "Assign this resource to a group (e.g., Databases, Web Servers) and use it as the destination in access control policies."
         }
         color={"blue"}
       />
