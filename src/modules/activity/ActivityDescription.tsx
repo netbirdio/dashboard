@@ -665,6 +665,32 @@ export default function ActivityDescription({ event }: Props) {
     );
 
   /**
+   * Reverse Proxy
+  */
+
+  if (event.activity_code == "service.peer.expose")
+    return (
+     <div className={"inline"}>
+       Peer <Value>{m.peer_name}</Value> exposed the service <Value>{m.domain}</Value> with auth{"  "}
+       <Value>{m.auth? "Enabled":"Disabled"}</Value>
+     </div>
+  );
+
+  if (event.activity_code == "service.peer.unexpose")
+    return (
+     <div className={"inline"}>
+       Peer <Value>{m.peer_name}</Value> unexpose the service <Value>{m.domain}</Value>
+     </div>
+  );
+
+    if (event.activity_code == "service.peer.expose.expire")
+    return (
+     <div className={"inline"}>
+       Exposed the service <Value>{m.domain}</Value> from peer <Value>{m.peer_name}</Value> was removed due to renew expiration
+     </div>
+  );
+
+  /**
    * Networks
    */
 
