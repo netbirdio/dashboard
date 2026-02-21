@@ -137,13 +137,16 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
     return (
       !hasChanges ||
       !permission.settings.update ||
-      (autoUpdateMethod === "custom" && !canSaveCustomVersion)
+      (autoUpdateMethod === "custom" && !canSaveCustomVersion) ||
+      (peerExposeEnabled && peerExposeGroupIds.length === 0)
     );
   }, [
     hasChanges,
     permission.settings.update,
     autoUpdateMethod,
     canSaveCustomVersion,
+    peerExposeEnabled,
+    peerExposeGroupIds,
   ]);
 
   const saveChanges = async () => {
@@ -358,8 +361,8 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
                     <div>
                       <Label>Allowed peer groups</Label>
                       <HelpText>
-                        Restrict which peer groups are allowed to expose
-                        services. Leave empty to allow all peers.
+                        Select which peer groups are allowed to expose
+                        services. At least one group is required.
                       </HelpText>
                       <PeerGroupSelector
                         values={peerExposeGroups}
