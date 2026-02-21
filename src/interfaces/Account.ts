@@ -8,6 +8,8 @@ export interface Account {
     extra: {
       peer_approval_enabled: boolean;
       user_approval_required: boolean;
+      peer_expose_enabled?: boolean;
+      peer_expose_groups?: string[];
     };
     peer_login_expiration_enabled: boolean;
     peer_login_expiration: number;
