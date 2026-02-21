@@ -6,6 +6,7 @@ import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
+import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import {
   SelectDropdown,
   SelectOption,
@@ -14,10 +15,12 @@ import { useHasChanges } from "@hooks/useHasChanges";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { validator } from "@utils/helpers";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   ClockFadingIcon,
   ExternalLinkIcon,
   FlaskConicalIcon,
+  GlobeIcon,
   MonitorSmartphoneIcon,
   RefreshCcw,
 } from "lucide-react";
@@ -26,6 +29,8 @@ import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
+import { Group } from "@/interfaces/Group";
+import { useGroupIdsToGroups } from "@/modules/groups/useGroupIdsToGroups";
 import { SmallBadge } from "@components/ui/SmallBadge";
 
 type Props = {
@@ -69,9 +74,31 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
     isCustomVersion ? autoUpdateSetting : "",
   );
 
+  const [peerExposeEnabled, setPeerExposeEnabled] = useState<boolean>(
+    account?.settings?.extra?.peer_expose_enabled ?? false,
+  );
+
+  const initialGroups = useGroupIdsToGroups(
+    account?.settings?.extra?.peer_expose_groups,
+  );
+  const [peerExposeGroups, setPeerExposeGroups] = useState<Group[]>([]);
+
+  const peerExposeGroupIds = useMemo(
+    () => peerExposeGroups.map((g) => g.id).filter(Boolean) as string[],
+    [peerExposeGroups],
+  );
+
+  React.useEffect(() => {
+    if (initialGroups) {
+      setPeerExposeGroups(initialGroups);
+    }
+  }, [initialGroups]);
+
   const { hasChanges, updateRef } = useHasChanges([
     autoUpdateMethod,
     autoUpdateCustomVersion,
+    peerExposeEnabled,
+    peerExposeGroupIds,
   ]);
 
   const handleUpdateMethodChange = (value: string) => {
@@ -118,11 +145,21 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
           settings: {
             ...account.settings,
             auto_update_version: autoUpdateCustomVersion || autoUpdateMethod,
+            extra: {
+              ...account.settings?.extra,
+              peer_expose_enabled: peerExposeEnabled,
+              peer_expose_groups: peerExposeGroupIds,
+            },
           },
         })
         .then(() => {
           mutate("/accounts");
-          updateRef([autoUpdateMethod, autoUpdateCustomVersion]);
+          updateRef([
+            autoUpdateMethod,
+            autoUpdateCustomVersion,
+            peerExposeEnabled,
+            peerExposeGroupIds,
+          ]);
         }),
       loadingMessage: "Updating client settings...",
     });
@@ -260,6 +297,63 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
             }
             disabled={!permission.settings.update}
           />
+
+          <div className={"mt-3"}>
+            <Label>
+              <GlobeIcon size={15} />
+              Peer Expose
+            </Label>
+            <HelpText>
+              Allow peers to expose local services through the NetBird reverse
+              proxy using the CLI.
+            </HelpText>
+          </div>
+
+          <FancyToggleSwitch
+            value={peerExposeEnabled}
+            onChange={setPeerExposeEnabled}
+            label={
+              <>
+                <GlobeIcon size={15} />
+                Enable Peer Expose
+              </>
+            }
+            helpText={
+              "When enabled, peers can expose local HTTP services accessible via a public URL."
+            }
+            disabled={!permission.settings.update}
+          />
+
+          <AnimatePresence>
+            {peerExposeEnabled && (
+              <div className={"overflow-hidden -top-4 relative z-0"}>
+                <motion.div
+                  initial={{ opacity: 0, height: 0, scale: 0.98 }}
+                  animate={{ opacity: 1, height: "auto", scale: 1 }}
+                  exit={{ opacity: 0, height: 0, scale: 0.98 }}
+                >
+                  <div
+                    className={
+                      "flex flex-col gap-6 bg-nb-gray-940 px-6 pt-5 pb-6 border border-nb-gray-930 rounded-b-md relative mx-3"
+                    }
+                  >
+                    <div>
+                      <Label>Allowed peer groups</Label>
+                      <HelpText>
+                        Restrict which peer groups are allowed to expose
+                        services. Leave empty to allow all peers.
+                      </HelpText>
+                      <PeerGroupSelector
+                        values={peerExposeGroups}
+                        onChange={setPeerExposeGroups}
+                        placeholder="Select peer groups..."
+                      />
+                    </div>
+                  </div>
+                </motion.div>
+              </div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </Tabs.Content>

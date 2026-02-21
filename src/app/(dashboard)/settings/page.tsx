@@ -6,7 +6,6 @@ import {
   AlertOctagonIcon,
   FingerprintIcon,
   FolderGit2Icon,
-  GlobeIcon,
   LockIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
@@ -25,7 +24,6 @@ import IdentityProvidersTab from "@/modules/settings/IdentityProvidersTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 import GroupsSettings from "@/modules/settings/GroupsSettings";
-import PeerExposeTab from "@/modules/settings/PeerExposeTab";
 
 export default function NetBirdSettings() {
   const queryParams = useSearchParams();
@@ -80,10 +78,6 @@ export default function NetBirdSettings() {
                 <MonitorSmartphoneIcon size={14} />
                 Clients
               </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="peer-expose">
-                <GlobeIcon size={14} />
-                Peer Expose
-              </VerticalTabs.Trigger>
             </>
           )}
 
@@ -101,7 +95,6 @@ export default function NetBirdSettings() {
             {account && <GroupsSettings account={account} />}
             {account && <NetworkSettingsTab account={account} />}
             {account && <ClientSettingsTab account={account} />}
-            {account && <PeerExposeTab account={account} />}
             {account && <DangerZoneTab account={account} />}
           </div>
         </RestrictedAccess>
