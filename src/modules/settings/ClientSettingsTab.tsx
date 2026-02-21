@@ -81,18 +81,14 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
   const initialGroups = useGroupIdsToGroups(
     account?.settings?.extra?.peer_expose_groups,
   );
-  const [peerExposeGroups, setPeerExposeGroups] = useState<Group[]>([]);
+  const [peerExposeGroups, setPeerExposeGroups] = useState<Group[]>(
+    initialGroups ?? [],
+  );
 
   const peerExposeGroupIds = useMemo(
     () => peerExposeGroups.map((g) => g.id).filter(Boolean) as string[],
     [peerExposeGroups],
   );
-
-  React.useEffect(() => {
-    if (initialGroups) {
-      setPeerExposeGroups(initialGroups);
-    }
-  }, [initialGroups]);
 
   const { hasChanges, updateRef } = useHasChanges([
     autoUpdateMethod,
@@ -100,6 +96,21 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
     peerExposeEnabled,
     peerExposeGroupIds,
   ]);
+
+  React.useEffect(() => {
+    if (initialGroups) {
+      setPeerExposeGroups(initialGroups);
+      const groupIds = initialGroups
+        .map((g) => g.id)
+        .filter(Boolean) as string[];
+      updateRef([
+        autoUpdateMethod,
+        autoUpdateCustomVersion,
+        peerExposeEnabled,
+        groupIds,
+      ]);
+    }
+  }, [initialGroups]);
 
   const handleUpdateMethodChange = (value: string) => {
     setAutoUpdateMethod(value);
