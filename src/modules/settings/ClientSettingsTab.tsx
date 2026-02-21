@@ -316,7 +316,14 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
             </Label>
             <HelpText>
               Allow peers to expose local services through the NetBird reverse
-              proxy using the CLI.
+              proxy using the CLI.{" "}
+              <InlineLink
+                href={"https://docs.netbird.io/manage/reverse-proxy/expose-from-cli"}
+                target={"_blank"}
+              >
+                Learn more
+                <ExternalLinkIcon size={12} />
+              </InlineLink>
             </HelpText>
           </div>
 
