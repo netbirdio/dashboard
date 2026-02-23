@@ -12,7 +12,6 @@ import {
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
-import FullScreenLoading from "@components/ui/FullScreenLoading";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
@@ -49,6 +48,7 @@ import ReverseProxiesProvider, {
   flattenReverseProxies,
   useReverseProxies,
 } from "@/contexts/ReverseProxiesProvider";
+import { SkeletonNetwork } from "@components/skeletons/SkeletonNetwork";
 
 export default function NetworkDetailPage() {
   const queryParameter = useSearchParams();
@@ -65,7 +65,7 @@ export default function NetworkDetailPage() {
       <NetworkOverview network={network} />
     </ReverseProxiesProvider>
   ) : (
-    <FullScreenLoading />
+    <SkeletonNetwork />
   );
 }
 
