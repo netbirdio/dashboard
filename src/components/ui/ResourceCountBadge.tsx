@@ -7,15 +7,20 @@ import { Group } from "@/interfaces/Group";
 
 type Props = {
   group?: Group;
+  disableRedirect?: boolean;
 } & React.HTMLAttributes<HTMLDivElement> &
   BadgeVariants;
 
-export default function ResourceCountBadge({ group }: Props) {
+export default function ResourceCountBadge({
+  group,
+  disableRedirect = false,
+}: Props) {
   const router = useRouter();
   const hasId = !!group?.id;
 
   const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
+    if (disableRedirect) return;
     if (hasId) router.push(`/group?id=${group?.id}&tab=resources`);
   };
 
