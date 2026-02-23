@@ -85,11 +85,11 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
   );
 
   const [peerExposeEnabled, setPeerExposeEnabled] = useState<boolean>(
-    account?.settings?.extra?.peer_expose_enabled ?? false,
+    account?.settings?.peer_expose_enabled ?? false,
   );
   const [peerExposeGroups, setPeerExposeGroups, { save: saveGroups }] =
     useGroupHelper({
-      initial: account.settings?.extra?.peer_expose_groups,
+      initial: account.settings?.peer_expose_groups,
     });
   const peerExposeGroupNames = useMemo(
     () => peerExposeGroups.map((g) => g.name).sort(),
@@ -155,11 +155,8 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           settings: {
             ...account.settings,
             auto_update_version: autoUpdateCustomVersion || autoUpdateMethod,
-            extra: {
-              ...account.settings?.extra,
-              peer_expose_enabled: peerExposeEnabled,
-              peer_expose_groups: peerExposeGroupIds,
-            },
+            peer_expose_enabled: peerExposeEnabled,
+            peer_expose_groups: peerExposeGroupIds,
           },
         })
         .then(() => {
