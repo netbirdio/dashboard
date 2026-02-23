@@ -2,6 +2,9 @@ import { Modal } from "@components/modal/Modal";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import React, { useState } from "react";
+import { useGroups } from "@/contexts/GroupsProvider";
+import { Group } from "@/interfaces/Group";
+import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
 
@@ -18,17 +21,59 @@ const PoliciesContext = React.createContext(
       message?: string,
     ) => void;
     createPolicy: (policy: Policy) => Promise<Policy>;
+    createPolicyForResource: (
+      policy: Policy,
+      resource: NetworkResource,
+    ) => Promise<Policy>;
     openEditPolicyModal: (policy: Policy, tab?: string) => void;
   },
 );
 
 export default function PoliciesProvider({ children }: Props) {
   const request = useApiCall<Policy>("/policies");
+  const { createOrUpdate: createOrUpdateGroup } = useGroups();
   const [policyModal, setPolicyModal] = useState(false);
   const [currentPolicy, setCurrentPolicy] = useState<Policy>();
   const [initialPolicyTab, setInitialPolicyTab] = useState("");
 
   const createPolicy = async (policy: Policy) => request.post(policy);
+
+  const createPolicyForResource = async (
+    policy: Policy,
+    resource: NetworkResource,
+  ) => {
+    const rule = policy.rules[0];
+
+    // Ensure all source groups exist and get their IDs
+    const sources = await Promise.all(
+      (rule.sources ?? []).map((g) =>
+        typeof g === "string" ? g : createOrUpdateGroup(g).then((r) => r.id),
+      ),
+    );
+
+    const hasGroups = resource.groups && resource.groups.length > 0;
+
+    return createPolicy({
+      ...policy,
+      source_posture_checks: (policy.source_posture_checks ?? []).map((c) =>
+        typeof c === "string" ? c : c.id,
+      ),
+      rules: [
+        {
+          ...rule,
+          sources: sources.filter(Boolean) as string[],
+          destinations: hasGroups
+            ? ((resource.groups as (Group | string)[])
+                .map((g) => (typeof g === "string" ? g : g.id))
+                .filter(Boolean) as string[])
+            : null,
+          destinationResource: hasGroups
+            ? undefined
+            : { id: resource.id, type: resource.type },
+        },
+      ],
+    } as Policy);
+  };
 
   const updatePolicy = async (
     policy: Policy,
@@ -70,7 +115,12 @@ export default function PoliciesProvider({ children }: Props) {
 
   return (
     <PoliciesContext.Provider
-      value={{ updatePolicy, createPolicy, openEditPolicyModal }}
+      value={{
+        updatePolicy,
+        createPolicy,
+        createPolicyForResource,
+        openEditPolicyModal,
+      }}
     >
       {children}
       <Modal
@@ -97,4 +147,3 @@ export default function PoliciesProvider({ children }: Props) {
 export const usePolicies = () => {
   return React.useContext(PoliciesContext);
 };
-

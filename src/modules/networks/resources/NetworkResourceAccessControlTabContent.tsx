@@ -9,12 +9,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import {
-  Edit2,
-  MinusCircleIcon,
-  MoreVertical,
-  PlusIcon,
-} from "lucide-react";
+import { Edit2, MinusCircleIcon, MoreVertical, PlusIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
@@ -24,12 +19,14 @@ import AccessControlProtocolCell from "@/modules/access-control/table/AccessCont
 import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
+import { Group } from "@/interfaces/Group";
 
 type Props = {
   policies: Policy[];
   onChange: (policies: Policy[]) => void;
   address: string;
   resource?: NetworkResource;
+  groups?: Group[];
 };
 
 export default function NetworkResourceAccessControlTabContent({
@@ -37,6 +34,7 @@ export default function NetworkResourceAccessControlTabContent({
   onChange,
   address,
   resource,
+  groups,
 }: Readonly<Props>) {
   const { network } = useNetworksContext();
   const { openEditPolicyModal, updatePolicy } = usePolicies();
@@ -95,9 +93,9 @@ export default function NetworkResourceAccessControlTabContent({
       <div>
         <Label>Access Control Policies</Label>
         <HelpText>
-          Define which source groups are allowed to access this resource. You can
-          also restrict access to specific protocols and ports. Without policies
-          access to this resource will not be possible.
+          Define which source groups are allowed to access this resource. You
+          can also restrict access to specific protocols and ports. Without
+          policies access to this resource will not be possible.
         </HelpText>
 
         {policies.length > 0 && (
@@ -129,7 +127,11 @@ export default function NetworkResourceAccessControlTabContent({
                     className="rounded-md hover:bg-nb-gray-900/30 cursor-pointer transition-all"
                   >
                     <td className="py-2.5 pl-5 pr-2 align-middle">
-                      <AccessControlSourcesCell policy={policy} />
+                      <AccessControlSourcesCell
+                        policy={policy}
+                        hideEdit
+                        disableRedirect
+                      />
                     </td>
                     <td className="py-2.5 px-4 align-middle">
                       <AccessControlProtocolCell policy={policy} />
@@ -145,18 +147,14 @@ export default function NetworkResourceAccessControlTabContent({
                         <ToggleSwitch
                           size="small"
                           checked={policy.enabled}
-                          onCheckedChange={() => togglePolicyEnabled(policy, index)}
+                          onCheckedChange={() =>
+                            togglePolicyEnabled(policy, index)
+                          }
                         />
                         <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
-                            <Button
-                              variant="default-outline"
-                              className="!px-3"
-                            >
-                              <MoreVertical
-                                size={16}
-                                className="shrink-0"
-                              />
+                            <Button variant="default-outline" className="!px-3">
+                              <MoreVertical size={16} className="shrink-0" />
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent
@@ -213,25 +211,26 @@ export default function NetworkResourceAccessControlTabContent({
         }}
         key={policyModalOpen ? 1 : 0}
       >
-        {policyModalOpen && (
-          <AccessControlModalContent
-            useSave={false}
-            disableDestination={true}
-            policy={
-              editingPolicyIndex !== null
-                ? policies[editingPolicyIndex]
-                : undefined
-            }
-            initialDestinationResource={destinationResource}
-            initialName={`Resource ${address}`}
-            initialDescription={`Network ${network?.name || ""}`}
-            onSuccess={(policy) => {
-              savePolicy(policy);
-              setPolicyModalOpen(false);
-              setEditingPolicyIndex(null);
-            }}
-          />
-        )}
+        <AccessControlModalContent
+          useSave={false}
+          disableDestination={true}
+          policy={
+            editingPolicyIndex !== null
+              ? policies[editingPolicyIndex]
+              : undefined
+          }
+          initialDestinationResource={
+            groups?.length ? undefined : destinationResource
+          }
+          initialDestinationGroups={groups?.length ? groups : undefined}
+          initialName={`Resource ${address}`}
+          initialDescription={`Network ${network?.name || ""}`}
+          onSuccess={(policy) => {
+            savePolicy(policy);
+            setPolicyModalOpen(false);
+            setEditingPolicyIndex(null);
+          }}
+        />
       </Modal>
     </div>
   );

@@ -1,8 +1,9 @@
 import { Modal } from "@components/modal/Modal";
 import { notify } from "@components/Notification";
-import { useApiCall } from "@utils/api";
+import useFetchApi, { useApiCall } from "@utils/api";
+import { orderBy } from "lodash";
 import * as React from "react";
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { Group } from "@/interfaces/Group";
@@ -38,6 +39,13 @@ const NetworksContext = React.createContext(
     deleteResource: (network: Network, resource: NetworkResource) => void;
     deleteRouter: (network: Network, router: NetworkRouter) => void;
     network?: Network;
+    assignedPolicies: (resource?: NetworkResource) => {
+      policies: Policy[];
+      enabledPolicies: Policy[];
+      isLoading: boolean;
+      policyCount: number;
+    };
+    resourceExists: (name: string, excludeId?: string) => boolean;
   },
 );
 
@@ -50,6 +58,61 @@ export const NetworkProvider = ({
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const deleteCall = useApiCall("/networks").del;
+  const { data: allPolicies, isLoading: policiesLoading } =
+    useFetchApi<Policy[]>("/policies");
+  const { data: allResources } =
+    useFetchApi<NetworkResource[]>("/networks/resources");
+
+  const resourceExists = useCallback(
+    (name: string, excludeId?: string) => {
+      if (!name) return false;
+      return !!allResources?.find(
+        (r) => r.name.toLowerCase() === name.toLowerCase() && r.id !== excludeId,
+      );
+    },
+    [allResources],
+  );
+
+  const assignedPolicies = useCallback(
+    (resource?: NetworkResource) => {
+      if (!resource) {
+        return {
+          policies: [],
+          enabledPolicies: [],
+          isLoading: policiesLoading,
+          policyCount: 0,
+        };
+      }
+      const resourceGroups = resource.groups as Group[];
+      const policies = orderBy(
+        allPolicies?.filter((policy) => {
+          const destinationResource = policy.rules
+            ?.map((rule) => rule?.destinationResource?.id === resource.id)
+            .some((id) => id);
+          if (destinationResource) return true;
+          const destinationPolicyGroups = policy.rules
+            ?.map((rule) => rule?.destinations)
+            .flat() as Group[];
+          const policyGroups = [...destinationPolicyGroups];
+          return resourceGroups?.some((resourceGroup) =>
+            policyGroups.some(
+              (policyGroup) => policyGroup?.id === resourceGroup.id,
+            ),
+          );
+        }),
+        "enabled",
+        "desc",
+      );
+      const enabledPolicies = policies?.filter((policy) => policy?.enabled);
+      return {
+        policies,
+        enabledPolicies,
+        isLoading: policiesLoading,
+        policyCount: policies?.length || 0,
+      };
+    },
+    [allPolicies, policiesLoading],
+  );
 
   const [currentNetwork, setCurrentNetwork] = useState<Network>();
   const [currentResource, setCurrentResource] = useState<NetworkResource>();
@@ -271,6 +334,8 @@ export const NetworkProvider = ({
         deleteResource,
         deleteRouter,
         network,
+        assignedPolicies,
+        resourceExists,
       }}
     >
       <PoliciesProvider>

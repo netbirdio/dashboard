@@ -10,17 +10,16 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
-import useResourcePolicies from "@/modules/networks/resources/useResourcePolicies";
 
 type Props = {
   resource?: NetworkResource;
 };
 export const ResourcePolicyCell = ({ resource }: Props) => {
   const { permission } = usePermissions();
-  const { openPolicyModal, network, openEditPolicyModal } =
+  const { openPolicyModal, network, openEditPolicyModal, assignedPolicies } =
     useNetworksContext();
-  const { policies: assignedPolicies, enabledPolicies, isLoading, policyCount } =
-    useResourcePolicies(resource);
+  const { policies: resourcePolicies, enabledPolicies, isLoading, policyCount } =
+    assignedPolicies(resource);
   const [tooltipOpen, setTooltipOpen] = useState(false);
 
   if (isLoading) {
@@ -44,7 +43,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
             className={"border-nb-gray-800"}
             content={
               <div className={"text-xs flex flex-col p-1"}>
-                {assignedPolicies?.map((policy: Policy) => {
+                {resourcePolicies?.map((policy: Policy) => {
                   const rule = policy?.rules?.[0];
                   if (!rule) return;
                   return (

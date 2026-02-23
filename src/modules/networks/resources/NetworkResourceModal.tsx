@@ -18,9 +18,9 @@ import Paragraph from "@components/Paragraph";
 import { HelpTooltip } from "@components/HelpTooltip";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
-import useFetchApi, { useApiCall } from "@utils/api";
+import { useApiCall } from "@utils/api";
 import { usePolicies } from "@/contexts/PoliciesProvider";
-import useResourcePolicies from "@/modules/networks/resources/useResourcePolicies";
+import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import {
   ExternalLinkIcon,
   PlusCircle,
@@ -35,6 +35,7 @@ import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import NetworkResourceAccessControlTabContent from "@/modules/networks/resources/NetworkResourceAccessControlTabContent";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
+import { useSWRConfig } from "swr";
 
 type Props = {
   open?: boolean;
@@ -86,8 +87,7 @@ export function ResourceModalContent({
     `/networks/${network.id}/resources/${resource?.id}`,
   ).put;
 
-  const { data: allResources } =
-    useFetchApi<NetworkResource[]>(`/networks/resources`);
+  const { mutate } = useSWRConfig();
 
   const [name, setName] = useState(resource?.name || "");
   const [description, setDescription] = useState(resource?.description || "");
@@ -103,9 +103,10 @@ export function ResourceModalContent({
   const [addressError, setAddressError] = useState("");
 
   // Access control state
-  const { policies: existingPolicies } = useResourcePolicies(resource);
+  const { assignedPolicies, resourceExists } = useNetworksContext();
+  const { policies: existingPolicies } = assignedPolicies(resource);
   const [policies, setPolicies] = useState<Policy[]>([]);
-  const { createPolicy } = usePolicies();
+  const { createPolicyForResource } = usePolicies();
 
   const allPolicies = useMemo(() => {
     return [...(existingPolicies || []), ...policies];
@@ -115,46 +116,40 @@ export function ResourceModalContent({
 
   const nameError = useMemo(() => {
     if (name === "") return "";
-    const duplicate = allResources?.find(
-      (r) =>
-        r.name.toLowerCase() === name.toLowerCase() && r.id !== resource?.id,
-    );
-    if (duplicate)
+    if (resourceExists(name, resource?.id))
       return "A resource with this name already exists. Please use another name.";
     return "";
-  }, [name, allResources, resource?.id]);
+  }, [name, resourceExists, resource?.id]);
 
   const createResource = async () => {
     const savedGroups = await saveGroups();
+    const promise = create({
+      name,
+      description,
+      address,
+      groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
+      enabled,
+    }).then(async (r) => {
+      // Create new policies
+      const newPolicies = policies.filter((p) => !p.id);
+      if (newPolicies.length > 0) {
+        await Promise.all(
+          newPolicies.map((p) => createPolicyForResource(p, r)),
+        ).then(() => {
+          mutate("/policies");
+        });
+      }
+      onCreated?.(r);
+    });
+
     notify({
       title: "Resource Created",
       description: `The resource "${name}" has been created successfully.`,
       loadingMessage: "Creating resource...",
-      promise: create({
-        name,
-        description,
-        address,
-        groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
-        enabled,
-      }).then(async (r) => {
-        // Save policies with the real resource ID
-        if (policies.length > 0) {
-          const policyPromises = policies.map((policy) =>
-            createPolicy({
-              ...policy,
-              rules: policy.rules.map((rule) => ({
-                ...rule,
-                destinationResource: rule.destinationResource
-                  ? { ...rule.destinationResource, id: r.id }
-                  : undefined,
-              })),
-            }),
-          );
-          await Promise.all(policyPromises);
-        }
-        onCreated?.(r);
-      }),
+      promise,
     });
+
+    return promise;
   };
 
   const updateResource = async () => {
@@ -289,6 +284,7 @@ export function ResourceModalContent({
             onChange={setPolicies}
             address={address}
             resource={resource}
+            groups={groups}
           />
         </TabsContent>
 
