@@ -14,13 +14,11 @@ import {
 import { useHasChanges } from "@hooks/useHasChanges";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
-import { validator } from "@utils/helpers";
-import { AnimatePresence, motion } from "framer-motion";
+import { cn, validator } from "@utils/helpers";
 import {
   ClockFadingIcon,
   ExternalLinkIcon,
   FlaskConicalIcon,
-  GlobeIcon,
   MonitorSmartphoneIcon,
   RefreshCcw,
 } from "lucide-react";
@@ -29,9 +27,11 @@ import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
-import { Group } from "@/interfaces/Group";
-import { useGroupIdsToGroups } from "@/modules/groups/useGroupIdsToGroups";
 import { SmallBadge } from "@components/ui/SmallBadge";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
+import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useGroups } from "@/contexts/GroupsProvider";
+import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
 
 type Props = {
   account: Account;
@@ -53,6 +53,16 @@ const latestOrCustomVersion = [
 ] as SelectOption[];
 
 export default function ClientSettingsTab({ account }: Readonly<Props>) {
+  const { isLoading: isGroupsLoading } = useGroups();
+
+  return isGroupsLoading ? (
+    <SkeletonSettings />
+  ) : (
+    <ClientSettingsTabContent account={account} />
+  );
+}
+
+function ClientSettingsTabContent({ account }: Readonly<Props>) {
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -77,16 +87,12 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
   const [peerExposeEnabled, setPeerExposeEnabled] = useState<boolean>(
     account?.settings?.extra?.peer_expose_enabled ?? false,
   );
-
-  const initialGroups = useGroupIdsToGroups(
-    account?.settings?.extra?.peer_expose_groups,
-  );
-  const [peerExposeGroups, setPeerExposeGroups] = useState<Group[]>(
-    initialGroups ?? [],
-  );
-
-  const peerExposeGroupIds = useMemo(
-    () => peerExposeGroups.map((g) => g.id).filter(Boolean) as string[],
+  const [peerExposeGroups, setPeerExposeGroups, { save: saveGroups }] =
+    useGroupHelper({
+      initial: account.settings?.extra?.peer_expose_groups,
+    });
+  const peerExposeGroupNames = useMemo(
+    () => peerExposeGroups.map((g) => g.name).sort(),
     [peerExposeGroups],
   );
 
@@ -94,23 +100,8 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
     autoUpdateMethod,
     autoUpdateCustomVersion,
     peerExposeEnabled,
-    peerExposeGroupIds,
+    peerExposeGroupNames,
   ]);
-
-  React.useEffect(() => {
-    if (initialGroups) {
-      setPeerExposeGroups(initialGroups);
-      const groupIds = initialGroups
-        .map((g) => g.id)
-        .filter(Boolean) as string[];
-      updateRef([
-        autoUpdateMethod,
-        autoUpdateCustomVersion,
-        peerExposeEnabled,
-        groupIds,
-      ]);
-    }
-  }, [initialGroups]);
 
   const handleUpdateMethodChange = (value: string) => {
     setAutoUpdateMethod(value);
@@ -138,7 +129,7 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
       !hasChanges ||
       !permission.settings.update ||
       (autoUpdateMethod === "custom" && !canSaveCustomVersion) ||
-      (peerExposeEnabled && peerExposeGroupIds.length === 0)
+      (peerExposeEnabled && peerExposeGroups.length === 0)
     );
   }, [
     hasChanges,
@@ -146,10 +137,15 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
     autoUpdateMethod,
     canSaveCustomVersion,
     peerExposeEnabled,
-    peerExposeGroupIds,
+    peerExposeGroups,
   ]);
 
   const saveChanges = async () => {
+    const groups = await saveGroups();
+    const peerExposeGroupIds = groups
+      .map((group) => group.id)
+      .filter(Boolean) as string[];
+
     notify({
       title: "Client Settings",
       description: `Client settings successfully updated.`,
@@ -172,7 +168,7 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
             autoUpdateMethod,
             autoUpdateCustomVersion,
             peerExposeEnabled,
-            peerExposeGroupIds,
+            peerExposeGroupNames,
           ]);
         }),
       loadingMessage: "Updating client settings...",
@@ -203,7 +199,7 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
 
   return (
     <Tabs.Content value={"clients"}>
-      <div className={"p-default py-6 max-w-xl"}>
+      <div className={"p-default py-6 max-w-2xl"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
@@ -229,7 +225,7 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
           </Button>
         </div>
 
-        <div className={"flex flex-col gap-6 w-full mt-8"}>
+        <div className={"flex flex-col gap-10 w-full mt-8"}>
           <div className={"flex flex-col relative"}>
             <Label>
               <RefreshCcw size={15} />
@@ -274,7 +270,63 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
             </div>
           </div>
 
-          <div className={"mt-3"}>
+          <div>
+            <div>
+              <Label>
+                <ReverseProxyIcon size={15} className={"fill-nb-gray-300"} />
+                Expose Services from CLI
+              </Label>
+              <HelpText>
+                Allow peers to expose local services through the NetBird reverse
+                proxy using the CLI. <br /> This requires at least NetBird{" "}
+                <span className={"text-white font-medium"}>v0.66.0</span>.{" "}
+                <InlineLink
+                  href={
+                    "https://docs.netbird.io/manage/reverse-proxy/expose-from-cli"
+                  }
+                  target={"_blank"}
+                >
+                  Learn more
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </HelpText>
+            </div>
+
+            <FancyToggleSwitch
+              className={"mt-2"}
+              value={peerExposeEnabled}
+              onChange={setPeerExposeEnabled}
+              label={"Enable Peer Expose"}
+              helpText={
+                "When enabled, peers can expose local HTTP services accessible via a public URL."
+              }
+              disabled={!permission.settings.update}
+            />
+
+            <div
+              className={cn(
+                "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+                !peerExposeEnabled
+                  ? "opacity-50 pointer-events-none"
+                  : "bg-nb-gray-930/80",
+              )}
+            >
+              <div className={"mt-2"}>
+                <Label>Allowed peer groups</Label>
+                <HelpText>
+                  Select which peer groups are allowed to expose services. At
+                  least one group is required.
+                </HelpText>
+                <PeerGroupSelector
+                  values={peerExposeGroups}
+                  onChange={setPeerExposeGroups}
+                  placeholder="Select peer groups..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
             <Label>
               <FlaskConicalIcon size={15} />
               Experimental
@@ -292,89 +344,26 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </HelpText>
+            <FancyToggleSwitch
+              className={"mt-2"}
+              value={lazyConnection}
+              onChange={toggleLazyConnection}
+              label={
+                <>
+                  <ClockFadingIcon size={15} />
+                  Enable Lazy Connections
+                </>
+              }
+              helpText={
+                <>
+                  Allow to establish connections between peers only when
+                  required. This requires NetBird client v0.45 or higher.
+                  Changes will only take effect after restarting the clients.
+                </>
+              }
+              disabled={!permission.settings.update}
+            />
           </div>
-          <FancyToggleSwitch
-            value={lazyConnection}
-            onChange={toggleLazyConnection}
-            label={
-              <>
-                <ClockFadingIcon size={15} />
-                Enable Lazy Connections
-              </>
-            }
-            helpText={
-              <>
-                Allow to establish connections between peers only when required.
-                This requires NetBird client v0.45 or higher. Changes will only
-                take effect after restarting the clients.
-              </>
-            }
-            disabled={!permission.settings.update}
-          />
-
-          <div className={"mt-3"}>
-            <Label>
-              <GlobeIcon size={15} />
-              Peer Expose
-            </Label>
-            <HelpText>
-              Allow peers to expose local services through the NetBird reverse
-              proxy using the CLI.{" "}
-              <InlineLink
-                href={"https://docs.netbird.io/manage/reverse-proxy/expose-from-cli"}
-                target={"_blank"}
-              >
-                Learn more
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </HelpText>
-          </div>
-
-          <FancyToggleSwitch
-            value={peerExposeEnabled}
-            onChange={setPeerExposeEnabled}
-            label={
-              <>
-                <GlobeIcon size={15} />
-                Enable Peer Expose
-              </>
-            }
-            helpText={
-              "When enabled, peers can expose local HTTP services accessible via a public URL."
-            }
-            disabled={!permission.settings.update}
-          />
-
-          <AnimatePresence>
-            {peerExposeEnabled && (
-              <div className={"overflow-hidden -top-4 relative z-0"}>
-                <motion.div
-                  initial={{ opacity: 0, height: 0, scale: 0.98 }}
-                  animate={{ opacity: 1, height: "auto", scale: 1 }}
-                  exit={{ opacity: 0, height: 0, scale: 0.98 }}
-                >
-                  <div
-                    className={
-                      "flex flex-col gap-6 bg-nb-gray-940 px-6 pt-5 pb-6 border border-nb-gray-930 rounded-b-md relative mx-3"
-                    }
-                  >
-                    <div>
-                      <Label>Allowed peer groups</Label>
-                      <HelpText>
-                        Select which peer groups are allowed to expose
-                        services. At least one group is required.
-                      </HelpText>
-                      <PeerGroupSelector
-                        values={peerExposeGroups}
-                        onChange={setPeerExposeGroups}
-                        placeholder="Select peer groups..."
-                      />
-                    </div>
-                  </div>
-                </motion.div>
-              </div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
     </Tabs.Content>
