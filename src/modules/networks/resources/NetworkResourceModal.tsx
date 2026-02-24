@@ -104,13 +104,13 @@ export function ResourceModalContent({
 
   // Access control state
   const { assignedPolicies, resourceExists } = useNetworksContext();
-  const { policies: existingPolicies } = assignedPolicies(resource);
   const [policies, setPolicies] = useState<Policy[]>([]);
   const { createPolicyForResource } = usePolicies();
 
-  const allPolicies = useMemo(() => {
+  const resourcePolicies = useMemo(() => {
+    const { policies: existingPolicies } = assignedPolicies(resource, groups);
     return [...(existingPolicies || []), ...policies];
-  }, [existingPolicies, policies]);
+  }, [resource, groups, assignedPolicies, policies]);
 
   const isAddressValid = address.length > 0 && addressError === "";
 
@@ -280,7 +280,7 @@ export function ResourceModalContent({
 
         <TabsContent value={"access-control"} className={"pb-8"}>
           <NetworkResourceAccessControlTabContent
-            policies={allPolicies}
+            policies={resourcePolicies}
             onChange={setPolicies}
             address={address}
             resource={resource}

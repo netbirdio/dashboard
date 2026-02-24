@@ -39,7 +39,7 @@ const NetworksContext = React.createContext(
     deleteResource: (network: Network, resource: NetworkResource) => void;
     deleteRouter: (network: Network, router: NetworkRouter) => void;
     network?: Network;
-    assignedPolicies: (resource?: NetworkResource) => {
+    assignedPolicies: (resource?: NetworkResource, groups?: Group[]) => {
       policies: Policy[];
       enabledPolicies: Policy[];
       isLoading: boolean;
@@ -74,8 +74,9 @@ export const NetworkProvider = ({
   );
 
   const assignedPolicies = useCallback(
-    (resource?: NetworkResource) => {
-      if (!resource) {
+    (resource?: NetworkResource, groups?: Group[]) => {
+      const resourceGroups = (groups || resource?.groups) as Group[] | undefined;
+      if (!resource && !resourceGroups?.length) {
         return {
           policies: [],
           enabledPolicies: [],
@@ -83,13 +84,14 @@ export const NetworkProvider = ({
           policyCount: 0,
         };
       }
-      const resourceGroups = resource.groups as Group[];
       const policies = orderBy(
         allPolicies?.filter((policy) => {
-          const destinationResource = policy.rules
-            ?.map((rule) => rule?.destinationResource?.id === resource.id)
-            .some((id) => id);
-          if (destinationResource) return true;
+          if (resource) {
+            const destinationResource = policy.rules
+              ?.map((rule) => rule?.destinationResource?.id === resource.id)
+              .some((id) => id);
+            if (destinationResource) return true;
+          }
           const destinationPolicyGroups = policy.rules
             ?.map((rule) => rule?.destinations)
             .flat() as Group[];
