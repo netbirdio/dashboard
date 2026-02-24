@@ -11,7 +11,7 @@ import {
 } from "@components/DropdownMenu";
 import { Edit2, MinusCircleIcon, MoreVertical, PlusIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
-import { NetworkResource } from "@/interfaces/Network";
+import { Group } from "@/interfaces/Group";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
@@ -19,25 +19,24 @@ import AccessControlProtocolCell from "@/modules/access-control/table/AccessCont
 import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
-import { Group } from "@/interfaces/Group";
+import { useSWRConfig } from "swr";
 
 type Props = {
   policies: Policy[];
   onChange: (policies: Policy[]) => void;
   address: string;
-  resource?: NetworkResource;
   groups?: Group[];
 };
 
-export default function NetworkResourceAccessControlTabContent({
+export default function NetworkResourceAccessControl({
   policies,
   onChange,
   address,
-  resource,
   groups,
 }: Readonly<Props>) {
+  const { mutate } = useSWRConfig();
   const { network } = useNetworksContext();
-  const { openEditPolicyModal, updatePolicy } = usePolicies();
+  const { openEditPolicyModal, updatePolicy, serializeRules } = usePolicies();
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [editingPolicyIndex, setEditingPolicyIndex] = useState<number | null>(
     null,
@@ -78,7 +77,15 @@ export default function NetworkResourceAccessControlTabContent({
 
   const togglePolicyEnabled = (policy: Policy, index: number) => {
     if (policy.id) {
-      updatePolicy(policy, { enabled: !policy.enabled });
+      const enabled = !policy.enabled;
+      updatePolicy(
+        policy,
+        { enabled, rules: serializeRules(policy.rules, enabled) },
+        () => {
+          mutate("/policies");
+        },
+        `Policy was successfully ${enabled ? "enabled" : "disabled"} `,
+      );
     } else {
       onChange(
         policies.map((p, i) =>

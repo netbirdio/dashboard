@@ -1,6 +1,7 @@
 import { Modal } from "@components/modal/Modal";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
+import { cloneDeep } from "@utils/helpers";
 import React, { useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { Group } from "@/interfaces/Group";
@@ -26,6 +27,7 @@ const PoliciesContext = React.createContext(
       resource: NetworkResource,
     ) => Promise<Policy>;
     openEditPolicyModal: (policy: Policy, tab?: string) => void;
+    serializeRules: (rules: Policy["rules"], enabled?: boolean) => Policy["rules"];
   },
 );
 
@@ -75,6 +77,28 @@ export default function PoliciesProvider({ children }: Props) {
     } as Policy);
   };
 
+  const serializeRules = (rules: Policy["rules"], enabled?: boolean) => {
+    rules = cloneDeep(rules);
+    rules.forEach((rule) => {
+      if (enabled !== undefined) rule.enabled = enabled;
+      rule.sources = rule.sources
+        ? (rule.sources.map((s) => {
+            const group = s as Group;
+            return group.id ?? s;
+          }) as string[])
+        : [];
+      rule.destinations = rule.destinations
+        ? (rule.destinations.map((d) => {
+            const group = d as Group;
+            return group.id ?? d;
+          }) as string[])
+        : [];
+      if (rule.destinationResource) rule.destinations = null;
+      if (rule.sourceResource) rule.sources = null;
+    });
+    return rules;
+  };
+
   const updatePolicy = async (
     policy: Policy,
     toUpdate: Partial<Policy>,
@@ -120,6 +144,7 @@ export default function PoliciesProvider({ children }: Props) {
         createPolicy,
         createPolicyForResource,
         openEditPolicyModal,
+        serializeRules,
       }}
     >
       {children}

@@ -28,7 +28,7 @@ const NetworksContext = React.createContext(
     openAddRoutingPeerModal: (network: Network, router?: NetworkRouter) => void;
     openEditNetworkModal: (network: Network) => void;
     openCreateNetworkModal: () => void;
-    openResourceModal: (network: Network, resource?: NetworkResource) => void;
+    openResourceModal: (network: Network, resource?: NetworkResource, initialTab?: string) => void;
     openResourceGroupModal: (
       network: Network,
       resource?: NetworkResource,
@@ -153,9 +153,12 @@ export const NetworkProvider = ({
     setNetworkModal(true);
   };
 
-  const openResourceModal = (network: Network, resource?: NetworkResource) => {
+  const [resourceModalInitialTab, setResourceModalInitialTab] = useState<string | undefined>();
+
+  const openResourceModal = (network: Network, resource?: NetworkResource, initialTab?: string) => {
     setCurrentNetwork(network);
     resource && setCurrentResource(resource);
+    setResourceModalInitialTab(initialTab);
     setResourceModal(true);
   };
 
@@ -443,6 +446,7 @@ export const NetworkProvider = ({
           <NetworkResourceModal
             network={currentNetwork}
             resource={currentResource}
+            initialTab={resourceModalInitialTab}
             onCreated={async (r) => {
               setResourceModal(false);
               setCurrentResource(undefined);
@@ -469,6 +473,7 @@ export const NetworkProvider = ({
             open={resourceModal}
             setOpen={(state) => {
               setCurrentResource(undefined);
+              setResourceModalInitialTab(undefined);
               setResourceModal(state);
             }}
           />

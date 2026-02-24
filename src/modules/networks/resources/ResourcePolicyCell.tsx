@@ -1,7 +1,7 @@
 import Badge from "@components/Badge";
 import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
-import { PlusCircle, ShieldIcon, SquarePenIcon } from "lucide-react";
+import { Settings, ShieldIcon, ShieldOff, SquarePenIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -10,16 +10,26 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
+import { cn } from "@utils/helpers";
 
 type Props = {
   resource?: NetworkResource;
 };
 export const ResourcePolicyCell = ({ resource }: Props) => {
   const { permission } = usePermissions();
-  const { openPolicyModal, network, openEditPolicyModal, assignedPolicies } =
-    useNetworksContext();
-  const { policies: resourcePolicies, enabledPolicies, isLoading, policyCount } =
-    assignedPolicies(resource);
+  const {
+    openResourceModal,
+    network,
+    openEditPolicyModal,
+    assignedPolicies,
+    openPolicyModal,
+  } = useNetworksContext();
+  const {
+    policies: resourcePolicies,
+    enabledPolicies,
+    isLoading,
+    policyCount,
+  } = assignedPolicies(resource);
   const [tooltipOpen, setTooltipOpen] = useState(false);
 
   if (isLoading) {
@@ -33,6 +43,13 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
   return (
     network && (
       <div className={"flex gap-3"}>
+        {policyCount === 0 && (
+          <Badge variant={"gray"}>
+            <ShieldOff size={12} className="text-red-500" />
+            <span className={"font-medium text-xs"}>None</span>
+          </Badge>
+        )}
+
         {policyCount > 0 && (
           <FullTooltip
             contentClassName={"p-0"}
@@ -89,18 +106,28 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
           >
             <Badge
               variant={"gray"}
-              useHover={false}
-              className={"select-none hover:bg-nb-gray-910"}
+              useHover={true}
+              className={"select-none hover:bg-nb-gray-910 cursor-pointer"}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (!tooltipOpen) setTooltipOpen(true);
+                if (tooltipOpen) setTooltipOpen(false);
+                openResourceModal(network, resource, "access-control");
               }}
             >
-              <ShieldIcon size={14} className={"text-green-500"} />
+              <ShieldIcon
+                size={14}
+                className={cn(
+                  enabledPolicies?.length > 0
+                    ? "text-green-500"
+                    : "text-nb-gray-400",
+                )}
+              />
               <div>
                 <span className={"font-medium text-xs"}>
-                  {enabledPolicies?.length}
+                  {enabledPolicies?.length > 0
+                    ? enabledPolicies?.length
+                    : `${policyCount} Disabled`}
                 </span>
               </div>
             </Badge>
@@ -110,11 +137,12 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
         <Button
           size={"xs"}
           variant={"secondary"}
+          className={"!px-3"}
           disabled={!permission.networks.update}
-          onClick={() => openPolicyModal(network, resource)}
+          onClick={() => openResourceModal(network, resource, "access-control")}
         >
-          <PlusCircle size={12} />
-          Add Policy
+          <Settings size={12} />
+          Configure
         </Button>
       </div>
     )

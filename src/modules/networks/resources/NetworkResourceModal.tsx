@@ -19,6 +19,7 @@ import { HelpTooltip } from "@components/HelpTooltip";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import { useApiCall } from "@utils/api";
+import { useDialog } from "@/contexts/DialogProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import {
@@ -33,7 +34,7 @@ import React, { useMemo, useRef, useState } from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import NetworkResourceAccessControlTabContent from "@/modules/networks/resources/NetworkResourceAccessControlTabContent";
+import NetworkResourceAccessControl from "@/modules/networks/resources/NetworkResourceAccessControl";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
 import { useSWRConfig } from "swr";
 
@@ -44,6 +45,7 @@ type Props = {
   resource?: NetworkResource;
   onCreated?: (r: NetworkResource) => void;
   onUpdated?: (r: NetworkResource) => void;
+  initialTab?: string;
 };
 
 export default function NetworkResourceModal({
@@ -53,6 +55,7 @@ export default function NetworkResourceModal({
   resource,
   onUpdated,
   onCreated,
+  initialTab,
 }: Props) {
   return (
     <Modal open={open} onOpenChange={setOpen}>
@@ -62,6 +65,7 @@ export default function NetworkResourceModal({
         resource={resource}
         onCreated={onCreated}
         onUpdated={onUpdated}
+        initialTab={initialTab}
       />
     </Modal>
   );
@@ -72,6 +76,7 @@ type ModalProps = {
   onUpdated?: (r: NetworkResource) => void;
   network: Network;
   resource?: NetworkResource;
+  initialTab?: string;
 };
 
 export function ResourceModalContent({
@@ -79,6 +84,7 @@ export function ResourceModalContent({
   onUpdated,
   network,
   resource,
+  initialTab,
 }: ModalProps) {
   const create = useApiCall<NetworkResource>(
     `/networks/${network.id}/resources`,
@@ -99,8 +105,10 @@ export function ResourceModalContent({
     resource ? resource.enabled : true,
   );
   const nameRef = useRef<HTMLInputElement>(null);
-  const [tab, setTab] = useState("resource");
+  const [tab, setTab] = useState(initialTab || "resource");
   const [addressError, setAddressError] = useState("");
+
+  const { confirm } = useDialog();
 
   // Access control state
   const { assignedPolicies, resourceExists } = useNetworksContext();
@@ -121,7 +129,21 @@ export function ResourceModalContent({
     return "";
   }, [name, resourceExists, resource?.id]);
 
+  const confirmMissingPolicies = async () => {
+    if (resourcePolicies.length > 0) return true;
+    return confirm({
+      title: "No Access Control Policies Configured",
+      description:
+        "Without access control policies, this resource will not be accessible by any peers. You can also create policies for this resource later. Are you sure you want to continue?",
+      type: "warning",
+      confirmText: resource ? "Save Changes" : "Add Resource",
+      cancelText: "Cancel",
+      maxWidthClass: "max-w-lg",
+    });
+  };
+
   const createResource = async () => {
+    if (!(await confirmMissingPolicies())) return;
     const savedGroups = await saveGroups();
     const promise = create({
       name,
@@ -153,6 +175,7 @@ export function ResourceModalContent({
   };
 
   const updateResource = async () => {
+    if (!(await confirmMissingPolicies())) return;
     const savedGroups = await saveGroups();
     notify({
       title: "Resource Updated",
@@ -279,11 +302,10 @@ export function ResourceModalContent({
         </TabsContent>
 
         <TabsContent value={"access-control"} className={"pb-8"}>
-          <NetworkResourceAccessControlTabContent
+          <NetworkResourceAccessControl
             policies={resourcePolicies}
             onChange={setPolicies}
             address={address}
-            resource={resource}
             groups={groups}
           />
         </TabsContent>

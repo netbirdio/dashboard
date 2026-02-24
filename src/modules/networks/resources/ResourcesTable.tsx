@@ -121,7 +121,16 @@ export default function ResourcesTable({
   const params = useSearchParams();
   const resourceId = params.get("resource") ?? undefined;
 
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    {
+      id: "name",
+      desc: true,
+    },
+    {
+      id: "id",
+      desc: true,
+    },
+  ]);
   const { openResourceModal, network } = useNetworksContext();
   const router = useRouter();
 
