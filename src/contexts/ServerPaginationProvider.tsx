@@ -31,6 +31,7 @@ type ServerPaginationContextValue<T = unknown> = {
   onGlobalFilterChange: (value: string) => void;
   setFilter: (key: string, value: string | undefined) => void;
   getFilter: (key: string) => string | undefined;
+  setSort: (name: string, direction: "asc" | "desc") => void;
   hasActiveFilters: boolean;
   resetFilters: () => void;
   onFilterReset: () => void;
@@ -146,6 +147,15 @@ export default function ServerPaginationProvider({
 
   const getFilter = useCallback((key: string) => filters[key], [filters]);
 
+  const setSort = useCallback((name: string, direction: "asc" | "desc") => {
+    setFilters((prev) => ({
+      ...prev,
+      sort_by: name,
+      sort_order: direction,
+    }));
+    setPage(1);
+  }, []);
+
   const hasActiveFilters =
     search !== "" ||
     Object.entries(filters).some(
@@ -170,6 +180,7 @@ export default function ServerPaginationProvider({
       mutate,
       setFilter,
       getFilter,
+      setSort,
       hasActiveFilters,
       resetFilters,
       pagination: { pageIndex: page - 1, pageSize },
@@ -193,6 +204,7 @@ export default function ServerPaginationProvider({
       mutate,
       setFilter,
       getFilter,
+      setSort,
       hasActiveFilters,
       resetFilters,
       page,
@@ -219,4 +231,9 @@ export function useServerPagination<T>() {
     );
   }
   return context as ServerPaginationContextValue<T>;
+}
+
+export function useOptionalServerPagination<T>() {
+  const context = useContext(ServerPaginationContext);
+  return context as ServerPaginationContextValue<T> | null;
 }
