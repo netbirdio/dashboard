@@ -55,6 +55,7 @@ const NetworksContext = React.createContext(
     resourceExists: (name: string, excludeId?: string) => boolean;
     resources?: NetworkResource[];
     getPolicyDestinationResources: (policy: Policy) => NetworkResource[];
+    policies?: Policy[];
   },
 );
 
@@ -67,7 +68,7 @@ export const NetworkProvider = ({
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const deleteCall = useApiCall("/networks").del;
-  const { data: allPolicies, isLoading: policiesLoading } =
+  const { data: policies, isLoading: policiesLoading } =
     useFetchApi<Policy[]>("/policies");
   const { data: resources } = useFetchApi<NetworkResource[]>(
     "/networks/resources",
@@ -97,8 +98,8 @@ export const NetworkProvider = ({
           policyCount: 0,
         };
       }
-      const policies = orderBy(
-        allPolicies?.filter((policy) => {
+      const resourcePolicies = orderBy(
+        policies?.filter((policy) => {
           if (resource) {
             const destinationResource = policy.rules
               ?.map((rule) => rule?.destinationResource?.id === resource.id)
@@ -118,15 +119,17 @@ export const NetworkProvider = ({
         "enabled",
         "desc",
       );
-      const enabledPolicies = policies?.filter((policy) => policy?.enabled);
+      const enabledPolicies = resourcePolicies?.filter(
+        (policy) => policy?.enabled,
+      );
       return {
-        policies,
+        policies: resourcePolicies,
         enabledPolicies,
         isLoading: policiesLoading,
         policyCount: policies?.length || 0,
       };
     },
-    [allPolicies, policiesLoading],
+    [policies, policiesLoading],
   );
 
   const getPolicyDestinationResources = useCallback(
@@ -385,6 +388,7 @@ export const NetworkProvider = ({
         resourceExists,
         resources,
         getPolicyDestinationResources,
+        policies,
       }}
     >
       <PoliciesProvider>

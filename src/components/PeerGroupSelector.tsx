@@ -30,6 +30,7 @@ import {
   MonitorSmartphoneIcon,
   NetworkIcon,
   SearchIcon,
+  ShieldCheck,
   WorkflowIcon,
 } from "lucide-react";
 import * as React from "react";
@@ -40,7 +41,7 @@ import { useElementSize } from "@/hooks/useElementSize";
 import type { Group, GroupPeer, GroupResource } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
-import { PolicyRuleResource } from "@/interfaces/Policy";
+import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { User } from "@/interfaces/User";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
@@ -84,6 +85,7 @@ interface MultiSelectProps {
   users?: User[];
   placeholderForSearch?: string;
   resourceIds?: string[];
+  policies?: Policy[];
 }
 export function PeerGroupSelector({
   onChange,
@@ -115,6 +117,7 @@ export function PeerGroupSelector({
   users,
   placeholderForSearch = 'Search groups or add new group by pressing "Enter"...',
   resourceIds,
+  policies,
 }: Readonly<MultiSelectProps>) {
   const { data: resources, isLoading: isResourcesLoading } = useFetchApi<
     NetworkResource[]
@@ -578,6 +581,13 @@ export function PeerGroupSelector({
                                 <ResourcesCounter group={option} />
                               )}
 
+                              {policies && (
+                                <PolicyCounter
+                                  group={option}
+                                  policies={policies}
+                                />
+                              )}
+
                               <div className={"flex gap-4 items-center"}>
                                 {!users ? (
                                   showPeerCounter && (
@@ -799,6 +809,38 @@ const ResourcesCounter = ({ group }: { group: Group }) => {
       {group.resources_count} Resource(s)
     </div>
   ) : null;
+};
+
+const PolicyCounter = ({
+  group,
+  policies,
+}: {
+  group: Group;
+  policies: Policy[];
+}) => {
+  const count = useMemo(() => {
+    if (!group.id) return 0;
+    return policies.filter(
+      (policy) =>
+        policy.rules?.some((rule) => {
+          const destinations = rule.destinations as Group[] | undefined;
+          return destinations?.some((d) => d.id === group.id);
+        }),
+    ).length;
+  }, [group.id, policies]);
+
+  if (count === 0) return null;
+
+  return (
+    <div
+      className={
+        "text-nb-gray-300 font-medium flex items-center gap-2 transition-all"
+      }
+    >
+      <ShieldCheck size={14} className={"shrink-0"} />
+      {count} {count === 1 ? "Policy" : "Policies"}
+    </div>
+  );
 };
 
 const resourcesSearchPredicate = (item: NetworkResource, query: string) => {

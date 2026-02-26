@@ -1,9 +1,10 @@
 "use client";
 
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
-import InlineLink from "@components/InlineLink";
+import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import {
@@ -31,6 +32,7 @@ import {
   WorkflowIcon,
 } from "lucide-react";
 import React, { useMemo, useRef, useState } from "react";
+import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -110,15 +112,35 @@ export function ResourceModalContent({
 
   const { confirm } = useDialog();
 
-  // Access control state
-  const { assignedPolicies, resourceExists } = useNetworksContext();
+  // Access control policies
   const [policies, setPolicies] = useState<Policy[]>([]);
   const { createPolicyForResource } = usePolicies();
+  const {
+    assignedPolicies,
+    resourceExists,
+    policies: allPolicies,
+  } = useNetworksContext();
+
+  const { policies: existingPolicies } = useMemo(
+    () => assignedPolicies(resource, groups),
+    [resource, groups],
+  );
 
   const resourcePolicies = useMemo(() => {
-    const { policies: existingPolicies } = assignedPolicies(resource, groups);
     return [...(existingPolicies || []), ...policies];
-  }, [resource, groups, assignedPolicies, policies]);
+  }, [existingPolicies, policies]);
+
+  const groupPolicyCount = useMemo(() => {
+    if (!groups.length || !allPolicies) return 0;
+    const groupIds = new Set(groups.map((g) => g.id));
+    return allPolicies.filter((policy) =>
+      policy.rules?.some((rule) => {
+        if (rule.destinationResource) return false;
+        const destinations = rule.destinations as Group[] | undefined;
+        return destinations?.some((d) => d.id && groupIds.has(d.id));
+      }),
+    ).length;
+  }, [groups, allPolicies]);
 
   const isAddressValid = address.length > 0 && addressError === "";
 
@@ -134,7 +156,7 @@ export function ResourceModalContent({
     return confirm({
       title: "No Access Control Policies Configured",
       description:
-        "Without access control policies, this resource will not be accessible by any peers. You can also create policies for this resource later. Are you sure you want to continue?",
+        "Without access control policies, this resource will not be accessible by any peers. You can also create policies later. Are you sure you want to continue?",
       type: "warning",
       confirmText: resource ? "Save Changes" : "Add Resource",
       cancelText: "Cancel",
@@ -199,7 +221,9 @@ export function ResourceModalContent({
 
   return (
     <ModalContent
-      maxWidthClass={tab === "resource" ? "max-w-[720px]" : "max-w-[790px]"}
+      maxWidthClass={
+        tab === "access-control" ? "max-w-[790px]" : "max-w-[720px]"
+      }
     >
       <ModalHeader
         icon={<WorkflowIcon size={20} />}
@@ -284,11 +308,39 @@ export function ResourceModalContent({
                 rules reusable and easy to maintain.
               </HelpText>
               <PeerGroupSelector
+                side={"top"}
                 onChange={setGroups}
                 values={groups}
                 showPeerCounter={false}
                 placeholder={"Add or select resource group(s)..."}
+                policies={allPolicies}
               />
+              {groupPolicyCount > 0 && (
+                <Callout variant={"info"} className={"mt-3"}>
+                  Your selected resource groups are used in{" "}
+                  <span className="text-white font-medium">
+                    {groupPolicyCount} Access Control{" "}
+                    {groupPolicyCount === 1 ? "Policy" : "Policies"}
+                  </span>
+                  . This resource will inherit access from{" "}
+                  {groupPolicyCount === 1 ? "this policy" : "these policies"}.
+                  {isAddressValid || resource ? (
+                    <>
+                      {" "}
+                      Please review them in the{" "}
+                      <InlineButtonLink
+                        onClick={() => setTab("access-control")}
+                        variant={"dashed"}
+                      >
+                        Access Control
+                      </InlineButtonLink>{" "}
+                      tab.
+                    </>
+                  ) : (
+                    " Please review them in the Access Control tab."
+                  )}
+                </Callout>
+              )}
             </div>
             <FancyToggleSwitch
               value={enabled}
