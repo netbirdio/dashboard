@@ -3,7 +3,7 @@ import { notify } from "@components/Notification";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { orderBy } from "lodash";
 import * as React from "react";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { Group } from "@/interfaces/Group";
@@ -28,7 +28,11 @@ const NetworksContext = React.createContext(
     openAddRoutingPeerModal: (network: Network, router?: NetworkRouter) => void;
     openEditNetworkModal: (network: Network) => void;
     openCreateNetworkModal: () => void;
-    openResourceModal: (network: Network, resource?: NetworkResource, initialTab?: string) => void;
+    openResourceModal: (
+      network: Network,
+      resource?: NetworkResource,
+      initialTab?: string,
+    ) => void;
     openResourceGroupModal: (
       network: Network,
       resource?: NetworkResource,
@@ -39,13 +43,18 @@ const NetworksContext = React.createContext(
     deleteResource: (network: Network, resource: NetworkResource) => void;
     deleteRouter: (network: Network, router: NetworkRouter) => void;
     network?: Network;
-    assignedPolicies: (resource?: NetworkResource, groups?: Group[]) => {
+    assignedPolicies: (
+      resource?: NetworkResource,
+      groups?: Group[],
+    ) => {
       policies: Policy[];
       enabledPolicies: Policy[];
       isLoading: boolean;
       policyCount: number;
     };
     resourceExists: (name: string, excludeId?: string) => boolean;
+    resources?: NetworkResource[];
+    getPolicyDestinationResources: (policy: Policy) => NetworkResource[];
   },
 );
 
@@ -60,22 +69,26 @@ export const NetworkProvider = ({
   const deleteCall = useApiCall("/networks").del;
   const { data: allPolicies, isLoading: policiesLoading } =
     useFetchApi<Policy[]>("/policies");
-  const { data: allResources } =
-    useFetchApi<NetworkResource[]>("/networks/resources");
+  const { data: resources } = useFetchApi<NetworkResource[]>(
+    "/networks/resources",
+  );
 
   const resourceExists = useCallback(
     (name: string, excludeId?: string) => {
       if (!name) return false;
-      return !!allResources?.find(
-        (r) => r.name.toLowerCase() === name.toLowerCase() && r.id !== excludeId,
+      return !!resources?.find(
+        (r) =>
+          r.name.toLowerCase() === name.toLowerCase() && r.id !== excludeId,
       );
     },
-    [allResources],
+    [resources],
   );
 
   const assignedPolicies = useCallback(
     (resource?: NetworkResource, groups?: Group[]) => {
-      const resourceGroups = (groups || resource?.groups) as Group[] | undefined;
+      const resourceGroups = (groups || resource?.groups) as
+        | Group[]
+        | undefined;
       if (!resource && !resourceGroups?.length) {
         return {
           policies: [],
@@ -116,6 +129,29 @@ export const NetworkProvider = ({
     [allPolicies, policiesLoading],
   );
 
+  const getPolicyDestinationResources = useCallback(
+    (policy: Policy): NetworkResource[] => {
+      const rule = policy?.rules?.[0];
+      const destinationGroups = rule?.destinations as Group[] | undefined;
+      const destinationGroupIds = new Set(
+        destinationGroups?.map((g) => g.id).filter(Boolean),
+      );
+
+      return (
+        resources?.filter((resource) => {
+          const resourceGroups = resource.groups as
+            | (Group | string)[]
+            | undefined;
+          return resourceGroups?.some((g) => {
+            const groupId = typeof g === "string" ? g : g.id;
+            return groupId && destinationGroupIds.has(groupId);
+          });
+        }) ?? []
+      );
+    },
+    [resources],
+  );
+
   const [currentNetwork, setCurrentNetwork] = useState<Network>();
   const [currentResource, setCurrentResource] = useState<NetworkResource>();
   const [currentRouter, setCurrentRouter] = useState<NetworkRouter>();
@@ -153,9 +189,15 @@ export const NetworkProvider = ({
     setNetworkModal(true);
   };
 
-  const [resourceModalInitialTab, setResourceModalInitialTab] = useState<string | undefined>();
+  const [resourceModalInitialTab, setResourceModalInitialTab] = useState<
+    string | undefined
+  >();
 
-  const openResourceModal = (network: Network, resource?: NetworkResource, initialTab?: string) => {
+  const openResourceModal = (
+    network: Network,
+    resource?: NetworkResource,
+    initialTab?: string,
+  ) => {
     setCurrentNetwork(network);
     resource && setCurrentResource(resource);
     setResourceModalInitialTab(initialTab);
@@ -178,11 +220,11 @@ export const NetworkProvider = ({
       destinationResource: hasResourceGroups
         ? undefined
         : resource
-          ? ({
-              id: resource.id,
-              type: resource.type,
-            } as PolicyRuleResource)
-          : undefined,
+        ? ({
+            id: resource.id,
+            type: resource.type,
+          } as PolicyRuleResource)
+        : undefined,
       name:
         network && !resource
           ? `${network?.name} Policy`
@@ -341,24 +383,26 @@ export const NetworkProvider = ({
         network,
         assignedPolicies,
         resourceExists,
+        resources,
+        getPolicyDestinationResources,
       }}
     >
       <PoliciesProvider>
-      {children}
+        {children}
 
-      <NetworkModal
-        open={networkModal}
-        setOpen={setNetworkModal}
-        network={currentNetwork}
-        onCreated={async (network) => {
-          mutate("/networks");
-          await askForResource(network);
-        }}
-        onUpdated={(n) => {
-          mutate("/networks");
-          mutate(`/networks/${n.id}`);
-        }}
-      />
+        <NetworkModal
+          open={networkModal}
+          setOpen={setNetworkModal}
+          network={currentNetwork}
+          onCreated={async (network) => {
+            mutate("/networks");
+            await askForResource(network);
+          }}
+          onUpdated={(n) => {
+            mutate("/networks");
+            mutate(`/networks/${n.id}`);
+          }}
+        />
         <Modal
           open={policyModal}
           onOpenChange={(state) => {
@@ -391,94 +435,94 @@ export const NetworkProvider = ({
             }}
           />
         </Modal>
-      {currentNetwork && (
-        <>
-          <NetworkRoutingPeerModal
-            network={currentNetwork}
-            router={currentRouter}
-            open={routingPeerModal}
-            onCreated={async () => {
-              setRoutingPeerModal(false);
-              setCurrentRouter(undefined);
-              mutate(`/networks`);
-              mutate("/groups");
-              if (network) {
-                mutate(`/networks/${currentNetwork.id}/routers`);
-                mutate(`/networks/${network.id}`);
-              }
-            }}
-            onUpdated={async () => {
-              setRoutingPeerModal(false);
-              setCurrentRouter(undefined);
-              mutate(`/networks`);
-              mutate("/groups");
-              if (network) {
-                mutate(`/networks/${network.id}`);
-                mutate(`/networks/${currentNetwork.id}/routers`);
-              }
-            }}
-            setOpen={(state) => {
-              setCurrentRouter(undefined);
-              setRoutingPeerModal(state);
-            }}
-          />
+        {currentNetwork && (
+          <>
+            <NetworkRoutingPeerModal
+              network={currentNetwork}
+              router={currentRouter}
+              open={routingPeerModal}
+              onCreated={async () => {
+                setRoutingPeerModal(false);
+                setCurrentRouter(undefined);
+                mutate(`/networks`);
+                mutate("/groups");
+                if (network) {
+                  mutate(`/networks/${currentNetwork.id}/routers`);
+                  mutate(`/networks/${network.id}`);
+                }
+              }}
+              onUpdated={async () => {
+                setRoutingPeerModal(false);
+                setCurrentRouter(undefined);
+                mutate(`/networks`);
+                mutate("/groups");
+                if (network) {
+                  mutate(`/networks/${network.id}`);
+                  mutate(`/networks/${currentNetwork.id}/routers`);
+                }
+              }}
+              setOpen={(state) => {
+                setCurrentRouter(undefined);
+                setRoutingPeerModal(state);
+              }}
+            />
 
-          <ResourceGroupModal
-            network={currentNetwork}
-            resource={currentResource}
-            open={resourceGroupModal}
-            onOpenChange={(state) => {
-              setCurrentResource(undefined);
-              setResourceGroupModal(state);
-            }}
-            onUpdated={() => {
-              setResourceGroupModal(false);
-              setCurrentResource(undefined);
-              mutate("/groups");
-              if (network) {
-                onResourceUpdate?.();
-                mutate(`/networks/${network.id}/resources`);
-                mutate(`/networks/${network.id}`);
-              }
-            }}
-          />
+            <ResourceGroupModal
+              network={currentNetwork}
+              resource={currentResource}
+              open={resourceGroupModal}
+              onOpenChange={(state) => {
+                setCurrentResource(undefined);
+                setResourceGroupModal(state);
+              }}
+              onUpdated={() => {
+                setResourceGroupModal(false);
+                setCurrentResource(undefined);
+                mutate("/groups");
+                if (network) {
+                  onResourceUpdate?.();
+                  mutate(`/networks/${network.id}/resources`);
+                  mutate(`/networks/${network.id}`);
+                }
+              }}
+            />
 
-          <NetworkResourceModal
-            network={currentNetwork}
-            resource={currentResource}
-            initialTab={resourceModalInitialTab}
-            onCreated={async (r) => {
-              setResourceModal(false);
-              setCurrentResource(undefined);
-              mutate("/networks");
-              mutate("/groups");
-              if (network) {
-                mutate(`/networks/${network.id}/resources`);
-                mutate(`/networks/${network.id}`);
-              } else {
-                await askForAccessControlPolicy(r);
-              }
-            }}
-            onUpdated={() => {
-              setResourceModal(false);
-              setCurrentResource(undefined);
-              mutate("/networks");
-              mutate("/groups");
-              if (network) {
-                onResourceUpdate?.();
-                mutate(`/networks/${network.id}/resources`);
-                mutate(`/networks/${network.id}`);
-              }
-            }}
-            open={resourceModal}
-            setOpen={(state) => {
-              setCurrentResource(undefined);
-              setResourceModalInitialTab(undefined);
-              setResourceModal(state);
-            }}
-          />
-        </>
-      )}
+            <NetworkResourceModal
+              network={currentNetwork}
+              resource={currentResource}
+              initialTab={resourceModalInitialTab}
+              onCreated={async (r) => {
+                setResourceModal(false);
+                setCurrentResource(undefined);
+                mutate("/networks");
+                mutate("/groups");
+                if (network) {
+                  mutate(`/networks/${network.id}/resources`);
+                  mutate(`/networks/${network.id}`);
+                } else {
+                  await askForAccessControlPolicy(r);
+                }
+              }}
+              onUpdated={() => {
+                setResourceModal(false);
+                setCurrentResource(undefined);
+                mutate("/networks");
+                mutate("/groups");
+                if (network) {
+                  onResourceUpdate?.();
+                  mutate(`/networks/${network.id}/resources`);
+                  mutate(`/networks/${network.id}`);
+                }
+              }}
+              open={resourceModal}
+              setOpen={(state) => {
+                setCurrentResource(undefined);
+                setResourceModalInitialTab(undefined);
+                setResourceModal(state);
+              }}
+            />
+          </>
+        )}
       </PoliciesProvider>
     </NetworksContext.Provider>
   );

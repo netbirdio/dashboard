@@ -198,7 +198,9 @@ export function ResourceModalContent({
   }, [name, isAddressValid, nameError]);
 
   return (
-    <ModalContent maxWidthClass={"max-w-[720px]"}>
+    <ModalContent
+      maxWidthClass={tab === "resource" ? "max-w-[720px]" : "max-w-[790px]"}
+    >
       <ModalHeader
         icon={<WorkflowIcon size={20} />}
         title={resource ? "Edit Resource" : "Add Resource"}
@@ -277,8 +279,9 @@ export function ResourceModalContent({
             <div>
               <Label>Resource Groups (optional)</Label>
               <HelpText>
-                Assign this resource to a group (e.g., Databases, Web Servers)
-                and use it as the destination in access control policies.
+                Organize this resource into a group (e.g., Databases, Web
+                Servers) and reference the group in access policies to keep
+                rules reusable and easy to maintain.
               </HelpText>
               <PeerGroupSelector
                 onChange={setGroups}

@@ -11,9 +11,13 @@ import { parsePortsToStrings } from "@/modules/access-control/useAccessControl";
 
 type Props = {
   policy: Policy;
+  visiblePorts?: number;
 };
 
-export default function AccessControlPortsCell({ policy }: Readonly<Props>) {
+export default function AccessControlPortsCell({
+  policy,
+  visiblePorts = 2,
+}: Readonly<Props>) {
   const rule = useMemo(() => {
     if (policy.rules.length > 0) return policy.rules[0];
     return undefined;
@@ -25,13 +29,13 @@ export default function AccessControlPortsCell({ policy }: Readonly<Props>) {
 
   const allPorts = useMemo(() => parsePortsToStrings(rule), [rule]);
 
-  const firstTwoPorts = useMemo(() => {
-    return allPorts?.slice(0, 2) ?? [];
-  }, [allPorts]);
+  const visiblePortsList = useMemo(() => {
+    return allPorts?.slice(0, visiblePorts) ?? [];
+  }, [allPorts, visiblePorts]);
 
   const otherPorts = useMemo(() => {
-    return allPorts?.slice(2) ?? [];
-  }, [allPorts]);
+    return allPorts?.slice(visiblePorts) ?? [];
+  }, [allPorts, visiblePorts]);
 
   return (
     <div className={"flex-1"}>
@@ -42,17 +46,19 @@ export default function AccessControlPortsCell({ policy }: Readonly<Props>) {
               {!hasAnyPorts && (
                 <Badge
                   variant={"gray"}
+
                   className={"uppercase tracking-wider font-medium"}
                 >
                   All
                 </Badge>
               )}
 
-              {firstTwoPorts?.map((port) => {
+              {visiblePortsList?.map((port) => {
                 return (
                   <Badge
                     key={port}
                     variant={"gray"}
+  
                     className={
                       "px-3 gap-2 whitespace-nowrap uppercase tracking-wider font-medium"
                     }
@@ -65,6 +71,7 @@ export default function AccessControlPortsCell({ policy }: Readonly<Props>) {
               {otherPorts && otherPorts.length > 0 && (
                 <Badge
                   variant={"gray"}
+
                   className={
                     "px-3 gap-2 whitespace-nowrap uppercase tracking-wider font-medium"
                   }
@@ -75,12 +82,8 @@ export default function AccessControlPortsCell({ policy }: Readonly<Props>) {
             </div>
           </TooltipTrigger>
           {otherPorts && otherPorts.length > 0 && (
-            <TooltipContent>
-              <div
-                className={
-                  "flex gap-2 items-start mt-3 mb-2 flex-wrap max-w-sm"
-                }
-              >
+            <TooltipContent className={"p-3"}>
+              <div className={"flex gap-2 items-start flex-wrap max-w-sm"}>
                 {otherPorts.map((port) => {
                   return (
                     <Badge key={port} variant={"gray"}>

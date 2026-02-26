@@ -8,9 +8,7 @@ import {
 import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
-import Separator from "@components/Separator";
 import { useApiCall } from "@utils/api";
-import { FolderGit2 } from "lucide-react";
 import * as React from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -78,19 +76,15 @@ const ResourceGroupModalContent = ({
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
+    <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
-        icon={<FolderGit2 size={18} />}
         title={"Resource Groups"}
         description={
-          "Assign this resource to a group (e.g., Databases, Web Servers) and use it as the destination in access control policies."
+          "Organize this resource into a group (e.g., Databases, Web Servers) and reference the group in access policies to keep rules reusable and easy to maintain."
         }
-        color={"blue"}
       />
 
-      <Separator />
-
-      <div className={"px-8 py-6 flex flex-col gap-8"}>
+      <div className={"px-8 py-6 pt-0 flex flex-col gap-8"}>
         <div>
           <PeerGroupSelector
             onChange={setGroups}

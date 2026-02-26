@@ -126,6 +126,7 @@ export const GroupResourcesSection = ({
         showSearchAndFilters={true}
         renderRow={(row, children) => (
           <NetworkProvider
+            key={row.network.id + row.name}
             network={row.network}
             onResourceUpdate={() => mutate("/networks/resources")}
             onResourceDelete={() => mutate("/networks/resources")}

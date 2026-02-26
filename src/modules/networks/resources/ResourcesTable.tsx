@@ -77,7 +77,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
       return groups.map((group) => group.name).join(", ");
     },
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return <DataTableHeader column={column}>Resource Groups</DataTableHeader>;
     },
     cell: ({ row }) => {
       return <ResourceGroupCell resource={row.original} />;
