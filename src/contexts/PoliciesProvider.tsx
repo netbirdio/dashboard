@@ -3,6 +3,7 @@ import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
 import { cloneDeep } from "@utils/helpers";
 import React, { useState } from "react";
+import { useSWRConfig } from "swr";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
@@ -27,11 +28,16 @@ const PoliciesContext = React.createContext(
       resource: NetworkResource,
     ) => Promise<Policy>;
     openEditPolicyModal: (policy: Policy, tab?: string) => void;
-    serializeRules: (rules: Policy["rules"], enabled?: boolean) => Policy["rules"];
+    deletePolicy: (policy: Policy, onSuccess?: () => void) => Promise<void>;
+    serializeRules: (
+      rules: Policy["rules"],
+      enabled?: boolean,
+    ) => Policy["rules"];
   },
 );
 
 export default function PoliciesProvider({ children }: Props) {
+  const { mutate } = useSWRConfig();
   const request = useApiCall<Policy>("/policies");
   const { createOrUpdate: createOrUpdateGroup } = useGroups();
   const [policyModal, setPolicyModal] = useState(false);
@@ -131,6 +137,20 @@ export default function PoliciesProvider({ children }: Props) {
     });
   };
 
+  const deletePolicy = async (policy: Policy, onSuccess?: () => void) => {
+    const promise = request.del("", `/${policy.id}`).then(() => {
+      mutate("/policies");
+      onSuccess?.();
+    });
+    notify({
+      title: "Access Control Policy " + policy.name,
+      description: "The policy was successfully deleted.",
+      promise,
+      loadingMessage: "Deleting policy...",
+    });
+    return promise;
+  };
+
   const openEditPolicyModal = (policy: Policy, tab?: string) => {
     setCurrentPolicy(policy);
     tab && setInitialPolicyTab(tab);
@@ -144,6 +164,7 @@ export default function PoliciesProvider({ children }: Props) {
         createPolicy,
         createPolicyForResource,
         openEditPolicyModal,
+        deletePolicy,
         serializeRules,
       }}
     >

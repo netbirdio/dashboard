@@ -126,7 +126,7 @@ export function ResourceModalContent({
     [resource, groups],
   );
 
-  const resourcePolicies = useMemo(() => {
+  const allResourcePolicies = useMemo(() => {
     return [...(existingPolicies || []), ...policies];
   }, [existingPolicies, policies]);
 
@@ -152,7 +152,7 @@ export function ResourceModalContent({
   }, [name, resourceExists, resource?.id]);
 
   const confirmMissingPolicies = async () => {
-    if (resourcePolicies.length > 0) return true;
+    if (allResourcePolicies.length > 0) return true;
     return confirm({
       title: "No Access Control Policies Configured",
       description:
@@ -358,10 +358,11 @@ export function ResourceModalContent({
 
         <TabsContent value={"access-control"} className={"pb-8"}>
           <NetworkResourceAccessControl
-            policies={resourcePolicies}
-            onChange={setPolicies}
+            existingPolicies={existingPolicies || []}
+            newPolicies={policies}
+            onNewPoliciesChange={setPolicies}
             address={address}
-            groups={groups}
+            resourceName={name}
           />
         </TabsContent>
 
