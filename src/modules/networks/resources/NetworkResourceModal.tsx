@@ -38,7 +38,6 @@ import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import NetworkResourceAccessControl from "@/modules/networks/resources/NetworkResourceAccessControl";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
-import { useSWRConfig } from "swr";
 
 type Props = {
   open?: boolean;
@@ -95,8 +94,6 @@ export function ResourceModalContent({
     `/networks/${network.id}/resources/${resource?.id}`,
   ).put;
 
-  const { mutate } = useSWRConfig();
-
   const [name, setName] = useState(resource?.name || "");
   const [description, setDescription] = useState(resource?.description || "");
   const [address, setAddress] = useState(resource?.address || "");
@@ -114,7 +111,7 @@ export function ResourceModalContent({
 
   // Access control policies
   const [policies, setPolicies] = useState<Policy[]>([]);
-  const { createPolicyForResource } = usePolicies();
+  const { createPoliciesForResource } = usePolicies();
   const {
     assignedPolicies,
     resourceExists,
@@ -175,15 +172,7 @@ export function ResourceModalContent({
       groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
       enabled,
     }).then(async (r) => {
-      // Create new policies
-      const newPolicies = policies.filter((p) => !p.id);
-      if (newPolicies.length > 0) {
-        await Promise.all(
-          newPolicies.map((p) => createPolicyForResource(p, r)),
-        ).then(() => {
-          mutate("/policies");
-        });
-      }
+      await createPoliciesForResource(policies, r);
       onCreated?.(r);
     });
 
@@ -207,14 +196,7 @@ export function ResourceModalContent({
       groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
       enabled,
     }).then(async (r) => {
-      const newPolicies = policies.filter((p) => !p.id);
-      if (newPolicies.length > 0) {
-        await Promise.all(
-          newPolicies.map((p) => createPolicyForResource(p, r)),
-        ).then(() => {
-          mutate("/policies");
-        });
-      }
+      await createPoliciesForResource(policies, r);
       onUpdated?.(r);
     });
     notify({

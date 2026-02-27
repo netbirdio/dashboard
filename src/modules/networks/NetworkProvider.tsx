@@ -1,11 +1,11 @@
 import { Modal } from "@components/modal/Modal";
 import { notify } from "@components/Notification";
-import useFetchApi, { useApiCall } from "@utils/api";
-import { orderBy } from "lodash";
+import { useApiCall } from "@utils/api";
 import * as React from "react";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useNetworkAccessControl } from "@/modules/networks/NetworkAccessControlProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
@@ -68,85 +68,13 @@ export const NetworkProvider = ({
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const deleteCall = useApiCall("/networks").del;
-  const { data: policies, isLoading: policiesLoading } =
-    useFetchApi<Policy[]>("/policies");
-  const { data: resources } = useFetchApi<NetworkResource[]>(
-    "/networks/resources",
-  );
-
-  const resourceExists = useCallback(
-    (name: string, excludeId?: string) => {
-      if (!name) return false;
-      return !!resources?.find(
-        (r) =>
-          r.name.toLowerCase() === name.toLowerCase() && r.id !== excludeId,
-      );
-    },
-    [resources],
-  );
-
-  const assignedPolicies = useCallback(
-    (resource?: NetworkResource, groups?: Group[]) => {
-      const resourceGroups = (groups || resource?.groups) as
-        | Group[]
-        | undefined;
-      if (!resource && !resourceGroups?.length) {
-        return {
-          policies: [],
-          enabledPolicies: [],
-          isLoading: policiesLoading,
-          policyCount: 0,
-        };
-      }
-      const resourcePolicies = orderBy(
-        policies?.filter((policy) => {
-          const rule = policy.rules?.[0];
-          if (!rule) return false;
-          if (resource && rule.destinationResource?.id === resource.id)
-            return true;
-          const destinations = (rule.destinations ?? []) as Group[];
-          return resourceGroups?.some((rg) =>
-            destinations.some((d) => d?.id === rg.id),
-          );
-        }),
-        "enabled",
-        "desc",
-      );
-      const enabledPolicies = resourcePolicies?.filter(
-        (policy) => policy?.enabled,
-      );
-      return {
-        policies: resourcePolicies,
-        enabledPolicies,
-        isLoading: policiesLoading,
-        policyCount: resourcePolicies?.length || 0,
-      };
-    },
-    [policies, policiesLoading],
-  );
-
-  const getPolicyDestinationResources = useCallback(
-    (policy: Policy): NetworkResource[] => {
-      const rule = policy?.rules?.[0];
-      const destinationGroups = rule?.destinations as Group[] | undefined;
-      const destinationGroupIds = new Set(
-        destinationGroups?.map((g) => g.id).filter(Boolean),
-      );
-
-      return (
-        resources?.filter((resource) => {
-          const resourceGroups = resource.groups as
-            | (Group | string)[]
-            | undefined;
-          return resourceGroups?.some((g) => {
-            const groupId = typeof g === "string" ? g : g.id;
-            return groupId && destinationGroupIds.has(groupId);
-          });
-        }) ?? []
-      );
-    },
-    [resources],
-  );
+  const {
+    policies,
+    resources,
+    assignedPolicies,
+    resourceExists,
+    getPolicyDestinationResources,
+  } = useNetworkAccessControl();
 
   const [currentNetwork, setCurrentNetwork] = useState<Network>();
   const [currentResource, setCurrentResource] = useState<NetworkResource>();
@@ -476,6 +404,7 @@ export const NetworkProvider = ({
                 setResourceGroupModal(false);
                 setCurrentResource(undefined);
                 mutate("/groups");
+                mutate("/networks/resources");
                 if (network) {
                   onResourceUpdate?.();
                   mutate(`/networks/${network.id}/resources`);
@@ -493,6 +422,7 @@ export const NetworkProvider = ({
                 setCurrentResource(undefined);
                 mutate("/networks");
                 mutate("/groups");
+                mutate("/networks/resources");
                 if (network) {
                   mutate(`/networks/${network.id}/resources`);
                   mutate(`/networks/${network.id}`);
@@ -505,6 +435,7 @@ export const NetworkProvider = ({
                 setCurrentResource(undefined);
                 mutate("/networks");
                 mutate("/groups");
+                mutate("/networks/resources");
                 if (network) {
                   onResourceUpdate?.();
                   mutate(`/networks/${network.id}/resources`);

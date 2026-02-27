@@ -23,10 +23,10 @@ const PoliciesContext = React.createContext(
       message?: string,
     ) => void;
     createPolicy: (policy: Policy) => Promise<Policy>;
-    createPolicyForResource: (
-      policy: Policy,
+    createPoliciesForResource: (
+      policies: Policy[],
       resource: NetworkResource,
-    ) => Promise<Policy>;
+    ) => Promise<void>;
     openEditPolicyModal: (policy: Policy, tab?: string) => void;
     deletePolicy: (policy: Policy, onSuccess?: () => void) => Promise<void>;
     serializeRules: (
@@ -88,6 +88,25 @@ export default function PoliciesProvider({ children }: Props) {
         },
       ],
     } as Policy);
+  };
+
+  const createPoliciesForResource = async (
+    newPolicies: Policy[],
+    resource: NetworkResource,
+  ) => {
+    const policiesToCreate = newPolicies.filter((p) => !p.id);
+    if (policiesToCreate.length === 0) return;
+
+    const promise = Promise.all(
+      policiesToCreate.map((p) => createPolicyForResource(p, resource)),
+    ).then(() => mutate("/policies"));
+
+    notify({
+      title: "Create Policies",
+      description: "Successfully created policies for resource.",
+      promise,
+      showOnlyError: true,
+    });
   };
 
   const serializeRules = (rules: Policy["rules"], enabled?: boolean) => {
@@ -169,7 +188,7 @@ export default function PoliciesProvider({ children }: Props) {
       value={{
         updatePolicy,
         createPolicy,
-        createPolicyForResource,
+        createPoliciesForResource,
         openEditPolicyModal,
         deletePolicy,
         serializeRules,

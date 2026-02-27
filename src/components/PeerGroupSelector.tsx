@@ -350,13 +350,11 @@ export function PeerGroupSelector({
                   className={"py-[3px]"}
                   resource={
                     resources?.find((r) => r.id === resource.id) ??
-                    (resource.id
-                      ? ({
-                          id: resource.id,
-                          name: resource.id,
-                          type: resource.type,
-                        } as NetworkResource)
-                      : undefined)
+                    ({
+                      id: resource.id,
+                      name: resource.id,
+                      type: resource.type,
+                    } as NetworkResource)
                   }
                   peer={peers?.find((p) => p.id === resource.id)}
                   onClick={(e) => {

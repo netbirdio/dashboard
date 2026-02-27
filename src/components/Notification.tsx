@@ -18,6 +18,7 @@ export interface NotifyProps<T> {
   icon?: React.ReactNode;
   backgroundColor?: string;
   preventSuccessToast?: boolean;
+  showOnlyError?: boolean;
   errorMessages?: ErrorResponse[];
 }
 
@@ -36,10 +37,11 @@ export default function Notification<T>({
   loadingMessage,
   duration = 3500,
   preventSuccessToast = false,
+  showOnlyError = false,
   errorMessages,
 }: NotificationProps<T>) {
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(!!promise);
+  const [loading, setLoading] = useState(!!promise && !showOnlyError);
   const [readyToDismiss, setReadyToDismiss] = useState(!promise);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -106,7 +108,7 @@ export default function Notification<T>({
       promise
         .then(() => {
           setLoading(false);
-          if (preventSuccessToast) {
+          if (showOnlyError || preventSuccessToast) {
             toast.dismiss(toastId);
           } else {
             setReadyToDismiss(true);
