@@ -131,9 +131,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                     description={network.description}
                   />
                 </div>
-                <NetworkProvider network={network}>
-                  <NetworkActions />
-                </NetworkProvider>
+                <NetworkActions />
               </div>
             </div>
 

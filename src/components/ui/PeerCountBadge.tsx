@@ -37,11 +37,11 @@ export default function PeerCountBadge({
     return peerCount;
   }, [currentGroup]);
 
-  const canRedirect = !!group?.id && group?.name !== "All";
+  const canRedirect =
+    !!group?.id && group?.name !== "All" && !disableRedirect;
 
   const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
-    if (disableRedirect) return;
     if (canRedirect) router.push(`/group?id=${group?.id}&tab=peers`);
   };
 
@@ -49,7 +49,7 @@ export default function PeerCountBadge({
   const showResources = resourcesCount > 0 && peerCount === 0;
 
   return showResources ? (
-    <ResourceCountBadge group={group} />
+    <ResourceCountBadge group={group} disableRedirect={disableRedirect} />
   ) : (
     <Badge
       variant={variant}

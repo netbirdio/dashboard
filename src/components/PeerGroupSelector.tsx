@@ -818,13 +818,14 @@ const PolicyCounter = ({
 }) => {
   const count = useMemo(() => {
     if (!group.id) return 0;
-    return policies.filter(
-      (policy) =>
-        policy.rules?.some((rule) => {
-          const destinations = rule.destinations as Group[] | undefined;
-          return destinations?.some((d) => d.id === group.id);
-        }),
-    ).length;
+    return policies.filter((policy) => {
+      const destinations = policy.rules?.[0]?.destinations as
+        | (Group | string)[]
+        | undefined;
+      return destinations?.some((d) =>
+        typeof d === "string" ? d === group.id : d.id === group.id,
+      );
+    }).length;
   }, [group.id, policies]);
 
   if (count === 0) return null;

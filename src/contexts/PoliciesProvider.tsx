@@ -107,6 +107,8 @@ export default function PoliciesProvider({ children }: Props) {
       promise,
       showOnlyError: true,
     });
+
+    return promise;
   };
 
   const serializeRules = (rules: Policy["rules"], enabled?: boolean) => {

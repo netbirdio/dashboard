@@ -130,14 +130,17 @@ export function ResourceModalContent({
   const groupPolicyCount = useMemo(() => {
     if (!groups.length || !allPolicies) return 0;
     const groupIds = new Set(groups.map((g) => g.id));
-    return allPolicies.filter(
-      (policy) =>
-        policy.rules?.some((rule) => {
-          if (rule.destinationResource) return false;
-          const destinations = rule.destinations as Group[] | undefined;
-          return destinations?.some((d) => d.id && groupIds.has(d.id));
-        }),
-    ).length;
+    return allPolicies.filter((policy) => {
+      const rule = policy.rules?.[0];
+      if (!rule || rule.destinationResource) return false;
+      const destinations = rule.destinations as
+        | (Group | string)[]
+        | undefined;
+      return destinations?.some((d) => {
+        const id = typeof d === "string" ? d : d.id;
+        return !!id && groupIds.has(id);
+      });
+    }).length;
   }, [groups, allPolicies]);
 
   const isAddressValid = address.length > 0 && addressError === "";

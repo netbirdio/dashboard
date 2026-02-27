@@ -30,6 +30,9 @@ type Props = {
   children: React.ReactNode;
 };
 
+const toGroupId = (g: Group | string): string | undefined =>
+  typeof g === "string" ? g : g?.id;
+
 export const NetworkAccessControlProvider = ({ children }: Props) => {
   const { data: policies, isLoading: policiesLoading } =
     useFetchApi<Policy[]>("/policies");
@@ -51,7 +54,7 @@ export const NetworkAccessControlProvider = ({ children }: Props) => {
   const assignedPolicies = useCallback(
     (resource?: NetworkResource, groups?: Group[]) => {
       const resourceGroups = (groups || resource?.groups) as
-        | Group[]
+        | (Group | string)[]
         | undefined;
       if (!resource && !resourceGroups?.length) {
         return {
@@ -61,16 +64,20 @@ export const NetworkAccessControlProvider = ({ children }: Props) => {
           policyCount: 0,
         };
       }
+      const resourceGroupIds = new Set(
+        resourceGroups?.map(toGroupId).filter(Boolean),
+      );
       const resourcePolicies = orderBy(
         policies?.filter((policy) => {
           const rule = policy.rules?.[0];
           if (!rule) return false;
           if (resource && rule.destinationResource?.id === resource.id)
             return true;
-          const destinations = (rule.destinations ?? []) as Group[];
-          return resourceGroups?.some((rg) =>
-            destinations.some((d) => d?.id === rg.id),
-          );
+          const destinations = (rule.destinations ?? []) as (Group | string)[];
+          return destinations.some((d) => {
+            const destId = toGroupId(d);
+            return !!destId && resourceGroupIds.has(destId);
+          });
         }),
         "enabled",
         "desc",
@@ -91,19 +98,24 @@ export const NetworkAccessControlProvider = ({ children }: Props) => {
   const getPolicyDestinationResources = useCallback(
     (policy: Policy): NetworkResource[] => {
       const rule = policy?.rules?.[0];
-      const destinationGroups = rule?.destinations as Group[] | undefined;
+      const destinationGroups = rule?.destinations as
+        | (Group | string)[]
+        | undefined;
       const destinationGroupIds = new Set(
-        destinationGroups?.map((g) => g.id).filter(Boolean),
+        destinationGroups?.map(toGroupId).filter(Boolean),
       );
+      const directDestinationId = rule?.destinationResource?.id;
 
       return (
         resources?.filter((resource) => {
+          if (directDestinationId && resource.id === directDestinationId)
+            return true;
           const resourceGroups = resource.groups as
             | (Group | string)[]
             | undefined;
           return resourceGroups?.some((g) => {
-            const groupId = typeof g === "string" ? g : g.id;
-            return groupId && destinationGroupIds.has(groupId);
+            const groupId = toGroupId(g);
+            return !!groupId && destinationGroupIds.has(groupId);
           });
         }) ?? []
       );

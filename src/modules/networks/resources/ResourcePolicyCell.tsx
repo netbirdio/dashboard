@@ -62,7 +62,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
               <div className={"text-xs flex flex-col p-1"}>
                 {resourcePolicies?.map((policy: Policy) => {
                   const rule = policy?.rules?.[0];
-                  if (!rule) return;
+                  if (!rule) return null;
                   return (
                     <button
                       key={policy.id}
@@ -111,6 +111,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
+                if (!permission.networks.update) return;
                 if (tooltipOpen) setTooltipOpen(false);
                 openResourceModal(network, resource, "access-control");
               }}

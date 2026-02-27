@@ -41,7 +41,7 @@ export default function Notification<T>({
   errorMessages,
 }: NotificationProps<T>) {
   const [error, setError] = useState("");
-  const [loading, setLoading] = useState(!!promise && !showOnlyError);
+  const [loading, setLoading] = useState(!!promise);
   const [readyToDismiss, setReadyToDismiss] = useState(!promise);
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -51,10 +51,13 @@ export default function Notification<T>({
   const startTimer = useCallback(() => {
     if (timerRef.current) return;
     startTimeRef.current = Date.now();
-    timerRef.current = setTimeout(() => {
-      timerRef.current = null;
-      toast.dismiss(toastId);
-    }, Math.max(0, remainingRef.current));
+    timerRef.current = setTimeout(
+      () => {
+        timerRef.current = null;
+        toast.dismiss(toastId);
+      },
+      Math.max(0, remainingRef.current),
+    );
   }, [toastId]);
 
   const pauseTimer = useCallback(() => {
@@ -90,7 +93,10 @@ export default function Notification<T>({
       }
     });
 
-    observer.observe(toastEl, { attributes: true, attributeFilter: ["data-expanded"] });
+    observer.observe(toastEl, {
+      attributes: true,
+      attributeFilter: ["data-expanded"],
+    });
 
     // Start immediately if not expanded
     const expanded = toastEl.getAttribute("data-expanded") === "true";
@@ -137,6 +143,9 @@ export default function Notification<T>({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const hideUntilError = showOnlyError && loading && !error;
+  if (hideUntilError) return null;
 
   return (
     <motion.div

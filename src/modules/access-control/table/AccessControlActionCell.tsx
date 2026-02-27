@@ -25,7 +25,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
       type: "danger",
     });
     if (!choice) return;
-    deletePolicy(policy).then();
+    await deletePolicy(policy);
   };
 
   return (

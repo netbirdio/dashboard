@@ -23,12 +23,16 @@ export default function useUrlTab(
     setTabState(newTab);
   }, [searchParams, getTab]);
 
-  const setTab = useCallback((value: string) => {
-    setTabState(value);
-    const params = new URLSearchParams(window.location.search);
-    params.set("tab", value);
-    window.history.replaceState(null, "", `?${params.toString()}`);
-  }, []);
+  const setTab = useCallback(
+    (value: string) => {
+      const nextTab = validTabs.includes(value) ? value : defaultTab;
+      setTabState(nextTab);
+      const params = new URLSearchParams(window.location.search);
+      params.set("tab", nextTab);
+      window.history.replaceState(null, "", `?${params.toString()}`);
+    },
+    [validTabs, defaultTab],
+  );
 
   return [tab, setTab];
 }

@@ -38,7 +38,11 @@ export const ResourceGroupCell = ({ resource }: Props) => {
           {permission.networks.update && <TransparentEditIconButton />}
         </>
       ) : (
-        <Badge variant={"gray"} useHover={true}>
+        <Badge
+          variant={"gray"}
+          useHover={true}
+          disabled={!permission.networks.update}
+        >
           <IconCirclePlus size={14} />
           Add Groups
         </Badge>
