@@ -100,20 +100,13 @@ export const NetworkProvider = ({
       }
       const resourcePolicies = orderBy(
         policies?.filter((policy) => {
-          if (resource) {
-            const destinationResource = policy.rules
-              ?.map((rule) => rule?.destinationResource?.id === resource.id)
-              .some((id) => id);
-            if (destinationResource) return true;
-          }
-          const destinationPolicyGroups = policy.rules
-            ?.map((rule) => rule?.destinations)
-            .flat() as Group[];
-          const policyGroups = [...destinationPolicyGroups];
-          return resourceGroups?.some((resourceGroup) =>
-            policyGroups.some(
-              (policyGroup) => policyGroup?.id === resourceGroup.id,
-            ),
+          const rule = policy.rules?.[0];
+          if (!rule) return false;
+          if (resource && rule.destinationResource?.id === resource.id)
+            return true;
+          const destinations = (rule.destinations ?? []) as Group[];
+          return resourceGroups?.some((rg) =>
+            destinations.some((d) => d?.id === rg.id),
           );
         }),
         "enabled",
@@ -126,7 +119,7 @@ export const NetworkProvider = ({
         policies: resourcePolicies,
         enabledPolicies,
         isLoading: policiesLoading,
-        policyCount: policies?.length || 0,
+        policyCount: resourcePolicies?.length || 0,
       };
     },
     [policies, policiesLoading],

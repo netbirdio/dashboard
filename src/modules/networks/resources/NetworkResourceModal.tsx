@@ -123,7 +123,7 @@ export function ResourceModalContent({
 
   const { policies: existingPolicies } = useMemo(
     () => assignedPolicies(resource, groups),
-    [resource, groups],
+    [assignedPolicies, resource, groups],
   );
 
   const allResourcePolicies = useMemo(() => {
@@ -133,12 +133,13 @@ export function ResourceModalContent({
   const groupPolicyCount = useMemo(() => {
     if (!groups.length || !allPolicies) return 0;
     const groupIds = new Set(groups.map((g) => g.id));
-    return allPolicies.filter((policy) =>
-      policy.rules?.some((rule) => {
-        if (rule.destinationResource) return false;
-        const destinations = rule.destinations as Group[] | undefined;
-        return destinations?.some((d) => d.id && groupIds.has(d.id));
-      }),
+    return allPolicies.filter(
+      (policy) =>
+        policy.rules?.some((rule) => {
+          if (rule.destinationResource) return false;
+          const destinations = rule.destinations as Group[] | undefined;
+          return destinations?.some((d) => d.id && groupIds.has(d.id));
+        }),
     ).length;
   }, [groups, allPolicies]);
 
@@ -199,19 +200,28 @@ export function ResourceModalContent({
   const updateResource = async () => {
     if (!(await confirmMissingPolicies())) return;
     const savedGroups = await saveGroups();
+    const promise = update({
+      name,
+      description,
+      address,
+      groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
+      enabled,
+    }).then(async (r) => {
+      const newPolicies = policies.filter((p) => !p.id);
+      if (newPolicies.length > 0) {
+        await Promise.all(
+          newPolicies.map((p) => createPolicyForResource(p, r)),
+        ).then(() => {
+          mutate("/policies");
+        });
+      }
+      onUpdated?.(r);
+    });
     notify({
       title: "Resource Updated",
-      description: `The resource "${name}" has been updated successfully.`,
+      description: `Resource "${name}" has been updated successfully.`,
       loadingMessage: "Updating resource...",
-      promise: update({
-        name,
-        description,
-        address,
-        groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
-        enabled,
-      }).then((r) => {
-        onUpdated?.(r);
-      }),
+      promise,
     });
   };
 

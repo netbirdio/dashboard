@@ -52,14 +52,25 @@ export default function PoliciesProvider({ children }: Props) {
   ) => {
     const rule = policy.rules[0];
 
-    // Ensure all source groups exist and get their IDs
     const sources = await Promise.all(
-      (rule.sources ?? []).map((g) =>
-        typeof g === "string" ? g : createOrUpdateGroup(g).then((r) => r.id),
-      ),
-    );
+      (rule.sources ?? []).map((g) => {
+        if (typeof g === "string") return g;
+        if (g.id) return g.id;
+        return createOrUpdateGroup(g).then((r) => r.id);
+      }),
+    ).then((ids) => ids.filter(Boolean) as string[]);
 
     const hasGroups = resource.groups && resource.groups.length > 0;
+
+    const destinations = hasGroups
+      ? await Promise.all(
+          (resource.groups as (Group | string)[]).map((g) => {
+            if (typeof g === "string") return g;
+            if (g.id) return g.id;
+            return createOrUpdateGroup(g).then((r) => r.id);
+          }),
+        ).then((ids) => ids.filter(Boolean) as string[])
+      : null;
 
     return createPolicy({
       ...policy,
@@ -69,12 +80,8 @@ export default function PoliciesProvider({ children }: Props) {
       rules: [
         {
           ...rule,
-          sources: sources.filter(Boolean) as string[],
-          destinations: hasGroups
-            ? ((resource.groups as (Group | string)[])
-                .map((g) => (typeof g === "string" ? g : g.id))
-                .filter(Boolean) as string[])
-            : null,
+          sources,
+          destinations,
           destinationResource: hasGroups
             ? undefined
             : { id: resource.id, type: resource.type },

@@ -126,9 +126,7 @@ export default function NetworkResourceAccessControl({
   const handleDeletePolicy = async (policy: Policy) => {
     if (!(await confirmMultiResourceAction(policy, "delete"))) return;
     if (policy.id) {
-      deletePolicy(policy, () => {
-        mutate("/policies");
-      });
+      await deletePolicy(policy);
     } else {
       onNewPoliciesChange(newPolicies.filter((p) => p !== policy));
     }
