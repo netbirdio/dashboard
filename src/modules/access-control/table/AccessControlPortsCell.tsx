@@ -46,7 +46,6 @@ export default function AccessControlPortsCell({
               {!hasAnyPorts && (
                 <Badge
                   variant={"gray"}
-
                   className={"uppercase tracking-wider font-medium"}
                 >
                   All
@@ -58,7 +57,6 @@ export default function AccessControlPortsCell({
                   <Badge
                     key={port}
                     variant={"gray"}
-  
                     className={
                       "px-3 gap-2 whitespace-nowrap uppercase tracking-wider font-medium"
                     }
@@ -71,7 +69,6 @@ export default function AccessControlPortsCell({
               {otherPorts && otherPorts.length > 0 && (
                 <Badge
                   variant={"gray"}
-
                   className={
                     "px-3 gap-2 whitespace-nowrap uppercase tracking-wider font-medium"
                   }
