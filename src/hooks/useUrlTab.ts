@@ -1,26 +1,37 @@
-import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo } from "react";
+import { useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 
 export default function useUrlTab(
   validTabs: string[],
   defaultTab: string,
 ): [string, (value: string) => void] {
   const searchParams = useSearchParams();
-  const router = useRouter();
 
-  const tab = useMemo(() => {
-    const tabParam = searchParams.get("tab");
-    if (tabParam && validTabs.includes(tabParam)) return tabParam;
-    return defaultTab;
-  }, [searchParams, validTabs, defaultTab]);
+  const getTab = useCallback(
+    (params: URLSearchParams) => {
+      const tabParam = params.get("tab");
+      if (tabParam && validTabs.includes(tabParam)) return tabParam;
+      return defaultTab;
+    },
+    [validTabs, defaultTab],
+  );
+
+  const [tab, setTabState] = useState(() => getTab(searchParams));
+
+  useEffect(() => {
+    const newTab = getTab(searchParams);
+    setTabState(newTab);
+  }, [searchParams, getTab]);
 
   const setTab = useCallback(
     (value: string) => {
-      const params = new URLSearchParams(searchParams.toString());
-      params.set("tab", value);
-      router.replace(`?${params.toString()}`, { scroll: false });
+      const nextTab = validTabs.includes(value) ? value : defaultTab;
+      setTabState(nextTab);
+      const params = new URLSearchParams(window.location.search);
+      params.set("tab", nextTab);
+      window.history.replaceState(null, "", `?${params.toString()}`);
     },
-    [searchParams, router],
+    [validTabs, defaultTab],
   );
 
   return [tab, setTab];

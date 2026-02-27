@@ -1,51 +1,36 @@
 import Badge from "@components/Badge";
 import Button from "@components/Button";
 import FullTooltip from "@components/FullTooltip";
-import useFetchApi from "@utils/api";
-import { orderBy } from "lodash";
-import { PlusCircle, ShieldIcon, SquarePenIcon } from "lucide-react";
+import { Settings, ShieldIcon, ShieldOff, SquarePenIcon } from "lucide-react";
 import * as React from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
+import { cn } from "@utils/helpers";
 
 type Props = {
   resource?: NetworkResource;
 };
 export const ResourcePolicyCell = ({ resource }: Props) => {
   const { permission } = usePermissions();
-  const { openPolicyModal, network, openEditPolicyModal } =
-    useNetworksContext();
-  const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
+  const {
+    openResourceModal,
+    network,
+    openEditPolicyModal,
+    assignedPolicies,
+    openPolicyModal,
+  } = useNetworksContext();
+  const {
+    policies: resourcePolicies,
+    enabledPolicies,
+    isLoading,
+    policyCount,
+  } = assignedPolicies(resource);
   const [tooltipOpen, setTooltipOpen] = useState(false);
-
-  const assignedPolicies = useMemo(() => {
-    const resourceGroups = resource?.groups as Group[];
-    return orderBy(
-      policies?.filter((policy) => {
-        const destinationResource = policy.rules
-          ?.map((rule) => rule?.destinationResource?.id === resource?.id)
-          .some((id) => id);
-        if (destinationResource) return true;
-        const destinationPolicyGroups = policy.rules
-          ?.map((rule) => rule?.destinations)
-          .flat() as Group[];
-        const policyGroups = [...destinationPolicyGroups];
-        return resourceGroups?.some((resourceGroup) =>
-          policyGroups.some(
-            (policyGroup) => policyGroup?.id === resourceGroup.id,
-          ),
-        );
-      }),
-      "enabled",
-      "desc",
-    );
-  }, [policies, resource]);
 
   if (isLoading) {
     return (
@@ -55,13 +40,16 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
     );
   }
 
-  const enabledPolicies = assignedPolicies?.filter((policy) => policy?.enabled);
-
-  const policyCount = assignedPolicies?.length || 0;
-
   return (
     network && (
       <div className={"flex gap-3"}>
+        {policyCount === 0 && (
+          <Badge variant={"gray"}>
+            <ShieldOff size={12} className="text-red-500" />
+            <span className={"font-medium text-xs"}>None</span>
+          </Badge>
+        )}
+
         {policyCount > 0 && (
           <FullTooltip
             contentClassName={"p-0"}
@@ -72,9 +60,9 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
             className={"border-nb-gray-800"}
             content={
               <div className={"text-xs flex flex-col p-1"}>
-                {assignedPolicies?.map((policy: Policy) => {
+                {resourcePolicies?.map((policy: Policy) => {
                   const rule = policy?.rules?.[0];
-                  if (!rule) return;
+                  if (!rule) return null;
                   return (
                     <button
                       key={policy.id}
@@ -118,18 +106,29 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
           >
             <Badge
               variant={"gray"}
-              useHover={false}
-              className={"select-none hover:bg-nb-gray-910"}
+              useHover={true}
+              className={"select-none hover:bg-nb-gray-910 cursor-pointer"}
               onClick={(e) => {
                 e.preventDefault();
                 e.stopPropagation();
-                if (!tooltipOpen) setTooltipOpen(true);
+                if (!permission.networks.update) return;
+                if (tooltipOpen) setTooltipOpen(false);
+                openResourceModal(network, resource, "access-control");
               }}
             >
-              <ShieldIcon size={14} className={"text-green-500"} />
+              <ShieldIcon
+                size={14}
+                className={cn(
+                  enabledPolicies?.length > 0
+                    ? "text-green-500"
+                    : "text-nb-gray-400",
+                )}
+              />
               <div>
                 <span className={"font-medium text-xs"}>
-                  {enabledPolicies?.length}
+                  {enabledPolicies?.length > 0
+                    ? enabledPolicies?.length
+                    : `${policyCount} Disabled`}
                 </span>
               </div>
             </Badge>
@@ -139,11 +138,12 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
         <Button
           size={"xs"}
           variant={"secondary"}
+          className={"!px-3"}
           disabled={!permission.networks.update}
-          onClick={() => openPolicyModal(network, resource)}
+          onClick={() => openResourceModal(network, resource, "access-control")}
         >
-          <PlusCircle size={12} />
-          Add Policy
+          <Settings size={12} />
+          Configure
         </Button>
       </div>
     )
