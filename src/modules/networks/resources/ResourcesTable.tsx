@@ -124,11 +124,7 @@ export default function ResourcesTable({
   const [sorting, setSorting] = useState<SortingState>([
     {
       id: "name",
-      desc: true,
-    },
-    {
-      id: "id",
-      desc: true,
+      desc: false,
     },
   ]);
   const { openResourceModal, network } = useNetworksContext();
