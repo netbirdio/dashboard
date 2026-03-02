@@ -136,7 +136,9 @@ export default function NetworkResourceAccessControl({
       }
       openEditPolicyModal(policy);
     } else {
-      setEditingPolicyIndex(newPolicies.indexOf(policy));
+      const idx = newPolicies.indexOf(policy);
+      if (idx === -1) return;
+      setEditingPolicyIndex(idx);
       setPolicyModalOpen(true);
     }
   };
