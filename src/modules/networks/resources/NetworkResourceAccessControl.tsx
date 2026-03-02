@@ -209,7 +209,7 @@ export default function NetworkResourceAccessControl({
                             <CircleIcon
                               size={8}
                               active={policy.enabled}
-                              className={"shrink-0 top-[3px] relative"}
+                              className={cn("shrink-0 relative top-[5px]")}
                             />
                           </div>
                           <div
