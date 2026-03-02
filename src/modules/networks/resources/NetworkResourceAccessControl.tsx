@@ -36,6 +36,14 @@ type Props = {
   hasResourceGroups?: boolean;
 };
 
+function getResourceType(
+  address: string,
+): "domain" | "host" | "subnet" {
+  const hasChars = !!address.match(/[a-z*]/i);
+  const isCIDR = !!address.match(/\//);
+  return hasChars ? "domain" : isCIDR ? "subnet" : "host";
+}
+
 export default function NetworkResourceAccessControl({
   existingPolicies,
   newPolicies,
@@ -60,10 +68,7 @@ export default function NetworkResourceAccessControl({
   );
 
   const destinationResource: PolicyRuleResource = useMemo(() => {
-    const hasChars = !!address.match(/[a-z*]/i);
-    const isCIDR = !!address.match(/\//);
-    const type = hasChars ? "domain" : isCIDR ? "subnet" : "host";
-    return { id: resourceId || resourceName || address, type };
+    return { id: resourceId || resourceName || address, type: getResourceType(address) };
   }, [address, resourceName, resourceId]);
 
   const openAddPolicy = () => {
@@ -71,11 +76,26 @@ export default function NetworkResourceAccessControl({
     setPolicyModalOpen(true);
   };
 
+  const currentResource = useMemo<NetworkResource>(() => {
+    return {
+      id: resourceId || "",
+      name: resourceName || address,
+      address,
+      type: getResourceType(address),
+      enabled: true,
+    };
+  }, [resourceId, resourceName, address]);
+
   const confirmMultiResourceAction = async (
     policy: Policy,
     action: "edit" | "delete",
   ) => {
-    const affectedResources = getPolicyDestinationResources(policy);
+    const fetchedResources = getPolicyDestinationResources(policy);
+    const affectedResources = fetchedResources.some(
+      (r) => r.id === currentResource.id,
+    )
+      ? fetchedResources
+      : [...fetchedResources, currentResource];
     const isMulti = affectedResources.length > 1;
     return confirm({
       title: isMulti ? (
@@ -106,7 +126,12 @@ export default function NetworkResourceAccessControl({
 
   const openEditPolicy = async (policy: Policy) => {
     if (policy.id) {
-      const affectedResources = getPolicyDestinationResources(policy);
+      const fetchedResources = getPolicyDestinationResources(policy);
+      const affectedResources = fetchedResources.some(
+        (r) => r.id === currentResource.id,
+      )
+        ? fetchedResources
+        : [...fetchedResources, currentResource];
       if (affectedResources.length > 1) {
         if (!(await confirmMultiResourceAction(policy, "edit"))) return;
       }
