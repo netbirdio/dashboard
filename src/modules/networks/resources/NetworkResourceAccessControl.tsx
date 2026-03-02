@@ -193,12 +193,14 @@ export default function NetworkResourceAccessControl({
                               text={policy.name}
                               maxWidth={"130px"}
                             />
-                            <div className={"mt-1 text-nb-gray-400 text-xs"}>
-                              <TruncatedText
-                                text={policy.description}
-                                maxWidth={"130px"}
-                              />
-                            </div>
+                            {policy.description && (
+                              <div className={"mt-1 text-nb-gray-400 text-xs"}>
+                                <TruncatedText
+                                  text={policy.description}
+                                  maxWidth={"130px"}
+                                />
+                              </div>
+                            )}
                           </div>
                         </div>
                       </td>
