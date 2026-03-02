@@ -33,6 +33,7 @@ type Props = {
   address: string;
   resourceName?: string;
   resourceId?: string;
+  hasResourceGroups?: boolean;
 };
 
 export default function NetworkResourceAccessControl({
@@ -42,6 +43,7 @@ export default function NetworkResourceAccessControl({
   address,
   resourceName,
   resourceId,
+  hasResourceGroups = false,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { network, getPolicyDestinationResources } = useNetworksContext();
@@ -300,6 +302,7 @@ export default function NetworkResourceAccessControl({
           initialDestinationResource={
             editingPolicyIndex === null ? destinationResource : undefined
           }
+          disableDestinationSelector={!hasResourceGroups}
           initialName={`${resourceName || address} Policy`}
           initialDescription={
             network?.description

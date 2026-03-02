@@ -125,6 +125,7 @@ type ModalProps = {
   initialPorts?: number[];
   initialDestinationResource?: PolicyRuleResource;
   initialTab?: string;
+  disableDestinationSelector?: boolean;
 };
 
 export function AccessControlModalContent({
@@ -141,6 +142,7 @@ export function AccessControlModalContent({
   initialPorts,
   initialDestinationResource,
   initialTab,
+  disableDestinationSelector = false,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
   const { users } = useUsers();
@@ -391,6 +393,7 @@ export function AccessControlModalContent({
                   onResourceChange={setDestinationResource}
                   saveGroupAssignments={useSave}
                   disabled={
+                    disableDestinationSelector ||
                     !permission.policies.update ||
                     !permission.policies.create
                   }

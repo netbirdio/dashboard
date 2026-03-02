@@ -359,6 +359,7 @@ export function ResourceModalContent({
             address={address}
             resourceName={name}
             resourceId={resource?.id}
+            hasResourceGroups={groups.length > 0}
           />
         </TabsContent>
 
