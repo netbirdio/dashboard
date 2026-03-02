@@ -278,19 +278,6 @@ export const NetworkProvider = ({
     openResourceModal(network);
   };
 
-  const askForAccessControlPolicy = async (res: NetworkResource) => {
-    const choice = await confirm({
-      title: `Add policy for '${res.name}'?`,
-      description:
-        "Without a policy, the resource will not be accessible by any peers. Create a policy to control access to this resource.",
-      confirmText: "Create Policy",
-      cancelText: "Later",
-      type: "default",
-    });
-    if (!choice) return;
-    openPolicyModal(currentNetwork, res);
-  };
-
   return (
     <NetworksContext.Provider
       value={{
@@ -427,7 +414,8 @@ export const NetworkProvider = ({
                   mutate(`/networks/${network.id}/resources`);
                   mutate(`/networks/${network.id}`);
                 } else {
-                  await askForAccessControlPolicy(r);
+                  currentNetwork?.routing_peers_count === 0 &&
+                    (await askForRoutingPeer(currentNetwork));
                 }
               }}
               onUpdated={() => {
