@@ -32,6 +32,7 @@ type Props = {
   onNewPoliciesChange: (policies: Policy[]) => void;
   address: string;
   resourceName?: string;
+  resourceId?: string;
 };
 
 export default function NetworkResourceAccessControl({
@@ -40,6 +41,7 @@ export default function NetworkResourceAccessControl({
   onNewPoliciesChange,
   address,
   resourceName,
+  resourceId,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { network, getPolicyDestinationResources } = useNetworksContext();
@@ -59,8 +61,8 @@ export default function NetworkResourceAccessControl({
     const hasChars = !!address.match(/[a-z*]/i);
     const isCIDR = !!address.match(/\//);
     const type = hasChars ? "domain" : isCIDR ? "subnet" : "host";
-    return { id: address, type };
-  }, [address]);
+    return { id: resourceId || resourceName || address, type };
+  }, [address, resourceName, resourceId]);
 
   const openAddPolicy = () => {
     setEditingPolicyIndex(null);
@@ -192,9 +194,10 @@ export default function NetworkResourceAccessControl({
                             <TruncatedText
                               text={policy.name}
                               maxWidth={"130px"}
+                              className={"leading-normal"}
                             />
                             {policy.description && (
-                              <div className={"mt-1 text-nb-gray-400 text-xs"}>
+                              <div className={"text-nb-gray-400 text-xs"}>
                                 <TruncatedText
                                   text={policy.description}
                                   maxWidth={"130px"}
@@ -294,7 +297,9 @@ export default function NetworkResourceAccessControl({
               ? newPolicies[editingPolicyIndex]
               : undefined
           }
-          initialDestinationResource={destinationResource}
+          initialDestinationResource={
+            editingPolicyIndex === null ? destinationResource : undefined
+          }
           initialName={`${resourceName || address} Policy`}
           initialDescription={
             network?.description

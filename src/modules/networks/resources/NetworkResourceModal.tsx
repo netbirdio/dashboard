@@ -358,6 +358,7 @@ export function ResourceModalContent({
             onNewPoliciesChange={setPolicies}
             address={address}
             resourceName={name}
+            resourceId={resource?.id}
           />
         </TabsContent>
 
