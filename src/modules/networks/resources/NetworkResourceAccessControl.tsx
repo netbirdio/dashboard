@@ -19,7 +19,6 @@ import { usePolicies } from "@/contexts/PoliciesProvider";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
-import { useSWRConfig } from "swr";
 import CircleIcon from "@/assets/icons/CircleIcon";
 import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
 import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
@@ -36,9 +35,7 @@ type Props = {
   hasResourceGroups?: boolean;
 };
 
-function getResourceType(
-  address: string,
-): "domain" | "host" | "subnet" {
+function getResourceType(address: string): "domain" | "host" | "subnet" {
   const hasChars = !!address.match(/[a-z*]/i);
   const isCIDR = !!address.match(/\//);
   return hasChars ? "domain" : isCIDR ? "subnet" : "host";
@@ -53,7 +50,6 @@ export default function NetworkResourceAccessControl({
   resourceId,
   hasResourceGroups = false,
 }: Readonly<Props>) {
-  const { mutate } = useSWRConfig();
   const { network, getPolicyDestinationResources } = useNetworksContext();
   const { openEditPolicyModal, deletePolicy } = usePolicies();
   const { confirm } = useDialog();
@@ -68,7 +64,10 @@ export default function NetworkResourceAccessControl({
   );
 
   const destinationResource: PolicyRuleResource = useMemo(() => {
-    return { id: resourceId || resourceName || address, type: getResourceType(address) };
+    return {
+      id: resourceId || resourceName || address,
+      type: getResourceType(address),
+    };
   }, [address, resourceName, resourceId]);
 
   const openAddPolicy = () => {
