@@ -15,6 +15,9 @@ import { ResourceGroupModal } from "@/modules/networks/resources/ResourceGroupMo
 import NetworkRoutingPeerModal from "@/modules/networks/routing-peers/NetworkRoutingPeerModal";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
+import { ResourceIcon } from "@/assets/icons/ResourceIcon";
+import CopyToClipboardText from "@components/CopyToClipboardText";
+import { cn } from "@utils/helpers";
 
 type Props = {
   children: React.ReactNode;
@@ -55,6 +58,11 @@ const NetworksContext = React.createContext(
     resourceExists: (name: string, excludeId?: string) => boolean;
     resources?: NetworkResource[];
     getPolicyDestinationResources: (policy: Policy) => NetworkResource[];
+    confirmMultiResourceAction: (
+      policy: Policy,
+      action: "edit" | "delete",
+      additionalResource?: NetworkResource,
+    ) => Promise<boolean>;
     policies?: Policy[];
   },
 );
@@ -170,6 +178,45 @@ export const NetworkProvider = ({
   const openEditPolicyModal = (policy: Policy) => {
     setCurrentPolicy(policy);
     setPolicyModal(true);
+  };
+
+  const confirmMultiResourceAction = async (
+    policy: Policy,
+    action: "edit" | "delete",
+    additionalResource?: NetworkResource,
+  ) => {
+    const fetchedResources = getPolicyDestinationResources(policy);
+    const affectedResources =
+      additionalResource &&
+      !fetchedResources.some((r) => r.id === additionalResource.id)
+        ? [...fetchedResources, additionalResource]
+        : fetchedResources;
+    const isMulti = affectedResources.length > 1;
+    return confirm({
+      title: isMulti ? (
+        <>This policy is used by multiple resources</>
+      ) : (
+        <>
+          {action === "edit" ? "Edit" : "Delete"} policy &apos;{policy.name}
+          &apos;?
+        </>
+      ),
+      description: isMulti
+        ? `This policy uses one or many resource group(s) as destinations. ${
+            action === "edit" ? "Updating" : "Deleting"
+          } this policy will also affect following resources:`
+        : action === "delete"
+          ? "Are you sure you want to delete this policy? This action cannot be undone."
+          : undefined,
+      children: isMulti ? (
+        <AffectedResourceList resources={affectedResources} />
+      ) : undefined,
+      confirmText: action === "edit" ? "Edit Policy" : "Delete Policy",
+      cancelText: "Cancel",
+      hideIcon: isMulti,
+      type: action === "edit" ? "warning" : "danger",
+      maxWidthClass: isMulti ? "max-w-lg" : undefined,
+    });
   };
 
   const deleteNetwork = async (network: Network) => {
@@ -296,6 +343,7 @@ export const NetworkProvider = ({
         resourceExists,
         resources,
         getPolicyDestinationResources,
+        confirmMultiResourceAction,
         policies,
       }}
     >
@@ -451,3 +499,37 @@ export const useNetworksContext = () => {
   }
   return context;
 };
+
+function AffectedResourceList({ resources }: { resources: NetworkResource[] }) {
+  const maxVisible = 6;
+  const visible = resources.slice(0, maxVisible);
+  const remaining = resources.length - maxVisible;
+  return (
+    <div
+      className={cn(
+        "rounded-md bg-nb-gray-930 border border-nb-gray-900 text-xs mt-4",
+      )}
+    >
+      {visible.map((r, i) => (
+        <div
+          key={r.id}
+          className={cn(
+            "flex items-center gap-2.5 px-3 py-2.5",
+            i > 0 && "border-t border-nb-gray-900",
+          )}
+        >
+          <ResourceIcon type={r.type || "host"} size={12} />
+          <span className="font-medium text-nb-gray-200">{r.name}</span>
+          <CopyToClipboardText className={"text-nb-gray-300"}>
+            {r.address}
+          </CopyToClipboardText>
+        </div>
+      ))}
+      {remaining > 0 && (
+        <div className="border-t border-nb-gray-900 px-3 py-2 text-nb-gray-200">
+          + {remaining} more
+        </div>
+      )}
+    </div>
+  );
+}

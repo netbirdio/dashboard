@@ -22,7 +22,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
     network,
     openEditPolicyModal,
     assignedPolicies,
-    openPolicyModal,
+    confirmMultiResourceAction,
   } = useNetworksContext();
   const {
     policies: resourcePolicies,
@@ -69,8 +69,14 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
                       className={
                         "m-0 pl-3 py-2.5 leading-none flex justify-between group hover:bg-nb-gray-900 rounded-md"
                       }
-                      onClick={() => {
+                      onClick={async () => {
                         setTooltipOpen(false);
+                        const confirm = await confirmMultiResourceAction(
+                          policy,
+                          "edit",
+                          resource,
+                        );
+                        if (!confirm) return;
                         openEditPolicyModal(policy);
                       }}
                     >

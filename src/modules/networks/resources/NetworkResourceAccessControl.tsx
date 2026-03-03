@@ -8,13 +8,11 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import { ResourceIcon } from "@/assets/icons/ResourceIcon";
 import { Edit2, MoreVertical, PlusIcon, Trash2 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { cn } from "@utils/helpers";
-import { useDialog } from "@/contexts/DialogProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -23,7 +21,6 @@ import CircleIcon from "@/assets/icons/CircleIcon";
 import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
 import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
 import TruncatedText from "@components/ui/TruncatedText";
-import CopyToClipboardText from "@components/CopyToClipboardText";
 
 type Props = {
   existingPolicies: Policy[];
@@ -50,9 +47,8 @@ export default function NetworkResourceAccessControl({
   resourceId,
   hasResourceGroups = false,
 }: Readonly<Props>) {
-  const { network, getPolicyDestinationResources } = useNetworksContext();
+  const { network, confirmMultiResourceAction } = useNetworksContext();
   const { openEditPolicyModal, deletePolicy } = usePolicies();
-  const { confirm } = useDialog();
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [editingPolicyIndex, setEditingPolicyIndex] = useState<number | null>(
     null,
@@ -70,11 +66,6 @@ export default function NetworkResourceAccessControl({
     };
   }, [address, resourceName, resourceId]);
 
-  const openAddPolicy = () => {
-    setEditingPolicyIndex(null);
-    setPolicyModalOpen(true);
-  };
-
   const currentResource = useMemo<NetworkResource>(() => {
     return {
       id: resourceId || "",
@@ -85,55 +76,19 @@ export default function NetworkResourceAccessControl({
     };
   }, [resourceId, resourceName, address]);
 
-  const confirmMultiResourceAction = async (
-    policy: Policy,
-    action: "edit" | "delete",
-  ) => {
-    const fetchedResources = getPolicyDestinationResources(policy);
-    const affectedResources = fetchedResources.some(
-      (r) => r.id === currentResource.id,
-    )
-      ? fetchedResources
-      : [...fetchedResources, currentResource];
-    const isMulti = affectedResources.length > 1;
-    return confirm({
-      title: isMulti ? (
-        <>This policy is used by multiple resources</>
-      ) : (
-        <>
-          {action === "edit" ? "Edit" : "Delete"} policy &apos;{policy.name}
-          &apos;?
-        </>
-      ),
-      description: isMulti
-        ? `This policy uses one or many resource group(s) as destinations. ${
-            action === "edit" ? "Updating" : "Deleting"
-          } this policy will also affect following resources:`
-        : action === "delete"
-        ? "Are you sure you want to delete this policy? This action cannot be undone."
-        : undefined,
-      children: isMulti ? (
-        <AffectedResourceList resources={affectedResources} />
-      ) : undefined,
-      confirmText: action === "edit" ? "Edit Policy" : "Delete Policy",
-      cancelText: "Cancel",
-      hideIcon: isMulti,
-      type: action === "edit" ? "warning" : "danger",
-      maxWidthClass: isMulti ? "max-w-lg" : undefined,
-    });
+  const openAddPolicy = () => {
+    setEditingPolicyIndex(null);
+    setPolicyModalOpen(true);
   };
 
   const openEditPolicy = async (policy: Policy) => {
     if (policy.id) {
-      const fetchedResources = getPolicyDestinationResources(policy);
-      const affectedResources = fetchedResources.some(
-        (r) => r.id === currentResource.id,
-      )
-        ? fetchedResources
-        : [...fetchedResources, currentResource];
-      if (affectedResources.length > 1) {
-        if (!(await confirmMultiResourceAction(policy, "edit"))) return;
-      }
+      const confirm = await confirmMultiResourceAction(
+        policy,
+        "edit",
+        currentResource,
+      );
+      if (!confirm) return;
       openEditPolicyModal(policy);
     } else {
       const idx = newPolicies.indexOf(policy);
@@ -154,7 +109,12 @@ export default function NetworkResourceAccessControl({
   };
 
   const handleDeletePolicy = async (policy: Policy) => {
-    if (!(await confirmMultiResourceAction(policy, "delete"))) return;
+    const confirm = await confirmMultiResourceAction(
+      policy,
+      "delete",
+      currentResource,
+    );
+    if (!confirm) return;
     if (policy.id) {
       await deletePolicy(policy);
     } else {
@@ -342,40 +302,6 @@ export default function NetworkResourceAccessControl({
           }}
         />
       </Modal>
-    </div>
-  );
-}
-
-function AffectedResourceList({ resources }: { resources: NetworkResource[] }) {
-  const maxVisible = 6;
-  const visible = resources.slice(0, maxVisible);
-  const remaining = resources.length - maxVisible;
-  return (
-    <div
-      className={cn(
-        "rounded-md bg-nb-gray-930 border border-nb-gray-900 text-xs mt-4",
-      )}
-    >
-      {visible.map((r, i) => (
-        <div
-          key={r.id}
-          className={cn(
-            "flex items-center gap-2.5 px-3 py-2.5",
-            i > 0 && "border-t border-nb-gray-900",
-          )}
-        >
-          <ResourceIcon type={r.type || "host"} size={12} />
-          <span className="font-medium text-nb-gray-200">{r.name}</span>
-          <CopyToClipboardText className={"text-nb-gray-300"}>
-            {r.address}
-          </CopyToClipboardText>
-        </div>
-      ))}
-      {remaining > 0 && (
-        <div className="border-t border-nb-gray-900 px-3 py-2 text-nb-gray-200">
-          + {remaining} more
-        </div>
-      )}
     </div>
   );
 }
