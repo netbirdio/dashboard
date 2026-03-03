@@ -13,8 +13,9 @@ type Props = {
   label?: string;
   className?: string;
   onError?: (error: string) => void;
-  description?: string;
+  description?: React.ReactNode;
   placeholder?: string;
+  autoFocus?: boolean;
 };
 export const ResourceSingleAddressInput = ({
   value,
@@ -24,6 +25,7 @@ export const ResourceSingleAddressInput = ({
   onError,
   description = "Enter a single IP address, CIDR block or domain name",
   placeholder = "Address (IP, CIDR or Domain)",
+  autoFocus,
 }: Props) => {
   const hasChars = useMemo(() => {
     return !!value.match(/[a-z*]/i);
@@ -71,6 +73,7 @@ export const ResourceSingleAddressInput = ({
       <Label>{label}</Label>
       <HelpText>{description}</HelpText>
       <Input
+        autoFocus={autoFocus}
         customPrefix={PrefixIcon}
         error={error}
         placeholder={placeholder}

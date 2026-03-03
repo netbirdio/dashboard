@@ -12,7 +12,6 @@ import {
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
-import FullScreenLoading from "@components/ui/FullScreenLoading";
 import useRedirect from "@hooks/useRedirect";
 import useFetchApi from "@utils/api";
 import { cn, singularize } from "@utils/helpers";
@@ -35,6 +34,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkResource, NetworkRouter } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
 import { NetworkInformationSquare } from "@/modules/networks/misc/NetworkInformationSquare";
+import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import {
   NetworkProvider,
   useNetworksContext,
@@ -49,6 +49,7 @@ import ReverseProxiesProvider, {
   flattenReverseProxies,
   useReverseProxies,
 } from "@/contexts/ReverseProxiesProvider";
+import { SkeletonNetwork } from "@components/skeletons/SkeletonNetwork";
 
 export default function NetworkDetailPage() {
   const queryParameter = useSearchParams();
@@ -65,7 +66,7 @@ export default function NetworkDetailPage() {
       <NetworkOverview network={network} />
     </ReverseProxiesProvider>
   ) : (
-    <FullScreenLoading />
+    <SkeletonNetwork />
   );
 }
 
@@ -96,103 +97,103 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
 
   return (
     <PageContainer>
-      <NetworkProvider network={network}>
-        <div className={"p-default py-6"}>
-          <Breadcrumbs>
-            <Breadcrumbs.Item
-              href={"/networks"}
-              label={"Networks"}
-              disabled={!permission.networks.read}
-              icon={<NetworkRoutesIcon size={13} />}
-            />
-            <Breadcrumbs.Item
-              href={"/network"}
-              label={network.name}
-              active={true}
-            />
-          </Breadcrumbs>
+      <NetworkAccessControlProvider>
+        <NetworkProvider network={network}>
+          <div className={"p-default py-6"}>
+            <Breadcrumbs>
+              <Breadcrumbs.Item
+                href={"/networks"}
+                label={"Networks"}
+                disabled={!permission.networks.read}
+                icon={<NetworkRoutesIcon size={13} />}
+              />
+              <Breadcrumbs.Item
+                href={"/network"}
+                label={network.name}
+                active={true}
+              />
+            </Breadcrumbs>
 
-          <div className={"flex justify-between max-w-6xl"}>
-            <div
-              className={"w-full lg:w-1/2 flex justify-between items-center"}
-            >
+            <div className={"flex justify-between max-w-6xl"}>
               <div
-                className={cn(
-                  "flex items-center w-full",
-                  !network.description && "gap-2",
-                )}
+                className={"w-full lg:w-1/2 flex justify-between items-center"}
               >
-                <NetworkInformationSquare
-                  name={network.name}
-                  active={isActive}
-                  size={"lg"}
-                  description={network.description}
-                />
-              </div>
-              <NetworkProvider network={network}>
+                <div
+                  className={cn(
+                    "flex items-center w-full",
+                    !network.description && "gap-2",
+                  )}
+                >
+                  <NetworkInformationSquare
+                    name={network.name}
+                    active={isActive}
+                    size={"lg"}
+                    description={network.description}
+                  />
+                </div>
                 <NetworkActions />
-              </NetworkProvider>
+              </div>
+            </div>
+
+            <div className={"flex gap-10 w-full mt-8 max-w-6xl items-start"}>
+              <NetworkInformationCard network={network} />
             </div>
           </div>
 
-          <div className={"flex gap-10 w-full mt-8 max-w-6xl items-start"}>
-            <NetworkInformationCard network={network} />
-          </div>
-        </div>
+          <Tabs
+            defaultValue={tab}
+            onValueChange={setTab}
+            value={tab}
+            className={"pb-0 mb-0"}
+          >
+            <TabsList justify={"start"} className={"px-8"}>
+              <TabsTrigger value={"resources"}>
+                <Layers3Icon size={14} />
+                {singularize("Resources", network?.resources?.length)}
+              </TabsTrigger>
+              <TabsTrigger value={"routing-peers"}>
+                <PeerIcon
+                  size={12}
+                  className={
+                    "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+                  }
+                />
+                {singularize("Routing Peers", network?.routing_peers_count)}
+              </TabsTrigger>
+              <TabsTrigger value={"services"}>
+                <ReverseProxyIcon
+                  size={16}
+                  className={
+                    "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
+                  }
+                />
+                {singularize("Services", services.length)}
+              </TabsTrigger>
+            </TabsList>
 
-        <Tabs
-          defaultValue={tab}
-          onValueChange={setTab}
-          value={tab}
-          className={"pb-0 mb-0"}
-        >
-          <TabsList justify={"start"} className={"px-8"}>
-            <TabsTrigger value={"resources"}>
-              <Layers3Icon size={14} />
-              {singularize("Resources", network?.resources?.length)}
-            </TabsTrigger>
-            <TabsTrigger value={"routing-peers"}>
-              <PeerIcon
-                size={12}
-                className={
-                  "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-                }
+            <TabsContent value={"resources"} className={"pb-8"}>
+              <ResourcesTabContent
+                data={resources}
+                isLoading={isResourcesLoading}
               />
-              {singularize("Routing Peers", network?.routing_peers_count)}
-            </TabsTrigger>
-            <TabsTrigger value={"services"}>
-              <ReverseProxyIcon
-                size={16}
-                className={
-                  "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
-                }
+            </TabsContent>
+
+            <TabsContent value={"routing-peers"} className={"pb-8"}>
+              <NetworkRoutingPeersTabContent
+                routers={routers}
+                isLoading={isRoutersLoading}
               />
-              {singularize("Services", services.length)}
-            </TabsTrigger>
-          </TabsList>
+            </TabsContent>
 
-          <TabsContent value={"resources"} className={"pb-8"}>
-            <ResourcesTabContent
-              data={resources}
-              isLoading={isResourcesLoading}
-            />
-          </TabsContent>
-
-          <TabsContent value={"routing-peers"} className={"pb-8"}>
-            <NetworkRoutingPeersTabContent
-              routers={routers}
-              isLoading={isRoutersLoading}
-            />
-          </TabsContent>
-
-          <TabsContent value={"services"} className={"pb-8"}>
-            <ReverseProxyFlatTargetsTabContent
-              targets={services}
-              isLoading={isServicesLoading}
-            />
-          </TabsContent>
-        </Tabs>
-      </NetworkProvider>
+            <TabsContent value={"services"} className={"pb-8"}>
+              <ReverseProxyFlatTargetsTabContent
+                targets={services}
+                isLoading={isServicesLoading}
+              />
+            </TabsContent>
+          </Tabs>
+        </NetworkProvider>
+      </NetworkAccessControlProvider>
     </PageContainer>
   );
 }

@@ -10,6 +10,7 @@ import ResourceCountBadge from "@components/ui/ResourceCountBadge";
 
 type Props = {
   group?: Group;
+  disableRedirect?: boolean;
 } & React.HTMLAttributes<HTMLDivElement> &
   BadgeVariants;
 
@@ -17,6 +18,7 @@ export default function PeerCountBadge({
   group,
   variant = "gray",
   className,
+  disableRedirect = false,
 }: Props) {
   const router = useRouter();
   const { dropdownOptions, groups } = useGroups();
@@ -35,7 +37,8 @@ export default function PeerCountBadge({
     return peerCount;
   }, [currentGroup]);
 
-  const canRedirect = !!group?.id && group?.name !== "All";
+  const canRedirect =
+    !!group?.id && group?.name !== "All" && !disableRedirect;
 
   const onClick = (e: React.MouseEvent<HTMLDivElement>) => {
     e.stopPropagation();
@@ -46,7 +49,7 @@ export default function PeerCountBadge({
   const showResources = resourcesCount > 0 && peerCount === 0;
 
   return showResources ? (
-    <ResourceCountBadge group={group} />
+    <ResourceCountBadge group={group} disableRedirect={disableRedirect} />
   ) : (
     <Badge
       variant={variant}
