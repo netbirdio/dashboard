@@ -9,6 +9,7 @@ import {
   LockIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
+  ShieldCheckIcon,
   ShieldIcon,
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -23,6 +24,7 @@ import DangerZoneTab from "@/modules/settings/DangerZoneTab";
 import IdentityProvidersTab from "@/modules/settings/IdentityProvidersTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
+import CertificateAuthorityTab from "@/modules/settings/CertificateAuthorityTab";
 import GroupsSettings from "@/modules/settings/GroupsSettings";
 
 export default function NetBirdSettings() {
@@ -78,6 +80,12 @@ export default function NetBirdSettings() {
                 <MonitorSmartphoneIcon size={14} />
                 Clients
               </VerticalTabs.Trigger>
+              {permission.certificate_authority?.read && (
+                <VerticalTabs.Trigger value="certificate-authority">
+                  <ShieldCheckIcon size={14} />
+                  Certificate Authority
+                </VerticalTabs.Trigger>
+              )}
             </>
           )}
 
@@ -95,6 +103,9 @@ export default function NetBirdSettings() {
             {account && <GroupsSettings account={account} />}
             {account && <NetworkSettingsTab account={account} />}
             {account && <ClientSettingsTab account={account} />}
+            {account && permission.certificate_authority?.read && (
+              <CertificateAuthorityTab account={account} />
+            )}
             {account && <DangerZoneTab account={account} />}
           </div>
         </RestrictedAccess>

@@ -12,6 +12,7 @@ export interface Account {
     peer_login_expiration_enabled: boolean;
     peer_expose_enabled?: boolean;
     peer_expose_groups?: string[];
+    cert_wildcard_allowed?: boolean;
     peer_login_expiration: number;
     peer_inactivity_expiration_enabled: boolean;
     peer_inactivity_expiration: number;

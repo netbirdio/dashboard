@@ -20,6 +20,7 @@ export interface Permissions {
     events: Permission;
 
     settings: Permission;
+    certificate_authority: Permission;
     accounts: Permission;
     billing: Permission;
     identity_providers: Permission;

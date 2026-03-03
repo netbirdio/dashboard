@@ -43,6 +43,7 @@ import {
   NetworkIcon,
   PencilIcon,
   RadioTowerIcon,
+  ShieldCheckIcon,
 } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -72,6 +73,7 @@ import ReverseProxiesProvider, {
   useReverseProxies,
 } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxyFlatTargetsTabContent } from "@/modules/reverse-proxy/targets/flat/ReverseProxyFlatTargetsTabContent";
+import { PeerCertificatesSection } from "@/modules/peer/PeerCertificatesSection";
 import { PeerSSHToggle } from "@/modules/peer/PeerSSHToggle";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
@@ -374,6 +376,13 @@ const PeerOverviewTabs = () => {
             Remote Jobs
           </TabsTrigger>
         )}
+
+        {peer?.id && permission.certificate_authority?.read && (
+          <TabsTrigger value={"certificates"}>
+            <ShieldCheckIcon size={16} />
+            Certificates
+          </TabsTrigger>
+        )}
       </TabsList>
 
       <TabsContent value={"overview"} className={"pb-8"}>
@@ -409,6 +418,12 @@ const PeerOverviewTabs = () => {
       {peer.id && permission.peers.delete && (
         <TabsContent value={"peer-job"} className={"pb-8"}>
           <PeerRemoteJobsSection peerID={peer.id} />
+        </TabsContent>
+      )}
+
+      {peer?.id && permission.certificate_authority?.read && (
+        <TabsContent value={"certificates"} className={"pb-8"}>
+          <PeerCertificatesSection peerId={peer.id} />
         </TabsContent>
       )}
     </Tabs>
