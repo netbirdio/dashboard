@@ -31,7 +31,7 @@ export default function ReverseProxyStatusCell({
     !!meta?.certificate_issued_at ||
     !!dataRef.current?.meta?.certificate_issued_at;
 
-  const shouldPoll = !!enabled && !certificateIssued;
+  const shouldPoll = !!enabled && !(isActive && certificateIssued);
 
   const { data } = useFetchApi<ReverseProxy>(
     `/reverse-proxies/services/${serviceId}`,
