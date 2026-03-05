@@ -55,6 +55,14 @@ function CertStatusBadge({ cert }: { cert: IssuedCertificate }) {
     );
   }
 
+  if (dayjs(cert.not_before).isAfter(dayjs())) {
+    return (
+      <Badge variant={"yellow"} size={"xs"}>
+        Pending
+      </Badge>
+    );
+  }
+
   return (
     <Badge variant={"green"} size={"xs"}>
       Active
@@ -79,7 +87,7 @@ function ActiveCertificateCard({
   const handleRevoke = async () => {
     const choice = await confirm({
       title: `Revoke certificate?`,
-      description: `Are you sure you want to revoke the certificate for ${cert.dns_names.join(", ") || cert.serial_number}? This action cannot be undone.`,
+      description: `Are you sure you want to revoke the certificate for ${cert.dns_names?.join(", ") || cert.serial_number}? This action cannot be undone.`,
       confirmText: "Revoke",
       cancelText: "Cancel",
       type: "danger",
