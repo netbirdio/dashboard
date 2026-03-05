@@ -315,8 +315,11 @@ export default function CertificateAuthorityTab({
 }: Readonly<Props>) {
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
-  const { data: cas, isLoading: isCAsLoading } =
-    useFetchApi<CACertificate[]>("/ca");
+  const {
+    data: cas,
+    isLoading: isCAsLoading,
+    error: caError,
+  } = useFetchApi<CACertificate[]>("/ca");
   const saveRequest = useApiCall<Account>("/accounts/" + account.id, true);
 
   const [initModalOpen, setInitModalOpen] = useState(false);
@@ -381,7 +384,18 @@ export default function CertificateAuthorityTab({
         </div>
       </div>
 
-      {!isCAsLoading && !activeCA && (
+      {caError && (
+        <div
+          className={
+            "mx-8 mb-4 flex items-center gap-3 rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+          }
+        >
+          <AlertTriangleIcon size={16} className="shrink-0" />
+          <span>Failed to load Certificate Authority data. Please try again later.</span>
+        </div>
+      )}
+
+      {!isCAsLoading && !caError && !activeCA && (
         <>
           {!dnsDomainSet && (
             <div
@@ -453,7 +467,7 @@ export default function CertificateAuthorityTab({
             helpText={
               "Peers can request wildcard subdomain certificates (e.g. *.peer.domain)"
             }
-            disabled={!permission.settings.update}
+            disabled={!permission.certificate_authority?.update}
           />
         </div>
       )}

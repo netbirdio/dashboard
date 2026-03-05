@@ -31,7 +31,11 @@ function isCertExpired(cert: IssuedCertificate) {
 }
 
 function isCertActive(cert: IssuedCertificate) {
-  return !cert.revoked && !isCertExpired(cert);
+  return (
+    !cert.revoked &&
+    !isCertExpired(cert) &&
+    !dayjs(cert.not_before).isAfter(dayjs())
+  );
 }
 
 function CertStatusBadge({ cert }: { cert: IssuedCertificate }) {
@@ -226,7 +230,11 @@ function PreviousCertificatesSection({
 }
 
 export function PeerCertificatesSection({ peerId }: Props) {
-  const { data: certificates, isLoading } = useFetchApi<IssuedCertificate[]>(
+  const {
+    data: certificates,
+    isLoading,
+    error,
+  } = useFetchApi<IssuedCertificate[]>(
     "/ca/certificates?peer_id=" + peerId,
   );
 
@@ -256,7 +264,17 @@ export function PeerCertificatesSection({ peerId }: Props) {
         Authority.
       </Paragraph>
 
-      {hasNoCerts && (
+      {error && (
+        <div
+          className={
+            "mb-4 flex items-center gap-3 rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400"
+          }
+        >
+          <span>Failed to load certificates. Please try again later.</span>
+        </div>
+      )}
+
+      {!error && hasNoCerts && (
         <GetStartedTest
           icon={
             <SquareIcon
