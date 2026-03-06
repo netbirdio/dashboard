@@ -1,13 +1,7 @@
 "use client";
 
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from "@components/Accordion";
 import Button from "@components/Button";
-import { Checkbox } from "@components/Checkbox";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -15,14 +9,17 @@ import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { SelectDropdown } from "@components/select/SelectDropdown";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import useFetchApi from "@utils/api";
 import {
   AlertTriangle,
+  ClockFadingIcon,
   ExternalLinkIcon,
-  HelpCircle,
   PlusCircle,
   Server,
   Settings,
+  ShieldXIcon,
+  Text,
 } from "lucide-react";
 import { Callout } from "@components/Callout";
 import cidr from "ip-cidr";
@@ -35,18 +32,19 @@ import {
   ReverseProxyTarget,
   ReverseProxyTargetProtocol,
   ReverseProxyTargetType,
+  ServiceTargetOptionsPathRewrite,
 } from "@/interfaces/ReverseProxy";
 import {
   defaultPortForProtocol,
   isResourceTargetType,
 } from "@/contexts/ReverseProxiesProvider";
-import Separator from "@components/Separator";
 import { cn } from "@utils/helpers";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
-import FullTooltip from "@components/FullTooltip";
 import Paragraph from "@components/Paragraph";
+import ReverseProxyTargetCustomHeaders from "@/modules/reverse-proxy/targets/ReverseProxyTargetCustomHeaders";
+import { useReverseProxyTargetOptions } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 
 /** Get initial host value based on target, resource, or peer */
 function getInitialHost(
@@ -93,6 +91,8 @@ export default function ReverseProxyTargetModal({
   );
   const { data: peers } = useFetchApi<Peer[]>("/peers");
 
+  const [tab, setTab] = useState("details");
+
   const [targetType, setTargetType] = useState<ReverseProxyTargetType>(
     currentTarget?.target_type ??
       (initialResource
@@ -121,9 +121,9 @@ export default function ReverseProxyTargetModal({
     currentTarget?.port ?? 0,
   );
   const [targetPath, setTargetPath] = useState(currentTarget?.path ?? "");
-  const [accessLocal, setAccessLocal] = useState(
-    currentTarget?.access_local ?? false,
-  );
+  const [accessLocal] = useState(currentTarget?.access_local ?? false);
+  const [options, setOption, { getTargetOptions, headers, errors }] =
+    useReverseProxyTargetOptions(currentTarget?.options);
   const portInputRef = useRef<HTMLInputElement>(null);
   const [installModal, setInstallModal] = useState(false);
 
@@ -232,7 +232,8 @@ export default function ReverseProxyTargetModal({
 
   const handleSave = () => {
     const resolvedType = initialPeer ? ReverseProxyTargetType.PEER : targetType;
-    const isResource = isResourceTargetType(resolvedType) || !!initialResource;
+    const resolvedIsResource =
+      isResourceTargetType(resolvedType) || !!initialResource;
     const targetData: ReverseProxyTarget = {
       target_type: resolvedType,
       target_id:
@@ -245,19 +246,17 @@ export default function ReverseProxyTargetModal({
       port: targetPort,
       path: targetPath || undefined,
       enabled: currentTarget?.enabled ?? true,
-      access_local: isResource ? accessLocal : undefined,
+      access_local: resolvedIsResource ? accessLocal : undefined,
+      options: getTargetOptions(),
     };
     onSave(targetData);
     onOpenChange(false);
   };
 
-  const showAdvancedSettings = false;
-  // const showAdvancedSettings = !!hasTarget && (isResourceTargetType(targetType) || !!initialResource);
-
   return (
     <>
       <Modal open={open} onOpenChange={onOpenChange}>
-        <ModalContent maxWidthClass="max-w-xl">
+        <ModalContent maxWidthClass="max-w-2xl">
           <ModalHeader
             icon={<Server className="text-netbird" size={16} />}
             title={currentTarget ? "Edit Target" : "Add Target"}
@@ -265,308 +264,397 @@ export default function ReverseProxyTargetModal({
             color="netbird"
           />
 
-          <Separator />
+          <Tabs value={tab} onValueChange={setTab}>
+            <TabsList justify={"start"} className={"px-8"}>
+              <TabsTrigger value={"details"}>
+                <Text size={14} />
+                Details
+              </TabsTrigger>
+              <TabsTrigger value={"options"} disabled={!canAddTarget}>
+                <Settings size={14} />
+                Advanced Settings
+              </TabsTrigger>
+            </TabsList>
 
-          <div
-            className={cn(
-              "px-8 py-6 pt-4 flex flex-col gap-6",
-              !showAdvancedSettings && "mb-3",
-            )}
-          >
-            {!initialResource && !initialPeer && (
-              <div>
-                <Label className={"gap-0 inline"}>
-                  {initialNetwork ? (
-                    "Select Resource"
-                  ) : (
-                    <>
-                      Select{" "}
-                      <HelpTooltip
-                        content={
-                          <div className="max-w-sm text-xs">
-                            A{" "}
-                            <span className={"text-white font-medium"}>
-                              peer
-                            </span>{" "}
-                            is a machine (e.g., laptop, server, container)
-                            running NetBird. Select a peer if your service runs
-                            directly on it.
-                            <span className={"mt-1 block"}>
-                              If you don&apos;t have a peer yet, you can{" "}
-                              <InlineButtonLink
-                                onClick={() => setInstallModal(true)}
-                              >
-                                Install NetBird
-                              </InlineButtonLink>
-                              .
-                            </span>
-                          </div>
-                        }
-                      >
-                        Peer
-                      </HelpTooltip>{" "}
-                      or{" "}
-                      <HelpTooltip
-                        content={
-                          <div className="max-w-sm text-xs">
-                            A{" "}
-                            <span className={"text-white font-medium"}>
-                              resource
-                            </span>{" "}
-                            is a destination (IP, subnet, or domain) that
-                            can&apos;t run NetBird directly. Resources are part
-                            of a network and are reached through a routing peer
-                            that forwards traffic to them.
-                            <span className={"mt-1 block"}>
-                              If you don&apos;t have resources yet, go to{" "}
-                              <InlineLink href={"/networks"}>
-                                Networks
-                              </InlineLink>{" "}
-                              to create some.
-                            </span>
-                          </div>
-                        }
-                      >
-                        Resource
-                      </HelpTooltip>
-                    </>
-                  )}
-                </Label>
+            <TabsContent value={"details"} className={"pb-8"}>
+              <div className="px-8 flex flex-col gap-8">
+                {!initialResource && !initialPeer && (
+                  <div>
+                    <Label className={"gap-0 inline"}>
+                      {initialNetwork ? (
+                        "Select Resource"
+                      ) : (
+                        <>
+                          Select{" "}
+                          <HelpTooltip
+                            className={"max-w-sm"}
+                            content={
+                              <>
+                                A{" "}
+                                <span className={"text-white font-medium"}>
+                                  peer
+                                </span>{" "}
+                                is a machine (e.g., laptop, server, container)
+                                running NetBird. Select a peer if your service
+                                runs directly on it.
+                                <span className={"mt-1 block"}>
+                                  If you don&apos;t have a peer yet, you can{" "}
+                                  <InlineButtonLink
+                                    onClick={() => setInstallModal(true)}
+                                  >
+                                    Install NetBird
+                                  </InlineButtonLink>
+                                  .
+                                </span>
+                              </>
+                            }
+                            interactive={true}
+                          >
+                            Peer
+                          </HelpTooltip>{" "}
+                          or{" "}
+                          <HelpTooltip
+                            className={"max-w-sm"}
+                            content={
+                              <>
+                                A{" "}
+                                <span className={"text-white font-medium"}>
+                                  resource
+                                </span>{" "}
+                                is a destination (IP, subnet, or domain) that
+                                can&apos;t run NetBird directly. Resources are
+                                part of a network and are reached through a
+                                routing peer that forwards traffic to them.
+                                <span className={"mt-1 block"}>
+                                  If you don&apos;t have resources yet, go to{" "}
+                                  <InlineLink href={"/networks"}>
+                                    Networks
+                                  </InlineLink>{" "}
+                                  to create some.
+                                </span>
+                              </>
+                            }
+                            interactive={true}
+                          >
+                            Resource
+                          </HelpTooltip>
+                        </>
+                      )}
+                    </Label>
 
-                <HelpText>
-                  {initialNetwork
-                    ? "Select the resource from your network you want to expose."
-                    : "Select the peer where your service is running or select a resource to expose it."}
-                </HelpText>
-                <PeerGroupSelector
-                  values={[]}
-                  onChange={() => {}}
-                  placeholder={
-                    initialNetwork
-                      ? "Select a resource..."
-                      : "Select a peer or resource..."
-                  }
-                  showPeers={!initialNetwork}
-                  showResources={true}
-                  showRoutes={false}
-                  hideAllGroup={true}
-                  hideGroupsTab={true}
-                  resourceIds={
-                    initialNetwork ? initialNetwork.resources ?? [] : undefined
-                  }
-                  tabOrder={
-                    initialNetwork ? ["resources"] : ["peers", "resources"]
-                  }
-                  closeOnSelect={true}
-                  max={1}
-                  resource={
-                    isResourceTargetType(targetType) && targetResourceId
-                      ? { id: targetResourceId, type: "host" }
-                      : targetType === ReverseProxyTargetType.PEER &&
-                        targetPeerId
-                      ? { id: targetPeerId, type: "peer" }
-                      : undefined
-                  }
-                  onResourceChange={(res) => {
-                    if (res) {
-                      if (res.type === "peer") {
-                        setTargetType(ReverseProxyTargetType.PEER);
-                        setTargetPeerId(res.id);
-                        setTargetResourceId(undefined);
-                        const peer = peers?.find((p) => p.id === res.id);
-                        setTargetHost(peer?.ip || "localhost");
-                      } else {
-                        const selectedResource = resources?.find(
-                          (r) => r.id === res.id,
-                        );
-                        setTargetType(
-                          (selectedResource?.type as ReverseProxyTargetType) ??
-                            ReverseProxyTargetType.HOST,
-                        );
-                        setTargetResourceId(res.id);
-                        setTargetPeerId(undefined);
-                        const address = selectedResource?.address || "";
-                        // If CIDR range, pre-fill with base IP
-                        if (address.includes("/")) {
-                          setTargetHost(address.split("/")[0]);
+                    <HelpText>
+                      {initialNetwork
+                        ? "Select the resource from your network you want to expose."
+                        : "Select the peer where your service is running or select a resource to expose it."}
+                    </HelpText>
+                    <PeerGroupSelector
+                      values={[]}
+                      onChange={() => {}}
+                      placeholder={
+                        initialNetwork
+                          ? "Select a resource..."
+                          : "Select a peer or resource..."
+                      }
+                      showPeers={!initialNetwork}
+                      showResources={true}
+                      showRoutes={false}
+                      hideAllGroup={true}
+                      hideGroupsTab={true}
+                      resourceIds={
+                        initialNetwork
+                          ? initialNetwork.resources ?? []
+                          : undefined
+                      }
+                      tabOrder={
+                        initialNetwork ? ["resources"] : ["peers", "resources"]
+                      }
+                      closeOnSelect={true}
+                      max={1}
+                      resource={
+                        isResourceTargetType(targetType) && targetResourceId
+                          ? { id: targetResourceId, type: "host" }
+                          : targetType === ReverseProxyTargetType.PEER &&
+                            targetPeerId
+                          ? { id: targetPeerId, type: "peer" }
+                          : undefined
+                      }
+                      onResourceChange={(res) => {
+                        if (res) {
+                          if (res.type === "peer") {
+                            setTargetType(ReverseProxyTargetType.PEER);
+                            setTargetPeerId(res.id);
+                            setTargetResourceId(undefined);
+                            const peer = peers?.find((p) => p.id === res.id);
+                            setTargetHost(peer?.ip || "localhost");
+                          } else {
+                            const selectedResource = resources?.find(
+                              (r) => r.id === res.id,
+                            );
+                            setTargetType(
+                              (selectedResource?.type as ReverseProxyTargetType) ??
+                                ReverseProxyTargetType.HOST,
+                            );
+                            setTargetResourceId(res.id);
+                            setTargetPeerId(undefined);
+                            const address = selectedResource?.address || "";
+                            // If CIDR range, pre-fill with base IP
+                            if (address.includes("/")) {
+                              setTargetHost(address.split("/")[0]);
+                            } else {
+                              setTargetHost(address);
+                            }
+                          }
+                          setTimeout(() => portInputRef.current?.focus(), 0);
                         } else {
-                          setTargetHost(address);
+                          setTargetPeerId(undefined);
+                          setTargetResourceId(undefined);
+                          setTargetHost("");
                         }
-                      }
-                      setTimeout(() => portInputRef.current?.focus(), 0);
-                    } else {
-                      setTargetPeerId(undefined);
-                      setTargetResourceId(undefined);
-                      setTargetHost("");
-                    }
-                  }}
-                />
-              </div>
-            )}
-
-            <div>
-              <Label>Location (Optional)</Label>
-              <HelpText>
-                Specify an optional path from where requests are routed to your
-                service.
-              </HelpText>
-              <div className="flex w-full">
-                <div
-                  className={`bg-nb-gray-900 rounded-l-md border text-nb-gray-300 border-r-0 text-sm border-nb-gray-700 flex items-center justify-center whitespace-nowrap px-4 ${
-                    !hasTarget ? "opacity-50" : "opacity-80"
-                  }`}
-                >
-                  {domain || "domain.example.com"}
-                </div>
-                <Input
-                  placeholder="/"
-                  value={targetPath}
-                  className={cn("rounded-l-none")}
-                  maxWidthClass="w-full"
-                  disabled={!hasTarget}
-                  onChange={(e) => {
-                    let value = e.target.value;
-                    if (value && !value.startsWith("/")) {
-                      value = "/" + value;
-                    }
-                    setTargetPath(value);
-                  }}
-                />
-              </div>
-              {isPathDuplicate && hasTarget && (
-                <Callout
-                  variant="warning"
-                  className="mt-3"
-                  icon={
-                    <AlertTriangle
-                      size={14}
-                      className="shrink-0 relative top-[3px]"
-                    />
-                  }
-                >
-                  Please use a different location. This location is already used
-                  by another target and cannot be added.
-                </Callout>
-              )}
-            </div>
-
-            <div className="flex gap-3 mt-1">
-              <div className="flex-1">
-                <Label>Protocol & Host / IP</Label>
-                {cidrInfo && (
-                  <HelpText className="!mt-1">
-                    Enter an IP address within {currentResourceAddress}
-                  </HelpText>
-                )}
-                <div className="flex items-center mt-2">
-                  <div className="w-[120px]">
-                    <SelectDropdown
-                      value={targetProtocol}
-                      onChange={(v) =>
-                        setTargetProtocol(v as ReverseProxyTargetProtocol)
-                      }
-                      options={[
-                        {
-                          value: ReverseProxyTargetProtocol.HTTP,
-                          label: "http://",
-                        },
-                        {
-                          value: ReverseProxyTargetProtocol.HTTPS,
-                          label: "https://",
-                        },
-                      ]}
-                      className="!rounded-r-none !border-r-0"
-                      disabled={!hasTarget}
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <Input
-                      value={targetHost}
-                      onChange={(e) => {
-                        // Only allow valid IP characters for CIDR ranges
-                        const value = isHostEditable
-                          ? e.target.value.replace(/[^0-9.]/g, "")
-                          : e.target.value;
-                        setTargetHost(value);
                       }}
-                      placeholder="e.g., 192.168.0.10"
-                      className="!rounded-l-none"
-                      disabled={!hasTarget}
-                      readOnly={hasTarget && !isHostEditable ? true : undefined}
-                      autoFocus={!!initialResource && isHostEditable}
                     />
                   </div>
+                )}
+
+                <div>
+                  <Label>Location (Optional)</Label>
+                  <HelpText>
+                    Specify an optional path from where requests are routed to
+                    your service.
+                  </HelpText>
+                  <div className="flex w-full">
+                    <div
+                      className={`bg-nb-gray-900 rounded-l-md border text-nb-gray-300 border-r-0 text-sm border-nb-gray-700 flex items-center justify-center whitespace-nowrap px-4 ${
+                        !hasTarget ? "opacity-50" : "opacity-80"
+                      }`}
+                    >
+                      {domain || "domain.example.com"}
+                    </div>
+                    <Input
+                      placeholder="/"
+                      value={targetPath}
+                      className={cn("rounded-l-none")}
+                      maxWidthClass="w-full"
+                      disabled={!hasTarget}
+                      onChange={(e) => {
+                        let value = e.target.value;
+                        if (value && !value.startsWith("/")) {
+                          value = "/" + value;
+                        }
+                        setTargetPath(value);
+                        if (!value || value === "/") {
+                          setOption("path_rewrite", undefined);
+                        }
+                      }}
+                    />
+                  </div>
+                  {isPathDuplicate && hasTarget && (
+                    <Callout
+                      variant="warning"
+                      className="mt-3"
+                      icon={
+                        <AlertTriangle
+                          size={14}
+                          className="shrink-0 relative top-[3px]"
+                        />
+                      }
+                    >
+                      This location is already used by another target and cannot
+                      be added. <br /> Please use a different location.
+                    </Callout>
+                  )}
+                  {targetPath &&
+                    targetPath !== "/" &&
+                    hasTarget &&
+                    !isPathDuplicate && (
+                      <FancyToggleSwitch
+                        value={options.path_rewrite === "preserve"}
+                        onChange={(v) =>
+                          setOption(
+                            "path_rewrite",
+                            v
+                              ? ("preserve" as ServiceTargetOptionsPathRewrite)
+                              : undefined,
+                          )
+                        }
+                        className={"mt-3.5"}
+                        label={
+                          <>
+                            Preserve Full Path
+                            <HelpTooltip
+                              content={
+                                <div className="text-xs max-w-xs flex flex-col gap-2">
+                                  <div>
+                                    When disabled, a request to e.g.,{" "}
+                                    <span className="font-mono text-white">
+                                      {targetPath}/users
+                                    </span>{" "}
+                                    is forwarded as{" "}
+                                    <span className="font-mono text-white">
+                                      /users
+                                    </span>
+                                    .
+                                  </div>
+                                  <div>
+                                    When enabled, a request to e.g.,{" "}
+                                    <span className="font-mono text-white">
+                                      {targetPath}/users
+                                    </span>{" "}
+                                    is forwarded as{" "}
+                                    <span className="font-mono text-white">
+                                      {targetPath}/users
+                                    </span>
+                                    .
+                                  </div>
+                                </div>
+                              }
+                            />
+                          </>
+                        }
+                        helpText={
+                          <div>
+                            Keep the original full request path when forwarding.{" "}
+                            <br />
+                            When disabled the matched prefix path is stripped.
+                          </div>
+                        }
+                      />
+                    )}
+                </div>
+
+                <div>
+                  <div className="flex gap-3 mt-1">
+                    <div className="flex-1">
+                      <Label>Protocol & Host / IP</Label>
+                      {cidrInfo && (
+                        <HelpText className="!mt-1">
+                          Enter an IP address within {currentResourceAddress}
+                        </HelpText>
+                      )}
+                      <div className="flex items-center mt-2">
+                        <div className="w-[120px]">
+                          <SelectDropdown
+                            value={targetProtocol}
+                            onChange={(v) => {
+                              const proto = v as ReverseProxyTargetProtocol;
+                              setTargetProtocol(proto);
+                              if (proto !== ReverseProxyTargetProtocol.HTTPS) {
+                                setOption("skip_tls_verify", undefined);
+                              }
+                            }}
+                            options={[
+                              {
+                                value: ReverseProxyTargetProtocol.HTTP,
+                                label: "http://",
+                              },
+                              {
+                                value: ReverseProxyTargetProtocol.HTTPS,
+                                label: "https://",
+                              },
+                            ]}
+                            className="!rounded-r-none !border-r-0"
+                            disabled={!hasTarget}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Input
+                            value={targetHost}
+                            onChange={(e) => {
+                              // Only allow valid IP characters for CIDR ranges
+                              const value = isHostEditable
+                                ? e.target.value.replace(/[^0-9.]/g, "")
+                                : e.target.value;
+                              setTargetHost(value);
+                            }}
+                            placeholder="e.g., 192.168.0.10"
+                            className="!rounded-l-none"
+                            disabled={!hasTarget}
+                            readOnly={
+                              hasTarget && !isHostEditable ? true : undefined
+                            }
+                            autoFocus={!!initialResource && isHostEditable}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    <div className="w-[150px]">
+                      <Label>
+                        Port
+                        <HelpTooltip
+                          content={
+                            "Enter the port where your service (e.g., webserver, app, API) is currently listening. If left empty, defaults to port 80 for HTTP or 443 for HTTPS."
+                          }
+                        />
+                      </Label>
+                      {cidrInfo && (
+                        <HelpText className="!mt-1">&nbsp;</HelpText>
+                      )}
+                      <div className="mt-2">
+                        <Input
+                          ref={portInputRef}
+                          type="number"
+                          value={targetPort === 0 ? "" : targetPort}
+                          onChange={(e) =>
+                            setTargetPort(parseInt(e.target.value) || 0)
+                          }
+                          placeholder={String(
+                            defaultPortForProtocol(targetProtocol),
+                          )}
+                          min={0}
+                          max={65535}
+                          disabled={!hasTarget}
+                          autoFocus={!!initialResource && !isHostEditable}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {targetProtocol === ReverseProxyTargetProtocol.HTTPS &&
+                    hasTarget && (
+                      <FancyToggleSwitch
+                        className={"mt-3.5"}
+                        value={options.skip_tls_verify ?? false}
+                        onChange={(v) =>
+                          setOption("skip_tls_verify", v || undefined)
+                        }
+                        label={
+                          <>
+                            <ShieldXIcon size={15} />
+                            Skip TLS Verification
+                          </>
+                        }
+                        helpText="Skip certificate verification when connecting to this target. Useful if your service already uses a self-signed certificate."
+                      />
+                    )}
                 </div>
               </div>
-              <div className="w-[150px]">
-                <Label>
-                  Port
-                  <FullTooltip
-                    content={
-                      <div className={"text-xs max-w-xs"}>
-                        Enter the port where your service (e.g., webserver, app,
-                        API) is currently listening. If left empty, defaults to
-                        port 80 for HTTP or 443 for HTTPS.
-                      </div>
-                    }
-                  >
-                    <HelpCircle
-                      size={12}
-                      className="cursor-help hover:text-nb-gray-100 transition-colors"
-                    />
-                  </FullTooltip>
-                </Label>
-                {cidrInfo && <HelpText className="!mt-1">&nbsp;</HelpText>}
-                <div className="mt-2">
+            </TabsContent>
+
+            <TabsContent value={"options"} className={"pb-8"}>
+              <div className="px-8 flex flex-col gap-8 pt-1.5">
+                <div className={"flex items-center justify-between"}>
+                  <div>
+                    <Label>Request Timeout</Label>
+                    <HelpText className={"mb-0"}>
+                      Max time to wait for a response as duration string (max
+                      5m). <br /> Leave this field empty for no timeout.
+                    </HelpText>
+                  </div>
                   <Input
-                    ref={portInputRef}
-                    type="number"
-                    value={targetPort === 0 ? "" : targetPort}
+                    customPrefix={<ClockFadingIcon size={16} />}
+                    placeholder="e.g. 10s, 30s, 1m"
+                    value={options.request_timeout ?? ""}
                     onChange={(e) =>
-                      setTargetPort(parseInt(e.target.value) || 0)
+                      setOption("request_timeout", e.target.value || undefined)
                     }
-                    placeholder={String(defaultPortForProtocol(targetProtocol))}
-                    min={0}
-                    max={65535}
-                    disabled={!hasTarget}
-                    autoFocus={!!initialResource && !isHostEditable}
+                    maxWidthClass="w-[180px]"
+                    errorTooltip={true}
+                    error={errors.timeout}
                   />
                 </div>
-              </div>
-            </div>
 
-            {showAdvancedSettings && (
-              <Accordion type="single" collapsible>
-                <AccordionItem value="advanced">
-                  <AccordionTrigger className="text-sm text-nb-gray-300">
-                    <div className="flex items-center gap-2">
-                      <Settings size={14} />
-                      Advanced Settings
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent>
-                    <div className="flex flex-col gap-4 mt-4">
-                      <label className="flex items-start gap-3 cursor-pointer">
-                        <Checkbox
-                          checked={accessLocal}
-                          onCheckedChange={(v) => setAccessLocal(v === true)}
-                        />
-                        <div>
-                          <Label className="!mb-0" as={"div"}>
-                            This is the routing peer
-                          </Label>
-                          <HelpText className="!mt-1">
-                            Enable if the service runs directly on the routing
-                            peer rather than behind it.
-                          </HelpText>
-                        </div>
-                      </label>
-                    </div>
-                  </AccordionContent>
-                </AccordionItem>
-              </Accordion>
-            )}
-          </div>
+                <ReverseProxyTargetCustomHeaders {...headers} />
+              </div>
+            </TabsContent>
+          </Tabs>
 
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>
@@ -582,23 +670,61 @@ export default function ReverseProxyTargetModal({
               </Paragraph>
             </div>
             <div className="flex gap-3 w-full justify-end">
-              <Button variant="secondary" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSave}
-                disabled={!canAddTarget}
-              >
-                {currentTarget ? (
-                  "Save Changes"
-                ) : (
-                  <>
-                    <PlusCircle size={16} />
-                    Add Target
-                  </>
-                )}
-              </Button>
+              {currentTarget ? (
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleSave}
+                    disabled={!canAddTarget || errors.options}
+                  >
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {tab === "details" && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        onClick={() => onOpenChange(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="primary"
+                        onClick={() => setTab("options")}
+                        disabled={!canAddTarget}
+                      >
+                        Continue
+                      </Button>
+                    </>
+                  )}
+                  {tab === "options" && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setTab("details")}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        variant="primary"
+                        onClick={handleSave}
+                        disabled={!canAddTarget || errors.options}
+                      >
+                        <PlusCircle size={16} />
+                        Add Target
+                      </Button>
+                    </>
+                  )}
+                </>
+              )}
             </div>
           </ModalFooter>
         </ModalContent>

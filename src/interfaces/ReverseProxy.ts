@@ -26,6 +26,15 @@ export enum ReverseProxyStatus {
   ERROR = "error",
 }
 
+export type ServiceTargetOptionsPathRewrite = "preserve";
+
+export interface ServiceTargetOptions {
+  skip_tls_verify?: boolean;
+  request_timeout?: string;
+  path_rewrite?: ServiceTargetOptionsPathRewrite;
+  custom_headers?: Record<string, string>;
+}
+
 export interface ReverseProxyTarget {
   target_id?: string;
   target_type: ReverseProxyTargetType;
@@ -35,6 +44,7 @@ export interface ReverseProxyTarget {
   port: number;
   enabled: boolean;
   access_local?: boolean;
+  options?: ServiceTargetOptions;
   // Frontend
   destination?: string;
 }
