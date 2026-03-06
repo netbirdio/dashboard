@@ -12,6 +12,7 @@ type Props = {
   serviceId: string;
   meta?: ReverseProxyMeta;
   enabled?: boolean;
+  isL4?: boolean;
 };
 
 const POLL_INTERVAL_MS = 3500;
@@ -20,15 +21,21 @@ export default function ReverseProxyStatusCell({
   serviceId,
   meta,
   enabled,
+  isL4,
 }: Readonly<Props>) {
   const status = meta?.status;
   const certificateIssued = !!meta?.certificate_issued_at;
 
+  const isTerminalStatus =
+    status === ReverseProxyStatus.ACTIVE ||
+    status === ReverseProxyStatus.ERROR ||
+    status === ReverseProxyStatus.TUNNEL_NOT_CREATED;
+
   const isSettingUp =
     enabled &&
     status !== undefined &&
-    status !== ReverseProxyStatus.ACTIVE &&
-    !certificateIssued;
+    !isTerminalStatus &&
+    (isL4 || !certificateIssued);
 
   const { data } = useFetchApi<ReverseProxy>(
     `/reverse-proxies/services/${serviceId}`,
@@ -45,9 +52,39 @@ export default function ReverseProxyStatusCell({
     return certificateIssued;
   }, [data]);
 
+  if (!enabled) return null;
+
+  // L4 services don't need certificates — hide once active
+  if (isL4) {
+    if (currentStatus === ReverseProxyStatus.ACTIVE) return null;
+    if (currentStatus === ReverseProxyStatus.ERROR) {
+      return (
+        <div className={"flex"}>
+          <Badge variant={"red"}>Error</Badge>
+        </div>
+      );
+    }
+    if (currentStatus === ReverseProxyStatus.TUNNEL_NOT_CREATED) {
+      return (
+        <div className={"flex"}>
+          <Badge variant={"red"}>Tunnel not created</Badge>
+        </div>
+      );
+    }
+    return (
+      <div className={"flex"}>
+        <Badge variant={"yellow"}>
+          <Loader2 size={14} className={"animate-spin"} />
+          Setting up service...
+        </Badge>
+      </div>
+    );
+  }
+
+  // HTTP services: hide once active with certificate issued
   if (
-    !enabled ||
-    (currentStatus === ReverseProxyStatus.ACTIVE && currentCertificateIssued)
+    currentStatus === ReverseProxyStatus.ACTIVE &&
+    currentCertificateIssued
   ) {
     return null;
   }

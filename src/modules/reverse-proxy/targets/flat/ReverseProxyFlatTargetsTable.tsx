@@ -1,11 +1,23 @@
 import Button from "@components/Button";
 import Card from "@components/Card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import NoResults from "@components/ui/NoResults";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
-import { PlusCircle } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  LockKeyhole,
+  PlusCircle,
+  Server,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useCallback, useState } from "react";
@@ -192,15 +204,53 @@ export const ReverseProxyFlatTargetsTable = ({
         />
       }
       rightSide={() => (
-        <Button
-          variant={"primary"}
-          className={"ml-auto"}
-          onClick={() => openModal()}
-          disabled={!permission?.services?.create}
-        >
-          <PlusCircle size={16} />
-          Add Service
-        </Button>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant={"primary"}
+              className={"ml-auto"}
+              disabled={!permission?.services?.create}
+            >
+              <PlusCircle size={16} />
+              Add Service
+              <ChevronDown size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-auto min-w-[200px]">
+            <DropdownMenuItem
+              onClick={() => openModal({ initialEndpointMode: "http" })}
+            >
+              <div className="flex gap-3 items-center">
+                <Server size={14} className="shrink-0" />
+                HTTP Service
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openModal({ initialEndpointMode: "tls" })}
+            >
+              <div className="flex gap-3 items-center">
+                <LockKeyhole size={14} className="shrink-0" />
+                TLS Passthrough
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openModal({ initialEndpointMode: "tcp" })}
+            >
+              <div className="flex gap-3 items-center">
+                <ArrowRight size={14} className="shrink-0" />
+                TCP Service
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openModal({ initialEndpointMode: "udp" })}
+            >
+              <div className="flex gap-3 items-center">
+                <ArrowRight size={14} className="shrink-0" />
+                UDP Service
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     >
       {(table) => (

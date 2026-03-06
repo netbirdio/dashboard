@@ -54,6 +54,7 @@ type ReverseProxiesContextValue = {
 type OpenModalOptions = {
   proxy?: ReverseProxy;
   initialTab?: string;
+  initialEndpointMode?: "http" | "tls" | "tcp" | "udp";
   initialPeer?: Peer;
   initialNetwork?: Network;
   initialResource?: NetworkResource;
@@ -146,11 +147,15 @@ export default function ReverseProxiesProvider({
   const [modalInitialResource, setModalInitialResource] = useState<
     NetworkResource | undefined
   >();
+  const [modalInitialEndpointMode, setModalInitialEndpointMode] = useState<
+    "http" | "tls" | "tcp" | "udp" | undefined
+  >();
   const onSuccessRef = React.useRef<(() => void) | undefined>(undefined);
   const openModal = useCallback(
     (options?: OpenModalOptions) => {
       setCurrentProxy(options?.proxy);
       setInitialTab(options?.initialTab);
+      setModalInitialEndpointMode(options?.initialEndpointMode);
       setModalInitialPeer(options?.initialPeer ?? initialPeer);
       setModalInitialNetwork(options?.initialNetwork ?? initialNetwork);
       setModalInitialResource(options?.initialResource);
@@ -164,6 +169,7 @@ export default function ReverseProxiesProvider({
     setModalOpen(false);
     setCurrentProxy(undefined);
     setInitialTab(undefined);
+    setModalInitialEndpointMode(undefined);
     setModalInitialPeer(undefined);
     setModalInitialNetwork(undefined);
     setModalInitialResource(undefined);
@@ -491,6 +497,7 @@ export default function ReverseProxiesProvider({
           reverseProxy={currentProxy}
           domains={domains}
           initialTab={initialTab}
+          initialEndpointMode={modalInitialEndpointMode}
           initialPeer={modalInitialPeer}
           initialNetwork={modalInitialNetwork}
           initialResource={modalInitialResource}
