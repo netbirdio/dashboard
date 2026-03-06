@@ -360,7 +360,7 @@ export default function ReverseProxyModal({
             </TabsTrigger>
             <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
               <Settings size={14} />
-              Settings
+              Advanced Settings
             </TabsTrigger>
           </TabsList>
 

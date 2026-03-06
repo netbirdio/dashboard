@@ -1,7 +1,6 @@
 "use client";
 
 import Button from "@components/Button";
-import { Checkbox } from "@components/Checkbox";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
@@ -14,19 +13,17 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import useFetchApi from "@utils/api";
 import {
   AlertTriangle,
+  ClockFadingIcon,
   ExternalLinkIcon,
-  HelpCircle,
-  MinusCircleIcon,
   PlusCircle,
-  PlusIcon,
-  RotateCcw,
   Server,
   Settings,
+  ShieldXIcon,
   Text,
 } from "lucide-react";
 import { Callout } from "@components/Callout";
 import cidr from "ip-cidr";
-import React, { useCallback, useMemo, useRef, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -35,7 +32,6 @@ import {
   ReverseProxyTarget,
   ReverseProxyTargetProtocol,
   ReverseProxyTargetType,
-  ServiceTargetOptions,
   ServiceTargetOptionsPathRewrite,
 } from "@/interfaces/ReverseProxy";
 import {
@@ -46,71 +42,9 @@ import { cn } from "@utils/helpers";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
-import FullTooltip from "@components/FullTooltip";
 import Paragraph from "@components/Paragraph";
-
-// RFC 7230 token characters for header names
-const HEADER_NAME_RE = /^[!#$%&'*+.^_`|~0-9A-Za-z-]+$/;
-// Go time.ParseDuration format: one or more {number}{unit} pairs
-const DURATION_RE = /^(\d+(\.\d+)?(ns|us|µs|ms|s|m|h))+$/;
-// Headers managed by the proxy that users cannot override
-const BLOCKED_HEADERS = new Set([
-  "host", "connection", "transfer-encoding", "keep-alive",
-  "proxy-authenticate", "proxy-authorization", "te", "trailer", "upgrade",
-]);
-
-type HeaderEntry = { id: number; name: string; value: string };
-
-function recordToHeaderEntries(
-  record: Record<string, string> | undefined,
-  nextId: () => number,
-): HeaderEntry[] {
-  if (!record) return [];
-  return Object.entries(record).map(([name, value]) => ({
-    id: nextId(),
-    name,
-    value,
-  }));
-}
-
-function headerEntriesToRecord(
-  entries: HeaderEntry[],
-): Record<string, string> | undefined {
-  if (entries.length === 0) return undefined;
-  const record: Record<string, string> = {};
-  for (const entry of entries) {
-    if (entry.name) record[entry.name] = entry.value;
-  }
-  return Object.keys(record).length > 0 ? record : undefined;
-}
-
-function validateHeaderName(
-  name: string,
-  allNames: string[],
-): string | undefined {
-  if (!name) return "Header name is required";
-  if (!HEADER_NAME_RE.test(name)) return "Invalid characters in header name";
-  if (BLOCKED_HEADERS.has(name.toLowerCase()))
-    return `"${name}" is a reserved header`;
-  const dupeCount = allNames.filter(
-    (n) => n.toLowerCase() === name.toLowerCase(),
-  ).length;
-  if (dupeCount > 1) return "Duplicate header name";
-  return undefined;
-}
-
-function validateHeaderValue(value: string): string | undefined {
-  if (value.includes("\r") || value.includes("\n"))
-    return "Value must not contain line breaks";
-  return undefined;
-}
-
-function validateTimeout(timeout: string): string | undefined {
-  if (!timeout) return undefined;
-  if (!DURATION_RE.test(timeout))
-    return 'Invalid duration, use e.g. "10s", "30s", "1m"';
-  return undefined;
-}
+import ReverseProxyTargetCustomHeaders from "@/modules/reverse-proxy/targets/ReverseProxyTargetCustomHeaders";
+import { useReverseProxyTargetOptions } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 
 /** Get initial host value based on target, resource, or peer */
 function getInitialHost(
@@ -187,20 +121,9 @@ export default function ReverseProxyTargetModal({
     currentTarget?.port ?? 0,
   );
   const [targetPath, setTargetPath] = useState(currentTarget?.path ?? "");
-  const [accessLocal, setAccessLocal] = useState(
-    currentTarget?.access_local ?? false,
-  );
-  const headerIdRef = useRef(0);
-  const nextHeaderId = useCallback(() => ++headerIdRef.current, []);
-  const [targetOptions, setTargetOptions] = useState<ServiceTargetOptions>(
-    () => {
-      const { custom_headers: _, ...rest } = currentTarget?.options ?? {};
-      return rest;
-    },
-  );
-  const [headerEntries, setHeaderEntries] = useState<HeaderEntry[]>(() =>
-    recordToHeaderEntries(currentTarget?.options?.custom_headers, nextHeaderId),
-  );
+  const [accessLocal] = useState(currentTarget?.access_local ?? false);
+  const [options, setOption, { getTargetOptions, headers, errors }] =
+    useReverseProxyTargetOptions(currentTarget?.options);
   const portInputRef = useRef<HTMLInputElement>(null);
   const [installModal, setInstallModal] = useState(false);
 
@@ -307,61 +230,10 @@ export default function ReverseProxyTargetModal({
   const hasTarget =
     initialResource || initialPeer || targetPeerId || targetResourceId;
 
-  const isResource = isResourceTargetType(targetType) || !!initialResource;
-
-  const updateOption = useCallback(
-    <K extends keyof ServiceTargetOptions>(
-      key: K,
-      value: ServiceTargetOptions[K],
-    ) => {
-      setTargetOptions((prev) => ({ ...prev, [key]: value }));
-    },
-    [],
-  );
-
-  const addHeader = useCallback(() => {
-    setHeaderEntries((prev) => [
-      ...prev,
-      { id: nextHeaderId(), name: "", value: "" },
-    ]);
-  }, [nextHeaderId]);
-
-  const removeHeader = useCallback((id: number) => {
-    setHeaderEntries((prev) => prev.filter((h) => h.id !== id));
-  }, []);
-
-  const updateHeaderEntry = useCallback(
-    (id: number, field: "name" | "value", fieldValue: string) => {
-      setHeaderEntries((prev) =>
-        prev.map((h) => (h.id === id ? { ...h, [field]: fieldValue } : h)),
-      );
-    },
-    [],
-  );
-
-  const hasAnyOptions =
-    targetOptions.skip_tls_verify !== undefined ||
-    targetOptions.request_timeout !== undefined ||
-    targetOptions.path_rewrite !== undefined ||
-    headerEntries.length > 0;
-
-  const resetOptions = useCallback(() => {
-    setTargetOptions({});
-    setHeaderEntries([]);
-  }, []);
-
   const handleSave = () => {
     const resolvedType = initialPeer ? ReverseProxyTargetType.PEER : targetType;
     const resolvedIsResource =
       isResourceTargetType(resolvedType) || !!initialResource;
-    const customHeaders = headerEntriesToRecord(headerEntries);
-    const mergedOptions: ServiceTargetOptions = {
-      ...targetOptions,
-      custom_headers: customHeaders,
-    };
-    const hasOptions = Object.values(mergedOptions).some(
-      (v) => v !== undefined,
-    );
     const targetData: ReverseProxyTarget = {
       target_type: resolvedType,
       target_id:
@@ -375,25 +247,16 @@ export default function ReverseProxyTargetModal({
       path: targetPath || undefined,
       enabled: currentTarget?.enabled ?? true,
       access_local: resolvedIsResource ? accessLocal : undefined,
-      options: hasOptions ? mergedOptions : undefined,
+      options: getTargetOptions(),
     };
     onSave(targetData);
     onOpenChange(false);
   };
 
-  const allHeaderNames = headerEntries.map((h) => h.name);
-  const timeoutError = validateTimeout(targetOptions.request_timeout ?? "");
-  const headerErrors = headerEntries.map((entry) => ({
-    name: validateHeaderName(entry.name, allHeaderNames),
-    value: validateHeaderValue(entry.value),
-  }));
-  const hasOptionsErrors =
-    !!timeoutError || headerErrors.some((e) => e.name || e.value);
-
   return (
     <>
       <Modal open={open} onOpenChange={onOpenChange}>
-        <ModalContent maxWidthClass="max-w-xl">
+        <ModalContent maxWidthClass="max-w-2xl">
           <ModalHeader
             icon={<Server className="text-netbird" size={16} />}
             title={currentTarget ? "Edit Target" : "Add Target"}
@@ -407,17 +270,14 @@ export default function ReverseProxyTargetModal({
                 <Text size={14} />
                 Details
               </TabsTrigger>
-              <TabsTrigger value={"options"} disabled={!hasTarget}>
+              <TabsTrigger value={"options"} disabled={!canAddTarget}>
                 <Settings size={14} />
-                Options
-                {hasOptionsErrors && tab !== "options" && (
-                  <span className="ml-1 inline-block w-2 h-2 rounded-full bg-red-500" />
-                )}
+                Advanced Settings
               </TabsTrigger>
             </TabsList>
 
             <TabsContent value={"details"} className={"pb-8"}>
-              <div className="px-8 flex flex-col gap-6">
+              <div className="px-8 flex flex-col gap-8">
                 {!initialResource && !initialPeer && (
                   <div>
                     <Label className={"gap-0 inline"}>
@@ -427,15 +287,16 @@ export default function ReverseProxyTargetModal({
                         <>
                           Select{" "}
                           <HelpTooltip
+                            className={"max-w-sm"}
                             content={
-                              <div className="max-w-sm text-xs">
+                              <>
                                 A{" "}
                                 <span className={"text-white font-medium"}>
                                   peer
                                 </span>{" "}
                                 is a machine (e.g., laptop, server, container)
-                                running NetBird. Select a peer if your service runs
-                                directly on it.
+                                running NetBird. Select a peer if your service
+                                runs directly on it.
                                 <span className={"mt-1 block"}>
                                   If you don&apos;t have a peer yet, you can{" "}
                                   <InlineButtonLink
@@ -445,23 +306,25 @@ export default function ReverseProxyTargetModal({
                                   </InlineButtonLink>
                                   .
                                 </span>
-                              </div>
+                              </>
                             }
+                            interactive={true}
                           >
                             Peer
                           </HelpTooltip>{" "}
                           or{" "}
                           <HelpTooltip
+                            className={"max-w-sm"}
                             content={
-                              <div className="max-w-sm text-xs">
+                              <>
                                 A{" "}
                                 <span className={"text-white font-medium"}>
                                   resource
                                 </span>{" "}
                                 is a destination (IP, subnet, or domain) that
-                                can&apos;t run NetBird directly. Resources are part
-                                of a network and are reached through a routing peer
-                                that forwards traffic to them.
+                                can&apos;t run NetBird directly. Resources are
+                                part of a network and are reached through a
+                                routing peer that forwards traffic to them.
                                 <span className={"mt-1 block"}>
                                   If you don&apos;t have resources yet, go to{" "}
                                   <InlineLink href={"/networks"}>
@@ -469,8 +332,9 @@ export default function ReverseProxyTargetModal({
                                   </InlineLink>{" "}
                                   to create some.
                                 </span>
-                              </div>
+                              </>
                             }
+                            interactive={true}
                           >
                             Resource
                           </HelpTooltip>
@@ -497,7 +361,9 @@ export default function ReverseProxyTargetModal({
                       hideAllGroup={true}
                       hideGroupsTab={true}
                       resourceIds={
-                        initialNetwork ? initialNetwork.resources ?? [] : undefined
+                        initialNetwork
+                          ? initialNetwork.resources ?? []
+                          : undefined
                       }
                       tabOrder={
                         initialNetwork ? ["resources"] : ["peers", "resources"]
@@ -552,8 +418,8 @@ export default function ReverseProxyTargetModal({
                 <div>
                   <Label>Location (Optional)</Label>
                   <HelpText>
-                    Specify an optional path from where requests are routed to your
-                    service.
+                    Specify an optional path from where requests are routed to
+                    your service.
                   </HelpText>
                   <div className="flex w-full">
                     <div
@@ -575,6 +441,9 @@ export default function ReverseProxyTargetModal({
                           value = "/" + value;
                         }
                         setTargetPath(value);
+                        if (!value || value === "/") {
+                          setOption("path_rewrite", undefined);
+                        }
                       }}
                     />
                   </div>
@@ -589,232 +458,200 @@ export default function ReverseProxyTargetModal({
                         />
                       }
                     >
-                      Please use a different location. This location is already used
-                      by another target and cannot be added.
+                      This location is already used by another target and cannot
+                      be added. <br /> Please use a different location.
                     </Callout>
                   )}
-                </div>
-
-                <div className="flex gap-3 mt-1">
-                  <div className="flex-1">
-                    <Label>Protocol & Host / IP</Label>
-                    {cidrInfo && (
-                      <HelpText className="!mt-1">
-                        Enter an IP address within {currentResourceAddress}
-                      </HelpText>
-                    )}
-                    <div className="flex items-center mt-2">
-                      <div className="w-[120px]">
-                        <SelectDropdown
-                          value={targetProtocol}
-                          onChange={(v) => {
-                            const proto = v as ReverseProxyTargetProtocol;
-                            setTargetProtocol(proto);
-                            if (proto !== ReverseProxyTargetProtocol.HTTPS) {
-                              updateOption("skip_tls_verify", undefined);
-                            }
-                          }}
-                          options={[
-                            {
-                              value: ReverseProxyTargetProtocol.HTTP,
-                              label: "http://",
-                            },
-                            {
-                              value: ReverseProxyTargetProtocol.HTTPS,
-                              label: "https://",
-                            },
-                          ]}
-                          className="!rounded-r-none !border-r-0"
-                          disabled={!hasTarget}
-                        />
-                      </div>
-                      <div className="flex-1">
-                        <Input
-                          value={targetHost}
-                          onChange={(e) => {
-                            // Only allow valid IP characters for CIDR ranges
-                            const value = isHostEditable
-                              ? e.target.value.replace(/[^0-9.]/g, "")
-                              : e.target.value;
-                            setTargetHost(value);
-                          }}
-                          placeholder="e.g., 192.168.0.10"
-                          className="!rounded-l-none"
-                          disabled={!hasTarget}
-                          readOnly={hasTarget && !isHostEditable ? true : undefined}
-                          autoFocus={!!initialResource && isHostEditable}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="w-[150px]">
-                    <Label>
-                      Port
-                      <FullTooltip
-                        content={
-                          <div className={"text-xs max-w-xs"}>
-                            Enter the port where your service (e.g., webserver, app,
-                            API) is currently listening. If left empty, defaults to
-                            port 80 for HTTP or 443 for HTTPS.
+                  {targetPath &&
+                    targetPath !== "/" &&
+                    hasTarget &&
+                    !isPathDuplicate && (
+                      <FancyToggleSwitch
+                        value={options.path_rewrite === "preserve"}
+                        onChange={(v) =>
+                          setOption(
+                            "path_rewrite",
+                            v
+                              ? ("preserve" as ServiceTargetOptionsPathRewrite)
+                              : undefined,
+                          )
+                        }
+                        className={"mt-3.5"}
+                        label={
+                          <>
+                            Preserve Full Path
+                            <HelpTooltip
+                              content={
+                                <div className="text-xs max-w-xs flex flex-col gap-2">
+                                  <div>
+                                    When disabled, a request to e.g.,{" "}
+                                    <span className="font-mono text-white">
+                                      {targetPath}/users
+                                    </span>{" "}
+                                    is forwarded as{" "}
+                                    <span className="font-mono text-white">
+                                      /users
+                                    </span>
+                                    .
+                                  </div>
+                                  <div>
+                                    When enabled, a request to e.g.,{" "}
+                                    <span className="font-mono text-white">
+                                      {targetPath}/users
+                                    </span>{" "}
+                                    is forwarded as{" "}
+                                    <span className="font-mono text-white">
+                                      {targetPath}/users
+                                    </span>
+                                    .
+                                  </div>
+                                </div>
+                              }
+                            />
+                          </>
+                        }
+                        helpText={
+                          <div>
+                            Keep the original full request path when forwarding.{" "}
+                            <br />
+                            When disabled the matched prefix path is stripped.
                           </div>
                         }
-                      >
-                        <HelpCircle
-                          size={12}
-                          className="cursor-help hover:text-nb-gray-100 transition-colors"
-                        />
-                      </FullTooltip>
-                    </Label>
-                    {cidrInfo && <HelpText className="!mt-1">&nbsp;</HelpText>}
-                    <div className="mt-2">
-                      <Input
-                        ref={portInputRef}
-                        type="number"
-                        value={targetPort === 0 ? "" : targetPort}
-                        onChange={(e) =>
-                          setTargetPort(parseInt(e.target.value) || 0)
-                        }
-                        placeholder={String(defaultPortForProtocol(targetProtocol))}
-                        min={0}
-                        max={65535}
-                        disabled={!hasTarget}
-                        autoFocus={!!initialResource && !isHostEditable}
                       />
-                    </div>
-                  </div>
+                    )}
                 </div>
 
-                {isResource && hasTarget && (
-                  <label className="flex items-start gap-3 cursor-pointer">
-                    <Checkbox
-                      checked={accessLocal}
-                      onCheckedChange={(v) => setAccessLocal(v === true)}
-                    />
-                    <div>
-                      <Label className="!mb-0" as={"div"}>
-                        This is the routing peer
-                      </Label>
-                      <HelpText className="!mt-1">
-                        Enable if the service runs directly on the routing
-                        peer rather than behind it.
-                      </HelpText>
+                <div>
+                  <div className="flex gap-3 mt-1">
+                    <div className="flex-1">
+                      <Label>Protocol & Host / IP</Label>
+                      {cidrInfo && (
+                        <HelpText className="!mt-1">
+                          Enter an IP address within {currentResourceAddress}
+                        </HelpText>
+                      )}
+                      <div className="flex items-center mt-2">
+                        <div className="w-[120px]">
+                          <SelectDropdown
+                            value={targetProtocol}
+                            onChange={(v) => {
+                              const proto = v as ReverseProxyTargetProtocol;
+                              setTargetProtocol(proto);
+                              if (proto !== ReverseProxyTargetProtocol.HTTPS) {
+                                setOption("skip_tls_verify", undefined);
+                              }
+                            }}
+                            options={[
+                              {
+                                value: ReverseProxyTargetProtocol.HTTP,
+                                label: "http://",
+                              },
+                              {
+                                value: ReverseProxyTargetProtocol.HTTPS,
+                                label: "https://",
+                              },
+                            ]}
+                            className="!rounded-r-none !border-r-0"
+                            disabled={!hasTarget}
+                          />
+                        </div>
+                        <div className="flex-1">
+                          <Input
+                            value={targetHost}
+                            onChange={(e) => {
+                              // Only allow valid IP characters for CIDR ranges
+                              const value = isHostEditable
+                                ? e.target.value.replace(/[^0-9.]/g, "")
+                                : e.target.value;
+                              setTargetHost(value);
+                            }}
+                            placeholder="e.g., 192.168.0.10"
+                            className="!rounded-l-none"
+                            disabled={!hasTarget}
+                            readOnly={
+                              hasTarget && !isHostEditable ? true : undefined
+                            }
+                            autoFocus={!!initialResource && isHostEditable}
+                          />
+                        </div>
+                      </div>
                     </div>
-                  </label>
-                )}
+                    <div className="w-[150px]">
+                      <Label>
+                        Port
+                        <HelpTooltip
+                          content={
+                            "Enter the port where your service (e.g., webserver, app, API) is currently listening. If left empty, defaults to port 80 for HTTP or 443 for HTTPS."
+                          }
+                        />
+                      </Label>
+                      {cidrInfo && (
+                        <HelpText className="!mt-1">&nbsp;</HelpText>
+                      )}
+                      <div className="mt-2">
+                        <Input
+                          ref={portInputRef}
+                          type="number"
+                          value={targetPort === 0 ? "" : targetPort}
+                          onChange={(e) =>
+                            setTargetPort(parseInt(e.target.value) || 0)
+                          }
+                          placeholder={String(
+                            defaultPortForProtocol(targetProtocol),
+                          )}
+                          min={0}
+                          max={65535}
+                          disabled={!hasTarget}
+                          autoFocus={!!initialResource && !isHostEditable}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  {targetProtocol === ReverseProxyTargetProtocol.HTTPS &&
+                    hasTarget && (
+                      <FancyToggleSwitch
+                        className={"mt-3.5"}
+                        value={options.skip_tls_verify ?? false}
+                        onChange={(v) =>
+                          setOption("skip_tls_verify", v || undefined)
+                        }
+                        label={
+                          <>
+                            <ShieldXIcon size={15} />
+                            Skip TLS Verification
+                          </>
+                        }
+                        helpText="Skip certificate verification when connecting to this target. Useful if your service already uses a self-signed certificate."
+                      />
+                    )}
+                </div>
               </div>
             </TabsContent>
 
             <TabsContent value={"options"} className={"pb-8"}>
-              <div className="px-8 flex flex-col gap-6">
-                {targetProtocol === ReverseProxyTargetProtocol.HTTPS && (
-                  <FancyToggleSwitch
-                    value={targetOptions.skip_tls_verify ?? false}
-                    onChange={(v) => updateOption("skip_tls_verify", v || undefined)}
-                    label={
-                      <>
-                        <Settings size={15} />
-                        Skip TLS Verification
-                      </>
-                    }
-                    helpText="Skip certificate verification when connecting to this HTTPS backend."
-                  />
-                )}
-
-                <div>
-                  <Label>Request Timeout</Label>
-                  <HelpText>
-                    Response timeout as a Go duration string (max 5m). Leave
-                    empty for the default.
-                  </HelpText>
+              <div className="px-8 flex flex-col gap-8 pt-1.5">
+                <div className={"flex items-center justify-between"}>
+                  <div>
+                    <Label>Request Timeout</Label>
+                    <HelpText className={"mb-0"}>
+                      Max time to wait for a response as duration string (max
+                      5m). <br /> Leave this field empty for no timeout.
+                    </HelpText>
+                  </div>
                   <Input
-                    className="mt-2"
+                    customPrefix={<ClockFadingIcon size={16} />}
                     placeholder="e.g. 10s, 30s, 1m"
-                    value={targetOptions.request_timeout ?? ""}
+                    value={options.request_timeout ?? ""}
                     onChange={(e) =>
-                      updateOption("request_timeout", e.target.value || undefined)
+                      setOption("request_timeout", e.target.value || undefined)
                     }
-                    maxWidthClass="max-w-[200px]"
-                    error={timeoutError}
+                    maxWidthClass="w-[180px]"
+                    errorTooltip={true}
+                    error={errors.timeout}
                   />
                 </div>
 
-                <div>
-                  <Label>Path Rewrite</Label>
-                  <HelpText>
-                    Controls how the request path is rewritten before forwarding.
-                    By default the matched prefix is stripped.
-                  </HelpText>
-                  <SelectDropdown
-                    className="mt-2"
-                    value={targetOptions.path_rewrite ?? "default"}
-                    onChange={(v) =>
-                      updateOption(
-                        "path_rewrite",
-                        v === "default"
-                          ? undefined
-                          : (v as ServiceTargetOptionsPathRewrite),
-                      )
-                    }
-                    options={[
-                      { value: "default", label: "Strip matched prefix (default)" },
-                      { value: "preserve", label: "Preserve full path" },
-                    ]}
-                  />
-                </div>
-
-                <div>
-                  <Label>Custom Headers</Label>
-                  <HelpText>
-                    Extra headers sent to the backend. Hop-by-hop headers
-                    (Host, Connection, etc.) are not allowed.
-                  </HelpText>
-                  {headerEntries.length > 0 && (
-                    <div className="flex flex-col gap-2 mt-3">
-                      {headerEntries.map((entry, index) => (
-                        <div key={entry.id} className="flex items-center gap-2">
-                          <Input
-                            placeholder="Header name"
-                            value={entry.name}
-                            onChange={(e) =>
-                              updateHeaderEntry(entry.id, "name", e.target.value)
-                            }
-                            maxWidthClass="flex-1"
-                            error={headerErrors[index]?.name}
-                            errorTooltip
-                          />
-                          <Input
-                            placeholder="Value"
-                            value={entry.value}
-                            onChange={(e) =>
-                              updateHeaderEntry(entry.id, "value", e.target.value)
-                            }
-                            maxWidthClass="flex-1"
-                            error={headerErrors[index]?.value}
-                            errorTooltip
-                          />
-                          <Button
-                            variant="default-outline"
-                            className="!px-2 shrink-0"
-                            onClick={() => removeHeader(entry.id)}
-                            aria-label="Remove header"
-                          >
-                            <MinusCircleIcon size={14} />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  <Button
-                    variant="dotted"
-                    className="w-full mt-3"
-                    size="sm"
-                    onClick={addHeader}
-                  >
-                    <PlusIcon size={14} />
-                    Add Header
-                  </Button>
-                </div>
-
+                <ReverseProxyTargetCustomHeaders {...headers} />
               </div>
             </TabsContent>
           </Tabs>
@@ -833,29 +670,61 @@ export default function ReverseProxyTargetModal({
               </Paragraph>
             </div>
             <div className="flex gap-3 w-full justify-end">
-              {tab === "options" && hasAnyOptions && (
-                <Button variant="default-outline" onClick={resetOptions}>
-                  <RotateCcw size={14} />
-                  Clear
-                </Button>
+              {currentTarget ? (
+                <>
+                  <Button
+                    variant="secondary"
+                    onClick={() => onOpenChange(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    variant="primary"
+                    onClick={handleSave}
+                    disabled={!canAddTarget || errors.options}
+                  >
+                    Save Changes
+                  </Button>
+                </>
+              ) : (
+                <>
+                  {tab === "details" && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        onClick={() => onOpenChange(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        variant="primary"
+                        onClick={() => setTab("options")}
+                        disabled={!canAddTarget}
+                      >
+                        Continue
+                      </Button>
+                    </>
+                  )}
+                  {tab === "options" && (
+                    <>
+                      <Button
+                        variant="secondary"
+                        onClick={() => setTab("details")}
+                      >
+                        Back
+                      </Button>
+                      <Button
+                        variant="primary"
+                        onClick={handleSave}
+                        disabled={!canAddTarget || errors.options}
+                      >
+                        <PlusCircle size={16} />
+                        Add Target
+                      </Button>
+                    </>
+                  )}
+                </>
               )}
-              <Button variant="secondary" onClick={() => onOpenChange(false)}>
-                Cancel
-              </Button>
-              <Button
-                variant="primary"
-                onClick={handleSave}
-                disabled={!canAddTarget || hasOptionsErrors}
-              >
-                {currentTarget ? (
-                  "Save Changes"
-                ) : (
-                  <>
-                    <PlusCircle size={16} />
-                    Add Target
-                  </>
-                )}
-              </Button>
             </div>
           </ModalFooter>
         </ModalContent>

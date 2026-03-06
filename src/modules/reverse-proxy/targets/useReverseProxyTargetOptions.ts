@@ -1,0 +1,101 @@
+import { useCallback, useState } from "react";
+import { ServiceTargetOptions } from "@/interfaces/ReverseProxy";
+import {
+  headerEntriesToRecord,
+  useCustomHeaders,
+} from "@/modules/reverse-proxy/targets/ReverseProxyTargetCustomHeaders";
+
+// Go time.ParseDuration format: one or more {number}{unit} pairs
+const DURATION_RE = /^(\d+(\.\d+)?(ns|us|µs|ms|s|m|h))+$/;
+const MAX_TIMEOUT_MS = 5 * 60 * 1000; // 5m
+
+function parseDurationMs(duration: string): number {
+  const units: Record<string, number> = {
+    ns: 1e-6,
+    us: 1e-3,
+    µs: 1e-3,
+    ms: 1,
+    s: 1000,
+    m: 60_000,
+    h: 3_600_000,
+  };
+  let total = 0;
+  for (const [, val, , unit] of duration.matchAll(
+    /(\d+(\.\d+)?)(ns|us|µs|ms|s|m|h)/g,
+  )) {
+    total += parseFloat(val) * units[unit];
+  }
+  return total;
+}
+
+function validateTimeout(timeout: string): string | undefined {
+  if (!timeout) return undefined;
+  if (!DURATION_RE.test(timeout))
+    return 'Invalid duration, use e.g., "10s", "30s", "1m"';
+  if (parseDurationMs(timeout) > MAX_TIMEOUT_MS)
+    return "Timeout cannot exceed the maximum of 5m.";
+  return undefined;
+}
+
+export function useReverseProxyTargetOptions(
+  initialOptions?: ServiceTargetOptions,
+) {
+  const [targetOptions, setTargetOptions] = useState<ServiceTargetOptions>(
+    () => {
+      const { custom_headers: _, ...rest } = initialOptions ?? {};
+      return rest;
+    },
+  );
+
+  const {
+    headerEntries,
+    addHeader,
+    removeHeader,
+    updateHeaderEntry,
+    headerErrors,
+    hasHeaderErrors,
+  } = useCustomHeaders(initialOptions?.custom_headers);
+
+  const updateOption = useCallback(
+    <K extends keyof ServiceTargetOptions>(
+      key: K,
+      value: ServiceTargetOptions[K],
+    ) => {
+      setTargetOptions((prev) => ({ ...prev, [key]: value }));
+    },
+    [],
+  );
+
+  const timeoutError = validateTimeout(targetOptions.request_timeout ?? "");
+  const hasOptionsErrors = !!timeoutError || hasHeaderErrors;
+
+  const getTargetOptions = useCallback((): ServiceTargetOptions | undefined => {
+    const customHeaders = headerEntriesToRecord(headerEntries);
+    const merged: ServiceTargetOptions = {
+      ...targetOptions,
+      custom_headers: customHeaders,
+    };
+    const hasOptions = Object.values(merged).some((v) => v !== undefined);
+    return hasOptions ? merged : undefined;
+  }, [targetOptions, headerEntries]);
+
+  return [
+    targetOptions,
+    updateOption,
+    {
+      getTargetOptions,
+      headers: {
+        headerEntries,
+        addHeader,
+        removeHeader,
+        updateHeaderEntry,
+        headerErrors,
+        hasHeaderErrors,
+      },
+      errors: {
+        timeout: timeoutError,
+        options: hasOptionsErrors,
+      },
+    },
+  ] as const;
+}
