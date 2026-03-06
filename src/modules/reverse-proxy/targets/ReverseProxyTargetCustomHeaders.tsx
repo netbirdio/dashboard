@@ -144,6 +144,7 @@ export default function ReverseProxyTargetCustomHeaders({
             <div key={entry.id} className="flex items-center gap-2">
               <Input
                 placeholder="Header, e.g., Authorization"
+                aria-label={`Header name for entry ${entry.id}`}
                 value={entry.name}
                 onChange={(e) =>
                   updateHeaderEntry(entry.id, "name", e.target.value)
@@ -154,6 +155,7 @@ export default function ReverseProxyTargetCustomHeaders({
               />
               <Input
                 placeholder="Value, e.g., Bearer eyJhbGci..."
+                aria-label={`Header value for entry ${entry.id}`}
                 value={entry.value}
                 onChange={(e) =>
                   updateHeaderEntry(entry.id, "value", e.target.value)
