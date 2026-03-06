@@ -218,8 +218,8 @@ export default function ReverseProxyModal({
   const [tlsTargetType, setTlsTargetType] = useState<ReverseProxyTargetType>(
     existingL4Target
       ? existingL4Target.target_type
-      : initialPeer
-        ? ReverseProxyTargetType.PEER
+      : initialResource
+        ? ReverseProxyTargetType.HOST
         : ReverseProxyTargetType.PEER,
   );
   const [tlsPeerId, setTlsPeerId] = useState<string | undefined>(
@@ -292,7 +292,7 @@ export default function ReverseProxyModal({
   );
 
   const [requestTimeout, setRequestTimeout] = useState(
-    existingL4Target?.options?.request_timeout ?? "",
+    existingL4Target?.options?.request_timeout ?? existingL4Target?.options?.session_idle_timeout ?? "",
   );
 
   const [targets, setTargets] = useState<ReverseProxyTarget[]>(
@@ -483,7 +483,7 @@ export default function ReverseProxyModal({
       enabled: true,
       options: (endpointMode !== "udp" && proxyProtocol) || requestTimeout ? {
         ...(endpointMode !== "udp" && proxyProtocol ? { proxy_protocol: true } : {}),
-        ...(requestTimeout ? { request_timeout: requestTimeout } : {}),
+        ...(requestTimeout ? { [endpointMode === "udp" ? "session_idle_timeout" : "request_timeout"]: requestTimeout } : {}),
       } : undefined,
     };
 
