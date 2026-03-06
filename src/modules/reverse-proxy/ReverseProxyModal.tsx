@@ -226,7 +226,11 @@ export default function ReverseProxyModal({
     existingL4IsPeer ? existingL4Target?.target_id : initialPeer?.id,
   );
   const [tlsResourceId, setTlsResourceId] = useState<string | undefined>(
-    !existingL4IsPeer ? existingL4Target?.target_id : initialResource?.id,
+    existingL4Target
+      ? existingL4IsPeer
+        ? undefined
+        : existingL4Target.target_id
+      : initialResource?.id,
   );
   const [tlsHost, setTlsHost] = useState(() => {
     if (existingL4Target?.host) return existingL4Target.host;
@@ -1011,10 +1015,12 @@ export default function ReverseProxyModal({
                     <div className={"max-w-sm"}>
                       <Label>
                         <Timer size={15} />
-                        Connection Timeout
+                        {endpointMode === "udp" ? "Session Idle Timeout" : "Connection Timeout"}
                       </Label>
                       <HelpText margin={false}>
-                        Timeout for establishing backend connections.
+                        {endpointMode === "udp"
+                          ? "Close the UDP session after this period of inactivity."
+                          : "Timeout for establishing backend connections."}
                       </HelpText>
                     </div>
                     <div className={"mt-1"}>
