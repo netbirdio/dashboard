@@ -488,7 +488,7 @@ export default function ReverseProxyModal({
       target_id: tlsPeerId || tlsResourceId || "",
       target_type: l4TargetType,
       port: tlsPort,
-      protocol: endpointMode as unknown as ReverseProxyTargetProtocol,
+      protocol: endpointMode as string as ReverseProxyTargetProtocol,
       host: tlsIsCidrRange ? tlsHost : undefined,
       enabled: true,
       options: (endpointMode !== "udp" && proxyProtocol) || requestTimeout ? {
