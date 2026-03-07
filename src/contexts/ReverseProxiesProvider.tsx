@@ -20,6 +20,7 @@ import {
   ReverseProxyTarget,
   ReverseProxyTargetProtocol,
   ReverseProxyTargetType,
+  ServiceMode,
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyModal from "@/modules/reverse-proxy/ReverseProxyModal";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
@@ -54,7 +55,7 @@ type ReverseProxiesContextValue = {
 type OpenModalOptions = {
   proxy?: ReverseProxy;
   initialTab?: string;
-  initialEndpointMode?: "http" | "tls" | "tcp" | "udp";
+  initialEndpointMode?: ServiceMode;
   initialPeer?: Peer;
   initialNetwork?: Network;
   initialResource?: NetworkResource;
@@ -148,7 +149,7 @@ export default function ReverseProxiesProvider({
     NetworkResource | undefined
   >();
   const [modalInitialEndpointMode, setModalInitialEndpointMode] = useState<
-    "http" | "tls" | "tcp" | "udp" | undefined
+    ServiceMode | undefined
   >();
   const onSuccessRef = React.useRef<(() => void) | undefined>(undefined);
   const openModal = useCallback(

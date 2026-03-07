@@ -90,7 +90,7 @@ type Props = {
   initialSubdomain?: string;
   /** Pre-set a resource target - hides target selection in modal */
   initialResource?: NetworkResource;
-  initialEndpointMode?: "http" | "tls" | "tcp" | "udp";
+  initialEndpointMode?: ServiceMode;
   initialPeer?: Peer;
   initialNetwork?: Network;
   initialTab?: string;
@@ -194,15 +194,15 @@ export default function ReverseProxyModal({
     return customDomain?.domain || freeDomain?.domain || "";
   });
 
-  type EndpointMode = "http" | "tls" | "tcp" | "udp";
+  type EndpointMode = ServiceMode;
 
   // Endpoint mode derived from protocol field
   const [endpointMode, setEndpointMode_] = useState<EndpointMode>(() => {
     if (reverseProxy?.mode) {
-      const p = reverseProxy.mode as string;
-      if (p === "tls" || p === "tcp" || p === "udp") return p;
+      const p = reverseProxy.mode;
+      if (p === ServiceMode.TLS || p === ServiceMode.TCP || p === ServiceMode.UDP) return p;
     }
-    return (initialEndpointMode as EndpointMode) ?? "http";
+    return initialEndpointMode ?? ServiceMode.HTTP;
   });
 
   // Fetch peers & resources for TLS target selector
@@ -219,11 +219,15 @@ export default function ReverseProxyModal({
     existingL4Target
       ? existingL4Target.target_type
       : initialResource
-        ? ReverseProxyTargetType.HOST
+        ? (initialResource.type as ReverseProxyTargetType) ?? ReverseProxyTargetType.HOST
         : ReverseProxyTargetType.PEER,
   );
   const [tlsPeerId, setTlsPeerId] = useState<string | undefined>(
-    existingL4IsPeer ? existingL4Target?.target_id : initialPeer?.id,
+    existingL4IsPeer
+      ? existingL4Target?.target_id
+      : initialResource
+        ? undefined
+        : initialPeer?.id,
   );
   const [tlsResourceId, setTlsResourceId] = useState<string | undefined>(
     existingL4Target
@@ -251,9 +255,11 @@ export default function ReverseProxyModal({
   // CIDR detection for TLS subnet resources
   const tlsResourceAddress = useMemo(() => {
     if (!tlsResourceId) return "";
-    const resource = resources?.find((r) => r.id === tlsResourceId);
+    const resource =
+      resources?.find((r) => r.id === tlsResourceId) ??
+      (initialResource?.id === tlsResourceId ? initialResource : undefined);
     return resource?.address || "";
-  }, [tlsResourceId, resources]);
+  }, [tlsResourceId, resources, initialResource]);
 
   const tlsCidrInfo = useMemo(() => {
     if (!tlsResourceAddress) return null;
@@ -482,7 +488,7 @@ export default function ReverseProxyModal({
       target_id: tlsPeerId || tlsResourceId || "",
       target_type: l4TargetType,
       port: tlsPort,
-      protocol: endpointMode as ReverseProxyTargetProtocol,
+      protocol: endpointMode as unknown as ReverseProxyTargetProtocol,
       host: tlsIsCidrRange ? tlsHost : undefined,
       enabled: true,
       options: (endpointMode !== "udp" && proxyProtocol) || requestTimeout ? {
@@ -524,13 +530,13 @@ export default function ReverseProxyModal({
           title={
             reverseProxy
               ? "Edit Service"
-              : initialEndpointMode === "tls"
+              : endpointMode === "tls"
                 ? "Add TLS Passthrough"
-                : initialEndpointMode === "tcp"
+                : endpointMode === "tcp"
                   ? "Add TCP Service"
-                  : initialEndpointMode === "udp"
+                  : endpointMode === "udp"
                     ? "Add UDP Service"
-                    : initialEndpointMode === "http"
+                    : endpointMode === "http"
                       ? "Add HTTP Service"
                       : "Add Service"
           }
@@ -642,7 +648,7 @@ export default function ReverseProxyModal({
                       </HelpText>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-2">
+                    <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Endpoint mode">
                       {([
                         { mode: "http" as EndpointMode, icon: <Server size={14} />, label: "HTTP", desc: "Reverse proxy with path routing, auth, and load balancing." },
                         { mode: "tls" as EndpointMode, icon: <LockKeyhole size={14} />, label: "TLS Passthrough", desc: "Direct TCP relay via SNI routing." },
@@ -652,6 +658,9 @@ export default function ReverseProxyModal({
                         <button
                           key={mode}
                           type="button"
+                          role="radio"
+                          aria-checked={endpointMode === mode}
+                          tabIndex={endpointMode === mode ? 0 : -1}
                           onClick={() => setEndpointMode(mode)}
                           className={cn(
                             "rounded-md border px-4 py-3 text-left transition-all",

@@ -32,6 +32,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxy,
+  ServiceMode,
   isL4Mode,
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyActionCell from "@/modules/reverse-proxy/table/ReverseProxyActionCell";
@@ -265,7 +266,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
 }
 
 type AddServiceDropdownProps = {
-  openModal: (options?: { initialEndpointMode?: "http" | "tls" | "tcp" | "udp" }) => void;
+  openModal: (options?: { initialEndpointMode?: ServiceMode }) => void;
   disabled?: boolean;
 };
 
@@ -284,7 +285,7 @@ function AddServiceDropdown({
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-auto min-w-[200px]">
         <DropdownMenuItem
-          onClick={() => openModal({ initialEndpointMode: "http" })}
+          onClick={() => openModal({ initialEndpointMode: ServiceMode.HTTP })}
         >
           <div className="flex gap-3 items-center">
             <Server size={14} className="shrink-0" />
@@ -292,7 +293,7 @@ function AddServiceDropdown({
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => openModal({ initialEndpointMode: "tls" })}
+          onClick={() => openModal({ initialEndpointMode: ServiceMode.TLS })}
         >
           <div className="flex gap-3 items-center">
             <LockKeyhole size={14} className="shrink-0" />
@@ -300,7 +301,7 @@ function AddServiceDropdown({
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => openModal({ initialEndpointMode: "tcp" })}
+          onClick={() => openModal({ initialEndpointMode: ServiceMode.TCP })}
         >
           <div className="flex gap-3 items-center">
             <ArrowRight size={14} className="shrink-0" />
@@ -308,7 +309,7 @@ function AddServiceDropdown({
           </div>
         </DropdownMenuItem>
         <DropdownMenuItem
-          onClick={() => openModal({ initialEndpointMode: "udp" })}
+          onClick={() => openModal({ initialEndpointMode: ServiceMode.UDP })}
         >
           <div className="flex gap-3 items-center">
             <ArrowRight size={14} className="shrink-0" />
