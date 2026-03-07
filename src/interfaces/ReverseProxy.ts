@@ -1,7 +1,17 @@
+export enum ServiceMode {
+  HTTP = "http",
+  TCP = "tcp",
+  UDP = "udp",
+  TLS = "tls",
+}
+
 export interface ReverseProxy {
   id?: string;
   name: string;
   domain: string;
+  mode?: ServiceMode;
+  listen_port?: number;
+  port_auto_assigned?: boolean;
   proxy_cluster?: string;
   targets: ReverseProxyTarget[];
   enabled: boolean;
@@ -9,6 +19,12 @@ export interface ReverseProxy {
   rewrite_redirects?: boolean;
   auth?: ReverseProxyAuth;
   meta?: ReverseProxyMeta;
+}
+
+export interface ProxyCluster {
+  address: string;
+  connected_proxies: number;
+  supports_custom_ports: boolean;
 }
 
 export interface ReverseProxyMeta {
@@ -31,8 +47,10 @@ export type ServiceTargetOptionsPathRewrite = "preserve";
 export interface ServiceTargetOptions {
   skip_tls_verify?: boolean;
   request_timeout?: string;
+  session_idle_timeout?: string;
   path_rewrite?: ServiceTargetOptionsPathRewrite;
   custom_headers?: Record<string, string>;
+  proxy_protocol?: boolean;
 }
 
 export interface ReverseProxyTarget {
@@ -73,6 +91,7 @@ export interface ReverseProxyDomain {
   validated: boolean;
   type: ReverseProxyDomainType;
   target_cluster?: string;
+  supports_custom_ports?: boolean;
 }
 
 export enum ReverseProxyDomainType {
@@ -90,6 +109,9 @@ export enum ReverseProxyTargetType {
 export enum ReverseProxyTargetProtocol {
   HTTP = "http",
   HTTPS = "https",
+  TCP = "tcp",
+  UDP = "udp",
+  TLS = "tls",
 }
 
 export interface ReverseProxyEvent {
@@ -111,6 +133,14 @@ export interface ReverseProxyEvent {
 
 export interface ReverseProxyFlatTarget extends ReverseProxyTarget {
   proxy: ReverseProxy;
+}
+
+export function isL4Mode(mode?: ServiceMode): boolean {
+  return (
+    mode === ServiceMode.TCP ||
+    mode === ServiceMode.UDP ||
+    mode === ServiceMode.TLS
+  );
 }
 
 export const REVERSE_PROXY_DOCS_LINK =

@@ -32,6 +32,7 @@ import {
   ReverseProxyTarget,
   ReverseProxyTargetProtocol,
   ReverseProxyTargetType,
+  ServiceMode,
   ServiceTargetOptionsPathRewrite,
 } from "@/interfaces/ReverseProxy";
 import {
@@ -650,6 +651,32 @@ export default function ReverseProxyTargetModal({
                     error={errors.timeout}
                   />
                 </div>
+
+                {reverseProxy.mode === ServiceMode.UDP && (
+                  <div className={"flex items-center justify-between"}>
+                    <div>
+                      <Label>Session Idle Timeout</Label>
+                      <HelpText className={"mb-0"}>
+                        How long a UDP session stays alive without traffic (max
+                        10m). <br /> Defaults to 30s when empty.
+                      </HelpText>
+                    </div>
+                    <Input
+                      customPrefix={<ClockFadingIcon size={16} />}
+                      placeholder="e.g. 30s, 2m, 5m"
+                      value={options.session_idle_timeout ?? ""}
+                      onChange={(e) =>
+                        setOption(
+                          "session_idle_timeout",
+                          e.target.value || undefined,
+                        )
+                      }
+                      maxWidthClass="w-[180px]"
+                      errorTooltip={true}
+                      error={errors.sessionIdleTimeout}
+                    />
+                  </div>
+                )}
 
                 <ReverseProxyTargetCustomHeaders {...headers} />
               </div>

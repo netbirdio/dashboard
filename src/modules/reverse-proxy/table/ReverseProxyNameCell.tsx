@@ -1,7 +1,7 @@
 import { cn } from "@utils/helpers";
 import { ChevronDown, ChevronRightIcon, LockIcon } from "lucide-react";
 import * as React from "react";
-import { ReverseProxy } from "@/interfaces/ReverseProxy";
+import { ReverseProxy, isL4Mode } from "@/interfaces/ReverseProxy";
 import ExternalLinkText from "@components/ExternalLinkText";
 
 type Props = {
@@ -19,7 +19,9 @@ export default function ReverseProxyNameCell({
 }: Readonly<Props>) {
   const displayDomain = domain ?? reverseProxy?.domain ?? "";
   const isEnabled = enabled ?? reverseProxy?.enabled ?? false;
-  const hasTargets = (reverseProxy?.targets?.length ?? 0) > 0;
+  const hasExpandableTargets =
+    (reverseProxy?.targets?.length ?? 0) > 0 &&
+    !isL4Mode(reverseProxy?.mode);
 
   return (
     <div
@@ -36,14 +38,14 @@ export default function ReverseProxyNameCell({
             size={20}
             className={cn(
               "group-data-[accordion=opened]/accordion:hidden text-nb-gray-400 shrink-0",
-              !hasTargets && "cursor-default opacity-0",
+              !hasExpandableTargets && "cursor-default opacity-0",
             )}
           />
           <ChevronDown
             size={20}
             className={cn(
               "group-data-[accordion=closed]/accordion:hidden text-nb-gray-400 shrink-0",
-              !hasTargets && "cursor-default opacity-0",
+              !hasExpandableTargets && "cursor-default opacity-0",
             )}
           />
         </>
@@ -57,13 +59,24 @@ export default function ReverseProxyNameCell({
           )}
         />
         <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 truncate">
-          {displayDomain ? (
-            <ExternalLinkText href={`https://${displayDomain}`}>
+          <div className="flex items-center gap-2">
+            {displayDomain ? (
+              <ExternalLinkText href={`https://${displayDomain}`}>
+                <span className="font-medium truncate">{displayDomain}</span>
+              </ExternalLinkText>
+            ) : (
               <span className="font-medium truncate">{displayDomain}</span>
-            </ExternalLinkText>
-          ) : (
-            <span className="font-medium truncate">{displayDomain}</span>
-          )}
+            )}
+            {reverseProxy?.mode && isL4Mode(reverseProxy.mode) ? (
+              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded uppercase leading-none bg-green-500/10 text-green-400 border border-green-500/20">
+                {reverseProxy.mode.toUpperCase()}
+              </span>
+            ) : reverseProxy && (
+              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded uppercase leading-none bg-sky-500/10 text-sky-400 border border-sky-500/20">
+                HTTP
+              </span>
+            )}
+          </div>
         </div>
       </div>
     </div>

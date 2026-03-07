@@ -23,7 +23,7 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { Group } from "@/interfaces/Group";
-import { ReverseProxy } from "@/interfaces/ReverseProxy";
+import { ReverseProxy, isL4Mode } from "@/interfaces/ReverseProxy";
 
 const AUTH_METHODS: {
   key: "password_auth" | "pin_auth" | "bearer_auth";
@@ -56,6 +56,18 @@ export default function ReverseProxyAuthCell({
   const { permission } = usePermissions();
   const { openModal } = useReverseProxies();
   const { groups } = useGroups();
+
+  // L4 services don't support auth
+  if (isL4Mode(reverseProxy.mode)) {
+    return (
+      <div className={"flex gap-3"}>
+        <Badge variant={"gray"}>
+          <span className={"font-medium text-xs text-nb-gray-500"}>N/A</span>
+        </Badge>
+      </div>
+    );
+  }
+
   const auth = reverseProxy.auth;
 
   const enabled = AUTH_METHODS.filter((m) => auth?.[m.key]?.enabled);

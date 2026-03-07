@@ -1,18 +1,30 @@
 import Button from "@components/Button";
 import Card from "@components/Card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import NoResults from "@components/ui/NoResults";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
-import { PlusCircle } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  LockKeyhole,
+  PlusCircle,
+  Server,
+} from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useCallback, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
+import { ReverseProxyFlatTarget, ServiceMode } from "@/interfaces/ReverseProxy";
 import ReverseProxyArrowCell from "@/modules/reverse-proxy/table/ReverseProxyArrowCell";
 import ReverseProxyAuthCell from "@/modules/reverse-proxy/table/ReverseProxyAuthCell";
 import ReverseProxyClusterCell from "@/modules/reverse-proxy/table/ReverseProxyClusterCell";
@@ -192,15 +204,53 @@ export const ReverseProxyFlatTargetsTable = ({
         />
       }
       rightSide={() => (
-        <Button
-          variant={"primary"}
-          className={"ml-auto"}
-          onClick={() => openModal()}
-          disabled={!permission?.services?.create}
-        >
-          <PlusCircle size={16} />
-          Add Service
-        </Button>
+        <DropdownMenu modal={false}>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant={"primary"}
+              className={"ml-auto"}
+              disabled={!permission?.services?.create}
+            >
+              <PlusCircle size={16} />
+              Add Service
+              <ChevronDown size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-auto min-w-[200px]">
+            <DropdownMenuItem
+              onClick={() => openModal({ initialEndpointMode: ServiceMode.HTTP })}
+            >
+              <div className="flex gap-3 items-center">
+                <Server size={14} className="shrink-0" />
+                HTTP Service
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openModal({ initialEndpointMode: ServiceMode.TLS })}
+            >
+              <div className="flex gap-3 items-center">
+                <LockKeyhole size={14} className="shrink-0" />
+                TLS Passthrough
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openModal({ initialEndpointMode: ServiceMode.TCP })}
+            >
+              <div className="flex gap-3 items-center">
+                <ArrowRight size={14} className="shrink-0" />
+                TCP Service
+              </div>
+            </DropdownMenuItem>
+            <DropdownMenuItem
+              onClick={() => openModal({ initialEndpointMode: ServiceMode.UDP })}
+            >
+              <div className="flex gap-3 items-center">
+                <ArrowRight size={14} className="shrink-0" />
+                UDP Service
+              </div>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       )}
     >
       {(table) => (
