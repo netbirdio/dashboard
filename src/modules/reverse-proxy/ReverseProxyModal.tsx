@@ -765,6 +765,7 @@ export default function ReverseProxyModal({
                               setTlsListenPort(parseInt(e.target.value) || 0)
                             }
                             disabled={isPortBased && !clusterSupportsCustomPorts}
+                            aria-label="Public listen port"
                           />
                         </div>
                         <ArrowRight
@@ -784,6 +785,7 @@ export default function ReverseProxyModal({
                             placeholder={tlsIsHostEditable ? "e.g., 10.0.0.5" : ""}
                             disabled={!hasTlsTarget}
                             readOnly={hasTlsTarget && !tlsIsHostEditable}
+                            aria-label="Destination host or IP"
                             className={
                               !tlsIsHostEditable
                                 ? "!text-nb-gray-400 font-mono !text-xs"
@@ -804,6 +806,7 @@ export default function ReverseProxyModal({
                             onChange={(e) =>
                               setTlsPort(parseInt(e.target.value) || 0)
                             }
+                            aria-label="Destination port"
                           />
                         </div>
                       </div>
