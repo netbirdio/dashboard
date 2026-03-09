@@ -166,13 +166,10 @@ export default function ReverseProxyModal({
   });
 
   // Parse existing domain if editing
-  // TCP/UDP store bare cluster domain; HTTP/TLS store subdomain.cluster
-  const isEditingPortBased = reverseProxy?.mode === ServiceMode.TCP || reverseProxy?.mode === ServiceMode.UDP;
-  const parsed = reverseProxy?.domain && !isEditingPortBased ? parseDomain(reverseProxy.domain) : null;
+  // All modes store subdomain.cluster as domain
+  const parsed = reverseProxy?.domain ? parseDomain(reverseProxy.domain) : null;
 
-  // Form state: for TCP/UDP, subdomain holds the service name
   const [subdomain, setSubdomain] = useState(() => {
-    if (isEditingPortBased) return reverseProxy?.name || "";
     return parsed?.subdomain ||
       initialSubdomain
         ?.toLowerCase()
@@ -182,7 +179,6 @@ export default function ReverseProxyModal({
   });
 
   const [baseDomain, setBaseDomain] = useState(() => {
-    if (isEditingPortBased && reverseProxy?.domain) return reverseProxy.domain;
     if (parsed?.baseDomain) return parsed.baseDomain;
     const validatedDomains = domains?.filter((d) => d.validated) || [];
     const customDomain = validatedDomains.find(
@@ -310,7 +306,7 @@ export default function ReverseProxyModal({
   );
 
   const isL4Mode = endpointMode === "tls" || endpointMode === "tcp" || endpointMode === "udp";
-  // TCP/UDP use bare cluster domain + port; TLS uses subdomain (SNI routing) like HTTP
+  // TCP/UDP use port-based routing; TLS uses SNI routing
   const isPortBased = endpointMode === "tcp" || endpointMode === "udp";
 
   // Check if the selected cluster supports custom listen ports
@@ -387,14 +383,10 @@ export default function ReverseProxyModal({
   );
 
   const isSubdomainValid = useMemo(() => {
-    if (isPortBased) {
-      return baseDomain.length > 0;
-    }
-    // HTTP and TLS both use subdomain.domain, check uniqueness
     return (
       subdomain.length > 0 && baseDomain.length > 0 && !domainAlreadyExists
     );
-  }, [subdomain, baseDomain, domainAlreadyExists, isPortBased]);
+  }, [subdomain, baseDomain, domainAlreadyExists]);
 
   const canContinueToSettings = useMemo(() => {
     if (!isSubdomainValid) return false;
@@ -488,7 +480,7 @@ export default function ReverseProxyModal({
       target_id: tlsPeerId || tlsResourceId || "",
       target_type: l4TargetType,
       port: tlsPort,
-      protocol: endpointMode as string as ReverseProxyTargetProtocol,
+      protocol: (endpointMode === "tls" ? "tcp" : endpointMode) as ReverseProxyTargetProtocol,
       host: tlsIsCidrRange ? tlsHost : undefined,
       enabled: true,
       options: (endpointMode !== "udp" && proxyProtocol) || requestTimeout ? {
@@ -497,13 +489,10 @@ export default function ReverseProxyModal({
       } : undefined,
     };
 
-    // TCP/UDP use bare cluster domain; HTTP and TLS use subdomain.domain
-    const serviceDomain = isPortBased ? baseDomain : fullDomain;
-
     handleCreateOrUpdateProxy({
       data: {
-        name: isPortBased ? (subdomain || reverseProxy?.name || `${endpointMode}-${tlsPort}`) : fullDomain,
-        domain: serviceDomain,
+        name: fullDomain,
+        domain: fullDomain,
         mode: isHTTPMode ? undefined : (endpointMode as ServiceMode),
         listen_port: isL4Mode && (!isPortBased || clusterSupportsCustomPorts) ? tlsListenPort : undefined,
         targets: isHTTPMode ? targets : [l4Target],
@@ -571,61 +560,44 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"targets"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-6"}>
-              {isPortBased ? (
-                <>
-                  <div>
-                    <Label>
-                      <GlobeIcon size={14} />
-                      Proxy Cluster
-                    </Label>
-                    <HelpText>Select the proxy cluster to handle this service.</HelpText>
+              <div>
+                <Label>
+                  <GlobeIcon size={14} />
+                  Domain
+                </Label>
+                <HelpText>
+                  Enter a subdomain and select a domain for your service.
+                </HelpText>
+                <div className="flex items-start mt-2">
+                  <div className="flex-1 min-w-0">
+                    <Input
+                      autoFocus
+                      value={subdomain}
+                      onChange={(e) => {
+                        setSubdomain(
+                          e.target.value
+                            .toLowerCase()
+                            .replace(/[^a-z0-9-]/g, ""),
+                        );
+                      }}
+                      error={
+                        domainAlreadyExists
+                          ? "This domain is already used by another service."
+                          : undefined
+                      }
+                      placeholder={"myapp"}
+                      className="!rounded-r-none !border-r-0"
+                    />
+                  </div>
+                  <div className="flex-1 min-w-0">
                     <CustomDomainSelector
                       value={baseDomain}
                       onChange={setBaseDomain}
-                      className="mt-2"
+                      className="!rounded-l-none"
                     />
                   </div>
-                </>
-              ) : (
-                <div>
-                  <Label>
-                    <GlobeIcon size={14} />
-                    Domain
-                  </Label>
-                  <HelpText>
-                    Enter a subdomain and select a domain for your service.
-                  </HelpText>
-                  <div className="flex items-start mt-2">
-                    <div className="flex-1 min-w-0">
-                      <Input
-                        autoFocus
-                        value={subdomain}
-                        onChange={(e) => {
-                          setSubdomain(
-                            e.target.value
-                              .toLowerCase()
-                              .replace(/[^a-z0-9-]/g, ""),
-                          );
-                        }}
-                        error={
-                          domainAlreadyExists
-                            ? "This domain is already used by another service."
-                            : undefined
-                        }
-                        placeholder={"myapp"}
-                        className="!rounded-r-none !border-r-0"
-                      />
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <CustomDomainSelector
-                        value={baseDomain}
-                        onChange={setBaseDomain}
-                        className="!rounded-l-none"
-                      />
-                    </div>
-                  </div>
                 </div>
-              )}
+              </div>
 
               {reverseProxy?.proxy_cluster && !isClusterConnected && (
                 <Callout variant={"error"}>
@@ -1288,6 +1260,7 @@ export default function ReverseProxyModal({
           }, 200);
         }}
       />
+
     </Modal>
   );
 }

@@ -111,7 +111,6 @@ export enum ReverseProxyTargetProtocol {
   HTTPS = "https",
   TCP = "tcp",
   UDP = "udp",
-  TLS = "tls",
 }
 
 export interface ReverseProxyEvent {
