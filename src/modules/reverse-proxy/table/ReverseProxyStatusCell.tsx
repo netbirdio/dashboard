@@ -6,7 +6,7 @@ import {
 import useFetchApi from "@utils/api";
 import Badge from "@components/Badge";
 import { Loader2 } from "lucide-react";
-import { useMemo } from "react";
+import { useRef } from "react";
 
 type Props = {
   serviceId: string;
@@ -23,38 +23,37 @@ export default function ReverseProxyStatusCell({
   enabled,
   isL4,
 }: Readonly<Props>) {
-  const status = meta?.status;
-  const certificateIssued = !!meta?.certificate_issued_at;
+  const dataRef = useRef<ReverseProxy | undefined>(undefined);
 
-  const isTerminalStatus =
-    status === ReverseProxyStatus.ACTIVE ||
-    status === ReverseProxyStatus.ERROR ||
-    status === ReverseProxyStatus.TUNNEL_NOT_CREATED;
+  const isActive =
+    meta?.status === ReverseProxyStatus.ACTIVE ||
+    dataRef.current?.meta?.status === ReverseProxyStatus.ACTIVE;
 
-  const isSettingUp =
-    enabled &&
-    status !== undefined &&
-    !isTerminalStatus &&
-    (isL4 || !certificateIssued);
+  const certificateIssued =
+    !!meta?.certificate_issued_at ||
+    !!dataRef.current?.meta?.certificate_issued_at;
+
+  const shouldPoll =
+    !!enabled && !(isActive && (isL4 || certificateIssued));
 
   const { data } = useFetchApi<ReverseProxy>(
     `/reverse-proxies/services/${serviceId}`,
     true,
     false,
-    isSettingUp,
+    shouldPoll,
     { refreshInterval: POLL_INTERVAL_MS },
   );
 
-  const currentStatus = data?.meta?.status ?? status;
+  dataRef.current = data;
 
-  const currentCertificateIssued = useMemo(() => {
-    if (data && data?.meta) return !!data?.meta?.certificate_issued_at;
-    return certificateIssued;
-  }, [data]);
+  const currentStatus = data?.meta?.status ?? meta?.status;
+  const currentCertificateIssued = data?.meta?.certificate_issued_at
+    ? !!data.meta.certificate_issued_at
+    : certificateIssued;
 
   if (!enabled) return null;
 
-  // L4 services don't need certificates — hide once active
+  // L4 services don't need certificates
   if (isL4) {
     if (currentStatus === ReverseProxyStatus.ACTIVE) return null;
     if (currentStatus === ReverseProxyStatus.ERROR) {
@@ -89,7 +88,7 @@ export default function ReverseProxyStatusCell({
     return null;
   }
 
-  if (!currentCertificateIssued) {
+  if (!certificateIssued) {
     return (
       <div className={"flex"}>
         <Badge variant={"yellow"}>
