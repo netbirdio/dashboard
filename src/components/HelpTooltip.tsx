@@ -15,6 +15,7 @@ type Props = {
   alignOffset?: number;
   sideOffset?: number;
   iconSize?: number;
+  delayDuration?: number;
 } & TooltipVariants;
 export const HelpTooltip = ({
   content,
@@ -28,6 +29,7 @@ export const HelpTooltip = ({
   alignOffset = 0,
   sideOffset,
   iconSize = 12,
+  delayDuration = 300,
 }: Props) => {
   return (
     <>
@@ -37,7 +39,7 @@ export const HelpTooltip = ({
         align={align}
         alignOffset={alignOffset}
         sideOffset={sideOffset}
-        delayDuration={150}
+        delayDuration={delayDuration}
         variant={variant}
         className={
           "inline underline decoration-dashed underline-offset-[3px] decoration-nb-gray-300 cursor-help transition-all hover:decoration-white"

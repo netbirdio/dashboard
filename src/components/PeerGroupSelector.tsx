@@ -78,7 +78,7 @@ interface MultiSelectProps {
   closeOnSelect?: boolean;
   resource?: PolicyRuleResource;
   onResourceChange?: (resource?: PolicyRuleResource) => void;
-  placeholder?: string;
+  placeholder?: React.ReactNode | string;
   customTrigger?: React.ReactNode;
   align?: "start" | "end";
   side?: "top" | "bottom";
@@ -409,7 +409,9 @@ export function PeerGroupSelector({
               })}
 
               {values.length == 0 && !resource && (
-                <span className={"pl-1"}>{placeholder}</span>
+                <span className={cn(typeof placeholder === "string" && "pl-1")}>
+                  {placeholder}
+                </span>
               )}
             </div>
 
