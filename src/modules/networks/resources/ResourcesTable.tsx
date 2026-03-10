@@ -77,7 +77,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
       return groups.map((group) => group.name).join(", ");
     },
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+      return <DataTableHeader column={column}>Resource Groups</DataTableHeader>;
     },
     cell: ({ row }) => {
       return <ResourceGroupCell resource={row.original} />;
@@ -121,7 +121,12 @@ export default function ResourcesTable({
   const params = useSearchParams();
   const resourceId = params.get("resource") ?? undefined;
 
-  const [sorting, setSorting] = useState<SortingState>([]);
+  const [sorting, setSorting] = useState<SortingState>([
+    {
+      id: "name",
+      desc: false,
+    },
+  ]);
   const { openResourceModal, network } = useNetworksContext();
   const router = useRouter();
 
