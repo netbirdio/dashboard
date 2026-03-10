@@ -13,7 +13,7 @@ const CountryContext = React.createContext(
     countries: Country[] | undefined;
     isLoading: boolean;
     getRegionByPeer: (peer: Peer) => string;
-    getRegionText: (country_code: string, city_name: string) => string;
+    getRegionText: (country_code: string, city_name: string, subdivision_code?: string) => string;
   },
 );
 
@@ -21,7 +21,7 @@ export default function CountryProvider({ children }: Props) {
   const { isRestricted } = usePermissions();
 
   const getRegionByPeer = (peer: Peer) => "Unknown";
-  const getRegionText = (country_code: string, city_name: string) => "Unknown";
+  const getRegionText = (country_code: string, city_name: string, _subdivision_code?: string) => "Unknown";
 
   return isRestricted ? (
     <CountryContext.Provider
@@ -47,12 +47,14 @@ function CountryProviderContent({ children }: Props) {
   );
 
   const getRegionText = useCallback(
-    (country_code: string, city_name: string) => {
+    (country_code: string, city_name: string, subdivision_code?: string) => {
       if (!countries) return "Unknown";
       const country = countries.find((c) => c.country_code === country_code);
       if (!country) return "Unknown";
-      if (!city_name) return country.country_name;
-      return `${country.country_name}, ${city_name}`;
+      const parts = [country.country_name];
+      if (subdivision_code) parts.push(subdivision_code);
+      if (city_name) parts.push(city_name);
+      return parts.join(", ");
     },
     [countries],
   );

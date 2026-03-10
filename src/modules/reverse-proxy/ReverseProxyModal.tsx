@@ -32,6 +32,7 @@ import {
   Edit,
   ExternalLinkIcon,
   GlobeIcon,
+  KeyRound,
   LockKeyhole,
   MinusCircleIcon,
   MoreVertical,
@@ -41,6 +42,7 @@ import {
   RectangleEllipsis,
   Server,
   Settings,
+  ShieldCheck,
   Text,
   Timer,
   Users,
@@ -56,9 +58,11 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
+  AccessRestrictions,
   REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
   REVERSE_PROXY_SERVICES_DOCS_LINK,
   REVERSE_PROXY_SETTINGS_DOCS_LINK,
+  HeaderAuthConfig,
   ReverseProxy,
   ReverseProxyAuth,
   ReverseProxyDomain,
@@ -75,6 +79,8 @@ import {
 } from "@/contexts/ReverseProxiesProvider";
 import { CustomDomainSelector } from "./domain/CustomDomainSelector";
 import { cn } from "@utils/helpers";
+import AccessRestrictionsSection from "@/modules/reverse-proxy/AccessRestrictionsSection";
+import AuthHeaderModal from "@/modules/reverse-proxy/auth/AuthHeaderModal";
 import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
@@ -322,7 +328,10 @@ export default function ReverseProxyModal({
   );
 
   const [requestTimeout, setRequestTimeout] = useState(
-    existingL4Target?.options?.request_timeout ?? existingL4Target?.options?.session_idle_timeout ?? "",
+    existingL4Target?.options?.request_timeout ?? (endpointMode === "udp" ? existingL4Target?.options?.session_idle_timeout ?? "" : ""),
+  );
+  const [sessionIdleTimeout, setSessionIdleTimeout] = useState(
+    existingL4Target?.options?.session_idle_timeout ?? "",
   );
 
   const [targets, setTargets] = useState<ReverseProxyTarget[]>(
@@ -395,10 +404,20 @@ export default function ReverseProxyModal({
     reverseProxy?.auth?.link_auth?.enabled ?? false,
   );
 
+  const [headerAuths, setHeaderAuths] = useState<HeaderAuthConfig[]>(
+    reverseProxy?.auth?.header_auths ?? [],
+  );
+  const headerAuthsEnabled = headerAuths.length > 0;
+
+  const [accessRestrictions, setAccessRestrictions] = useState<AccessRestrictions>(
+    reverseProxy?.access_restrictions ?? {},
+  );
+
   // Auth modal states
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [ssoModalOpen, setSsoModalOpen] = useState(false);
   const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [headerAuthModalOpen, setHeaderAuthModalOpen] = useState(false);
 
   // Target being added/edited
   const [targetModalOpen, setTargetModalOpen] = useState(false);
@@ -454,15 +473,31 @@ export default function ReverseProxyModal({
   };
 
   const hasNoAuth =
-    !passwordEnabled && !pinEnabled && !bearerEnabled && !linkAuthEnabled;
+    !passwordEnabled && !pinEnabled && !bearerEnabled && !linkAuthEnabled && !headerAuthsEnabled;
+
+  // Filter out empty entries (rows where user clicked "Add" but didn't fill in).
+  const cleanedRestrictions: AccessRestrictions = {
+    allowed_cidrs: accessRestrictions.allowed_cidrs?.filter(Boolean),
+    blocked_cidrs: accessRestrictions.blocked_cidrs?.filter(Boolean),
+    allowed_countries: accessRestrictions.allowed_countries?.filter(Boolean),
+    blocked_countries: accessRestrictions.blocked_countries?.filter(Boolean),
+  };
+
+  const hasAccessRestrictions =
+    (cleanedRestrictions.allowed_cidrs?.length ?? 0) > 0 ||
+    (cleanedRestrictions.blocked_cidrs?.length ?? 0) > 0 ||
+    (cleanedRestrictions.allowed_countries?.length ?? 0) > 0 ||
+    (cleanedRestrictions.blocked_countries?.length ?? 0) > 0;
 
   const handleSubmit = async () => {
-    // Show warning if no authentication is configured (HTTP only; TLS is pass-through)
-    if (endpointMode === "http" && hasNoAuth) {
+    const isHTTPMode = endpointMode === "http";
+    const noProtection = isHTTPMode ? (hasNoAuth && !hasAccessRestrictions) : !hasAccessRestrictions;
+    if (noProtection) {
       const confirmed = await confirm({
-        title: "No Authentication Configured",
-        description:
-          "This service will be publicly accessible to everyone on the internet without any restrictions. Are you sure you want to continue?",
+        title: "No Protection Configured",
+        description: isHTTPMode
+          ? "This service will be publicly accessible to everyone on the internet without any authentication or access restrictions. Are you sure you want to continue?"
+          : "This service has no access restrictions (IP or country). It will accept connections from any source. Are you sure you want to continue?",
         type: "warning",
         confirmText: reverseProxy ? "Save Changes" : "Add Service",
         cancelText: "Cancel",
@@ -489,9 +524,8 @@ export default function ReverseProxyModal({
       link_auth: {
         enabled: linkAuthEnabled,
       },
+      header_auths: headerAuths,
     };
-
-    const isHTTPMode = endpointMode === "http";
 
     const l4TargetType =
       tlsTargetType === ReverseProxyTargetType.PEER
@@ -507,9 +541,11 @@ export default function ReverseProxyModal({
       protocol: (endpointMode === "tls" ? "tcp" : endpointMode) as ReverseProxyTargetProtocol,
       host: tlsIsCidrRange ? tlsHost : undefined,
       enabled: true,
-      options: (endpointMode !== "udp" && proxyProtocol) || requestTimeout ? {
+      options: (endpointMode !== "udp" && proxyProtocol) || requestTimeout || sessionIdleTimeout ? {
         ...(endpointMode !== "udp" && proxyProtocol ? { proxy_protocol: true } : {}),
-        ...(requestTimeout ? { [endpointMode === "udp" ? "session_idle_timeout" : "request_timeout"]: requestTimeout } : {}),
+        ...(endpointMode === "udp" && requestTimeout ? { session_idle_timeout: requestTimeout } : {}),
+        ...(endpointMode !== "udp" && requestTimeout ? { request_timeout: requestTimeout } : {}),
+        ...((endpointMode === "tcp" || endpointMode === "tls") && sessionIdleTimeout ? { session_idle_timeout: sessionIdleTimeout } : {}),
       } : undefined,
     };
 
@@ -524,6 +560,7 @@ export default function ReverseProxyModal({
         pass_host_header: isHTTPMode ? passHostHeader : undefined,
         rewrite_redirects: isHTTPMode ? rewriteRedirects : undefined,
         auth: isHTTPMode ? auth : undefined,
+        access_restrictions: hasAccessRestrictions ? cleanedRestrictions : undefined,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -576,6 +613,10 @@ export default function ReverseProxyModal({
                 Authentication
               </TabsTrigger>
             )}
+            <TabsTrigger value={"access"} disabled={!canContinueToSettings}>
+              <ShieldCheck size={14} />
+              Access Control
+            </TabsTrigger>
             <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
               <Settings size={14} />
               Advanced Settings
@@ -998,8 +1039,29 @@ export default function ReverseProxyModal({
                   enabled={pinEnabled}
                   onClick={() => setPinModalOpen(true)}
                 />
+                <SettingCard.Item
+                  label={
+                    <>
+                      <KeyRound size={15} />
+                      Header Auth
+                    </>
+                  }
+                  description="Authenticate via HTTP headers (Basic Auth, Bearer token, or custom). Multiple headers are OR'd."
+                  enabled={headerAuthsEnabled}
+                  onClick={() => setHeaderAuthModalOpen(true)}
+                />
               </SettingCard>
+              <p className="text-xs text-nb-gray-400 px-1">
+                When multiple methods are enabled, a request matching any one of them will be granted access.
+              </p>
             </div>
+          </TabsContent>
+
+          <TabsContent value={"access"} className={"pb-8"}>
+            <AccessRestrictionsSection
+              value={accessRestrictions}
+              onChange={setAccessRestrictions}
+            />
           </TabsContent>
 
           <TabsContent value={"settings"} className={"pb-8"}>
@@ -1018,7 +1080,7 @@ export default function ReverseProxyModal({
                 />
               )}
               {isL4Mode && (
-                <div className={"px-6 py-4 border rounded-md border-nb-gray-910 bg-nb-gray-900/30"}>
+                <div className={"px-6 py-4 border rounded-md border-nb-gray-910 bg-nb-gray-900/30 flex flex-col gap-4"}>
                   <div className={"flex justify-between gap-10"}>
                     <div className={"max-w-sm"}>
                       <Label>
@@ -1041,6 +1103,28 @@ export default function ReverseProxyModal({
                       />
                     </div>
                   </div>
+                  {(endpointMode === "tcp" || endpointMode === "tls") && (
+                    <div className={"flex justify-between gap-10"}>
+                      <div className={"max-w-sm"}>
+                        <Label>
+                          <Timer size={15} />
+                          Session Idle Timeout
+                        </Label>
+                        <HelpText margin={false}>
+                          Close the TCP connection after this period of inactivity. Defaults to 5m when empty.
+                        </HelpText>
+                      </div>
+                      <div className={"mt-1"}>
+                        <Input
+                          value={sessionIdleTimeout}
+                          onChange={(e) => setSessionIdleTimeout(e.target.value)}
+                          onClick={(e) => e.stopPropagation()}
+                          placeholder={'5m'}
+                          maxWidthClass={"w-[100px]"}
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
               {endpointMode === "http" && (
@@ -1135,7 +1219,7 @@ export default function ReverseProxyModal({
                       <Button
                         variant={"primary"}
                         onClick={() =>
-                          setTab(isL4Mode ? "settings" : "auth")
+                          setTab(isL4Mode ? "access" : "auth")
                         }
                         disabled={!canContinueToSettings}
                       >
@@ -1155,6 +1239,25 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
+                      onClick={() => setTab("access")}
+                    >
+                      Continue
+                    </Button>
+                  </>
+                )}
+
+                {tab === "access" && (
+                  <>
+                    <Button
+                      variant={"secondary"}
+                      onClick={() =>
+                        setTab(isL4Mode ? "targets" : "auth")
+                      }
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      variant={"primary"}
                       onClick={() => setTab("settings")}
                     >
                       Continue
@@ -1166,9 +1269,7 @@ export default function ReverseProxyModal({
                   <>
                     <Button
                       variant={"secondary"}
-                      onClick={() =>
-                        setTab(isL4Mode ? "targets" : "auth")
-                      }
+                      onClick={() => setTab("access")}
                     >
                       Back
                     </Button>
@@ -1285,6 +1386,22 @@ export default function ReverseProxyModal({
         }}
       />
 
+      <AuthHeaderModal
+        open={headerAuthModalOpen}
+        onOpenChange={setHeaderAuthModalOpen}
+        key={headerAuthModalOpen ? "h1" : "h0"}
+        currentHeaders={headerAuths}
+        onSave={(headers) => {
+          setTimeout(() => {
+            setHeaderAuths(headers);
+          }, 200);
+        }}
+        onRemove={() => {
+          setTimeout(() => {
+            setHeaderAuths([]);
+          }, 200);
+        }}
+      />
     </Modal>
   );
 }

@@ -652,13 +652,15 @@ export default function ReverseProxyTargetModal({
                   />
                 </div>
 
-                {reverseProxy.mode === ServiceMode.UDP && (
+                {(reverseProxy.mode === ServiceMode.UDP || reverseProxy.mode === ServiceMode.TCP) && (
                   <div className={"flex items-center justify-between"}>
                     <div>
                       <Label>Session Idle Timeout</Label>
                       <HelpText className={"mb-0"}>
-                        How long a UDP session stays alive without traffic (max
-                        10m). <br /> Defaults to 30s when empty.
+                        {reverseProxy.mode === ServiceMode.UDP
+                          ? <>How long a UDP session stays alive without traffic. <br /> Defaults to 30s when empty.</>
+                          : <>How long a TCP connection stays alive without traffic. <br /> Defaults to 5m when empty.</>
+                        }
                       </HelpText>
                     </div>
                     <Input
