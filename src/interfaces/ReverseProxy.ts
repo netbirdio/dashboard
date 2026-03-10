@@ -18,6 +18,7 @@ export interface ReverseProxy {
   pass_host_header?: boolean;
   rewrite_redirects?: boolean;
   auth?: ReverseProxyAuth;
+  access_restrictions?: AccessRestrictions;
   meta?: ReverseProxyMeta;
 }
 
@@ -77,6 +78,20 @@ export interface ReverseProxyAuth {
   link_auth?: {
     enabled: boolean;
   };
+  header_auths?: HeaderAuthConfig[];
+}
+
+export interface HeaderAuthConfig {
+  enabled: boolean;
+  header: string;
+  value: string;
+}
+
+export interface AccessRestrictions {
+  allowed_cidrs?: string[];
+  blocked_cidrs?: string[];
+  allowed_countries?: string[];
+  blocked_countries?: string[];
 }
 
 export interface ReverseProxyDomain {
@@ -129,6 +144,7 @@ export interface ReverseProxyEvent {
   auth_method_used?: string;
   country_code?: string;
   city_name?: string;
+  subdivision_code?: string;
   bytes_upload: number;
   bytes_download: number;
   protocol?: EventProtocol;

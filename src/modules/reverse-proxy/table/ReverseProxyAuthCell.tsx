@@ -11,8 +11,10 @@ import { UserCountStack } from "@components/ui/MultipleGroups";
 import {
   ArrowRightIcon,
   Binary,
-  HelpCircle,
+  Globe,
+  KeyRound,
   LucideIcon,
+  Network,
   RectangleEllipsis,
   Settings,
   ShieldCheck,
@@ -24,8 +26,7 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { Group } from "@/interfaces/Group";
-import { isL4Mode, ReverseProxy } from "@/interfaces/ReverseProxy";
-import FullTooltip from "@components/FullTooltip";
+import { AccessRestrictions, ReverseProxy, isL4Mode } from "@/interfaces/ReverseProxy";
 
 const AUTH_METHODS: {
   key: "password_auth" | "pin_auth" | "bearer_auth";
@@ -59,30 +60,22 @@ export default function ReverseProxyAuthCell({
   const { openModal } = useReverseProxies();
   const { groups } = useGroups();
 
-  // L4 services don't support auth
+  // L4 services don't support auth, show access restrictions instead
   if (isL4Mode(reverseProxy.mode)) {
     return (
-      <div className={"flex"}>
-        <FullTooltip
-          content={
-            <div className={"flex text-xs max-w-[340px]"}>
-              Auth methods are not supported for TCP/UDP and TLS passthrough
-              services as they operate at the network layer.
-            </div>
-          }
-        >
-          <Badge variant={"gray"}>
-            N/A
-            <HelpCircle size={12} />
-          </Badge>
-        </FullTooltip>
-      </div>
+      <L4AccessBadge
+        reverseProxy={reverseProxy}
+        permission={permission}
+        openModal={openModal}
+      />
     );
   }
 
   const auth = reverseProxy.auth;
 
   const enabled = AUTH_METHODS.filter((m) => auth?.[m.key]?.enabled);
+  const headerAuthCount = auth?.header_auths?.length ?? 0;
+  const totalEnabled = enabled.length + (headerAuthCount > 0 ? 1 : 0);
 
   const ssoGroups = auth?.bearer_auth?.enabled
     ? (auth.bearer_auth.distribution_groups ?? [])
@@ -91,21 +84,30 @@ export default function ReverseProxyAuthCell({
     : [];
 
   const showHoverContent =
-    enabled.length > 1 || (enabled.length === 1 && auth?.bearer_auth?.enabled);
+    totalEnabled > 1 || (totalEnabled === 1 && auth?.bearer_auth?.enabled);
 
-  const SingleIcon = enabled.length === 1 ? enabled[0].Icon : null;
+  const isSingleStandard = totalEnabled === 1 && enabled.length === 1;
+  const SingleIcon = isSingleStandard ? enabled[0].Icon : null;
 
-  const badgeContent = SingleIcon ? (
-    <>
-      <SingleIcon size={12} className="text-green-500" />
-      <span className={"font-medium text-xs"}>{enabled[0].label}</span>
-    </>
-  ) : enabled.length > 1 ? (
-    <>
-      <ShieldCheck size={12} className="text-green-400" />
-      <span className={"font-medium text-xs"}>{enabled.length} Enabled</span>
-    </>
-  ) : null;
+  const badgeContent =
+    isSingleStandard && SingleIcon ? (
+      <>
+        <SingleIcon size={12} className="text-green-500" />
+        <span className={"font-medium text-xs"}>{enabled[0].label}</span>
+      </>
+    ) : totalEnabled === 1 && headerAuthCount > 0 ? (
+      <>
+        <KeyRound size={12} className="text-green-500" />
+        <span className={"font-medium text-xs"}>Header Auth</span>
+      </>
+    ) : totalEnabled > 1 ? (
+      <>
+        <ShieldCheck size={12} className="text-green-400" />
+        <span className={"font-medium text-xs"}>
+          {totalEnabled} Enabled
+        </span>
+      </>
+    ) : null;
 
   return (
     <div
@@ -158,7 +160,9 @@ export default function ReverseProxyAuthCell({
                       {ssoGroups.map((group) => (
                         <div
                           key={group.id}
-                          className={"flex gap-2 items-center justify-between"}
+                          className={
+                            "flex gap-2 items-center justify-between"
+                          }
                         >
                           <GroupBadge group={group} />
                           <ArrowRightIcon size={14} />
@@ -180,6 +184,115 @@ export default function ReverseProxyAuthCell({
         onClick={(e) => {
           e.stopPropagation();
           openModal({ proxy: reverseProxy, initialTab: "auth" });
+        }}
+        className={"!px-3"}
+        disabled={!permission?.services?.update}
+      >
+        <Settings size={12} />
+        Configure
+      </Button>
+    </div>
+  );
+}
+
+function hasRestrictions(r?: AccessRestrictions): boolean {
+  if (!r) return false;
+  return (
+    (r.allowed_cidrs?.length ?? 0) > 0 ||
+    (r.blocked_cidrs?.length ?? 0) > 0 ||
+    (r.allowed_countries?.length ?? 0) > 0 ||
+    (r.blocked_countries?.length ?? 0) > 0
+  );
+}
+
+type L4AccessBadgeProps = {
+  reverseProxy: ReverseProxy;
+  permission: ReturnType<typeof usePermissions>["permission"];
+  openModal: ReturnType<typeof useReverseProxies>["openModal"];
+};
+
+function L4AccessBadge({
+  reverseProxy,
+  permission,
+  openModal,
+}: Readonly<L4AccessBadgeProps>) {
+  const r = reverseProxy.access_restrictions;
+  const active = hasRestrictions(r);
+
+  return (
+    <div
+      className={"flex gap-3"}
+      onClick={(e) => {
+        e.stopPropagation();
+        openModal({ proxy: reverseProxy, initialTab: "access" });
+      }}
+    >
+      <HoverCard openDelay={200} closeDelay={100}>
+        <HoverCardTrigger asChild={true}>
+          {active ? (
+            <Badge variant={"gray"} useHover={false} className={"cursor-pointer"}>
+              <ShieldCheck size={12} className="text-green-500" />
+              <span className={"font-medium text-xs"}>
+                Access Control
+              </span>
+            </Badge>
+          ) : (
+            <Badge variant={"gray"}>
+              <ShieldOff size={12} className="text-red-500" />
+              <span className={"font-medium text-xs"}>No Restrictions</span>
+            </Badge>
+          )}
+        </HoverCardTrigger>
+        {active && r && (
+          <HoverCardContent
+            className={"p-0"}
+            sideOffset={14}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className={"text-xs"}>
+              {(r.allowed_cidrs?.length ?? 0) > 0 && (
+                <ListItem
+                  className={"py-0.5"}
+                  icon={<Network size={14} />}
+                  label={`${r.allowed_cidrs!.length} CIDR${r.allowed_cidrs!.length > 1 ? "s" : ""} allowed`}
+                  value={<span className="text-green-500">Active</span>}
+                />
+              )}
+              {(r.blocked_cidrs?.length ?? 0) > 0 && (
+                <ListItem
+                  className={"py-0.5"}
+                  icon={<Network size={14} />}
+                  label={`${r.blocked_cidrs!.length} CIDR${r.blocked_cidrs!.length > 1 ? "s" : ""} blocked`}
+                  value={<span className="text-red-400">Active</span>}
+                />
+              )}
+              {(r.allowed_countries?.length ?? 0) > 0 && (
+                <ListItem
+                  className={"py-0.5"}
+                  icon={<Globe size={14} />}
+                  label={`${r.allowed_countries!.length} ${r.allowed_countries!.length > 1 ? "countries" : "country"} allowed`}
+                  value={<span className="text-green-500">Active</span>}
+                />
+              )}
+              {(r.blocked_countries?.length ?? 0) > 0 && (
+                <ListItem
+                  className={"py-0.5"}
+                  icon={<Globe size={14} />}
+                  label={`${r.blocked_countries!.length} ${r.blocked_countries!.length > 1 ? "countries" : "country"} blocked`}
+                  value={<span className="text-red-400">Active</span>}
+                />
+              )}
+            </div>
+          </HoverCardContent>
+        )}
+      </HoverCard>
+
+      <Button
+        size={"xs"}
+        variant={"secondary"}
+        onClick={(e) => {
+          e.stopPropagation();
+          openModal({ proxy: reverseProxy, initialTab: "access" });
         }}
         className={"!px-3"}
         disabled={!permission?.services?.update}
