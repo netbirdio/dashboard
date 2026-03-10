@@ -296,6 +296,7 @@ export function DataTable<TData, TValue>({
     autoResetAll: false,
     autoResetExpanded: false,
     manualPagination: manualPagination,
+    manualSorting: serverSidePagination,
     manualFiltering: manualFiltering || manualColumnFiltering,
     pageCount: pageCount,
     state: {
