@@ -11,9 +11,15 @@ import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
 type Props = {
   policy: Policy;
+  hideEdit?: boolean;
+  disableRedirect?: boolean;
 };
 
-export default function AccessControlSourcesCell({ policy }: Props) {
+export default function AccessControlSourcesCell({
+  policy,
+  hideEdit = false,
+  disableRedirect = false,
+}: Props) {
   const { permission } = usePermissions();
   const canUpdate = permission?.policies?.update;
 
@@ -27,12 +33,18 @@ export default function AccessControlSourcesCell({ policy }: Props) {
   }
 
   return firstRule ? (
-    <div className={cn("flex items-center gap-1", canUpdate && "group")}>
+    <div
+      className={cn(
+        "flex items-center gap-1",
+        canUpdate && !hideEdit && "group",
+      )}
+    >
       <MultipleGroups
         groups={firstRule.sources as Group[]}
         showUsers={firstRule.protocol === "netbird-ssh"}
+        disableRedirect={disableRedirect}
       />
-      {canUpdate && <TransparentEditIconButton />}
+      {canUpdate && !hideEdit && <TransparentEditIconButton />}
     </div>
   ) : (
     <EmptyRow />

@@ -26,6 +26,7 @@ type Props = {
   showResources?: boolean;
   redirectGroupTab?: string;
   showUsers?: boolean;
+  disableRedirect?: boolean;
 };
 
 export default function MultipleGroups({
@@ -37,6 +38,7 @@ export default function MultipleGroups({
   showResources = false,
   showUsers = false,
   redirectGroupTab,
+  disableRedirect = false,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
 
@@ -64,6 +66,7 @@ export default function MultipleGroups({
             {firstGroup && (
               <GroupBadge
                 group={firstGroup}
+                showNewBadge={true}
                 className={
                   permission.groups.update ? "group-hover:bg-nb-gray-800" : ""
                 }
@@ -101,7 +104,7 @@ export default function MultipleGroups({
                   return (
                     group && (
                       <div
-                        key={group.id}
+                        key={group?.id || group?.name}
                         className={
                           "flex gap-2 items-center justify-between w-full"
                         }
@@ -110,16 +113,23 @@ export default function MultipleGroups({
                           group={group}
                           className={"py-0"}
                           textClassName={"py-1.5"}
-                          redirectToGroupPage={true}
+                          showNewBadge={true}
+                          redirectToGroupPage={!disableRedirect}
                           redirectGroupTab={redirectGroupTab}
                         ></GroupBadge>
                         <ArrowRightIcon size={14} />
                         {showResources ? (
-                          <ResourceCountBadge group={group} />
+                          <ResourceCountBadge
+                            group={group}
+                            disableRedirect={disableRedirect}
+                          />
                         ) : showUsers ? (
                           <UserCountStack group={group} />
                         ) : (
-                          <PeerCountBadge group={group} />
+                          <PeerCountBadge
+                            group={group}
+                            disableRedirect={disableRedirect}
+                          />
                         )}
                       </div>
                     )

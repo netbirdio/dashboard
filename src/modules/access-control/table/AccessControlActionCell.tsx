@@ -1,33 +1,19 @@
 import Button from "@components/Button";
-import { notify } from "@components/Notification";
-import { useApiCall } from "@utils/api";
 import { Trash2 } from "lucide-react";
 import * as React from "react";
-import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Policy } from "@/interfaces/Policy";
-import { Route } from "@/interfaces/Route";
+import { usePolicies } from "@/contexts/PoliciesProvider";
 
 type Props = {
   policy: Policy;
 };
+
 export default function AccessControlActionCell({ policy }: Readonly<Props>) {
   const { confirm } = useDialog();
-  const policyRequest = useApiCall<Route>("/policies");
-  const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
-
-  const deleteRule = async () => {
-    notify({
-      title: "Access Control Policy " + policy.name,
-      description: "The policy was successfully removed.",
-      promise: policyRequest.del("", `/${policy.id}`).then(() => {
-        mutate("/policies");
-      }),
-      loadingMessage: "Deleting the policy...",
-    });
-  };
+  const { deletePolicy } = usePolicies();
 
   const openConfirm = async () => {
     const choice = await confirm({
@@ -39,7 +25,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
       type: "danger",
     });
     if (!choice) return;
-    deleteRule().then();
+    await deletePolicy(policy);
   };
 
   return (

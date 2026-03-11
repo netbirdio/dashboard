@@ -54,6 +54,7 @@ import { PostureCheckTabTrigger } from "@/modules/posture-checks/ui/PostureCheck
 import { SSHAccessType } from "@/modules/access-control/ssh/SSHAccessType";
 import { SSHAuthorizedGroups } from "@/modules/access-control/ssh/SSHAuthorizedGroups";
 import { useUsers } from "@/contexts/UsersProvider";
+import { HelpTooltip } from "@components/HelpTooltip";
 
 type Props = {
   children?: React.ReactNode;
@@ -124,6 +125,7 @@ type ModalProps = {
   initialPorts?: number[];
   initialDestinationResource?: PolicyRuleResource;
   initialTab?: string;
+  disableDestinationSelector?: boolean;
 };
 
 export function AccessControlModalContent({
@@ -140,6 +142,7 @@ export function AccessControlModalContent({
   initialPorts,
   initialDestinationResource,
   initialTab,
+  disableDestinationSelector = false,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
   const { users } = useUsers();
@@ -293,7 +296,25 @@ export function AccessControlModalContent({
                   <SelectItem value="tcp">TCP</SelectItem>
                   <SelectItem value="udp">UDP</SelectItem>
                   <SelectItem value="icmp">ICMP</SelectItem>
-                  <SelectItem value="netbird-ssh">NetBird SSH</SelectItem>
+                  <SelectItem
+                    value="netbird-ssh"
+                    extra={
+                      <HelpTooltip
+                        triggerClassName={"ml-[0.01rem]"}
+                        align={"center"}
+                        side={"right"}
+                        content={
+                          <>
+                            Select NetBird SSH for SSH-specific policies with
+                            fine-grained access control, or use TCP with port 22
+                            for basic network-level SSH access
+                          </>
+                        }
+                      />
+                    }
+                  >
+                    NetBird SSH
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -303,6 +324,15 @@ export function AccessControlModalContent({
                 <Label className={"mb-2"}>
                   <FolderDown size={15} />
                   Source
+                  <HelpTooltip
+                    content={
+                      <>
+                        Typically a group of user devices (e.g., Developers,
+                        Marketing) or individual devices in peer-to-peer
+                        connections that will access the destination.
+                      </>
+                    }
+                  />
                 </Label>
                 <PeerGroupSelector
                   dataCy={"source-group-selector"}
@@ -337,6 +367,15 @@ export function AccessControlModalContent({
                 <Label className={"mb-2"}>
                   <FolderInput size={15} />
                   Destination
+                  <HelpTooltip
+                    content={
+                      <>
+                        Typically a group of peers or resources (e.g., Servers,
+                        Databases, Internal Services) that will be accessed by
+                        the source. Can also be an individual peer or resource.
+                      </>
+                    }
+                  />
                 </Label>
                 <PeerGroupSelector
                   dataCy={"destination-group-selector"}
@@ -354,7 +393,9 @@ export function AccessControlModalContent({
                   onResourceChange={setDestinationResource}
                   saveGroupAssignments={useSave}
                   disabled={
-                    !permission.policies.update || !permission.policies.create
+                    disableDestinationSelector ||
+                    !permission.policies.update ||
+                    !permission.policies.create
                   }
                 />
               </div>
@@ -575,7 +616,13 @@ export function AccessControlModalContent({
                   <Button
                     variant={"primary"}
                     disabled={submitDisabled || !permission.policies.create}
-                    onClick={submit}
+                    onClick={() => {
+                      if (useSave) {
+                        submit();
+                      } else {
+                        close();
+                      }
+                    }}
                     data-cy={"submit-policy"}
                   >
                     <PlusCircle size={16} />

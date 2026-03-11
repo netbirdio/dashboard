@@ -11,12 +11,10 @@ import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ExternalLinkIcon } from "lucide-react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
-import { usePathname } from "next/navigation";
 import dayjs from "dayjs";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@components/DatePickerWithRange";
-import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import {
   isL4Event,
@@ -43,7 +41,9 @@ export const makeEventsColumns = (
   {
     id: "timestamp",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>Time</DataTableHeader>
+      <DataTableHeader column={column} name="timestamp">
+        Time
+      </DataTableHeader>
     ),
     cell: ({ row }) => (
       <ReverseProxyEventsTimeCell timestamp={row.original.timestamp} />
@@ -57,7 +57,9 @@ export const makeEventsColumns = (
     accessorFn: (row) =>
       `${row.source_ip} ${row.city_name || ""} ${row.country_code || ""}`,
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>Location / IP</DataTableHeader>
+      <DataTableHeader column={column} name="source_ip">
+        Location / IP
+      </DataTableHeader>
     ),
     cell: ({ row }) => (
       <ReverseProxyEventsLocationIpCell event={row.original} />
@@ -67,7 +69,9 @@ export const makeEventsColumns = (
     id: "method",
     accessorKey: "method",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>Method</DataTableHeader>
+      <DataTableHeader column={column} name="method">
+        Method
+      </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsMethodCell event={row.original} />,
     filterFn: "arrIncludesSomeExact",
@@ -76,7 +80,9 @@ export const makeEventsColumns = (
     id: "url",
     accessorFn: (row) => `${row.host} ${row.path || ""}`,
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>Host / URL</DataTableHeader>
+      <DataTableHeader column={column} name="url" sorting={false}>
+        Host / URL
+      </DataTableHeader>
     ),
     cell: ({ row }) => (
       <ReverseProxyEventsUrlCell
@@ -89,7 +95,9 @@ export const makeEventsColumns = (
     id: "status",
     accessorKey: "status_code",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>Status</DataTableHeader>
+      <DataTableHeader column={column} name="status_code">
+        Status
+      </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsStatusCell event={row.original} />,
     size: 80,
@@ -104,7 +112,9 @@ export const makeEventsColumns = (
     id: "duration",
     accessorKey: "duration_ms",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>Duration</DataTableHeader>
+      <DataTableHeader column={column} name="duration">
+        Duration
+      </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsDurationCell event={row.original} />,
   },
@@ -112,7 +122,9 @@ export const makeEventsColumns = (
     id: "auth_method",
     accessorKey: "auth_method_used",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>Auth Method</DataTableHeader>
+      <DataTableHeader column={column} name="auth_method">
+        Auth Method
+      </DataTableHeader>
     ),
     cell: ({ row }) => (
       <ReverseProxyEventsAuthMethodCell event={row.original} />
@@ -122,7 +134,9 @@ export const makeEventsColumns = (
     id: "reason",
     accessorKey: "reason",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>Reason</DataTableHeader>
+      <DataTableHeader column={column} name="reason">
+        Reason
+      </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsReasonCell event={row.original} />,
   },
@@ -130,7 +144,9 @@ export const makeEventsColumns = (
     id: "user",
     accessorFn: (row) => row.user_id || "",
     header: ({ column }) => (
-      <DataTableHeader column={column} sorting={false}>User</DataTableHeader>
+      <DataTableHeader column={column} name="user_id">
+        User
+      </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsUserCell event={row.original} />,
   },
@@ -146,8 +162,6 @@ type Props = {
 export default function ReverseProxyEventsTable({
   headingTarget,
 }: Readonly<Props>) {
-  const path = usePathname();
-
   const {
     data: events,
     isLoading,
@@ -201,15 +215,12 @@ export default function ReverseProxyEventsTable({
     [setFilter],
   );
 
-  const [sorting, setSorting] = useLocalStorage<SortingState>(
-    "netbird-table-sort" + path,
-    [
-      {
-        id: "timestamp",
-        desc: true,
-      },
-    ],
-  );
+  const [sorting, setSorting] = useState<SortingState>([
+    {
+      id: "timestamp",
+      desc: true,
+    },
+  ]);
 
   return (
     <DataTable
