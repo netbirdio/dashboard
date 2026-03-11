@@ -60,17 +60,19 @@ export default function PoliciesProvider({ children }: Props) {
       }),
     ).then((ids) => ids.filter(Boolean) as string[]);
 
-    const hasGroups = resource.groups && resource.groups.length > 0;
-
-    const destinations = hasGroups
-      ? await Promise.all(
-          (resource.groups as (Group | string)[]).map((g) => {
+    const destinations = rule.destinationResource
+      ? undefined
+      : await Promise.all(
+          (rule.destinations ?? []).map((g) => {
             if (typeof g === "string") return g;
             if (g.id) return g.id;
             return createOrUpdateGroup(g).then((r) => r.id);
           }),
-        ).then((ids) => ids.filter(Boolean) as string[])
-      : null;
+        ).then((ids) => ids.filter(Boolean) as string[]);
+
+    const destinationResource = rule.destinationResource
+      ? { id: resource.id, type: resource.type }
+      : undefined;
 
     return createPolicy({
       ...policy,
@@ -82,9 +84,7 @@ export default function PoliciesProvider({ children }: Props) {
           ...rule,
           sources,
           destinations,
-          destinationResource: hasGroups
-            ? undefined
-            : { id: resource.id, type: resource.type },
+          destinationResource,
         },
       ],
     } as Policy);
