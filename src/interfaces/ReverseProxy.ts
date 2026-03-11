@@ -113,6 +113,13 @@ export enum ReverseProxyTargetProtocol {
   UDP = "udp",
 }
 
+export enum EventProtocol {
+  HTTP = "http",
+  TCP = "tcp",
+  UDP = "udp",
+  TLS = "tls",
+}
+
 export interface ReverseProxyEvent {
   id: string;
   service_id: string;
@@ -128,6 +135,17 @@ export interface ReverseProxyEvent {
   auth_method_used?: string;
   country_code?: string;
   city_name?: string;
+  bytes_upload: number;
+  bytes_download: number;
+  protocol?: EventProtocol;
+}
+
+export function isL4Event(event: ReverseProxyEvent): boolean {
+  return (
+    event.protocol === EventProtocol.TCP ||
+    event.protocol === EventProtocol.UDP ||
+    event.protocol === EventProtocol.TLS
+  );
 }
 
 export interface ReverseProxyFlatTarget extends ReverseProxyTarget {

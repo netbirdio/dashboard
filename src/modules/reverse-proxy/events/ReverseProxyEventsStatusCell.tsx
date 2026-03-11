@@ -1,5 +1,5 @@
 import * as React from "react";
-import { ReverseProxyEvent } from "@/interfaces/ReverseProxy";
+import { isL4Event, ReverseProxyEvent } from "@/interfaces/ReverseProxy";
 import Badge from "@components/Badge";
 
 type Props = {
@@ -7,6 +7,12 @@ type Props = {
 };
 
 export const ReverseProxyEventsStatusCell = ({ event }: Props) => {
+  if (isL4Event(event)) {
+    return (
+      <span className="text-nb-gray-200 text-xs px-1">-</span>
+    );
+  }
+
   const isSuccess = event.status_code >= 200 && event.status_code < 400;
 
   return (
