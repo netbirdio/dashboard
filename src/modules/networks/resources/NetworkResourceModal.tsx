@@ -34,13 +34,15 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@components/Accordion";
-import React, { useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import NetworkResourceAccessControl from "@/modules/networks/resources/NetworkResourceAccessControl";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
+import { useAIAssistant } from "@/components/ai-assistant/AIAssistantProvider";
+import { Sparkles } from "lucide-react";
 
 type Props = {
   open?: boolean;
@@ -111,6 +113,16 @@ export function ResourceModalContent({
   const [addressError, setAddressError] = useState("");
 
   const { confirm } = useDialog();
+
+  const { setExplainContext, clearExplainContext } = useAIAssistant();
+  useEffect(() => {
+    setExplainContext({
+      modalName: resource ? "Edit Resource" : "Add Resource",
+      pageName: "Networks",
+      docsUrl: "https://docs.netbird.io/manage/networks",
+    });
+    return () => clearExplainContext();
+  }, [resource, setExplainContext, clearExplainContext]);
 
   // Access control policies
   const [policies, setPolicies] = useState<Policy[]>([]);
@@ -221,16 +233,21 @@ export function ResourceModalContent({
         tab === "access-control" ? "max-w-[790px]" : "max-w-[680px]"
       }
     >
-      <ModalHeader
-        icon={<WorkflowIcon size={20} />}
-        title={resource ? "Edit Resource" : "Add Resource"}
-        description={
-          resource
-            ? `${resource.name}`
-            : `Add new resource to "${network?.name}"`
-        }
-        color={"yellow"}
-      />
+      <div className="flex items-start justify-between">
+        <ModalHeader
+          icon={<WorkflowIcon size={20} />}
+          title={resource ? "Edit Resource" : "Add Resource"}
+          description={
+            resource
+              ? `${resource.name}`
+              : `Add new resource to "${network?.name}"`
+          }
+          color={"yellow"}
+        />
+        <div className="pr-12 pt-2">
+          <ExplainButton />
+        </div>
+      </div>
 
       <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
         <TabsList justify={"start"} className={"px-8"}>
@@ -249,7 +266,7 @@ export function ResourceModalContent({
 
         <TabsContent value={"resource"} className={"pb-4"}>
           <div className={"px-8 flex-col flex gap-6"}>
-            <div>
+            <div data-explain>
               <Label>Name</Label>
               <HelpText>
                 Set an easily identifiable name for your resource
@@ -264,6 +281,7 @@ export function ResourceModalContent({
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
+            <div data-explain>
             <ResourceSingleAddressInput
               value={address}
               onChange={setAddress}
@@ -297,6 +315,7 @@ export function ResourceModalContent({
                 </>
               }
             />
+            </div>
 
             <Accordion
               type={"multiple"}
@@ -314,7 +333,7 @@ export function ResourceModalContent({
                 </AccordionTrigger>
                 <AccordionContent className={""}>
                   <div className={"flex flex-col gap-6 pb-4 pt-2"}>
-                    <div>
+                    <div data-explain>
                       <Label>Description</Label>
                       <HelpText>
                         Write a short description to add more context to this
@@ -326,7 +345,7 @@ export function ResourceModalContent({
                         onChange={(e) => setDescription(e.target.value)}
                       />
                     </div>
-                    <div>
+                    <div data-explain>
                       <Label>Resource Groups</Label>
                       <HelpText className={"mt-1"}>
                         Add this resource to a group (e.g., Databases, Web
@@ -460,5 +479,24 @@ export function ResourceModalContent({
         </div>
       </ModalFooter>
     </ModalContent>
+  );
+}
+
+function ExplainButton() {
+  const { explainMode, enterExplainMode, exitExplainMode } = useAIAssistant();
+
+  return (
+    <button
+      data-explain-ignore
+      onClick={() => (explainMode ? exitExplainMode() : enterExplainMode())}
+      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer shrink-0 ${
+        explainMode
+          ? "bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500/40 animate-pulse"
+          : "bg-nb-gray-900/60 text-nb-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10"
+      }`}
+    >
+      <Sparkles size={13} />
+      {explainMode ? "Click an element..." : "Explain"}
+    </button>
   );
 }

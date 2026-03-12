@@ -20,6 +20,7 @@ import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
 import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import InstanceSetupProvider from "@/contexts/InstanceSetupProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
+import AIAssistantProvider from "@/components/ai-assistant/AIAssistantProvider";
 
 const inter = localFont({
   src: "../assets/fonts/Inter.ttf",
@@ -51,7 +52,9 @@ export default function AppLayout({
                   <InstanceSetupProvider>
                     <OIDCProvider>
                       <TooltipProvider delayDuration={0}>
-                        {children}
+                        <AIAssistantProvider>
+                          {children}
+                        </AIAssistantProvider>
                       </TooltipProvider>
                     </OIDCProvider>
                   </InstanceSetupProvider>
