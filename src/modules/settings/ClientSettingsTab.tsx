@@ -244,9 +244,9 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               />
             </Label>
             <HelpText>
-              Select how NetBird clients handle automatic updates by choosing
-              the latest version, a custom version, or disabling updates
-              altogether. Automatic Updates require at least NetBird{" "}
+              Configure how NetBird clients receive update notifications.
+              When enabled, users will be prompted to install the selected
+              version. Automatic Updates require at least NetBird{" "}
               <span className={"text-white font-medium"}>v0.61.0</span>.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/manage/peers/auto-update"}
@@ -281,17 +281,19 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               label={
                 <>
                   <AlertTriangle size={15} className={"text-yellow-400"} />
-                  Always Update
+                  Force Automatic Updates
                 </>
               }
               helpText={
-                "When enabled, updates are installed automatically in the background without user interaction. This may interrupt active connections and restart the client."
+                "When enabled, updates are installed automatically in the background without user interaction."
               }
               disabled={
                 !permission.settings.update || autoUpdateMethod === "disabled"
               }
-            >
+            />
+            {autoUpdateAlways && autoUpdateMethod !== "disabled" && (
               <Callout
+                className={"mt-3"}
                 variant={"warning"}
                 icon={
                   <AlertTriangle
@@ -304,7 +306,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                 during updates, which can temporarily disrupt active
                 connections. Use with caution in production environments.
               </Callout>
-            </FancyToggleSwitch>
+            )}
           </div>
 
           <div>
