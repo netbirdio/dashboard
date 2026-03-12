@@ -343,12 +343,11 @@ export default function ReverseProxyModal({
   const isPortBased = endpointMode === "tcp" || endpointMode === "udp";
 
   // Check if the selected cluster supports custom listen ports
-  const clusterSupportsCustomPorts = useMemo(() => {
-    const selectedDomain = domains?.find(
-      (d) => d.domain === baseDomain || d.target_cluster === baseDomain,
-    );
-    return selectedDomain?.supports_custom_ports ?? false;
-  }, [domains, baseDomain]);
+  const selectedClusterDomain = domains?.find(
+    (d) => d.domain === baseDomain || d.target_cluster === baseDomain,
+  );
+  const clusterSupportsCustomPorts =
+    selectedClusterDomain?.supports_custom_ports ?? false;
 
   const hasAnyEndpoint =
     (endpointMode === "http" && targets.length > 0) ||
