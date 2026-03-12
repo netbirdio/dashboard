@@ -2,6 +2,7 @@
 
 import * as AccordionPrimitive from "@radix-ui/react-accordion";
 import { cn } from "@utils/helpers";
+import { motion } from "framer-motion";
 import { ChevronDown } from "lucide-react";
 import * as React from "react";
 
@@ -23,7 +24,7 @@ const AccordionTrigger = React.forwardRef<
     <AccordionPrimitive.Trigger
       ref={ref}
       className={cn(
-        "flex flex-1 items-center gap-4 font-medium transition-all [&[data-state=open]>svg.chevron]:rotate-180 hover:opacity-80 my-2",
+        "flex flex-1 items-center gap-4 font-medium [&[data-state=open]>svg.chevron]:rotate-180 hover:opacity-80 my-2",
         className,
       )}
       {...props}
@@ -36,20 +37,41 @@ const AccordionTrigger = React.forwardRef<
 AccordionTrigger.displayName = AccordionPrimitive.Trigger.displayName;
 
 const AccordionContent = React.forwardRef<
-  React.ElementRef<typeof AccordionPrimitive.Content>,
+  HTMLDivElement,
   React.ComponentPropsWithoutRef<typeof AccordionPrimitive.Content>
->(({ className, children, ...props }, ref) => (
-  <AccordionPrimitive.Content
-    ref={ref}
-    className={cn(
-      "overflow-hidden text-sm transition-all data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down",
-      className,
-    )}
-    {...props}
-  >
-    <div className=" pt-0">{children}</div>
-  </AccordionPrimitive.Content>
-));
+>(({ className, children }, ref) => {
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  const [isOpen, setIsOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    const el = wrapperRef.current?.closest("[data-state]");
+    if (!el) return;
+
+    const update = () => setIsOpen(el.getAttribute("data-state") === "open");
+    update();
+
+    const observer = new MutationObserver(update);
+    observer.observe(el, { attributes: true, attributeFilter: ["data-state"] });
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={wrapperRef}>
+      <motion.div
+        ref={ref}
+        initial={false}
+        animate={{
+          height: isOpen ? "auto" : 0,
+          opacity: isOpen ? 1 : 0,
+        }}
+        transition={{ duration: 0.15, ease: "easeOut" }}
+        className={cn("overflow-hidden text-sm", className)}
+      >
+        <div className="pt-0">{children}</div>
+      </motion.div>
+    </div>
+  );
+});
 AccordionContent.displayName = AccordionPrimitive.Content.displayName;
 
 export { Accordion, AccordionContent, AccordionItem, AccordionTrigger };

@@ -68,7 +68,7 @@ export default function NetworkResourceAccessControl({
 
   const currentResource = useMemo<NetworkResource>(() => {
     return {
-      id: resourceId || "",
+      id: resourceId || resourceName || address,
       name: resourceName || address,
       address,
       type: getResourceType(address),
@@ -289,7 +289,8 @@ export default function NetworkResourceAccessControl({
             editingPolicyIndex === null ? destinationResource : undefined
           }
           disableDestinationSelector={!hasResourceGroups}
-          initialName={`${resourceName || address} Policy`}
+          additionalResources={[currentResource]}
+          initialName={`${resourceName || address} Access`}
           initialDescription={
             network?.description
               ? `${network.name}, ${network.description}`
