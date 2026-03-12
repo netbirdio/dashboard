@@ -38,6 +38,7 @@ const ModalOverlay = React.forwardRef<
       "bg-black/30 dark:bg-black/40 backdrop-blur-sm",
       className,
     )}
+    style={{ scrollbarGutter: "stable both-edges" }}
     {...props}
   />
 ));

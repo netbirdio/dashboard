@@ -46,6 +46,7 @@ import React, { useMemo, useState } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
+import { NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { useAccessControl } from "@/modules/access-control/useAccessControl";
@@ -126,6 +127,7 @@ type ModalProps = {
   initialDestinationResource?: PolicyRuleResource;
   initialTab?: string;
   disableDestinationSelector?: boolean;
+  additionalResources?: NetworkResource[];
 };
 
 export function AccessControlModalContent({
@@ -143,6 +145,7 @@ export function AccessControlModalContent({
   initialDestinationResource,
   initialTab,
   disableDestinationSelector = false,
+  additionalResources,
 }: Readonly<ModalProps>) {
   const { permission } = usePermissions();
   const { users } = useUsers();
@@ -392,6 +395,7 @@ export function AccessControlModalContent({
                   resource={destinationResource}
                   onResourceChange={setDestinationResource}
                   saveGroupAssignments={useSave}
+                  additionalResources={additionalResources}
                   disabled={
                     disableDestinationSelector ||
                     !permission.policies.update ||

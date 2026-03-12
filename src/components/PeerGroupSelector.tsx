@@ -85,6 +85,7 @@ interface MultiSelectProps {
   users?: User[];
   placeholderForSearch?: string;
   resourceIds?: string[];
+  additionalResources?: NetworkResource[];
   policies?: Policy[];
 }
 export function PeerGroupSelector({
@@ -117,11 +118,20 @@ export function PeerGroupSelector({
   users,
   placeholderForSearch = 'Search groups or add new group by pressing "Enter"...',
   resourceIds,
+  additionalResources,
   policies,
 }: Readonly<MultiSelectProps>) {
-  const { data: resources, isLoading: isResourcesLoading } = useFetchApi<
+  const { data: fetchedResources, isLoading: isResourcesLoading } = useFetchApi<
     NetworkResource[]
   >("/networks/resources");
+
+  const resources = useMemo(() => {
+    if (!additionalResources?.length) return fetchedResources;
+    const additional = additionalResources.filter(
+      (ar) => !fetchedResources?.some((r) => r.id === ar.id),
+    );
+    return [...(fetchedResources || []), ...additional];
+  }, [fetchedResources, additionalResources]);
 
   const { data: peers, isLoading: isPeersLoading } =
     useFetchApi<Peer[]>("/peers");

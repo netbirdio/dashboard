@@ -12,6 +12,9 @@ import { useApiCall } from "@utils/api";
 import * as React from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useNetworksContext } from "@/modules/networks/NetworkProvider";
+import { FolderGit2 } from "lucide-react";
+import Separator from "@components/Separator";
 
 type ResourceGroupModalProps = {
   resource?: NetworkResource;
@@ -56,6 +59,7 @@ const ResourceGroupModalContent = ({
     `/networks/${network?.id}/resources/${resource?.id}`,
   ).put;
 
+  const { policies } = useNetworksContext();
   const [groups, setGroups, { save: saveGroups }] = useGroupHelper({
     initial: resource?.groups || [],
   });
@@ -80,17 +84,21 @@ const ResourceGroupModalContent = ({
       <ModalHeader
         title={"Resource Groups"}
         description={
-          "Organize this resource into a group (e.g., Databases, Web Servers) and reference the group in access policies to keep rules reusable and easy to maintain."
+          "Add this resource to a group (e.g., Databases, Web Servers) and reference the group in access policies to simplify management."
         }
+        icon={<FolderGit2 size={18} />}
       />
 
-      <div className={"px-8 py-6 pt-0 flex flex-col gap-8"}>
+      <Separator />
+
+      <div className={"px-8 py-6 pt-6 flex flex-col gap-8"}>
         <div>
           <PeerGroupSelector
             onChange={setGroups}
             values={groups}
             showPeerCounter={false}
             placeholder={"Add or select resource group(s)..."}
+            policies={policies}
           />
         </div>
       </div>
