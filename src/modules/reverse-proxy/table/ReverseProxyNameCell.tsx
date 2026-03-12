@@ -23,8 +23,7 @@ export default function ReverseProxyNameCell({
   const isL4 = reverseProxy?.mode && isL4Mode(reverseProxy.mode);
   const portSuffix =
     isL4 && reverseProxy?.listen_port ? `:${reverseProxy.listen_port}` : "";
-  const isLinkable =
-    !reverseProxy?.mode || reverseProxy.mode === ServiceMode.TLS;
+  const isLinkable = !isL4 || reverseProxy?.mode === ServiceMode.TLS;
 
   const handleCopy = useCallback(() => {
     const text = `${displayDomain}${portSuffix}`;
