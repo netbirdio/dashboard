@@ -2,7 +2,7 @@ import Badge from "@components/Badge";
 import Button from "@components/Button";
 import { DeviceCard } from "@components/DeviceCard";
 import useFetchApi from "@utils/api";
-import { ArrowRight, PlusCircle, Server } from "lucide-react";
+import { PlusCircle, Server } from "lucide-react";
 import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -82,10 +82,6 @@ function L4TargetDisplay({ reverseProxy }: Readonly<{ reverseProxy: ReverseProxy
 
   return (
     <div className="flex items-center gap-2">
-      <span className="text-xs font-mono text-nb-gray-300 shrink-0">
-        {reverseProxy.listen_port}
-      </span>
-      <ArrowRight size={12} className="text-nb-gray-500 shrink-0" />
       {peer || resource ? (
         <DeviceCard device={peer} resource={resource} address={portLabel} />
       ) : (
