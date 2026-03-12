@@ -78,6 +78,15 @@ export default function ReverseProxyNameCell({
         />
         <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 truncate">
           <div className="flex items-center gap-2">
+            {reverseProxy?.mode && isL4Mode(reverseProxy.mode) ? (
+              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded uppercase leading-none bg-green-500/10 text-green-400 border border-green-500/20 shrink-0 w-[38px] text-center">
+                {reverseProxy.mode.toUpperCase()}
+              </span>
+            ) : reverseProxy && (
+              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded uppercase leading-none bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0 w-[38px] text-center">
+                HTTP
+              </span>
+            )}
             {displayDomain && isLinkable ? (
               <ExternalLinkText href={`https://${displayDomain}${portSuffix}`}>
                 <span className="font-medium truncate">
@@ -96,15 +105,6 @@ export default function ReverseProxyNameCell({
               >
                 {displayDomain}
                 {portSuffix}
-              </span>
-            )}
-            {reverseProxy?.mode && isL4Mode(reverseProxy.mode) ? (
-              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded uppercase leading-none bg-green-500/10 text-green-400 border border-green-500/20">
-                {reverseProxy.mode.toUpperCase()}
-              </span>
-            ) : reverseProxy && (
-              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded uppercase leading-none bg-sky-500/10 text-sky-400 border border-sky-500/20">
-                HTTP
               </span>
             )}
           </div>
