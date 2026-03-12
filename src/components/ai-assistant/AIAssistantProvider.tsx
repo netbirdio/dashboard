@@ -172,24 +172,23 @@ export default function AIAssistantProvider({
     };
   }, [explainMode, explainCtx, openChat, exitExplainMode]);
 
-  // Apply/remove highlight outline on hovered explainable element
+  // Apply/remove highlight on hovered explainable element via CSS class
   useEffect(() => {
     if (!hoveredEl) return;
-    const prev = hoveredEl.style.outline;
-    const prevRadius = hoveredEl.style.borderRadius;
-    const prevTransition = hoveredEl.style.transition;
-    const prevCursor = hoveredEl.style.cursor;
-    hoveredEl.style.outline = "2px solid rgba(234, 179, 8, 0.7)";
-    hoveredEl.style.borderRadius = "6px";
-    hoveredEl.style.transition = "outline 0.1s ease";
-    hoveredEl.style.cursor = "help";
+    hoveredEl.classList.add("ai-explain-highlight");
     return () => {
-      hoveredEl.style.outline = prev;
-      hoveredEl.style.borderRadius = prevRadius;
-      hoveredEl.style.transition = prevTransition;
-      hoveredEl.style.cursor = prevCursor;
+      hoveredEl.classList.remove("ai-explain-highlight");
     };
   }, [hoveredEl]);
+
+  // Also clean up all highlights when leaving explain mode
+  useEffect(() => {
+    if (!explainMode) {
+      document.querySelectorAll(".ai-explain-highlight").forEach((el) => {
+        el.classList.remove("ai-explain-highlight");
+      });
+    }
+  }, [explainMode]);
 
   return (
     <AIAssistantContext.Provider
@@ -206,7 +205,18 @@ export default function AIAssistantProvider({
     >
       {children}
 
-      {/* Explain mode banner */}
+      {/* Explain mode styles + banner */}
+      {explainMode && (
+        <style>{`
+          .ai-explain-highlight {
+            outline: 2px solid rgba(234, 179, 8, 0.7) !important;
+
+            border-radius: 6px;
+            cursor: help !important;
+            transition: outline 0.1s ease;
+          }
+        `}</style>
+      )}
       {explainMode && (
         <div
           data-ai-banner

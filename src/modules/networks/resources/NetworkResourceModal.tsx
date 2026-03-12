@@ -229,6 +229,7 @@ export function ResourceModalContent({
 
   return (
     <ModalContent
+      data-explain
       maxWidthClass={
         tab === "access-control" ? "max-w-[790px]" : "max-w-[680px]"
       }
