@@ -97,12 +97,34 @@ type Props = {
   onSuccess?: () => void;
 };
 
-// Helper to parse domain into subdomain and base domain
-function parseDomain(fullDomain: string): {
+// Helper to parse domain into subdomain and base domain.
+// When availableDomains is provided, matches against them first (longest match wins)
+// to avoid e.g. "netbird.io" matching when the actual domain is "eu.proxy.netbird.io".
+function parseDomain(
+  fullDomain: string,
+  availableDomains?: ReverseProxyDomain[],
+): {
   subdomain: string;
   baseDomain: string;
   isCustom: boolean;
 } {
+  // Try matching against actual available domains first (sorted longest-first for specificity)
+  if (availableDomains?.length) {
+    const sorted = [...availableDomains]
+      .filter((d) => d.domain)
+      .sort((a, b) => b.domain.length - a.domain.length);
+    for (const d of sorted) {
+      if (fullDomain.endsWith(`.${d.domain}`)) {
+        return {
+          subdomain: fullDomain.slice(0, -(d.domain.length + 1)),
+          baseDomain: d.domain,
+          isCustom: d.type === ReverseProxyDomainType.CUSTOM,
+        };
+      }
+    }
+  }
+
+  // Fallback to hardcoded known domains
   const knownDomains = ["netbird.cloud", "netbird.io", "netbird.app"];
 
   for (const known of knownDomains) {
@@ -167,7 +189,9 @@ export default function ReverseProxyModal({
 
   // Parse existing domain if editing
   // All modes store subdomain.cluster as domain
-  const parsed = reverseProxy?.domain ? parseDomain(reverseProxy.domain) : null;
+  const parsed = reverseProxy?.domain
+    ? parseDomain(reverseProxy.domain, domains)
+    : null;
 
   const [subdomain, setSubdomain] = useState(() => {
     return parsed?.subdomain ||

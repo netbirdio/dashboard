@@ -18,6 +18,9 @@ export default function ReverseProxyNameCell({
   showChevron = true,
 }: Readonly<Props>) {
   const displayDomain = domain ?? reverseProxy?.domain ?? "";
+  const isL4 = reverseProxy?.mode && isL4Mode(reverseProxy.mode);
+  const portSuffix =
+    isL4 && reverseProxy?.listen_port ? `:${reverseProxy.listen_port}` : "";
   const isEnabled = enabled ?? reverseProxy?.enabled ?? false;
   const hasExpandableTargets =
     (reverseProxy?.targets?.length ?? 0) > 0 &&
@@ -61,8 +64,11 @@ export default function ReverseProxyNameCell({
         <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 truncate">
           <div className="flex items-center gap-2">
             {displayDomain ? (
-              <ExternalLinkText href={`https://${displayDomain}`}>
-                <span className="font-medium truncate">{displayDomain}</span>
+              <ExternalLinkText href={`https://${displayDomain}${portSuffix}`}>
+                <span className="font-medium truncate">
+                  {displayDomain}
+                  {portSuffix}
+                </span>
               </ExternalLinkText>
             ) : (
               <span className="font-medium truncate">{displayDomain}</span>
