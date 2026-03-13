@@ -1058,6 +1058,7 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"access"} className={"pb-8"}>
             <AccessRestrictionsSection
+              key={reverseProxy?.id ?? "new"}
               value={accessRestrictions}
               onChange={setAccessRestrictions}
             />
