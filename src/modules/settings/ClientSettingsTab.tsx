@@ -246,7 +246,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             <HelpText>
               Configure how NetBird clients receive update notifications.
               When enabled, users will be prompted to install the selected
-              version. Automatic Updates require at least NetBird{" "}
+              version. This requires at least NetBird{" "}
               <span className={"text-white font-medium"}>v0.61.0</span>.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/manage/peers/auto-update"}
