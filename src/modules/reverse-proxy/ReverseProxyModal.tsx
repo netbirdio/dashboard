@@ -618,6 +618,7 @@ export default function ReverseProxyModal({
                       value={baseDomain}
                       onChange={setBaseDomain}
                       className="!rounded-l-none"
+                      isL4Mode={isL4Mode}
                     />
                   </div>
                 </div>
