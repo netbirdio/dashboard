@@ -41,7 +41,7 @@ import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import NetworkResourceAccessControl from "@/modules/networks/resources/NetworkResourceAccessControl";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
-import { useAIAssistant } from "@/components/ai-assistant/AIAssistantProvider";
+import { useAIAssistant } from "netbird-explain/client";
 import { Sparkles } from "lucide-react";
 
 type Props = {
@@ -119,7 +119,7 @@ export function ResourceModalContent({
     setExplainContext({
       modalName: resource ? "Edit Resource" : "Add Resource",
       pageName: "Networks",
-      docsUrl: "https://docs.netbird.io/manage/networks",
+      docsUrls: ["https://docs.netbird.io/manage/networks"],
     });
     return () => clearExplainContext();
   }, [resource, setExplainContext, clearExplainContext]);

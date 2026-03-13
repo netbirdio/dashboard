@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "export",
+  transpilePackages: ["netbird-explain"],
   images: {
     unoptimized: true,
   },

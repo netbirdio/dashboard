@@ -23,27 +23,33 @@ type Props = {
   initialQuery: string;
 };
 
-const DUMMY_RESPONSES: Record<string, string> = {
-  default:
-    "This is a feature in NetBird that helps you manage your network infrastructure. It allows you to configure and control how your peers connect and communicate with each other securely.\n\nWould you like me to explain any specific aspect in more detail?",
-  resource:
-    "A **Resource** in NetBird represents a network endpoint or service that you want to make accessible through your private network. Resources can be:\n\n- **IP Addresses** - A single host (e.g., 10.0.0.1)\n- **CIDR Blocks** - An entire subnet (e.g., 10.0.0.0/24)\n- **Domain Names** - A DNS name (e.g., service.internal)\n\nResources are organized within Networks and can be assigned to groups for easier policy management.",
-  policy:
-    "**Access Control Policies** define who can access what in your NetBird network. They work by matching source peers/groups with destination resources.\n\nWithout at least one policy, a resource won't be accessible by any peers. You can create policies directly when adding a resource, or manage them separately.",
-  group:
-    "**Resource Groups** help you organize resources (e.g., Databases, Web Servers) and reference them in access policies. This keeps your rules reusable and easy to maintain.\n\nWhen you assign a resource to a group that's already used in policies, the resource automatically inherits access from those policies.",
-  network:
-    "A **Network** in NetBird is a logical grouping that contains resources, routing peers, and policies. It represents a segment of your infrastructure that you want to manage together.\n\nEach network can have multiple resources and routing peers that handle traffic forwarding.",
-};
+const AI_SERVER_URL =
+  process.env.NEXT_PUBLIC_AI_SERVER_URL || "http://localhost:3080";
+const AI_API_KEY =
+  process.env.NEXT_PUBLIC_AI_API_KEY || "nb-ai-dev-key-change-me";
 
-function getDummyResponse(query: string): string {
-  const lower = query.toLowerCase();
-  if (lower.includes("resource")) return DUMMY_RESPONSES.resource;
-  if (lower.includes("polic") || lower.includes("access control"))
-    return DUMMY_RESPONSES.policy;
-  if (lower.includes("group")) return DUMMY_RESPONSES.group;
-  if (lower.includes("network")) return DUMMY_RESPONSES.network;
-  return DUMMY_RESPONSES.default;
+async function fetchAIResponse(messages: Message[]): Promise<string> {
+  const response = await fetch(`${AI_SERVER_URL}/api/ai/chat`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${AI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      messages: messages.map((m) => ({
+        role: m.role,
+        content: m.content,
+      })),
+    }),
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(`${response.status}: ${text}`);
+  }
+
+  const data = await response.json();
+  return data.reply;
 }
 
 export default function AIChatBot({ open, onClose, initialQuery }: Props) {
@@ -53,6 +59,7 @@ export default function AIChatBot({ open, onClose, initialQuery }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const hasProcessedInitialQuery = useRef(false);
+  const abortControllerRef = useRef<AbortController | null>(null);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -61,6 +68,30 @@ export default function AIChatBot({ open, onClose, initialQuery }: Props) {
   useEffect(() => {
     scrollToBottom();
   }, [messages, isTyping, scrollToBottom]);
+
+  const getAIResponse = useCallback(async (allMessages: Message[]) => {
+    setIsTyping(true);
+    try {
+      const reply = await fetchAIResponse(allMessages);
+      const response: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: reply,
+      };
+      setMessages((prev) => [...prev, response]);
+    } catch (err) {
+      const errorMsg =
+        err instanceof Error ? err.message : "Unknown error";
+      const response: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content: `Sorry, I couldn't get a response. Error: ${errorMsg}`,
+      };
+      setMessages((prev) => [...prev, response]);
+    } finally {
+      setIsTyping(false);
+    }
+  }, []);
 
   // Handle initial query from explain mode
   useEffect(() => {
@@ -89,21 +120,9 @@ export default function AIChatBot({ open, onClose, initialQuery }: Props) {
       });
 
       setMessages(msgs);
-      setIsTyping(true);
-
-      const timer = setTimeout(() => {
-        const response: Message = {
-          id: (Date.now() + 1).toString(),
-          role: "assistant",
-          content: getDummyResponse(initialQuery),
-        };
-        setMessages((prev) => [...prev, response]);
-        setIsTyping(false);
-      }, 1200);
-
-      return () => clearTimeout(timer);
+      getAIResponse(msgs);
     }
-  }, [open, initialQuery]);
+  }, [open, initialQuery, getAIResponse]);
 
   // Reset when closed
   useEffect(() => {
@@ -112,6 +131,7 @@ export default function AIChatBot({ open, onClose, initialQuery }: Props) {
       setMessages([]);
       setInput("");
       setIsTyping(false);
+      abortControllerRef.current?.abort();
     }
   }, [open]);
 
@@ -131,20 +151,11 @@ export default function AIChatBot({ open, onClose, initialQuery }: Props) {
       role: "user",
       content: text,
     };
-    setMessages((prev) => [...prev, userMsg]);
+    const updatedMessages = [...messages, userMsg];
+    setMessages(updatedMessages);
     setInput("");
-    setIsTyping(true);
-
-    setTimeout(() => {
-      const response: Message = {
-        id: (Date.now() + 1).toString(),
-        role: "assistant",
-        content: getDummyResponse(text),
-      };
-      setMessages((prev) => [...prev, response]);
-      setIsTyping(false);
-    }, 800 + Math.random() * 1000);
-  }, [input, isTyping]);
+    getAIResponse(updatedMessages);
+  }, [input, isTyping, messages, getAIResponse]);
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -208,60 +219,60 @@ export default function AIChatBot({ open, onClose, initialQuery }: Props) {
 
         {messages.map((msg) =>
           msg.role === "context" ? (
-            <div
-              key={msg.id}
-              className="flex justify-center"
-            >
+            <div key={msg.id} className="flex justify-center">
               <div className="text-[11px] text-nb-gray-500 bg-nb-gray-900/50 rounded-full px-3 py-1 flex items-center gap-1.5">
                 <Sparkles size={10} className="text-yellow-500/60" />
                 {msg.content}
               </div>
             </div>
           ) : (
-          <div
-            key={msg.id}
-            className={cn(
-              "flex gap-2.5",
-              msg.role === "user" ? "justify-end" : "justify-start",
-            )}
-          >
-            {msg.role === "assistant" && (
-              <div className="flex-shrink-0 w-6 h-6 rounded-md bg-gradient-to-br from-yellow-400/20 to-orange-400/20 flex items-center justify-center mt-0.5">
-                <Bot size={13} className="text-yellow-400" />
-              </div>
-            )}
             <div
+              key={msg.id}
               className={cn(
-                "max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed",
-                msg.role === "user"
-                  ? "bg-indigo-600 text-white"
-                  : "bg-nb-gray-900/80 text-nb-gray-200",
+                "flex gap-2.5",
+                msg.role === "user" ? "justify-end" : "justify-start",
               )}
             >
-              {msg.content.split("\n").map((line, i) => (
-                <React.Fragment key={i}>
-                  {line
-                    .split(/(\*\*[^*]+\*\*)/)
-                    .map((part, j) =>
-                      part.startsWith("**") && part.endsWith("**") ? (
-                        <strong key={j} className="font-semibold text-white">
-                          {part.slice(2, -2)}
-                        </strong>
-                      ) : (
-                        <React.Fragment key={j}>{part}</React.Fragment>
-                      ),
-                    )}
-                  {i < msg.content.split("\n").length - 1 && <br />}
-                </React.Fragment>
-              ))}
-            </div>
-            {msg.role === "user" && (
-              <div className="flex-shrink-0 w-6 h-6 rounded-md bg-indigo-600/30 flex items-center justify-center mt-0.5">
-                <User size={13} className="text-indigo-300" />
+              {msg.role === "assistant" && (
+                <div className="flex-shrink-0 w-6 h-6 rounded-md bg-gradient-to-br from-yellow-400/20 to-orange-400/20 flex items-center justify-center mt-0.5">
+                  <Bot size={13} className="text-yellow-400" />
+                </div>
+              )}
+              <div
+                className={cn(
+                  "max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed",
+                  msg.role === "user"
+                    ? "bg-indigo-600 text-white"
+                    : "bg-nb-gray-900/80 text-nb-gray-200",
+                )}
+              >
+                {msg.content.split("\n").map((line, i) => (
+                  <React.Fragment key={i}>
+                    {line
+                      .split(/(\*\*[^*]+\*\*)/)
+                      .map((part, j) =>
+                        part.startsWith("**") && part.endsWith("**") ? (
+                          <strong
+                            key={j}
+                            className="font-semibold text-white"
+                          >
+                            {part.slice(2, -2)}
+                          </strong>
+                        ) : (
+                          <React.Fragment key={j}>{part}</React.Fragment>
+                        ),
+                      )}
+                    {i < msg.content.split("\n").length - 1 && <br />}
+                  </React.Fragment>
+                ))}
               </div>
-            )}
-          </div>
-          )
+              {msg.role === "user" && (
+                <div className="flex-shrink-0 w-6 h-6 rounded-md bg-indigo-600/30 flex items-center justify-center mt-0.5">
+                  <User size={13} className="text-indigo-300" />
+                </div>
+              )}
+            </div>
+          ),
         )}
 
         {isTyping && (
@@ -308,7 +319,7 @@ export default function AIChatBot({ open, onClose, initialQuery }: Props) {
           </button>
         </div>
         <p className="text-[10px] text-nb-gray-600 mt-1.5 text-center">
-          AI-powered assistant - Prototype demo
+          AI-powered assistant
         </p>
       </div>
     </div>

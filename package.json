@@ -16,6 +16,7 @@
     "cypress:open": "cypress open"
   },
   "dependencies": {
+    "netbird-explain": "file:./packages/netbird-explain",
     "@axa-fr/react-oidc": "^7.26.3",
     "@dagrejs/dagre": "^1.1.5",
     "@radix-ui/react-accordion": "^1.2.12",
