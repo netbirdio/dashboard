@@ -17,9 +17,12 @@ import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@components/DatePickerWithRange";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import {
+  isL4Event,
   REVERSE_PROXY_EVENTS_DOCS_LINK,
+  ReverseProxy,
   ReverseProxyEvent,
 } from "@/interfaces/ReverseProxy";
+import useFetchApi from "@/utils/api";
 import { ReverseProxyEventsStatusCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsStatusCell";
 import { ReverseProxyEventsUserCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsUserCell";
 import { ReverseProxyEventsLocationIpCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsLocationIpCell";
@@ -32,7 +35,9 @@ import { ReverseProxyEventsAuthMethodCell } from "@/modules/reverse-proxy/events
 import { ReverseProxyEventsReasonCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsReasonCell";
 import { ReverseProxyEventsDurationCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsDurationCell";
 
-export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
+export const makeEventsColumns = (
+  servicesMap: Map<string, ReverseProxy>,
+): ColumnDef<ReverseProxyEvent>[] => [
   {
     id: "timestamp",
     header: ({ column }) => (
@@ -73,13 +78,18 @@ export const ReverseProxyEventsTableColumns: ColumnDef<ReverseProxyEvent>[] = [
   },
   {
     id: "url",
-    accessorFn: (row) => `${row.host} ${row.path}`,
+    accessorFn: (row) => `${row.host} ${row.path || ""}`,
     header: ({ column }) => (
-      <DataTableHeader column={column} name="url">
-        URL
+      <DataTableHeader column={column} name="url" sorting={false}>
+        Host / URL
       </DataTableHeader>
     ),
-    cell: ({ row }) => <ReverseProxyEventsUrlCell event={row.original} />,
+    cell: ({ row }) => (
+      <ReverseProxyEventsUrlCell
+        event={row.original}
+        service={servicesMap.get(row.original.service_id)}
+      />
+    ),
   },
   {
     id: "status",
@@ -162,6 +172,23 @@ export default function ReverseProxyEventsTable({
     ...paginationProps
   } = useServerPagination<ReverseProxyEvent[]>();
 
+  const { data: services } = useFetchApi<ReverseProxy[]>(
+    "/reverse-proxies/services",
+  );
+
+  const servicesMap = useMemo(() => {
+    const map = new Map<string, ReverseProxy>();
+    for (const svc of services ?? []) {
+      if (svc.id) map.set(svc.id, svc);
+    }
+    return map;
+  }, [services]);
+
+  const columns = useMemo(
+    () => makeEventsColumns(servicesMap),
+    [servicesMap],
+  );
+
   const activeStatus = getFilter("status");
 
   const dateRange = useMemo<DateRange | undefined>(() => {
@@ -206,7 +233,7 @@ export default function ReverseProxyEventsTable({
       text={"Proxy Events"}
       sorting={sorting}
       setSorting={setSorting}
-      columns={ReverseProxyEventsTableColumns}
+      columns={columns}
       columnVisibility={{ is_success: false, id: false }}
       searchPlaceholder={"Search by IP, host, path, user..."}
       getStartedCard={

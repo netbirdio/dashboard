@@ -12,6 +12,7 @@ import HelpText from "@components/HelpText";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
+import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import SettingCard from "@components/SettingCard";
 import {
   Modal,
@@ -34,17 +35,21 @@ import {
   LockKeyhole,
   MinusCircleIcon,
   MoreVertical,
+  Network as NetworkIcon,
   PlusCircle,
   PlusIcon,
   RectangleEllipsis,
   Server,
   Settings,
   Text,
+  Timer,
   Users,
 } from "lucide-react";
 import { Callout } from "@components/Callout";
+import useFetchApi from "@utils/api";
+import cidr from "ip-cidr";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -59,7 +64,15 @@ import {
   ReverseProxyDomain,
   ReverseProxyDomainType,
   ReverseProxyTarget,
+  ReverseProxyTargetProtocol,
+  ReverseProxyTargetType,
+  ServiceMode,
+  isL4Mode as isL4ServiceMode,
 } from "@/interfaces/ReverseProxy";
+import {
+  isResourceTargetType,
+  useReverseProxies,
+} from "@/contexts/ReverseProxiesProvider";
 import { CustomDomainSelector } from "./domain/CustomDomainSelector";
 import { cn } from "@utils/helpers";
 import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
@@ -67,7 +80,6 @@ import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 
 type Props = {
   open: boolean;
@@ -78,18 +90,41 @@ type Props = {
   initialSubdomain?: string;
   /** Pre-set a resource target - hides target selection in modal */
   initialResource?: NetworkResource;
+  initialEndpointMode?: ServiceMode;
   initialPeer?: Peer;
   initialNetwork?: Network;
   initialTab?: string;
   onSuccess?: () => void;
 };
 
-// Helper to parse domain into subdomain and base domain
-function parseDomain(fullDomain: string): {
+// Helper to parse domain into subdomain and base domain.
+// When availableDomains is provided, matches against them first (longest match wins)
+// to avoid e.g. "netbird.io" matching when the actual domain is "eu.proxy.netbird.io".
+function parseDomain(
+  fullDomain: string,
+  availableDomains?: ReverseProxyDomain[],
+): {
   subdomain: string;
   baseDomain: string;
   isCustom: boolean;
 } {
+  // Try matching against actual available domains first (sorted longest-first for specificity)
+  if (availableDomains?.length) {
+    const sorted = [...availableDomains]
+      .filter((d) => d.domain)
+      .sort((a, b) => b.domain.length - a.domain.length);
+    for (const d of sorted) {
+      if (fullDomain.endsWith(`.${d.domain}`)) {
+        return {
+          subdomain: fullDomain.slice(0, -(d.domain.length + 1)),
+          baseDomain: d.domain,
+          isCustom: d.type === ReverseProxyDomainType.CUSTOM,
+        };
+      }
+    }
+  }
+
+  // Fallback to hardcoded known domains
   const knownDomains = ["netbird.cloud", "netbird.io", "netbird.app"];
 
   for (const known of knownDomains) {
@@ -126,6 +161,7 @@ export default function ReverseProxyModal({
   domains,
   initialSubdomain,
   initialResource,
+  initialEndpointMode,
   initialPeer,
   initialNetwork,
   initialTab,
@@ -152,17 +188,19 @@ export default function ReverseProxyModal({
   });
 
   // Parse existing domain if editing
-  const parsed = reverseProxy?.domain ? parseDomain(reverseProxy.domain) : null;
+  // All modes store subdomain.cluster as domain
+  const parsed = reverseProxy?.domain
+    ? parseDomain(reverseProxy.domain, domains)
+    : null;
 
-  // Form state
-  const [subdomain, setSubdomain] = useState(
-    parsed?.subdomain ||
+  const [subdomain, setSubdomain] = useState(() => {
+    return parsed?.subdomain ||
       initialSubdomain
         ?.toLowerCase()
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-]/g, "") ||
-      "",
-  );
+      "";
+  });
 
   const [baseDomain, setBaseDomain] = useState(() => {
     if (parsed?.baseDomain) return parsed.baseDomain;
@@ -176,9 +214,144 @@ export default function ReverseProxyModal({
     return customDomain?.domain || freeDomain?.domain || "";
   });
 
+  type EndpointMode = ServiceMode;
+
+  // Endpoint mode derived from protocol field
+  const [endpointMode, setEndpointMode_] = useState<EndpointMode>(() => {
+    if (reverseProxy?.mode) {
+      const p = reverseProxy.mode;
+      if (p === ServiceMode.TLS || p === ServiceMode.TCP || p === ServiceMode.UDP) return p;
+    }
+    return initialEndpointMode ?? ServiceMode.HTTP;
+  });
+
+  // Fetch peers & resources for TLS target selector
+  const { data: peers } = useFetchApi<Peer[]>("/peers");
+  const { data: resources } = useFetchApi<NetworkResource[]>(
+    "/networks/resources",
+  );
+
+  // L4 target selection state (TLS/TCP/UDP) - target is in targets[0]
+  const existingL4Target = isL4ServiceMode(reverseProxy?.mode) ? reverseProxy?.targets?.[0] : undefined;
+  const existingL4IsPeer = existingL4Target?.target_type === ReverseProxyTargetType.PEER;
+
+  const [tlsTargetType, setTlsTargetType] = useState<ReverseProxyTargetType>(
+    existingL4Target
+      ? existingL4Target.target_type
+      : initialResource
+        ? (initialResource.type as ReverseProxyTargetType) ?? ReverseProxyTargetType.HOST
+        : ReverseProxyTargetType.PEER,
+  );
+  const [tlsPeerId, setTlsPeerId] = useState<string | undefined>(
+    existingL4IsPeer
+      ? existingL4Target?.target_id
+      : initialResource
+        ? undefined
+        : initialPeer?.id,
+  );
+  const [tlsResourceId, setTlsResourceId] = useState<string | undefined>(
+    existingL4Target
+      ? existingL4IsPeer
+        ? undefined
+        : existingL4Target.target_id
+      : initialResource?.id,
+  );
+  const [tlsHost, setTlsHost] = useState(() => {
+    if (existingL4Target?.host) return existingL4Target.host;
+    if (initialPeer) return initialPeer.ip;
+    if (initialResource) {
+      const addr = initialResource.address;
+      return addr.includes("/") ? addr.split("/")[0] : addr;
+    }
+    return "";
+  });
+  const [tlsPort, setTlsPort] = useState<number>(existingL4Target?.port || 0);
+  const [tlsListenPort, setTlsListenPort] = useState<number>(
+    reverseProxy?.listen_port || 0,
+  );
+
+  const hasTlsTarget = !!tlsPeerId || !!tlsResourceId;
+
+  // CIDR detection for TLS subnet resources
+  const tlsResourceAddress = useMemo(() => {
+    if (!tlsResourceId) return "";
+    const resource =
+      resources?.find((r) => r.id === tlsResourceId) ??
+      (initialResource?.id === tlsResourceId ? initialResource : undefined);
+    return resource?.address || "";
+  }, [tlsResourceId, resources, initialResource]);
+
+  const tlsCidrInfo = useMemo(() => {
+    if (!tlsResourceAddress) return null;
+    if (!cidr.isValidCIDR(tlsResourceAddress)) return null;
+    try {
+      return new cidr(tlsResourceAddress);
+    } catch {
+      return null;
+    }
+  }, [tlsResourceAddress]);
+
+  const tlsIsCidrRange = useMemo(() => {
+    if (!tlsCidrInfo) return false;
+    const parts = tlsResourceAddress.split("/");
+    const mask = parts.length === 2 ? parseInt(parts[1], 10) : 32;
+    return mask < 32;
+  }, [tlsCidrInfo, tlsResourceAddress]);
+
+  const tlsIsHostEditable = tlsIsCidrRange;
+
+  const tlsIsHostInCidrRange = useMemo(() => {
+    if (!tlsCidrInfo || !tlsHost) return false;
+    if (!cidr.isValidAddress(tlsHost)) return false;
+    return tlsCidrInfo.contains(tlsHost);
+  }, [tlsCidrInfo, tlsHost]);
+
+  const tlsIsValidCidrHost =
+    !tlsIsCidrRange || (!!tlsHost && tlsIsHostInCidrRange);
+
+  const setEndpointMode = useCallback(
+    (mode: EndpointMode) => {
+      setEndpointMode_(mode);
+    },
+    [],
+  );
+
+  // Proxy protocol: for L4 modes maps to target proxy_protocol
+  const [proxyProtocol, setProxyProtocol] = useState(
+    existingL4Target?.options?.proxy_protocol ?? false,
+  );
+
+  const [requestTimeout, setRequestTimeout] = useState(
+    existingL4Target?.options?.request_timeout ?? existingL4Target?.options?.session_idle_timeout ?? "",
+  );
+
   const [targets, setTargets] = useState<ReverseProxyTarget[]>(
     reverseProxy?.targets || [],
   );
+
+  const isL4Mode = endpointMode === "tls" || endpointMode === "tcp" || endpointMode === "udp";
+  // TCP/UDP use port-based routing; TLS uses SNI routing
+  const isPortBased = endpointMode === "tcp" || endpointMode === "udp";
+
+  // Check if the selected cluster supports custom listen ports
+  const clusterSupportsCustomPorts = useMemo(() => {
+    const selectedDomain = domains?.find(
+      (d) => d.domain === baseDomain || d.target_cluster === baseDomain,
+    );
+    return selectedDomain?.supports_custom_ports ?? false;
+  }, [domains, baseDomain]);
+
+  const hasAnyEndpoint =
+    (endpointMode === "http" && targets.length > 0) ||
+    (isL4Mode &&
+      hasTlsTarget &&
+      tlsIsValidCidrHost &&
+      tlsPort >= 1 &&
+      tlsPort <= 65535 &&
+      (isPortBased && !clusterSupportsCustomPorts
+        ? true
+        : tlsListenPort >= 1 && tlsListenPort <= 65535));
+
   const [passHostHeader, setPassHostHeader] = useState(
     reverseProxy?.pass_host_header ?? false,
   );
@@ -240,8 +413,10 @@ export default function ReverseProxyModal({
   }, [subdomain, baseDomain, domainAlreadyExists]);
 
   const canContinueToSettings = useMemo(() => {
-    return isSubdomainValid && targets.length > 0;
-  }, [isSubdomainValid, targets]);
+    if (!isSubdomainValid) return false;
+    if (!hasAnyEndpoint) return false;
+    return true;
+  }, [isSubdomainValid, hasAnyEndpoint]);
 
   const submitDisabled = useMemo(() => {
     return !canContinueToSettings;
@@ -282,8 +457,8 @@ export default function ReverseProxyModal({
     !passwordEnabled && !pinEnabled && !bearerEnabled && !linkAuthEnabled;
 
   const handleSubmit = async () => {
-    // Show warning if no authentication is configured
-    if (hasNoAuth) {
+    // Show warning if no authentication is configured (HTTP only; TLS is pass-through)
+    if (endpointMode === "http" && hasNoAuth) {
       const confirmed = await confirm({
         title: "No Authentication Configured",
         description:
@@ -316,15 +491,39 @@ export default function ReverseProxyModal({
       },
     };
 
+    const isHTTPMode = endpointMode === "http";
+
+    const l4TargetType =
+      tlsTargetType === ReverseProxyTargetType.PEER
+        ? ReverseProxyTargetType.PEER
+        : tlsTargetType === ReverseProxyTargetType.SUBNET
+          ? ReverseProxyTargetType.SUBNET
+          : ReverseProxyTargetType.HOST;
+
+    const l4Target: ReverseProxyTarget = {
+      target_id: tlsPeerId || tlsResourceId || "",
+      target_type: l4TargetType,
+      port: tlsPort,
+      protocol: (endpointMode === "tls" ? "tcp" : endpointMode) as ReverseProxyTargetProtocol,
+      host: tlsIsCidrRange ? tlsHost : undefined,
+      enabled: true,
+      options: (endpointMode !== "udp" && proxyProtocol) || requestTimeout ? {
+        ...(endpointMode !== "udp" && proxyProtocol ? { proxy_protocol: true } : {}),
+        ...(requestTimeout ? { [endpointMode === "udp" ? "session_idle_timeout" : "request_timeout"]: requestTimeout } : {}),
+      } : undefined,
+    };
+
     handleCreateOrUpdateProxy({
       data: {
         name: fullDomain,
         domain: fullDomain,
-        targets,
+        mode: isHTTPMode ? undefined : (endpointMode as ServiceMode),
+        listen_port: isL4Mode && (!isPortBased || clusterSupportsCustomPorts) ? tlsListenPort : undefined,
+        targets: isHTTPMode ? targets : [l4Target],
         enabled: reverseProxy?.enabled ?? true,
-        pass_host_header: passHostHeader,
-        rewrite_redirects: rewriteRedirects,
-        auth,
+        pass_host_header: isHTTPMode ? passHostHeader : undefined,
+        rewrite_redirects: isHTTPMode ? rewriteRedirects : undefined,
+        auth: isHTTPMode ? auth : undefined,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -341,9 +540,23 @@ export default function ReverseProxyModal({
       >
         <ModalHeader
           icon={<ReverseProxyIcon className={"fill-netbird"} size={18} />}
-          title={reverseProxy ? "Edit Service" : "Add Service"}
+          title={
+            reverseProxy
+              ? "Edit Service"
+              : endpointMode === "tls"
+                ? "Add TLS Passthrough"
+                : endpointMode === "tcp"
+                  ? "Add TCP Service"
+                  : endpointMode === "udp"
+                    ? "Add UDP Service"
+                    : endpointMode === "http"
+                      ? "Add HTTP Service"
+                      : "Add Service"
+          }
           description={
-            "Expose services securely through NetBird's reverse proxy."
+            isL4Mode
+              ? "Forward traffic directly to your backend."
+              : "Expose services securely through NetBird's reverse proxy."
           }
           color={"netbird"}
         />
@@ -354,10 +567,15 @@ export default function ReverseProxyModal({
               <Text size={14} />
               Details
             </TabsTrigger>
-            <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
-              <LockKeyhole size={16} />
-              Authentication
-            </TabsTrigger>
+            {endpointMode === "http" && (
+              <TabsTrigger
+                value={"auth"}
+                disabled={!canContinueToSettings}
+              >
+                <LockKeyhole size={16} />
+                Authentication
+              </TabsTrigger>
+            )}
             <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
               <Settings size={14} />
               Advanced Settings
@@ -400,6 +618,7 @@ export default function ReverseProxyModal({
                       value={baseDomain}
                       onChange={setBaseDomain}
                       className="!rounded-l-none"
+                      isL4Mode={isL4Mode}
                     />
                   </div>
                 </div>
@@ -413,10 +632,191 @@ export default function ReverseProxyModal({
                 </Callout>
               )}
 
+              <div className="flex flex-col gap-4">
+                {!initialEndpointMode && !reverseProxy && (
+                  <>
+                    <div>
+                      <Label>
+                        <NetworkIcon size={14} />
+                        Endpoint Type
+                      </Label>
+                      <HelpText>
+                        Choose how traffic is forwarded to your backend.
+                      </HelpText>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Endpoint mode">
+                      {([
+                        { mode: "http" as EndpointMode, icon: <Server size={14} />, label: "HTTP", desc: "Reverse proxy with path routing, auth, and load balancing." },
+                        { mode: "tls" as EndpointMode, icon: <LockKeyhole size={14} />, label: "TLS Passthrough", desc: "Direct TCP relay via SNI routing." },
+                        { mode: "tcp" as EndpointMode, icon: <ArrowRight size={14} />, label: "TCP", desc: "TCP relay to a backend on a dedicated port." },
+                        { mode: "udp" as EndpointMode, icon: <ArrowRight size={14} />, label: "UDP", desc: "UDP relay to a backend on a dedicated port." },
+                      ]).map(({ mode, icon, label, desc }) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          role="radio"
+                          aria-checked={endpointMode === mode}
+                          tabIndex={endpointMode === mode ? 0 : -1}
+                          onClick={() => setEndpointMode(mode)}
+                          className={cn(
+                            "rounded-md border px-4 py-3 text-left transition-all",
+                            endpointMode === mode
+                              ? "border-green-500/30 bg-green-500/5"
+                              : "border-nb-gray-800 bg-nb-gray-920/30 hover:border-nb-gray-700",
+                          )}
+                        >
+                          <div className="flex items-center gap-2 text-sm font-medium">
+                            {icon}
+                            {label}
+                          </div>
+                          <div className="text-xs text-nb-gray-400 mt-1">
+                            {desc}
+                          </div>
+                        </button>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {isL4Mode && (
+                  <>
+                    <div>
+                      <Label>Target Device</Label>
+                      <HelpText>
+                        Select the peer or resource running your backend.
+                      </HelpText>
+                      <PeerGroupSelector
+                        values={[]}
+                        onChange={() => {}}
+                        placeholder="Select a peer or resource..."
+                        showPeers={true}
+                        showResources={true}
+                        showRoutes={false}
+                        hideAllGroup={true}
+                        hideGroupsTab={true}
+                        tabOrder={["peers", "resources"]}
+                        closeOnSelect={true}
+                        max={1}
+                        resource={
+                          isResourceTargetType(tlsTargetType) && tlsResourceId
+                            ? { id: tlsResourceId, type: "host" }
+                            : tlsTargetType === ReverseProxyTargetType.PEER && tlsPeerId
+                            ? { id: tlsPeerId, type: "peer" }
+                            : undefined
+                        }
+                        onResourceChange={(res) => {
+                          if (res) {
+                            if (res.type === "peer") {
+                              setTlsTargetType(ReverseProxyTargetType.PEER);
+                              setTlsPeerId(res.id);
+                              setTlsResourceId(undefined);
+                              const peer = peers?.find((p) => p.id === res.id);
+                              setTlsHost(peer?.ip || "");
+                            } else {
+                              const selectedResource = resources?.find(
+                                (r) => r.id === res.id,
+                              );
+                              setTlsTargetType(
+                                (selectedResource?.type as ReverseProxyTargetType) ??
+                                  ReverseProxyTargetType.HOST,
+                              );
+                              setTlsResourceId(res.id);
+                              setTlsPeerId(undefined);
+                              const address = selectedResource?.address || "";
+                              setTlsHost(
+                                address.includes("/")
+                                  ? address.split("/")[0]
+                                  : address,
+                              );
+                            }
+                          } else {
+                            setTlsPeerId(undefined);
+                            setTlsResourceId(undefined);
+                            setTlsHost("");
+                          }
+                        }}
+                      />
+                    </div>
+                    <div>
+                      <Label>Ports</Label>
+                      <HelpText>
+                        {!isPortBased || clusterSupportsCustomPorts
+                          ? "The public listen port and the destination port on the target device."
+                          : "The destination port on the target device. The public listen port will be auto-assigned."}
+                      </HelpText>
+                      {tlsCidrInfo && (
+                        <HelpText className="!mt-1">
+                          Enter an IP address within {tlsResourceAddress}
+                        </HelpText>
+                      )}
+                      <div className="flex items-center gap-2 mt-2">
+                        <div className="flex-1">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={65535}
+                            placeholder={isPortBased && !clusterSupportsCustomPorts ? "Auto" : "443"}
+                            value={isPortBased && !clusterSupportsCustomPorts ? "" : (tlsListenPort || "")}
+                            onChange={(e) =>
+                              setTlsListenPort(parseInt(e.target.value) || 0)
+                            }
+                            disabled={isPortBased && !clusterSupportsCustomPorts}
+                            aria-label="Public listen port"
+                          />
+                        </div>
+                        <ArrowRight
+                          size={16}
+                          className="text-nb-gray-400 shrink-0"
+                        />
+                        <div className="flex-1">
+                          <Input
+                            value={tlsHost || (tlsIsHostEditable ? "" : "—")}
+                            onChange={(e) => {
+                              if (tlsIsHostEditable) {
+                                setTlsHost(
+                                  e.target.value.replace(/[^0-9.]/g, ""),
+                                );
+                              }
+                            }}
+                            placeholder={tlsIsHostEditable ? "e.g., 10.0.0.5" : ""}
+                            disabled={!hasTlsTarget}
+                            readOnly={hasTlsTarget && !tlsIsHostEditable}
+                            aria-label="Destination host or IP"
+                            className={
+                              !tlsIsHostEditable
+                                ? "!text-nb-gray-400 font-mono !text-xs"
+                                : "font-mono !text-xs"
+                            }
+                          />
+                        </div>
+                        <span className="text-nb-gray-500 shrink-0 font-mono">
+                          :
+                        </span>
+                        <div className="w-[120px] shrink-0">
+                          <Input
+                            type="number"
+                            min={1}
+                            max={65535}
+                            placeholder="443"
+                            value={tlsPort || ""}
+                            onChange={(e) =>
+                              setTlsPort(parseInt(e.target.value) || 0)
+                            }
+                            aria-label="Destination port"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {endpointMode === "http" && (
               <div>
                 <Label>
                   <Server size={14} />
-                  Targets
+                  HTTP Targets
                 </Label>
                 <HelpText>
                   Add one or more devices running your service or resources to
@@ -559,6 +959,7 @@ export default function ReverseProxyModal({
                   </Callout>
                 )}
               </div>
+              )}
             </div>
           </TabsContent>
 
@@ -604,28 +1005,71 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"settings"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-4"}>
-              <FancyToggleSwitch
-                value={passHostHeader}
-                onChange={setPassHostHeader}
-                label={
-                  <>
-                    <GlobeIcon size={15} />
-                    Pass Host Header
-                  </>
-                }
-                helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
-              />
-              <FancyToggleSwitch
-                value={rewriteRedirects}
-                onChange={setRewriteRedirects}
-                label={
-                  <>
-                    <ArrowRight size={15} />
-                    Rewrite Redirects
-                  </>
-                }
-                helpText="Rewrite Location headers in backend responses to use the public domain instead of the internal backend address."
-              />
+              {(endpointMode === "tcp" || endpointMode === "tls") && (
+                <FancyToggleSwitch
+                  value={proxyProtocol}
+                  onChange={setProxyProtocol}
+                  label={
+                    <>
+                      <NetworkIcon size={15} />
+                      PROXY Protocol v2
+                    </>
+                  }
+                  helpText="Send a PROXY protocol v2 header to the backend with the real client IP."
+                />
+              )}
+              {isL4Mode && (
+                <div className={"px-6 py-4 border rounded-md border-nb-gray-910 bg-nb-gray-900/30"}>
+                  <div className={"flex justify-between gap-10"}>
+                    <div className={"max-w-sm"}>
+                      <Label>
+                        <Timer size={15} />
+                        {endpointMode === "udp" ? "Session Idle Timeout" : "Connection Timeout"}
+                      </Label>
+                      <HelpText margin={false}>
+                        {endpointMode === "udp"
+                          ? "Close the UDP session after this period of inactivity."
+                          : "Timeout for establishing backend connections."}
+                      </HelpText>
+                    </div>
+                    <div className={"mt-1"}>
+                      <Input
+                        value={requestTimeout}
+                        onChange={(e) => setRequestTimeout(e.target.value)}
+                        onClick={(e) => e.stopPropagation()}
+                        placeholder={'30s'}
+                        maxWidthClass={"w-[100px]"}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+              {endpointMode === "http" && (
+                <>
+                  <FancyToggleSwitch
+                    value={passHostHeader}
+                    onChange={setPassHostHeader}
+                    label={
+                      <>
+                        <GlobeIcon size={15} />
+                        Pass Host Header
+                      </>
+                    }
+                    helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
+                  />
+                  <FancyToggleSwitch
+                    value={rewriteRedirects}
+                    onChange={setRewriteRedirects}
+                    label={
+                      <>
+                        <ArrowRight size={15} />
+                        Rewrite Redirects
+                      </>
+                    }
+                    helpText="Rewrite Location headers in backend responses to use the public domain instead of the internal backend address."
+                  />
+                </>
+              )}
             </div>
           </TabsContent>
         </Tabs>
@@ -679,13 +1123,26 @@ export default function ReverseProxyModal({
                     <ModalClose asChild>
                       <Button variant={"secondary"}>Cancel</Button>
                     </ModalClose>
-                    <Button
-                      variant={"primary"}
-                      onClick={() => setTab("auth")}
-                      disabled={!canContinueToSettings}
-                    >
-                      Continue
-                    </Button>
+                    {endpointMode === "udp" ? (
+                      <Button
+                        variant={"primary"}
+                        disabled={submitDisabled || !permission?.services?.create}
+                        onClick={handleSubmit}
+                      >
+                        <PlusCircle size={16} />
+                        Add Service
+                      </Button>
+                    ) : (
+                      <Button
+                        variant={"primary"}
+                        onClick={() =>
+                          setTab(isL4Mode ? "settings" : "auth")
+                        }
+                        disabled={!canContinueToSettings}
+                      >
+                        Continue
+                      </Button>
+                    )}
                   </>
                 )}
 
@@ -710,7 +1167,9 @@ export default function ReverseProxyModal({
                   <>
                     <Button
                       variant={"secondary"}
-                      onClick={() => setTab("auth")}
+                      onClick={() =>
+                        setTab(isL4Mode ? "targets" : "auth")
+                      }
                     >
                       Back
                     </Button>
@@ -760,6 +1219,7 @@ export default function ReverseProxyModal({
           domain: fullDomain,
           targets: targets,
           enabled: reverseProxy?.enabled ?? true,
+          mode: endpointMode as ServiceMode,
         }}
         initialResource={initialResource}
         initialPeer={initialPeer}
@@ -825,6 +1285,7 @@ export default function ReverseProxyModal({
           }, 200);
         }}
       />
+
     </Modal>
   );
 }

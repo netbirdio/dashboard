@@ -16,6 +16,7 @@ interface DomainSelectorProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   className?: string;
+  isL4Mode?: boolean;
 }
 
 export function CustomDomainSelector({
@@ -23,6 +24,7 @@ export function CustomDomainSelector({
   onChange,
   disabled = false,
   className,
+  isL4Mode = false,
 }: DomainSelectorProps) {
   const router = useRouter();
   const { domains } = useReverseProxies();
@@ -31,8 +33,10 @@ export function CustomDomainSelector({
     const opts: SelectOption[] = [];
 
     // Add free domains (connected proxy clusters, e.g., .eu.proxy.netbird.io)
+    // In L4 mode, hide clusters that haven't reported capabilities (old proxies).
     domains
       ?.filter((d) => d.type === ReverseProxyDomainType.FREE)
+      .filter((d) => !isL4Mode || d.supports_custom_ports !== undefined)
       .forEach((domain) => {
         opts.push({
           value: domain.domain,
@@ -83,7 +87,7 @@ export function CustomDomainSelector({
     });
 
     return opts;
-  }, [domains]);
+  }, [domains, isL4Mode]);
 
   const handleChange = (selectedValue: string) => {
     if (selectedValue === "add_custom") {

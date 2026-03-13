@@ -12,6 +12,7 @@ type Props = {
   serviceId: string;
   meta?: ReverseProxyMeta;
   enabled?: boolean;
+  isL4?: boolean;
 };
 
 const POLL_INTERVAL_MS = 3500;
@@ -20,6 +21,7 @@ export default function ReverseProxyStatusCell({
   serviceId,
   meta,
   enabled,
+  isL4,
 }: Readonly<Props>) {
   const dataRef = useRef<ReverseProxy | undefined>(undefined);
 
@@ -31,7 +33,8 @@ export default function ReverseProxyStatusCell({
     !!meta?.certificate_issued_at ||
     !!dataRef.current?.meta?.certificate_issued_at;
 
-  const shouldPoll = !!enabled && !(isActive && certificateIssued);
+  const shouldPoll =
+    !!enabled && !(isActive && (isL4 || certificateIssued));
 
   const { data } = useFetchApi<ReverseProxy>(
     `/reverse-proxies/services/${serviceId}`,
@@ -43,7 +46,45 @@ export default function ReverseProxyStatusCell({
 
   dataRef.current = data;
 
-  if (!enabled || (isActive && certificateIssued)) {
+  const currentStatus = data?.meta?.status ?? meta?.status;
+  const currentCertificateIssued = data?.meta?.certificate_issued_at
+    ? !!data.meta.certificate_issued_at
+    : certificateIssued;
+
+  if (!enabled) return null;
+
+  // L4 services don't need certificates
+  if (isL4) {
+    if (currentStatus === ReverseProxyStatus.ACTIVE) return null;
+    if (currentStatus === ReverseProxyStatus.ERROR) {
+      return (
+        <div className={"flex"}>
+          <Badge variant={"red"}>Error</Badge>
+        </div>
+      );
+    }
+    if (currentStatus === ReverseProxyStatus.TUNNEL_NOT_CREATED) {
+      return (
+        <div className={"flex"}>
+          <Badge variant={"red"}>Tunnel not created</Badge>
+        </div>
+      );
+    }
+    return (
+      <div className={"flex"}>
+        <Badge variant={"yellow"}>
+          <Loader2 size={14} className={"animate-spin"} />
+          Setting up service...
+        </Badge>
+      </div>
+    );
+  }
+
+  // HTTP services: hide once active with certificate issued
+  if (
+    currentStatus === ReverseProxyStatus.ACTIVE &&
+    currentCertificateIssued
+  ) {
     return null;
   }
 

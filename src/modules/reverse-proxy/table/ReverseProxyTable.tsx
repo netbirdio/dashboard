@@ -1,5 +1,11 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -8,7 +14,14 @@ import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
-import { ExternalLinkIcon, PlusCircle } from "lucide-react";
+import {
+  ArrowRight,
+  ChevronDown,
+  ExternalLinkIcon,
+  LockKeyhole,
+  PlusCircle,
+  Server,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
@@ -19,6 +32,8 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxy,
+  ServiceMode,
+  isL4Mode,
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyActionCell from "@/modules/reverse-proxy/table/ReverseProxyActionCell";
 import ReverseProxyActiveCell from "@/modules/reverse-proxy/table/ReverseProxyActiveCell";
@@ -48,6 +63,7 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
           serviceId={row.original.id}
           meta={row.original.meta}
           enabled={row.original.enabled}
+          isL4={isL4Mode(row.original.mode)}
         />
       ) : null,
   },
@@ -132,6 +148,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       searchPlaceholder={"Search by URL, domain, or target..."}
       columnVisibility={{ searchString: false }}
       renderExpandedRow={(reverseProxy) => {
+        if (isL4Mode(reverseProxy.mode)) return;
         const hasTargets = (reverseProxy?.targets?.length ?? 0) > 0;
         if (!hasTargets) return;
         return (
@@ -157,15 +174,10 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
             "Expose your internal services securely through NetBird's reverse proxy with automatic TLS and optional authentication to protect your services."
           }
           button={
-            <Button
-              variant={"primary"}
-              className={""}
-              onClick={() => openModal()}
+            <AddServiceDropdown
+              openModal={openModal}
               disabled={!permission?.services?.create}
-            >
-              <PlusCircle size={16} />
-              Add Service
-            </Button>
+            />
           }
           learnMore={
             <>
@@ -181,15 +193,12 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       rightSide={() => (
         <>
           {reverseProxies && reverseProxies?.length > 0 && (
-            <Button
-              variant={"primary"}
-              className={"ml-auto"}
-              onClick={() => openModal()}
-              disabled={!permission?.services?.create}
-            >
-              <PlusCircle size={16} />
-              Add Service
-            </Button>
+            <div className={"ml-auto"}>
+              <AddServiceDropdown
+                openModal={openModal}
+                disabled={!permission?.services?.create}
+              />
+            </div>
           )}
         </>
       )}
@@ -253,5 +262,61 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
         </>
       )}
     </DataTable>
+  );
+}
+
+type AddServiceDropdownProps = {
+  openModal: (options?: { initialEndpointMode?: ServiceMode }) => void;
+  disabled?: boolean;
+};
+
+function AddServiceDropdown({
+  openModal,
+  disabled,
+}: Readonly<AddServiceDropdownProps>) {
+  return (
+    <DropdownMenu modal={false}>
+      <DropdownMenuTrigger asChild>
+        <Button variant={"primary"} disabled={disabled}>
+          <PlusCircle size={16} />
+          Add Service
+          <ChevronDown size={14} />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-auto min-w-[200px]">
+        <DropdownMenuItem
+          onClick={() => openModal({ initialEndpointMode: ServiceMode.HTTP })}
+        >
+          <div className="flex gap-3 items-center">
+            <Server size={14} className="shrink-0" />
+            HTTP Service
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => openModal({ initialEndpointMode: ServiceMode.TLS })}
+        >
+          <div className="flex gap-3 items-center">
+            <LockKeyhole size={14} className="shrink-0" />
+            TLS Passthrough
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => openModal({ initialEndpointMode: ServiceMode.TCP })}
+        >
+          <div className="flex gap-3 items-center">
+            <ArrowRight size={14} className="shrink-0" />
+            TCP Service
+          </div>
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          onClick={() => openModal({ initialEndpointMode: ServiceMode.UDP })}
+        >
+          <div className="flex gap-3 items-center">
+            <ArrowRight size={14} className="shrink-0" />
+            UDP Service
+          </div>
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
