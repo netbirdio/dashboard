@@ -635,8 +635,8 @@ export default function ReverseProxyTargetModal({
                   <div>
                     <Label>Request Timeout</Label>
                     <HelpText className={"mb-0"}>
-                      Max time to wait for a response as duration string (max
-                      5m). <br /> Leave this field empty for no timeout.
+                      Max time to wait for a response as duration string (e.g.
+                      30s, 2m). <br /> Leave this field empty for no timeout.
                     </HelpText>
                   </div>
                   <Input
