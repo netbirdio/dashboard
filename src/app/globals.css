@@ -230,3 +230,168 @@ html:root {
 [data-nb-explain-highlight] {
     outline: 1px solid rgba(246, 131, 48, 0.7) !important;
 }
+
+/* Markdown body — Dify-style rendering for AI chat messages */
+.nb-markdown-body {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: var(--nb-explain-text, #e4e7e9);
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+}
+
+.nb-markdown-body > *:first-child {
+    margin-top: 0;
+}
+
+.nb-markdown-body > *:last-child {
+    margin-bottom: 0;
+}
+
+.nb-markdown-body p {
+    margin: 0.4em 0;
+    font-weight: 400;
+    letter-spacing: normal;
+    color: inherit;
+    font-size: inherit;
+}
+
+.nb-markdown-body strong {
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.nb-markdown-body em {
+    font-style: italic;
+}
+
+/* Headings */
+.nb-markdown-body h1 {
+    font-size: 1.25em;
+    font-weight: 600;
+    margin: 0.6em 0 0.3em;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.nb-markdown-body h2 {
+    font-size: 1.15em;
+    font-weight: 600;
+    margin: 0.5em 0 0.3em;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+.nb-markdown-body h3 {
+    font-size: 1.05em;
+    font-weight: 600;
+    margin: 0.4em 0 0.2em;
+    color: rgba(255, 255, 255, 0.95);
+}
+
+/* Lists */
+.nb-markdown-body ul {
+    margin: 0.4em 0;
+    padding-left: 1.4em;
+    list-style-type: disc;
+}
+
+.nb-markdown-body ol {
+    margin: 0.4em 0;
+    padding-left: 1.4em;
+    list-style-type: decimal;
+}
+
+.nb-markdown-body li {
+    margin: 0.15em 0;
+}
+
+.nb-markdown-body li > p {
+    margin: 0.1em 0;
+}
+
+/* Task lists (GFM) */
+.nb-markdown-body li input[type="checkbox"] {
+    margin-right: 0.4em;
+    vertical-align: middle;
+}
+
+/* Inline code */
+.nb-markdown-body code {
+    background: rgba(0, 0, 0, 0.25);
+    border-radius: 4px;
+    padding: 0.15em 0.4em;
+    font-size: 0.88em;
+    font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* Code blocks */
+.nb-markdown-body pre {
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 6px;
+    padding: 0.7em 0.9em;
+    margin: 0.5em 0;
+    overflow-x: auto;
+    font-size: 0.85em;
+}
+
+.nb-markdown-body pre code {
+    background: none;
+    border-radius: 0;
+    padding: 0;
+    font-size: inherit;
+}
+
+/* Blockquotes */
+.nb-markdown-body blockquote {
+    margin: 0.5em 0;
+    padding: 0.3em 0.8em;
+    border-left: 3px solid var(--nb-explain-accent, #f68330);
+    color: var(--nb-explain-text-muted, #a3adb5);
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 0 4px 4px 0;
+}
+
+.nb-markdown-body blockquote p {
+    margin: 0.2em 0;
+}
+
+/* Links */
+.nb-markdown-body a {
+    color: var(--nb-explain-accent, #f68330);
+    text-decoration: underline;
+    text-underline-offset: 2px;
+}
+
+.nb-markdown-body a:hover {
+    opacity: 0.85;
+}
+
+/* Horizontal rules */
+.nb-markdown-body hr {
+    border: none;
+    border-top: 1px solid var(--nb-explain-border, #363b40);
+    margin: 0.8em 0;
+}
+
+/* Tables (GFM) */
+.nb-markdown-body table {
+    border-collapse: collapse;
+    margin: 0.5em 0;
+    width: 100%;
+    font-size: 0.88em;
+}
+
+.nb-markdown-body th,
+.nb-markdown-body td {
+    border: 1px solid var(--nb-explain-border, #363b40);
+    padding: 0.35em 0.6em;
+    text-align: left;
+}
+
+.nb-markdown-body th {
+    background: rgba(0, 0, 0, 0.2);
+    font-weight: 600;
+}
+
+.nb-markdown-body tr:nth-child(even) {
+    background: rgba(0, 0, 0, 0.08);
+}

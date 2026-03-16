@@ -20,7 +20,24 @@ import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
 import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import InstanceSetupProvider from "@/contexts/InstanceSetupProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
+import Markdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { AIAssistantProvider } from "@netbirdio/explain/client";
+import type { Message } from "@netbirdio/explain/client";
+
+function renderMessage(message: Message) {
+  if (message.role === "assistant") {
+    return (
+      <div className="nb-markdown-body">
+        <Markdown remarkPlugins={[remarkGfm, remarkBreaks]}>
+          {message.content}
+        </Markdown>
+      </div>
+    );
+  }
+  return <>{message.content}</>;
+}
 
 const inter = localFont({
   src: "../assets/fonts/Inter.ttf",
@@ -55,7 +72,7 @@ export default function AppLayout({
                         <AIAssistantProvider
                           endpoint={process.env.NEXT_PUBLIC_AI_SERVER_URL || "http://localhost:3080/api/ai/chat"}
                           apiKey={process.env.NEXT_PUBLIC_AI_API_KEY || "nb-ai-dev-key-change-me"}
-
+                          renderMessage={renderMessage}
                         >
                           {children}
                         </AIAssistantProvider>
