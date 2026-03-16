@@ -1,5 +1,9 @@
-import React, { ReactNode } from "react";
-import { ServiceMode } from "@/interfaces/ReverseProxy";
+import React, { ReactNode, useEffect } from "react";
+import {
+  isL4Mode as isL4ServiceMode,
+  type ReverseProxyDomain,
+  ServiceMode,
+} from "@/interfaces/ReverseProxy";
 import {
   Select,
   SelectContent,
@@ -16,6 +20,7 @@ type Props = {
   value?: ServiceMode;
   onChange: (value: ServiceMode) => void;
   disabled?: boolean;
+  domain?: ReverseProxyDomain;
 };
 
 type ServiceModeConfig = {
@@ -52,9 +57,18 @@ export const ReverseProxyServiceModeSelector = ({
   value,
   onChange,
   disabled,
+  domain,
 }: Props) => {
   const selected = value ?? ServiceMode.HTTP;
   const selectedMode = SERVICE_MODES[selected];
+  const isL4Supported = domain?.supports_custom_ports !== undefined;
+
+  // Reset to HTTP if the current L4 mode becomes unsupported (e.g. domain changed)
+  useEffect(() => {
+    if (!isL4Supported && isL4ServiceMode(selected)) {
+      onChange(ServiceMode.HTTP);
+    }
+  }, [isL4Supported, selected, onChange]);
 
   return (
     <div className="flex justify-between items-center gap-10">
@@ -80,7 +94,9 @@ export const ReverseProxyServiceModeSelector = ({
           </div>
         </SelectTrigger>
         <SelectContent data-cy={"service-mode-selection"}>
-          {Object.entries(SERVICE_MODES).map(([mode, config]) => (
+          {Object.entries(SERVICE_MODES)
+            .filter(([mode]) => isL4Supported || !isL4ServiceMode(mode as ServiceMode))
+            .map(([mode, config]) => (
             <SelectItem
               key={mode}
               value={mode}

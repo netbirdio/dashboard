@@ -1,7 +1,7 @@
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { ArrowRight } from "lucide-react";
-import React from "react";
+import React, { useRef } from "react";
 import ReverseProxyAddressInput from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
 import ReverseProxyTargetSelector, {
   type Target,
@@ -12,26 +12,40 @@ type Props = {
   l4Target: Target | undefined;
   setL4Target: React.Dispatch<React.SetStateAction<Target | undefined>>;
   isListenPortSupported: boolean;
-  tlsListenPort: number;
-  setTlsListenPort: (port: number) => void;
-  tlsPort: number;
-  setTlsPort: (port: number) => void;
+  listenPort: number;
+  setListenPort: (port: number) => void;
+  port: number;
+  setPort: (port: number) => void;
 };
 
 export default function ReverseProxyLayer4Content({
   l4Target,
   setL4Target,
   isListenPortSupported,
-  tlsListenPort,
-  setTlsListenPort,
-  tlsPort,
-  setTlsPort,
+  listenPort,
+  setListenPort,
+  port,
+  setPort,
 }: Readonly<Props>) {
+  const listenPortRef = useRef<HTMLInputElement>(null);
+  const portRef = useRef<HTMLInputElement>(null);
+
   return (
-    <div className="flex flex-col gap-8">
+    <div className={"-mt-1 flex flex-col gap-8"}>
       <ReverseProxyTargetSelector
         value={l4Target}
-        onChange={(selection) => setL4Target(selection)}
+        onChange={(selection) => {
+          setL4Target(selection);
+          if (selection) {
+            setTimeout(() => {
+              if (isListenPortSupported) {
+                listenPortRef.current?.focus();
+              } else {
+                portRef.current?.focus();
+              }
+            }, 0);
+          }
+        }}
       />
 
       <div className={"flex gap-4 items-center"}>
@@ -42,13 +56,14 @@ export default function ReverseProxyLayer4Content({
           </Label>
           <div className={"mt-2"}>
             <Input
+              ref={listenPortRef}
               type="number"
               min={1}
               max={65535}
               placeholder={!isListenPortSupported ? "Auto" : "443"}
-              value={!isListenPortSupported ? "" : tlsListenPort || ""}
-              onChange={(e) => setTlsListenPort(parseInt(e.target.value) || 0)}
-              disabled={!isListenPortSupported}
+              value={!isListenPortSupported ? "" : listenPort || ""}
+              onChange={(e) => setListenPort(parseInt(e.target.value) || 0)}
+              disabled={!isListenPortSupported || !l4Target}
               aria-label="Public listen port"
             />
           </div>
@@ -75,12 +90,14 @@ export default function ReverseProxyLayer4Content({
             </Label>
             <div className={"mt-2 min-w-[120px]"}>
               <Input
+                ref={portRef}
                 type="number"
                 min={1}
                 max={65535}
                 placeholder="443"
-                value={tlsPort || ""}
-                onChange={(e) => setTlsPort(parseInt(e.target.value) || 0)}
+                value={port || ""}
+                onChange={(e) => setPort(parseInt(e.target.value) || 0)}
+                disabled={!l4Target}
                 aria-label="Destination port"
                 className={"rounded-l-none"}
               />

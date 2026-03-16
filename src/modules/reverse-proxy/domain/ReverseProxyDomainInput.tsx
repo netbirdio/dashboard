@@ -11,7 +11,6 @@ type Props = {
   baseDomain: string;
   onBaseDomainChange: (value: string) => void;
   domainAlreadyExists: boolean;
-  isL4Mode: boolean;
   clusterOffline?: {
     clusterName: string;
   };
@@ -23,7 +22,6 @@ export default function ReverseProxyDomainInput({
   baseDomain,
   onBaseDomainChange,
   domainAlreadyExists,
-  isL4Mode,
   clusterOffline,
 }: Readonly<Props>) {
   return (
@@ -56,7 +54,6 @@ export default function ReverseProxyDomainInput({
             value={baseDomain}
             onChange={onBaseDomainChange}
             className="!rounded-l-none"
-            isL4Mode={isL4Mode}
           />
         </div>
       </div>
