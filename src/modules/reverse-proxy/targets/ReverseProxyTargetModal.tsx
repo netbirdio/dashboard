@@ -20,7 +20,6 @@ import {
   Text,
 } from "lucide-react";
 import { Callout } from "@components/Callout";
-import cidr from "ip-cidr";
 import React, { useMemo, useRef, useState } from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -46,6 +45,10 @@ import ReverseProxyTargetSelector, {
   Target,
 } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
 import { useReverseProxyTargetOptions } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
+import ReverseProxyAddressInput, {
+  CidrHelpText,
+  useReverseProxyAddress,
+} from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
 
 /** Get initial host value based on target, resource, or peer */
 function getInitialHost(
@@ -124,43 +127,18 @@ export default function ReverseProxyTargetModal({
     useReverseProxyTargetOptions(currentTarget?.options);
   const portInputRef = useRef<HTMLInputElement>(null);
 
-  // Get the current resource's address (from initialResource or selected resource)
-  const currentResourceAddress = initialResource
-    ? initialResource.address
-    : target?.resourceAddress ?? "";
-
-  // Parse the CIDR using ip-cidr library
-  const cidrInfo = useMemo(() => {
-    if (!currentResourceAddress) return null;
-    if (!cidr.isValidCIDR(currentResourceAddress)) return null;
-    try {
-      return new cidr(currentResourceAddress);
-    } catch {
-      return null;
-    }
-  }, [currentResourceAddress]);
-
-  // Get the CIDR mask (e.g., 24 for /24)
-  const cidrMask = useMemo(() => {
-    if (!cidrInfo) return null;
-    const parts = currentResourceAddress.split("/");
-    return parts.length === 2 ? parseInt(parts[1], 10) : 32;
-  }, [cidrInfo, currentResourceAddress]);
-
-  // Check if address is a CIDR range (has more than one address)
-  const isCidrRange = useMemo(() => {
-    return cidrMask !== null && cidrMask < 32;
-  }, [cidrMask]);
-
-  // Host should be editable if it's a CIDR range with multiple addresses
-  const isHostEditable = isCidrRange;
-
-  // Validate if current host is within CIDR range
-  const isHostInCidrRange = useMemo(() => {
-    if (!cidrInfo || !target?.host) return false;
-    if (!cidr.isValidAddress(target.host)) return false;
-    return cidrInfo.contains(target.host);
-  }, [cidrInfo, target?.host]);
+  const { isCidrRange, isHostEditable, isValidCidrHost } =
+    useReverseProxyAddress(
+      initialResource
+        ? target
+          ? { ...target, resourceAddress: initialResource.address }
+          : {
+              type: ReverseProxyTargetType.HOST,
+              host: "",
+              resourceAddress: initialResource.address,
+            }
+        : target,
+    );
 
   // Normalize path for comparison (ensure it starts with / and handle empty as /)
   const normalizePath = (path: string | undefined) => {
@@ -188,7 +166,6 @@ export default function ReverseProxyTargetModal({
 
   const isValidPort =
     targetPort === 0 || (targetPort >= 1 && targetPort <= 65535);
-  const isValidCidrHost = !isCidrRange || (target?.host && isHostInCidrRange);
 
   const canAddTarget = useMemo(() => {
     // Don't allow if path is duplicate or port is invalid
@@ -393,14 +370,19 @@ export default function ReverseProxyTargetModal({
                 </div>
 
                 <div>
-                  <div className="flex gap-3 mt-1">
+                  <div className="flex mt-1">
                     <div className="flex-1">
                       <Label>Protocol & Host / IP</Label>
-                      {cidrInfo && (
-                        <HelpText className="!mt-1">
-                          Enter an IP address within {currentResourceAddress}
-                        </HelpText>
-                      )}
+                      <CidrHelpText
+                        target={
+                          initialResource && target
+                            ? {
+                                ...target,
+                                resourceAddress: initialResource.address,
+                              }
+                            : target
+                        }
+                      />
                       <div className="flex items-center mt-2">
                         <div className="w-[120px]">
                           <SelectDropdown
@@ -427,24 +409,18 @@ export default function ReverseProxyTargetModal({
                           />
                         </div>
                         <div className="flex-1">
-                          <Input
-                            value={target?.host ?? ""}
-                            onChange={(e) => {
-                              // Only allow valid IP characters for CIDR ranges
-                              const value = isHostEditable
-                                ? e.target.value.replace(/[^0-9.]/g, "")
-                                : e.target.value;
-                              setTarget(
-                                (prev) => prev && { ...prev, host: value },
-                              );
-                            }}
-                            placeholder="e.g., 192.168.0.10"
-                            className="!rounded-l-none"
-                            disabled={!hasTarget}
-                            readOnly={
-                              hasTarget && !isHostEditable ? true : undefined
+                          <ReverseProxyAddressInput
+                            value={
+                              initialResource && target
+                                ? {
+                                    ...target,
+                                    resourceAddress: initialResource.address,
+                                  }
+                                : target
                             }
+                            onChange={setTarget}
                             autoFocus={!!initialResource && isHostEditable}
+                            className="!rounded-l-none"
                           />
                         </div>
                       </div>
@@ -458,13 +434,14 @@ export default function ReverseProxyTargetModal({
                           }
                         />
                       </Label>
-                      {cidrInfo && (
+                      {isCidrRange && (
                         <HelpText className="!mt-1">&nbsp;</HelpText>
                       )}
                       <div className="mt-2">
                         <Input
                           ref={portInputRef}
                           type="number"
+                          className={"rounded-l-none"}
                           value={targetPort === 0 ? "" : targetPort}
                           onChange={(e) =>
                             setTargetPort(parseInt(e.target.value) || 0)

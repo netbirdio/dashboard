@@ -1,18 +1,11 @@
 "use client";
 
 import Button from "@components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
-import InlineLink, { InlineButtonLink } from "@components/InlineLink";
+import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
-import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import SettingCard from "@components/SettingCard";
 import {
   Modal,
@@ -23,31 +16,21 @@ import {
 import Paragraph from "@components/Paragraph";
 import ModalHeader from "@components/modal/ModalHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
-import { ToggleSwitch } from "@components/ToggleSwitch";
 import {
-  AlertTriangle,
   ArrowRight,
-  ArrowUpRight,
   Binary,
-  Edit,
   ExternalLinkIcon,
   GlobeIcon,
   LockKeyhole,
-  MinusCircleIcon,
-  MoreVertical,
   Network as NetworkIcon,
   PlusCircle,
-  PlusIcon,
   RectangleEllipsis,
   Settings,
   Timer,
   Users,
 } from "lucide-react";
-import { Callout } from "@components/Callout";
-import useFetchApi from "@utils/api";
-import cidr from "ip-cidr";
 import { useRouter } from "next/navigation";
-import React, { useCallback, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -61,22 +44,22 @@ import {
   ReverseProxy,
   ReverseProxyAuth,
   ReverseProxyDomain,
-  ReverseProxyDomainType,
   ReverseProxyTarget,
   ReverseProxyTargetProtocol,
   ReverseProxyTargetType,
   ServiceMode,
 } from "@/interfaces/ReverseProxy";
-import {
-  isResourceTargetType,
-  useReverseProxies,
-} from "@/contexts/ReverseProxiesProvider";
-import { CustomDomainSelector } from "./domain/CustomDomainSelector";
-import { cn } from "@utils/helpers";
+import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
+import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
 import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
+import ReverseProxyHTTPTargets from "@/modules/reverse-proxy/ReverseProxyHTTPTargets";
+import ReverseProxyLayer4Content from "@/modules/reverse-proxy/ReverseProxyLayer4Content";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
+import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
+import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { ReverseProxyServiceModeSelector } from "@/modules/reverse-proxy/ReverseProxyServiceModeSelector";
 
@@ -95,63 +78,6 @@ type Props = {
   onSuccess?: () => void;
 };
 
-// Helper to parse domain into subdomain and base domain.
-// When availableDomains is provided, matches against them first (longest match wins)
-// to avoid e.g. "netbird.io" matching when the actual domain is "eu.proxy.netbird.io".
-function parseDomain(
-  fullDomain: string,
-  availableDomains?: ReverseProxyDomain[],
-): {
-  subdomain: string;
-  baseDomain: string;
-  isCustom: boolean;
-} {
-  // Try matching against actual available domains first (sorted longest-first for specificity)
-  if (availableDomains?.length) {
-    const sorted = [...availableDomains]
-      .filter((d) => d.domain)
-      .sort((a, b) => b.domain.length - a.domain.length);
-    for (const d of sorted) {
-      if (fullDomain.endsWith(`.${d.domain}`)) {
-        return {
-          subdomain: fullDomain.slice(0, -(d.domain.length + 1)),
-          baseDomain: d.domain,
-          isCustom: d.type === ReverseProxyDomainType.CUSTOM,
-        };
-      }
-    }
-  }
-
-  // Fallback to hardcoded known domains
-  const knownDomains = ["netbird.cloud", "netbird.io", "netbird.app"];
-
-  for (const known of knownDomains) {
-    if (fullDomain.endsWith(`.${known}`)) {
-      return {
-        subdomain: fullDomain.slice(0, -(known.length + 1)),
-        baseDomain: known,
-        isCustom: false,
-      };
-    }
-  }
-
-  // Custom domain - find the first dot to split
-  const firstDot = fullDomain.indexOf(".");
-  if (firstDot > 0) {
-    return {
-      subdomain: fullDomain.slice(0, firstDot),
-      baseDomain: fullDomain.slice(firstDot + 1),
-      isCustom: true,
-    };
-  }
-
-  return {
-    subdomain: fullDomain,
-    baseDomain: "netbird.cloud",
-    isCustom: false,
-  };
-}
-
 export default function ReverseProxyModal({
   open,
   onOpenChange,
@@ -167,159 +93,73 @@ export default function ReverseProxyModal({
   const router = useRouter();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
-  const { reverseProxies, handleCreateOrUpdateProxy } = useReverseProxies();
+  const { handleCreateOrUpdateProxy } = useReverseProxies();
 
-  // Check if the proxy's cluster exists in available free domains
-  const isClusterConnected = useMemo(() => {
-    if (!reverseProxy?.proxy_cluster) return false;
-    return domains?.some(
-      (d) =>
-        d.type === ReverseProxyDomainType.FREE &&
-        d.domain === reverseProxy.proxy_cluster,
-    );
-  }, [reverseProxy?.proxy_cluster, domains]);
+  const {
+    subdomain,
+    setSubdomain,
+    baseDomain,
+    setBaseDomain,
+    fullDomain,
+    domainAlreadyExists,
+    isClusterConnected,
+  } = useReverseProxyDomain({ reverseProxy, domains, initialSubdomain });
 
   const [tab, setTab] = useState(() => {
     if (initialTab && initialTab !== "") return initialTab;
     return "targets";
   });
 
-  // Parse existing domain if editing
-  // All modes store subdomain.cluster as domain
-  const parsed = reverseProxy?.domain
-    ? parseDomain(reverseProxy.domain, domains)
-    : null;
-
-  const [subdomain, setSubdomain] = useState(() => {
-    return (
-      parsed?.subdomain ||
-      initialSubdomain
-        ?.toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "") ||
-      ""
-    );
-  });
-
-  const [baseDomain, setBaseDomain] = useState(() => {
-    if (parsed?.baseDomain) return parsed.baseDomain;
-    const validatedDomains = domains?.filter((d) => d.validated) || [];
-    const customDomain = validatedDomains.find(
-      (d) => d.type === ReverseProxyDomainType.CUSTOM,
-    );
-    const freeDomain = validatedDomains.find(
-      (d) => d.type === ReverseProxyDomainType.FREE,
-    );
-    return customDomain?.domain || freeDomain?.domain || "";
-  });
-
-  type EndpointMode = ServiceMode;
-
-  // Endpoint mode derived from protocol field
-  const [endpointMode, setEndpointMode_] = useState<EndpointMode>(() => {
-    if (reverseProxy?.mode) {
-      const p = reverseProxy.mode;
-      if (
-        p === ServiceMode.TLS ||
-        p === ServiceMode.TCP ||
-        p === ServiceMode.UDP
-      )
-        return p;
-    }
-    return ServiceMode.HTTP;
-  });
-
-  // Fetch peers & resources for TLS target selector
-  const { data: peers } = useFetchApi<Peer[]>("/peers");
-  const { data: resources } = useFetchApi<NetworkResource[]>(
-    "/networks/resources",
+  const [serviceMode, setServiceMode] = useState<ServiceMode>(
+    reverseProxy?.mode ?? ServiceMode.HTTP,
   );
+
+  const isL4Mode = isL4ServiceMode(serviceMode);
 
   // L4 target selection state (TLS/TCP/UDP) - target is in targets[0]
-  const existingL4Target = isL4ServiceMode(reverseProxy?.mode)
+  const existingL4Target = isL4Mode
     ? reverseProxy?.targets?.[0]
     : undefined;
-  const existingL4IsPeer =
-    existingL4Target?.target_type === ReverseProxyTargetType.PEER;
 
-  const [tlsTargetType, setTlsTargetType] = useState<ReverseProxyTargetType>(
-    existingL4Target
-      ? existingL4Target.target_type
-      : initialResource
-      ? (initialResource.type as ReverseProxyTargetType) ??
-        ReverseProxyTargetType.HOST
-      : ReverseProxyTargetType.PEER,
-  );
-  const [tlsPeerId, setTlsPeerId] = useState<string | undefined>(
-    existingL4IsPeer
-      ? existingL4Target?.target_id
-      : initialResource
-      ? undefined
-      : initialPeer?.id,
-  );
-  const [tlsResourceId, setTlsResourceId] = useState<string | undefined>(
-    existingL4Target
-      ? existingL4IsPeer
-        ? undefined
-        : existingL4Target.target_id
-      : initialResource?.id,
-  );
-  const [tlsHost, setTlsHost] = useState(() => {
-    if (existingL4Target?.host) return existingL4Target.host;
-    if (initialPeer) return initialPeer.ip;
+  const [l4Target, setL4Target] = useState<Target | undefined>(() => {
+    if (existingL4Target) {
+      const isPeer =
+        existingL4Target.target_type === ReverseProxyTargetType.PEER;
+      return {
+        type: existingL4Target.target_type,
+        peerId: isPeer ? existingL4Target.target_id : undefined,
+        resourceId: isPeer ? undefined : existingL4Target.target_id,
+        host: existingL4Target.host || "",
+      };
+    }
     if (initialResource) {
       const addr = initialResource.address;
-      return addr.includes("/") ? addr.split("/")[0] : addr;
+      return {
+        type:
+          (initialResource.type as ReverseProxyTargetType) ??
+          ReverseProxyTargetType.HOST,
+        resourceId: initialResource.id,
+        host: addr.includes("/") ? addr.split("/")[0] : addr,
+        resourceAddress: addr,
+      };
     }
-    return "";
+    if (initialPeer) {
+      return {
+        type: ReverseProxyTargetType.PEER,
+        peerId: initialPeer.id,
+        host: initialPeer.ip,
+      };
+    }
+    return undefined;
   });
   const [tlsPort, setTlsPort] = useState<number>(existingL4Target?.port || 0);
   const [tlsListenPort, setTlsListenPort] = useState<number>(
     reverseProxy?.listen_port || 0,
   );
 
-  const hasTlsTarget = !!tlsPeerId || !!tlsResourceId;
-
-  // CIDR detection for TLS subnet resources
-  const tlsResourceAddress = useMemo(() => {
-    if (!tlsResourceId) return "";
-    const resource =
-      resources?.find((r) => r.id === tlsResourceId) ??
-      (initialResource?.id === tlsResourceId ? initialResource : undefined);
-    return resource?.address || "";
-  }, [tlsResourceId, resources, initialResource]);
-
-  const tlsCidrInfo = useMemo(() => {
-    if (!tlsResourceAddress) return null;
-    if (!cidr.isValidCIDR(tlsResourceAddress)) return null;
-    try {
-      return new cidr(tlsResourceAddress);
-    } catch {
-      return null;
-    }
-  }, [tlsResourceAddress]);
-
-  const tlsIsCidrRange = useMemo(() => {
-    if (!tlsCidrInfo) return false;
-    const parts = tlsResourceAddress.split("/");
-    const mask = parts.length === 2 ? parseInt(parts[1], 10) : 32;
-    return mask < 32;
-  }, [tlsCidrInfo, tlsResourceAddress]);
-
-  const tlsIsHostEditable = tlsIsCidrRange;
-
-  const tlsIsHostInCidrRange = useMemo(() => {
-    if (!tlsCidrInfo || !tlsHost) return false;
-    if (!cidr.isValidAddress(tlsHost)) return false;
-    return tlsCidrInfo.contains(tlsHost);
-  }, [tlsCidrInfo, tlsHost]);
-
-  const tlsIsValidCidrHost =
-    !tlsIsCidrRange || (!!tlsHost && tlsIsHostInCidrRange);
-
-  const setEndpointMode = useCallback((mode: EndpointMode) => {
-    setEndpointMode_(mode);
-  }, []);
+  // CIDR detection for L4 subnet resources
+  const { isCidrRange: l4IsCidrRange, isValidCidrHost: l4IsValidCidrHost } =
+    useReverseProxyAddress(l4Target);
 
   // Proxy protocol: for L4 modes maps to target proxy_protocol
   const [proxyProtocol, setProxyProtocol] = useState(
@@ -336,29 +176,14 @@ export default function ReverseProxyModal({
     reverseProxy?.targets || [],
   );
 
-  const isL4Mode =
-    endpointMode === "tls" || endpointMode === "tcp" || endpointMode === "udp";
-  // TCP/UDP use port-based routing; TLS uses SNI routing
-  const isPortBased = endpointMode === "tcp" || endpointMode === "udp";
-
-  // Check if the selected cluster supports custom listen ports
-  const clusterSupportsCustomPorts = useMemo(() => {
+  // Whether a custom listen port is supported (TLS always, TCP/UDP only when cluster supports it)
+  const isListenPortSupported = useMemo(() => {
+    if (serviceMode !== "tcp" && serviceMode !== "udp") return true;
     const selectedDomain = domains?.find(
       (d) => d.domain === baseDomain || d.target_cluster === baseDomain,
     );
     return selectedDomain?.supports_custom_ports ?? false;
-  }, [domains, baseDomain]);
-
-  const hasAnyEndpoint =
-    (endpointMode === "http" && targets.length > 0) ||
-    (isL4Mode &&
-      hasTlsTarget &&
-      tlsIsValidCidrHost &&
-      tlsPort >= 1 &&
-      tlsPort <= 65535 &&
-      (isPortBased && !clusterSupportsCustomPorts
-        ? true
-        : tlsListenPort >= 1 && tlsListenPort <= 65535));
+  }, [domains, baseDomain, serviceMode]);
 
   const [passHostHeader, setPassHostHeader] = useState(
     reverseProxy?.pass_host_header ?? false,
@@ -366,19 +191,6 @@ export default function ReverseProxyModal({
   const [rewriteRedirects, setRewriteRedirects] = useState(
     reverseProxy?.rewrite_redirects ?? false,
   );
-
-  // Compute full domain
-  const fullDomain = useMemo(() => {
-    if (!baseDomain) return subdomain;
-    return `${subdomain}.${baseDomain}`;
-  }, [subdomain, baseDomain]);
-
-  const domainAlreadyExists = useMemo(() => {
-    if (!reverseProxies || !fullDomain) return false;
-    return reverseProxies.some(
-      (p) => p.domain === fullDomain && p.id !== reverseProxy?.id,
-    );
-  }, [reverseProxies, fullDomain, reverseProxy?.id]);
 
   // Authentication options - initialized from existing reverseProxy.auth
   const [passwordEnabled, setPasswordEnabled] = useState(
@@ -414,21 +226,32 @@ export default function ReverseProxyModal({
     null,
   );
 
-  const isSubdomainValid = useMemo(() => {
-    return (
-      subdomain.length > 0 && baseDomain.length > 0 && !domainAlreadyExists
-    );
-  }, [subdomain, baseDomain, domainAlreadyExists]);
-
   const canContinueToSettings = useMemo(() => {
-    if (!isSubdomainValid) return false;
-    if (!hasAnyEndpoint) return false;
-    return true;
-  }, [isSubdomainValid, hasAnyEndpoint]);
-
-  const submitDisabled = useMemo(() => {
-    return !canContinueToSettings;
-  }, [canContinueToSettings]);
+    const isSubdomainValid =
+      subdomain.length > 0 && baseDomain.length > 0 && !domainAlreadyExists;
+    const isValidPort = (port: number) => port >= 1 && port <= 65535;
+    const hasHttpEndpoint = !isL4Mode && targets.length > 0;
+    const hasL4Endpoint =
+      isL4Mode &&
+      !!l4Target &&
+      l4IsValidCidrHost &&
+      isValidPort(tlsPort) &&
+      (!isListenPortSupported || isValidPort(tlsListenPort));
+    const hasAnyEndpoint = hasHttpEndpoint || hasL4Endpoint;
+    return isSubdomainValid && hasAnyEndpoint;
+  }, [
+    subdomain,
+    baseDomain,
+    domainAlreadyExists,
+    serviceMode,
+    targets.length,
+    isL4Mode,
+    l4Target,
+    l4IsValidCidrHost,
+    tlsPort,
+    isListenPortSupported,
+    tlsListenPort,
+  ]);
 
   const saveTarget = (targetData: ReverseProxyTarget) => {
     if (editingTargetIndex !== null) {
@@ -466,7 +289,7 @@ export default function ReverseProxyModal({
 
   const handleSubmit = async () => {
     // Show warning if no authentication is configured (HTTP only; TLS is pass-through)
-    if (endpointMode === "http" && hasNoAuth) {
+    if (!isL4Mode && hasNoAuth) {
       const confirmed = await confirm({
         title: "No Authentication Configured",
         description:
@@ -499,55 +322,46 @@ export default function ReverseProxyModal({
       },
     };
 
-    const isHTTPMode = endpointMode === "http";
-
     const l4TargetType =
-      tlsTargetType === ReverseProxyTargetType.PEER
+      l4Target?.type === ReverseProxyTargetType.PEER
         ? ReverseProxyTargetType.PEER
-        : tlsTargetType === ReverseProxyTargetType.SUBNET
+        : l4Target?.type === ReverseProxyTargetType.SUBNET
         ? ReverseProxyTargetType.SUBNET
         : ReverseProxyTargetType.HOST;
 
-    const l4Target: ReverseProxyTarget = {
-      target_id: tlsPeerId || tlsResourceId || "",
+    const l4TargetPayload: ReverseProxyTarget = {
+      target_id: l4Target?.peerId || l4Target?.resourceId || "",
       target_type: l4TargetType,
       port: tlsPort,
-      protocol: (endpointMode === "tls"
+      protocol: (serviceMode === "tls"
         ? "tcp"
-        : endpointMode) as ReverseProxyTargetProtocol,
-      host: tlsIsCidrRange ? tlsHost : undefined,
+        : serviceMode) as ReverseProxyTargetProtocol,
+      host: l4IsCidrRange ? l4Target?.host : undefined,
       enabled: true,
-      options:
-        (endpointMode !== "udp" && proxyProtocol) || requestTimeout
-          ? {
-              ...(endpointMode !== "udp" && proxyProtocol
-                ? { proxy_protocol: true }
-                : {}),
-              ...(requestTimeout
-                ? {
-                    [endpointMode === "udp"
-                      ? "session_idle_timeout"
-                      : "request_timeout"]: requestTimeout,
-                  }
-                : {}),
-            }
-          : undefined,
+      options: (() => {
+        const opts: Record<string, unknown> = {};
+        if (serviceMode !== "udp" && proxyProtocol) opts.proxy_protocol = true;
+        if (requestTimeout) {
+          opts[
+            serviceMode === "udp" ? "session_idle_timeout" : "request_timeout"
+          ] = requestTimeout;
+        }
+        return Object.keys(opts).length ? opts : undefined;
+      })(),
     };
 
     handleCreateOrUpdateProxy({
       data: {
         name: fullDomain,
         domain: fullDomain,
-        mode: isHTTPMode ? undefined : (endpointMode as ServiceMode),
+        mode: isL4Mode ? (serviceMode as ServiceMode) : undefined,
         listen_port:
-          isL4Mode && (!isPortBased || clusterSupportsCustomPorts)
-            ? tlsListenPort
-            : undefined,
-        targets: isHTTPMode ? targets : [l4Target],
+          isL4Mode && isListenPortSupported ? tlsListenPort : undefined,
+        targets: isL4Mode ? [l4TargetPayload] : targets,
         enabled: reverseProxy?.enabled ?? true,
-        pass_host_header: isHTTPMode ? passHostHeader : undefined,
-        rewrite_redirects: isHTTPMode ? rewriteRedirects : undefined,
-        auth: isHTTPMode ? auth : undefined,
+        pass_host_header: isL4Mode ? undefined : passHostHeader,
+        rewrite_redirects: isL4Mode ? undefined : rewriteRedirects,
+        auth: isL4Mode ? undefined : auth,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -557,6 +371,30 @@ export default function ReverseProxyModal({
     });
   };
 
+  const modalTitle = useMemo(() => {
+    if (reverseProxy) return "Edit Service";
+    switch (serviceMode) {
+      case "tls":
+        return "Add TLS Passthrough";
+      case "tcp":
+        return "Add TCP Service";
+      case "udp":
+        return "Add UDP Service";
+      case "http":
+        return "Add HTTP/S Service";
+      default:
+        return "Add Service";
+    }
+  }, [reverseProxy, serviceMode]);
+
+  const modalDescription = useMemo(
+    () =>
+      isL4Mode
+        ? "Forward traffic directly to your backend."
+        : "Expose services securely through NetBird's reverse proxy.",
+    [isL4Mode],
+  );
+
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
       <ModalContent
@@ -564,24 +402,8 @@ export default function ReverseProxyModal({
       >
         <ModalHeader
           icon={<ReverseProxyIcon className={"fill-netbird"} size={18} />}
-          title={
-            reverseProxy
-              ? "Edit Service"
-              : endpointMode === "tls"
-              ? "Add TLS Passthrough"
-              : endpointMode === "tcp"
-              ? "Add TCP Service"
-              : endpointMode === "udp"
-              ? "Add UDP Service"
-              : endpointMode === "http"
-              ? "Add HTTP Service"
-              : "Add Service"
-          }
-          description={
-            isL4Mode
-              ? "Forward traffic directly to your backend."
-              : "Expose services securely through NetBird's reverse proxy."
-          }
+          title={modalTitle}
+          description={modalDescription}
           color={"netbird"}
         />
 
@@ -591,7 +413,7 @@ export default function ReverseProxyModal({
               <ReverseProxyIcon size={14} />
               Service
             </TabsTrigger>
-            {endpointMode === "http" && (
+            {!isL4Mode && (
               <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
                 <LockKeyhole size={16} />
                 Authentication
@@ -605,350 +427,51 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"targets"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-6"}>
-              <div>
-                <Label>Domain</Label>
-                <HelpText>
-                  Enter a subdomain and select a domain for your service.
-                </HelpText>
-                <div className="flex items-start mt-2">
-                  <div className="flex-1 min-w-0">
-                    <Input
-                      autoFocus
-                      value={subdomain}
-                      onChange={(e) => {
-                        setSubdomain(
-                          e.target.value
-                            .toLowerCase()
-                            .replace(/[^a-z0-9-]/g, ""),
-                        );
-                      }}
-                      error={
-                        domainAlreadyExists
-                          ? "This domain is already used by another service."
-                          : undefined
-                      }
-                      placeholder={"myapp"}
-                      className="!rounded-r-none !border-r-0"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <CustomDomainSelector
-                      value={baseDomain}
-                      onChange={setBaseDomain}
-                      className="!rounded-l-none"
-                      isL4Mode={isL4Mode}
-                    />
-                  </div>
-                </div>
-                {reverseProxy?.proxy_cluster && !isClusterConnected && (
-                  <Callout variant={"error"} className={"mt-3"}>
-                    Cluster {reverseProxy.proxy_cluster} is offline. Make sure
-                    the proxy server is running and connected to the right
-                    management address.
-                  </Callout>
-                )}
-              </div>
+              <ReverseProxyDomainInput
+                subdomain={subdomain}
+                onSubdomainChange={setSubdomain}
+                baseDomain={baseDomain}
+                onBaseDomainChange={setBaseDomain}
+                domainAlreadyExists={domainAlreadyExists}
+                isL4Mode={isL4Mode}
+                clusterOffline={
+                  reverseProxy?.proxy_cluster && !isClusterConnected
+                    ? { clusterName: reverseProxy.proxy_cluster }
+                    : undefined
+                }
+              />
 
               <ReverseProxyServiceModeSelector
-                onChange={setEndpointMode}
-                value={endpointMode}
+                onChange={setServiceMode}
+                value={serviceMode}
                 disabled={!!reverseProxy}
               />
 
-              {isL4Mode && (
-                <div className="flex flex-col gap-4">
-                  <>
-                    <div>
-                      <Label>Target Device</Label>
-                      <HelpText>
-                        Select the peer or resource running your backend.
-                      </HelpText>
-                      <PeerGroupSelector
-                        values={[]}
-                        onChange={() => {}}
-                        placeholder="Select a peer or resource..."
-                        showPeers={true}
-                        showResources={true}
-                        showRoutes={false}
-                        hideAllGroup={true}
-                        hideGroupsTab={true}
-                        tabOrder={["peers", "resources"]}
-                        closeOnSelect={true}
-                        max={1}
-                        resource={
-                          isResourceTargetType(tlsTargetType) && tlsResourceId
-                            ? { id: tlsResourceId, type: "host" }
-                            : tlsTargetType === ReverseProxyTargetType.PEER &&
-                              tlsPeerId
-                            ? { id: tlsPeerId, type: "peer" }
-                            : undefined
-                        }
-                        onResourceChange={(res) => {
-                          if (res) {
-                            if (res.type === "peer") {
-                              setTlsTargetType(ReverseProxyTargetType.PEER);
-                              setTlsPeerId(res.id);
-                              setTlsResourceId(undefined);
-                              const peer = peers?.find((p) => p.id === res.id);
-                              setTlsHost(peer?.ip || "");
-                            } else {
-                              const selectedResource = resources?.find(
-                                (r) => r.id === res.id,
-                              );
-                              setTlsTargetType(
-                                (selectedResource?.type as ReverseProxyTargetType) ??
-                                  ReverseProxyTargetType.HOST,
-                              );
-                              setTlsResourceId(res.id);
-                              setTlsPeerId(undefined);
-                              const address = selectedResource?.address || "";
-                              setTlsHost(
-                                address.includes("/")
-                                  ? address.split("/")[0]
-                                  : address,
-                              );
-                            }
-                          } else {
-                            setTlsPeerId(undefined);
-                            setTlsResourceId(undefined);
-                            setTlsHost("");
-                          }
-                        }}
-                      />
-                    </div>
-                    <div>
-                      <Label>Ports</Label>
-                      <HelpText>
-                        {!isPortBased || clusterSupportsCustomPorts
-                          ? "The public listen port and the destination port on the target device."
-                          : "The destination port on the target device. The public listen port will be auto-assigned."}
-                      </HelpText>
-                      {tlsCidrInfo && (
-                        <HelpText className="!mt-1">
-                          Enter an IP address within {tlsResourceAddress}
-                        </HelpText>
-                      )}
-                      <div className="flex items-center gap-2 mt-2">
-                        <div className="flex-1">
-                          <Input
-                            type="number"
-                            min={1}
-                            max={65535}
-                            placeholder={
-                              isPortBased && !clusterSupportsCustomPorts
-                                ? "Auto"
-                                : "443"
-                            }
-                            value={
-                              isPortBased && !clusterSupportsCustomPorts
-                                ? ""
-                                : tlsListenPort || ""
-                            }
-                            onChange={(e) =>
-                              setTlsListenPort(parseInt(e.target.value) || 0)
-                            }
-                            disabled={
-                              isPortBased && !clusterSupportsCustomPorts
-                            }
-                            aria-label="Public listen port"
-                          />
-                        </div>
-                        <ArrowRight
-                          size={16}
-                          className="text-nb-gray-400 shrink-0"
-                        />
-                        <div className="flex-1">
-                          <Input
-                            value={tlsHost || (tlsIsHostEditable ? "" : "—")}
-                            onChange={(e) => {
-                              if (tlsIsHostEditable) {
-                                setTlsHost(
-                                  e.target.value.replace(/[^0-9.]/g, ""),
-                                );
-                              }
-                            }}
-                            placeholder={
-                              tlsIsHostEditable ? "e.g., 10.0.0.5" : ""
-                            }
-                            disabled={!hasTlsTarget}
-                            readOnly={hasTlsTarget && !tlsIsHostEditable}
-                            aria-label="Destination host or IP"
-                            className={
-                              !tlsIsHostEditable
-                                ? "!text-nb-gray-400 font-mono !text-xs"
-                                : "font-mono !text-xs"
-                            }
-                          />
-                        </div>
-                        <span className="text-nb-gray-500 shrink-0 font-mono">
-                          :
-                        </span>
-                        <div className="w-[120px] shrink-0">
-                          <Input
-                            type="number"
-                            min={1}
-                            max={65535}
-                            placeholder="443"
-                            value={tlsPort || ""}
-                            onChange={(e) =>
-                              setTlsPort(parseInt(e.target.value) || 0)
-                            }
-                            aria-label="Destination port"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  </>
-                </div>
-              )}
-
-              {endpointMode === "http" && (
-                <div>
-                  <Label>HTTP/S Targets</Label>
-                  <HelpText>
-                    Add one or more devices running your service or resources to
-                    make it publicly accessible.
-                  </HelpText>
-
-                  {targets.length > 0 && (
-                    <div
-                      className={
-                        "mt-3 mb-3 overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30 py-1 px-1 rounded-md "
-                      }
-                    >
-                      <table className="w-full">
-                        <tbody>
-                          {targets.map((target, index) => (
-                            <tr
-                              key={index}
-                              onClick={() => editTarget(index)}
-                              className="rounded-md hover:bg-nb-gray-900/30 cursor-pointer transition-all"
-                            >
-                              <td className="py-2.5 pl-5 pr-2 align-middle">
-                                <span className="text-[11px] leading-none font-mono px-2.5 py-2 rounded bg-nb-gray-900 text-nb-gray-300 inline-flex items-center">
-                                  {target.path
-                                    ? target.path.startsWith("/")
-                                      ? target.path
-                                      : `/${target.path}`
-                                    : "/"}
-                                </span>
-                              </td>
-                              <td className="py-2.5 px-4 align-middle">
-                                <ArrowRight
-                                  size={12}
-                                  className="text-nb-gray-400"
-                                />
-                              </td>
-                              <td className="py-2.5 pr-2 align-middle">
-                                <TargetDestination target={target} />
-                              </td>
-                              <td className="py-2.5 pl-2 pr-4">
-                                <div
-                                  className="flex items-center gap-2 justify-end"
-                                  onClick={(e) => e.stopPropagation()}
-                                >
-                                  <ToggleSwitch
-                                    size="small"
-                                    checked={target.enabled !== false}
-                                    onCheckedChange={() =>
-                                      toggleTargetEnabled(index)
-                                    }
-                                  />
-                                  <DropdownMenu modal={false}>
-                                    <DropdownMenuTrigger asChild>
-                                      <Button
-                                        variant="default-outline"
-                                        className="!px-3"
-                                      >
-                                        <MoreVertical
-                                          size={16}
-                                          className="shrink-0"
-                                        />
-                                      </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent
-                                      className="w-auto min-w-[200px]"
-                                      align="end"
-                                    >
-                                      <DropdownMenuItem
-                                        onClick={() => editTarget(index)}
-                                      >
-                                        <div className="flex gap-3 items-center">
-                                          <Edit
-                                            size={14}
-                                            className="shrink-0"
-                                          />
-                                          Edit Target
-                                        </div>
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem
-                                        variant={"danger"}
-                                        onClick={() => removeTarget(index)}
-                                      >
-                                        <div className="flex gap-3 items-center">
-                                          <MinusCircleIcon
-                                            size={14}
-                                            className="shrink-0"
-                                          />
-                                          Remove Target
-                                        </div>
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </div>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-
-                  <Button
-                    variant="dotted"
-                    className={cn("w-full mt-1", targets?.length > 0 && "mt-1")}
-                    size="sm"
-                    onClick={() => setTargetModalOpen(true)}
-                    disabled={
-                      !!(initialNetwork && !initialNetwork.resources?.length)
-                    }
-                  >
-                    <PlusIcon size={14} />
-                    Add Target
-                  </Button>
-
-                  {initialNetwork && !initialNetwork.resources?.length && (
-                    <Callout
-                      variant="warning"
-                      className="mt-3"
-                      icon={
-                        <AlertTriangle
-                          size={14}
-                          className="shrink-0 relative top-[3px]"
-                        />
-                      }
-                    >
-                      There are currently no resources in your network{" "}
-                      <span className={"text-netbird-100 font-medium"}>
-                        {initialNetwork?.name}
-                      </span>
-                      . Add resources to your network before exposing it as a
-                      service.{" "}
-                      <InlineButtonLink
-                        variant={"default"}
-                        onClick={() => {
-                          onOpenChange(false);
-                          router.push(
-                            `/network?id=${initialNetwork.id}&tab=resources`,
-                          );
-                        }}
-                      >
-                        Go to Resources
-                        <ArrowUpRight size={14} />
-                      </InlineButtonLink>
-                    </Callout>
-                  )}
-                </div>
+              {isL4Mode ? (
+                <ReverseProxyLayer4Content
+                  l4Target={l4Target}
+                  setL4Target={setL4Target}
+                  isListenPortSupported={isListenPortSupported}
+                  tlsListenPort={tlsListenPort}
+                  setTlsListenPort={setTlsListenPort}
+                  tlsPort={tlsPort}
+                  setTlsPort={setTlsPort}
+                />
+              ) : (
+                <ReverseProxyHTTPTargets
+                  targets={targets}
+                  onEditTarget={editTarget}
+                  onRemoveTarget={removeTarget}
+                  onToggleTargetEnabled={toggleTargetEnabled}
+                  onAddTarget={() => setTargetModalOpen(true)}
+                  initialNetwork={initialNetwork}
+                  onNavigateToResources={() => {
+                    onOpenChange(false);
+                    router.push(
+                      `/network?id=${initialNetwork?.id}&tab=resources`,
+                    );
+                  }}
+                />
               )}
             </div>
           </TabsContent>
@@ -995,7 +518,7 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"settings"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-4"}>
-              {(endpointMode === "tcp" || endpointMode === "tls") && (
+              {(serviceMode === "tcp" || serviceMode === "tls") && (
                 <FancyToggleSwitch
                   value={proxyProtocol}
                   onChange={setProxyProtocol}
@@ -1018,12 +541,12 @@ export default function ReverseProxyModal({
                     <div className={"max-w-sm"}>
                       <Label>
                         <Timer size={15} />
-                        {endpointMode === "udp"
+                        {serviceMode === "udp"
                           ? "Session Idle Timeout"
                           : "Connection Timeout"}
                       </Label>
                       <HelpText margin={false}>
-                        {endpointMode === "udp"
+                        {serviceMode === "udp"
                           ? "Close the UDP session after this period of inactivity."
                           : "Timeout for establishing backend connections."}
                       </HelpText>
@@ -1040,7 +563,7 @@ export default function ReverseProxyModal({
                   </div>
                 </div>
               )}
-              {endpointMode === "http" && (
+              {!isL4Mode && (
                 <>
                   <FancyToggleSwitch
                     value={passHostHeader}
@@ -1072,44 +595,31 @@ export default function ReverseProxyModal({
 
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
-            {tab === "targets" && (
-              <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={REVERSE_PROXY_SERVICES_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Services
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </Paragraph>
-            )}
-
-            {tab === "auth" && (
-              <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={REVERSE_PROXY_AUTHENTICATION_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Authentication
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </Paragraph>
-            )}
-
-            {tab === "settings" && (
-              <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={REVERSE_PROXY_SETTINGS_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Settings
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </Paragraph>
-            )}
+            {(() => {
+              const docsLink = {
+                targets: {
+                  href: REVERSE_PROXY_SERVICES_DOCS_LINK,
+                  label: "Services",
+                },
+                auth: {
+                  href: REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
+                  label: "Authentication",
+                },
+                settings: {
+                  href: REVERSE_PROXY_SETTINGS_DOCS_LINK,
+                  label: "Settings",
+                },
+              }[tab];
+              return docsLink ? (
+                <Paragraph className={"text-sm mt-auto"}>
+                  Learn more about
+                  <InlineLink href={docsLink.href} target={"_blank"}>
+                    {docsLink.label}
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </Paragraph>
+              ) : null;
+            })()}
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             {!reverseProxy ? (
@@ -1119,26 +629,13 @@ export default function ReverseProxyModal({
                     <ModalClose asChild>
                       <Button variant={"secondary"}>Cancel</Button>
                     </ModalClose>
-                    {endpointMode === "udp" ? (
-                      <Button
-                        variant={"primary"}
-                        disabled={
-                          submitDisabled || !permission?.services?.create
-                        }
-                        onClick={handleSubmit}
-                      >
-                        <PlusCircle size={16} />
-                        Add Service
-                      </Button>
-                    ) : (
-                      <Button
-                        variant={"primary"}
-                        onClick={() => setTab(isL4Mode ? "settings" : "auth")}
-                        disabled={!canContinueToSettings}
-                      >
-                        Continue
-                      </Button>
-                    )}
+                    <Button
+                      variant={"primary"}
+                      onClick={() => setTab(isL4Mode ? "settings" : "auth")}
+                      disabled={!canContinueToSettings}
+                    >
+                      Continue
+                    </Button>
                   </>
                 )}
 
@@ -1169,7 +666,9 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
-                      disabled={submitDisabled || !permission?.services?.create}
+                      disabled={
+                        !canContinueToSettings || !permission?.services?.create
+                      }
                       onClick={handleSubmit}
                     >
                       <PlusCircle size={16} />
@@ -1185,7 +684,9 @@ export default function ReverseProxyModal({
                 </ModalClose>
                 <Button
                   variant={"primary"}
-                  disabled={submitDisabled || !permission?.services?.update}
+                  disabled={
+                    !canContinueToSettings || !permission?.services?.update
+                  }
                   onClick={handleSubmit}
                 >
                   Save Changes
@@ -1213,7 +714,7 @@ export default function ReverseProxyModal({
           domain: fullDomain,
           targets: targets,
           enabled: reverseProxy?.enabled ?? true,
-          mode: endpointMode as ServiceMode,
+          mode: serviceMode,
         }}
         initialResource={initialResource}
         initialPeer={initialPeer}
@@ -1280,14 +781,5 @@ export default function ReverseProxyModal({
         }}
       />
     </Modal>
-  );
-}
-
-function TargetDestination({ target }: { target: ReverseProxyTarget }) {
-  const { resolveDestination } = useReverseProxies();
-  return (
-    <span className="text-[0.76rem] text-nb-gray-200 whitespace-nowrap font-mono">
-      {resolveDestination(target)}
-    </span>
   );
 }
