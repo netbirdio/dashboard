@@ -1,5 +1,11 @@
 "use client";
 
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@components/Accordion";
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
@@ -8,16 +14,13 @@ import { Label } from "@components/Label";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { SelectDropdown } from "@components/select/SelectDropdown";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import {
   AlertTriangle,
   ClockFadingIcon,
   ExternalLinkIcon,
   PlusCircle,
   Server,
-  Settings,
   ShieldXIcon,
-  Text,
 } from "lucide-react";
 import { Callout } from "@components/Callout";
 import React, { useMemo, useRef, useState } from "react";
@@ -49,6 +52,7 @@ import ReverseProxyAddressInput, {
   CidrHelpText,
   useReverseProxyAddress,
 } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
+import Separator from "@components/Separator";
 
 /** Get initial host value based on target, resource, or peer */
 function getInitialHost(
@@ -89,8 +93,6 @@ export default function ReverseProxyTargetModal({
 }: Readonly<Props>) {
   const existingTargets = reverseProxy.targets || [];
   const domain = reverseProxy.domain;
-
-  const [tab, setTab] = useState("details");
 
   const [target, setTarget] = useState<Target | undefined>(
     currentTarget || initialResource || initialPeer
@@ -236,145 +238,170 @@ export default function ReverseProxyTargetModal({
             color="netbird"
           />
 
-          <Tabs value={tab} onValueChange={setTab}>
-            <TabsList justify={"start"} className={"px-8"}>
-              <TabsTrigger value={"details"}>
-                <Text size={14} />
-                Details
-              </TabsTrigger>
-              <TabsTrigger value={"options"} disabled={!canAddTarget}>
-                <Settings size={14} />
-                Advanced Settings
-              </TabsTrigger>
-            </TabsList>
+          <Separator />
 
-            <TabsContent value={"details"} className={"pb-8"}>
-              <div className="px-8 flex flex-col gap-8">
-                {!initialResource && !initialPeer && (
-                  <ReverseProxyTargetSelector
-                    value={target}
-                    initialNetwork={initialNetwork}
-                    onChange={(selection) => {
-                      setTarget(selection);
-                      if (selection) {
-                        setTimeout(() => portInputRef.current?.focus(), 0);
-                      }
-                    }}
+          <div className="px-8 pt-5 pb-4 flex flex-col gap-6">
+            {!initialResource && !initialPeer && (
+              <ReverseProxyTargetSelector
+                value={target}
+                initialNetwork={initialNetwork}
+                onChange={(selection) => {
+                  setTarget(selection);
+                  if (selection) {
+                    setTimeout(() => portInputRef.current?.focus(), 0);
+                  }
+                }}
+              />
+            )}
+
+            <div>
+              <Label>Location (Optional)</Label>
+              <HelpText>
+                Specify an optional path from where requests are routed to your
+                service.
+              </HelpText>
+              <div className="flex w-full">
+                <div
+                  className={`bg-nb-gray-900 rounded-l-md border text-nb-gray-300 border-r-0 text-sm border-nb-gray-700 flex items-center justify-center whitespace-nowrap px-4 ${
+                    !hasTarget ? "opacity-50" : "opacity-80"
+                  }`}
+                >
+                  {domain || "domain.example.com"}
+                </div>
+                <Input
+                  placeholder="/"
+                  value={targetPath}
+                  className={cn("rounded-l-none")}
+                  maxWidthClass="w-full"
+                  disabled={!hasTarget}
+                  onChange={(e) => {
+                    let value = e.target.value;
+                    if (value && !value.startsWith("/")) {
+                      value = "/" + value;
+                    }
+                    setTargetPath(value);
+                    if (!value || value === "/") {
+                      setOption("path_rewrite", undefined);
+                    }
+                  }}
+                />
+              </div>
+              {isPathDuplicate && hasTarget && (
+                <Callout
+                  variant="warning"
+                  className="mt-3"
+                  icon={
+                    <AlertTriangle
+                      size={14}
+                      className="shrink-0 relative top-[3px]"
+                    />
+                  }
+                >
+                  This location is already used by another target and cannot be
+                  added. <br /> Please use a different location.
+                </Callout>
+              )}
+              {targetPath &&
+                targetPath !== "/" &&
+                hasTarget &&
+                !isPathDuplicate && (
+                  <FancyToggleSwitch
+                    value={options.path_rewrite === "preserve"}
+                    onChange={(v) =>
+                      setOption(
+                        "path_rewrite",
+                        v
+                          ? ("preserve" as ServiceTargetOptionsPathRewrite)
+                          : undefined,
+                      )
+                    }
+                    className={"mt-3.5"}
+                    label={
+                      <>
+                        Preserve Full Path
+                        <HelpTooltip
+                          content={
+                            <div className="text-xs max-w-xs flex flex-col gap-2">
+                              <div>
+                                When disabled, a request to e.g.,{" "}
+                                <span className="font-mono text-white">
+                                  {targetPath}/users
+                                </span>{" "}
+                                is forwarded as{" "}
+                                <span className="font-mono text-white">
+                                  /users
+                                </span>
+                                .
+                              </div>
+                              <div>
+                                When enabled, a request to e.g.,{" "}
+                                <span className="font-mono text-white">
+                                  {targetPath}/users
+                                </span>{" "}
+                                is forwarded as{" "}
+                                <span className="font-mono text-white">
+                                  {targetPath}/users
+                                </span>
+                                .
+                              </div>
+                            </div>
+                          }
+                        />
+                      </>
+                    }
+                    helpText={
+                      <div>
+                        Keep the original full request path when forwarding.{" "}
+                        <br />
+                        When disabled the matched prefix path is stripped.
+                      </div>
+                    }
                   />
                 )}
+            </div>
 
-                <div>
-                  <Label>Location (Optional)</Label>
-                  <HelpText>
-                    Specify an optional path from where requests are routed to
-                    your service.
-                  </HelpText>
-                  <div className="flex w-full">
-                    <div
-                      className={`bg-nb-gray-900 rounded-l-md border text-nb-gray-300 border-r-0 text-sm border-nb-gray-700 flex items-center justify-center whitespace-nowrap px-4 ${
-                        !hasTarget ? "opacity-50" : "opacity-80"
-                      }`}
-                    >
-                      {domain || "domain.example.com"}
-                    </div>
-                    <Input
-                      placeholder="/"
-                      value={targetPath}
-                      className={cn("rounded-l-none")}
-                      maxWidthClass="w-full"
-                      disabled={!hasTarget}
-                      onChange={(e) => {
-                        let value = e.target.value;
-                        if (value && !value.startsWith("/")) {
-                          value = "/" + value;
-                        }
-                        setTargetPath(value);
-                        if (!value || value === "/") {
-                          setOption("path_rewrite", undefined);
-                        }
-                      }}
-                    />
-                  </div>
-                  {isPathDuplicate && hasTarget && (
-                    <Callout
-                      variant="warning"
-                      className="mt-3"
-                      icon={
-                        <AlertTriangle
-                          size={14}
-                          className="shrink-0 relative top-[3px]"
-                        />
-                      }
-                    >
-                      This location is already used by another target and cannot
-                      be added. <br /> Please use a different location.
-                    </Callout>
-                  )}
-                  {targetPath &&
-                    targetPath !== "/" &&
-                    hasTarget &&
-                    !isPathDuplicate && (
-                      <FancyToggleSwitch
-                        value={options.path_rewrite === "preserve"}
-                        onChange={(v) =>
-                          setOption(
-                            "path_rewrite",
-                            v
-                              ? ("preserve" as ServiceTargetOptionsPathRewrite)
-                              : undefined,
-                          )
-                        }
-                        className={"mt-3.5"}
-                        label={
-                          <>
-                            Preserve Full Path
-                            <HelpTooltip
-                              content={
-                                <div className="text-xs max-w-xs flex flex-col gap-2">
-                                  <div>
-                                    When disabled, a request to e.g.,{" "}
-                                    <span className="font-mono text-white">
-                                      {targetPath}/users
-                                    </span>{" "}
-                                    is forwarded as{" "}
-                                    <span className="font-mono text-white">
-                                      /users
-                                    </span>
-                                    .
-                                  </div>
-                                  <div>
-                                    When enabled, a request to e.g.,{" "}
-                                    <span className="font-mono text-white">
-                                      {targetPath}/users
-                                    </span>{" "}
-                                    is forwarded as{" "}
-                                    <span className="font-mono text-white">
-                                      {targetPath}/users
-                                    </span>
-                                    .
-                                  </div>
-                                </div>
-                              }
-                            />
-                          </>
-                        }
-                        helpText={
-                          <div>
-                            Keep the original full request path when forwarding.{" "}
-                            <br />
-                            When disabled the matched prefix path is stripped.
-                          </div>
-                        }
+            <div>
+              <div className="flex mt-1">
+                <div className="flex-1">
+                  <Label>Protocol & Host / IP</Label>
+                  <CidrHelpText
+                    target={
+                      initialResource && target
+                        ? {
+                            ...target,
+                            resourceAddress: initialResource.address,
+                          }
+                        : target
+                    }
+                  />
+                  <div className="flex items-center mt-2">
+                    <div className="w-[120px]">
+                      <SelectDropdown
+                        value={targetProtocol}
+                        onChange={(v) => {
+                          const proto = v as ReverseProxyTargetProtocol;
+                          setTargetProtocol(proto);
+                          if (proto !== ReverseProxyTargetProtocol.HTTPS) {
+                            setOption("skip_tls_verify", undefined);
+                          }
+                        }}
+                        options={[
+                          {
+                            value: ReverseProxyTargetProtocol.HTTP,
+                            label: "http://",
+                          },
+                          {
+                            value: ReverseProxyTargetProtocol.HTTPS,
+                            label: "https://",
+                          },
+                        ]}
+                        className="!rounded-r-none !border-r-0"
+                        disabled={!hasTarget}
                       />
-                    )}
-                </div>
-
-                <div>
-                  <div className="flex mt-1">
+                    </div>
                     <div className="flex-1">
-                      <Label>Protocol & Host / IP</Label>
-                      <CidrHelpText
-                        target={
+                      <ReverseProxyAddressInput
+                        value={
                           initialResource && target
                             ? {
                                 ...target,
@@ -382,155 +409,135 @@ export default function ReverseProxyTargetModal({
                               }
                             : target
                         }
+                        onChange={setTarget}
+                        autoFocus={!!initialResource && isHostEditable}
+                        className="!rounded-l-none"
                       />
-                      <div className="flex items-center mt-2">
-                        <div className="w-[120px]">
-                          <SelectDropdown
-                            value={targetProtocol}
-                            onChange={(v) => {
-                              const proto = v as ReverseProxyTargetProtocol;
-                              setTargetProtocol(proto);
-                              if (proto !== ReverseProxyTargetProtocol.HTTPS) {
-                                setOption("skip_tls_verify", undefined);
-                              }
-                            }}
-                            options={[
-                              {
-                                value: ReverseProxyTargetProtocol.HTTP,
-                                label: "http://",
-                              },
-                              {
-                                value: ReverseProxyTargetProtocol.HTTPS,
-                                label: "https://",
-                              },
-                            ]}
-                            className="!rounded-r-none !border-r-0"
-                            disabled={!hasTarget}
-                          />
-                        </div>
-                        <div className="flex-1">
-                          <ReverseProxyAddressInput
-                            value={
-                              initialResource && target
-                                ? {
-                                    ...target,
-                                    resourceAddress: initialResource.address,
-                                  }
-                                : target
-                            }
-                            onChange={setTarget}
-                            autoFocus={!!initialResource && isHostEditable}
-                            className="!rounded-l-none"
-                          />
-                        </div>
-                      </div>
-                    </div>
-                    <div className="w-[150px]">
-                      <Label>
-                        Port
-                        <HelpTooltip
-                          content={
-                            "Enter the port where your service (e.g., webserver, app, API) is currently listening. If left empty, defaults to port 80 for HTTP or 443 for HTTPS."
-                          }
-                        />
-                      </Label>
-                      {isCidrRange && (
-                        <HelpText className="!mt-1">&nbsp;</HelpText>
-                      )}
-                      <div className="mt-2">
-                        <Input
-                          ref={portInputRef}
-                          type="number"
-                          className={"rounded-l-none"}
-                          value={targetPort === 0 ? "" : targetPort}
-                          onChange={(e) =>
-                            setTargetPort(parseInt(e.target.value) || 0)
-                          }
-                          placeholder={String(
-                            defaultPortForProtocol(targetProtocol),
-                          )}
-                          min={0}
-                          max={65535}
-                          disabled={!hasTarget}
-                          autoFocus={!!initialResource && !isHostEditable}
-                        />
-                      </div>
                     </div>
                   </div>
-                  {targetProtocol === ReverseProxyTargetProtocol.HTTPS &&
-                    hasTarget && (
-                      <FancyToggleSwitch
-                        className={"mt-3.5"}
-                        value={options.skip_tls_verify ?? false}
-                        onChange={(v) =>
-                          setOption("skip_tls_verify", v || undefined)
-                        }
-                        label={
-                          <>
-                            <ShieldXIcon size={15} />
-                            Skip TLS Verification
-                          </>
-                        }
-                        helpText="Skip certificate verification when connecting to this target. Useful if your service already uses a self-signed certificate."
-                      />
-                    )}
                 </div>
-              </div>
-            </TabsContent>
-
-            <TabsContent value={"options"} className={"pb-8"}>
-              <div className="px-8 flex flex-col gap-8 pt-1.5">
-                <div className={"flex items-center justify-between"}>
-                  <div>
-                    <Label>Request Timeout</Label>
-                    <HelpText className={"mb-0"}>
-                      Max time to wait for a response as duration string (max
-                      5m). <br /> Leave this field empty for no timeout.
-                    </HelpText>
-                  </div>
-                  <Input
-                    customPrefix={<ClockFadingIcon size={16} />}
-                    placeholder="e.g. 10s, 30s, 1m"
-                    value={options.request_timeout ?? ""}
-                    onChange={(e) =>
-                      setOption("request_timeout", e.target.value || undefined)
-                    }
-                    maxWidthClass="w-[180px]"
-                    errorTooltip={true}
-                    error={errors.timeout}
-                  />
-                </div>
-
-                {reverseProxy.mode === ServiceMode.UDP && (
-                  <div className={"flex items-center justify-between"}>
-                    <div>
-                      <Label>Session Idle Timeout</Label>
-                      <HelpText className={"mb-0"}>
-                        How long a UDP session stays alive without traffic (max
-                        10m). <br /> Defaults to 30s when empty.
-                      </HelpText>
-                    </div>
-                    <Input
-                      customPrefix={<ClockFadingIcon size={16} />}
-                      placeholder="e.g. 30s, 2m, 5m"
-                      value={options.session_idle_timeout ?? ""}
-                      onChange={(e) =>
-                        setOption(
-                          "session_idle_timeout",
-                          e.target.value || undefined,
-                        )
+                <div className="w-[150px]">
+                  <Label>
+                    Port
+                    <HelpTooltip
+                      content={
+                        "Enter the port where your service (e.g., webserver, app, API) is currently listening. If left empty, defaults to port 80 for HTTP or 443 for HTTPS."
                       }
-                      maxWidthClass="w-[180px]"
-                      errorTooltip={true}
-                      error={errors.sessionIdleTimeout}
+                    />
+                  </Label>
+                  {isCidrRange && <HelpText className="!mt-1">&nbsp;</HelpText>}
+                  <div className="mt-2">
+                    <Input
+                      ref={portInputRef}
+                      type="number"
+                      className={"rounded-l-none"}
+                      value={targetPort === 0 ? "" : targetPort}
+                      onChange={(e) =>
+                        setTargetPort(parseInt(e.target.value) || 0)
+                      }
+                      placeholder={String(
+                        defaultPortForProtocol(targetProtocol),
+                      )}
+                      min={0}
+                      max={65535}
+                      disabled={!hasTarget}
+                      autoFocus={!!initialResource && !isHostEditable}
                     />
                   </div>
-                )}
-
-                <ReverseProxyTargetCustomHeaders {...headers} />
+                </div>
               </div>
-            </TabsContent>
-          </Tabs>
+              {targetProtocol === ReverseProxyTargetProtocol.HTTPS &&
+                hasTarget && (
+                  <FancyToggleSwitch
+                    className={"mt-3.5"}
+                    value={options.skip_tls_verify ?? false}
+                    onChange={(v) =>
+                      setOption("skip_tls_verify", v || undefined)
+                    }
+                    label={
+                      <>
+                        <ShieldXIcon size={15} />
+                        Skip TLS Verification
+                      </>
+                    }
+                    helpText="Skip certificate verification when connecting to this target. Useful if your service already uses a self-signed certificate."
+                  />
+                )}
+            </div>
+
+            <Accordion
+              type={"multiple"}
+              className={"flex flex-col gap-2 -mt-2"}
+            >
+              <AccordionItem value={"optional-settings"}>
+                <AccordionTrigger
+                  className={
+                    "text-[0.8rem] tracking-wider text-nb-gray-200 py-4 my-0 leading-none gap-2 flex items-center"
+                  }
+                >
+                  <span className={"relative top-[1px]"}>
+                    Optional Settings
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent>
+                  <div className={"flex flex-col gap-8 pb-6 pt-2"}>
+                    <div className={"flex items-center justify-between"}>
+                      <div>
+                        <Label>Request Timeout</Label>
+                        <HelpText className={"mb-0"}>
+                          Max time to wait for a response as duration string
+                          (max 5m). <br /> Leave this field empty for no
+                          timeout.
+                        </HelpText>
+                      </div>
+                      <Input
+                        customPrefix={<ClockFadingIcon size={16} />}
+                        placeholder="e.g. 10s, 30s, 1m"
+                        value={options.request_timeout ?? ""}
+                        onChange={(e) =>
+                          setOption(
+                            "request_timeout",
+                            e.target.value || undefined,
+                          )
+                        }
+                        maxWidthClass="w-[180px]"
+                        errorTooltip={true}
+                        error={errors.timeout}
+                      />
+                    </div>
+
+                    {reverseProxy.mode === ServiceMode.UDP && (
+                      <div className={"flex items-center justify-between"}>
+                        <div>
+                          <Label>Session Idle Timeout</Label>
+                          <HelpText className={"mb-0"}>
+                            How long a UDP session stays alive without traffic
+                            (max 10m). <br /> Defaults to 30s when empty.
+                          </HelpText>
+                        </div>
+                        <Input
+                          customPrefix={<ClockFadingIcon size={16} />}
+                          placeholder="e.g. 30s, 2m, 5m"
+                          value={options.session_idle_timeout ?? ""}
+                          onChange={(e) =>
+                            setOption(
+                              "session_idle_timeout",
+                              e.target.value || undefined,
+                            )
+                          }
+                          maxWidthClass="w-[180px]"
+                          errorTooltip={true}
+                          error={errors.sessionIdleTimeout}
+                        />
+                      </div>
+                    )}
+
+                    <ReverseProxyTargetCustomHeaders {...headers} />
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
+          </div>
 
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>
@@ -546,61 +553,23 @@ export default function ReverseProxyTargetModal({
               </Paragraph>
             </div>
             <div className="flex gap-3 w-full justify-end">
-              {currentTarget ? (
-                <>
-                  <Button
-                    variant="secondary"
-                    onClick={() => onOpenChange(false)}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    variant="primary"
-                    onClick={handleSave}
-                    disabled={!canAddTarget || errors.options}
-                  >
-                    Save Changes
-                  </Button>
-                </>
-              ) : (
-                <>
-                  {tab === "details" && (
-                    <>
-                      <Button
-                        variant="secondary"
-                        onClick={() => onOpenChange(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        variant="primary"
-                        onClick={() => setTab("options")}
-                        disabled={!canAddTarget}
-                      >
-                        Continue
-                      </Button>
-                    </>
-                  )}
-                  {tab === "options" && (
-                    <>
-                      <Button
-                        variant="secondary"
-                        onClick={() => setTab("details")}
-                      >
-                        Back
-                      </Button>
-                      <Button
-                        variant="primary"
-                        onClick={handleSave}
-                        disabled={!canAddTarget || errors.options}
-                      >
-                        <PlusCircle size={16} />
-                        Add Target
-                      </Button>
-                    </>
-                  )}
-                </>
-              )}
+              <Button variant="secondary" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={handleSave}
+                disabled={!canAddTarget || errors.options}
+              >
+                {currentTarget ? (
+                  "Save Changes"
+                ) : (
+                  <>
+                    <PlusCircle size={16} />
+                    Add Target
+                  </>
+                )}
+              </Button>
             </div>
           </ModalFooter>
         </ModalContent>
