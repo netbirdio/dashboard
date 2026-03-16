@@ -11,6 +11,7 @@ import { UserCountStack } from "@components/ui/MultipleGroups";
 import {
   ArrowRightIcon,
   Binary,
+  HelpCircle,
   LucideIcon,
   RectangleEllipsis,
   Settings,
@@ -23,7 +24,8 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { Group } from "@/interfaces/Group";
-import { ReverseProxy, isL4Mode } from "@/interfaces/ReverseProxy";
+import { isL4Mode, ReverseProxy } from "@/interfaces/ReverseProxy";
+import FullTooltip from "@components/FullTooltip";
 
 const AUTH_METHODS: {
   key: "password_auth" | "pin_auth" | "bearer_auth";
@@ -60,10 +62,20 @@ export default function ReverseProxyAuthCell({
   // L4 services don't support auth
   if (isL4Mode(reverseProxy.mode)) {
     return (
-      <div className={"flex gap-3"}>
-        <Badge variant={"gray"}>
-          <span className={"font-medium text-xs text-nb-gray-500"}>N/A</span>
-        </Badge>
+      <div className={"flex"}>
+        <FullTooltip
+          content={
+            <div className={"flex text-xs max-w-[340px]"}>
+              Auth methods are not supported for TCP/UDP and TLS passthrough
+              services as they operate at the network layer.
+            </div>
+          }
+        >
+          <Badge variant={"gray"}>
+            N/A
+            <HelpCircle size={12} />
+          </Badge>
+        </FullTooltip>
       </div>
     );
   }
@@ -83,20 +95,17 @@ export default function ReverseProxyAuthCell({
 
   const SingleIcon = enabled.length === 1 ? enabled[0].Icon : null;
 
-  const badgeContent =
-    SingleIcon ? (
-      <>
-        <SingleIcon size={12} className="text-green-500" />
-        <span className={"font-medium text-xs"}>{enabled[0].label}</span>
-      </>
-    ) : enabled.length > 1 ? (
-      <>
-        <ShieldCheck size={12} className="text-green-400" />
-        <span className={"font-medium text-xs"}>
-          {enabled.length} Enabled
-        </span>
-      </>
-    ) : null;
+  const badgeContent = SingleIcon ? (
+    <>
+      <SingleIcon size={12} className="text-green-500" />
+      <span className={"font-medium text-xs"}>{enabled[0].label}</span>
+    </>
+  ) : enabled.length > 1 ? (
+    <>
+      <ShieldCheck size={12} className="text-green-400" />
+      <span className={"font-medium text-xs"}>{enabled.length} Enabled</span>
+    </>
+  ) : null;
 
   return (
     <div
@@ -149,9 +158,7 @@ export default function ReverseProxyAuthCell({
                       {ssoGroups.map((group) => (
                         <div
                           key={group.id}
-                          className={
-                            "flex gap-2 items-center justify-between"
-                          }
+                          className={"flex gap-2 items-center justify-between"}
                         >
                           <GroupBadge group={group} />
                           <ArrowRightIcon size={14} />
