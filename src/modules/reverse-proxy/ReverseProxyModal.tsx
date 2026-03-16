@@ -19,14 +19,14 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import {
   ArrowRight,
   Binary,
+  ClockFadingIcon,
   ExternalLinkIcon,
   GlobeIcon,
   LockKeyhole,
-  Network as NetworkIcon,
+  MapPin,
   PlusCircle,
   RectangleEllipsis,
   Settings,
-  Timer,
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -188,7 +188,8 @@ export default function ReverseProxyModal({
 
   // Whether a custom listen port is supported (TLS always, TCP/UDP only when cluster supports it)
   const isListenPortSupported = useMemo(() => {
-    if (serviceMode !== ServiceMode.TCP && serviceMode !== ServiceMode.UDP) return true;
+    if (serviceMode !== ServiceMode.TCP && serviceMode !== ServiceMode.UDP)
+      return true;
     return selectedDomain?.supports_custom_ports ?? false;
   }, [selectedDomain, serviceMode]);
 
@@ -340,19 +341,23 @@ export default function ReverseProxyModal({
       target_id: l4Target?.peerId || l4Target?.resourceId || "",
       target_type: l4TargetType,
       port: port,
-      protocol: serviceMode === ServiceMode.TLS
-        ? ReverseProxyTargetProtocol.TCP
-        : serviceMode === ServiceMode.UDP
+      protocol:
+        serviceMode === ServiceMode.TLS
+          ? ReverseProxyTargetProtocol.TCP
+          : serviceMode === ServiceMode.UDP
           ? ReverseProxyTargetProtocol.UDP
           : ReverseProxyTargetProtocol.TCP,
       host: l4IsCidrRange ? l4Target?.host : undefined,
       enabled: true,
       options: (() => {
         const opts: Record<string, unknown> = {};
-        if (serviceMode !== ServiceMode.UDP && proxyProtocol) opts.proxy_protocol = true;
+        if (serviceMode !== ServiceMode.UDP && proxyProtocol)
+          opts.proxy_protocol = true;
         if (timeoutOption) {
           opts[
-            serviceMode === ServiceMode.UDP ? "session_idle_timeout" : "request_timeout"
+            serviceMode === ServiceMode.UDP
+              ? "session_idle_timeout"
+              : "request_timeout"
           ] = timeoutOption;
         }
         return Object.keys(opts).length ? opts : undefined;
@@ -526,54 +531,59 @@ export default function ReverseProxyModal({
           </TabsContent>
 
           <TabsContent value={"settings"} className={"pb-8"}>
-            <div className={"px-8 flex-col flex gap-4"}>
-              {(serviceMode === ServiceMode.TCP || serviceMode === ServiceMode.TLS) && (
+            <div className={"px-8 flex-col flex gap-6"}>
+              {isL4Mode && (
+                <>
+                  <div className={"flex items-center justify-between"}>
+                    <div>
+                      <Label>
+                        {serviceMode === ServiceMode.UDP
+                          ? "Session Idle Timeout"
+                          : "Connection Timeout"}
+                      </Label>
+                      <HelpText className={"mb-0"}>
+                        {serviceMode === ServiceMode.UDP ? (
+                          <>
+                            Close the UDP session after this period of
+                            inactivity.
+                            <br /> Leave this field empty for no timeout.
+                          </>
+                        ) : (
+                          <>
+                            Timeout for establishing backend connections. <br />{" "}
+                            Leave this field empty for no timeout.
+                          </>
+                        )}
+                      </HelpText>
+                    </div>
+                    <Input
+                      customPrefix={<ClockFadingIcon size={16} />}
+                      placeholder="e.g. 10s, 30s, 1m"
+                      value={timeoutOption}
+                      onChange={(e) => setTimeoutOption(e.target.value)}
+                      maxWidthClass="w-[180px]"
+                      errorTooltip={true}
+                    />
+                  </div>
+                </>
+              )}
+              {(serviceMode === ServiceMode.TCP ||
+                serviceMode === ServiceMode.TLS) && (
                 <FancyToggleSwitch
                   value={proxyProtocol}
                   onChange={setProxyProtocol}
                   label={
                     <>
-                      <NetworkIcon size={15} />
-                      PROXY Protocol v2
+                      <MapPin size={15} />
+                      Enable Source IP Preservation
                     </>
                   }
-                  helpText="Send a PROXY protocol v2 header to the backend with the real client IP."
+                  helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
                 />
               )}
-              {isL4Mode && (
-                <div
-                  className={
-                    "px-6 py-4 border rounded-md border-nb-gray-910 bg-nb-gray-900/30"
-                  }
-                >
-                  <div className={"flex justify-between gap-10"}>
-                    <div className={"max-w-sm"}>
-                      <Label>
-                        <Timer size={15} />
-                        {serviceMode === ServiceMode.UDP
-                          ? "Session Idle Timeout"
-                          : "Connection Timeout"}
-                      </Label>
-                      <HelpText margin={false}>
-                        {serviceMode === ServiceMode.UDP
-                          ? "Close the UDP session after this period of inactivity."
-                          : "Timeout for establishing backend connections."}
-                      </HelpText>
-                    </div>
-                    <div className={"mt-1"}>
-                      <Input
-                        value={timeoutOption}
-                        onChange={(e) => setTimeoutOption(e.target.value)}
-                        onClick={(e) => e.stopPropagation()}
-                        placeholder={"30s"}
-                        maxWidthClass={"w-[100px]"}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
+
               {!isL4Mode && (
-                <>
+                <div className={"flex flex-col gap-4"}>
                   <FancyToggleSwitch
                     value={passHostHeader}
                     onChange={setPassHostHeader}
@@ -596,7 +606,7 @@ export default function ReverseProxyModal({
                     }
                     helpText="Rewrite Location headers in backend responses to use the public domain instead of the internal backend address."
                   />
-                </>
+                </div>
               )}
             </div>
           </TabsContent>
