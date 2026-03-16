@@ -1,11 +1,5 @@
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -14,14 +8,7 @@ import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
-import {
-  ArrowRight,
-  ChevronDown,
-  ExternalLinkIcon,
-  LockKeyhole,
-  PlusCircle,
-  Server,
-} from "lucide-react";
+import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React from "react";
 import { useSWRConfig } from "swr";
@@ -30,10 +17,9 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
+  isL4Mode,
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxy,
-  ServiceMode,
-  isL4Mode,
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyActionCell from "@/modules/reverse-proxy/table/ReverseProxyActionCell";
 import ReverseProxyActiveCell from "@/modules/reverse-proxy/table/ReverseProxyActiveCell";
@@ -174,10 +160,14 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
             "Expose your internal services securely through NetBird's reverse proxy with automatic TLS and optional authentication to protect your services."
           }
           button={
-            <AddServiceDropdown
-              openModal={openModal}
+            <Button
+              variant={"primary"}
+              onClick={() => openModal()}
               disabled={!permission?.services?.create}
-            />
+            >
+              <PlusCircle size={16} />
+              Add Service
+            </Button>
           }
           learnMore={
             <>
@@ -193,12 +183,15 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       rightSide={() => (
         <>
           {reverseProxies && reverseProxies?.length > 0 && (
-            <div className={"ml-auto"}>
-              <AddServiceDropdown
-                openModal={openModal}
-                disabled={!permission?.services?.create}
-              />
-            </div>
+            <Button
+              variant={"primary"}
+              className={"ml-auto"}
+              onClick={() => openModal()}
+              disabled={!permission?.services?.create}
+            >
+              <PlusCircle size={16} />
+              Add Service
+            </Button>
           )}
         </>
       )}
@@ -262,61 +255,5 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
         </>
       )}
     </DataTable>
-  );
-}
-
-type AddServiceDropdownProps = {
-  openModal: (options?: { initialEndpointMode?: ServiceMode }) => void;
-  disabled?: boolean;
-};
-
-function AddServiceDropdown({
-  openModal,
-  disabled,
-}: Readonly<AddServiceDropdownProps>) {
-  return (
-    <DropdownMenu modal={false}>
-      <DropdownMenuTrigger asChild>
-        <Button variant={"primary"} disabled={disabled}>
-          <PlusCircle size={16} />
-          Add Service
-          <ChevronDown size={14} />
-        </Button>
-      </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-auto min-w-[200px]">
-        <DropdownMenuItem
-          onClick={() => openModal({ initialEndpointMode: ServiceMode.HTTP })}
-        >
-          <div className="flex gap-3 items-center">
-            <Server size={14} className="shrink-0" />
-            HTTP Service
-          </div>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => openModal({ initialEndpointMode: ServiceMode.TLS })}
-        >
-          <div className="flex gap-3 items-center">
-            <LockKeyhole size={14} className="shrink-0" />
-            TLS Passthrough
-          </div>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => openModal({ initialEndpointMode: ServiceMode.TCP })}
-        >
-          <div className="flex gap-3 items-center">
-            <ArrowRight size={14} className="shrink-0" />
-            TCP Service
-          </div>
-        </DropdownMenuItem>
-        <DropdownMenuItem
-          onClick={() => openModal({ initialEndpointMode: ServiceMode.UDP })}
-        >
-          <div className="flex gap-3 items-center">
-            <ArrowRight size={14} className="shrink-0" />
-            UDP Service
-          </div>
-        </DropdownMenuItem>
-      </DropdownMenuContent>
-    </DropdownMenu>
   );
 }

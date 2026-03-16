@@ -8,6 +8,7 @@ type Props = {
   description: ReactNode;
   icon?: ReactNode;
   className?: string;
+  disabled?: boolean;
 };
 
 export const RadioCard = ({
@@ -16,15 +17,18 @@ export const RadioCard = ({
   description,
   className,
   icon,
+  disabled,
 }: Props) => {
   return (
     <RadioGroup.Item
       value={value}
+      disabled={disabled}
       className={cn(
         "peer relative block cursor-pointer rounded-lg border border-nb-gray-900 bg-nb-gray-930/60 px-5 py-3 transition-all focus:outline-none",
         "data-[state=checked]:border-nb-gray-400 data-[state=checked]:bg-nb-gray-920",
         "outline-none focus:ring-0 focus:bg-nb-gray-930 focus:border-nb-gray-920",
         "hover:bg-nb-gray-930",
+        "disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-nb-gray-930/60",
         className,
       )}
     >

@@ -39,9 +39,7 @@ import {
   PlusCircle,
   PlusIcon,
   RectangleEllipsis,
-  Server,
   Settings,
-  Text,
   Timer,
   Users,
 } from "lucide-react";
@@ -56,6 +54,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
+  isL4Mode as isL4ServiceMode,
   REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
   REVERSE_PROXY_SERVICES_DOCS_LINK,
   REVERSE_PROXY_SETTINGS_DOCS_LINK,
@@ -67,7 +66,6 @@ import {
   ReverseProxyTargetProtocol,
   ReverseProxyTargetType,
   ServiceMode,
-  isL4Mode as isL4ServiceMode,
 } from "@/interfaces/ReverseProxy";
 import {
   isResourceTargetType,
@@ -80,6 +78,7 @@ import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { ReverseProxyServiceModeSelector } from "@/modules/reverse-proxy/ReverseProxyServiceModeSelector";
 
 type Props = {
   open: boolean;
@@ -90,7 +89,6 @@ type Props = {
   initialSubdomain?: string;
   /** Pre-set a resource target - hides target selection in modal */
   initialResource?: NetworkResource;
-  initialEndpointMode?: ServiceMode;
   initialPeer?: Peer;
   initialNetwork?: Network;
   initialTab?: string;
@@ -161,7 +159,6 @@ export default function ReverseProxyModal({
   domains,
   initialSubdomain,
   initialResource,
-  initialEndpointMode,
   initialPeer,
   initialNetwork,
   initialTab,
@@ -194,12 +191,14 @@ export default function ReverseProxyModal({
     : null;
 
   const [subdomain, setSubdomain] = useState(() => {
-    return parsed?.subdomain ||
+    return (
+      parsed?.subdomain ||
       initialSubdomain
         ?.toLowerCase()
         .replace(/\s+/g, "-")
         .replace(/[^a-z0-9-]/g, "") ||
-      "";
+      ""
+    );
   });
 
   const [baseDomain, setBaseDomain] = useState(() => {
@@ -220,9 +219,14 @@ export default function ReverseProxyModal({
   const [endpointMode, setEndpointMode_] = useState<EndpointMode>(() => {
     if (reverseProxy?.mode) {
       const p = reverseProxy.mode;
-      if (p === ServiceMode.TLS || p === ServiceMode.TCP || p === ServiceMode.UDP) return p;
+      if (
+        p === ServiceMode.TLS ||
+        p === ServiceMode.TCP ||
+        p === ServiceMode.UDP
+      )
+        return p;
     }
-    return initialEndpointMode ?? ServiceMode.HTTP;
+    return ServiceMode.HTTP;
   });
 
   // Fetch peers & resources for TLS target selector
@@ -232,22 +236,26 @@ export default function ReverseProxyModal({
   );
 
   // L4 target selection state (TLS/TCP/UDP) - target is in targets[0]
-  const existingL4Target = isL4ServiceMode(reverseProxy?.mode) ? reverseProxy?.targets?.[0] : undefined;
-  const existingL4IsPeer = existingL4Target?.target_type === ReverseProxyTargetType.PEER;
+  const existingL4Target = isL4ServiceMode(reverseProxy?.mode)
+    ? reverseProxy?.targets?.[0]
+    : undefined;
+  const existingL4IsPeer =
+    existingL4Target?.target_type === ReverseProxyTargetType.PEER;
 
   const [tlsTargetType, setTlsTargetType] = useState<ReverseProxyTargetType>(
     existingL4Target
       ? existingL4Target.target_type
       : initialResource
-        ? (initialResource.type as ReverseProxyTargetType) ?? ReverseProxyTargetType.HOST
-        : ReverseProxyTargetType.PEER,
+      ? (initialResource.type as ReverseProxyTargetType) ??
+        ReverseProxyTargetType.HOST
+      : ReverseProxyTargetType.PEER,
   );
   const [tlsPeerId, setTlsPeerId] = useState<string | undefined>(
     existingL4IsPeer
       ? existingL4Target?.target_id
       : initialResource
-        ? undefined
-        : initialPeer?.id,
+      ? undefined
+      : initialPeer?.id,
   );
   const [tlsResourceId, setTlsResourceId] = useState<string | undefined>(
     existingL4Target
@@ -309,12 +317,9 @@ export default function ReverseProxyModal({
   const tlsIsValidCidrHost =
     !tlsIsCidrRange || (!!tlsHost && tlsIsHostInCidrRange);
 
-  const setEndpointMode = useCallback(
-    (mode: EndpointMode) => {
-      setEndpointMode_(mode);
-    },
-    [],
-  );
+  const setEndpointMode = useCallback((mode: EndpointMode) => {
+    setEndpointMode_(mode);
+  }, []);
 
   // Proxy protocol: for L4 modes maps to target proxy_protocol
   const [proxyProtocol, setProxyProtocol] = useState(
@@ -322,14 +327,17 @@ export default function ReverseProxyModal({
   );
 
   const [requestTimeout, setRequestTimeout] = useState(
-    existingL4Target?.options?.request_timeout ?? existingL4Target?.options?.session_idle_timeout ?? "",
+    existingL4Target?.options?.request_timeout ??
+      existingL4Target?.options?.session_idle_timeout ??
+      "",
   );
 
   const [targets, setTargets] = useState<ReverseProxyTarget[]>(
     reverseProxy?.targets || [],
   );
 
-  const isL4Mode = endpointMode === "tls" || endpointMode === "tcp" || endpointMode === "udp";
+  const isL4Mode =
+    endpointMode === "tls" || endpointMode === "tcp" || endpointMode === "udp";
   // TCP/UDP use port-based routing; TLS uses SNI routing
   const isPortBased = endpointMode === "tcp" || endpointMode === "udp";
 
@@ -497,20 +505,33 @@ export default function ReverseProxyModal({
       tlsTargetType === ReverseProxyTargetType.PEER
         ? ReverseProxyTargetType.PEER
         : tlsTargetType === ReverseProxyTargetType.SUBNET
-          ? ReverseProxyTargetType.SUBNET
-          : ReverseProxyTargetType.HOST;
+        ? ReverseProxyTargetType.SUBNET
+        : ReverseProxyTargetType.HOST;
 
     const l4Target: ReverseProxyTarget = {
       target_id: tlsPeerId || tlsResourceId || "",
       target_type: l4TargetType,
       port: tlsPort,
-      protocol: (endpointMode === "tls" ? "tcp" : endpointMode) as ReverseProxyTargetProtocol,
+      protocol: (endpointMode === "tls"
+        ? "tcp"
+        : endpointMode) as ReverseProxyTargetProtocol,
       host: tlsIsCidrRange ? tlsHost : undefined,
       enabled: true,
-      options: (endpointMode !== "udp" && proxyProtocol) || requestTimeout ? {
-        ...(endpointMode !== "udp" && proxyProtocol ? { proxy_protocol: true } : {}),
-        ...(requestTimeout ? { [endpointMode === "udp" ? "session_idle_timeout" : "request_timeout"]: requestTimeout } : {}),
-      } : undefined,
+      options:
+        (endpointMode !== "udp" && proxyProtocol) || requestTimeout
+          ? {
+              ...(endpointMode !== "udp" && proxyProtocol
+                ? { proxy_protocol: true }
+                : {}),
+              ...(requestTimeout
+                ? {
+                    [endpointMode === "udp"
+                      ? "session_idle_timeout"
+                      : "request_timeout"]: requestTimeout,
+                  }
+                : {}),
+            }
+          : undefined,
     };
 
     handleCreateOrUpdateProxy({
@@ -518,7 +539,10 @@ export default function ReverseProxyModal({
         name: fullDomain,
         domain: fullDomain,
         mode: isHTTPMode ? undefined : (endpointMode as ServiceMode),
-        listen_port: isL4Mode && (!isPortBased || clusterSupportsCustomPorts) ? tlsListenPort : undefined,
+        listen_port:
+          isL4Mode && (!isPortBased || clusterSupportsCustomPorts)
+            ? tlsListenPort
+            : undefined,
         targets: isHTTPMode ? targets : [l4Target],
         enabled: reverseProxy?.enabled ?? true,
         pass_host_header: isHTTPMode ? passHostHeader : undefined,
@@ -544,14 +568,14 @@ export default function ReverseProxyModal({
             reverseProxy
               ? "Edit Service"
               : endpointMode === "tls"
-                ? "Add TLS Passthrough"
-                : endpointMode === "tcp"
-                  ? "Add TCP Service"
-                  : endpointMode === "udp"
-                    ? "Add UDP Service"
-                    : endpointMode === "http"
-                      ? "Add HTTP Service"
-                      : "Add Service"
+              ? "Add TLS Passthrough"
+              : endpointMode === "tcp"
+              ? "Add TCP Service"
+              : endpointMode === "udp"
+              ? "Add UDP Service"
+              : endpointMode === "http"
+              ? "Add HTTP Service"
+              : "Add Service"
           }
           description={
             isL4Mode
@@ -564,14 +588,11 @@ export default function ReverseProxyModal({
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList justify={"start"} className={"px-8"}>
             <TabsTrigger value={"targets"}>
-              <Text size={14} />
-              Details
+              <ReverseProxyIcon size={14} />
+              Service
             </TabsTrigger>
             {endpointMode === "http" && (
-              <TabsTrigger
-                value={"auth"}
-                disabled={!canContinueToSettings}
-              >
+              <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
                 <LockKeyhole size={16} />
                 Authentication
               </TabsTrigger>
@@ -585,10 +606,7 @@ export default function ReverseProxyModal({
           <TabsContent value={"targets"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-6"}>
               <div>
-                <Label>
-                  <GlobeIcon size={14} />
-                  Domain
-                </Label>
+                <Label>Domain</Label>
                 <HelpText>
                   Enter a subdomain and select a domain for your service.
                 </HelpText>
@@ -632,54 +650,14 @@ export default function ReverseProxyModal({
                 </Callout>
               )}
 
-              <div className="flex flex-col gap-4">
-                {!initialEndpointMode && !reverseProxy && (
-                  <>
-                    <div>
-                      <Label>
-                        <NetworkIcon size={14} />
-                        Endpoint Type
-                      </Label>
-                      <HelpText>
-                        Choose how traffic is forwarded to your backend.
-                      </HelpText>
-                    </div>
+              <ReverseProxyServiceModeSelector
+                onChange={setEndpointMode}
+                value={endpointMode}
+                disabled={!!reverseProxy}
+              />
 
-                    <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Endpoint mode">
-                      {([
-                        { mode: "http" as EndpointMode, icon: <Server size={14} />, label: "HTTP", desc: "Reverse proxy with path routing, auth, and load balancing." },
-                        { mode: "tls" as EndpointMode, icon: <LockKeyhole size={14} />, label: "TLS Passthrough", desc: "Direct TCP relay via SNI routing." },
-                        { mode: "tcp" as EndpointMode, icon: <ArrowRight size={14} />, label: "TCP", desc: "TCP relay to a backend on a dedicated port." },
-                        { mode: "udp" as EndpointMode, icon: <ArrowRight size={14} />, label: "UDP", desc: "UDP relay to a backend on a dedicated port." },
-                      ]).map(({ mode, icon, label, desc }) => (
-                        <button
-                          key={mode}
-                          type="button"
-                          role="radio"
-                          aria-checked={endpointMode === mode}
-                          tabIndex={endpointMode === mode ? 0 : -1}
-                          onClick={() => setEndpointMode(mode)}
-                          className={cn(
-                            "rounded-md border px-4 py-3 text-left transition-all",
-                            endpointMode === mode
-                              ? "border-green-500/30 bg-green-500/5"
-                              : "border-nb-gray-800 bg-nb-gray-920/30 hover:border-nb-gray-700",
-                          )}
-                        >
-                          <div className="flex items-center gap-2 text-sm font-medium">
-                            {icon}
-                            {label}
-                          </div>
-                          <div className="text-xs text-nb-gray-400 mt-1">
-                            {desc}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {isL4Mode && (
+              {isL4Mode && (
+                <div className="flex flex-col gap-4">
                   <>
                     <div>
                       <Label>Target Device</Label>
@@ -701,7 +679,8 @@ export default function ReverseProxyModal({
                         resource={
                           isResourceTargetType(tlsTargetType) && tlsResourceId
                             ? { id: tlsResourceId, type: "host" }
-                            : tlsTargetType === ReverseProxyTargetType.PEER && tlsPeerId
+                            : tlsTargetType === ReverseProxyTargetType.PEER &&
+                              tlsPeerId
                             ? { id: tlsPeerId, type: "peer" }
                             : undefined
                         }
@@ -756,12 +735,22 @@ export default function ReverseProxyModal({
                             type="number"
                             min={1}
                             max={65535}
-                            placeholder={isPortBased && !clusterSupportsCustomPorts ? "Auto" : "443"}
-                            value={isPortBased && !clusterSupportsCustomPorts ? "" : (tlsListenPort || "")}
+                            placeholder={
+                              isPortBased && !clusterSupportsCustomPorts
+                                ? "Auto"
+                                : "443"
+                            }
+                            value={
+                              isPortBased && !clusterSupportsCustomPorts
+                                ? ""
+                                : tlsListenPort || ""
+                            }
                             onChange={(e) =>
                               setTlsListenPort(parseInt(e.target.value) || 0)
                             }
-                            disabled={isPortBased && !clusterSupportsCustomPorts}
+                            disabled={
+                              isPortBased && !clusterSupportsCustomPorts
+                            }
                             aria-label="Public listen port"
                           />
                         </div>
@@ -779,7 +768,9 @@ export default function ReverseProxyModal({
                                 );
                               }
                             }}
-                            placeholder={tlsIsHostEditable ? "e.g., 10.0.0.5" : ""}
+                            placeholder={
+                              tlsIsHostEditable ? "e.g., 10.0.0.5" : ""
+                            }
                             disabled={!hasTlsTarget}
                             readOnly={hasTlsTarget && !tlsIsHostEditable}
                             aria-label="Destination host or IP"
@@ -809,156 +800,156 @@ export default function ReverseProxyModal({
                       </div>
                     </div>
                   </>
-                )}
-              </div>
+                </div>
+              )}
 
               {endpointMode === "http" && (
-              <div>
-                <Label>
-                  <Server size={14} />
-                  HTTP Targets
-                </Label>
-                <HelpText>
-                  Add one or more devices running your service or resources to
-                  make it publicly accessible.
-                </HelpText>
+                <div>
+                  <Label>HTTP/S Targets</Label>
+                  <HelpText>
+                    Add one or more devices running your service or resources to
+                    make it publicly accessible.
+                  </HelpText>
 
-                {targets.length > 0 && (
-                  <div
-                    className={
-                      "mt-3 mb-3 overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30 py-1 px-1 rounded-md "
-                    }
-                  >
-                    <table className="w-full">
-                      <tbody>
-                        {targets.map((target, index) => (
-                          <tr
-                            key={index}
-                            onClick={() => editTarget(index)}
-                            className="rounded-md hover:bg-nb-gray-900/30 cursor-pointer transition-all"
-                          >
-                            <td className="py-2.5 pl-5 pr-2 align-middle">
-                              <span className="text-[11px] leading-none font-mono px-2.5 py-2 rounded bg-nb-gray-900 text-nb-gray-300 inline-flex items-center">
-                                {target.path
-                                  ? target.path.startsWith("/")
-                                    ? target.path
-                                    : `/${target.path}`
-                                  : "/"}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-4 align-middle">
-                              <ArrowRight
-                                size={12}
-                                className="text-nb-gray-400"
-                              />
-                            </td>
-                            <td className="py-2.5 pr-2 align-middle">
-                              <TargetDestination target={target} />
-                            </td>
-                            <td className="py-2.5 pl-2 pr-4">
-                              <div
-                                className="flex items-center gap-2 justify-end"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <ToggleSwitch
-                                  size="small"
-                                  checked={target.enabled !== false}
-                                  onCheckedChange={() =>
-                                    toggleTargetEnabled(index)
-                                  }
+                  {targets.length > 0 && (
+                    <div
+                      className={
+                        "mt-3 mb-3 overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30 py-1 px-1 rounded-md "
+                      }
+                    >
+                      <table className="w-full">
+                        <tbody>
+                          {targets.map((target, index) => (
+                            <tr
+                              key={index}
+                              onClick={() => editTarget(index)}
+                              className="rounded-md hover:bg-nb-gray-900/30 cursor-pointer transition-all"
+                            >
+                              <td className="py-2.5 pl-5 pr-2 align-middle">
+                                <span className="text-[11px] leading-none font-mono px-2.5 py-2 rounded bg-nb-gray-900 text-nb-gray-300 inline-flex items-center">
+                                  {target.path
+                                    ? target.path.startsWith("/")
+                                      ? target.path
+                                      : `/${target.path}`
+                                    : "/"}
+                                </span>
+                              </td>
+                              <td className="py-2.5 px-4 align-middle">
+                                <ArrowRight
+                                  size={12}
+                                  className="text-nb-gray-400"
                                 />
-                                <DropdownMenu modal={false}>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="default-outline"
-                                      className="!px-3"
-                                    >
-                                      <MoreVertical
-                                        size={16}
-                                        className="shrink-0"
-                                      />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    className="w-auto min-w-[200px]"
-                                    align="end"
-                                  >
-                                    <DropdownMenuItem
-                                      onClick={() => editTarget(index)}
-                                    >
-                                      <div className="flex gap-3 items-center">
-                                        <Edit size={14} className="shrink-0" />
-                                        Edit Target
-                                      </div>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      variant={"danger"}
-                                      onClick={() => removeTarget(index)}
-                                    >
-                                      <div className="flex gap-3 items-center">
-                                        <MinusCircleIcon
-                                          size={14}
+                              </td>
+                              <td className="py-2.5 pr-2 align-middle">
+                                <TargetDestination target={target} />
+                              </td>
+                              <td className="py-2.5 pl-2 pr-4">
+                                <div
+                                  className="flex items-center gap-2 justify-end"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <ToggleSwitch
+                                    size="small"
+                                    checked={target.enabled !== false}
+                                    onCheckedChange={() =>
+                                      toggleTargetEnabled(index)
+                                    }
+                                  />
+                                  <DropdownMenu modal={false}>
+                                    <DropdownMenuTrigger asChild>
+                                      <Button
+                                        variant="default-outline"
+                                        className="!px-3"
+                                      >
+                                        <MoreVertical
+                                          size={16}
                                           className="shrink-0"
                                         />
-                                        Remove Target
-                                      </div>
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
+                                      </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent
+                                      className="w-auto min-w-[200px]"
+                                      align="end"
+                                    >
+                                      <DropdownMenuItem
+                                        onClick={() => editTarget(index)}
+                                      >
+                                        <div className="flex gap-3 items-center">
+                                          <Edit
+                                            size={14}
+                                            className="shrink-0"
+                                          />
+                                          Edit Target
+                                        </div>
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem
+                                        variant={"danger"}
+                                        onClick={() => removeTarget(index)}
+                                      >
+                                        <div className="flex gap-3 items-center">
+                                          <MinusCircleIcon
+                                            size={14}
+                                            className="shrink-0"
+                                          />
+                                          Remove Target
+                                        </div>
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </div>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
 
-                <Button
-                  variant="dotted"
-                  className={cn("w-full mt-1", targets?.length > 0 && "mt-1")}
-                  size="sm"
-                  onClick={() => setTargetModalOpen(true)}
-                  disabled={
-                    !!(initialNetwork && !initialNetwork.resources?.length)
-                  }
-                >
-                  <PlusIcon size={14} />
-                  Add Target
-                </Button>
-
-                {initialNetwork && !initialNetwork.resources?.length && (
-                  <Callout
-                    variant="warning"
-                    className="mt-3"
-                    icon={
-                      <AlertTriangle
-                        size={14}
-                        className="shrink-0 relative top-[3px]"
-                      />
+                  <Button
+                    variant="dotted"
+                    className={cn("w-full mt-1", targets?.length > 0 && "mt-1")}
+                    size="sm"
+                    onClick={() => setTargetModalOpen(true)}
+                    disabled={
+                      !!(initialNetwork && !initialNetwork.resources?.length)
                     }
                   >
-                    There are currently no resources in your network{" "}
-                    <span className={"text-netbird-100 font-medium"}>
-                      {initialNetwork?.name}
-                    </span>
-                    . Add resources to your network before exposing it as a
-                    service.{" "}
-                    <InlineButtonLink
-                      variant={"default"}
-                      onClick={() => {
-                        onOpenChange(false);
-                        router.push(
-                          `/network?id=${initialNetwork.id}&tab=resources`,
-                        );
-                      }}
+                    <PlusIcon size={14} />
+                    Add Target
+                  </Button>
+
+                  {initialNetwork && !initialNetwork.resources?.length && (
+                    <Callout
+                      variant="warning"
+                      className="mt-3"
+                      icon={
+                        <AlertTriangle
+                          size={14}
+                          className="shrink-0 relative top-[3px]"
+                        />
+                      }
                     >
-                      Go to Resources
-                      <ArrowUpRight size={14} />
-                    </InlineButtonLink>
-                  </Callout>
-                )}
-              </div>
+                      There are currently no resources in your network{" "}
+                      <span className={"text-netbird-100 font-medium"}>
+                        {initialNetwork?.name}
+                      </span>
+                      . Add resources to your network before exposing it as a
+                      service.{" "}
+                      <InlineButtonLink
+                        variant={"default"}
+                        onClick={() => {
+                          onOpenChange(false);
+                          router.push(
+                            `/network?id=${initialNetwork.id}&tab=resources`,
+                          );
+                        }}
+                      >
+                        Go to Resources
+                        <ArrowUpRight size={14} />
+                      </InlineButtonLink>
+                    </Callout>
+                  )}
+                </div>
               )}
             </div>
           </TabsContent>
@@ -1019,12 +1010,18 @@ export default function ReverseProxyModal({
                 />
               )}
               {isL4Mode && (
-                <div className={"px-6 py-4 border rounded-md border-nb-gray-910 bg-nb-gray-900/30"}>
+                <div
+                  className={
+                    "px-6 py-4 border rounded-md border-nb-gray-910 bg-nb-gray-900/30"
+                  }
+                >
                   <div className={"flex justify-between gap-10"}>
                     <div className={"max-w-sm"}>
                       <Label>
                         <Timer size={15} />
-                        {endpointMode === "udp" ? "Session Idle Timeout" : "Connection Timeout"}
+                        {endpointMode === "udp"
+                          ? "Session Idle Timeout"
+                          : "Connection Timeout"}
                       </Label>
                       <HelpText margin={false}>
                         {endpointMode === "udp"
@@ -1037,7 +1034,7 @@ export default function ReverseProxyModal({
                         value={requestTimeout}
                         onChange={(e) => setRequestTimeout(e.target.value)}
                         onClick={(e) => e.stopPropagation()}
-                        placeholder={'30s'}
+                        placeholder={"30s"}
                         maxWidthClass={"w-[100px]"}
                       />
                     </div>
@@ -1126,7 +1123,9 @@ export default function ReverseProxyModal({
                     {endpointMode === "udp" ? (
                       <Button
                         variant={"primary"}
-                        disabled={submitDisabled || !permission?.services?.create}
+                        disabled={
+                          submitDisabled || !permission?.services?.create
+                        }
                         onClick={handleSubmit}
                       >
                         <PlusCircle size={16} />
@@ -1135,9 +1134,7 @@ export default function ReverseProxyModal({
                     ) : (
                       <Button
                         variant={"primary"}
-                        onClick={() =>
-                          setTab(isL4Mode ? "settings" : "auth")
-                        }
+                        onClick={() => setTab(isL4Mode ? "settings" : "auth")}
                         disabled={!canContinueToSettings}
                       >
                         Continue
@@ -1167,9 +1164,7 @@ export default function ReverseProxyModal({
                   <>
                     <Button
                       variant={"secondary"}
-                      onClick={() =>
-                        setTab(isL4Mode ? "targets" : "auth")
-                      }
+                      onClick={() => setTab(isL4Mode ? "targets" : "auth")}
                     >
                       Back
                     </Button>
@@ -1285,7 +1280,6 @@ export default function ReverseProxyModal({
           }, 200);
         }}
       />
-
     </Modal>
   );
 }
