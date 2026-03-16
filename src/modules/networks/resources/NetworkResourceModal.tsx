@@ -329,7 +329,7 @@ export function ResourceModalContent({
                   }
                 >
                   <span className={"relative top-[1px]"}>
-                    Additional Options (optional)
+                    Optional Settings
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className={""}>

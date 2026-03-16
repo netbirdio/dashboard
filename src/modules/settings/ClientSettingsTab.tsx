@@ -11,6 +11,7 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
+import { Callout } from "@components/Callout";
 import { useHasChanges } from "@hooks/useHasChanges";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
@@ -20,6 +21,7 @@ import {
   ExternalLinkIcon,
   FlaskConicalIcon,
   MonitorSmartphoneIcon,
+  AlertTriangle,
   RefreshCcw,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
@@ -84,6 +86,10 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
     isCustomVersion ? autoUpdateSetting : "",
   );
 
+  const [autoUpdateAlways, setAutoUpdateAlways] = useState(
+    account.settings?.auto_update_always ?? false,
+  );
+
   const [peerExposeEnabled, setPeerExposeEnabled] = useState<boolean>(
     account?.settings?.peer_expose_enabled ?? false,
   );
@@ -99,6 +105,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
   const { hasChanges, updateRef } = useHasChanges([
     autoUpdateMethod,
     autoUpdateCustomVersion,
+    autoUpdateAlways,
     peerExposeEnabled,
     peerExposeGroupNames,
   ]);
@@ -155,6 +162,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           settings: {
             ...account.settings,
             auto_update_version: autoUpdateCustomVersion || autoUpdateMethod,
+            auto_update_always: autoUpdateAlways,
             peer_expose_enabled: peerExposeEnabled,
             peer_expose_groups: peerExposeGroupIds,
           },
@@ -164,6 +172,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           updateRef([
             autoUpdateMethod,
             autoUpdateCustomVersion,
+            autoUpdateAlways,
             peerExposeEnabled,
             peerExposeGroupNames,
           ]);
@@ -235,9 +244,9 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
               />
             </Label>
             <HelpText>
-              Select how NetBird clients handle automatic updates by choosing
-              the latest version, a custom version, or disabling updates
-              altogether. Automatic Updates require at least NetBird{" "}
+              Configure how NetBird clients receive update notifications.
+              When enabled, users will be prompted to install the selected
+              version. This requires at least NetBird{" "}
               <span className={"text-white font-medium"}>v0.61.0</span>.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/manage/peers/auto-update"}
@@ -265,6 +274,39 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                 }}
               />
             </div>
+            <FancyToggleSwitch
+              className={"mt-4"}
+              value={autoUpdateAlways}
+              onChange={setAutoUpdateAlways}
+              label={
+                <>
+                  <AlertTriangle size={15} className={"text-yellow-400"} />
+                  Force Automatic Updates
+                </>
+              }
+              helpText={
+                "When enabled, updates are installed automatically in the background without user interaction."
+              }
+              disabled={
+                !permission.settings.update || autoUpdateMethod === "disabled"
+              }
+            />
+            {autoUpdateAlways && autoUpdateMethod !== "disabled" && (
+              <Callout
+                className={"mt-3"}
+                variant={"warning"}
+                icon={
+                  <AlertTriangle
+                    size={14}
+                    className={"shrink-0 relative top-[3px]"}
+                  />
+                }
+              >
+                Enabling automatic updates will restart the NetBird client
+                during updates, which can temporarily disrupt active
+                connections. Use with caution in production environments.
+              </Callout>
+            )}
           </div>
 
           <div>
