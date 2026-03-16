@@ -41,7 +41,7 @@ import { Policy } from "@/interfaces/Policy";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import NetworkResourceAccessControl from "@/modules/networks/resources/NetworkResourceAccessControl";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
-import { useAIAssistant } from "netbird-explain/client";
+import { useAIAssistant } from "@netbirdio/explain/client";
 import { Sparkles } from "lucide-react";
 
 type Props = {
@@ -119,7 +119,7 @@ export function ResourceModalContent({
     setExplainContext({
       modalName: resource ? "Edit Resource" : "Add Resource",
       pageName: "Networks",
-      docsUrls: ["https://docs.netbird.io/manage/networks"],
+      docsUrls: ["https://docs.netbird.io/manage/networks", ""],
     });
     return () => clearExplainContext();
   }, [resource, setExplainContext, clearExplainContext]);
@@ -229,7 +229,7 @@ export function ResourceModalContent({
 
   return (
     <ModalContent
-      data-explain
+      data-nb-explain
       maxWidthClass={
         tab === "access-control" ? "max-w-[790px]" : "max-w-[680px]"
       }
@@ -267,7 +267,7 @@ export function ResourceModalContent({
 
         <TabsContent value={"resource"} className={"pb-4"}>
           <div className={"px-8 flex-col flex gap-6"}>
-            <div data-explain>
+            <div data-nb-explain>
               <Label>Name</Label>
               <HelpText>
                 Set an easily identifiable name for your resource
@@ -282,7 +282,7 @@ export function ResourceModalContent({
                 onChange={(e) => setName(e.target.value)}
               />
             </div>
-            <div data-explain>
+            <div data-nb-explain>
             <ResourceSingleAddressInput
               value={address}
               onChange={setAddress}
@@ -334,7 +334,7 @@ export function ResourceModalContent({
                 </AccordionTrigger>
                 <AccordionContent className={""}>
                   <div className={"flex flex-col gap-6 pb-4 pt-2"}>
-                    <div data-explain>
+                    <div data-nb-explain>
                       <Label>Description</Label>
                       <HelpText>
                         Write a short description to add more context to this
@@ -346,7 +346,7 @@ export function ResourceModalContent({
                         onChange={(e) => setDescription(e.target.value)}
                       />
                     </div>
-                    <div data-explain>
+                    <div data-nb-explain>
                       <Label>Resource Groups</Label>
                       <HelpText className={"mt-1"}>
                         Add this resource to a group (e.g., Databases, Web
@@ -488,12 +488,12 @@ function ExplainButton() {
 
   return (
     <button
-      data-explain-ignore
+      data-nb-explain-ignore
       onClick={() => (explainMode ? exitExplainMode() : enterExplainMode())}
       className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer shrink-0 ${
         explainMode
-          ? "bg-yellow-500/20 text-yellow-400 ring-1 ring-yellow-500/40 animate-pulse"
-          : "bg-nb-gray-900/60 text-nb-gray-400 hover:text-yellow-400 hover:bg-yellow-500/10"
+          ? "bg-netbird/20 text-netbird-300 ring-1 ring-netbird/40 animate-pulse"
+          : "bg-nb-gray-900/60 text-nb-gray-400 hover:text-netbird-300 hover:bg-netbird/10"
       }`}
     >
       <Sparkles size={13} />

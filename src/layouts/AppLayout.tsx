@@ -20,7 +20,7 @@ import ErrorBoundaryProvider from "@/contexts/ErrorBoundary";
 import { GlobalThemeProvider } from "@/contexts/GlobalThemeProvider";
 import InstanceSetupProvider from "@/contexts/InstanceSetupProvider";
 import { NavigationEvents } from "@/contexts/NavigationEvents";
-import { AIAssistantProvider } from "netbird-explain/client";
+import { AIAssistantProvider } from "@netbirdio/explain/client";
 
 const inter = localFont({
   src: "../assets/fonts/Inter.ttf",
@@ -55,6 +55,7 @@ export default function AppLayout({
                         <AIAssistantProvider
                           endpoint={process.env.NEXT_PUBLIC_AI_SERVER_URL || "http://localhost:3080/api/ai/chat"}
                           apiKey={process.env.NEXT_PUBLIC_AI_API_KEY || "nb-ai-dev-key-change-me"}
+
                         >
                           {children}
                         </AIAssistantProvider>

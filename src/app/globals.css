@@ -200,3 +200,33 @@ p {
 .react-flow__node-groupNode .selected{
     @apply border-netbird;
 }
+
+/* @netbirdio/explain theme overrides — match dashboard palette */
+html:root {
+    --nb-explain-bg: #1c1e21;
+    --nb-explain-bg-subtle: #25282d;
+    --nb-explain-bg-hover: #2e3238;
+    --nb-explain-border: #363b40;
+    --nb-explain-text: #e4e7e9;
+    --nb-explain-text-muted: #a3adb5;
+    --nb-explain-text-dim: #7c8994;
+    --nb-explain-accent: #f68330;
+    --nb-explain-accent-hover: #f46d1b;
+    --nb-explain-accent-glow: rgba(246, 131, 48, 0.15);
+    --nb-explain-user-bg: #f68330;
+    --nb-explain-user-text: #ffffff;
+    --nb-explain-user-glow: rgba(246, 131, 48, 0.25);
+    --nb-explain-radius: 8px;
+    --nb-explain-radius-sm: 6px;
+    --nb-explain-radius-xs: 4px;
+    --nb-explain-font: inherit;
+    --nb-explain-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6), 0 0 0 1px #363b40;
+    --nb-explain-banner-bg: rgba(246, 131, 48, 0.92);
+    --nb-explain-banner-text: #ffffff;
+    --nb-explain-error-text: #F98080;
+}
+
+/* Override explain highlight outline to match netbird orange */
+[data-nb-explain-highlight] {
+    outline: 1px solid rgba(246, 131, 48, 0.7) !important;
+}

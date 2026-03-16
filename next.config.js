@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "export",
-  transpilePackages: ["netbird-explain"],
   images: {
     unoptimized: true,
   },
   reactStrictMode: false,
+  experimental: {
+    externalDir: true,
+  },
   env: {
     APP_ENV: process.env.APP_ENV || "production",
     NEXT_PUBLIC_DASHBOARD_VERSION:
