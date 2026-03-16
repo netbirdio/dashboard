@@ -7,10 +7,8 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { Modal, ModalContent, ModalFooter } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
-import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
-import useFetchApi from "@utils/api";
 import {
   AlertTriangle,
   ClockFadingIcon,
@@ -41,10 +39,12 @@ import {
 } from "@/contexts/ReverseProxiesProvider";
 import { cn } from "@utils/helpers";
 import { HelpTooltip } from "@components/HelpTooltip";
-import InlineLink, { InlineButtonLink } from "@components/InlineLink";
-import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
+import InlineLink from "@components/InlineLink";
 import Paragraph from "@components/Paragraph";
 import ReverseProxyTargetCustomHeaders from "@/modules/reverse-proxy/targets/ReverseProxyTargetCustomHeaders";
+import ReverseProxyTargetSelector, {
+  Target,
+} from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
 import { useReverseProxyTargetOptions } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 
 /** Get initial host value based on target, resource, or peer */
@@ -86,38 +86,35 @@ export default function ReverseProxyTargetModal({
 }: Readonly<Props>) {
   const existingTargets = reverseProxy.targets || [];
   const domain = reverseProxy.domain;
-  // Fetch resources and peers for target selection
-  const { data: resources } = useFetchApi<NetworkResource[]>(
-    "/networks/resources",
-  );
-  const { data: peers } = useFetchApi<Peer[]>("/peers");
 
   const [tab, setTab] = useState("details");
 
-  const [targetType, setTargetType] = useState<ReverseProxyTargetType>(
-    currentTarget?.target_type ??
-      (initialResource
-        ? (initialResource.type as ReverseProxyTargetType) ??
-          ReverseProxyTargetType.HOST
-        : ReverseProxyTargetType.PEER),
+  const [target, setTarget] = useState<Target | undefined>(
+    currentTarget || initialResource || initialPeer
+      ? {
+          type:
+            currentTarget?.target_type ??
+            (initialResource
+              ? (initialResource.type as ReverseProxyTargetType) ??
+                ReverseProxyTargetType.HOST
+              : ReverseProxyTargetType.PEER),
+          peerId:
+            currentTarget?.target_type === ReverseProxyTargetType.PEER
+              ? currentTarget?.target_id
+              : initialPeer?.id,
+          resourceId:
+            currentTarget && isResourceTargetType(currentTarget.target_type)
+              ? currentTarget?.target_id
+              : initialResource?.id,
+          host: getInitialHost(currentTarget, initialResource, initialPeer),
+        }
+      : undefined,
   );
-  const [targetPeerId, setTargetPeerId] = useState<string | undefined>(
-    currentTarget?.target_type === ReverseProxyTargetType.PEER
-      ? currentTarget?.target_id
-      : initialPeer?.id,
-  );
-  const [targetResourceId, setTargetResourceId] = useState<string | undefined>(
-    currentTarget && isResourceTargetType(currentTarget.target_type)
-      ? currentTarget?.target_id
-      : initialResource?.id,
-  );
+
   const [targetProtocol, setTargetProtocol] =
     useState<ReverseProxyTargetProtocol>(
       currentTarget?.protocol ?? ReverseProxyTargetProtocol.HTTP,
     );
-  const [targetHost, setTargetHost] = useState(
-    getInitialHost(currentTarget, initialResource, initialPeer),
-  );
   const [targetPort, setTargetPort] = useState<number>(
     currentTarget?.port ?? 0,
   );
@@ -126,17 +123,11 @@ export default function ReverseProxyTargetModal({
   const [options, setOption, { getTargetOptions, headers, errors }] =
     useReverseProxyTargetOptions(currentTarget?.options);
   const portInputRef = useRef<HTMLInputElement>(null);
-  const [installModal, setInstallModal] = useState(false);
 
   // Get the current resource's address (from initialResource or selected resource)
-  const currentResourceAddress = useMemo(() => {
-    if (initialResource) return initialResource.address;
-    if (targetResourceId) {
-      const resource = resources?.find((r) => r.id === targetResourceId);
-      return resource?.address || "";
-    }
-    return "";
-  }, [initialResource, targetResourceId, resources]);
+  const currentResourceAddress = initialResource
+    ? initialResource.address
+    : target?.resourceAddress ?? "";
 
   // Parse the CIDR using ip-cidr library
   const cidrInfo = useMemo(() => {
@@ -166,10 +157,10 @@ export default function ReverseProxyTargetModal({
 
   // Validate if current host is within CIDR range
   const isHostInCidrRange = useMemo(() => {
-    if (!cidrInfo || !targetHost) return false;
-    if (!cidr.isValidAddress(targetHost)) return false;
-    return cidrInfo.contains(targetHost);
-  }, [cidrInfo, targetHost]);
+    if (!cidrInfo || !target?.host) return false;
+    if (!cidr.isValidAddress(target.host)) return false;
+    return cidrInfo.contains(target.host);
+  }, [cidrInfo, target?.host]);
 
   // Normalize path for comparison (ensure it starts with / and handle empty as /)
   const normalizePath = (path: string | undefined) => {
@@ -197,7 +188,7 @@ export default function ReverseProxyTargetModal({
 
   const isValidPort =
     targetPort === 0 || (targetPort >= 1 && targetPort <= 65535);
-  const isValidCidrHost = !isCidrRange || (targetHost && isHostInCidrRange);
+  const isValidCidrHost = !isCidrRange || (target?.host && isHostInCidrRange);
 
   const canAddTarget = useMemo(() => {
     // Don't allow if path is duplicate or port is invalid
@@ -210,11 +201,12 @@ export default function ReverseProxyTargetModal({
     if (initialPeer) {
       return true;
     }
-    if (targetType === ReverseProxyTargetType.PEER) {
-      return !!targetPeerId;
+    if (!target) return false;
+    if (target.type === ReverseProxyTargetType.PEER) {
+      return !!target.peerId;
     }
-    if (isResourceTargetType(targetType)) {
-      return !!targetResourceId && isValidCidrHost;
+    if (isResourceTargetType(target.type)) {
+      return !!target.resourceId && isValidCidrHost;
     }
     return false;
   }, [
@@ -222,28 +214,30 @@ export default function ReverseProxyTargetModal({
     isValidPort,
     initialResource,
     initialPeer,
-    targetType,
-    targetPeerId,
-    targetResourceId,
+    target,
     isValidCidrHost,
   ]);
 
-  const hasTarget =
-    initialResource || initialPeer || targetPeerId || targetResourceId;
+  const hasTarget = !!(initialResource || initialPeer || target);
 
   const handleSave = () => {
-    const resolvedType = initialPeer ? ReverseProxyTargetType.PEER : targetType;
+    if (!target) return;
+    const resolvedType = initialPeer
+      ? ReverseProxyTargetType.PEER
+      : target.type;
     const resolvedIsResource =
       isResourceTargetType(resolvedType) || !!initialResource;
     const targetData: ReverseProxyTarget = {
       target_type: resolvedType,
       target_id:
         resolvedType === ReverseProxyTargetType.PEER
-          ? targetPeerId
-          : targetResourceId,
+          ? target.peerId
+          : target.resourceId,
       protocol: targetProtocol,
       host:
-        resolvedType === ReverseProxyTargetType.SUBNET ? targetHost : undefined,
+        resolvedType === ReverseProxyTargetType.SUBNET
+          ? target.host
+          : undefined,
       port: targetPort,
       path: targetPath || undefined,
       enabled: currentTarget?.enabled ?? true,
@@ -280,140 +274,16 @@ export default function ReverseProxyTargetModal({
             <TabsContent value={"details"} className={"pb-8"}>
               <div className="px-8 flex flex-col gap-8">
                 {!initialResource && !initialPeer && (
-                  <div>
-                    <Label className={"gap-0 inline"}>
-                      {initialNetwork ? (
-                        "Select Resource"
-                      ) : (
-                        <>
-                          Select{" "}
-                          <HelpTooltip
-                            className={"max-w-sm"}
-                            content={
-                              <>
-                                A{" "}
-                                <span className={"text-white font-medium"}>
-                                  peer
-                                </span>{" "}
-                                is a machine (e.g., laptop, server, container)
-                                running NetBird. Select a peer if your service
-                                runs directly on it.
-                                <span className={"mt-1 block"}>
-                                  If you don&apos;t have a peer yet, you can{" "}
-                                  <InlineButtonLink
-                                    onClick={() => setInstallModal(true)}
-                                  >
-                                    Install NetBird
-                                  </InlineButtonLink>
-                                  .
-                                </span>
-                              </>
-                            }
-                            interactive={true}
-                          >
-                            Peer
-                          </HelpTooltip>{" "}
-                          or{" "}
-                          <HelpTooltip
-                            className={"max-w-sm"}
-                            content={
-                              <>
-                                A{" "}
-                                <span className={"text-white font-medium"}>
-                                  resource
-                                </span>{" "}
-                                is a destination (IP, subnet, or domain) that
-                                can&apos;t run NetBird directly. Resources are
-                                part of a network and are reached through a
-                                routing peer that forwards traffic to them.
-                                <span className={"mt-1 block"}>
-                                  If you don&apos;t have resources yet, go to{" "}
-                                  <InlineLink href={"/networks"}>
-                                    Networks
-                                  </InlineLink>{" "}
-                                  to create some.
-                                </span>
-                              </>
-                            }
-                            interactive={true}
-                          >
-                            Resource
-                          </HelpTooltip>
-                        </>
-                      )}
-                    </Label>
-
-                    <HelpText>
-                      {initialNetwork
-                        ? "Select the resource from your network you want to expose."
-                        : "Select the peer where your service is running or select a resource to expose it."}
-                    </HelpText>
-                    <PeerGroupSelector
-                      values={[]}
-                      onChange={() => {}}
-                      placeholder={
-                        initialNetwork
-                          ? "Select a resource..."
-                          : "Select a peer or resource..."
+                  <ReverseProxyTargetSelector
+                    value={target}
+                    initialNetwork={initialNetwork}
+                    onChange={(selection) => {
+                      setTarget(selection);
+                      if (selection) {
+                        setTimeout(() => portInputRef.current?.focus(), 0);
                       }
-                      showPeers={!initialNetwork}
-                      showResources={true}
-                      showRoutes={false}
-                      hideAllGroup={true}
-                      hideGroupsTab={true}
-                      resourceIds={
-                        initialNetwork
-                          ? initialNetwork.resources ?? []
-                          : undefined
-                      }
-                      tabOrder={
-                        initialNetwork ? ["resources"] : ["peers", "resources"]
-                      }
-                      closeOnSelect={true}
-                      max={1}
-                      resource={
-                        isResourceTargetType(targetType) && targetResourceId
-                          ? { id: targetResourceId, type: "host" }
-                          : targetType === ReverseProxyTargetType.PEER &&
-                            targetPeerId
-                          ? { id: targetPeerId, type: "peer" }
-                          : undefined
-                      }
-                      onResourceChange={(res) => {
-                        if (res) {
-                          if (res.type === "peer") {
-                            setTargetType(ReverseProxyTargetType.PEER);
-                            setTargetPeerId(res.id);
-                            setTargetResourceId(undefined);
-                            const peer = peers?.find((p) => p.id === res.id);
-                            setTargetHost(peer?.ip || "localhost");
-                          } else {
-                            const selectedResource = resources?.find(
-                              (r) => r.id === res.id,
-                            );
-                            setTargetType(
-                              (selectedResource?.type as ReverseProxyTargetType) ??
-                                ReverseProxyTargetType.HOST,
-                            );
-                            setTargetResourceId(res.id);
-                            setTargetPeerId(undefined);
-                            const address = selectedResource?.address || "";
-                            // If CIDR range, pre-fill with base IP
-                            if (address.includes("/")) {
-                              setTargetHost(address.split("/")[0]);
-                            } else {
-                              setTargetHost(address);
-                            }
-                          }
-                          setTimeout(() => portInputRef.current?.focus(), 0);
-                        } else {
-                          setTargetPeerId(undefined);
-                          setTargetResourceId(undefined);
-                          setTargetHost("");
-                        }
-                      }}
-                    />
-                  </div>
+                    }}
+                  />
                 )}
 
                 <div>
@@ -558,13 +428,15 @@ export default function ReverseProxyTargetModal({
                         </div>
                         <div className="flex-1">
                           <Input
-                            value={targetHost}
+                            value={target?.host ?? ""}
                             onChange={(e) => {
                               // Only allow valid IP characters for CIDR ranges
                               const value = isHostEditable
                                 ? e.target.value.replace(/[^0-9.]/g, "")
                                 : e.target.value;
-                              setTargetHost(value);
+                              setTarget(
+                                (prev) => prev && { ...prev, host: value },
+                              );
                             }}
                             placeholder="e.g., 192.168.0.10"
                             className="!rounded-l-none"
@@ -755,10 +627,6 @@ export default function ReverseProxyTargetModal({
             </div>
           </ModalFooter>
         </ModalContent>
-      </Modal>
-
-      <Modal open={installModal} onOpenChange={setInstallModal}>
-        <SetupModal />
       </Modal>
     </>
   );
