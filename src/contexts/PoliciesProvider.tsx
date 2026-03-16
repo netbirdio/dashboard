@@ -26,6 +26,7 @@ const PoliciesContext = React.createContext(
     createPoliciesForResource: (
       policies: Policy[],
       resource: NetworkResource,
+      knownGroups?: Group[],
     ) => Promise<void>;
     openEditPolicyModal: (policy: Policy, tab?: string) => void;
     deletePolicy: (policy: Policy, onSuccess?: () => void) => Promise<void>;
@@ -39,7 +40,7 @@ const PoliciesContext = React.createContext(
 export default function PoliciesProvider({ children }: Props) {
   const { mutate } = useSWRConfig();
   const request = useApiCall<Policy>("/policies");
-  const { createOrUpdate: createOrUpdateGroup } = useGroups();
+  const { createOrUpdate: createOrUpdateGroup, groups } = useGroups();
   const [policyModal, setPolicyModal] = useState(false);
   const [currentPolicy, setCurrentPolicy] = useState<Policy>();
   const [initialPolicyTab, setInitialPolicyTab] = useState("");
@@ -49,28 +50,33 @@ export default function PoliciesProvider({ children }: Props) {
   const createPolicyForResource = async (
     policy: Policy,
     resource: NetworkResource,
+    knownGroups?: Group[],
   ) => {
     const rule = policy.rules[0];
 
+    const allGroups = [...(knownGroups || []), ...(groups || [])];
+    const resolveGroup = async (g: Group | string): Promise<string> => {
+      if (typeof g === "string") return g;
+      if (g.id) return g.id;
+      const existing = allGroups.find((eg) => eg.name === g.name);
+      if (existing?.id) return existing.id;
+      const created = await createOrUpdateGroup(g);
+      return created.id!;
+    };
+
     const sources = await Promise.all(
-      (rule.sources ?? []).map((g) => {
-        if (typeof g === "string") return g;
-        if (g.id) return g.id;
-        return createOrUpdateGroup(g).then((r) => r.id);
-      }),
+      (rule.sources ?? []).map(resolveGroup),
     ).then((ids) => ids.filter(Boolean) as string[]);
 
-    const hasGroups = resource.groups && resource.groups.length > 0;
+    const destinations = rule.destinationResource
+      ? undefined
+      : await Promise.all((rule.destinations ?? []).map(resolveGroup)).then(
+          (ids) => ids.filter(Boolean) as string[],
+        );
 
-    const destinations = hasGroups
-      ? await Promise.all(
-          (resource.groups as (Group | string)[]).map((g) => {
-            if (typeof g === "string") return g;
-            if (g.id) return g.id;
-            return createOrUpdateGroup(g).then((r) => r.id);
-          }),
-        ).then((ids) => ids.filter(Boolean) as string[])
-      : null;
+    const destinationResource = rule.destinationResource
+      ? { id: resource.id, type: resource.type }
+      : undefined;
 
     return createPolicy({
       ...policy,
@@ -82,9 +88,7 @@ export default function PoliciesProvider({ children }: Props) {
           ...rule,
           sources,
           destinations,
-          destinationResource: hasGroups
-            ? undefined
-            : { id: resource.id, type: resource.type },
+          destinationResource,
         },
       ],
     } as Policy);
@@ -93,22 +97,17 @@ export default function PoliciesProvider({ children }: Props) {
   const createPoliciesForResource = async (
     newPolicies: Policy[],
     resource: NetworkResource,
+    knownGroups?: Group[],
   ) => {
     const policiesToCreate = newPolicies.filter((p) => !p.id);
     if (policiesToCreate.length === 0) return;
 
-    const promise = Promise.all(
-      policiesToCreate.map((p) => createPolicyForResource(p, resource)),
-    ).then(() => mutate("/policies"));
-
-    notify({
-      title: "Create Policies",
-      description: "Successfully created policies for resource.",
-      promise,
-      showOnlyError: true,
-    });
-
-    return promise;
+    await Promise.all(
+      policiesToCreate.map((p) =>
+        createPolicyForResource(p, resource, knownGroups),
+      ),
+    );
+    await mutate("/policies");
   };
 
   const serializeRules = (rules: Policy["rules"], enabled?: boolean) => {

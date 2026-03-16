@@ -192,6 +192,7 @@ export const NetworkProvider = ({
         ? [...fetchedResources, additionalResource]
         : fetchedResources;
     const isMulti = affectedResources.length > 1;
+    if (!isMulti && action === "edit") return true;
     return confirm({
       title: isMulti ? (
         <>This policy is used by multiple resources</>
@@ -206,8 +207,8 @@ export const NetworkProvider = ({
             action === "edit" ? "Updating" : "Deleting"
           } this policy will also affect following resources:`
         : action === "delete"
-          ? "Are you sure you want to delete this policy? This action cannot be undone."
-          : undefined,
+        ? "Are you sure you want to delete this policy? This action cannot be undone."
+        : undefined,
       children: isMulti ? (
         <AffectedResourceList resources={affectedResources} />
       ) : undefined,

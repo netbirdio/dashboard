@@ -2,7 +2,6 @@
 
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
-import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -26,11 +25,15 @@ import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import {
   ExternalLinkIcon,
   PlusCircle,
-  Power,
   ShieldCheck,
-  Text,
   WorkflowIcon,
 } from "lucide-react";
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@components/Accordion";
 import React, { useMemo, useRef, useState } from "react";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
@@ -133,9 +136,7 @@ export function ResourceModalContent({
     return allPolicies.filter((policy) => {
       const rule = policy.rules?.[0];
       if (!rule || rule.destinationResource) return false;
-      const destinations = rule.destinations as
-        | (Group | string)[]
-        | undefined;
+      const destinations = rule.destinations as (Group | string)[] | undefined;
       return destinations?.some((d) => {
         const id = typeof d === "string" ? d : d.id;
         return !!id && groupIds.has(id);
@@ -175,7 +176,7 @@ export function ResourceModalContent({
       groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
       enabled,
     }).then(async (r) => {
-      await createPoliciesForResource(policies, r);
+      await createPoliciesForResource(policies, r, savedGroups);
       onCreated?.(r);
     });
 
@@ -199,7 +200,7 @@ export function ResourceModalContent({
       groups: savedGroups ? savedGroups.map((g) => g.id) : undefined,
       enabled,
     }).then(async (r) => {
-      await createPoliciesForResource(policies, r);
+      await createPoliciesForResource(policies, r, savedGroups);
       onUpdated?.(r);
     });
     notify({
@@ -217,7 +218,7 @@ export function ResourceModalContent({
   return (
     <ModalContent
       maxWidthClass={
-        tab === "access-control" ? "max-w-[790px]" : "max-w-[720px]"
+        tab === "access-control" ? "max-w-[790px]" : "max-w-[680px]"
       }
     >
       <ModalHeader
@@ -239,32 +240,34 @@ export function ResourceModalContent({
           </TabsTrigger>
           <TabsTrigger
             value={"access-control"}
-            disabled={!resource && !isAddressValid}
+            disabled={!resource && !canCreate}
           >
             <ShieldCheck size={16} />
             Access Control
           </TabsTrigger>
-          <TabsTrigger
-            value={"general"}
-            disabled={!resource && !isAddressValid}
-          >
-            <Text
-              size={16}
-              className={
-                "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
-              }
-            />
-            Name & Description
-          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value={"resource"} className={"pb-8"}>
-          <div className={"px-8 flex-col flex gap-8"}>
+        <TabsContent value={"resource"} className={"pb-4"}>
+          <div className={"px-8 flex-col flex gap-6"}>
+            <div>
+              <Label>Name</Label>
+              <HelpText>
+                Set an easily identifiable name for your resource
+              </HelpText>
+              <Input
+                ref={nameRef}
+                autoFocus={true}
+                tabIndex={0}
+                placeholder={"e.g., Postgres Database"}
+                value={name}
+                error={nameError}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </div>
             <ResourceSingleAddressInput
               value={address}
               onChange={setAddress}
               onError={setAddressError}
-              autoFocus={true}
               description={
                 <>
                   Enter a single{" "}
@@ -295,59 +298,83 @@ export function ResourceModalContent({
               }
             />
 
-            <div>
-              <Label>Resource Groups (optional)</Label>
-              <HelpText>
-                Organize this resource into a group (e.g., Databases, Web
-                Servers) and reference the group in access policies to keep
-                rules reusable and easy to maintain.
-              </HelpText>
-              <PeerGroupSelector
-                side={"top"}
-                onChange={setGroups}
-                values={groups}
-                showPeerCounter={false}
-                placeholder={"Add or select resource group(s)..."}
-                policies={allPolicies}
-              />
-              {groupPolicyCount > 0 && (
-                <Callout variant={"info"} className={"mt-3"}>
-                  Your selected resource groups are used in{" "}
-                  <span className="text-white font-medium">
-                    {groupPolicyCount} Access Control{" "}
-                    {groupPolicyCount === 1 ? "Policy" : "Policies"}
+            <Accordion
+              type={"multiple"}
+              className={"flex flex-col gap-2 -mt-2"}
+            >
+              <AccordionItem value={"resource-groups"}>
+                <AccordionTrigger
+                  className={
+                    "text-[0.8rem] tracking-wider text-nb-gray-200 py-4  my-0 leading-none gap-2 flex items-center"
+                  }
+                >
+                  <span className={"relative top-[1px]"}>
+                    Optional Settings
                   </span>
-                  . This resource will inherit access from{" "}
-                  {groupPolicyCount === 1 ? "this policy" : "these policies"}.
-                  {isAddressValid || resource ? (
-                    <>
-                      {" "}
-                      Please review them in the{" "}
-                      <InlineButtonLink
-                        onClick={() => setTab("access-control")}
-                        variant={"dashed"}
-                      >
-                        Access Control
-                      </InlineButtonLink>{" "}
-                      tab.
-                    </>
-                  ) : (
-                    " Please review them in the Access Control tab."
-                  )}
-                </Callout>
-              )}
-            </div>
-            <FancyToggleSwitch
-              value={enabled}
-              onChange={setEnabled}
-              label={
-                <>
-                  <Power size={15} />
-                  Enable Resource
-                </>
-              }
-              helpText={"Use this switch to enable or disable the resource."}
-            />
+                </AccordionTrigger>
+                <AccordionContent className={""}>
+                  <div className={"flex flex-col gap-6 pb-4 pt-2"}>
+                    <div>
+                      <Label>Description</Label>
+                      <HelpText>
+                        Write a short description to add more context to this
+                        resource.
+                      </HelpText>
+                      <Input
+                        placeholder={"e.g., Production, Development"}
+                        value={description}
+                        onChange={(e) => setDescription(e.target.value)}
+                      />
+                    </div>
+                    <div>
+                      <Label>Resource Groups</Label>
+                      <HelpText className={"mt-1"}>
+                        Add this resource to a group (e.g., Databases, Web
+                        Servers) and reference the group <br /> in access
+                        policies to simplify management.
+                      </HelpText>
+                      <PeerGroupSelector
+                        side={"top"}
+                        onChange={setGroups}
+                        values={groups}
+                        showPeerCounter={false}
+                        placeholder={"Add or select resource group(s)..."}
+                        policies={allPolicies}
+                      />
+                      {groupPolicyCount > 0 && (
+                        <Callout variant={"info"} className={"mt-3"}>
+                          Your selected resource groups are used in{" "}
+                          <span className="text-white font-medium">
+                            {groupPolicyCount} Access Control{" "}
+                            {groupPolicyCount === 1 ? "Policy" : "Policies"}
+                          </span>
+                          . This resource will inherit access from{" "}
+                          {groupPolicyCount === 1
+                            ? "this policy"
+                            : "these policies"}
+                          .
+                          {isAddressValid || resource ? (
+                            <>
+                              {" "}
+                              Please review them in the{" "}
+                              <InlineButtonLink
+                                onClick={() => setTab("access-control")}
+                                variant={"dashed"}
+                              >
+                                Access Control
+                              </InlineButtonLink>{" "}
+                              tab.
+                            </>
+                          ) : (
+                            " Please review them in the Access Control tab."
+                          )}
+                        </Callout>
+                      )}
+                    </div>
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            </Accordion>
           </div>
         </TabsContent>
 
@@ -361,36 +388,6 @@ export function ResourceModalContent({
             resourceId={resource?.id}
             hasResourceGroups={groups.length > 0}
           />
-        </TabsContent>
-
-        <TabsContent value={"general"} className={"px-8 pb-8"}>
-          <div className={"flex flex-col gap-6"}>
-            <div>
-              <Label>Name</Label>
-              <HelpText>
-                Set an easily identifiable name for your resource
-              </HelpText>
-              <Input
-                ref={nameRef}
-                tabIndex={0}
-                placeholder={"e.g., Postgres Database"}
-                value={name}
-                error={nameError}
-                onChange={(e) => setName(e.target.value)}
-              />
-            </div>
-            <div>
-              <Label>Description (optional)</Label>
-              <HelpText>
-                Write a short description to add more context to this resource.
-              </HelpText>
-              <Input
-                placeholder={"e.g., Production, Development"}
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
-            </div>
-          </div>
         </TabsContent>
       </Tabs>
 
@@ -418,7 +415,7 @@ export function ResourceModalContent({
                   <Button
                     variant={"primary"}
                     onClick={() => setTab("access-control")}
-                    disabled={!isAddressValid}
+                    disabled={!canCreate}
                   >
                     Continue
                   </Button>
@@ -430,26 +427,6 @@ export function ResourceModalContent({
                   <Button
                     variant={"secondary"}
                     onClick={() => setTab("resource")}
-                  >
-                    Back
-                  </Button>
-                  <Button
-                    variant={"primary"}
-                    onClick={() => {
-                      setTab("general");
-                      setTimeout(() => nameRef.current?.focus(), 0);
-                    }}
-                  >
-                    Continue
-                  </Button>
-                </>
-              )}
-
-              {tab === "general" && (
-                <>
-                  <Button
-                    variant={"secondary"}
-                    onClick={() => setTab("access-control")}
                   >
                     Back
                   </Button>
