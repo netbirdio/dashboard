@@ -163,7 +163,7 @@ export default function ReverseProxyModal({
 
   // CIDR detection for L4 subnet resources
   const { isCidrRange: l4IsCidrRange, isValidCidrHost: l4IsValidCidrHost } =
-    useReverseProxyAddress(l4Target, initialResource);
+    useReverseProxyAddress(l4Target);
 
   // Proxy protocol: for L4 modes maps to target proxy_protocol
   const [proxyProtocol, setProxyProtocol] = useState(

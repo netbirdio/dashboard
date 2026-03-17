@@ -26,6 +26,8 @@ import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProx
 
 type ReverseProxiesContextValue = {
   reverseProxies: ReverseProxy[] | undefined;
+  resources: NetworkResource[] | undefined;
+  peers: Peer[] | undefined;
   isLoading: boolean;
   openModal: (options?: OpenModalOptions) => void;
   openTargetModal: (options: OpenTargetModalOptions) => void;
@@ -465,6 +467,8 @@ export default function ReverseProxiesProvider({
     <ReverseProxiesContext.Provider
       value={{
         reverseProxies,
+        resources,
+        peers,
         isLoading,
         openModal,
         openTargetModal,

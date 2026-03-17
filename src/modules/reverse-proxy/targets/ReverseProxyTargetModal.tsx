@@ -130,7 +130,7 @@ export default function ReverseProxyTargetModal({
   const portInputRef = useRef<HTMLInputElement>(null);
 
   const { isCidrRange, isHostEditable, isValidCidrHost } =
-    useReverseProxyAddress(target, initialResource);
+    useReverseProxyAddress(target);
 
   // Normalize path for comparison (ensure it starts with / and handle empty as /)
   const normalizePath = (path: string | undefined) => {
@@ -354,10 +354,7 @@ export default function ReverseProxyTargetModal({
               <div className="flex mt-1">
                 <div className="flex-1">
                   <Label>Protocol & Host / IP</Label>
-                  <CidrHelpText
-                    target={target}
-                    resource={initialResource}
-                  />
+                  <CidrHelpText target={target} />
                   <div className="flex items-center mt-2">
                     <div className="w-[120px]">
                       <SelectDropdown
@@ -387,7 +384,6 @@ export default function ReverseProxyTargetModal({
                       <ReverseProxyAddressInput
                         value={target}
                         onChange={setTarget}
-                        resource={initialResource}
                         autoFocus={!!initialResource && isHostEditable}
                         className="!rounded-l-none"
                       />

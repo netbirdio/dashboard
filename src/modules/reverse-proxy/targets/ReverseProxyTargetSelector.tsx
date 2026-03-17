@@ -5,14 +5,15 @@ import { Label } from "@components/Label";
 import { Modal } from "@components/modal/Modal";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import React, { useState } from "react";
-import { Network, NetworkResource } from "@/interfaces/Network";
-import { Peer } from "@/interfaces/Peer";
+import { Network } from "@/interfaces/Network";
 import { ReverseProxyTargetType } from "@/interfaces/ReverseProxy";
-import { isResourceTargetType } from "@/contexts/ReverseProxiesProvider";
+import {
+  isResourceTargetType,
+  useReverseProxies,
+} from "@/contexts/ReverseProxiesProvider";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
-import useFetchApi from "@utils/api";
 
 export type Target = {
   type: ReverseProxyTargetType;
@@ -32,10 +33,7 @@ export default function ReverseProxyTargetSelector({
   initialNetwork,
   onChange,
 }: Readonly<Props>) {
-  const { data: resources } = useFetchApi<NetworkResource[]>(
-    "/networks/resources",
-  );
-  const { data: peers } = useFetchApi<Peer[]>("/peers");
+  const { resources, peers } = useReverseProxies();
   const [installModal, setInstallModal] = useState(false);
 
   return (

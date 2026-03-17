@@ -4,13 +4,15 @@ import React, { useMemo } from "react";
 import cidr from "ip-cidr";
 import type { Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
 import { ReverseProxyTargetType } from "@/interfaces/ReverseProxy";
-import { NetworkResource } from "@/interfaces/Network";
+import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { cn } from "@utils/helpers";
 
-export function useReverseProxyAddress(
-  target: Target | undefined,
-  resource?: NetworkResource,
-) {
+export function useReverseProxyAddress(target: Target | undefined) {
+  const { resources } = useReverseProxies();
+  const resource = useMemo(
+    () => resources?.find((r) => r.id === target?.resourceId),
+    [resources, target?.resourceId],
+  );
   const resourceAddress = resource?.address || "";
 
   const isCidrRange = useMemo(() => {
@@ -57,15 +59,10 @@ export function useReverseProxyAddress(
 
 export function CidrHelpText({
   target,
-  resource,
 }: {
   target: Target | undefined;
-  resource?: NetworkResource;
 }) {
-  const { cidrInfo, resourceAddress } = useReverseProxyAddress(
-    target,
-    resource,
-  );
+  const { cidrInfo, resourceAddress } = useReverseProxyAddress(target);
   if (!cidrInfo) return null;
   return (
     <HelpText className="!mt-1">
@@ -77,7 +74,6 @@ export function CidrHelpText({
 type Props = {
   value: Target | undefined;
   onChange: React.Dispatch<React.SetStateAction<Target | undefined>>;
-  resource?: NetworkResource;
   className?: string;
   autoFocus?: boolean;
 };
@@ -85,11 +81,10 @@ type Props = {
 export default function ReverseProxyAddressInput({
   value: target,
   onChange,
-  resource,
   className,
   autoFocus,
 }: Readonly<Props>) {
-  const { isHostEditable } = useReverseProxyAddress(target, resource);
+  const { isHostEditable } = useReverseProxyAddress(target);
 
   return (
     <Input
