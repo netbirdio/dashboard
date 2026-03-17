@@ -61,9 +61,9 @@ export default function ReverseProxyFlatTargetActionCell({
             }}
             disabled={!permission?.services?.update}
           >
-            <div className={"flex gap-3 items-center"}>
+            <div className={"flex gap-3 items-center pr-6"}>
               <Settings size={14} className={"shrink-0"} />
-              Settings
+              Advanced Settings
             </div>
           </DropdownMenuItem>
 
