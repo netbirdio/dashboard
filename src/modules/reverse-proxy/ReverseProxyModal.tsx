@@ -23,7 +23,7 @@ import {
   ExternalLinkIcon,
   GlobeIcon,
   LockKeyhole,
-  MapPin,
+  MapPinned,
   PlusCircle,
   RectangleEllipsis,
   Settings,
@@ -574,8 +574,8 @@ export default function ReverseProxyModal({
                   onChange={setProxyProtocol}
                   label={
                     <>
-                      <MapPin size={15} />
-                      Enable Source IP Preservation
+                      <MapPinned size={15} />
+                      Preserve Client Source IP
                     </>
                   }
                   helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
