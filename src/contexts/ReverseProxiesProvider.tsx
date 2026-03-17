@@ -93,7 +93,7 @@ export default function ReverseProxiesProvider({
   const { data: rawReverseProxies, isLoading } = useFetchApi<ReverseProxy[]>(
     "/reverse-proxies/services",
   );
-  const request = useApiCall<ReverseProxy>("/reverse-proxies/services");
+  const request = useApiCall<ReverseProxy>("/reverse-proxies/services", true);
 
   // Peers & Resources for resolving target destinations
   const { data: peers } = useFetchApi<Peer[]>("/peers");
