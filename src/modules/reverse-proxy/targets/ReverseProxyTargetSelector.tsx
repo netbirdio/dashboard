@@ -116,7 +116,7 @@ export default function ReverseProxyTargetSelector({
         max={1}
         resource={
           value?.type && isResourceTargetType(value.type) && value.resourceId
-            ? { id: value.resourceId, type: "host" }
+            ? { id: value.resourceId, type: value.type }
             : value?.type === ReverseProxyTargetType.PEER && value.peerId
             ? { id: value.peerId, type: "peer" }
             : undefined
