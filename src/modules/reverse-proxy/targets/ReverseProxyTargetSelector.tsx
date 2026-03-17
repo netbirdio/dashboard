@@ -93,7 +93,7 @@ export default function ReverseProxyTargetSelector({
       <HelpText>
         {initialNetwork
           ? "Select the resource from your network you want to expose."
-          : "Select the peer where your service is running or select a resource to expose it."}
+          : "Select the peer or resource where your service is running."}
       </HelpText>
       <PeerGroupSelector
         values={[]}

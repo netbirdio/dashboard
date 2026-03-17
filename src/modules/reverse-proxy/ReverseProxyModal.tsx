@@ -61,7 +61,10 @@ import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProx
 import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
 import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import { ReverseProxyServiceModeSelector } from "@/modules/reverse-proxy/ReverseProxyServiceModeSelector";
+import {
+  ReverseProxyServiceModeSelector,
+  SERVICE_MODES,
+} from "@/modules/reverse-proxy/ReverseProxyServiceModeSelector";
 
 type Props = {
   open: boolean;
@@ -385,25 +388,17 @@ export default function ReverseProxyModal({
   };
 
   const modalTitle = useMemo(() => {
-    if (reverseProxy) return "Edit Service";
-    switch (serviceMode) {
-      case ServiceMode.TLS:
-        return "Add TLS Passthrough";
-      case ServiceMode.TCP:
-        return "Add TCP Service";
-      case ServiceMode.UDP:
-        return "Add UDP Service";
-      case ServiceMode.HTTP:
-        return "Add HTTP/S Service";
-      default:
-        return "Add Service";
-    }
+    const prefix = reverseProxy ? "Edit" : "Add";
+    const label = serviceMode
+      ? SERVICE_MODES[serviceMode].label
+      : "Service";
+    return `${prefix} ${label}`;
   }, [reverseProxy, serviceMode]);
 
   const modalDescription = useMemo(
     () =>
       isL4Mode
-        ? "Forward traffic directly to your backend."
+        ? "Forward traffic directly to your backend service."
         : "Expose services securely through NetBird's reverse proxy.",
     [isL4Mode],
   );
