@@ -333,39 +333,34 @@ export default function ReverseProxyModal({
       },
     };
 
-    const l4TargetType =
-      l4Target?.type === ReverseProxyTargetType.PEER
-        ? ReverseProxyTargetType.PEER
-        : l4Target?.type === ReverseProxyTargetType.SUBNET
-        ? ReverseProxyTargetType.SUBNET
-        : ReverseProxyTargetType.HOST;
-
-    const l4TargetPayload: ReverseProxyTarget = {
-      target_id: l4Target?.peerId || l4Target?.resourceId || "",
-      target_type: l4TargetType,
-      port: port,
-      protocol:
-        serviceMode === ServiceMode.TLS
-          ? ReverseProxyTargetProtocol.TCP
-          : serviceMode === ServiceMode.UDP
-          ? ReverseProxyTargetProtocol.UDP
-          : ReverseProxyTargetProtocol.TCP,
-      host: l4IsCidrRange ? l4Target?.host : undefined,
-      enabled: true,
-      options: (() => {
-        const opts: Record<string, unknown> = {};
-        if (serviceMode !== ServiceMode.UDP && proxyProtocol)
-          opts.proxy_protocol = true;
-        if (timeoutOption) {
-          opts[
-            serviceMode === ServiceMode.UDP
-              ? "session_idle_timeout"
-              : "request_timeout"
-          ] = timeoutOption;
+    const l4TargetPayload: ReverseProxyTarget | undefined = l4Target
+      ? {
+          target_id: l4Target?.peerId || l4Target?.resourceId || "",
+          target_type: l4Target?.type,
+          port: port,
+          protocol:
+            serviceMode === ServiceMode.TLS
+              ? ReverseProxyTargetProtocol.TCP
+              : serviceMode === ServiceMode.UDP
+              ? ReverseProxyTargetProtocol.UDP
+              : ReverseProxyTargetProtocol.TCP,
+          host: l4IsCidrRange ? l4Target?.host : undefined,
+          enabled: true,
+          options: (() => {
+            const opts: Record<string, unknown> = {};
+            if (serviceMode !== ServiceMode.UDP && proxyProtocol)
+              opts.proxy_protocol = true;
+            if (timeoutOption) {
+              opts[
+                serviceMode === ServiceMode.UDP
+                  ? "session_idle_timeout"
+                  : "request_timeout"
+              ] = timeoutOption;
+            }
+            return Object.keys(opts).length ? opts : undefined;
+          })(),
         }
-        return Object.keys(opts).length ? opts : undefined;
-      })(),
-    };
+      : undefined;
 
     handleCreateOrUpdateProxy({
       data: {
@@ -373,7 +368,7 @@ export default function ReverseProxyModal({
         domain: fullDomain,
         mode: isL4Mode ? (serviceMode as ServiceMode) : undefined,
         listen_port: isL4Mode && isListenPortSupported ? listenPort : undefined,
-        targets: isL4Mode ? [l4TargetPayload] : targets,
+        targets: isL4Mode && l4TargetPayload ? [l4TargetPayload] : targets,
         enabled: reverseProxy?.enabled ?? true,
         pass_host_header: isL4Mode ? undefined : passHostHeader,
         rewrite_redirects: isL4Mode ? undefined : rewriteRedirects,
