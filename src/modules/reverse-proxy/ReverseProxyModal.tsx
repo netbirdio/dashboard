@@ -141,7 +141,6 @@ export default function ReverseProxyModal({
           ReverseProxyTargetType.HOST,
         resourceId: initialResource.id,
         host: addr.includes("/") ? addr.split("/")[0] : addr,
-        resourceAddress: addr,
       };
     }
     if (initialPeer) {
@@ -164,7 +163,7 @@ export default function ReverseProxyModal({
 
   // CIDR detection for L4 subnet resources
   const { isCidrRange: l4IsCidrRange, isValidCidrHost: l4IsValidCidrHost } =
-    useReverseProxyAddress(l4Target);
+    useReverseProxyAddress(l4Target, initialResource);
 
   // Proxy protocol: for L4 modes maps to target proxy_protocol
   const [proxyProtocol, setProxyProtocol] = useState(

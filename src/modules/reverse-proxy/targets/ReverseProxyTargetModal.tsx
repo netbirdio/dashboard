@@ -130,17 +130,7 @@ export default function ReverseProxyTargetModal({
   const portInputRef = useRef<HTMLInputElement>(null);
 
   const { isCidrRange, isHostEditable, isValidCidrHost } =
-    useReverseProxyAddress(
-      initialResource
-        ? target
-          ? { ...target, resourceAddress: initialResource.address }
-          : {
-              type: ReverseProxyTargetType.HOST,
-              host: "",
-              resourceAddress: initialResource.address,
-            }
-        : target,
-    );
+    useReverseProxyAddress(target, initialResource);
 
   // Normalize path for comparison (ensure it starts with / and handle empty as /)
   const normalizePath = (path: string | undefined) => {
@@ -365,14 +355,8 @@ export default function ReverseProxyTargetModal({
                 <div className="flex-1">
                   <Label>Protocol & Host / IP</Label>
                   <CidrHelpText
-                    target={
-                      initialResource && target
-                        ? {
-                            ...target,
-                            resourceAddress: initialResource.address,
-                          }
-                        : target
-                    }
+                    target={target}
+                    resource={initialResource}
                   />
                   <div className="flex items-center mt-2">
                     <div className="w-[120px]">
@@ -401,15 +385,9 @@ export default function ReverseProxyTargetModal({
                     </div>
                     <div className="flex-1">
                       <ReverseProxyAddressInput
-                        value={
-                          initialResource && target
-                            ? {
-                                ...target,
-                                resourceAddress: initialResource.address,
-                              }
-                            : target
-                        }
+                        value={target}
                         onChange={setTarget}
+                        resource={initialResource}
                         autoFocus={!!initialResource && isHostEditable}
                         className="!rounded-l-none"
                       />

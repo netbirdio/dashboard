@@ -3,10 +3,24 @@ import { Input } from "@components/Input";
 import React, { useMemo } from "react";
 import cidr from "ip-cidr";
 import type { Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
+import { ReverseProxyTargetType } from "@/interfaces/ReverseProxy";
+import { NetworkResource } from "@/interfaces/Network";
 import { cn } from "@utils/helpers";
 
-export function useReverseProxyAddress(target: Target | undefined) {
-  const resourceAddress = target?.resourceAddress || "";
+export function useReverseProxyAddress(
+  target: Target | undefined,
+  resource?: NetworkResource,
+) {
+  const resourceAddress = resource?.address || "";
+
+  const isCidrRange = useMemo(() => {
+    if (target?.type === ReverseProxyTargetType.SUBNET) return true;
+    if (!resourceAddress) return false;
+    if (!cidr.isValidCIDR(resourceAddress)) return false;
+    const parts = resourceAddress.split("/");
+    const mask = parts.length === 2 ? parseInt(parts[1], 10) : 32;
+    return mask < 32;
+  }, [target?.type, resourceAddress]);
 
   const cidrInfo = useMemo(() => {
     if (!resourceAddress) return null;
@@ -18,13 +32,6 @@ export function useReverseProxyAddress(target: Target | undefined) {
     }
   }, [resourceAddress]);
 
-  const isCidrRange = useMemo(() => {
-    if (!cidrInfo) return false;
-    const parts = resourceAddress.split("/");
-    const mask = parts.length === 2 ? parseInt(parts[1], 10) : 32;
-    return mask < 32;
-  }, [cidrInfo, resourceAddress]);
-
   const isHostEditable = isCidrRange;
 
   const isHostInCidrRange = useMemo(() => {
@@ -33,7 +40,10 @@ export function useReverseProxyAddress(target: Target | undefined) {
     return cidrInfo.contains(target.host);
   }, [cidrInfo, target?.host]);
 
-  const isValidCidrHost = !isCidrRange || (!!target?.host && isHostInCidrRange);
+  const isValidCidrHost =
+    !isCidrRange ||
+    (!!target?.host &&
+      (cidrInfo ? isHostInCidrRange : cidr.isValidAddress(target.host)));
 
   return {
     resourceAddress,
@@ -45,8 +55,17 @@ export function useReverseProxyAddress(target: Target | undefined) {
   };
 }
 
-export function CidrHelpText({ target }: { target: Target | undefined }) {
-  const { resourceAddress, cidrInfo } = useReverseProxyAddress(target);
+export function CidrHelpText({
+  target,
+  resource,
+}: {
+  target: Target | undefined;
+  resource?: NetworkResource;
+}) {
+  const { cidrInfo, resourceAddress } = useReverseProxyAddress(
+    target,
+    resource,
+  );
   if (!cidrInfo) return null;
   return (
     <HelpText className="!mt-1">
@@ -58,6 +77,7 @@ export function CidrHelpText({ target }: { target: Target | undefined }) {
 type Props = {
   value: Target | undefined;
   onChange: React.Dispatch<React.SetStateAction<Target | undefined>>;
+  resource?: NetworkResource;
   className?: string;
   autoFocus?: boolean;
 };
@@ -65,10 +85,11 @@ type Props = {
 export default function ReverseProxyAddressInput({
   value: target,
   onChange,
+  resource,
   className,
   autoFocus,
 }: Readonly<Props>) {
-  const { isHostEditable } = useReverseProxyAddress(target);
+  const { isHostEditable } = useReverseProxyAddress(target, resource);
 
   return (
     <Input

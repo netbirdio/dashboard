@@ -19,7 +19,6 @@ export type Target = {
   peerId?: string;
   resourceId?: string;
   host: string;
-  resourceAddress?: string;
 };
 
 type Props = {
@@ -139,7 +138,6 @@ export default function ReverseProxyTargetSelector({
                   ReverseProxyTargetType.HOST,
                 resourceId: res.id,
                 host: address.includes("/") ? address.split("/")[0] : address,
-                resourceAddress: address,
               });
             }
           } else {
