@@ -353,8 +353,10 @@ export default function ReverseProxyTargetModal({
             <div>
               <div className="flex mt-1">
                 <div className="flex-1">
-                  <Label>Protocol & Host / IP</Label>
-                  <CidrHelpText target={target} />
+                  <Label>
+                    Protocol & Host / IP
+                    <CidrHelpText target={target} />
+                  </Label>
                   <div className="flex items-center mt-2">
                     <div className="w-[120px]">
                       <SelectDropdown
@@ -399,7 +401,6 @@ export default function ReverseProxyTargetModal({
                       }
                     />
                   </Label>
-                  {isCidrRange && <HelpText className="!mt-1">&nbsp;</HelpText>}
                   <div className="mt-2">
                     <Input
                       ref={portInputRef}

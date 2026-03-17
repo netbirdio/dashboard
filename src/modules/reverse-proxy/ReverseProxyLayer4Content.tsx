@@ -4,7 +4,9 @@ import { ArrowRight } from "lucide-react";
 import React, { useRef } from "react";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
-import ReverseProxyAddressInput from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
+import ReverseProxyAddressInput, {
+  CidrHelpText,
+} from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
 import ReverseProxyTargetSelector, {
   type Target,
 } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
@@ -63,7 +65,12 @@ export default function ReverseProxyLayer4Content({
         <div className={"w-full max-w-[180px]"}>
           <Label>
             Listen Port
-            <HelpTooltip content={"TODO: Add description"} />
+            <HelpTooltip
+              className={"max-w-sm"}
+              content={
+                "Enter the public listen port this service will be reachable on."
+              }
+            />
           </Label>
           <div className={"mt-2"}>
             <Input
@@ -82,8 +89,11 @@ export default function ReverseProxyLayer4Content({
         <ArrowRight size={16} className="text-nb-gray-400 shrink-0 mt-6" />
         <div className={"w-full flex"}>
           <div className={"w-full"}>
-            <Label>Host / IP</Label>
-            <div className="flex w-full mt-2">
+            <Label>
+              Host / IP
+              <CidrHelpText target={l4Target} />
+            </Label>
+            <div className="flex w-full mt-2 relative">
               <ReverseProxyAddressInput
                 value={l4Target}
                 onChange={setL4Target}

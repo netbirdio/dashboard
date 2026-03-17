@@ -1,4 +1,3 @@
-import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import React, { useMemo } from "react";
 import cidr from "ip-cidr";
@@ -6,6 +5,7 @@ import type { Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetS
 import { ReverseProxyTargetType } from "@/interfaces/ReverseProxy";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { cn } from "@utils/helpers";
+import { HelpTooltip } from "@components/HelpTooltip";
 
 export function useReverseProxyAddress(target: Target | undefined) {
   const { resources } = useReverseProxies();
@@ -57,17 +57,11 @@ export function useReverseProxyAddress(target: Target | undefined) {
   };
 }
 
-export function CidrHelpText({
-  target,
-}: {
-  target: Target | undefined;
-}) {
+export function CidrHelpText({ target }: { target: Target | undefined }) {
   const { cidrInfo, resourceAddress } = useReverseProxyAddress(target);
   if (!cidrInfo) return null;
   return (
-    <HelpText className="!mt-1">
-      Enter an IP address within {resourceAddress}
-    </HelpText>
+    <HelpTooltip content={`Enter an IP address within ${resourceAddress}`} />
   );
 }
 
