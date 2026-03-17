@@ -30,7 +30,7 @@ type ServiceModeConfig = {
 };
 
 // TODO Update descriptions with examples
-const SERVICE_MODES: Record<ServiceMode, ServiceModeConfig> = {
+export const SERVICE_MODES: Record<ServiceMode, ServiceModeConfig> = {
   [ServiceMode.HTTP]: {
     label: "HTTP/S Service",
     description: "Reverse proxy with path routing, auth, and load balancing.",
@@ -95,23 +95,26 @@ export const ReverseProxyServiceModeSelector = ({
         </SelectTrigger>
         <SelectContent data-cy={"service-mode-selection"}>
           {Object.entries(SERVICE_MODES)
-            .filter(([mode]) => isL4Supported || !isL4ServiceMode(mode as ServiceMode))
+            .filter(
+              ([mode]) =>
+                isL4Supported || !isL4ServiceMode(mode as ServiceMode),
+            )
             .map(([mode, config]) => (
-            <SelectItem
-              key={mode}
-              value={mode}
-              extra={
-                <HelpTooltip
-                  triggerClassName={"ml-[0.01rem]"}
-                  align={"center"}
-                  side={"right"}
-                  content={<>{config.description}</>}
-                />
-              }
-            >
-              <span className="whitespace-nowrap">{config.label}</span>
-            </SelectItem>
-          ))}
+              <SelectItem
+                key={mode}
+                value={mode}
+                extra={
+                  <HelpTooltip
+                    triggerClassName={"ml-[0.01rem]"}
+                    align={"center"}
+                    side={"right"}
+                    content={<>{config.description}</>}
+                  />
+                }
+              >
+                <span className="whitespace-nowrap">{config.label}</span>
+              </SelectItem>
+            ))}
         </SelectContent>
       </Select>
     </div>

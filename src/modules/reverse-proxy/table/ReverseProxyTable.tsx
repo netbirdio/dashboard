@@ -29,6 +29,7 @@ import ReverseProxyNameCell from "@/modules/reverse-proxy/table/ReverseProxyName
 import ReverseProxyTargetsCell from "@/modules/reverse-proxy/table/ReverseProxyTargetsCell";
 import ReverseProxyTargetsTable from "@/modules/reverse-proxy/targets/ReverseProxyTargetsTable";
 import ReverseProxyStatusCell from "@/modules/reverse-proxy/table/ReverseProxyStatusCell";
+import { ReverseProxyTypeCell } from "@/modules/reverse-proxy/table/ReverseProxyTypeCell";
 
 const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   {
@@ -38,6 +39,14 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
     },
     sortingFn: "text",
     cell: ({ row }) => <ReverseProxyNameCell reverseProxy={row.original} />,
+  },
+  {
+    accessorKey: "mode",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Type</DataTableHeader>;
+    },
+    sortingFn: "text",
+    cell: ({ row }) => <ReverseProxyTypeCell reverseProxy={row.original} />,
   },
   {
     id: "status",

@@ -1,10 +1,9 @@
 import { cn } from "@utils/helpers";
 import { ChevronDown, ChevronRightIcon, LockIcon } from "lucide-react";
 import * as React from "react";
-import { useCallback } from "react";
-import { ReverseProxy, ServiceMode, isL4Mode } from "@/interfaces/ReverseProxy";
+import { isL4Mode, ReverseProxy, ServiceMode } from "@/interfaces/ReverseProxy";
 import ExternalLinkText from "@components/ExternalLinkText";
-import { notify } from "@components/Notification";
+import CopyToClipboardText from "@components/CopyToClipboardText";
 
 type Props = {
   reverseProxy?: ReverseProxy;
@@ -25,20 +24,9 @@ export default function ReverseProxyNameCell({
     isL4 && reverseProxy?.listen_port ? `:${reverseProxy.listen_port}` : "";
   const isLinkable = !isL4 || reverseProxy?.mode === ServiceMode.TLS;
 
-  const handleCopy = useCallback(() => {
-    const text = `${displayDomain}${portSuffix}`;
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-      notify({
-        title: "Copied to clipboard",
-        description: text,
-      });
-    });
-  }, [displayDomain, portSuffix]);
   const isEnabled = enabled ?? reverseProxy?.enabled ?? false;
   const hasExpandableTargets =
-    (reverseProxy?.targets?.length ?? 0) > 0 &&
-    !isL4Mode(reverseProxy?.mode);
+    (reverseProxy?.targets?.length ?? 0) > 0 && !isL4Mode(reverseProxy?.mode);
 
   return (
     <div
@@ -77,15 +65,6 @@ export default function ReverseProxyNameCell({
         />
         <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 truncate">
           <div className="flex items-center gap-2">
-            {reverseProxy?.mode && isL4Mode(reverseProxy.mode) ? (
-              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded uppercase leading-none bg-green-500/10 text-green-400 border border-green-500/20 shrink-0 w-[38px] text-center">
-                {reverseProxy.mode.toUpperCase()}
-              </span>
-            ) : reverseProxy && (
-              <span className="text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded uppercase leading-none bg-sky-500/10 text-sky-400 border border-sky-500/20 shrink-0 w-[38px] text-center">
-                HTTP
-              </span>
-            )}
             {displayDomain && isLinkable ? (
               <ExternalLinkText href={`https://${displayDomain}${portSuffix}`}>
                 <span className="font-medium truncate">
@@ -94,17 +73,10 @@ export default function ReverseProxyNameCell({
                 </span>
               </ExternalLinkText>
             ) : (
-              <span
-                className="font-medium truncate cursor-pointer hover:underline"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleCopy();
-                }}
-                title="Click to copy"
-              >
+              <CopyToClipboardText>
                 {displayDomain}
                 {portSuffix}
-              </span>
+              </CopyToClipboardText>
             )}
           </div>
         </div>
