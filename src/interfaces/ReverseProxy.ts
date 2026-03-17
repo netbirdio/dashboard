@@ -21,12 +21,6 @@ export interface ReverseProxy {
   meta?: ReverseProxyMeta;
 }
 
-export interface ProxyCluster {
-  address: string;
-  connected_proxies: number;
-  supports_custom_ports?: boolean;
-}
-
 export interface ReverseProxyMeta {
   created_at: string;
   status: ReverseProxyStatus;
