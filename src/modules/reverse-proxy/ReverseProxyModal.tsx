@@ -457,6 +457,9 @@ export default function ReverseProxyModal({
                   setListenPort={setListenPort}
                   port={port}
                   setPort={setPort}
+                  initialResource={initialResource}
+                  initialPeer={initialPeer}
+                  initialNetwork={initialNetwork}
                 />
               ) : (
                 <ReverseProxyHTTPTargets

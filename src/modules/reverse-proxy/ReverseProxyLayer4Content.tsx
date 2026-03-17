@@ -2,6 +2,8 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { ArrowRight } from "lucide-react";
 import React, { useRef } from "react";
+import { Network, NetworkResource } from "@/interfaces/Network";
+import { Peer } from "@/interfaces/Peer";
 import ReverseProxyAddressInput from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
 import ReverseProxyTargetSelector, {
   type Target,
@@ -16,6 +18,9 @@ type Props = {
   setListenPort: (port: number) => void;
   port: number;
   setPort: (port: number) => void;
+  initialResource?: NetworkResource;
+  initialPeer?: Peer;
+  initialNetwork?: Network;
 };
 
 export default function ReverseProxyLayer4Content({
@@ -26,27 +31,33 @@ export default function ReverseProxyLayer4Content({
   setListenPort,
   port,
   setPort,
+  initialResource,
+  initialPeer,
+  initialNetwork,
 }: Readonly<Props>) {
   const listenPortRef = useRef<HTMLInputElement>(null);
   const portRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className={"-mt-1 flex flex-col gap-8"}>
-      <ReverseProxyTargetSelector
-        value={l4Target}
-        onChange={(selection) => {
-          setL4Target(selection);
-          if (selection) {
-            setTimeout(() => {
-              if (isListenPortSupported) {
-                listenPortRef.current?.focus();
-              } else {
-                portRef.current?.focus();
-              }
-            }, 0);
-          }
-        }}
-      />
+      {!initialResource && !initialPeer && (
+        <ReverseProxyTargetSelector
+          value={l4Target}
+          initialNetwork={initialNetwork}
+          onChange={(selection) => {
+            setL4Target(selection);
+            if (selection) {
+              setTimeout(() => {
+                if (isListenPortSupported) {
+                  listenPortRef.current?.focus();
+                } else {
+                  portRef.current?.focus();
+                }
+              }, 0);
+            }
+          }}
+        />
+      )}
 
       <div className={"flex gap-4 items-center"}>
         <div className={"w-full max-w-[180px]"}>
