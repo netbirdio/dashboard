@@ -44,14 +44,15 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
           : `/${target.path}`
         : "";
       const fullUrl = `${target.proxy.domain}${path}`;
-      const disabled = target.enabled === false;
-      const isEnabled = target.proxy.enabled && target.enabled !== false;
+      const disabled = !target.enabled;
+      const isEnabled = target.proxy.enabled && target.enabled;
 
       return (
         <div className={disabled ? "opacity-40" : ""}>
           <ReverseProxyNameCell
             domain={fullUrl}
             enabled={isEnabled}
+            reverseProxy={row.original.proxy}
             showChevron={false}
           />
         </div>
@@ -62,7 +63,7 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
     accessorKey: "arrow",
     header: "",
     cell: ({ row }) => (
-      <ReverseProxyArrowCell disabled={row.original.enabled === false} />
+      <ReverseProxyArrowCell disabled={!row.original.enabled} />
     ),
   },
   {
@@ -120,7 +121,13 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
   {
     id: "searchString",
     accessorFn: (row) => {
-      return [row.proxy.domain, row.destination, row.host, row.port, row.path].join("");
+      return [
+        row.proxy.domain,
+        row.destination,
+        row.host,
+        row.port,
+        row.path,
+      ].join("");
     },
   },
 ];

@@ -80,13 +80,15 @@ export const DeviceCard = ({
             hideTooltip={true}
           />
         </span>
-        <span
-          className={
-            "text-sm font-normal text-nb-gray-400 relative whitespace-nowrap"
-          }
-        >
-          <TruncatedText text={descriptionText} maxWidth={"160px"} />
-        </span>
+        {descriptionText && (
+          <span
+            className={
+              "text-sm font-normal text-nb-gray-400 relative whitespace-nowrap"
+            }
+          >
+            <TruncatedText text={descriptionText} maxWidth={"160px"} />
+          </span>
+        )}
       </div>
     </div>
   );
