@@ -70,7 +70,7 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   {
     accessorKey: "targets",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Targets</DataTableHeader>;
+      return <DataTableHeader column={column}>Target(s)</DataTableHeader>;
     },
     cell: ({ row }) => <ReverseProxyTargetsCell reverseProxy={row.original} />,
   },
@@ -133,6 +133,7 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       useRowId={true}
       searchPlaceholder={"Search by URL, domain, or target..."}
       columnVisibility={{ searchString: false }}
+      tableCellClassName={"h-[80px]"}
       renderExpandedRow={(reverseProxy) => {
         if (isL4Mode(reverseProxy.mode)) return;
         const hasTargets = (reverseProxy?.targets?.length ?? 0) > 0;
