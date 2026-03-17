@@ -9,7 +9,7 @@ import { MoreVertical, Settings, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
+import { isL4Mode, ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
 
 type Props = {
   target: ReverseProxyFlatTarget;
@@ -40,7 +40,11 @@ export default function ReverseProxyFlatTargetActionCell({
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
-              openTargetModal({ proxy: target.proxy, target: target });
+              if (isL4Mode(target.proxy.mode)) {
+                openModal({ proxy: target.proxy });
+              } else {
+                openTargetModal({ proxy: target.proxy, target: target });
+              }
             }}
             disabled={!permission?.services?.update}
           >

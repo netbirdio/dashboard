@@ -389,9 +389,7 @@ export default function ReverseProxyModal({
 
   const modalTitle = useMemo(() => {
     const prefix = reverseProxy ? "Edit" : "Add";
-    const label = serviceMode
-      ? SERVICE_MODES[serviceMode].label
-      : "Service";
+    const label = serviceMode ? SERVICE_MODES[serviceMode].label : "Service";
     return `${prefix} ${label}`;
   }, [reverseProxy, serviceMode]);
 
@@ -527,6 +525,21 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"settings"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-6"}>
+              {(serviceMode === ServiceMode.TCP ||
+                serviceMode === ServiceMode.TLS) && (
+                <FancyToggleSwitch
+                  value={proxyProtocol}
+                  onChange={setProxyProtocol}
+                  label={
+                    <>
+                      <MapPinned size={15} />
+                      Preserve Client Source IP
+                    </>
+                  }
+                  helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
+                />
+              )}
+
               {isL4Mode && (
                 <>
                   <div className={"flex items-center justify-between"}>
@@ -561,20 +574,6 @@ export default function ReverseProxyModal({
                     />
                   </div>
                 </>
-              )}
-              {(serviceMode === ServiceMode.TCP ||
-                serviceMode === ServiceMode.TLS) && (
-                <FancyToggleSwitch
-                  value={proxyProtocol}
-                  onChange={setProxyProtocol}
-                  label={
-                    <>
-                      <MapPinned size={15} />
-                      Preserve Client Source IP
-                    </>
-                  }
-                  helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
-                />
               )}
 
               {!isL4Mode && (
