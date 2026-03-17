@@ -17,7 +17,6 @@ import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@components/DatePickerWithRange";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import {
-  isL4Event,
   REVERSE_PROXY_EVENTS_DOCS_LINK,
   ReverseProxy,
   ReverseProxyEvent,
@@ -34,6 +33,7 @@ import { ReverseProxyEventsTimeCell } from "@/modules/reverse-proxy/events/Rever
 import { ReverseProxyEventsAuthMethodCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsAuthMethodCell";
 import { ReverseProxyEventsReasonCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsReasonCell";
 import { ReverseProxyEventsDurationCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsDurationCell";
+import { ReverseProxyEventsBytesCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsBytesCell";
 
 export const makeEventsColumns = (
   servicesMap: Map<string, ReverseProxy>,
@@ -119,6 +119,16 @@ export const makeEventsColumns = (
     cell: ({ row }) => <ReverseProxyEventsDurationCell event={row.original} />,
   },
   {
+    id: "bytes",
+    accessorFn: (row) => (row.bytes_download ?? 0) + (row.bytes_upload ?? 0),
+    header: ({ column }) => (
+      <DataTableHeader column={column} sorting={false}>
+        Bytes
+      </DataTableHeader>
+    ),
+    cell: ({ row }) => <ReverseProxyEventsBytesCell event={row.original} />,
+  },
+  {
     id: "auth_method",
     accessorKey: "auth_method_used",
     header: ({ column }) => (
@@ -184,10 +194,7 @@ export default function ReverseProxyEventsTable({
     return map;
   }, [services]);
 
-  const columns = useMemo(
-    () => makeEventsColumns(servicesMap),
-    [servicesMap],
-  );
+  const columns = useMemo(() => makeEventsColumns(servicesMap), [servicesMap]);
 
   const activeStatus = getFilter("status");
 
