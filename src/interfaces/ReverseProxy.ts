@@ -180,3 +180,6 @@ export const REVERSE_PROXY_DOMAIN_VERIFICATION_LINK =
 
 export const REVERSE_PROXY_EVENTS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy/access-logs";
+
+export const REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK =
+  "https://docs.netbird.io/manage/reverse-proxy#troubleshooting";

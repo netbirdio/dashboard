@@ -1,4 +1,5 @@
 import {
+  REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK,
   ReverseProxy,
   ReverseProxyMeta,
   ReverseProxyStatus,
@@ -6,7 +7,8 @@ import {
 import useFetchApi from "@utils/api";
 import Badge from "@components/Badge";
 import FullTooltip from "@components/FullTooltip";
-import { AlertTriangle, Loader2 } from "lucide-react";
+import InlineLink from "@components/InlineLink";
+import { CircleAlert, Loader2 } from "lucide-react";
 import { useRef } from "react";
 
 type Props = {
@@ -63,8 +65,15 @@ export default function ReverseProxyStatusCell({
       return (
         <FullTooltip
           content={
-            <div className={"flex flex-col gap-1 text-xs max-w-xs"}>
-              TODO: Add helpful tooltip
+            <div className={"text-xs max-w-xs"}>
+              Something went wrong while setting up this service. See our{" "}
+              <InlineLink
+                href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
+                target={"_blank"}
+              >
+                Troubleshooting Docs
+              </InlineLink>{" "}
+              for more details.
             </div>
           }
           align={"center"}
@@ -72,7 +81,7 @@ export default function ReverseProxyStatusCell({
         >
           <div className={"flex"}>
             <Badge variant={"red"}>
-              <AlertTriangle size={11} />
+              <CircleAlert size={11} />
               Error
             </Badge>
           </div>
@@ -83,8 +92,15 @@ export default function ReverseProxyStatusCell({
       return (
         <FullTooltip
           content={
-            <div className={"flex flex-col gap-1 text-xs max-w-xs"}>
-              TODO: Add helpful tooltip
+            <div className={"text-xs max-w-xs"}>
+              The tunnel to the target peer could not be established. See our{" "}
+              <InlineLink
+                href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
+                target={"_blank"}
+              >
+                Troubleshooting Docs
+              </InlineLink>{" "}
+              for more details.
             </div>
           }
           align={"center"}
@@ -92,7 +108,7 @@ export default function ReverseProxyStatusCell({
         >
           <div className={"flex"}>
             <Badge variant={"red"}>
-              <AlertTriangle size={11} />
+              <CircleAlert size={11} />
               Tunnel not created
             </Badge>
           </div>
