@@ -68,7 +68,9 @@ export default function ReverseProxyLayer4Content({
             <HelpTooltip
               className={"max-w-sm"}
               content={
-                "Enter the public listen port this service will be reachable on."
+                isListenPortSupported
+                  ? "Enter the public listen port this service will be reachable on."
+                  : "The listen port will be automatically assigned after the service is created."
               }
             />
           </Label>
