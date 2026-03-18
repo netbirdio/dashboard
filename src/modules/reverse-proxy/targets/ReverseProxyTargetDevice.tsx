@@ -18,6 +18,7 @@ type Props = {
   target: ReverseProxyTarget;
   showDescription?: boolean;
   wrapperClassName?: string;
+  skeletonClassName?: string;
   deviceClassName?: string;
   address?: string;
 };
@@ -26,6 +27,7 @@ export const ReverseProxyTargetDevice = ({
   target,
   showDescription,
   wrapperClassName = "h-[59px]",
+  skeletonClassName = "min-h-[59px]",
   deviceClassName = "",
   address,
 }: Props) => {
@@ -61,7 +63,7 @@ export const ReverseProxyTargetDevice = ({
   };
 
   if (isPeersLoading || isResourceLoading || isNetworksLoading)
-    return <SkeletonDeviceCard />;
+    return <SkeletonDeviceCard className={skeletonClassName} />;
 
   if (!peer && !resource)
     return (

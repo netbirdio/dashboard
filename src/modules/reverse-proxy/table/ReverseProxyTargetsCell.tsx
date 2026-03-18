@@ -27,7 +27,8 @@ export default function ReverseProxyTargetsCell({
       <ReverseProxyTargetDevice
         target={target}
         address={address}
-        wrapperClassName={""}
+        wrapperClassName={"h-[48px]"}
+        skeletonClassName={"h-[48px]"}
       />
     );
   }
