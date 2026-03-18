@@ -9,7 +9,7 @@ import { MoreVertical, Settings, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
+import { isL4Mode, ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
 
 type Props = {
   target: ReverseProxyFlatTarget;
@@ -40,7 +40,11 @@ export default function ReverseProxyFlatTargetActionCell({
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
-              openTargetModal({ proxy: target.proxy, target: target });
+              if (isL4Mode(target.proxy.mode)) {
+                openModal({ proxy: target.proxy });
+              } else {
+                openTargetModal({ proxy: target.proxy, target: target });
+              }
             }}
             disabled={!permission?.services?.update}
           >
@@ -57,9 +61,9 @@ export default function ReverseProxyFlatTargetActionCell({
             }}
             disabled={!permission?.services?.update}
           >
-            <div className={"flex gap-3 items-center"}>
+            <div className={"flex gap-3 items-center pr-6"}>
               <Settings size={14} className={"shrink-0"} />
-              Settings
+              Advanced Settings
             </div>
           </DropdownMenuItem>
 

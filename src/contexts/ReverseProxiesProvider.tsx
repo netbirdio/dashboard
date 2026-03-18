@@ -26,6 +26,8 @@ import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProx
 
 type ReverseProxiesContextValue = {
   reverseProxies: ReverseProxy[] | undefined;
+  resources: NetworkResource[] | undefined;
+  peers: Peer[] | undefined;
   isLoading: boolean;
   openModal: (options?: OpenModalOptions) => void;
   openTargetModal: (options: OpenTargetModalOptions) => void;
@@ -93,7 +95,7 @@ export default function ReverseProxiesProvider({
   const { data: rawReverseProxies, isLoading } = useFetchApi<ReverseProxy[]>(
     "/reverse-proxies/services",
   );
-  const request = useApiCall<ReverseProxy>("/reverse-proxies/services");
+  const request = useApiCall<ReverseProxy>("/reverse-proxies/services", true);
 
   // Peers & Resources for resolving target destinations
   const { data: peers } = useFetchApi<Peer[]>("/peers");
@@ -465,6 +467,8 @@ export default function ReverseProxiesProvider({
     <ReverseProxiesContext.Provider
       value={{
         reverseProxies,
+        resources,
+        peers,
         isLoading,
         openModal,
         openTargetModal,

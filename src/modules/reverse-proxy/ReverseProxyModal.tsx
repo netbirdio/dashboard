@@ -1,15 +1,9 @@
 "use client";
 
 import Button from "@components/Button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
-import InlineLink, { InlineButtonLink } from "@components/InlineLink";
+import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import SettingCard from "@components/SettingCard";
@@ -22,27 +16,19 @@ import {
 import Paragraph from "@components/Paragraph";
 import ModalHeader from "@components/modal/ModalHeader";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
-import { ToggleSwitch } from "@components/ToggleSwitch";
 import {
-  AlertTriangle,
   ArrowRight,
-  ArrowUpRight,
   Binary,
-  Edit,
+  ClockFadingIcon,
   ExternalLinkIcon,
   GlobeIcon,
   LockKeyhole,
-  MinusCircleIcon,
-  MoreVertical,
+  MapPinned,
   PlusCircle,
-  PlusIcon,
   RectangleEllipsis,
-  Server,
   Settings,
-  Text,
   Users,
 } from "lucide-react";
-import { Callout } from "@components/Callout";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
@@ -51,23 +37,38 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
+  isL4Mode as isL4ServiceMode,
   REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
   REVERSE_PROXY_SERVICES_DOCS_LINK,
   REVERSE_PROXY_SETTINGS_DOCS_LINK,
   ReverseProxy,
   ReverseProxyAuth,
   ReverseProxyDomain,
-  ReverseProxyDomainType,
   ReverseProxyTarget,
+  ReverseProxyTargetProtocol,
+  ReverseProxyTargetType,
+  ServiceMode,
 } from "@/interfaces/ReverseProxy";
-import { CustomDomainSelector } from "./domain/CustomDomainSelector";
-import { cn } from "@utils/helpers";
+import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
+import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
 import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
+import ReverseProxyHTTPTargets from "@/modules/reverse-proxy/ReverseProxyHTTPTargets";
+import ReverseProxyLayer4Content from "@/modules/reverse-proxy/ReverseProxyLayer4Content";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
+import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
+import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
+import {
+  validateTimeout,
+  validateSessionIdleTimeout,
+} from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
-import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import {
+  ReverseProxyServiceModeSelector,
+  SERVICE_MODES,
+} from "@/modules/reverse-proxy/ReverseProxyServiceModeSelector";
 
 type Props = {
   open: boolean;
@@ -84,41 +85,6 @@ type Props = {
   onSuccess?: () => void;
 };
 
-// Helper to parse domain into subdomain and base domain
-function parseDomain(fullDomain: string): {
-  subdomain: string;
-  baseDomain: string;
-  isCustom: boolean;
-} {
-  const knownDomains = ["netbird.cloud", "netbird.io", "netbird.app"];
-
-  for (const known of knownDomains) {
-    if (fullDomain.endsWith(`.${known}`)) {
-      return {
-        subdomain: fullDomain.slice(0, -(known.length + 1)),
-        baseDomain: known,
-        isCustom: false,
-      };
-    }
-  }
-
-  // Custom domain - find the first dot to split
-  const firstDot = fullDomain.indexOf(".");
-  if (firstDot > 0) {
-    return {
-      subdomain: fullDomain.slice(0, firstDot),
-      baseDomain: fullDomain.slice(firstDot + 1),
-      isCustom: true,
-    };
-  }
-
-  return {
-    subdomain: fullDomain,
-    baseDomain: "netbird.cloud",
-    isCustom: false,
-  };
-}
-
 export default function ReverseProxyModal({
   open,
   onOpenChange,
@@ -134,70 +100,118 @@ export default function ReverseProxyModal({
   const router = useRouter();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
-  const { reverseProxies, handleCreateOrUpdateProxy } = useReverseProxies();
+  const { handleCreateOrUpdateProxy } = useReverseProxies();
 
-  // Check if the proxy's cluster exists in available free domains
-  const isClusterConnected = useMemo(() => {
-    if (!reverseProxy?.proxy_cluster) return false;
-    return domains?.some(
-      (d) =>
-        d.type === ReverseProxyDomainType.FREE &&
-        d.domain === reverseProxy.proxy_cluster,
-    );
-  }, [reverseProxy?.proxy_cluster, domains]);
+  const {
+    subdomain,
+    setSubdomain,
+    baseDomain,
+    setBaseDomain,
+    fullDomain,
+    domainAlreadyExists,
+    isClusterConnected,
+  } = useReverseProxyDomain({ reverseProxy, domains, initialSubdomain });
 
   const [tab, setTab] = useState(() => {
     if (initialTab && initialTab !== "") return initialTab;
     return "targets";
   });
 
-  // Parse existing domain if editing
-  const parsed = reverseProxy?.domain ? parseDomain(reverseProxy.domain) : null;
+  const [serviceMode, setServiceMode] = useState<ServiceMode>(
+    reverseProxy?.mode ?? ServiceMode.HTTP,
+  );
 
-  // Form state
-  const [subdomain, setSubdomain] = useState(
-    parsed?.subdomain ||
-      initialSubdomain
-        ?.toLowerCase()
-        .replace(/\s+/g, "-")
-        .replace(/[^a-z0-9-]/g, "") ||
+  const isL4Mode = isL4ServiceMode(serviceMode);
+
+  // L4 target selection state (TLS/TCP/UDP) - target is in targets[0]
+  const [l4Target, setL4Target] = useState<Target | undefined>(() => {
+    const existing = isL4ServiceMode(reverseProxy?.mode)
+      ? reverseProxy?.targets?.[0]
+      : undefined;
+    if (existing) {
+      const isPeer = existing.target_type === ReverseProxyTargetType.PEER;
+      return {
+        type: existing.target_type,
+        peerId: isPeer ? existing.target_id : undefined,
+        resourceId: isPeer ? undefined : existing.target_id,
+        host: existing.host || "",
+      };
+    }
+    if (initialResource) {
+      const addr = initialResource.address;
+      return {
+        type:
+          (initialResource.type as ReverseProxyTargetType) ??
+          ReverseProxyTargetType.HOST,
+        resourceId: initialResource.id,
+        host: addr.includes("/") ? addr.split("/")[0] : addr,
+      };
+    }
+    if (initialPeer) {
+      return {
+        type: ReverseProxyTargetType.PEER,
+        peerId: initialPeer.id,
+        host: initialPeer.ip,
+      };
+    }
+    return undefined;
+  });
+
+  const [port, setPort] = useState<number>(
+    reverseProxy?.targets?.[0]?.port || 0,
+  );
+
+  const [listenPort, setListenPort] = useState<number>(
+    reverseProxy?.listen_port || 0,
+  );
+
+  // CIDR detection for L4 subnet resources
+  const { isCidrRange: l4IsCidrRange, isValidCidrHost: l4IsValidCidrHost } =
+    useReverseProxyAddress(l4Target);
+
+  // Proxy protocol: for L4 modes maps to target proxy_protocol
+  const [proxyProtocol, setProxyProtocol] = useState(
+    reverseProxy?.targets?.[0]?.options?.proxy_protocol ?? false,
+  );
+
+  const [timeoutOption, setTimeoutOption] = useState(
+    reverseProxy?.targets?.[0]?.options?.request_timeout ??
+      reverseProxy?.targets?.[0]?.options?.session_idle_timeout ??
       "",
   );
 
-  const [baseDomain, setBaseDomain] = useState(() => {
-    if (parsed?.baseDomain) return parsed.baseDomain;
-    const validatedDomains = domains?.filter((d) => d.validated) || [];
-    const customDomain = validatedDomains.find(
-      (d) => d.type === ReverseProxyDomainType.CUSTOM,
-    );
-    const freeDomain = validatedDomains.find(
-      (d) => d.type === ReverseProxyDomainType.FREE,
-    );
-    return customDomain?.domain || freeDomain?.domain || "";
-  });
+  const timeoutError = useMemo(() => {
+    if (!timeoutOption) return undefined;
+    return serviceMode === ServiceMode.UDP
+      ? validateSessionIdleTimeout(timeoutOption)
+      : validateTimeout(timeoutOption);
+  }, [timeoutOption, serviceMode]);
 
   const [targets, setTargets] = useState<ReverseProxyTarget[]>(
     reverseProxy?.targets || [],
   );
+
+  const selectedDomain = useMemo(
+    () =>
+      domains?.find(
+        (d) => d.domain === baseDomain || d.target_cluster === baseDomain,
+      ),
+    [domains, baseDomain],
+  );
+
+  // Whether a custom listen port is supported (TLS always, TCP/UDP only when cluster supports it)
+  const isListenPortSupported = useMemo(() => {
+    if (serviceMode !== ServiceMode.TCP && serviceMode !== ServiceMode.UDP)
+      return true;
+    return selectedDomain?.supports_custom_ports ?? false;
+  }, [selectedDomain, serviceMode]);
+
   const [passHostHeader, setPassHostHeader] = useState(
     reverseProxy?.pass_host_header ?? false,
   );
   const [rewriteRedirects, setRewriteRedirects] = useState(
     reverseProxy?.rewrite_redirects ?? false,
   );
-
-  // Compute full domain
-  const fullDomain = useMemo(() => {
-    if (!baseDomain) return subdomain;
-    return `${subdomain}.${baseDomain}`;
-  }, [subdomain, baseDomain]);
-
-  const domainAlreadyExists = useMemo(() => {
-    if (!reverseProxies || !fullDomain) return false;
-    return reverseProxies.some(
-      (p) => p.domain === fullDomain && p.id !== reverseProxy?.id,
-    );
-  }, [reverseProxies, fullDomain, reverseProxy?.id]);
 
   // Authentication options - initialized from existing reverseProxy.auth
   const [passwordEnabled, setPasswordEnabled] = useState(
@@ -233,19 +247,32 @@ export default function ReverseProxyModal({
     null,
   );
 
-  const isSubdomainValid = useMemo(() => {
-    return (
-      subdomain.length > 0 && baseDomain.length > 0 && !domainAlreadyExists
-    );
-  }, [subdomain, baseDomain, domainAlreadyExists]);
-
   const canContinueToSettings = useMemo(() => {
-    return isSubdomainValid && targets.length > 0;
-  }, [isSubdomainValid, targets]);
-
-  const submitDisabled = useMemo(() => {
-    return !canContinueToSettings;
-  }, [canContinueToSettings]);
+    const isSubdomainValid =
+      subdomain.length > 0 && baseDomain.length > 0 && !domainAlreadyExists;
+    const isValidPort = (port: number) => port >= 1 && port <= 65535;
+    const hasHttpEndpoint = !isL4Mode && targets.length > 0;
+    const hasL4Endpoint =
+      isL4Mode &&
+      !!l4Target &&
+      l4IsValidCidrHost &&
+      isValidPort(port) &&
+      (!isListenPortSupported || isValidPort(listenPort));
+    const hasAnyEndpoint = hasHttpEndpoint || hasL4Endpoint;
+    return isSubdomainValid && hasAnyEndpoint;
+  }, [
+    subdomain,
+    baseDomain,
+    domainAlreadyExists,
+    serviceMode,
+    targets.length,
+    isL4Mode,
+    l4Target,
+    l4IsValidCidrHost,
+    port,
+    isListenPortSupported,
+    listenPort,
+  ]);
 
   const saveTarget = (targetData: ReverseProxyTarget) => {
     if (editingTargetIndex !== null) {
@@ -282,8 +309,8 @@ export default function ReverseProxyModal({
     !passwordEnabled && !pinEnabled && !bearerEnabled && !linkAuthEnabled;
 
   const handleSubmit = async () => {
-    // Show warning if no authentication is configured
-    if (hasNoAuth) {
+    // Show warning if no authentication is configured (HTTP only; TLS is pass-through)
+    if (!isL4Mode && hasNoAuth) {
       const confirmed = await confirm({
         title: "No Authentication Configured",
         description:
@@ -316,15 +343,46 @@ export default function ReverseProxyModal({
       },
     };
 
+    const l4TargetPayload: ReverseProxyTarget | undefined = l4Target
+      ? {
+          target_id: l4Target?.peerId || l4Target?.resourceId || "",
+          target_type: l4Target?.type,
+          port: port,
+          protocol:
+            serviceMode === ServiceMode.TLS
+              ? ReverseProxyTargetProtocol.TCP
+              : serviceMode === ServiceMode.UDP
+              ? ReverseProxyTargetProtocol.UDP
+              : ReverseProxyTargetProtocol.TCP,
+          host: l4IsCidrRange ? l4Target?.host : undefined,
+          enabled: true,
+          options: (() => {
+            const opts: Record<string, unknown> = {};
+            if (serviceMode !== ServiceMode.UDP && proxyProtocol)
+              opts.proxy_protocol = true;
+            if (timeoutOption) {
+              opts[
+                serviceMode === ServiceMode.UDP
+                  ? "session_idle_timeout"
+                  : "request_timeout"
+              ] = timeoutOption;
+            }
+            return Object.keys(opts).length ? opts : undefined;
+          })(),
+        }
+      : undefined;
+
     handleCreateOrUpdateProxy({
       data: {
         name: fullDomain,
         domain: fullDomain,
-        targets,
+        mode: isL4Mode ? (serviceMode as ServiceMode) : undefined,
+        listen_port: isL4Mode && isListenPortSupported ? listenPort : undefined,
+        targets: isL4Mode && l4TargetPayload ? [l4TargetPayload] : targets,
         enabled: reverseProxy?.enabled ?? true,
-        pass_host_header: passHostHeader,
-        rewrite_redirects: rewriteRedirects,
-        auth,
+        pass_host_header: isL4Mode ? undefined : passHostHeader,
+        rewrite_redirects: isL4Mode ? undefined : rewriteRedirects,
+        auth: isL4Mode ? undefined : auth,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -334,6 +392,20 @@ export default function ReverseProxyModal({
     });
   };
 
+  const modalTitle = useMemo(() => {
+    const prefix = reverseProxy ? "Edit" : "Add";
+    const label = serviceMode ? SERVICE_MODES[serviceMode].label : "Service";
+    return `${prefix} ${label}`;
+  }, [reverseProxy, serviceMode]);
+
+  const modalDescription = useMemo(
+    () =>
+      isL4Mode
+        ? "Forward traffic directly to your backend service."
+        : "Expose services securely through NetBird's reverse proxy.",
+    [isL4Mode],
+  );
+
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
       <ModalContent
@@ -341,23 +413,23 @@ export default function ReverseProxyModal({
       >
         <ModalHeader
           icon={<ReverseProxyIcon className={"fill-netbird"} size={18} />}
-          title={reverseProxy ? "Edit Service" : "Add Service"}
-          description={
-            "Expose services securely through NetBird's reverse proxy."
-          }
+          title={modalTitle}
+          description={modalDescription}
           color={"netbird"}
         />
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList justify={"start"} className={"px-8"}>
             <TabsTrigger value={"targets"}>
-              <Text size={14} />
-              Details
+              <ReverseProxyIcon size={14} />
+              Service
             </TabsTrigger>
-            <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
-              <LockKeyhole size={16} />
-              Authentication
-            </TabsTrigger>
+            {!isL4Mode && (
+              <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
+                <LockKeyhole size={16} />
+                Authentication
+              </TabsTrigger>
+            )}
             <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
               <Settings size={14} />
               Advanced Settings
@@ -366,199 +438,56 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"targets"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-6"}>
-              <div>
-                <Label>
-                  <GlobeIcon size={14} />
-                  Domain
-                </Label>
-                <HelpText>
-                  Enter a subdomain and select a domain for your service.
-                </HelpText>
-                <div className="flex items-start mt-2">
-                  <div className="flex-1 min-w-0">
-                    <Input
-                      autoFocus
-                      value={subdomain}
-                      onChange={(e) => {
-                        setSubdomain(
-                          e.target.value
-                            .toLowerCase()
-                            .replace(/[^a-z0-9-]/g, ""),
-                        );
-                      }}
-                      error={
-                        domainAlreadyExists
-                          ? "This domain is already used by another service."
-                          : undefined
-                      }
-                      placeholder={"myapp"}
-                      className="!rounded-r-none !border-r-0"
-                    />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <CustomDomainSelector
-                      value={baseDomain}
-                      onChange={setBaseDomain}
-                      className="!rounded-l-none"
-                    />
-                  </div>
-                </div>
-              </div>
+              <ReverseProxyDomainInput
+                subdomain={subdomain}
+                onSubdomainChange={setSubdomain}
+                baseDomain={baseDomain}
+                onBaseDomainChange={setBaseDomain}
+                domainAlreadyExists={domainAlreadyExists}
+                clusterOffline={
+                  reverseProxy?.proxy_cluster && !isClusterConnected
+                    ? { clusterName: reverseProxy.proxy_cluster }
+                    : undefined
+                }
+              />
 
-              {reverseProxy?.proxy_cluster && !isClusterConnected && (
-                <Callout variant={"error"}>
-                  Cluster {reverseProxy.proxy_cluster} is offline. Make sure the
-                  proxy server is running and connected to the right management
-                  address.
-                </Callout>
+              {!reverseProxy && (
+                <ReverseProxyServiceModeSelector
+                  onChange={setServiceMode}
+                  value={serviceMode}
+                  domain={selectedDomain}
+                />
               )}
 
-              <div>
-                <Label>
-                  <Server size={14} />
-                  Targets
-                </Label>
-                <HelpText>
-                  Add one or more devices running your service or resources to
-                  make it publicly accessible.
-                </HelpText>
-
-                {targets.length > 0 && (
-                  <div
-                    className={
-                      "mt-3 mb-3 overflow-hidden border border-nb-gray-900 bg-nb-gray-920/30 py-1 px-1 rounded-md "
-                    }
-                  >
-                    <table className="w-full">
-                      <tbody>
-                        {targets.map((target, index) => (
-                          <tr
-                            key={index}
-                            onClick={() => editTarget(index)}
-                            className="rounded-md hover:bg-nb-gray-900/30 cursor-pointer transition-all"
-                          >
-                            <td className="py-2.5 pl-5 pr-2 align-middle">
-                              <span className="text-[11px] leading-none font-mono px-2.5 py-2 rounded bg-nb-gray-900 text-nb-gray-300 inline-flex items-center">
-                                {target.path
-                                  ? target.path.startsWith("/")
-                                    ? target.path
-                                    : `/${target.path}`
-                                  : "/"}
-                              </span>
-                            </td>
-                            <td className="py-2.5 px-4 align-middle">
-                              <ArrowRight
-                                size={12}
-                                className="text-nb-gray-400"
-                              />
-                            </td>
-                            <td className="py-2.5 pr-2 align-middle">
-                              <TargetDestination target={target} />
-                            </td>
-                            <td className="py-2.5 pl-2 pr-4">
-                              <div
-                                className="flex items-center gap-2 justify-end"
-                                onClick={(e) => e.stopPropagation()}
-                              >
-                                <ToggleSwitch
-                                  size="small"
-                                  checked={target.enabled !== false}
-                                  onCheckedChange={() =>
-                                    toggleTargetEnabled(index)
-                                  }
-                                />
-                                <DropdownMenu modal={false}>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button
-                                      variant="default-outline"
-                                      className="!px-3"
-                                    >
-                                      <MoreVertical
-                                        size={16}
-                                        className="shrink-0"
-                                      />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent
-                                    className="w-auto min-w-[200px]"
-                                    align="end"
-                                  >
-                                    <DropdownMenuItem
-                                      onClick={() => editTarget(index)}
-                                    >
-                                      <div className="flex gap-3 items-center">
-                                        <Edit size={14} className="shrink-0" />
-                                        Edit Target
-                                      </div>
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      variant={"danger"}
-                                      onClick={() => removeTarget(index)}
-                                    >
-                                      <div className="flex gap-3 items-center">
-                                        <MinusCircleIcon
-                                          size={14}
-                                          className="shrink-0"
-                                        />
-                                        Remove Target
-                                      </div>
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                )}
-
-                <Button
-                  variant="dotted"
-                  className={cn("w-full mt-1", targets?.length > 0 && "mt-1")}
-                  size="sm"
-                  onClick={() => setTargetModalOpen(true)}
-                  disabled={
-                    !!(initialNetwork && !initialNetwork.resources?.length)
-                  }
-                >
-                  <PlusIcon size={14} />
-                  Add Target
-                </Button>
-
-                {initialNetwork && !initialNetwork.resources?.length && (
-                  <Callout
-                    variant="warning"
-                    className="mt-3"
-                    icon={
-                      <AlertTriangle
-                        size={14}
-                        className="shrink-0 relative top-[3px]"
-                      />
-                    }
-                  >
-                    There are currently no resources in your network{" "}
-                    <span className={"text-netbird-100 font-medium"}>
-                      {initialNetwork?.name}
-                    </span>
-                    . Add resources to your network before exposing it as a
-                    service.{" "}
-                    <InlineButtonLink
-                      variant={"default"}
-                      onClick={() => {
-                        onOpenChange(false);
-                        router.push(
-                          `/network?id=${initialNetwork.id}&tab=resources`,
-                        );
-                      }}
-                    >
-                      Go to Resources
-                      <ArrowUpRight size={14} />
-                    </InlineButtonLink>
-                  </Callout>
-                )}
-              </div>
+              {isL4Mode ? (
+                <ReverseProxyLayer4Content
+                  l4Target={l4Target}
+                  setL4Target={setL4Target}
+                  isListenPortSupported={isListenPortSupported}
+                  listenPort={listenPort}
+                  setListenPort={setListenPort}
+                  port={port}
+                  setPort={setPort}
+                  initialResource={initialResource}
+                  initialPeer={initialPeer}
+                  initialNetwork={initialNetwork}
+                />
+              ) : (
+                <ReverseProxyHTTPTargets
+                  targets={targets}
+                  onEditTarget={editTarget}
+                  onRemoveTarget={removeTarget}
+                  onToggleTargetEnabled={toggleTargetEnabled}
+                  onAddTarget={() => setTargetModalOpen(true)}
+                  initialNetwork={initialNetwork}
+                  onNavigateToResources={() => {
+                    onOpenChange(false);
+                    router.push(
+                      `/network?id=${initialNetwork?.id}&tab=resources`,
+                    );
+                  }}
+                />
+              )}
             </div>
           </TabsContent>
 
@@ -603,73 +532,116 @@ export default function ReverseProxyModal({
           </TabsContent>
 
           <TabsContent value={"settings"} className={"pb-8"}>
-            <div className={"px-8 flex-col flex gap-4"}>
-              <FancyToggleSwitch
-                value={passHostHeader}
-                onChange={setPassHostHeader}
-                label={
-                  <>
-                    <GlobeIcon size={15} />
-                    Pass Host Header
-                  </>
-                }
-                helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
-              />
-              <FancyToggleSwitch
-                value={rewriteRedirects}
-                onChange={setRewriteRedirects}
-                label={
-                  <>
-                    <ArrowRight size={15} />
-                    Rewrite Redirects
-                  </>
-                }
-                helpText="Rewrite Location headers in backend responses to use the public domain instead of the internal backend address."
-              />
+            <div className={"px-8 flex-col flex gap-6"}>
+              {(serviceMode === ServiceMode.TCP ||
+                serviceMode === ServiceMode.TLS) && (
+                <FancyToggleSwitch
+                  value={proxyProtocol}
+                  onChange={setProxyProtocol}
+                  label={
+                    <>
+                      <MapPinned size={15} />
+                      Preserve Client Source IP
+                    </>
+                  }
+                  helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
+                />
+              )}
+
+              {isL4Mode && (
+                <>
+                  <div className={"flex items-center justify-between"}>
+                    <div>
+                      <Label>
+                        {serviceMode === ServiceMode.UDP
+                          ? "Session Idle Timeout"
+                          : "Connection Timeout"}
+                      </Label>
+                      <HelpText className={"mb-0"}>
+                        {serviceMode === ServiceMode.UDP ? (
+                          <>
+                            Close the UDP session after this period of
+                            inactivity.
+                            <br /> Leave this field empty for no timeout.
+                          </>
+                        ) : (
+                          <>
+                            Timeout for establishing backend connections. <br />{" "}
+                            Leave this field empty for no timeout.
+                          </>
+                        )}
+                      </HelpText>
+                    </div>
+                    <Input
+                      customPrefix={<ClockFadingIcon size={16} />}
+                      placeholder="e.g. 10s, 30s, 1m"
+                      value={timeoutOption}
+                      onChange={(e) => setTimeoutOption(e.target.value)}
+                      maxWidthClass="w-[180px]"
+                      errorTooltip={true}
+                      error={timeoutError}
+                    />
+                  </div>
+                </>
+              )}
+
+              {!isL4Mode && (
+                <div className={"flex flex-col gap-4"}>
+                  <FancyToggleSwitch
+                    value={passHostHeader}
+                    onChange={setPassHostHeader}
+                    label={
+                      <>
+                        <GlobeIcon size={15} />
+                        Pass Host Header
+                      </>
+                    }
+                    helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
+                  />
+                  <FancyToggleSwitch
+                    value={rewriteRedirects}
+                    onChange={setRewriteRedirects}
+                    label={
+                      <>
+                        <ArrowRight size={15} />
+                        Rewrite Redirects
+                      </>
+                    }
+                    helpText="Rewrite Location headers in backend responses to use the public domain instead of the internal backend address."
+                  />
+                </div>
+              )}
             </div>
           </TabsContent>
         </Tabs>
 
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
-            {tab === "targets" && (
-              <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={REVERSE_PROXY_SERVICES_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Services
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </Paragraph>
-            )}
-
-            {tab === "auth" && (
-              <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={REVERSE_PROXY_AUTHENTICATION_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Authentication
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </Paragraph>
-            )}
-
-            {tab === "settings" && (
-              <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
-                <InlineLink
-                  href={REVERSE_PROXY_SETTINGS_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Settings
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </Paragraph>
-            )}
+            {(() => {
+              const docsLink = {
+                targets: {
+                  href: REVERSE_PROXY_SERVICES_DOCS_LINK,
+                  label: "Services",
+                },
+                auth: {
+                  href: REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
+                  label: "Authentication",
+                },
+                settings: {
+                  href: REVERSE_PROXY_SETTINGS_DOCS_LINK,
+                  label: "Settings",
+                },
+              }[tab];
+              return docsLink ? (
+                <Paragraph className={"text-sm mt-auto"}>
+                  Learn more about
+                  <InlineLink href={docsLink.href} target={"_blank"}>
+                    {docsLink.label}
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </Paragraph>
+              ) : null;
+            })()}
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             {!reverseProxy ? (
@@ -681,7 +653,7 @@ export default function ReverseProxyModal({
                     </ModalClose>
                     <Button
                       variant={"primary"}
-                      onClick={() => setTab("auth")}
+                      onClick={() => setTab(isL4Mode ? "settings" : "auth")}
                       disabled={!canContinueToSettings}
                     >
                       Continue
@@ -710,13 +682,17 @@ export default function ReverseProxyModal({
                   <>
                     <Button
                       variant={"secondary"}
-                      onClick={() => setTab("auth")}
+                      onClick={() => setTab(isL4Mode ? "targets" : "auth")}
                     >
                       Back
                     </Button>
                     <Button
                       variant={"primary"}
-                      disabled={submitDisabled || !permission?.services?.create}
+                      disabled={
+                        !canContinueToSettings ||
+                        !permission?.services?.create ||
+                        !!timeoutError
+                      }
                       onClick={handleSubmit}
                     >
                       <PlusCircle size={16} />
@@ -732,7 +708,11 @@ export default function ReverseProxyModal({
                 </ModalClose>
                 <Button
                   variant={"primary"}
-                  disabled={submitDisabled || !permission?.services?.update}
+                  disabled={
+                    !canContinueToSettings ||
+                    !permission?.services?.update ||
+                    !!timeoutError
+                  }
                   onClick={handleSubmit}
                 >
                   Save Changes
@@ -760,6 +740,7 @@ export default function ReverseProxyModal({
           domain: fullDomain,
           targets: targets,
           enabled: reverseProxy?.enabled ?? true,
+          mode: serviceMode,
         }}
         initialResource={initialResource}
         initialPeer={initialPeer}
@@ -826,14 +807,5 @@ export default function ReverseProxyModal({
         }}
       />
     </Modal>
-  );
-}
-
-function TargetDestination({ target }: { target: ReverseProxyTarget }) {
-  const { resolveDestination } = useReverseProxies();
-  return (
-    <span className="text-[0.76rem] text-nb-gray-200 whitespace-nowrap font-mono">
-      {resolveDestination(target)}
-    </span>
   );
 }

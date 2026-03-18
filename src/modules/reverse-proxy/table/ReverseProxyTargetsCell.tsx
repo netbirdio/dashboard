@@ -4,7 +4,8 @@ import { PlusCircle, Server } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { ReverseProxy } from "@/interfaces/ReverseProxy";
+import { isL4Mode, ReverseProxy } from "@/interfaces/ReverseProxy";
+import { ReverseProxyTargetDevice } from "@/modules/reverse-proxy/targets/ReverseProxyTargetDevice";
 
 type Props = {
   reverseProxy: ReverseProxy;
@@ -15,6 +16,22 @@ export default function ReverseProxyTargetsCell({
 }: Readonly<Props>) {
   const { permission } = usePermissions();
   const { openTargetModal } = useReverseProxies();
+
+  if (isL4Mode(reverseProxy.mode)) {
+    const target = reverseProxy?.targets?.[0];
+    const address = target.host
+      ? `${target.host}:${target.port}`
+      : `:${target.port}`;
+
+    return (
+      <ReverseProxyTargetDevice
+        target={target}
+        address={address}
+        wrapperClassName={"h-[48px]"}
+        skeletonClassName={"h-[48px]"}
+      />
+    );
+  }
 
   const targetsCount = reverseProxy?.targets?.length ?? 0;
 

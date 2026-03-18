@@ -17,6 +17,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
+  isL4Mode,
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxy,
 } from "@/interfaces/ReverseProxy";
@@ -28,6 +29,7 @@ import ReverseProxyNameCell from "@/modules/reverse-proxy/table/ReverseProxyName
 import ReverseProxyTargetsCell from "@/modules/reverse-proxy/table/ReverseProxyTargetsCell";
 import ReverseProxyTargetsTable from "@/modules/reverse-proxy/targets/ReverseProxyTargetsTable";
 import ReverseProxyStatusCell from "@/modules/reverse-proxy/table/ReverseProxyStatusCell";
+import { ReverseProxyTypeCell } from "@/modules/reverse-proxy/table/ReverseProxyTypeCell";
 
 const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   {
@@ -39,6 +41,14 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
     cell: ({ row }) => <ReverseProxyNameCell reverseProxy={row.original} />,
   },
   {
+    accessorKey: "mode",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Type</DataTableHeader>;
+    },
+    sortingFn: "text",
+    cell: ({ row }) => <ReverseProxyTypeCell reverseProxy={row.original} />,
+  },
+  {
     id: "status",
     accessorFn: (proxy) => proxy?.meta?.certificate_issued_at,
     header: "",
@@ -48,6 +58,7 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
           serviceId={row.original.id}
           meta={row.original.meta}
           enabled={row.original.enabled}
+          isL4={isL4Mode(row.original.mode)}
         />
       ) : null,
   },
@@ -68,7 +79,7 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
   {
     accessorKey: "targets",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Targets</DataTableHeader>;
+      return <DataTableHeader column={column}>Target(s)</DataTableHeader>;
     },
     cell: ({ row }) => <ReverseProxyTargetsCell reverseProxy={row.original} />,
   },
@@ -131,7 +142,9 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       useRowId={true}
       searchPlaceholder={"Search by URL, domain, or target..."}
       columnVisibility={{ searchString: false }}
+      tableCellClassName={"h-[80px]"}
       renderExpandedRow={(reverseProxy) => {
+        if (isL4Mode(reverseProxy.mode)) return;
         const hasTargets = (reverseProxy?.targets?.length ?? 0) > 0;
         if (!hasTargets) return;
         return (
@@ -159,7 +172,6 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
           button={
             <Button
               variant={"primary"}
-              className={""}
               onClick={() => openModal()}
               disabled={!permission?.services?.create}
             >

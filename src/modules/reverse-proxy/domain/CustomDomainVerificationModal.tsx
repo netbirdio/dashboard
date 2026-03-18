@@ -22,6 +22,7 @@ import {
 } from "@/interfaces/ReverseProxy";
 import Paragraph from "@components/Paragraph";
 import InlineLink from "@components/InlineLink";
+import { isNetBirdHosted } from "@/utils/netbird";
 
 type Props = {
   open: boolean;
@@ -79,18 +80,36 @@ export const CustomDomainVerificationModal = ({
           </Steps>
           <div className={"flex flex-col gap-6"}>
             {!cnameTarget ? (
-              <Callout variant={"warning"}>
-                No proxy clusters are currently connected. Please ensure at
-                least one proxy is running to configure DNS verification. <br />
-                Learn more about{" "}
-                <InlineLink
-                  href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Proxy Clusters
-                  <ExternalLinkIcon size={12} />
-                </InlineLink>
-              </Callout>
+              isNetBirdHosted() ? (
+                <Callout variant={"warning"}>
+                  No proxy clusters are currently connected. Please try again in
+                  a few minutes. If the issue persists, check{" "}
+                  <InlineLink
+                    href={"https://status.netbird.io/"}
+                    target={"_blank"}
+                  >
+                    NetBird Status
+                  </InlineLink>{" "}
+                  or reach out to{"  "}
+                  <InlineLink href={"mailto:support@netbird.io"}>
+                    support@netbird.io
+                  </InlineLink>
+                </Callout>
+              ) : (
+                <Callout variant={"warning"}>
+                  No proxy clusters are currently connected. Please ensure at
+                  least one proxy is running to configure DNS verification.{" "}
+                  <br />
+                  Learn more about{" "}
+                  <InlineLink
+                    href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
+                    target={"_blank"}
+                  >
+                    Proxy Clusters
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </Callout>
+              )
             ) : (
               <>
                 <Card className={"w-full"}>

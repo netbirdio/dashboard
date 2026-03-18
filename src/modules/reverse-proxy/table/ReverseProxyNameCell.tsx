@@ -1,8 +1,9 @@
 import { cn } from "@utils/helpers";
 import { ChevronDown, ChevronRightIcon, LockIcon } from "lucide-react";
 import * as React from "react";
-import { ReverseProxy } from "@/interfaces/ReverseProxy";
+import { isL4Mode, ReverseProxy, ServiceMode } from "@/interfaces/ReverseProxy";
 import ExternalLinkText from "@components/ExternalLinkText";
+import CopyToClipboardText from "@components/CopyToClipboardText";
 
 type Props = {
   reverseProxy?: ReverseProxy;
@@ -18,8 +19,14 @@ export default function ReverseProxyNameCell({
   showChevron = true,
 }: Readonly<Props>) {
   const displayDomain = domain ?? reverseProxy?.domain ?? "";
+  const isL4 = reverseProxy?.mode && isL4Mode(reverseProxy.mode);
+  const portSuffix =
+    isL4 && reverseProxy?.listen_port ? `:${reverseProxy.listen_port}` : "";
+  const isLinkable = !isL4 || reverseProxy?.mode === ServiceMode.TLS;
+
   const isEnabled = enabled ?? reverseProxy?.enabled ?? false;
-  const hasTargets = (reverseProxy?.targets?.length ?? 0) > 0;
+  const hasExpandableTargets =
+    (reverseProxy?.targets?.length ?? 0) > 0 && !isL4Mode(reverseProxy?.mode);
 
   return (
     <div
@@ -36,14 +43,14 @@ export default function ReverseProxyNameCell({
             size={20}
             className={cn(
               "group-data-[accordion=opened]/accordion:hidden text-nb-gray-400 shrink-0",
-              !hasTargets && "cursor-default opacity-0",
+              !hasExpandableTargets && "cursor-default opacity-0",
             )}
           />
           <ChevronDown
             size={20}
             className={cn(
               "group-data-[accordion=closed]/accordion:hidden text-nb-gray-400 shrink-0",
-              !hasTargets && "cursor-default opacity-0",
+              !hasExpandableTargets && "cursor-default opacity-0",
             )}
           />
         </>
@@ -57,13 +64,21 @@ export default function ReverseProxyNameCell({
           )}
         />
         <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 truncate">
-          {displayDomain ? (
-            <ExternalLinkText href={`https://${displayDomain}`}>
-              <span className="font-medium truncate">{displayDomain}</span>
-            </ExternalLinkText>
-          ) : (
-            <span className="font-medium truncate">{displayDomain}</span>
-          )}
+          <div className="flex items-center gap-2">
+            {displayDomain && isLinkable ? (
+              <ExternalLinkText href={`https://${displayDomain}${portSuffix}`}>
+                <span className="font-medium truncate">
+                  {displayDomain}
+                  {portSuffix}
+                </span>
+              </ExternalLinkText>
+            ) : (
+              <CopyToClipboardText>
+                {displayDomain}
+                {portSuffix}
+              </CopyToClipboardText>
+            )}
+          </div>
         </div>
       </div>
     </div>
