@@ -44,8 +44,7 @@ export function useReverseProxyAddress(target: Target | undefined) {
 
   const isValidCidrHost =
     !isCidrRange ||
-    (!!target?.host &&
-      (cidrInfo ? isHostInCidrRange : cidr.isValidAddress(target.host)));
+    (!!target?.host && !!cidrInfo && isHostInCidrRange);
 
   return {
     resourceAddress,

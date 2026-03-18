@@ -60,6 +60,10 @@ import ReverseProxyLayer4Content from "@/modules/reverse-proxy/ReverseProxyLayer
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
 import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
 import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
+import {
+  validateTimeout,
+  validateSessionIdleTimeout,
+} from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import {
   ReverseProxyServiceModeSelector,
@@ -175,6 +179,13 @@ export default function ReverseProxyModal({
       reverseProxy?.targets?.[0]?.options?.session_idle_timeout ??
       "",
   );
+
+  const timeoutError = useMemo(() => {
+    if (!timeoutOption) return undefined;
+    return serviceMode === ServiceMode.UDP
+      ? validateSessionIdleTimeout(timeoutOption)
+      : validateTimeout(timeoutOption);
+  }, [timeoutOption, serviceMode]);
 
   const [targets, setTargets] = useState<ReverseProxyTarget[]>(
     reverseProxy?.targets || [],
@@ -568,6 +579,7 @@ export default function ReverseProxyModal({
                       onChange={(e) => setTimeoutOption(e.target.value)}
                       maxWidthClass="w-[180px]"
                       errorTooltip={true}
+                      error={timeoutError}
                     />
                   </div>
                 </>
@@ -677,7 +689,9 @@ export default function ReverseProxyModal({
                     <Button
                       variant={"primary"}
                       disabled={
-                        !canContinueToSettings || !permission?.services?.create
+                        !canContinueToSettings ||
+                        !permission?.services?.create ||
+                        !!timeoutError
                       }
                       onClick={handleSubmit}
                     >
@@ -695,7 +709,9 @@ export default function ReverseProxyModal({
                 <Button
                   variant={"primary"}
                   disabled={
-                    !canContinueToSettings || !permission?.services?.update
+                    !canContinueToSettings ||
+                    !permission?.services?.update ||
+                    !!timeoutError
                   }
                   onClick={handleSubmit}
                 >

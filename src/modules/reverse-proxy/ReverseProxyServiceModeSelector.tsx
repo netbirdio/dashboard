@@ -64,7 +64,7 @@ export const ReverseProxyServiceModeSelector = ({
 }: Props) => {
   const selected = value ?? ServiceMode.HTTP;
   const selectedMode = SERVICE_MODES[selected];
-  const isL4Supported = domain?.supports_custom_ports !== undefined;
+  const isL4Supported = domain?.supports_custom_ports === true;
 
   // Reset to HTTP if the current L4 mode becomes unsupported (e.g. domain changed)
   useEffect(() => {

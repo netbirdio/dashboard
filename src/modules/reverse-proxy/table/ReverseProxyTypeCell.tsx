@@ -14,9 +14,9 @@ type Props = {
 export const ReverseProxyTypeCell = ({ reverseProxy }: Props) => {
   const serviceModeLabel = useMemo(() => {
     if (!reverseProxy?.mode) return "HTTP/S";
-    return trim(
-      SERVICE_MODES?.[reverseProxy.mode].label.replace("Service", ""),
-    );
+    const mode = SERVICE_MODES[reverseProxy.mode];
+    if (!mode) return "HTTP/S";
+    return trim(mode.label.replace("Service", ""));
   }, [reverseProxy]);
 
   return (

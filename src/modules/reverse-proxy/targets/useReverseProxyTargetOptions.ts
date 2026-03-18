@@ -29,7 +29,7 @@ function parseDurationMs(duration: string): number {
   return total;
 }
 
-function validateTimeout(timeout: string): string | undefined {
+export function validateTimeout(timeout: string): string | undefined {
   if (!timeout) return undefined;
   if (!DURATION_RE.test(timeout))
     return 'Invalid duration, use e.g., "10s", "30s", "1m"';
@@ -38,7 +38,7 @@ function validateTimeout(timeout: string): string | undefined {
   return undefined;
 }
 
-function validateSessionIdleTimeout(timeout: string): string | undefined {
+export function validateSessionIdleTimeout(timeout: string): string | undefined {
   if (!timeout) return undefined;
   if (!DURATION_RE.test(timeout))
     return 'Invalid duration, use e.g., "30s", "2m", "5m"';
