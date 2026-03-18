@@ -23,6 +23,7 @@ import {
 } from "@/interfaces/ReverseProxy";
 import HelpText from "@components/HelpText";
 import Separator from "@components/Separator";
+import { isNetBirdHosted } from "@/utils/netbird";
 import {
   SelectDropdown,
   SelectOption,
@@ -99,18 +100,35 @@ export const CustomDomainModal = ({
 
         <div className={"px-8 flex flex-col gap-6 pt-6 pb-8"}>
           {availableClusters.length === 0 ? (
-            <Callout variant="warning">
-              No proxy clusters are currently connected. Please ensure at least
-              one proxy is running before adding a domain. <br /> Learn more
-              about{" "}
-              <InlineLink
-                href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
-                target={"_blank"}
-              >
-                Proxy Clusters
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </Callout>
+            isNetBirdHosted() ? (
+              <Callout variant={"warning"}>
+                No proxy clusters are currently connected. Please try again in a
+                few minutes. If the issue persists, check{" "}
+                <InlineLink
+                  href={"https://status.netbird.io/"}
+                  target={"_blank"}
+                >
+                  NetBird Status
+                </InlineLink>{" "}
+                or reach out to{"  "}
+                <InlineLink href={"mailto:support@netbird.io"}>
+                  support@netbird.io
+                </InlineLink>
+              </Callout>
+            ) : (
+              <Callout variant="warning">
+                No proxy clusters are currently connected. Please ensure at
+                least one proxy is running before adding a domain. <br /> Learn
+                more about{" "}
+                <InlineLink
+                  href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
+                  target={"_blank"}
+                >
+                  Proxy Clusters
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </Callout>
+            )
           ) : (
             <>
               <div>

@@ -4,6 +4,8 @@ import { Label } from "@components/Label";
 import { Callout } from "@components/Callout";
 import React from "react";
 import { CustomDomainSelector } from "./CustomDomainSelector";
+import { isNetBirdHosted } from "@utils/netbird";
+import InlineLink from "@components/InlineLink";
 
 type Props = {
   subdomain: string;
@@ -57,12 +59,26 @@ export default function ReverseProxyDomainInput({
           />
         </div>
       </div>
-      {clusterOffline && (
-        <Callout variant={"error"} className={"mt-3"}>
-          Cluster {clusterOffline.clusterName} is offline. Make sure the proxy
-          server is running and connected to the right management address.
-        </Callout>
-      )}
+
+      {clusterOffline &&
+        (isNetBirdHosted() ? (
+          <Callout variant={"warning"} className={"mt-3"}>
+            Cluster {clusterOffline.clusterName} is offline. Please try again in
+            a few minutes. If the issue persists, check{" "}
+            <InlineLink href={"https://status.netbird.io/"} target={"_blank"}>
+              NetBird Status
+            </InlineLink>{" "}
+            or reach out to{"  "}
+            <InlineLink href={"mailto:support@netbird.io"}>
+              support@netbird.io
+            </InlineLink>
+          </Callout>
+        ) : (
+          <Callout variant={"error"} className={"mt-3"}>
+            Cluster {clusterOffline.clusterName} is offline. Make sure the proxy
+            server is running and connected to the right management address.
+          </Callout>
+        ))}
     </div>
   );
 }
