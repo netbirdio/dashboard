@@ -74,7 +74,7 @@ export const ReverseProxyServiceModeSelector = ({
   }, [isL4Supported, selected, onChange]);
 
   return (
-    <div className="flex justify-between items-center gap-10">
+    <div className="flex justify-between items-center gap-10 mt-2">
       <div>
         <Label>Service Type</Label>
         <HelpText>
