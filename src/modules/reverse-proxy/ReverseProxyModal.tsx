@@ -248,8 +248,12 @@ export default function ReverseProxyModal({
   );
 
   const canContinueToSettings = useMemo(() => {
+    const subdomainRequired =
+      selectedDomain?.require_subdomain === true;
     const isSubdomainValid =
-      subdomain.length > 0 && baseDomain.length > 0 && !domainAlreadyExists;
+      baseDomain.length > 0 &&
+      !domainAlreadyExists &&
+      (subdomain.length > 0 || !subdomainRequired);
     const isValidPort = (port: number) => port >= 1 && port <= 65535;
     const hasHttpEndpoint = !isL4Mode && targets.length > 0;
     const hasL4Endpoint =
@@ -264,6 +268,7 @@ export default function ReverseProxyModal({
     subdomain,
     baseDomain,
     domainAlreadyExists,
+    selectedDomain,
     serviceMode,
     targets.length,
     isL4Mode,
@@ -444,6 +449,7 @@ export default function ReverseProxyModal({
                 baseDomain={baseDomain}
                 onBaseDomainChange={setBaseDomain}
                 domainAlreadyExists={domainAlreadyExists}
+                subdomainRequired={selectedDomain?.require_subdomain === true}
                 clusterOffline={
                   reverseProxy?.proxy_cluster && !isClusterConnected
                     ? { clusterName: reverseProxy.proxy_cluster }
