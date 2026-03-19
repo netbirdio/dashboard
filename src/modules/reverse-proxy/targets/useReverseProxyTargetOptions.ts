@@ -7,43 +7,17 @@ import {
 
 // Go time.ParseDuration format: one or more {number}{unit} pairs
 const DURATION_RE = /^(\d+(\.\d+)?(ns|us|µs|ms|s|m|h))+$/;
-const MAX_TIMEOUT_MS = 5 * 60 * 1000; // 5m
-const MAX_SESSION_IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10m
-
-function parseDurationMs(duration: string): number {
-  const units: Record<string, number> = {
-    ns: 1e-6,
-    us: 1e-3,
-    µs: 1e-3,
-    ms: 1,
-    s: 1000,
-    m: 60_000,
-    h: 3_600_000,
-  };
-  let total = 0;
-  for (const [, val, , unit] of duration.matchAll(
-    /(\d+(\.\d+)?)(ns|us|µs|ms|s|m|h)/g,
-  )) {
-    total += parseFloat(val) * units[unit];
-  }
-  return total;
-}
-
-export function validateTimeout(timeout: string): string | undefined {
+function validateTimeout(timeout: string): string | undefined {
   if (!timeout) return undefined;
   if (!DURATION_RE.test(timeout))
     return 'Invalid duration, use e.g., "10s", "30s", "1m"';
-  if (parseDurationMs(timeout) > MAX_TIMEOUT_MS)
-    return "Timeout cannot exceed the maximum of 5m.";
   return undefined;
 }
 
-export function validateSessionIdleTimeout(timeout: string): string | undefined {
+function validateSessionIdleTimeout(timeout: string): string | undefined {
   if (!timeout) return undefined;
   if (!DURATION_RE.test(timeout))
     return 'Invalid duration, use e.g., "30s", "2m", "5m"';
-  if (parseDurationMs(timeout) > MAX_SESSION_IDLE_TIMEOUT_MS)
-    return "Session idle timeout cannot exceed the maximum of 10m.";
   return undefined;
 }
 
