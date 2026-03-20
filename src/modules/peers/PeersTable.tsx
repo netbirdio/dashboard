@@ -98,6 +98,10 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     sortingFn: "text",
   },
   {
+    id: "has_user",
+    accessorFn: (peer) => !!peer.user_id,
+  },
+  {
     id: "user_name",
     accessorFn: (peer) => (peer.user ? peer.user?.name : "Unknown"),
   },
@@ -314,6 +318,7 @@ export default function PeersTable({
           group_name_strings: false,
           group_names: false,
           ip: false,
+          has_user: false,
           serial: false,
           user_name: false,
           user_email: false,
@@ -336,6 +341,9 @@ export default function PeersTable({
                   let groupFilters = table
                     .getColumn("group_names")
                     ?.getFilterValue();
+                  let hasUserFilter = table
+                    .getColumn("has_user")
+                    ?.getFilterValue();
                   table.setColumnFilters([
                     {
                       id: "connected",
@@ -350,8 +358,8 @@ export default function PeersTable({
                       value: groupFilters ?? [],
                     },
                     {
-                      id: "group_names",
-                      value: groupFilters ?? [],
+                      id: "has_user",
+                      value: hasUserFilter,
                     },
                   ]);
                   resetSelectedRows();
@@ -370,6 +378,9 @@ export default function PeersTable({
                   let groupFilters = table
                     .getColumn("group_names")
                     ?.getFilterValue();
+                  let hasUserFilter = table
+                    .getColumn("has_user")
+                    ?.getFilterValue();
                   table.setColumnFilters([
                     {
                       id: "connected",
@@ -384,8 +395,8 @@ export default function PeersTable({
                       value: groupFilters ?? [],
                     },
                     {
-                      id: "group_names",
-                      value: groupFilters ?? [],
+                      id: "has_user",
+                      value: hasUserFilter,
                     },
                   ]);
                   resetSelectedRows();
@@ -405,6 +416,9 @@ export default function PeersTable({
                   let groupFilters = table
                     .getColumn("group_names")
                     ?.getFilterValue();
+                  let hasUserFilter = table
+                    .getColumn("has_user")
+                    ?.getFilterValue();
                   table.setColumnFilters([
                     {
                       id: "connected",
@@ -417,6 +431,10 @@ export default function PeersTable({
                     {
                       id: "group_names",
                       value: groupFilters ?? [],
+                    },
+                    {
+                      id: "has_user",
+                      value: hasUserFilter,
                     },
                   ]);
                   resetSelectedRows();
@@ -442,6 +460,9 @@ export default function PeersTable({
                     undefined
                       ? true
                       : undefined;
+                  let hasUserFilter = table
+                    .getColumn("has_user")
+                    ?.getFilterValue();
 
                   table.setColumnFilters([
                     {
@@ -451,6 +472,10 @@ export default function PeersTable({
                     {
                       id: "approval_required",
                       value: current,
+                    },
+                    {
+                      id: "has_user",
+                      value: hasUserFilter,
                     },
                   ]);
 
@@ -466,6 +491,53 @@ export default function PeersTable({
                 Pending Approvals
                 <NotificationCountBadge count={pendingApprovalCount} />
               </Button>
+            )}
+
+            {!isUser && (
+              <ButtonGroup disabled={peers?.length == 0}>
+                <ButtonGroup.Button
+                  disabled={peers?.length == 0}
+                  onClick={() => {
+                    table.setPageIndex(0);
+                    const current =
+                      table.getColumn("has_user")?.getFilterValue();
+                    table
+                      .getColumn("has_user")
+                      ?.setFilterValue(
+                        current === true ? undefined : true,
+                      );
+                    resetSelectedRows();
+                  }}
+                  variant={
+                    table.getColumn("has_user")?.getFilterValue() === true
+                      ? "tertiary"
+                      : "secondary"
+                  }
+                >
+                  With Users
+                </ButtonGroup.Button>
+                <ButtonGroup.Button
+                  disabled={peers?.length == 0}
+                  onClick={() => {
+                    table.setPageIndex(0);
+                    const current =
+                      table.getColumn("has_user")?.getFilterValue();
+                    table
+                      .getColumn("has_user")
+                      ?.setFilterValue(
+                        current === false ? undefined : false,
+                      );
+                    resetSelectedRows();
+                  }}
+                  variant={
+                    table.getColumn("has_user")?.getFilterValue() === false
+                      ? "tertiary"
+                      : "secondary"
+                  }
+                >
+                  No Users
+                </ButtonGroup.Button>
+              </ButtonGroup>
             )}
 
             <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
