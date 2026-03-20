@@ -124,7 +124,7 @@ export default function NetworkResourceAccessControl({
 
   return (
     <div className={"px-8 flex-col flex gap-6"}>
-      <div>
+      <div data-nb-explain="Access Control Policies" data-nb-explain-docs='["https://docs.netbird.io/manage/access-control/manage-network-access"]'>
         <Label>Access Control Policies</Label>
         <HelpText>
           Define which source groups are allowed to access this resource. You

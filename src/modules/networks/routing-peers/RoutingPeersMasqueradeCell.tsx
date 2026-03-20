@@ -62,7 +62,7 @@ export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
     !permission.networks.update;
 
   return (
-    <div className={"flex"}>
+    <div className={"flex"} data-nb-explain="Masquerade Toggle">
       <RoutingPeerMasqueradeTooltip show={isToggleDisabled}>
         <ToggleSwitch
           disabled={isToggleDisabled}

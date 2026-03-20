@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
+import ExplainButton from "@components/ExplainButton";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -90,20 +91,25 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
-      <ModalHeader
-        icon={<NetworkRoutesIcon className={"fill-netbird"} />}
-        title={network ? "Update Network" : "Add Network"}
-        description={
-          network
-            ? network.name
-            : "Access internal resources in LANs and VPC by adding a network."
-        }
-        color={"netbird"}
-      />
+    <ModalContent maxWidthClass={"max-w-xl"} data-nb-explain-docs='["https://docs.netbird.io/manage/networks"]'>
+      <div className="flex items-start justify-between">
+        <ModalHeader
+          icon={<NetworkRoutesIcon className={"fill-netbird"} />}
+          title={network ? "Update Network" : "Add Network"}
+          description={
+            network
+              ? network.name
+              : "Access internal resources in LANs and VPC by adding a network."
+          }
+          color={"netbird"}
+        />
+        <div className="pr-12 pt-2">
+          <ExplainButton />
+        </div>
+      </div>
       <Separator />
       <div className={"px-8 flex-col flex gap-6 py-6"}>
-        <div>
+        <div data-nb-explain="Network Name">
           <Label>Network Name</Label>
           <HelpText>Provide a unique name for the network.</HelpText>
           <Input
@@ -113,7 +119,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
             onChange={(e) => setName(e.target.value)}
           />
         </div>
-        <div>
+        <div data-nb-explain="Network Description">
           <Label>Description (optional)</Label>
           <HelpText>
             Write a short description to add more context to this network.

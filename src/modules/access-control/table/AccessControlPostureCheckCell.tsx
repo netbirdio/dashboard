@@ -15,7 +15,7 @@ export default function AccessControlPostureCheckCell({ policy }: Props) {
 
   return policy.source_posture_checks &&
     policy.source_posture_checks.length > 0 ? (
-    <div className={"flex"}>
+    <div className={"flex"} data-nb-explain="Posture Checks">
       <Badge variant={"gray"} useHover={true}>
         <ShieldCheck size={14} className={"text-green-500"} />
         {policy.source_posture_checks.length} Posture Check(s)

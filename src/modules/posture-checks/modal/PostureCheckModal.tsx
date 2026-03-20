@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import ExplainButton from "@components/ExplainButton";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -70,17 +71,23 @@ export default function PostureCheckModal({
         <ModalContent
           maxWidthClass={cn("relative", "max-w-2xl")}
           showClose={true}
+          data-nb-explain-docs='["https://docs.netbird.io/manage/access-control/posture-checks"]'
         >
-          <ModalHeader
-            icon={<ShieldCheck size={19} />}
-            title={
-              postureCheck ? "Update Posture Check" : "Create Posture Check"
-            }
-            description={
-              "Use posture checks to further restrict access in your network."
-            }
-            color={"netbird"}
-          />
+          <div className="flex items-start justify-between">
+            <ModalHeader
+              icon={<ShieldCheck size={19} />}
+              title={
+                postureCheck ? "Update Posture Check" : "Create Posture Check"
+              }
+              description={
+                "Use posture checks to further restrict access in your network."
+              }
+              color={"netbird"}
+            />
+            <div className="pr-12 pt-2">
+              <ExplainButton />
+            </div>
+          </div>
 
           <Tabs onValueChange={(v) => setTab(v)} defaultValue={tab} value={tab}>
             <TabsList justify={"start"} className={"px-8"}>
@@ -105,66 +112,76 @@ export default function PostureCheckModal({
 
             <TabsContent value={"checks"} className={"pb-6 px-8"}>
               <>
-                <PostureCheckNetBirdVersion
-                  value={check?.checks?.nb_version_check}
-                  onChange={(v) =>
-                    setCheck({
-                      type: "version",
-                      payload: v,
-                    })
-                  }
-                  disabled={
-                    !permission.policies.create || !permission.policies.update
-                  }
-                />
-                <PostureCheckGeoLocation
-                  value={check?.checks?.geo_location_check}
-                  onChange={(v) =>
-                    setCheck({
-                      type: "location",
-                      payload: v,
-                    })
-                  }
-                  disabled={
-                    !permission.policies.create || !permission.policies.update
-                  }
-                />
-                <PostureCheckPeerNetworkRange
-                  value={check?.checks?.peer_network_range_check}
-                  onChange={(v) =>
-                    setCheck({
-                      type: "network_range",
-                      payload: v,
-                    })
-                  }
-                  disabled={
-                    !permission.policies.create || !permission.policies.update
-                  }
-                />
-                <PostureCheckOperatingSystem
-                  value={check?.checks?.os_version_check}
-                  onChange={(v) =>
-                    setCheck({
-                      type: "os",
-                      payload: v,
-                    })
-                  }
-                  disabled={
-                    !permission.policies.create || !permission.policies.update
-                  }
-                />
-                <PostureCheckProcess
-                  value={check?.checks?.process_check}
-                  onChange={(v) =>
-                    setCheck({
-                      type: "process_check",
-                      payload: v,
-                    })
-                  }
-                  disabled={
-                    !permission.policies.create || !permission.policies.update
-                  }
-                />
+                <div data-nb-explain="NetBird Version Check">
+                  <PostureCheckNetBirdVersion
+                    value={check?.checks?.nb_version_check}
+                    onChange={(v) =>
+                      setCheck({
+                        type: "version",
+                        payload: v,
+                      })
+                    }
+                    disabled={
+                      !permission.policies.create || !permission.policies.update
+                    }
+                  />
+                </div>
+                <div data-nb-explain="Geo Location Check">
+                  <PostureCheckGeoLocation
+                    value={check?.checks?.geo_location_check}
+                    onChange={(v) =>
+                      setCheck({
+                        type: "location",
+                        payload: v,
+                      })
+                    }
+                    disabled={
+                      !permission.policies.create || !permission.policies.update
+                    }
+                  />
+                </div>
+                <div data-nb-explain="Peer Network Range Check">
+                  <PostureCheckPeerNetworkRange
+                    value={check?.checks?.peer_network_range_check}
+                    onChange={(v) =>
+                      setCheck({
+                        type: "network_range",
+                        payload: v,
+                      })
+                    }
+                    disabled={
+                      !permission.policies.create || !permission.policies.update
+                    }
+                  />
+                </div>
+                <div data-nb-explain="Operating System Check">
+                  <PostureCheckOperatingSystem
+                    value={check?.checks?.os_version_check}
+                    onChange={(v) =>
+                      setCheck({
+                        type: "os",
+                        payload: v,
+                      })
+                    }
+                    disabled={
+                      !permission.policies.create || !permission.policies.update
+                    }
+                  />
+                </div>
+                <div data-nb-explain="Process Check">
+                  <PostureCheckProcess
+                    value={check?.checks?.process_check}
+                    onChange={(v) =>
+                      setCheck({
+                        type: "process_check",
+                        payload: v,
+                      })
+                    }
+                    disabled={
+                      !permission.policies.create || !permission.policies.update
+                    }
+                  />
+                </div>
               </>
             </TabsContent>
             <TabsContent value={"general"} className={"pb-8 px-8"}>

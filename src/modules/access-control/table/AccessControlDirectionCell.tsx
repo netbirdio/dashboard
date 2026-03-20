@@ -21,7 +21,7 @@ export default function AccessControlDirectionCell({
     firstRule?.destinationResource?.type !== "peer";
 
   return (
-    <div className={"flex h-full"}>
+    <div className={"flex h-full"} data-nb-explain="Traffic Direction">
       {bidirectional && !isSingleResource ? (
         <Badge variant={"green"} className={"py-2 px-4"}>
           <LongArrowBidirectionalIcon

@@ -25,7 +25,7 @@ export const RoutingPeerMasqueradeSwitch = ({
 }: Props) => {
   return (
     <RoutingPeerMasqueradeTooltip show={disabled}>
-      <div className={"flex flex-col gap-4"}>
+      <div className={"flex flex-col gap-4"} data-nb-explain="Masquerade" data-nb-explain-docs='["https://docs.netbird.io/manage/networks"]'>
         <FancyToggleSwitch
           value={value}
           onChange={onChange}

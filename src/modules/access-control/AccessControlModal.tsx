@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
+import ExplainButton from "@components/ExplainButton";
 import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
@@ -231,19 +232,24 @@ export function AccessControlModalContent({
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-3xl"}>
-      <ModalHeader
-        icon={<AccessControlIcon className={"fill-netbird"} />}
-        title={
-          policy
-            ? "Update Access Control Policy"
-            : "Create New Access Control Policy"
-        }
-        description={
-          "Use this policy to restrict access to groups of resources."
-        }
-        color={"netbird"}
-      />
+    <ModalContent maxWidthClass={"max-w-3xl"} data-nb-explain-docs='["https://docs.netbird.io/manage/access-control", "https://docs.netbird.io/manage/access-control/manage-network-access"]'>
+      <div className="flex items-start justify-between">
+        <ModalHeader
+          icon={<AccessControlIcon className={"fill-netbird"} />}
+          title={
+            policy
+              ? "Update Access Control Policy"
+              : "Create New Access Control Policy"
+          }
+          description={
+            "Use this policy to restrict access to groups of resources."
+          }
+          color={"netbird"}
+        />
+        <div className="pr-12 pt-2">
+          <ExplainButton />
+        </div>
+      </div>
 
       <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
         <TabsList justify={"start"} className={"px-8"}>
@@ -268,6 +274,7 @@ export function AccessControlModalContent({
             <div
               className={"flex justify-between items-center gap-10"}
               data-cy={"protocol-wrapper"}
+              data-nb-explain="Protocol"
             >
               <div className={"w-full"}>
                 <Label>Protocol</Label>
@@ -323,7 +330,7 @@ export function AccessControlModalContent({
             </div>
 
             <div className={"flex gap-6 items-center"}>
-              <div className={"w-full self-start"}>
+              <div className={"w-full self-start"} data-nb-explain="Source">
                 <Label className={"mb-2"}>
                   <FolderDown size={15} />
                   Source
@@ -366,7 +373,7 @@ export function AccessControlModalContent({
                 destinationResource={destinationResource}
               />
 
-              <div className={"w-full self-start"}>
+              <div className={"w-full self-start"} data-nb-explain="Destination">
                 <Label className={"mb-2"}>
                   <FolderInput size={15} />
                   Destination
@@ -443,6 +450,7 @@ export function AccessControlModalContent({
                 )}
                 <div
                   className={"flex justify-between items-center gap-10 mt-2"}
+                  data-nb-explain="SSH Access"
                 >
                   <div className={"w-full"}>
                     <Label className={"flex items-center gap-2"}>
@@ -469,6 +477,7 @@ export function AccessControlModalContent({
               </div>
             ) : (
               <div
+                data-nb-explain="Ports"
                 className={cn(
                   "mb-2 mt-2",
                   portDisabled && "opacity-30 pointer-events-none",
@@ -497,20 +506,22 @@ export function AccessControlModalContent({
               </div>
             )}
 
-            <FancyToggleSwitch
-              value={enabled}
-              onChange={setEnabled}
-              disabled={
-                !permission.policies.update || !permission.policies.create
-              }
-              label={
-                <>
-                  <Power size={15} />
-                  Enable Policy
-                </>
-              }
-              helpText={"Use this switch to enable or disable the policy."}
-            />
+            <div data-nb-explain="Enable Policy">
+              <FancyToggleSwitch
+                value={enabled}
+                onChange={setEnabled}
+                disabled={
+                  !permission.policies.update || !permission.policies.create
+                }
+                label={
+                  <>
+                    <Power size={15} />
+                    Enable Policy
+                  </>
+                }
+                helpText={"Use this switch to enable or disable the policy."}
+              />
+            </div>
           </div>
         </TabsContent>
         <PostureCheckTab

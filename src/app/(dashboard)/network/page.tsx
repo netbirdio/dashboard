@@ -2,6 +2,7 @@
 
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
+import ExplainButton from "@components/ExplainButton";
 import Card from "@components/Card";
 import {
   DropdownMenu,
@@ -99,6 +100,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
     <PageContainer>
       <NetworkAccessControlProvider>
         <NetworkProvider network={network}>
+          <div data-nb-explain-docs='["https://docs.netbird.io/manage/networks"]'>
           <div className={"p-default py-6"}>
             <Breadcrumbs>
               <Breadcrumbs.Item
@@ -131,7 +133,10 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                     description={network.description}
                   />
                 </div>
-                <NetworkActions />
+                <div className="flex items-center gap-2">
+                  <ExplainButton />
+                  <NetworkActions />
+                </div>
               </div>
             </div>
 
@@ -192,6 +197,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
               />
             </TabsContent>
           </Tabs>
+          </div>
         </NetworkProvider>
       </NetworkAccessControlProvider>
     </PageContainer>
@@ -282,6 +288,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
       <Card.List>
         <Card.ListItem
           tooltip={false}
+          data-nb-explain="High Availability"
           label={
             <>
               <ServerIcon size={16} />
@@ -327,6 +334,8 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
         />
         <Card.ListItem
           tooltip={false}
+          data-nb-explain="Active Policies"
+          data-nb-explain-docs='["https://docs.netbird.io/manage/access-control/manage-network-access"]'
           label={
             policyCount > 0 ? (
               <>

@@ -69,7 +69,7 @@ export const ResourceSingleAddressInput = ({
   }, [error]);
 
   return (
-    <div className={className}>
+    <div className={className} data-nb-explain="Resource Address">
       <Label>{label}</Label>
       <HelpText>{description}</HelpText>
       <Input

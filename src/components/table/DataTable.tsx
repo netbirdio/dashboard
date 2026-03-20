@@ -552,7 +552,8 @@ export function DataTable<TData, TValue>({
                             }
                           }}
                         >
-                          {row.getVisibleCells().map((cell) => (
+                          {row.getVisibleCells().map((cell) => {
+                            return (
                             <TableCellComponent
                               key={cell.id}
                               className={cn("relative", tableCellClassName)}
@@ -574,7 +575,8 @@ export function DataTable<TData, TValue>({
                                 )}
                               </div>
                             </TableCellComponent>
-                          ))}
+                          );
+                          })}
                         </TableRowComponent>
 
                         {expandedRow && isExpanded && (

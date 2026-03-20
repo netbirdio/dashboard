@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
+import ExplainButton from "@components/ExplainButton";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
@@ -199,13 +200,18 @@ function RoutingPeerModalContent({
   const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"}>
-      <ModalHeader
-        icon={<Share2Icon size={16} />}
-        title={router ? "Update Routing Peer" : "Add Routing Peer"}
-        description={`Route traffic to '${network.name}'`}
-        color={"netbird"}
-      />
+    <ModalContent maxWidthClass={"max-w-xl"} data-nb-explain-docs='["https://docs.netbird.io/manage/networks"]'>
+      <div className="flex items-start justify-between">
+        <ModalHeader
+          icon={<Share2Icon size={16} />}
+          title={router ? "Update Routing Peer" : "Add Routing Peer"}
+          description={`Route traffic to '${network.name}'`}
+          color={"netbird"}
+        />
+        <div className="pr-12 pt-2">
+          <ExplainButton />
+        </div>
+      </div>
 
       <Tabs defaultValue={tab} onValueChange={(v) => setTab(v)} value={tab}>
         <TabsList justify={"between"} className={"px-8 justify-between w-full"}>
@@ -231,7 +237,7 @@ function RoutingPeerModalContent({
         </TabsList>
         <TabsContent value={"router"} className={"pb-6"}>
           <div className={"flex flex-col gap-4 px-8"}>
-            <div className={"relative "}>
+            <div className={"relative"} data-nb-explain="Routing Peer Selection">
               <SegmentedTabs
                 value={type}
                 onChange={(state) => {
@@ -296,19 +302,21 @@ function RoutingPeerModalContent({
 
         <TabsContent value={"settings"} className={"pb-4"}>
           <div className={"px-8 flex flex-col gap-6"}>
-            <FancyToggleSwitch
-              value={enabled}
-              onChange={setEnabled}
-              label={
-                <>
-                  <Power size={15} />
-                  Enable Routing Peer
-                </>
-              }
-              helpText={
-                "Use this switch to enable or disable the routing peer."
-              }
-            />
+            <div data-nb-explain="Enable Routing Peer">
+              <FancyToggleSwitch
+                value={enabled}
+                onChange={setEnabled}
+                label={
+                  <>
+                    <Power size={15} />
+                    Enable Routing Peer
+                  </>
+                }
+                helpText={
+                  "Use this switch to enable or disable the routing peer."
+                }
+              />
+            </div>
 
             <RoutingPeerMasqueradeSwitch
               value={masquerade}
@@ -317,7 +325,7 @@ function RoutingPeerModalContent({
               routingPeerGroupId={routingPeerGroups?.[0]?.id}
             />
 
-            <div className={cn("flex justify-between")}>
+            <div data-nb-explain="Metric" className={cn("flex justify-between")}>
               <div>
                 <Label>Metric</Label>
                 <HelpText className={"max-w-[200px]"}>

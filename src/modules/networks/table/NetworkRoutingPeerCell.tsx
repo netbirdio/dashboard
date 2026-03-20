@@ -48,7 +48,7 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
   );
 
   return (
-    <div className={"flex gap-3 items-center"}>
+    <div className={"flex gap-3 items-center"} data-nb-explain="Routing Peers & High Availability">
       <FullTooltip
         interactive={false}
         content={

@@ -42,7 +42,7 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import NetworkResourceAccessControl from "@/modules/networks/resources/NetworkResourceAccessControl";
 import { ResourceSingleAddressInput } from "@/modules/networks/resources/ResourceSingleAddressInput";
 import { useAIAssistant } from "@netbirdio/explain/client";
-import { Sparkles } from "lucide-react";
+import ExplainButton from "@components/ExplainButton";
 
 type Props = {
   open?: boolean;
@@ -119,7 +119,7 @@ export function ResourceModalContent({
     setExplainContext({
       modalName: resource ? "Edit Resource" : "Add Resource",
       pageName: "Networks",
-      docsUrls: ["https://docs.netbird.io/manage/networks", ""],
+      docsUrls: ["https://docs.netbird.io/manage/networks"],
     });
     return () => clearExplainContext();
   }, [resource, setExplainContext, clearExplainContext]);
@@ -483,21 +483,3 @@ export function ResourceModalContent({
   );
 }
 
-function ExplainButton() {
-  const { explainMode, enterExplainMode, exitExplainMode } = useAIAssistant();
-
-  return (
-    <button
-      data-nb-explain-ignore
-      onClick={() => (explainMode ? exitExplainMode() : enterExplainMode())}
-      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all cursor-pointer shrink-0 ${
-        explainMode
-          ? "bg-netbird/20 text-netbird-300 ring-1 ring-netbird/40 animate-pulse"
-          : "bg-nb-gray-900/60 text-nb-gray-400 hover:text-netbird-300 hover:bg-netbird/10"
-      }`}
-    >
-      <Sparkles size={13} />
-      {explainMode ? "Click an element..." : "Explain"}
-    </button>
-  );
-}

@@ -55,7 +55,7 @@ export const ResourceEnabledCell = ({
   }, [resource]);
 
   return (
-    <div className={"flex"}>
+    <div className={"flex"} data-nb-explain="Resource Active Toggle">
       <ToggleSwitch
         checked={isChecked}
         size={"small"}
