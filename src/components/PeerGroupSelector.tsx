@@ -968,7 +968,8 @@ const ResourcesList = ({
 const peersSearchPredicate = (item: Peer, query: string) => {
   const lowerCaseQuery = query.toLowerCase();
   if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
-  return item.ip.toLowerCase().includes(lowerCaseQuery);
+  if (item.ip.toLowerCase().includes(lowerCaseQuery)) return true;
+  return item.ipv6?.toLowerCase().includes(lowerCaseQuery) ?? false;
 };
 
 const PeersList = ({
@@ -1059,6 +1060,7 @@ const PeersList = ({
                   }
                 >
                   {res.ip}
+                  {res.ipv6 && `, ${res.ipv6}`}
                   <RadioItem value={res.id} />
                 </div>
               </div>

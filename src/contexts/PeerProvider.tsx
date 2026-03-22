@@ -80,6 +80,7 @@ export default function PeerProvider({
     inactivityExpiration?: boolean;
     approval_required?: boolean;
     ip?: string;
+    ipv6?: string;
   }) => {
     return peerRequest.put(
       {
@@ -99,6 +100,7 @@ export default function PeerProvider({
             ? undefined
             : props.approval_required,
         ip: props.ip != undefined ? props.ip : undefined,
+        ipv6: props.ipv6 != undefined ? props.ipv6 : undefined,
       },
       `/${peer.id}`,
     );
