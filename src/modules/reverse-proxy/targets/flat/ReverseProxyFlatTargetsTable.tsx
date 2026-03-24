@@ -14,6 +14,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
 import ReverseProxyArrowCell from "@/modules/reverse-proxy/table/ReverseProxyArrowCell";
+import ReverseProxyAccessControlCell from "@/modules/reverse-proxy/table/ReverseProxyAccessControlCell";
 import ReverseProxyAuthCell from "@/modules/reverse-proxy/table/ReverseProxyAuthCell";
 import ReverseProxyClusterCell from "@/modules/reverse-proxy/table/ReverseProxyClusterCell";
 import ReverseProxyDestinationCell from "@/modules/reverse-proxy/table/ReverseProxyDestinationCell";
@@ -109,6 +110,15 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
     ),
     cell: ({ row }) => (
       <ReverseProxyAuthCell reverseProxy={row.original.proxy} />
+    ),
+  },
+  {
+    id: "access_control",
+    header: ({ column }) => (
+      <DataTableHeader column={column}>Access Control</DataTableHeader>
+    ),
+    cell: ({ row }) => (
+      <ReverseProxyAccessControlCell reverseProxy={row.original.proxy} />
     ),
   },
   {

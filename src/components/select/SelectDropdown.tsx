@@ -48,6 +48,9 @@ interface SelectDropdownProps {
   children?: React.ReactNode;
   maxHeight?: number;
   triggerClassName?: string;
+  iconSize?: number;
+  truncate?: boolean;
+  compact?: boolean;
 }
 
 export function SelectDropdown({
@@ -68,6 +71,9 @@ export function SelectDropdown({
   children,
   maxHeight,
   triggerClassName,
+  iconSize = 14,
+  truncate = false,
+  compact = false,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -107,15 +113,18 @@ export function SelectDropdown({
 
   const SelectedItem = () => {
     return (
-      <div className={"flex items-center gap-2.5"}>
-        {selected?.icon && <selected.icon size={14} width={14} />}
+      <div className={cn("flex items-center gap-2.5", truncate && "min-w-0")}>
+        {selected?.icon && <selected.icon size={iconSize} width={iconSize} />}
         <div
           className={cn(
             "flex flex-col text-sm font-medium",
             size === "xs" && "text-xs",
+            truncate && "min-w-0",
           )}
         >
-          <span className={"text-nb-gray-200"}>{selected?.label}</span>
+          <span className={cn("text-nb-gray-200", truncate && "truncate")}>
+            {selected?.label}
+          </span>
         </div>
       </div>
     );
@@ -216,20 +225,22 @@ export function SelectDropdown({
 
             <ScrollArea
               className={cn(
-                "overflow-y-auto flex flex-col gap-1 pl-2 pr-3",
-                !showSearch && "pt-2",
+                "overflow-y-auto flex flex-col gap-1",
+                compact ? "pl-1 pr-1" : "pl-2 pr-3",
+                !showSearch && (compact ? "pt-1" : "pt-2"),
               )}
               style={{
                 maxHeight: maxHeight ?? 380,
               }}
             >
               <CommandGroup>
-                <div className={"grid grid-cols-1 gap-1 pb-2 w-full"}>
+                <div className={cn("grid grid-cols-1 gap-1 w-full", compact ? "pb-1" : "pb-2")}>
                   {filteredItems.map((option) => (
                     <SelectDropdownItem
                       option={option}
                       toggle={toggle}
                       key={option.value}
+                      iconSize={iconSize}
                       showValue={showValues}
                       size={size}
                     />
@@ -249,11 +260,13 @@ const SelectDropdownItem = ({
   toggle,
   showValue = false,
   size = "sm",
+  iconSize = 14,
 }: {
   option: SelectOption;
   toggle: (value: string) => void;
   showValue?: boolean;
   size: "xs" | "sm";
+  iconSize?: number;
 }) => {
   const value = option.value || "" + option.label || "";
   const elementRef = useRef<HTMLDivElement>(null);
@@ -285,7 +298,12 @@ const SelectDropdownItem = ({
               option?.disabled && "cursor-not-allowed",
             )}
           >
-            {option.icon && <option.icon size={14} width={14} />}
+            {option.icon && (
+              <div className={"shrink-0"}>
+                <option.icon size={iconSize} width={iconSize} />
+              </div>
+            )}
+
             {option?.renderItem && option.renderItem()}
             {!option?.renderItem && (
               <div

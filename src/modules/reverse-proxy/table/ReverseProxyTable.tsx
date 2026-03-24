@@ -23,6 +23,7 @@ import {
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyActionCell from "@/modules/reverse-proxy/table/ReverseProxyActionCell";
 import ReverseProxyActiveCell from "@/modules/reverse-proxy/table/ReverseProxyActiveCell";
+import ReverseProxyAccessControlCell from "@/modules/reverse-proxy/table/ReverseProxyAccessControlCell";
 import ReverseProxyAuthCell from "@/modules/reverse-proxy/table/ReverseProxyAuthCell";
 import ReverseProxyClusterCell from "@/modules/reverse-proxy/table/ReverseProxyClusterCell";
 import ReverseProxyNameCell from "@/modules/reverse-proxy/table/ReverseProxyNameCell";
@@ -89,6 +90,17 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
       return <DataTableHeader column={column}>Auth Methods</DataTableHeader>;
     },
     cell: ({ row }) => <ReverseProxyAuthCell reverseProxy={row.original} />,
+  },
+  {
+    id: "access_rules",
+    header: ({ column }) => {
+      return (
+        <DataTableHeader column={column}>Access Control</DataTableHeader>
+      );
+    },
+    cell: ({ row }) => (
+      <ReverseProxyAccessControlCell reverseProxy={row.original} />
+    ),
   },
   {
     accessorKey: "id",
