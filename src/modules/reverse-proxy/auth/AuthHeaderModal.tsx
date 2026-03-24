@@ -7,7 +7,6 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
-import { GradientFadedBackground } from "@components/ui/GradientFadedBackground";
 import {
   BracesIcon,
   CircleUserIcon,
@@ -18,6 +17,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import React, { useMemo, useReducer } from "react";
+import { useHasChanges } from "@/hooks/useHasChanges";
 import type { HeaderAuthConfig } from "@/interfaces/ReverseProxy";
 
 type HeaderType = "basic" | "bearer" | "custom";
@@ -50,6 +50,8 @@ const HEADER_TYPE_OPTIONS: SelectOption[] = [
   },
 ];
 
+const MASKED_VALUE = "••••••••";
+
 const INPUT_PROPS = {
   autoComplete: "off",
   "data-1p-ignore": true,
@@ -57,7 +59,9 @@ const INPUT_PROPS = {
   "data-form-type": "other",
 } as const;
 
-function createHeaderEntry(overrides?: Partial<HeaderAuthItem>): HeaderAuthItem {
+function createHeaderEntry(
+  overrides?: Partial<HeaderAuthItem>,
+): HeaderAuthItem {
   return {
     id: crypto.randomUUID(),
     type: "basic",
@@ -86,15 +90,24 @@ function fromBase64(b64: string): string {
 
 function headerEntryToConfig(entry: HeaderAuthItem): HeaderAuthConfig {
   if (entry.existingSecret) {
-    return { enabled: true, header: entry.header, value: "" };
+    const value = entry.value === MASKED_VALUE ? "" : entry.value;
+    return { enabled: true, header: entry.header, value };
   }
   switch (entry.type) {
     case "basic": {
       const encoded = toBase64(`${entry.username}:${entry.password}`);
-      return { enabled: true, header: "Authorization", value: `Basic ${encoded}` };
+      return {
+        enabled: true,
+        header: "Authorization",
+        value: `Basic ${encoded}`,
+      };
     }
     case "bearer":
-      return { enabled: true, header: "Authorization", value: `Bearer ${entry.value}` };
+      return {
+        enabled: true,
+        header: "Authorization",
+        value: `Bearer ${entry.value}`,
+      };
     case "custom":
       return { enabled: true, header: entry.header, value: entry.value };
   }
@@ -114,18 +127,20 @@ function configToHeaderEntry(config: HeaderAuthConfig): HeaderAuthItem {
           password: decoded.slice(sep + 1),
         });
       }
-    } catch {
-    }
+    } catch {}
   }
 
-  if (config.header === "Authorization" && config.value?.startsWith("Bearer ")) {
+  if (
+    config.header === "Authorization" &&
+    config.value?.startsWith("Bearer ")
+  ) {
     return createHeaderEntry({ type: "bearer", value: config.value.slice(7) });
   }
 
   return createHeaderEntry({
     type: isExisting && config.header === "Authorization" ? "basic" : "custom",
     header: config.header,
-    value: config.value ?? "",
+    value: isExisting ? MASKED_VALUE : config.value ?? "",
     existingSecret: isExisting,
   });
 }
@@ -147,7 +162,10 @@ type HeaderAction =
   | { type: "remove"; index: number }
   | { type: "update"; index: number; updates: Partial<HeaderAuthItem> };
 
-function headersReducer(state: HeaderAuthItem[], action: HeaderAction): HeaderAuthItem[] {
+function headersReducer(
+  state: HeaderAuthItem[],
+  action: HeaderAction,
+): HeaderAuthItem[] {
   switch (action.type) {
     case "add":
       return [...state, createHeaderEntry()];
@@ -163,7 +181,9 @@ function headersReducer(state: HeaderAuthItem[], action: HeaderAction): HeaderAu
 }
 
 function initHeaders(headers: HeaderAuthConfig[]): HeaderAuthItem[] {
-  return headers.length > 0 ? headers.map(configToHeaderEntry) : [createHeaderEntry()];
+  return headers.length > 0
+    ? headers.map(configToHeaderEntry)
+    : [createHeaderEntry()];
 }
 
 type Props = {
@@ -181,9 +201,14 @@ export default function AuthHeaderModal({
   onSave,
   onRemove,
 }: Readonly<Props>) {
-  const [items, dispatch] = useReducer(headersReducer, currentHeaders, initHeaders);
+  const [items, dispatch] = useReducer(
+    headersReducer,
+    currentHeaders,
+    initHeaders,
+  );
   const isEditing = currentHeaders.length > 0;
   const canSave = useMemo(() => items.every(isHeaderValid), [items]);
+  const { hasChanges } = useHasChanges(items);
 
   const handleSave = () => {
     if (!canSave) return;
@@ -191,23 +216,30 @@ export default function AuthHeaderModal({
     onSave(items.map(headerEntryToConfig));
   };
 
-  const handleRemove = () => {
+  const handleRemoveAll = () => {
     onOpenChange(false);
     onRemove();
   };
 
   return (
     <Modal open={open} onOpenChange={onOpenChange}>
-      <ModalContent maxWidthClass="max-w-xl">
+      <ModalContent
+        maxWidthClass="max-w-xl"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          const container = e.currentTarget as HTMLElement | null;
+          container
+            ?.querySelector<HTMLInputElement>("input:not([type=hidden])")
+            ?.focus();
+        }}
+      >
         <ModalHeader
           title="HTTP Headers"
           description="Require specific HTTP headers to access this service."
         />
 
-        <GradientFadedBackground />
-
         <div className="px-8">
-          <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-3">
             {items.map((item, index) => (
               <HeaderItemRow
                 key={item.id}
@@ -234,7 +266,7 @@ export default function AuthHeaderModal({
 
           {items.length > 1 && (
             <Callout className="mt-4" variant="info">
-              A request matching any one of these headers will grant access.
+              Any request matching one of these headers will grant access.
               <br />
               Matched headers are stripped before reaching your backend.
             </Callout>
@@ -243,7 +275,7 @@ export default function AuthHeaderModal({
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
-                <Button variant="danger-text" onClick={handleRemove}>
+                <Button variant="danger-text" onClick={handleRemoveAll}>
                   Remove All
                 </Button>
                 <div className="flex gap-3">
@@ -253,7 +285,7 @@ export default function AuthHeaderModal({
                   <Button
                     variant="primary"
                     onClick={handleSave}
-                    disabled={!canSave}
+                    disabled={!canSave || !hasChanges}
                   >
                     Save
                   </Button>
@@ -298,7 +330,7 @@ function HeaderItemRow({
   onRemove,
   showRemove,
 }: Readonly<HeaderItemRowProps>) {
-  const handlePresetChange = (value: string) => {
+  const handleHeaderTypeChange = (value: string) => {
     const type = value as HeaderType;
     onChange({
       type,
@@ -310,40 +342,33 @@ function HeaderItemRow({
   };
 
   return (
-    <div className="rounded-md border border-nb-gray-900 overflow-hidden">
-      <div className="flex items-center justify-between px-4 h-10 bg-nb-gray-930 border-b border-nb-gray-900">
-        <span className="text-xs font-medium text-nb-gray-200 flex items-center gap-2">
-          <FileCode2Icon size={12} />
-          Header {index + 1}
-        </span>
-        {showRemove && (
-          <Button variant="danger-text" size="xs" onClick={onRemove}>
-            <MinusCircleIcon size={12} />
-            Remove
-          </Button>
-        )}
-      </div>
-      <div className="flex flex-col gap-2 p-4 bg-nb-gray-920/30">
+    <div className="rounded-md border border-nb-gray-900 bg-nb-gray-920/30 overflow-hidden">
+      <div className="flex flex-col gap-2 px-4 pt-2 pb-4 bg-nb-gray-920/30">
+        <div className="flex items-center justify-between h-6 mt-0.5">
+          <span className="text-xs font-normal text-nb-gray-200 flex items-center gap-2">
+            <FileCode2Icon size={14} />
+            {item.existingSecret
+              ? `Header ${index + 1} - ${item.header}`
+              : `Header ${index + 1}`}
+          </span>
+          {showRemove && (
+            <Button variant="danger-text" size="xs" onClick={onRemove}>
+              <MinusCircleIcon size={12} />
+              Remove
+            </Button>
+          )}
+        </div>
         {item.existingSecret ? (
           <div>
-            <p className="text-xs text-nb-gray-400 mb-2">
-              Header <code className="text-nb-gray-200">{item.header}</code> is
-              configured. Enter a new value below to change it, or leave empty
-              to keep the current one.
-            </p>
             <Input
+              customPrefix={<span className="min-w-[38px]">Value</span>}
               type="password"
-              showPasswordToggle
-              placeholder="Enter new value to replace..."
+              showPasswordToggle={!item.value.includes("•")}
+              value={item.value}
+              placeholder="e.g., AIiaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe"
               {...INPUT_PROPS}
               onChange={(e) => {
-                if (e.target.value) {
-                  onChange({
-                    existingSecret: false,
-                    type: "custom",
-                    value: e.target.value,
-                  });
-                }
+                onChange({ value: e.target.value });
               }}
             />
           </div>
@@ -351,7 +376,7 @@ function HeaderItemRow({
           <>
             <SelectDropdown
               value={item.type}
-              onChange={handlePresetChange}
+              onChange={handleHeaderTypeChange}
               options={HEADER_TYPE_OPTIONS}
             />
 
