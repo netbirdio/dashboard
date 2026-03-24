@@ -122,7 +122,9 @@ export default function ReverseProxyAuthCell({
   return (
     <div className={"flex"} onClick={(e) => {
       e.stopPropagation();
-      openModal({ proxy: reverseProxy, initialTab: "auth" });
+      if (permission?.services?.update) {
+        openModal({ proxy: reverseProxy, initialTab: "auth" });
+      }
     }}>
       <div className={"flex items-center"}>
         {authBadge ? (
@@ -191,6 +193,7 @@ export default function ReverseProxyAuthCell({
             openModal({ proxy: reverseProxy, initialTab: "auth" });
           }}
           disabled={!permission?.services?.update}
+          aria-label="Configure authentication"
         >
           <Settings size={12} />
         </Button>

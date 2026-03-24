@@ -138,7 +138,9 @@ export default function ReverseProxyAccessControlCell({
       className={"flex"}
       onClick={(e) => {
         e.stopPropagation();
-        openModal({ proxy: reverseProxy, initialTab: "access-control" });
+        if (permission?.services?.update) {
+          openModal({ proxy: reverseProxy, initialTab: "access-control" });
+        }
       }}
     >
       <div className={"flex items-center"}>
@@ -187,6 +189,7 @@ export default function ReverseProxyAccessControlCell({
             openModal({ proxy: reverseProxy, initialTab: "access-control" });
           }}
           disabled={!permission?.services?.update}
+          aria-label="Configure access control"
         >
           <Settings size={12} />
         </Button>
