@@ -1,4 +1,5 @@
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import { Input } from "@components/Input";
 import { Modal, ModalClose, ModalContent } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
@@ -22,7 +23,7 @@ import type { HeaderAuthConfig } from "@/interfaces/ReverseProxy";
 type HeaderType = "basic" | "bearer" | "custom";
 
 interface HeaderAuthItem {
-  id: number;
+  id: string;
   type: HeaderType;
   header: string;
   value: string;
@@ -56,11 +57,9 @@ const INPUT_PROPS = {
   "data-form-type": "other",
 } as const;
 
-let nextHeaderId = 0;
-
 function createHeaderEntry(overrides?: Partial<HeaderAuthItem>): HeaderAuthItem {
   return {
-    id: nextHeaderId++,
+    id: crypto.randomUUID(),
     type: "basic",
     header: "Authorization",
     value: "",
@@ -233,6 +232,14 @@ export default function AuthHeaderModal({
             Add Header
           </Button>
 
+          {items.length > 1 && (
+            <Callout className="mt-4" variant="info">
+              A request matching any one of these headers will grant access.
+              <br />
+              Matched headers are stripped before reaching your backend.
+            </Callout>
+          )}
+
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
               <>
@@ -304,9 +311,9 @@ function HeaderItemRow({
 
   return (
     <div className="rounded-md border border-nb-gray-900 overflow-hidden">
-      <div className="flex items-center justify-between px-4 py-3 bg-nb-gray-930 border-b border-nb-gray-900">
-        <span className="text-sm font-medium text-nb-gray-200 flex items-center gap-2">
-          <FileCode2Icon size={14} />
+      <div className="flex items-center justify-between px-4 h-10 bg-nb-gray-930 border-b border-nb-gray-900">
+        <span className="text-xs font-medium text-nb-gray-200 flex items-center gap-2">
+          <FileCode2Icon size={12} />
           Header {index + 1}
         </span>
         {showRemove && (
