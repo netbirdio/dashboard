@@ -323,7 +323,7 @@ export default function ReverseProxyModal({
     !accessRestrictions;
 
   const handleSubmit = async () => {
-    if (!isL4Mode && isUnprotected) {
+    if (isUnprotected) {
       const confirmed = await confirm({
         title: "No Protection Configured",
         description:

@@ -230,6 +230,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                     })
                   }
                   options={ACTION_OPTIONS}
+                  compact
                 />
               </div>
 
@@ -245,6 +246,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                     })
                   }
                   options={TYPE_OPTIONS}
+                  compact
                 />
               </div>
 

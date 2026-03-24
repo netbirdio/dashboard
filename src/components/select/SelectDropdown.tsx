@@ -50,6 +50,7 @@ interface SelectDropdownProps {
   triggerClassName?: string;
   iconSize?: number;
   truncate?: boolean;
+  compact?: boolean;
 }
 
 export function SelectDropdown({
@@ -72,6 +73,7 @@ export function SelectDropdown({
   triggerClassName,
   iconSize = 14,
   truncate = false,
+  compact = false,
 }: Readonly<SelectDropdownProps>) {
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -223,15 +225,16 @@ export function SelectDropdown({
 
             <ScrollArea
               className={cn(
-                "overflow-y-auto flex flex-col gap-1 pl-1 pr-1",
-                !showSearch && "pt-1",
+                "overflow-y-auto flex flex-col gap-1",
+                compact ? "pl-1 pr-1" : "pl-2 pr-3",
+                !showSearch && (compact ? "pt-1" : "pt-2"),
               )}
               style={{
                 maxHeight: maxHeight ?? 380,
               }}
             >
               <CommandGroup>
-                <div className={"grid grid-cols-1 gap-1 pb-1 w-full"}>
+                <div className={cn("grid grid-cols-1 gap-1 w-full", compact ? "pb-1" : "pb-2")}>
                   {filteredItems.map((option) => (
                     <SelectDropdownItem
                       option={option}

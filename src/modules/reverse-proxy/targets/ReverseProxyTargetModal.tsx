@@ -487,7 +487,7 @@ export default function ReverseProxyTargetModal({
                           <Label>Session Idle Timeout</Label>
                           <HelpText className={"mb-0"}>
                             How long a UDP session stays alive without traffic
-                            (max 10m). <br /> Defaults to 30s when empty.
+                            (e.g., 30s, 2m). <br /> Defaults to 30s when empty.
                           </HelpText>
                         </div>
                         <Input
