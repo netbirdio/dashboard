@@ -98,7 +98,7 @@ const SelectItem = React.forwardRef<
             <Check className="h-4 w-4" />
           </SelectPrimitive.ItemIndicator>
         </span>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
           <span className="flex-shrink-0">{icon}</span>
           <div className="flex flex-col">
             <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>

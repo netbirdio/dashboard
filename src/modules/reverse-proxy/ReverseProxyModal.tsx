@@ -27,6 +27,7 @@ import {
   PlusCircle,
   RectangleEllipsis,
   Settings,
+  ShieldCheckIcon,
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
@@ -37,7 +38,9 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
+  AccessRestrictions,
   isL4Mode as isL4ServiceMode,
+  REVERSE_PROXY_ACCESS_CONTROL_DOCS_LINK,
   REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
   REVERSE_PROXY_SERVICES_DOCS_LINK,
   REVERSE_PROXY_SETTINGS_DOCS_LINK,
@@ -61,14 +64,15 @@ import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProx
 import { type Target } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
 import { useReverseProxyAddress } from "@/modules/reverse-proxy/targets/ReverseProxyAddressInput";
 import {
-  validateTimeout,
   validateSessionIdleTimeout,
+  validateTimeout,
 } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import {
   ReverseProxyServiceModeSelector,
   SERVICE_MODES,
 } from "@/modules/reverse-proxy/ReverseProxyServiceModeSelector";
+import { ReverseProxyAccessControlRules } from "@/modules/reverse-proxy/ReverseProxyAccessControlRules";
 
 type Props = {
   open: boolean;
@@ -236,6 +240,12 @@ export default function ReverseProxyModal({
     reverseProxy?.auth?.link_auth?.enabled ?? false,
   );
 
+  const [accessRestrictions, setAccessRestrictions] = useState<
+    AccessRestrictions | undefined
+  >(reverseProxy?.access_restrictions);
+
+  const [accessControlHasErrors, setAccessControlHasErrors] = useState(false);
+
   // Auth modal states
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [ssoModalOpen, setSsoModalOpen] = useState(false);
@@ -305,16 +315,19 @@ export default function ReverseProxyModal({
     );
   };
 
-  const hasNoAuth =
-    !passwordEnabled && !pinEnabled && !bearerEnabled && !linkAuthEnabled;
+  const isUnprotected =
+    !passwordEnabled &&
+    !pinEnabled &&
+    !bearerEnabled &&
+    !linkAuthEnabled &&
+    !accessRestrictions;
 
   const handleSubmit = async () => {
-    // Show warning if no authentication is configured (HTTP only; TLS is pass-through)
-    if (!isL4Mode && hasNoAuth) {
+    if (!isL4Mode && isUnprotected) {
       const confirmed = await confirm({
-        title: "No Authentication Configured",
+        title: "No Protection Configured",
         description:
-          "This service will be publicly accessible to everyone on the internet without any restrictions. Are you sure you want to continue?",
+          "This service has no authentication or access control rules configured. It will be publicly accessible to everyone on the internet. Are you sure you want to continue?",
         type: "warning",
         confirmText: reverseProxy ? "Save Changes" : "Add Service",
         cancelText: "Cancel",
@@ -383,6 +396,7 @@ export default function ReverseProxyModal({
         pass_host_header: isL4Mode ? undefined : passHostHeader,
         rewrite_redirects: isL4Mode ? undefined : rewriteRedirects,
         auth: isL4Mode ? undefined : auth,
+        access_restrictions: accessRestrictions,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -426,10 +440,17 @@ export default function ReverseProxyModal({
             </TabsTrigger>
             {!isL4Mode && (
               <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
-                <LockKeyhole size={16} />
+                <LockKeyhole size={14} />
                 Authentication
               </TabsTrigger>
             )}
+            <TabsTrigger
+              value={"access-control"}
+              disabled={!canContinueToSettings}
+            >
+              <ShieldCheckIcon size={14} />
+              Access Control
+            </TabsTrigger>
             <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
               <Settings size={14} />
               Advanced Settings
@@ -531,6 +552,16 @@ export default function ReverseProxyModal({
             </div>
           </TabsContent>
 
+          <TabsContent value={"access-control"} className={"pb-8"}>
+            <div className={"px-8 flex-col flex gap-4"}>
+              <ReverseProxyAccessControlRules
+                value={accessRestrictions}
+                onChange={setAccessRestrictions}
+                onValidationChange={setAccessControlHasErrors}
+              />
+            </div>
+          </TabsContent>
+
           <TabsContent value={"settings"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-6"}>
               {(serviceMode === ServiceMode.TCP ||
@@ -627,6 +658,10 @@ export default function ReverseProxyModal({
                   href: REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
                   label: "Authentication",
                 },
+                "access-control": {
+                  href: REVERSE_PROXY_ACCESS_CONTROL_DOCS_LINK,
+                  label: "Access Control",
+                },
                 settings: {
                   href: REVERSE_PROXY_SETTINGS_DOCS_LINK,
                   label: "Settings",
@@ -653,7 +688,9 @@ export default function ReverseProxyModal({
                     </ModalClose>
                     <Button
                       variant={"primary"}
-                      onClick={() => setTab(isL4Mode ? "settings" : "auth")}
+                      onClick={() =>
+                        setTab(isL4Mode ? "access-control" : "auth")
+                      }
                       disabled={!canContinueToSettings}
                     >
                       Continue
@@ -671,7 +708,25 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
+                      onClick={() => setTab("access-control")}
+                    >
+                      Continue
+                    </Button>
+                  </>
+                )}
+
+                {tab === "access-control" && (
+                  <>
+                    <Button
+                      variant={"secondary"}
+                      onClick={() => setTab(isL4Mode ? "targets" : "auth")}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      variant={"primary"}
                       onClick={() => setTab("settings")}
+                      disabled={accessControlHasErrors}
                     >
                       Continue
                     </Button>
@@ -682,7 +737,7 @@ export default function ReverseProxyModal({
                   <>
                     <Button
                       variant={"secondary"}
-                      onClick={() => setTab(isL4Mode ? "targets" : "auth")}
+                      onClick={() => setTab("access-control")}
                     >
                       Back
                     </Button>
@@ -691,7 +746,8 @@ export default function ReverseProxyModal({
                       disabled={
                         !canContinueToSettings ||
                         !permission?.services?.create ||
-                        !!timeoutError
+                        !!timeoutError ||
+                        accessControlHasErrors
                       }
                       onClick={handleSubmit}
                     >
@@ -711,7 +767,8 @@ export default function ReverseProxyModal({
                   disabled={
                     !canContinueToSettings ||
                     !permission?.services?.update ||
-                    !!timeoutError
+                    !!timeoutError ||
+                    accessControlHasErrors
                   }
                   onClick={handleSubmit}
                 >
