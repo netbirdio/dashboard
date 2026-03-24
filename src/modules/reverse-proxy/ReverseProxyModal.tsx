@@ -895,7 +895,6 @@ export default function ReverseProxyModal({
         onOpenChange={setHeaderModalOpen}
         key={headerModalOpen ? "h1" : "h0"}
         currentHeaders={headerAuths}
-        isEnabled={headerAuthsEnabled}
         onSave={(headers) => {
           setTimeout(() => {
             setHeaderAuths(headers);

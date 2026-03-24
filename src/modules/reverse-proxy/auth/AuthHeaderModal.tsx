@@ -1,7 +1,5 @@
 import Button from "@components/Button";
-import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
-import { Label } from "@components/Label";
 import { Modal, ModalClose, ModalContent } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import {
@@ -12,150 +10,167 @@ import { GradientFadedBackground } from "@components/ui/GradientFadedBackground"
 import {
   BracesIcon,
   CircleUserIcon,
+  FileCode2Icon,
   KeyRoundIcon,
   MinusCircleIcon,
   PlusIcon,
-  TagIcon,
   UserIcon,
 } from "lucide-react";
-import React, { useMemo, useState } from "react";
-import { HeaderAuthConfig } from "@/interfaces/ReverseProxy";
+import React, { useMemo, useReducer } from "react";
+import type { HeaderAuthConfig } from "@/interfaces/ReverseProxy";
 
-enum AuthType {
-  Basic = "basic",
-  Bearer = "bearer",
-  Custom = "custom",
+type HeaderType = "basic" | "bearer" | "custom";
+
+interface HeaderAuthItem {
+  id: number;
+  type: HeaderType;
+  header: string;
+  value: string;
+  username: string;
+  password: string;
+  existingSecret: boolean;
 }
 
-const authTypeOptions = [
+const HEADER_TYPE_OPTIONS: SelectOption[] = [
   {
-    value: AuthType.Basic,
+    value: "basic" satisfies HeaderType,
     label: "Basic Auth",
     icon: () => <CircleUserIcon size={14} />,
   },
   {
-    value: AuthType.Bearer,
+    value: "bearer" satisfies HeaderType,
     label: "Bearer Token",
     icon: () => <KeyRoundIcon size={14} />,
   },
   {
-    value: AuthType.Custom,
+    value: "custom" satisfies HeaderType,
     label: "Custom Header",
     icon: () => <BracesIcon size={14} />,
   },
-] as SelectOption[];
+];
 
-/**
- * Internal state per header entry. The UI lets users pick an auth type,
- * then we convert to the API's flat { header, value } on save.
- */
-interface HeaderEntry {
-  authType: AuthType;
-  username: string;
-  password: string;
-  token: string;
-  headerName: string;
-  headerValue: string;
-}
+const INPUT_PROPS = {
+  autoComplete: "off",
+  "data-1p-ignore": true,
+  "data-lpignore": "true",
+  "data-form-type": "other",
+} as const;
 
-const emptyEntry = (): HeaderEntry => ({
-  authType: AuthType.Basic,
-  username: "",
-  password: "",
-  token: "",
-  headerName: "",
-  headerValue: "",
-});
+let nextHeaderId = 0;
 
-/**
- * Convert an API HeaderAuthConfig into our internal form state.
- * We detect the auth type from the header/value format.
- */
-function fromApi(cfg: HeaderAuthConfig): HeaderEntry {
-  if (
-    cfg.header.toLowerCase() === "authorization" &&
-    cfg.value.startsWith("Basic ")
-  ) {
-    let username = "";
-    let password = "";
-    try {
-      const decoded = atob(cfg.value.substring(6));
-      const colonIdx = decoded.indexOf(":");
-      if (colonIdx !== -1) {
-        username = decoded.substring(0, colonIdx);
-        password = decoded.substring(colonIdx + 1);
-      }
-    } catch {
-      // keep empty
-    }
-    return {
-      authType: AuthType.Basic,
-      username,
-      password,
-      token: "",
-      headerName: "",
-      headerValue: "",
-    };
-  }
-  if (
-    cfg.header.toLowerCase() === "authorization" &&
-    cfg.value.startsWith("Bearer ")
-  ) {
-    return {
-      authType: AuthType.Bearer,
-      username: "",
-      password: "",
-      token: cfg.value.substring(7),
-      headerName: "",
-      headerValue: "",
-    };
-  }
+function createHeaderEntry(overrides?: Partial<HeaderAuthItem>): HeaderAuthItem {
   return {
-    authType: AuthType.Custom,
+    id: nextHeaderId++,
+    type: "basic",
+    header: "Authorization",
+    value: "",
     username: "",
     password: "",
-    token: "",
-    headerName: cfg.header,
-    headerValue: cfg.value,
+    existingSecret: false,
+    ...overrides,
   };
 }
 
-/** Convert our internal form state to the API format. */
-function toApi(entry: HeaderEntry): HeaderAuthConfig | null {
-  switch (entry.authType) {
-    case AuthType.Basic: {
-      if (!entry.username.trim() || !entry.password.trim()) return null;
-      const encoded = btoa(`${entry.username}:${entry.password}`);
-      return {
-        enabled: true,
-        header: "Authorization",
-        value: `Basic ${encoded}`,
-      };
+function toBase64(str: string): string {
+  return btoa(
+    new TextEncoder()
+      .encode(str)
+      .reduce((acc, byte) => acc + String.fromCharCode(byte), ""),
+  );
+}
+
+function fromBase64(b64: string): string {
+  return new TextDecoder().decode(
+    Uint8Array.from(atob(b64), (c) => c.charCodeAt(0)),
+  );
+}
+
+function headerEntryToConfig(entry: HeaderAuthItem): HeaderAuthConfig {
+  if (entry.existingSecret) {
+    return { enabled: true, header: entry.header, value: "" };
+  }
+  switch (entry.type) {
+    case "basic": {
+      const encoded = toBase64(`${entry.username}:${entry.password}`);
+      return { enabled: true, header: "Authorization", value: `Basic ${encoded}` };
     }
-    case AuthType.Bearer: {
-      if (!entry.token.trim()) return null;
-      return {
-        enabled: true,
-        header: "Authorization",
-        value: `Bearer ${entry.token}`,
-      };
-    }
-    case AuthType.Custom: {
-      if (!entry.headerName.trim() || !entry.headerValue.trim()) return null;
-      return {
-        enabled: true,
-        header: entry.headerName,
-        value: entry.headerValue,
-      };
+    case "bearer":
+      return { enabled: true, header: "Authorization", value: `Bearer ${entry.value}` };
+    case "custom":
+      return { enabled: true, header: entry.header, value: entry.value };
+  }
+}
+
+function configToHeaderEntry(config: HeaderAuthConfig): HeaderAuthItem {
+  const isExisting = !config.value;
+
+  if (config.header === "Authorization" && config.value?.startsWith("Basic ")) {
+    try {
+      const decoded = fromBase64(config.value.slice(6));
+      const sep = decoded.indexOf(":");
+      if (sep >= 0) {
+        return createHeaderEntry({
+          type: "basic",
+          username: decoded.slice(0, sep),
+          password: decoded.slice(sep + 1),
+        });
+      }
+    } catch {
     }
   }
+
+  if (config.header === "Authorization" && config.value?.startsWith("Bearer ")) {
+    return createHeaderEntry({ type: "bearer", value: config.value.slice(7) });
+  }
+
+  return createHeaderEntry({
+    type: isExisting && config.header === "Authorization" ? "basic" : "custom",
+    header: config.header,
+    value: config.value ?? "",
+    existingSecret: isExisting,
+  });
+}
+
+function isHeaderValid(entry: HeaderAuthItem): boolean {
+  if (entry.existingSecret) return true;
+  switch (entry.type) {
+    case "basic":
+      return entry.username.trim().length > 0 && entry.password.length > 0;
+    case "bearer":
+      return entry.value.trim().length > 0;
+    case "custom":
+      return entry.header.trim().length > 0 && entry.value.trim().length > 0;
+  }
+}
+
+type HeaderAction =
+  | { type: "add" }
+  | { type: "remove"; index: number }
+  | { type: "update"; index: number; updates: Partial<HeaderAuthItem> };
+
+function headersReducer(state: HeaderAuthItem[], action: HeaderAction): HeaderAuthItem[] {
+  switch (action.type) {
+    case "add":
+      return [...state, createHeaderEntry()];
+    case "remove":
+      return state.length === 1
+        ? [createHeaderEntry()]
+        : state.filter((_, i) => i !== action.index);
+    case "update":
+      return state.map((e, i) =>
+        i === action.index ? { ...e, ...action.updates } : e,
+      );
+  }
+}
+
+function initHeaders(headers: HeaderAuthConfig[]): HeaderAuthItem[] {
+  return headers.length > 0 ? headers.map(configToHeaderEntry) : [createHeaderEntry()];
 }
 
 type Props = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   currentHeaders: HeaderAuthConfig[];
-  isEnabled: boolean;
   onSave: (headers: HeaderAuthConfig[]) => void;
   onRemove: () => void;
 };
@@ -164,49 +179,22 @@ export default function AuthHeaderModal({
   open,
   onOpenChange,
   currentHeaders,
-  isEnabled,
   onSave,
   onRemove,
 }: Readonly<Props>) {
-  const [entries, setEntries] = useState<HeaderEntry[]>(
-    currentHeaders.length > 0 ? currentHeaders.map(fromApi) : [emptyEntry()],
-  );
-  const isEditing = isEnabled;
-
-  const canSave = useMemo(() => {
-    return entries.some((e) => toApi(e) !== null);
-  }, [entries]);
+  const [items, dispatch] = useReducer(headersReducer, currentHeaders, initHeaders);
+  const isEditing = currentHeaders.length > 0;
+  const canSave = useMemo(() => items.every(isHeaderValid), [items]);
 
   const handleSave = () => {
     if (!canSave) return;
-    const configs = entries
-      .map(toApi)
-      .filter((c): c is HeaderAuthConfig => c !== null);
     onOpenChange(false);
-    onSave(configs);
+    onSave(items.map(headerEntryToConfig));
   };
 
   const handleRemove = () => {
     onOpenChange(false);
     onRemove();
-  };
-
-  const addEntry = () => {
-    setEntries([...entries, emptyEntry()]);
-  };
-
-  const updateEntry = (index: number, updates: Partial<HeaderEntry>) => {
-    setEntries(
-      entries.map((e, i) => (i === index ? { ...e, ...updates } : e)),
-    );
-  };
-
-  const removeEntry = (index: number) => {
-    if (entries.length === 1) {
-      setEntries([emptyEntry()]);
-      return;
-    }
-    setEntries(entries.filter((_, i) => i !== index));
   };
 
   return (
@@ -221,13 +209,16 @@ export default function AuthHeaderModal({
 
         <div className="px-8">
           <div className="flex flex-col gap-4">
-            {entries.map((entry, index) => (
-              <HeaderEntryRow
-                key={index}
-                entry={entry}
-                onChange={(updates) => updateEntry(index, updates)}
-                onRemove={() => removeEntry(index)}
-                showRemove={entries.length > 1}
+            {items.map((item, index) => (
+              <HeaderItemRow
+                key={item.id}
+                item={item}
+                index={index}
+                onChange={(updates) =>
+                  dispatch({ type: "update", index, updates })
+                }
+                onRemove={() => dispatch({ type: "remove", index })}
+                showRemove={items.length > 1}
               />
             ))}
           </div>
@@ -236,7 +227,7 @@ export default function AuthHeaderModal({
             variant="dotted"
             className="w-full mt-4"
             size="sm"
-            onClick={addEntry}
+            onClick={() => dispatch({ type: "add" })}
           >
             <PlusIcon size={14} />
             Add Header
@@ -246,7 +237,7 @@ export default function AuthHeaderModal({
             {isEditing ? (
               <>
                 <Button variant="danger-text" onClick={handleRemove}>
-                  Remove
+                  Remove All
                 </Button>
                 <div className="flex gap-3">
                   <ModalClose asChild>
@@ -285,107 +276,139 @@ export default function AuthHeaderModal({
   );
 }
 
-type HeaderEntryRowProps = {
-  entry: HeaderEntry;
-  onChange: (updates: Partial<HeaderEntry>) => void;
+type HeaderItemRowProps = {
+  item: HeaderAuthItem;
+  index: number;
+  onChange: (updates: Partial<HeaderAuthItem>) => void;
   onRemove: () => void;
   showRemove: boolean;
 };
 
-function HeaderEntryRow({
-  entry,
+function HeaderItemRow({
+  item,
+  index,
   onChange,
   onRemove,
   showRemove,
-}: Readonly<HeaderEntryRowProps>) {
+}: Readonly<HeaderItemRowProps>) {
+  const handlePresetChange = (value: string) => {
+    const type = value as HeaderType;
+    onChange({
+      type,
+      header: type === "custom" ? "" : "Authorization",
+      value: "",
+      username: "",
+      password: "",
+    });
+  };
+
   return (
-    <div className="flex flex-col gap-2 p-4 rounded-md border border-nb-gray-800 bg-nb-gray-950/50">
-      <div className="flex gap-2 items-center">
-        <div className="w-full">
-          <SelectDropdown
-            value={entry.authType}
-            onChange={(value) =>
-              onChange({
-                authType: value as AuthType,
-                username: "",
-                password: "",
-                token: "",
-                headerName: "",
-                headerValue: "",
-              })
-            }
-            options={authTypeOptions}
-          />
-        </div>
+    <div className="rounded-md border border-nb-gray-900 overflow-hidden">
+      <div className="flex items-center justify-between px-4 py-3 bg-nb-gray-930 border-b border-nb-gray-900">
+        <span className="text-sm font-medium text-nb-gray-200 flex items-center gap-2">
+          <FileCode2Icon size={14} />
+          Header {index + 1}
+        </span>
         {showRemove && (
-          <Button
-            className="h-[42px] shrink-0"
-            variant="default-outline"
-            onClick={onRemove}
-          >
-            <MinusCircleIcon size={15} />
+          <Button variant="danger-text" size="xs" onClick={onRemove}>
+            <MinusCircleIcon size={12} />
+            Remove
           </Button>
         )}
       </div>
-
-      {entry.authType === AuthType.Basic && (
-        <div className="flex flex-col gap-2 mt-1">
-          <Input
-            customPrefix={<UserIcon size={16} />}
-            placeholder="Username"
-            maxWidthClass="w-full"
-            value={entry.username}
-            onChange={(e) => onChange({ username: e.target.value })}
-          />
-          <Input
-            customPrefix={<KeyRoundIcon size={16} />}
-            placeholder="Password"
-            maxWidthClass="w-full"
-            value={entry.password}
-            onChange={(e) => onChange({ password: e.target.value })}
-            type="password"
-          />
-        </div>
-      )}
-
-      {entry.authType === AuthType.Bearer && (
-        <div className="flex flex-col gap-2 mt-1">
-          <Input
-            customPrefix={"Bearer"}
-            placeholder="e.g. eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
-            maxWidthClass="w-full"
-            value={entry.token}
-            onChange={(e) => onChange({ token: e.target.value })}
-            type="password"
-          />
-        </div>
-      )}
-
-      {entry.authType === AuthType.Custom && (
-        <div className="flex flex-col gap-2 mt-1">
+      <div className="flex flex-col gap-2 p-4 bg-nb-gray-920/30">
+        {item.existingSecret ? (
           <div>
-            <Label>Header Name & Value</Label>
-            <HelpText>
-              Specify the header name and value for custom authentication.
-            </HelpText>
+            <p className="text-xs text-nb-gray-400 mb-2">
+              Header <code className="text-nb-gray-200">{item.header}</code> is
+              configured. Enter a new value below to change it, or leave empty
+              to keep the current one.
+            </p>
+            <Input
+              type="password"
+              showPasswordToggle
+              placeholder="Enter new value to replace..."
+              {...INPUT_PROPS}
+              onChange={(e) => {
+                if (e.target.value) {
+                  onChange({
+                    existingSecret: false,
+                    type: "custom",
+                    value: e.target.value,
+                  });
+                }
+              }}
+            />
           </div>
-          <Input
-            customPrefix={<TagIcon size={16} />}
-            placeholder="e.g., X-API-Key"
-            maxWidthClass="w-full"
-            value={entry.headerName}
-            onChange={(e) => onChange({ headerName: e.target.value })}
-          />
-          <Input
-            customPrefix={<KeyRoundIcon size={16} />}
-            placeholder="e.g., AIiaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe"
-            maxWidthClass="w-full"
-            value={entry.headerValue}
-            onChange={(e) => onChange({ headerValue: e.target.value })}
-            type="password"
-          />
-        </div>
-      )}
+        ) : (
+          <>
+            <SelectDropdown
+              value={item.type}
+              onChange={handlePresetChange}
+              options={HEADER_TYPE_OPTIONS}
+            />
+
+            {item.type === "basic" && (
+              <div className="flex flex-col gap-2">
+                <Input
+                  customPrefix={<UserIcon size={16} />}
+                  placeholder="Username"
+                  maxWidthClass="w-full"
+                  value={item.username}
+                  onChange={(e) => onChange({ username: e.target.value })}
+                  {...INPUT_PROPS}
+                />
+                <Input
+                  customPrefix={<KeyRoundIcon size={16} />}
+                  placeholder="Password"
+                  maxWidthClass="w-full"
+                  value={item.password}
+                  onChange={(e) => onChange({ password: e.target.value })}
+                  type="password"
+                  showPasswordToggle
+                  {...INPUT_PROPS}
+                />
+              </div>
+            )}
+
+            {item.type === "bearer" && (
+              <Input
+                customPrefix={"Bearer"}
+                placeholder="e.g. eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+                maxWidthClass="w-full"
+                value={item.value}
+                onChange={(e) => onChange({ value: e.target.value })}
+                type="password"
+                showPasswordToggle
+                {...INPUT_PROPS}
+              />
+            )}
+
+            {item.type === "custom" && (
+              <div className="flex flex-col gap-2">
+                <Input
+                  customPrefix={<span className="min-w-[38px]">Name</span>}
+                  placeholder="e.g., X-API-Key"
+                  maxWidthClass="w-full"
+                  value={item.header}
+                  onChange={(e) => onChange({ header: e.target.value })}
+                  {...INPUT_PROPS}
+                />
+                <Input
+                  customPrefix={<span className="min-w-[38px]">Value</span>}
+                  placeholder="e.g., AIiaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe"
+                  maxWidthClass="w-full"
+                  value={item.value}
+                  onChange={(e) => onChange({ value: e.target.value })}
+                  type="password"
+                  showPasswordToggle
+                  {...INPUT_PROPS}
+                />
+              </div>
+            )}
+          </>
+        )}
+      </div>
     </div>
   );
 }
