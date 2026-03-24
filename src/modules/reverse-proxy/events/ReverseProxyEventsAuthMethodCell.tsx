@@ -1,5 +1,5 @@
 import Badge from "@components/Badge";
-import { Binary, Mail, RectangleEllipsis, Users } from "lucide-react";
+import { Binary, FileCode2Icon, Mail, RectangleEllipsis, Users } from "lucide-react";
 import * as React from "react";
 import { ReverseProxyEvent } from "@/interfaces/ReverseProxy";
 
@@ -32,6 +32,12 @@ export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
         return {
           icon: <Binary size={12} />,
           label: "PIN Code",
+        };
+      case "header":
+      case "headers":
+        return {
+          icon: <FileCode2Icon size={12} />,
+          label: "HTTP Headers",
         };
       case "link":
       case "magic_link":
