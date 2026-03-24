@@ -1,5 +1,14 @@
 import Badge from "@components/Badge";
-import { Binary, FileCode2Icon, Mail, RectangleEllipsis, Users } from "lucide-react";
+import {
+  Binary,
+  FileCode2Icon,
+  Flag,
+  GlobeOff,
+  Mail,
+  Network,
+  RectangleEllipsis,
+  Users,
+} from "lucide-react";
 import * as React from "react";
 import { ReverseProxyEvent } from "@/interfaces/ReverseProxy";
 
@@ -34,7 +43,6 @@ export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
           label: "PIN Code",
         };
       case "header":
-      case "headers":
         return {
           icon: <FileCode2Icon size={12} />,
           label: "HTTP Headers",
@@ -45,6 +53,21 @@ export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
         return {
           icon: <Mail size={12} />,
           label: "Magic Link",
+        };
+      case "ip_restricted":
+        return {
+          icon: <Network size={12} />,
+          label: "IP Restricted",
+        };
+      case "country_restricted":
+        return {
+          icon: <Flag size={12} />,
+          label: "Country Restricted",
+        };
+      case "geo_unavailable":
+        return {
+          icon: <GlobeOff size={12} />,
+          label: "Geo Unavailable",
         };
       default:
         return {
