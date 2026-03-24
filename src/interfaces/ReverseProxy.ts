@@ -101,6 +101,7 @@ export interface ReverseProxyDomain {
   type: ReverseProxyDomainType;
   target_cluster?: string;
   supports_custom_ports?: boolean;
+  require_subdomain?: boolean;
 }
 
 export enum ReverseProxyDomainType {

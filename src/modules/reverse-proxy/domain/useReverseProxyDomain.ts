@@ -23,6 +23,13 @@ function parseDomain(
       .filter((d) => d.domain)
       .sort((a, b) => b.domain.length - a.domain.length);
     for (const d of sorted) {
+      if (fullDomain === d.domain) {
+        return {
+          subdomain: "",
+          baseDomain: d.domain,
+          isCustom: d.type === ReverseProxyDomainType.CUSTOM,
+        };
+      }
       if (fullDomain.endsWith(`.${d.domain}`)) {
         return {
           subdomain: fullDomain.slice(0, -(d.domain.length + 1)),
@@ -103,7 +110,11 @@ export function useReverseProxyDomain({
     return customDomain?.domain || freeDomain?.domain || "";
   });
 
-  const fullDomain = baseDomain ? `${subdomain}.${baseDomain}` : subdomain;
+  const fullDomain = baseDomain
+    ? subdomain
+      ? `${subdomain}.${baseDomain}`
+      : baseDomain
+    : subdomain;
 
   const domainAlreadyExists = useMemo(() => {
     if (!reverseProxies || !fullDomain) return false;

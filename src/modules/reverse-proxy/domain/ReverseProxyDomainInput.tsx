@@ -13,6 +13,7 @@ type Props = {
   baseDomain: string;
   onBaseDomainChange: (value: string) => void;
   domainAlreadyExists: boolean;
+  subdomainRequired?: boolean;
   clusterOffline?: {
     clusterName: string;
   };
@@ -24,13 +25,16 @@ export default function ReverseProxyDomainInput({
   baseDomain,
   onBaseDomainChange,
   domainAlreadyExists,
+  subdomainRequired = false,
   clusterOffline,
 }: Readonly<Props>) {
   return (
     <div>
       <Label>Domain</Label>
       <HelpText>
-        Enter a subdomain and select a domain for your service.
+        {subdomainRequired
+          ? "Enter a subdomain and select a domain for your service."
+          : "Optionally enter a subdomain, or use the domain directly."}
       </HelpText>
       <div className="flex items-start mt-2">
         <div className="flex-1 min-w-0">
@@ -47,7 +51,7 @@ export default function ReverseProxyDomainInput({
                 ? "This domain is already used by another service."
                 : undefined
             }
-            placeholder={"myapp"}
+            placeholder={subdomainRequired ? "myapp" : "myapp (optional)"}
             className="!rounded-r-none !border-r-0"
           />
         </div>
