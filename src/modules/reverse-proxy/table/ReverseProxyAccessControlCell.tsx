@@ -40,6 +40,7 @@ export default function ReverseProxyAccessControlCell({
   const { openModal } = useReverseProxies();
   const { countries } = useCountries();
 
+  const canConfigure = !!permission?.services?.update;
   const restrictions = reverseProxy.access_restrictions;
 
   const ruleCount =
@@ -50,7 +51,13 @@ export default function ReverseProxyAccessControlCell({
 
   const rulesBadge =
     ruleCount > 0 ? (
-      <Badge variant={"gray"} useHover={false} className={"cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"}>
+      <Badge
+        variant={"gray"}
+        disabled={!canConfigure}
+        className={
+          "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
+        }
+      >
         <ShieldCheck size={12} className="text-green-500" />
         <span className={"font-medium text-xs"}>
           {ruleCount} {ruleCount === 1 ? "Rule" : "Rules"}
@@ -85,10 +92,14 @@ export default function ReverseProxyAccessControlCell({
       });
     }
 
-    const allowedIps = restrictions?.allowed_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
-    const allowedCidrs = restrictions?.allowed_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
-    const blockedIps = restrictions?.blocked_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
-    const blockedCidrs = restrictions?.blocked_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
+    const allowedIps =
+      restrictions?.allowed_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
+    const allowedCidrs =
+      restrictions?.allowed_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
+    const blockedIps =
+      restrictions?.blocked_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
+    const blockedCidrs =
+      restrictions?.blocked_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
 
     if (allowedIps.length) {
       entries.push({
@@ -161,11 +172,22 @@ export default function ReverseProxyAccessControlCell({
                         "flex justify-between gap-12 py-2 px-4 border-b border-nb-gray-920 last:border-b-0"
                       }
                     >
-                      <div className={"flex items-start gap-2 font-medium whitespace-nowrap text-nb-gray-100 pt-0.5"}>
-                        <Icon size={14} className={blocked ? "text-red-500" : "text-green-500"} />
+                      <div
+                        className={
+                          "flex items-start gap-2 font-medium whitespace-nowrap text-nb-gray-100 pt-0.5"
+                        }
+                      >
+                        <Icon
+                          size={14}
+                          className={
+                            blocked ? "text-red-500" : "text-green-500"
+                          }
+                        />
                         {label}
                       </div>
-                      <div className={"max-w-[200px] text-nb-gray-300 text-right"}>
+                      <div
+                        className={"max-w-[200px] text-nb-gray-300 text-right"}
+                      >
                         {value}
                       </div>
                     </div>
@@ -175,7 +197,13 @@ export default function ReverseProxyAccessControlCell({
             )}
           </HoverCard>
         ) : (
-          <Badge variant={"gray"} className={"!rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start cursor-pointer hover:bg-nb-gray-930 transition-all"}>
+          <Badge
+            variant={"gray"}
+            disabled={!canConfigure}
+            className={
+              "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
+            }
+          >
             <ShieldOff size={12} className="text-red-500" />
             <span className={"font-medium text-xs"}>No Rules</span>
           </Badge>

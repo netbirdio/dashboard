@@ -90,15 +90,15 @@ export default function ReverseProxyAuthCell({
         .filter((g): g is Group => g != undefined)
     : [];
 
+  const canConfigure = !!permission?.services?.update;
   const SingleAuthIcon = authCount === 1 ? enabled[0].Icon : null;
 
   const authBadge = SingleAuthIcon ? (
     <Badge
       variant={"gray"}
       useHover={false}
-      className={
-        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
-      }
+      disabled={!canConfigure}
+      className={"cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"}
     >
       <SingleAuthIcon size={12} className="text-green-500" />
       <span className={"font-medium text-xs"}>{enabled[0].label}</span>
@@ -107,9 +107,8 @@ export default function ReverseProxyAuthCell({
     <Badge
       variant={"gray"}
       useHover={false}
-      className={
-        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
-      }
+      disabled={!canConfigure}
+      className={"cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"}
     >
       <LockKeyhole size={12} className="text-green-500" />
       <span className={"font-medium text-xs"}>{authCount} Enabled</span>
@@ -176,9 +175,8 @@ export default function ReverseProxyAuthCell({
         ) : (
           <Badge
             variant={"gray"}
-            className={
-              "!rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start cursor-pointer hover:bg-nb-gray-930 transition-all"
-            }
+            disabled={!canConfigure}
+            className={"cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"}
           >
             <LockOpenIcon size={12} className="text-red-500" />
             <span className={"font-medium text-xs"}>No Auth</span>
