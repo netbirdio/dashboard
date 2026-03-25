@@ -21,6 +21,7 @@ import {
   Binary,
   ClockFadingIcon,
   ExternalLinkIcon,
+  FileCode2Icon,
   GlobeIcon,
   LockKeyhole,
   MapPinned,
@@ -39,6 +40,7 @@ import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
   AccessRestrictions,
+  HeaderAuthConfig,
   isL4Mode as isL4ServiceMode,
   REVERSE_PROXY_ACCESS_CONTROL_DOCS_LINK,
   REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
@@ -56,6 +58,7 @@ import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
 import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
 import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
+import AuthHeaderModal from "@/modules/reverse-proxy/auth/AuthHeaderModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
 import ReverseProxyHTTPTargets from "@/modules/reverse-proxy/ReverseProxyHTTPTargets";
@@ -240,6 +243,13 @@ export default function ReverseProxyModal({
     reverseProxy?.auth?.link_auth?.enabled ?? false,
   );
 
+  const [headerAuthsEnabled, setHeaderAuthsEnabled] = useState(
+    (reverseProxy?.auth?.header_auths ?? []).some((h) => h.enabled),
+  );
+  const [headerAuths, setHeaderAuths] = useState<HeaderAuthConfig[]>(
+    reverseProxy?.auth?.header_auths ?? [],
+  );
+
   const [accessRestrictions, setAccessRestrictions] = useState<
     AccessRestrictions | undefined
   >(reverseProxy?.access_restrictions);
@@ -250,6 +260,7 @@ export default function ReverseProxyModal({
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [ssoModalOpen, setSsoModalOpen] = useState(false);
   const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [headerModalOpen, setHeaderModalOpen] = useState(false);
 
   // Target being added/edited
   const [targetModalOpen, setTargetModalOpen] = useState(false);
@@ -325,6 +336,7 @@ export default function ReverseProxyModal({
     !pinEnabled &&
     !bearerEnabled &&
     !linkAuthEnabled &&
+    !headerAuthsEnabled &&
     !accessRestrictions;
 
   const handleSubmit = async () => {
@@ -359,6 +371,9 @@ export default function ReverseProxyModal({
       link_auth: {
         enabled: linkAuthEnabled,
       },
+      header_auths: headerAuthsEnabled
+        ? headerAuths.map((h) => ({ ...h, enabled: true }))
+        : [],
     };
 
     const l4TargetPayload: ReverseProxyTarget | undefined = l4Target
@@ -553,6 +568,17 @@ export default function ReverseProxyModal({
                   description="Require a numeric PIN code to access this service."
                   enabled={pinEnabled}
                   onClick={() => setPinModalOpen(true)}
+                />
+                <SettingCard.Item
+                  label={
+                    <>
+                      <FileCode2Icon size={15} />
+                      HTTP Headers
+                    </>
+                  }
+                  description="Require specific HTTP headers to access this service."
+                  enabled={headerAuthsEnabled}
+                  onClick={() => setHeaderModalOpen(true)}
                 />
               </SettingCard>
             </div>
@@ -866,6 +892,25 @@ export default function ReverseProxyModal({
           setTimeout(() => {
             setPin("");
             setPinEnabled(false);
+          }, 200);
+        }}
+      />
+
+      <AuthHeaderModal
+        open={headerModalOpen}
+        onOpenChange={setHeaderModalOpen}
+        key={headerModalOpen ? "h1" : "h0"}
+        currentHeaders={headerAuths}
+        onSave={(headers) => {
+          setTimeout(() => {
+            setHeaderAuths(headers);
+            setHeaderAuthsEnabled(true);
+          }, 200);
+        }}
+        onRemove={() => {
+          setTimeout(() => {
+            setHeaderAuths([]);
+            setHeaderAuthsEnabled(false);
           }, 200);
         }}
       />

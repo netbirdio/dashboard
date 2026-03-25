@@ -74,7 +74,7 @@ export const buttonVariants = cva(
           "",
         ],
         "danger-text": [
-          "dark:bg-transparent dark:text-red-500 dark:hover:text-red-600 dark:border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 dark:ring-offset-neutral-950/50",
+          "dark:bg-transparent dark:text-red-500 dark:hover:text-red-600 dark:border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 dark:ring-offset-neutral-950/50 rounded-sm",
         ],
         "default-outline": [
           "dark:ring-offset-nb-gray-950/50 dark:focus:ring-nb-gray-500/20",

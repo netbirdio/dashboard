@@ -11,6 +11,7 @@ import { UserCountStack } from "@components/ui/MultipleGroups";
 import {
   ArrowRightIcon,
   Binary,
+  FileCode2Icon,
   HelpCircle,
   LockKeyhole,
   LockOpenIcon,
@@ -48,6 +49,12 @@ const AUTH_METHODS: {
   },
 ];
 
+const HEADER_AUTH_METHOD = {
+  label: "HTTP Headers",
+  hoverLabel: "HTTP Headers",
+  Icon: FileCode2Icon,
+};
+
 type Props = {
   reverseProxy: ReverseProxy;
 };
@@ -82,7 +89,8 @@ export default function ReverseProxyAuthCell({
   const auth = reverseProxy.auth;
 
   const enabled = AUTH_METHODS.filter((m) => auth?.[m.key]?.enabled);
-  const authCount = enabled.length;
+  const hasHeaderAuths = (auth?.header_auths ?? []).some((h) => h.enabled);
+  const authCount = enabled.length + (hasHeaderAuths ? 1 : 0);
 
   const ssoGroups = auth?.bearer_auth?.enabled
     ? (auth.bearer_auth.distribution_groups ?? [])
@@ -91,7 +99,13 @@ export default function ReverseProxyAuthCell({
     : [];
 
   const canConfigure = !!permission?.services?.update;
-  const SingleAuthIcon = authCount === 1 ? enabled[0].Icon : null;
+  const singleAuth =
+    authCount === 1
+      ? enabled.length === 1
+        ? enabled[0]
+        : HEADER_AUTH_METHOD
+      : null;
+  const SingleAuthIcon = singleAuth?.Icon ?? null;
 
   const authBadge = SingleAuthIcon ? (
     <Badge
@@ -101,7 +115,7 @@ export default function ReverseProxyAuthCell({
       className={"cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"}
     >
       <SingleAuthIcon size={12} className="text-green-500" />
-      <span className={"font-medium text-xs"}>{enabled[0].label}</span>
+      <span className={"font-medium text-xs"}>{singleAuth!.label}</span>
     </Badge>
   ) : authCount > 1 ? (
     <Badge
@@ -116,7 +130,7 @@ export default function ReverseProxyAuthCell({
   ) : null;
 
   const showAuthHover =
-    authCount > 1 || (authCount === 1 && auth?.bearer_auth?.enabled);
+    authCount > 1 || (authCount === 1 && (auth?.bearer_auth?.enabled || hasHeaderAuths));
 
   return (
     <div className={"flex"} onClick={(e) => {
@@ -168,6 +182,18 @@ export default function ReverseProxyAuthCell({
                       )}
                     </ListItem>
                   ))}
+                  {hasHeaderAuths && (
+                    <ListItem
+                      className={"py-0.5"}
+                      icon={<FileCode2Icon size={14} />}
+                      label={HEADER_AUTH_METHOD.hoverLabel}
+                      value={
+                        <div className={"text-green-500"}>
+                          {(auth?.header_auths ?? []).filter((h) => h.enabled).length} Header{(auth?.header_auths ?? []).filter((h) => h.enabled).length !== 1 ? "s" : ""}
+                        </div>
+                      }
+                    />
+                  )}
                 </div>
               </HoverCardContent>
             )}
