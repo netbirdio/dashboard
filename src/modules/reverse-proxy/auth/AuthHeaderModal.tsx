@@ -16,7 +16,7 @@ import {
   PlusIcon,
   UserIcon,
 } from "lucide-react";
-import React, { useMemo, useReducer } from "react";
+import React, { useMemo, useReducer, useRef } from "react";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import type { HeaderAuthConfig } from "@/interfaces/ReverseProxy";
 
@@ -330,6 +330,8 @@ function HeaderItemRow({
   onRemove,
   showRemove,
 }: Readonly<HeaderItemRowProps>) {
+  const isMaskedRef = useRef(item.existingSecret);
+
   const handleHeaderTypeChange = (value: string) => {
     const type = value as HeaderType;
     onChange({
@@ -363,11 +365,17 @@ function HeaderItemRow({
             <Input
               customPrefix={<span className="min-w-[38px]">Value</span>}
               type="password"
-              showPasswordToggle={!item.value.includes("•")}
-              value={item.value}
+              showPasswordToggle={!isMaskedRef.current}
+              value={isMaskedRef.current ? MASKED_VALUE : item.value}
               placeholder="e.g., AIiaSyDaGmWKa4JsXZ-HjGw7ISLn_3namBGewQe"
               {...INPUT_PROPS}
               onChange={(e) => {
+                if (isMaskedRef.current) {
+                  isMaskedRef.current = false;
+                  const nativeEvent = e.nativeEvent as InputEvent;
+                  onChange({ value: nativeEvent.data ?? "" });
+                  return;
+                }
                 onChange({ value: e.target.value });
               }}
             />
