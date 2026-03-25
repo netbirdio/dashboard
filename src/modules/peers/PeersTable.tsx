@@ -138,8 +138,18 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
   {
     accessorKey: "last_seen",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Last seen</DataTableHeader>;
+    header: ({ column, table }) => {
+      return (
+        <DataTableHeader
+          column={column}
+          onSort={() => {
+            const desc = column.getIsSorted() === "desc";
+            table.setSorting([{ id: "last_seen", desc: !desc }]);
+          }}
+        >
+          Last seen
+        </DataTableHeader>
+      );
     },
     sortingFn: "datetime",
     cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
@@ -226,16 +236,12 @@ export default function PeersTable({
     "netbird-table-sort" + path,
     [
       {
-        id: "connected",
+        id: "last_seen",
         desc: true,
       },
       {
         id: "name",
         desc: false,
-      },
-      {
-        id: "last_seen",
-        desc: true,
       },
     ],
   );

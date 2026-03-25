@@ -14,6 +14,7 @@ type Props = {
   center?: boolean;
   className?: string;
   sorting?: boolean;
+  onSort?: () => void;
   name?: string;
 };
 export default function DataTableHeader({
@@ -23,14 +24,20 @@ export default function DataTableHeader({
   center,
   className,
   sorting = true,
+  onSort,
   name,
 }: Props) {
   const serverPagination = useOptionalServerPagination();
 
   const handleSort = () => {
-    const direction = column.getIsSorted() === "asc" ? "desc" : "asc";
-    column.toggleSorting(direction === "desc");
+    if (onSort) {
+      onSort();
+    } else {
+      const direction = column.getIsSorted() === "asc" ? "desc" : "asc";
+      column.toggleSorting(direction === "desc");
+    }
     if (name && serverPagination?.setSort) {
+      const direction = column.getIsSorted() === "asc" ? "desc" : "asc";
       serverPagination.setSort(name, direction);
     }
   };
