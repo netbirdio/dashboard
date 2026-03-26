@@ -30,6 +30,7 @@ const PeerContext = React.createContext(
       inactivityExpiration?: boolean;
       approval_required?: boolean;
       ip?: string;
+      ipv6?: string;
     }) => Promise<Peer>;
     toggleSSH: (newState: boolean) => Promise<void>;
     setSSHInstructionsModal: (open: boolean) => void;

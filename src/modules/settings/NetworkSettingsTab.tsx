@@ -46,8 +46,12 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
   const [ipv6EnabledGroups, setIpv6EnabledGroups] = useGroupHelper({
     initial: account.settings?.ipv6_enabled_groups,
   });
-  const ipv6GroupNames = useMemo(
-    () => ipv6EnabledGroups.map((g) => g.name).sort(),
+  const ipv6GroupIds = useMemo(
+    () =>
+      ipv6EnabledGroups
+        .map((g) => g.id)
+        .filter((id): id is string => !!id)
+        .sort(),
     [ipv6EnabledGroups],
   );
 
@@ -77,7 +81,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
     customDNSDomain,
     networkRange,
     networkRangeV6,
-    ipv6GroupNames,
+    ipv6GroupIds,
   ]);
 
   const saveChanges = async () => {
