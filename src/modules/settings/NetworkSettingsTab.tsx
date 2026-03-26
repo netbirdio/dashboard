@@ -118,7 +118,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
         })
         .then(() => {
           mutate("/accounts");
-          updateRef([customDNSDomain, networkRange, networkRangeV6, ipv6GroupNames]);
+          updateRef([customDNSDomain, networkRange, networkRangeV6, ipv6GroupIds]);
         }),
       loadingMessage: "Updating network settings...",
     });
