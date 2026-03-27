@@ -3,6 +3,7 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
+import cidr from "ip-cidr";
 import Card from "@components/Card";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
@@ -469,6 +470,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
   const { update } = usePeer();
   const { mutate } = useSWRConfig();
   const [showEditIPModal, setShowEditIPModal] = useState(false);
+  const [showEditIPv6Modal, setShowEditIPv6Modal] = useState(false);
   const { permission } = usePermissions();
 
   const countryText = useMemo(() => {
@@ -492,6 +494,23 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
           }}
           peer={peer}
           key={showEditIPModal ? 1 : 0}
+        />
+      </Modal>
+      <Modal open={showEditIPv6Modal} onOpenChange={setShowEditIPv6Modal}>
+        <EditIPv6Modal
+          onSuccess={(newIPv6) => {
+            notify({
+              title: peer.name,
+              description: "Peer IPv6 was successfully updated",
+              promise: update({ ipv6: newIPv6 }).then(() => {
+                mutate("/peers/" + peer.id);
+                setShowEditIPv6Modal(false);
+              }),
+              loadingMessage: "Updating peer IPv6...",
+            });
+          }}
+          peer={peer}
+          key={showEditIPv6Modal ? 1 : 0}
         />
       </Modal>
       <Card className={"w-full xl:w-1/2"}>
@@ -524,6 +543,37 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
               </div>
             }
           />
+
+          {peer.ipv6 && (
+            <Card.ListItem
+              copy
+              tooltip={false}
+              copyText={"NetBird IPv6 Address"}
+              label={
+                <>
+                  <MapPin size={16} />
+                  NetBird IPv6 Address
+                </>
+              }
+              valueToCopy={peer.ipv6}
+              value={
+                <div className="flex items-center gap-2 justify-between w-full">
+                  <span>{peer.ipv6}</span>
+                  {permission.peers.update && (
+                    <button
+                      className="flex w-7 h-7 items-center justify-center gap-2 text-nb-gray-400 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setShowEditIPv6Modal(true);
+                      }}
+                    >
+                      <PencilIcon size={14} />
+                    </button>
+                  )}
+                </div>
+              }
+            />
+          )}
 
           <Card.ListItem
             copy
@@ -834,6 +884,84 @@ function EditIPModal({ onSuccess, peer }: Readonly<EditIPModalProps>) {
               variant={"primary"}
               className={"w-full"}
               onClick={() => onSuccess(ip)}
+              disabled={isDisabled}
+            >
+              Save
+            </Button>
+          </div>
+        </ModalFooter>
+      </form>
+    </ModalContent>
+  );
+}
+
+interface EditIPv6ModalProps {
+  onSuccess: (ipv6: string) => void;
+  peer: Peer;
+}
+
+function isValidIPv6(address: string): boolean {
+  return cidr.isValidAddress(address) && address.includes(":");
+}
+
+function EditIPv6Modal({ onSuccess, peer }: Readonly<EditIPv6ModalProps>) {
+  const [ipv6, setIPv6] = useState(peer.ipv6 || "");
+  const [error, setError] = useState("");
+
+  const isDisabled = useMemo(() => {
+    if (ipv6 === peer.ipv6) return true;
+    const trimmed = trim(ipv6);
+    return trimmed.length === 0 || !isValidIPv6(trimmed);
+  }, [ipv6, peer.ipv6]);
+
+  React.useEffect(() => {
+    switch (true) {
+      case ipv6 === peer.ipv6:
+        setError("");
+        break;
+      case !isValidIPv6(trim(ipv6)):
+        setError("Please enter a valid IPv6 address, e.g., fd00:1234::1");
+        break;
+      default:
+        setError("");
+        break;
+    }
+  }, [ipv6, peer.ipv6]);
+
+  return (
+    <ModalContent maxWidthClass={"max-w-md"}>
+      <form>
+        <ModalHeader
+          title={"Edit Peer IPv6 Address"}
+          description={"Update the NetBird IPv6 address for this peer."}
+          color={"blue"}
+        />
+
+        <div className={"p-default flex flex-col gap-4"}>
+          <div>
+            <Input
+              placeholder={"e.g., fd00:1234::1"}
+              value={ipv6}
+              onChange={(e) => setIPv6(e.target.value)}
+              error={error}
+            />
+          </div>
+
+          <Callout>Changes take effect when the peer reconnects.</Callout>
+        </div>
+
+        <ModalFooter className={"items-center"} separator={false}>
+          <div className={"flex gap-3 w-full justify-end"}>
+            <ModalClose asChild={true}>
+              <Button variant={"secondary"} className={"w-full"}>
+                Cancel
+              </Button>
+            </ModalClose>
+
+            <Button
+              variant={"primary"}
+              className={"w-full"}
+              onClick={() => onSuccess(ipv6.trim())}
               disabled={isDisabled}
             >
               Save
