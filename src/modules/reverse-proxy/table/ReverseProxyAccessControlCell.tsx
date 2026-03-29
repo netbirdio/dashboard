@@ -10,6 +10,7 @@ import {
   LucideIcon,
   NetworkIcon,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   ShieldOff,
   WorkflowIcon,
@@ -19,7 +20,7 @@ import { useMemo } from "react";
 import { useCountries } from "@/contexts/CountryProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { ReverseProxy } from "@/interfaces/ReverseProxy";
+import { CrowdSecMode, ReverseProxy } from "@/interfaces/ReverseProxy";
 
 type RuleEntry = {
   key: string;
@@ -27,6 +28,7 @@ type RuleEntry = {
   Icon: LucideIcon;
   value: string;
   blocked?: boolean;
+  trusted?: boolean;
 };
 
 type Props = {
@@ -37,17 +39,30 @@ export default function ReverseProxyAccessControlCell({
   reverseProxy,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
-  const { openModal } = useReverseProxies();
+  const { openModal, domains } = useReverseProxies();
   const { countries } = useCountries();
 
   const canConfigure = !!permission?.services?.update;
   const restrictions = reverseProxy.access_restrictions;
 
+  const supportsCrowdSec = domains?.find(
+    (d) => d.domain === reverseProxy.proxy_cluster,
+  )?.supports_crowdsec;
+
+  const hasCrowdSec =
+    supportsCrowdSec &&
+    restrictions?.crowdsec_mode != null &&
+    restrictions.crowdsec_mode !== CrowdSecMode.OFF;
+
+  const hasTrustedCidrs = (restrictions?.trusted_cidrs?.length ?? 0) > 0;
+
   const ruleCount =
     (restrictions?.allowed_cidrs?.length ?? 0) +
     (restrictions?.blocked_cidrs?.length ?? 0) +
     (restrictions?.allowed_countries?.length ?? 0) +
-    (restrictions?.blocked_countries?.length ?? 0);
+    (restrictions?.blocked_countries?.length ?? 0) +
+    (restrictions?.trusted_cidrs?.length ?? 0) +
+    (hasCrowdSec ? 1 : 0);
 
   const rulesBadge =
     ruleCount > 0 ? (
@@ -139,8 +154,45 @@ export default function ReverseProxyAccessControlCell({
       });
     }
 
+    if (hasTrustedCidrs) {
+      const trustedIps = restrictions!.trusted_cidrs!.filter((c) => c.endsWith("/32"));
+      const trustedCidrs = restrictions!.trusted_cidrs!.filter((c) => !c.endsWith("/32"));
+
+      if (trustedIps.length) {
+        entries.push({
+          key: "trusted-ips",
+          label: trustedIps.length === 1 ? "Trusted IP" : "Trusted IPs",
+          Icon: WorkflowIcon,
+          value: trustedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
+          trusted: true,
+        });
+      }
+
+      if (trustedCidrs.length) {
+        entries.push({
+          key: "trusted-cidrs",
+          label: trustedCidrs.length === 1 ? "Trusted CIDR" : "Trusted CIDRs",
+          Icon: NetworkIcon,
+          value: trustedCidrs.join(", "),
+          trusted: true,
+        });
+      }
+    }
+
+    if (hasCrowdSec) {
+      entries.push({
+        key: "crowdsec",
+        label: "CrowdSec",
+        Icon: ShieldAlert,
+        value:
+          restrictions?.crowdsec_mode === CrowdSecMode.ENFORCE
+            ? "Enforce"
+            : "Observe",
+      });
+    }
+
     return entries;
-  }, [restrictions, countries]);
+  }, [restrictions, countries, hasTrustedCidrs, hasCrowdSec]);
 
   const showRulesHover = ruleGroups.length > 0;
 
@@ -165,7 +217,7 @@ export default function ReverseProxyAccessControlCell({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className={"text-xs"}>
-                  {ruleGroups.map(({ key, label, Icon, value, blocked }) => (
+                  {ruleGroups.map(({ key, label, Icon, value, blocked, trusted }) => (
                     <div
                       key={key}
                       className={
@@ -180,7 +232,7 @@ export default function ReverseProxyAccessControlCell({
                         <Icon
                           size={14}
                           className={
-                            blocked ? "text-red-500" : "text-green-500"
+                            trusted ? "text-yellow-400" : blocked ? "text-red-500" : "text-green-500"
                           }
                         />
                         {label}
