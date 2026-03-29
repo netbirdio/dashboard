@@ -6,6 +6,7 @@ import { TooltipProvider } from "@components/Tooltip";
 import { cn } from "@utils/helpers";
 import dayjs from "dayjs";
 import relativeTime from "dayjs/plugin/relativeTime";
+import localizedFormat from "dayjs/plugin/localizedFormat";
 import { Viewport } from "next";
 import localFont from "next/font/local";
 import React, { Suspense } from "react";
@@ -28,6 +29,34 @@ const inter = localFont({
 
 // Extend dayjs with relativeTime plugin
 dayjs.extend(relativeTime);
+// Extend dayjs with localizedFormat plugin
+dayjs.extend(localizedFormat);
+
+(() => {
+  if (typeof window !== "undefined") {
+    const languages = Array.of(navigator.language, navigator.languages).flat();
+    let candidates = new Set();
+
+    for (let language of languages) {
+      language = language.toLowerCase();
+      candidates.add(language);
+      candidates.add(language.split("-")[0]);
+    }
+
+    (async () => {
+      for (const locale of candidates) {
+        try {
+          await import(`dayjs/locale/${locale}`);
+          dayjs.locale(locale);
+          return;
+        } catch {
+          // try next candidate
+        }
+      }
+      dayjs.locale("en");
+    })();
+  }
+})();
 
 export const viewport: Viewport = {
   width: "device-width",
