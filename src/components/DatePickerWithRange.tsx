@@ -87,10 +87,10 @@ export function DatePickerWithRange({
     if (isActive.yesterday) return "Yesterday";
     if (isActive.today) return "Today";
 
-    if (!value.to) return dayjs(value.from).format("MMM DD, YYYY").toString();
-    return `${dayjs(value.from).format("MMM DD, YYYY")} - ${dayjs(
+    if (!value.to) return dayjs(value.from).format("L").toString();
+    return `${dayjs(value.from).format("L")} - ${dayjs(
       value.to,
-    ).format("MMM DD, YYYY")}`;
+    ).format("L")}`;
   }, [value, isActive]);
 
   const [calendarOpen, setCalendarOpen] = useState(false);
