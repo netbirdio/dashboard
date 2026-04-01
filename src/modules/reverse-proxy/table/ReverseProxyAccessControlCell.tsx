@@ -107,21 +107,23 @@ export default function ReverseProxyAccessControlCell({
       });
     }
 
+    const isHostCidr = (c: string) =>
+      c.includes(":") ? c.endsWith("/128") : c.endsWith("/32");
     const allowedIps =
-      restrictions?.allowed_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
+      restrictions?.allowed_cidrs?.filter(isHostCidr) ?? [];
     const allowedCidrs =
-      restrictions?.allowed_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
+      restrictions?.allowed_cidrs?.filter((c) => !isHostCidr(c)) ?? [];
     const blockedIps =
-      restrictions?.blocked_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
+      restrictions?.blocked_cidrs?.filter(isHostCidr) ?? [];
     const blockedCidrs =
-      restrictions?.blocked_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
+      restrictions?.blocked_cidrs?.filter((c) => !isHostCidr(c)) ?? [];
 
     if (allowedIps.length) {
       entries.push({
         key: "allowed-ips",
         label: allowedIps.length === 1 ? "Allowed IP" : "Allowed IPs",
         Icon: WorkflowIcon,
-        value: allowedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
+        value: allowedIps.map((c) => c.replace(/\/(32|128)$/, "")).join(", "),
       });
     }
 
@@ -139,7 +141,7 @@ export default function ReverseProxyAccessControlCell({
         key: "blocked-ips",
         label: blockedIps.length === 1 ? "Blocked IP" : "Blocked IPs",
         Icon: WorkflowIcon,
-        value: blockedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
+        value: blockedIps.map((c) => c.replace(/\/(32|128)$/, "")).join(", "),
         blocked: true,
       });
     }
@@ -155,15 +157,15 @@ export default function ReverseProxyAccessControlCell({
     }
 
     if (hasTrustedCidrs) {
-      const trustedIps = restrictions!.trusted_cidrs!.filter((c) => c.endsWith("/32"));
-      const trustedCidrs = restrictions!.trusted_cidrs!.filter((c) => !c.endsWith("/32"));
+      const trustedIps = restrictions!.trusted_cidrs!.filter(isHostCidr);
+      const trustedCidrs = restrictions!.trusted_cidrs!.filter((c) => !isHostCidr(c));
 
       if (trustedIps.length) {
         entries.push({
           key: "trusted-ips",
           label: trustedIps.length === 1 ? "Trusted IP" : "Trusted IPs",
           Icon: WorkflowIcon,
-          value: trustedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
+          value: trustedIps.map((c) => c.replace(/\/(32|128)$/, "")).join(", "),
           trusted: true,
         });
       }

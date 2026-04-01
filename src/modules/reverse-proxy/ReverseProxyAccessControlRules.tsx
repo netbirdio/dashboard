@@ -155,7 +155,7 @@ function rulesReducer(state: AccessRule[], action: RulesAction): AccessRule[] {
 
 function pushCidrRules(rules: AccessRule[], values: string[] | undefined, action: AccessAction) {
   values?.forEach((v) => {
-    const isIp = v.endsWith("/32") || v.endsWith("/128");
+    const isIp = v.includes(":") ? v.endsWith("/128") : v.endsWith("/32");
     rules.push({ id: nextId(), action, type: isIp ? "ip" : "cidr", value: isIp ? v.replace(/\/(32|128)$/, "") : v });
   });
 }
