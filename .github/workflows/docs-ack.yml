@@ -39,13 +39,9 @@ jobs:
           added_checked=$(printf '%s' "$body" | grep -Ei '^[[:space:]]*-\s*\[x\]\s*I added/updated documentation' | wc -l | tr -d '[:space:]' || true)
           noneed_checked=$(printf '%s' "$body" | grep -Ei '^[[:space:]]*-\s*\[x\]\s*Documentation is \*\*not needed\*\*' | wc -l | tr -d '[:space:]' || true)
 
-          if [ "$added_checked" -eq 1 ] && [ "$noneed_checked" -eq 1 ]; then
-            echo "::error::Choose exactly one: either 'docs added' OR 'not needed'."
-            exit 1
-          fi
-
-          if [ "$added_checked" -eq 0 ] && [ "$noneed_checked" -eq 0 ]; then
-            echo "::error::You must check exactly one docs option in the PR template."
+          total=$((added_checked + noneed_checked))
+          if [ "$total" -ne 1 ]; then
+            echo "::error::You must check exactly one docs option in the PR template (either 'docs added' OR 'not needed')."
             exit 1
           fi
 
@@ -84,10 +80,11 @@ jobs:
         if: steps.validate.outputs.mode == 'added'
         uses: actions/github-script@v7
         id: verify
+        env:
+          PR_NUMBER: ${{ steps.extract.outputs.pr_number }}
         with:
-          pr_number: ${{ steps.extract.outputs.pr_number }}
           script: |
-            const prNumber = parseInt(core.getInput('pr_number'), 10);
+            const prNumber = parseInt(process.env.PR_NUMBER, 10);
             const { data } = await github.rest.pulls.get({
               owner: 'netbirdio',
               repo: 'docs',
