@@ -28,8 +28,13 @@ export const DeviceCard = ({
   const descriptionText = useMemo(() => {
     return description !== undefined
       ? description
-      : address || device?.ip || resource?.address;
-  }, [description, address, device]);
+      : address ||
+        (device?.ip
+          ? device.ipv6
+            ? `${device.ip}, ${device.ipv6}`
+            : device.ip
+          : resource?.address);
+  }, [description, address, device, resource]);
 
   return (
     <div
