@@ -1,14 +1,32 @@
+export enum ServiceMode {
+  HTTP = "http",
+  TCP = "tcp",
+  UDP = "udp",
+  TLS = "tls",
+}
+
 export interface ReverseProxy {
   id?: string;
   name: string;
   domain: string;
+  mode?: ServiceMode;
+  listen_port?: number;
+  port_auto_assigned?: boolean;
   proxy_cluster?: string;
   targets: ReverseProxyTarget[];
   enabled: boolean;
   pass_host_header?: boolean;
   rewrite_redirects?: boolean;
   auth?: ReverseProxyAuth;
+  access_restrictions?: AccessRestrictions;
   meta?: ReverseProxyMeta;
+}
+
+export interface AccessRestrictions {
+  allowed_cidrs?: string[];
+  blocked_cidrs?: string[];
+  allowed_countries?: string[];
+  blocked_countries?: string[];
 }
 
 export interface ReverseProxyMeta {
@@ -31,8 +49,10 @@ export type ServiceTargetOptionsPathRewrite = "preserve";
 export interface ServiceTargetOptions {
   skip_tls_verify?: boolean;
   request_timeout?: string;
+  session_idle_timeout?: string;
   path_rewrite?: ServiceTargetOptionsPathRewrite;
   custom_headers?: Record<string, string>;
+  proxy_protocol?: boolean;
 }
 
 export interface ReverseProxyTarget {
@@ -65,6 +85,13 @@ export interface ReverseProxyAuth {
   link_auth?: {
     enabled: boolean;
   };
+  header_auths?: HeaderAuthConfig[];
+}
+
+export interface HeaderAuthConfig {
+  enabled: boolean;
+  header: string;
+  value: string;
 }
 
 export interface ReverseProxyDomain {
@@ -73,6 +100,8 @@ export interface ReverseProxyDomain {
   validated: boolean;
   type: ReverseProxyDomainType;
   target_cluster?: string;
+  supports_custom_ports?: boolean;
+  require_subdomain?: boolean;
 }
 
 export enum ReverseProxyDomainType {
@@ -90,6 +119,15 @@ export enum ReverseProxyTargetType {
 export enum ReverseProxyTargetProtocol {
   HTTP = "http",
   HTTPS = "https",
+  TCP = "tcp",
+  UDP = "udp",
+}
+
+export enum EventProtocol {
+  HTTP = "http",
+  TCP = "tcp",
+  UDP = "udp",
+  TLS = "tls",
 }
 
 export interface ReverseProxyEvent {
@@ -107,10 +145,30 @@ export interface ReverseProxyEvent {
   auth_method_used?: string;
   country_code?: string;
   city_name?: string;
+  subdivision_code?: string;
+  bytes_upload: number;
+  bytes_download: number;
+  protocol?: EventProtocol;
+}
+
+export function isL4Event(event: ReverseProxyEvent): boolean {
+  return (
+    event.protocol === EventProtocol.TCP ||
+    event.protocol === EventProtocol.UDP ||
+    event.protocol === EventProtocol.TLS
+  );
 }
 
 export interface ReverseProxyFlatTarget extends ReverseProxyTarget {
   proxy: ReverseProxy;
+}
+
+export function isL4Mode(mode?: ServiceMode): boolean {
+  return (
+    mode === ServiceMode.TCP ||
+    mode === ServiceMode.UDP ||
+    mode === ServiceMode.TLS
+  );
 }
 
 export const REVERSE_PROXY_DOCS_LINK =
@@ -139,3 +197,9 @@ export const REVERSE_PROXY_DOMAIN_VERIFICATION_LINK =
 
 export const REVERSE_PROXY_EVENTS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy/access-logs";
+
+export const REVERSE_PROXY_ACCESS_CONTROL_DOCS_LINK =
+  "https://docs.netbird.io/manage/reverse-proxy";
+
+export const REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK =
+  "https://docs.netbird.io/manage/reverse-proxy#troubleshooting";

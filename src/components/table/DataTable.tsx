@@ -53,6 +53,7 @@ declare module "@tanstack/table-core" {
   }
   interface SortingFns {
     checkbox: SortingFn<unknown>;
+    datetime: SortingFn<unknown>;
   }
 }
 
@@ -97,6 +98,15 @@ const arrIncludesSomeExact: FilterFn<any> = (
   const rowValue = row.getValue(columnId);
   if (!rowValue && rowValue !== 0) return false;
   return value.some((val) => val === rowValue);
+};
+
+const datetimeSort: SortingFn<any> = (rowA, rowB, columnId) => {
+  const aConnected = rowA.original?.connected;
+  const bConnected = rowB.original?.connected;
+  if (aConnected !== bConnected) return aConnected ? 1 : -1;
+  const a = dayjs(rowA.getValue(columnId)).valueOf();
+  const b = dayjs(rowB.getValue(columnId)).valueOf();
+  return a - b;
 };
 
 const checkboxSort: SortingFn<any> = (rowA, rowB, columnId) => {
@@ -324,6 +334,7 @@ export function DataTable<TData, TValue>({
     },
     sortingFns: {
       checkbox: checkboxSort,
+      datetime: datetimeSort,
     },
     getRowId: useRowId ? (row) => row.id : undefined,
     onRowSelectionChange: setRowSelection,

@@ -77,23 +77,56 @@ const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof SelectPrimitive.Item> & {
     extra?: React.ReactNode;
+    icon?: React.ReactNode;
+    description?: React.ReactNode;
   }
->(({ className, children, extra, ...props }, ref) => (
+>(({ className, children, extra, icon, description, ...props }, ref) => (
   <SelectPrimitive.Item
     ref={ref}
     className={cn(
-      "relative flex w-full select-none items-center rounded-md py-1.5 pl-8 pr-2 text-sm outline-none focus:bg-gray-100 focus:text-neutral-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-nb-gray-900 dark:focus:text-neutral-50 dark:text-gray-400 cursor-pointer",
+      "relative flex w-full select-none items-center rounded-md py-1.5 text-sm outline-none focus:bg-gray-100 focus:text-neutral-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:focus:bg-nb-gray-900 dark:focus:text-neutral-50 dark:text-gray-400 cursor-pointer",
+      icon ? "pl-2 pr-8" : "pl-8 pr-2",
+      description && "py-2",
       className,
     )}
     {...props}
   >
-    <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
-      <SelectPrimitive.ItemIndicator>
-        <Check className="h-4 w-4" />
-      </SelectPrimitive.ItemIndicator>
-    </span>
-
-    <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+    {icon ? (
+      <>
+        <span className="absolute right-2 flex h-3.5 w-3.5 items-center justify-center">
+          <SelectPrimitive.ItemIndicator>
+            <Check className="h-4 w-4" />
+          </SelectPrimitive.ItemIndicator>
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="flex-shrink-0">{icon}</span>
+          <div className="flex flex-col">
+            <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+            {description && (
+              <span className="text-xs text-nb-gray-300 font-normal">
+                {description}
+              </span>
+            )}
+          </div>
+        </div>
+      </>
+    ) : (
+      <>
+        <span className="absolute left-2 flex h-3.5 w-3.5 items-center justify-center">
+          <SelectPrimitive.ItemIndicator>
+            <Check className="h-4 w-4" />
+          </SelectPrimitive.ItemIndicator>
+        </span>
+        <div className="flex flex-col">
+          <SelectPrimitive.ItemText>{children}</SelectPrimitive.ItemText>
+          {description && (
+            <span className="text-xs text-nb-gray-300 font-normal">
+              {description}
+            </span>
+          )}
+        </div>
+      </>
+    )}
     {extra}
   </SelectPrimitive.Item>
 ));

@@ -14,6 +14,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
 import ReverseProxyArrowCell from "@/modules/reverse-proxy/table/ReverseProxyArrowCell";
+import ReverseProxyAccessControlCell from "@/modules/reverse-proxy/table/ReverseProxyAccessControlCell";
 import ReverseProxyAuthCell from "@/modules/reverse-proxy/table/ReverseProxyAuthCell";
 import ReverseProxyClusterCell from "@/modules/reverse-proxy/table/ReverseProxyClusterCell";
 import ReverseProxyDestinationCell from "@/modules/reverse-proxy/table/ReverseProxyDestinationCell";
@@ -44,14 +45,15 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
           : `/${target.path}`
         : "";
       const fullUrl = `${target.proxy.domain}${path}`;
-      const disabled = target.enabled === false;
-      const isEnabled = target.proxy.enabled && target.enabled !== false;
+      const disabled = !target.enabled;
+      const isEnabled = target.proxy.enabled && target.enabled;
 
       return (
         <div className={disabled ? "opacity-40" : ""}>
           <ReverseProxyNameCell
             domain={fullUrl}
             enabled={isEnabled}
+            reverseProxy={row.original.proxy}
             showChevron={false}
           />
         </div>
@@ -62,7 +64,7 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
     accessorKey: "arrow",
     header: "",
     cell: ({ row }) => (
-      <ReverseProxyArrowCell disabled={row.original.enabled === false} />
+      <ReverseProxyArrowCell disabled={!row.original.enabled} />
     ),
   },
   {
@@ -111,6 +113,15 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
     ),
   },
   {
+    id: "access_control",
+    header: ({ column }) => (
+      <DataTableHeader column={column}>Access Control</DataTableHeader>
+    ),
+    cell: ({ row }) => (
+      <ReverseProxyAccessControlCell reverseProxy={row.original.proxy} />
+    ),
+  },
+  {
     accessorKey: "actions",
     header: "",
     cell: ({ row }) => (
@@ -120,7 +131,13 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
   {
     id: "searchString",
     accessorFn: (row) => {
-      return [row.proxy.domain, row.destination, row.host, row.port, row.path].join("");
+      return [
+        row.proxy.domain,
+        row.destination,
+        row.host,
+        row.port,
+        row.path,
+      ].join("");
     },
   },
 ];

@@ -19,8 +19,17 @@ export const ReverseProxyEventsLocationIpCell = ({ event }: Props) => {
   const { getRegionText, isLoading } = useCountries();
 
   const region = useMemo(() => {
-    return getRegionText(event.country_code || "", event.city_name || "");
-  }, [getRegionText, event.country_code, event.city_name]);
+    return getRegionText(
+      event.country_code || "",
+      event.city_name || "",
+      event.subdivision_code,
+    );
+  }, [
+    getRegionText,
+    event.country_code,
+    event.city_name,
+    event.subdivision_code,
+  ]);
 
   return (
     <FullTooltip

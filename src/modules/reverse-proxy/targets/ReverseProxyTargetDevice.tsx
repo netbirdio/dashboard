@@ -17,11 +17,19 @@ import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 type Props = {
   target: ReverseProxyTarget;
   showDescription?: boolean;
+  wrapperClassName?: string;
+  skeletonClassName?: string;
+  deviceClassName?: string;
+  address?: string;
 };
 
 export const ReverseProxyTargetDevice = ({
   target,
   showDescription,
+  wrapperClassName = "h-[59px]",
+  skeletonClassName = "min-h-[59px]",
+  deviceClassName = "",
+  address,
 }: Props) => {
   const router = useRouter();
   const { data: peers, isLoading: isPeersLoading } =
@@ -55,17 +63,19 @@ export const ReverseProxyTargetDevice = ({
   };
 
   if (isPeersLoading || isResourceLoading || isNetworksLoading)
-    return <SkeletonDeviceCard />;
+    return <SkeletonDeviceCard className={skeletonClassName} />;
 
   if (!peer && !resource)
     return (
-      <div className={"min-h-[59px] flex items-center relative left-1"}>
+      <div
+        className={cn("flex items-center relative left-1", wrapperClassName)}
+      >
         <EmptyRow />
       </div>
     );
 
   return (
-    <div className={"min-h-[59px] flex items-center relative -left-2"}>
+    <div className={cn("flex items-center relative -left-2", wrapperClassName)}>
       <div
         className={cn(
           "cursor-pointer rounded-md hover:bg-nb-gray-900/40 flex items-center justify-between group pr-4",
@@ -73,8 +83,13 @@ export const ReverseProxyTargetDevice = ({
         onClick={handleClick}
       >
         <DeviceCard
+          address={address}
           device={peer}
-          className={cn(!target.enabled && "opacity-40", "pl-2")}
+          className={cn(
+            !target.enabled && "opacity-40",
+            "pl-2",
+            deviceClassName,
+          )}
           resource={resource}
           description={showDescription ? resource?.description : undefined}
         />

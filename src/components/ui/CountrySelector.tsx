@@ -9,8 +9,11 @@ import { useCountries } from "@/contexts/CountryProvider";
 type Props = {
   value: string;
   onChange: (value: string) => void;
+  iconSize?: number;
+  popoverWidth?: "auto" | "content" | number;
+  truncate?: boolean;
 };
-export const CountrySelector = ({ value, onChange }: Props) => {
+export const CountrySelector = ({ value, onChange, iconSize = 20, popoverWidth, truncate }: Props) => {
   const { countries, isLoading } = useCountries();
 
   const countryList = useMemo(() => {
@@ -22,7 +25,7 @@ export const CountrySelector = ({ value, onChange }: Props) => {
       }) =>
         createElement(RoundedFlag, {
           country: country.country_code,
-          size: 20,
+          size: iconSize,
           ...props,
         });
       return {
@@ -42,7 +45,10 @@ export const CountrySelector = ({ value, onChange }: Props) => {
         searchPlaceholder={"Search country..."}
         value={value}
         onChange={onChange}
+        iconSize={iconSize}
         options={countryList || []}
+        popoverWidth={popoverWidth}
+        truncate={truncate}
       />
     </div>
   );

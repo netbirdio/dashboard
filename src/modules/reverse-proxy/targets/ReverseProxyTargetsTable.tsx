@@ -74,6 +74,7 @@ export default function ReverseProxyTargetsTable({ reverseProxy }: Props) {
         className={"bg-nb-gray-960 py-2"}
         inset={true}
         text={"Targets"}
+        initialPageSize={reverseProxy?.targets?.length}
         manualPagination={true}
         sorting={sorting}
         columnVisibility={{}}
