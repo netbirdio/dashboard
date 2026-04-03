@@ -1,26 +1,42 @@
-import { useEffect, useMemo, useReducer, useRef } from "react";
+import { useEffect, useMemo, useReducer, useRef, useState } from "react";
 import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@components/Select";
 import cidr from "ip-cidr";
 import {
+  ChevronDownIcon,
   FlagIcon,
   MinusCircleIcon,
   NetworkIcon,
   PlusIcon,
+  ShieldAlertIcon,
   ShieldCheckIcon,
   ShieldXIcon,
+  StarIcon,
   WorkflowIcon,
 } from "lucide-react";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
 import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
 import { CountrySelector } from "@/components/ui/CountrySelector";
-import { AccessRestrictions } from "@/interfaces/ReverseProxy";
+import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
 
-type AccessAction = "allow" | "block";
+type AccessAction = "allow" | "block" | "trusted";
 type AccessRuleType = "country" | "ip" | "cidr";
 
 const ACTION_OPTIONS: SelectOption[] = [
@@ -33,6 +49,11 @@ const ACTION_OPTIONS: SelectOption[] = [
     label: "Block Only",
     value: "block",
     icon: (props) => <ShieldXIcon {...props} className="text-red-500" />,
+  },
+  {
+    label: "Trusted",
+    value: "trusted",
+    icon: (props) => <StarIcon {...props} className="text-yellow-400" />,
   },
 ];
 
@@ -54,6 +75,10 @@ const TYPE_OPTIONS: SelectOption[] = [
   },
 ];
 
+const TYPE_OPTIONS_NO_COUNTRY: SelectOption[] = TYPE_OPTIONS.filter(
+  (o) => o.value !== "country",
+);
+
 type AccessRule = {
   id: string;
   action: AccessAction;
@@ -63,6 +88,7 @@ type AccessRule = {
 
 type RulesAction =
   | { type: "add" }
+  | { type: "add_many"; rules: Omit<AccessRule, "id">[] }
   | { type: "remove"; id: string }
   | {
       type: "update";
@@ -70,6 +96,30 @@ type RulesAction =
       field: "action" | "type" | "value";
       value: string;
     };
+
+type CIDRPreset = {
+  label: string;
+  cidrs: string[];
+};
+
+const TRUSTED_PRESETS: CIDRPreset[] = [
+  {
+    label: "RFC 1918 (Private IPv4)",
+    cidrs: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
+  },
+  {
+    label: "CGNAT (100.64/10)",
+    cidrs: ["100.64.0.0/10"],
+  },
+  {
+    label: "IPv6 ULA",
+    cidrs: ["fc00::/7"],
+  },
+  {
+    label: "Loopback",
+    cidrs: ["127.0.0.0/8", "::1/128"],
+  },
+];
 
 const nextId = () => crypto.randomUUID();
 
@@ -80,6 +130,13 @@ function rulesReducer(state: AccessRule[], action: RulesAction): AccessRule[] {
         ...state,
         { id: nextId(), action: "allow", type: "country", value: "" },
       ];
+    case "add_many": {
+      const existing = new Set(state.map((r) => `${r.action}:${r.type}:${r.value}`));
+      const newRules = action.rules
+        .filter((r) => !existing.has(`${r.action}:${r.type}:${r.value}`))
+        .map((r) => ({ ...r, id: nextId() }));
+      return [...state, ...newRules];
+    }
     case "remove":
       return state.filter((r) => r.id !== action.id);
     case "update":
@@ -88,9 +145,19 @@ function rulesReducer(state: AccessRule[], action: RulesAction): AccessRule[] {
         if (action.field === "type") {
           return { ...r, type: action.value as AccessRuleType, value: "" };
         }
+        if (action.field === "action" && action.value === "trusted" && r.type === "country") {
+          return { ...r, action: action.value as AccessAction, type: "cidr", value: "" };
+        }
         return { ...r, [action.field]: action.value };
       });
   }
+}
+
+function pushCidrRules(rules: AccessRule[], values: string[] | undefined, action: AccessAction) {
+  values?.forEach((v) => {
+    const isIp = v.includes(":") ? v.endsWith("/128") : v.endsWith("/32");
+    rules.push({ id: nextId(), action, type: isIp ? "ip" : "cidr", value: isIp ? v.replace(/\/(32|128)$/, "") : v });
+  });
 }
 
 function restrictionsToRules(
@@ -98,30 +165,28 @@ function restrictionsToRules(
 ): AccessRule[] {
   if (!restrictions) return [];
   const rules: AccessRule[] = [];
-  restrictions.allowed_countries?.forEach((v) =>
-    rules.push({ id: nextId(), action: "allow", type: "country", value: v }),
-  );
+  // Trusted first, then block, then allow.
+  pushCidrRules(rules, restrictions.trusted_cidrs, "trusted");
+  pushCidrRules(rules, restrictions.blocked_cidrs, "block");
   restrictions.blocked_countries?.forEach((v) =>
     rules.push({ id: nextId(), action: "block", type: "country", value: v }),
   );
-  restrictions.allowed_cidrs?.forEach((v) => {
-    const isIp = v.endsWith("/32");
-    rules.push({ id: nextId(), action: "allow", type: isIp ? "ip" : "cidr", value: isIp ? v.replace(/\/32$/, "") : v });
-  });
-  restrictions.blocked_cidrs?.forEach((v) => {
-    const isIp = v.endsWith("/32");
-    rules.push({ id: nextId(), action: "block", type: isIp ? "ip" : "cidr", value: isIp ? v.replace(/\/32$/, "") : v });
-  });
+  pushCidrRules(rules, restrictions.allowed_cidrs, "allow");
+  restrictions.allowed_countries?.forEach((v) =>
+    rules.push({ id: nextId(), action: "allow", type: "country", value: v }),
+  );
   return rules;
 }
 
 function rulesToRestrictions(
   rules: AccessRule[],
+  crowdsecMode?: CrowdSecMode,
 ): AccessRestrictions | undefined {
   const allowed_countries: string[] = [];
   const blocked_countries: string[] = [];
   const allowed_cidrs: string[] = [];
   const blocked_cidrs: string[] = [];
+  const trusted_cidrs: string[] = [];
 
   for (const rule of rules) {
     if (!rule.value) continue;
@@ -129,17 +194,22 @@ function rulesToRestrictions(
       if (rule.action === "allow") allowed_countries.push(rule.value);
       else blocked_countries.push(rule.value);
     } else {
-      const value = rule.type === "ip" && !rule.value.includes("/") ? `${rule.value}/32` : rule.value;
-      if (rule.action === "allow") allowed_cidrs.push(value);
+      const suffix = rule.value.includes(":") ? "/128" : "/32";
+      const value = rule.type === "ip" && !rule.value.includes("/") ? `${rule.value}${suffix}` : rule.value;
+      if (rule.action === "trusted") trusted_cidrs.push(value);
+      else if (rule.action === "allow") allowed_cidrs.push(value);
       else blocked_cidrs.push(value);
     }
   }
 
+  const hasCrowdSec = crowdsecMode != null && crowdsecMode !== CrowdSecMode.OFF;
   const hasAny =
     allowed_countries.length > 0 ||
     blocked_countries.length > 0 ||
     allowed_cidrs.length > 0 ||
-    blocked_cidrs.length > 0;
+    blocked_cidrs.length > 0 ||
+    trusted_cidrs.length > 0 ||
+    hasCrowdSec;
 
   if (!hasAny) return undefined;
 
@@ -148,6 +218,8 @@ function rulesToRestrictions(
     ...(blocked_countries.length > 0 && { blocked_countries }),
     ...(allowed_cidrs.length > 0 && { allowed_cidrs }),
     ...(blocked_cidrs.length > 0 && { blocked_cidrs }),
+    ...(trusted_cidrs.length > 0 && { trusted_cidrs }),
+    ...(hasCrowdSec && { crowdsec_mode: crowdsecMode }),
   };
 }
 
@@ -155,6 +227,7 @@ type Props = {
   value: AccessRestrictions | undefined;
   onChange: (value: AccessRestrictions | undefined) => void;
   onValidationChange?: (hasErrors: boolean) => void;
+  supportsCrowdSec?: boolean;
 };
 
 function validateRule(rule: AccessRule): string {
@@ -172,11 +245,15 @@ function validateRule(rule: AccessRule): string {
   return "";
 }
 
-export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationChange }: Props) => {
+export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationChange, supportsCrowdSec }: Props) => {
   const [rules, dispatch] = useReducer(
     rulesReducer,
     value,
     restrictionsToRules,
+  );
+
+  const [crowdsecMode, setCrowdsecMode] = useState<CrowdSecMode>(
+    value?.crowdsec_mode ?? CrowdSecMode.OFF,
   );
 
   const errors = useMemo(
@@ -196,8 +273,14 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
   onValidationChangeRef.current = onValidationChange;
 
   useEffect(() => {
-    onChangeRef.current(rulesToRestrictions(rules));
-  }, [rules]);
+    if (!supportsCrowdSec) {
+      setCrowdsecMode(CrowdSecMode.OFF);
+    }
+  }, [supportsCrowdSec]);
+
+  useEffect(() => {
+    onChangeRef.current(rulesToRestrictions(rules, crowdsecMode));
+  }, [rules, crowdsecMode]);
 
   useEffect(() => {
     onValidationChangeRef.current?.(hasErrors);
@@ -205,6 +288,32 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
 
   return (
     <div className={"flex-col flex"}>
+      {supportsCrowdSec && (
+        <div className="mb-6">
+          <Label>
+            <ShieldAlertIcon size={14} />
+            CrowdSec IP Reputation
+          </Label>
+          <HelpText>
+            Block or monitor connections from IPs flagged by CrowdSec. Enforce
+            blocks immediately, observe logs without blocking.
+          </HelpText>
+          <Select
+            value={crowdsecMode}
+            onValueChange={(v) => setCrowdsecMode(v as CrowdSecMode)}
+          >
+            <SelectTrigger className="w-[200px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value={CrowdSecMode.OFF}>Off</SelectItem>
+              <SelectItem value={CrowdSecMode.ENFORCE}>Enforce</SelectItem>
+              <SelectItem value={CrowdSecMode.OBSERVE}>Observe</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
       <div>
         <Label>Access Control Rules</Label>
         <HelpText>
@@ -212,6 +321,8 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
           or CIDR block.
           <br />
           Block rules always take priority over allow rules.
+          <br />
+          Trusted IPs bypass all restriction layers.
         </HelpText>
       </div>
       {rules.length > 0 && (
@@ -245,7 +356,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                       value: v,
                     })
                   }
-                  options={TYPE_OPTIONS}
+                  options={rule.action === "trusted" ? TYPE_OPTIONS_NO_COUNTRY : TYPE_OPTIONS}
                   compact
                 />
               </div>
@@ -301,15 +412,46 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
           ))}
         </div>
       )}
-      <Button
-        variant="dotted"
-        className="w-full"
-        size="sm"
-        onClick={() => dispatch({ type: "add" })}
-      >
-        <PlusIcon size={14} />
-        Add Rule
-      </Button>
+      <div className="flex gap-2">
+        <Button
+          variant="dotted"
+          className="flex-1"
+          size="sm"
+          onClick={() => dispatch({ type: "add" })}
+        >
+          <PlusIcon size={14} />
+          Add Rule
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="dotted" size="sm">
+              <StarIcon size={14} />
+              Add Trusted Preset
+              <ChevronDownIcon size={14} />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {TRUSTED_PRESETS.map((preset) => (
+              <DropdownMenuItem
+                key={preset.label}
+                onClick={() =>
+                  dispatch({
+                    type: "add_many",
+                    rules: preset.cidrs.map((c) => ({
+                      action: "trusted" as const,
+                      type: "cidr" as const,
+                      value: c,
+                    })),
+                  })
+                }
+              >
+                <NetworkIcon size={14} />
+                {preset.label}
+              </DropdownMenuItem>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
     </div>
   );
 };
