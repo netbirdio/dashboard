@@ -32,8 +32,10 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
+import { useAIAssistant } from "@netbirdio/explain/client";
+import ExplainButton from "@components/ExplainButton";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
@@ -256,6 +258,19 @@ export default function ReverseProxyModal({
 
   const [accessControlHasErrors, setAccessControlHasErrors] = useState(false);
 
+  const { setExplainContext, clearExplainContext } = useAIAssistant();
+  useEffect(() => {
+    setExplainContext({
+      modalName: reverseProxy ? "Edit Service" : "Add Service",
+      pageName: "Reverse Proxy",
+      docsUrls: [
+        "https://docs.netbird.io/manage/reverse-proxy",
+        "https://docs.netbird.io/manage/reverse-proxy/authentication",
+      ],
+    });
+    return () => clearExplainContext();
+  }, [reverseProxy, setExplainContext, clearExplainContext]);
+
   // Auth modal states
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
   const [ssoModalOpen, setSsoModalOpen] = useState(false);
@@ -443,14 +458,20 @@ export default function ReverseProxyModal({
   return (
     <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
       <ModalContent
+        data-nb-explain
         maxWidthClass={tab === "service" ? "max-w-xl" : "max-w-2xl"}
       >
-        <ModalHeader
-          icon={<ReverseProxyIcon className={"fill-netbird"} size={18} />}
-          title={modalTitle}
-          description={modalDescription}
-          color={"netbird"}
-        />
+        <div className="flex items-start justify-between">
+          <ModalHeader
+            icon={<ReverseProxyIcon className={"fill-netbird"} size={18} />}
+            title={modalTitle}
+            description={modalDescription}
+            color={"netbird"}
+          />
+          <div className="pr-12 pt-2">
+            <ExplainButton />
+          </div>
+        </div>
 
         <Tabs value={tab} onValueChange={setTab}>
           <TabsList justify={"start"} className={"px-8"}>
@@ -479,6 +500,7 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"targets"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-6"}>
+              <div data-nb-explain data-nb-explain-docs="https://docs.netbird.io/manage/reverse-proxy#services">
               <ReverseProxyDomainInput
                 subdomain={subdomain}
                 onSubdomainChange={setSubdomain}
@@ -492,16 +514,20 @@ export default function ReverseProxyModal({
                     : undefined
                 }
               />
+              </div>
 
               {!reverseProxy && (
+                <div data-nb-explain data-nb-explain-docs="https://docs.netbird.io/manage/reverse-proxy#services">
                 <ReverseProxyServiceModeSelector
                   onChange={setServiceMode}
                   value={serviceMode}
                   domain={selectedDomain}
                 />
+                </div>
               )}
 
               {isL4Mode ? (
+                <div data-nb-explain data-nb-explain-docs="https://docs.netbird.io/manage/reverse-proxy#targets">
                 <ReverseProxyLayer4Content
                   l4Target={l4Target}
                   setL4Target={setL4Target}
@@ -514,7 +540,9 @@ export default function ReverseProxyModal({
                   initialPeer={initialPeer}
                   initialNetwork={initialNetwork}
                 />
+                </div>
               ) : (
+                <div data-nb-explain data-nb-explain-docs="https://docs.netbird.io/manage/reverse-proxy#targets">
                 <ReverseProxyHTTPTargets
                   targets={targets}
                   onEditTarget={editTarget}
@@ -529,13 +557,14 @@ export default function ReverseProxyModal({
                     );
                   }}
                 />
+                </div>
               )}
             </div>
           </TabsContent>
 
           <TabsContent value={"auth"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-4"}>
-              <SettingCard>
+              <SettingCard data-nb-explain data-nb-explain-docs="https://docs.netbird.io/manage/reverse-proxy/authentication">
                 <SettingCard.Item
                   label={
                     <>
@@ -585,7 +614,7 @@ export default function ReverseProxyModal({
           </TabsContent>
 
           <TabsContent value={"access-control"} className={"pb-8"}>
-            <div className={"px-8 flex-col flex gap-4"}>
+            <div data-nb-explain data-nb-explain-docs="https://docs.netbird.io/manage/reverse-proxy" className={"px-8 flex-col flex gap-4"}>
               <ReverseProxyAccessControlRules
                 value={accessRestrictions}
                 onChange={setAccessRestrictions}
@@ -595,7 +624,7 @@ export default function ReverseProxyModal({
           </TabsContent>
 
           <TabsContent value={"settings"} className={"pb-8"}>
-            <div className={"px-8 flex-col flex gap-6"}>
+            <div data-nb-explain data-nb-explain-docs="https://docs.netbird.io/manage/reverse-proxy#step-4-configure-advanced-settings" className={"px-8 flex-col flex gap-6"}>
               {(serviceMode === ServiceMode.TCP ||
                 serviceMode === ServiceMode.TLS) && (
                 <FancyToggleSwitch
