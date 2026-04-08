@@ -63,56 +63,60 @@ export default function ReverseProxyStatusCell({
     if (isActive) return null;
     if (hasError) {
       return (
-        <FullTooltip
-          content={
-            <div className={"text-xs max-w-xs"}>
-              Something went wrong while setting up this service. See our{" "}
-              <InlineLink
-                href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
-                target={"_blank"}
-              >
-                Troubleshooting Docs
-              </InlineLink>{" "}
-              for more details.
+        <div className={"flex"} data-status-cell>
+          <FullTooltip
+            content={
+              <div className={"text-xs max-w-xs"}>
+                Something went wrong while setting up this service. See our{" "}
+                <InlineLink
+                  href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
+                  target={"_blank"}
+                >
+                  Troubleshooting Docs
+                </InlineLink>{" "}
+                for more details.
+              </div>
+            }
+            align={"center"}
+            alignOffset={0}
+          >
+            <div className={"flex"}>
+              <Badge variant={"red"}>
+                <CircleAlert size={11} />
+                Error
+              </Badge>
             </div>
-          }
-          align={"center"}
-          alignOffset={0}
-        >
-          <div className={"flex"}>
-            <Badge variant={"red"}>
-              <CircleAlert size={11} />
-              Error
-            </Badge>
-          </div>
-        </FullTooltip>
+          </FullTooltip>
+        </div>
       );
     }
     if (isTunnelNotCreated) {
       return (
-        <FullTooltip
-          content={
-            <div className={"text-xs max-w-xs"}>
-              The tunnel to the target peer could not be established. See our{" "}
-              <InlineLink
-                href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
-                target={"_blank"}
-              >
-                Troubleshooting Docs
-              </InlineLink>{" "}
-              for more details.
+        <div className={"flex"} data-status-cell>
+          <FullTooltip
+            content={
+              <div className={"text-xs max-w-xs"}>
+                The tunnel to the target peer could not be established. See our{" "}
+                <InlineLink
+                  href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
+                  target={"_blank"}
+                >
+                  Troubleshooting Docs
+                </InlineLink>{" "}
+                for more details.
+              </div>
+            }
+            align={"center"}
+            alignOffset={0}
+          >
+            <div className={"flex"}>
+              <Badge variant={"red"}>
+                <CircleAlert size={11} />
+                Tunnel not created
+              </Badge>
             </div>
-          }
-          align={"center"}
-          alignOffset={0}
-        >
-          <div className={"flex"}>
-            <Badge variant={"red"}>
-              <CircleAlert size={11} />
-              Tunnel not created
-            </Badge>
-          </div>
-        </FullTooltip>
+          </FullTooltip>
+        </div>
       );
     }
     return <SettingUpService />;
@@ -120,12 +124,12 @@ export default function ReverseProxyStatusCell({
 
   // HTTP services: hide once active with certificate issued
   if (isActive && certificateIssued) {
-    return null;
+    return <div data-status-cell />;
   }
 
   if (!certificateIssued) {
     return (
-      <div className={"flex"}>
+      <div className={"flex"} data-status-cell>
         <Badge variant={"yellow"}>
           <Loader2 size={12} className={"animate-spin"} />
           Issuing certificate...
@@ -139,7 +143,7 @@ export default function ReverseProxyStatusCell({
 
 const SettingUpService = () => {
   return (
-    <div className={"flex"}>
+    <div className={"flex"} data-status-cell>
       <Badge variant={"yellow"}>
         <Loader2 size={14} className={"animate-spin"} />
         Setting up service...

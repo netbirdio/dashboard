@@ -6,13 +6,22 @@ type Props = {
   name?: string;
   email?: string;
   id?: string;
+  size?: "default" | "sm";
   className?: string;
 };
-export const SmallUserAvatar = ({ name, id, email, className }: Props) => {
+export const SmallUserAvatar = ({
+  name,
+  id,
+  email,
+  size = "default",
+  className,
+}: Props) => {
   return (
     <div
       className={cn(
-        "w-7 h-7 rounded-full shrink-0 flex items-center justify-center text-white uppercase text-[12px] font-medium bg-nb-gray-850",
+        "rounded-full shrink-0 flex items-center justify-center text-white uppercase font-medium bg-nb-gray-850",
+        size === "default" && "w-7 h-7 text-[12px]",
+        size === "sm" && "w-5 h-5 text-[9px] leading-[0]",
         className,
       )}
       style={{

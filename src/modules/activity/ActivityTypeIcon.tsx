@@ -11,7 +11,6 @@ import {
   KeyRound,
   Layers3Icon,
   LogIn,
-  type LucideIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
   RefreshCcw,
@@ -21,6 +20,7 @@ import {
   User,
 } from "lucide-react";
 import React from "react";
+import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 
 type Props = {
   code: string;
@@ -46,7 +46,7 @@ const ActivityTypeMappings = {
   dashboard: LogIn,
   integration: Blocks,
   personal: User,
-  service: Cog,
+  "service.user": Cog,
   billing: CreditCardIcon,
   integrated: ShieldCheck,
   posture: ShieldCheck,
@@ -54,21 +54,24 @@ const ActivityTypeMappings = {
   resource: Layers3Icon,
   network: NetworkIcon,
   identityprovider: FingerprintIcon,
-} as const satisfies Record<string, LucideIcon>;
+  service: ReverseProxyIcon,
+} as const;
 
 export default function ActivityTypeIcon({
   code,
   size = 18,
   className,
 }: Props) {
-  const prefixParts = code?.split(".") || [];
-  const prefix = (prefixParts[0] || "").toLowerCase();
+  const parts = code?.split(".") || [];
+  const twoPartKey = parts.slice(0, 2).join(".").toLowerCase();
+  const onePartKey = (parts[0] || "").toLowerCase();
 
-  // Check if prefix is a valid key, otherwise use fallback
+  const key = (
+    twoPartKey in ActivityTypeMappings ? twoPartKey : onePartKey
+  ) as ActivityTypeKey;
+
   const Icon =
-    prefix in ActivityTypeMappings
-      ? ActivityTypeMappings[prefix as ActivityTypeKey]
-      : HelpCircleIcon;
+    key in ActivityTypeMappings ? ActivityTypeMappings[key] : HelpCircleIcon;
 
   return <Icon size={size} className={cn(DEFAULT_CLASSES, className)} />;
 }

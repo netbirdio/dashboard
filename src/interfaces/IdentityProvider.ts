@@ -1,20 +1,22 @@
 export interface GoogleWorkspaceIntegration {
   id: string;
-  customerId: string;
-  syncInterval: number;
+  customer_id: string;
+  sync_interval: number;
   enabled: boolean;
   group_prefixes: string[];
   user_group_prefixes: string[];
+  connector_id?: string;
 }
 
 export interface AzureADIntegration {
   id: string;
-  clientId: string;
-  tenantId: string;
-  syncInterval: number;
+  client_id: string;
+  tenant_id: string;
+  sync_interval: number;
   enabled: boolean;
   group_prefixes: string[];
   user_group_prefixes: string[];
+  connector_id?: string;
 }
 
 export interface OktaIntegration {
@@ -23,6 +25,8 @@ export interface OktaIntegration {
   group_prefixes: string[];
   user_group_prefixes: string[];
   auth_token: string;
+  connection_name?: string;
+  connector_id?: string;
 }
 
 export interface IdentityProviderLog {

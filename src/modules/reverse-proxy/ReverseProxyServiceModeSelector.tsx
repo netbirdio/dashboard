@@ -31,7 +31,7 @@ type ServiceModeConfig = {
 
 export const SERVICE_MODES: Record<ServiceMode, ServiceModeConfig> = {
   [ServiceMode.HTTP]: {
-    label: "HTTP/S Service",
+    label: "HTTPS Service",
     description:
       "Reverse proxy with path routing and built-in authentication (SSO, PIN, password). Typically used for web applications and APIs.",
     icon: <Globe size={14} />,
@@ -64,7 +64,7 @@ export const ReverseProxyServiceModeSelector = ({
 }: Props) => {
   const selected = value ?? ServiceMode.HTTP;
   const selectedMode = SERVICE_MODES[selected];
-  const isL4Supported = domain?.supports_custom_ports === true;
+  const isL4Supported = domain?.supports_custom_ports !== undefined;
 
   // Reset to HTTP if the current L4 mode becomes unsupported (e.g. domain changed)
   useEffect(() => {

@@ -36,7 +36,7 @@ export default function ReverseProxyTargetsCell({
   const targetsCount = reverseProxy?.targets?.length ?? 0;
 
   return (
-    <div className={"flex gap-3"}>
+    <div className={"flex gap-3"} data-targets-cell>
       {targetsCount > 0 && (
         <Badge
           variant={"gray"}
