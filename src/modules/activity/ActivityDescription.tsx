@@ -839,7 +839,7 @@ export default function ActivityDescription({ event }: Props) {
       <div className={"inline"}>
         Service <Value>{m.domain}</Value> in cluster{" "}
         <Value>{m.proxy_cluster}</Value> was updated with authentication{" "}
-        <Value>{m.auth ? "Enabled" : "Disabled"}</Value>
+        <Value>{m.auth === "true" ? "Enabled" : "Disabled"}</Value>
       </div>
     );
 
