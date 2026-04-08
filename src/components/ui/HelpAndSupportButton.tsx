@@ -57,7 +57,6 @@ export default function HelpAndSupportButton() {
         <DropdownMenuItem
           href="https://docs.netbird.io/"
           target="_blank"
-          rel="noopener noreferrer"
           asChild
         >
           <div className={"flex gap-3 items-center"}>
@@ -71,7 +70,6 @@ export default function HelpAndSupportButton() {
         <DropdownMenuItem
           href="https://docs.netbird.io/help/troubleshooting-client"
           target="_blank"
-          rel="noopener noreferrer"
           asChild
         >
           <div className={"flex gap-3 items-center"}>
@@ -97,7 +95,6 @@ export default function HelpAndSupportButton() {
         <DropdownMenuItem
           href="https://forum.netbird.io/"
           target="_blank"
-          rel="noopener noreferrer"
           asChild
         >
           <div className={"flex gap-3 items-center"}>
@@ -111,7 +108,6 @@ export default function HelpAndSupportButton() {
         <DropdownMenuItem
           href="https://docs.netbird.io/slack-url"
           target="_blank"
-          rel="noopener noreferrer"
           asChild
         >
           <div className={"flex gap-3 items-center"}>
@@ -128,7 +124,6 @@ export default function HelpAndSupportButton() {
         <DropdownMenuItem
           href={"https://forms.gle/TeLw2zrXEdw6RcQ36"}
           target={"_blank"}
-          rel="noopener noreferrer"
           asChild
         >
           <div className={"flex gap-3 items-center"}>

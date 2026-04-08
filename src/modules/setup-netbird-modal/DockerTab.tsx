@@ -37,6 +37,7 @@ export default function DockerTab({
                 href={"https://docs.docker.com/engine/install/"}
                 passHref
                 target={"_blank"}
+                rel="noopener noreferrer"
               >
                 <Button variant={"primary"}>
                   <ExternalLinkIcon size={14} />
