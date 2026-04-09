@@ -37,6 +37,7 @@ export default function ReverseProxyActionCell({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end">
           <DropdownMenuItem
+            data-proxy-edit-action={reverseProxy.id}
             onClick={(e) => {
               e.stopPropagation();
               openModal({ proxy: reverseProxy });

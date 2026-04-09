@@ -23,6 +23,7 @@ const variants = cva("", {
       purple: ["bg-purple-950/50 border-purple-500 border text-purple-500"],
       yellow: ["bg-yellow-950 border-yellow-500 border text-yellow-400"],
       gray: ["bg-nb-gray-930/60 border-nb-gray-800/40 text-nb-gray-300 border"],
+      lightGray: ["bg-nb-gray-910  text-nb-gray-200 border border-nb-gray-900"],
       grayer: [
         "bg-nb-gray-900/40 border-nb-gray-800/40 text-nb-gray-300 border",
       ],
@@ -45,6 +46,7 @@ const variants = cva("", {
       "blue-darker": ["hover:bg-sky-800"],
       red: ["hover:bg-red-950/40"],
       gray: ["hover:bg-nb-gray-900"],
+      lightGray: ["hover:bg-nb-gray-900"],
       grayer: ["hover:bg-nb-gray-900"],
       "gray-ghost": ["hover:bg-nb-gray-800 cursor-pointer"],
       green: ["hover:bg-green-950/50"],

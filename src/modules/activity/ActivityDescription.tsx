@@ -821,6 +821,36 @@ export default function ActivityDescription({ event }: Props) {
       </div>
     );
 
+  /**
+   * Reverse Proxy
+   */
+
+  if (event.activity_code == "service.create")
+    return (
+      <div className={"inline"}>
+        Service <Value>{m.domain}</Value> in cluster{" "}
+        <Value>{m.proxy_cluster}</Value> was created with authentication{" "}
+        <Value>{m.auth ? "Enabled" : "Disabled"}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "service.update")
+    return (
+      <div className={"inline"}>
+        Service <Value>{m.domain}</Value> in cluster{" "}
+        <Value>{m.proxy_cluster}</Value> was updated with authentication{" "}
+        <Value>{m.auth === "true" ? "Enabled" : "Disabled"}</Value>
+      </div>
+    );
+
+  if (event.activity_code == "service.delete")
+    return (
+      <div className={"inline"}>
+        Service <Value>{m.domain}</Value> in cluster{" "}
+        <Value>{m.proxy_cluster}</Value> was deleted
+      </div>
+    );
+
   return (
     <div className={"flex gap-2.5 items-center"}>
       <span className={"mb-[1px]"}>{event.activity}</span>

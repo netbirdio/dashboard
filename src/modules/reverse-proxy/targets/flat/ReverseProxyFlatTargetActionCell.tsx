@@ -38,6 +38,7 @@ export default function ReverseProxyFlatTargetActionCell({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end">
           <DropdownMenuItem
+            data-proxy-edit-action={target.proxy.id}
             onClick={(e) => {
               e.stopPropagation();
               if (isL4Mode(target.proxy.mode)) {
@@ -55,6 +56,7 @@ export default function ReverseProxyFlatTargetActionCell({
           </DropdownMenuItem>
 
           <DropdownMenuItem
+            data-proxy-settings-action={target.proxy.id}
             onClick={(e) => {
               e.stopPropagation();
               openModal({ proxy: target.proxy, initialTab: "settings" });

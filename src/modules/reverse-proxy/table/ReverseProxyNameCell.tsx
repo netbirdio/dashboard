@@ -36,6 +36,7 @@ export default function ReverseProxyNameCell({
           ? "gap-6 min-w-[270px] max-w-[270px]"
           : "gap-2.5 min-w-[200px]",
       )}
+      data-name-cell
     >
       {showChevron && (
         <>

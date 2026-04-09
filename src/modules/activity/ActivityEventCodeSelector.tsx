@@ -49,7 +49,9 @@ export function ActivityEventCodeSelector({
       return {
         activity_code: event.activity_code,
         activity: event.activity,
-        group: event.activity_code.split(".")[0],
+        group: event.activity_code.startsWith("service.user")
+          ? "Service User"
+          : event.activity_code.split(".")[0],
       };
     });
     return items.reduce((acc, item) => {

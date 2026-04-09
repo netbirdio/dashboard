@@ -15,7 +15,7 @@ export default function ReverseProxyActiveCell({
   const { handleToggle } = useReverseProxies();
 
   return (
-    <div className={"flex min-w-[0px]"}>
+    <div className={"flex min-w-[0px]"} data-active-cell>
       <ToggleSwitch
         disabled={!permission?.services?.update}
         checked={reverseProxy.enabled}
