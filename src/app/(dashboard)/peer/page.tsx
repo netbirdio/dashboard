@@ -526,7 +526,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             copyText={"NetBird IP Address"}
             label={
               <>
-                <MapPin size={16} />
+                <MapPin size={16} className={"shrink-0"} />
                 NetBird IP Address
               </>
             }
@@ -547,7 +547,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
               copyText={"NetBird IPv6 Address"}
               label={
                 <>
-                  <MapPin size={16} />
+                  <MapPin size={16} className={"shrink-0"} />
                   NetBird IPv6 Address
                 </>
               }
@@ -567,7 +567,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             copyText={"Public IP Address"}
             label={
               <>
-                <NetworkIcon size={16} />
+                <NetworkIcon size={16} className={"shrink-0"} />
                 Public IP Address
               </>
             }
@@ -579,7 +579,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             copyText={"DNS label"}
             label={
               <>
-                <Globe size={16} />
+                <Globe size={16} className={"shrink-0"} />
                 Domain Name
               </>
             }
@@ -597,7 +597,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             copyText={"Hostname"}
             label={
               <>
-                <MonitorSmartphoneIcon size={16} />
+                <MonitorSmartphoneIcon size={16} className={"shrink-0"} />
                 Hostname
               </>
             }
@@ -607,7 +607,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
           <Card.ListItem
             label={
               <>
-                <FlagIcon size={16} />
+                <FlagIcon size={16} className={"shrink-0"} />
                 Region
               </>
             }
@@ -637,7 +637,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
           <Card.ListItem
             label={
               <>
-                <Cpu size={16} />
+                <Cpu size={16} className={"shrink-0"} />
                 Operating System
               </>
             }
@@ -648,7 +648,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             <Card.ListItem
               label={
                 <>
-                  <Barcode size={16} />
+                  <Barcode size={16} className={"shrink-0"} />
                   Serial Number
                 </>
               }
@@ -660,7 +660,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             <Card.ListItem
               label={
                 <>
-                  <CalendarDays size={16} />
+                  <CalendarDays size={16} className={"shrink-0"} />
                   Registered on
                 </>
               }
@@ -676,7 +676,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
           <Card.ListItem
             label={
               <>
-                <History size={16} />
+                <History size={16} className={"shrink-0"} />
                 Last seen
               </>
             }
@@ -693,7 +693,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
           <Card.ListItem
             label={
               <>
-                <NetBirdIcon size={16} />
+                <NetBirdIcon size={16} className={"shrink-0"} />
                 Agent Version
               </>
             }
@@ -704,7 +704,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             <Card.ListItem
               label={
                 <>
-                  <NetBirdIcon size={16} />
+                  <NetBirdIcon size={16} className={"shrink-0"} />
                   UI Version
                 </>
               }
