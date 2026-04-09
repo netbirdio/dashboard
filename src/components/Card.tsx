@@ -50,7 +50,7 @@ function CardListItem({
   return (
     <li
       className={cn(
-        "flex justify-between px-4 border-b border-nb-gray-900 py-4 last:border-b-0 items-center h-full",
+        "flex justify-between px-4 border-b border-nb-gray-900 py-3.5 last:border-b-0 items-center h-full",
         className,
       )}
     >
