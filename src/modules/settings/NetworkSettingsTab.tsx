@@ -20,12 +20,24 @@ import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useGroups } from "@/contexts/GroupsProvider";
+import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
 
 type Props = {
   account: Account;
 };
 
 export default function NetworkSettingsTab({ account }: Readonly<Props>) {
+  const { isLoading: isGroupsLoading } = useGroups();
+
+  return isGroupsLoading ? (
+    <SkeletonSettings />
+  ) : (
+    <NetworkSettingsTabContent account={account} />
+  );
+}
+
+function NetworkSettingsTabContent({ account }: Readonly<Props>) {
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -43,15 +55,12 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
   const [networkRangeV6, setNetworkRangeV6] = useState(
     account.settings.network_range_v6 || "",
   );
-  const [ipv6EnabledGroups, setIpv6EnabledGroups] = useGroupHelper({
-    initial: account.settings?.ipv6_enabled_groups,
-  });
-  const ipv6GroupIds = useMemo(
-    () =>
-      ipv6EnabledGroups
-        .map((g) => g.id)
-        .filter((id): id is string => !!id)
-        .sort(),
+  const [ipv6EnabledGroups, setIpv6EnabledGroups, { save: saveGroups }] =
+    useGroupHelper({
+      initial: account.settings?.ipv6_enabled_groups,
+    });
+  const ipv6GroupNames = useMemo(
+    () => ipv6EnabledGroups.map((g) => g.name).sort(),
     [ipv6EnabledGroups],
   );
 
@@ -81,13 +90,18 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
     customDNSDomain,
     networkRange,
     networkRangeV6,
-    ipv6GroupIds,
+    ipv6GroupNames,
   ]);
 
   const saveChanges = async () => {
+    const groups = await saveGroups();
+    const ipv6EnabledGroupIds = groups
+      .map((group) => group.id)
+      .filter(Boolean) as string[];
+
     const updatedSettings = {
       ...account.settings,
-      ipv6_enabled_groups: ipv6EnabledGroups.map((g) => g.id).filter((id): id is string => !!id),
+      ipv6_enabled_groups: ipv6EnabledGroupIds,
     };
 
     if (customDNSDomain !== "" || account.settings.dns_domain) {
@@ -118,7 +132,12 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
         })
         .then(() => {
           mutate("/accounts");
-          updateRef([customDNSDomain, networkRange, networkRangeV6, ipv6GroupIds]);
+          updateRef([
+            customDNSDomain,
+            networkRange,
+            networkRangeV6,
+            ipv6GroupNames,
+          ]);
         }),
       loadingMessage: "Updating network settings...",
     });
@@ -287,9 +306,9 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
           <div>
             <Label>IPv6 Enabled Groups</Label>
             <HelpText>
-              Peers in the selected groups will receive IPv6 overlay
-              addresses (dual-stack). Remove all groups to disable IPv6.
-              Changes apply on save and will restart affected clients.
+              Peers in the selected groups will receive IPv6 overlay addresses
+              (dual-stack). Remove all groups to disable IPv6. Changes apply on
+              save and will restart affected clients.
             </HelpText>
             <PeerGroupSelector
               values={ipv6EnabledGroups}
