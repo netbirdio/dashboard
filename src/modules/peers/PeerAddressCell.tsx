@@ -11,6 +11,7 @@ import { PeerAddressTooltipContent } from "@/modules/peers/PeerAddressTooltipCon
 type Props = {
   peer: Peer;
 };
+
 export default function PeerAddressCell({ peer }: Props) {
   return (
     <FullTooltip
@@ -54,7 +55,6 @@ export default function PeerAddressCell({ peer }: Props) {
               className={"dark:text-nb-gray-400 font-mono font-thin text-xs"}
             >
               {peer.ip}
-              {peer.ipv6 && `, ${peer.ipv6}`}
             </span>
           </CopyToClipboardText>
         </div>
