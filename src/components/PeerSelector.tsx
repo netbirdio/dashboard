@@ -125,9 +125,7 @@ export function PeerSelector({
                     "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-1 font-mono text-[10px]"
                   }
                 >
-                  <MapPinIcon />
                   {value.ip}
-                  {value.ipv6 && `, ${value.ipv6}`}
                 </div>
               </div>
             ) : (
@@ -240,9 +238,7 @@ export function PeerSelector({
                         !isSupported && "opacity-50",
                       )}
                     >
-                      <MapPinIcon />
                       {option.ip}
-                      {option.ipv6 && `, ${option.ipv6}`}
                     </div>
                   </FullTooltip>
                 );

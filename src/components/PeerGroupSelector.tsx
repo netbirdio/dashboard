@@ -290,7 +290,7 @@ export function PeerGroupSelector({
   const searchPlaceholder = useMemo(() => {
     if (tab === "groups") return placeholderForSearch;
     if (tab === "resources") return "Search resource...";
-    if (tab === "peers") return "Search peer...";
+    if (tab === "peers") return "Search peer by name or ip...";
     return "Search...";
   }, [tab, placeholderForSearch]);
 
@@ -537,9 +537,6 @@ export function PeerGroupSelector({
                       const isSelected =
                         values.find((group) => group.name == option.name) !=
                         undefined;
-                      const peerCount =
-                        option.peers?.length ?? option?.peers_count ?? 0;
-
                       const isDisabled = disabledGroups
                         ? disabledGroups?.findIndex(
                             (g) => g.id === option.id,
@@ -1060,7 +1057,6 @@ const PeersList = ({
                   }
                 >
                   {res.ip}
-                  {res.ipv6 && `, ${res.ipv6}`}
                   <RadioItem value={res.id} />
                 </div>
               </div>
