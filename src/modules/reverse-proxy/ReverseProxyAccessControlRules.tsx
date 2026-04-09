@@ -12,7 +12,6 @@ import {
 } from "@components/Select";
 import cidr from "ip-cidr";
 import {
-  ChevronDownIcon,
   FlagIcon,
   MinusCircleIcon,
   NetworkIcon,
@@ -20,15 +19,8 @@ import {
   ShieldAlertIcon,
   ShieldCheckIcon,
   ShieldXIcon,
-  StarIcon,
   WorkflowIcon,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@components/DropdownMenu";
 import {
   SelectDropdown,
   SelectOption,
@@ -36,7 +28,7 @@ import {
 import { CountrySelector } from "@/components/ui/CountrySelector";
 import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
 
-type AccessAction = "allow" | "block" | "trusted";
+type AccessAction = "allow" | "block";
 type AccessRuleType = "country" | "ip" | "cidr";
 
 const ACTION_OPTIONS: SelectOption[] = [
@@ -49,11 +41,6 @@ const ACTION_OPTIONS: SelectOption[] = [
     label: "Block Only",
     value: "block",
     icon: (props) => <ShieldXIcon {...props} className="text-red-500" />,
-  },
-  {
-    label: "Trusted",
-    value: "trusted",
-    icon: (props) => <StarIcon {...props} className="text-yellow-400" />,
   },
 ];
 
@@ -75,10 +62,6 @@ const TYPE_OPTIONS: SelectOption[] = [
   },
 ];
 
-const TYPE_OPTIONS_NO_COUNTRY: SelectOption[] = TYPE_OPTIONS.filter(
-  (o) => o.value !== "country",
-);
-
 type AccessRule = {
   id: string;
   action: AccessAction;
@@ -88,7 +71,6 @@ type AccessRule = {
 
 type RulesAction =
   | { type: "add" }
-  | { type: "add_many"; rules: Omit<AccessRule, "id">[] }
   | { type: "remove"; id: string }
   | {
       type: "update";
@@ -96,30 +78,6 @@ type RulesAction =
       field: "action" | "type" | "value";
       value: string;
     };
-
-type CIDRPreset = {
-  label: string;
-  cidrs: string[];
-};
-
-const TRUSTED_PRESETS: CIDRPreset[] = [
-  {
-    label: "RFC 1918 (Private IPv4)",
-    cidrs: ["10.0.0.0/8", "172.16.0.0/12", "192.168.0.0/16"],
-  },
-  {
-    label: "CGNAT (100.64/10)",
-    cidrs: ["100.64.0.0/10"],
-  },
-  {
-    label: "IPv6 ULA",
-    cidrs: ["fc00::/7"],
-  },
-  {
-    label: "Loopback",
-    cidrs: ["127.0.0.0/8", "::1/128"],
-  },
-];
 
 const nextId = () => crypto.randomUUID();
 
@@ -130,13 +88,6 @@ function rulesReducer(state: AccessRule[], action: RulesAction): AccessRule[] {
         ...state,
         { id: nextId(), action: "allow", type: "country", value: "" },
       ];
-    case "add_many": {
-      const existing = new Set(state.map((r) => `${r.action}:${r.type}:${r.value}`));
-      const newRules = action.rules
-        .filter((r) => !existing.has(`${r.action}:${r.type}:${r.value}`))
-        .map((r) => ({ ...r, id: nextId() }));
-      return [...state, ...newRules];
-    }
     case "remove":
       return state.filter((r) => r.id !== action.id);
     case "update":
@@ -144,9 +95,6 @@ function rulesReducer(state: AccessRule[], action: RulesAction): AccessRule[] {
         if (r.id !== action.id) return r;
         if (action.field === "type") {
           return { ...r, type: action.value as AccessRuleType, value: "" };
-        }
-        if (action.field === "action" && action.value === "trusted" && r.type === "country") {
-          return { ...r, action: action.value as AccessAction, type: "cidr", value: "" };
         }
         return { ...r, [action.field]: action.value };
       });
@@ -165,8 +113,6 @@ function restrictionsToRules(
 ): AccessRule[] {
   if (!restrictions) return [];
   const rules: AccessRule[] = [];
-  // Trusted first, then block, then allow.
-  pushCidrRules(rules, restrictions.trusted_cidrs, "trusted");
   pushCidrRules(rules, restrictions.blocked_cidrs, "block");
   restrictions.blocked_countries?.forEach((v) =>
     rules.push({ id: nextId(), action: "block", type: "country", value: v }),
@@ -186,7 +132,6 @@ function rulesToRestrictions(
   const blocked_countries: string[] = [];
   const allowed_cidrs: string[] = [];
   const blocked_cidrs: string[] = [];
-  const trusted_cidrs: string[] = [];
 
   for (const rule of rules) {
     if (!rule.value) continue;
@@ -196,8 +141,7 @@ function rulesToRestrictions(
     } else {
       const suffix = rule.value.includes(":") ? "/128" : "/32";
       const value = rule.type === "ip" && !rule.value.includes("/") ? `${rule.value}${suffix}` : rule.value;
-      if (rule.action === "trusted") trusted_cidrs.push(value);
-      else if (rule.action === "allow") allowed_cidrs.push(value);
+      if (rule.action === "allow") allowed_cidrs.push(value);
       else blocked_cidrs.push(value);
     }
   }
@@ -208,7 +152,6 @@ function rulesToRestrictions(
     blocked_countries.length > 0 ||
     allowed_cidrs.length > 0 ||
     blocked_cidrs.length > 0 ||
-    trusted_cidrs.length > 0 ||
     hasCrowdSec;
 
   if (!hasAny) return undefined;
@@ -218,7 +161,6 @@ function rulesToRestrictions(
     ...(blocked_countries.length > 0 && { blocked_countries }),
     ...(allowed_cidrs.length > 0 && { allowed_cidrs }),
     ...(blocked_cidrs.length > 0 && { blocked_cidrs }),
-    ...(trusted_cidrs.length > 0 && { trusted_cidrs }),
     ...(hasCrowdSec && { crowdsec_mode: crowdsecMode }),
   };
 }
@@ -321,8 +263,6 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
           or CIDR block.
           <br />
           Block rules always take priority over allow rules.
-          <br />
-          Trusted IPs bypass all restriction layers.
         </HelpText>
       </div>
       {rules.length > 0 && (
@@ -356,7 +296,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                       value: v,
                     })
                   }
-                  options={rule.action === "trusted" ? TYPE_OPTIONS_NO_COUNTRY : TYPE_OPTIONS}
+                  options={TYPE_OPTIONS}
                   compact
                 />
               </div>
@@ -422,35 +362,6 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
           <PlusIcon size={14} />
           Add Rule
         </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="dotted" size="sm">
-              <StarIcon size={14} />
-              Add Trusted Preset
-              <ChevronDownIcon size={14} />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {TRUSTED_PRESETS.map((preset) => (
-              <DropdownMenuItem
-                key={preset.label}
-                onClick={() =>
-                  dispatch({
-                    type: "add_many",
-                    rules: preset.cidrs.map((c) => ({
-                      action: "trusted" as const,
-                      type: "cidr" as const,
-                      value: c,
-                    })),
-                  })
-                }
-              >
-                <NetworkIcon size={14} />
-                {preset.label}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuContent>
-        </DropdownMenu>
       </div>
     </div>
   );

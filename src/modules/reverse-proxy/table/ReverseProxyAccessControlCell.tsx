@@ -28,7 +28,6 @@ type RuleEntry = {
   Icon: LucideIcon;
   value: string;
   blocked?: boolean;
-  trusted?: boolean;
 };
 
 type Props = {
@@ -54,14 +53,11 @@ export default function ReverseProxyAccessControlCell({
     restrictions?.crowdsec_mode != null &&
     restrictions.crowdsec_mode !== CrowdSecMode.OFF;
 
-  const hasTrustedCidrs = (restrictions?.trusted_cidrs?.length ?? 0) > 0;
-
   const ruleCount =
     (restrictions?.allowed_cidrs?.length ?? 0) +
     (restrictions?.blocked_cidrs?.length ?? 0) +
     (restrictions?.allowed_countries?.length ?? 0) +
     (restrictions?.blocked_countries?.length ?? 0) +
-    (restrictions?.trusted_cidrs?.length ?? 0) +
     (hasCrowdSec ? 1 : 0);
 
   const rulesBadge =
@@ -156,31 +152,6 @@ export default function ReverseProxyAccessControlCell({
       });
     }
 
-    if (hasTrustedCidrs) {
-      const trustedIps = restrictions!.trusted_cidrs!.filter(isHostCidr);
-      const trustedCidrs = restrictions!.trusted_cidrs!.filter((c) => !isHostCidr(c));
-
-      if (trustedIps.length) {
-        entries.push({
-          key: "trusted-ips",
-          label: trustedIps.length === 1 ? "Trusted IP" : "Trusted IPs",
-          Icon: WorkflowIcon,
-          value: trustedIps.map((c) => c.replace(/\/(32|128)$/, "")).join(", "),
-          trusted: true,
-        });
-      }
-
-      if (trustedCidrs.length) {
-        entries.push({
-          key: "trusted-cidrs",
-          label: trustedCidrs.length === 1 ? "Trusted CIDR" : "Trusted CIDRs",
-          Icon: NetworkIcon,
-          value: trustedCidrs.join(", "),
-          trusted: true,
-        });
-      }
-    }
-
     if (hasCrowdSec) {
       entries.push({
         key: "crowdsec",
@@ -194,7 +165,7 @@ export default function ReverseProxyAccessControlCell({
     }
 
     return entries;
-  }, [restrictions, countries, hasTrustedCidrs, hasCrowdSec]);
+  }, [restrictions, countries, hasCrowdSec]);
 
   const showRulesHover = ruleGroups.length > 0;
 
@@ -219,7 +190,7 @@ export default function ReverseProxyAccessControlCell({
                 onClick={(e) => e.stopPropagation()}
               >
                 <div className={"text-xs"}>
-                  {ruleGroups.map(({ key, label, Icon, value, blocked, trusted }) => (
+                  {ruleGroups.map(({ key, label, Icon, value, blocked }) => (
                     <div
                       key={key}
                       className={
@@ -234,7 +205,7 @@ export default function ReverseProxyAccessControlCell({
                         <Icon
                           size={14}
                           className={
-                            trusted ? "text-yellow-400" : blocked ? "text-red-500" : "text-green-500"
+                            blocked ? "text-red-500" : "text-green-500"
                           }
                         />
                         {label}

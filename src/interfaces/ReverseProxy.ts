@@ -35,7 +35,6 @@ export interface AccessRestrictions {
   blocked_cidrs?: string[];
   allowed_countries?: string[];
   blocked_countries?: string[];
-  trusted_cidrs?: string[];
   crowdsec_mode?: CrowdSecMode;
 }
 
