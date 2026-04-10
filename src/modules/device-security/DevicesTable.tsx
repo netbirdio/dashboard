@@ -12,6 +12,7 @@ import { RefreshCwIcon, ShieldIcon, ShieldOffIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useCallback } from "react";
 import { useSWRConfig } from "swr";
+import { notify } from "@components/Notification";
 import { useDeviceSecurity } from "@/contexts/DeviceSecurityProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { DeviceCert } from "@/interfaces/DeviceSecurity";
@@ -161,8 +162,13 @@ export default function DevicesTable() {
   );
 
   const handleRenew = useCallback(
-    async (id: string) => {
-      await renewDevice(id);
+    (id: string) => {
+      notify({
+        title: "Renewing certificate",
+        description: "Device certificate was successfully renewed",
+        promise: renewDevice(id),
+        loadingMessage: "Renewing device certificate...",
+      });
     },
     [renewDevice],
   );
