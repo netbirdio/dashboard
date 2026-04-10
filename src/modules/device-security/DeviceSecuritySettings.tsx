@@ -34,7 +34,7 @@ import PageContainer from "@/layouts/PageContainer";
 
 const DEVICE_AUTH_MODES: DeviceAuthMode[] = ["disabled", "optional", "cert-only", "cert-and-sso"];
 const ENROLLMENT_MODES: EnrollmentMode[] = ["manual", "attestation", "both"];
-const CA_TYPES: CAType[] = ["builtin", "external"];
+const CA_TYPES: CAType[] = ["builtin", "vault", "smallstep", "scep"];
 
 function isDeviceAuthMode(v: string): v is DeviceAuthMode {
   return DEVICE_AUTH_MODES.includes(v as DeviceAuthMode);
@@ -68,7 +68,9 @@ const ENROLLMENT_LABELS: Record<EnrollmentMode, string> = {
 
 const CA_TYPE_LABELS: Record<CAType, string> = {
   builtin: "Built-in CA",
-  external: "External CA",
+  vault: "HashiCorp Vault",
+  smallstep: "Smallstep CA",
+  scep: "SCEP",
 };
 
 export default function DeviceSecuritySettings() {

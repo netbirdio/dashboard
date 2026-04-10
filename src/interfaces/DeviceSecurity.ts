@@ -4,7 +4,7 @@ export type DeviceAuthMode =
   | "cert-only"
   | "cert-and-sso";
 export type EnrollmentMode = "manual" | "attestation" | "both";
-export type CAType = "builtin" | "external";
+export type CAType = "builtin" | "vault" | "smallstep" | "scep";
 
 export interface DeviceAuthSettings {
   mode: DeviceAuthMode;
