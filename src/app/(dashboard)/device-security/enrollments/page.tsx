@@ -5,7 +5,6 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { ShieldCheckIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
-import { DeviceSecurityProvider } from "@/contexts/DeviceSecurityProvider";
 import PageContainer from "@/layouts/PageContainer";
 
 const EnrollmentsTable = lazy(
@@ -15,7 +14,6 @@ const EnrollmentsTable = lazy(
 export default function EnrollmentsPage() {
   return (
     <PageContainer>
-      <DeviceSecurityProvider>
         <div className="p-default py-6">
           <Breadcrumbs>
             <Breadcrumbs.Item
@@ -39,7 +37,6 @@ export default function EnrollmentsPage() {
         <Suspense fallback={<SkeletonTable />}>
           <EnrollmentsTable />
         </Suspense>
-      </DeviceSecurityProvider>
     </PageContainer>
   );
 }
