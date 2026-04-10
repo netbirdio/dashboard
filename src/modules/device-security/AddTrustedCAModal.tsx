@@ -20,6 +20,7 @@ import React, { useMemo, useState } from "react";
 import { useDeviceSecurity } from "@/contexts/DeviceSecurityProvider";
 
 const PEM_HEADER = "-----BEGIN CERTIFICATE-----";
+const PEM_FOOTER = "-----END CERTIFICATE-----";
 
 type Props = {
   children: React.ReactNode;
@@ -50,7 +51,10 @@ function AddTrustedCAModalContent({ onSuccess }: Readonly<ContentProps>) {
     const trimmed = pem.trim();
     if (trimmed.length === 0) return undefined;
     if (!trimmed.startsWith(PEM_HEADER)) {
-      return `PEM certificate must start with "${PEM_HEADER}"`;
+      return `Must start with "${PEM_HEADER}"`;
+    }
+    if (!trimmed.endsWith(PEM_FOOTER)) {
+      return `Must end with "${PEM_FOOTER}"`;
     }
     return undefined;
   }, [pem]);
