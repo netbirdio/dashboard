@@ -5,6 +5,7 @@ import { cn } from "@utils/helpers";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import DeviceSecurityIcon from "@/assets/icons/DeviceSecurityIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
@@ -191,6 +192,41 @@ export default function Navigation({
                     isChild
                     href={"/dns/settings"}
                     visible={permission.dns.read}
+                  />
+                </SidebarItem>
+                <SidebarItem
+                  icon={<DeviceSecurityIcon size={16} />}
+                  label="Device Security"
+                  collapsible
+                  visible={true}
+                >
+                  <SidebarItem
+                    label="Settings"
+                    href="/device-security/settings"
+                    isChild
+                    exactPathMatch={true}
+                    visible={true}
+                  />
+                  <SidebarItem
+                    label="Enrollments"
+                    href="/device-security/enrollments"
+                    isChild
+                    exactPathMatch={true}
+                    visible={true}
+                  />
+                  <SidebarItem
+                    label="Devices"
+                    href="/device-security/devices"
+                    isChild
+                    exactPathMatch={true}
+                    visible={true}
+                  />
+                  <SidebarItem
+                    label="Trusted CAs"
+                    href="/device-security/trusted-cas"
+                    isChild
+                    exactPathMatch={true}
+                    visible={true}
                   />
                 </SidebarItem>
                 <SidebarItem
