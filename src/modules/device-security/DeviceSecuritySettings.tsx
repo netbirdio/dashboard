@@ -105,7 +105,7 @@ export default function DeviceSecuritySettings() {
     devices?.filter((d) => !d.revoked).length ?? 0;
 
   const showCertOnlyWarning =
-    mode === "cert-only" && activeCertCount === 0;
+    (mode === "cert-only" || mode === "cert-and-sso") && activeCertCount === 0;
 
   const handleSave = useCallback(async () => {
     notify({
@@ -158,6 +158,18 @@ export default function DeviceSecuritySettings() {
             <Skeleton height={80} width={"100%"} />
           </div>
           <Skeleton height={80} width={"100%"} />
+        </div>
+      </PageContainer>
+    );
+  }
+
+  if (!settingsLoading && !settings) {
+    return (
+      <PageContainer>
+        <div className={"p-default py-6 max-w-2xl"}>
+          <Callout variant={"error"} title={"Failed to load settings"}>
+            Could not load device security settings. Please refresh the page and try again.
+          </Callout>
         </div>
       </PageContainer>
     );
@@ -282,9 +294,11 @@ export default function DeviceSecuritySettings() {
               min={1}
               max={3650}
               value={certValidityDays}
-              onChange={(e) =>
-                setCertValidityDays(parseInt(e.target.value, 10) || 0)
-              }
+              onChange={(e) => {
+                const parsed = parseInt(e.target.value, 10);
+                if (Number.isNaN(parsed)) return;
+                setCertValidityDays(Math.max(1, Math.min(3650, parsed)));
+              }}
               data-cy={"cert-validity-days"}
             />
           </SettingRow>
