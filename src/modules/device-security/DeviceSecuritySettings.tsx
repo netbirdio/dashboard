@@ -167,8 +167,8 @@ export default function DeviceSecuritySettings() {
     return (
       <PageContainer>
         <div className={"p-default py-6 max-w-2xl"}>
-          <Callout variant={"error"} title={"Failed to load settings"}>
-            Could not load device security settings. Please refresh the page and try again.
+          <Callout variant={"error"}>
+            Failed to load device security settings. Please refresh the page and try again.
           </Callout>
         </div>
       </PageContainer>
