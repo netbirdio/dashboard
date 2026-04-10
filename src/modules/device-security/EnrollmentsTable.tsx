@@ -5,6 +5,7 @@ import Button from "@components/Button";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
+import { notify } from "@components/Notification";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
@@ -129,6 +130,28 @@ function buildColumns(
       cell: ({ row }) => <StatusBadge status={row.original.status} />,
     },
     {
+      id: "reason",
+      accessorKey: "reason",
+      header: ({ column }) => (
+        <DataTableHeader column={column}>Reason</DataTableHeader>
+      ),
+      cell: ({ row }) => {
+        const reason = row.original.reason;
+        return (
+          <span
+            className={"text-nb-gray-400 text-sm"}
+            title={reason}
+          >
+            {reason ? (
+              <span className={"text-nb-gray-100"}>{reason}</span>
+            ) : (
+              <span className={"text-nb-gray-500"}>—</span>
+            )}
+          </span>
+        );
+      },
+    },
+    {
       accessorKey: "created_at",
       header: ({ column }) => (
         <DataTableHeader column={column}>Created</DataTableHeader>
@@ -170,7 +193,10 @@ export default function EnrollmentsTable() {
       try {
         await approveEnrollment(id);
       } catch {
-        // Error is handled by the API error boundary in the provider
+        notify({
+          title: "Failed to approve enrollment",
+          description: "Please try again.",
+        });
       }
     },
     [approveEnrollment],
@@ -181,7 +207,10 @@ export default function EnrollmentsTable() {
       try {
         await rejectEnrollment(id);
       } catch {
-        // Error is handled by the API error boundary in the provider
+        notify({
+          title: "Failed to reject enrollment",
+          description: "Please try again.",
+        });
       }
     },
     [rejectEnrollment],
@@ -195,7 +224,7 @@ export default function EnrollmentsTable() {
   if (!enrollmentsLoading && (!enrollments || enrollments.length === 0)) {
     return (
       <NoResults
-        title="No pending enrollment requests"
+        title="No enrollment requests"
         description="There are no device enrollment requests at this time."
         icon={<ShieldAlertIcon size={20} />}
       />
