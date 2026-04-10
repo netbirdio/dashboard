@@ -198,35 +198,35 @@ export default function Navigation({
                   icon={<DeviceSecurityIcon size={16} />}
                   label="Device Security"
                   collapsible
-                  visible={true}
+                  visible={!isRestricted}
                 >
                   <SidebarItem
                     label="Settings"
                     href="/device-security/settings"
                     isChild
                     exactPathMatch={true}
-                    visible={true}
+                    visible={!isRestricted}
                   />
                   <SidebarItem
                     label="Enrollments"
                     href="/device-security/enrollments"
                     isChild
                     exactPathMatch={true}
-                    visible={true}
+                    visible={!isRestricted}
                   />
                   <SidebarItem
                     label="Devices"
                     href="/device-security/devices"
                     isChild
                     exactPathMatch={true}
-                    visible={true}
+                    visible={!isRestricted}
                   />
                   <SidebarItem
                     label="Trusted CAs"
                     href="/device-security/trusted-cas"
                     isChild
                     exactPathMatch={true}
-                    visible={true}
+                    visible={!isRestricted}
                   />
                 </SidebarItem>
                 <SidebarItem
