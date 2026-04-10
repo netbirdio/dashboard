@@ -32,6 +32,20 @@ import type {
 } from "@/interfaces/DeviceSecurity";
 import PageContainer from "@/layouts/PageContainer";
 
+const DEVICE_AUTH_MODES: DeviceAuthMode[] = ["disabled", "optional", "cert-only", "cert-and-sso"];
+const ENROLLMENT_MODES: EnrollmentMode[] = ["manual", "attestation", "both"];
+const CA_TYPES: CAType[] = ["builtin", "external"];
+
+function isDeviceAuthMode(v: string): v is DeviceAuthMode {
+  return DEVICE_AUTH_MODES.includes(v as DeviceAuthMode);
+}
+function isEnrollmentMode(v: string): v is EnrollmentMode {
+  return ENROLLMENT_MODES.includes(v as EnrollmentMode);
+}
+function isCAType(v: string): v is CAType {
+  return CA_TYPES.includes(v as CAType);
+}
+
 const MODE_LABELS: Record<DeviceAuthMode, string> = {
   disabled: "Disabled",
   optional: "Optional",
@@ -104,6 +118,7 @@ export default function DeviceSecuritySettings() {
         cert_validity_days: certValidityDays,
         ocsp_enabled: ocspEnabled,
         fail_open_on_ocsp_unavailable: failOpenOnOcsp,
+        inventory_type: settings?.inventory_type ?? "",
       }).then(() => {
         updateRef([
           mode,
@@ -123,6 +138,7 @@ export default function DeviceSecuritySettings() {
     certValidityDays,
     ocspEnabled,
     failOpenOnOcsp,
+    settings,
     updateSettings,
     updateRef,
   ]);
@@ -187,7 +203,7 @@ export default function DeviceSecuritySettings() {
             label="Authentication Mode"
             help="Controls how device certificates are used for authentication"
           >
-            <Select value={mode} onValueChange={(v) => setMode(v as DeviceAuthMode)}>
+            <Select value={mode} onValueChange={(v) => { if (isDeviceAuthMode(v)) setMode(v); }}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -219,7 +235,7 @@ export default function DeviceSecuritySettings() {
           >
             <Select
               value={enrollmentMode}
-              onValueChange={(v) => setEnrollmentMode(v as EnrollmentMode)}
+              onValueChange={(v) => { if (isEnrollmentMode(v)) setEnrollmentMode(v); }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -241,7 +257,7 @@ export default function DeviceSecuritySettings() {
           >
             <Select
               value={caType}
-              onValueChange={(v) => setCaType(v as CAType)}
+              onValueChange={(v) => { if (isCAType(v)) setCaType(v); }}
             >
               <SelectTrigger>
                 <SelectValue />

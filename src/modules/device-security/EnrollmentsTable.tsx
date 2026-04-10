@@ -167,14 +167,22 @@ export default function EnrollmentsTable() {
 
   const handleApprove = useCallback(
     async (id: string) => {
-      await approveEnrollment(id);
+      try {
+        await approveEnrollment(id);
+      } catch {
+        // Error is handled by the API error boundary in the provider
+      }
     },
     [approveEnrollment],
   );
 
   const handleReject = useCallback(
     async (id: string) => {
-      await rejectEnrollment(id);
+      try {
+        await rejectEnrollment(id);
+      } catch {
+        // Error is handled by the API error boundary in the provider
+      }
     },
     [rejectEnrollment],
   );
