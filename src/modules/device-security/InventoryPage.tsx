@@ -334,7 +334,8 @@ export default function InventoryPage() {
     updateRef([inventoryConfig]);
   }, [inventoryConfig, updateRef]);
 
-  const handleTypeChange = (type: InventoryType) => {
+  const handleTypeChange = useCallback((type: InventoryType) => {
+    if (type === "fleetdm" || type === "webhook") return;
     setLocalConfig((prev) => ({
       ...prev,
       inventory_type: type,
@@ -342,7 +343,7 @@ export default function InventoryPage() {
       intune: prev.intune ?? DEFAULT_INTUNE,
       jamf: prev.jamf ?? DEFAULT_JAMF,
     }));
-  };
+  }, []);
 
   const handleStaticChange = (config: StaticInventoryConfig) =>
     setLocalConfig((prev) => ({ ...prev, static: config }));
@@ -353,7 +354,7 @@ export default function InventoryPage() {
   const handleJamfChange = (config: JamfInventoryConfig) =>
     setLocalConfig((prev) => ({ ...prev, jamf: config }));
 
-  const handleSave = useCallback(() => {
+  const handleSave = useCallback(async () => {
     if (localConfig.inventory_type === "intune") {
       const intune = localConfig.intune ?? DEFAULT_INTUNE;
       if (!intune.tenant_id || !intune.client_id) {
@@ -368,14 +369,19 @@ export default function InventoryPage() {
         return;
       }
     }
+    const savePromise = updateInventoryConfig(localConfig);
     notify({
       title: "Device Inventory",
       description: "Inventory configuration saved successfully.",
-      promise: updateInventoryConfig(localConfig).then((saved) => {
-        updateRef([saved]);
-      }),
+      promise: savePromise,
       loadingMessage: "Saving inventory configuration...",
     });
+    try {
+      const saved = await savePromise;
+      updateRef([saved ?? localConfig]);
+    } catch {
+      return;
+    }
   }, [localConfig, updateInventoryConfig, updateRef]);
 
   const enrollmentMode = settings?.enrollment_mode;
