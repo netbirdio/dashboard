@@ -58,6 +58,10 @@ function PasswordField({ id, label, value, hasExisting, onChange }: PasswordFiel
   );
 }
 
+// ---- Constants ----
+
+const PEER_SEPARATOR_RE = /[\n,]+/;
+
 // ---- Default configs ----
 
 const DEFAULT_STATIC: StaticInventoryConfig = {
@@ -101,7 +105,7 @@ function StaticForm({ config, onChange }: StaticFormProps) {
 
   const handleChange = (raw: string) => {
     const peers = raw
-      .split(/[\n,]+/)
+      .split(PEER_SEPARATOR_RE)
       .map((s) => s.trim())
       .filter(Boolean);
     onChange({ ...config, peers });
@@ -118,6 +122,7 @@ function StaticForm({ config, onChange }: StaticFormProps) {
           value={value}
           onChange={(e) => handleChange(e.target.value)}
           placeholder={"Enter one peer ID per line, or comma-separated"}
+          aria-describedby="static-peers-help"
           className={
             "w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm " +
             "font-mono text-gray-900 placeholder:text-gray-400 " +
@@ -125,7 +130,7 @@ function StaticForm({ config, onChange }: StaticFormProps) {
             "dark:border-zinc-700 dark:bg-zinc-950 dark:text-gray-100 dark:placeholder:text-gray-600"
           }
         />
-        <HelpText>
+        <HelpText id="static-peers-help">
           {config.peers.length > 0
             ? `${config.peers.length} peer ID${config.peers.length !== 1 ? "s" : ""} in list`
             : "No peers configured"}
@@ -283,6 +288,20 @@ export default function InventoryPage() {
     setLocalConfig((prev) => ({ ...prev, jamf: config }));
 
   const handleSave = useCallback(() => {
+    if (localConfig.inventory_type === "intune") {
+      const intune = localConfig.intune ?? DEFAULT_INTUNE;
+      if (!intune.tenant_id || !intune.client_id) {
+        notify.error("Tenant ID and Client ID are required for Intune");
+        return;
+      }
+    }
+    if (localConfig.inventory_type === "jamf") {
+      const jamf = localConfig.jamf ?? DEFAULT_JAMF;
+      if (!jamf.jamf_url) {
+        notify.error("Server URL is required for Jamf");
+        return;
+      }
+    }
     notify({
       title: "Device Inventory",
       description: "Inventory configuration saved successfully.",
