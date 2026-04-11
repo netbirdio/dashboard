@@ -11,7 +11,6 @@ export interface DeviceAuthSettings {
   enrollment_mode: EnrollmentMode;
   ca_type: CAType;
   cert_validity_days: number;
-  inventory_type: string;
 }
 
 export interface DeviceEnrollment {
@@ -92,38 +91,34 @@ export interface CATestResult {
 }
 
 // Inventory config types — for /device-auth/inventory/config endpoints
-
-export type InventoryType =
-  | "static"
-  | "intune"
-  | "jamf"
-  | "fleetdm"
-  | "webhook";
+// Multiple sources can be enabled simultaneously (e.g., Intune for Windows + Jamf for Mac).
 
 export interface StaticInventoryConfig {
-  peers: string[];
-  serial_count: number;
+  enabled: boolean;
+  peers: string[];        // WireGuard public keys
+  serial_count: number;   // read-only in GET; serials are managed by upload
 }
 
 export interface IntuneInventoryConfig {
+  enabled: boolean;
   tenant_id: string;
   client_id: string;
-  client_secret: string; // empty in GET response
+  client_secret: string;    // empty in GET response
   has_client_secret: boolean;
   require_compliance: boolean;
 }
 
 export interface JamfInventoryConfig {
+  enabled: boolean;
   jamf_url: string;
-  username: string;
-  password: string; // empty in GET response
-  has_password: boolean;
+  client_id: string;
+  client_secret: string;    // empty in GET response
+  has_client_secret: boolean;
   require_management: boolean;
 }
 
 export interface InventoryConfig {
-  inventory_type: InventoryType;
-  static?: StaticInventoryConfig;
-  intune?: IntuneInventoryConfig;
-  jamf?: JamfInventoryConfig;
+  static: StaticInventoryConfig;
+  intune: IntuneInventoryConfig;
+  jamf: JamfInventoryConfig;
 }

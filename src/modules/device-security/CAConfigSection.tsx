@@ -63,8 +63,8 @@ export function CAConfigSection({ caType, config, onChange }: CAConfigSectionPro
         : "SCEP Configuration";
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">{title}</p>
+    <div className="flex flex-col gap-4 rounded-md border border-nb-gray-900 bg-nb-gray-940 p-4">
+      <p className="text-sm font-medium text-nb-gray-300">{title}</p>
 
       {caType === "vault" && (
         <div className="flex flex-col gap-3">

@@ -112,10 +112,10 @@ export default function DeviceSecuritySettings() {
 
   useEffect(() => {
     if (!settings) return;
-    const newMode = settings.mode;
-    const newEnrollment = settings.enrollment_mode;
-    const newCAType = settings.ca_type;
-    const newCertValidity = settings.cert_validity_days;
+    const newMode = isDeviceAuthMode(settings.mode) ? settings.mode : "disabled";
+    const newEnrollment = isEnrollmentMode(settings.enrollment_mode) ? settings.enrollment_mode : "manual";
+    const newCAType = isCAType(settings.ca_type) ? settings.ca_type : "builtin";
+    const newCertValidity = settings.cert_validity_days > 0 ? settings.cert_validity_days : 365;
     setMode(newMode);
     setEnrollmentMode(newEnrollment);
     setCaType(newCAType);
@@ -139,7 +139,6 @@ export default function DeviceSecuritySettings() {
       enrollment_mode: enrollmentMode,
       ca_type: caType,
       cert_validity_days: certValidityDays,
-      inventory_type: settings?.inventory_type ?? "",
     });
     notify({
       title: "Device Security Settings",
@@ -397,7 +396,7 @@ export default function DeviceSecuritySettings() {
                 {testing ? "Testing..." : "Test Connection"}
               </Button>
               {testing && (
-                <span className="text-sm text-gray-500">Running CA test...</span>
+                <span className="text-sm text-nb-gray-400">Running CA test...</span>
               )}
             </div>
           )}
@@ -431,7 +430,7 @@ export default function DeviceSecuritySettings() {
             label="Certificate Revocation"
             help="Revocation uses CRL (Certificate Revocation List), published every 12 hours."
           >
-            <p className="font-mono text-sm text-gray-500 dark:text-gray-400">
+            <p className="font-mono text-sm text-nb-gray-400">
               {"GET /api/v1/device-auth/crl?account_id=<id>"}
             </p>
           </SettingRow>

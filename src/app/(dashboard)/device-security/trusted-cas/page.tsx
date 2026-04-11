@@ -1,10 +1,11 @@
 "use client";
 
 import Breadcrumbs from "@components/Breadcrumbs";
+import { Callout } from "@components/Callout";
 import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { usePortalElement } from "@hooks/usePortalElement";
-import { InfoIcon, ShieldCheckIcon } from "lucide-react";
+import { ShieldCheckIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -37,13 +38,12 @@ export default function TrustedCAsPage() {
           certificates when devices bring their own certificates signed by
           external authorities.
         </Paragraph>
-        <div className="mt-3 flex items-start gap-2 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
-          <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
-          <p className="text-sm text-blue-700 dark:text-blue-300">
+        <div className="mt-3">
+          <Callout variant="info">
             Trusted CAs are used when devices present certificates signed by an
             external CA. This is different from the built-in CA used for
             certificate issuance.
-          </p>
+          </Callout>
         </div>
       </div>
       <Suspense fallback={<SkeletonTable />}>

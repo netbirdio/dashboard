@@ -76,7 +76,11 @@ function buildColumns(
   ];
 }
 
-export default function TrustedCAsTable() {
+type Props = {
+  headingTarget?: HTMLHeadingElement | null;
+};
+
+export default function TrustedCAsTable({ headingTarget }: Readonly<Props>) {
   const { trustedCAs, trustedCAsLoading, deleteTrustedCA } = useDeviceSecurity();
   const { confirm } = useDialog();
   const path = usePathname();
@@ -123,18 +127,15 @@ export default function TrustedCAsTable() {
     </AddTrustedCAModal>
   );
 
-  if (!trustedCAsLoading && (!trustedCAs || trustedCAs.length === 0)) {
-    return (
-      <div>
-        <div className="flex justify-end mb-4">{addButton}</div>
-        <NoResults
-          title="No trusted CAs added."
-          description="Add a trusted Certificate Authority to enable device certificate authentication."
-          icon={<ShieldCheckIcon size={20} />}
-        />
-      </div>
-    );
-  }
+  const emptyState = (
+    <NoResults
+      title="No trusted CAs added."
+      description="Add a trusted Certificate Authority to enable device certificate authentication."
+      icon={<ShieldCheckIcon size={20} />}
+    >
+      <div className={"mt-6"}>{addButton}</div>
+    </NoResults>
+  );
 
   return (
     <DataTable
@@ -145,8 +146,11 @@ export default function TrustedCAsTable() {
       data={trustedCAs ?? []}
       isLoading={trustedCAsLoading}
       searchPlaceholder="Search by name..."
-    >
-      {() => addButton}
-    </DataTable>
+      headingTarget={headingTarget}
+      getStartedCard={emptyState}
+      rightSide={() =>
+        trustedCAs && trustedCAs.length > 0 ? addButton : null
+      }
+    />
   );
 }

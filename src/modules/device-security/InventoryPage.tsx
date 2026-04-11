@@ -3,20 +3,28 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
+import { Checkbox } from "@components/Checkbox";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
+import { cn } from "@utils/helpers";
 import { useHasChanges } from "@hooks/useHasChanges";
-import { LayoutListIcon, ShieldCheckIcon } from "lucide-react";
+import {
+  DatabaseIcon,
+  LayoutListIcon,
+  MonitorSmartphoneIcon,
+  ShieldCheckIcon,
+  SmartphoneIcon,
+} from "lucide-react";
 import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useDeviceSecurityContext } from "@/contexts/DeviceSecurityProvider";
 import type {
   InventoryConfig,
-  InventoryType,
   IntuneInventoryConfig,
   JamfInventoryConfig,
   StaticInventoryConfig,
@@ -24,18 +32,16 @@ import type {
 import PageContainer from "@/layouts/PageContainer";
 import { PasswordField } from "./PasswordField";
 
-// ---- Constants ----
-
-const SERIAL_SEPARATOR_RE = /[\n,]+/;
-
-// ---- Default configs ----
+// ── Defaults ──────────────────────────────────────────────────────────────────
 
 const DEFAULT_STATIC: StaticInventoryConfig = {
+  enabled: false,
   peers: [],
   serial_count: 0,
 };
 
 const DEFAULT_INTUNE: IntuneInventoryConfig = {
+  enabled: false,
   tenant_id: "",
   client_id: "",
   client_secret: "",
@@ -44,32 +50,21 @@ const DEFAULT_INTUNE: IntuneInventoryConfig = {
 };
 
 const DEFAULT_JAMF: JamfInventoryConfig = {
+  enabled: false,
   jamf_url: "",
-  username: "",
-  password: "",
-  has_password: false,
+  client_id: "",
+  client_secret: "",
+  has_client_secret: false,
   require_management: false,
 };
 
-// ---- Inventory type options ----
+const DEFAULT_CONFIG: InventoryConfig = {
+  static: DEFAULT_STATIC,
+  intune: DEFAULT_INTUNE,
+  jamf: DEFAULT_JAMF,
+};
 
-interface InventoryTypeOption {
-  value: InventoryType;
-  label: string;
-  description: string;
-  disabled?: boolean;
-  comingSoon?: boolean;
-}
-
-const INVENTORY_TYPE_OPTIONS: InventoryTypeOption[] = [
-  { value: "static", label: "Static List", description: "Manually maintained list of allowed peer IDs" },
-  { value: "intune", label: "Microsoft Intune", description: "Sync managed devices from Microsoft Intune" },
-  { value: "jamf", label: "Jamf Pro", description: "Sync managed devices from Jamf Pro MDM" },
-  { value: "fleetdm", label: "Fleet", description: "Sync managed devices from FleetDM / osquery", disabled: true, comingSoon: true },
-  { value: "webhook", label: "Webhook", description: "Approve devices via a custom webhook", disabled: true, comingSoon: true },
-];
-
-// ---- Static form with two-tab UI ----
+// ── Static source form ────────────────────────────────────────────────────────
 
 type StaticTab = "peers" | "serials";
 
@@ -80,127 +75,99 @@ interface StaticFormProps {
 
 function StaticForm({ config, onChange }: StaticFormProps) {
   const [activeTab, setActiveTab] = useState<StaticTab>("peers");
-
-  const wgKeys = config.peers.filter((p) => !p.startsWith("serial:"));
-  const peersValue = wgKeys.join("\n");
+  const peersValue = config.peers.join("\n");
 
   const handlePeersChange = (raw: string) => {
-    const newKeys = raw
+    const newPeers = raw
       .split(/[\n,]+/)
       .map((s) => s.trim())
       .filter(Boolean);
-    const serials = config.peers.filter((p) => p.startsWith("serial:"));
-    onChange({ ...config, peers: [...newKeys, ...serials] });
-  };
-
-  const serialsValue = config.peers
-    .filter((p) => p.startsWith("serial:"))
-    .map((p) => p.replace(/^serial:/, ""))
-    .join("\n");
-
-  const handleSerialsChange = (raw: string) => {
-    const newSerials = raw
-      .split(SERIAL_SEPARATOR_RE)
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((s) => (s.startsWith("serial:") ? s : `serial:${s}`));
-    onChange({ ...config, peers: [...wgKeys, ...newSerials] });
+    onChange({ ...config, peers: newPeers });
   };
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
-      {/* Tab buttons */}
-      <div className="flex gap-0 border-b border-gray-200 dark:border-zinc-700">
-        <button
-          type="button"
-          onClick={() => setActiveTab("peers")}
-          className={
-            "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors " +
-            (activeTab === "peers"
-              ? "border-nb-gray-900 text-gray-900 dark:border-zinc-400 dark:text-gray-100"
-              : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200")
-          }
-        >
-          NetBird Peers
-        </button>
-        <button
-          type="button"
-          onClick={() => setActiveTab("serials")}
-          className={
-            "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors " +
-            (activeTab === "serials"
-              ? "border-nb-gray-900 text-gray-900 dark:border-zinc-400 dark:text-gray-100"
-              : "border-transparent text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200")
-          }
-        >
-          Serial Numbers
-        </button>
+    <div
+      className={cn(
+        "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940",
+        "px-5 pt-3 pb-5 mx-[0.25rem]",
+      )}
+    >
+      {/* Sub-tabs */}
+      <div className="flex border-b border-nb-gray-900 mb-4">
+        {(["peers", "serials"] as StaticTab[]).map((tab) => (
+          <button
+            key={tab}
+            type="button"
+            onClick={() => setActiveTab(tab)}
+            className={cn(
+              "px-4 py-2 text-sm font-medium border-b-2 -mb-px transition-colors",
+              activeTab === tab
+                ? "border-netbird text-netbird"
+                : "border-transparent text-nb-gray-400 hover:text-nb-gray-200",
+            )}
+          >
+            {tab === "peers" ? "WireGuard Keys" : "Serial Numbers"}
+          </button>
+        ))}
       </div>
 
-      {/* Tab: NetBird Peers */}
       {activeTab === "peers" && (
-        <div className="flex flex-col gap-3">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Select NetBird peers that are allowed to enroll. The device&apos;s WireGuard public key is matched during attestation.
-          </p>
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="static-wg-keys">WireGuard Public Keys</Label>
-            <textarea
-              id="static-wg-keys"
-              rows={6}
-              value={peersValue}
-              onChange={(e) => handlePeersChange(e.target.value)}
-              placeholder={"Enter one WireGuard public key per line"}
-              aria-describedby="static-wg-keys-help"
-              className={
-                "w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm " +
-                "font-mono text-gray-900 placeholder:text-gray-400 " +
-                "focus:outline-none focus:ring-2 focus:ring-nb-gray-900 " +
-                "dark:border-zinc-700 dark:bg-zinc-950 dark:text-gray-100 dark:placeholder:text-gray-600"
-              }
-            />
-            <HelpText id="static-wg-keys-help">
-              {wgKeys.length > 0
-                ? `${wgKeys.length} WireGuard key${wgKeys.length !== 1 ? "s" : ""} in list`
-                : "No peers configured"}
-            </HelpText>
-          </div>
+        <div className="flex flex-col gap-2">
+          <HelpText>
+            WireGuard public keys of NetBird peers allowed to enroll automatically.
+            The key is matched against the peer&apos;s WireGuard identity during attestation.
+          </HelpText>
+          <textarea
+            rows={6}
+            value={peersValue}
+            onChange={(e) => handlePeersChange(e.target.value)}
+            placeholder={"Paste one WireGuard public key per line"}
+            spellCheck={false}
+            className={cn(
+              "w-full rounded-md border border-nb-gray-900 bg-nb-gray-950",
+              "px-3 py-2 text-sm font-mono text-nb-gray-100",
+              "placeholder:text-nb-gray-600",
+              "focus:outline-none focus:ring-1 focus:ring-netbird focus:border-netbird",
+              "resize-y min-h-[120px]",
+            )}
+          />
+          <HelpText>
+            {config.peers.length > 0
+              ? `${config.peers.length} key${config.peers.length !== 1 ? "s" : ""} in list`
+              : "No keys configured"}
+          </HelpText>
         </div>
       )}
 
-      {/* Tab: Serial Numbers */}
       {activeTab === "serials" && (
-        <div className="flex flex-col gap-3">
+        <div className="flex flex-col gap-2">
           <Callout variant="warning">
-            Serial numbers are less secure than WireGuard keys. Use only if your MDM enforces serial uniqueness.
+            Serial numbers are less secure than WireGuard keys. Use only if your
+            MDM enforces serial uniqueness.
           </Callout>
-          <div className="flex flex-col gap-1">
-            <Label htmlFor="static-serials">Serial Numbers</Label>
-            <textarea
-              id="static-serials"
-              rows={6}
-              value={serialsValue}
-              onChange={(e) => handleSerialsChange(e.target.value)}
-              placeholder={"Enter one serial number per line"}
-              aria-describedby="static-serials-help"
-              className={
-                "w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm " +
-                "font-mono text-gray-900 placeholder:text-gray-400 " +
-                "focus:outline-none focus:ring-2 focus:ring-nb-gray-900 " +
-                "dark:border-zinc-700 dark:bg-zinc-950 dark:text-gray-100 dark:placeholder:text-gray-600"
-              }
-            />
-            <HelpText id="static-serials-help">
-              {config.serial_count > 0
-                ? `${config.serial_count} serial number${config.serial_count !== 1 ? "s" : ""} stored`
-                : "No serial numbers configured"}
-            </HelpText>
+          <HelpText>
+            TPM EK serial numbers (decimal format) allowed to enroll automatically.
+            One serial per line. For large fleets, consider using an MDM integration instead.
+          </HelpText>
+          <div className="flex items-center justify-between">
+            <Label>Serial Numbers</Label>
+            {config.serial_count > 0 && (
+              <span className="text-xs text-nb-gray-400">
+                {config.serial_count} stored
+              </span>
+            )}
           </div>
+          <p className="text-xs text-nb-gray-400">
+            Serial numbers are write-only. Existing entries are preserved unless you upload a new list.
+            Contact support or use the API to manage large serial lists.
+          </p>
         </div>
       )}
     </div>
   );
 }
+
+// ── Intune source form ─────────────────────────────────────────────────────────
 
 interface IntuneFormProps {
   config: IntuneInventoryConfig;
@@ -212,50 +179,59 @@ function IntuneForm({ config, onChange }: IntuneFormProps) {
     onChange({ ...config, ...patch });
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Microsoft Intune Configuration</p>
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="intune-tenant-id">Tenant ID</Label>
-          <Input
-            id="intune-tenant-id"
-            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-            value={config.tenant_id}
-            onChange={(e) => update({ tenant_id: e.target.value })}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="intune-client-id">Client ID</Label>
-          <Input
-            id="intune-client-id"
-            placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
-            value={config.client_id}
-            onChange={(e) => update({ client_id: e.target.value })}
-          />
-        </div>
-        <PasswordField
-          id="intune-client-secret"
-          label="Client Secret"
-          value={config.client_secret}
-          hasExisting={config.has_client_secret}
-          onChange={(v) => update({ client_secret: v })}
+    <div
+      className={cn(
+        "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940",
+        "px-5 pt-4 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+      )}
+    >
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="intune-tenant-id">Tenant ID</Label>
+        <Input
+          id="intune-tenant-id"
+          placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+          value={config.tenant_id}
+          onChange={(e) => update({ tenant_id: e.target.value })}
         />
-        <div className="flex items-center gap-2">
-          <input
-            id="intune-require-compliance"
-            type="checkbox"
-            checked={config.require_compliance}
-            onChange={(e) => update({ require_compliance: e.target.checked })}
-            className="h-4 w-4 rounded border-gray-300 text-nb-gray-900 focus:ring-nb-gray-900"
-          />
+      </div>
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="intune-client-id">Client ID (Application ID)</Label>
+        <Input
+          id="intune-client-id"
+          placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+          value={config.client_id}
+          onChange={(e) => update({ client_id: e.target.value })}
+        />
+      </div>
+      <PasswordField
+        id="intune-client-secret"
+        label="Client Secret"
+        value={config.client_secret}
+        hasExisting={config.has_client_secret}
+        onChange={(v) => update({ client_secret: v })}
+      />
+      <div className="flex items-center gap-3">
+        <Checkbox
+          id="intune-require-compliance"
+          checked={config.require_compliance}
+          onCheckedChange={(checked) =>
+            update({ require_compliance: checked === true })
+          }
+        />
+        <div>
           <Label htmlFor="intune-require-compliance" className="cursor-pointer">
-            Require compliance
+            Require device compliance
           </Label>
+          <HelpText>
+            Only enroll devices that are marked as compliant in Intune.
+          </HelpText>
         </div>
       </div>
     </div>
   );
 }
+
+// ── Jamf source form ──────────────────────────────────────────────────────────
 
 interface JamfFormProps {
   config: JamfInventoryConfig;
@@ -267,58 +243,87 @@ function JamfForm({ config, onChange }: JamfFormProps) {
     onChange({ ...config, ...patch });
 
   return (
-    <div className="flex flex-col gap-4 rounded-lg border border-gray-200 bg-gray-50 p-4 dark:border-zinc-700 dark:bg-zinc-900">
-      <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Jamf Pro Configuration</p>
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="jamf-server-url">Server URL</Label>
-          <Input
-            id="jamf-server-url"
-            type="url"
-            placeholder="https://yourorg.jamfcloud.com"
-            value={config.jamf_url}
-            onChange={(e) => update({ jamf_url: e.target.value })}
-          />
-        </div>
-        <div className="flex flex-col gap-1">
-          <Label htmlFor="jamf-username">Username</Label>
-          <Input
-            id="jamf-username"
-            placeholder="api-user"
-            value={config.username}
-            onChange={(e) => update({ username: e.target.value })}
-          />
-        </div>
-        <PasswordField
-          id="jamf-password"
-          label="Password"
-          value={config.password}
-          hasExisting={config.has_password}
-          onChange={(v) => update({ password: v })}
+    <div
+      className={cn(
+        "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940",
+        "px-5 pt-4 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+      )}
+    >
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="jamf-server-url">Server URL</Label>
+        <Input
+          id="jamf-server-url"
+          type="url"
+          placeholder="https://yourorg.jamfcloud.com"
+          value={config.jamf_url}
+          onChange={(e) => update({ jamf_url: e.target.value })}
         />
-        <div className="flex items-center gap-2">
-          <input
-            id="jamf-require-management"
-            type="checkbox"
-            checked={config.require_management}
-            onChange={(e) => update({ require_management: e.target.checked })}
-            className="h-4 w-4 rounded border-gray-300 text-nb-gray-900 focus:ring-nb-gray-900"
-          />
+      </div>
+      <div className="flex flex-col gap-1">
+        <Label htmlFor="jamf-client-id">Client ID (API Role)</Label>
+        <Input
+          id="jamf-client-id"
+          placeholder="netbird-integration"
+          value={config.client_id}
+          onChange={(e) => update({ client_id: e.target.value })}
+        />
+      </div>
+      <PasswordField
+        id="jamf-client-secret"
+        label="Client Secret"
+        value={config.client_secret}
+        hasExisting={config.has_client_secret}
+        onChange={(v) => update({ client_secret: v })}
+      />
+      <div className="flex items-center gap-3">
+        <Checkbox
+          id="jamf-require-management"
+          checked={config.require_management}
+          onCheckedChange={(checked) =>
+            update({ require_management: checked === true })
+          }
+        />
+        <div>
           <Label htmlFor="jamf-require-management" className="cursor-pointer">
-            Require management
+            Require device management
           </Label>
+          <HelpText>
+            Only enroll devices that are actively managed in Jamf Pro.
+          </HelpText>
         </div>
       </div>
     </div>
   );
 }
 
-// ---- Main page ----
+// ── Coming soon placeholder ───────────────────────────────────────────────────
 
-const DEFAULT_CONFIG: InventoryConfig = {
-  inventory_type: "static",
-  static: DEFAULT_STATIC,
-};
+function ComingSoonSource({
+  icon,
+  label,
+  description,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-center gap-4 px-5 py-4 rounded-md border border-nb-gray-910 bg-nb-gray-900/30 opacity-60">
+      <div className="text-nb-gray-400">{icon}</div>
+      <div className="flex-1">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-medium text-nb-gray-200">{label}</span>
+          <span className="inline-flex items-center rounded-full bg-nb-gray-800 px-2 py-0.5 text-xs font-medium text-nb-gray-400">
+            Coming soon
+          </span>
+        </div>
+        <p className="text-xs text-nb-gray-500">{description}</p>
+      </div>
+    </div>
+  );
+}
+
+// ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function InventoryPage() {
   const { inventoryConfig, inventoryConfigLoading, updateInventoryConfig, settings } =
@@ -330,41 +335,41 @@ export default function InventoryPage() {
 
   useEffect(() => {
     if (!inventoryConfig) return;
-    setLocalConfig(inventoryConfig);
+    setLocalConfig({
+      static: inventoryConfig.static ?? DEFAULT_STATIC,
+      intune: inventoryConfig.intune ?? DEFAULT_INTUNE,
+      jamf: inventoryConfig.jamf ?? DEFAULT_JAMF,
+    });
     updateRef([inventoryConfig]);
   }, [inventoryConfig, updateRef]);
 
-  const handleTypeChange = useCallback((type: InventoryType) => {
-    if (type === "fleetdm" || type === "webhook") return;
-    setLocalConfig((prev) => ({
-      ...prev,
-      inventory_type: type,
-      static: prev.static ?? DEFAULT_STATIC,
-      intune: prev.intune ?? DEFAULT_INTUNE,
-      jamf: prev.jamf ?? DEFAULT_JAMF,
-    }));
-  }, []);
+  const updateStatic = useCallback(
+    (patch: Partial<StaticInventoryConfig>) =>
+      setLocalConfig((prev) => ({ ...prev, static: { ...prev.static, ...patch } })),
+    [],
+  );
 
-  const handleStaticChange = (config: StaticInventoryConfig) =>
-    setLocalConfig((prev) => ({ ...prev, static: config }));
+  const updateIntune = useCallback(
+    (cfg: IntuneInventoryConfig) =>
+      setLocalConfig((prev) => ({ ...prev, intune: cfg })),
+    [],
+  );
 
-  const handleIntuneChange = (config: IntuneInventoryConfig) =>
-    setLocalConfig((prev) => ({ ...prev, intune: config }));
-
-  const handleJamfChange = (config: JamfInventoryConfig) =>
-    setLocalConfig((prev) => ({ ...prev, jamf: config }));
+  const updateJamf = useCallback(
+    (cfg: JamfInventoryConfig) =>
+      setLocalConfig((prev) => ({ ...prev, jamf: cfg })),
+    [],
+  );
 
   const handleSave = useCallback(async () => {
-    if (localConfig.inventory_type === "intune") {
-      const intune = localConfig.intune ?? DEFAULT_INTUNE;
-      if (!intune.tenant_id || !intune.client_id) {
+    if (localConfig.intune.enabled) {
+      if (!localConfig.intune.tenant_id || !localConfig.intune.client_id) {
         notify.error("Tenant ID and Client ID are required for Intune");
         return;
       }
     }
-    if (localConfig.inventory_type === "jamf") {
-      const jamf = localConfig.jamf ?? DEFAULT_JAMF;
-      if (!jamf.jamf_url) {
+    if (localConfig.jamf.enabled) {
+      if (!localConfig.jamf.jamf_url) {
         notify.error("Server URL is required for Jamf");
         return;
       }
@@ -395,10 +400,10 @@ export default function InventoryPage() {
           <Skeleton height={24} width={200} className="mb-6" />
           <Skeleton height={32} width={160} className="mb-10" />
           <div className="mb-8">
-            <Skeleton height={17} width={200} className="mb-2" />
-            <Skeleton height={80} width="100%" />
+            <Skeleton height={60} width="100%" className="mb-3" />
+            <Skeleton height={60} width="100%" className="mb-3" />
+            <Skeleton height={60} width="100%" />
           </div>
-          <Skeleton height={120} width="100%" />
         </div>
       </PageContainer>
     );
@@ -437,7 +442,8 @@ export default function InventoryPage() {
           <div>
             <h1>Device Inventory</h1>
             <Paragraph>
-              Configure the device allow-list or MDM integration used for attestation-mode enrollment.
+              Configure device allow-lists or MDM integrations for attestation enrollment.
+              Multiple sources can be active simultaneously.
             </Paragraph>
           </div>
           <Button
@@ -451,7 +457,7 @@ export default function InventoryPage() {
         </div>
 
         {/* Status callout */}
-        <div className="mt-6">
+        <div className="mt-6 mb-8">
           {attestationActive ? (
             <Callout variant="success">
               Inventory is active. Managed devices are automatically approved during enrollment.{" "}
@@ -461,7 +467,8 @@ export default function InventoryPage() {
             </Callout>
           ) : (
             <Callout variant="warning">
-              Attestation is not enabled. To use inventory-based enrollment, enable Attestation mode in{" "}
+              Attestation is not enabled. To use inventory-based enrollment, enable Attestation
+              mode in{" "}
               <Link href="/device-security/settings" className="underline font-medium">
                 Settings →
               </Link>
@@ -469,73 +476,77 @@ export default function InventoryPage() {
           )}
         </div>
 
-        <div className="flex flex-col gap-6 w-full mt-8">
-          {/* Inventory type selector */}
-          <div className="flex flex-col gap-1 sm:flex-row w-full sm:gap-4 items-start">
-            <div className="min-w-[330px]">
-              <Label>Inventory Source</Label>
-              <HelpText>
-                Choose how NetBird determines which devices are allowed to enroll via attestation
-              </HelpText>
-            </div>
-            <div className="w-full flex flex-col gap-2">
-              {INVENTORY_TYPE_OPTIONS.map(({ value, label, description, disabled, comingSoon }) => (
-                <label
-                  key={value}
-                  className={
-                    "flex items-start gap-3 rounded-lg border p-3 transition-colors " +
-                    (disabled
-                      ? "opacity-50 cursor-not-allowed border-gray-200 dark:border-zinc-700"
-                      : "cursor-pointer " +
-                        (localConfig.inventory_type === value
-                          ? "border-nb-gray-900 bg-gray-50 dark:border-zinc-500 dark:bg-zinc-800"
-                          : "border-gray-200 hover:border-gray-300 dark:border-zinc-700 dark:hover:border-zinc-600"))
-                  }
-                >
-                  <input
-                    type="radio"
-                    name="inventory-type"
-                    value={value}
-                    checked={localConfig.inventory_type === value}
-                    onChange={() => !disabled && handleTypeChange(value)}
-                    disabled={disabled}
-                    className="mt-0.5 h-4 w-4 text-nb-gray-900 border-gray-300 focus:ring-nb-gray-900"
-                  />
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <p className="text-sm font-medium text-gray-900 dark:text-gray-100">{label}</p>
-                      {comingSoon && (
-                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-500 dark:bg-zinc-700 dark:text-gray-400">
-                          Coming soon
-                        </span>
-                      )}
-                    </div>
-                    <p className="text-xs text-gray-500 dark:text-gray-400">{description}</p>
-                  </div>
-                </label>
-              ))}
-            </div>
+        <div className="flex flex-col gap-4">
+          {/* Static allow-list */}
+          <div className="flex flex-col">
+            <FancyToggleSwitch
+              value={localConfig.static.enabled}
+              onChange={(v) => updateStatic({ enabled: v })}
+              label={
+                <>
+                  <DatabaseIcon size={15} />
+                  Static Allow-List
+                </>
+              }
+              helpText="Manually maintained list of WireGuard keys or serial numbers."
+            />
+            {localConfig.static.enabled && (
+              <StaticForm
+                config={localConfig.static}
+                onChange={(cfg) =>
+                  setLocalConfig((prev) => ({ ...prev, static: cfg }))
+                }
+              />
+            )}
           </div>
 
-          {/* Type-specific config form */}
-          {localConfig.inventory_type === "static" && (
-            <StaticForm
-              config={localConfig.static ?? DEFAULT_STATIC}
-              onChange={handleStaticChange}
+          {/* Microsoft Intune */}
+          <div className="flex flex-col">
+            <FancyToggleSwitch
+              value={localConfig.intune.enabled}
+              onChange={(v) => updateIntune({ ...localConfig.intune, enabled: v })}
+              label={
+                <>
+                  <MonitorSmartphoneIcon size={15} />
+                  Microsoft Intune
+                </>
+              }
+              helpText="Approve Windows and other managed devices from Microsoft Intune."
             />
-          )}
-          {localConfig.inventory_type === "intune" && (
-            <IntuneForm
-              config={localConfig.intune ?? DEFAULT_INTUNE}
-              onChange={handleIntuneChange}
+            {localConfig.intune.enabled && (
+              <IntuneForm config={localConfig.intune} onChange={updateIntune} />
+            )}
+          </div>
+
+          {/* Jamf Pro */}
+          <div className="flex flex-col">
+            <FancyToggleSwitch
+              value={localConfig.jamf.enabled}
+              onChange={(v) => updateJamf({ ...localConfig.jamf, enabled: v })}
+              label={
+                <>
+                  <SmartphoneIcon size={15} />
+                  Jamf Pro
+                </>
+              }
+              helpText="Approve macOS and iOS devices managed by Jamf Pro."
             />
-          )}
-          {localConfig.inventory_type === "jamf" && (
-            <JamfForm
-              config={localConfig.jamf ?? DEFAULT_JAMF}
-              onChange={handleJamfChange}
-            />
-          )}
+            {localConfig.jamf.enabled && (
+              <JamfForm config={localConfig.jamf} onChange={updateJamf} />
+            )}
+          </div>
+
+          {/* Coming soon */}
+          <ComingSoonSource
+            icon={<MonitorSmartphoneIcon size={18} />}
+            label="Fleet"
+            description="Sync managed devices from FleetDM / osquery"
+          />
+          <ComingSoonSource
+            icon={<ShieldCheckIcon size={18} />}
+            label="Webhook"
+            description="Approve devices via a custom webhook endpoint"
+          />
         </div>
       </div>
     </PageContainer>
