@@ -38,6 +38,7 @@ function StepRow({ step }: { step: CATestStep }) {
         {hasDetails && (
           <button
             type="button"
+            aria-label={expanded ? `Hide ${STEP_LABELS[step.name] ?? step.name} details` : `Show ${STEP_LABELS[step.name] ?? step.name} details`}
             onClick={() => setExpanded((e) => !e)}
             className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
           >
