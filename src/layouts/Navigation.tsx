@@ -208,6 +208,13 @@ export default function Navigation({
                     visible={!isRestricted}
                   />
                   <SidebarItem
+                    label="Inventory"
+                    href="/device-security/inventory"
+                    isChild
+                    exactPathMatch={true}
+                    visible={!isRestricted}
+                  />
+                  <SidebarItem
                     label="Enrollments"
                     href="/device-security/enrollments"
                     isChild
