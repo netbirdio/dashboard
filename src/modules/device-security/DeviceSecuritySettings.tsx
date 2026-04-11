@@ -18,7 +18,6 @@ import {
 import { useHasChanges } from "@hooks/useHasChanges";
 import {
   AlertTriangleIcon,
-  InfoIcon,
   KeyIcon,
   ShieldCheckIcon,
 } from "lucide-react";
@@ -73,7 +72,7 @@ const ENROLLMENT_LABELS: Record<EnrollmentMode, string> = {
 
 const ENROLLMENT_DESCRIPTIONS: Record<EnrollmentMode, string> = {
   manual: "You approve each device. New devices wait in the Enrollments queue until an admin clicks Approve",
-  attestation: "Managed devices are approved automatically. Requires MDM (Intune or Jamf) or a static device allow-list",
+  attestation: "Managed devices are approved automatically. Requires your MDM (Intune or Jamf) or a static device allow-list to be configured.",
   both: "Managed devices get in automatically; unmanaged devices wait for manual approval",
 };
 
@@ -301,20 +300,15 @@ export default function DeviceSecuritySettings() {
 
           {/* Attestation callout */}
           {(enrollmentMode === "attestation" || enrollmentMode === "both") && (
-            <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
-              <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
-              <div className="flex-1">
-                <p className="text-sm text-blue-700 dark:text-blue-300">
-                  Attestation requires inventory configuration. Configure your MDM (Intune, Jamf) or a static device allow-list.
-                </p>
-              </div>
+            <Callout variant="info">
+              Attestation requires inventory configuration. Configure your MDM (Intune, Jamf) or a static device allow-list.{" "}
               <Link
                 href="/device-security/inventory"
-                className="shrink-0 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+                className="font-medium underline"
               >
                 Go to Inventory →
               </Link>
-            </div>
+            </Callout>
           )}
 
           {/* Certificate Authority */}
@@ -396,7 +390,7 @@ export default function DeviceSecuritySettings() {
             help="Revocation uses CRL (Certificate Revocation List), published every 12 hours."
           >
             <p className="font-mono text-sm text-gray-500 dark:text-gray-400">
-              {"GET /api/v1/device-auth/crl?account=<id>"}
+              {"GET /api/v1/device-auth/crl?account_id=<id>"}
             </p>
           </SettingRow>
         </div>
