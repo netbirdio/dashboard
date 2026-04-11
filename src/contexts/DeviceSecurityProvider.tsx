@@ -4,9 +4,12 @@ import useFetchApi, { useApiCall } from "@utils/api";
 import React, { useCallback, useMemo } from "react";
 import { useSWRConfig } from "swr";
 import type {
+  CAConfig,
+  CATestResult,
   DeviceAuthSettings,
   DeviceCert,
   DeviceEnrollment,
+  InventoryConfig,
   TrustedCA,
 } from "@/interfaces/DeviceSecurity";
 
@@ -33,6 +36,17 @@ type DeviceSecurityContextValue = {
   trustedCAsLoading: boolean;
   addTrustedCA: (name: string, pem: string) => Promise<TrustedCA>;
   deleteTrustedCA: (id: string) => Promise<void>;
+
+  // CA Config
+  caConfig: CAConfig | undefined;
+  caConfigLoading: boolean;
+  updateCAConfig: (config: CAConfig) => Promise<CAConfig>;
+  testCAConnection: (config: CAConfig) => Promise<CATestResult>;
+
+  // Inventory Config
+  inventoryConfig: InventoryConfig | undefined;
+  inventoryConfigLoading: boolean;
+  updateInventoryConfig: (config: InventoryConfig) => Promise<InventoryConfig>;
 };
 
 const DeviceSecurityContext = React.createContext(
@@ -64,12 +78,23 @@ export function DeviceSecurityProvider({
   const { data: trustedCAs, isLoading: trustedCAsLoading } =
     useFetchApi<TrustedCA[]>("/device-auth/trusted-cas");
 
+  const { data: caConfig, isLoading: caConfigLoading } =
+    useFetchApi<CAConfig>("/device-auth/ca/config");
+
+  const { data: inventoryConfig, isLoading: inventoryConfigLoading } =
+    useFetchApi<InventoryConfig>("/device-auth/inventory/config");
+
   const settingsRequest = useApiCall<DeviceAuthSettings>(
     "/device-auth/settings",
   );
   const enrollmentRequest = useApiCall<void>("/device-auth/enrollments");
   const deviceRequest = useApiCall<void>("/device-auth/devices");
   const caRequest = useApiCall<TrustedCA>("/device-auth/trusted-cas");
+  const caConfigRequest = useApiCall<CAConfig>("/device-auth/ca/config");
+  const caTestRequest = useApiCall<CATestResult>("/device-auth/ca/test");
+  const inventoryConfigRequest = useApiCall<InventoryConfig>(
+    "/device-auth/inventory/config",
+  );
 
   const updateSettings = useCallback(
     async (s: Partial<DeviceAuthSettings>) => {
@@ -129,6 +154,31 @@ export function DeviceSecurityProvider({
     [caRequest, mutate],
   );
 
+  const updateCAConfig = useCallback(
+    async (config: CAConfig) => {
+      const updated = await caConfigRequest.put(config);
+      await mutate("/device-auth/ca/config");
+      return updated;
+    },
+    [caConfigRequest, mutate],
+  );
+
+  const testCAConnection = useCallback(
+    async (config: CAConfig) => {
+      return await caTestRequest.post(config);
+    },
+    [caTestRequest],
+  );
+
+  const updateInventoryConfig = useCallback(
+    async (config: InventoryConfig) => {
+      const updated = await inventoryConfigRequest.put(config);
+      await mutate("/device-auth/inventory/config");
+      return updated;
+    },
+    [inventoryConfigRequest, mutate],
+  );
+
   const value = useMemo(
     () => ({
       settings,
@@ -146,6 +196,13 @@ export function DeviceSecurityProvider({
       trustedCAsLoading,
       addTrustedCA,
       deleteTrustedCA,
+      caConfig,
+      caConfigLoading,
+      updateCAConfig,
+      testCAConnection,
+      inventoryConfig,
+      inventoryConfigLoading,
+      updateInventoryConfig,
     }),
     [
       settings,
@@ -163,6 +220,13 @@ export function DeviceSecurityProvider({
       trustedCAsLoading,
       addTrustedCA,
       deleteTrustedCA,
+      caConfig,
+      caConfigLoading,
+      updateCAConfig,
+      testCAConnection,
+      inventoryConfig,
+      inventoryConfigLoading,
+      updateInventoryConfig,
     ],
   );
 
@@ -174,3 +238,5 @@ export function DeviceSecurityProvider({
 }
 
 export const useDeviceSecurity = () => React.useContext(DeviceSecurityContext);
+export const useDeviceSecurityContext = () =>
+  React.useContext(DeviceSecurityContext);
