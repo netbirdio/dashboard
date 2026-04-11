@@ -3,7 +3,6 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
-import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -19,18 +18,24 @@ import {
 import { useHasChanges } from "@hooks/useHasChanges";
 import {
   AlertTriangleIcon,
+  InfoIcon,
   KeyIcon,
   ShieldCheckIcon,
 } from "lucide-react";
+import Link from "next/link";
 import React, { useCallback, useEffect, useState } from "react";
 import Skeleton from "react-loading-skeleton";
-import { useDeviceSecurity } from "@/contexts/DeviceSecurityProvider";
+import { useDeviceSecurityContext } from "@/contexts/DeviceSecurityProvider";
 import type {
+  CAConfig,
+  CATestResult,
   CAType,
   DeviceAuthMode,
   EnrollmentMode,
 } from "@/interfaces/DeviceSecurity";
 import PageContainer from "@/layouts/PageContainer";
+import { CAConfigSection } from "./CAConfigSection";
+import { CATestPanel } from "./CATestPanel";
 
 const DEVICE_AUTH_MODES: DeviceAuthMode[] = ["disabled", "optional", "cert-only", "cert-and-sso"];
 const ENROLLMENT_MODES: EnrollmentMode[] = ["manual", "attestation", "both"];
@@ -66,6 +71,12 @@ const ENROLLMENT_LABELS: Record<EnrollmentMode, string> = {
   both: "Both",
 };
 
+const ENROLLMENT_DESCRIPTIONS: Record<EnrollmentMode, string> = {
+  manual: "You approve each device. New devices wait in the Enrollments queue until an admin clicks Approve",
+  attestation: "Managed devices are approved automatically. Requires MDM (Intune or Jamf) or a static device allow-list",
+  both: "Managed devices get in automatically; unmanaged devices wait for manual approval",
+};
+
 const CA_TYPE_LABELS: Record<CAType, string> = {
   builtin: "Built-in CA",
   vault: "HashiCorp Vault",
@@ -74,15 +85,23 @@ const CA_TYPE_LABELS: Record<CAType, string> = {
 };
 
 export default function DeviceSecuritySettings() {
-  const { settings, settingsLoading, updateSettings, devices } =
-    useDeviceSecurity();
+  const {
+    settings,
+    settingsLoading,
+    updateSettings,
+    devices,
+    caConfig,
+    updateCAConfig,
+    testCAConnection,
+  } = useDeviceSecurityContext();
 
   const [mode, setMode] = useState<DeviceAuthMode>("disabled");
   const [enrollmentMode, setEnrollmentMode] = useState<EnrollmentMode>("manual");
   const [caType, setCaType] = useState<CAType>("builtin");
   const [certValidityDays, setCertValidityDays] = useState(365);
-  const [ocspEnabled, setOcspEnabled] = useState(false);
-  const [failOpenOnOcsp, setFailOpenOnOcsp] = useState(false);
+  const [localCAConfig, setLocalCAConfig] = useState<CAConfig>({ ca_type: "builtin" });
+  const [testResult, setTestResult] = useState<CATestResult | null>(null);
+  const [testing, setTesting] = useState(false);
 
   useEffect(() => {
     if (!settings) return;
@@ -90,22 +109,21 @@ export default function DeviceSecuritySettings() {
     setEnrollmentMode(settings.enrollment_mode);
     setCaType(settings.ca_type);
     setCertValidityDays(settings.cert_validity_days);
-    setOcspEnabled(settings.ocsp_enabled);
-    setFailOpenOnOcsp(settings.fail_open_on_ocsp_unavailable);
   }, [settings]);
+
+  useEffect(() => {
+    if (caConfig) setLocalCAConfig(caConfig);
+  }, [caConfig]);
 
   const { hasChanges, updateRef } = useHasChanges([
     mode,
     enrollmentMode,
     caType,
     certValidityDays,
-    ocspEnabled,
-    failOpenOnOcsp,
+    localCAConfig,
   ]);
 
-  const activeCertCount =
-    devices?.filter((d) => !d.revoked).length ?? 0;
-
+  const activeCertCount = devices?.filter((d) => !d.revoked).length ?? 0;
   const showCertOnlyWarning =
     (mode === "cert-only" || mode === "cert-and-sso") && activeCertCount === 0;
 
@@ -113,24 +131,19 @@ export default function DeviceSecuritySettings() {
     notify({
       title: "Device Security Settings",
       description: "Settings saved successfully.",
-      promise: updateSettings({
-        mode,
-        enrollment_mode: enrollmentMode,
-        ca_type: caType,
-        cert_validity_days: certValidityDays,
-        ocsp_enabled: ocspEnabled,
-        fail_open_on_ocsp_unavailable: failOpenOnOcsp,
-        inventory_type: settings?.inventory_type ?? "",
-      }).then(() => {
-        updateRef([
+      promise: (async () => {
+        await updateSettings({
           mode,
-          enrollmentMode,
-          caType,
-          certValidityDays,
-          ocspEnabled,
-          failOpenOnOcsp,
-        ]);
-      }),
+          enrollment_mode: enrollmentMode,
+          ca_type: caType,
+          cert_validity_days: certValidityDays,
+          inventory_type: settings?.inventory_type ?? "",
+        });
+        if (caType !== "builtin") {
+          await updateCAConfig(localCAConfig);
+        }
+        updateRef([mode, enrollmentMode, caType, certValidityDays, localCAConfig]);
+      })(),
       loadingMessage: "Saving device security settings...",
     });
   }, [
@@ -138,12 +151,23 @@ export default function DeviceSecuritySettings() {
     enrollmentMode,
     caType,
     certValidityDays,
-    ocspEnabled,
-    failOpenOnOcsp,
+    localCAConfig,
     settings,
     updateSettings,
+    updateCAConfig,
     updateRef,
   ]);
+
+  const handleTestCA = useCallback(async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await testCAConnection(localCAConfig);
+      setTestResult(result);
+    } finally {
+      setTesting(false);
+    }
+  }, [localCAConfig, testCAConnection]);
 
   if (settingsLoading) {
     return (
@@ -217,7 +241,12 @@ export default function DeviceSecuritySettings() {
             label="Authentication Mode"
             help="Controls how device certificates are used for authentication"
           >
-            <Select value={mode} onValueChange={(v) => { if (isDeviceAuthMode(v)) setMode(v); }}>
+            <Select
+              value={mode}
+              onValueChange={(v) => {
+                if (isDeviceAuthMode(v)) setMode(v);
+              }}
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -249,14 +278,20 @@ export default function DeviceSecuritySettings() {
           >
             <Select
               value={enrollmentMode}
-              onValueChange={(v) => { if (isEnrollmentMode(v)) setEnrollmentMode(v); }}
+              onValueChange={(v) => {
+                if (isEnrollmentMode(v)) setEnrollmentMode(v);
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(ENROLLMENT_LABELS).map(([value, label]) => (
-                  <SelectItem key={value} value={value}>
+                  <SelectItem
+                    key={value}
+                    value={value}
+                    description={ENROLLMENT_DESCRIPTIONS[value as EnrollmentMode]}
+                  >
                     {label}
                   </SelectItem>
                 ))}
@@ -264,14 +299,34 @@ export default function DeviceSecuritySettings() {
             </Select>
           </SettingRow>
 
-          {/* CA Type */}
+          {/* Attestation callout */}
+          {(enrollmentMode === "attestation" || enrollmentMode === "both") && (
+            <div className="flex items-start gap-3 rounded-lg border border-blue-200 bg-blue-50 p-3 dark:border-blue-800 dark:bg-blue-950">
+              <InfoIcon className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
+              <div className="flex-1">
+                <p className="text-sm text-blue-700 dark:text-blue-300">
+                  Attestation requires inventory configuration. Configure your MDM (Intune, Jamf) or a static device allow-list.
+                </p>
+              </div>
+              <Link
+                href="/device-security/inventory"
+                className="shrink-0 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
+              >
+                Go to Inventory →
+              </Link>
+            </div>
+          )}
+
+          {/* Certificate Authority */}
           <SettingRow
             label="Certificate Authority"
             help="Choose between the built-in CA or an external CA for signing device certificates"
           >
             <Select
               value={caType}
-              onValueChange={(v) => { if (isCAType(v)) setCaType(v); }}
+              onValueChange={(v) => {
+                if (isCAType(v)) setCaType(v);
+              }}
             >
               <SelectTrigger>
                 <SelectValue />
@@ -286,51 +341,64 @@ export default function DeviceSecuritySettings() {
             </Select>
           </SettingRow>
 
-          {/* Certificate Validity */}
-          <SettingRow
-            label="Certificate Validity (days)"
-            help="Number of days a device certificate remains valid after issuance"
-          >
-            <Input
-              type={"number"}
-              min={1}
-              max={3650}
-              value={certValidityDays}
-              onChange={(e) => {
-                const parsed = parseInt(e.target.value, 10);
-                if (Number.isNaN(parsed)) return;
-                setCertValidityDays(Math.max(1, Math.min(3650, parsed)));
-              }}
-              data-cy={"cert-validity-days"}
-            />
-          </SettingRow>
-
-          {/* OCSP Enabled */}
-          <FancyToggleSwitch
-            value={ocspEnabled}
-            onChange={setOcspEnabled}
-            label={
-              <>
-                <ShieldCheckIcon size={15} />
-                Enable OCSP
-              </>
-            }
-            helpText={
-              "Enable Online Certificate Status Protocol for real-time certificate revocation checking"
-            }
-          />
-
-          {/* Fail Open on OCSP Unavailable */}
-          {ocspEnabled && (
-            <FancyToggleSwitch
-              value={failOpenOnOcsp}
-              onChange={setFailOpenOnOcsp}
-              label={"Fail open on OCSP unavailable"}
-              helpText={
-                "Allow connections when the OCSP responder is unreachable. Disabling this may cause connectivity issues if the OCSP service goes down."
-              }
+          {/* CA-specific config section */}
+          {caType !== "builtin" && (
+            <CAConfigSection
+              caType={caType}
+              config={localCAConfig}
+              onChange={setLocalCAConfig}
             />
           )}
+
+          {/* Test Connection */}
+          {caType !== "builtin" && (
+            <div className="flex items-center gap-3">
+              <Button
+                variant={"secondary"}
+                disabled={testing}
+                onClick={handleTestCA}
+              >
+                {testing ? "Testing..." : "Test Connection"}
+              </Button>
+              {testing && (
+                <span className="text-sm text-gray-500">Running CA test...</span>
+              )}
+            </div>
+          )}
+
+          {/* CA test results */}
+          {testResult && <CATestPanel result={testResult} />}
+
+          {/* Certificate Validity — only for built-in CA */}
+          {caType === "builtin" && (
+            <SettingRow
+              label="Certificate Validity (days)"
+              help="Number of days a device certificate remains valid after issuance"
+            >
+              <Input
+                type={"number"}
+                min={1}
+                max={3650}
+                value={certValidityDays}
+                onChange={(e) => {
+                  const parsed = parseInt(e.target.value, 10);
+                  if (Number.isNaN(parsed)) return;
+                  setCertValidityDays(Math.max(1, Math.min(3650, parsed)));
+                }}
+                data-cy={"cert-validity-days"}
+              />
+            </SettingRow>
+          )}
+
+          {/* Certificate Revocation */}
+          <SettingRow
+            label="Certificate Revocation"
+            help="Revocation uses CRL (Certificate Revocation List), published every 12 hours."
+          >
+            <p className="font-mono text-sm text-gray-500 dark:text-gray-400">
+              {"GET /api/v1/device-auth/crl?account=<id>"}
+            </p>
+          </SettingRow>
         </div>
       </div>
     </PageContainer>
@@ -349,7 +417,7 @@ function SettingRow({
   return (
     <div
       className={
-        "flex flex-col gap-1 sm:flex-row w-full sm:gap-4 items-center"
+        "flex flex-col gap-1 sm:flex-row w-full sm:gap-4 items-start"
       }
     >
       <div className={"min-w-[330px]"}>
