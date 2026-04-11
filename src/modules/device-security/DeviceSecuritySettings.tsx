@@ -102,18 +102,6 @@ export default function DeviceSecuritySettings() {
   const [testResult, setTestResult] = useState<CATestResult | null>(null);
   const [testing, setTesting] = useState(false);
 
-  useEffect(() => {
-    if (!settings) return;
-    setMode(settings.mode);
-    setEnrollmentMode(settings.enrollment_mode);
-    setCaType(settings.ca_type);
-    setCertValidityDays(settings.cert_validity_days);
-  }, [settings]);
-
-  useEffect(() => {
-    if (caConfig) setLocalCAConfig(caConfig);
-  }, [caConfig]);
-
   const { hasChanges, updateRef } = useHasChanges([
     mode,
     enrollmentMode,
@@ -122,29 +110,65 @@ export default function DeviceSecuritySettings() {
     localCAConfig,
   ]);
 
+  useEffect(() => {
+    if (!settings) return;
+    const newMode = settings.mode;
+    const newEnrollment = settings.enrollment_mode;
+    const newCAType = settings.ca_type;
+    const newCertValidity = settings.cert_validity_days;
+    setMode(newMode);
+    setEnrollmentMode(newEnrollment);
+    setCaType(newCAType);
+    setCertValidityDays(newCertValidity);
+    updateRef([newMode, newEnrollment, newCAType, newCertValidity, localCAConfig]);
+  }, [settings]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (!caConfig) return;
+    setLocalCAConfig(caConfig);
+    updateRef([mode, enrollmentMode, caType, certValidityDays, caConfig]);
+  }, [caConfig]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const activeCertCount = devices?.filter((d) => !d.revoked).length ?? 0;
   const showCertOnlyWarning =
     (mode === "cert-only" || mode === "cert-and-sso") && activeCertCount === 0;
 
   const handleSave = useCallback(async () => {
+    const settingsPromise = updateSettings({
+      mode,
+      enrollment_mode: enrollmentMode,
+      ca_type: caType,
+      cert_validity_days: certValidityDays,
+      inventory_type: settings?.inventory_type ?? "",
+    });
     notify({
       title: "Device Security Settings",
       description: "Settings saved successfully.",
-      promise: (async () => {
-        await updateSettings({
-          mode,
-          enrollment_mode: enrollmentMode,
-          ca_type: caType,
-          cert_validity_days: certValidityDays,
-          inventory_type: settings?.inventory_type ?? "",
-        });
-        if (caType !== "builtin") {
-          await updateCAConfig(localCAConfig);
-        }
-        updateRef([mode, enrollmentMode, caType, certValidityDays, localCAConfig]);
-      })(),
-      loadingMessage: "Saving device security settings...",
+      promise: settingsPromise,
+      loadingMessage: "Saving settings...",
     });
+    try {
+      await settingsPromise;
+    } catch {
+      return;
+    }
+
+    if (caType !== "builtin") {
+      const caPromise = updateCAConfig(localCAConfig);
+      notify({
+        title: "CA Configuration",
+        description: "CA configuration saved successfully.",
+        promise: caPromise,
+        loadingMessage: "Saving CA configuration...",
+      });
+      try {
+        await caPromise;
+      } catch {
+        return;
+      }
+    }
+
+    updateRef([mode, enrollmentMode, caType, certValidityDays, localCAConfig]);
   }, [
     mode,
     enrollmentMode,
@@ -162,7 +186,25 @@ export default function DeviceSecuritySettings() {
     setTestResult(null);
     try {
       const result = await testCAConnection(localCAConfig);
-      setTestResult(result);
+      setTestResult(result ?? {
+        success: false,
+        steps: [{
+          name: "generate_csr",
+          status: "error" as const,
+          detail: "Request failed. Check network connection and try again.",
+          elapsed_ms: 0,
+        }],
+      });
+    } catch (e) {
+      setTestResult({
+        success: false,
+        steps: [{
+          name: "generate_csr",
+          status: "error" as const,
+          detail: e instanceof Error ? e.message : "Unexpected error",
+          elapsed_ms: 0,
+        }],
+      });
     } finally {
       setTesting(false);
     }

@@ -11,8 +11,6 @@ export interface DeviceAuthSettings {
   enrollment_mode: EnrollmentMode;
   ca_type: CAType;
   cert_validity_days: number;
-  ocsp_enabled: boolean;
-  fail_open_on_ocsp_unavailable: boolean;
   inventory_type: string;
 }
 
