@@ -26,9 +26,8 @@ export default function DangerZoneTab({ account }: Props) {
     const deletePromise = new Promise<void>((resolve, reject) => {
       return deleteRequest
         .del()
-        .catch((error) => reject(error))
         .then(() => {
-          // Clear browser storage after account deletion
+          // Clear browser storage only after confirmed account deletion
           if (typeof window !== "undefined") {
             localStorage.clear();
             sessionStorage.clear();
@@ -37,7 +36,8 @@ export default function DangerZoneTab({ account }: Props) {
           }
           logout().then();
           resolve();
-        });
+        })
+        .catch((error) => reject(error));
     });
 
     notify({
