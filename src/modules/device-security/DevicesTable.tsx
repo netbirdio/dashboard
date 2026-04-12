@@ -178,15 +178,13 @@ export default function DevicesTable() {
     [handleRenew],
   );
 
-  if (!devicesLoading && (!devices || devices.length === 0)) {
-    return (
-      <NoResults
-        title="No device certificates issued"
-        description="No device certificates issued."
-        icon={<ShieldIcon size={20} />}
-      />
-    );
-  }
+  const emptyState = (
+    <NoResults
+      title="No device certificates issued"
+      description="Device certificates will appear here once devices enroll and are issued certificates."
+      icon={<ShieldIcon size={20} />}
+    />
+  );
 
   return (
     <DataTable
@@ -197,6 +195,7 @@ export default function DevicesTable() {
       data={devices}
       isLoading={devicesLoading}
       searchPlaceholder="Search by key or serial..."
+      getStartedCard={emptyState}
     >
       {() => (
         <DataTableRefreshButton
