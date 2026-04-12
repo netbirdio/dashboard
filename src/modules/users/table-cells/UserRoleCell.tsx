@@ -1,6 +1,6 @@
 import Badge from "@components/Badge";
 import { cn } from "@utils/helpers";
-import { Cog, CreditCardIcon, EyeIcon, NetworkIcon, User2 } from "lucide-react";
+import { Cog, CreditCardIcon, EyeIcon, NetworkIcon, ShieldCheckIcon, User2 } from "lucide-react";
 import React from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { Role, User } from "@/interfaces/User";
@@ -49,6 +49,12 @@ export default function UserRoleCell({ user }: Readonly<Props>) {
           <>
             <NetworkIcon size={14} />
             Network Admin
+          </>
+        )}
+        {role === Role.CertApprover && (
+          <>
+            <ShieldCheckIcon size={14} />
+            Cert Approver
           </>
         )}
       </Badge>

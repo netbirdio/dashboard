@@ -3,6 +3,7 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import Button from "@components/Button";
 import { Callout } from "@components/Callout";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -98,6 +99,7 @@ export default function DeviceSecuritySettings() {
   const [enrollmentMode, setEnrollmentMode] = useState<EnrollmentMode>("manual");
   const [caType, setCaType] = useState<CAType>("builtin");
   const [certValidityDays, setCertValidityDays] = useState(365);
+  const [requireInventoryCheck, setRequireInventoryCheck] = useState(false);
   const [localCAConfig, setLocalCAConfig] = useState<CAConfig>({ ca_type: "builtin" });
   const [testResult, setTestResult] = useState<CATestResult | null>(null);
   const [testing, setTesting] = useState(false);
@@ -107,6 +109,7 @@ export default function DeviceSecuritySettings() {
     enrollmentMode,
     caType,
     certValidityDays,
+    requireInventoryCheck,
     localCAConfig,
   ]);
 
@@ -116,17 +119,19 @@ export default function DeviceSecuritySettings() {
     const newEnrollment = isEnrollmentMode(settings.enrollment_mode) ? settings.enrollment_mode : "manual";
     const newCAType = isCAType(settings.ca_type) ? settings.ca_type : "builtin";
     const newCertValidity = settings.cert_validity_days > 0 ? settings.cert_validity_days : 365;
+    const newRequireInventoryCheck = settings.require_inventory_check ?? false;
     setMode(newMode);
     setEnrollmentMode(newEnrollment);
     setCaType(newCAType);
     setCertValidityDays(newCertValidity);
-    updateRef([newMode, newEnrollment, newCAType, newCertValidity, localCAConfig]);
+    setRequireInventoryCheck(newRequireInventoryCheck);
+    updateRef([newMode, newEnrollment, newCAType, newCertValidity, newRequireInventoryCheck, localCAConfig]);
   }, [settings]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!caConfig) return;
     setLocalCAConfig(caConfig);
-    updateRef([mode, enrollmentMode, caType, certValidityDays, caConfig]);
+    updateRef([mode, enrollmentMode, caType, certValidityDays, requireInventoryCheck, caConfig]);
   }, [caConfig]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const activeCertCount = devices?.filter((d) => !d.revoked).length ?? 0;
@@ -139,6 +144,7 @@ export default function DeviceSecuritySettings() {
       enrollment_mode: enrollmentMode,
       ca_type: caType,
       cert_validity_days: certValidityDays,
+      require_inventory_check: requireInventoryCheck,
     });
     notify({
       title: "Device Security Settings",
@@ -167,12 +173,13 @@ export default function DeviceSecuritySettings() {
       }
     }
 
-    updateRef([mode, enrollmentMode, caType, certValidityDays, localCAConfig]);
+    updateRef([mode, enrollmentMode, caType, certValidityDays, requireInventoryCheck, localCAConfig]);
   }, [
     mode,
     enrollmentMode,
     caType,
     certValidityDays,
+    requireInventoryCheck,
     localCAConfig,
     settings,
     updateSettings,
@@ -350,6 +357,29 @@ export default function DeviceSecuritySettings() {
                 Go to Inventory →
               </Link>
             </Callout>
+          )}
+
+          {/* Inventory check for manual enrollment */}
+          {(enrollmentMode === "manual" || enrollmentMode === "both") && (
+            <FancyToggleSwitch
+              value={requireInventoryCheck}
+              onChange={setRequireInventoryCheck}
+              label="Require inventory check before enrollment"
+              helpText={
+                <>
+                  When enabled, a device serial number must be found in your{" "}
+                  <Link
+                    href="/device-security/inventory"
+                    className="font-medium underline"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    configured inventory
+                  </Link>{" "}
+                  before its enrollment request is accepted. Devices not in the inventory are silently rejected and never appear in the approval queue.
+                </>
+              }
+              data-cy={"require-inventory-check"}
+            />
           )}
 
           {/* Certificate Authority */}

@@ -11,6 +11,8 @@ export interface DeviceAuthSettings {
   enrollment_mode: EnrollmentMode;
   ca_type: CAType;
   cert_validity_days: number;
+  inventory_type: string;
+  require_inventory_check: boolean;
 }
 
 export interface DeviceEnrollment {
