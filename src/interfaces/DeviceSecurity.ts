@@ -39,6 +39,7 @@ export interface TrustedCA {
   id: string;
   name: string;
   created_at: string;
+  pem?: string;
 }
 
 // CA config types — for /device-auth/ca/config endpoints

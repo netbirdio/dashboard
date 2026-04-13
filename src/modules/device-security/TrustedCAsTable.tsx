@@ -7,9 +7,9 @@ import { notify } from "@components/Notification";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { PlusCircle, ShieldCheckIcon, Trash2 } from "lucide-react";
+import { ChevronDown, ChevronUp, ClipboardCopyIcon, PlusCircle, ShieldCheckIcon, Trash2 } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useDeviceSecurity } from "@/contexts/DeviceSecurityProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -40,6 +40,42 @@ function DeleteCell({ ca, onDelete }: Readonly<DeleteCellProps>) {
   );
 }
 
+function CertPEMViewer({ pem }: { pem: string }) {
+  const [expanded, setExpanded] = useState(false);
+
+  const handleCopy = () => {
+    navigator.clipboard.writeText(pem);
+  };
+
+  return (
+    <div className="flex flex-col">
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex items-center gap-1 text-xs text-nb-gray-400 hover:text-nb-gray-200 transition-colors w-fit"
+      >
+        {expanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+        {expanded ? "Hide certificate" : "View certificate"}
+      </button>
+      {expanded && (
+        <div className="relative mt-2">
+          <pre className="text-xs font-mono text-nb-gray-300 bg-nb-gray-950 border border-nb-gray-900 rounded-md p-3 overflow-x-auto whitespace-pre-wrap break-all max-h-48 overflow-y-auto">
+            {pem}
+          </pre>
+          <button
+            type="button"
+            onClick={handleCopy}
+            title="Copy PEM"
+            className="absolute top-2 right-2 text-nb-gray-400 hover:text-nb-gray-100 transition-colors"
+          >
+            <ClipboardCopyIcon size={14} />
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function buildColumns(
   onDelete: (id: string) => void,
 ): ColumnDef<TrustedCA>[] {
@@ -51,7 +87,12 @@ function buildColumns(
       ),
       sortingFn: "text",
       cell: ({ row }) => (
-        <span className="font-medium">{row.original.name}</span>
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">{row.original.name}</span>
+          {row.original.pem && (
+            <CertPEMViewer pem={row.original.pem} />
+          )}
+        </div>
       ),
     },
     {
