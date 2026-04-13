@@ -196,7 +196,17 @@ export default function Navigation({
                 </SidebarItem>
                 <SidebarItem
                   icon={<DeviceSecurityIcon size={16} />}
-                  label="Device Security"
+                  label={
+                    <div className={"flex items-center gap-2"}>
+                      Device Security
+                      <SmallBadge
+                        text={"Beta"}
+                        variant={"sky"}
+                        className={"text-[8px] leading-none py-[3px] px-[5px]"}
+                        textClassName={"top-0"}
+                      />
+                    </div>
+                  }
                   collapsible
                   visible={!isRestricted}
                 >
