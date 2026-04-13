@@ -390,7 +390,10 @@ export default function DeviceSecuritySettings() {
             <Select
               value={caType}
               onValueChange={(v) => {
-                if (isCAType(v)) setCaType(v);
+                if (isCAType(v)) {
+                  setCaType(v);
+                  setLocalCAConfig((prev) => ({ ...prev, ca_type: v }));
+                }
               }}
             >
               <SelectTrigger>
