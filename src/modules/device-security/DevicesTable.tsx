@@ -16,6 +16,9 @@ import { notify } from "@components/Notification";
 import { useDeviceSecurity } from "@/contexts/DeviceSecurityProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { DeviceCert } from "@/interfaces/DeviceSecurity";
+import type { Peer } from "@/interfaces/Peer";
+import useFetchApi from "@utils/api";
+import Link from "next/link";
 import RevokeDeviceModal from "./RevokeDeviceModal";
 
 function truncate(value: string, length = 16): string {
@@ -85,8 +88,39 @@ function ActionsCell({ cert, onRenew }: Readonly<ActionsCellProps>) {
 
 function buildColumns(
   onRenew: (id: string) => void,
+  peerMap: Map<string, Peer>,
 ): ColumnDef<DeviceCert>[] {
   return [
+    {
+      id: "peer",
+      header: ({ column }) => (
+        <DataTableHeader column={column}>Peer</DataTableHeader>
+      ),
+      cell: ({ row }) => {
+        const peer = peerMap.get(row.original.peer_id);
+        if (peer) {
+          return (
+            <Link
+              href={`/peer?id=${peer.id}`}
+              className="group flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="font-medium text-nb-gray-100 group-hover:text-netbird transition-colors">
+                {peer.name}
+              </span>
+              <span className="text-xs text-nb-gray-500">
+                {peer.ip}
+              </span>
+            </Link>
+          );
+        }
+        return (
+          <span className="text-nb-gray-400 text-sm" title={row.original.peer_id}>
+            {truncate(row.original.peer_id)}
+          </span>
+        );
+      },
+    },
     {
       accessorKey: "wg_public_key",
       header: ({ column }) => (
@@ -153,6 +187,13 @@ function buildColumns(
 
 export default function DevicesTable() {
   const { devices, devicesLoading, renewDevice } = useDeviceSecurity();
+  const { data: peers } = useFetchApi<Peer[]>("/peers");
+
+  const peerMap = React.useMemo(() => {
+    if (!peers) return new Map<string, Peer>();
+    return new Map(peers.map((p) => [p.id ?? "", p]));
+  }, [peers]);
+
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -174,8 +215,8 @@ export default function DevicesTable() {
   );
 
   const columns = React.useMemo(
-    () => buildColumns(handleRenew),
-    [handleRenew],
+    () => buildColumns(handleRenew, peerMap),
+    [handleRenew, peerMap],
   );
 
   const emptyState = (
