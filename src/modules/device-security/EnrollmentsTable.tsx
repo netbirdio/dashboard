@@ -16,6 +16,9 @@ import { useSWRConfig } from "swr";
 import { useDeviceSecurity } from "@/contexts/DeviceSecurityProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { DeviceEnrollment } from "@/interfaces/DeviceSecurity";
+import type { Peer } from "@/interfaces/Peer";
+import useFetchApi from "@utils/api";
+import Link from "next/link";
 
 const STATUS_BADGE_VARIANT = {
   pending: "yellow",
@@ -86,6 +89,7 @@ function ActionsCell({
 function buildColumns(
   onApprove: (id: string) => void,
   onReject: (id: string) => void,
+  peerMap: Map<string, Peer>,
 ): ColumnDef<DeviceEnrollment>[] {
   return [
     {
@@ -101,14 +105,33 @@ function buildColumns(
     {
       accessorKey: "peer_id",
       header: ({ column }) => (
-        <DataTableHeader column={column}>Peer ID</DataTableHeader>
+        <DataTableHeader column={column}>Peer</DataTableHeader>
       ),
       sortingFn: "text",
-      cell: ({ row }) => (
-        <span title={row.original.peer_id}>
-          {truncate(row.original.peer_id)}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const peer = peerMap.get(row.original.peer_id);
+        if (peer) {
+          return (
+            <Link
+              href={`/peer?id=${peer.id}`}
+              className="group flex flex-col"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="font-medium text-nb-gray-100 group-hover:text-netbird transition-colors">
+                {peer.name}
+              </span>
+              <span className="text-xs text-nb-gray-500" title={row.original.peer_id}>
+                {truncate(row.original.peer_id)}
+              </span>
+            </Link>
+          );
+        }
+        return (
+          <span className="text-nb-gray-400" title={row.original.peer_id}>
+            {truncate(row.original.peer_id)}
+          </span>
+        );
+      },
     },
     {
       accessorKey: "wg_public_key",
@@ -188,6 +211,13 @@ export default function EnrollmentsTable() {
     [{ id: "created_at", desc: true }],
   );
 
+  const { data: peers } = useFetchApi<Peer[]>("/peers");
+
+  const peerMap = React.useMemo(() => {
+    if (!peers) return new Map<string, Peer>();
+    return new Map(peers.map((p) => [p.id ?? "", p]));
+  }, [peers]);
+
   const handleApprove = useCallback(
     async (id: string) => {
       try {
@@ -217,8 +247,8 @@ export default function EnrollmentsTable() {
   );
 
   const columns = React.useMemo(
-    () => buildColumns(handleApprove, handleReject),
-    [handleApprove, handleReject],
+    () => buildColumns(handleApprove, handleReject, peerMap),
+    [handleApprove, handleReject, peerMap],
   );
 
   if (!enrollmentsLoading && (!enrollments || enrollments.length === 0)) {
