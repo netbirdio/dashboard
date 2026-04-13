@@ -13,6 +13,7 @@ import { CheckCircleIcon, ShieldAlertIcon, XCircleIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useCallback } from "react";
 import { useSWRConfig } from "swr";
+import { useDialog } from "@/contexts/DialogProvider";
 import { useDeviceSecurity } from "@/contexts/DeviceSecurityProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import type { DeviceEnrollment } from "@/interfaces/DeviceSecurity";
@@ -203,6 +204,7 @@ export default function EnrollmentsTable() {
     approveEnrollment,
     rejectEnrollment,
   } = useDeviceSecurity();
+  const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -220,6 +222,16 @@ export default function EnrollmentsTable() {
 
   const handleApprove = useCallback(
     async (id: string) => {
+      const choice = await confirm({
+        title: "Approve enrollment?",
+        description: "This device will be issued a certificate and allowed to connect.",
+        confirmText: "Approve",
+        cancelText: "Cancel",
+        type: "default",
+      });
+
+      if (!choice) return;
+
       try {
         await approveEnrollment(id);
       } catch {
@@ -229,13 +241,24 @@ export default function EnrollmentsTable() {
         });
       }
     },
-    [approveEnrollment],
+    [approveEnrollment, confirm],
   );
 
   const handleReject = useCallback(
     async (id: string) => {
+      const choice = await confirm({
+        title: "Reject enrollment?",
+        description: "The device will be denied access. You can set a reason below.",
+        confirmText: "Reject",
+        cancelText: "Cancel",
+        type: "danger",
+      });
+
+      if (!choice) return;
+
+      // TODO: prompt for rejection reason via a dedicated modal
       try {
-        await rejectEnrollment(id);
+        await rejectEnrollment(id, undefined);
       } catch {
         notify({
           title: "Failed to reject enrollment",
@@ -243,7 +266,7 @@ export default function EnrollmentsTable() {
         });
       }
     },
-    [rejectEnrollment],
+    [rejectEnrollment, confirm],
   );
 
   const columns = React.useMemo(

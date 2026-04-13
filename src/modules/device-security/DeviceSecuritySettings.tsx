@@ -84,6 +84,18 @@ const CA_TYPE_LABELS: Record<CAType, string> = {
   scep: "SCEP",
 };
 
+/**
+ * Returns a copy of config that only includes the sub-object for the active
+ * caType. Strips credentials for inactive CA types before sending to the API.
+ */
+function buildCleanCAConfig(config: CAConfig, caType: CAType): CAConfig {
+  const clean: CAConfig = { ca_type: caType };
+  if (caType === "vault" && config.vault) clean.vault = config.vault;
+  else if (caType === "smallstep" && config.smallstep) clean.smallstep = config.smallstep;
+  else if (caType === "scep" && config.scep) clean.scep = config.scep;
+  return clean;
+}
+
 export default function DeviceSecuritySettings() {
   const {
     settings,
@@ -159,7 +171,7 @@ export default function DeviceSecuritySettings() {
     }
 
     if (caType !== "builtin") {
-      const caPromise = updateCAConfig(localCAConfig);
+      const caPromise = updateCAConfig(buildCleanCAConfig(localCAConfig, caType));
       notify({
         title: "CA Configuration",
         description: "CA configuration saved successfully.",
@@ -191,7 +203,7 @@ export default function DeviceSecuritySettings() {
     setTesting(true);
     setTestResult(null);
     try {
-      const result = await testCAConnection(localCAConfig);
+      const result = await testCAConnection(buildCleanCAConfig(localCAConfig, caType));
       setTestResult(result ?? {
         success: false,
         steps: [{
