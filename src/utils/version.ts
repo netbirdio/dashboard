@@ -94,3 +94,4 @@ export const isNetbirdSSHProtocolSupported = (version: string) => {
   if (version == "development") return true;
   return compareVersions(version, "0.61.0");
 };
+
