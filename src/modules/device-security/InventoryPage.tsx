@@ -37,7 +37,7 @@ import { PasswordField } from "./PasswordField";
 const DEFAULT_STATIC: StaticInventoryConfig = {
   enabled: false,
   peers: [],
-  serial_count: 0,
+  serials: [],
 };
 
 const DEFAULT_INTUNE: IntuneInventoryConfig = {
@@ -141,26 +141,43 @@ function StaticForm({ config, onChange }: StaticFormProps) {
 
       {activeTab === "serials" && (
         <div className="flex flex-col gap-2">
-          <Callout variant="warning">
-            Serial numbers are less secure than WireGuard keys. Use only if your
-            MDM enforces serial uniqueness.
-          </Callout>
           <HelpText>
-            TPM EK serial numbers (decimal format) allowed to enroll automatically.
-            One serial per line. For large fleets, consider using an MDM integration instead.
+            Hardware serial numbers of devices allowed to enroll automatically.
+            Use the serial number reported by the OS — on macOS:{" "}
+            <code className="bg-nb-gray-900 px-1 rounded text-xs">
+              system_profiler SPHardwareDataType | grep Serial
+            </code>
+            , on Windows:{" "}
+            <code className="bg-nb-gray-900 px-1 rounded text-xs">
+              wmic bios get SerialNumber
+            </code>
+            . One serial per line.
           </HelpText>
-          <div className="flex items-center justify-between">
-            <Label>Serial Numbers</Label>
-            {config.serial_count > 0 && (
-              <span className="text-xs text-nb-gray-400">
-                {config.serial_count} stored
-              </span>
+          <textarea
+            rows={8}
+            value={config.serials.join("\n")}
+            onChange={(e) => {
+              const newSerials = e.target.value
+                .split(/[\n,]+/)
+                .map((s) => s.trim())
+                .filter(Boolean);
+              onChange({ ...config, serials: newSerials });
+            }}
+            placeholder={"Paste one serial number per line\nC02XL1YLJHD5\nPF2RJKAM\nR90VM1XXPK"}
+            spellCheck={false}
+            className={cn(
+              "w-full rounded-md border border-nb-gray-900 bg-nb-gray-950",
+              "px-3 py-2 text-sm font-mono text-nb-gray-100",
+              "placeholder:text-nb-gray-600",
+              "focus:outline-none focus:ring-1 focus:ring-netbird focus:border-netbird",
+              "resize-y min-h-[150px]",
             )}
-          </div>
-          <p className="text-xs text-nb-gray-400">
-            Serial numbers are write-only. Existing entries are preserved unless you upload a new list.
-            Contact support or use the API to manage large serial lists.
-          </p>
+          />
+          <HelpText>
+            {config.serials.length > 0
+              ? `${config.serials.length} serial${config.serials.length !== 1 ? "s" : ""} in list`
+              : "No serials configured"}
+          </HelpText>
         </div>
       )}
     </div>

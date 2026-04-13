@@ -97,8 +97,8 @@ export interface CATestResult {
 
 export interface StaticInventoryConfig {
   enabled: boolean;
-  peers: string[];        // WireGuard public keys
-  serial_count: number;   // read-only in GET; serials are managed by upload
+  peers: string[];     // WireGuard public keys
+  serials: string[];   // hardware serial numbers (string format, e.g. "C02XL1YLJHD5")
 }
 
 export interface IntuneInventoryConfig {
