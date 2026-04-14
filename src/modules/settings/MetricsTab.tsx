@@ -76,7 +76,7 @@ export default function MetricsTab({ account }: Readonly<Props>) {
             Learn more about{" "}
             <InlineLink
               href={
-                "https://docs.netbird.io/selfhosted/client-metrics"
+                "https://docs.netbird.io/manage/client-metrics"
               }
               target={"_blank"}
             >
