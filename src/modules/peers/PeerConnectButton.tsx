@@ -11,6 +11,7 @@ import { usePeer } from "@/contexts/PeerProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
+import { VNCButton } from "@/modules/remote-access/vnc/VNCButton";
 import { cn } from "@utils/helpers";
 
 export const PeerConnectButton = () => {
@@ -43,6 +44,7 @@ export const PeerConnectButton = () => {
         >
           <SSHButton peer={peer} isDropdown={true} />
           <RDPButton peer={peer} isDropdown={true} />
+          <VNCButton peer={peer} isDropdown={true} />
         </DropdownMenuContent>
       </DropdownMenu>
     </>
@@ -50,7 +52,7 @@ export const PeerConnectButton = () => {
     <FullTooltip
       content={
         <div className={"max-w-[200px] text-xs"}>
-          Connecting via SSH or RDP is only available when the peer is online.
+          Connecting via SSH, RDP, or VNC is only available when the peer is online.
         </div>
       }
     >

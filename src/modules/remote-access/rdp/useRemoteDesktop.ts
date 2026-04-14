@@ -25,6 +25,7 @@ export interface RDPCredentials {
   password: string;
   domain?: string;
   port: number;
+  useTokenAuth?: boolean;
 }
 
 interface RDPConnection {

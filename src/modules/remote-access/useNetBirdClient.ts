@@ -262,6 +262,26 @@ export const useNetBirdClient = () => {
     [],
   );
 
+  const requestRDPAuth = useCallback(
+    async (
+      host: string,
+      username: string,
+      jwtToken: string,
+    ): Promise<{
+      status: string;
+      sessionId: string;
+      expiresAt: number;
+      osUser: string;
+      reason: string;
+    }> => {
+      if (!netBirdClient.current?.requestRDPAuth) {
+        throw new Error("Go client not ready or requestRDPAuth not available");
+      }
+      return netBirdClient.current.requestRDPAuth(host, username, jwtToken);
+    },
+    [],
+  );
+
   const connectTemporary = useCallback(
     async (peerId: string, rules?: string[]) => {
       const currentStatus = netBirdStore.getState().status;
@@ -290,6 +310,7 @@ export const useNetBirdClient = () => {
             rules: rules ?? [
               "tcp/22022",
               "tcp/3389",
+              "tcp/22338",
               "tcp/44338",
               "netbird-ssh/22",
             ],
@@ -326,5 +347,6 @@ export const useNetBirdClient = () => {
     makeRequest,
     proxyRequest,
     setupRDPProxy,
+    requestRDPAuth,
   };
 };

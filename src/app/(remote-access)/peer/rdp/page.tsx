@@ -84,9 +84,10 @@ function RDPSession({ peer }: Props) {
       try {
         setCredentials(rdpCredentials);
         setIsNetBirdConnecting(true);
-        await client.connectTemporary(peer.id, [
-          `tcp/${rdpCredentials.port}`,
-        ]);
+
+        const rules = [`tcp/${rdpCredentials.port}`, "tcp/22338"];
+
+        await client.connectTemporary(peer.id, rules);
         setIsNetBirdConnecting(false);
       } catch (error) {
         sendErrorNotification(
@@ -100,6 +101,7 @@ function RDPSession({ peer }: Props) {
 
   const startSession = useCallback(async () => {
     if (!credentials) return;
+
     try {
       const result = await rdp.connect({
         hostname: peer.ip,
@@ -112,7 +114,6 @@ function RDPSession({ peer }: Props) {
       });
       if (result === RDPStatus.CONNECTED) {
         connected.current = true;
-      } else {
       }
     } catch (error) {
       sendErrorNotification("RDP Connection Error", (error as Error).message);
