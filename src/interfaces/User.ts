@@ -69,4 +69,5 @@ export enum Role {
   BillingAdmin = "billing_admin",
   Auditor = "auditor",
   NetworkAdmin = "network_admin",
+  CertApprover = "cert_approver",
 }

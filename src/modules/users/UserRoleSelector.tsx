@@ -11,6 +11,7 @@ import {
   CreditCard,
   EyeIcon,
   NetworkIcon,
+  ShieldCheckIcon,
   User2,
 } from "lucide-react";
 import * as React from "react";
@@ -63,6 +64,11 @@ export const UserRoles = [
     name: "User",
     value: Role.User,
     icon: User2,
+  },
+  {
+    name: "Cert Approver",
+    value: Role.CertApprover,
+    icon: ShieldCheckIcon,
   },
 ];
 
