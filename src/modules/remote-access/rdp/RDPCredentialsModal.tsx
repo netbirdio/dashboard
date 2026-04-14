@@ -8,6 +8,7 @@ import {
   ExternalLinkIcon,
   KeyRoundIcon,
   MonitorIcon,
+  ShieldCheckIcon,
   User2,
 } from "lucide-react";
 import Separator from "@components/Separator";
@@ -40,6 +41,7 @@ export const RDPCredentialsModal = ({
 }: Props) => {
   const [username, setUsername] = useState("Administrator");
   const [password, setPassword] = useState("");
+  const [useTokenAuth, setUseTokenAuth] = useState(true);
 
   const [port, setPort] = useState("3389");
 
@@ -84,9 +86,10 @@ export const RDPCredentialsModal = ({
 
     onConnect({
       username: parsedUsername,
-      password,
+      password: useTokenAuth ? "" : password,
       domain: parsedDomain,
       port: Number(port),
+      useTokenAuth,
     });
   }, [hasAnyError, onConnect, username, password, port]);
 
@@ -130,11 +133,33 @@ export const RDPCredentialsModal = ({
             </div>
           )}
           <div>
-            <Label>Username & Password</Label>
+            <Label>Authentication</Label>
+            <div className={"flex gap-4 mb-3"}>
+              <label className={"flex items-center gap-2 cursor-pointer text-sm"}>
+                <input
+                  type="radio"
+                  checked={useTokenAuth}
+                  onChange={() => setUseTokenAuth(true)}
+                  className={"accent-netbird"}
+                />
+                <ShieldCheckIcon size={14} className={"text-netbird"} />
+                NetBird Token (passwordless)
+              </label>
+              <label className={"flex items-center gap-2 cursor-pointer text-sm"}>
+                <input
+                  type="radio"
+                  checked={!useTokenAuth}
+                  onChange={() => setUseTokenAuth(false)}
+                  className={"accent-netbird"}
+                />
+                <KeyRoundIcon size={14} className={"text-nb-gray-300"} />
+                Password
+              </label>
+            </div>
             <HelpText>
-              Enter the credentials required to authenticate with the remote
-              host. For domain accounts, use DOMAIN\username or username@domain
-              format.
+              {useTokenAuth
+                ? "Authenticate using your NetBird identity. The remote peer must have --allow-server-rdp enabled."
+                : "Enter the credentials for the remote host. For domain accounts, use DOMAIN\\username or username@domain format."}
             </HelpText>
             <div className={"flex flex-col gap-2 w-full"}>
               <Input
@@ -151,21 +176,23 @@ export const RDPCredentialsModal = ({
                   <User2 size={16} className={"text-nb-gray-300"} />
                 }
               />
-              <Input
-                value={password}
-                placeholder={"Enter password"}
-                type={"password"}
-                onChange={(e) => setPassword(e.target.value)}
-                onKeyDown={handleKeyDown}
-                name="password"
-                autoComplete={"current-password"}
-                error={undefined}
-                errorTooltip={true}
-                errorTooltipPosition={"top-right"}
-                customPrefix={
-                  <KeyRoundIcon size={16} className={"text-nb-gray-300"} />
-                }
-              />
+              {!useTokenAuth && (
+                <Input
+                  value={password}
+                  placeholder={"Enter password"}
+                  type={"password"}
+                  onChange={(e) => setPassword(e.target.value)}
+                  onKeyDown={handleKeyDown}
+                  name="password"
+                  autoComplete={"current-password"}
+                  error={undefined}
+                  errorTooltip={true}
+                  errorTooltipPosition={"top-right"}
+                  customPrefix={
+                    <KeyRoundIcon size={16} className={"text-nb-gray-300"} />
+                  }
+                />
+              )}
             </div>
           </div>
           <div>

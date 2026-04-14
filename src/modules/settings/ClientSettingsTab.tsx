@@ -102,12 +102,45 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
     [peerExposeGroups],
   );
 
+  const [recordingEnabled, setRecordingEnabled] = useState<boolean>(
+    account?.settings?.recording_enabled ?? false,
+  );
+  const [
+    recordingGroups,
+    setRecordingGroups,
+    { save: saveRecordingGroups },
+  ] = useGroupHelper({
+    initial: account.settings?.recording_groups,
+  });
+  const recordingGroupNames = useMemo(
+    () => recordingGroups.map((g) => g.name).sort(),
+    [recordingGroups],
+  );
+  const [recordingMaxSessions, setRecordingMaxSessions] = useState(
+    account?.settings?.recording_max_sessions ?? 0,
+  );
+  const [recordingMaxTotalSizeMb, setRecordingMaxTotalSizeMb] = useState(
+    account?.settings?.recording_max_total_size_mb ?? 0,
+  );
+  const [recordingInputEnabled, setRecordingInputEnabled] = useState(
+    account?.settings?.recording_input_enabled ?? true,
+  );
+  const [recordingEncryptionKey, setRecordingEncryptionKey] = useState(
+    account?.settings?.recording_encryption_key ?? "",
+  );
+
   const { hasChanges, updateRef } = useHasChanges([
     autoUpdateMethod,
     autoUpdateCustomVersion,
     autoUpdateAlways,
     peerExposeEnabled,
     peerExposeGroupNames,
+    recordingEnabled,
+    recordingGroupNames,
+    recordingMaxSessions,
+    recordingMaxTotalSizeMb,
+    recordingInputEnabled,
+    recordingEncryptionKey,
   ]);
 
   const handleUpdateMethodChange = (value: string) => {
@@ -149,7 +182,11 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 
   const saveChanges = async () => {
     const groups = await saveGroups();
+    const recGroups = await saveRecordingGroups();
     const peerExposeGroupIds = groups
+      .map((group) => group.id)
+      .filter(Boolean) as string[];
+    const recordingGroupIds = recGroups
       .map((group) => group.id)
       .filter(Boolean) as string[];
 
@@ -165,6 +202,12 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             auto_update_always: autoUpdateAlways,
             peer_expose_enabled: peerExposeEnabled,
             peer_expose_groups: peerExposeGroupIds,
+            recording_enabled: recordingEnabled,
+            recording_groups: recordingGroupIds,
+            recording_max_sessions: recordingMaxSessions,
+            recording_max_total_size_mb: recordingMaxTotalSizeMb,
+            recording_input_enabled: recordingInputEnabled,
+            recording_encryption_key: recordingEncryptionKey,
           },
         })
         .then(() => {
@@ -175,6 +218,12 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
             autoUpdateAlways,
             peerExposeEnabled,
             peerExposeGroupNames,
+            recordingEnabled,
+            recordingGroupNames,
+            recordingMaxSessions,
+            recordingMaxTotalSizeMb,
+            recordingInputEnabled,
+            recordingEncryptionKey,
           ]);
         }),
       loadingMessage: "Updating client settings...",
@@ -360,6 +409,108 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                   values={peerExposeGroups}
                   onChange={setPeerExposeGroups}
                   placeholder="Select peer groups..."
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <Label>Session Recording</Label>
+            <HelpText>
+              When enabled, SSH and VNC sessions on peers in the selected groups
+              will be recorded. Users see a warning that the session is being
+              recorded. If recording cannot start, the session is denied.
+            </HelpText>
+
+            <FancyToggleSwitch
+              className={"mt-2"}
+              value={recordingEnabled}
+              onChange={setRecordingEnabled}
+              label={"Enable Session Recording"}
+              helpText={
+                "Record SSH terminal sessions and VNC screen sessions for peers in the selected groups."
+              }
+              disabled={!permission.settings.update}
+            />
+
+            <div
+              className={cn(
+                "border border-nb-gray-900 border-t-0 rounded-b-md bg-nb-gray-940 px-[1.28rem] pt-3 pb-5 flex flex-col gap-4 mx-[0.25rem]",
+                !recordingEnabled
+                  ? "opacity-50 pointer-events-none"
+                  : "bg-nb-gray-930/80",
+              )}
+            >
+              <div className={"mt-2"}>
+                <Label>Peer groups</Label>
+                <HelpText>
+                  Select which peer groups have session recording enabled. At
+                  least one group is required.
+                </HelpText>
+                <PeerGroupSelector
+                  values={recordingGroups}
+                  onChange={setRecordingGroups}
+                  placeholder="Select peer groups..."
+                />
+              </div>
+
+              <FancyToggleSwitch
+                value={recordingInputEnabled}
+                onChange={setRecordingInputEnabled}
+                label={"Record Input"}
+                helpText={
+                  "Capture keyboard input in SSH recordings. When disabled, only terminal output is recorded."
+                }
+                disabled={!permission.settings.update}
+              />
+
+              <div className={"flex gap-4"}>
+                <div className={"flex-1"}>
+                  <Label>Max recordings per peer</Label>
+                  <HelpText>
+                    Maximum number of recording files to keep. 0 means
+                    unlimited.
+                  </HelpText>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={recordingMaxSessions}
+                    onChange={(e) =>
+                      setRecordingMaxSessions(Number(e.target.value))
+                    }
+                    placeholder="0"
+                  />
+                </div>
+                <div className={"flex-1"}>
+                  <Label>Max total size (MB)</Label>
+                  <HelpText>
+                    Maximum total size in MB of recordings per peer. 0 means
+                    unlimited.
+                  </HelpText>
+                  <Input
+                    type="number"
+                    min={0}
+                    value={recordingMaxTotalSizeMb}
+                    onChange={(e) =>
+                      setRecordingMaxTotalSizeMb(Number(e.target.value))
+                    }
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label>Encryption Key (optional)</Label>
+                <HelpText>
+                  Base64-encoded public key for encrypting recordings. When set,
+                  recordings are encrypted at rest and can only be decrypted with
+                  the corresponding private key.
+                </HelpText>
+                <Input
+                  value={recordingEncryptionKey}
+                  onChange={(e) => setRecordingEncryptionKey(e.target.value)}
+                  placeholder="Base64-encoded public key..."
+                  className="font-mono text-xs"
                 />
               </div>
             </div>

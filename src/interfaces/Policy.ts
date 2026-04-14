@@ -40,4 +40,4 @@ export interface PolicyRuleResource {
   type?: "domain" | "host" | "subnet" | "peer";
 }
 
-export type Protocol = "all" | "tcp" | "udp" | "icmp" | "netbird-ssh";
+export type Protocol = "all" | "tcp" | "udp" | "icmp" | "netbird-ssh" | "netbird-vnc";

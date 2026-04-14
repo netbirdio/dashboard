@@ -41,7 +41,7 @@ export default function AccessControlSourcesCell({
     >
       <MultipleGroups
         groups={firstRule.sources as Group[]}
-        showUsers={firstRule.protocol === "netbird-ssh"}
+        showUsers={firstRule.protocol === "netbird-ssh" || firstRule.protocol === "netbird-vnc"}
         disableRedirect={disableRedirect}
       />
       {canUpdate && !hideEdit && <TransparentEditIconButton />}

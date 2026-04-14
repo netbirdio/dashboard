@@ -149,7 +149,7 @@ export const useAccessControl = ({
   );
 
   const [sshAccessType, setSshAccessType] = useState<"full" | "limited">(() => {
-    if (protocol === "netbird-ssh") {
+    if (protocol === "netbird-ssh" || protocol === "netbird-vnc") {
       return firstRule?.authorized_groups !== undefined &&
         Object.keys(firstRule?.authorized_groups).length > 0
         ? "limited"
@@ -259,9 +259,13 @@ export const useAccessControl = ({
     let [newPorts, newPortRanges] = parseAccessControlPorts(ports, portRanges);
 
     let authorizedGroups: AuthorizedGroups = {};
-    if (protocol === "netbird-ssh") {
-      // Set port 22 for SSH protocol
-      newPorts = ["22"];
+    const isNetBirdService = protocol === "netbird-ssh" || protocol === "netbird-vnc";
+    if (isNetBirdService) {
+      if (protocol === "netbird-ssh") {
+        newPorts = ["22"];
+      } else if (protocol === "netbird-vnc") {
+        newPorts = ["25900"];
+      }
       newPortRanges = [];
 
       const isEmpty =
@@ -307,7 +311,7 @@ export const useAccessControl = ({
           ports: newPorts,
           port_ranges: newPortRanges,
           authorized_groups:
-            protocol === "netbird-ssh" ? authorizedGroups : undefined,
+            isNetBirdService ? authorizedGroups : undefined,
         },
       ],
     } as Policy;

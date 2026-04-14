@@ -4,7 +4,7 @@ import * as React from "react";
 import { useEffect } from "react";
 
 const QUERY_PARAMS_KEY = "netbird-query-params";
-const PRESERVE_QUERY_PARAMS_PATHS = ["/peer/ssh", "/peer/rdp"];
+const PRESERVE_QUERY_PARAMS_PATHS = ["/peer/ssh", "/peer/rdp", "/peer/vnc"];
 const VALID_PARAMS = [
   "tab",
   "search",

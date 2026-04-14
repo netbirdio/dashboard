@@ -24,6 +24,12 @@ export interface Account {
     dns_domain: string;
     network_range?: string;
     lazy_connection_enabled: boolean;
+    recording_enabled?: boolean;
+    recording_groups?: string[];
+    recording_max_sessions?: number;
+    recording_max_total_size_mb?: number;
+    recording_input_enabled?: boolean;
+    recording_encryption_key?: string;
     embedded_idp_enabled?: boolean;
     auto_update_version: string;
     auto_update_always: boolean;

@@ -198,6 +198,8 @@ export function AccessControlModalContent({
     initialDestinationResource,
   });
 
+  const isNetBirdService = protocol === "netbird-ssh" || protocol === "netbird-vnc";
+
   const [tab, setTab] = useState(() => {
     if (initialTab && initialTab !== "") return initialTab;
     if (!cell) return "policy";
@@ -318,6 +320,25 @@ export function AccessControlModalContent({
                   >
                     NetBird SSH
                   </SelectItem>
+                  <SelectItem
+                    value="netbird-vnc"
+                    extra={
+                      <HelpTooltip
+                        triggerClassName={"ml-[0.01rem]"}
+                        align={"center"}
+                        side={"right"}
+                        content={
+                          <>
+                            Select NetBird VNC for VNC-specific policies with
+                            fine-grained access control, or use TCP with port
+                            5900 for basic network-level VNC access
+                          </>
+                        }
+                      />
+                    }
+                  >
+                    NetBird VNC
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -341,15 +362,15 @@ export function AccessControlModalContent({
                   dataCy={"source-group-selector"}
                   popoverWidth={500}
                   placeholder={"Select source(s)..."}
-                  showRoutes={protocol !== "netbird-ssh"}
+                  showRoutes={!isNetBirdService}
                   showResources={false}
-                  showPeers={protocol !== "netbird-ssh"}
+                  showPeers={!isNetBirdService}
                   showResourceCounter={false}
                   showPeerCount={allowEditPeers}
                   disableInlineRemoveGroup={false}
                   values={sourceGroups}
                   onChange={setSourceGroups}
-                  users={protocol === "netbird-ssh" ? users : undefined}
+                  users={isNetBirdService ? users : undefined}
                   resource={sourceResource}
                   onResourceChange={setSourceResource}
                   saveGroupAssignments={useSave}
@@ -385,7 +406,7 @@ export function AccessControlModalContent({
                   popoverWidth={500}
                   placeholder={"Select destination(s)..."}
                   showRoutes={true}
-                  showResources={protocol !== "netbird-ssh"}
+                  showResources={!isNetBirdService}
                   showPeers={true}
                   showResourceCounter={true}
                   showPeerCount={allowEditPeers}
@@ -423,7 +444,7 @@ export function AccessControlModalContent({
                 </Callout>
               )}
 
-            {protocol === "netbird-ssh" ? (
+            {isNetBirdService ? (
               <div>
                 {destinationHasResources && (
                   <Callout
@@ -436,9 +457,8 @@ export function AccessControlModalContent({
                     }
                     className="mb-6"
                   >
-                    SSH access only works on peers, not on routed resources.
-                    Please ensure your destination groups contain peers for SSH
-                    connectivity.
+                    This service only works on peers, not on routed resources.
+                    Please ensure your destination groups contain peers.
                   </Callout>
                 )}
                 <div
@@ -447,7 +467,7 @@ export function AccessControlModalContent({
                   <div className={"w-full"}>
                     <Label className={"flex items-center gap-2"}>
                       <SquareTerminalIcon size={15} />
-                      SSH Access
+                      {protocol === "netbird-vnc" ? "VNC" : "SSH"} Access
                     </Label>
                     <HelpText>
                       Select {`'Full Access'`} to allow SSH as any local user,

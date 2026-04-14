@@ -73,8 +73,10 @@ import ReverseProxiesProvider, {
 } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxyFlatTargetsTabContent } from "@/modules/reverse-proxy/targets/flat/ReverseProxyFlatTargetsTabContent";
 import { PeerSSHToggle } from "@/modules/peer/PeerSSHToggle";
+import { PeerVNCPolicyInfo } from "@/modules/peer/PeerVNCPolicyInfo";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
+import { VNCButton } from "@/modules/remote-access/vnc/VNCButton";
 import { PeerExpirationSettings } from "@/modules/peer/PeerExpirationSettings";
 
 export default function PeerPage() {
@@ -448,14 +450,16 @@ const PeerOverviewTabContent = () => {
           )}
 
           <PeerSSHToggle />
+          <PeerVNCPolicyInfo peer={peer} />
 
           {/* Remote Access Buttons */}
           <div>
             <Label>Remote Access</Label>
-            <HelpText>Connect directly to this peer via SSH or RDP.</HelpText>
+            <HelpText>Connect directly to this peer via SSH, RDP, or VNC.</HelpText>
             <div className="flex gap-3">
               <SSHButton peer={peer} />
               <RDPButton peer={peer} />
+              <VNCButton peer={peer} />
             </div>
           </div>
         </div>
