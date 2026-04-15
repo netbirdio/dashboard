@@ -15,6 +15,7 @@ import { useEffect, useRef, useState } from "react";
 import Skeleton from "react-loading-skeleton";
 import { useElementSize } from "@/hooks/useElementSize";
 import { DropdownInfoText } from "@components/DropdownInfoText";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export interface SelectOption {
   label: string | React.ReactNode;
@@ -62,8 +63,8 @@ export function SelectDropdown({
   options,
   showSearch = false,
   showValues = false,
-  placeholder = "Select...",
-  searchPlaceholder = "Search...",
+  placeholder,
+  searchPlaceholder,
   isLoading = false,
   variant = "input",
   className,
@@ -75,6 +76,9 @@ export function SelectDropdown({
   truncate = false,
   compact = false,
 }: Readonly<SelectDropdownProps>) {
+  const { t } = useI18n();
+  const resolvedPlaceholder = placeholder ?? t("selectDropdown.placeholder");
+  const resolvedSearchPlaceholder = searchPlaceholder ?? t("selectDropdown.searchPlaceholder");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const toggle = (selectedValue: string) => {
@@ -139,7 +143,7 @@ export function SelectDropdown({
             size === "xs" && "text-xs",
           )}
         >
-          <span className={"text-nb-gray-200"}>{placeholder}</span>
+          <span className={"text-nb-gray-200"}>{resolvedPlaceholder}</span>
         </div>
       </div>
     );
@@ -212,14 +216,13 @@ export function SelectDropdown({
                 search={search}
                 setSearch={setSearch}
                 ref={searchRef}
-                placeholder={searchPlaceholder}
+                placeholder={resolvedSearchPlaceholder}
               />
             )}
 
             {filteredItems.length == 0 && (
               <DropdownInfoText className={"max-w-sm mx-auto px-4"}>
-                There are no results matching your search. Please try a
-                different search term.
+                {t("selectDropdown.noResults")}
               </DropdownInfoText>
             )}
 

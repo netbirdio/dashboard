@@ -16,6 +16,7 @@ import { ExternalLinkIcon, GlobeIcon, ServerIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import {
   REVERSE_PROXY_CLUSTERS_DOCS_LINK,
   REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK,
@@ -41,6 +42,7 @@ export const CustomDomainModal = ({
   onDomainSubmit,
 }: Props) => {
   const { domains } = useReverseProxies();
+  const { t } = useI18n();
   const [domain, setDomain] = useState("");
   const [selectedCluster, setSelectedCluster] = useState("");
 
@@ -64,10 +66,10 @@ export const CustomDomainModal = ({
       preventLeadingAndTrailingDots: true,
     });
     if (!isValid) {
-      return "Please enter a valid TLD domain, e.g., company.com";
+      return t("reverseProxy.customDomainError");
     }
     return "";
-  }, [domain]);
+  }, [domain, t]);
 
   const isValidDomain = !error && domain.length > 0;
   const canSubmit = isValidDomain && selectedCluster;
@@ -91,8 +93,8 @@ export const CustomDomainModal = ({
       <ModalContent maxWidthClass={"relative max-w-lg"} showClose={true}>
         <ModalHeader
           icon={<GlobeIcon size={20} />}
-          title={"Add Custom Domain"}
-          description={"You will need to verify the domain with DNS records"}
+          title={t("reverseProxy.customDomainModalTitle")}
+          description={t("reverseProxy.customDomainModalDescription")}
           color={"netbird"}
         />
 
@@ -102,29 +104,27 @@ export const CustomDomainModal = ({
           {availableClusters.length === 0 ? (
             isNetBirdHosted() ? (
               <Callout variant={"warning"}>
-                No proxy clusters are currently connected. Please try again in a
-                few minutes. If the issue persists, check{" "}
+                {t("reverseProxy.customDomainNoClusterHosted")}{" "}
                 <InlineLink
                   href={"https://status.netbird.io/"}
                   target={"_blank"}
                 >
-                  NetBird Status
+                  {t("reverseProxy.netbirdStatus")}
                 </InlineLink>{" "}
-                or reach out to{"  "}
+                {t("reverseProxy.customDomainNoClusterHostedSuffix")}{" "}
                 <InlineLink href={"mailto:support@netbird.io"}>
                   support@netbird.io
                 </InlineLink>
               </Callout>
             ) : (
               <Callout variant="warning">
-                No proxy clusters are currently connected. Please ensure at
-                least one proxy is running before adding a domain. <br /> Learn
-                more about{" "}
+                {t("reverseProxy.customDomainNoClusterSelfHosted")} <br />
+                {t("common.learnMorePrefix")}{" "}
                 <InlineLink
                   href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
                   target={"_blank"}
                 >
-                  Proxy Clusters
+                  {t("reverseProxy.proxyClusters")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </Callout>
@@ -132,7 +132,7 @@ export const CustomDomainModal = ({
           ) : (
             <>
               <div>
-                <Label>Domain</Label>
+                <Label>{t("reverseProxy.domainLabel")}</Label>
                 <Input
                   autoFocus
                   value={domain}
@@ -142,22 +142,22 @@ export const CustomDomainModal = ({
                       addDomain();
                     }
                   }}
-                  placeholder="e.g., company.com"
+                  placeholder={t("reverseProxy.domainPlaceholder")}
                   error={error || undefined}
                 />
               </div>
 
               <div>
-                <Label>Target Proxy Cluster</Label>
+                <Label>{t("reverseProxy.targetProxyCluster")}</Label>
                 <HelpText>
-                  Select the cluster your CNAME record should point to
+                  {t("reverseProxy.targetProxyClusterHelp")}
                 </HelpText>
                 <SelectDropdown
                   showSearch={false}
                   value={selectedCluster}
                   onChange={setSelectedCluster}
                   options={availableClusterOptions}
-                  placeholder={"Select a proxy cluster..."}
+                  placeholder={t("reverseProxy.selectProxyCluster")}
                 />
               </div>
             </>
@@ -166,19 +166,19 @@ export const CustomDomainModal = ({
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
-              Learn more about
+              {t("common.learnMorePrefix")}
               <InlineLink
                 href={REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK}
                 target={"_blank"}
               >
-                Custom Domains
+                {t("reverseProxy.customDomainsLearnMore")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("actions.cancel")}</Button>
             </ModalClose>
 
             <Button
@@ -186,7 +186,7 @@ export const CustomDomainModal = ({
               onClick={addDomain}
               disabled={!canSubmit}
             >
-              Add Domain
+              {t("reverseProxy.addDomain")}
             </Button>
           </div>
         </ModalFooter>

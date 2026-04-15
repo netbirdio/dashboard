@@ -12,12 +12,14 @@ import { BugPlay, ChevronDown } from "lucide-react";
 import React, { useState } from "react";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { CreateDebugJobModalContent } from "../jobs/CreateDebugJobModal";
 
 export const RemoteJobDropdownButton = () => {
   const [modal, setModal] = useState(false);
   const { peer } = usePeer();
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const isConnected = peer?.connected;
   const disabled = !permission.peers.delete;
 
@@ -39,7 +41,7 @@ export const RemoteJobDropdownButton = () => {
           }}
         >
           <Button variant={"primary"} disabled={disabled}>
-            Run Remote Job
+            {t("remoteJobs.run")}
             <ChevronDown size={16} />
           </Button>
         </DropdownMenuTrigger>
@@ -52,10 +54,9 @@ export const RemoteJobDropdownButton = () => {
                 }
               >
                 <div>
-                  Peer{" "}
+                  {t("remoteJobs.peer")}{" "}
                   <span className={"text-white font-medium"}>{peer.name}</span>{" "}
-                  is currently offline. Please connect the peer to run remote
-                  jobs.
+                  {t("remoteJobs.offlineMessage")}
                 </div>
               </div>
               <DropdownMenuSeparator />
@@ -73,10 +74,10 @@ export const RemoteJobDropdownButton = () => {
                 size={"small"}
               />
               <div className={"flex flex-col text-left"}>
-                <div className={"text-left text-white"}>Debug Bundle</div>
-                <div className={"text-xs"}>
-                  Collect debug information for troubleshooting
+                <div className={"text-left text-white"}>
+                  {t("jobs.debugBundle")}
                 </div>
+                <div className={"text-xs"}>{t("remoteJobs.debugBundleHelp")}</div>
               </div>
             </div>
           </DropdownMenuItem>

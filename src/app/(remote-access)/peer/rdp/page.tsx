@@ -2,10 +2,12 @@
 
 import { notify } from "@components/Notification";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
+import { PageNotFound } from "@components/ui/PageNotFound";
 import { IconCircleX } from "@tabler/icons-react";
 import useFetchApi from "@utils/api";
 import { Loader2Icon } from "lucide-react";
 import React, { useCallback, useEffect, useRef, useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import type { Peer } from "@/interfaces/Peer";
 import { RDPCertificateModal } from "@/modules/remote-access/rdp/RDPCertificateModal";
 import { RDPCredentialsModal } from "@/modules/remote-access/rdp/RDPCredentialsModal";
@@ -22,6 +24,7 @@ import {
 import { cn } from "@utils/helpers";
 
 export default function RDPPage() {
+  const { t } = useI18n();
   const { peerId } = useRDPQueryParams();
 
   const {
@@ -29,6 +32,15 @@ export default function RDPPage() {
     isLoading,
     error,
   } = useFetchApi<Peer>(`/peers/${peerId}`, true, false, !!peerId);
+
+  if (error) {
+    return (
+      <PageNotFound
+        title={error.message}
+        description={t("remoteAccess.peerNotFound")}
+      />
+    );
+  }
 
   return (
     <div className={"w-screen h-screen overflow-hidden fixed inset-0"}>
@@ -46,6 +58,7 @@ type Props = {
 };
 
 function RDPSession({ peer }: Props) {
+  const { t } = useI18n();
   const client = useNetBirdClient();
   const [isNetBirdConnecting, setIsNetBirdConnecting] = useState(false);
   const rdp = useRemoteDesktop(client);
@@ -90,7 +103,7 @@ function RDPSession({ peer }: Props) {
         setIsNetBirdConnecting(false);
       } catch (error) {
         sendErrorNotification(
-          "NetBird Connection Error",
+          t("remoteAccess.netbirdConnectionError"),
           (error as Error).message,
         );
         setIsNetBirdConnecting(false);
@@ -115,11 +128,14 @@ function RDPSession({ peer }: Props) {
       } else {
       }
     } catch (error) {
-      sendErrorNotification("RDP Connection Error", (error as Error).message);
+      sendErrorNotification(
+        t("remoteAccess.rdpConnectionError"),
+        (error as Error).message,
+      );
       setCredentialsModal(true);
       await reset();
     }
-  }, [credentials, peer.ip, rdp, reset]);
+  }, [credentials, peer.ip, rdp, reset, t]);
 
   /**
    * Establish RDP session when NetBird connection is ready
@@ -148,12 +164,15 @@ function RDPSession({ peer }: Props) {
    */
   useEffect(() => {
     if (rdp.error) {
-      sendErrorNotification("RDP Error", rdp.error);
+      sendErrorNotification(t("remoteAccess.rdpError"), rdp.error);
     }
     if (client.error) {
-      sendErrorNotification("NetBird Client Error", client.error);
+      sendErrorNotification(
+        t("remoteAccess.netbirdClientError"),
+        client.error,
+      );
     }
-  }, [rdp, client]);
+  }, [rdp, client, t]);
 
   /**
    * Close credentials modal when RDP is connected

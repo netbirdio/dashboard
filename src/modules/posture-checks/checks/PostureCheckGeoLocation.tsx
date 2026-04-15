@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { GeoLocation, GeoLocationCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
 
@@ -32,6 +33,7 @@ export const PostureCheckGeoLocation = ({
   onChange,
   disabled,
 }: Props) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
@@ -39,17 +41,15 @@ export const PostureCheckGeoLocation = ({
       open={open}
       setOpen={setOpen}
       icon={<FlagIcon size={16} />}
-      title={"Country & Region"}
-      description={
-        "Restrict access in your network based on country or region."
-      }
+      title={t("postureChecks.geoLocationTitle")}
+      description={t("postureChecks.geoLocationDescription")}
       iconClass={"bg-gradient-to-tr from-indigo-500 to-indigo-400"}
       modalWidthClass={"max-w-2xl"}
       active={value ? value?.locations?.length > 0 : false}
       onReset={() => onChange(undefined)}
       license={
         <div className={"text-xs max-w-xs"}>
-          This check includes GeoLite2 data created by MaxMind, available from{" "}
+          {t("postureChecks.geoLicensePrefix")}{" "}
           <InlineLink href={"https://www.maxmind.com"} target={"_blank"}>
             https://www.maxmind.com
           </InlineLink>
@@ -69,6 +69,7 @@ export const PostureCheckGeoLocation = ({
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const { t } = useI18n();
   const [allowDenyLocation, setAllowDenyLocation] = useState<string>(
     value?.action ? value.action : "allow",
   );
@@ -106,20 +107,19 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
       <div className={"flex flex-col px-8 gap-2 pb-6"}>
         <div className={"flex justify-between items-start gap-10 mt-2"}>
           <div>
-            <Label>Allow or Block Location</Label>
+            <Label>{t("postureChecks.allowOrBlockLocation")}</Label>
             <HelpText className={""}>
-              Choose whether you want to allow or block access from specific
-              countries or regions
+              {t("postureChecks.allowOrBlockLocationHelp")}
             </HelpText>
           </div>
           <RadioGroup value={allowDenyLocation} onChange={setAllowDenyLocation}>
             <RadioGroupItem value={"allow"} variant={"green"}>
               <ShieldCheck size={16} />
-              Allow
+              {t("postureChecks.allow")}
             </RadioGroupItem>
             <RadioGroupItem value={"deny"} variant={"red"}>
               <ShieldXIcon size={16} />
-              Block
+              {t("postureChecks.block")}
             </RadioGroupItem>
           </RadioGroup>
         </div>
@@ -169,28 +169,28 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
           onClick={addLocation}
         >
           <PlusCircle size={16} />
-          Add Location
+          {t("postureChecks.addLocation")}
         </Button>
       </div>
 
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("common.learnMorePrefix")}
             <InlineLink
               href={
                 "https://docs.netbird.io/how-to/manage-posture-checks#geolocation-check"
               }
               target={"_blank"}
             >
-              Country & Region Check
+              {t("postureChecks.countryRegionCheck")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("actions.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
@@ -206,7 +206,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
             }}
             disabled={disabled}
           >
-            Save
+            {t("groupsSettings.save")}
           </Button>
         </div>
       </ModalFooter>

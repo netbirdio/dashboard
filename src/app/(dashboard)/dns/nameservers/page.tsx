@@ -11,6 +11,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { NameserverGroup } from "@/interfaces/Nameserver";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -20,6 +21,7 @@ const NameserverGroupTable = lazy(
 
 export default function NameServers() {
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const { data: nameserverGroups, isLoading } =
     useFetchApi<NameserverGroup[]>("/dns/nameservers");
@@ -33,35 +35,33 @@ export default function NameServers() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/dns/nameservers"}
-            label={"DNS"}
+            label={t("dns.title")}
             icon={<DNSIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/dns/nameservers"}
-            label={"Nameservers"}
+            label={t("nameservers.title")}
             active
             icon={<DNSIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Nameservers</h1>
+        <h1 ref={headingRef}>{t("nameservers.title")}</h1>
+        <Paragraph>{t("nameservers.description")}</Paragraph>
         <Paragraph>
-          Add nameservers for domain name resolution in your NetBird network.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          {t("common.learnMorePrefix")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
             target={"_blank"}
           >
-            DNS
+            {t("dns.title")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
+          {t("common.inDocumentationSuffix")}
         </Paragraph>
       </div>
 
       <RestrictedAccess
-        page={"Nameservers"}
+        page={t("nameservers.title")}
         hasAccess={permission.nameservers.read}
       >
         <Suspense fallback={<SkeletonTable />}>

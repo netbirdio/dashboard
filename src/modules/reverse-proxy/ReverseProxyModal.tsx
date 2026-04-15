@@ -36,6 +36,7 @@ import React, { useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -108,6 +109,7 @@ export default function ReverseProxyModal({
   const { permission } = usePermissions();
   const { confirm } = useDialog();
   const { handleCreateOrUpdateProxy } = useReverseProxies();
+  const { t } = useI18n();
 
   const {
     subdomain,
@@ -342,12 +344,13 @@ export default function ReverseProxyModal({
   const handleSubmit = async () => {
     if (isUnprotected) {
       const confirmed = await confirm({
-        title: "No Protection Configured",
-        description:
-          "This service has no authentication or access control rules configured. It will be publicly accessible to everyone on the internet. Are you sure you want to continue?",
+        title: t("reverseProxy.modalNoProtectionTitle"),
+        description: t("reverseProxy.modalNoProtectionDescription"),
         type: "warning",
-        confirmText: reverseProxy ? "Save Changes" : "Add Service",
-        cancelText: "Cancel",
+        confirmText: reverseProxy
+          ? t("actions.saveChanges")
+          : t("reverseProxy.addService"),
+        cancelText: t("actions.cancel"),
         maxWidthClass: "max-w-lg",
       });
       if (!confirmed) return;
@@ -427,17 +430,21 @@ export default function ReverseProxyModal({
   };
 
   const modalTitle = useMemo(() => {
-    const prefix = reverseProxy ? "Edit" : "Add";
-    const label = serviceMode ? SERVICE_MODES[serviceMode].label : "Service";
+    const prefix = reverseProxy
+      ? t("reverseProxy.modalEditPrefix")
+      : t("reverseProxy.modalAddPrefix");
+    const label = serviceMode
+      ? SERVICE_MODES[serviceMode].label
+      : t("reverseProxy.modalDefaultLabel");
     return `${prefix} ${label}`;
-  }, [reverseProxy, serviceMode]);
+  }, [reverseProxy, serviceMode, t]);
 
   const modalDescription = useMemo(
     () =>
       isL4Mode
-        ? "Forward traffic directly to your backend service."
-        : "Expose services securely through NetBird's reverse proxy.",
-    [isL4Mode],
+        ? t("reverseProxy.modalL4Description")
+        : t("reverseProxy.modalHttpDescription"),
+    [isL4Mode, t],
   );
 
   return (
@@ -456,12 +463,12 @@ export default function ReverseProxyModal({
           <TabsList justify={"start"} className={"px-8"}>
             <TabsTrigger value={"targets"}>
               <ReverseProxyIcon size={14} />
-              Service
+              {t("reverseProxy.tabService")}
             </TabsTrigger>
             {!isL4Mode && (
               <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
                 <LockKeyhole size={14} />
-                Authentication
+                {t("reverseProxy.tabAuthentication")}
               </TabsTrigger>
             )}
             <TabsTrigger
@@ -469,11 +476,11 @@ export default function ReverseProxyModal({
               disabled={!canContinueToSettings}
             >
               <ShieldCheckIcon size={14} />
-              Access Control
+              {t("reverseProxy.tabAccessControl")}
             </TabsTrigger>
             <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
               <Settings size={14} />
-              Advanced Settings
+              {t("reverseProxy.tabAdvancedSettings")}
             </TabsTrigger>
           </TabsList>
 
@@ -540,10 +547,10 @@ export default function ReverseProxyModal({
                   label={
                     <>
                       <Users size={15} />
-                      SSO (Single Sign-On)
+                      {t("reverseProxy.authSso")}
                     </>
                   }
-                  description="Require users to authenticate via SSO to access this service."
+                  description={t("reverseProxy.authSsoDescription")}
                   enabled={bearerEnabled}
                   onClick={() => setSsoModalOpen(true)}
                 />
@@ -551,10 +558,10 @@ export default function ReverseProxyModal({
                   label={
                     <>
                       <RectangleEllipsis size={15} />
-                      Password
+                      {t("reverseProxy.authPassword")}
                     </>
                   }
-                  description="Require a password to access this service."
+                  description={t("reverseProxy.authPasswordDescription")}
                   enabled={passwordEnabled}
                   onClick={() => setPasswordModalOpen(true)}
                 />
@@ -562,10 +569,10 @@ export default function ReverseProxyModal({
                   label={
                     <>
                       <Binary size={15} />
-                      PIN Code
+                      {t("reverseProxy.authPin")}
                     </>
                   }
-                  description="Require a numeric PIN code to access this service."
+                  description={t("reverseProxy.authPinDescription")}
                   enabled={pinEnabled}
                   onClick={() => setPinModalOpen(true)}
                 />
@@ -573,10 +580,10 @@ export default function ReverseProxyModal({
                   label={
                     <>
                       <FileCode2Icon size={15} />
-                      HTTP Headers
+                      {t("reverseProxy.authHeaders")}
                     </>
                   }
-                  description="Require specific HTTP headers to access this service."
+                  description={t("reverseProxy.authHeadersDescription")}
                   enabled={headerAuthsEnabled}
                   onClick={() => setHeaderModalOpen(true)}
                 />
@@ -604,10 +611,10 @@ export default function ReverseProxyModal({
                   label={
                     <>
                       <MapPinned size={15} />
-                      Preserve Client Source IP
+                      {t("reverseProxy.preserveClientIp")}
                     </>
                   }
-                  helpText="Preserve client source IP addresses when forwarding traffic to the backend using PROXY Protocol v2."
+                  helpText={t("reverseProxy.preserveClientIpHelp")}
                 />
               )}
 
@@ -617,27 +624,18 @@ export default function ReverseProxyModal({
                     <div>
                       <Label>
                         {serviceMode === ServiceMode.UDP
-                          ? "Session Idle Timeout"
-                          : "Connection Timeout"}
+                          ? t("reverseProxy.sessionIdleTimeout")
+                          : t("reverseProxy.connectionTimeout")}
                       </Label>
                       <HelpText className={"mb-0"}>
-                        {serviceMode === ServiceMode.UDP ? (
-                          <>
-                            Close the UDP session after this period of
-                            inactivity.
-                            <br /> Leave this field empty for no timeout.
-                          </>
-                        ) : (
-                          <>
-                            Timeout for establishing backend connections. <br />{" "}
-                            Leave this field empty for no timeout.
-                          </>
-                        )}
+                        {serviceMode === ServiceMode.UDP
+                          ? t("reverseProxy.sessionIdleTimeoutHelp")
+                          : t("reverseProxy.connectionTimeoutHelp")}
                       </HelpText>
                     </div>
                     <Input
                       customPrefix={<ClockFadingIcon size={16} />}
-                      placeholder="e.g. 10s, 30s, 1m"
+                      placeholder={t("reverseProxy.timeoutPlaceholder")}
                       value={timeoutOption}
                       onChange={(e) => setTimeoutOption(e.target.value)}
                       maxWidthClass="w-[180px]"
@@ -656,10 +654,10 @@ export default function ReverseProxyModal({
                     label={
                       <>
                         <GlobeIcon size={15} />
-                        Pass Host Header
+                        {t("reverseProxy.passHostHeader")}
                       </>
                     }
-                    helpText="Forward the original Host header to the backend instead of rewriting it to the target address."
+                    helpText={t("reverseProxy.passHostHeaderHelp")}
                   />
                   <FancyToggleSwitch
                     value={rewriteRedirects}
@@ -667,10 +665,10 @@ export default function ReverseProxyModal({
                     label={
                       <>
                         <ArrowRight size={15} />
-                        Rewrite Redirects
+                        {t("reverseProxy.rewriteRedirects")}
                       </>
                     }
-                    helpText="Rewrite Location headers in backend responses to use the public domain instead of the internal backend address."
+                    helpText={t("reverseProxy.rewriteRedirectsHelp")}
                   />
                 </div>
               )}
@@ -684,24 +682,24 @@ export default function ReverseProxyModal({
               const docsLink = {
                 targets: {
                   href: REVERSE_PROXY_SERVICES_DOCS_LINK,
-                  label: "Services",
+                  label: t("reverseProxy.servicesTitle"),
                 },
                 auth: {
                   href: REVERSE_PROXY_AUTHENTICATION_DOCS_LINK,
-                  label: "Authentication",
+                  label: t("reverseProxy.tabAuthentication"),
                 },
                 "access-control": {
                   href: REVERSE_PROXY_ACCESS_CONTROL_DOCS_LINK,
-                  label: "Access Control",
+                  label: t("reverseProxy.tabAccessControl"),
                 },
                 settings: {
                   href: REVERSE_PROXY_SETTINGS_DOCS_LINK,
-                  label: "Settings",
+                  label: t("settings.title"),
                 },
               }[tab];
               return docsLink ? (
                 <Paragraph className={"text-sm mt-auto"}>
-                  Learn more about
+                  {t("common.learnMorePrefix")}
                   <InlineLink href={docsLink.href} target={"_blank"}>
                     {docsLink.label}
                     <ExternalLinkIcon size={12} />
@@ -716,7 +714,7 @@ export default function ReverseProxyModal({
                 {tab === "targets" && (
                   <>
                     <ModalClose asChild>
-                      <Button variant={"secondary"}>Cancel</Button>
+                      <Button variant={"secondary"}>{t("actions.cancel")}</Button>
                     </ModalClose>
                     <Button
                       variant={"primary"}
@@ -725,7 +723,7 @@ export default function ReverseProxyModal({
                       }
                       disabled={!canContinueToSettings}
                     >
-                      Continue
+                      {t("actions.continue")}
                     </Button>
                   </>
                 )}
@@ -736,13 +734,13 @@ export default function ReverseProxyModal({
                       variant={"secondary"}
                       onClick={() => setTab("targets")}
                     >
-                      Back
+                      {t("actions.back")}
                     </Button>
                     <Button
                       variant={"primary"}
                       onClick={() => setTab("access-control")}
                     >
-                      Continue
+                      {t("actions.continue")}
                     </Button>
                   </>
                 )}
@@ -753,14 +751,14 @@ export default function ReverseProxyModal({
                       variant={"secondary"}
                       onClick={() => setTab(isL4Mode ? "targets" : "auth")}
                     >
-                      Back
+                      {t("actions.back")}
                     </Button>
                     <Button
                       variant={"primary"}
                       onClick={() => setTab("settings")}
                       disabled={accessControlHasErrors}
                     >
-                      Continue
+                      {t("actions.continue")}
                     </Button>
                   </>
                 )}
@@ -771,7 +769,7 @@ export default function ReverseProxyModal({
                       variant={"secondary"}
                       onClick={() => setTab("access-control")}
                     >
-                      Back
+                      {t("actions.back")}
                     </Button>
                     <Button
                       variant={"primary"}
@@ -784,7 +782,7 @@ export default function ReverseProxyModal({
                       onClick={handleSubmit}
                     >
                       <PlusCircle size={16} />
-                      Add Service
+                      {t("reverseProxy.addService")}
                     </Button>
                   </>
                 )}
@@ -792,7 +790,7 @@ export default function ReverseProxyModal({
             ) : (
               <>
                 <ModalClose asChild>
-                  <Button variant={"secondary"}>Cancel</Button>
+                  <Button variant={"secondary"}>{t("actions.cancel")}</Button>
                 </ModalClose>
                 <Button
                   variant={"primary"}
@@ -804,7 +802,7 @@ export default function ReverseProxyModal({
                   }
                   onClick={handleSubmit}
                 >
-                  Save Changes
+                  {t("actions.saveChanges")}
                 </Button>
               </>
             )}

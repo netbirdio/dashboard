@@ -34,8 +34,10 @@ import { GroupResourcesSection } from "@/modules/groups/details/GroupResourcesSe
 import { GroupSetupKeysSection } from "@/modules/groups/details/GroupSetupKeysSection";
 import { GroupUsersSection } from "@/modules/groups/details/GroupUsersSection";
 import useGroupDetails from "@/modules/groups/details/useGroupDetails";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export default function GroupPage() {
+  const { t } = useI18n();
   const queryParameter = useSearchParams();
   const { isRestricted } = usePermissions();
   const groupId = queryParameter.get("id");
@@ -50,7 +52,7 @@ export default function GroupPage() {
   if (isRestricted) {
     return (
       <PageContainer>
-        <RestrictedAccess page={"Group Information"} />
+        <RestrictedAccess page={t("groupDetails.title")} />
       </PageContainer>
     );
   }
@@ -59,9 +61,7 @@ export default function GroupPage() {
     return (
       <PageNotFound
         title={error?.message}
-        description={
-          "The group you are attempting to access cannot be found. It may have been deleted, or you may not have permission to view it. Please verify the URL or return to the dashboard."
-        }
+        description={t("groupDetails.notFound")}
       />
     );
 
@@ -73,7 +73,7 @@ export default function GroupPage() {
             <Breadcrumbs>
               <Breadcrumbs.Item
                 href={"/groups"}
-                label={"Groups"}
+                label={t("groups.title")}
                 icon={<FolderGit2Icon size={14} />}
               />
               <Breadcrumbs.Item label={group.name} active />
@@ -142,6 +142,7 @@ const validAllGroupTabs = [
 const validOtherGroupTabs = ["users", "peers", "setup-keys"];
 
 const GroupOverviewTabs = ({ group }: { group: Group }) => {
+  const { t } = useI18n();
   const searchParams = useSearchParams();
 
   const getInitialTab = () => {
@@ -188,7 +189,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            {singularize("Users", usersCount)}
+            {singularize(t("users.title"), usersCount)}
           </TabsTrigger>
         )}
 
@@ -203,7 +204,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            {singularize("Peers", peersCount)}
+            {singularize(t("peers.title"), peersCount)}
           </TabsTrigger>
         )}
 
@@ -217,7 +218,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
               "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
             }
           />
-          {singularize("Policies", policiesCount)}
+          {singularize(t("nav.policies"), policiesCount)}
         </TabsTrigger>
 
         <TabsTrigger
@@ -225,7 +226,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
           className={groupDetails === null ? "animate-pulse" : ""}
         >
           <Layers3Icon size={14} />
-          {singularize("Resources", resourcesCount)}
+          {singularize(t("networkDetails.resources"), resourcesCount)}
         </TabsTrigger>
 
         <TabsTrigger
@@ -238,7 +239,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
               "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
             }
           />
-          {singularize("Network Routes", routesCount)}
+          {singularize(t("networkRoutesPage.title"), routesCount)}
         </TabsTrigger>
 
         <TabsTrigger
@@ -251,7 +252,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
               "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
             }
           />
-          {singularize("Nameservers", nameserversCount)}
+          {singularize(t("nameservers.title"), nameserversCount)}
         </TabsTrigger>
 
         <TabsTrigger
@@ -264,7 +265,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
               "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
             }
           />
-          {singularize("Zones", zonesCount)}
+          {singularize(t("zones.title"), zonesCount)}
         </TabsTrigger>
 
         {group.name !== "All" && (
@@ -278,7 +279,7 @@ const GroupOverviewTabs = ({ group }: { group: Group }) => {
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            {singularize("Setup Keys", setupKeysCount)}
+            {singularize(t("setupKeys.title"), setupKeysCount)}
           </TabsTrigger>
         )}
       </TabsList>

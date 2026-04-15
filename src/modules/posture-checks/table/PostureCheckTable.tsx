@@ -16,6 +16,7 @@ import { usePathname } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Policy } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import PostureCheckModal from "@/modules/posture-checks/modal/PostureCheckModal";
@@ -31,41 +32,51 @@ type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
-const Columns: ColumnDef<PostureCheck>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
-    },
-    cell: ({ row }) => <PostureCheckNameCell check={row.original} />,
-  },
-  {
-    id: "active",
-    accessorKey: "active",
-    sortingFn: "basic",
-  },
-  {
-    id: "checks",
-    accessorFn: (row) => Object.keys(row.checks).length,
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Checks</DataTableHeader>;
-    },
-    cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
-  },
-  {
-    id: "access_control_usage",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Policies</DataTableHeader>;
-    },
-    cell: ({ row }) => <PostureCheckPolicyUsageCell check={row.original} />,
-  },
+function useColumns(): ColumnDef<PostureCheck>[] {
+  const { t } = useI18n();
 
-  {
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => <PostureCheckActionCell check={row.original} />,
-  },
-];
+  return useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>;
+        },
+        cell: ({ row }) => <PostureCheckNameCell check={row.original} />,
+      },
+      {
+        id: "active",
+        accessorKey: "active",
+        sortingFn: "basic",
+      },
+      {
+        id: "checks",
+        accessorFn: (row) => Object.keys(row.checks).length,
+        header: ({ column }) => {
+          return (
+            <DataTableHeader column={column}>{t("postureChecks.checks")}</DataTableHeader>
+          );
+        },
+        cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
+      },
+      {
+        id: "access_control_usage",
+        header: ({ column }) => {
+          return (
+            <DataTableHeader column={column}>{t("nav.policies")}</DataTableHeader>
+          );
+        },
+        cell: ({ row }) => <PostureCheckPolicyUsageCell check={row.original} />,
+      },
+      {
+        accessorKey: "id",
+        header: "",
+        cell: ({ row }) => <PostureCheckActionCell check={row.original} />,
+      },
+    ],
+    [t],
+  );
+}
 
 export default function PostureCheckTable({
   postureChecks,
@@ -73,9 +84,11 @@ export default function PostureCheckTable({
   headingTarget,
 }: Props) {
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const { data: policies } = useFetchApi<Policy[]>("/policies");
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const columns = useColumns();
 
   const data = useMemo(() => {
     if (!postureChecks) return [];
@@ -126,11 +139,11 @@ export default function PostureCheckTable({
         <DataTable
           headingTarget={headingTarget}
           isLoading={isLoading}
-          text={"Posture Check"}
+          text={t("postureChecks.title")}
           sorting={sorting}
           wrapperClassName={""}
           setSorting={setSorting}
-          columns={Columns}
+          columns={columns}
           showHeader={true}
           columnVisibility={{
             active: false,
@@ -141,7 +154,7 @@ export default function PostureCheckTable({
             setCurrentCellClicked(cell);
           }}
           data={data}
-          searchPlaceholder={"Search by name and description..."}
+          searchPlaceholder={t("postureChecks.searchPlaceholder")}
           rightSide={() => (
             <>
               {data && data?.length > 0 && (
@@ -157,7 +170,7 @@ export default function PostureCheckTable({
                   }}
                 >
                   <IconCirclePlus size={16} />
-                  Add Posture Check
+                  {t("postureChecks.addButton")}
                 </Button>
               )}
             </>
@@ -171,10 +184,8 @@ export default function PostureCheckTable({
                   size={"large"}
                 />
               }
-              title={"Create Posture Check"}
-              description={
-                "Add posture checks to further restrict access in your network. E.g., only clients with a specific NetBird client version, operating system or location are allowed to connect."
-              }
+              title={t("postureChecks.emptyTitle")}
+              description={t("postureChecks.emptyDescription")}
               button={
                 <Button
                   variant={"primary"}
@@ -185,19 +196,19 @@ export default function PostureCheckTable({
                   onClick={() => setPostureCheckModal(true)}
                 >
                   <IconCirclePlus size={16} />
-                  Create Posture Check
+                  {t("postureChecks.createButton")}
                 </Button>
               }
               learnMore={
                 <>
-                  Learn more about
+                  {t("common.learnMorePrefix")}
                   <InlineLink
                     href={
                       "https://docs.netbird.io/how-to/manage-posture-checks"
                     }
                     target={"_blank"}
                   >
-                    Posture Checks
+                    {t("postureChecks.title")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -221,7 +232,7 @@ export default function PostureCheckTable({
                         : "secondary"
                     }
                   >
-                    Active
+                    {t("accessPolicies.active")}
                   </ButtonGroup.Button>
                   <ButtonGroup.Button
                     onClick={() => {
@@ -235,7 +246,7 @@ export default function PostureCheckTable({
                         : "secondary"
                     }
                   >
-                    All
+                    {t("filters.all")}
                   </ButtonGroup.Button>
                 </ButtonGroup>
                 <DataTableRowsPerPage

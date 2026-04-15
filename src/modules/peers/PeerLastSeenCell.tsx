@@ -1,5 +1,6 @@
 import { History } from "lucide-react";
 import * as React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Peer } from "@/interfaces/Peer";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 
@@ -7,6 +8,8 @@ type Props = {
   peer: Peer;
 };
 export default function PeerLastSeenCell({ peer }: Props) {
+  const { t } = useI18n();
+
   return !peer.connected ? (
     <LastTimeRow date={peer.last_seen} />
   ) : (
@@ -17,7 +20,7 @@ export default function PeerLastSeenCell({ peer }: Props) {
     >
       <>
         <History size={14} />
-        just now
+        {t("peerDetails.justNow")}
       </>
     </div>
   );

@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import Card from "@components/Card";
 import {
@@ -23,6 +25,7 @@ import {
 import Paragraph from "@components/Paragraph";
 import InlineLink from "@components/InlineLink";
 import { isNetBirdHosted } from "@/utils/netbird";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   open: boolean;
@@ -40,6 +43,7 @@ export const CustomDomainVerificationModal = ({
   targetCluster,
 }: Props) => {
   const { domains } = useReverseProxies();
+  const { t } = useI18n();
 
   const handleStartVerification = () => {
     onStartVerification(domain);
@@ -59,22 +63,27 @@ export const CustomDomainVerificationModal = ({
         <GradientFadedBackground />
         <ModalHeader
           icon={<GlobeIcon size={20} />}
-          title={"Verify Domain"}
-          description={domain.domain}
+          title={t("reverseProxy.verifyDomainTitle")}
+          description={t("reverseProxy.verifyDomainDescription", {
+            domain: domain.domain,
+          })}
           color={"netbird"}
         />
         <div className={"px-8 flex flex-col gap-0 pb-6"}>
           <Steps className={"pt-0 stepper-bg-variant"}>
             <Steps.Step step={1}>
-              <p className={"font-normal"}>
-                Sign in to your domain name provider (e.g. cloudflare.com or
-                godaddy.com)
-              </p>
+              <p className={"font-normal"}>{t("reverseProxy.verifyStepLogin")}</p>
             </Steps.Step>
             <Steps.Step step={2} line={false}>
               <p className={"font-normal"}>
-                Add the <Mark>CNAME record</Mark> below to your DNS
-                configuration for <Mark>{domain.domain}</Mark>
+                {t("reverseProxy.verifyStepAdd", { domain: domain.domain })
+                  .split("CNAME")
+                  .map((part, index, arr) => (
+                    <React.Fragment key={`${part}-${index}`}>
+                      {part}
+                      {index < arr.length - 1 && <Mark>CNAME</Mark>}
+                    </React.Fragment>
+                  ))}
               </p>
             </Steps.Step>
           </Steps>
@@ -82,30 +91,28 @@ export const CustomDomainVerificationModal = ({
             {!cnameTarget ? (
               isNetBirdHosted() ? (
                 <Callout variant={"warning"}>
-                  No proxy clusters are currently connected. Please try again in
-                  a few minutes. If the issue persists, check{" "}
+                  {t("reverseProxy.customDomainNoClusterHosted")}{" "}
                   <InlineLink
                     href={"https://status.netbird.io/"}
                     target={"_blank"}
                   >
-                    NetBird Status
+                    {t("reverseProxy.netbirdStatus")}
                   </InlineLink>{" "}
-                  or reach out to{"  "}
+                  {t("reverseProxy.customDomainNoClusterHostedSuffix")}{" "}
                   <InlineLink href={"mailto:support@netbird.io"}>
                     support@netbird.io
                   </InlineLink>
                 </Callout>
               ) : (
                 <Callout variant={"warning"}>
-                  No proxy clusters are currently connected. Please ensure at
-                  least one proxy is running to configure DNS verification.{" "}
+                  {t("reverseProxy.customDomainNoClusterSelfHosted")}{" "}
                   <br />
-                  Learn more about{" "}
+                  {t("common.learnMorePrefix")}{" "}
                   <InlineLink
                     href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
                     target={"_blank"}
                   >
-                    Proxy Clusters
+                    {t("reverseProxy.proxyClusters")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </Callout>
@@ -117,13 +124,13 @@ export const CustomDomainVerificationModal = ({
                     <Card.ListItem
                       copy
                       copyText={`*.${domain.domain}`}
-                      label={"CNAME Record"}
+                      label={t("reverseProxy.cnameRecord")}
                       value={`*.${domain.domain}`}
                     />
                     <Card.ListItem
                       copy
                       copyText={cnameTarget}
-                      label={"CNAME Content"}
+                      label={t("reverseProxy.cnameContent")}
                       value={cnameTarget}
                     />
                   </Card.List>
@@ -132,17 +139,15 @@ export const CustomDomainVerificationModal = ({
                 {!targetCluster && freeDomains.length > 1 && (
                   <Callout variant={"info"}>
                     <span className="font-medium">
-                      Available proxy clusters:
+                      {t("reverseProxy.availableClusters")}
                     </span>{" "}
-                    {freeDomains.map((d) => d.domain).join(", ")}. Choose the
-                    cluster closest to your users for best performance.
+                    {freeDomains.map((d) => d.domain).join(", ")}.{" "}
+                    {t("reverseProxy.availableClustersHelp")}
                   </Callout>
                 )}
 
                 <Callout variant={"warning"}>
-                  DNS changes may take some time to propagate. If NetBird does
-                  not find the record immediately, please wait up to 24 hours
-                  and try again.
+                  {t("reverseProxy.pendingVerificationHelp")}
                 </Callout>
               </>
             )}
@@ -151,19 +156,21 @@ export const CustomDomainVerificationModal = ({
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
-              Learn more about
+              {t("common.learnMorePrefix")}
               <InlineLink
                 href={REVERSE_PROXY_DOMAIN_VERIFICATION_LINK}
                 target={"_blank"}
               >
-                Domain Verification
+                {t("reverseProxy.domainVerification")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Verify Later</Button>
+              <Button variant={"secondary"}>
+                {t("reverseProxy.verifyLater")}
+              </Button>
             </ModalClose>
 
             <Button
@@ -171,7 +178,7 @@ export const CustomDomainVerificationModal = ({
               onClick={handleStartVerification}
               disabled={!cnameTarget}
             >
-              Start Verification
+              {t("reverseProxy.startVerification")}
             </Button>
           </div>
         </ModalFooter>

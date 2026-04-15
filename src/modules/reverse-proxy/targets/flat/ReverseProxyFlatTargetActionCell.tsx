@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import {
   DropdownMenu,
@@ -9,6 +11,7 @@ import { MoreVertical, Settings, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { isL4Mode, ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
 
 type Props = {
@@ -21,6 +24,7 @@ export default function ReverseProxyFlatTargetActionCell({
   const { permission } = usePermissions();
   const { openModal, openTargetModal, handleDeleteTarget } =
     useReverseProxies();
+  const { t } = useI18n();
 
   return (
     <div className={"flex justify-end pr-4"}>
@@ -38,7 +42,6 @@ export default function ReverseProxyFlatTargetActionCell({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end">
           <DropdownMenuItem
-            data-proxy-edit-action={target.proxy.id}
             onClick={(e) => {
               e.stopPropagation();
               if (isL4Mode(target.proxy.mode)) {
@@ -51,12 +54,11 @@ export default function ReverseProxyFlatTargetActionCell({
           >
             <div className={"flex gap-3 items-center pr-8"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit Target
+              {t("reverseProxy.editTarget")}
             </div>
           </DropdownMenuItem>
 
           <DropdownMenuItem
-            data-proxy-settings-action={target.proxy.id}
             onClick={(e) => {
               e.stopPropagation();
               openModal({ proxy: target.proxy, initialTab: "settings" });
@@ -65,7 +67,7 @@ export default function ReverseProxyFlatTargetActionCell({
           >
             <div className={"flex gap-3 items-center pr-6"}>
               <Settings size={14} className={"shrink-0"} />
-              Advanced Settings
+              {t("reverseProxy.tabAdvancedSettings")}
             </div>
           </DropdownMenuItem>
 
@@ -79,7 +81,7 @@ export default function ReverseProxyFlatTargetActionCell({
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("actions.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

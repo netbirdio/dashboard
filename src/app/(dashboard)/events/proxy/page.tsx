@@ -15,9 +15,11 @@ import PageContainer from "@/layouts/PageContainer";
 import ReverseProxyEventsTable from "@/modules/reverse-proxy/events/ReverseProxyEventsTable";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { REVERSE_PROXY_EVENTS_DOCS_LINK } from "@/interfaces/ReverseProxy";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export default function ProxyEventsPage() {
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -36,35 +38,32 @@ export default function ProxyEventsPage() {
       <div className="p-default py-6">
         <Breadcrumbs>
           <Breadcrumbs.Item
-            label="Activity"
+            label={t("nav.activity")}
             disabled
             icon={<ActivityIcon size={13} />}
           />
           <Breadcrumbs.Item
             href="/events/proxy"
-            label="Proxy Events"
+            label={t("nav.proxyEvents")}
             icon={<ReverseProxyIcon size={15} />}
           />
         </Breadcrumbs>
 
-        <h1 ref={headingRef}>Proxy Events</h1>
+        <h1 ref={headingRef}>{t("proxyEvents.title")}</h1>
+
+        <Paragraph>{t("proxyEvents.description")}</Paragraph>
 
         <Paragraph>
-          View access logs for your reverse proxy services, including allowed
-          and denied requests.
-        </Paragraph>
-
-        <Paragraph>
-          Learn more about{" "}
+          {t("common.learnMorePrefix")}{" "}
           <InlineLink href={REVERSE_PROXY_EVENTS_DOCS_LINK} target="_blank">
-            Proxy Events <ExternalLinkIcon size={12} />
+            {t("nav.proxyEvents")} <ExternalLinkIcon size={12} />
           </InlineLink>{" "}
-          in our documentation.
+          {t("common.inDocumentationSuffix")}
         </Paragraph>
       </div>
 
       <RestrictedAccess
-        page="Proxy Events"
+        page={t("nav.proxyEvents")}
         hasAccess={permission?.services?.read}
       >
         <ServerPaginationProvider

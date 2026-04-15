@@ -34,15 +34,20 @@ import { ReverseProxyEventsAuthMethodCell } from "@/modules/reverse-proxy/events
 import { ReverseProxyEventsReasonCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsReasonCell";
 import { ReverseProxyEventsDurationCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsDurationCell";
 import { ReverseProxyEventsBytesCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsBytesCell";
+import { useI18n } from "@/i18n/I18nProvider";
+import type { MessageKey } from "@/i18n/messages";
+
+type TranslationValues = Record<string, string | number>;
 
 export const makeEventsColumns = (
   servicesMap: Map<string, ReverseProxy>,
+  t: (key: MessageKey, values?: TranslationValues) => string,
 ): ColumnDef<ReverseProxyEvent>[] => [
   {
     id: "timestamp",
     header: ({ column }) => (
       <DataTableHeader column={column} name="timestamp">
-        Time
+        {t("proxyEvents.time")}
       </DataTableHeader>
     ),
     cell: ({ row }) => (
@@ -58,7 +63,7 @@ export const makeEventsColumns = (
       `${row.source_ip} ${row.city_name || ""} ${row.country_code || ""}`,
     header: ({ column }) => (
       <DataTableHeader column={column} name="source_ip">
-        Location / IP
+        {t("proxyEvents.locationIp")}
       </DataTableHeader>
     ),
     cell: ({ row }) => (
@@ -70,7 +75,7 @@ export const makeEventsColumns = (
     accessorKey: "method",
     header: ({ column }) => (
       <DataTableHeader column={column} name="method">
-        Method
+        {t("proxyEvents.method")}
       </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsMethodCell event={row.original} />,
@@ -81,7 +86,7 @@ export const makeEventsColumns = (
     accessorFn: (row) => `${row.host} ${row.path || ""}`,
     header: ({ column }) => (
       <DataTableHeader column={column} name="url" sorting={false}>
-        Host / URL
+        {t("proxyEvents.hostUrl")}
       </DataTableHeader>
     ),
     cell: ({ row }) => (
@@ -96,7 +101,7 @@ export const makeEventsColumns = (
     accessorKey: "status_code",
     header: ({ column }) => (
       <DataTableHeader column={column} name="status_code">
-        Status
+        {t("table.status")}
       </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsStatusCell event={row.original} />,
@@ -113,7 +118,7 @@ export const makeEventsColumns = (
     accessorKey: "duration_ms",
     header: ({ column }) => (
       <DataTableHeader column={column} name="duration">
-        Duration
+        {t("proxyEvents.duration")}
       </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsDurationCell event={row.original} />,
@@ -123,7 +128,7 @@ export const makeEventsColumns = (
     accessorFn: (row) => (row.bytes_download ?? 0) + (row.bytes_upload ?? 0),
     header: ({ column }) => (
       <DataTableHeader column={column} sorting={false}>
-        Bytes
+        {t("proxyEvents.bytes")}
       </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsBytesCell event={row.original} />,
@@ -133,7 +138,7 @@ export const makeEventsColumns = (
     accessorKey: "auth_method_used",
     header: ({ column }) => (
       <DataTableHeader column={column} name="auth_method">
-        Auth Method
+        {t("proxyEvents.authMethod")}
       </DataTableHeader>
     ),
     cell: ({ row }) => (
@@ -145,7 +150,7 @@ export const makeEventsColumns = (
     accessorKey: "reason",
     header: ({ column }) => (
       <DataTableHeader column={column} name="reason">
-        Reason
+        {t("proxyEvents.reason")}
       </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsReasonCell event={row.original} />,
@@ -155,7 +160,7 @@ export const makeEventsColumns = (
     accessorFn: (row) => row.user_id || "",
     header: ({ column }) => (
       <DataTableHeader column={column} name="user_id">
-        User
+        {t("table.user")}
       </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsUserCell event={row.original} />,
@@ -172,6 +177,7 @@ type Props = {
 export default function ReverseProxyEventsTable({
   headingTarget,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const {
     data: events,
     isLoading,
@@ -194,7 +200,7 @@ export default function ReverseProxyEventsTable({
     return map;
   }, [services]);
 
-  const columns = useMemo(() => makeEventsColumns(servicesMap), [servicesMap]);
+  const columns = useMemo(() => makeEventsColumns(servicesMap, t), [servicesMap, t]);
 
   const activeStatus = getFilter("status");
 
@@ -237,12 +243,12 @@ export default function ReverseProxyEventsTable({
       isLoading={isLoading}
       inset={false}
       tableCellClassName={"py-1 px-2"}
-      text={"Proxy Events"}
+      text={t("proxyEvents.title")}
       sorting={sorting}
       setSorting={setSorting}
       columns={columns}
       columnVisibility={{ is_success: false, id: false }}
-      searchPlaceholder={"Search by IP, host, path, user..."}
+      searchPlaceholder={t("proxyEvents.searchPlaceholder")}
       getStartedCard={
         <GetStartedTest
           icon={
@@ -254,18 +260,16 @@ export default function ReverseProxyEventsTable({
               size={"large"}
             />
           }
-          title={"No Proxy Events Yet"}
-          description={
-            "We haven't detected any proxy events yet. This could be because you haven't configured any reverse proxy services, or there hasn't been any traffic."
-          }
+          title={t("proxyEvents.emptyTitle")}
+          description={t("proxyEvents.emptyDescription")}
           learnMore={
             <>
-              Learn more about
+              {t("common.learnMorePrefix")}{" "}
               <InlineLink
                 href={REVERSE_PROXY_EVENTS_DOCS_LINK}
                 target={"_blank"}
               >
-                Proxy Events
+                {t("proxyEvents.title")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>
@@ -280,19 +284,19 @@ export default function ReverseProxyEventsTable({
               onClick={() => setFilter("status", undefined)}
               variant={activeStatus === undefined ? "tertiary" : "secondary"}
             >
-              All
+              {t("filters.all")}
             </ButtonGroup.Button>
             <ButtonGroup.Button
               onClick={() => setFilter("status", "success")}
               variant={activeStatus === "success" ? "tertiary" : "secondary"}
             >
-              Success
+              {t("proxyEvents.success")}
             </ButtonGroup.Button>
             <ButtonGroup.Button
               onClick={() => setFilter("status", "failed")}
               variant={activeStatus === "failed" ? "tertiary" : "secondary"}
             >
-              Failed
+              {t("proxyEvents.failed")}
             </ButtonGroup.Button>
           </ButtonGroup>
 

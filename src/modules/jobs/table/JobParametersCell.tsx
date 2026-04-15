@@ -3,9 +3,12 @@ import FullTooltip from "@components/FullTooltip";
 import { TooltipListItem } from "@components/TooltipListItem";
 import { InfoIcon } from "lucide-react";
 import React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
 export const JobParametersCell = ({ parameters }: { parameters: any }) => {
+  const { t } = useI18n();
+
   if (!parameters || Object.keys(parameters).length === 0) {
     return <EmptyRow />;
   }
@@ -34,8 +37,8 @@ export const JobParametersCell = ({ parameters }: { parameters: any }) => {
               value={
                 typeof value === "boolean"
                   ? value
-                    ? "Yes"
-                    : "No"
+                    ? t("common.yes")
+                    : t("common.no")
                   : String(value)
               }
               key={key}
@@ -49,7 +52,7 @@ export const JobParametersCell = ({ parameters }: { parameters: any }) => {
         className="flex items-center gap-1.5 cursor-default"
       >
         <InfoIcon size={12} />
-        {entries.length} Parameters
+        {t("jobs.parametersCount", { count: entries.length })}
       </Badge>
     </FullTooltip>
   );

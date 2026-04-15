@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
@@ -18,6 +20,7 @@ import Separator from "@components/Separator";
 import { validator } from "@utils/helpers";
 import { ExternalLinkIcon, Power, ScanSearch } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { DNS_ZONE_DOCS_LINK, DNSZone } from "@/interfaces/DNS";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
@@ -77,6 +80,7 @@ export function DNSZoneModalContent({
   zone,
   initialDistributionGroups,
 }: Readonly<ModalProps>) {
+  const { t } = useI18n();
   const { createZone, updateZone } = useDNSZones();
   const [domain, setDomain] = useState(zone?.domain ?? "");
   const [enabled, setEnabled] = useState<boolean>(zone?.enabled ?? true);
@@ -95,9 +99,9 @@ export function DNSZoneModalContent({
       preventLeadingAndTrailingDots: true,
     });
     if (!valid) {
-      return "Please enter a valid domain, e.g. internal, company.internal or intra.example.com";
+      return t("zones.domainError");
     }
-  }, [domain]);
+  }, [domain, t]);
 
   const handleOnSubmit = async () => {
     return saveGroups().then((distributionGroups) => {
@@ -130,10 +134,8 @@ export function DNSZoneModalContent({
     <ModalContent maxWidthClass={"max-w-2xl"}>
       <ModalHeader
         icon={<DNSZoneIcon size={20} className={"fill-netbird"} />}
-        title={zone ? "Update DNS Zone" : "Add DNS Zone"}
-        description={
-          "Use a zone to control domain name resolution for your network."
-        }
+        title={zone ? t("zones.modalUpdateTitle") : t("zones.modalAddTitle")}
+        description={t("zones.modalDescription")}
         color={"netbird"}
       />
 
@@ -141,15 +143,12 @@ export function DNSZoneModalContent({
 
       <div className={"px-8 pt-6 pb-7 flex-col flex gap-6"}>
         <div>
-          <Label>Domain</Label>
-          <HelpText>
-            Enter a domain for this zone (e.g., company.internal,
-            intra.example.com)
-          </HelpText>
+          <Label>{t("zones.domain")}</Label>
+          <HelpText>{t("zones.domainHelp")}</HelpText>
           <Input
             disabled={!!zone}
             readOnly={!!zone}
-            placeholder={"e.g., company.internal"}
+            placeholder={t("zones.domainPlaceholder")}
             errorTooltip={false}
             errorTooltipPosition={"top"}
             error={domainError}
@@ -158,11 +157,8 @@ export function DNSZoneModalContent({
           />
         </div>
         <div className={"mb-2"}>
-          <Label>Distribution Groups</Label>
-          <HelpText>
-            Advertise this zone and its records to peers that belong to the
-            following groups
-          </HelpText>
+          <Label>{t("zones.distributionGroups")}</Label>
+          <HelpText>{t("zones.distributionGroupsHelp")}</HelpText>
           <PeerGroupSelector
             onChange={setGroups}
             values={groups}
@@ -177,12 +173,10 @@ export function DNSZoneModalContent({
           label={
             <>
               <ScanSearch size={15} />
-              Enable Search Domains
+              {t("zones.enableSearchDomains")}
             </>
           }
-          helpText={
-            "E.g., 'server.company.internal' will be accessible with 'server'"
-          }
+          helpText={t("zones.enableSearchDomainsHelp")}
         />
 
         <FancyToggleSwitch
@@ -191,33 +185,33 @@ export function DNSZoneModalContent({
           label={
             <>
               <Power size={15} />
-              Enable DNS Zone
+              {t("zones.enableLabel")}
             </>
           }
-          helpText={"Use this switch to enable or disable the dns zone."}
+          helpText={t("zones.enableHelp")}
         />
       </div>
 
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("common.learnMorePrefix")}
             <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
-              DNS Zones
+              {t("zones.learnMoreLink")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("actions.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
             onClick={handleOnSubmit}
             disabled={!canUpdateOrCreate}
           >
-            {zone ? "Save Changes" : "Add Zone"}
+            {zone ? t("actions.saveChanges") : t("zones.add")}
           </Button>
         </div>
       </ModalFooter>

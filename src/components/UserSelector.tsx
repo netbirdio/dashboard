@@ -9,6 +9,7 @@ import { ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
 import { memo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useI18n } from "@/i18n/I18nProvider";
 import { User } from "@/interfaces/User";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
@@ -39,8 +40,10 @@ export function UserSelector({
   value,
   disabled = false,
   options = [],
-  placeholder = "Select a user...",
+  placeholder,
 }: MultiSelectProps) {
+  const { t } = useI18n();
+  const resolvedPlaceholder = placeholder ?? t("userSelector.selectUser");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
   const [filteredItems, search, setSearch] = useSearch(
@@ -97,7 +100,7 @@ export function UserSelector({
                 variant={"selected"}
               />
             ) : (
-              <span>{placeholder}</span>
+              <span>{resolvedPlaceholder}</span>
             )}
           </div>
 
@@ -119,22 +122,20 @@ export function UserSelector({
             value={search}
             onChange={setSearch}
             hideEnterIcon={true}
-            placeholder={"Search for users by name or email..."}
+            placeholder={t("userSelector.searchPlaceholder")}
           />
 
           {options.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {
-                  "There are no users to select. Invite some users for this tenant before unlinking."
-                }
+                {t("userSelector.noUsers")}
               </DropdownInfoText>
             </div>
           )}
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
-              There are no users matching your search.
+              {t("userSelector.noMatchingUsers")}
             </DropdownInfoText>
           )}
 
@@ -170,6 +171,7 @@ export const UserListItem = ({
   className,
   variant,
 }: UserListItemProps) => {
+  const { t } = useI18n();
   const isSystemUser = user?.email === "NetBird" || user?.email === "";
   const maxChars = variant === "selected" ? 30 : 20;
 
@@ -197,7 +199,7 @@ export const UserListItem = ({
           )}
         >
           <TextWithTooltip
-            text={isSystemUser ? "System" : user?.name || user?.id}
+            text={isSystemUser ? t("userSelector.system") : user?.name || user?.id}
             maxChars={maxChars}
           />
         </span>

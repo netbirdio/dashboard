@@ -19,6 +19,7 @@ import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Role, User } from "@/interfaces/User";
 
 interface MultiSelectProps {
@@ -77,6 +78,20 @@ export function UserRoleSelector({
   side = "bottom",
   align = "start",
 }: Readonly<MultiSelectProps>) {
+  const { t } = useI18n();
+
+  const getRoleName = (roleValue: Role) => {
+    switch(roleValue) {
+      case Role.Owner: return t("userRoles.owner");
+      case Role.Admin: return t("userRoles.admin");
+      case Role.NetworkAdmin: return t("userRoles.networkAdmin");
+      case Role.BillingAdmin: return t("userRoles.billingAdmin");
+      case Role.Auditor: return t("userRoles.auditor");
+      case Role.User: return t("userRoles.user");
+      default: return "";
+    }
+  };
+
   const [inputRef, { width }] = useElementSize<
     HTMLButtonElement | HTMLDivElement
   >();
@@ -86,24 +101,27 @@ export function UserRoleSelector({
   const toggle = async (item: Role) => {
     if (item === Role.Owner) {
       let ok = await confirm({
-        title: "Transfer Ownership?",
+        title: t("userRoles.transferOwnershipTitle"),
         type: "warning",
         description: (
           <div className={"inline-block"}>
-            This action will transfer the{" "}
-            <span className={"text-netbird inline font-medium"}>Owner</span>{" "}
-            role to{" "}
+            {t("userRoles.transferOwnershipLine1")}{" "}
+            <span className={"text-netbird inline font-medium"}>
+              {t("userRoles.owner")}
+            </span>{" "}
+            {t("userRoles.transferOwnershipLine2")}{" "}
             {currentUser ? (
               <span className={"text-netbird inline font-medium"}>
                 {currentUser.name}
               </span>
             ) : (
-              "this user"
+              t("userRoles.thisUser")
             )}{" "}
-            and leave you with the{" "}
-            <span className={"text-netbird inline font-medium"}>Admin</span>{" "}
-            role. This action can only be undone if the new owner transfers the
-            role back to you.
+            {t("userRoles.transferOwnershipLine3")}{" "}
+            <span className={"text-netbird inline font-medium"}>
+              {t("userRoles.admin")}
+            </span>{" "}
+            {t("userRoles.transferOwnershipLine4")}
           </div>
         ),
       });
@@ -145,7 +163,7 @@ export function UserRoleSelector({
                   <selectedRole.icon size={14} width={14} />
                   <div className={"flex flex-col text-sm font-medium"}>
                     <span className={"text-nb-gray-200 whitespace-nowrap"}>
-                      {selectedRole?.name}
+                      {getRoleName(selectedRole.value)}
                     </span>
                   </div>
                 </div>
@@ -208,7 +226,7 @@ export function UserRoleSelector({
                               "flex flex-col text-sm font-medium text-nb-gray-200 whitespace-nowrap"
                             }
                           >
-                            {item.name}
+                            {getRoleName(item.value)}
                           </div>
                         </div>
                       </CommandItem>

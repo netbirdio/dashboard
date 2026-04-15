@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import {
   DropdownMenu,
@@ -20,6 +22,7 @@ import {
 } from "lucide-react";
 import { Callout } from "@components/Callout";
 import React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Network } from "@/interfaces/Network";
 import { ReverseProxyTarget } from "@/interfaces/ReverseProxy";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
@@ -44,13 +47,12 @@ export default function ReverseProxyHTTPTargets({
   initialNetwork,
   onNavigateToResources,
 }: Readonly<Props>) {
+  const { t } = useI18n();
+
   return (
     <div>
-      <Label>HTTPS Targets</Label>
-      <HelpText>
-        Add one or more devices running your service or resources to make it
-        publicly accessible.
-      </HelpText>
+      <Label>{t("reverseProxy.httpTargets")}</Label>
+      <HelpText>{t("reverseProxy.httpTargetsHelp")}</HelpText>
 
       {targets.length > 0 && (
         <div
@@ -93,7 +95,10 @@ export default function ReverseProxyHTTPTargets({
                       />
                       <DropdownMenu modal={false}>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="default-outline" className="!px-3">
+                          <Button
+                            variant="default-outline"
+                            className="!px-3"
+                          >
                             <MoreVertical size={16} className="shrink-0" />
                           </Button>
                         </DropdownMenuTrigger>
@@ -101,10 +106,12 @@ export default function ReverseProxyHTTPTargets({
                           className="w-auto min-w-[200px]"
                           align="end"
                         >
-                          <DropdownMenuItem onClick={() => onEditTarget(index)}>
+                          <DropdownMenuItem
+                            onClick={() => onEditTarget(index)}
+                          >
                             <div className="flex gap-3 items-center">
                               <Edit size={14} className="shrink-0" />
-                              Edit Target
+                              {t("reverseProxy.editTarget")}
                             </div>
                           </DropdownMenuItem>
                           <DropdownMenuItem
@@ -112,8 +119,11 @@ export default function ReverseProxyHTTPTargets({
                             onClick={() => onRemoveTarget(index)}
                           >
                             <div className="flex gap-3 items-center">
-                              <MinusCircleIcon size={14} className="shrink-0" />
-                              Remove Target
+                              <MinusCircleIcon
+                                size={14}
+                                className="shrink-0"
+                              />
+                              {t("reverseProxy.removeTarget")}
                             </div>
                           </DropdownMenuItem>
                         </DropdownMenuContent>
@@ -135,7 +145,7 @@ export default function ReverseProxyHTTPTargets({
         disabled={!!(initialNetwork && !initialNetwork.resources?.length)}
       >
         <PlusIcon size={14} />
-        Add Target
+        {t("reverseProxy.addTarget")}
       </Button>
 
       {initialNetwork && !initialNetwork.resources?.length && (
@@ -143,16 +153,19 @@ export default function ReverseProxyHTTPTargets({
           variant="warning"
           className="mt-3"
           icon={
-            <AlertTriangle size={14} className="shrink-0 relative top-[3px]" />
+            <AlertTriangle
+              size={14}
+              className="shrink-0 relative top-[3px]"
+            />
           }
         >
-          There are currently no resources in your network{" "}
+          {t("reverseProxy.noResourcesPrefix")}{" "}
           <span className={"text-netbird-100 font-medium"}>
             {initialNetwork?.name}
           </span>
-          . Add resources to your network before exposing it as a service.{" "}
+          {t("reverseProxy.noResourcesSuffix")}{" "}
           <InlineButtonLink variant={"default"} onClick={onNavigateToResources}>
-            Go to Resources
+            {t("reverseProxy.goToResources")}
             <ArrowUpRight size={14} />
           </InlineButtonLink>
         </Callout>

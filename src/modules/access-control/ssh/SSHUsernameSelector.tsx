@@ -17,6 +17,7 @@ import {
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useI18n } from "@/i18n/I18nProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 
 interface MultiSelectProps {
@@ -32,6 +33,7 @@ export function SSHUsernameSelector({
   disabled = false,
   popoverWidth = "auto",
 }: Readonly<MultiSelectProps>) {
+  const { t } = useI18n();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -88,7 +90,7 @@ export function SSHUsernameSelector({
               {values?.length === 0 && (
                 <Badge variant={"gray"} className={"font-normal py-1"}>
                   <CircleUserIcon size={12} className={"shrink-0"} />
-                  All Local Users
+                  {t("accessControl.allLocalUsers")}
                 </Badge>
               )}
 
@@ -147,7 +149,7 @@ export function SSHUsernameSelector({
                   ref={searchRef}
                   value={search}
                   onValueChange={setSearch}
-                  placeholder={"E.g., root, ec2-user, ubuntu"}
+                  placeholder={t("accessControl.sshUsernamePlaceholder")}
                 />
                 <div
                   className={
@@ -202,9 +204,9 @@ export function SSHUsernameSelector({
                         <div
                           className={"text-neutral-500 dark:text-nb-gray-300"}
                         >
-                          Add username by pressing{" "}
+                          {t("accessControl.addUsernameByPressing")}{" "}
                           <span className={"font-bold text-netbird"}>
-                            {"'Enter'"}
+                            {t("accessControl.enterKey")}
                           </span>
                         </div>
                       </CommandItem>

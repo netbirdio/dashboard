@@ -8,7 +8,7 @@ on:
   pull_request:
 
 env:
-  IMAGE_NAME: netbirdio/dashboard
+  IMAGE_NAME: ohoimager/netbird-dashboard-i18n
 
 jobs:
   build_n_push:
@@ -19,8 +19,8 @@ jobs:
       - name: setup-node
         uses: actions/setup-node@v3
         with:
-          node-version: '20'
-          cache: 'npm'
+          node-version: "20"
+          cache: "npm"
 
       - name: Install dependencies
         run: npm install
@@ -34,7 +34,7 @@ jobs:
           repository: netbirdio/IronRDP
           latest: true
           fileName: "*.ts"
-          out-file-path: 'public/ironrdp-pkg'
+          out-file-path: "public/ironrdp-pkg"
 
       - name: Download IronRDP release JS files
         uses: robinraju/release-downloader@v1.7
@@ -43,7 +43,7 @@ jobs:
           repository: netbirdio/IronRDP
           latest: true
           fileName: "*.js"
-          out-file-path: 'public/ironrdp-pkg'
+          out-file-path: "public/ironrdp-pkg"
 
       - name: Download IronRDP release WASM file
         uses: robinraju/release-downloader@v1.7
@@ -52,7 +52,7 @@ jobs:
           repository: netbirdio/IronRDP
           latest: true
           fileName: "ironrdp_web_bg.wasm"
-          out-file-path: 'public/ironrdp-pkg'
+          out-file-path: "public/ironrdp-pkg"
 
       - name: Get version from tag
         id: version
@@ -67,26 +67,21 @@ jobs:
         run: npm run build
         env:
           NEXT_PUBLIC_DASHBOARD_VERSION: ${{ steps.version.outputs.version }}
-      -
-        name: Set up QEMU
+      - name: Set up QEMU
         uses: docker/setup-qemu-action@v2
-      -
-        name: Set up Docker Buildx
+      - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
-      -
-        name: Docker meta
+      - name: Docker meta
         id: meta
         uses: docker/metadata-action@v4
         with:
           images: ${{ env.IMAGE_NAME }}
-      -
-        name: Login to DockerHub
+      - name: Login to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.NB_DOCKER_USER }}
           password: ${{ secrets.NB_DOCKER_TOKEN }}
-      -
-        name: Docker build and push
+      - name: Docker build and push
         uses: docker/build-push-action@v3
         with:
           context: .

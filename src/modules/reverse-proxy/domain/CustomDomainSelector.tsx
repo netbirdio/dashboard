@@ -8,6 +8,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { ReverseProxyDomainType } from "@/interfaces/ReverseProxy";
 import { isNetBirdHosted } from "@utils/netbird";
 
@@ -26,6 +27,7 @@ export function CustomDomainSelector({
 }: DomainSelectorProps) {
   const router = useRouter();
   const { domains } = useReverseProxies();
+  const { t } = useI18n();
 
   const options: SelectOption[] = useMemo(() => {
     const opts: SelectOption[] = [];
@@ -43,9 +45,9 @@ export function CustomDomainSelector({
                 <span>.{domain.domain}</span>
               </div>
               {isNetBirdHosted() ? (
-                <SmallBadge text="Free" variant="green" size="md" />
+                <SmallBadge text={t("reverseProxy.freeBadge")} variant="green" size="md" />
               ) : (
-                <SmallBadge text="Cluster" variant="green" size="md" />
+                <SmallBadge text={t("reverseProxy.clusterBadge")} variant="green" size="md" />
               )}
             </div>
           ),
@@ -62,7 +64,7 @@ export function CustomDomainSelector({
           renderItem: () => (
             <div className="flex items-center gap-2 w-full text-sm justify-between">
               <span>.{domain.domain}</span>
-              <SmallBadge text="Custom" variant="sky" size="md" />
+              <SmallBadge text={t("reverseProxy.customBadge")} variant="sky" size="md" />
             </div>
           ),
         });
@@ -71,11 +73,11 @@ export function CustomDomainSelector({
     // Add "Add Custom Domain" option
     opts.push({
       value: "add_custom",
-      label: "Add Custom Domain",
+      label: t("reverseProxy.customDomainSelectorAdd"),
       renderItem: () => (
         <div className="flex items-center justify-between gap-2 text-netbird text-sm w-full">
           <div className={"flex items-center gap-2"}>
-            <span>Add Custom Domain</span>
+            <span>{t("reverseProxy.customDomainSelectorAdd")}</span>
           </div>
           <ArrowUpRight size={16} />
         </div>
@@ -83,7 +85,7 @@ export function CustomDomainSelector({
     });
 
     return opts;
-  }, [domains]);
+  }, [domains, t]);
 
   const handleChange = (selectedValue: string) => {
     if (selectedValue === "add_custom") {
@@ -100,9 +102,9 @@ export function CustomDomainSelector({
       options={options}
       popoverWidth={335}
       showSearch={true}
-      searchPlaceholder="Search domains..."
+      searchPlaceholder={t("reverseProxy.searchDomains")}
       disabled={disabled}
-      placeholder="Select domain..."
+      placeholder={t("reverseProxy.selectDomain")}
       className={className}
     />
   );

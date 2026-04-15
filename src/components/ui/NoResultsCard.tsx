@@ -4,6 +4,7 @@ import { cn } from "@utils/helpers";
 import { FilterX } from "lucide-react";
 import React from "react";
 import Skeleton from "react-loading-skeleton";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   icon?: React.ReactNode;
@@ -15,11 +16,12 @@ type Props = {
 
 export default function NoResultsCard({
   icon,
-  title = "Could not find any results",
-  description = "We couldn't find any results. Please try a different search term or change your filters.",
+  title,
+  description,
   children,
   className,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   return (
     <div className={cn("px-8 mt-8", className)}>
       <Card className={"w-full relative overflow-hidden"}>
@@ -50,9 +52,9 @@ export default function NoResultsCard({
             {icon || <FilterX size={24} />}
           </div>
           <div className={"text-center"}>
-            <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title}</h1>
+            <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title ?? t("noResults.title")}</h1>
             <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>
-              {description}
+              {description ?? t("noResults.description")}
             </Paragraph>
             {children}
           </div>

@@ -4,6 +4,7 @@ import { useDebounce } from "@hooks/useDebounce";
 import { Search } from "lucide-react";
 import React, { useEffect, useState } from "react";
 import { useHotkeys } from "react-hotkeys-hook";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface Props extends React.InputHTMLAttributes<HTMLInputElement> {
   setGlobalSearch: (value: string) => void;
@@ -21,6 +22,7 @@ export default function DataTableGlobalSearch({
   onClick,
   ...props
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const ref = React.useRef<HTMLInputElement>(null);
   const [inputValue, setInputValue] = useState(globalSearch || "");
   const debouncedValue = useDebounce(inputValue, 800);
@@ -67,7 +69,7 @@ export default function DataTableGlobalSearch({
       value={inputValue} // Shows immediate updates
       onChange={handleChange}
       maxWidthClass={className}
-      customSuffix={<Kbd>⌘ K</Kbd>}
+      customSuffix={<Kbd>{t('dataTable.searchShortcut')}</Kbd>}
       disabled={false}
     />
   );

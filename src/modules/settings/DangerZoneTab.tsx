@@ -10,6 +10,7 @@ import React from "react";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Account } from "@/interfaces/Account";
 
 type Props = {
@@ -21,13 +22,15 @@ export default function DangerZoneTab({ account }: Props) {
   const { confirm } = useDialog();
   const deleteRequest = useApiCall<Account>("/accounts/" + account.id);
   const { logout } = useLoggedInUser();
+  const { t } = useI18n();
 
   const deleteAccount = async () => {
     const deletePromise = new Promise<void>((resolve, reject) => {
       return deleteRequest
         .del()
+        .catch((error) => reject(error))
         .then(() => {
-          // Clear browser storage only after confirmed account deletion
+          // Clear browser storage after account deletion
           if (typeof window !== "undefined") {
             localStorage.clear();
             sessionStorage.clear();
@@ -36,25 +39,23 @@ export default function DangerZoneTab({ account }: Props) {
           }
           logout().then();
           resolve();
-        })
-        .catch((error) => reject(error));
+        });
     });
 
     notify({
-      title: "Delete NetBird account",
-      description: "NetBird account was successfully deleted.",
+      title: t("dangerZone.deleteAccountTitle"),
+      description: t("dangerZone.deletedDescription"),
       promise: deletePromise,
-      loadingMessage: "Deleting the account...",
+      loadingMessage: t("dangerZone.deleting"),
     });
   };
 
   const handleConfirm = async () => {
     const choice = await confirm({
-      title: "Delete NetBird account",
-      description:
-        "Are you sure you want to delete your NetBird account? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("dangerZone.deleteAccountTitle"),
+      description: t("dangerZone.confirmDescription"),
+      confirmText: t("actions.delete"),
+      cancelText: t("actions.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -67,17 +68,17 @@ export default function DangerZoneTab({ account }: Props) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("settings.title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Danger Zone"}
+            label={t("settings.dangerZone")}
             icon={<AlertOctagonIcon size={14} />}
             active
           />
         </Breadcrumbs>
-        <h1>Danger Zone</h1>
+        <h1>{t("settings.dangerZone")}</h1>
         <div className={"gap-6 mt-6 max-w-lg"}>
           <Card
             className={
@@ -86,17 +87,14 @@ export default function DangerZoneTab({ account }: Props) {
           >
             <div className={"px-8 py-6"}>
               <p className={"text-xl font-medium mb-2 !text-red-50"}>
-                Delete NetBird account
+                {t("dangerZone.deleteAccountTitle")}
               </p>
               <p className={"!text-red-50/80"}>
-                Before proceeding to delete your Netbird account, please be
-                aware that this action is irreversible. Once your account is
-                deleted, you will permanently lose access to all associated
-                data, including your peers, users, groups, policies, and routes.
+                {t("dangerZone.deleteAccountWarning")}
               </p>
               <div className={"mt-6"}>
                 <Button variant={"danger"} onClick={handleConfirm} size={"xs"}>
-                  Delete Account
+                  {t("dangerZone.deleteAccountButton")}
                 </Button>
               </div>
             </div>

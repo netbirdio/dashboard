@@ -11,6 +11,7 @@ import React, { lazy, Suspense } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -20,6 +21,7 @@ const CustomDomainsTable = lazy(
 
 export default function ReverseProxyCustomDomainsPage() {
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
@@ -30,33 +32,31 @@ export default function ReverseProxyCustomDomainsPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/reverse-proxy/services"}
-            label={"Reverse Proxy"}
+            label={t("nav.reverseProxy")}
             icon={<ReverseProxyIcon size={16} />}
           />
           <Breadcrumbs.Item
             href={"/reverse-proxy/custom-domains"}
-            label={"Custom Domains"}
+            label={t("nav.customDomains")}
             active={true}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Domains</h1>
+        <h1 ref={headingRef}>{t("customDomains.title")}</h1>
+        <Paragraph>{t("customDomains.description")}</Paragraph>
         <Paragraph>
-          Add and manage custom domains for your reverse proxy services.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          {t("common.learnMorePrefix")}{" "}
           <InlineLink
             href={REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK}
             target={"_blank"}
           >
-            Custom Domains
+            {t("nav.customDomains")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
+          {" "}{t("common.inDocumentationSuffix")}
         </Paragraph>
       </div>
       <RestrictedAccess
-        page={"Custom Domains"}
+        page={t("nav.customDomains")}
         hasAccess={permission?.services?.read}
       >
         <ReverseProxiesProvider>

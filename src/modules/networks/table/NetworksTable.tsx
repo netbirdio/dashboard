@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
@@ -10,11 +12,12 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Network } from "@/interfaces/Network";
 import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import {
@@ -28,48 +31,55 @@ import { NetworkResourceCell } from "@/modules/networks/table/NetworkResourceCel
 import NetworkRoutingPeerCell from "@/modules/networks/table/NetworkRoutingPeerCell";
 import { GlobalSearchModal } from "@/modules/search/GlobalSearchModal";
 
-export const NetworkTableColumns: ColumnDef<Network>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Network</DataTableHeader>
-    ),
-    sortingFn: "text",
-    cell: ({ row }) => <NetworkNameCell network={row.original} />,
-  },
-  {
-    accessorKey: "description",
-  },
-  {
-    accessorKey: "resources",
-    accessorFn: (network) => network?.resources?.length,
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Resources</DataTableHeader>;
-    },
-    cell: ({ row }) => <NetworkResourceCell network={row.original} />,
-  },
-  {
-    accessorKey: "policies",
-    accessorFn: (network) => network?.policies?.length,
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Policies</DataTableHeader>;
-    },
-    cell: ({ row }) => <NetworkPolicyCell network={row.original} />,
-  },
-  {
-    accessorKey: "routers",
-    accessorFn: (network) => network?.routers?.length,
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Routing Peers</DataTableHeader>;
-    },
-    cell: ({ row }) => <NetworkRoutingPeerCell network={row.original} />,
-  },
-  {
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => <NetworkActionCell network={row.original} />,
-  },
-];
+function useNetworkTableColumns(): ColumnDef<Network>[] {
+  const { t } = useI18n();
+
+  return useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: ({ column }) => (
+          <DataTableHeader column={column}>{t("networks.title")}</DataTableHeader>
+        ),
+        sortingFn: "text",
+        cell: ({ row }) => <NetworkNameCell network={row.original} />,
+      },
+      {
+        accessorKey: "description",
+      },
+      {
+        accessorKey: "resources",
+        accessorFn: (network) => network?.resources?.length,
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("groups.tooltip.networkResources")}</DataTableHeader>;
+        },
+        cell: ({ row }) => <NetworkResourceCell network={row.original} />,
+      },
+      {
+        accessorKey: "policies",
+        accessorFn: (network) => network?.policies?.length,
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("groups.tooltip.policies")}</DataTableHeader>;
+        },
+        cell: ({ row }) => <NetworkPolicyCell network={row.original} />,
+      },
+      {
+        accessorKey: "routers",
+        accessorFn: (network) => network?.routers?.length,
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("networks.routingPeers")}</DataTableHeader>;
+        },
+        cell: ({ row }) => <NetworkRoutingPeerCell network={row.original} />,
+      },
+      {
+        accessorKey: "id",
+        header: "",
+        cell: ({ row }) => <NetworkActionCell network={row.original} />,
+      },
+    ],
+    [t],
+  );
+}
 
 type Props = {
   data?: Network[];
@@ -85,8 +95,9 @@ export default function NetworksTable({
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const [searchModal, setSearchModal] = useState(false);
+  const { t } = useI18n();
+  const columns = useNetworkTableColumns();
 
-  // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path,
     [
@@ -105,12 +116,12 @@ export default function NetworksTable({
           <DataTable
             headingTarget={headingTarget}
             isLoading={isLoading}
-            text={"Networks"}
+            text={t("networks.title")}
             sorting={sorting}
             setSorting={setSorting}
-            columns={NetworkTableColumns}
+            columns={columns}
             data={data}
-            searchPlaceholder={"Search by network name or description..."}
+            searchPlaceholder={t("networks.searchPlaceholder")}
             columnVisibility={{
               description: false,
             }}
@@ -129,10 +140,8 @@ export default function NetworksTable({
                     size={"large"}
                   />
                 }
-                title={"Create New Network"}
-                description={
-                  "It looks like you don't have any networks. Access internal resources in your LANs and VPC by adding a network."
-                }
+                title={t("networks.emptyTitle")}
+                description={t("networks.emptyDescription")}
                 button={
                   <div className={"gap-x-4 flex items-center justify-center"}>
                     <AddNetworkButton />
@@ -140,12 +149,12 @@ export default function NetworksTable({
                 }
                 learnMore={
                   <>
-                    Learn more about
+                    {t("common.learnMorePrefix")}{" "}
                     <InlineLink
                       href={"https://docs.netbird.io/how-to/networks"}
                       target={"_blank"}
                     >
-                      Networks
+                      {t("networks.title")}
                       <ExternalLinkIcon size={12} />
                     </InlineLink>
                   </>
@@ -184,8 +193,9 @@ export default function NetworksTable({
 
 const AddNetworkButton = () => {
   const { permission } = usePermissions();
-
   const { openCreateNetworkModal } = useNetworksContext();
+  const { t } = useI18n();
+
   return (
     <Button
       variant={"primary"}
@@ -193,7 +203,7 @@ const AddNetworkButton = () => {
       disabled={!permission.networks.create}
     >
       <PlusCircle size={16} />
-      Add Network
+      {t("networks.addNetwork")}
     </Button>
   );
 };

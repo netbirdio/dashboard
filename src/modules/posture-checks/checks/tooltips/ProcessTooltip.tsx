@@ -6,6 +6,7 @@ import { TerminalIcon } from "lucide-react";
 import * as React from "react";
 import AppleIcon from "@/assets/icons/AppleIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 import { ProcessCheck } from "@/interfaces/PostureCheck";
 
 type Props = {
@@ -13,6 +14,8 @@ type Props = {
   children?: React.ReactNode;
 };
 export const ProcessTooltip = ({ check, children }: Props) => {
+  const { t } = useI18n();
+
   return check ? (
     <FullTooltip
       className={"w-full min-w-0"}
@@ -26,8 +29,10 @@ export const ProcessTooltip = ({ check, children }: Props) => {
         >
           <div className={"px-4 pt-3"}>
             <span>
-              <span className={"text-green-500 font-semibold"}>Allow only</span>{" "}
-              peers which are running the following processes
+              <span className={"text-green-500 font-semibold"}>
+                {t("postureChecks.allowOnly")}
+              </span>{" "}
+              {t("postureChecks.processTooltipAllowed")}
             </span>
           </div>
 
@@ -54,7 +59,7 @@ export const ProcessTooltip = ({ check, children }: Props) => {
                           title={p?.linux_path}
                         >
                           {tryGetProcessNameFromPath(p?.linux_path) ||
-                            "Unknown path"}
+                            t("postureChecks.unknownPath")}
                         </span>
                       </Badge>
                     )}
@@ -73,7 +78,7 @@ export const ProcessTooltip = ({ check, children }: Props) => {
                           title={p?.mac_path}
                         >
                           {tryGetProcessNameFromPath(p?.mac_path) ||
-                            "Unknown path"}
+                            t("postureChecks.unknownPath")}
                         </span>
                       </Badge>
                     )}
@@ -92,7 +97,7 @@ export const ProcessTooltip = ({ check, children }: Props) => {
                           title={p?.windows_path}
                         >
                           {tryGetProcessNameFromPath(p?.windows_path) ||
-                            "Unknown path"}
+                            t("postureChecks.unknownPath")}
                         </span>
                       </Badge>
                     )}

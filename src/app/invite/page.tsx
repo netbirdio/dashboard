@@ -17,6 +17,7 @@ import dayjs from "dayjs";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useMemo, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 import { UserInviteInfo } from "@/interfaces/User";
 
 export default function InviteAcceptPage() {
@@ -28,6 +29,7 @@ export default function InviteAcceptPage() {
 }
 
 function InviteAcceptContent() {
+  const { t } = useI18n();
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams?.get("token");
@@ -44,7 +46,7 @@ function InviteAcceptContent() {
 
   useEffect(() => {
     if (!token) {
-      setError("No invite token provided");
+      setError(t("invite.acceptMissingToken"));
       setLoading(false);
       return;
     }
@@ -56,15 +58,15 @@ function InviteAcceptContent() {
       })
       .catch((err) => {
         if (err.code === 429) {
-          setError("Too many attempts. Please wait a moment and try again.");
+          setError(t("invite.acceptRateLimited"));
           setIsRateLimited(true);
         } else {
-          setError(err.message || "Invalid or expired invite link");
+          setError(err.message || t("invite.acceptInvalidLink"));
           setIsRateLimited(false);
         }
         setLoading(false);
       });
-  }, [token]);
+  }, [token, t]);
 
   const passwordsMatch = password === confirmPassword;
   const hasMinLength = password.length >= 8;
@@ -86,7 +88,7 @@ function InviteAcceptContent() {
       await acceptInvite(token, password);
       setSuccess(true);
     } catch (err: any) {
-      setError(err.message || "Failed to accept invite");
+      setError(err.message || t("invite.acceptFailed"));
     } finally {
       setSubmitting(false);
     }
@@ -112,18 +114,17 @@ function InviteAcceptContent() {
               </div>
             </div>
             <h1 className="text-2xl font-semibold text-white mb-2">
-              Too Many Requests
+              {t("invite.tooManyRequests")}
             </h1>
             <Paragraph className="text-nb-gray-400 text-base">
-              You&apos;ve made too many requests. Please wait a moment and try
-              again.
+              {t("invite.tooManyRequestsDescription")}
             </Paragraph>
             <Button
               variant="secondary"
               className="mt-6"
               onClick={() => window.location.reload()}
             >
-              Try Again
+              {t("errorPage.tryAgain")}
             </Button>
           </div>
         </div>
@@ -139,18 +140,17 @@ function InviteAcceptContent() {
             </div>
           </div>
           <h1 className="text-2xl font-semibold text-white mb-2">
-            Invalid Invite
+            {t("invite.invalidTitle")}
           </h1>
           <Paragraph className="text-nb-gray-400 text-base">
-            This invite link is invalid or has expired. Please contact your
-            administrator to receive a new invitation.
+            {t("invite.invalidDescription")}
           </Paragraph>
           <Button
             variant="secondary"
             className="mt-6"
             onClick={() => router.push("/")}
           >
-            Go to Login
+            {t("invite.goToLogin")}
           </Button>
         </div>
       </div>
@@ -167,18 +167,17 @@ function InviteAcceptContent() {
             </div>
           </div>
           <h1 className="text-2xl font-semibold text-white mb-2">
-            Account Created!
+            {t("invite.accountCreatedTitle")}
           </h1>
           <Paragraph className="text-nb-gray-400">
-            Your account has been created successfully. You can now log in with
-            your email and password.
+            {t("invite.accountCreatedDescription")}
           </Paragraph>
           <Button
             variant="primary"
             className="mt-6"
             onClick={() => router.push("/")}
           >
-            Go to Login
+            {t("invite.goToLogin")}
           </Button>
         </div>
       </div>
@@ -195,18 +194,17 @@ function InviteAcceptContent() {
             </div>
           </div>
           <h1 className="text-2xl font-semibold text-white mb-2">
-            Invite Expired
+            {t("invite.expiredTitle")}
           </h1>
           <Paragraph className="text-nb-gray-400">
-            This invite link has expired. Please contact your administrator to
-            receive a new invitation.
+            {t("invite.expiredDescription")}
           </Paragraph>
           <Button
             variant="secondary"
             className="mt-6"
             onClick={() => router.push("/")}
           >
-            Go to Login
+            {t("invite.goToLogin")}
           </Button>
         </div>
       </div>
@@ -222,10 +220,12 @@ function InviteAcceptContent() {
 
         <div className="text-center mb-8">
           <h1 className="text-2xl font-semibold text-white mb-2">
-            Welcome to NetBird
+            {t("invite.welcomeTitle")}
           </h1>
           <p className="dark:text-nb-gray-400 text-nb-gray-500 text-base">
-            You&apos;ve been invited by <span className="dark:text-white text-nb-gray-900 font-medium">{inviteInfo.invited_by}</span> to join the network. Set your password to complete your account setup.
+            {t("invite.welcomeDescription", {
+              invitedBy: inviteInfo.invited_by,
+            })}
           </p>
         </div>
 
@@ -247,7 +247,7 @@ function InviteAcceptContent() {
             <div>
               <Input
                 type="password"
-                placeholder="Password"
+                placeholder={t("invite.passwordPlaceholder")}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 customPrefix={
@@ -256,11 +256,26 @@ function InviteAcceptContent() {
               />
               {password && (
                 <div className="mt-2 space-y-1">
-                  <PasswordRule met={hasMinLength} text="At least 8 characters" />
-                  <PasswordRule met={hasUppercase} text="One uppercase letter" />
-                  <PasswordRule met={hasLowercase} text="One lowercase letter" />
-                  <PasswordRule met={hasNumber} text="One number" />
-                  <PasswordRule met={hasSpecialChar} text="One special character (!@#$%^&*)" />
+                  <PasswordRule
+                    met={hasMinLength}
+                    text={t("invite.passwordRuleMinLength")}
+                  />
+                  <PasswordRule
+                    met={hasUppercase}
+                    text={t("invite.passwordRuleUppercase")}
+                  />
+                  <PasswordRule
+                    met={hasLowercase}
+                    text={t("invite.passwordRuleLowercase")}
+                  />
+                  <PasswordRule
+                    met={hasNumber}
+                    text={t("invite.passwordRuleNumber")}
+                  />
+                  <PasswordRule
+                    met={hasSpecialChar}
+                    text={t("invite.passwordRuleSpecial")}
+                  />
                 </div>
               )}
             </div>
@@ -268,7 +283,7 @@ function InviteAcceptContent() {
             <div>
               <Input
                 type="password"
-                placeholder="Confirm Password"
+                placeholder={t("invite.confirmPasswordPlaceholder")}
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 customPrefix={
@@ -277,7 +292,7 @@ function InviteAcceptContent() {
               />
               {confirmPassword && !passwordsMatch && (
                 <p className="text-xs text-red-500 mt-1">
-                  Passwords do not match
+                  {t("changePassword.passwordMatchError")}
                 </p>
               )}
             </div>
@@ -294,13 +309,18 @@ function InviteAcceptContent() {
               className="w-full"
               disabled={!canSubmit}
             >
-              {submitting ? "Creating Account..." : "Create Account"}
+              {submitting
+                ? t("invite.creatingAccount")
+                : t("invite.createAccount")}
             </Button>
           </form>
         </div>
 
         <p className="text-center text-xs text-nb-gray-500">
-          Invite expires on {dayjs(inviteInfo.expires_at).format("D MMMM, YYYY [at] h:mm A")}
+          {t("invite.expiresOn")}{" "}
+          {dayjs(inviteInfo.expires_at).format(
+            t("invite.acceptExpiresOnFormat"),
+          )}
         </p>
       </div>
     </div>

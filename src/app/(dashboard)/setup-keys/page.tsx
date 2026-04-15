@@ -12,6 +12,7 @@ import React, { lazy, Suspense, useMemo } from "react";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 import PageContainer from "@/layouts/PageContainer";
@@ -24,6 +25,7 @@ export default function SetupKeys() {
   const { data: setupKeys, isLoading } = useFetchApi<SetupKey[]>("/setup-keys");
   const { permission } = usePermissions();
   const { groups } = useGroups();
+  const { t } = useI18n();
 
   const setupKeysWithGroups = useMemo(() => {
     if (!setupKeys) return [];
@@ -50,31 +52,28 @@ export default function SetupKeys() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/setup-keys"}
-            label={"Setup Keys"}
+            label={t("setupKeys.title")}
             icon={<SetupKeysIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Setup Keys</h1>
+        <h1 ref={headingRef}>{t("setupKeys.title")}</h1>
+        <Paragraph>{t("setupKeys.description")}</Paragraph>
         <Paragraph>
-          Setup keys are pre-authentication keys that allow to register new
-          machines in your network.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          {t("common.learnMorePrefix")}{" "}
           <InlineLink
             href={
               "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
             }
             target={"_blank"}
           >
-            Setup Keys
+            {t("setupKeys.title")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
+          {t("common.inDocumentationSuffix")}
         </Paragraph>
       </div>
       <RestrictedAccess
-        page={"Setup Keys"}
+        page={t("setupKeys.title")}
         hasAccess={permission.setup_keys.read}
       >
         <Suspense fallback={<SkeletonTable />}>

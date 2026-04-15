@@ -5,6 +5,7 @@ import { cn } from "@utils/helpers";
 import { AnimatePresence, motion } from "framer-motion";
 import { MonitorSmartphoneIcon } from "lucide-react";
 import * as React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props<T> = {
   selectedItems?: T[];
@@ -15,10 +16,11 @@ type Props<T> = {
 
 export function DataTableMultiSelectPopup<T>({
   onCanceled,
-  label = "Peer(s) selected",
+  label,
   selectedItems,
   rightSide,
 }: Props<T>) {
+  const { t } = useI18n();
   const count = selectedItems?.length || 0;
   return (
     <AnimatePresence>
@@ -57,15 +59,15 @@ export function DataTableMultiSelectPopup<T>({
                       <MonitorSmartphoneIcon size={16} className={""} />
                       <span>
                         <span className={"font-medium text-white"}>
-                          {count}
-                        </span>{" "}
-                        {label}
+                        {count}
+                      </span>{" "}
+                        {label ?? t("selection.peersSelected")}
                       </span>
                     </div>
                     <div className={"flex gap-2 items-center"}>
                       {rightSide}
                       <FullTooltip
-                        content={<span className={"text-xs"}>Cancel</span>}
+                        content={<span className={"text-xs"}>{t("common.cancel")}</span>}
                       >
                         <Button
                           onClick={onCanceled}

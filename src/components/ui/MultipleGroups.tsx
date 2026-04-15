@@ -16,6 +16,7 @@ import { useUsers } from "@/contexts/UsersProvider";
 import { Group } from "@/interfaces/Group";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   groups: Group[];
@@ -31,8 +32,8 @@ type Props = {
 
 export default function MultipleGroups({
   groups,
-  label = "Assigned Groups",
-  description = "Use groups to control what this peer can access",
+  label,
+  description,
   onClick,
   className,
   showResources = false,
@@ -40,7 +41,11 @@ export default function MultipleGroups({
   redirectGroupTab,
   disableRedirect = false,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const { permission } = usePermissions();
+  
+  const defaultLabel = label || t("groups.assignedGroups");
+  const defaultDescription = description || t("groups.useGroupsToControlAccess");
 
   if (!groups || groups?.length === 0) return <EmptyRow />;
   const orderedGroups = groups.sort((a, b) => {
@@ -92,7 +97,7 @@ export default function MultipleGroups({
             onClick={(e) => e.stopPropagation()}
           >
             <div className={"text-sm font-medium text-left px-5 pt-3"}>
-              {label}
+              {defaultLabel}
             </div>
             <ScrollArea
               className={

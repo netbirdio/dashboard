@@ -30,6 +30,7 @@ import AppleIcon from "@/assets/icons/AppleIcon";
 import IOSIcon from "@/assets/icons/IOSIcon";
 import { LinuxIcon } from "@/assets/icons/LinuxIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   androidVersions,
@@ -51,6 +52,7 @@ export const PostureCheckOperatingSystem = ({
   onChange,
   disabled,
 }: Props) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
@@ -59,11 +61,9 @@ export const PostureCheckOperatingSystem = ({
       setOpen={setOpen}
       key={open ? 1 : 0}
       icon={<Disc3Icon size={16} />}
-      title={"Operating System"}
+      title={t("postureChecks.operatingSystemTitle")}
       modalWidthClass={"max-w-xl"}
-      description={
-        "Restrict access in your network based on the operating system."
-      }
+      description={t("postureChecks.operatingSystemDescription")}
       iconClass={"bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300"}
       active={value !== undefined}
       onReset={() => onChange(undefined)}
@@ -81,6 +81,7 @@ export const PostureCheckOperatingSystem = ({
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const { t } = useI18n();
   const [tab] = useState(String(OperatingSystem.LINUX));
 
   const firstTimeCheck = value === undefined;
@@ -141,7 +142,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            Linux
+            {t("postureChecks.osLinux")}
           </TabsTrigger>
           <TabsTrigger value={String(OperatingSystem.WINDOWS)}>
             <WindowsIcon
@@ -149,7 +150,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            Windows
+            {t("postureChecks.osWindows")}
           </TabsTrigger>
           <TabsTrigger value={String(OperatingSystem.APPLE)}>
             <AppleIcon
@@ -157,7 +158,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            macOS
+            {t("postureChecks.osMacos")}
           </TabsTrigger>
           <TabsTrigger value={String(OperatingSystem.IOS)}>
             <IOSIcon
@@ -165,7 +166,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            iOS
+            {t("postureChecks.osIos")}
           </TabsTrigger>
           <TabsTrigger value={String(OperatingSystem.ANDROID)}>
             <AndroidIcon
@@ -173,7 +174,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            Android
+            {t("postureChecks.osAndroid")}
           </TabsTrigger>
         </TabsList>
         <TabsContent value={String(OperatingSystem.LINUX)} className={"px-8"}>
@@ -230,21 +231,21 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("common.learnMorePrefix")}
             <InlineLink
               href={
                 "https://docs.netbird.io/how-to/manage-posture-checks#operating-system-version-check"
               }
               target={"_blank"}
             >
-              Operating System Check
+              {t("postureChecks.operatingSystemCheck")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("actions.cancel")}</Button>
           </ModalClose>
           <Button
             disabled={!!versionError}
@@ -275,7 +276,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
             }}
           >
-            Save
+            {t("groupsSettings.save")}
           </Button>
         </div>
       </ModalFooter>
@@ -292,19 +293,6 @@ type OperatingSystemTabProps = {
   disabled?: boolean;
 };
 
-const allOrMinOptions = [
-  {
-    label: "All versions",
-    value: "all",
-    icon: GalleryHorizontalEnd,
-  },
-  {
-    label: "Equal or greater than",
-    value: "min",
-    icon: IconMathEqualGreater,
-  },
-] as SelectOption[];
-
 export const OperatingSystemTab = ({
   value,
   onChange,
@@ -313,6 +301,19 @@ export const OperatingSystemTab = ({
   onError,
   disabled,
 }: OperatingSystemTabProps) => {
+  const { t } = useI18n();
+  const allOrMinOptions: SelectOption[] = [
+    {
+      label: t("postureChecks.allVersions"),
+      value: "all",
+      icon: GalleryHorizontalEnd,
+    },
+    {
+      label: t("postureChecks.equalOrGreaterThan"),
+      value: "min",
+      icon: IconMathEqualGreater,
+    },
+  ];
   const [allow, setAllow] = useState(value == "-" ? "block" : "allow");
   const [allOrMin, setAllOrMin] = useState(
     value == "" || value == "-" || value == "0" ? "all" : "min",
@@ -352,17 +353,17 @@ export const OperatingSystemTab = ({
 
   const prefix =
     os === OperatingSystem.LINUX || os === OperatingSystem.WINDOWS
-      ? "Kernel Version"
-      : "Version";
+      ? t("postureChecks.kernelVersion")
+      : t("clientSettings.version");
 
   const versionError = useMemo(() => {
-    const msg = "Please enter a valid version, e.g., 0.2, 0.2.0, 0.2.0-alpha.1";
+    const msg = t("clientSettings.versionError");
     if (value == "") return "";
     if (value == "-") return "";
     const validSemver = validator.isValidVersion(value);
     if (!validSemver) return msg;
     return "";
-  }, [value]);
+  }, [value, t]);
 
   useEffect(() => {
     onError(versionError);
@@ -372,19 +373,19 @@ export const OperatingSystemTab = ({
     <div className={""}>
       <div className={"flex justify-between items-start gap-10 "}>
         <div>
-          <Label>Allow or Block</Label>
+          <Label>{t("postureChecks.allowOrBlock")}</Label>
           <HelpText>
-            Choose whether you want to allow or block the operating system.
+            {t("postureChecks.allowOrBlockOsHelp")}
           </HelpText>
         </div>
         <RadioGroup value={allow} onChange={changeAllow}>
           <RadioGroupItem value={"allow"} variant={"green"}>
             <ShieldCheck size={14} />
-            Allow
+            {t("postureChecks.allow")}
           </RadioGroupItem>
           <RadioGroupItem value={"block"} variant={"red"}>
             <ShieldXIcon size={14} />
-            Block
+            {t("postureChecks.block")}
           </RadioGroupItem>
         </RadioGroup>
       </div>
@@ -399,7 +400,7 @@ export const OperatingSystemTab = ({
           <SelectDropdown
             value={value || "0"}
             showSearch={true}
-            placeholder={"Select version..."}
+            placeholder={t("postureChecks.selectVersion")}
             onChange={onChange}
             options={versionList}
             disabled={allOrMin === "all" || allow === "block" || disabled}
@@ -408,7 +409,7 @@ export const OperatingSystemTab = ({
           <Input
             value={value}
             customPrefix={prefix}
-            placeholder={"e.g., 6.0.0"}
+            placeholder={t("postureChecks.osVersionPlaceholder")}
             error={versionError}
             errorTooltip={true}
             disabled={allOrMin === "all" || allow === "block" || disabled}
@@ -427,10 +428,10 @@ export const OperatingSystemTab = ({
             label={
               <>
                 <FileCog size={14} />
-                Use custom version number
+                {t("postureChecks.useCustomVersionNumber")}
               </>
             }
-            helpText={"Use a custom version number if you need more control."}
+            helpText={t("postureChecks.useCustomVersionNumberHelp")}
           />
         </div>
       )}

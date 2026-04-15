@@ -10,6 +10,7 @@ import {
 } from "@components/DropdownMenu";
 import { Edit2, MoreVertical, PlusIcon, Trash2 } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource } from "@/interfaces/Policy";
 import { cn } from "@utils/helpers";
@@ -49,6 +50,7 @@ export default function NetworkResourceAccessControl({
 }: Readonly<Props>) {
   const { network, confirmMultiResourceAction } = useNetworksContext();
   const { openEditPolicyModal, deletePolicy } = usePolicies();
+  const { t } = useI18n();
   const [policyModalOpen, setPolicyModalOpen] = useState(false);
   const [editingPolicyIndex, setEditingPolicyIndex] = useState<number | null>(
     null,
@@ -125,11 +127,9 @@ export default function NetworkResourceAccessControl({
   return (
     <div className={"px-8 flex-col flex gap-6"}>
       <div>
-        <Label>Access Control Policies</Label>
+        <Label>{t("networkResourceAccessControl.title")}</Label>
         <HelpText>
-          Define which source groups are allowed to access this resource. You
-          can also restrict access to specific protocols and ports. Without
-          policies access to this resource will not be possible.
+          {t("networkResourceAccessControl.description")}
         </HelpText>
 
         {allPolicies.length > 0 && (
@@ -142,13 +142,13 @@ export default function NetworkResourceAccessControl({
               <thead>
                 <tr>
                   <th className="py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium">
-                    Name
+                    {t("table.name")}
                   </th>
                   <th className="py-2 pl-5 pr-2 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium">
-                    Source Groups
+                    {t("networkResourceAccessControl.sourceGroups")}
                   </th>
                   <th className="py-2 px-4 text-left text-[11px] uppercase tracking-wider text-nb-gray-400 font-medium">
-                    Protocol & Ports
+                    {t("networkResourceAccessControl.protocolPorts")}
                   </th>
                   <th className="py-2 pr-4 pl-2" />
                 </tr>
@@ -235,7 +235,7 @@ export default function NetworkResourceAccessControl({
                               >
                                 <div className="flex gap-3 items-center">
                                   <Edit2 size={14} className="shrink-0" />
-                                  Edit Policy
+                                  {t("networkResourceAccessControl.editPolicy")}
                                 </div>
                               </DropdownMenuItem>
                               <DropdownMenuItem
@@ -244,7 +244,7 @@ export default function NetworkResourceAccessControl({
                               >
                                 <div className="flex gap-3 items-center">
                                   <Trash2 size={14} className="shrink-0" />
-                                  Delete Policy
+                                  {t("networkResourceAccessControl.deletePolicy")}
                                 </div>
                               </DropdownMenuItem>
                             </DropdownMenuContent>
@@ -266,7 +266,7 @@ export default function NetworkResourceAccessControl({
           onClick={openAddPolicy}
         >
           <PlusIcon size={14} />
-          Add Policy
+          {t("networkResourceAccessControl.addPolicy")}
         </Button>
       </div>
 

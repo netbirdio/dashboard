@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import { Input } from "@components/Input";
 import {
@@ -11,6 +13,7 @@ import { trim } from "lodash";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   initialName: string;
@@ -27,6 +30,7 @@ export const EditGroupNameModal = ({
   const [name, setName] = useState(initialName);
   const { groups } = useGroups();
   const [error, setError] = useState("");
+  const { t } = useI18n();
 
   const isDisabled = useMemo(() => {
     if (name === initialName) return true;
@@ -39,7 +43,7 @@ export const EditGroupNameModal = ({
     const newName = e.target.value;
     const findGroup = groups?.find((g) => g.name === newName);
     if (findGroup) {
-      setError("This group already exists. Please choose another name.");
+      setError(t("groups.renameExists"));
     } else {
       setError("");
     }
@@ -50,15 +54,15 @@ export const EditGroupNameModal = ({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass={"max-w-md"}>
         <ModalHeader
-          title={"Rename Group"}
-          description={"Set an easily identifiable name for your group."}
+          title={t("groups.renameTitle")}
+          description={t("groups.renameDescription")}
           color={"blue"}
         />
 
         <div className={"p-default flex flex-col gap-4"}>
           <div>
             <Input
-              placeholder={"e.g., Developers"}
+              placeholder={t("groups.renamePlaceholder")}
               value={name}
               onChange={handleNameChange}
               error={error}
@@ -70,7 +74,7 @@ export const EditGroupNameModal = ({
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
               <Button variant={"secondary"} className={"w-full"}>
-                Cancel
+                {t("actions.cancel")}
               </Button>
             </ModalClose>
 
@@ -81,7 +85,7 @@ export const EditGroupNameModal = ({
               disabled={isDisabled}
               type={"submit"}
             >
-              Save
+              {t("actions.save")}
             </Button>
           </div>
         </ModalFooter>

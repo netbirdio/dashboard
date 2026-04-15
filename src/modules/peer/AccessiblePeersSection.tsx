@@ -5,6 +5,7 @@ import SkeletonTable, {
 import useFetchApi from "@utils/api";
 import * as React from "react";
 import { lazy, Suspense } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import type { Peer } from "@/interfaces/Peer";
 
@@ -16,6 +17,7 @@ type Props = {
   peerID: string;
 };
 export const AccessiblePeersSection = ({ peerID }: Props) => {
+  const { t } = useI18n();
   const { data: peers, isLoading } = useFetchApi<Peer[]>(
     `/peers/${peerID}/accessible-peers`,
   );
@@ -35,8 +37,7 @@ export const AccessiblePeersSection = ({ peerID }: Props) => {
         <div className={"flex justify-between items-center mb-5"}>
           <div>
             <Paragraph>
-              This peer can connect to the following peers within the NetBird
-              network.
+              {t("peer.accessiblePeersDescription")}
             </Paragraph>
           </div>
         </div>

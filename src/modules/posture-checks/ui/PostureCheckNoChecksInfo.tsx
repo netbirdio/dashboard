@@ -6,6 +6,7 @@ import { cn } from "@utils/helpers";
 import { FolderSearch } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 
 export function PostureCheckNoChecksInfo({
@@ -16,6 +17,7 @@ export function PostureCheckNoChecksInfo({
   onBrowseClick: () => void;
 }) {
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const { data: postureChecks } =
     useFetchApi<PostureCheck[]>("/posture-checks");
@@ -28,12 +30,10 @@ export function PostureCheckNoChecksInfo({
         }
       >
         <h2 className={"text-lg my-0 leading-[1.5 text-center]"}>
-          {"You haven't added any posture checks yet"}
+          {t("postureChecks.noChecksTitle")}
         </h2>
         <Paragraph className={cn("text-sm text-center max-w-md mt-1")}>
-          Add various posture checks to further restrict access in your network.
-          E.g., only clients with a specific NetBird client version, operating
-          system or location are allowed to connect.
+          {t("postureChecks.emptyDescription")}
         </Paragraph>
       </div>
       <div className={"flex items-center justify-center gap-4 mt-5"}>
@@ -48,7 +48,7 @@ export function PostureCheckNoChecksInfo({
           onClick={onBrowseClick}
         >
           <FolderSearch size={14} />
-          Browse Checks
+          {t("postureChecks.browseChecks")}
         </Button>
         <Button
           variant={"primary"}
@@ -57,7 +57,7 @@ export function PostureCheckNoChecksInfo({
           disabled={!permission.policies.create || !permission.policies.update}
         >
           <IconCirclePlus size={14} />
-          New Posture Check
+          {t("postureChecks.newButton")}
         </Button>
       </div>
     </div>

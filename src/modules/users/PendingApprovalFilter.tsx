@@ -3,6 +3,7 @@ import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import { Table } from "@tanstack/react-table";
 import * as React from "react";
 import { useEffect } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props<T> = {
   table: Table<T>;
@@ -11,6 +12,7 @@ type Props<T> = {
 };
 
 export const PendingApprovalFilter = <T,>({ table, data, count }: Props<T>) => {
+  const { t } = useI18n();
   // Reset filter if there are no pending approvals
   useEffect(() => {
     if (
@@ -45,7 +47,7 @@ export const PendingApprovalFilter = <T,>({ table, data, count }: Props<T>) => {
           : "secondary"
       }
     >
-      Pending Approvals
+      {t("users.pendingApprovals")}
       <NotificationCountBadge count={count} />
     </Button>
   );

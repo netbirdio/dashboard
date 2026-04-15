@@ -8,6 +8,7 @@ import { GRPC_API_ORIGIN } from "@utils/netbird";
 import { ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
 import React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { RoutingPeerSetupKeyInfo } from "@/modules/setup-netbird-modal/SetupModal";
 
@@ -22,16 +23,18 @@ export default function DockerTab({
   showSetupKeyInfo = false,
   hostname,
 }: Readonly<Props>) {
+  const { t } = useI18n();
+
   return (
     <TabsContent value={String(OperatingSystem.DOCKER)}>
       <TabsContentPadding>
         <p className={"font-medium flex gap-3 items-center text-base"}>
           <IconBrandUbuntu size={16} />
-          Install on Ubuntu
+          {t("setupModal.dockerInstallTitle")}
         </p>
         <Steps>
           <Steps.Step step={1}>
-            <p>Install Docker</p>
+            <p>{t("setupModal.installDocker")}</p>
             <div className={"flex gap-4 mt-1"}>
               <Link
                 href={"https://docs.docker.com/engine/install/"}
@@ -40,14 +43,14 @@ export default function DockerTab({
               >
                 <Button variant={"primary"}>
                   <ExternalLinkIcon size={14} />
-                  Official Docker Installation Guide
+                  {t("setupModal.officialDockerGuide")}
                 </Button>
               </Link>
             </div>
           </Steps.Step>
           <Steps.Step step={2}>
             <p>
-              Run NetBird container
+              {t("setupModal.runNetBirdContainer")}
               {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
             </p>
             <Code>
@@ -82,13 +85,13 @@ export default function DockerTab({
             </Code>
           </Steps.Step>
           <Steps.Step step={3} line={false}>
-            <p>Read our documentation</p>
+            <p>{t("setupModal.readDocumentation")}</p>
             <InlineLink
               href={"https://docs.netbird.io/how-to/installation/docker"}
               passHref={true}
               target={"_blank"}
             >
-              Running NetBird in Docker
+              {t("setupModal.runningNetBirdDocker")}
             </InlineLink>
           </Steps.Step>
         </Steps>

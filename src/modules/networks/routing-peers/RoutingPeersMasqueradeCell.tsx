@@ -6,6 +6,7 @@ import * as React from "react";
 import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import type { Peer } from "@/interfaces/Peer";
@@ -16,6 +17,7 @@ type Props = {
   router: NetworkRouter;
 };
 export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
+  const { t } = useI18n();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { network } = useNetworksContext();
@@ -40,9 +42,11 @@ export const RoutingPeersMasqueradeCell = ({ router }: Props) => {
 
   const toggle = async (enabled: boolean) => {
     notify({
-      title: "Network Routing Peer",
-      description: `Masquerade is now ${enabled ? "enabled" : "disabled"}`,
-      loadingMessage: "Updating masquerade...",
+      title: t("networkRoutingPeers.notifyTitle"),
+      description: t("networkRoutingPeers.masqueradeToggleDescription", {
+        status: enabled ? t("table.active") : t("common.disabled"),
+      }),
+      loadingMessage: t("networkRoutingPeers.updatingMasquerade"),
       promise: update({
         ...router,
         masquerade: enabled,

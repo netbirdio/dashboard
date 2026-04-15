@@ -8,6 +8,7 @@ import {
   SelectValue,
 } from "@components/Select";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { ShieldHalfIcon, ShieldUserIcon } from "lucide-react";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 
 export const SSHAccessType = ({ value, onChange }: Props) => {
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   return (
     <Select
@@ -34,15 +36,15 @@ export const SSHAccessType = ({ value, onChange }: Props) => {
           ) : (
             <ShieldHalfIcon size={15} className={"text-nb-gray-300 shrink-0"} />
           )}
-          <SelectValue placeholder="Select ssh access type..." />
+          <SelectValue placeholder={t("accessControl.selectSshAccessType")} />
         </div>
       </SelectTrigger>
       <SelectContent data-cy={"ssh-access-selection"}>
         <SelectItem value="full" className={"whitespace-nowrap"}>
-          Full Access
+          {t("accessControl.fullAccess")}
         </SelectItem>
         <SelectItem value="limited" className={"whitespace-nowrap"}>
-          Limited Access
+          {t("accessControl.limitedAccess")}
         </SelectItem>
       </SelectContent>
     </Select>

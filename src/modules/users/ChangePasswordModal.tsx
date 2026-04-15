@@ -17,6 +17,7 @@ import HelpText from "@components/HelpText";
 import { useApiCall } from "@utils/api";
 import { KeyRound, LockIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -49,6 +50,7 @@ export function ChangePasswordModalContent({
   userId,
   onSuccess,
 }: Readonly<ModalProps>) {
+  const { t } = useI18n();
   const passwordRequest = useApiCall<void>(`/users/${userId}/password`, true);
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
@@ -62,15 +64,17 @@ export function ChangePasswordModalContent({
 
   const newPasswordError = useMemo(() => {
     if (newPassword.length === 0) return undefined;
-    if (newPassword.length < 8) return "Password must be at least 8 characters";
+    if (newPassword.length < 8)
+      return t("changePassword.passwordLengthError");
     return undefined;
-  }, [newPassword]);
+  }, [newPassword, t]);
 
   const confirmPasswordError = useMemo(() => {
     if (confirmPassword.length === 0) return undefined;
-    if (newPassword !== confirmPassword) return "Passwords do not match";
+    if (newPassword !== confirmPassword)
+      return t("changePassword.passwordMatchError");
     return undefined;
-  }, [newPassword, confirmPassword]);
+  }, [newPassword, confirmPassword, t]);
 
   const isDisabled = useMemo(() => {
     if (currentPassword.length === 0) return true;
@@ -85,8 +89,8 @@ export function ChangePasswordModalContent({
 
     setIsLoading(true);
     notify({
-      title: "Change Password",
-      description: "Your password has been successfully changed.",
+      title: t("changePassword.successTitle"),
+      description: t("changePassword.successDescription"),
       promise: passwordRequest
         .put({
           old_password: currentPassword,
@@ -98,7 +102,7 @@ export function ChangePasswordModalContent({
         .finally(() => {
           setIsLoading(false);
         }),
-      loadingMessage: "Changing password...",
+      loadingMessage: t("changePassword.loading"),
     });
   };
 
@@ -112,8 +116,8 @@ export function ChangePasswordModalContent({
     <ModalContent maxWidthClass={"max-w-lg"}>
       <ModalHeader
         icon={<KeyRound size={18} />}
-        title={"Change Password"}
-        description={"Update your account password."}
+        title={t("changePassword.title")}
+        description={t("changePassword.description")}
         color={"netbird"}
       />
 
@@ -121,11 +125,11 @@ export function ChangePasswordModalContent({
 
       <form className={"px-8 py-6 flex flex-col gap-6"} onSubmit={changePassword}>
         <div>
-          <Label>Current Password</Label>
-          <HelpText>Enter your current password to verify your identity.</HelpText>
+          <Label>{t("changePassword.currentPassword")}</Label>
+          <HelpText>{t("changePassword.currentPasswordHelp")}</HelpText>
           <Input
             type="password"
-            placeholder={"Enter current password"}
+            placeholder={t("changePassword.currentPasswordPlaceholder")}
             value={currentPassword}
             onChange={(e) => setCurrentPassword(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -138,13 +142,13 @@ export function ChangePasswordModalContent({
         </div>
 
         <div>
-          <Label>New Password</Label>
+          <Label>{t("changePassword.newPassword")}</Label>
           <HelpText>
-            Enter your new password. Must be at least 8 characters.
+            {t("changePassword.newPasswordHelp")}
           </HelpText>
           <Input
             type="password"
-            placeholder={"Enter new password"}
+            placeholder={t("changePassword.newPasswordPlaceholder")}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -157,11 +161,11 @@ export function ChangePasswordModalContent({
         </div>
 
         <div>
-          <Label>Confirm New Password</Label>
-          <HelpText>Re-enter your new password to confirm.</HelpText>
+          <Label>{t("changePassword.confirmNewPassword")}</Label>
+          <HelpText>{t("changePassword.confirmNewPasswordHelp")}</HelpText>
           <Input
             type="password"
-            placeholder={"Confirm new password"}
+            placeholder={t("changePassword.confirmNewPasswordPlaceholder")}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             onKeyDown={handleKeyDown}
@@ -177,7 +181,7 @@ export function ChangePasswordModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("actions.cancel")}</Button>
           </ModalClose>
 
           <Button
@@ -185,7 +189,7 @@ export function ChangePasswordModalContent({
             disabled={isDisabled || isLoading}
             onClick={changePassword}
           >
-            Change Password
+            {t("changePassword.title")}
           </Button>
         </div>
       </ModalFooter>

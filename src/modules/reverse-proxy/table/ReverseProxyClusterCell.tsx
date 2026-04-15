@@ -31,7 +31,7 @@ export default function ReverseProxyClusterCell({
 
   if (!hasCluster) {
     return (
-      <div className="flex items-center gap-2" data-cluster-cell>
+      <div className="flex items-center gap-2">
         <Badge variant="gray" className="font-normal">
           <Globe size={12} />
           All
@@ -42,7 +42,7 @@ export default function ReverseProxyClusterCell({
 
   if (isConnected) {
     return (
-      <div className="flex items-center gap-2" data-cluster-cell>
+      <div className="flex items-center gap-2">
         <Badge variant={"gray"} className={cn("font-normal")}>
           <Server size={11} className={cn("text-green-500")} />
           {reverseProxy.proxy_cluster}
@@ -76,7 +76,7 @@ export default function ReverseProxyClusterCell({
       align={"center"}
       alignOffset={0}
     >
-      <div className="flex items-center gap-2" data-cluster-cell>
+      <div className="flex items-center gap-2">
         <Badge variant={"red"} className={cn("font-normal")}>
           <AlertTriangle size={11} />
           {reverseProxy.proxy_cluster}

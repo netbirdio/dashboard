@@ -4,6 +4,7 @@ import { IconCirclePlus, IconDirectionSign } from "@tabler/icons-react";
 import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
 import { ExitNodeHelpTooltip } from "@/modules/exit-node/ExitNodeHelpTooltip";
@@ -21,6 +22,7 @@ export const AddExitNodeButton = ({
 }: Props) => {
   const [modal, setModal] = useState(false);
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   return (
     <>
@@ -33,12 +35,12 @@ export const AddExitNodeButton = ({
           {!firstTime ? (
             <>
               <IconCirclePlus size={16} />
-              Add Exit Node
+              {t("exitNodes.add")}
             </>
           ) : (
             <>
               <IconDirectionSign size={16} className={"text-yellow-400"} />
-              Set Up Exit Node
+              {t("exitNodes.setup")}
             </>
           )}
         </Button>

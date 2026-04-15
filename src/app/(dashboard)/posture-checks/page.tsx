@@ -12,6 +12,7 @@ import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import PageContainer from "@/layouts/PageContainer";
@@ -21,6 +22,7 @@ const PostureCheckTable = lazy(
 );
 export default function PostureChecksPage() {
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
 
@@ -34,35 +36,33 @@ export default function PostureChecksPage() {
           <Breadcrumbs>
             <Breadcrumbs.Item
               href={"/access-control"}
-              label={"Access Control"}
+              label={t("accessControl.title")}
               icon={<AccessControlIcon size={14} />}
             />
             <Breadcrumbs.Item
               href={"/posture-checks"}
-              label={"Posture Checks"}
+              label={t("nav.postureChecks")}
               active
               icon={<ShieldCheck size={15} />}
             />
           </Breadcrumbs>
-          <h1 ref={headingRef}>Posture Checks</h1>
+          <h1 ref={headingRef}>{t("nav.postureChecks")}</h1>
+          <Paragraph>{t("postureChecks.pageDescription")}</Paragraph>
           <Paragraph>
-            Use posture checks to further restrict access in your network.
-          </Paragraph>
-          <Paragraph>
-            Learn more about
+            {t("common.learnMorePrefix")}{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/manage-posture-checks"}
               target={"_blank"}
             >
-              Posture Checks
+              {t("nav.postureChecks")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
+            {" "}{t("common.inDocumentationSuffix")}
           </Paragraph>
         </div>
 
         <RestrictedAccess
-          page={"Posture Checks"}
+          page={t("nav.postureChecks")}
           hasAccess={permission.policies.read}
         >
           <PoliciesProvider>

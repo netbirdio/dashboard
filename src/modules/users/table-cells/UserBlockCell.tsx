@@ -5,6 +5,7 @@ import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { User } from "@/interfaces/User";
 
 type Props = {
@@ -12,6 +13,7 @@ type Props = {
   isUserPage?: boolean;
 };
 export default function UserBlockCell({ user, isUserPage = false }: Props) {
+  const { t } = useI18n();
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
@@ -24,24 +26,24 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
   const disabled = user.is_current || user.role === "owner";
 
   const update = async (blocked: boolean) => {
-    const name = user.name || "User";
+    const name = user.name || t("userActions.userFallback");
 
     if (blocked) {
       const choice = await confirm({
-        title: `Block '${name}'?`,
-        description:
-          "This action will immediately revoke the user's access and disconnect all of their active peers.",
-        confirmText: "Block",
-        cancelText: "Cancel",
+        title: t("userBlock.confirmTitle", { name }),
+        description: t("userBlock.confirmDescription"),
+        confirmText: t("postureChecks.block"),
+        cancelText: t("actions.cancel"),
         type: "danger",
       });
       if (!choice) return;
     }
 
     notify({
-      title: blocked ? "User blocked" : "User unblocked",
-      description:
-        name + " was successfully " + (blocked ? "blocked." : "unblocked."),
+      title: blocked ? t("userBlock.blockedTitle") : t("userBlock.unblockedTitle"),
+      description: blocked
+        ? t("userBlock.blockedDescription", { name })
+        : t("userBlock.unblockedDescription", { name }),
       promise: userRequest
         .put(
           {
@@ -56,8 +58,8 @@ export default function UserBlockCell({ user, isUserPage = false }: Props) {
           if (isUserPage) mutate(`/users`);
         }),
       loadingMessage: blocked
-        ? "Blocking the user..."
-        : "Unblocking the user...",
+        ? t("userBlock.blocking")
+        : t("userBlock.unblocking"),
     });
   };
 

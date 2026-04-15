@@ -6,6 +6,7 @@ import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { User } from "@/interfaces/User";
 import GroupsRow from "@/modules/common-table-rows/GroupsRow";
@@ -14,6 +15,7 @@ type Props = {
   user: User;
 };
 export default function UserGroupCell({ user }: Readonly<Props>) {
+  const { t } = useI18n();
   const { groups, isLoading } = useGroups();
   const [modal, setModal] = useState(false);
   const { mutate } = useSWRConfig();
@@ -47,8 +49,8 @@ export default function UserGroupCell({ user }: Readonly<Props>) {
       groups?.map((group) => group?.id).filter((id) => id !== undefined) || [];
 
     notify({
-      title: user?.name || user?.email || "User",
-      description: "Groups of the user were successfully saved",
+      title: user?.name || user?.email || t("userActions.userFallback"),
+      description: t("userGroups.savedDescription"),
       promise: userRequest
         .put(
           {
@@ -63,14 +65,14 @@ export default function UserGroupCell({ user }: Readonly<Props>) {
           mutate(`/integrations/msp/switcher`);
           mutate("/groups");
         }),
-      loadingMessage: "Updating groups...",
+      loadingMessage: t("userGroups.updating"),
     });
   };
 
   return (
     <GroupsRow
-      label={"Auto-assigned Groups"}
-      description={"Groups will be assigned to peers added by this user."}
+      label={t("userGroups.label")}
+      description={t("userGroups.description")}
       groups={userGroupIds}
       onSave={handleSave}
       hideAllGroup={true}

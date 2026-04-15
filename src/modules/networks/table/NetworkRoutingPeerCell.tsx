@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Network } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -14,28 +15,33 @@ type Props = {
   network: Network;
 };
 export default function NetworkRoutingPeerCell({ network }: Props) {
+  const { t } = useI18n();
   const { permission } = usePermissions();
   const router = useRouter();
   const disabledText = useMemo(
     () => (
       <>
-        High availability is currently{" "}
-        <span className={"text-yellow-400 font-medium"}>inactive</span> for this
-        network.
+        {t("networkDetails.highAvailabilityInactivePrefix")}{" "}
+        <span className={"text-yellow-400 font-medium"}>
+          {t("networkDetails.inactive")}
+        </span>{" "}
+        {t("networkDetails.highAvailabilitySuffix")}
       </>
     ),
-    [],
+    [t],
   );
 
   const enabledText = useMemo(
     () => (
       <>
-        High availability is{" "}
-        <span className={"text-green-500 font-medium"}>active</span> for this
-        network.
+        {t("networkDetails.highAvailabilityActivePrefix")}{" "}
+        <span className={"text-green-500 font-medium"}>
+          {t("networkDetails.active")}
+        </span>{" "}
+        {t("networkDetails.highAvailabilitySuffix")}
       </>
     ),
-    [],
+    [t],
   );
 
   const { openAddRoutingPeerModal } = useNetworksContext();
@@ -57,13 +63,11 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
               {isHighlyAvailable ? enabledText : disabledText}
               {isHighlyAvailable ? (
                 <div className={"inline-flex mt-2"}>
-                  You can add more routing peers to increase the availability of
-                  this network.
+                  {t("networkDetails.highAvailabilityEnabledHelp")}
                 </div>
               ) : (
                 <div className={"inline-flex mt-2"}>
-                  Go ahead and add more routing peers or groups with routing
-                  peers to enable high availability for this network.
+                  {t("networkDetails.highAvailabilityDisabledHelp")}
                 </div>
               )}
             </>
@@ -89,7 +93,7 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
                 )}
               ></div>
               {network?.routing_peers_count && network.routing_peers_count}{" "}
-              Peer(s)
+              {t("networkRouting.peer")}
             </>
 
             <HelpCircle size={12} />
@@ -104,7 +108,7 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
         disabled={!permission.networks.update}
       >
         <PlusCircle size={12} />
-        Add Routing Peer
+        {t("networkRouting.add")}
       </Button>
     </div>
   );

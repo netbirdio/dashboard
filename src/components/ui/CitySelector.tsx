@@ -6,6 +6,7 @@ import useFetchApi from "@utils/api";
 import { MapPin } from "lucide-react";
 import { createElement, useMemo } from "react";
 import { City } from "@/interfaces/City";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   value: string;
@@ -13,6 +14,7 @@ type Props = {
   country: string;
 };
 export const CitySelector = ({ value, onChange, country = "de" }: Props) => {
+  const { t } = useI18n();
   const { data: cities, isLoading } = useFetchApi<City[]>(
     `/locations/countries/${country}/cities`,
   );
@@ -36,7 +38,7 @@ export const CitySelector = ({ value, onChange, country = "de" }: Props) => {
       } as SelectOption;
     }) as SelectOption[];
 
-    all.unshift({ label: "All Locations", value: "", icon: pinIcon });
+    all.unshift({ label: t("citySelector.allLocations"), value: "", icon: pinIcon });
     return all;
   }, [cities]);
 
@@ -45,8 +47,8 @@ export const CitySelector = ({ value, onChange, country = "de" }: Props) => {
       <SelectDropdown
         isLoading={isLoading}
         showSearch={true}
-        placeholder={"Select city (optional)..."}
-        searchPlaceholder={"Search city..."}
+        placeholder={t("citySelector.placeholder")}
+        searchPlaceholder={t("citySelector.searchPlaceholder")}
         value={value}
         onChange={onChange}
         options={cityList || []}

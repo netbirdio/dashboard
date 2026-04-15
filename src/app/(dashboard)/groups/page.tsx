@@ -9,12 +9,14 @@ import React, { lazy, Suspense } from "react";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import InlineLink from "@/components/InlineLink";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import PageContainer from "@/layouts/PageContainer";
 
 const GroupsTable = lazy(() => import("@/modules/groups/table/GroupsTable"));
 
 export default function GroupsPage() {
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -24,29 +26,29 @@ export default function GroupsPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/groups"}
-            label={"Groups"}
+            label={t("groups.title")}
             icon={<FolderGit2Icon size={14} />}
             active
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Groups</h1>
+        <h1 ref={headingRef}>{t("groups.title")}</h1>
+        <Paragraph>{t("groups.description")}</Paragraph>
         <Paragraph>
-          Here is the overview of the groups of your organization. You can
-          delete the unused ones.
-        </Paragraph>
-        <Paragraph>
-          Learn more about{" "}
+          {t("common.learnMorePrefix")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-network-access"}
             target={"_blank"}
           >
-            Groups
+            {t("groups.title")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
+          {t("common.inDocumentationSuffix")}
         </Paragraph>
       </div>
-      <RestrictedAccess hasAccess={permission.groups.read} page={"Groups"}>
+      <RestrictedAccess
+        hasAccess={permission.groups.read}
+        page={t("groups.title")}
+      >
         <Suspense fallback={<SkeletonTable />}>
           <GroupsTable headingTarget={portalTarget} />
         </Suspense>

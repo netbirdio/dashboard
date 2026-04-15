@@ -8,6 +8,7 @@ import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { IconChevronDown } from "@tabler/icons-react";
 import * as React from "react";
 import { usePeer } from "@/contexts/PeerProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
@@ -15,6 +16,7 @@ import { cn } from "@utils/helpers";
 
 export const PeerConnectButton = () => {
   const { peer } = usePeer();
+  const { t } = useI18n();
   const isConnected = peer.connected;
   const os = getOperatingSystem(peer?.os);
   const isMobile = os === OperatingSystem.ANDROID || os === OperatingSystem.IOS;
@@ -32,7 +34,7 @@ export const PeerConnectButton = () => {
           }}
         >
           <div className={"group"}>
-            <ConnectButton />
+            <ConnectButton label={t("remoteAccess.connect")} />
           </div>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -50,16 +52,22 @@ export const PeerConnectButton = () => {
     <FullTooltip
       content={
         <div className={"max-w-[200px] text-xs"}>
-          Connecting via SSH or RDP is only available when the peer is online.
+          {t("peerConnect.offlineHelp")}
         </div>
       }
     >
-      <ConnectButton disabled={true} />
+      <ConnectButton disabled={true} label={t("remoteAccess.connect")} />
     </FullTooltip>
   );
 };
 
-const ConnectButton = ({ disabled }: { disabled?: boolean }) => {
+const ConnectButton = ({
+  disabled,
+  label,
+}: {
+  disabled?: boolean;
+  label: string;
+}) => {
   return (
     <button
       className={cn(
@@ -73,7 +81,7 @@ const ConnectButton = ({ disabled }: { disabled?: boolean }) => {
         e.preventDefault();
       }}
     >
-      Connect
+      {label}
       <IconChevronDown size={14} />
     </button>
   );

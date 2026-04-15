@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
 import Card from "@components/Card";
@@ -9,6 +11,7 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
+import NoResults from "@components/ui/NoResults";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
 import { ClockFadingIcon, ExternalLinkIcon, PlusCircle } from "lucide-react";
@@ -16,9 +19,9 @@ import { usePathname, useSearchParams } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
-import NoResults from "@/components/ui/NoResults";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useI18n } from "@/i18n/I18nProvider";
 import type { Policy } from "@/interfaces/Policy";
 import AccessControlModal, {
   AccessControlUpdateModal,
@@ -40,143 +43,153 @@ type Props = {
   isGroupPage?: boolean;
 };
 
-export const AccessControlTableColumns: ColumnDef<Policy>[] = [
-  {
-    id: "name",
-    accessorFn: (row) => removeAllSpaces(row?.name),
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
-    },
-    sortingFn: "text",
-    filterFn: "fuzzy",
-    cell: ({ cell }) => <AccessControlNameCell policy={cell.row.original} />,
-  },
-  {
-    id: "description",
-    accessorFn: (row) => removeAllSpaces(row?.description),
-    sortingFn: "text",
-    filterFn: "fuzzy",
-  },
-  {
-    id: "enabled",
-    accessorKey: "enabled",
-    accessorFn: (row) => row.enabled,
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
-    },
-    cell: ({ cell }) => <AccessControlActiveCell policy={cell.row.original} />,
-  },
-  {
-    id: "sources",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].sources?.length || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
-    },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Sources</DataTableHeader>;
-    },
-    cell: ({ cell }) => <AccessControlSourcesCell policy={cell.row.original} />,
-  },
-  {
-    id: "direction",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].bidirectional || true;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
-    },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Direction</DataTableHeader>;
-    },
-    cell: ({ cell }) => (
-      <AccessControlDirectionCell policy={cell.row.original} />
-    ),
-  },
-  {
-    id: "destinations",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].destinations?.length || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
-    },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Destinations</DataTableHeader>;
-    },
-    cell: ({ cell }) => (
-      <AccessControlDestinationsCell policy={cell.row.original} />
-    ),
-  },
+function useAccessControlTableColumns(): ColumnDef<Policy>[] {
+  const { t } = useI18n();
 
-  {
-    id: "protocol",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].protocol || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
-    },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Protocol</DataTableHeader>;
-    },
-    cell: ({ cell }) => (
-      <AccessControlProtocolCell policy={cell.row.original} />
-    ),
-  },
-  {
-    id: "ports",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].ports?.length || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
-    },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Ports</DataTableHeader>;
-    },
-    cell: ({ cell }) => <AccessControlPortsCell policy={cell.row.original} />,
-  },
-  {
-    id: "posture_checks",
-    accessorFn: (row) => row.source_posture_checks?.length || 0,
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Posture Checks</DataTableHeader>;
-    },
-    cell: ({ cell }) => (
-      <AccessControlPostureCheckCell policy={cell.row.original} />
-    ),
-  },
-  {
-    id: "id",
-    accessorKey: "id",
-    filterFn: "exactMatch",
-  },
-  {
-    id: "actions",
-    accessorKey: "id",
-    header: "",
-    cell: ({ cell }) => <AccessControlActionCell policy={cell.row.original} />,
-  },
-];
+  return useMemo(
+    () => [
+      {
+        id: "name",
+        accessorFn: (row) => removeAllSpaces(row?.name),
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>;
+        },
+        sortingFn: "text",
+        filterFn: "fuzzy",
+        cell: ({ cell }) => <AccessControlNameCell policy={cell.row.original} />,
+      },
+      {
+        id: "description",
+        accessorFn: (row) => removeAllSpaces(row?.description),
+        sortingFn: "text",
+        filterFn: "fuzzy",
+      },
+      {
+        id: "enabled",
+        accessorKey: "enabled",
+        accessorFn: (row) => row.enabled,
+        sortingFn: "basic",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.active")}</DataTableHeader>;
+        },
+        cell: ({ cell }) => <AccessControlActiveCell policy={cell.row.original} />,
+      },
+      {
+        id: "sources",
+        accessorFn: (row) => {
+          try {
+            return row.rules[0].sources?.length || 0;
+          } catch (error) {
+            console.log(error);
+          }
+          return 0;
+        },
+        sortingFn: "basic",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.sources")}</DataTableHeader>;
+        },
+        cell: ({ cell }) => <AccessControlSourcesCell policy={cell.row.original} />,
+      },
+      {
+        id: "direction",
+        accessorFn: (row) => {
+          try {
+            return row.rules[0].bidirectional || true;
+          } catch (error) {
+            console.log(error);
+          }
+          return 0;
+        },
+        sortingFn: "basic",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.direction")}</DataTableHeader>;
+        },
+        cell: ({ cell }) => (
+          <AccessControlDirectionCell policy={cell.row.original} />
+        ),
+      },
+      {
+        id: "destinations",
+        accessorFn: (row) => {
+          try {
+            return row.rules[0].destinations?.length || 0;
+          } catch (error) {
+            console.log(error);
+          }
+          return 0;
+        },
+        sortingFn: "basic",
+        header: ({ column }) => {
+          return (
+            <DataTableHeader column={column}>{t("table.destinations")}</DataTableHeader>
+          );
+        },
+        cell: ({ cell }) => (
+          <AccessControlDestinationsCell policy={cell.row.original} />
+        ),
+      },
+      {
+        id: "protocol",
+        accessorFn: (row) => {
+          try {
+            return row.rules[0].protocol || 0;
+          } catch (error) {
+            console.log(error);
+          }
+          return 0;
+        },
+        sortingFn: "basic",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.protocol")}</DataTableHeader>;
+        },
+        cell: ({ cell }) => (
+          <AccessControlProtocolCell policy={cell.row.original} />
+        ),
+      },
+      {
+        id: "ports",
+        accessorFn: (row) => {
+          try {
+            return row.rules[0].ports?.length || 0;
+          } catch (error) {
+            console.log(error);
+          }
+          return 0;
+        },
+        sortingFn: "basic",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.ports")}</DataTableHeader>;
+        },
+        cell: ({ cell }) => <AccessControlPortsCell policy={cell.row.original} />,
+      },
+      {
+        id: "posture_checks",
+        accessorFn: (row) => row.source_posture_checks?.length || 0,
+        sortingFn: "basic",
+        header: ({ column }) => {
+          return (
+            <DataTableHeader column={column}>{t("nav.postureChecks")}</DataTableHeader>
+          );
+        },
+        cell: ({ cell }) => (
+          <AccessControlPostureCheckCell policy={cell.row.original} />
+        ),
+      },
+      {
+        id: "id",
+        accessorKey: "id",
+        filterFn: "exactMatch",
+      },
+      {
+        id: "actions",
+        accessorKey: "id",
+        header: "",
+        cell: ({ cell }) => <AccessControlActionCell policy={cell.row.original} />,
+      },
+    ],
+    [t],
+  );
+}
 
 export default function AccessControlTable({
   policies,
@@ -189,8 +202,9 @@ export default function AccessControlTable({
   const { permission } = usePermissions();
   const params = useSearchParams();
   const idParam = !isGroupPage ? params.get("id") : undefined;
+  const { t } = useI18n();
+  const columns = useAccessControlTableColumns();
 
-  // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path,
     [
@@ -205,7 +219,6 @@ export default function AccessControlTable({
   const [editModal, setEditModal] = useState(false);
   const [currentRow, setCurrentRow] = useState<Policy>();
   const [currentCellClicked, setCurrentCellClicked] = useState("");
-
   const [showTemporaryPolicies, setShowTemporaryPolicies] = useState(false);
 
   const withTemporaryPolicies = useCallback(
@@ -272,10 +285,10 @@ export default function AccessControlTable({
               ]
             : undefined
         }
-        text={"Access Control Policies"}
+        text={t("accessControl.policiesTitle")}
         sorting={sorting}
         setSorting={setSorting}
-        columns={AccessControlTableColumns}
+        columns={columns}
         columnVisibility={{
           description: false,
           id: false,
@@ -287,15 +300,13 @@ export default function AccessControlTable({
           setEditModal(true);
           setCurrentCellClicked(cell);
         }}
-        searchPlaceholder={"Search by name and description..."}
+        searchPlaceholder={t("accessPolicies.searchPlaceholder")}
         getStartedCard={
           isGroupPage ? (
             <NoResults
               className={"py-4"}
-              title={"This group is not used within any policies yet"}
-              description={
-                "Assign this group as either a source or destination inside a policy to see them listed here."
-              }
+              title={t("accessPolicies.emptyGroupTitle")}
+              description={t("accessPolicies.emptyGroupDescription")}
               icon={
                 <AccessControlIcon size={20} className={"fill-nb-gray-300"} />
               }
@@ -308,7 +319,7 @@ export default function AccessControlTable({
                     disabled={!permission.policies.create}
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {t("accessPolicies.addPolicy")}
                   </Button>
                 </AccessControlModal>
               </div>
@@ -318,19 +329,14 @@ export default function AccessControlTable({
               icon={
                 <SquareIcon
                   icon={
-                    <AccessControlIcon
-                      className={"fill-nb-gray-200"}
-                      size={20}
-                    />
+                    <AccessControlIcon className={"fill-nb-gray-200"} size={20} />
                   }
                   color={"gray"}
                   size={"large"}
                 />
               }
-              title={"Create New Policy"}
-              description={
-                "It looks like you don't have any policies yet. Policies can allow connections by specific protocol and ports."
-              }
+              title={t("accessPolicies.emptyTitle")}
+              description={t("accessPolicies.emptyDescription")}
               button={
                 <div className={"flex gap-4 items-center justify-center"}>
                   <AccessControlModal>
@@ -339,21 +345,19 @@ export default function AccessControlTable({
                       disabled={!permission.policies.create}
                     >
                       <PlusCircle size={16} />
-                      Add Policy
+                      {t("accessPolicies.addPolicy")}
                     </Button>
                   </AccessControlModal>
                 </div>
               }
               learnMore={
                 <>
-                  Learn more about
+                  {t("common.learnMorePrefix")}{" "}
                   <InlineLink
-                    href={
-                      "https://docs.netbird.io/how-to/manage-network-access"
-                    }
+                    href={"https://docs.netbird.io/how-to/manage-network-access"}
                     target={"_blank"}
                   >
-                    Access Controls
+                    {t("accessControl.learnMoreLink")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -372,7 +376,7 @@ export default function AccessControlTable({
                     disabled={!permission.policies.create}
                   >
                     <PlusCircle size={16} />
-                    Add Policy
+                    {t("accessPolicies.addPolicy")}
                   </Button>
                 </AccessControlModal>
               </div>
@@ -396,7 +400,7 @@ export default function AccessControlTable({
                       : "secondary"
                   }
                 >
-                  All
+                  {t("filters.all")}
                 </ButtonGroup.Button>
                 <ButtonGroup.Button
                   onClick={() => {
@@ -410,7 +414,7 @@ export default function AccessControlTable({
                       : "secondary"
                   }
                 >
-                  Active
+                  {t("accessPolicies.active")}
                 </ButtonGroup.Button>
                 <ButtonGroup.Button
                   onClick={() => {
@@ -424,7 +428,7 @@ export default function AccessControlTable({
                       : "secondary"
                   }
                 >
-                  Inactive
+                  {t("accessPolicies.inactive")}
                 </ButtonGroup.Button>
               </ButtonGroup>
               <DataTableRowsPerPage
@@ -436,9 +440,7 @@ export default function AccessControlTable({
                 <FullTooltip
                   content={
                     <div className={"max-w-sm text-xs"}>
-                      Show temporary policies created by the NetBird browser
-                      client. These policies are ephemeral and will be deleted
-                      automatically after a short period of time.
+                      {t("accessPolicies.temporaryTooltip")}
                     </div>
                   }
                 >

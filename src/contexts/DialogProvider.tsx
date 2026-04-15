@@ -8,6 +8,7 @@ import {
 import ModalHeader from "@components/modal/ModalHeader";
 import { AlertCircle, AlertTriangle } from "lucide-react";
 import React, { useCallback, useRef, useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -32,6 +33,7 @@ type DialogOptions = {
 };
 
 export default function DialogProvider({ children }: Props) {
+  const { t } = useI18n();
   const [state, setState] = useState({
     isOpen: false,
   });
@@ -73,11 +75,11 @@ export default function DialogProvider({ children }: Props) {
           >
             <ModalHeader
               center={dialogOptions.center ?? dialogOptions.type == "center"}
-              title={dialogOptions.title || "Confirmation"}
+              title={dialogOptions.title || t("dialog.confirmation")}
               margin={"mt-1"}
               description={
                 dialogOptions.description ||
-                "Are you sure you want to continue? This action cannot be undone."
+                t("dialog.confirmationDescription")
               }
               icon={dialogOptions.hideIcon ? "" : dialogTypes[dialogOptions.type || "default"]}
               color={
@@ -107,7 +109,7 @@ export default function DialogProvider({ children }: Props) {
                   data-cy={"confirmation.cancel"}
                   onClick={() => fn.current && fn.current(false)}
                 >
-                  {dialogOptions.cancelText || "Cancel"}
+                  {dialogOptions.cancelText || t("common.cancel")}
                 </Button>
               </ModalClose>
               <Button
@@ -123,7 +125,7 @@ export default function DialogProvider({ children }: Props) {
                 data-cy={"confirmation.confirm"}
                 onClick={() => fn.current && fn.current(true)}
               >
-                {dialogOptions.confirmText || "Confirm"}
+                {dialogOptions.confirmText || t("dialog.confirm")}
               </Button>
             </ModalFooter>
           </ModalContent>

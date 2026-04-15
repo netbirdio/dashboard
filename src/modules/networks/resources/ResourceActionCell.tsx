@@ -8,6 +8,7 @@ import {
 import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -15,6 +16,7 @@ type Props = {
   resource: NetworkResource;
 };
 export const ResourceActionCell = ({ resource }: Props) => {
+  const { t } = useI18n();
   const { permission } = usePermissions();
   const { deleteResource, network, openResourceModal } = useNetworksContext();
 
@@ -49,7 +51,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              {t("actions.edit")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -62,7 +64,7 @@ export const ResourceActionCell = ({ resource }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("actions.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

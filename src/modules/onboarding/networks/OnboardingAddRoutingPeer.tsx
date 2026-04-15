@@ -7,6 +7,7 @@ import { CopyIcon, DownloadIcon, KeyRoundIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkRouter } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
@@ -24,6 +25,7 @@ export const OnboardingAddRoutingPeer = ({
   peers,
   onRoutingPeerAdded,
 }: Props) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const { groups } = useGroups();
@@ -40,17 +42,17 @@ export const OnboardingAddRoutingPeer = ({
     );
     if (!routingPeerGroup) {
       routingPeerGroup = await groupRequest.post({
-        name: "Routing Peers",
+        name: t("onboarding.routingPeersGroupName"),
       });
     }
 
     notify({
-      title: "Setup Key Created",
-      description: "Successfully copied to clipboard.",
-      loadingMessage: "Generating setup key...",
+      title: t("onboarding.setupKeyCreated"),
+      description: t("onboarding.copiedToClipboard"),
+      loadingMessage: t("onboarding.generatingSetupKey"),
       promise: setupKeyRequest
         .post({
-          name: "Routing Peer (My First Network)",
+          name: t("onboarding.routingPeerSetupKeyName"),
           type: "one-off",
           expires_in: 24 * 60 * 60, // 1 day expiration
           revoked: false,
@@ -100,8 +102,8 @@ export const OnboardingAddRoutingPeer = ({
       await navigator.clipboard.writeText(key || "");
       if (showMessage) {
         notify({
-          title: "Setup Key Copied",
-          description: "Successfully copied to clipboard.",
+          title: t("onboarding.setupKeyCopied"),
+          description: t("onboarding.copiedToClipboard"),
         });
       }
     } catch (e) {}
@@ -111,22 +113,21 @@ export const OnboardingAddRoutingPeer = ({
     <div className={"relative flex flex-col h-full gap-4"}>
         <div>
             <h1 className={"text-xl text-center"}>
-                Add a routing peer and get the traffic flowing
+                {t("onboarding.addRoutingPeerTitle")}
             </h1>
             <div
                 className={
                     "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
                 }
             >
-                Think of a routing peer as a connector to your internal network.
-                It runs NetBird and lets your remote devices access internal resources, while enforcing access control policies.
+                {t("onboarding.addRoutingPeerDescription")}
             </div>
             <div
                 className={
                     "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
                 }
             >
-                Generate a setup key and install NetBird on that machine.
+                {t("onboarding.addRoutingPeerStep")}
             </div>
         </div>
 
@@ -139,10 +140,10 @@ export const OnboardingAddRoutingPeer = ({
             <div>
                 <div className="text-nb-gray-100 font-normal text-sm text-left gap-2 flex items-center">
             <KeyRoundIcon size={12} />
-            Setup-Key
+            {t("onboarding.setupKey")}
           </div>
           <div className={"text-nb-gray-300 text-[0.8rem] text-left mt-0.5"}>
-            {setupKey?.key || "Not yet generated"}
+            {setupKey?.key || t("onboarding.notGeneratedYet")}
           </div>
         </div>
         {setupKey ? (
@@ -154,7 +155,7 @@ export const OnboardingAddRoutingPeer = ({
           </Button>
         ) : (
           <Button variant={"primary"} onClick={generateSetupKey} size={"xs"}>
-            Generate Setup Key
+            {t("onboarding.generateSetupKey")}
           </Button>
         )}
       </div>
@@ -166,7 +167,7 @@ export const OnboardingAddRoutingPeer = ({
         onClick={() => setOpen(true)}
       >
         <DownloadIcon size={16} />
-        Install Routing Peer
+        {t("onboarding.installRoutingPeer")}
       </Button>
 
       {setupKey && (
@@ -174,7 +175,7 @@ export const OnboardingAddRoutingPeer = ({
           <ModalContent>
             <SetupModalContent
               hostname={"routing-peer"}
-              title={"Install NetBird"}
+              title={t("setupModal.installNetBird")}
               setupKey={setupKey.key}
             />
           </ModalContent>

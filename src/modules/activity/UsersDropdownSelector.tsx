@@ -13,6 +13,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface Props {
   value?: string;
@@ -48,11 +49,12 @@ export function UsersDropdownSelector({
   popoverWidth = 250,
   options,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const [filteredItems, search, setSearch] = useSearch(
     options.concat({
       id: "all-users",
-      name: "All Users",
-      email: "Include all users",
+      name: t("users.allUsers"),
+      email: t("users.includeAllUsers"),
     }),
     searchPredicate,
     { filter: true, debounce: 150 },
@@ -107,7 +109,7 @@ export function UsersDropdownSelector({
             {!selectedUser ? (
               <React.Fragment>
                 <UserCircle2 size={16} />
-                All Users
+                {t("users.allUsers")}
               </React.Fragment>
             ) : (
               <React.Fragment>
@@ -165,14 +167,14 @@ export function UsersDropdownSelector({
           <DropdownInput
             value={search}
             onChange={setSearch}
-            placeholder={"Search user..."}
+            placeholder={t("users.searchPlaceholder")}
             hideEnterIcon={true}
           />
 
           {options.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {"No users available to select."}
+                {t("users.noUsersAvailable")}
               </DropdownInfoText>
             </div>
           )}
@@ -180,7 +182,7 @@ export function UsersDropdownSelector({
           {filteredItems.length == 0 && search != "" && (
             <div className={"px-10"}>
               <DropdownInfoText>
-                There are no users matching your search.
+                {t("users.noUsersMatchingSearch")}
               </DropdownInfoText>
             </div>
           )}

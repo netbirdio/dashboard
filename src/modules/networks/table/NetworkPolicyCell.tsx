@@ -4,6 +4,7 @@ import { PlusCircle, ShieldIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Network } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export const NetworkPolicyCell = ({ network }: Props) => {
+  const { t } = useI18n();
   const { permission } = usePermissions();
 
   const { openPolicyModal } = useNetworksContext();
@@ -41,7 +43,7 @@ export const NetworkPolicyCell = ({ network }: Props) => {
         disabled={!permission.networks.update}
       >
         <PlusCircle size={12} />
-        Add Policy
+        {t("networks.addPolicy")}
       </Button>
     </div>
   ) : (
@@ -53,7 +55,7 @@ export const NetworkPolicyCell = ({ network }: Props) => {
         onClick={() => openPolicyModal(network)}
       >
         <PlusCircle size={12} />
-        Add Policy
+        {t("networks.addPolicy")}
       </Button>
     </>
   );

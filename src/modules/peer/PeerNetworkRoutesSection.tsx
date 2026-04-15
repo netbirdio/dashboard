@@ -9,6 +9,7 @@ import AddRouteDropdownButton from "@/modules/peer/AddRouteDropdownButton";
 import usePeerRoutes from "@/modules/peer/usePeerRoutes";
 import InlineLink from "@components/InlineLink";
 import { ExternalLinkIcon } from "lucide-react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const PeerRoutesTable = lazy(() => import("@/modules/peer/PeerRoutesTable"));
 
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export const PeerNetworkRoutesSection = ({ peer }: Props) => {
+  const { t } = useI18n();
   const { peerRoutes, isLoading } = usePeerRoutes({ peer });
   const exitNodeInfo = useHasExitNodes(peer);
 
@@ -26,21 +28,20 @@ export const PeerNetworkRoutesSection = ({ peer }: Props) => {
         <div className={"flex justify-between items-center mb-5"}>
           <div>
             <Paragraph>
-              Access other networks without installing NetBird on every
-              resource.
+              {t("peerNetworkRoutes.description")}
             </Paragraph>
             <Paragraph>
-              Learn more about
+              {t("common.learnMorePrefix")}{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                 }
                 target={"_blank"}
               >
-                Network Routes
+                {t("networkRoutesPage.title")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
-              in our documentation.
+              {t("common.inDocumentationSuffix")}
             </Paragraph>
           </div>
           <div className={"inline-flex gap-4 justify-end"}>

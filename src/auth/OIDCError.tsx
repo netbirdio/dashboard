@@ -7,10 +7,12 @@ import { useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useEffect, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const config = loadConfig();
 
 export const OIDCError = () => {
+  const { t } = useI18n();
   const { oidcUserLoadingState } = useOidcUser();
   const params = useSearchParams();
   const errorParam = params.get("error");
@@ -24,13 +26,13 @@ export const OIDCError = () => {
     if (accessDenied) {
       if (title === "account linked successfully") {
         setTitle(
-          "Your account has been linked successfully. Please log in again to complete the setup.",
+          t("auth.accountLinkedSuccessfully"),
         );
       }
     } else {
-      setTitle("Oops, something went wrong");
+      setTitle(t("auth.somethingWentWrong"));
     }
-  }, [accessDenied, title]);
+  }, [accessDenied, title, t]);
 
   return (
     <div
@@ -50,7 +52,7 @@ export const OIDCError = () => {
       {accessDenied ? (
         <>
           <Paragraph className={"text-center mt-2"}>
-            Already verified your email address?
+            {t("auth.alreadyVerifiedEmail")}
           </Paragraph>
 
           <Button
@@ -59,7 +61,7 @@ export const OIDCError = () => {
             className={"mt-5"}
             onClick={() => logout("/", { client_id: config.clientId })}
           >
-            Continue
+            {t("actions.continue")}
             <ArrowRightIcon size={16} />
           </Button>
 
@@ -69,19 +71,18 @@ export const OIDCError = () => {
             className={"mt-5"}
             onClick={() => logout("/", { client_id: config.clientId })}
           >
-            Trouble logging in? Try again.
+            {t("auth.troubleLoggingIn")}
           </Button>
         </>
       ) : (
         <>
           <Paragraph className={"text-center mt-2 block"}>
-            There was an error logging you in. <br />
-            Error:{" "}
-            <span className={"inline capitalize"}>
-              {invalidRequest && errorDescription
+            {t("auth.errorLoggingIn")} <br />
+            {t("auth.error")}:{
+              invalidRequest && errorDescription
                 ? errorDescription
-                : oidcUserLoadingState}
-            </span>
+                : oidcUserLoadingState
+            }
           </Paragraph>
           <Button
             variant={"primary"}
@@ -89,7 +90,7 @@ export const OIDCError = () => {
             className={"mt-5"}
             onClick={() => logout("/", { client_id: config.clientId })}
           >
-            Logout
+            {t("auth.logout")}
           </Button>
         </>
       )}

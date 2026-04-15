@@ -6,6 +6,7 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback } from "react";
 import Skeleton from "react-loading-skeleton";
 import SquareIcon from "@components/SquareIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   icon?: React.ReactNode;
@@ -20,14 +21,15 @@ type Props = {
 
 export default function NoResults({
   icon,
-  title = "Could not find any results",
-  description = "We couldn't find any results. Please try a different search term or change your filters.",
+  title,
+  description,
   children,
   className,
   hasFiltersApplied = false,
   onResetFilters,
   contentClassName,
 }: Props) {
+  const { t } = useI18n();
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -83,9 +85,9 @@ export default function NoResults({
         </div>
 
         <div className={"text-center"}>
-          <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title}</h1>
+          <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title ?? t("noResults.title")}</h1>
           <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>
-            {description}
+            {description ?? t("noResults.description")}
           </Paragraph>
           {hasFiltersApplied && onResetFilters && (
             <Button
@@ -94,7 +96,7 @@ export default function NoResults({
               className="mt-4"
             >
               <FilterX size={16} />
-              Reset Filters & Search
+              {t("noResults.resetFilters")}
             </Button>
           )}
           {children}

@@ -8,6 +8,7 @@ import { useUsers } from "@/contexts/UsersProvider";
 import { cn } from "@utils/helpers";
 import { Callout } from "@components/Callout";
 import { SSHUsernameSelector } from "@/modules/access-control/ssh/SSHUsernameSelector";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   sourceGroups?: Group[];
@@ -22,6 +23,7 @@ export function SSHAuthorizedGroups({
   setAuthorizedGroups,
   accessType,
 }: Props) {
+  const { t } = useI18n();
   const isEmpty =
     !authorizedGroups || Object.keys(authorizedGroups).length === 0;
 
@@ -61,9 +63,7 @@ export function SSHAuthorizedGroups({
         icon={<InfoIcon size={14} className={"shrink-0 relative top-[3px]"} />}
         className="mt-3 py-[.75rem]"
       >
-        You have not added any source groups yet, please add source groups in
-        order to specify which user group has access to which system users on
-        the destination machines.
+        {t("accessControl.noSourceGroupsForSsh")}
       </Callout>
     );
   }

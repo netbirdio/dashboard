@@ -9,6 +9,7 @@ import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { ReverseProxy } from "@/interfaces/ReverseProxy";
 
 type Props = {
@@ -20,6 +21,7 @@ export default function ReverseProxyActionCell({
 }: Readonly<Props>) {
   const { permission } = usePermissions();
   const { openModal, handleDelete } = useReverseProxies();
+  const { t } = useI18n();
 
   return (
     <div className={"flex justify-end pr-4"}>
@@ -37,7 +39,6 @@ export default function ReverseProxyActionCell({
         </DropdownMenuTrigger>
         <DropdownMenuContent className="w-auto" align="end">
           <DropdownMenuItem
-            data-proxy-edit-action={reverseProxy.id}
             onClick={(e) => {
               e.stopPropagation();
               openModal({ proxy: reverseProxy });
@@ -46,7 +47,7 @@ export default function ReverseProxyActionCell({
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              {t("actions.edit")}
             </div>
           </DropdownMenuItem>
 
@@ -60,7 +61,7 @@ export default function ReverseProxyActionCell({
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("actions.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

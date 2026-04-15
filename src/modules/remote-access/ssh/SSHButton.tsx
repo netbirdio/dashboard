@@ -4,6 +4,7 @@ import { CircleHelpIcon, TerminalIcon } from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Peer } from "@/interfaces/Peer";
 import { SSHCredentialsModal } from "@/modules/remote-access/ssh/SSHCredentialsModal";
 import { SSHTooltip } from "@/modules/remote-access/ssh/SSHTooltip";
@@ -18,6 +19,7 @@ type Props = {
 export const SSHButton = ({ peer, isDropdown = false }: Props) => {
   const [modal, setModal] = useState(false);
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const isSSHEnabled =
     peer?.local_flags?.server_ssh_allowed || peer?.ssh_enabled;
@@ -53,7 +55,7 @@ export const SSHButton = ({ peer, isDropdown = false }: Props) => {
               >
                 <div className={"flex gap-3 items-center w-full"}>
                   <TerminalIcon size={14} className={"shrink-0"} />
-                  SSH
+                  {t("remoteAccess.ssh")}
                 </div>
               </DropdownMenuItem>
             ) : (
@@ -64,7 +66,7 @@ export const SSHButton = ({ peer, isDropdown = false }: Props) => {
                 disabled={disabled}
               >
                 <TerminalIcon size={16} />
-                SSH
+                {t("remoteAccess.ssh")}
                 {disabled && <CircleHelpIcon size={12} />}
               </Button>
             )}

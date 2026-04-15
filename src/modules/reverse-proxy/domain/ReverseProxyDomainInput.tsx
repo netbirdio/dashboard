@@ -6,6 +6,7 @@ import React from "react";
 import { CustomDomainSelector } from "./CustomDomainSelector";
 import { isNetBirdHosted } from "@utils/netbird";
 import InlineLink from "@components/InlineLink";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   subdomain: string;
@@ -28,13 +29,15 @@ export default function ReverseProxyDomainInput({
   subdomainRequired = false,
   clusterOffline,
 }: Readonly<Props>) {
+  const { t } = useI18n();
+
   return (
     <div>
-      <Label>Domain</Label>
+      <Label>{t("reverseProxy.domain")}</Label>
       <HelpText>
         {subdomainRequired
-          ? "Enter a subdomain and select a domain for your service."
-          : "Optionally enter a subdomain, or use the domain directly."}
+          ? t("reverseProxy.domainInputRequiredHelp")
+          : t("reverseProxy.domainInputOptionalHelp")}
       </HelpText>
       <div className="flex items-start mt-2">
         <div className="flex-1 min-w-0">
@@ -48,10 +51,14 @@ export default function ReverseProxyDomainInput({
             }}
             error={
               domainAlreadyExists
-                ? "This domain is already used by another service."
+                ? t("reverseProxy.domainAlreadyUsed")
                 : undefined
             }
-            placeholder={subdomainRequired ? "myapp" : "myapp (optional)"}
+            placeholder={
+              subdomainRequired
+                ? t("reverseProxy.subdomainPlaceholder")
+                : t("reverseProxy.subdomainOptionalPlaceholder")
+            }
             className="!rounded-r-none !border-r-0"
           />
         </div>
@@ -67,20 +74,22 @@ export default function ReverseProxyDomainInput({
       {clusterOffline &&
         (isNetBirdHosted() ? (
           <Callout variant={"warning"} className={"mt-3"}>
-            Cluster {clusterOffline.clusterName} is offline. Please try again in
-            a few minutes. If the issue persists, check{" "}
+            {t("reverseProxy.clusterOfflineHostedPrefix", {
+              clusterName: clusterOffline.clusterName,
+            })}{" "}
             <InlineLink href={"https://status.netbird.io/"} target={"_blank"}>
-              NetBird Status
+              {t("reverseProxy.netbirdStatus")}
             </InlineLink>{" "}
-            or reach out to{"  "}
+            {t("reverseProxy.clusterOfflineHostedMiddle")}{" "}
             <InlineLink href={"mailto:support@netbird.io"}>
               support@netbird.io
             </InlineLink>
           </Callout>
         ) : (
           <Callout variant={"error"} className={"mt-3"}>
-            Cluster {clusterOffline.clusterName} is offline. Make sure the proxy
-            server is running and connected to the right management address.
+            {t("reverseProxy.clusterOfflineSelfHosted", {
+              clusterName: clusterOffline.clusterName,
+            })}
           </Callout>
         ))}
     </div>

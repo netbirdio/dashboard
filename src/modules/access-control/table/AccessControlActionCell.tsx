@@ -4,6 +4,7 @@ import * as React from "react";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Policy } from "@/interfaces/Policy";
+import { useI18n } from "@/i18n/I18nProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 
 type Props = {
@@ -14,14 +15,14 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
   const { confirm } = useDialog();
   const { permission } = usePermissions();
   const { deletePolicy } = usePolicies();
+  const { t } = useI18n();
 
   const openConfirm = async () => {
     const choice = await confirm({
-      title: `Delete '${policy.name}'?`,
-      description:
-        "Are you sure you want to delete this access control policy? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("policies.deleteTitle", { name: policy.name }),
+      description: t("policies.deleteDescription"),
+      confirmText: t("actions.delete"),
+      cancelText: t("actions.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -37,7 +38,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
         disabled={!permission.policies.delete}
       >
         <Trash2 size={16} />
-        Delete
+        {t("actions.delete")}
       </Button>
     </div>
   );

@@ -12,6 +12,7 @@ import { IconBrandUbuntu } from "@tabler/icons-react";
 import { getNetBirdUpCommand } from "@utils/netbird";
 import { TerminalSquareIcon } from "lucide-react";
 import React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   HostnameParameter,
@@ -30,12 +31,14 @@ export default function LinuxTab({
   showSetupKeyInfo = false,
   hostname,
 }: Readonly<Props>) {
+  const { t } = useI18n();
+
   return (
     <TabsContent value={String(OperatingSystem.LINUX)}>
       <TabsContentPadding>
         <p className={"font-medium flex gap-3 items-center text-base"}>
           <TerminalSquareIcon size={16} />
-          Install with Command-line
+          {t("setupModal.installWithCommandLine")}
         </p>
         <Steps>
           <Steps.Step step={1}>
@@ -43,7 +46,8 @@ export default function LinuxTab({
           </Steps.Step>
           <Steps.Step step={2} line={false}>
             <p>
-              Run NetBird {!setupKey && "and log in the browser"}
+              {t("setupModal.runNetBird")}
+              {!setupKey && ` ${t("setupModal.andLogInBrowser")}`}
               {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
             </p>
             <Code>
@@ -62,12 +66,12 @@ export default function LinuxTab({
           <AccordionItem value="item-1">
             <AccordionTrigger>
               <IconBrandUbuntu size={16} />
-              Install manually on Ubuntu
+              {t("setupModal.installManuallyUbuntu")}
             </AccordionTrigger>
             <AccordionContent>
               <Steps>
                 <Steps.Step step={1}>
-                  <p>Add our repository</p>
+                  <p>{t("setupModal.addRepository")}</p>
                   <Code>
                     <Code.Line>sudo apt-get update</Code.Line>
                     <Code.Line>
@@ -84,7 +88,7 @@ export default function LinuxTab({
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={2}>
-                  <p>Install NetBird</p>
+                  <p>{t("setupModal.installNetBird")}</p>
                   <Code
                     codeToCopy={[
                       `sudo apt-get update`,
@@ -93,15 +97,18 @@ export default function LinuxTab({
                     ].join("\n")}
                   >
                     <Code.Line>sudo apt-get update</Code.Line>
-                    <Code.Comment># for CLI only</Code.Comment>
+                    <Code.Comment>{t("setupModal.cliOnlyComment")}</Code.Comment>
                     <Code.Line>sudo apt-get install netbird</Code.Line>
-                    <Code.Comment># for GUI package</Code.Comment>
+                    <Code.Comment>
+                      {t("setupModal.guiPackageComment")}
+                    </Code.Comment>
                     <Code.Line>sudo apt-get install netbird-ui</Code.Line>
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={3} line={false}>
                   <p>
-                    Run NetBird {!setupKey && "and log in the browser"}
+                    {t("setupModal.runNetBird")}
+                    {!setupKey && ` ${t("setupModal.andLogInBrowser")}`}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <Code>

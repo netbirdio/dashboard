@@ -6,11 +6,13 @@ import * as React from "react";
 import { useMemo } from "react";
 import Skeleton from "react-loading-skeleton";
 import { Route } from "@/interfaces/Route";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   group_id: string;
 };
 export const AccessControlGroupCount = ({ group_id }: Props) => {
+  const { t } = useI18n();
   const { data, isLoading } = useFetchApi<Route[]>("/routes");
 
   const routes = useMemo(() => {
@@ -60,7 +62,7 @@ export const AccessControlGroupCount = ({ group_id }: Props) => {
         }
       >
         <RouteIcon size={14} className={"shrink-0"} />
-        {routes.length} Route(s)
+        {routes.length} {t('accessControlGroupCount.routes')}
       </div>
     </FullTooltip>
   ) : null;

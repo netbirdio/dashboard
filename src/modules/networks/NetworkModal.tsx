@@ -20,6 +20,7 @@ import { useApiCall } from "@utils/api";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import React, { useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Network } from "@/interfaces/Network";
 
 type Props = {
@@ -41,13 +42,13 @@ export default function NetworkModal({
     <Modal open={open} onOpenChange={setOpen}>
       <Content
         network={network}
-        onCreated={(network) => {
+        onCreated={(nextNetwork) => {
           setOpen?.(false);
-          onCreated?.(network);
+          onCreated?.(nextNetwork);
         }}
-        onUpdated={(network) => {
+        onUpdated={(nextNetwork) => {
           setOpen?.(false);
-          onUpdated?.(network);
+          onUpdated?.(nextNetwork);
         }}
         key={open ? "1" : "0"}
       />
@@ -66,14 +67,15 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
   const [description, setDescription] = useState(network?.description || "");
   const create = useApiCall<Network>("/networks").post;
   const update = useApiCall<Network>("/networks").put;
+  const { t } = useI18n();
 
   const updateNetwork = async () => {
     notify({
       title: name,
-      description: "Network updated successfully.",
-      loadingMessage: "Updating network...",
-      promise: update({ name, description }, `/${network?.id}`).then((n) => {
-        onUpdated?.(n);
+      description: t("network.updated"),
+      loadingMessage: t("network.updating"),
+      promise: update({ name, description }, `/${network?.id}`).then((next) => {
+        onUpdated?.(next);
       }),
     });
   };
@@ -81,10 +83,10 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
   const createNetwork = async () => {
     notify({
       title: name,
-      description: "Network created successfully.",
-      loadingMessage: "Creating network...",
-      promise: create({ name, description }).then((n) => {
-        onCreated?.(n);
+      description: t("network.created"),
+      loadingMessage: t("network.creating"),
+      promise: create({ name, description }).then((next) => {
+        onCreated?.(next);
       }),
     });
   };
@@ -93,33 +95,27 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
-        title={network ? "Update Network" : "Add Network"}
-        description={
-          network
-            ? network.name
-            : "Access internal resources in LANs and VPC by adding a network."
-        }
+        title={network ? t("network.modalUpdateTitle") : t("network.modalAddTitle")}
+        description={network ? network.name : t("network.modalAddDescription")}
         color={"netbird"}
       />
       <Separator />
       <div className={"px-8 flex-col flex gap-6 py-6"}>
         <div>
-          <Label>Network Name</Label>
-          <HelpText>Provide a unique name for the network.</HelpText>
+          <Label>{t("network.name")}</Label>
+          <HelpText>{t("network.nameHelp")}</HelpText>
           <Input
             tabIndex={0}
-            placeholder={"e.g., Office Network"}
+            placeholder={t("network.namePlaceholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
         <div>
-          <Label>Description (optional)</Label>
-          <HelpText>
-            Write a short description to add more context to this network.
-          </HelpText>
+          <Label>{t("network.descriptionLabel")}</Label>
+          <HelpText>{t("network.descriptionHelp")}</HelpText>
           <Textarea
-            placeholder={"e.g., Berlin, Münzstraße 12 "}
+            placeholder={t("network.descriptionPlaceholder")}
             value={description}
             rows={3}
             onChange={(e) => setDescription(e.target.value)}
@@ -130,19 +126,19 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("common.learnMorePrefix")}{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/networks"}
               target={"_blank"}
             >
-              Networks
+              {t("networks.title")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("actions.cancel")}</Button>
           </ModalClose>
 
           <Button
@@ -152,11 +148,11 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
             onClick={network ? updateNetwork : createNetwork}
           >
             {network ? (
-              "Save Changes"
+              t("actions.saveChanges")
             ) : (
               <>
                 <PlusCircle size={16} />
-                Add Network
+                {t("networks.addNetwork")}
               </>
             )}
           </Button>

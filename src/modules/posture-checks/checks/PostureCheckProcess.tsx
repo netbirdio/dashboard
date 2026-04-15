@@ -17,6 +17,7 @@ import {
 import * as React from "react";
 import { useMemo, useState } from "react";
 import AppleIcon from "@/assets/icons/AppleIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
 import { Process, ProcessCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
@@ -28,6 +29,7 @@ type Props = {
 };
 
 export const PostureCheckProcess = ({ value, onChange, disabled }: Props) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   return (
@@ -36,10 +38,8 @@ export const PostureCheckProcess = ({ value, onChange, disabled }: Props) => {
       setOpen={setOpen}
       key={open ? 1 : 0}
       active={value?.processes && value?.processes?.length > 0}
-      title={"Process"}
-      description={
-        "Restrict access in your network based on running processes of a peer."
-      }
+      title={t("postureChecks.processTitle")}
+      description={t("postureChecks.processDescription")}
       icon={<ServerCogIcon size={18} />}
       iconClass={"bg-gradient-to-tr from-nb-gray-500 to-nb-gray-300"}
       modalWidthClass={"max-w-xl"}
@@ -58,6 +58,7 @@ export const PostureCheckProcess = ({ value, onChange, disabled }: Props) => {
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const { t } = useI18n();
   const [processes, setProcesses] = useState<Process[]>(
     value?.processes
       ? value.processes.map((p) => {
@@ -115,24 +116,24 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
           errorMacPath: p?.mac_path
             ? validator.isValidUnixFilePath(p?.mac_path || "")
               ? ""
-              : "Please enter a valid macOS file path"
+              : t("postureChecks.macPathError")
             : "",
           errorLinuxPath: p?.linux_path
             ? validator.isValidUnixFilePath(p?.linux_path || "")
               ? ""
-              : "Please enter a valid Unix file path"
+              : t("postureChecks.unixPathError")
             : "",
           errorWindowsPath: p?.windows_path
             ? validator.isValidWindowsFilePath(p?.windows_path || "")
               ? ""
-              : "Please enter a valid Windows file path"
+              : t("postureChecks.windowsPathError")
             : "",
         };
       });
     } else {
       return [];
     }
-  }, [processes]);
+  }, [processes, t]);
 
   const hasErrorsOrIsEmpty = useMemo(() => {
     if (processes.length === 0) return true;
@@ -153,11 +154,9 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
       <div className={"flex flex-col px-8 gap-2 pb-6"}>
         <div className={"flex justify-between items-start gap-10 mt-2"}>
           <div>
-            <Label>Processes</Label>
+            <Label>{t("postureChecks.processesLabel")}</Label>
             <HelpText className={""}>
-              Add the path of an executable file of the process. You can define
-              a path for Linux, macOS and Windows. Peers will only be allowed to
-              connect if the process is running on their system.
+              {t("postureChecks.processesHelp")}
             </HelpText>
           </div>
         </div>
@@ -268,27 +267,27 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
           disabled={disabled}
         >
           <PlusCircle size={16} />
-          Add Process
+          {t("postureChecks.addProcess")}
         </Button>
       </div>
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("common.learnMorePrefix")}
             <InlineLink
               href={
                 "https://docs.netbird.io/how-to/manage-posture-checks#process-check"
               }
               target={"_blank"}
             >
-              Process Check
+              {t("postureChecks.processCheck")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("actions.cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
@@ -308,7 +307,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
               }
             }}
           >
-            Save
+            {t("groupsSettings.save")}
           </Button>
         </div>
       </ModalFooter>

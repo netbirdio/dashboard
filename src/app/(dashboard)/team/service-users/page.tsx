@@ -12,6 +12,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { lazy, Suspense } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -21,6 +22,7 @@ const ServiceUsersTable = lazy(
 
 export default function ServiceUsers() {
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const { data: users, isLoading } = useFetchApi<User[]>(
     "/users?service_user=true",
   );
@@ -34,35 +36,32 @@ export default function ServiceUsers() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/team"}
-            label={"Team"}
+            label={t("team.title")}
             icon={<TeamIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/team/service-users"}
-            label={"Service Users"}
+            label={t("serviceUsers.title")}
             active
             icon={<IconSettings2 size={17} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Service Users</h1>
+        <h1 ref={headingRef}>{t("serviceUsers.title")}</h1>
+        <Paragraph>{t("serviceUsers.description")}</Paragraph>
         <Paragraph>
-          Use service users to create API tokens and avoid losing automated
-          access.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          {t("common.learnMorePrefix")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
             target={"_blank"}
           >
-            Service Users
+            {t("serviceUsers.title")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
+          {t("common.inDocumentationSuffix")}
         </Paragraph>
       </div>
       <RestrictedAccess
-        page={"Service Users"}
+        page={t("serviceUsers.title")}
         hasAccess={permission.users.read}
       >
         <Suspense fallback={<SkeletonTable />}>

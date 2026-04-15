@@ -8,10 +8,12 @@ import { ArrowRightIcon, RefreshCw } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const config = loadConfig();
 
 export default function ErrorPage() {
+  const { t } = useI18n();
   const { logout, isAuthenticated } = useOidc();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -58,19 +60,19 @@ export default function ErrorPage() {
     error?.message?.toLowerCase().includes("pending approval");
 
   const getTitle = () => {
-    if (isBlockedUser) return "User Account Blocked";
-    if (isPendingApproval) return "User Approval Pending";
-    return "Access Error";
+    if (isBlockedUser) return t("errorPage.blockedTitle");
+    if (isPendingApproval) return t("errorPage.pendingTitle");
+    return t("errorPage.defaultTitle");
   };
 
   const getDescription = () => {
     if (isBlockedUser) {
-      return "Your access has been blocked by the NetBird account administrator, possibly due to new user approval requirements or security policies. Please contact your administrator to regain access.";
+      return t("errorPage.blockedDescription");
     }
     if (isPendingApproval) {
-      return "Your account is pending approval from an administrator. Please wait for approval before accessing the dashboard.";
+      return t("errorPage.pendingDescription");
     }
-    return "An error occurred while trying to access the dashboard. Please try again or contact your administrator.";
+    return t("errorPage.defaultDescription");
   };
 
   return (
@@ -88,25 +90,29 @@ export default function ErrorPage() {
       {error && (
         <div className="bg-nb-gray-930 border border-nb-gray-800 rounded-md p-4 mt-4 max-w-md font-mono mb-2">
           <div className="text-center text-sm text-netbird">
-            <div>response_message: {error.message}</div>
+            <div>
+              {t("errorPage.responseMessage")}: {error.message}
+            </div>
           </div>
         </div>
       )}
 
       <Paragraph className="text-center mt-2 text-sm">
-        If you believe this is an error, please contact your administrator.
+        {t("errorPage.contactAdmin")}
       </Paragraph>
 
       <div className="mt-5 space-y-3">
         {!isBlockedUser && !isPendingApproval && (
           <Button variant="default-outline" size="sm" onClick={handleRetry}>
             <RefreshCw size={16} className="mr-2" />
-            Try Again
+            {t("errorPage.tryAgain")}
           </Button>
         )}
 
         <Button variant="primary" size="sm" onClick={handleLogout}>
-          {isBlockedUser || isPendingApproval ? "Sign Out" : "Logout"}
+          {isBlockedUser || isPendingApproval
+            ? t("errorPage.signOut")
+            : t("user.logout")}
           <ArrowRightIcon size={16} />
         </Button>
       </div>

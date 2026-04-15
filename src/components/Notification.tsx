@@ -1,3 +1,5 @@
+"use client";
+
 import { IconCircleX } from "@tabler/icons-react";
 import type { ErrorResponse } from "@utils/api";
 import { cn } from "@utils/helpers";
@@ -7,6 +9,7 @@ import { CheckIcon, Loader2, XIcon } from "lucide-react";
 import * as React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export interface NotifyProps<T> {
   title: string;
@@ -43,6 +46,7 @@ export default function Notification<T>({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(!!promise);
   const [readyToDismiss, setReadyToDismiss] = useState(!promise);
+  const { t } = useI18n();
 
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const remainingRef = useRef(duration);
@@ -122,7 +126,7 @@ export default function Notification<T>({
         })
         .catch((e) => {
           const err = e as ErrorResponse;
-          let message = err.message || "Something went wrong...";
+          let message = err.message || t("notification.genericError");
           message = message.charAt(0).toUpperCase() + message.slice(1);
           const code: number = err.code || 418;
 

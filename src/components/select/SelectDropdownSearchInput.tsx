@@ -2,6 +2,7 @@ import { cn } from "@utils/helpers";
 import { SearchIcon } from "lucide-react";
 import * as React from "react";
 import { Dispatch, forwardRef } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   search: string;
@@ -14,10 +15,12 @@ export const SelectDropdownSearchInput = forwardRef<HTMLInputElement, Props>(
     {
       search,
       setSearch,
-      placeholder = "Search for peers by name or ip...",
+      placeholder,
     }: Props,
     ref,
   ) => {
+    const { t } = useI18n();
+    const resolvedPlaceholder = placeholder ?? t("selectDropdown.searchPlaceholder");
     return (
       <div className={"relative"}>
         <input
@@ -30,7 +33,7 @@ export const SelectDropdownSearchInput = forwardRef<HTMLInputElement, Props>(
           ref={ref}
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder={placeholder}
+          placeholder={resolvedPlaceholder}
         />
         <div className={"absolute left-0 top-0 h-full flex items-center pl-4"}>
           <div className={"flex items-center"}>

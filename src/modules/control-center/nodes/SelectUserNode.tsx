@@ -9,6 +9,7 @@ import { sortBy } from "lodash";
 import { ChevronsUpDown, Cog } from "lucide-react";
 import * as React from "react";
 import { User } from "@/interfaces/User";
+import { useI18n } from "@/i18n/I18nProvider";
 import TruncatedText from "@components/ui/TruncatedText";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
@@ -22,6 +23,7 @@ type UserNodeProps = Node<
 >;
 
 export const SelectUserNode = ({ data, id }: UserNodeProps) => {
+  const { t } = useI18n();
   const { data: users } = useFetchApi<User[]>("/users?service_user=false");
 
   const userSelectOptions: SelectOption[] = sortBy(
@@ -86,7 +88,7 @@ export const SelectUserNode = ({ data, id }: UserNodeProps) => {
         onChange={data.onUserChange}
         options={userSelectOptions}
         showSearch={true}
-        searchPlaceholder={"Search user by name or email..."}
+        searchPlaceholder={t("users.searchByEmailOrName")}
         popoverWidth={280}
         className={cn(
           "!bg-nb-gray-920  !hover:bg-nb-gray-925 !text-nb-gray-300",

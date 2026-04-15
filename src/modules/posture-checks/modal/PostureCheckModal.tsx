@@ -13,6 +13,7 @@ import { isEmpty } from "lodash";
 import { ExternalLinkIcon, LayoutList, ShieldCheck, Text } from "lucide-react";
 import React, { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckGeoLocation } from "@/modules/posture-checks/checks/PostureCheckGeoLocation";
 import { PostureCheckNetBirdVersion } from "@/modules/posture-checks/checks/PostureCheckNetBirdVersion";
@@ -37,6 +38,7 @@ export default function PostureCheckModal({
   useSave = true,
 }: Props) {
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const {
     state: check,
@@ -74,11 +76,11 @@ export default function PostureCheckModal({
           <ModalHeader
             icon={<ShieldCheck size={19} />}
             title={
-              postureCheck ? "Update Posture Check" : "Create Posture Check"
+              postureCheck
+                ? t("postureChecks.updateModalTitle")
+                : t("postureChecks.createModalTitle")
             }
-            description={
-              "Use posture checks to further restrict access in your network."
-            }
+            description={t("postureChecks.modalDescription")}
             color={"netbird"}
           />
 
@@ -86,7 +88,7 @@ export default function PostureCheckModal({
             <TabsList justify={"start"} className={"px-8"}>
               <TabsTrigger value={"checks"}>
                 <LayoutList size={16} />
-                Checks
+                {t("postureChecks.checks")}
               </TabsTrigger>
 
               <TabsTrigger
@@ -99,7 +101,7 @@ export default function PostureCheckModal({
                     "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
                   }
                 />
-                Name & Description
+                {t("postureChecks.nameDescription")}
               </TabsTrigger>
             </TabsList>
 
@@ -170,10 +172,8 @@ export default function PostureCheckModal({
             <TabsContent value={"general"} className={"pb-8 px-8"}>
               <div className={"flex flex-col gap-6"}>
                 <div>
-                  <Label>Name of the Posture Check</Label>
-                  <HelpText>
-                    Set an easily identifiable name for your posture check.
-                  </HelpText>
+                  <Label>{t("postureChecks.nameLabel")}</Label>
+                  <HelpText>{t("postureChecks.nameHelp")}</HelpText>
                   <Input
                     autoFocus={true}
                     tabIndex={0}
@@ -184,18 +184,15 @@ export default function PostureCheckModal({
                         payload: e.target.value,
                       })
                     }
-                    placeholder={"e.g., NetBird Version > 0.25.0"}
+                    placeholder={t("postureChecks.namePlaceholder")}
                     disabled={
                       !permission.policies.create || !permission.policies.update
                     }
                   />
                 </div>
                 <div>
-                  <Label>Description (optional)</Label>
-                  <HelpText>
-                    Write a short description to add more context to this
-                    policy.
-                  </HelpText>
+                  <Label>{t("postureChecks.descriptionLabel")}</Label>
+                  <HelpText>{t("postureChecks.descriptionHelp")}</HelpText>
                   <Textarea
                     value={check?.description}
                     onChange={(e) =>
@@ -204,9 +201,7 @@ export default function PostureCheckModal({
                         payload: e.target.value,
                       })
                     }
-                    placeholder={
-                      "e.g., Check if the NetBird version is bigger than 0.25.0"
-                    }
+                    placeholder={t("postureChecks.descriptionPlaceholder")}
                     rows={3}
                     disabled={
                       !permission.policies.create || !permission.policies.update
@@ -220,12 +215,12 @@ export default function PostureCheckModal({
           <ModalFooter className={"items-center"}>
             <div className={"w-full"}>
               <Paragraph className={"text-sm mt-auto"}>
-                Learn more about
+                {t("common.learnMorePrefix")}
                 <InlineLink
                   href={"https://docs.netbird.io/how-to/manage-posture-checks"}
                   target={"_blank"}
                 >
-                  Posture Checks
+                  {t("postureChecks.title")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </Paragraph>
@@ -237,7 +232,7 @@ export default function PostureCheckModal({
                     variant={"secondary"}
                     onClick={() => onOpenChange(false)}
                   >
-                    Cancel
+                    {t("actions.cancel")}
                   </Button>
                 )}
 
@@ -246,7 +241,7 @@ export default function PostureCheckModal({
                     variant={"secondary"}
                     onClick={() => setTab("checks")}
                   >
-                    Back
+                    {t("actions.back")}
                   </Button>
                 )}
 
@@ -256,7 +251,7 @@ export default function PostureCheckModal({
                     onClick={() => setTab("general")}
                     disabled={!isAtLeastOneCheckEnabled}
                   >
-                    Continue
+                    {t("actions.continue")}
                   </Button>
                 )}
 
@@ -272,7 +267,9 @@ export default function PostureCheckModal({
                       }
                     }}
                   >
-                    {postureCheck ? "Save Changes" : "Create Posture Check"}
+                    {postureCheck
+                      ? t("actions.saveChanges")
+                      : t("postureChecks.createButton")}
                   </Button>
                 )}
               </>
