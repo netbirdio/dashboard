@@ -28,6 +28,7 @@ export interface Account {
     auto_update_version: string;
     auto_update_always: boolean;
     local_auth_disabled?: boolean;
+    local_mfa_enabled?: boolean;
   };
   onboarding?: AccountOnboarding;
 }
