@@ -225,7 +225,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
             />
           </div>
 
-          {account.settings.local_auth_disabled || !account.settings.embedded_idp_enabled ?
+          {!account.settings.local_auth_disabled && account.settings.embedded_idp_enabled ?
             (
               <div className={"flex flex-col"}>
                 <FancyToggleSwitch
