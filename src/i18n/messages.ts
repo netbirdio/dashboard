@@ -4176,7 +4176,7 @@ export const messages = {
     "groupPeers.removeFromGroup": "从分组中移除设备",
     "routeAddRoutingPeer.title": "添加新的路由设备",
     "routeAddRoutingPeer.description":
-      "当你添加多个路由设备时，NetBird 会为该网络启用高可用。",
+      "当你添加多个路由设备时，Cloink 会为该网络启用高可用。",
     "routeAddRoutingPeer.networkHelp": "你要添加此路由的网络名称和 CIDR。",
     "routeAddRoutingPeer.addRoute": "添加路由",
     "routeAddRoutingPeer.success": "设备已成功添加到该路由",
@@ -4192,7 +4192,7 @@ export const messages = {
     "peerSsh.cliClient": "命令行",
     "peerSsh.desktopClient": "桌面客户端",
     "peerSsh.cliStepIntro":
-      "如果你通过 CLI 使用 NetBird，可以运行以下命令启用 SSH：",
+      "如果你通过 CLI 使用 Cloink，可以运行以下命令启用 SSH：",
     "peerSsh.desktopStepPrefix":
       "如果你通过 Cloink 桌面客户端使用，请点击 Cloink 托盘图标，进入",
     "peerSsh.settings": "设置",
@@ -4219,13 +4219,13 @@ export const messages = {
     "peerSsh.setupHelp":
       "设置 SSH，并创建显式访问控制策略，用于定义哪些用户可以通过 SSH 访问此机器上的特定本地用户名。",
     "peerSsh.clientUpdateWarning":
-      "你已配置 SSH 访问，但客户端运行的是较旧版本的 NetBird。请将 Cloink 客户端更新到 v0.61.0 及以上版本以允许 SSH 连接。",
+      "你已配置 SSH 访问，但客户端运行的是较旧版本的 Cloink。请将 Cloink 客户端更新到 v0.61.0 及以上版本以允许 SSH 连接。",
     "peerSsh.serverDisabledWarning":
       "你已配置 SSH 访问策略，但此客户端尚未启用 SSH 服务。请启用 SSH 服务以允许 SSH 连接。",
     "peerSsh.explicitPolicyWarning":
       "你的 SSH 服务已启用，但从 Cloink v0.61.0 开始，SSH 需要显式访问控制策略。请创建 SSH 访问控制策略以允许 SSH 连接。",
     "peerNetworkRoutes.description":
-      "无需在每个资源上安装 NetBird，也能访问其他网络。",
+      "无需在每个资源上安装 Cloink，也能访问其他网络。",
     "peerRouteActions.deleteTitle": "删除路由 {name}",
     "peerRouteActions.deleted": "路由已成功移除",
     "peerRouteActions.deleting": "正在删除路由...",
@@ -4357,9 +4357,9 @@ export const messages = {
     "onboarding.routingPeerSetupKeyName": "路由设备（我的第一个网络）",
     "onboarding.addRoutingPeerTitle": "添加路由设备，让流量开始转发",
     "onboarding.addRoutingPeerDescription":
-      "可以把路由设备理解为你内部网络的连接器。它运行 NetBird，让远程设备能够访问内部资源，同时执行访问控制策略。",
+      "可以把路由设备理解为你内部网络的连接器。它运行 Cloink，让远程设备能够访问内部资源，同时执行访问控制策略。",
     "onboarding.addRoutingPeerStep":
-      "生成一个安装密钥，并在那台机器上安装 NetBird。",
+      "生成一个安装密钥，并在那台机器上安装 Cloink。",
     "onboarding.setupKey": "安装密钥",
     "onboarding.notGeneratedYet": "尚未生成",
     "onboarding.generateSetupKey": "生成安装密钥",
@@ -4642,7 +4642,7 @@ export const messages = {
       "较小的跃点数表示较高的路由优先级。",
     "networkRoutingPeers.createSetupKeyTitle": "创建安装密钥？",
     "networkRoutingPeers.createSetupKeyDescription":
-      "如果继续，将自动创建一个一次性安装密钥，你随后就可以安装 NetBird。",
+      "如果继续，将自动创建一个一次性安装密钥，你随后就可以安装 Cloink。",
     "networkRoutingPeers.setupKeyName": "路由设备（{name}）",
     "networkRoutingPeers.masqueradeHelp":
       "在不配置本地路由器或其他设备上的路由的情况下，允许访问您的专用网络。",
@@ -4745,7 +4745,7 @@ export const messages = {
     "clientSettings.selectPeerGroups": "选择设备分组...",
     "clientSettings.experimental": "实验性功能",
     "clientSettings.lazyConnectionsHelpPrefix":
-      "懒连接是一项实验性功能，具体行为和能力可能会继续演进。NetBird 不再始终维持常驻连接，而是根据活动或信令按需建立连接。",
+      "懒连接是一项实验性功能，具体行为和能力可能会继续演进。Cloink 不再始终维持常驻连接，而是根据活动或信令按需建立连接。",
     "clientSettings.enableLazyConnections": "启用懒连接",
     "clientSettings.enableLazyConnectionsHelp":
       "仅在需要时才在设备之间建立连接。此功能要求 Cloink 客户端版本不低于 v0.45。修改后需要重启客户端才会生效。",
@@ -4806,7 +4806,7 @@ export const messages = {
       "从 JWT 声明中提取并同步分组到用户的自动分组中，并可根据令牌自动创建分组。",
     "groupsSettings.jwtAllowGroupTitle": "JWT 允许分组 - {group}",
     "groupsSettings.jwtAllowGroupDescription":
-      "只有属于 {group} 分组的用户才能访问 NetBird。你确定要保存这些更改吗？",
+      "只有属于 {group} 分组的用户才能访问 Cloink。你确定要保存这些更改吗？",
     "groupsSettings.accessWarning":
       "为避免失去访问权限，请确保你属于这个分组。",
     "groupsSettings.jwtClaim": "JWT 声明字段",
@@ -4815,7 +4815,7 @@ export const messages = {
     "groupsSettings.jwtClaimPlaceholder": "例如：roles",
     "groupsSettings.jwtAllowGroups": "JWT 允许分组",
     "groupsSettings.jwtAllowGroupsHelp":
-      "限制只有指定分组名称的用户可以访问 NetBird，例如 Cloink users。要使用这些分组，你需要先在身份提供商中完成配置。",
+      "限制只有指定分组名称的用户可以访问 Cloink，例如 Cloink users。要使用这些分组，你需要先在身份提供商中完成配置。",
     "groupsSettings.addGroupPlaceholder": "添加一个分组并按 Enter",
     "groupsSettings.manageGroupsPrefix":
       "想查看并管理你的分组？你可以在这里找到分组管理：",
@@ -4864,7 +4864,7 @@ export const messages = {
     "postureChecks.nameLabel": "姿态检查名称",
     "postureChecks.nameHelp":
       "为你的姿态检查设置一个易于识别的名称。",
-    "postureChecks.namePlaceholder": "例如：NetBird 版本 > 0.25.0",
+    "postureChecks.namePlaceholder": "例如：Cloink 版本 > 0.25.0",
     "postureChecks.descriptionLabel": "描述（可选）",
     "postureChecks.descriptionHelp":
       "写一段简短描述，为这个策略补充更多上下文。",
@@ -4981,7 +4981,7 @@ export const messages = {
     "setupModal.installWithSetupKey": "使用 Setup Key 安装 Cloink",
     "setupModal.installNetBird": "安装 Cloink",
     "setupModal.setupKeyDescription":
-      "开始之前，请先安装并运行 NetBird，并将 setup key 作为参数传入。",
+      "开始之前，请先安装并运行 Cloink，并将 setup key 作为参数传入。",
     "setupModal.defaultDescription":
       "开始之前，请先安装 Cloink 并使用你的邮箱账号登录。",
     "setupModal.linux": "Linux",
