@@ -25,7 +25,7 @@ export const messages = {
     "common.savingChanges": "Saving Changes",
     "common.thisPage": "this page",
     "common.learnMore": "Learn more",
-    "common.installCloink": "Install Cloink",
+    "common.installNetBird": "Install Cloink",
     "common.copiedToClipboard": "Copied to clipboard",
     "common.close": "Close",
     "common.delete": "Delete",
@@ -323,8 +323,7 @@ export const messages = {
     "reverseProxy.servicesDescription":
       "Expose services securely through Cloink's reverse proxy.",
     "reverseProxy.tableTitle": "Reverse Proxy",
-    "reverseProxy.searchPlaceholder":
-      "Search by URL, domain, or target...",
+    "reverseProxy.searchPlaceholder": "Search by URL, domain, or target...",
     "reverseProxy.emptyTitle": "Create Services",
     "reverseProxy.emptyDescription":
       "Expose your internal services securely through Cloink's reverse proxy with automatic TLS and optional authentication to protect your services.",
@@ -487,7 +486,7 @@ export const messages = {
     "reverseProxy.subdomainOptionalPlaceholder": "myapp (optional)",
     "reverseProxy.clusterOfflineHostedPrefix":
       "Cluster {clusterName} is offline. Please try again in a few minutes. If the issue persists, check",
-    "reverseProxy.CloinkStatus": "Cloink Status",
+    "reverseProxy.netbirdStatus": "Cloink Status",
     "reverseProxy.clusterOfflineHostedMiddle": "or reach out to",
     "reverseProxy.clusterOfflineSelfHosted":
       "Cluster {clusterName} is offline. Make sure the proxy server is running and connected to the right management address.",
@@ -561,7 +560,7 @@ export const messages = {
     "reverseProxy.preservePathEnabledPrefix":
       "When enabled, a request to e.g.,",
     "reverseProxy.preservePathEnabledMiddle": "is forwarded as",
-    "reverseProxy.installCloink": "Install Cloink",
+    "reverseProxy.installNetBird": "Install Cloink",
     "reverseProxy.networks": "Networks",
     "reverseProxy.headerInvalidName":
       "Invalid characters in header name. Please use another one.",
@@ -720,7 +719,7 @@ export const messages = {
     "users.includeAllUsers": "Include all users",
     "users.noUsersAvailable": "No users available to select.",
     "users.noUsersMatchingSearch": "There are no users matching your search.",
-    "users.systemEmail": "Cloink",
+    "users.systemEmail": "云链-Cloink",
     "serviceUsers.searchPlaceholder": "Search by name or role...",
     "serviceUsers.createTitle": "Create Service User",
     "serviceUsers.emptyDescription":
@@ -820,7 +819,7 @@ export const messages = {
       "One special character (!@#$%^&*)",
     "invite.acceptExpiresOnFormat": "D MMMM, YYYY [at] h:mm A",
     "invite.copyAndClose": "Copy & Close",
-    "onboarding.installCloink": "Install Cloink",
+    "onboarding.installNetBird": "Install Cloink",
     "onboarding.addClientDevice": "Time to add your client device",
     "onboarding.addClientDeviceDescription": "Your first resource and routing peer are all set. Now, take your device, install Cloink, and let's get you connected.",
     "onboarding.testConnection": "Let's put that connection to the test",
@@ -841,12 +840,12 @@ export const messages = {
     "onboarding.shareLink": "Share Link",
     "onboarding.useHeadlessSetup": "Use the headless setup to register a peer without a browser or user interaction.",
     "onboarding.installWithSetupKey": "Install with a setup key",
-    "onboarding.installCloinkOnAnotherDevice": "Install Cloink on another device using this link.",
+    "onboarding.installNetBirdOnAnotherDevice": "Install Cloink on another device using this link.",
     "onboarding.createSetupKey": "Create a Setup Key?",
     "onboarding.createSetupKeyDescription": "If you continue, a one-off setup key will be automatically created and you will be able to install Cloink.",
     "onboarding.dialogTitle": "Onboarding",
-    "onboarding.getStartedWithCloink": "Get started with Cloink",
-    "onboarding.CloinkFlexibility": "Cloink provides the flexibility of both a peer-to-peer overlay network and a remote network access solution. Choose what fits your needs, you can always combine both.",
+    "onboarding.getStartedWithNetBird": "Get started with Cloink",
+    "onboarding.netbirdFlexibility": "Cloink provides the flexibility of both a peer-to-peer overlay network and a remote network access solution. Choose what fits your needs, you can always combine both.",
     "onboarding.peerToPeerNetwork": "Peer-to-Peer Network",
     "onboarding.p2pBusinessDescription": "Install Cloink on two or more devices to create secure, direct WireGuard connections, like laptop to server or server to database. Add at least two machines to get started.",
     "onboarding.p2pHomelabDescription": "Install Cloink on two or more devices in your homelab, such as your laptop, NAS, or Raspberry Pi, to create secure, direct WireGuard connections.",
@@ -863,10 +862,10 @@ export const messages = {
     "onboarding.personal": "Personal",
     "onboarding.companySizeQuestion":
       "How many people at your company will use Cloink?",
-    "onboarding.howHeardAboutCloink":
+    "onboarding.howHeardAboutNetBird":
       "How did you hear about Cloink?",
     "onboarding.selectOption": "Select an option...",
-    "onboarding.howPlanToUseCloink":
+    "onboarding.howPlanToUseNetBird":
       "How do you plan to use Cloink?",
     "onboarding.selectMultipleUseCases": "Select one or more use cases.",
     "onboarding.zeroTrustSecurity": "Zero Trust Security",
@@ -901,11 +900,11 @@ export const messages = {
     "onboarding.referralSource.Comparison Sites": "Comparison Sites",
     "onboarding.referralSource.Slack": "Slack",
     "onboarding.referralSource.Other": "Other",
-    "onboarding.referralSource.Cloink YouTube Channel":
+    "onboarding.referralSource.NetBird YouTube Channel":
       "Cloink YouTube Channel",
     "onboarding.referralSource.Other YouTube Channel":
       "Other YouTube Channel",
-    "onboarding.referralSource.Cloink SubReddit": "Cloink SubReddit",
+    "onboarding.referralSource.NetBird SubReddit": "Cloink SubReddit",
     "onboarding.referralSource.Other Reddit Thread": "Other Reddit Thread",
     "onboarding.referralSource.GitHub": "GitHub",
     "invite.createUserTitle": "Create User",
@@ -926,7 +925,7 @@ export const messages = {
     "invite.autoGroupsHelp":
       "Groups will be assigned to peers added by this user.",
     "invite.namePlaceholder": "John Doe",
-    "invite.emailPlaceholder": "hello@Cloink.io",
+    "invite.emailPlaceholder": "hello@Cloink.4w.ink",
     "invite.creatingUserTitle": "Create User",
     "invite.creatingUserDescription": "Creating user account for {name}...",
     "invite.creatingUserLoading": "Creating user...",
@@ -1041,7 +1040,7 @@ export const messages = {
       "This key will not be shown again, so be sure to copy it and store in a secure location.",
     "setupKey.creationFailed": "Setup key could not be created...",
     "actions.close": "Close",
-    "setupKey.installCloink": "Install Cloink",
+    "setupKey.installNetBird": "Install Cloink",
     "setupKey.creatingTitle": "Create Setup Key",
     "setupKey.creatingDescription":
       "Setup key created successfully. You can now enroll peers with your new key.",
@@ -1137,7 +1136,7 @@ export const messages = {
       "It looks like you don't have any connected machines.\nGet started by adding one to your network.",
     "activity.learnMorePrefix": "Learn more in our",
     "activity.learnMoreLink": "Getting Started Guide",
-    "activity.CloinkUser": "Cloink",
+    "activity.netbirdUser": "Cloink",
     "activity.setupkeyRevoke": "was revoked",
     "activity.setupkeyDelete": "was deleted",
     "activity.setupkeyAdd": "was created",
@@ -1397,11 +1396,11 @@ export const messages = {
     "remoteAccess.noAccessToken": "No access token available.",
     "remoteAccess.sshConnectionFailed":
       "SSH connection failed. Check the console for details.",
-    "remoteAccess.CloinkConnectionError": "Cloink Connection Error",
+    "remoteAccess.netbirdConnectionError": "Cloink Connection Error",
     "remoteAccess.rdpConnectionError": "RDP Connection Error",
     "remoteAccess.rdpGenericError": "RDP connection failed",
     "remoteAccess.rdpError": "RDP Error",
-    "remoteAccess.CloinkClientError": "Cloink Client Error",
+    "remoteAccess.netbirdClientError": "Cloink Client Error",
     "remoteAccess.canvasUnavailable": "Canvas not available for RDP rendering",
     "remoteAccess.ironrdpUnavailable":
       "IronRDP components not available from client",
@@ -1410,11 +1409,11 @@ export const messages = {
     "remoteAccess.wasmInitTimeout":
       "Cloink WASM failed to initialize in time",
     "remoteAccess.wasmInitFailed": "Failed to initialize WASM",
-    "remoteAccess.CloinkClientUnavailable":
+    "remoteAccess.netbirdClientUnavailable":
       "CloinkClient is not available or not a function",
     "remoteAccess.connectionFailed": "Connection failed",
     "remoteAccess.goClientNotReady": "Go client not ready",
-    "remoteAccess.CloinkClientNotReady": "Cloink client not ready",
+    "remoteAccess.netbirdClientNotReady": "Cloink client not ready",
     "routeModal.distributionGroups": "Distribution Groups",
     "routeModal.distributionGroupsPeerHelp":
       "Route all internet traffic through this peer for the following groups",
@@ -1571,7 +1570,7 @@ export const messages = {
       "Starting from Cloink v0.61.0, SSH requires an explicit access control policy to allow SSH connections to this machine.",
     "peerSsh.createPolicy": "Create SSH Policy",
     "peerSsh.finishStepPrefix":
-      "Once the Cloink SSH server is allowed on the client,",
+      "Once the Cloink SSH server is allowed on the client,", 
     "peerSsh.finishStepMiddle": "click",
     "peerSsh.confirmAndEnable": "Confirm & Enable",
     "peerSsh.finishStepSuffix": "below to finish the setup.",
@@ -1778,7 +1777,7 @@ export const messages = {
       "Connect directly to this peer via SSH or RDP.",
     "peerDetails.ipUpdated": "Peer IP was successfully updated",
     "peerDetails.ipUpdating": "Updating peer IP...",
-    "peerDetails.CloinkIpAddress": "Cloink IP Address",
+    "peerDetails.netbirdIpAddress": "Cloink IP Address",
     "peerDetails.publicIpAddress": "Public IP Address",
     "peerDetails.dnsLabel": "DNS label",
     "peerDetails.domainName": "Domain Name",
@@ -2323,8 +2322,8 @@ export const messages = {
     "postureChecks.disableCheckDescription":
       "Are you sure you want to disable this check? All settings of this check will be lost.",
     "postureChecks.disable": "Disable",
-    "postureChecks.CloinkVersionTitle": "Cloink Client Version",
-    "postureChecks.CloinkVersionDescription":
+    "postureChecks.netbirdVersionTitle": "Cloink Client Version",
+    "postureChecks.netbirdVersionDescription":
       "Restrict access to peers with a specific Cloink client version.",
     "postureChecks.minimumRequiredVersion": "Minimum required version",
     "postureChecks.minimumRequiredVersionHelp":
@@ -2403,7 +2402,7 @@ export const messages = {
     "setupModal.welcomeTitle": "Hello {name}!",
     "setupModal.welcomeSubtitle": "It's time to add your first device.",
     "setupModal.installWithSetupKey": "Install Cloink with Setup Key",
-    "setupModal.installCloink": "Install Cloink",
+    "setupModal.installNetBird": "Install Cloink",
     "setupModal.setupKeyDescription":
       "To get started, install and run Cloink with the setup key as a parameter.",
     "setupModal.defaultDescription":
@@ -2426,26 +2425,26 @@ export const messages = {
     "setupModal.arch64": "64-Bit",
     "setupModal.arch64Msi": "64-Bit (MSI)",
     "setupModal.archArm64Msi": "ARM64 (MSI)",
-    "setupModal.downloadCloink": "Download Cloink",
+    "setupModal.downloadNetBird": "Download Cloink",
     "setupModal.managementUrlInstructions":
       "Click on \"Settings\" then \"Advanced Settings\" from the Cloink icon in your system tray and enter the following \"Management URL\"",
-    "setupModal.openCommandLineRunCloink":
+    "setupModal.openCommandLineRunNetBird":
       "Open Command-line and run Cloink",
     "setupModal.clickConnectTray":
       "Click on \"Connect\" from the Cloink icon in your system tray",
     "setupModal.signUpWithEmail": "Sign up using your email address",
     "setupModal.macosInstallTitle": "Install on macOS",
     "setupModal.macosStep1": "Download and run macOS Installer",
-    "setupModal.openTerminalRunCloink": "Open Terminal and run Cloink",
+    "setupModal.openTerminalRunNetBird": "Open Terminal and run Cloink",
     "setupModal.installManuallyTerminal": "Install manually with Terminal",
-    "setupModal.runCloink": "Run Cloink",
+    "setupModal.runNetBird": "Run Cloink",
     "setupModal.andLogInBrowser": "and log in the browser",
     "setupModal.installManuallyHomebrew": "Install manually with HomeBrew",
     "setupModal.downloadInstallHomebrew": "Download and install HomeBrew",
     "setupModal.homebrewGuide": "HomeBrew Installation Guide",
     "setupModal.cliOnlyComment": "# for CLI only",
     "setupModal.guiPackageComment": "# for GUI package",
-    "setupModal.startCloinkDaemon": "Start Cloink daemon",
+    "setupModal.startNetBirdDaemon": "Start Cloink daemon",
     "setupModal.installWithCommandLine": "Install with Command-line",
     "setupModal.installManuallyUbuntu": "Install manually on Ubuntu",
     "setupModal.addRepository": "Add our repository",
@@ -2464,9 +2463,9 @@ export const messages = {
     "setupModal.dockerInstallTitle": "Install with Docker",
     "setupModal.installDocker": "Install Docker",
     "setupModal.officialDockerGuide": "Official Docker Installation Guide",
-    "setupModal.runCloinkContainer": "Run Cloink container",
+    "setupModal.runNetBirdContainer": "Run Cloink container",
     "setupModal.readDocumentation": "Read our documentation",
-    "setupModal.runningCloinkDocker": "Running Cloink in Docker",
+    "setupModal.runningNetBirdDocker": "Running Cloink in Docker",
     "accessControl.modalUpdateTitle": "Update Access Control Policy",
     "accessControl.modalCreateTitle": "Create New Access Control Policy",
     "accessControl.modalDescription":
@@ -2493,9 +2492,9 @@ export const messages = {
     "accessControl.sshAccess": "SSH Access",
     "accessControl.sshAccessHelp":
       "Select 'Full Access' to allow SSH as any local user, or 'Limited Access' to specify which local users each group is allowed to use.",
-    "accessControl.CloinkSshTooltip":
+    "accessControl.netbirdSshTooltip":
       "Select Cloink SSH for SSH-specific policies with fine-grained access control, or use TCP with port 22 for basic network-level SSH access",
-    "accessControl.CloinkSsh": "Cloink SSH",
+    "accessControl.netbirdSsh": "Cloink SSH",
     "accessControl.selectSshAccessType": "Select SSH access type...",
     "accessControl.fullAccess": "Full Access",
     "accessControl.limitedAccess": "Limited Access",
@@ -2607,7 +2606,7 @@ export const messages = {
     "peerSelector.searchPlaceholder": "Search for peers by name or ip...",
     "peerSelector.noPeersAvailable": "No peers available to select.",
     "peerSelector.noMatchingPeers": "There are no peers matching your search.",
-    "peerSelector.updateCloinkTooltip": "Please update Cloink to at least v0.36.6 or later to use this peer as a routing peer.",
+    "peerSelector.updateNetBirdTooltip": "Please update Cloink to at least v0.36.6 or later to use this peer as a routing peer.",
     "networkRouteSelector.selectNetwork": "Select an existing network...",
     "networkRouteSelector.searchPlaceholder": "Search for network by name or cidr...",
     "networkRouteSelector.noRoutes": "Seems like you don't have any network routes created yet.",
@@ -2695,11 +2694,11 @@ export const messages = {
     "peerActionCell.disableSshAccess": "Disable SSH Access",
     "peerActionCell.enableSshAccess": "Enable SSH Access",
     "peerActionCell.expirationDisabledTooltip": "Expiration is disabled for all peers added with an setup-key.",
-    "peerAddress.CloinkIp": "Cloink IP",
+    "peerAddress.netBirdIp": "Cloink IP",
     "peerAddress.publicIp": "Public IP",
     "peerAddress.domain": "Domain",
     "peerAddress.region": "Region",
-    "peerAddress.CloinkIpCopied": "Cloink IP has been copied to your clipboard",
+    "peerAddress.netBirdIpCopied": "Cloink IP has been copied to your clipboard",
     "peerAddress.publicIpCopied": "Public IP has been copied to your clipboard",
     "peerAddress.dnsLabelCopied": "DNS label has been copied to your clipboard",
     "peerAddress.regionCopied": "Region has been copied to your clipboard",
@@ -2758,7 +2757,7 @@ export const messages = {
     "common.savingChanges": "正在保存更改",
     "common.thisPage": "当前页面",
     "common.learnMore": "了解更多",
-    "common.installCloink": "安装 Cloink",
+    "common.installNetBird": "安装 云链-Cloink",
     "common.copiedToClipboard": "已复制到剪贴板",
     "common.close": "关闭",
     "common.delete": "删除",
@@ -2799,14 +2798,14 @@ export const messages = {
     "help.title": "帮助与支持",
     "help.documentation": "文档",
     "help.troubleshooting": "故障排查",
-    "help.forum": "Cloink 论坛",
-    "help.slack": "Cloink Slack",
+    "help.forum": "云链-Cloink 论坛",
+    "help.slack": "云链-Cloink Slack",
     "help.feedback": "反馈",
     "errorPage.blockedTitle": "用户账号已被封禁",
     "errorPage.pendingTitle": "用户等待审批",
     "errorPage.defaultTitle": "访问错误",
     "errorPage.blockedDescription":
-      "你的访问已被 Cloink 账号管理员阻止，这可能是由于新用户审批要求或安全策略导致的。请联系管理员以恢复访问权限。",
+      "你的访问已被 云链-Cloink 账号管理员阻止，这可能是由于新用户审批要求或安全策略导致的。请联系管理员以恢复访问权限。",
     "errorPage.pendingDescription":
       "你的账号正在等待管理员审批。请在获得批准后再访问控制台。",
     "errorPage.defaultDescription":
@@ -2836,7 +2835,7 @@ export const messages = {
     "peers.learnMoreSuffix": "的内容，请查看我们的文档。",
     "peers.blockedTitle": "将新设备加入你的网络",
     "peers.blockedDescription":
-      "开始使用前，请先安装 Cloink，并使用你的邮箱账号登录。完成后设备应该就会连接成功。如果你还有问题，可以查看我们的",
+      "开始使用前，请先安装 云链-Cloink，并使用你的邮箱账号登录。完成后设备应该就会连接成功。如果你还有问题，可以查看我们的",
     "peers.addPeer": "添加设备",
     "peers.installationGuide": "安装指南",
     "setupKeys.title": "注册密钥",
@@ -3180,7 +3179,7 @@ export const messages = {
     "reverseProxy.subdomainOptionalPlaceholder": "myapp（可选）",
     "reverseProxy.clusterOfflineHostedPrefix":
       "集群 {clusterName} 当前离线。请几分钟后重试。如果问题持续存在，请查看",
-    "reverseProxy.CloinkStatus": "Cloink 状态页",
+    "reverseProxy.netbirdStatus": "Cloink 状态页",
     "reverseProxy.clusterOfflineHostedMiddle": "或联系",
     "reverseProxy.clusterOfflineSelfHosted":
       "集群 {clusterName} 当前离线。请确认代理服务器正在运行，并已连接到正确的管理地址。",
@@ -3252,7 +3251,7 @@ export const messages = {
     "reverseProxy.preservePathEnabledPrefix":
       "开启时，例如发往",
     "reverseProxy.preservePathEnabledMiddle": "的请求会被转发为",
-    "reverseProxy.installCloink": "安装 Cloink",
+    "reverseProxy.installNetBird": "安装 Cloink",
     "reverseProxy.networks": "网络",
     "reverseProxy.headerInvalidName":
       "请求头名称包含无效字符，请更换一个。",
@@ -3335,7 +3334,7 @@ export const messages = {
       "Cloink 反向代理目前处于测试阶段。功能与能力在正式发布时可能发生变化。",
     "networks.title": "网络",
     "networks.description":
-      "网络功能让你无需在每台机器上都安装 Cloink，也能访问局域网和 VPC 中的内部资源。",
+      "网络功能让你无需在每台机器上都安装 NetBird，也能访问局域网和 VPC 中的内部资源。",
     "networks.policyLabel": "策略",
     "networks.defaultPolicyName": "{name} 策略",
     "networks.multiPolicyTitle": "此策略被多个资源使用",
@@ -3409,7 +3408,7 @@ export const messages = {
     "users.includeAllUsers": "包含所有用户",
     "users.noUsersAvailable": "没有可用的用户可选择。",
     "users.noUsersMatchingSearch": "没有与搜索匹配的用户。",
-    "users.systemEmail": "Cloink",
+    "users.systemEmail": "云链-Cloink",
     "serviceUsers.searchPlaceholder": "按名称或角色搜索...",
     "serviceUsers.createTitle": "创建服务用户",
     "serviceUsers.emptyDescription":
@@ -3448,7 +3447,7 @@ export const messages = {
     "invite.expiredTitle": "邀请已过期",
     "invite.expiredDescription":
       "此邀请链接已过期。请联系管理员重新获取邀请。",
-    "invite.welcomeTitle": "欢迎使用 Cloink",
+    "invite.welcomeTitle": "欢迎使用 云链-Cloink",
     "auth.accountLinkedSuccessfully": "你的账户已成功关联。请再次登录以完成设置。",
     "auth.somethingWentWrong": "哦，出现了一些问题",
     "auth.alreadyVerifiedEmail": "已经验证了你的邮箱地址？",
@@ -3507,9 +3506,9 @@ export const messages = {
     "invite.passwordRuleSpecial": "一个特殊字符（!@#$%^&*）",
     "invite.acceptExpiresOnFormat": "YYYY年M月D日 HH:mm",
     "invite.copyAndClose": "复制并关闭",
-    "onboarding.installCloink": "安装 Cloink",
+    "onboarding.installNetBird": "安装 云链-Cloink",
     "onboarding.addClientDevice": "现在添加你的客户端设备",
-    "onboarding.addClientDeviceDescription": "你的第一个资源和路由设备已经设置好了。现在，拿起你的设备，安装 Cloink，让我们连接起来。",
+    "onboarding.addClientDeviceDescription": "你的第一个资源和路由设备已经设置好了。现在，拿起你的设备，安装 云链-Cloink，让我们连接起来。",
     "onboarding.testConnection": "让我们测试一下这个连接",
     "onboarding.testConnectionDescription": "很好！你已经成功连接了客户端设备。现在，让我们测试一下它是否能够访问你的资源。",
     "onboarding.openCommandLine": "打开命令行并在",
@@ -3520,37 +3519,37 @@ export const messages = {
     "onboarding.troubleshootingGuide": "故障排查指南",
     "onboarding.itWorksContinue": "一切正常！- 继续",
     "onboarding.getFirstDeviceOnline": "让我们让你的第一台设备上线",
-    "onboarding.getFirstDeviceOnlineDescription": "要访问其他机器，安装 Cloink，登录，你的设备就会加入网络。你添加的每台设备都会成为你网络中的 Cloink 对等端。就这么简单。",
+    "onboarding.getFirstDeviceOnlineDescription": "要访问其他机器，安装 云链-Cloink，登录，你的设备就会加入网络。你添加的每台设备都会成为你网络中的 云链-Cloink 对等端。就这么简单。",
     "onboarding.bringSecondDevice": "现在添加你的第二台设备",
-    "onboarding.eachDeviceGetsPrivateIP": "在你的 Cloink 网络中，每台设备（也称为对等端）都有自己的私有 IP 和名称，以便在网络中安全通信。",
+    "onboarding.eachDeviceGetsPrivateIP": "在你的 云链-Cloink 网络中，每台设备（也称为对等端）都有自己的私有 IP 和名称，以便在网络中安全通信。",
     "onboarding.shareLinkToCompleteSetup": "要完成设置，只需分享此链接或将其通过电子邮件发送给自己，以便轻松设置你的下一台设备。",
     "onboarding.installationLinkCopied": "安装链接已成功复制",
     "onboarding.shareLink": "分享链接",
     "onboarding.useHeadlessSetup": "使用无头设置来注册没有浏览器或用户交互的对等端。",
     "onboarding.installWithSetupKey": "使用设置密钥安装",
-    "onboarding.installCloinkOnAnotherDevice": "使用此链接在另一台设备上安装 Cloink。",
+    "onboarding.installNetBirdOnAnotherDevice": "使用此链接在另一台设备上安装 云链-Cloink。",
     "onboarding.createSetupKey": "创建设置密钥？",
-    "onboarding.createSetupKeyDescription": "如果你继续，将自动创建一次性设置密钥，你将能够安装 Cloink。",
+    "onboarding.createSetupKeyDescription": "如果继续，系统将自动创建一个一次性设置密钥，你可以使用它来安装 云链-Cloink。",
     "onboarding.dialogTitle": "引导流程",
-    "onboarding.getStartedWithCloink": "开始使用 Cloink",
-    "onboarding.CloinkFlexibility": "Cloink 提供了点对点覆盖网络和远程网络访问解决方案的灵活性。选择适合你需求的方案，你始终可以结合使用两者。",
+    "onboarding.getStartedWithNetBird": "开始使用 云链-Cloink",
+    "onboarding.netbirdFlexibility": "云链-Cloink 提供了点对点覆盖网络和远程网络访问解决方案的灵活性。选择适合你需求的方案，你始终可以结合使用两者。",
     "onboarding.peerToPeerNetwork": "点对点网络",
-    "onboarding.p2pBusinessDescription": "在两台或更多设备上安装 Cloink，创建安全、直接的 WireGuard 连接，例如笔记本电脑到服务器或服务器到数据库。至少添加两台机器开始使用。",
-    "onboarding.p2pHomelabDescription": "在你的 homelab 中的两台或更多设备上安装 Cloink，例如你的笔记本电脑、NAS 或树莓派，以创建安全、直接的 WireGuard 连接。",
+    "onboarding.p2pBusinessDescription": "在两台或更多设备上安装 云链-Cloink，创建安全、直接的 WireGuard 连接，例如笔记本电脑到服务器或服务器到数据库。至少添加两台机器开始使用。",
+    "onboarding.p2pHomelabDescription": "在你的 homelab 中的两台或更多设备上安装 云链-Cloink，例如你的笔记本电脑、NAS 或树莓派，以创建安全、直接的 WireGuard 连接。",
     "onboarding.remoteNetworkAccess": "远程网络访问",
-    "onboarding.remoteAccessBusinessDescription": "无需在每台机器上安装 Cloink，即可为员工提供对 VM、Kubernetes 集群以及云或本地资源的远程访问。",
-    "onboarding.remoteAccessHomelabDescription": "无需在每台设备上安装 Cloink，即可从任何地方安全访问你的 homelab。",
+    "onboarding.remoteAccessBusinessDescription": "无需在每台机器上安装 云链-Cloink，即可为员工提供对 VM、Kubernetes 集群以及云或本地资源的远程访问。",
+    "onboarding.remoteAccessHomelabDescription": "无需在每台设备上安装 云链-Cloink，即可从任何地方安全访问你的 homelab。",
     "onboarding.recommended": "推荐",
     "onboarding.recommendedBasedOnChoices": "根据你之前的选择，我们建议从 {title} 开始。你始终可以稍后结合使用两种选项。",
-    "onboarding.welcome": "欢迎使用 Cloink！",
-    "onboarding.welcomeWithName": "欢迎使用 Cloink，{{name}}！",
+    "onboarding.welcome": "欢迎使用 云链-Cloink！",
+    "onboarding.welcomeWithName": "欢迎使用 云链-Cloink，{{name}}！",
     "onboarding.shareDetails": "分享一些关于你的使用场景的详细信息，以帮助我们顺利开始。",
     "onboarding.business": "商业",
     "onboarding.personal": "个人",
-    "onboarding.companySizeQuestion": "贵公司有多少人将使用 Cloink？",
-    "onboarding.howHeardAboutCloink": "你是如何了解到 Cloink 的？",
+    "onboarding.companySizeQuestion": "贵公司有多少人将使用 云链-Cloink？",
+    "onboarding.howHeardAboutNetBird": "你是如何了解到 云链-Cloink 的？",
     "onboarding.selectOption": "请选择一个选项...",
-    "onboarding.howPlanToUseCloink": "你计划如何使用 Cloink？",
+    "onboarding.howPlanToUseNetBird": "你计划如何使用 云链-Cloink？",
     "onboarding.selectMultipleUseCases": "你也可以选择多个使用场景。",
     "onboarding.zeroTrustSecurity": "零信任安全",
     "onboarding.employeeRemoteAccess": "员工远程访问",
@@ -3582,11 +3581,11 @@ export const messages = {
     "onboarding.referralSource.Comparison Sites": "对比网站",
     "onboarding.referralSource.Slack": "Slack",
     "onboarding.referralSource.Other": "其他",
-    "onboarding.referralSource.Cloink YouTube Channel":
+    "onboarding.referralSource.NetBird YouTube Channel":
       "Cloink YouTube 频道",
     "onboarding.referralSource.Other YouTube Channel":
       "其他 YouTube 频道",
-    "onboarding.referralSource.Cloink SubReddit": "Cloink SubReddit",
+    "onboarding.referralSource.NetBird SubReddit": "Cloink SubReddit",
     "onboarding.referralSource.Other Reddit Thread": "其他 Reddit 讨论串",
     "onboarding.referralSource.GitHub": "GitHub",
     "peer.expirationUpdated": "过期时间已成功更新",
@@ -3626,7 +3625,7 @@ export const messages = {
     "invite.autoGroups": "自动分配分组",
     "invite.autoGroupsHelp": "该用户添加的设备会被分配到这些分组。",
     "invite.namePlaceholder": "张三",
-    "invite.emailPlaceholder": "hello@Cloink.io",
+    "invite.emailPlaceholder": "hello@cloink.4w.ink",
     "invite.creatingUserTitle": "创建用户",
     "invite.creatingUserDescription": "正在为 {name} 创建用户账号...",
     "invite.creatingUserLoading": "正在创建用户...",
@@ -3730,7 +3729,7 @@ export const messages = {
       "这个密钥不会再次显示，请务必复制并妥善保存在安全的位置。",
     "setupKey.creationFailed": "注册密钥创建失败...",
     "actions.close": "关闭",
-    "setupKey.installCloink": "安装 Cloink",
+    "setupKey.installNetBird": "安装 Cloink",
     "setupKey.creatingTitle": "创建注册密钥",
     "setupKey.creatingDescription":
       "注册密钥已创建成功。现在你可以使用这个新密钥将设备加入网络。",
@@ -3810,7 +3809,7 @@ export const messages = {
       "看起来你还没有任何已连接的机器。\n从向你的网络中添加一台设备开始吧。",
     "activity.learnMorePrefix": "更多说明请查看我们的",
     "activity.learnMoreLink": "快速入门指南",
-    "activity.CloinkUser": "Cloink",
+    "activity.netbirdUser": "Cloink",
     "activity.setupkeyRevoke": "被撤销",
     "activity.setupkeyDelete": "被删除",
     "activity.setupkeyAdd": "被创建",
@@ -3824,9 +3823,9 @@ export const messages = {
     "activity.routeUpdate": "被更新",
     "activity.routeAdd": "被创建",
     "activity.userPeerDelete": "被删除",
-    "activity.userPeerAdd": "已添加，Cloink IP为",
+    "activity.userPeerAdd": "已添加，NetBird IP为",
     "activity.userPeerUpdate": "已更新",
-    "activity.userJoin": "加入了Cloink",
+    "activity.userJoin": "加入了NetBird",
     "activity.userInvite": "已被邀请。",
     "activity.userCreate": "被创建，创建者为",
     "activity.userGroupAdd": "被添加至用户",
@@ -3844,8 +3843,8 @@ export const messages = {
     "activity.userInviteLinkDelete": "邀请链接已为以下用户删除",
     "activity.serviceUserCreate": "已被创建",
     "activity.serviceUserDelete": "已被删除",
-    "activity.peerGroupDelete": "被从Cloink IP为的设备中移除",
-    "activity.peerGroupAdd": "被添加至Cloink IP为的设备",
+    "activity.peerGroupDelete": "被从NetBird IP为的设备中移除",
+    "activity.peerGroupAdd": "被添加至NetBird IP为的设备",
     "activity.peerLoginExpire": "已过期",
     "activity.peerSshDisable": "已被禁用",
     "activity.peerSshEnable": "已被启用",
@@ -3854,7 +3853,7 @@ export const messages = {
     "activity.peerRename": "已被重命名为",
     "activity.peerApprove": "已被批准",
     "activity.peerIpUpdate": "IP地址已从以下地址更新为",
-    "activity.peerUserAdd": "已添加，Cloink IP为",
+    "activity.peerUserAdd": "已添加，NetBird IP为",
     "activity.groupAdd": "已被创建",
     "activity.groupDelete": "已被删除",
     "activity.groupUpdate": "已被重命名为",
@@ -4047,11 +4046,11 @@ export const messages = {
     "remoteAccess.noAccessToken": "没有可用的访问令牌。",
     "remoteAccess.sshConnectionFailed":
       "SSH 连接失败。请查看控制台了解详情。",
-    "remoteAccess.CloinkConnectionError": "Cloink 连接错误",
+    "remoteAccess.netbirdConnectionError": "Cloink 连接错误",
     "remoteAccess.rdpConnectionError": "RDP 连接错误",
     "remoteAccess.rdpGenericError": "RDP 连接失败",
     "remoteAccess.rdpError": "RDP 错误",
-    "remoteAccess.CloinkClientError": "Cloink 客户端错误",
+    "remoteAccess.netbirdClientError": "Cloink 客户端错误",
     "remoteAccess.canvasUnavailable": "没有可用于 RDP 渲染的画布",
     "remoteAccess.ironrdpUnavailable":
       "客户端未提供可用的 IronRDP 组件",
@@ -4059,11 +4058,11 @@ export const messages = {
     "remoteAccess.wasmLoadFailed": "加载 WASM 运行时失败",
     "remoteAccess.wasmInitTimeout": "Cloink WASM 初始化超时",
     "remoteAccess.wasmInitFailed": "初始化 WASM 失败",
-    "remoteAccess.CloinkClientUnavailable":
-      "CloinkClient 不可用，或它不是一个函数",
+    "remoteAccess.netbirdClientUnavailable":
+      "NetBirdClient 不可用，或它不是一个函数",
     "remoteAccess.connectionFailed": "连接失败",
     "remoteAccess.goClientNotReady": "Go 客户端尚未就绪",
-    "remoteAccess.CloinkClientNotReady": "Cloink 客户端尚未就绪",
+    "remoteAccess.netbirdClientNotReady": "Cloink 客户端尚未就绪",
     "routeModal.distributionGroups": "分发分组",
     "routeModal.distributionGroupsPeerHelp":
       "将所有互联网流量通过此设备转发给以下分组",
@@ -4110,7 +4109,7 @@ export const messages = {
       "这些分组中的设备将需要手动进行域名解析",
     "networkRoutesPage.title": "网络路由",
     "networkRoutesPage.description":
-      "网络路由允许你访问其他网络，例如局域网和 VPC，而无需在每个资源上安装 Cloink。",
+      "网络路由允许你访问其他网络，例如局域网和 VPC，而无需在每个资源上安装 NetBird。",
     "networkRoutesPage.callout":
       "我们建议使用新的 Networks 概念，以更直观地查看并管理你的资源访问权限。",
     "networkRoutesPage.goToNetworks": "前往 Networks",
@@ -4177,7 +4176,7 @@ export const messages = {
     "groupPeers.removeFromGroup": "从分组中移除设备",
     "routeAddRoutingPeer.title": "添加新的路由设备",
     "routeAddRoutingPeer.description":
-      "当你添加多个路由设备时，Cloink 会为该网络启用高可用。",
+      "当你添加多个路由设备时，NetBird 会为该网络启用高可用。",
     "routeAddRoutingPeer.networkHelp": "你要添加此路由的网络名称和 CIDR。",
     "routeAddRoutingPeer.addRoute": "添加路由",
     "routeAddRoutingPeer.success": "设备已成功添加到该路由",
@@ -4193,7 +4192,7 @@ export const messages = {
     "peerSsh.cliClient": "命令行",
     "peerSsh.desktopClient": "桌面客户端",
     "peerSsh.cliStepIntro":
-      "如果你通过 CLI 使用 Cloink，可以运行以下命令启用 SSH：",
+      "如果你通过 CLI 使用 NetBird，可以运行以下命令启用 SSH：",
     "peerSsh.desktopStepPrefix":
       "如果你通过 Cloink 桌面客户端使用，请点击 Cloink 托盘图标，进入",
     "peerSsh.settings": "设置",
@@ -4220,13 +4219,13 @@ export const messages = {
     "peerSsh.setupHelp":
       "设置 SSH，并创建显式访问控制策略，用于定义哪些用户可以通过 SSH 访问此机器上的特定本地用户名。",
     "peerSsh.clientUpdateWarning":
-      "你已配置 SSH 访问，但客户端运行的是较旧版本的 Cloink。请将 Cloink 客户端更新到 v0.61.0 及以上版本以允许 SSH 连接。",
+      "你已配置 SSH 访问，但客户端运行的是较旧版本的 NetBird。请将 Cloink 客户端更新到 v0.61.0 及以上版本以允许 SSH 连接。",
     "peerSsh.serverDisabledWarning":
       "你已配置 SSH 访问策略，但此客户端尚未启用 SSH 服务。请启用 SSH 服务以允许 SSH 连接。",
     "peerSsh.explicitPolicyWarning":
       "你的 SSH 服务已启用，但从 Cloink v0.61.0 开始，SSH 需要显式访问控制策略。请创建 SSH 访问控制策略以允许 SSH 连接。",
     "peerNetworkRoutes.description":
-      "无需在每个资源上安装 Cloink，也能访问其他网络。",
+      "无需在每个资源上安装 NetBird，也能访问其他网络。",
     "peerRouteActions.deleteTitle": "删除路由 {name}",
     "peerRouteActions.deleted": "路由已成功移除",
     "peerRouteActions.deleting": "正在删除路由...",
@@ -4358,9 +4357,9 @@ export const messages = {
     "onboarding.routingPeerSetupKeyName": "路由设备（我的第一个网络）",
     "onboarding.addRoutingPeerTitle": "添加路由设备，让流量开始转发",
     "onboarding.addRoutingPeerDescription":
-      "可以把路由设备理解为你内部网络的连接器。它运行 Cloink，让远程设备能够访问内部资源，同时执行访问控制策略。",
+      "可以把路由设备理解为你内部网络的连接器。它运行 NetBird，让远程设备能够访问内部资源，同时执行访问控制策略。",
     "onboarding.addRoutingPeerStep":
-      "生成一个安装密钥，并在那台机器上安装 Cloink。",
+      "生成一个安装密钥，并在那台机器上安装 NetBird。",
     "onboarding.setupKey": "安装密钥",
     "onboarding.notGeneratedYet": "尚未生成",
     "onboarding.generateSetupKey": "生成安装密钥",
@@ -4397,7 +4396,7 @@ export const messages = {
     "peerDetails.remoteAccessHelp": "通过 SSH 或 RDP 直接连接到此设备。",
     "peerDetails.ipUpdated": "设备 IP 已成功更新",
     "peerDetails.ipUpdating": "正在更新设备 IP...",
-    "peerDetails.CloinkIpAddress": "Cloink IP 地址",
+    "peerDetails.netbirdIpAddress": "Cloink IP 地址",
     "peerDetails.publicIpAddress": "公网 IP 地址",
     "peerDetails.dnsLabel": "DNS 标签",
     "peerDetails.domainName": "域名",
@@ -4643,7 +4642,7 @@ export const messages = {
       "较小的跃点数表示较高的路由优先级。",
     "networkRoutingPeers.createSetupKeyTitle": "创建安装密钥？",
     "networkRoutingPeers.createSetupKeyDescription":
-      "如果继续，将自动创建一个一次性安装密钥，你随后就可以安装 Cloink。",
+      "如果继续，将自动创建一个一次性安装密钥，你随后就可以安装 NetBird。",
     "networkRoutingPeers.setupKeyName": "路由设备（{name}）",
     "networkRoutingPeers.masqueradeHelp":
       "在不配置本地路由器或其他设备上的路由的情况下，允许访问您的专用网络。",
@@ -4746,7 +4745,7 @@ export const messages = {
     "clientSettings.selectPeerGroups": "选择设备分组...",
     "clientSettings.experimental": "实验性功能",
     "clientSettings.lazyConnectionsHelpPrefix":
-      "懒连接是一项实验性功能，具体行为和能力可能会继续演进。Cloink 不再始终维持常驻连接，而是根据活动或信令按需建立连接。",
+      "懒连接是一项实验性功能，具体行为和能力可能会继续演进。NetBird 不再始终维持常驻连接，而是根据活动或信令按需建立连接。",
     "clientSettings.enableLazyConnections": "启用懒连接",
     "clientSettings.enableLazyConnectionsHelp":
       "仅在需要时才在设备之间建立连接。此功能要求 Cloink 客户端版本不低于 v0.45。修改后需要重启客户端才会生效。",
@@ -4807,7 +4806,7 @@ export const messages = {
       "从 JWT 声明中提取并同步分组到用户的自动分组中，并可根据令牌自动创建分组。",
     "groupsSettings.jwtAllowGroupTitle": "JWT 允许分组 - {group}",
     "groupsSettings.jwtAllowGroupDescription":
-      "只有属于 {group} 分组的用户才能访问 Cloink。你确定要保存这些更改吗？",
+      "只有属于 {group} 分组的用户才能访问 NetBird。你确定要保存这些更改吗？",
     "groupsSettings.accessWarning":
       "为避免失去访问权限，请确保你属于这个分组。",
     "groupsSettings.jwtClaim": "JWT 声明字段",
@@ -4816,7 +4815,7 @@ export const messages = {
     "groupsSettings.jwtClaimPlaceholder": "例如：roles",
     "groupsSettings.jwtAllowGroups": "JWT 允许分组",
     "groupsSettings.jwtAllowGroupsHelp":
-      "限制只有指定分组名称的用户可以访问 Cloink，例如 Cloink users。要使用这些分组，你需要先在身份提供商中完成配置。",
+      "限制只有指定分组名称的用户可以访问 NetBird，例如 Cloink users。要使用这些分组，你需要先在身份提供商中完成配置。",
     "groupsSettings.addGroupPlaceholder": "添加一个分组并按 Enter",
     "groupsSettings.manageGroupsPrefix":
       "想查看并管理你的分组？你可以在这里找到分组管理：",
@@ -4865,7 +4864,7 @@ export const messages = {
     "postureChecks.nameLabel": "姿态检查名称",
     "postureChecks.nameHelp":
       "为你的姿态检查设置一个易于识别的名称。",
-    "postureChecks.namePlaceholder": "例如：Cloink 版本 > 0.25.0",
+    "postureChecks.namePlaceholder": "例如：NetBird 版本 > 0.25.0",
     "postureChecks.descriptionLabel": "描述（可选）",
     "postureChecks.descriptionHelp":
       "写一段简短描述，为这个策略补充更多上下文。",
@@ -4903,8 +4902,8 @@ export const messages = {
     "postureChecks.disableCheckDescription":
       "你确定要禁用此检查吗？该检查的所有设置都会丢失。",
     "postureChecks.disable": "禁用",
-    "postureChecks.CloinkVersionTitle": "Cloink 客户端版本",
-    "postureChecks.CloinkVersionDescription":
+    "postureChecks.netbirdVersionTitle": "Cloink 客户端版本",
+    "postureChecks.netbirdVersionDescription":
       "限制只有满足特定 Cloink 客户端版本的设备才能访问。",
     "postureChecks.minimumRequiredVersion": "最低要求版本",
     "postureChecks.minimumRequiredVersionHelp":
@@ -4980,9 +4979,9 @@ export const messages = {
     "setupModal.welcomeTitle": "你好，{name}！",
     "setupModal.welcomeSubtitle": "现在来添加你的第一台设备吧。",
     "setupModal.installWithSetupKey": "使用 Setup Key 安装 Cloink",
-    "setupModal.installCloink": "安装 Cloink",
+    "setupModal.installNetBird": "安装 Cloink",
     "setupModal.setupKeyDescription":
-      "开始之前，请先安装并运行 Cloink，并将 setup key 作为参数传入。",
+      "开始之前，请先安装并运行 NetBird，并将 setup key 作为参数传入。",
     "setupModal.defaultDescription":
       "开始之前，请先安装 Cloink 并使用你的邮箱账号登录。",
     "setupModal.linux": "Linux",
@@ -5003,25 +5002,25 @@ export const messages = {
     "setupModal.arch64": "64 位",
     "setupModal.arch64Msi": "64 位（MSI）",
     "setupModal.archArm64Msi": "ARM64（MSI）",
-    "setupModal.downloadCloink": "下载 Cloink",
+    "setupModal.downloadNetBird": "下载 Cloink",
     "setupModal.managementUrlInstructions":
       "点击系统托盘中的 Cloink 图标，依次进入“Settings”和“Advanced Settings”，然后输入下面的“Management URL”",
-    "setupModal.openCommandLineRunCloink": "打开命令行并运行 Cloink",
+    "setupModal.openCommandLineRunNetBird": "打开命令行并运行 Cloink",
     "setupModal.clickConnectTray":
       "点击系统托盘中 Cloink 图标里的“Connect”",
     "setupModal.signUpWithEmail": "使用你的邮箱地址注册/登录",
     "setupModal.macosInstallTitle": "在 macOS 上安装",
     "setupModal.macosStep1": "下载并运行 macOS 安装程序",
-    "setupModal.openTerminalRunCloink": "打开终端并运行 Cloink",
+    "setupModal.openTerminalRunNetBird": "打开终端并运行 Cloink",
     "setupModal.installManuallyTerminal": "通过终端手动安装",
-    "setupModal.runCloink": "运行 Cloink",
+    "setupModal.runNetBird": "运行 Cloink",
     "setupModal.andLogInBrowser": "并在浏览器中登录",
     "setupModal.installManuallyHomebrew": "通过 HomeBrew 手动安装",
     "setupModal.downloadInstallHomebrew": "下载并安装 HomeBrew",
     "setupModal.homebrewGuide": "HomeBrew 安装指南",
     "setupModal.cliOnlyComment": "# 仅 CLI 使用",
     "setupModal.guiPackageComment": "# GUI 图形界面包",
-    "setupModal.startCloinkDaemon": "启动 Cloink 后台服务",
+    "setupModal.startNetBirdDaemon": "启动 Cloink 后台服务",
     "setupModal.installWithCommandLine": "通过命令行安装",
     "setupModal.installManuallyUbuntu": "在 Ubuntu 上手动安装",
     "setupModal.addRepository": "添加我们的软件仓库",
@@ -5037,9 +5036,9 @@ export const messages = {
     "setupModal.dockerInstallTitle": "通过 Docker 安装",
     "setupModal.installDocker": "安装 Docker",
     "setupModal.officialDockerGuide": "Docker 官方安装指南",
-    "setupModal.runCloinkContainer": "运行 Cloink 容器",
+    "setupModal.runNetBirdContainer": "运行 Cloink 容器",
     "setupModal.readDocumentation": "阅读文档",
-    "setupModal.runningCloinkDocker": "在 Docker 中运行 Cloink",
+    "setupModal.runningNetBirdDocker": "在 Docker 中运行 Cloink",
     "accessControl.modalUpdateTitle": "更新访问控制策略",
     "accessControl.modalCreateTitle": "创建新的访问控制策略",
     "accessControl.modalDescription": "使用此策略限制对资源分组的访问。",
@@ -5065,9 +5064,9 @@ export const messages = {
     "accessControl.sshAccess": "SSH 访问",
     "accessControl.sshAccessHelp":
       "选择“完全访问”可允许以任意本地用户进行 SSH，选择“受限访问”可为每个分组指定允许使用的本地用户。",
-    "accessControl.CloinkSshTooltip":
+    "accessControl.netbirdSshTooltip":
       "如果你需要细粒度的 SSH 访问控制，请选择 Cloink SSH；如果只需要基础的网络级 SSH 访问，可使用 TCP 加 22 端口。",
-    "accessControl.CloinkSsh": "Cloink SSH",
+    "accessControl.netbirdSsh": "Cloink SSH",
     "accessControl.selectSshAccessType": "选择 SSH 访问类型...",
     "accessControl.fullAccess": "完全访问",
     "accessControl.limitedAccess": "受限访问",
@@ -5167,7 +5166,7 @@ export const messages = {
     "peerSelector.searchPlaceholder": "按名称或 IP 搜索设备...",
     "peerSelector.noPeersAvailable": "没有可供选择的设备。",
     "peerSelector.noMatchingPeers": "没有匹配搜索条件的设备。",
-    "peerSelector.updateCloinkTooltip": "请将 Cloink 更新到至少 v0.36.6 或更高版本，以便将此设备用作路由设备。",
+    "peerSelector.updateNetBirdTooltip": "请将 Cloink 更新到至少 v0.36.6 或更高版本，以便将此设备用作路由设备。",
     "networkRouteSelector.selectNetwork": "选择现有网络...",
     "networkRouteSelector.searchPlaceholder": "按名称或 CIDR 搜索网络...",
     "networkRouteSelector.noRoutes": "您似乎还没有创建任何网络路由。",
@@ -5257,11 +5256,11 @@ export const messages = {
     "peerActionCell.disableSshAccess": "禁用 SSH 访问",
     "peerActionCell.enableSshAccess": "启用 SSH 访问",
     "peerActionCell.expirationDisabledTooltip": "通过安装密钥添加的所有设备均禁用过期设置。",
-    "peerAddress.CloinkIp": "Cloink IP",
+    "peerAddress.netBirdIp": "Cloink IP",
     "peerAddress.publicIp": "公网 IP",
     "peerAddress.domain": "域名",
     "peerAddress.region": "地区",
-    "peerAddress.CloinkIpCopied": "Cloink IP 已复制到剪贴板",
+    "peerAddress.netBirdIpCopied": "Cloink IP 已复制到剪贴板",
     "peerAddress.publicIpCopied": "公网 IP 已复制到剪贴板",
     "peerAddress.dnsLabelCopied": "DNS 标签已复制到剪贴板",
     "peerAddress.regionCopied": "地区已复制到剪贴板",
