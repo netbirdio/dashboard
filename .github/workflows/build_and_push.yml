@@ -8,7 +8,7 @@ on:
   pull_request:
 
 env:
-  IMAGE_NAME: ohoimager/netbird-dashboard-i18n
+  IMAGE_NAME: ohoimager/cloink-dashboard
 
 jobs:
   build_n_push:
