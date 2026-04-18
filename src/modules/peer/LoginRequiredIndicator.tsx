@@ -1,12 +1,14 @@
 import FullTooltip from "@components/FullTooltip";
 import { AlertTriangle } from "lucide-react";
 import * as React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Peer } from "@/interfaces/Peer";
 
 type Props = {
   peer: Peer;
 };
 export const LoginRequiredIndicator = ({ peer }: Props) => {
+  const { t } = useI18n();
   if (!peer.login_expired) {
     return null;
   }
@@ -15,9 +17,8 @@ export const LoginRequiredIndicator = ({ peer }: Props) => {
     <FullTooltip
       content={
         <div className={"text-xs max-w-xs"}>
-          {" "}
-          This peer is offline and needs to be <br />
-          re-authenticated because its login has expired.
+          {t("peer.loginExpiredTooltipLine1")} <br />
+          {t("peer.loginExpiredTooltipLine2")}
         </div>
       }
     >

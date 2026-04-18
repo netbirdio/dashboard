@@ -8,6 +8,7 @@ import {
 import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -15,6 +16,7 @@ type Props = {
   router: NetworkRouter;
 };
 export const RoutingPeersActionCell = ({ router }: Props) => {
+  const { t } = useI18n();
   const { permission } = usePermissions();
   const { deleteRouter, network, openAddRoutingPeerModal } =
     useNetworksContext();
@@ -50,7 +52,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              {t("actions.edit")}
             </div>
           </DropdownMenuItem>
           <DropdownMenuItem
@@ -63,7 +65,7 @@ export const RoutingPeersActionCell = ({ router }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Remove
+              {t("actions.remove")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

@@ -12,6 +12,7 @@ import { ChevronsUpDown, SearchIcon, XIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useI18n } from "@/i18n/I18nProvider";
 import { PortRange } from "@/interfaces/Policy";
 
 interface MultiSelectProps {
@@ -52,6 +53,7 @@ export function PortSelector({
   popoverWidth = "auto",
   showAll = false,
 }: Readonly<MultiSelectProps>) {
+  const { t } = useI18n();
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [open, setOpen] = useState(false);
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
@@ -131,7 +133,7 @@ export function PortSelector({
                   variant={"gray"}
                   className={"uppercase tracking-wider font-medium py-1"}
                 >
-                  All
+                  {t("portSelector.all")}
                 </Badge>
               )}
 
@@ -153,7 +155,7 @@ export function PortSelector({
                   />
                 </Badge>
               ))}
-              {ports.length == 0 && <span>Select ports...</span>}
+              {ports.length == 0 && <span>{t("portSelector.selectPorts")}</span>}
             </div>
 
             <ChevronsUpDown size={18} className={"shrink-0"} />
@@ -191,9 +193,7 @@ export function PortSelector({
                   ref={searchRef}
                   value={search}
                   onValueChange={setSearch}
-                  placeholder={
-                    'Add a port or a range e.g. 80 or 1-1023 and press "Enter" to add...'
-                  }
+                  placeholder={t("portSelector.placeholder")}
                 />
                 <div
                   className={
@@ -230,9 +230,7 @@ export function PortSelector({
                 {!notFound && search && !portsInput.includes(search) && (
                   <div className={"text-sm"}>
                     <DropdownInfoText className={"mb-[18px] pt-[4px]"}>
-                      {
-                        "Please add a valid port or port range (e.g. 80, 443, 1-1023)"
-                      }
+                      {t("portSelector.invalidPort")}
                     </DropdownInfoText>
                   </div>
                 )}
@@ -264,10 +262,11 @@ export function PortSelector({
                         <div
                           className={"text-neutral-500 dark:text-nb-gray-300"}
                         >
-                          Add this port or range by pressing{" "}
+                          {t("portSelector.addByEnter")}{" "}
                           <span className={"font-bold text-netbird"}>
-                            {"'Enter'"}
-                          </span>
+                            {t("portSelector.enterKey")}
+                          </span>{" "}
+                          {t("portSelector.addThisPort")}
                         </div>
                       </CommandItem>
                     </div>
@@ -322,8 +321,9 @@ export function PortSelector({
       </Popover>
       {portRanges?.length > 0 && (
         <Callout variant={"info"} className={"mt-4"}>
-          Port ranges requires NetBird client{" "}
-          <span className={"text-white font-normal"}>v0.48</span> or higher.
+          {t("portSelector.portRangesRequire")}{" "}
+          <span className={"text-white font-normal"}>v0.48</span>{" "}
+          {t("portSelector.orHigher")}
         </Callout>
       )}
     </>

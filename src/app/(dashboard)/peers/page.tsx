@@ -11,6 +11,7 @@ import PeerIcon from "@/assets/icons/PeerIcon";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import PageContainer from "@/layouts/PageContainer";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
 
@@ -35,6 +36,7 @@ export default function Peers() {
 function PeersView() {
   const { peers, isLoading } = usePeers();
   const { users } = useUsers();
+  const { t } = useI18n();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -52,25 +54,22 @@ function PeersView() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/peers"}
-            label={"Peers"}
+            label={t("peers.title")}
             icon={<PeerIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Peers</h1>
+        <h1 ref={headingRef}>{t("peers.title")}</h1>
+        <Paragraph>{t("peers.description")}</Paragraph>
         <Paragraph>
-          A list of all machines and devices connected to your private network.
-          Use this view to manage peers.
-        </Paragraph>
-        <Paragraph>
-          Learn more about{" "}
+          {t("peers.learnMorePrefix")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/add-machines-to-your-network"}
             target={"_blank"}
           >
-            Peers
+            {t("peers.learnMoreLink")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
+          {t("peers.learnMoreSuffix")}
         </Paragraph>
       </div>
       <Suspense fallback={<SkeletonTable />}>
@@ -85,19 +84,19 @@ function PeersView() {
 }
 
 function PeersBlockedView() {
+  const { t } = useI18n();
+
   return (
     <div className={"flex items-center justify-center flex-col"}>
       <div className={"p-default py-6 max-w-3xl text-center"}>
-        <h1>Add new device to your network</h1>
+        <h1>{t("peers.blockedTitle")}</h1>
         <Paragraph className={"inline"}>
-          To get started, install NetBird and log in using your email account.
-          After that you should be connected. If you have further questions
-          check out our{" "}
+          {t("peers.blockedDescription")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/getting-started#installation"}
             target={"_blank"}
           >
-            Installation Guide
+            {t("peers.installationGuide")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>

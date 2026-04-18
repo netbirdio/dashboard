@@ -11,6 +11,7 @@ import {
 import useFetchApi from "@utils/api";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
+import { useI18n } from "@/i18n/I18nProvider";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckChecksCell } from "@/modules/posture-checks/table/cells/PostureCheckChecksCell";
 import { PostureCheckNameCell } from "@/modules/posture-checks/table/cells/PostureCheckNameCell";
@@ -20,6 +21,7 @@ type Props = {
 };
 
 export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
+  const { t } = useI18n();
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
   const { mutate } = useSWRConfig();
@@ -42,11 +44,11 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
         setRowSelection={setSelectedRows}
         isLoading={isLoading}
         keepStateInLocalStorage={false}
-        text={"Posture Check"}
+        text={t("postureChecks.title")}
         sorting={sorting}
         wrapperClassName={""}
         setSorting={setSorting}
-        columns={PostureChecksColumns}
+        columns={getPostureChecksColumns(t)}
         showHeader={true}
         columnVisibility={{
           description: false,
@@ -54,7 +56,7 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
         tableClassName={"mt-6 !border-0"}
         rowClassName={"!border-b-0 px-10"}
         data={postureChecks}
-        searchPlaceholder={"Search by name and description..."}
+        searchPlaceholder={t("postureChecks.searchPlaceholder")}
         onRowClick={(row) => row.toggleSelected()}
         rightSide={(table) => (
           <>
@@ -69,7 +71,9 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
                 }
                 disabled={table.getSelectedRowModel().rows.length <= 0}
               >
-                Add Posture Checks ({table.getSelectedRowModel().rows.length})
+                {t("postureChecks.addSelected", {
+                  count: table.getSelectedRowModel().rows.length,
+                })}
               </Button>
             )}
           </>
@@ -90,7 +94,10 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
   );
 }
 
-export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
+function getPostureChecksColumns(
+  t: (key: any, values?: Record<string, string | number>) => string,
+): ColumnDef<PostureCheck>[] {
+  return [
   {
     id: "select",
     header: ({ table }) => (
@@ -98,7 +105,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={t("postureChecks.selectAll")}
         />
       </div>
     ),
@@ -107,7 +114,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={t("postureChecks.selectRow")}
           variant={"tableCell"}
         />
       </div>
@@ -118,7 +125,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      return <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>;
     },
     cell: ({ row }) => (
       <PostureCheckNameCell small={true} check={row.original} />
@@ -127,8 +134,11 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
   {
     accessorKey: "id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Checks</DataTableHeader>;
+      return (
+        <DataTableHeader column={column}>{t("postureChecks.checks")}</DataTableHeader>
+      );
     },
     cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
   },
 ];
+}

@@ -5,6 +5,7 @@ import * as React from "react";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
 import { Intent } from "@/modules/onboarding/Onboarding";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   intent?: Intent;
@@ -23,6 +24,8 @@ export const OnboardingDevices = ({
   firstRoutingPeer,
   enabled = false,
 }: Props) => {
+  const { t } = useI18n();
+
   return intent === Intent.P2P ? (
     <div
       className={cn(
@@ -59,8 +62,8 @@ export const OnboardingDevices = ({
         <WaitingForDevice
           text={
             !firstDevice
-              ? "Waiting for your first device to connect"
-              : "Waiting for your second device to connect"
+              ? t("onboarding.waitingForFirstDevice")
+              : t("onboarding.waitingForSecondDevice")
           }
         />
       )}
@@ -74,7 +77,9 @@ export const OnboardingDevices = ({
       )}
     >
       {firstRoutingPeer && resource && (
-        <span className={"text-xs text-nb-gray-500"}>Network</span>
+        <span className={"text-xs text-nb-gray-500"}>
+          {t("onboarding.networkLabel")}
+        </span>
       )}
 
       <div
@@ -118,8 +123,8 @@ export const OnboardingDevices = ({
           <WaitingForDevice
             text={
               !firstRoutingPeer
-                ? "Waiting for your routing peer to connect"
-                : "Waiting for your own device to connect"
+                ? t("onboarding.waitingForRoutingPeer")
+                : t("onboarding.waitingForOwnDevice")
             }
           />
         )}
@@ -142,7 +147,7 @@ export const OnboardingDevices = ({
 };
 
 export const WaitingForDevice = ({
-  text = "Waiting for your first device to connect",
+  text,
 }: {
   text: string;
 }) => {

@@ -11,6 +11,7 @@ import React, { lazy, useState } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { useGroupContext } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { User } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 import { AssignUserToGroupModal } from "@/modules/groups/AssignUserToGroupModal";
@@ -24,94 +25,98 @@ import { InviteUserButton } from "@/modules/users/UsersTable";
 
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 
-export const GroupUsersTableColumns: ColumnDef<User>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className={"min-w-[20px] max-w-[20px]"}>
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+function useGroupUsersTableColumns(): ColumnDef<User>[] {
+  const { t } = useI18n();
+
+  return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className={"min-w-[20px] max-w-[20px]"}>
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+            aria-label={t("groupUsers.selectAll")}
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className={"min-w-[20px] max-w-[20px]"}>
+          <Checkbox
+            checked={row.getIsSelected()}
+            variant={"tableCell"}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label={t("groupUsers.selectRow")}
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>;
+      },
+      accessorFn: (row) => row.name + " " + row.email,
+      sortingFn: "text",
+      cell: ({ row }) => <UserNameCell user={row.original} />,
+    },
+    {
+      accessorKey: "is_current",
+      sortingFn: "basic",
+    },
+    {
+      accessorKey: "role",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("table.role")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <UserRoleCell user={row.original} />,
+    },
+    {
+      accessorKey: "status",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("table.status")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <UserStatusCell user={row.original} />,
+    },
+    {
+      accessorKey: "is_blocked",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("table.blockUser")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <UserBlockCell user={row.original} />,
+    },
+    {
+      accessorKey: "last_login",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("table.lastLogin")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => (
+        <LastTimeRow
+          date={dayjs(row.original.last_login).toDate()}
+          text={t("users.lastLoginOn")}
         />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className={"min-w-[20px] max-w-[20px]"}>
-        <Checkbox
-          checked={row.getIsSelected()}
-          variant={"tableCell"}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+      ),
     },
-    accessorFn: (row) => row.name + " " + row.email,
-    sortingFn: "text",
-    cell: ({ row }) => <UserNameCell user={row.original} />,
-  },
-  {
-    accessorKey: "is_current",
-    sortingFn: "basic",
-  },
-  {
-    accessorKey: "role",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
+    {
+      id: "approval_required",
+      accessorKey: "approval_required",
+      sortingFn: "basic",
+      accessorFn: (u) => u?.pending_approval,
     },
-    sortingFn: "text",
-    cell: ({ row }) => <UserRoleCell user={row.original} />,
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
+    {
+      id: "remove_from_group",
+      accessorKey: "id",
+      header: "",
+      cell: ({ row }) => <GroupUsersRemoveCell user={row.original} />,
     },
-    sortingFn: "text",
-    cell: ({ row }) => <UserStatusCell user={row.original} />,
-  },
-  {
-    accessorKey: "is_blocked",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Block User</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserBlockCell user={row.original} />,
-  },
-  {
-    accessorKey: "last_login",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Last Login</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => (
-      <LastTimeRow
-        date={dayjs(row.original.last_login).toDate()}
-        text={"Last login on"}
-      />
-    ),
-  },
-  {
-    id: "approval_required",
-    accessorKey: "approval_required",
-    sortingFn: "basic",
-    accessorFn: (u) => u?.pending_approval,
-  },
-  {
-    id: "remove_from_group",
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => <GroupUsersRemoveCell user={row.original} />,
-  },
-];
+  ];
+}
 
 type Props = {
   users?: User[];
@@ -119,16 +124,18 @@ type Props = {
 };
 
 export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
+  const { t } = useI18n();
   const { group, addUsersToGroup, removeUsersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
   const { permission } = usePermissions();
+  const columns = useGroupUsersTableColumns();
 
   return (
     <GroupDetailsTableContainer>
       <UsersTable
         isLoading={isLoading}
-        columns={GroupUsersTableColumns}
+        columns={columns}
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
         onRowClick={(row) => row.toggleSelected()}
@@ -138,10 +145,8 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
         getStartedCard={
           <NoResults
             className={"py-4"}
-            title={"This group has no assigned users yet"}
-            description={
-              "Invite new users or assign existing ones to this group to see them listed here."
-            }
+            title={t("groupUsers.emptyTitle")}
+            description={t("groupUsers.emptyDescription")}
             icon={<TeamIcon size={20} className={"fill-nb-gray-300"} />}
           >
             {permission?.users?.update && (
@@ -152,7 +157,7 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
                   onClick={() => setOpen(true)}
                 >
                   <PlusCircle size={16} />
-                  Assign Users
+                  {t("groupUsers.assignUsers")}
                 </Button>
                 <InviteUserButton show={true} groups={[group]} />
               </div>
@@ -163,7 +168,7 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
           return (
             <>
               <DataTableMultiSelectPopup
-                label={"User(s) selected"}
+                label={t("groupUsers.selected")}
                 selectedItems={table
                   .getSelectedRowModel()
                   .rows.map((row) => row.original)}
@@ -172,9 +177,7 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
                   <>
                     <FullTooltip
                       content={
-                        <span className={"text-xs"}>
-                          Remove Users from Group
-                        </span>
+                        <span className={"text-xs"}>{t("groupUsers.removeFromGroup")}</span>
                       }
                     >
                       <Button
@@ -215,7 +218,7 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
                     onClick={() => setOpen(true)}
                   >
                     <PlusCircle size={16} />
-                    Assign Users
+                    {t("groupUsers.assignUsers")}
                   </Button>
                   <InviteUserButton show={true} groups={[group]} />
                 </div>

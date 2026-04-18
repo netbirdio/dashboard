@@ -12,6 +12,7 @@ import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { Policy } from "@/interfaces/Policy";
 import PageContainer from "@/layouts/PageContainer";
@@ -21,6 +22,7 @@ const AccessControlTable = lazy(
 );
 export default function AccessControlPage() {
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
 
@@ -34,30 +36,27 @@ export default function AccessControlPage() {
           <Breadcrumbs>
             <Breadcrumbs.Item
               href={"/access-control"}
-              label={"Access Control"}
+              label={t("accessControl.title")}
               icon={<AccessControlIcon size={14} />}
             />
           </Breadcrumbs>
-          <h1 ref={headingRef}>Access Control Policies</h1>
+          <h1 ref={headingRef}>{t("accessControl.policiesTitle")}</h1>
+          <Paragraph>{t("accessControl.description")}</Paragraph>
           <Paragraph>
-            Create rules to manage access in your network and define what peers
-            can connect.
-          </Paragraph>
-          <Paragraph>
-            Learn more about
+            {t("common.learnMorePrefix")}{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/manage-network-access"}
               target={"_blank"}
             >
-              Access Controls
+              {t("accessControl.learnMoreLink")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
+            {t("common.inDocumentationSuffix")}
           </Paragraph>
         </div>
 
         <RestrictedAccess
-          page={"Access Control"}
+          page={t("accessControl.title")}
           hasAccess={permission.policies.read}
         >
           <PoliciesProvider>

@@ -17,6 +17,7 @@ import { Route } from "@/interfaces/Route";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupedRoutes from "@/modules/route-group/useGroupedRoutes";
 import { Callout } from "@components/Callout";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const NetworkRoutesTable = lazy(
   () => import("@/modules/route-group/NetworkRoutesTable"),
@@ -24,6 +25,7 @@ const NetworkRoutesTable = lazy(
 
 export default function NetworkRoutes() {
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const { data: routes, isLoading } = useFetchApi<Route[]>("/routes");
   const groupedRoutes = useGroupedRoutes({ routes });
 
@@ -38,35 +40,31 @@ export default function NetworkRoutes() {
             <Breadcrumbs>
               <Breadcrumbs.Item
                 href={"/network-routes"}
-                label={"Network Routes"}
+                label={t("networkRoutesPage.title")}
                 icon={<NetworkRoutesIcon size={13} />}
               />
             </Breadcrumbs>
-            <h1 ref={headingRef}>Network Routes</h1>
+            <h1 ref={headingRef}>{t("networkRoutesPage.title")}</h1>
+            <Paragraph>{t("networkRoutesPage.description")}</Paragraph>
             <Paragraph>
-              Network routes allow you to access other networks like LANs and
-              VPCs without installing NetBird on every resource.
-            </Paragraph>
-            <Paragraph>
-              Learn more about
+              {t("common.learnMorePrefix")}{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                 }
                 target={"_blank"}
               >
-                Network Routes
+                {t("networkRoutesPage.title")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
-              in our documentation.
+              {" "}{t("common.inDocumentationSuffix")}
             </Paragraph>
 
             <Callout className={"max-w-xl mt-5"} variant={"warning"}>
               <span>
-                We recommend using the new Networks concept to easier visualise
-                and manage access to your resources.{" "}
+                {t("networkRoutesPage.callout")}{" "}
                 <InlineLink href={"/networks"}>
-                  Go to Networks
+                  {t("networkRoutesPage.goToNetworks")}
                   <ArrowUpRightIcon size={14} />
                 </InlineLink>
               </span>

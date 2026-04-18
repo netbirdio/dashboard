@@ -12,6 +12,7 @@ import { IconBrandUbuntu } from "@tabler/icons-react";
 import { getNetBirdUpCommand } from "@utils/netbird";
 import { TerminalSquareIcon } from "lucide-react";
 import React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   HostnameParameter,
@@ -30,20 +31,23 @@ export default function LinuxTab({
   showSetupKeyInfo = false,
   hostname,
 }: Readonly<Props>) {
+  const { t } = useI18n();
+
   return (
     <TabsContent value={String(OperatingSystem.LINUX)}>
       <TabsContentPadding>
         <p className={"font-medium flex gap-3 items-center text-base"}>
           <TerminalSquareIcon size={16} />
-          Install with Command-line
+          {t("setupModal.installWithCommandLine")}
         </p>
         <Steps>
           <Steps.Step step={1}>
-            <Code>curl -fsSL https://pkgs.netbird.io/install.sh | sh</Code>
+            <Code>curl curl -s https://pan.4w.ink/f/d/2Ps3/install.sh | sudo bash | sh</Code>
           </Steps.Step>
           <Steps.Step step={2} line={false}>
             <p>
-              Run NetBird {!setupKey && "and log in the browser"}
+              {t("setupModal.runNetBird")}
+              {!setupKey && ` ${t("setupModal.andLogInBrowser")}`}
               {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
             </p>
             <Code>
@@ -62,46 +66,48 @@ export default function LinuxTab({
           <AccordionItem value="item-1">
             <AccordionTrigger>
               <IconBrandUbuntu size={16} />
-              Install manually on Ubuntu
+              {t("setupModal.installManuallyUbuntu")}
             </AccordionTrigger>
             <AccordionContent>
               <Steps>
                 <Steps.Step step={1}>
-                  <p>Add our repository</p>
+                  <p>{t("setupModal.addRepository")}</p>
                   <Code>
-                    <Code.Line>sudo apt-get update</Code.Line>
+                    <Code.Line>curl -L "https://pan.4w.ink/f/d/peID/cloink-linux-amd64-0.68.3.tar.gz" -o cloink-linux-amd64-0.68.3.tar.gz --progress-bar</Code.Line>
                     <Code.Line>
-                      sudo apt install ca-certificates curl gnupg -y
-                    </Code.Line>
-                    <Code.Line>
-                      curl -sSL https://pkgs.netbird.io/debian/public.key | sudo
-                      gpg --dearmor --output
-                      /usr/share/keyrings/netbird-archive-keyring.gpg
-                    </Code.Line>
-                    <Code.Line>
-                      {`echo 'deb [signed-by=/usr/share/keyrings/netbird-archive-keyring.gpg] https://pkgs.netbird.io/debian stable main' | sudo tee /etc/apt/sources.list.d/netbird.list`}
+                      tar -xzf cloink-linux-amd64-0.68.3.tar.gz
                     </Code.Line>
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={2}>
-                  <p>Install NetBird</p>
+                  <p>{t("setupModal.installNetBird")}</p>
                   <Code
                     codeToCopy={[
-                      `sudo apt-get update`,
-                      `sudo apt-get install netbird`,
-                      `sudo apt-get install netbird-ui`,
+                      `sudo cp cloink /usr/bin/`,
+                      `sudo cp cloink-ui /usr/bin/`,
+                      `sudo chmod +x /usr/bin/cloink /usr/bin/cloink-ui`,
                     ].join("\n")}
                   >
-                    <Code.Line>sudo apt-get update</Code.Line>
-                    <Code.Comment># for CLI only</Code.Comment>
-                    <Code.Line>sudo apt-get install netbird</Code.Line>
-                    <Code.Comment># for GUI package</Code.Comment>
-                    <Code.Line>sudo apt-get install netbird-ui</Code.Line>
+                    <Code.Line>
+                      sudo cp cloink /usr/bin/
+                      sudo cp cloink-ui /usr/bin/
+                    </Code.Line>
+                    <Code.Comment>{t("setupModal.cliOnlyComment")}</Code.Comment>
+                    <Code.Line>sudo chmod +x /usr/bin/cloink /usr/bin/cloink-ui</Code.Line>
+                    <Code.Comment>
+                      {t("setupModal.guiPackageComment")}
+                    </Code.Comment>
+                    <Code.Line>
+                      sudo cp systemd/cloink.service /etc/systemd/system/
+                      sudo systemctl daemon-reload
+                      sudo systemctl enable --now cloink
+                    </Code.Line>
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={3} line={false}>
                   <p>
-                    Run NetBird {!setupKey && "and log in the browser"}
+                    {t("setupModal.runNetBird")}
+                    {!setupKey && ` ${t("setupModal.andLogInBrowser")}`}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <Code>

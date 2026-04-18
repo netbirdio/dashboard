@@ -10,6 +10,7 @@ import { debounce } from "lodash";
 import { Calendar as CalendarIcon } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface Props {
   value?: DateRange;
@@ -64,6 +65,7 @@ export function DatePickerWithRange({
   onChange,
   disabled = false,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const isActive = useMemo(() => {
     return {
       today: isEqualDateRange(value, defaultRanges.today),
@@ -77,21 +79,21 @@ export function DatePickerWithRange({
   }, [value]);
 
   const displayDateValue = useMemo(() => {
-    if (!value) return "Select date range";
+    if (!value) return t("datePicker.selectDateRange");
 
-    if (isActive.allTime) return "All Time";
-    if (isActive.lastMonth) return "Last Month";
-    if (isActive.last14Days) return "Last 14 Days";
-    if (isActive.last2Days) return "Last 2 Days";
-    if (isActive.last7Days) return "Last 7 Days";
-    if (isActive.yesterday) return "Yesterday";
-    if (isActive.today) return "Today";
+    if (isActive.allTime) return t("datePicker.allTime");
+    if (isActive.lastMonth) return t("datePicker.lastMonth");
+    if (isActive.last14Days) return t("datePicker.last14Days");
+    if (isActive.last2Days) return t("datePicker.last2Days");
+    if (isActive.last7Days) return t("datePicker.last7Days");
+    if (isActive.yesterday) return t("datePicker.yesterday");
+    if (isActive.today) return t("datePicker.today");
 
     if (!value.to) return dayjs(value.from).format("MMM DD, YYYY").toString();
     return `${dayjs(value.from).format("MMM DD, YYYY")} - ${dayjs(
       value.to,
     ).format("MMM DD, YYYY")}`;
-  }, [value, isActive]);
+  }, [value, isActive, t]);
 
   const [calendarOpen, setCalendarOpen] = useState(false);
 
@@ -146,7 +148,7 @@ export function DatePickerWithRange({
                 label={
                   <>
                     <CalendarIcon size={14} className={"shrink-0"} />
-                    All Time
+                    {t("datePicker.allTime")}
                   </>
                 }
                 active={isActive.allTime}
@@ -155,22 +157,22 @@ export function DatePickerWithRange({
             </div>
             <div className={"flex gap-2 flex-wrap"}>
               <CalendarButton
-                label={"Last Month"}
+                label={t("datePicker.lastMonth")}
                 active={isActive.lastMonth}
                 onClick={() => updateRangeAndClose(defaultRanges.lastMonth)}
               />
               <CalendarButton
-                label={"Last 14 Days"}
+                label={t("datePicker.last14Days")}
                 active={isActive.last14Days}
                 onClick={() => updateRangeAndClose(defaultRanges.last14Days)}
               />
               <CalendarButton
-                label={"Yesterday"}
+                label={t("datePicker.yesterday")}
                 active={isActive.yesterday}
                 onClick={() => updateRangeAndClose(defaultRanges.yesterday)}
               />
               <CalendarButton
-                label={"Today"}
+                label={t("datePicker.today")}
                 active={isActive.today}
                 onClick={() => updateRangeAndClose(defaultRanges.today)}
               />

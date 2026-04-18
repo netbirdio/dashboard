@@ -12,6 +12,7 @@ import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import { NetworkAccessControlProvider } from "@/modules/networks/NetworkAccessControlProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResourceWithNetwork } from "@/interfaces/Network";
 import { GroupDetailsTableContainer } from "@/modules/groups/details/GroupDetailsTableContainer";
@@ -23,83 +24,87 @@ import { ResourceGroupCell } from "@/modules/networks/resources/ResourceGroupCel
 import ResourceNameCell from "@/modules/networks/resources/ResourceNameCell";
 import { ResourcePolicyCell } from "@/modules/networks/resources/ResourcePolicyCell";
 
-const GroupResourcesColumns: ColumnDef<NetworkResourceWithNetwork>[] = [
-  {
-    id: "id",
-    accessorKey: "id",
-    filterFn: "exactMatch",
-  },
-  {
-    id: "name",
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Resource</DataTableHeader>;
+function useGroupResourcesColumns(): ColumnDef<NetworkResourceWithNetwork>[] {
+  const { t } = useI18n();
+
+  return [
+    {
+      id: "id",
+      accessorKey: "id",
+      filterFn: "exactMatch",
     },
-    cell: ({ row }) => {
-      return <ResourceNameCell resource={row.original} />;
+    {
+      id: "name",
+      accessorKey: "name",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("networkResources.resourceTab")}</DataTableHeader>;
+      },
+      cell: ({ row }) => {
+        return <ResourceNameCell resource={row.original} />;
+      },
     },
-  },
-  {
-    id: "description",
-    accessorKey: "description",
-    accessorFn: (resource) =>
-      removeAllSpaces(resource?.description || "").toLowerCase(),
-  },
-  {
-    id: "address",
-    accessorKey: "address",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Address</DataTableHeader>;
+    {
+      id: "description",
+      accessorKey: "description",
+      accessorFn: (resource) =>
+        removeAllSpaces(resource?.description || "").toLowerCase(),
     },
-    cell: ({ row }) => {
-      return <ResourceAddressCell resource={row.original} />;
+    {
+      id: "address",
+      accessorKey: "address",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("resourcesTable.address")}</DataTableHeader>;
+      },
+      cell: ({ row }) => {
+        return <ResourceAddressCell resource={row.original} />;
+      },
     },
-  },
-  {
-    id: "enabled",
-    accessorKey: "enabled",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
+    {
+      id: "enabled",
+      accessorKey: "enabled",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("resourcesTable.active")}</DataTableHeader>;
+      },
+      cell: ({ row }) => (
+        <ResourceEnabledCell
+          resource={row.original}
+          mutateAllResourcesOnUpdate={true}
+        />
+      ),
     },
-    cell: ({ row }) => (
-      <ResourceEnabledCell
-        resource={row.original}
-        mutateAllResourcesOnUpdate={true}
-      />
-    ),
-  },
-  {
-    id: "groups",
-    accessorFn: (resource) => {
-      let groups = resource?.groups as Group[];
-      return groups.map((group) => group.name).join(", ");
+    {
+      id: "groups",
+      accessorFn: (resource) => {
+        let groups = resource?.groups as Group[];
+        return groups.map((group) => group.name).join(", ");
+      },
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("table.groups")}</DataTableHeader>;
+      },
+      cell: ({ row }) => {
+        return <ResourceGroupCell resource={row.original} />;
+      },
     },
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
+    {
+      id: "policies",
+      accessorKey: "id",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("nav.policies")}</DataTableHeader>;
+      },
+      cell: ({ row }) => {
+        return <ResourcePolicyCell resource={row.original} />;
+      },
     },
-    cell: ({ row }) => {
-      return <ResourceGroupCell resource={row.original} />;
+    {
+      id: "actions",
+      accessorKey: "id",
+      header: "",
+      cell: ({ row }) => {
+        return <ResourceActionCell resource={row.original} />;
+      },
     },
-  },
-  {
-    id: "policies",
-    accessorKey: "id",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Policies</DataTableHeader>;
-    },
-    cell: ({ row }) => {
-      return <ResourcePolicyCell resource={row.original} />;
-    },
-  },
-  {
-    id: "actions",
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => {
-      return <ResourceActionCell resource={row.original} />;
-    },
-  },
-];
+  ];
+}
 
 type Props = {
   resources?: NetworkResourceWithNetwork[];
@@ -110,10 +115,12 @@ export const GroupResourcesSection = ({
   resources,
   isLoading = true,
 }: Props) => {
+  const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([]);
   const { permission } = usePermissions();
   const router = useRouter();
   const { mutate } = useSWRConfig();
+  const columns = useGroupResourcesColumns();
 
   return (
     <NetworkAccessControlProvider>
@@ -138,18 +145,16 @@ export const GroupResourcesSection = ({
           )}
           inset={false}
           tableClassName={"mt-0"}
-          text={"Resources"}
-          columns={GroupResourcesColumns}
+          text={t("networkResources.linkLabel")}
+          columns={columns}
           keepStateInLocalStorage={false}
           data={resources}
-          searchPlaceholder={"Search by name, address or group..."}
+          searchPlaceholder={t("resourcesTable.searchPlaceholder")}
           getStartedCard={
             <NoResults
               className={"py-4"}
-              title={"This group has no assigned resources"}
-              description={
-                "Assign this group to your resources inside your networks to see them listed here."
-              }
+              title={t("resourcesTable.emptyGroupTitle")}
+              description={t("resourcesTable.emptyGroupDescription")}
               icon={<Layers3Icon size={20} />}
             >
               {permission?.networks?.create && (
@@ -159,7 +164,7 @@ export const GroupResourcesSection = ({
                     className={"mt-4"}
                     onClick={() => router.push("/networks")}
                   >
-                    Go to Networks
+                    {t("resourcesTable.goToNetworks")}
                     <ArrowUpRightIcon size={16} />
                   </Button>
                 </>

@@ -12,6 +12,7 @@ import React, { lazy, Suspense } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -20,6 +21,7 @@ const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 export default function TeamUsers() {
   const { isLoading: isGroupsLoading } = useGroups();
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const { data: users, isLoading } = useFetchApi<User[]>(
     "/users?service_user=false",
   );
@@ -33,34 +35,31 @@ export default function TeamUsers() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/team"}
-            label={"Team"}
+            label={t("team.title")}
             icon={<TeamIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/team/users"}
-            label={"Users"}
+            label={t("users.title")}
             active
             icon={<User2 size={16} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Users</h1>
+        <h1 ref={headingRef}>{t("users.title")}</h1>
+        <Paragraph>{t("users.description")}</Paragraph>
         <Paragraph>
-          Manage users and their permissions. Same-domain email users are added
-          automatically on first sign-in.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          {t("common.learnMorePrefix")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/add-users-to-your-network"}
             target={"_blank"}
           >
-            Users
+            {t("users.title")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
+          {t("common.inDocumentationSuffix")}
         </Paragraph>
       </div>
-      <RestrictedAccess page={"Users"} hasAccess={permission.users.read}>
+      <RestrictedAccess page={t("users.title")} hasAccess={permission.users.read}>
         <Suspense fallback={<SkeletonTable />}>
           <UsersTable
             users={users}

@@ -6,6 +6,7 @@ import { ReverseProxyTargetType } from "@/interfaces/ReverseProxy";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { cn } from "@utils/helpers";
 import { HelpTooltip } from "@components/HelpTooltip";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export function useReverseProxyAddress(target: Target | undefined) {
   const { resources } = useReverseProxies();
@@ -57,10 +58,15 @@ export function useReverseProxyAddress(target: Target | undefined) {
 }
 
 export function CidrHelpText({ target }: { target: Target | undefined }) {
+  const { t } = useI18n();
   const { cidrInfo, resourceAddress } = useReverseProxyAddress(target);
   if (!cidrInfo) return null;
   return (
-    <HelpTooltip content={`Enter an IP address within ${resourceAddress}`} />
+    <HelpTooltip
+      content={t("reverseProxy.enterIpWithinRange", {
+        range: resourceAddress,
+      })}
+    />
   );
 }
 
@@ -77,6 +83,7 @@ export default function ReverseProxyAddressInput({
   className,
   autoFocus,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const { isHostEditable } = useReverseProxyAddress(target);
 
   return (
@@ -90,7 +97,7 @@ export default function ReverseProxyAddressInput({
       }}
       maxWidthClass={"w-full"}
       customSuffix={":"}
-      placeholder="e.g., 192.168.0.10"
+      placeholder={t("reverseProxy.addressPlaceholder")}
       disabled={!target}
       readOnly={target && !isHostEditable ? true : undefined}
       className={cn("rounded-r-none border-r-0", className)}

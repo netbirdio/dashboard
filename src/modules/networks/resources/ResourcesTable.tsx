@@ -12,6 +12,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -118,6 +119,7 @@ export default function ResourcesTable({
   isGroupPage,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const params = useSearchParams();
   const resourceId = params.get("resource") ?? undefined;
 
@@ -148,8 +150,62 @@ export default function ResourcesTable({
       showSearchAndFilters={true}
       inset={false}
       tableClassName={"mt-0"}
-      text={"Resources"}
-      columns={NetworkResourceColumns}
+      text={t("networkResources.linkLabel")}
+      columns={NetworkResourceColumns.map(
+        (column): ColumnDef<NetworkResource> => {
+        if (column.id === "name") {
+          return {
+            ...column,
+            header: ({ column: tableColumn }: { column: any }) => (
+              <DataTableHeader column={tableColumn}>
+                {t("networkResources.resourceTab")}
+              </DataTableHeader>
+            ),
+          } as ColumnDef<NetworkResource>;
+        }
+        if (column.id === "address") {
+          return {
+            ...column,
+            header: ({ column: tableColumn }: { column: any }) => (
+              <DataTableHeader column={tableColumn}>
+                {t("resourcesTable.address")}
+              </DataTableHeader>
+            ),
+          } as ColumnDef<NetworkResource>;
+        }
+        if (column.id === "enabled") {
+          return {
+            ...column,
+            header: ({ column: tableColumn }: { column: any }) => (
+              <DataTableHeader column={tableColumn}>
+                {t("resourcesTable.active")}
+              </DataTableHeader>
+            ),
+          } as ColumnDef<NetworkResource>;
+        }
+        if (column.id === "groups") {
+          return {
+            ...column,
+            header: ({ column: tableColumn }: { column: any }) => (
+              <DataTableHeader column={tableColumn}>
+                {t("networkResources.groupsLabel")}
+              </DataTableHeader>
+            ),
+          } as ColumnDef<NetworkResource>;
+        }
+        if (column.id === "policies") {
+          return {
+            ...column,
+            header: ({ column: tableColumn }: { column: any }) => (
+              <DataTableHeader column={tableColumn}>
+                {t("nav.policies")}
+              </DataTableHeader>
+            ),
+          } as ColumnDef<NetworkResource>;
+        }
+        return column as ColumnDef<NetworkResource>;
+        },
+      )}
       keepStateInLocalStorage={false}
       initialFilters={
         resourceId ? [{ id: "id", value: resourceId }] : undefined
@@ -157,20 +213,20 @@ export default function ResourcesTable({
       initialSearch={resourceId}
       onFilterReset={removeResourceParam}
       data={resources}
-      searchPlaceholder={"Search by name, address or group..."}
+      searchPlaceholder={t("resourcesTable.searchPlaceholder")}
       isLoading={isLoading}
       getStartedCard={
         <NoResults
           className={"py-4"}
           title={
             isGroupPage
-              ? "This group has no assigned resources"
-              : "This network has no resources"
+              ? t("resourcesTable.emptyGroupTitle")
+              : t("resourcesTable.emptyNetworkTitle")
           }
           description={
             isGroupPage
-              ? "Assign this group to your resources inside your networks to see them listed here."
-              : "Add resources to this network to control what peers can access. Resources can be anything from a single IP, a subnet, or a domain."
+              ? t("resourcesTable.emptyGroupDescription")
+              : t("resourcesTable.emptyNetworkDescription")
           }
           icon={<Layers3Icon size={20} className={"text-nb-gray-400"} />}
         >
@@ -181,7 +237,7 @@ export default function ResourcesTable({
                 className={"mt-4"}
                 onClick={() => router.push("/networks")}
               >
-                Go to Networks
+                {t("resourcesTable.goToNetworks")}
                 <ArrowUpRightIcon size={16} />
               </Button>
             </>
@@ -203,7 +259,7 @@ export default function ResourcesTable({
                 disabled={!permission.networks.update}
               >
                 <IconCirclePlus size={16} />
-                Add Resource
+                {t("networkResources.add")}
               </Button>
             )
           : undefined

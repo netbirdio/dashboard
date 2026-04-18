@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Route } from "@/interfaces/Route";
 import RouteUpdateModal from "@/modules/routes/RouteUpdateModal";
 
@@ -14,6 +15,7 @@ type Props = {
   route: Route;
 };
 export default function RouteActionCell({ route }: Props) {
+  const { t } = useI18n();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
   const routeRequest = useApiCall<Route>("/routes");
@@ -22,22 +24,21 @@ export default function RouteActionCell({ route }: Props) {
 
   const handleRevoke = async () => {
     notify({
-      title: "Delete Route " + route.network_id,
-      description: "Route was successfully removed",
+      title: t("peerRouteActions.deleteTitle", { name: route.network_id }),
+      description: t("peerRouteActions.deleted"),
       promise: routeRequest.del("", `/${route.id}`).then(() => {
         mutate("/routes");
       }),
-      loadingMessage: "Deleting the route...",
+      loadingMessage: t("peerRouteActions.deleting"),
     });
   };
 
   const handleConfirm = async () => {
     const choice = await confirm({
-      title: `Delete '${route.network_id}'?`,
-      description:
-        "Are you sure you want to delete this route? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("routeActions.confirmDeleteTitle", { name: route.network_id }),
+      description: t("routeActions.confirmDeleteDescription"),
+      confirmText: t("actions.delete"),
+      cancelText: t("common.cancel"),
       type: "danger",
     });
     if (!choice) return;
@@ -60,7 +61,7 @@ export default function RouteActionCell({ route }: Props) {
         disabled={!permission.routes.update}
       >
         <PenSquare size={16} />
-        Edit
+        {t("actions.edit")}
       </Button>
       <Button
         variant={"danger-outline"}
@@ -69,7 +70,7 @@ export default function RouteActionCell({ route }: Props) {
         disabled={!permission.routes.delete}
       >
         <Trash2 size={16} />
-        Delete
+        {t("actions.delete")}
       </Button>
     </div>
   );

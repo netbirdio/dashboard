@@ -10,6 +10,7 @@ import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Account } from "@/interfaces/Account";
 
 type Props = {
@@ -18,6 +19,7 @@ type Props = {
 
 export default function PermissionsTab({ account }: Props) {
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const { mutate } = useSWRConfig();
   const saveRequest = useApiCall<Account>("/accounts/" + account.id);
@@ -30,8 +32,8 @@ export default function PermissionsTab({ account }: Props) {
 
   const saveChanges = async () => {
     notify({
-      title: "Permission Settings",
-      description: "Permissions were updated successfully.",
+      title: t("permissionsTab.notifyTitle"),
+      description: t("permissionsTab.updatedDescription"),
       promise: saveRequest
         .put({
           id: account.id,
@@ -44,7 +46,7 @@ export default function PermissionsTab({ account }: Props) {
           mutate("/accounts");
           updateRef([userViewBlocked]);
         }),
-      loadingMessage: "Updating permissions...",
+      loadingMessage: t("permissionsTab.updating"),
     });
   };
 
@@ -54,24 +56,24 @@ export default function PermissionsTab({ account }: Props) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("settings.title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=permissions"}
-            label={"Permissions"}
+            label={t("settings.permissions")}
             icon={<LockIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between"}>
-          <h1>Permissions</h1>
+          <h1>{t("settings.permissions")}</h1>
           <Button
             variant={"primary"}
             disabled={!hasChanges || !permission.settings.update}
             onClick={saveChanges}
           >
-            Save Changes
+            {t("actions.saveChanges")}
           </Button>
         </div>
 
@@ -82,11 +84,11 @@ export default function PermissionsTab({ account }: Props) {
             label={
               <>
                 <GaugeIcon size={15} />
-                Restrict dashboard for regular users
+                {t("permissionsTab.restrictDashboard")}
               </>
             }
             helpText={
-              "Access to the dashboard will be limited and regular users will not be able to view any peers."
+              t("permissionsTab.restrictDashboardHelp")
             }
             disabled={!permission.settings.update}
           />

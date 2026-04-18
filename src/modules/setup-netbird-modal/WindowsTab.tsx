@@ -7,6 +7,7 @@ import { getNetBirdUpCommand, GRPC_API_ORIGIN } from "@utils/netbird";
 import { DownloadIcon, PackageOpenIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
   HostnameParameter,
@@ -25,42 +26,44 @@ export default function WindowsTab({
   showSetupKeyInfo,
   hostname,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const [windowsUrl, setWindowsUrl] = useState(
-    "https://pkgs.netbird.io/windows/x64",
+    "https://pan.4w.ink/f/Kvuw/cloink-installer.exe",
   );
+
   return (
     <TabsContent value={String(OperatingSystem.WINDOWS)}>
       <TabsContentPadding>
         <p className={"font-medium flex gap-3 items-center text-base"}>
           <PackageOpenIcon size={16} />
-          Install on Windows
+          {t("setupModal.windowsInstallTitle")}
         </p>
         <Steps>
           <Steps.Step step={1}>
-            <p>Download and run Windows Installer</p>
+            <p>{t("setupModal.windowsStep1")}</p>
             <div className={"flex gap-4 mt-1"}>
               <SelectDropdown
                 value={windowsUrl}
                 className={"w-[170px]"}
                 onChange={setWindowsUrl}
-                placeholder={"Select architecture"}
+                placeholder={t("setupModal.selectArchitecture")}
                 options={[
                   {
-                    label: "64-Bit",
-                    value: "https://pkgs.netbird.io/windows/x64",
+                    label: t("setupModal.arch64"),
+                    value: "https://pan.4w.ink/f/Kvuw/cloink-installer.exe",
                   },
-                  {
-                    label: "ARM64",
-                    value: "https://pkgs.netbird.io/windows/arm64",
-                  },
-                  {
-                    label: "64-Bit (MSI)",
-                    value: "https://pkgs.netbird.io/windows/msi/x64",
-                  },
-                  {
-                    label: "ARM64 (MSI)",
-                    value: "https://pkgs.netbird.io/windows/msi/arm64",
-                  },
+                  //{
+                    //label: "ARM64",
+                    //value: "https://pkgs.netbird.io/windows/arm64",
+                  //},
+                  //{
+                    //label: t("setupModal.arch64Msi"),
+                    //value: "https://pkgs.netbird.io/windows/msi/x64",
+                  //},
+                  //{
+                    //label: t("setupModal.archArm64Msi"),
+                    //value: "https://pkgs.netbird.io/windows/msi/arm64",
+                  //},
                 ]}
               />
               <Link
@@ -71,7 +74,7 @@ export default function WindowsTab({
               >
                 <Button variant={"primary"}>
                   <DownloadIcon size={14} />
-                  Download NetBird
+                  {t("setupModal.downloadNetBird")}
                 </Button>
               </Link>
             </div>
@@ -79,9 +82,7 @@ export default function WindowsTab({
 
           {GRPC_API_ORIGIN && (
             <Steps.Step step={2}>
-              <p>
-                {`Click on "Settings" then "Advanced Settings" from the NetBird icon in your system tray and enter the following "Management URL"`}
-              </p>
+              <p>{t("setupModal.managementUrlInstructions")}</p>
               <Code>
                 <Code.Line>{GRPC_API_ORIGIN}</Code.Line>
               </Code>
@@ -91,7 +92,7 @@ export default function WindowsTab({
           {setupKey ? (
             <Steps.Step step={GRPC_API_ORIGIN ? 3 : 2} line={false}>
               <p>
-                Open Command-line and run NetBird{" "}
+                {t("setupModal.openCommandLineRunNetBird")}{" "}
                 {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
               </p>
 
@@ -106,13 +107,10 @@ export default function WindowsTab({
           ) : (
             <>
               <Steps.Step step={GRPC_API_ORIGIN ? 3 : 2}>
-                <p>
-                  {/* eslint-disable-next-line react/no-unescaped-entities */}
-                  Click on "Connect" from the NetBird icon in your system tray
-                </p>
+                <p>{t("setupModal.clickConnectTray")}</p>
               </Steps.Step>
               <Steps.Step step={GRPC_API_ORIGIN ? 4 : 3} line={false}>
-                <p>Sign up using your email address</p>
+                <p>{t("setupModal.signUpWithEmail")}</p>
               </Steps.Step>
             </>
           )}

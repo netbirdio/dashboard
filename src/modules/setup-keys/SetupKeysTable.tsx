@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import ButtonGroup from "@components/ButtonGroup";
 import Card from "@components/Card";
@@ -13,11 +15,12 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
@@ -30,92 +33,100 @@ import SetupKeyNameCell from "@/modules/setup-keys/SetupKeyNameCell";
 import SetupKeyStatusCell from "@/modules/setup-keys/SetupKeyStatusCell";
 import SetupKeyUsageCell from "@/modules/setup-keys/SetupKeyUsageCell";
 
-export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name & Key</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => (
-      <SetupKeyNameCell
-        name={row.original.name}
-        valid={row.original.valid}
-        secret={row.original.key}
-      />
-    ),
-  },
-  {
-    id: "valid",
-    accessorKey: "valid",
-    sortingFn: "basic",
-  },
-  {
-    accessorKey: "usage_limit",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Usage</DataTableHeader>;
-    },
-    cell: ({ row }) => (
-      <SetupKeyUsageCell
-        current={row.original.used_times}
-        limit={row.original.usage_limit || 0}
-        reusable={row.original.type == "reusable"}
-      />
-    ),
-  },
-  {
-    accessorKey: "last_used",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Last used</DataTableHeader>;
-    },
-    sortingFn: "datetime",
-    cell: ({ row }) => (
-      <LastTimeRow date={row.original.last_used} text={"Last used on"} />
-    ),
-  },
-  {
-    id: "group_strings",
-    accessorKey: "group_strings",
-    accessorFn: (s) => s.groups?.map((g) => g?.name || "").join(", "),
-  },
-  {
-    accessorFn: (item) => item.auto_groups?.length,
-    id: "groups",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
-    },
-    cell: ({ row }) => <SetupKeyGroupsCell setupKey={row.original} />,
-  },
+function useSetupKeysTableColumns(): ColumnDef<SetupKey>[] {
+  const { t } = useI18n();
 
-  {
-    accessorKey: "expires",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Expires</DataTableHeader>;
-    },
-    cell: ({ row }) => {
-      let expires = dayjs(row.original.expires);
-      let isNeverExpiring = expires?.year() == 1 || false;
-      return !isNeverExpiring ? (
-        <ExpirationDateRow date={row.original.expires} />
-      ) : (
-        <EmptyRow className={"px-3"} />
-      );
-    },
-  },
-  {
-    id: "status",
-    accessorKey: "id",
-    header: ({ column }) => "",
-    cell: ({ row }) => <SetupKeyStatusCell setupKey={row.original} />,
-  },
-  {
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => {
-      return <SetupKeyActionCell setupKey={row.original} />;
-    },
-  },
-];
+  return useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: ({ column }) => {
+          return (
+            <DataTableHeader column={column}>{t("table.nameAndKey")}</DataTableHeader>
+          );
+        },
+        sortingFn: "text",
+        cell: ({ row }) => (
+          <SetupKeyNameCell
+            name={row.original.name}
+            valid={row.original.valid}
+            secret={row.original.key}
+          />
+        ),
+      },
+      {
+        id: "valid",
+        accessorKey: "valid",
+        sortingFn: "basic",
+      },
+      {
+        accessorKey: "usage_limit",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.usage")}</DataTableHeader>;
+        },
+        cell: ({ row }) => (
+          <SetupKeyUsageCell
+            current={row.original.used_times}
+            limit={row.original.usage_limit || 0}
+            reusable={row.original.type == "reusable"}
+          />
+        ),
+      },
+      {
+        accessorKey: "last_used",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.lastUsed")}</DataTableHeader>;
+        },
+        sortingFn: "datetime",
+        cell: ({ row }) => (
+          <LastTimeRow date={row.original.last_used} text={t("setupKeys.lastUsedOn")} />
+        ),
+      },
+      {
+        id: "group_strings",
+        accessorKey: "group_strings",
+        accessorFn: (s) => s.groups?.map((g) => g?.name || "").join(", "),
+      },
+      {
+        accessorFn: (item) => item.auto_groups?.length,
+        id: "groups",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.groups")}</DataTableHeader>;
+        },
+        cell: ({ row }) => <SetupKeyGroupsCell setupKey={row.original} />,
+      },
+      {
+        accessorKey: "expires",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.expires")}</DataTableHeader>;
+        },
+        cell: ({ row }) => {
+          const expires = dayjs(row.original.expires);
+          const isNeverExpiring = expires?.year() == 1 || false;
+          return !isNeverExpiring ? (
+            <ExpirationDateRow date={row.original.expires} />
+          ) : (
+            <EmptyRow className={"px-3"} />
+          );
+        },
+      },
+      {
+        id: "status",
+        accessorKey: "id",
+        header: ({ column }) => "",
+        cell: ({ row }) => <SetupKeyStatusCell setupKey={row.original} />,
+      },
+      {
+        accessorKey: "id",
+        header: "",
+        cell: ({ row }) => {
+          return <SetupKeyActionCell setupKey={row.original} />;
+        },
+      },
+    ],
+    [t],
+  );
+}
 
 type Props = {
   setupKeys?: SetupKey[];
@@ -135,8 +146,9 @@ export default function SetupKeysTable({
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
+  const { t } = useI18n();
+  const columns = useSetupKeysTableColumns();
 
-  // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path,
     [
@@ -171,12 +183,12 @@ export default function SetupKeysTable({
         inset={false}
         minimal={isGroupPage}
         keepStateInLocalStorage={!isGroupPage}
-        text={"Setup Keys"}
+        text={t("setupKeys.title")}
         sorting={sorting}
         setSorting={setSorting}
-        columns={SetupKeysTableColumns}
+        columns={columns}
         data={setupKeys}
-        searchPlaceholder={"Search by name, type or group..."}
+        searchPlaceholder={t("setupKeys.searchPlaceholder")}
         columnVisibility={{
           valid: false,
           group_strings: false,
@@ -186,10 +198,8 @@ export default function SetupKeysTable({
             <NoResults
               icon={<SetupKeysIcon className={"fill-nb-gray-200"} size={20} />}
               className={"py-4"}
-              title={"This group is not used within any setup keys yet"}
-              description={
-                "Assign this group when creating a new setup key to see them listed here."
-              }
+              title={t("setupKeys.groupEmptyTitle")}
+              description={t("setupKeys.groupEmptyDescription")}
             >
               <Button
                 variant={"primary"}
@@ -198,24 +208,20 @@ export default function SetupKeysTable({
                 disabled={!permission.setup_keys.create}
               >
                 <PlusCircle size={16} />
-                Create Setup Key
+                {t("setupKeys.createTitle")}
               </Button>
             </NoResults>
           ) : (
             <GetStartedTest
               icon={
                 <SquareIcon
-                  icon={
-                    <SetupKeysIcon className={"fill-nb-gray-200"} size={20} />
-                  }
+                  icon={<SetupKeysIcon className={"fill-nb-gray-200"} size={20} />}
                   color={"gray"}
                   size={"large"}
                 />
               }
-              title={"Create Setup Key"}
-              description={
-                "Add a setup key to register new machines in your network. The key links machines to your account during initial setup."
-              }
+              title={t("setupKeys.createTitle")}
+              description={t("setupKeys.emptyDescription")}
               button={
                 <Button
                   variant={"primary"}
@@ -224,19 +230,19 @@ export default function SetupKeysTable({
                   disabled={!permission.setup_keys.create}
                 >
                   <PlusCircle size={16} />
-                  Create Setup Key
+                  {t("setupKeys.createTitle")}
                 </Button>
               }
               learnMore={
                 <>
-                  Learn more about
+                  {t("common.learnMorePrefix")}{" "}
                   <InlineLink
                     href={
                       "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
                     }
                     target={"_blank"}
                   >
-                    Setup Keys
+                    {t("setupKeys.title")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -254,7 +260,7 @@ export default function SetupKeysTable({
                 disabled={!permission.setup_keys.create}
               >
                 <PlusCircle size={16} />
-                Create Setup Key
+                {t("setupKeys.createTitle")}
               </Button>
             )}
           </>
@@ -275,7 +281,7 @@ export default function SetupKeysTable({
                     : "secondary"
                 }
               >
-                All
+                {t("filters.all")}
               </ButtonGroup.Button>
               <ButtonGroup.Button
                 onClick={() => {
@@ -289,7 +295,7 @@ export default function SetupKeysTable({
                     : "secondary"
                 }
               >
-                Valid
+                {t("filters.valid")}
               </ButtonGroup.Button>
               <ButtonGroup.Button
                 onClick={() => {
@@ -303,7 +309,7 @@ export default function SetupKeysTable({
                     : "secondary"
                 }
               >
-                Expired
+                {t("filters.expired")}
               </ButtonGroup.Button>
             </ButtonGroup>
             <DataTableRowsPerPage

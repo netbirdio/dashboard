@@ -12,6 +12,7 @@ import { lazy, useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { useGroupContext } from "@/contexts/GroupProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Peer } from "@/interfaces/Peer";
 import { AssignPeerToGroupModal } from "@/modules/groups/AssignPeerToGroupModal";
 import { GroupPeersRemoveCell } from "@/modules/groups/details/GroupDetailsRemoveCell";
@@ -23,85 +24,89 @@ import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 
 const GroupPeersTable = lazy(() => import("@/modules/peer/MinimalPeersTable"));
 
-const GroupPeersTableColumns: ColumnDef<Peer>[] = [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <div className={"min-w-[20px] max-w-[20px]"}>
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected()}
-          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      </div>
-    ),
-    cell: ({ row }) => (
-      <div className={"min-w-[20px] max-w-[20px]"}>
-        <Checkbox
-          checked={row.getIsSelected()}
-          variant={"tableCell"}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-        />
-      </div>
-    ),
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
+function useGroupPeersTableColumns(): ColumnDef<Peer>[] {
+  const { t } = useI18n();
+
+  return [
+    {
+      id: "select",
+      header: ({ table }) => (
+        <div className={"min-w-[20px] max-w-[20px]"}>
+          <Checkbox
+            checked={table.getIsAllPageRowsSelected()}
+            onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+            aria-label={t("groupUsers.selectAll")}
+          />
+        </div>
+      ),
+      cell: ({ row }) => (
+        <div className={"min-w-[20px] max-w-[20px]"}>
+          <Checkbox
+            checked={row.getIsSelected()}
+            variant={"tableCell"}
+            onCheckedChange={(value) => row.toggleSelected(!!value)}
+            aria-label={t("groupUsers.selectRow")}
+          />
+        </div>
+      ),
+      enableSorting: false,
+      enableHiding: false,
     },
-    sortingFn: "text",
-    cell: ({ row }) => <PeerNameCell peer={row.original} />,
-  },
-  {
-    id: "connected",
-    accessorKey: "connected",
-    accessorFn: (peer) => peer.connected,
-  },
-  {
-    accessorKey: "ip",
-    sortingFn: "text",
-  },
-  {
-    id: "user_name",
-    accessorFn: (peer) => (peer.user ? peer.user?.name : "Unknown"),
-  },
-  {
-    id: "user_email",
-    accessorFn: (peer) => (peer.user ? peer.user?.email : "Unknown"),
-  },
-  {
-    accessorKey: "dns_label",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Address</DataTableHeader>;
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <PeerNameCell peer={row.original} />,
     },
-    cell: ({ row }) => <PeerAddressCell peer={row.original} />,
-  },
-  {
-    accessorKey: "last_seen",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Last seen</DataTableHeader>;
+    {
+      id: "connected",
+      accessorKey: "connected",
+      accessorFn: (peer) => peer.connected,
     },
-    sortingFn: "datetime",
-    cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
-  },
-  {
-    accessorKey: "os",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>OS</DataTableHeader>;
+    {
+      accessorKey: "ip",
+      sortingFn: "text",
     },
-    cell: ({ row }) => <PeerOSCell os={row.original.os} />,
-  },
-  {
-    id: "remove_from_group",
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => <GroupPeersRemoveCell peer={row.original} />,
-  },
-];
+    {
+      id: "user_name",
+      accessorFn: (peer) => (peer.user ? peer.user?.name : t("peerDetails.unknown")),
+    },
+    {
+      id: "user_email",
+      accessorFn: (peer) => (peer.user ? peer.user?.email : t("peerDetails.unknown")),
+    },
+    {
+      accessorKey: "dns_label",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("resourcesTable.address")}</DataTableHeader>;
+      },
+      cell: ({ row }) => <PeerAddressCell peer={row.original} />,
+    },
+    {
+      accessorKey: "last_seen",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("peerDetails.lastSeen")}</DataTableHeader>;
+      },
+      sortingFn: "datetime",
+      cell: ({ row }) => <PeerLastSeenCell peer={row.original} />,
+    },
+    {
+      accessorKey: "os",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("peerDetails.operatingSystem")}</DataTableHeader>;
+      },
+      cell: ({ row }) => <PeerOSCell os={row.original.os} />,
+    },
+    {
+      id: "remove_from_group",
+      accessorKey: "id",
+      header: "",
+      cell: ({ row }) => <GroupPeersRemoveCell peer={row.original} />,
+    },
+  ];
+}
 
 type Props = {
   peers?: Peer[];
@@ -109,26 +114,26 @@ type Props = {
 };
 
 export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
+  const { t } = useI18n();
   const { group, addPeersToGroup, removePeersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
   const { permission } = usePermissions();
+  const columns = useGroupPeersTableColumns();
 
   return (
     <GroupDetailsTableContainer>
       <GroupPeersTable
         isLoading={isLoading}
         peers={peers}
-        columns={GroupPeersTableColumns}
+        columns={columns}
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
         getStartedCard={
           <NoResults
             className={"py-4"}
-            title={"This group has no assigned peers yet"}
-            description={
-              "Install NetBird and assign existing peers to this group to see them listed here."
-            }
+            title={t("groupPeers.emptyTitle")}
+            description={t("groupPeers.emptyDescription")}
             icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
           >
             {permission?.peers?.update && permission?.groups?.update && (
@@ -140,7 +145,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
                   onClick={() => setOpen(true)}
                 >
                   <PlusCircle size={16} />
-                  Assign Peers
+                  {t("groupPeers.assignPeers")}
                 </Button>
               </div>
             )}
@@ -158,7 +163,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
                 <>
                   <FullTooltip
                     content={
-                      <span className={"text-xs"}>Remove Peers from Group</span>
+                      <span className={"text-xs"}>{t("groupPeers.removeFromGroup")}</span>
                     }
                   >
                     <Button
@@ -186,7 +191,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
               useSave={false}
               showHeader={false}
               showClose={false}
-              buttonText={"Assign Peers"}
+              buttonText={t("groupPeers.assignPeers")}
               selectInitialPeers={false}
               excludedPeers={peers}
               onUpdate={(g) => {
@@ -205,7 +210,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
                       onClick={() => setOpen(true)}
                     >
                       <PlusCircle size={16} />
-                      Assign Peers
+                      {t("groupPeers.assignPeers")}
                     </Button>
                   )}
                 </div>

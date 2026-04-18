@@ -18,41 +18,12 @@ import {
   SelectOption,
 } from "@components/select/SelectDropdown";
 import { CountrySelector } from "@/components/ui/CountrySelector";
+import { useI18n } from "@/i18n/I18nProvider";
+import type { MessageKey } from "@/i18n/messages";
 import { AccessRestrictions } from "@/interfaces/ReverseProxy";
 
 type AccessAction = "allow" | "block";
 type AccessRuleType = "country" | "ip" | "cidr";
-
-const ACTION_OPTIONS: SelectOption[] = [
-  {
-    label: "Allow Only",
-    value: "allow",
-    icon: (props) => <ShieldCheckIcon {...props} className="text-green-500" />,
-  },
-  {
-    label: "Block Only",
-    value: "block",
-    icon: (props) => <ShieldXIcon {...props} className="text-red-500" />,
-  },
-];
-
-const TYPE_OPTIONS: SelectOption[] = [
-  {
-    label: "Country",
-    value: "country",
-    icon: (props) => <FlagIcon {...props} />,
-  },
-  {
-    label: "IP Address",
-    value: "ip",
-    icon: (props) => <WorkflowIcon {...props} />,
-  },
-  {
-    label: "CIDR Block",
-    value: "cidr",
-    icon: (props) => <NetworkIcon {...props} />,
-  },
-];
 
 type AccessRule = {
   id: string;
@@ -157,31 +128,77 @@ type Props = {
   onValidationChange?: (hasErrors: boolean) => void;
 };
 
-function validateRule(rule: AccessRule): string {
+function validateRule(
+  rule: AccessRule,
+  t: (
+    key: MessageKey,
+    values?: Record<string, string | number>,
+  ) => string,
+): string {
   if (rule.type === "country" || !rule.value) return "";
   if (rule.type === "ip") {
     const val = rule.value.includes("/") ? rule.value : `${rule.value}/32`;
     if (!cidr.isValidAddress(val)) {
-      return "Please enter a valid IP address, e.g., 85.203.15.42";
+      return t("reverseProxy.validIpAddress");
     }
   } else {
     if (!rule.value.includes("/") || !cidr.isValidAddress(rule.value)) {
-      return "Please enter a valid CIDR block, e.g., 74.125.0.0/16";
+      return t("reverseProxy.validCidrBlock");
     }
   }
   return "";
 }
 
 export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationChange }: Props) => {
+  const { t } = useI18n();
   const [rules, dispatch] = useReducer(
     rulesReducer,
     value,
     restrictionsToRules,
   );
 
+  const actionOptions = useMemo<SelectOption[]>(
+    () => [
+      {
+        label: t("reverseProxy.allowOnly"),
+        value: "allow",
+        icon: (props) => (
+          <ShieldCheckIcon {...props} className="text-green-500" />
+        ),
+      },
+      {
+        label: t("reverseProxy.blockOnly"),
+        value: "block",
+        icon: (props) => <ShieldXIcon {...props} className="text-red-500" />,
+      },
+    ],
+    [t],
+  );
+
+  const typeOptions = useMemo<SelectOption[]>(
+    () => [
+      {
+        label: t("reverseProxy.country"),
+        value: "country",
+        icon: (props) => <FlagIcon {...props} />,
+      },
+      {
+        label: t("reverseProxy.ipAddress"),
+        value: "ip",
+        icon: (props) => <WorkflowIcon {...props} />,
+      },
+      {
+        label: t("reverseProxy.cidrBlock"),
+        value: "cidr",
+        icon: (props) => <NetworkIcon {...props} />,
+      },
+    ],
+    [t],
+  );
+
   const errors = useMemo(
-    () => Object.fromEntries(rules.map((r) => [r.id, validateRule(r)])),
-    [rules],
+    () => Object.fromEntries(rules.map((r) => [r.id, validateRule(r, t)])),
+    [rules, t],
   );
 
   const hasErrors = useMemo(
@@ -206,12 +223,11 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
   return (
     <div className={"flex-col flex"}>
       <div>
-        <Label>Access Control Rules</Label>
+        <Label>{t("reverseProxy.accessControlRules")}</Label>
         <HelpText>
-          Define rules to allow or block traffic based on country, IP address,
-          or CIDR block.
+          {t("reverseProxy.accessControlRulesDescription")}
           <br />
-          Block rules always take priority over allow rules.
+          {t("reverseProxy.blockRulesPriority")}
         </HelpText>
       </div>
       {rules.length > 0 && (
@@ -229,7 +245,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                       value: v,
                     })
                   }
-                  options={ACTION_OPTIONS}
+                  options={actionOptions}
                   compact
                 />
               </div>
@@ -245,7 +261,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                       value: v,
                     })
                   }
-                  options={TYPE_OPTIONS}
+                  options={typeOptions}
                   compact
                 />
               </div>
@@ -270,8 +286,8 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                   <Input
                     placeholder={
                       rule.type === "ip"
-                        ? "e.g., 85.203.15.42"
-                        : "e.g., 74.125.0.0/16"
+                        ? t("reverseProxy.ipAddressPlaceholder")
+                        : t("reverseProxy.cidrBlockPlaceholder")
                     }
                     value={rule.value}
                     onChange={(e) =>
@@ -293,7 +309,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
                 variant="default-outline"
                 className="h-[42px] w-[42px] !px-0 shrink-0 ml-2"
                 onClick={() => dispatch({ type: "remove", id: rule.id })}
-                aria-label="Remove rule"
+                aria-label={t("reverseProxy.removeRule")}
               >
                 <MinusCircleIcon size={14} />
               </Button>
@@ -308,7 +324,7 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
         onClick={() => dispatch({ type: "add" })}
       >
         <PlusIcon size={14} />
-        Add Rule
+        {t("reverseProxy.addRule")}
       </Button>
     </div>
   );

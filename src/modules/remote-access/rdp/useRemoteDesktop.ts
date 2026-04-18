@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { useIronRDPInputHandler } from "./useIronRDPInputHandler";
 import {
   CertificatePromptInfo,
@@ -44,6 +45,7 @@ export enum RDPStatus {
 export const RDP_DOCS_LINK = "https://docs.netbird.io/how-to/browser-client";
 
 export const useRemoteDesktop = (client: any) => {
+  const { t } = useI18n();
   const [status, setStatus] = useState(RDPStatus.DISCONNECTED);
   const [config, setConfig] = useState<RDPConfig | null>(null);
   const [error, setError] = useState("");
@@ -157,11 +159,11 @@ export const useRemoteDesktop = (client: any) => {
 
       try {
         if (!canvasRef.current) {
-          throw new Error("Canvas not available for RDP rendering");
+          throw new Error(t("remoteAccess.canvasUnavailable"));
         }
 
         if (!client?.ironRDPBridge || !client?.initializeIronRDP) {
-          throw new Error("IronRDP components not available from client");
+          throw new Error(t("remoteAccess.ironrdpUnavailable"));
         }
 
         const canvas = canvasRef.current;
@@ -176,7 +178,7 @@ export const useRemoteDesktop = (client: any) => {
 
         const initialized = await client.initializeIronRDP();
         if (!initialized) {
-          throw new Error("Failed to initialize IronRDP");
+          throw new Error(t("remoteAccess.ironrdpInitFailed"));
         }
 
         const originalHandler = setupCertificateHandler();
@@ -219,7 +221,7 @@ export const useRemoteDesktop = (client: any) => {
           const ironError = err as IronError;
           const errorMessage = ironError.backtrace
             ? ironError.backtrace()
-            : "RDP connection failed";
+            : t("remoteAccess.rdpGenericError");
           setError(errorMessage);
           resetState();
           throw Error(errorMessage);
@@ -228,13 +230,13 @@ export const useRemoteDesktop = (client: any) => {
         }
       } catch (err) {
         const errorMessage =
-          err instanceof Error ? err.message : "RDP connection failed";
+          err instanceof Error ? err.message : t("remoteAccess.rdpGenericError");
         setError(errorMessage);
         resetState();
         throw Error(errorMessage);
       }
     },
-    [client, status, setupCertificateHandler, resetState],
+    [client, status, setupCertificateHandler, resetState, t],
   );
 
   /**

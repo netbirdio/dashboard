@@ -3,12 +3,11 @@ import { DropdownMenuItem } from "@components/DropdownMenu";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { CircleHelpIcon, MonitorIcon } from "lucide-react";
 import * as React from "react";
-import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import { RDPTooltip } from "@/modules/remote-access/rdp/RDPTooltip";
-import { SSHCredentialsModal } from "@/modules/remote-access/ssh/SSHCredentialsModal";
 
 type Props = {
   peer: Peer;
@@ -16,8 +15,8 @@ type Props = {
 };
 
 export const RDPButton = ({ peer, isDropdown = false }: Props) => {
-  const [modal, setModal] = useState(false);
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const disabled = !peer.connected || !permission.peers.update;
   const hasPermission = permission.peers.update;
@@ -49,7 +48,7 @@ export const RDPButton = ({ peer, isDropdown = false }: Props) => {
               >
                 <div className={"flex gap-3 items-center w-full"}>
                   <MonitorIcon size={14} className={"shrink-0"} />
-                  RDP
+                  {t("remoteAccess.rdp")}
                 </div>
               </DropdownMenuItem>
             ) : (
@@ -60,7 +59,7 @@ export const RDPButton = ({ peer, isDropdown = false }: Props) => {
                 disabled={disabled}
               >
                 <MonitorIcon size={16} />
-                RDP
+                {t("remoteAccess.rdp")}
                 {disabled && <CircleHelpIcon size={12} />}
               </Button>
             )}

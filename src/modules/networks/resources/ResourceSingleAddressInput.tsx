@@ -6,6 +6,7 @@ import cidr from "ip-cidr";
 import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   value: string;
@@ -20,13 +21,14 @@ type Props = {
 export const ResourceSingleAddressInput = ({
   value,
   onChange,
-  label = "Address",
+  label,
   className = "",
   onError,
-  description = "Enter a single IP address, CIDR block or domain name",
-  placeholder = "Address (IP, CIDR or Domain)",
+  description,
+  placeholder,
   autoFocus,
 }: Props) => {
+  const { t } = useI18n();
   const hasChars = useMemo(() => {
     return !!value.match(/[a-z*]/i);
   }, [value]);
@@ -51,18 +53,18 @@ export const ResourceSingleAddressInput = ({
         !value.includes(".") ||
         value.endsWith(".")
       ) {
-        return "Please enter a valid domain, e.g. service.internal, example.com or *.example.com";
+        return t("networkResources.addressDomainError");
       }
       return ""; // Valid domain
     }
 
     // Case 2: If it's not a valid domain, check if it's a valid CIDR
     if (!cidr.isValidAddress(value)) {
-      return "Please enter a valid IP or CIDR, e.g., 10.0.0.21, 192.168.1.0/24";
+      return t("networkResources.addressIpOrCidrError");
     }
 
     return ""; // Valid CIDR
-  }, [value, hasChars, isCIDRBlock]);
+  }, [value, hasChars, isCIDRBlock, t]);
 
   useEffect(() => {
     onError?.(error);
@@ -70,13 +72,13 @@ export const ResourceSingleAddressInput = ({
 
   return (
     <div className={className}>
-      <Label>{label}</Label>
-      <HelpText>{description}</HelpText>
+      <Label>{label ?? t("networkResources.addressLabel")}</Label>
+      <HelpText>{description ?? t("networkResources.addressHelp")}</HelpText>
       <Input
         autoFocus={autoFocus}
         customPrefix={PrefixIcon}
         error={error}
-        placeholder={placeholder}
+        placeholder={placeholder ?? t("networkResources.addressPlaceholder")}
         value={value}
         onChange={(e) => onChange(e.target.value)}
       />

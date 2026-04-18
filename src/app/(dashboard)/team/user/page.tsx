@@ -33,6 +33,7 @@ import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { Role, User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
@@ -46,6 +47,7 @@ import { UserPeersSection } from "@/modules/users/UserPeersSection";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
 
 export default function UserPage() {
+  const { t } = useI18n();
   const queryParameter = useSearchParams();
   const userId = queryParameter.get("id");
   const { permission } = usePermissions();
@@ -66,7 +68,7 @@ export default function UserPage() {
   if (!permission.users.read) {
     return (
       <PageContainer>
-        <RestrictedAccess page={"User Information"} />
+        <RestrictedAccess page={t("userDetails.title")} />
       </PageContainer>
     );
   }
@@ -88,6 +90,7 @@ type Props = {
 };
 
 function UserOverview({ user, initialGroups }: Readonly<Props>) {
+  const { t } = useI18n();
   const router = useRouter();
   const userRequest = useApiCall<User>("/users");
   const isServiceUser = !!user?.is_service_user;
@@ -113,7 +116,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
 
     notify({
       title: user.name,
-      description: "Changes successfully saved.",
+      description: t("userDetails.saved"),
       promise: userRequest
         .put(
           {
@@ -127,7 +130,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           mutate(`/users?service_user=${isServiceUser}`);
           updateChangesRef([role, selectedGroups]);
         }),
-      loadingMessage: "Saving changes...",
+      loadingMessage: t("userDetails.saving"),
     });
   };
 
@@ -148,7 +151,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/team"}
-            label={"Team"}
+            label={t("team.title")}
             disabled={!permission.users.read}
             icon={<TeamIcon size={13} />}
           />
@@ -156,13 +159,13 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           {isServiceUser ? (
             <Breadcrumbs.Item
               href={"/team/service-users"}
-              label={"Service Users"}
+              label={t("serviceUsers.title")}
               icon={<IconSettings2 size={17} />}
             />
           ) : (
             <Breadcrumbs.Item
               href={"/team/users"}
-              label={"Users"}
+              label={t("users.title")}
               disabled={!permission.users.read}
               icon={<User2 size={16} />}
             />
@@ -186,7 +189,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                     : {
                         color: user?.name
                           ? generateColorFromString(
-                              user?.name || user?.id || "System User",
+                              user?.name || user?.id || t("users.system"),
                             )
                           : "#808080",
                       }
@@ -214,7 +217,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                     : router.push("/team/users");
                 }}
               >
-                Cancel
+                {t("actions.cancel")}
               </Button>
 
               <Button
@@ -224,7 +227,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                 onClick={save}
                 data-cy={"save-changes"}
               >
-                Save Changes
+                {t("actions.saveChanges")}
               </Button>
             </div>
           )}
@@ -235,10 +238,8 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           <div className={"flex flex-col gap-8 w-1/2 "}>
             {!isServiceUser && isOwnerOrAdmin && (
               <div>
-                <Label>Auto-assigned groups</Label>
-                <HelpText>
-                  Groups will be assigned to peers added by this user.
-                </HelpText>
+                <Label>{t("userDetails.autoAssignedGroups")}</Label>
+                <HelpText>{t("userDetails.autoAssignedGroupsHelp")}</HelpText>
                 <PeerGroupSelector
                   disabled={isUser}
                   onChange={setSelectedGroups}
@@ -250,10 +251,8 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
             )}
             <div className={"flex items-start"}>
               <div className={"w-2/3"}>
-                <Label>User Role</Label>
-                <HelpText>
-                  Set a role for the user to assign access permissions.
-                </HelpText>
+                <Label>{t("userDetails.userRole")}</Label>
+                <HelpText>{t("userDetails.userRoleHelp")}</HelpText>
               </div>
               <div className={"w-1/3"}>
                 <UserRoleSelector
@@ -281,13 +280,13 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           {showPeers && (
             <TabsTrigger value={"peers"}>
               <MonitorSmartphoneIcon size={16} />
-              Peers
+              {t("peers.title")}
             </TabsTrigger>
           )}
           {showAccessTokens && (
             <TabsTrigger value={"access-tokens"}>
               <KeyRoundIcon size={16} />
-              Access Tokens
+              {t("accessTokens.title")}
             </TabsTrigger>
           )}
         </TabsList>
@@ -302,10 +301,8 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
               <div className={"max-w-6xl"}>
                 <div className={"flex justify-between items-center"}>
                   <div>
-                    <h2>Access Tokens</h2>
-                    <Paragraph>
-                      Access tokens give access to NetBird API.
-                    </Paragraph>
+                    <h2>{t("accessTokens.title")}</h2>
+                    <Paragraph>{t("userDetails.accessTokensDescription")}</Paragraph>
                   </div>
                   <div className={"inline-flex gap-4 justify-end"}>
                     <div>
@@ -316,7 +313,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
                           disabled={!permission.pats.create}
                         >
                           <IconCirclePlus size={16} />
-                          Create Access Token
+                          {t("userDetails.createAccessToken")}
                         </Button>
                       </CreateAccessTokenModal>
                     </div>
@@ -333,6 +330,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
 }
 
 function UserInformationCard({ user }: Readonly<{ user: User }>) {
+  const { t } = useI18n();
   const isServiceUser = user.is_service_user || false;
   const neverLoggedIn = dayjs(user.last_login).isBefore(
     dayjs().subtract(1000, "years"),
@@ -346,7 +344,7 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
           label={
             <>
               <User2 size={16} />
-              {user.name ? "Name" : "User ID"}
+              {user.name ? t("userDetails.name") : t("userDetails.userId")}
             </>
           }
           value={user.name || user.id}
@@ -357,7 +355,7 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
             label={
               <>
                 <Mail size={16} />
-                E-Mail
+                {t("userDetails.email")}
               </>
             }
             value={user.email || "-"}
@@ -369,7 +367,7 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
           label={
             <>
               <GalleryHorizontalEnd size={16} />
-              Status
+              {t("table.status")}
             </>
           }
           value={<UserStatusCell user={user} />}
@@ -385,7 +383,7 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
                   label={
                     <>
                       <Ban size={16} />
-                      Block User
+                      {t("table.blockUser")}
                     </>
                   }
                   value={<UserBlockCell user={user} isUserPage={true} />}
@@ -396,13 +394,13 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
               label={
                 <>
                   <History size={16} />
-                  Last login
+                  {t("table.lastLogin")}
                 </>
               }
               value={
                 neverLoggedIn
-                  ? "Never"
-                  : dayjs(user.last_login).format("D MMMM, YYYY [at] h:mm A") +
+                  ? t("userDetails.never")
+                  : dayjs(user.last_login).format(t("userDetails.lastLoginFormat")) +
                     " (" +
                     dayjs().to(user.last_login) +
                     ")"

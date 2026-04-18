@@ -6,6 +6,7 @@ import SkeletonTable, {
 import { ExternalLinkIcon } from "lucide-react";
 import * as React from "react";
 import { Suspense } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import {
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxyFlatTarget,
@@ -24,23 +25,24 @@ export const ReverseProxyFlatTargetsTabContent = ({
   targets,
   isLoading,
   hideResourceColumn,
-  emptyTableTitle = "This network has no services",
-  emptyTableDescription = "Create resources and expose services securely through NetBird's reverse proxy.",
+  emptyTableTitle,
+  emptyTableDescription,
 }: Props) => {
+  const { t } = useI18n();
   return (
     <div className={"pb-10 px-8"}>
       <div className={"flex justify-between items-center mb-5"}>
         <div>
           <Paragraph>
-            Expose services securely through NetBird&apos;s reverse proxy.
+            {t("reverseProxyTargets.description")}
           </Paragraph>
           <Paragraph>
-            Learn more about
+            {t("common.learnMorePrefix")}{" "}
             <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
-              Services
+              {t("nav.services")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
+            {t("common.inDocumentationSuffix")}
           </Paragraph>
         </div>
       </div>
@@ -58,8 +60,10 @@ export const ReverseProxyFlatTargetsTabContent = ({
           targets={targets}
           isLoading={isLoading}
           hideResourceColumn={hideResourceColumn}
-          emptyTableTitle={emptyTableTitle}
-          emptyTableDescription={emptyTableDescription}
+          emptyTableTitle={emptyTableTitle ?? t("reverseProxyTargets.emptyTitle")}
+          emptyTableDescription={
+            emptyTableDescription ?? t("reverseProxyTargets.emptyDescription")
+          }
         />
       </Suspense>
     </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import {
   DropdownMenu,
@@ -8,6 +10,7 @@ import {
 import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { DNSZone } from "@/interfaces/DNS";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
 
@@ -18,6 +21,7 @@ type Props = {
 export const DNSZonesActionCell = ({ zone }: Props) => {
   const { permission } = usePermissions();
   const { openZoneModal, deleteZone } = useDNSZones();
+  const { t } = useI18n();
 
   return (
     <div className={"flex justify-end pr-4"}>
@@ -37,7 +41,7 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
           <DropdownMenuItem onClick={() => openZoneModal(zone)}>
             <div className={"flex gap-3 items-center"}>
               <SquarePenIcon size={14} className={"shrink-0"} />
-              Edit
+              {t("actions.edit")}
             </div>
           </DropdownMenuItem>
 
@@ -48,7 +52,7 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("actions.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

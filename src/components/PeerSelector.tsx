@@ -13,6 +13,7 @@ import { ArrowUpCircleIcon, ChevronsUpDown, MapPin } from "lucide-react";
 import * as React from "react";
 import { memo, useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Peer } from "@/interfaces/Peer";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 
@@ -39,6 +40,7 @@ export function PeerSelector({
   excludedPeers,
   disabled = false,
 }: MultiSelectProps) {
+  const { t } = useI18n();
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -129,7 +131,7 @@ export function PeerSelector({
                 </div>
               </div>
             ) : (
-              <span>Select a peer...</span>
+              <span>{t("peerSelector.selectPeer")}</span>
             )}
           </div>
 
@@ -150,20 +152,20 @@ export function PeerSelector({
           <DropdownInput
             value={search}
             onChange={setSearch}
-            placeholder={"Search for peers by name or ip..."}
+            placeholder={t("peerSelector.searchPlaceholder")}
           />
 
           {unfilteredItems.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {"No peers available to select."}
+                {t("peerSelector.noPeersAvailable")}
               </DropdownInfoText>
             </div>
           )}
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
-              There are no peers matching your search.
+              {t("peerSelector.noMatchingPeers")}
             </DropdownInfoText>
           )}
 
@@ -193,9 +195,7 @@ export function PeerSelector({
                     className={"w-full flex items-center justify-between"}
                     content={
                       <div className={"max-w-[240px] text-xs"}>
-                        Please update NetBird to at least{" "}
-                        <span className={"text-netbird"}>v0.36.6</span> or later
-                        to use this peer as a routing peer.
+                        {t("peerSelector.updateNetBirdTooltip")}
                       </div>
                     }
                   >

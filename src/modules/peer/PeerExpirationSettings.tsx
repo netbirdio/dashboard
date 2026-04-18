@@ -8,8 +8,10 @@ import { notify } from "@components/Notification";
 import { useSWRConfig } from "swr";
 import { cn } from "@utils/helpers";
 import { useAccount } from "@/modules/account/useAccount";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const PeerExpirationSettings = () => {
+  const { t } = useI18n();
   const { peer, update } = usePeer();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
@@ -40,9 +42,9 @@ export const PeerExpirationSettings = () => {
 
     notify({
       title: peer.name,
-      description: "Expiration was successfully updated",
+      description: t("peer.expirationUpdated"),
       promise,
-      loadingMessage: "Updating setting...",
+      loadingMessage: t("peer.updatingSetting"),
     });
 
     return promise;
@@ -90,10 +92,8 @@ export const PeerExpirationSettings = () => {
                 inactivityExpiration: state,
               });
             }}
-            title={"Require login after disconnect"}
-            description={
-              "Enable to require authentication after users disconnect from management for 10 minutes."
-            }
+            title={t("peer.requireLoginAfterDisconnect")}
+            description={t("peer.requireLoginAfterDisconnectDescription")}
             className={
               !peerLoginExpiration ? "opacity-40 pointer-events-none" : ""
             }

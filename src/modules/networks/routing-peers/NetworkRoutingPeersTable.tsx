@@ -10,6 +10,7 @@ import * as React from "react";
 import { useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { NetworkRoutingPeerName } from "@/modules/networks/routing-peers/NetworkRoutingPeerName";
@@ -24,65 +25,71 @@ type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
-const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
-  {
-    id: "name",
-    accessorKey: "id",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Peer</DataTableHeader>;
+function useNetworkRouterColumns(): ColumnDef<NetworkRouter>[] {
+  const { t } = useI18n();
+
+  return [
+    {
+      id: "name",
+      accessorKey: "id",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("networkRouting.peer")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <NetworkRoutingPeerName router={row.original} />,
     },
-    sortingFn: "text",
-    cell: ({ row }) => <NetworkRoutingPeerName router={row.original} />,
-  },
-  {
-    id: "enabled",
-    accessorKey: "enabled",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
+    {
+      id: "enabled",
+      accessorKey: "enabled",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("table.active")}</DataTableHeader>;
+      },
+      cell: ({ row }) => <RoutingPeersEnabledCell router={row.original} />,
     },
-    cell: ({ row }) => <RoutingPeersEnabledCell router={row.original} />,
-  },
-  {
-    id: "metric",
-    accessorKey: "metric",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Metric</DataTableHeader>;
+    {
+      id: "metric",
+      accessorKey: "metric",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("networkRouting.metric")}</DataTableHeader>;
+      },
+      cell: ({ row }) => (
+        <RouteMetricCell metric={row.original.metric} useHoverStyle={false} />
+      ),
     },
-    cell: ({ row }) => (
-      <RouteMetricCell metric={row.original.metric} useHoverStyle={false} />
-    ),
-  },
-  {
-    id: "masquerade",
-    accessorKey: "masquerade",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Masquerade</DataTableHeader>;
+    {
+      id: "masquerade",
+      accessorKey: "masquerade",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("networkRouting.masquerade")}</DataTableHeader>;
+      },
+      cell: ({ row }) => <RoutingPeersMasqueradeCell router={row.original} />,
     },
-    cell: ({ row }) => <RoutingPeersMasqueradeCell router={row.original} />,
-  },
-  {
-    id: "actions",
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => {
-      return <RoutingPeersActionCell router={row.original} />;
+    {
+      id: "actions",
+      accessorKey: "id",
+      header: "",
+      cell: ({ row }) => {
+        return <RoutingPeersActionCell router={row.original} />;
+      },
     },
-  },
-  {
-    id: "search",
-    accessorKey: "search",
-    header: "",
-    filterFn: "fuzzy",
-  },
-];
+    {
+      id: "search",
+      accessorKey: "search",
+      header: "",
+      filterFn: "fuzzy",
+    },
+  ];
+}
 
 export default function NetworkRoutingPeersTable({
   routers,
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const { permission } = usePermissions();
   const { openAddRoutingPeerModal, network } = useNetworksContext();
+  const columns = useNetworkRouterColumns();
 
   const [sorting, setSorting] = useState<SortingState>([
     {
@@ -102,19 +109,17 @@ export default function NetworkRoutingPeersTable({
       showSearchAndFilters={true}
       inset={false}
       tableClassName={"mt-0"}
-      text={"Routing Peers"}
-      columns={NetworkRouterColumns}
+      text={t("networkDetails.routingPeers")}
+      columns={columns}
       keepStateInLocalStorage={false}
       data={routers}
-      searchPlaceholder={"Search by peer name, group name..."}
+      searchPlaceholder={t("networkRouting.searchPlaceholder")}
       isLoading={isLoading}
       getStartedCard={
         <NoResults
           className={"py-4"}
-          title={"This network has no routing peers"}
-          description={
-            "Add routing peers to this network to access resources inside this network."
-          }
+          title={t("networkRouting.emptyTitle")}
+          description={t("networkRouting.emptyDescription")}
           icon={<PeerIcon size={18} className={"fill-nb-gray-400"} />}
         />
       }
@@ -128,7 +133,7 @@ export default function NetworkRoutingPeersTable({
           disabled={!permission.networks.update}
         >
           <IconCirclePlus size={16} />
-          Add Routing Peer
+          {t("networkRouting.add")}
         </Button>
       )}
     >

@@ -9,12 +9,14 @@ import React, { useMemo } from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
 import { useCountries } from "@/contexts/CountryProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   event: ActivityEvent;
 };
 
 export default function ActivityDescription({ event }: Props) {
+  const { t } = useI18n();
   const m = event.meta;
   const meta = useMemo(() => {
     if (event.meta) {
@@ -42,24 +44,21 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "setupkey.revoke")
     return (
       <div className={"inline"}>
-        Setup-Key <Value> {m.name}</Value> with key <Value>{m.key}</Value> was
-        revoked
+        Setup-Key <Value> {m.name}</Value> with key <Value>{m.key}</Value> {t("activity.setupkeyRevoke")}
       </div>
     );
 
   if (event.activity_code == "setupkey.delete")
     return (
       <div className={"inline"}>
-        Setup-Key <Value> {m.name}</Value> with key <Value>{m.key}</Value> was
-        deleted
+        Setup-Key <Value> {m.name}</Value> with key <Value>{m.key}</Value> {t("activity.setupkeyDelete")}
       </div>
     );
 
   if (event.activity_code == "setupkey.add")
     return (
       <div className={"inline"}>
-        Setup-Key <Value>{m.name}</Value> with key <Value>{m.key}</Value> was
-        created
+        Setup-Key <Value>{m.name}</Value> with key <Value>{m.key}</Value> {t("activity.setupkeyAdd")}
       </div>
     );
 
@@ -75,7 +74,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "setupkey.group.delete")
     return (
       <div className={"inline"}>
-        Group <Value>{m.group}</Value> was removed from the{" "}
+        Group <Value>{m.group}</Value> {t("activity.setupkeyGroupDelete")}{" "}
         <Value>{m.setupkey}</Value> setup key
       </div>
     );
@@ -83,7 +82,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "setupkey.group.add")
     return (
       <div className={"inline"}>
-        Group <Value>{m.group}</Value> was added to the{" "}
+        Group <Value>{m.group}</Value> {t("activity.setupkeyGroupAdd")}{" "}
         <Value>{m.setupkey}</Value> setup key
       </div>
     );
@@ -94,7 +93,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "dashboard.login")
     return (
       <div className={"inline"}>
-        <Value>{m.username}</Value> logged in to the dashboard
+        <Value>{m.username}</Value> {t("activity.dashboardLogin")}
       </div>
     );
 
@@ -105,21 +104,21 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "policy.update")
     return (
       <div className={"inline"}>
-        Policy <Value>{m.name}</Value> has been updated
+        Policy <Value>{m.name}</Value> {t("activity.policyUpdate")}
       </div>
     );
 
   if (event.activity_code == "policy.delete")
     return (
       <div className={"inline"}>
-        Policy <Value>{m.name}</Value> was deleted
+        Policy <Value>{m.name}</Value> {t("activity.policyDelete")}
       </div>
     );
 
   if (event.activity_code == "policy.add")
     return (
       <div className={"inline"}>
-        Policy <Value>{m.name}</Value> was created
+        Policy <Value>{m.name}</Value> {t("activity.policyAdd")}
       </div>
     );
 
@@ -133,7 +132,7 @@ export default function ActivityDescription({ event }: Props) {
       <div className={"inline"}>
         Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
         <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
-        {hasDomains ? "" : "range"} was deleted
+        {hasDomains ? "" : "range"} {t("activity.routeDelete")}
       </div>
     );
   }
@@ -144,7 +143,7 @@ export default function ActivityDescription({ event }: Props) {
       <div className={"inline"}>
         Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
         <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
-        {hasDomains ? "" : "range"} was updated
+        {hasDomains ? "" : "range"} {t("activity.routeUpdate")}
       </div>
     );
   }
@@ -155,7 +154,7 @@ export default function ActivityDescription({ event }: Props) {
       <div className={"inline"}>
         Route <Value>{m.name}</Value> with the {hasDomains ? "domain(s)" : ""}{" "}
         <Value>{hasDomains ? m?.domains : m.network_range}</Value>{" "}
-        {hasDomains ? "" : "range"} was created
+        {hasDomains ? "" : "range"} {t("activity.routeAdd")}
       </div>
     );
   }
@@ -168,15 +167,15 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> with
-        NetBird IP <Value>{m.ip}</Value> was deleted
+        NetBird IP <Value>{m.ip}</Value> {t("activity.userPeerDelete")}
       </div>
     );
 
   if (event.activity_code == "user.peer.add")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
-        with the NetBird IP <Value>{m.ip}</Value>
+        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> {t("activity.userPeerAdd")}{" "}
+        <Value>{m.ip}</Value>
       </div>
     );
 
@@ -184,37 +183,36 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> with
-        NetBird IP <Value>{m.ip}</Value> was updated
+        NetBird IP <Value>{m.ip}</Value> {t("activity.userPeerUpdate")}
       </div>
     );
 
   if (event.activity_code == "user.join")
     return (
       <div className={"inline"}>
-        User <Value>{m.username}</Value> joined NetBird
+        User <Value>{m.username}</Value> {t("activity.userJoin")}
       </div>
     );
 
   if (event.activity_code == "user.invite")
     return (
       <div className={"inline"}>
-        <Value>{event.meta.username}</Value> <Value>{event.meta.email}</Value>{" "}
-        was invited.
+        <Value>{event.meta.username}</Value> <Value>{event.meta.email}</Value> {t("activity.userInvite")}
       </div>
     );
 
   if (event.activity_code == "user.create")
     return (
       <div className={"inline"}>
-        <Value>{event.meta.username}</Value> <Value>{event.meta.email}</Value>{" "}
-        was created by <Value>{event?.initiator_name || "NetBird"}</Value>
+        <Value>{event.meta.username}</Value> <Value>{event.meta.email}</Value> {t("activity.userCreate")}{" "}
+        <Value>{event?.initiator_name || "NetBird"}</Value>
       </div>
     );
 
   if (event.activity_code == "user.group.add")
     return (
       <div className={"inline"}>
-        Group <Value>{event.meta.group}</Value> was added to user{" "}
+        Group <Value>{event.meta.group}</Value> {t("activity.userGroupAdd")}{" "}
         <Value>{event.meta.username}</Value>
       </div>
     );
@@ -223,8 +221,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value>
-        was blocked
+        <Value>{event.meta.email}</Value> {t("activity.userBlock")}
       </div>
     );
 
@@ -232,8 +229,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value>
-        was unblocked
+        <Value>{event.meta.email}</Value> {t("activity.userUnblock")}
       </div>
     );
 
@@ -241,14 +237,14 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value> was deleted
+        <Value>{event.meta.email}</Value> {t("activity.userDelete")}
       </div>
     );
 
   if (event.activity_code == "user.group.delete")
     return (
       <div className={"inline"}>
-        Group <Value>{event.meta.group}</Value> was removed from user{" "}
+        Group <Value>{event.meta.group}</Value> {t("activity.userGroupDelete")}{" "}
         <Value>{event.meta.username}</Value> <Value>{event.meta.email}</Value>
       </div>
     );
@@ -256,7 +252,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "user.role.update")
     return (
       <div className={"inline"}>
-        Role <Value>{event.meta.role}</Value> was updated of user{" "}
+        Role <Value>{event.meta.role}</Value> {t("activity.userRoleUpdate")}{" "}
         <Value>{event.meta.username}</Value> <Value>{event.meta.email}</Value>
       </div>
     );
@@ -265,7 +261,7 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value> was approved
+        <Value>{event.meta.email}</Value> {t("activity.userApprove")}
       </div>
     );
 
@@ -273,14 +269,14 @@ export default function ActivityDescription({ event }: Props) {
     return (
       <div className={"inline"}>
         User <Value>{event.meta.username}</Value>{" "}
-        <Value>{event.meta.email}</Value> was rejected
+        <Value>{event.meta.email}</Value> {t("activity.userReject")}
       </div>
     );
 
   if (event.activity_code == "user.password.change")
     return (
       <div className={"inline"}>
-        Password was changed for user <Value>{event.meta.username}</Value>{" "}
+        {t("activity.userPasswordChange")} <Value>{event.meta.username}</Value>{" "}
         <Value>{event.meta.email}</Value>
       </div>
     );
@@ -292,7 +288,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "user.invite.link.create")
     return (
       <div className={"inline"}>
-        Invite link was created for <Value>{event.meta.username}</Value>{" "}
+        {t("activity.userInviteLinkCreate")} <Value>{event.meta.username}</Value>{" "}
         <Value>{event.meta.email}</Value>
       </div>
     );
@@ -300,7 +296,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "user.invite.link.accept")
     return (
       <div className={"inline"}>
-        Invite link was accepted by <Value>{event.meta.username}</Value>{" "}
+        {t("activity.userInviteLinkAccept")} <Value>{event.meta.username}</Value>{" "}
         <Value>{event.meta.email}</Value>
       </div>
     );
@@ -308,7 +304,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "user.invite.link.regenerate")
     return (
       <div className={"inline"}>
-        Invite link was regenerated for <Value>{event.meta.username}</Value>{" "}
+        {t("activity.userInviteLinkRegenerate")} <Value>{event.meta.username}</Value>{" "}
         <Value>{event.meta.email}</Value>
       </div>
     );
@@ -316,7 +312,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "user.invite.link.delete")
     return (
       <div className={"inline"}>
-        Invite link was deleted for <Value>{event.meta.username}</Value>{" "}
+        {t("activity.userInviteLinkDelete")} <Value>{event.meta.username}</Value>{" "}
         <Value>{event.meta.email}</Value>
       </div>
     );
@@ -335,7 +331,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "service.user.delete")
     return (
       <div className={"inline"}>
-        Service user <Value>{event.meta.name}</Value> was deleted
+        Service user <Value>{event.meta.name}</Value> {t("activity.serviceUserDelete")}
       </div>
     );
 
@@ -346,82 +342,77 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "peer.group.delete")
     return (
       <div className={"inline"}>
-        Group <Value>{m.group}</Value> was removed from the peer with the
-        NetBird IP <Value>{m.peer_ip}</Value>
+        Group <Value>{m.group}</Value> {t("activity.peerGroupDelete")} <Value>{m.peer_ip}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.group.add")
     return (
       <div className={"inline"}>
-        Group <Value>{m.group}</Value> was added to the peer with the NetBird IP{" "}
-        <Value>{m.peer_ip}</Value>
+        Group <Value>{m.group}</Value> {t("activity.peerGroupAdd")} <Value>{m.peer_ip}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.login.expire")
     return (
       <div className={"inline"}>
-        Login of the peer <Value>{m.name}</Value> is expired
+        {t("activity.peerLoginExpire")} <Value>{m.name}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.ssh.disable")
     return (
       <div className={"inline"}>
-        SSH Server of peer <Value>{m.name}</Value> was disabled
+        SSH Server {t("activity.peerSshDisable")} <Value>{m.name}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.ssh.enable")
     return (
       <div className={"inline"}>
-        SSH Server of peer <Value>{m.name}</Value> was enabled
+        SSH Server {t("activity.peerSshEnable")} <Value>{m.name}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.login.expiration.disable")
     return (
       <div className={"inline"}>
-        Login expiration of peer <Value>{m.name}</Value> was disabled
+        {t("activity.peerLoginExpirationDisable")} <Value>{m.name}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.login.expiration.enable")
     return (
       <div className={"inline"}>
-        Login expiration of peer <Value>{m.name}</Value> was enabled
+        {t("activity.peerLoginExpirationEnable")} <Value>{m.name}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.rename")
     return (
       <div className={"inline"}>
-        Peer with the NetBird IP <Value>{m.ip}</Value> was renamed to{" "}
-        <Value>{m.name}</Value>
+        Peer with the NetBird IP <Value>{m.ip}</Value> {t("activity.peerRename")} <Value>{m.name}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.approve")
     return (
       <div className={"inline"}>
-        Peer with the NetBird IP <Value>{m.ip}</Value> was approved
+        Peer with the NetBird IP <Value>{m.ip}</Value> {t("activity.peerApprove")}
       </div>
     );
 
   if (event.activity_code == "peer.ip.update")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> IP address was updated from{" "}
-        <Value>{m.old_ip}</Value> to <Value>{m.ip}</Value>
+        Peer <Value>{m.name}</Value> IP {t("activity.peerIpUpdate")} <Value>{m.old_ip}</Value> {t("activity.to")} <Value>{m.ip}</Value>
       </div>
     );
 
   if (event.activity_code == "peer.user.add")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> was added
-        with the NetBird IP <Value>{m.ip}</Value>
+        Peer <Value>{m.name}</Value> <PeerConnectionInfo meta={m} /> {t("activity.peerUserAdd")} <Value>{m.ip}</Value>
       </div>
     );
 
@@ -432,22 +423,21 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "group.add")
     return (
       <div className={"inline"}>
-        Group <Value>{m.name}</Value> was created
+        Group <Value>{event.meta.group_name}</Value> {t("activity.groupAdd")}
       </div>
     );
 
   if (event.activity_code == "group.delete")
     return (
       <div className={"inline"}>
-        Group <Value>{event.meta.name}</Value> was deleted
+        Group <Value>{event.meta.group_name}</Value> {t("activity.groupDelete")}
       </div>
     );
 
   if (event.activity_code == "group.update")
     return (
       <div className={"inline"}>
-        Group <Value>{event.meta.old_name}</Value> was renamed to{" "}
-        <Value>{event.meta.new_name}</Value>
+        Group <Value>{event.meta.old_name}</Value> {t("activity.groupUpdate")} <Value>{event.meta.new_name}</Value>
       </div>
     );
 
@@ -458,25 +448,35 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "account.create")
     return (
       <div className={"inline"}>
-        <Value>{event.initiator_name}</Value> created an account
+        <Value>{event.initiator_name}</Value> {t("activity.accountCreate")}
       </div>
     );
 
   if (event.activity_code == "account.setting.peer.login.expiration.update")
-    return <div className={"inline"}>Global login expiration was updated</div>;
+    return (
+      <div className={"inline"}>
+        {t("activity.globalLoginExpirationUpdated")}
+      </div>
+    );
 
   if (event.activity_code == "account.setting.peer.login.expiration.enable")
-    return <div className={"inline"}>Global login expiration was enabled</div>;
+    return (
+      <div className={"inline"}>
+        {t("activity.globalLoginExpirationEnabled")}
+      </div>
+    );
 
   if (event.activity_code == "account.setting.peer.login.expiration.disable")
-    return <div className={"inline"}>Global login expiration was disabled</div>;
+    return (
+      <div className={"inline"}>
+        {t("activity.globalLoginExpirationDisabled")}
+      </div>
+    );
 
   if (event.activity_code == "account.network.range.update")
     return (
       <div className={"inline"}>
-        Account network range was updated from{" "}
-        <Value>{m.old_network_range}</Value> to{" "}
-        <Value>{m.new_network_range}</Value>
+        {t("activity.accountNetworkRangeUpdate")} <Value>{m.old_network_range}</Value> {t("activity.to")} <Value>{m.new_network_range}</Value>
       </div>
     );
 
@@ -487,21 +487,21 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "nameserver.group.add")
     return (
       <div className={"inline"}>
-        Nameserver <Value>{event.meta.name}</Value> was added
+        Nameserver <Value>{event.meta.name}</Value> {t("activity.nameserverGroupAdd")}
       </div>
     );
 
   if (event.activity_code == "nameserver.group.delete")
     return (
       <div className={"inline"}>
-        Nameserver <Value>{event.meta.name}</Value> was deleted
+        Nameserver with IP <Value>{event.meta.ip}</Value> {t("activity.nameserverDelete")}
       </div>
     );
 
   if (event.activity_code == "nameserver.group.update")
     return (
       <div className={"inline"}>
-        Nameserver <Value>{event.meta.name}</Value> was updated
+        Nameserver with IP <Value>{event.meta.ip}</Value> {t("activity.nameserverUpdate")}
       </div>
     );
 
@@ -512,16 +512,14 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "personal.access.token.create")
     return (
       <div className={"inline"}>
-        Access token <Value>{event.meta.name}</Value> for user{" "}
-        <Value>{event.meta.username}</Value> was created
+        Access token <Value>{event.meta.name}</Value> {t("activity.personalAccessTokenCreate")} <Value>{event.meta.username}</Value>
       </div>
     );
 
   if (event.activity_code == "personal.access.token.delete")
     return (
       <div className={"inline"}>
-        Access token <Value>{event.meta.name}</Value> for user{" "}
-        <Value>{event.meta.username}</Value> was deleted
+        Access token <Value>{event.meta.name}</Value> {t("activity.personalAccessTokenDelete")} <Value>{event.meta.username}</Value>
       </div>
     );
 
@@ -530,31 +528,28 @@ export default function ActivityDescription({ event }: Props) {
    */
 
   if (event.activity_code == "integration.create") {
-    if (!event.meta.platform) return "Integration created";
+    if (!event.meta.platform) return t("activity.integrationCreate");
     return (
       <div className={"inline"}>
-        <Value className={"capitalize"}>{event.meta.platform}</Value>{" "}
-        integration created
+        <Value className={"capitalize"}>{event.meta.platform}</Value> {t("activity.integrationCreate")}
       </div>
     );
   }
 
   if (event.activity_code == "integration.delete") {
-    if (!event.meta.platform) return "Integration deleted";
+    if (!event.meta.platform) return t("activity.integrationDelete");
     return (
       <div className={"inline"}>
-        <Value className={"capitalize"}>{event.meta.platform}</Value>{" "}
-        integration deleted
+        <Value className={"capitalize"}>{event.meta.platform}</Value> {t("activity.integrationDelete")}
       </div>
     );
   }
 
   if (event.activity_code == "integration.update") {
-    if (!event.meta.platform) return "Integration updated";
+    if (!event.meta.platform) return t("activity.integrationUpdate");
     return (
       <div className={"inline"}>
-        <Value className={"capitalize"}>{event.meta.platform}</Value>{" "}
-        integration updated
+        <Value className={"capitalize"}>{event.meta.platform}</Value> {t("activity.integrationUpdate")}
       </div>
     );
   }
@@ -566,16 +561,14 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "dns.setting.disabled.management.group.add")
     return (
       <div className={"inline"}>
-        Group <Value>{event.meta.group}</Value> was added to disabled DNS group
-        setting
+        Group <Value>{event.meta.group}</Value> {t("activity.dnsSettingDisabledManagementGroupAdd")}
       </div>
     );
 
   if (event.activity_code == "dns.setting.disabled.management.group.delete")
     return (
       <div className={"inline"}>
-        Group <Value>{event.meta.group}</Value> was removed from disabled DNS
-        group setting
+        Group <Value>{event.meta.group}</Value> {t("activity.dnsSettingDisabledManagementGroupDelete")}
       </div>
     );
 
@@ -586,26 +579,26 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "posture.check.updated")
     return (
       <div className={"inline"}>
-        Posture check <Value> {m.name}</Value> was updated
+        Posture check <Value> {m.name}</Value> {t("activity.postureCheckUpdated")}
       </div>
     );
 
   if (event.activity_code == "posture.check.created")
     return (
       <div className={"inline"}>
-        Posture check <Value> {m.name}</Value> was created
+        Posture check <Value> {m.name}</Value> {t("activity.postureCheckCreated")}
       </div>
     );
 
   if (event.activity_code == "posture.check.deleted")
     return (
       <div className={"inline"}>
-        Posture check <Value> {m.name}</Value> was deleted
+        Posture check <Value> {m.name}</Value> {t("activity.postureCheckDeleted")}
       </div>
     );
 
   if (event.activity_code == "transferred.owner.role")
-    return <div className={"inline"}>Owner role was transferred</div>;
+    return <div className={"inline"}>{t("activity.ownerRoleTransferred")}</div>;
 
   /**
    * EDR
@@ -613,35 +606,35 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "integrated-validator.api.created")
     return (
       <div className={"inline"}>
-        <Value>{m?.platform}</Value> integration created
+        <Value>{m?.platform}</Value> {t("activity.integratedValidatorApiCreated")}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.api.updated")
     return (
       <div className={"inline"}>
-        <Value>{m?.platform}</Value> integration updated
+        <Value>{m?.platform}</Value> {t("activity.integratedValidatorApiUpdated")}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.api.deleted")
     return (
       <div className={"inline"}>
-        <Value>{m?.platform}</Value> integration deleted
+        <Value>{m?.platform}</Value> {t("activity.integratedValidatorApiDeleted")}
       </div>
     );
 
   if (event.activity_code == "integrated-validator.host-check.approved")
     return (
       <div className={"inline"}>
-        Peer approved by <Value>{m?.platform}</Value> integration
+        Peer {t("activity.integratedValidatorHostCheckApproved")} <Value>{m?.platform}</Value> integration
       </div>
     );
 
   if (event.activity_code == "integrated-validator.host-check.denied")
     return (
       <div className={"inline"}>
-        Peer rejected by <Value>{m?.platform}</Value> integration
+        Peer {t("activity.integratedValidatorHostCheckDenied")} <Value>{m?.platform}</Value> integration
       </div>
     );
 
@@ -651,16 +644,14 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "resource.group.add")
     return (
       <div className={"inline"}>
-        Group <Value>{m.resource_name}</Value> added to resource{"  "}
-        <Value>{m.name}</Value>
+        Group <Value>{m.resource_name}</Value> {t("activity.resourceGroupAdd")} <Value>{m.name}</Value>
       </div>
     );
 
   if (event.activity_code == "resource.group.delete")
     return (
       <div className={"inline"}>
-        Group <Value>{m.resource_name}</Value> removed from resource{"  "}
-        <Value>{m.name}</Value>
+        Group <Value>{m.resource_name}</Value> {t("activity.resourceGroupDelete")} <Value>{m.name}</Value>
       </div>
     );
 
@@ -671,25 +662,21 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "service.peer.expose")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.peer_name}</Value> exposed service{" "}
-        <Value>{m.domain}</Value> with auth{" "}
-        <Value>{m.auth ? "Enabled" : "Disabled"}</Value>
+        Peer <Value>{m.peer_name}</Value> {t("activity.servicePeerExpose")} <Value>{m.domain}</Value> {t("activity.withAuth")} <Value>{m.auth ? t("activity.enabled") : t("activity.disabled")}</Value>
       </div>
     );
 
   if (event.activity_code == "service.peer.unexpose")
     return (
       <div className={"inline"}>
-        Peer <Value>{m.peer_name}</Value> unexposed service{" "}
-        <Value>{m.domain}</Value>
+        Peer <Value>{m.peer_name}</Value> {t("activity.servicePeerUnexpose")} <Value>{m.domain}</Value>
       </div>
     );
 
   if (event.activity_code == "service.peer.expose.expire")
     return (
       <div className={"inline"}>
-        Service <Value>{m.domain}</Value> exposed by peer{" "}
-        <Value>{m.peer_name}</Value> was removed due to renewal expiration
+        Service <Value>{m.domain}</Value> {t("activity.servicePeerExposeExpire")} <Value>{m.peer_name}</Value>
       </div>
     );
 
@@ -700,69 +687,63 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "network.resource.create")
     return (
       <div className={"inline"}>
-        Resource <Value>{m.name}</Value> created for network{"  "}
-        <Value>{m.network_name}</Value>
+        Resource <Value>{m.name}</Value> {t("activity.networkResourceCreate")} <Value>{m.network_name}</Value>
       </div>
     );
 
   if (event.activity_code == "network.resource.update")
     return (
       <div className={"inline"}>
-        Resource <Value>{m.name}</Value> updated for network{"  "}
-        <Value>{m.network_name}</Value>
+        Resource <Value>{m.name}</Value> {t("activity.networkResourceUpdate")} <Value>{m.network_name}</Value>
       </div>
     );
 
   if (event.activity_code == "network.resource.delete")
     return (
       <div className={"inline"}>
-        Resource <Value>{m.name}</Value> deleted from network{"  "}
-        <Value>{m.network_name}</Value>
+        Resource <Value>{m.name}</Value> {t("activity.networkResourceDelete")} <Value>{m.network_name}</Value>
       </div>
     );
 
   if (event.activity_code == "network.router.create")
     return (
       <div className={"inline"}>
-        Routing peer created for network{"  "}
-        <Value>{m.network_name}</Value>
+        {t("activity.networkRouterCreate")} <Value>{m.network_name}</Value>
       </div>
     );
 
   if (event.activity_code == "network.router.delete")
     return (
       <div className={"inline"}>
-        Routing peer deleted from network{"  "}
-        <Value>{m.network_name}</Value>
+        {t("activity.networkRouterDelete")} <Value>{m.network_name}</Value>
       </div>
     );
 
   if (event.activity_code == "network.router.update")
     return (
       <div className={"inline"}>
-        Routing peer updated from network{"  "}
-        <Value>{m.network_name}</Value>
+        {t("activity.networkRouterUpdate")} <Value>{m.network_name}</Value>
       </div>
     );
 
   if (event.activity_code == "network.create")
     return (
       <div className={"inline"}>
-        Network with name <Value>{m.name}</Value> created
+        Network with name <Value>{m.name}</Value> {t("activity.networkCreate")}
       </div>
     );
 
   if (event.activity_code == "network.delete")
     return (
       <div className={"inline"}>
-        Network with name <Value>{m.name}</Value> deleted
+        Network with name <Value>{m.name}</Value> {t("activity.networkDelete")}
       </div>
     );
 
   if (event.activity_code == "network.update")
     return (
       <div className={"inline"}>
-        Network with name <Value>{m.name}</Value> updated
+        Network with name <Value>{m.name}</Value> {t("activity.networkUpdate")}
       </div>
     );
 
@@ -773,8 +754,7 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "peer.job.create")
     return (
       <div className={"inline"}>
-        Remote job <Value>{m.job_type}</Value> created for peer{" "}
-        <Value>{m.for_peer_name}</Value>
+        Remote job <Value>{m.job_type}</Value> {t("activity.peerJobCreate")} <Value>{m.for_peer_name}</Value>
       </div>
     );
 
@@ -785,14 +765,14 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "account.settings.extra.flow.group.remove")
     return (
       <div className={"inline"}>
-        Limit traffic event group <Value>{m.group_name}</Value> removed
+        Limit traffic event group <Value>{m.group_name}</Value> {t("activity.accountSettingsFlowGroupRemove")}
       </div>
     );
 
   if (event.activity_code == "account.settings.extra.flow.group.add")
     return (
       <div className={"inline"}>
-        Limit traffic event group <Value>{m.group_name}</Value> added
+        Limit traffic event group <Value>{m.group_name}</Value> {t("activity.accountSettingsFlowGroupAdd")}
       </div>
     );
 
@@ -803,51 +783,21 @@ export default function ActivityDescription({ event }: Props) {
   if (event.activity_code == "identityprovider.create")
     return (
       <div className={"inline"}>
-        Identity provider <Value>{m.name}</Value> was created
+        Identity provider <Value>{m.name}</Value> {t("activity.identityProviderCreate")}
       </div>
     );
 
   if (event.activity_code == "identityprovider.update")
     return (
       <div className={"inline"}>
-        Identity provider <Value>{m.name}</Value> was updated
+        Identity provider <Value>{m.name}</Value> {t("activity.identityProviderUpdate")}
       </div>
     );
 
   if (event.activity_code == "identityprovider.delete")
     return (
       <div className={"inline"}>
-        Identity provider <Value>{m.name}</Value> was deleted
-      </div>
-    );
-
-  /**
-   * Reverse Proxy
-   */
-
-  if (event.activity_code == "service.create")
-    return (
-      <div className={"inline"}>
-        Service <Value>{m.domain}</Value> in cluster{" "}
-        <Value>{m.proxy_cluster}</Value> was created with authentication{" "}
-        <Value>{m.auth ? "Enabled" : "Disabled"}</Value>
-      </div>
-    );
-
-  if (event.activity_code == "service.update")
-    return (
-      <div className={"inline"}>
-        Service <Value>{m.domain}</Value> in cluster{" "}
-        <Value>{m.proxy_cluster}</Value> was updated with authentication{" "}
-        <Value>{m.auth === "true" ? "Enabled" : "Disabled"}</Value>
-      </div>
-    );
-
-  if (event.activity_code == "service.delete")
-    return (
-      <div className={"inline"}>
-        Service <Value>{m.domain}</Value> in cluster{" "}
-        <Value>{m.proxy_cluster}</Value> was deleted
+        Identity provider <Value>{m.name}</Value> {t("activity.identityProviderDelete")}
       </div>
     );
 
@@ -859,9 +809,9 @@ export default function ActivityDescription({ event }: Props) {
         <FullTooltip
           content={
             <div className={"pb-1"}>
-              <Label className={"mb-3"}>Activity Code</Label>
+              <Label className={"mb-3"}>{t("activity.activityCode")}</Label>
               <Value>{event.activity_code}</Value>
-              <Label className={"my-3"}>Meta</Label>
+              <Label className={"my-3"}>{t("activity.meta")}</Label>
               {meta &&
                 meta.map((item) => (
                   <React.Fragment key={item?.key}>
@@ -902,20 +852,21 @@ function Value({
 }
 
 function PeerConnectionInfo({ meta }: { meta: any }) {
+  const { t } = useI18n();
   const hasMeta =
     !isEmpty(meta?.location_country_code) ||
     !isEmpty(meta?.location_connection_ip);
   const { countries } = useCountries();
 
   const countryText = useMemo(() => {
-    if (!countries) return "Unknown";
+    if (!countries) return t("common.unknown");
     const country = countries.find(
       (c) => c.country_code === meta?.location_country_code,
     );
-    if (!country) return "Unknown";
+    if (!country) return t("common.unknown");
     if (!meta?.location_city_name) return country.country_name;
     return `${country.country_name}, ${meta?.location_city_name}`;
-  }, [countries, meta]);
+  }, [countries, meta, t]);
 
   return hasMeta ? (
     <>

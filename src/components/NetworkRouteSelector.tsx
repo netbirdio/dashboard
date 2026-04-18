@@ -12,6 +12,7 @@ import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { useElementSize } from "@/hooks/useElementSize";
+import { useI18n } from "@/i18n/I18nProvider";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import useGroupedRoutes from "@/modules/route-group/useGroupedRoutes";
 
@@ -26,6 +27,7 @@ export function NetworkRouteSelector({
   value,
   disabled = false,
 }: MultiSelectProps) {
+  const { t } = useI18n();
   const { data: routes } = useFetchApi<Route[]>("/routes");
   const groupedRoutes = useGroupedRoutes({ routes });
 
@@ -127,7 +129,7 @@ export function NetworkRouteSelector({
                 <DomainList domains={value?.domains} />
               </div>
             ) : (
-              <span>Select an existing network...</span>
+              <span>{t("networkRouteSelector.selectNetwork")}</span>
             )}
           </div>
 
@@ -165,7 +167,7 @@ export function NetworkRouteSelector({
                 ref={searchRef}
                 value={search}
                 onValueChange={setSearch}
-                placeholder={"Search for network by name or cidr..."}
+                placeholder={t("networkRouteSelector.searchPlaceholder")}
               />
               <div
                 className={
@@ -198,12 +200,12 @@ export function NetworkRouteSelector({
                     "text-center pb-2 text-nb-gray-500 max-w-xs mx-auto"
                   }
                 >
-                  {"Seems like you don't have any network routes created yet."}
+                  {t("networkRouteSelector.noRoutes")}
                 </div>
               )}
               {notFound && (
                 <div className={"text-center pb-2 text-nb-gray-500"}>
-                  There are no networks matching your search.
+                  {t("networkRouteSelector.noMatchingNetworks")}
                 </div>
               )}
               <CommandGroup>

@@ -19,6 +19,7 @@ import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import GroupRouteProvider from "@/contexts/GroupRouteProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import { AddExitNodeButton } from "@/modules/exit-node/AddExitNodeButton";
@@ -31,87 +32,93 @@ import { RouteAddRoutingPeerProvider } from "@/modules/routes/RouteAddRoutingPee
 import RouteModal from "@/modules/routes/RouteModal";
 import RouteTable from "@/modules/routes/RouteTable";
 
-export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
-  {
-    accessorKey: "network_id",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <GroupedRouteNameCell groupedRoute={row.original} />,
-  },
-  {
-    accessorKey: "description",
-    sortingFn: "text",
-  },
-  {
-    accessorKey: "description_search",
-    sortingFn: "text",
-  },
-  {
-    accessorKey: "domain_search",
-    sortingFn: "text",
-  },
-  {
-    id: "enabled",
-    accessorKey: "enabled",
-    sortingFn: "basic",
-  },
-  {
-    id: "group_names",
-    accessorFn: (row) => {
-      return row.group_names?.map((name) => name).join(", ");
-    },
-  },
-  {
-    accessorKey: "routes_search",
-  },
-  {
-    id: "domains",
-    accessorFn: (row) => {
-      return row.domains?.map((name) => name).join(", ");
-    },
-  },
-  {
-    accessorKey: "network",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Network</DataTableHeader>;
-    },
-    cell: ({ row }) => (
-      <GroupedRouteNetworkRangeCell
-        network={row.original.network}
-        domains={row.original?.domains}
-      />
-    ),
-  },
-  {
-    id: "type",
-    accessorFn: (row) => row.is_using_route_groups,
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Type</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <GroupedRouteTypeCell groupedRoute={row.original} />,
-  },
+function useGroupedRouteTableColumns(): ColumnDef<GroupedRoute>[] {
+  const { t } = useI18n();
 
-  {
-    accessorKey: "high_availability_count",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader column={column}>High Availability</DataTableHeader>
-      );
+  return [
+    {
+      accessorKey: "network_id",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <GroupedRouteNameCell groupedRoute={row.original} />,
     },
-    cell: ({ row }) => (
-      <GroupedRouteHighAvailabilityCell groupedRoute={row.original} />
-    ),
-  },
+    {
+      accessorKey: "description",
+      sortingFn: "text",
+    },
+    {
+      accessorKey: "description_search",
+      sortingFn: "text",
+    },
+    {
+      accessorKey: "domain_search",
+      sortingFn: "text",
+    },
+    {
+      id: "enabled",
+      accessorKey: "enabled",
+      sortingFn: "basic",
+    },
+    {
+      id: "group_names",
+      accessorFn: (row) => {
+        return row.group_names?.map((name) => name).join(", ");
+      },
+    },
+    {
+      accessorKey: "routes_search",
+    },
+    {
+      id: "domains",
+      accessorFn: (row) => {
+        return row.domains?.map((name) => name).join(", ");
+      },
+    },
+    {
+      accessorKey: "network",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("networkDetails.network")}</DataTableHeader>;
+      },
+      cell: ({ row }) => (
+        <GroupedRouteNetworkRangeCell
+          network={row.original.network}
+          domains={row.original?.domains}
+        />
+      ),
+    },
+    {
+      id: "type",
+      accessorFn: (row) => row.is_using_route_groups,
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("networkDetails.type")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <GroupedRouteTypeCell groupedRoute={row.original} />,
+    },
 
-  {
-    accessorKey: "id",
-    header: "",
-    cell: ({ row }) => <GroupedRouteActionCell groupedRoute={row.original} />,
-  },
-];
+    {
+      accessorKey: "high_availability_count",
+      header: ({ column }) => {
+        return (
+          <DataTableHeader column={column}>
+            {t("networkDetails.highAvailability")}
+          </DataTableHeader>
+        );
+      },
+      cell: ({ row }) => (
+        <GroupedRouteHighAvailabilityCell groupedRoute={row.original} />
+      ),
+    },
+
+    {
+      accessorKey: "id",
+      header: "",
+      cell: ({ row }) => <GroupedRouteActionCell groupedRoute={row.original} />,
+    },
+  ];
+}
 
 type Props = {
   isLoading: boolean;
@@ -130,9 +137,11 @@ export default function NetworkRoutesTable({
   isGroupPage = false,
   distributionGroups,
 }: Props) {
+  const { t } = useI18n();
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const columns = useGroupedRouteTableColumns();
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -166,10 +175,10 @@ export default function NetworkRoutesTable({
       <DataTable
         headingTarget={headingTarget}
         isLoading={isLoading}
-        text={"Network Routes"}
+        text={t("networkRoutesPage.title")}
         sorting={sorting}
         setSorting={setSorting}
-        columns={GroupedRouteTableColumns}
+        columns={columns}
         data={groupedRoutes}
         wrapperComponent={isGroupPage ? Card : undefined}
         wrapperProps={isGroupPage ? { className: "mt-6 w-full" } : undefined}
@@ -178,7 +187,7 @@ export default function NetworkRoutesTable({
         inset={false}
         minimal={isGroupPage}
         keepStateInLocalStorage={!isGroupPage}
-        searchPlaceholder={"Search by network, range, name or groups..."}
+        searchPlaceholder={t("routeTable.searchPlaceholder")}
         columnVisibility={{
           enabled: false,
           description: false,
@@ -203,10 +212,8 @@ export default function NetworkRoutesTable({
                 <NetworkRoutesIcon className={"fill-nb-gray-200"} size={20} />
               }
               className={"py-4"}
-              title={"This group is not used within any network routes yet"}
-              description={
-                "Assign this group when creating a new route to see them listed here."
-              }
+              title={t("routeTable.emptyGroupTitle")}
+              description={t("routeTable.emptyGroupDescription")}
             >
               <div className={"gap-x-4 flex items-center justify-center mt-4"}>
                 <AddExitNodeButton distributionGroups={distributionGroups} />
@@ -217,7 +224,7 @@ export default function NetworkRoutesTable({
                   disabled={!permission.routes.create}
                 >
                   <PlusCircle size={16} />
-                  Add Route
+                  {t("routeActions.addRoute")}
                 </Button>
               </div>
             </NoResults>
@@ -235,9 +242,9 @@ export default function NetworkRoutesTable({
                   size={"large"}
                 />
               }
-              title={"Create New Route"}
+              title={t("routeTable.createTitle")}
               description={
-                "It looks like you don't have any routes. Access LANs and VPC by adding a network route."
+                t("routeTable.emptyTitleDescription")
               }
               button={
                 <div className={"gap-x-4 flex items-center justify-center"}>
@@ -249,20 +256,20 @@ export default function NetworkRoutesTable({
                     disabled={!permission.routes.create}
                   >
                     <PlusCircle size={16} />
-                    Add Route
+                    {t("routeActions.addRoute")}
                   </Button>
                 </div>
               }
               learnMore={
                 <>
-                  Learn more about
+                  {t("common.learnMorePrefix")}{" "}
                   <InlineLink
                     href={
                       "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                     }
                     target={"_blank"}
                   >
-                    Network Routes
+                    {t("networkRoutesPage.title")}
                     <ExternalLinkIcon size={12} />
                   </InlineLink>
                 </>
@@ -282,7 +289,7 @@ export default function NetworkRoutesTable({
                   disabled={!permission.routes.create}
                 >
                   <PlusCircle size={16} />
-                  Add Route
+                  {t("routeActions.addRoute")}
                 </Button>
               </div>
             )}
@@ -304,7 +311,7 @@ export default function NetworkRoutesTable({
                     : "secondary"
                 }
               >
-                Enabled
+                {t("filters.enabled")}
               </ButtonGroup.Button>
               <ButtonGroup.Button
                 onClick={() => {
@@ -318,7 +325,7 @@ export default function NetworkRoutesTable({
                     : "secondary"
                 }
               >
-                All
+                {t("filters.all")}
               </ButtonGroup.Button>
             </ButtonGroup>
             <DataTableRowsPerPage

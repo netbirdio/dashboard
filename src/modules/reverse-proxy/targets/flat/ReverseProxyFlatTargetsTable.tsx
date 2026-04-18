@@ -8,10 +8,11 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { PlusCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
 import ReverseProxyArrowCell from "@/modules/reverse-proxy/table/ReverseProxyArrowCell";
 import ReverseProxyAccessControlCell from "@/modules/reverse-proxy/table/ReverseProxyAccessControlCell";
@@ -23,146 +24,6 @@ import ReverseProxyFlatTargetActionCell from "@/modules/reverse-proxy/targets/fl
 import ReverseProxyTargetActiveCell from "@/modules/reverse-proxy/targets/ReverseProxyTargetActiveCell";
 import { ReverseProxyTargetProvider } from "@/modules/reverse-proxy/targets/ReverseProxyTargetContext";
 import { ReverseProxyTargetDevice } from "@/modules/reverse-proxy/targets/ReverseProxyTargetDevice";
-
-const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
-  {
-    id: "target_id",
-    accessorKey: "target_id",
-    filterFn: "exactMatch",
-  },
-  {
-    id: "domain",
-    accessorFn: (row) => row.proxy.domain,
-    header: ({ column }) => (
-      <DataTableHeader column={column}>URL</DataTableHeader>
-    ),
-    sortingFn: "text",
-    cell: ({ row }) => {
-      const target = row.original;
-      const path = target.path
-        ? target.path.startsWith("/")
-          ? target.path
-          : `/${target.path}`
-        : "";
-      const fullUrl = `${target.proxy.domain}${path}`;
-      const disabled = !target.enabled;
-      const isEnabled = target.proxy.enabled && target.enabled;
-
-      return (
-        <div className="flex items-center gap-2">
-          <div
-            className={disabled ? "opacity-40" : ""}
-            data-proxy-id={target.proxy.id}
-          >
-            <ReverseProxyNameCell
-              domain={fullUrl}
-              enabled={isEnabled}
-              reverseProxy={row.original.proxy}
-              showChevron={false}
-            />
-          </div>
-          <div data-status-cell />
-        </div>
-      );
-    },
-  },
-  {
-    accessorKey: "arrow",
-    header: "",
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyArrowCell disabled={row.original.enabled === false} />
-      </div>
-    ),
-  },
-  {
-    accessorKey: "host",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Destination</DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyDestinationCell target={row.original} />
-      </div>
-    ),
-  },
-  {
-    accessorKey: "enabled",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Active</DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyTargetProvider value={row.original.proxy}>
-          <ReverseProxyTargetActiveCell target={row.original} />
-        </ReverseProxyTargetProvider>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "proxy_cluster",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Cluster</DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyClusterCell reverseProxy={row.original.proxy} />
-      </div>
-    ),
-  },
-  {
-    accessorKey: "target_type",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Resource</DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyTargetDevice target={row.original} showDescription />
-      </div>
-    ),
-  },
-  {
-    accessorKey: "auth",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Auth Methods</DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyAuthCell reverseProxy={row.original.proxy} />
-      </div>
-    ),
-  },
-  {
-    id: "access_control",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Access Control</DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyAccessControlCell reverseProxy={row.original.proxy} />
-      </div>
-    ),
-  },
-  {
-    accessorKey: "actions",
-    header: "",
-    cell: ({ row }) => (
-      <ReverseProxyFlatTargetActionCell target={row.original} />
-    ),
-  },
-  {
-    id: "searchString",
-    accessorFn: (row) => {
-      return [
-        row.proxy.domain,
-        row.destination,
-        row.host,
-        row.port,
-        row.path,
-      ].join("");
-    },
-  },
-];
 
 type Props = {
   targets: ReverseProxyFlatTarget[];
@@ -179,6 +40,7 @@ export const ReverseProxyFlatTargetsTable = ({
   emptyTableTitle,
   emptyTableDescription,
 }: Props) => {
+  const { t } = useI18n();
   const [sorting, setSorting] = useState<SortingState>([
     { id: "domain", desc: false },
   ]);
@@ -195,6 +57,133 @@ export const ReverseProxyFlatTargetsTable = ({
     router.replace(`?${newParams.toString()}`, { scroll: false });
   }, [resourceId, params, router]);
 
+  const columns = useMemo<ColumnDef<ReverseProxyFlatTarget>[]>(
+    () => [
+      {
+        id: "target_id",
+        accessorKey: "target_id",
+        filterFn: "exactMatch",
+      },
+      {
+        id: "domain",
+        accessorFn: (row) => row.proxy.domain,
+        header: ({ column }) => (
+          <DataTableHeader column={column}>{t("table.url")}</DataTableHeader>
+        ),
+        sortingFn: "text",
+        cell: ({ row }) => {
+          const target = row.original;
+          const path = target.path
+            ? target.path.startsWith("/")
+              ? target.path
+              : `/${target.path}`
+            : "";
+          const fullUrl = `${target.proxy.domain}${path}`;
+          const disabled = !target.enabled;
+          const isEnabled = target.proxy.enabled && target.enabled;
+
+          return (
+            <div className={disabled ? "opacity-40" : ""}>
+              <ReverseProxyNameCell
+                domain={fullUrl}
+                enabled={isEnabled}
+                reverseProxy={row.original.proxy}
+                showChevron={false}
+              />
+            </div>
+          );
+        },
+      },
+      {
+        accessorKey: "arrow",
+        header: "",
+        cell: ({ row }) => (
+          <ReverseProxyArrowCell disabled={!row.original.enabled} />
+        ),
+      },
+      {
+        accessorKey: "host",
+        header: ({ column }) => (
+          <DataTableHeader column={column}>
+            {t("table.destination")}
+          </DataTableHeader>
+        ),
+        cell: ({ row }) => <ReverseProxyDestinationCell target={row.original} />,
+      },
+      {
+        accessorKey: "enabled",
+        header: ({ column }) => (
+          <DataTableHeader column={column}>{t("table.active")}</DataTableHeader>
+        ),
+        cell: ({ row }) => (
+          <ReverseProxyTargetProvider value={row.original.proxy}>
+            <ReverseProxyTargetActiveCell target={row.original} />
+          </ReverseProxyTargetProvider>
+        ),
+      },
+      {
+        accessorKey: "proxy_cluster",
+        header: ({ column }) => (
+          <DataTableHeader column={column}>{t("reverseProxy.cluster")}</DataTableHeader>
+        ),
+        cell: ({ row }) => (
+          <ReverseProxyClusterCell reverseProxy={row.original.proxy} />
+        ),
+      },
+      {
+        accessorKey: "target_type",
+        header: ({ column }) => (
+          <DataTableHeader column={column}>{t("table.resource")}</DataTableHeader>
+        ),
+        cell: ({ row }) => (
+          <ReverseProxyTargetDevice target={row.original} showDescription />
+        ),
+      },
+      {
+        accessorKey: "auth",
+        header: ({ column }) => (
+          <DataTableHeader column={column}>
+            {t("reverseProxy.authMethods")}
+          </DataTableHeader>
+        ),
+        cell: ({ row }) => (
+          <ReverseProxyAuthCell reverseProxy={row.original.proxy} />
+        ),
+      },
+      {
+        id: "access_control",
+        header: ({ column }) => (
+          <DataTableHeader column={column}>
+            {t("reverseProxy.accessControl")}
+          </DataTableHeader>
+        ),
+        cell: ({ row }) => (
+          <ReverseProxyAccessControlCell reverseProxy={row.original.proxy} />
+        ),
+      },
+      {
+        accessorKey: "actions",
+        header: "",
+        cell: ({ row }) => (
+          <ReverseProxyFlatTargetActionCell target={row.original} />
+        ),
+      },
+      {
+        id: "searchString",
+        accessorFn: (row) => {
+          return [
+            row.proxy.domain,
+            row.destination,
+            row.host,
+            row.port,
+            row.path,
+          ].join("");
+        },
+      },
+    ],
+    [t],
+  );
+
   return (
     <DataTable
       wrapperComponent={Card}
@@ -204,13 +193,13 @@ export const ReverseProxyFlatTargetsTable = ({
       minimal={true}
       showSearchAndFilters={true}
       tableClassName="mt-0"
-      text="Service"
+      text={t("reverseProxy.modalDefaultLabel")}
       sorting={sorting}
       setSorting={setSorting}
-      columns={FlatTargetsTableColumns}
+      columns={columns}
       data={targets}
       keepStateInLocalStorage={false}
-      searchPlaceholder="Search by URL, destination, or target..."
+      searchPlaceholder={t("reverseProxy.searchTargetsPlaceholder")}
       initialFilters={
         resourceId ? [{ id: "target_id", value: resourceId }] : undefined
       }
@@ -238,7 +227,7 @@ export const ReverseProxyFlatTargetsTable = ({
           disabled={!permission?.services?.create}
         >
           <PlusCircle size={16} />
-          Add Service
+          {t("reverseProxy.addService")}
         </Button>
       )}
     >

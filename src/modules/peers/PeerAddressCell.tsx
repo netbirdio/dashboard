@@ -5,6 +5,7 @@ import { isEmpty } from "lodash";
 import { GlobeIcon } from "lucide-react";
 import React from "react";
 import RoundedFlag from "@/assets/countries/RoundedFlag";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Peer } from "@/interfaces/Peer";
 import { PeerAddressTooltipContent } from "@/modules/peers/PeerAddressTooltipContent";
 
@@ -12,6 +13,8 @@ type Props = {
   peer: Peer;
 };
 export default function PeerAddressCell({ peer }: Props) {
+  const { t } = useI18n();
+
   return (
     <FullTooltip
       side={"top"}
@@ -43,12 +46,12 @@ export default function PeerAddressCell({ peer }: Props) {
         </div>
         <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 font-light truncate">
           <CopyToClipboardText
-            message={"DNS label has been copied to your clipboard"}
+            message={t("peerAddress.dnsLabelCopied")}
           >
             <span className={"font-normal truncate"}>{peer.dns_label}</span>
           </CopyToClipboardText>
           <CopyToClipboardText
-            message={"IP address has been copied to your clipboard"}
+            message={t("peerAddress.netBirdIpCopied")}
           >
             <span
               className={"dark:text-nb-gray-400 font-mono font-thin text-xs"}

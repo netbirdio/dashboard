@@ -6,6 +6,7 @@ import { GlobeIcon, MinusCircleIcon } from "lucide-react";
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { Domain } from "@/interfaces/Domain";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   value: Domain;
@@ -47,6 +48,7 @@ export default function InputDomain({
   allowWildcard = true,
   showRemoveButton = true,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const [name, setName] = useState(value?.name || "");
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,7 +66,7 @@ export default function InputDomain({
       preventLeadingAndTrailingDots,
     });
     if (!valid) {
-      return "Please enter a valid domain, e.g. example.com or intra.example.com";
+      return t("inputDomain.error");
     }
   }, [name]);
 
@@ -80,7 +82,7 @@ export default function InputDomain({
       <div className={"w-full"}>
         <Input
           customPrefix={<GlobeIcon size={15} />}
-          placeholder={"e.g., example.com"}
+          placeholder={t("inputDomain.placeholder")}
           maxWidthClass={"w-full"}
           data-cy={"domain-input"}
           value={name}

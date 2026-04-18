@@ -10,6 +10,7 @@ import {
   Users,
 } from "lucide-react";
 import * as React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { ReverseProxyEvent } from "@/interfaces/ReverseProxy";
 
 type Props = {
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
+  const { t } = useI18n();
   const authMethod = event.auth_method_used;
 
   if (!authMethod) {
@@ -30,44 +32,44 @@ export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
       case "bearer":
         return {
           icon: <Users size={12} />,
-          label: "SSO",
+          label: t("reverseProxy.authMethodSso"),
         };
       case "password":
         return {
           icon: <RectangleEllipsis size={12} />,
-          label: "Password",
+          label: t("reverseProxy.authMethodPassword"),
         };
       case "pin":
         return {
           icon: <Binary size={12} />,
-          label: "PIN Code",
+          label: t("reverseProxy.authMethodPin"),
         };
       case "header":
         return {
           icon: <FileCode2Icon size={12} />,
-          label: "HTTP Headers",
+          label: t("reverseProxy.authMethodHeaders"),
         };
       case "link":
       case "magic_link":
       case "magic-link":
         return {
           icon: <Mail size={12} />,
-          label: "Magic Link",
+          label: t("reverseProxy.authMethodMagicLink"),
         };
       case "ip_restricted":
         return {
           icon: <Network size={12} />,
-          label: "IP Restricted",
+          label: t("reverseProxy.authMethodIpRestricted"),
         };
       case "country_restricted":
         return {
           icon: <Flag size={12} />,
-          label: "Country Restricted",
+          label: t("reverseProxy.authMethodCountryRestricted"),
         };
       case "geo_unavailable":
         return {
           icon: <GlobeOff size={12} />,
-          label: "Geo Unavailable",
+          label: t("reverseProxy.authMethodGeoUnavailable"),
         };
       default:
         return {

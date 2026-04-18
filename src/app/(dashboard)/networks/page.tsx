@@ -11,6 +11,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import React, { Suspense } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";
 import NetworksTable from "@/modules/networks/table/NetworksTable";
@@ -18,6 +19,7 @@ import NetworksTable from "@/modules/networks/table/NetworksTable";
 export default function Networks() {
   const { data: networks, isLoading } = useFetchApi<Network[]>("/networks");
   const { permission } = usePermissions();
+  const { t } = useI18n();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
@@ -27,29 +29,29 @@ export default function Networks() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/networks"}
-            label={"Networks"}
+            label={t("networks.title")}
             icon={<NetworkRoutesIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Networks</h1>
+        <h1 ref={headingRef}>{t("networks.title")}</h1>
+        <Paragraph>{t("networks.description")}</Paragraph>
         <Paragraph>
-          Networks allow you to access internal resources in LANs and VPCs
-          without installing NetBird on every machine.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          {t("common.learnMorePrefix")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/networks"}
             target={"_blank"}
           >
-            Networks
+            {t("networks.title")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
+          {t("common.inDocumentationSuffix")}
         </Paragraph>
       </div>
 
-      <RestrictedAccess hasAccess={permission.networks.read}>
+      <RestrictedAccess
+        hasAccess={permission.networks.read}
+        page={t("networks.title")}
+      >
         <Suspense fallback={<SkeletonTable />}>
           <NetworksTable
             data={networks}

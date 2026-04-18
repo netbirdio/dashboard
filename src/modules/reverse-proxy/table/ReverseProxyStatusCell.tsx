@@ -1,3 +1,5 @@
+"use client";
+
 import {
   REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK,
   ReverseProxy,
@@ -10,6 +12,7 @@ import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import { CircleAlert, Loader2 } from "lucide-react";
 import { useRef } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   serviceId: string;
@@ -26,6 +29,7 @@ export default function ReverseProxyStatusCell({
   enabled,
   isL4,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const dataRef = useRef<ReverseProxy | undefined>(undefined);
 
   const isActive =
@@ -63,60 +67,56 @@ export default function ReverseProxyStatusCell({
     if (isActive) return null;
     if (hasError) {
       return (
-        <div className={"flex"} data-status-cell>
-          <FullTooltip
-            content={
-              <div className={"text-xs max-w-xs"}>
-                Something went wrong while setting up this service. See our{" "}
-                <InlineLink
-                  href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Troubleshooting Docs
-                </InlineLink>{" "}
-                for more details.
-              </div>
-            }
-            align={"center"}
-            alignOffset={0}
-          >
-            <div className={"flex"}>
-              <Badge variant={"red"}>
-                <CircleAlert size={11} />
-                Error
-              </Badge>
+        <FullTooltip
+          content={
+            <div className={"text-xs max-w-xs"}>
+              {t("reverseProxy.statusGenericError")}{" "}
+              <InlineLink
+                href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
+                target={"_blank"}
+              >
+                {t("reverseProxy.statusTroubleshootingLink")}
+              </InlineLink>{" "}
+              {t("reverseProxy.statusTroubleshootingSuffix")}
             </div>
-          </FullTooltip>
-        </div>
+          }
+          align={"center"}
+          alignOffset={0}
+        >
+          <div className={"flex"}>
+            <Badge variant={"red"}>
+              <CircleAlert size={11} />
+              {t("reverseProxy.statusError")}
+            </Badge>
+          </div>
+        </FullTooltip>
       );
     }
     if (isTunnelNotCreated) {
       return (
-        <div className={"flex"} data-status-cell>
-          <FullTooltip
-            content={
-              <div className={"text-xs max-w-xs"}>
-                The tunnel to the target peer could not be established. See our{" "}
-                <InlineLink
-                  href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
-                  target={"_blank"}
-                >
-                  Troubleshooting Docs
-                </InlineLink>{" "}
-                for more details.
-              </div>
-            }
-            align={"center"}
-            alignOffset={0}
-          >
-            <div className={"flex"}>
-              <Badge variant={"red"}>
-                <CircleAlert size={11} />
-                Tunnel not created
-              </Badge>
+        <FullTooltip
+          content={
+            <div className={"text-xs max-w-xs"}>
+              {t("reverseProxy.statusTunnelError")}{" "}
+              <InlineLink
+                href={REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK}
+                target={"_blank"}
+              >
+                {t("reverseProxy.statusTroubleshootingLink")}
+              </InlineLink>{" "}
+              {t("reverseProxy.statusTroubleshootingSuffix")}
             </div>
-          </FullTooltip>
-        </div>
+          }
+          align={"center"}
+          alignOffset={0}
+        >
+          <div className={"flex"}>
+            <Badge variant={"red"}>
+              <CircleAlert size={11} />
+              {t("reverseProxy.statusTunnelNotCreated")}
+            </Badge>
+          </div>
+        </FullTooltip>
       );
     }
     return <SettingUpService />;
@@ -124,15 +124,15 @@ export default function ReverseProxyStatusCell({
 
   // HTTP services: hide once active with certificate issued
   if (isActive && certificateIssued) {
-    return <div data-status-cell />;
+    return null;
   }
 
   if (!certificateIssued) {
     return (
-      <div className={"flex"} data-status-cell>
+      <div className={"flex"}>
         <Badge variant={"yellow"}>
           <Loader2 size={12} className={"animate-spin"} />
-          Issuing certificate...
+          {t("reverseProxy.statusIssuingCertificate")}
         </Badge>
       </div>
     );
@@ -142,11 +142,13 @@ export default function ReverseProxyStatusCell({
 }
 
 const SettingUpService = () => {
+  const { t } = useI18n();
+
   return (
-    <div className={"flex"} data-status-cell>
+    <div className={"flex"}>
       <Badge variant={"yellow"}>
         <Loader2 size={14} className={"animate-spin"} />
-        Setting up service...
+        {t("reverseProxy.statusSettingUpService")}
       </Badge>
     </div>
   );

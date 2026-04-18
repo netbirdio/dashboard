@@ -10,6 +10,7 @@ import Quad9Logo from "@/assets/nameservers/quad9.svg";
 import { Group } from "@/interfaces/Group";
 import { NameserverGroup, NameserverPresets } from "@/interfaces/Nameserver";
 import NameserverModal from "@/modules/dns/nameservers/NameserverModal";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -63,6 +64,7 @@ type ModalProps = {
 export function NameserverTemplateModalContent({
   onePresetSelection,
 }: Readonly<ModalProps>) {
+  const { t } = useI18n();
   return (
     <ModalContent maxWidthClass={"max-w-xl"} showClose={true}>
       <div className={"px-8 py-3 flex flex-col gap-6 mt-4"}>
@@ -70,37 +72,29 @@ export function NameserverTemplateModalContent({
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Google)}
             src={GoogleLogo}
-            title={"Google DNS"}
-            description={
-              "A free, global DNS resolution service by Google that implements a number of security, performance, and compliance improvements."
-            }
+            title={t("nameserverTemplate.google")}
+            description={t("nameserverTemplate.googleDesc")}
             href={"https://developers.google.com/speed/public-dns"}
           />
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Cloudflare)}
             src={CloudflareLogo}
-            title={"Cloudflare DNS"}
-            description={
-              "Enterprise-grade DNS service that offers the fastest response time, unparalleled redundancy, and advanced security with built-in DDoS mitigation and DNSSEC."
-            }
+            title={t("nameserverTemplate.cloudflare")}
+            description={t("nameserverTemplate.cloudflareDesc")}
             href={"https://www.cloudflare.com/learning/dns/what-is-1.1.1.1/"}
           />
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Quad9)}
             src={Quad9Logo}
-            title={"Quad9 DNS"}
-            description={
-              "The Quad9 DNS service is operated by the Swiss-based Quad9 Foundation, whose mission is to provide a safer and more robust Internet for everyone."
-            }
+            title={t("nameserverTemplate.quad9")}
+            description={t("nameserverTemplate.quad9Desc")}
             href={"https://quad9.net/"}
           />
           <NameserverTemplate
             onClick={() => onePresetSelection(NameserverPresets.Default)}
             icon={<GlobeIcon size={30} className={"text-netbird"} />}
-            title={"Custom DNS"}
-            description={
-              "Use custom nameservers to resolve domains in your network. You can either use a public DNS or your own nameservers."
-            }
+            title={t("nameserverTemplate.custom")}
+            description={t("nameserverTemplate.customDesc")}
           />
         </div>
       </div>
@@ -125,6 +119,7 @@ function NameserverTemplate({
   href?: string;
   hrefTitle?: string;
 }>) {
+  const { t } = useI18n();
   return (
     <button
       className={
@@ -158,7 +153,7 @@ function NameserverTemplate({
                 e.stopPropagation();
               }}
             >
-              {hrefTitle || "Learn more"}
+              {hrefTitle || t("nameserverTemplate.learnMore")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </div>

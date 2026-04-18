@@ -17,6 +17,7 @@ import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Account } from "@/interfaces/Account";
 
 type Props = {
@@ -25,6 +26,7 @@ type Props = {
 
 export default function NetworkSettingsTab({ account }: Readonly<Props>) {
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const { mutate } = useSWRConfig();
   const saveRequest = useApiCall<Account>("/accounts/" + account.id, true);
@@ -41,10 +43,10 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
 
   const toggleNetworkDNSSetting = async (toggle: boolean) => {
     notify({
-      title: "DNS Wildcard Routing",
-      description: `DNS Wildcard Routing successfully ${
-        toggle ? "enabled" : "disabled"
-      }.`,
+      title: t("networkSettings.dnsWildcardTitle"),
+      description: toggle
+        ? t("networkSettings.dnsWildcardEnabled")
+        : t("networkSettings.dnsWildcardDisabled"),
       promise: saveRequest
         .put({
           id: account.id,
@@ -57,7 +59,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
           setRoutingPeerDNSSetting(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating DNS wildcard setting...",
+      loadingMessage: t("networkSettings.dnsWildcardUpdating"),
     });
   };
 
@@ -80,8 +82,8 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
     }
 
     notify({
-      title: "Network Settings",
-      description: `Network settings successfully updated.`,
+      title: t("networkSettings.notifyTitle"),
+      description: t("networkSettings.updatedDescription"),
       promise: saveRequest
         .put({
           id: account.id,
@@ -91,7 +93,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
           mutate("/accounts");
           updateRef([customDNSDomain, networkRange]);
         }),
-      loadingMessage: "Updating network settings...",
+      loadingMessage: t("networkSettings.updating"),
     });
   };
 
@@ -102,14 +104,14 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
       allowOnlyTld: false,
     });
     if (!valid) {
-      return "Please enter a valid domain, e.g. example.com or intra.example.com";
+      return t("networkSettings.domainError");
     }
-  }, [customDNSDomain]);
+  }, [customDNSDomain, t]);
 
   const networkRangeError = useMemo(() => {
     if (networkRange == "") {
       if (account.settings.network_range) {
-        return "Network range cannot be empty";
+        return t("networkSettings.networkRangeEmptyError");
       }
       return "";
     }
@@ -117,12 +119,12 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
     try {
       const validCIDR = cidr.isValidCIDR(networkRange);
       if (!validCIDR) {
-        return "Please enter a valid IPv4 CIDR range, e.g. 100.64.0.0/16 or 192.168.1.0/24";
+        return t("networkSettings.networkRangeError");
       }
     } catch (error) {
-      return "Please enter a valid IPv4 CIDR range, e.g. 100.64.0.0/16 or 192.168.1.0/24";
+      return t("networkSettings.networkRangeError");
     }
-  }, [networkRange, account.settings.network_range]);
+  }, [networkRange, account.settings.network_range, t]);
 
   return (
     <Tabs.Content value={"networks"}>
@@ -130,19 +132,19 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("settings.title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=networks"}
-            label={"Networks"}
+            label={t("settings.networks")}
             icon={<NetworkIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between"}>
           <div>
-            <h1>Networks</h1>
+            <h1>{t("settings.networks")}</h1>
           </div>
           <Button
             variant={"primary"}
@@ -154,7 +156,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
             }
             onClick={saveChanges}
           >
-            Save Changes
+            {t("actions.saveChanges")}
           </Button>
         </div>
 
@@ -166,11 +168,9 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
               }
             >
               <div className={"min-w-[330px]"}>
-                <Label>DNS Domain</Label>
+                <Label>{t("networkSettings.dnsDomain")}</Label>
                 <HelpText>
-                  Specify a custom peer DNS domain for your network. This should
-                  not point to a domain that is already in use elsewhere, to
-                  avoid overriding DNS results.
+                  {t("networkSettings.dnsDomainHelp")}
                 </HelpText>
               </div>
               <div className={"w-full"}>
@@ -196,15 +196,14 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
               }
             >
               <div className={"min-w-[330px]"}>
-                <Label>Network Range</Label>
+                <Label>{t("networkSettings.networkRange")}</Label>
                 <HelpText>
-                  Specify a custom IPv4 range for your network in CIDR format.
-                  All peer IPs will be re-allocated when changed.
+                  {t("networkSettings.networkRangeHelp")}
                 </HelpText>
               </div>
               <div className={"w-full"}>
                 <Input
-                  placeholder={"e.g. 100.64.0.0/16"}
+                  placeholder={t("networkSettings.networkRangePlaceholder")}
                   errorTooltip={true}
                   errorTooltipPosition={"top"}
                   error={networkRangeError}
@@ -222,14 +221,12 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
             label={
               <>
                 <GlobeIcon size={15} />
-                Enable DNS Wildcard Routing
+                {t("networkSettings.enableDnsWildcardRouting")}
               </>
             }
             helpText={
               <>
-                Allow routing using DNS wildcards. This requires NetBird client
-                v0.35 or higher. Changes will only take effect after restarting
-                the clients.{" "}
+                {t("networkSettings.enableDnsWildcardRoutingHelp")}{" "}
                 <InlineLink
                   href={
                     "https://docs.netbird.io/how-to/accessing-entire-domains-within-networks#enabling-dns-wildcard-routing"
@@ -237,7 +234,7 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
                   target={"_blank"}
                   onClick={(e) => e.stopPropagation()}
                 >
-                  Learn more
+                  {t("clientSettings.learnMore")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>

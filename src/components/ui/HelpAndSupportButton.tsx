@@ -22,10 +22,12 @@ import { useState } from "react";
 import Button from "@components/Button";
 import { cn } from "@utils/helpers";
 import SlackIcon from "@/assets/icons/SlackIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 import { isNetBirdHosted } from "@utils/netbird";
 
 export default function HelpAndSupportButton() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const { t } = useI18n();
 
   return (
     <DropdownMenu
@@ -49,7 +51,7 @@ export default function HelpAndSupportButton() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1 px-1">
             <div className="text-sm font-normal leading-none text-nb-gray-200 py-1">
-              Help and Support
+              {t("help.title")}
             </div>
           </div>
         </DropdownMenuLabel>
@@ -62,7 +64,7 @@ export default function HelpAndSupportButton() {
         >
           <div className={"flex gap-3 items-center"}>
             <BookText size={14} />
-            Documentation
+            {t("help.documentation")}
           </div>
           <DropdownMenuShortcut>
             <ArrowUpRightIcon size={16} />
@@ -76,7 +78,7 @@ export default function HelpAndSupportButton() {
         >
           <div className={"flex gap-3 items-center"}>
             <TriangleAlert size={14} />
-            Troubleshooting
+            {t("help.troubleshooting")}
           </div>
           <DropdownMenuShortcut>
             <ArrowUpRightIcon size={16} />
@@ -102,7 +104,7 @@ export default function HelpAndSupportButton() {
         >
           <div className={"flex gap-3 items-center"}>
             <MessagesSquareIcon size={14} />
-            NetBird Forum
+            {t("help.forum")}
           </div>
           <DropdownMenuShortcut>
             <ArrowUpRightIcon size={16} />
@@ -116,7 +118,7 @@ export default function HelpAndSupportButton() {
         >
           <div className={"flex gap-3 items-center"}>
             <SlackIcon size={14} />
-            NetBird Slack
+            {t("help.slack")}
           </div>
           <DropdownMenuShortcut>
             <ArrowUpRightIcon size={16} />
@@ -133,7 +135,7 @@ export default function HelpAndSupportButton() {
         >
           <div className={"flex gap-3 items-center"}>
             <MessageSquareShare size={14} />
-            Feedback
+            {t("help.feedback")}
           </div>
           <DropdownMenuShortcut>
             <ArrowUpRightIcon size={16} />

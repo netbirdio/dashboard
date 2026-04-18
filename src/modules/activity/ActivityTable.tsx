@@ -17,6 +17,7 @@ import { DateRange } from "react-day-picker";
 import { useSWRConfig } from "swr";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useI18n } from "@/i18n/I18nProvider";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import { ActivityEntryRow } from "@/modules/activity/ActivityEntryRow";
 import { ActivityEventCodeSelector } from "@/modules/activity/ActivityEventCodeSelector";
@@ -31,47 +32,51 @@ type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
-const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
-  {
-    accessorKey: "activity_code",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Code</DataTableHeader>;
+function useActivityFeedColumnsTable(): ColumnDef<ActivityEvent>[] {
+  const { t } = useI18n();
+
+  return [
+    {
+      accessorKey: "activity_code",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t("activity.code")}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      filterFn: "arrIncludesSomeExact",
+      cell: ({ row }) => <ActivityEntryRow event={row.original} />,
     },
-    sortingFn: "text",
-    filterFn: "arrIncludesSomeExact",
-    cell: ({ row }) => <ActivityEntryRow event={row.original} />,
-  },
-  {
-    id: "activity_text",
-    accessorFn: (event) => {
-      try {
-        if (event.meta) {
-          return Object.keys(event.meta)
-            .map((key) => {
-              return `${event?.meta[key]}`;
-            })
-            .join(" ");
+    {
+      id: "activity_text",
+      accessorFn: (event) => {
+        try {
+          if (event.meta) {
+            return Object.keys(event.meta)
+              .map((key) => {
+                return `${event?.meta[key]}`;
+              })
+              .join(" ");
+          }
+        } catch (error) {
+          return "";
         }
-      } catch (error) {
-        return "";
-      }
+      },
     },
-  },
-  {
-    accessorKey: "timestamp",
-    id: "timestamp",
-    filterFn: "dateRange",
-  },
-  {
-    accessorKey: "activity",
-    id: "name",
-  },
-  {
-    id: "initiator_email",
-    accessorFn: (row) => row.initiator_email || "NetBird",
-    filterFn: "exactMatch",
-  },
-];
+    {
+      accessorKey: "timestamp",
+      id: "timestamp",
+      filterFn: "dateRange",
+    },
+    {
+      accessorKey: "activity",
+      id: "name",
+    },
+    {
+      id: "initiator_email",
+      accessorFn: (row) => row.initiator_email || t("activity.netbirdUser"),
+      filterFn: "exactMatch",
+    },
+  ];
+}
 
 const defaultFromDate = dayjs().subtract(14, "day").toDate();
 const defaultToDate = dayjs().toDate();
@@ -83,6 +88,8 @@ export default function ActivityTable({
 }: Props) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
+  const { t } = useI18n();
+  const columns = useActivityFeedColumnsTable();
 
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
@@ -123,14 +130,14 @@ export default function ActivityTable({
       headingTarget={headingTarget}
       paginationClassName={"max-w-[800px]"}
       as={"div"}
-      text={"Audit Events"}
+      text={t("activity.auditEventsTitle")}
       sorting={sorting}
       setSorting={setSorting}
       wrapperClassName={"gap-0 flex flex-col"}
       tableClassName={"px-8 pt-4"}
-      columns={ActivityFeedColumnsTable}
+      columns={columns}
       data={events}
-      searchPlaceholder={"Search by audit name, user, peer, meta..."}
+      searchPlaceholder={t("activity.searchPlaceholder")}
       isLoading={isLoading}
       columnVisibility={{
         timestamp: false,
@@ -147,20 +154,17 @@ export default function ActivityTable({
               size={"large"}
             />
           }
-          title={"Get Started with NetBird"}
-          description={
-            "It looks like you don't have any connected machines.\n" +
-            "Get started by adding one to your network."
-          }
+          title={t("activity.getStartedTitle")}
+          description={t("activity.getStartedDescription")}
           button={<AddPeerButton />}
           learnMore={
             <>
-              Learn more in our{" "}
+              {t("activity.learnMorePrefix")}{" "}
               <InlineLink
                 href={"https://docs.netbird.io/how-to/getting-started"}
                 target={"_blank"}
               >
-                Getting Started Guide
+                {t("activity.learnMoreLink")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>

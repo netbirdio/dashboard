@@ -5,6 +5,7 @@ import Script from "next/script";
 import React, { useEffect, useState } from "react";
 import ReactGA from "react-ga4";
 import { hotjar } from "react-hotjar";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   children: React.ReactNode;
@@ -135,12 +136,13 @@ export const GoogleTagManagerHeadScript = () => {
 };
 
 const GoogleTageManagerBodyScript = () => {
+  const { t } = useI18n();
   if (!config.googleTagManagerID) return null;
   return (
     isProduction() && (
       <noscript>
         <iframe
-          title={"Google Tag Manager"}
+          title={t("analytics.googleTagManager")}
           src={`https://www.googletagmanager.com/ns.html?id=${config.googleTagManagerID}`}
           height="0"
           width="0"

@@ -33,6 +33,22 @@ export interface CertificateHandler {
 export class RDPCertificateHandler implements CertificateHandler {
   private readonly STORAGE_KEY = 'netbird-rdp-trusted-certs';
   private modalElement: HTMLElement | null = null;
+  private readonly labels = {
+    parseUnavailable: '无法解析',
+    verificationTitle: 'RDP 证书验证',
+    serverPresentsCertificate: '服务器',
+    serverPresentsCertificateSuffix: '正在提供以下证书：',
+    subject: '主题',
+    issuer: '签发者',
+    serial: '序列号',
+    sha256: 'SHA-256',
+    trustQuestion: '你信任此证书吗？',
+    rememberCertificate: '记住此证书，以便后续连接时自动信任',
+    reject: '拒绝',
+    accept: '接受',
+    changedTitle: '证书已发生变化！',
+    previousFingerprint: '此前的指纹：',
+  };
   /**
    * Handle RDCleanPath response containing server certificates
    */
@@ -181,8 +197,8 @@ export class RDPCertificateHandler implements CertificateHandler {
       // Add warning about certificate change
       const warningDiv = modal.querySelector('.cert-warning') as HTMLElement;
       warningDiv.innerHTML = `
-        <strong>⚠️ Certificate has changed!</strong><br>
-        <small>Previous fingerprint: ${oldCert.fingerprint.substring(0, 32)}...</small>
+        <strong>${this.labels.changedTitle}</strong><br>
+        <small>${this.labels.previousFingerprint} ${oldCert.fingerprint.substring(0, 32)}...</small>
       `;
       const acceptBtn = modal.querySelector('#cert-accept') as HTMLButtonElement;
       const rejectBtn = modal.querySelector('#cert-reject') as HTMLButtonElement;
@@ -210,15 +226,15 @@ export class RDPCertificateHandler implements CertificateHandler {
       raw: certBytes,
       fingerprint: fingerprint,
       hostname: hostname,
-      subject: 'Unable to parse',
-      issuer: 'Unable to parse'
+      subject: this.labels.parseUnavailable,
+      issuer: this.labels.parseUnavailable
     };
     return this.promptUserAcceptance(hostname, certInfo);
   }
   /**
    * Create certificate acceptance modal
    */
-  private createCertificateModal(hostname: string, certInfo: CertificateInfo, isChange: boolean): HTMLElement {
+  private createCertificateModal(hostname: string, certInfo: CertificateInfo, _isChange: boolean): HTMLElement {
     // Remove any existing modal
     this.closeModal();
     const modal = document.createElement('div');
@@ -226,28 +242,28 @@ export class RDPCertificateHandler implements CertificateHandler {
     modal.innerHTML = `
       <div class="rdp-cert-overlay"></div>
       <div class="rdp-cert-dialog">
-        <h2>RDP Certificate Verification</h2>
+        <h2>${this.labels.verificationTitle}</h2>
         <div class="cert-warning" style="color: #ff9800; margin-bottom: 15px;"></div>
-        <p>The server <strong>${hostname}</strong> is presenting a certificate:</p>
+        <p>${this.labels.serverPresentsCertificate} <strong>${hostname}</strong> ${this.labels.serverPresentsCertificateSuffix}</p>
         <div class="cert-details">
           <table>
-            <tr><td><strong>Subject:</strong></td><td>${certInfo.subject || 'Unknown'}</td></tr>
-            <tr><td><strong>Issuer:</strong></td><td>${certInfo.issuer || 'Unknown'}</td></tr>
-            ${certInfo.serialNumber ? `<tr><td><strong>Serial:</strong></td><td style="font-family: monospace; font-size: 0.9em;">${certInfo.serialNumber}</td></tr>` : ''}
-            <tr><td><strong>SHA-256:</strong></td><td style="font-family: monospace; font-size: 0.9em;">
+            <tr><td><strong>${this.labels.subject}:</strong></td><td>${certInfo.subject || this.labels.parseUnavailable}</td></tr>
+            <tr><td><strong>${this.labels.issuer}:</strong></td><td>${certInfo.issuer || this.labels.parseUnavailable}</td></tr>
+            ${certInfo.serialNumber ? `<tr><td><strong>${this.labels.serial}:</strong></td><td style="font-family: monospace; font-size: 0.9em;">${certInfo.serialNumber}</td></tr>` : ''}
+            <tr><td><strong>${this.labels.sha256}:</strong></td><td style="font-family: monospace; font-size: 0.9em;">
               ${certInfo.fingerprint}</td></tr>
           </table>
         </div>
         <div class="cert-question">
-          <p>Do you trust this certificate?</p>
+          <p>${this.labels.trustQuestion}</p>
           <label>
             <input type="checkbox" id="cert-remember" checked>
-            Remember this certificate for future connections
+            ${this.labels.rememberCertificate}
           </label>
         </div>
         <div class="cert-buttons">
-          <button id="cert-reject" class="cert-btn cert-btn-reject">Reject</button>
-          <button id="cert-accept" class="cert-btn cert-btn-accept">Accept</button>
+          <button id="cert-reject" class="cert-btn cert-btn-reject">${this.labels.reject}</button>
+          <button id="cert-accept" class="cert-btn cert-btn-accept">${this.labels.accept}</button>
         </div>
       </div>
     `;

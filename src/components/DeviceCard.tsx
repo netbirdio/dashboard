@@ -7,6 +7,7 @@ import { PeerOSIcon } from "@/assets/icons/PeerOSIcon";
 import { ResourceIcon } from "@/assets/icons/ResourceIcon";
 import { NetworkResource } from "@/interfaces/Network";
 import type { Peer } from "@/interfaces/Peer";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type DeviceCardProps = {
   device?: Peer;
@@ -23,6 +24,7 @@ export const DeviceCard = ({
   address,
   description,
 }: DeviceCardProps) => {
+  const { t } = useI18n();
   if (!device && !resource) return null;
 
   const descriptionText = useMemo(() => {
@@ -75,7 +77,7 @@ export const DeviceCard = ({
           }
         >
           <TruncatedText
-            text={device?.name || resource?.name || "Unknown"}
+            text={device?.name || resource?.name || t("common.unknown")}
             maxWidth={"150px"}
             hideTooltip={true}
           />

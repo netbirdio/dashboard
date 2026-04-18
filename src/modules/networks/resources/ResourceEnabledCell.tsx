@@ -8,6 +8,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   resource: NetworkResource;
@@ -17,6 +18,7 @@ export const ResourceEnabledCell = ({
   resource,
   mutateAllResourcesOnUpdate,
 }: Props) => {
+  const { t } = useI18n();
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -28,11 +30,12 @@ export const ResourceEnabledCell = ({
 
   const toggle = async (enabled: boolean) => {
     notify({
-      title: `Update Resource`,
-      description: `'${resource?.name}' is now ${
-        enabled ? "enabled" : "disabled"
-      }`,
-      loadingMessage: "Updating resource...",
+      title: t("networkResources.updatedTitle"),
+      description: t("networkResources.toggleDescription", {
+        name: resource?.name || "",
+        status: enabled ? t("table.active") : t("common.disabled"),
+      }),
+      loadingMessage: t("networkResources.updating"),
       duration: 1200,
       promise: update({
         ...resource,

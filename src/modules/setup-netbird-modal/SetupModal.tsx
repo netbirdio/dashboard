@@ -17,6 +17,7 @@ import ShellIcon from "@/assets/icons/ShellIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import useOperatingSystem from "@/hooks/useOperatingSystem";
+import { useI18n } from "@/i18n/I18nProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import AndroidTab from "@/modules/setup-netbird-modal/AndroidTab";
 import DockerTab from "@/modules/setup-netbird-modal/DockerTab";
@@ -78,6 +79,7 @@ export function SetupModalContent({
   hostname,
   hideDocker = false,
 }: Readonly<SetupModalContentProps>) {
+  const { t } = useI18n();
   const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
   const pathname = usePathname();
@@ -87,16 +89,19 @@ export function SetupModalContent({
     if (title) return title;
 
     if (isFirstRun && !isInstallPage) {
-      let name = user?.given_name || "there";
+      const name = user?.given_name || t("setupModal.there");
       return (
         <>
-          Hello {name}! 👋 <br /> It&apos;s time to add your first device.
+          {t("setupModal.welcomeTitle", { name })} <br />
+          {t("setupModal.welcomeSubtitle")}
         </>
       );
     }
 
-    return setupKey ? "Install NetBird with Setup Key" : "Install NetBird";
-  }, [isFirstRun, isInstallPage, setupKey, title, user?.given_name]);
+    return setupKey
+      ? t("setupModal.installWithSetupKey")
+      : t("setupModal.installNetBird");
+  }, [isFirstRun, isInstallPage, setupKey, t, title, user?.given_name]);
 
   return (
     <>
@@ -114,8 +119,8 @@ export function SetupModalContent({
             className={cn("mx-auto mt-3", setupKey ? "max-w-sm" : "max-w-xs")}
           >
             {setupKey
-              ? "To get started, install and run NetBird with the setup key as a parameter."
-              : "To get started, install NetBird and log in with your email account."}
+              ? t("setupModal.setupKeyDescription")
+              : t("setupModal.defaultDescription")}
           </Paragraph>
         </div>
       )}
@@ -128,7 +133,7 @@ export function SetupModalContent({
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            Linux
+            {t("setupModal.linux")}
           </TabsTrigger>
 
           <TabsTrigger value={String(OperatingSystem.WINDOWS)}>
@@ -137,7 +142,7 @@ export function SetupModalContent({
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            Windows
+            {t("setupModal.windows")}
           </TabsTrigger>
           <TabsTrigger value={String(OperatingSystem.APPLE)}>
             <AppleIcon
@@ -145,7 +150,7 @@ export function SetupModalContent({
                 "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
               }
             />
-            macOS
+            {t("setupModal.macos")}
           </TabsTrigger>
 
           {!setupKey && (
@@ -156,7 +161,7 @@ export function SetupModalContent({
                     "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
                   }
                 />
-                iOS
+                {t("setupModal.ios")}
               </TabsTrigger>
               <TabsTrigger value={String(OperatingSystem.ANDROID)}>
                 <AndroidIcon
@@ -164,7 +169,7 @@ export function SetupModalContent({
                     "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
                   }
                 />
-                Android
+                {t("setupModal.android")}
               </TabsTrigger>
             </>
           )}
@@ -176,7 +181,7 @@ export function SetupModalContent({
                   "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
                 }
               />
-              Docker
+              {t("setupModal.docker")}
             </TabsTrigger>
           )}
         </TabsList>
@@ -216,16 +221,14 @@ export function SetupModalContent({
         <ModalFooter variant={"setup"}>
           <div>
             <SmallParagraph>
-              After that you should be connected. Add more devices to your
-              network or manage your existing devices in the admin panel. If you
-              have further questions check out our{" "}
+              {t("setupModal.footerDescription")}{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/getting-started#installation"
                 }
                 target={"_blank"}
               >
-                Installation Guide
+                {t("peers.installationGuide")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </SmallParagraph>
@@ -268,15 +271,17 @@ export const HostnameParameter = ({ hostname }: { hostname?: string }) => {
 };
 
 export const RoutingPeerSetupKeyInfo = () => {
+  const { t } = useI18n();
+
   return (
     <div
       className={
         "flex gap-2 mt-1 items-center text-xs text-nb-gray-300 font-normal mb-1"
       }
     >
-      This setup key can be used only once within the next 24 hours.
+      {t("setupModal.setupKeyInfoLine1")}
       <br />
-      When expired, the same key can not be used again.
+      {t("setupModal.setupKeyInfoLine2")}
     </div>
   );
 };

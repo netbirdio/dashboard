@@ -1,5 +1,6 @@
 import { cn } from "@utils/helpers";
 import React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Job } from "@/interfaces/Job";
 
 type Props = {
@@ -7,6 +8,7 @@ type Props = {
 };
 
 export default function JobStatusCell({ job }: Readonly<Props>) {
+  const { t } = useI18n();
   const status = job.status;
 
   return (
@@ -22,9 +24,9 @@ export default function JobStatusCell({ job }: Readonly<Props>) {
           status == "succeeded" && "bg-green-500",
         )}
       ></span>
-      {status == "pending" && "Pending"}
-      {status == "failed" && "Failed"}
-      {status == "succeeded" && "Completed"}
+      {status == "pending" && t("jobs.status.pending")}
+      {status == "failed" && t("jobs.status.failed")}
+      {status == "succeeded" && t("jobs.status.completed")}
     </div>
   );
 }

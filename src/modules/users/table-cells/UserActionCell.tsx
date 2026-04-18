@@ -8,6 +8,7 @@ import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { User } from "@/interfaces/User";
 import { UserResendInviteButton } from "@/modules/users/UserResendInviteButton";
 
@@ -19,67 +20,66 @@ export default function UserActionCell({
   user,
   serviceUser = false,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const { confirm } = useDialog();
   const { permission } = usePermissions();
   const userRequest = useApiCall<User>("/users");
   const { mutate } = useSWRConfig();
 
   const deleteRule = async () => {
-    const name = user.name || "User";
+    const name = user.name || t("userActions.userFallback");
     notify({
-      title: `'${name}' deleted`,
-      description: "User was successfully deleted.",
+      title: t("userActions.deletedTitle", { name }),
+      description: t("userActions.deletedDescription"),
       promise: userRequest.del("", `/${user.id}`).then(() => {
         mutate(`/users?service_user=${serviceUser}`);
       }),
-      loadingMessage: "Deleting the user...",
+      loadingMessage: t("userActions.deleting"),
     });
   };
 
   const approveUser = async () => {
-    const name = user.name || "User";
+    const name = user.name || t("userActions.userFallback");
     notify({
-      title: `'${name}' approved`,
-      description: "User was successfully approved.",
+      title: t("userActions.approvedTitle", { name }),
+      description: t("userActions.approvedDescription"),
       promise: userRequest.post({}, `/${user.id}/approve`).then(() => {
         mutate(`/users?service_user=${serviceUser}`);
       }),
-      loadingMessage: "Approving the user...",
+      loadingMessage: t("userActions.approving"),
     });
   };
 
   const rejectUser = async () => {
-    const name = user.name || "User";
+    const name = user.name || t("userActions.userFallback");
     const choice = await confirm({
-      title: `Reject '${name}'?`,
-      description:
-        "Rejecting this user will remove them from the account permanently. This action cannot be undone.",
-      confirmText: "Reject",
-      cancelText: "Cancel",
+      title: t("userActions.rejectConfirmTitle", { name }),
+      description: t("userActions.rejectConfirmDescription"),
+      confirmText: t("userActions.reject"),
+      cancelText: t("actions.cancel"),
       type: "danger",
       maxWidthClass: "max-w-md",
     });
     if (!choice) return;
 
     notify({
-      title: `'${name}' rejected`,
-      description: "User was successfully rejected and removed.",
+      title: t("userActions.rejectedTitle", { name }),
+      description: t("userActions.rejectedDescription"),
       promise: userRequest.del("", `/${user.id}/reject`).then(() => {
         mutate(`/users?service_user=${serviceUser}`);
       }),
 
-      loadingMessage: "Rejecting the user...",
+      loadingMessage: t("userActions.rejecting"),
     });
   };
 
   const openConfirm = async () => {
-    const name = user.name || "User";
+    const name = user.name || t("userActions.userFallback");
     const choice = await confirm({
-      title: `Delete '${name}'?`,
-      description:
-        "Deleting this user will remove their devices and remove dashboard access. This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t("userActions.deleteConfirmTitle", { name }),
+      description: t("userActions.deleteConfirmDescription"),
+      confirmText: t("actions.delete"),
+      cancelText: t("actions.cancel"),
       maxWidthClass: "max-w-md",
       type: "danger",
     });
@@ -109,7 +109,7 @@ export default function UserActionCell({
             onClick={approveUser}
             data-cy={"approve-user"}
           >
-            Approve
+            {t("userActions.approve")}
           </Button>
           <Button
             variant={"danger-outline"}
@@ -119,7 +119,7 @@ export default function UserActionCell({
             data-cy={"reject-user"}
           >
             <XCircle size={14} />
-            Reject
+            {t("userActions.reject")}
           </Button>
         </>
       )}
@@ -133,7 +133,7 @@ export default function UserActionCell({
           disabled={disabled}
         >
           <Trash2 size={16} />
-          Delete
+          {t("actions.delete")}
         </Button>
       )}
     </div>

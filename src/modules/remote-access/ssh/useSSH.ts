@@ -1,5 +1,6 @@
 import { useOidcAccessToken } from "@axa-fr/react-oidc";
 import { useCallback, useRef, useState } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 interface SSHConfig {
   hostname: string;
@@ -27,6 +28,7 @@ export const SSH_DOCS_LINK =
 const SSH_DETECTION_TIMEOUT_MS = 20000;
 
 export const useSSH = (client: any) => {
+  const { t } = useI18n();
   const [status, setStatus] = useState(SSHStatus.DISCONNECTED);
   const [config, setConfig] = useState<SSHConfig | null>(null);
   const session = useRef<SSHConnection | null>(null);
@@ -60,7 +62,7 @@ export const useSSH = (client: any) => {
 
         if (requiresJwt && !accessToken) {
           console.error("No access token available");
-          setError("No access token available");
+          setError(t("remoteAccess.noAccessToken"));
           setStatus(SSHStatus.DISCONNECTED);
           setConfig(null);
           return SSHStatus.DISCONNECTED;
@@ -87,12 +89,12 @@ export const useSSH = (client: any) => {
         console.error("Connection failed:", err);
         session.current = null;
         setStatus(SSHStatus.DISCONNECTED);
-        setError("SSH connection failed. Check the console for details.");
+        setError(t("remoteAccess.sshConnectionFailed"));
         setConfig(null);
         return SSHStatus.DISCONNECTED;
       }
     },
-    [client, status, accessToken],
+    [client, status, accessToken, t],
   );
 
   const disconnect = useCallback(() => {

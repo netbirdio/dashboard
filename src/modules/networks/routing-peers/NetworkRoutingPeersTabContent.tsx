@@ -12,6 +12,7 @@ import { useUsers } from "@/contexts/UsersProvider";
 import Paragraph from "@components/Paragraph";
 import InlineLink from "@components/InlineLink";
 import { ExternalLinkIcon } from "lucide-react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export const NetworkRoutingPeersTabContent = ({
   routers,
@@ -20,6 +21,7 @@ export const NetworkRoutingPeersTabContent = ({
   routers?: NetworkRouter[];
   isLoading: boolean;
 }) => {
+  const { t } = useI18n();
   const { groups } = useGroups();
   const { users } = useUsers();
   const { data: peers } = useFetchApi<Peer[]>(`/peers`);
@@ -44,19 +46,18 @@ export const NetworkRoutingPeersTabContent = ({
       <div className={"flex justify-between items-center mb-5"}>
         <div>
           <Paragraph>
-            Add routing peers to this network to access resources inside this
-            network.
+            {t("networkRouting.tabDescription")}
           </Paragraph>
           <Paragraph>
-            Learn more about
+            {t("common.learnMorePrefix")}{" "}
             <InlineLink
               href={"https://docs.netbird.io/manage/networks#routing-peers"}
               target={"_blank"}
             >
-              Routing Peers
+              {t("networkDetails.routingPeers")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
+            {t("common.inDocumentationSuffix")}
           </Paragraph>
         </div>
       </div>

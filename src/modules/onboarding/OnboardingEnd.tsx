@@ -7,56 +7,52 @@ import * as React from "react";
 import ACLImage from "@/assets/onboarding/acl.png";
 import ActivityImage from "@/assets/onboarding/activity.png";
 import PostureCheckImage from "@/assets/onboarding/posture.png";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   onFinish?: () => void;
 };
 
 export const OnboardingEnd = ({ onFinish }: Props) => {
+  const { t } = useI18n();
   const { oidcUser: user } = useOidcUser();
   const name = user?.given_name || user?.name || user?.preferred_username;
 
-  const title = name ? `Congratulations, ${name}!` : "Congratulations!";
+  const title = name
+    ? t("onboarding.endTitleWithName", { name })
+    : t("onboarding.endTitle");
 
   return (
     <div className={"relative flex flex-col h-full justify-between"}>
       <div>
         <h1 className={"text-xl text-center max-w-sm mx-auto"}>
           {title} <br />
-          You’ve completed the onboarding.
+          {t("onboarding.endSubtitle")}
         </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          What’s next? Check out these guides to get the most out of NetBird. To
-          learn more, explore the dashboard, visit our documentation, or browse
-          our YouTube channel.
+          {t("onboarding.endDescription")}
         </div>
 
         <div className={"mt-8 flex flex-col gap-8"}>
           <VideoGuide
-            title={"Access Control in Under 5 Minutes"}
+            title={t("onboarding.videoAclTitle")}
             src={ACLImage}
-            description={
-              "Learn how to manage access for your network resources effectively. Whether you want to restrict access to specific machines or allow certain users to connect."
-            }
+            description={t("onboarding.videoAclDescription")}
             href={"https://www.youtube.com/watch?v=WtZD_q-g_Jc"}
           />
           <VideoGuide
-            title={"Provision Users & Groups From Your IdP"}
+            title={t("onboarding.videoIdpTitle")}
             src={PostureCheckImage}
-            description={
-              "Learn how to provision users and groups from your identity provider, such as Okta, Azure AD, or Google Workspace, to manage access control in NetBird and automate onboarding and offboarding processes."
-            }
+            description={t("onboarding.videoIdpDescription")}
             href={"https://www.youtube.com/watch?v=RxYWTpf7cgY"}
           />
           <VideoGuide
-            title={"How NetBird Works"}
-            description={
-              "Learn more about how NetBird works, its architecture, and how it can help you build secure networks."
-            }
+            title={t("onboarding.videoHowTitle")}
+            description={t("onboarding.videoHowDescription")}
             src={ActivityImage}
             href={"https://www.youtube.com/watch?v=CFa7SY4Up9k&t=261s"}
           />
@@ -64,7 +60,7 @@ export const OnboardingEnd = ({ onFinish }: Props) => {
 
         <div className={"mt-10 flex items-center justify-center"}>
           <Button variant={"secondaryLighter"} onClick={onFinish}>
-            Go to Dashboard
+            {t("onboarding.goToDashboard")}
             <ArrowRightIcon size={16} />
           </Button>
         </div>

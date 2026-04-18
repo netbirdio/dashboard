@@ -4,6 +4,7 @@ import { MonitorSmartphoneIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Route } from "@/interfaces/Route";
 
 type Props = {
@@ -11,6 +12,7 @@ type Props = {
 };
 export default function PeerRouteTypeCell({ route }: Props) {
   const { groups } = useGroups();
+  const { t } = useI18n();
 
   const peerGroup = useMemo(() => {
     if (!groups) return undefined;
@@ -24,7 +26,7 @@ export default function PeerRouteTypeCell({ route }: Props) {
     <div className={"inline-flex"}>
       {!peerGroup ? (
         <Badge variant={"gray"} className={"min-w-[130px]"}>
-          <MonitorSmartphoneIcon size={14} /> Routing Peer
+          <MonitorSmartphoneIcon size={14} /> {t("routeModal.routingPeer")}
         </Badge>
       ) : (
         <GroupBadge group={peerGroup} />

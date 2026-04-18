@@ -7,12 +7,14 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useEffect } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
+import { useI18n } from "@/i18n/I18nProvider";
 
 const config = loadConfig();
 
 export const SessionLost = () => {
   const router = useRouter();
   const { logout } = useOidc();
+  const { t } = useI18n();
 
   useEffect(() => {
     router.push("/peers");
@@ -31,10 +33,9 @@ export const SessionLost = () => {
       >
         <NetBirdIcon size={20} />
       </div>
-      <h1>Session Expired</h1>
+      <h1>{t("session.expiredTitle")}</h1>
       <Paragraph className={"text-center"}>
-        It looks like your login session is no longer active or has expired.
-        Please login again to continue using the app.
+        {t("session.expiredDescription")}
       </Paragraph>
       <Button
         variant={"primary"}
@@ -42,7 +43,7 @@ export const SessionLost = () => {
         className={"mt-5"}
         onClick={() => logout("", { client_id: config.clientId })}
       >
-        Login
+        {t("session.login")}
         <LogIn size={16} />
       </Button>
     </div>

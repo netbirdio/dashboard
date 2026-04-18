@@ -2,6 +2,7 @@ import { ToggleSwitch } from "@components/ToggleSwitch";
 import React, { useMemo } from "react";
 import { mutate } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { usePolicies } from "@/contexts/PoliciesProvider";
 import { Policy } from "@/interfaces/Policy";
 
@@ -11,6 +12,7 @@ type Props = {
 export default function AccessControlActiveCell({ policy }: Readonly<Props>) {
   const { updatePolicy, serializeRules } = usePolicies();
   const { permission } = usePermissions();
+  const { t } = useI18n();
 
   const isChecked = useMemo(() => {
     return policy.enabled;
@@ -24,8 +26,8 @@ export default function AccessControlActiveCell({ policy }: Readonly<Props>) {
         mutate("/policies");
       },
       enabled
-        ? "The rule was successfully enabled"
-        : "The rule was successfully disabled",
+        ? t("accessControl.ruleEnabled")
+        : t("accessControl.ruleDisabled"),
     );
   };
 

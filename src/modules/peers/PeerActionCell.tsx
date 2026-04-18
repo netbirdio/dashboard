@@ -25,6 +25,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
 import InlineLink from "@components/InlineLink";
 import { useDialog } from "@/contexts/DialogProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export default function PeerActionCell() {
   const { peer, deletePeer, update, toggleSSH, setSSHInstructionsModal } =
@@ -33,6 +34,7 @@ export default function PeerActionCell() {
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
+  const { t } = useI18n();
 
   const showSSHButton = useMemo(() => {
     const isClientSSHEnabled = peer?.local_flags?.server_ssh_allowed;
@@ -42,11 +44,18 @@ export default function PeerActionCell() {
   }, [peer]);
 
   const toggleLoginExpiration = async () => {
-    const text = peer.login_expiration_enabled ? "disabled" : "enabled";
     const disableLoginExpiration = peer.login_expiration_enabled;
     notify({
-      title: `Session expiration is ${text}`,
-      description: `Session expiration for peer ${peer.name} was successfully ${text}.`,
+      title: disableLoginExpiration
+        ? t("peerActionCell.sessionExpirationDisabled")
+        : t("peerActionCell.sessionExpirationEnabled"),
+      description: disableLoginExpiration
+        ? t("peerActionCell.sessionExpirationDescriptionDisabled", {
+            name: peer.name,
+          })
+        : t("peerActionCell.sessionExpirationDescriptionEnabled", {
+            name: peer.name,
+          }),
       promise: update({
         loginExpiration: !peer.login_expiration_enabled,
         inactivityExpiration: disableLoginExpiration
@@ -56,31 +65,28 @@ export default function PeerActionCell() {
         mutate("/peers");
         mutate("/groups");
       }),
-      loadingMessage: "Updating session expiration...",
+      loadingMessage: t("peerActionCell.updatingSessionExpiration"),
     });
   };
 
   const disableDashboardSSH = async () => {
     const choice = await confirm({
-      title: `Disable SSH Access?`,
+      title: t("peerSsh.disableTitle"),
       description: (
         <div>
-          Starting from NetBird v0.61.0, once SSH access is disabled, you cannot
-          re-enable it again from the dashboard. You&apos;ll need to create an
-          explicit access control policy and update your NetBird client to
-          restore SSH functionality.{" "}
+          {t("peerSsh.disableDescription")}{" "}
           <InlineLink
             href={"https://docs.netbird.io/manage/peers/ssh"}
             target={"_blank"}
             onClick={(e) => e.stopPropagation()}
           >
-            Learn more
+            {t("common.learnMore")}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </div>
       ),
-      confirmText: "Disable",
-      cancelText: "Cancel",
+      confirmText: t("peerSsh.disable"),
+      cancelText: t("common.cancel"),
       type: "warning",
       maxWidthClass: "max-w-xl",
     });
@@ -109,7 +115,7 @@ export default function PeerActionCell() {
           >
             <div className={"flex gap-3 items-center"}>
               <MonitorIcon size={14} className={"shrink-0"} />
-              View Details
+              {t("actions.viewDetails")}
             </div>
           </DropdownMenuItem>
 
@@ -121,7 +127,7 @@ export default function PeerActionCell() {
               >
                 <IconInfoCircle size={14} />
                 <span>
-                  Expiration is disabled for all peers added with an setup-key.
+                  {t("peerActionCell.expirationDisabledTooltip")}
                 </span>
               </div>
             }
@@ -134,8 +140,9 @@ export default function PeerActionCell() {
             >
               <div className={"flex gap-3 items-center w-full"}>
                 <TimerResetIcon size={14} className={"shrink-0"} />
-                {peer.login_expiration_enabled ? "Disable" : "Enable"} Session
-                Expiration
+                {peer.login_expiration_enabled
+                  ? t("peerActionCell.disableSessionExpiration")
+                  : t("peerActionCell.enableSessionExpiration")}
               </div>
             </DropdownMenuItem>
           </FullTooltip>
@@ -152,7 +159,9 @@ export default function PeerActionCell() {
               <div className={"flex gap-3 items-center w-full"}>
                 <TerminalSquare size={14} className={"shrink-0"} />
                 <div className={"flex justify-between items-center w-full"}>
-                  {peer.ssh_enabled ? "Disable" : "Enable"} SSH Access
+                  {peer.ssh_enabled
+                    ? t("peerActionCell.disableSshAccess")
+                    : t("peerActionCell.enableSshAccess")}
                 </div>
               </div>
             </DropdownMenuItem>
@@ -169,7 +178,7 @@ export default function PeerActionCell() {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t("actions.delete")}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

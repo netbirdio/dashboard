@@ -11,11 +11,13 @@ import { NetworkResource } from "@/interfaces/Network";
 import { Policy } from "@/interfaces/Policy";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { cn } from "@utils/helpers";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   resource?: NetworkResource;
 };
 export const ResourcePolicyCell = ({ resource }: Props) => {
+  const { t } = useI18n();
   const { permission } = usePermissions();
   const {
     openResourceModal,
@@ -46,7 +48,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
         {policyCount === 0 && (
           <Badge variant={"gray"}>
             <ShieldOff size={12} className="text-red-500" />
-            <span className={"font-medium text-xs"}>None</span>
+            <span className={"font-medium text-xs"}>{t("common.none")}</span>
           </Badge>
         )}
 
@@ -134,7 +136,9 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
                 <span className={"font-medium text-xs"}>
                   {enabledPolicies?.length > 0
                     ? enabledPolicies?.length
-                    : `${policyCount} Disabled`}
+                    : t("networkResources.policyCountDisabled", {
+                        count: policyCount,
+                      })}
                 </span>
               </div>
             </Badge>
@@ -149,7 +153,7 @@ export const ResourcePolicyCell = ({ resource }: Props) => {
           onClick={() => openResourceModal(network, resource, "access-control")}
         >
           <Settings size={12} />
-          Configure
+          {t("actions.configure")}
         </Button>
       </div>
     )

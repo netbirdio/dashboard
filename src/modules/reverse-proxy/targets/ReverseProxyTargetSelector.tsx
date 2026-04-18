@@ -14,6 +14,7 @@ import {
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink, { InlineButtonLink } from "@components/InlineLink";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
+import { useI18n } from "@/i18n/I18nProvider";
 
 export type Target = {
   type: ReverseProxyTargetType;
@@ -35,26 +36,25 @@ export default function ReverseProxyTargetSelector({
 }: Readonly<Props>) {
   const { resources, peers } = useReverseProxies();
   const [installModal, setInstallModal] = useState(false);
+  const { t } = useI18n();
 
   return (
     <div>
       <Label className={"gap-0 inline"}>
         {initialNetwork ? (
-          "Select Resource"
+          t("reverseProxy.targetSelectResource")
         ) : (
           <>
-            Select{" "}
+            {t("reverseProxy.targetSelectPeerOrResource")}{" "}
             <HelpTooltip
               className={"max-w-sm"}
               content={
                 <>
-                  A <span className={"text-white font-medium"}>peer</span> is a
-                  machine (e.g., laptop, server, container) running NetBird.
-                  Select a peer if your service runs directly on it.
+                  {t("reverseProxy.targetPeerHelp")}
                   <span className={"mt-1 block"}>
-                    If you don&apos;t have a peer yet, you can{" "}
+                    {t("reverseProxy.targetPeerInstall")}{" "}
                     <InlineButtonLink onClick={() => setInstallModal(true)}>
-                      Install NetBird
+                      {t("reverseProxy.installNetBird")}
                     </InlineButtonLink>
                     .
                   </span>
@@ -62,43 +62,42 @@ export default function ReverseProxyTargetSelector({
               }
               interactive={true}
             >
-              Peer
+              {t("reverseProxy.targetPeerLabel")}
             </HelpTooltip>{" "}
-            or{" "}
+            {t("reverseProxy.targetPeerOrResourceConnector")}{" "}
             <HelpTooltip
               className={"max-w-sm"}
               content={
                 <>
-                  A <span className={"text-white font-medium"}>resource</span>{" "}
-                  is a destination (IP, subnet, or domain) that can&apos;t run
-                  NetBird directly. Resources are part of a network and are
-                  reached through a routing peer that forwards traffic to them.
+                  {t("reverseProxy.targetResourceHelp")}
                   <span className={"mt-1 block"}>
-                    If you don&apos;t have resources yet, go to{" "}
-                    <InlineLink href={"/networks"}>Networks</InlineLink> to
-                    create some.
+                    {t("reverseProxy.targetResourceCreate")}{" "}
+                    <InlineLink href={"/networks"}>
+                      {t("reverseProxy.networks")}
+                    </InlineLink>{" "}
+                    {t("reverseProxy.targetCreateSome")}
                   </span>
                 </>
               }
               interactive={true}
             >
-              Resource
+              {t("reverseProxy.targetResourceLabel")}
             </HelpTooltip>
           </>
         )}
       </Label>
       <HelpText>
         {initialNetwork
-          ? "Select the resource from your network you want to expose."
-          : "Select the peer or resource where your service is running."}
+          ? t("reverseProxy.targetSelectResourceHelp")
+          : t("reverseProxy.targetSelectPeerOrResourceHelp")}
       </HelpText>
       <PeerGroupSelector
         values={[]}
         onChange={() => {}}
         placeholder={
           initialNetwork
-            ? "Select a resource..."
-            : "Select a peer or resource..."
+            ? t("reverseProxy.targetSelectResourcePlaceholder")
+            : t("reverseProxy.targetSelectPeerOrResourcePlaceholder")
         }
         showPeers={!initialNetwork}
         showResources={true}

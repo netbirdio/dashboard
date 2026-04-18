@@ -5,6 +5,7 @@ import { cn, generateColorFromString } from "@utils/helpers";
 import { orderBy } from "lodash";
 import * as React from "react";
 import { useMemo } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { User } from "@/interfaces/User";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
 
@@ -23,12 +24,13 @@ export const HorizontalUsersStack = ({
   side = "top",
   isAllGroup = false,
 }: Props) => {
+  const { t } = useI18n();
   let usersToDisplay = orderBy(users?.slice(0, max) || [], ["name"]);
 
   const userCountText = useMemo(() => {
-    if (isAllGroup) return "All Users";
-    return `${users?.length || 0} User(s)`;
-  }, [users, isAllGroup]);
+    if (isAllGroup) return t("users.allUsers");
+    return t("users.userCount", { count: users?.length || 0 });
+  }, [users, isAllGroup, t]);
 
   return (
     <FullTooltip
@@ -58,7 +60,7 @@ export const HorizontalUsersStack = ({
                     <TextWithTooltip
                       text={
                         user?.email === "NetBird"
-                          ? "System"
+                          ? t("users.system")
                           : user?.name || user?.id
                       }
                       maxChars={500}
@@ -66,7 +68,7 @@ export const HorizontalUsersStack = ({
                   </span>
                   <span className={"text-nb-gray-350 font-light"}>
                     <TextWithTooltip
-                      text={user?.email || "NetBird"}
+                      text={user?.email || t("users.systemEmail")}
                       maxChars={500}
                     />
                   </span>

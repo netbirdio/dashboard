@@ -24,6 +24,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
+import { useI18n } from "@/i18n/I18nProvider";
 import { SSH_DOCS_LINK } from "@/modules/remote-access/ssh/useSSH";
 
 type Props = {
@@ -33,6 +34,7 @@ type Props = {
 };
 
 export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
+  const { t } = useI18n();
   const [username, setUsername] = useState(
     getOperatingSystem(peer.os) === OperatingSystem.WINDOWS
       ? "Administrator"
@@ -43,15 +45,15 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
   const [port, setPort] = useState(initialPort);
 
   const userNameError = useMemo(() => {
-    if (username?.length === 0) return "Username cannot be empty";
-  }, [username]);
+    if (username?.length === 0) return t("remoteAccess.usernameEmpty");
+  }, [username, t]);
 
   const portError = useMemo(() => {
     const portNumber = Number(port);
     const isValid =
       Number.isInteger(portNumber) && portNumber > 0 && portNumber <= 65535;
-    if (!isValid) return "Port must be a number between 1 and 65535";
-  }, [port]);
+    if (!isValid) return t("remoteAccess.portError");
+  }, [port, t]);
 
   const hasAnyError = useMemo(() => {
     if (userNameError !== undefined) return true;
@@ -76,20 +78,18 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
         <ModalHeader
           icon={<TerminalIcon className={"text-netbird"} size={18} />}
           title={peer.name}
-          description={`Connect to ${peer.ip} via SSH`}
+          description={t("remoteAccess.connectViaSsh", { ip: peer.ip })}
           color={"netbird"}
         />
         <Separator />
 
         <div className={"px-8 py-6 flex flex-col gap-8"}>
           <div className={""}>
-            <Label>Username & Port</Label>
-            <HelpText>
-              The username and port you will use to connect to the remote host.
-            </HelpText>
+            <Label>{t("remoteAccess.usernamePort")}</Label>
+            <HelpText>{t("remoteAccess.sshCredentialsHelp")}</HelpText>
             <div className={"flex flex-col gap-2 w-full"}>
               <Input
-                placeholder={"root"}
+                placeholder={t("remoteAccess.sshUsernamePlaceholder")}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 customSuffix={`@${peer.ip}`}
@@ -127,16 +127,16 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             <Paragraph className={"text-sm mt-auto"}>
-              Learn more about
+              {t("common.learnMorePrefix")}{" "}
               <InlineLink href={SSH_DOCS_LINK} target={"_blank"}>
-                SSH
+                {t("remoteAccess.ssh")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("actions.cancel")}</Button>
             </ModalClose>
 
             <Button
@@ -144,7 +144,7 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
               disabled={hasAnyError}
               onClick={openSSHWindow}
             >
-              Connect
+              {t("remoteAccess.connect")}
             </Button>
           </div>
         </ModalFooter>

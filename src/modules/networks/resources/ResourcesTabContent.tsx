@@ -3,6 +3,7 @@ import SkeletonTable, {
 } from "@components/skeletons/SkeletonTable";
 import * as React from "react";
 import { Suspense } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { NetworkResource } from "@/interfaces/Network";
 import ResourcesTable from "@/modules/networks/resources/ResourcesTable";
 import Paragraph from "@components/Paragraph";
@@ -18,23 +19,24 @@ export const ResourcesTabContent = ({
   data,
   isLoading,
 }: ResourcesSectionProps) => {
+  const { t } = useI18n();
   return (
     <div className={"px-8"}>
       <div className={"flex justify-between items-center mb-5"}>
         <div>
           <Paragraph>
-            Add resources to this network to control what peers can access.
+            {t("resourcesTable.networkDescription")}
           </Paragraph>
           <Paragraph>
-            Learn more about{" "}
+            {t("common.learnMorePrefix")}{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/networks#resources"}
               target={"_blank"}
             >
-              Resources
+              {t("networkResources.linkLabel")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
+            {t("common.inDocumentationSuffix")}
           </Paragraph>
         </div>
       </div>

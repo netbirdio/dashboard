@@ -6,6 +6,7 @@ import {
   TooltipTrigger,
 } from "@components/Tooltip";
 import React, { useMemo } from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Policy } from "@/interfaces/Policy";
 import { parsePortsToStrings } from "@/modules/access-control/useAccessControl";
 
@@ -18,6 +19,7 @@ export default function AccessControlPortsCell({
   policy,
   visiblePorts = 2,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const rule = useMemo(() => {
     if (policy.rules.length > 0) return policy.rules[0];
     return undefined;
@@ -48,7 +50,7 @@ export default function AccessControlPortsCell({
                   variant={"gray"}
                   className={"uppercase tracking-wider font-medium"}
                 >
-                  All
+                  {t("filters.all")}
                 </Badge>
               )}
 

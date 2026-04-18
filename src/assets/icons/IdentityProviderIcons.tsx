@@ -24,6 +24,7 @@ export const idpIcon = (
     authentik: <AuthentikIcon size={size} />,
     keycloak: <KeycloakIcon size={size} />,
     oidc: <KeyRound size={size} className="text-nb-gray-400" />,
+    wechatwork: <KeyRound size={size} className="text-nb-gray-400" />,
   };
 
   return icons[type];

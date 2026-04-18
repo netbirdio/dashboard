@@ -14,12 +14,14 @@ import AppleLogo from "@/assets/os-icons/apple.svg";
 import FreeBSDLogo from "@/assets/os-icons/FreeBSD.png";
 import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   os: string;
   serial?: string;
 };
 export function PeerOSCell({ os, serial }: Readonly<Props>) {
+  const { t } = useI18n();
   return (
     <TooltipProvider>
       <Tooltip delayDuration={1}>
@@ -40,11 +42,11 @@ export function PeerOSCell({ os, serial }: Readonly<Props>) {
         </TooltipTrigger>
         <TooltipContent className={"!p-0"}>
           <div>
-            <ListItem icon={<CpuIcon size={14} />} label={"OS"} value={os} />
+            <ListItem icon={<CpuIcon size={14} />} label={t("table.os")} value={os} />
             {serial && serial !== "" && (
               <ListItem
                 icon={<Barcode size={14} />}
-                label={"Serial Number"}
+                label={t("table.serialNumber")}
                 value={serial}
               />
             )}

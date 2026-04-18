@@ -7,16 +7,18 @@ import { useRouter } from "next/navigation";
 import * as React from "react";
 import Skeleton from "react-loading-skeleton";
 import PageContainer from "@/layouts/PageContainer";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   title?: string;
   description?: string;
 };
 export const PageNotFound = ({
-  title = "The requested page was not found",
-  description = "The page you are attempting to access cannot be found. Please verify the URL or return to the dashboard to continue browsing.",
+  title,
+  description,
 }: Props) => {
   const router = useRouter();
+  const { t } = useI18n();
 
   return (
     <PageContainer>
@@ -66,10 +68,10 @@ export const PageNotFound = ({
                             "text-3xl font-medium mx-auto mt-3 capitalize"
                           }
                         >
-                          {title}
+                          {title ?? t("pageNotFound.title")}
                         </h1>
                         <Paragraph className={"justify-center my-3 max-w-xl"}>
-                          {description}
+                          {description ?? t("pageNotFound.description")}
                         </Paragraph>
                         <Button
                           variant={"secondary"}
@@ -77,7 +79,7 @@ export const PageNotFound = ({
                           onClick={() => router.back()}
                         >
                           <Undo2Icon size={15} className={"shrink-0"} />
-                          Go Back
+                          {t("pageNotFound.goBack")}
                         </Button>
                       </div>
                     </div>

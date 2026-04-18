@@ -5,6 +5,7 @@ import * as React from "react";
 import { useEffect, useState } from "react";
 import { Peer } from "@/interfaces/Peer";
 import { SetupModalContent } from "@/modules/setup-netbird-modal/SetupModal";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type Props = {
   onBack: () => void;
@@ -17,6 +18,7 @@ export const OnboardingFirstDevice = ({
   firstDevice,
   onFinish,
 }: Props) => {
+  const { t } = useI18n();
   const [open, setOpen] = useState(false);
 
   /**
@@ -30,31 +32,33 @@ export const OnboardingFirstDevice = ({
     <div className={"relative flex flex-col h-full gap-4"}>
       <div>
         <h1 className={"text-xl text-center"}>
-          {`Let's get your first device online`}
+          {t("onboarding.getFirstDeviceOnline")}
         </h1>
         <div
           className={
             "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
           }
         >
-          {`To access other machines, install NetBird, sign in, and your device joins the network.
-          Every device you add becomes a NetBird peer in your network. It's that simple.`}
+          {t("onboarding.getFirstDeviceOnlineDescription")}
         </div>
       </div>
 
       <div className={"flex items-center justify-center mt-4 gap-3"}>
         <Button variant={"secondary"} onClick={onBack}>
-          Go Back
+          {t("actions.goBack")}
         </Button>
         <Button variant={"primary"} onClick={() => setOpen(true)}>
           <DownloadIcon size={16} />
-          Install NetBird
+          {t("onboarding.installNetBird")}
         </Button>
       </div>
 
       <Modal open={open} onOpenChange={setOpen}>
         <ModalContent className={"!z-[70]"}>
-          <SetupModalContent title={"Install NetBird"} hideDocker={true} />
+          <SetupModalContent
+            title={t("onboarding.installNetBird")}
+            hideDocker={true}
+          />
         </ModalContent>
       </Modal>
     </div>

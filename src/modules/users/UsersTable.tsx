@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import Card from "@components/Card";
 import FullTooltip from "@components/FullTooltip";
@@ -21,14 +23,16 @@ import { isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
 import { ExternalLinkIcon, Link2, MailPlus } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { User, UserInvite } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
+import { useAccount } from "@/modules/account/useAccount";
 import { PendingApprovalFilter } from "@/modules/users/PendingApprovalFilter";
 import UserActionCell from "@/modules/users/table-cells/UserActionCell";
 import UserBlockCell from "@/modules/users/table-cells/UserBlockCell";
@@ -38,82 +42,90 @@ import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import UserInviteModal from "@/modules/users/UserInviteModal";
 import UserInvitesTable from "@/modules/users/UserInvitesTable";
-import { useAccount } from "@/modules/account/useAccount";
 
-export const UsersTableColumns: ColumnDef<User>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
-    },
-    accessorFn: (row) => row.name + " " + row.email,
-    sortingFn: "text",
-    cell: ({ row }) => <UserNameCell user={row.original} />,
-  },
-  {
-    accessorKey: "is_current",
-    sortingFn: "basic",
-  },
-  {
-    accessorKey: "role",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserRoleCell user={row.original} />,
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserStatusCell user={row.original} />,
-  },
+function useUsersTableColumns(): ColumnDef<User>[] {
+  const { t } = useI18n();
 
-  {
-    accessorKey: "auto_groups",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserGroupCell user={row.original} />,
-  },
-
-  {
-    accessorKey: "is_blocked",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Block User</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserBlockCell user={row.original} />,
-  },
-  {
-    accessorKey: "last_login",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Last Login</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => (
-      <LastTimeRow
-        date={dayjs(row.original.last_login).toDate()}
-        text={"Last login on"}
-      />
-    ),
-  },
-  {
-    id: "approval_required",
-    accessorKey: "approval_required",
-    sortingFn: "basic",
-    accessorFn: (u) => u?.pending_approval,
-  },
-  {
-    accessorKey: "id",
-    header: "",
-    sortingFn: "text",
-    cell: ({ row }) => <UserActionCell user={row.original} />,
-  },
-];
+  return useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>;
+        },
+        accessorFn: (row) => row.name + " " + row.email,
+        sortingFn: "text",
+        cell: ({ row }) => <UserNameCell user={row.original} />,
+      },
+      {
+        accessorKey: "is_current",
+        sortingFn: "basic",
+      },
+      {
+        accessorKey: "role",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.role")}</DataTableHeader>;
+        },
+        sortingFn: "text",
+        cell: ({ row }) => <UserRoleCell user={row.original} />,
+      },
+      {
+        accessorKey: "status",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.status")}</DataTableHeader>;
+        },
+        sortingFn: "text",
+        cell: ({ row }) => <UserStatusCell user={row.original} />,
+      },
+      {
+        accessorKey: "auto_groups",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.groups")}</DataTableHeader>;
+        },
+        sortingFn: "text",
+        cell: ({ row }) => <UserGroupCell user={row.original} />,
+      },
+      {
+        accessorKey: "is_blocked",
+        header: ({ column }) => {
+          return (
+            <DataTableHeader column={column}>{t("table.blockUser")}</DataTableHeader>
+          );
+        },
+        sortingFn: "text",
+        cell: ({ row }) => <UserBlockCell user={row.original} />,
+      },
+      {
+        accessorKey: "last_login",
+        header: ({ column }) => {
+          return (
+            <DataTableHeader column={column}>{t("table.lastLogin")}</DataTableHeader>
+          );
+        },
+        sortingFn: "text",
+        cell: ({ row }) => (
+          <LastTimeRow
+            date={dayjs(row.original.last_login).toDate()}
+            text={t("users.lastLoginOn")}
+          />
+        ),
+      },
+      {
+        id: "approval_required",
+        accessorKey: "approval_required",
+        sortingFn: "basic",
+        accessorFn: (u) => u?.pending_approval,
+      },
+      {
+        accessorKey: "id",
+        header: "",
+        sortingFn: "text",
+        cell: ({ row }) => <UserActionCell user={row.original} />,
+      },
+    ],
+    [t],
+  );
+}
 
 type Props = {
   users?: User[];
@@ -136,7 +148,7 @@ export default function UsersTable({
   minimal,
   rightSide,
   getStartedCard,
-  columns = UsersTableColumns,
+  columns,
   selectedRows,
   setSelectedRows,
   onRowClick,
@@ -146,6 +158,8 @@ export default function UsersTable({
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const account = useAccount();
+  const { t } = useI18n();
+  const translatedColumns = useUsersTableColumns();
 
   const isCloud = isNetBirdHosted();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
@@ -161,7 +175,6 @@ export default function UsersTable({
 
   const [showInvites, setShowInvites] = useState(false);
 
-  // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path,
     [
@@ -194,10 +207,10 @@ export default function UsersTable({
       headingTarget={headingTarget}
       isLoading={isLoading}
       keepStateInLocalStorage={keepStateInLocalStorage}
-      text={"Users"}
+      text={t("users.title")}
       sorting={sorting}
       setSorting={setSorting}
-      columns={columns}
+      columns={columns ?? translatedColumns}
       wrapperComponent={minimal ? Card : undefined}
       wrapperProps={minimal && { className: "mt-6 w-full" }}
       minimal={minimal}
@@ -217,7 +230,7 @@ export default function UsersTable({
             }
           : onRowClick
       }
-      searchPlaceholder={"Search by name, email or role..."}
+      searchPlaceholder={t("users.searchPlaceholder")}
       getStartedCard={
         !getStartedCard ? (
           <GetStartedTest
@@ -228,10 +241,8 @@ export default function UsersTable({
                 size={"large"}
               />
             }
-            title={"Add New Users"}
-            description={
-              "It looks like you don't have any users yet. Get started by inviting users to your account."
-            }
+            title={t("users.addNewTitle")}
+            description={t("users.addNewDescription")}
             button={
               <div className={"flex flex-col items-center justify-center"}>
                 <InviteUserButton show={true} />
@@ -239,14 +250,12 @@ export default function UsersTable({
             }
             learnMore={
               <>
-                Learn more about
+                {t("common.learnMorePrefix")}{" "}
                 <InlineLink
-                  href={
-                    "https://docs.netbird.io/how-to/add-users-to-your-network"
-                  }
+                  href={"https://docs.netbird.io/how-to/add-users-to-your-network"}
                   target={"_blank"}
                 >
-                  Users
+                  {t("users.title")}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -289,7 +298,7 @@ export default function UsersTable({
                 onClick={() => setShowInvites(true)}
               >
                 <Link2 size={14} />
-                Show Invites
+                {t("users.showInvites")}
                 <NotificationCountBadge count={validInvitesCount} />
               </Button>
             )}
@@ -313,11 +322,10 @@ export const InviteUserButton = ({
 }: InviteUserButtonProps) => {
   const { permission } = usePermissions();
   const account = useAccount();
+  const { t } = useI18n();
 
   if (!show) return null;
 
-  // On cloud: always show "Invite User"
-  // On self-hosted: only show when embedded_idp_enabled is true
   const isCloud = isNetBirdHosted();
   const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
   const localAuthDisabled = account?.settings.local_auth_disabled;
@@ -333,7 +341,7 @@ export const InviteUserButton = ({
       disabled={isDisabled}
     >
       <MailPlus size={16} />
-      {isCloud ? "Invite User" : "Add User"}
+      {isCloud ? t("users.inviteUser") : t("users.addUser")}
     </Button>
   );
 
@@ -344,16 +352,16 @@ export const InviteUserButton = ({
         interactive={true}
         content={
           <div className={"flex flex-col"}>
-            <p className={"max-w-[200px] text-xs"}>
-              Local authentication is disabled. Use your IdP for authentication.
-            </p>
+            <p className={"max-w-[200px] text-xs"}>{t("users.localAuthDisabled")}</p>
             <div className={"text-xs mt-1.5"}>
               <InlineLink
-                href={"https://docs.netbird.io/selfhosted/identity-providers/disable-local-authentication"}
+                href={
+                  "https://docs.netbird.io/selfhosted/identity-providers/disable-local-authentication"
+                }
                 target={"_blank"}
                 className={"flex gap-1 items-center"}
               >
-                Learn more
+                {t("users.learnMoreShort")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </div>
@@ -367,4 +375,3 @@ export const InviteUserButton = ({
 
   return <UserInviteModal groups={groups}>{button}</UserInviteModal>;
 };
-

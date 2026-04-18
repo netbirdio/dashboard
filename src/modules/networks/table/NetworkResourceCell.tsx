@@ -4,6 +4,7 @@ import { LayersIcon, PlusCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Network } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 
@@ -12,6 +13,7 @@ type Props = {
 };
 
 export const NetworkResourceCell = ({ network }: Props) => {
+  const { t } = useI18n();
   const { permission } = usePermissions();
 
   const { openResourceModal } = useNetworksContext();
@@ -41,7 +43,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
         disabled={!permission.networks.update}
       >
         <PlusCircle size={12} />
-        Add Resource
+        {t("networks.addResource")}
       </Button>
     </div>
   ) : (
@@ -53,7 +55,7 @@ export const NetworkResourceCell = ({ network }: Props) => {
         onClick={() => openResourceModal(network)}
       >
         <PlusCircle size={12} />
-        Add Resource
+        {t("networks.addResource")}
       </Button>
     </>
   );

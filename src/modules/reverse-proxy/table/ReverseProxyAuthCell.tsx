@@ -15,7 +15,6 @@ import {
   HelpCircle,
   LockKeyhole,
   LockOpenIcon,
-  LucideIcon,
   RectangleEllipsis,
   Settings,
   Users,
@@ -24,30 +23,10 @@ import * as React from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import { useI18n } from "@/i18n/I18nProvider";
 import { Group } from "@/interfaces/Group";
 import { isL4Mode, ReverseProxy } from "@/interfaces/ReverseProxy";
 import FullTooltip from "@components/FullTooltip";
-
-const AUTH_METHODS: {
-  key: "password_auth" | "pin_auth" | "bearer_auth";
-  label: string;
-  hoverLabel: string;
-  Icon: LucideIcon;
-}[] = [
-  {
-    key: "password_auth",
-    label: "Password",
-    hoverLabel: "Password",
-    Icon: RectangleEllipsis,
-  },
-  { key: "pin_auth", label: "PIN Code", hoverLabel: "PIN Code", Icon: Binary },
-  {
-    key: "bearer_auth",
-    label: "SSO",
-    hoverLabel: "SSO (Single Sign On)",
-    Icon: Users,
-  },
-];
 
 const HEADER_AUTH_METHOD = {
   label: "HTTP Headers",
@@ -62,6 +41,7 @@ type Props = {
 export default function ReverseProxyAuthCell({
   reverseProxy,
 }: Readonly<Props>) {
+  const { t } = useI18n();
   const { permission } = usePermissions();
   const { openModal } = useReverseProxies();
   const { groups } = useGroups();
@@ -72,13 +52,12 @@ export default function ReverseProxyAuthCell({
         <FullTooltip
           content={
             <div className={"flex text-xs max-w-[340px]"}>
-              Auth methods are not supported for TCP/UDP and TLS passthrough
-              services as they operate at the network layer.
+              {t("reverseProxy.authNotSupported")}
             </div>
           }
         >
           <Badge variant={"gray"}>
-            N/A
+            {t("remoteAccess.notAvailable")}
             <HelpCircle size={12} />
           </Badge>
         </FullTooltip>
@@ -87,8 +66,28 @@ export default function ReverseProxyAuthCell({
   }
 
   const auth = reverseProxy.auth;
+  const authMethods = [
+    {
+      key: "password_auth" as const,
+      label: t("reverseProxy.authMethodPassword"),
+      hoverLabel: t("reverseProxy.authMethodPassword"),
+      Icon: RectangleEllipsis,
+    },
+    {
+      key: "pin_auth" as const,
+      label: t("reverseProxy.authMethodPin"),
+      hoverLabel: t("reverseProxy.authMethodPin"),
+      Icon: Binary,
+    },
+    {
+      key: "bearer_auth" as const,
+      label: t("reverseProxy.authMethodSso"),
+      hoverLabel: t("reverseProxy.authMethodSsoFull"),
+      Icon: Users,
+    },
+  ];
 
-  const enabled = AUTH_METHODS.filter((m) => auth?.[m.key]?.enabled);
+  const enabled = authMethods.filter((m) => auth?.[m.key]?.enabled);
   const hasHeaderAuths = (auth?.header_auths ?? []).some((h) => h.enabled);
   const authCount = enabled.length + (hasHeaderAuths ? 1 : 0);
 
@@ -103,7 +102,11 @@ export default function ReverseProxyAuthCell({
     authCount === 1
       ? enabled.length === 1
         ? enabled[0]
-        : HEADER_AUTH_METHOD
+      : {
+          ...HEADER_AUTH_METHOD,
+          label: t("reverseProxy.authMethodHeaders"),
+          hoverLabel: t("reverseProxy.authMethodHeaders"),
+        }
       : null;
   const SingleAuthIcon = singleAuth?.Icon ?? null;
 
@@ -112,9 +115,7 @@ export default function ReverseProxyAuthCell({
       variant={"gray"}
       useHover={false}
       disabled={!canConfigure}
-      className={
-        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
-      }
+      className={"cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"}
     >
       <SingleAuthIcon size={12} className="text-green-500" />
       <span className={"font-medium text-xs"}>{singleAuth!.label}</span>
@@ -124,30 +125,25 @@ export default function ReverseProxyAuthCell({
       variant={"gray"}
       useHover={false}
       disabled={!canConfigure}
-      className={
-        "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
-      }
+      className={"cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"}
     >
       <LockKeyhole size={12} className="text-green-500" />
-      <span className={"font-medium text-xs"}>{authCount} Enabled</span>
+      <span className={"font-medium text-xs"}>
+        {t("reverseProxy.authEnabledCount", { count: authCount })}
+      </span>
     </Badge>
   ) : null;
 
   const showAuthHover =
-    authCount > 1 ||
-    (authCount === 1 && (auth?.bearer_auth?.enabled || hasHeaderAuths));
+    authCount > 1 || (authCount === 1 && (auth?.bearer_auth?.enabled || hasHeaderAuths));
 
   return (
-    <div
-      className={"flex"}
-      data-auth-cell
-      onClick={(e) => {
-        e.stopPropagation();
-        if (permission?.services?.update) {
-          openModal({ proxy: reverseProxy, initialTab: "auth" });
-        }
-      }}
-    >
+    <div className={"flex"} onClick={(e) => {
+      e.stopPropagation();
+      if (permission?.services?.update) {
+        openModal({ proxy: reverseProxy, initialTab: "auth" });
+      }
+    }}>
       <div className={"flex items-center"}>
         {authBadge ? (
           <HoverCard openDelay={200} closeDelay={100}>
@@ -168,8 +164,8 @@ export default function ReverseProxyAuthCell({
                       value={
                         <div className={"text-green-500"}>
                           {key === "bearer_auth" && ssoGroups.length === 0
-                            ? "All Users"
-                            : "Enabled"}
+                            ? t("reverseProxy.allUsers")
+                            : t("filters.enabled")}
                         </div>
                       }
                     >
@@ -198,15 +194,11 @@ export default function ReverseProxyAuthCell({
                       label={HEADER_AUTH_METHOD.hoverLabel}
                       value={
                         <div className={"text-green-500"}>
-                          {
-                            (auth?.header_auths ?? []).filter((h) => h.enabled)
-                              .length
-                          }{" "}
-                          Header
-                          {(auth?.header_auths ?? []).filter((h) => h.enabled)
-                            .length !== 1
-                            ? "s"
-                            : ""}
+                          {t("reverseProxy.headersEnabledCount", {
+                            count: (auth?.header_auths ?? []).filter(
+                              (h) => h.enabled,
+                            ).length,
+                          })}
                         </div>
                       }
                     />
@@ -219,12 +211,12 @@ export default function ReverseProxyAuthCell({
           <Badge
             variant={"gray"}
             disabled={!canConfigure}
-            className={
-              "cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"
-            }
+            className={"cursor-pointer !rounded-r-none !border-r-0 !h-[34px] min-w-[100px] !justify-start hover:bg-nb-gray-930 transition-all"}
           >
             <LockOpenIcon size={12} className="text-red-500" />
-            <span className={"font-medium text-xs"}>No Auth</span>
+            <span className={"font-medium text-xs"}>
+              {t("reverseProxy.noAuth")}
+            </span>
           </Badge>
         )}
         <Button
@@ -236,7 +228,7 @@ export default function ReverseProxyAuthCell({
             openModal({ proxy: reverseProxy, initialTab: "auth" });
           }}
           disabled={!permission?.services?.update}
-          aria-label="Configure authentication"
+          aria-label={t("reverseProxy.configureAuthentication")}
         >
           <Settings size={12} />
         </Button>

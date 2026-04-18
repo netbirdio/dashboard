@@ -7,6 +7,7 @@ import { SmallBadge } from "@components/ui/SmallBadge";
 import { cn } from "@utils/helpers";
 import { PlusCircle, SquarePen } from "lucide-react";
 import React from "react";
+import { useI18n } from "@/i18n/I18nProvider";
 
 type SettingCardItemProps = {
   label: React.ReactNode;
@@ -21,6 +22,7 @@ function SettingCardItem({
   enabled,
   onClick,
 }: Readonly<SettingCardItemProps>) {
+  const { t } = useI18n();
   return (
     <div
       role="button"
@@ -41,7 +43,7 @@ function SettingCardItem({
           <Label>{label}</Label>
           {enabled && (
             <SmallBadge
-              text="Enabled"
+              text={t("filters.enabled")}
               variant="green"
               size="md"
               className={"-top-[0.25rem]"}
@@ -59,7 +61,7 @@ function SettingCardItem({
             onClick={onClick}
           >
             <SquarePen size={12} />
-            Edit
+            {t("actions.edit")}
           </Button>
         ) : (
           <Button
@@ -69,7 +71,7 @@ function SettingCardItem({
             onClick={onClick}
           >
             <PlusCircle size={12} />
-            Add
+            {t("actions.add")}
           </Button>
         )}
       </div>

@@ -1,3 +1,5 @@
+"use client";
+
 import Button from "@components/Button";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
@@ -11,10 +13,11 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
-import React from "react";
+import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { useI18n } from "@/i18n/I18nProvider";
 import { User } from "@/interfaces/User";
 import ServiceUserModal from "@/modules/users/ServiceUserModal";
 import ServiceUserNameCell from "@/modules/users/table-cells/ServiceUserNameCell";
@@ -22,44 +25,51 @@ import UserActionCell from "@/modules/users/table-cells/UserActionCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 
-export const ServiceUsersTableColumns: ColumnDef<User>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <ServiceUserNameCell user={row.original} />,
-  },
-  {
-    accessorKey: "is_current",
-    sortingFn: "basic",
-  },
-  {
-    accessorKey: "role",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserRoleCell user={row.original} />,
-  },
-  {
-    accessorKey: "status",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserStatusCell user={row.original} />,
-  },
-  {
-    accessorKey: "id",
-    header: "",
-    sortingFn: "text",
-    cell: ({ row }) => (
-      <UserActionCell user={row.original} serviceUser={true} />
-    ),
-  },
-];
+function useServiceUsersTableColumns(): ColumnDef<User>[] {
+  const { t } = useI18n();
+
+  return useMemo(
+    () => [
+      {
+        accessorKey: "name",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>;
+        },
+        sortingFn: "text",
+        cell: ({ row }) => <ServiceUserNameCell user={row.original} />,
+      },
+      {
+        accessorKey: "is_current",
+        sortingFn: "basic",
+      },
+      {
+        accessorKey: "role",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.role")}</DataTableHeader>;
+        },
+        sortingFn: "text",
+        cell: ({ row }) => <UserRoleCell user={row.original} />,
+      },
+      {
+        accessorKey: "status",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("table.status")}</DataTableHeader>;
+        },
+        sortingFn: "text",
+        cell: ({ row }) => <UserStatusCell user={row.original} />,
+      },
+      {
+        accessorKey: "id",
+        header: "",
+        sortingFn: "text",
+        cell: ({ row }) => (
+          <UserActionCell user={row.original} serviceUser={true} />
+        ),
+      },
+    ],
+    [t],
+  );
+}
 
 type Props = {
   users?: User[];
@@ -77,8 +87,9 @@ export default function ServiceUsersTable({
   const router = useRouter();
   const path = usePathname();
   const { permission } = usePermissions();
+  const { t } = useI18n();
+  const columns = useServiceUsersTableColumns();
 
-  // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
     "netbird-table-sort" + path,
     [
@@ -97,10 +108,10 @@ export default function ServiceUsersTable({
     <DataTable
       headingTarget={headingTarget}
       isLoading={isLoading}
-      text={"Service Users"}
+      text={t("serviceUsers.title")}
       sorting={sorting}
       setSorting={setSorting}
-      columns={ServiceUsersTableColumns}
+      columns={columns}
       data={users}
       onRowClick={(row) => {
         router.push(`/team/user?id=${row.original.id}&service_user=true`);
@@ -109,7 +120,7 @@ export default function ServiceUsersTable({
       columnVisibility={{
         is_current: false,
       }}
-      searchPlaceholder={"Search by name or role..."}
+      searchPlaceholder={t("serviceUsers.searchPlaceholder")}
       getStartedCard={
         <GetStartedTest
           icon={
@@ -119,10 +130,8 @@ export default function ServiceUsersTable({
               size={"large"}
             />
           }
-          title={"Create Service User"}
-          description={
-            "It looks like you don't have any service users. Get started by creating a service user."
-          }
+          title={t("serviceUsers.createTitle")}
+          description={t("serviceUsers.emptyDescription")}
           button={
             <div className={"flex flex-col"}>
               <div>
@@ -134,7 +143,7 @@ export default function ServiceUsersTable({
                     disabled={!permission.users.create}
                   >
                     <PlusCircle size={16} />
-                    Create Service User
+                    {t("serviceUsers.createTitle")}
                   </Button>
                 </ServiceUserModal>
               </div>
@@ -142,14 +151,12 @@ export default function ServiceUsersTable({
           }
           learnMore={
             <>
-              Learn more about
+              {t("common.learnMorePrefix")}{" "}
               <InlineLink
-                href={
-                  "https://docs.netbird.io/how-to/access-netbird-public-api"
-                }
+                href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
                 target={"_blank"}
               >
-                Service Users
+                {t("serviceUsers.title")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>
@@ -167,7 +174,7 @@ export default function ServiceUsersTable({
                 disabled={!permission.users.create}
               >
                 <PlusCircle size={16} />
-                Create Service User
+                {t("serviceUsers.createTitle")}
               </Button>
             </ServiceUserModal>
           )}
