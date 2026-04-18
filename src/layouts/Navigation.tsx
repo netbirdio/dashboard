@@ -122,6 +122,13 @@ export default function Navigation({
                     visible={permission.policies.read}
                   />
                   <SidebarItem
+                    label="Inspection Policies"
+                    isChild
+                    href={"/access-control/inspection-policies"}
+                    exactPathMatch={true}
+                    visible={permission.policies.read}
+                  />
+                  <SidebarItem
                     label="Posture Checks"
                     isChild
                     href={"/posture-checks"}

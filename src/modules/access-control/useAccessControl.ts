@@ -14,6 +14,7 @@ import {
   PortRange,
   Protocol,
 } from "@/interfaces/Policy";
+import { InspectionPolicy } from "@/interfaces/Network";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { usePostureCheck } from "@/modules/posture-checks/usePostureCheck";
@@ -49,6 +50,11 @@ export const useAccessControl = ({
   const [postureChecks, setPostureChecks] = useState<PostureCheck[]>([]);
   const postureChecksLoaded = useRef(false);
 
+  const { data: allInspectionPolicies, isLoading: isInspectionPoliciesLoading } =
+    useFetchApi<InspectionPolicy[]>("/inspection-policies");
+  const [inspectionPolicies, setInspectionPolicies] = useState<InspectionPolicy[]>([]);
+  const inspectionPoliciesLoaded = useRef(false);
+
   const initialPostureChecks = useMemo(() => {
     const foundChecks =
       allPostureChecks?.filter((check) => {
@@ -81,6 +87,23 @@ export const useAccessControl = ({
       setPostureChecks(initialPostureChecks);
     }
   }, [initialPostureChecks]);
+
+  // Initialize inspection policies from existing policy
+  const initialInspectionPolicies = useMemo(() => {
+    if (!policy?.inspection_policies || !allInspectionPolicies) return [];
+    const ids = policy.inspection_policies.map((ip) =>
+      typeof ip === "string" ? ip : ip.id,
+    ).filter(Boolean) as string[];
+    return allInspectionPolicies.filter((ip) => ip.id && ids.includes(ip.id));
+  }, [policy, allInspectionPolicies]);
+
+  useEffect(() => {
+    if (inspectionPoliciesLoaded.current) return;
+    if (initialInspectionPolicies.length > 0) {
+      inspectionPoliciesLoaded.current = true;
+      setInspectionPolicies(initialInspectionPolicies);
+    }
+  }, [initialInspectionPolicies]);
 
   const { updatePolicy } = usePolicies();
   const firstRule = policy?.rules ? policy.rules[0] : undefined;
@@ -191,6 +214,7 @@ export const useAccessControl = ({
       description,
       enabled,
       source_posture_checks: postureChecks,
+      inspection_policies: inspectionPolicies,
       rules: [
         {
           bidirectional: direction == "bi",
@@ -291,6 +315,9 @@ export const useAccessControl = ({
       enabled,
       source_posture_checks: postureChecks
         ? postureChecks.map((c) => c.id)
+        : undefined,
+      inspection_policies: inspectionPolicies
+        ? inspectionPolicies.map((p) => p.id)
         : undefined,
       rules: [
         {
@@ -407,10 +434,13 @@ export const useAccessControl = ({
     setDestinationGroups,
     postureChecks,
     setPostureChecks,
+    inspectionPolicies,
+    setInspectionPolicies,
     submit,
     getPolicyData,
     portDisabled,
     isPostureChecksLoading,
+    isInspectionPoliciesLoading,
     sourceResource,
     setSourceResource,
     destinationResource,

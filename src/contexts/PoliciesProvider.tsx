@@ -83,6 +83,9 @@ export default function PoliciesProvider({ children }: Props) {
       source_posture_checks: (policy.source_posture_checks ?? []).map((c) =>
         typeof c === "string" ? c : c.id,
       ),
+      inspection_policies: (policy.inspection_policies ?? []).map((p) =>
+        typeof p === "string" ? p : p.id,
+      ),
       rules: [
         {
           ...rule,
@@ -153,6 +156,10 @@ export default function PoliciesProvider({ children }: Props) {
             source_posture_checks:
               toUpdate.source_posture_checks ??
               policy.source_posture_checks ??
+              [],
+            inspection_policies:
+              toUpdate.inspection_policies ??
+              policy.inspection_policies ??
               [],
           },
           `/${policy.id}`,

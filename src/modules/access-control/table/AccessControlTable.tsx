@@ -29,6 +29,7 @@ import AccessControlDestinationsCell from "@/modules/access-control/table/Access
 import AccessControlDirectionCell from "@/modules/access-control/table/AccessControlDirectionCell";
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
 import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
+import AccessControlInspectionCell from "@/modules/access-control/table/AccessControlInspectionCell";
 import AccessControlPostureCheckCell from "@/modules/access-control/table/AccessControlPostureCheckCell";
 import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
@@ -163,6 +164,17 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     },
     cell: ({ cell }) => (
       <AccessControlPostureCheckCell policy={cell.row.original} />
+    ),
+  },
+  {
+    id: "inspection_policies",
+    accessorFn: (row) => row.inspection_policies?.length || 0,
+    sortingFn: "basic",
+    header: ({ column }) => {
+      return <DataTableHeader column={column}>Inspection</DataTableHeader>;
+    },
+    cell: ({ cell }) => (
+      <AccessControlInspectionCell policy={cell.row.original} />
     ),
   },
   {

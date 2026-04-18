@@ -1,4 +1,5 @@
 import { Group } from "@/interfaces/Group";
+import { InspectionPolicy } from "@/interfaces/Network";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 
 export interface Policy {
@@ -9,6 +10,7 @@ export interface Policy {
   query?: string;
   rules: PolicyRule[];
   source_posture_checks: string[] | PostureCheck[];
+  inspection_policies?: string[] | InspectionPolicy[];
 }
 
 export interface PolicyRule {

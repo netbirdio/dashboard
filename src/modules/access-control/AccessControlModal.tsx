@@ -50,6 +50,9 @@ import { NetworkResource } from "@/interfaces/Network";
 import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { useAccessControl } from "@/modules/access-control/useAccessControl";
+import { InspectionPolicy } from "@/interfaces/Network";
+import { InspectionTab } from "@/modules/networks/inspection/InspectionTab";
+import { InspectionTabTrigger } from "@/modules/networks/inspection/InspectionTabTrigger";
 import { PostureCheckTab } from "@/modules/posture-checks/ui/PostureCheckTab";
 import { PostureCheckTabTrigger } from "@/modules/posture-checks/ui/PostureCheckTabTrigger";
 import { SSHAccessType } from "@/modules/access-control/ssh/SSHAccessType";
@@ -186,6 +189,9 @@ export function AccessControlModalContent({
     setSshAccessType,
     sshAuthorizedGroups,
     setSshAuthorizedGroups,
+    inspectionPolicies,
+    setInspectionPolicies,
+    isInspectionPoliciesLoading,
   } = useAccessControl({
     policy,
     postureCheckTemplates,
@@ -202,6 +208,7 @@ export function AccessControlModalContent({
     if (initialTab && initialTab !== "") return initialTab;
     if (!cell) return "policy";
     if (cell == "posture_checks") return "posture_checks";
+    if (cell == "inspection_policies") return "inspection";
     return "policy";
   });
 
@@ -252,6 +259,7 @@ export function AccessControlModalContent({
             Policy
           </TabsTrigger>
           <PostureCheckTabTrigger disabled={!canContinueToPostureChecks} />
+          <InspectionTabTrigger disabled={!canContinueToPostureChecks} />
           <TabsTrigger value={"general"} disabled={!canContinueToPostureChecks}>
             <Text
               size={16}
@@ -518,6 +526,11 @@ export function AccessControlModalContent({
           postureChecks={postureChecks}
           setPostureChecks={setPostureChecks}
         />
+        <InspectionTab
+          isLoading={isInspectionPoliciesLoading}
+          inspectionPolicies={inspectionPolicies}
+          setInspectionPolicies={setInspectionPolicies}
+        />
         <TabsContent value={"general"} className={"px-8 pb-6"}>
           <div className={"flex flex-col gap-6"}>
             <div>
@@ -600,6 +613,24 @@ export function AccessControlModalContent({
                   </Button>
                   <Button
                     variant={"primary"}
+                    onClick={() => setTab("inspection")}
+                    disabled={!canContinueToPostureChecks}
+                  >
+                    Continue
+                  </Button>
+                </>
+              )}
+
+              {tab == "inspection" && (
+                <>
+                  <Button
+                    variant={"secondary"}
+                    onClick={() => setTab("posture_checks")}
+                  >
+                    Back
+                  </Button>
+                  <Button
+                    variant={"primary"}
                     onClick={() => setTab("general")}
                     disabled={!canContinueToPostureChecks}
                   >
@@ -612,7 +643,7 @@ export function AccessControlModalContent({
                 <>
                   <Button
                     variant={"secondary"}
-                    onClick={() => setTab("posture_checks")}
+                    onClick={() => setTab("inspection")}
                   >
                     Back
                   </Button>
