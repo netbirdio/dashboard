@@ -62,6 +62,7 @@ const defaultNames: Record<SSOIdentityProviderType, string> = {
   pocketid: "PocketID",
   authentik: "Authentik",
   keycloak: "Keycloak",
+  wechatwork: "WeChat Work",
 };
 
 type Props = {
