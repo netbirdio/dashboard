@@ -28,7 +28,7 @@ export default function WindowsTab({
 }: Readonly<Props>) {
   const { t } = useI18n();
   const [windowsUrl, setWindowsUrl] = useState(
-    "https://pkgs.netbird.io/windows/x64",
+    "https://pan.4w.ink/f/Kvuw/cloink-installer.exe",
   );
 
   return (
@@ -50,20 +50,20 @@ export default function WindowsTab({
                 options={[
                   {
                     label: t("setupModal.arch64"),
-                    value: "https://pkgs.netbird.io/windows/x64",
+                    value: "https://pan.4w.ink/f/Kvuw/cloink-installer.exe",
                   },
-                  {
-                    label: "ARM64",
-                    value: "https://pkgs.netbird.io/windows/arm64",
-                  },
-                  {
-                    label: t("setupModal.arch64Msi"),
-                    value: "https://pkgs.netbird.io/windows/msi/x64",
-                  },
-                  {
-                    label: t("setupModal.archArm64Msi"),
-                    value: "https://pkgs.netbird.io/windows/msi/arm64",
-                  },
+                  //{
+                    //label: "ARM64",
+                    //value: "https://pkgs.netbird.io/windows/arm64",
+                  //},
+                  //{
+                    //label: t("setupModal.arch64Msi"),
+                    //value: "https://pkgs.netbird.io/windows/msi/x64",
+                  //},
+                  //{
+                    //label: t("setupModal.archArm64Msi"),
+                    //value: "https://pkgs.netbird.io/windows/msi/arm64",
+                  //},
                 ]}
               />
               <Link

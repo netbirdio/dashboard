@@ -4,7 +4,7 @@ const config = loadConfig();
 export const GRPC_API_ORIGIN = config.grpcApiOrigin;
 
 export const getNetBirdUpCommand = () => {
-  let cmd = "netbird up";
+  let cmd = "cloink up";
   if (GRPC_API_ORIGIN) {
     cmd += " --management-url " + GRPC_API_ORIGIN;
   }

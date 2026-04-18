@@ -54,11 +54,11 @@ export default function DockerTab({
               {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
             </p>
             <Code>
-              <Code.Line>docker run --rm -d \</Code.Line>
+              <Code.Line>docker run --name cloink-client -d \</Code.Line>
               <Code.Line> --cap-add=NET_ADMIN \</Code.Line>
               <Code.Line>
                 {" "}
-                -e NB_SETUP_KEY=
+                -e CL_SETUP_KEY=
                 <span className={"text-netbird"}>
                   {setupKey ?? "SETUP_KEY"}
                 </span>{" "}
@@ -68,20 +68,20 @@ export default function DockerTab({
               {hostname && (
                 <Code.Line>
                   {" "}
-                  -e NB_HOSTNAME=
+                  -e CL_HOSTNAME=
                   <span className={"text-netbird"}>{`'${hostname}'`}</span> \
                 </Code.Line>
               )}
 
-              <Code.Line> -v netbird-client:/var/lib/netbird \</Code.Line>
+              <Code.Line> -v cloink-client:/var/lib/cloink \</Code.Line>
               {GRPC_API_ORIGIN && (
                 <Code.Line>
                   {" "}
-                  -e NB_MANAGEMENT_URL=
+                  -e CL_MANAGEMENT_URL=
                   <span className={"text-netbird"}>{GRPC_API_ORIGIN}</span> \
                 </Code.Line>
               )}
-              <Code.Line> netbirdio/netbird:latest</Code.Line>
+              <Code.Line> ohoimager/cloink:latest</Code.Line>
             </Code>
           </Steps.Step>
           <Steps.Step step={3} line={false}>

@@ -5023,7 +5023,7 @@ export const messages = {
     "setupModal.startNetBirdDaemon": "启动 Cloink 后台服务",
     "setupModal.installWithCommandLine": "通过命令行安装",
     "setupModal.installManuallyUbuntu": "在 Ubuntu 上手动安装",
-    "setupModal.addRepository": "添加我们的软件仓库",
+    "setupModal.addRepository": "手动下载安装 Cloink",
     "setupModal.androidInstallTitle": "在 Android 上安装",
     "setupModal.androidStep1": "从 Google Play 商店下载并安装应用：",
     "setupModal.googlePlayAlt": "从 Google Play 下载 Cloink",
