@@ -18,7 +18,7 @@ export const getLatestNetbirdRelease = async (
 
   if (runFetch) {
     const data = (await fetch(
-      `${GITHUB_API_ENDPOINT}/repos/netbirdio/netbird/releases/latest`,
+      `${GITHUB_API_ENDPOINT}/repos/cloinkio/cloink/releases/latest`,
     ).then((response) => response.json())) as any;
 
     try {
@@ -65,7 +65,7 @@ export const compareVersions = (
 /**
  * Check if peer as routing peer is supported by the provided version and operating system.
  * Routing peers are supported on Windows, macOS, iOS & Android starting from NetBird v0.36.6+.
- * @param version
+ * @param version 
  * @param os
  */
 export const isRoutingPeerSupported = (version: string, os: string) => {
@@ -77,7 +77,7 @@ export const isRoutingPeerSupported = (version: string, os: string) => {
 
 /**
  * Check if native SSH is supported.
- * Supported starting from NetBird v0.60.0+.
+ * Supported starting from Cloink v0.60.0+.
  * @param version
  */
 export const isNativeSSHSupported = (version: string) => {
