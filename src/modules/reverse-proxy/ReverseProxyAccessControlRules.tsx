@@ -3,20 +3,12 @@ import { Label } from "@components/Label";
 import HelpText from "@components/HelpText";
 import Button from "@components/Button";
 import { Input } from "@components/Input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@components/Select";
 import cidr from "ip-cidr";
 import {
   FlagIcon,
   MinusCircleIcon,
   NetworkIcon,
   PlusIcon,
-  ShieldAlertIcon,
   ShieldCheckIcon,
   ShieldXIcon,
   WorkflowIcon,
@@ -27,6 +19,7 @@ import {
 } from "@components/select/SelectDropdown";
 import { CountrySelector } from "@/components/ui/CountrySelector";
 import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
+import { ReverseProxyCrowdSecIPReputation } from "@/modules/reverse-proxy/ReverseProxyCrowdSecIPReputation";
 
 type AccessAction = "allow" | "block";
 type AccessRuleType = "country" | "ip" | "cidr";
@@ -101,10 +94,19 @@ function rulesReducer(state: AccessRule[], action: RulesAction): AccessRule[] {
   }
 }
 
-function pushCidrRules(rules: AccessRule[], values: string[] | undefined, action: AccessAction) {
+function pushCidrRules(
+  rules: AccessRule[],
+  values: string[] | undefined,
+  action: AccessAction,
+) {
   values?.forEach((v) => {
     const isIp = v.includes(":") ? v.endsWith("/128") : v.endsWith("/32");
-    rules.push({ id: nextId(), action, type: isIp ? "ip" : "cidr", value: isIp ? v.replace(/\/(32|128)$/, "") : v });
+    rules.push({
+      id: nextId(),
+      action,
+      type: isIp ? "ip" : "cidr",
+      value: isIp ? v.replace(/\/(32|128)$/, "") : v,
+    });
   });
 }
 
@@ -140,7 +142,10 @@ function rulesToRestrictions(
       else blocked_countries.push(rule.value);
     } else {
       const suffix = rule.value.includes(":") ? "/128" : "/32";
-      const value = rule.type === "ip" && !rule.value.includes("/") ? `${rule.value}${suffix}` : rule.value;
+      const value =
+        rule.type === "ip" && !rule.value.includes("/")
+          ? `${rule.value}${suffix}`
+          : rule.value;
       if (rule.action === "allow") allowed_cidrs.push(value);
       else blocked_cidrs.push(value);
     }
@@ -187,7 +192,12 @@ function validateRule(rule: AccessRule): string {
   return "";
 }
 
-export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationChange, supportsCrowdSec }: Props) => {
+export const ReverseProxyAccessControlRules = ({
+  value,
+  onChange,
+  onValidationChange,
+  supportsCrowdSec,
+}: Props) => {
   const [rules, dispatch] = useReducer(
     rulesReducer,
     value,
@@ -231,29 +241,10 @@ export const ReverseProxyAccessControlRules = ({ value, onChange, onValidationCh
   return (
     <div className={"flex-col flex"}>
       {supportsCrowdSec && (
-        <div className="mb-6">
-          <Label>
-            <ShieldAlertIcon size={14} />
-            CrowdSec IP Reputation
-          </Label>
-          <HelpText>
-            Block or monitor connections from IPs flagged by CrowdSec. Enforce
-            blocks immediately, observe logs without blocking.
-          </HelpText>
-          <Select
-            value={crowdsecMode}
-            onValueChange={(v) => setCrowdsecMode(v as CrowdSecMode)}
-          >
-            <SelectTrigger className="w-[200px]">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={CrowdSecMode.OFF}>Off</SelectItem>
-              <SelectItem value={CrowdSecMode.ENFORCE}>Enforce</SelectItem>
-              <SelectItem value={CrowdSecMode.OBSERVE}>Observe</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <ReverseProxyCrowdSecIPReputation
+          value={crowdsecMode}
+          onChange={setCrowdsecMode}
+        />
       )}
 
       <div>
