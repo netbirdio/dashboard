@@ -22,11 +22,20 @@ export interface ReverseProxy {
   meta?: ReverseProxyMeta;
 }
 
+export const CrowdSecMode = {
+  OFF: "off",
+  ENFORCE: "enforce",
+  OBSERVE: "observe",
+} as const;
+
+export type CrowdSecMode = (typeof CrowdSecMode)[keyof typeof CrowdSecMode];
+
 export interface AccessRestrictions {
   allowed_cidrs?: string[];
   blocked_cidrs?: string[];
   allowed_countries?: string[];
   blocked_countries?: string[];
+  crowdsec_mode?: CrowdSecMode;
 }
 
 export interface ReverseProxyMeta {
@@ -102,6 +111,7 @@ export interface ReverseProxyDomain {
   target_cluster?: string;
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
+  supports_crowdsec?: boolean;
 }
 
 export enum ReverseProxyDomainType {
@@ -149,6 +159,7 @@ export interface ReverseProxyEvent {
   bytes_upload: number;
   bytes_download: number;
   protocol?: EventProtocol;
+  metadata?: Record<string, string>;
 }
 
 export function isL4Event(event: ReverseProxyEvent): boolean {
