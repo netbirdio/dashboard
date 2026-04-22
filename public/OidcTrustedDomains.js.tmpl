@@ -1,6 +1,6 @@
-﻿
-// Add here trusted domains, access tokens will be send to 
+
+// Domains used by OIDC server must be also declared here
+
 const trustedDomains = {
-    default:["$NETBIRD_MGMT_API_ENDPOINT"],
-    auth0:[]
-};  
+  default:["$NETBIRD_MGMT_API_ENDPOINT", "$NETBIRD_MGMT_GRPC_API_ENDPOINT"],
+};
