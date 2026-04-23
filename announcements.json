@@ -7,6 +7,6 @@
     "variant": "important",
     "isExternal": true,
     "closeable": true,
-    "isCloudOnly": false
+    "targets": ["selfhosted"]
   }
 ]
