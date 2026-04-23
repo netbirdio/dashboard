@@ -5,6 +5,7 @@ export interface Peer {
   id?: string;
   name: string;
   ip: string;
+  ipv6?: string;
   connected: boolean;
   created_at?: Date;
   last_seen: Date;

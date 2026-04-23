@@ -30,7 +30,8 @@ const searchPredicate = (item: Peer, query: string) => {
   const lowerCaseQuery = query.toLowerCase();
   if (item.name.toLowerCase().includes(lowerCaseQuery)) return true;
   if (item.hostname.toLowerCase().includes(lowerCaseQuery)) return true;
-  return item.ip.toLowerCase().startsWith(lowerCaseQuery);
+  if (item.ip.toLowerCase().startsWith(lowerCaseQuery)) return true;
+  return !!item.ipv6?.toLowerCase().startsWith(lowerCaseQuery);
 };
 
 export function PeerSelector({
@@ -124,7 +125,6 @@ export function PeerSelector({
                     "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-1 font-mono text-[10px]"
                   }
                 >
-                  <MapPinIcon />
                   {value.ip}
                 </div>
               </div>
@@ -238,7 +238,6 @@ export function PeerSelector({
                         !isSupported && "opacity-50",
                       )}
                     >
-                      <MapPinIcon />
                       {option.ip}
                     </div>
                   </FullTooltip>
