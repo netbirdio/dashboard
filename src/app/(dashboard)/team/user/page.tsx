@@ -402,7 +402,7 @@ function UserInformationCard({ user }: Readonly<{ user: User }>) {
               value={
                 neverLoggedIn
                   ? "Never"
-                  : dayjs(user.last_login).format("D MMMM, YYYY [at] h:mm A") +
+                  : dayjs(user.last_login).format("L [at] LT") +
                     " (" +
                     dayjs().to(user.last_login) +
                     ")"
