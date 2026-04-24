@@ -22,6 +22,7 @@ import { cn } from "@utils/helpers";
 import {
   CalendarClock,
   ExternalLinkIcon,
+  KeyRound,
   ShieldIcon,
   ShieldUserIcon,
   TimerResetIcon,
@@ -66,6 +67,15 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
     },
   );
 
+  // Local MFA (UI only, not wired to the backend yet)
+  const [isLocalMFAEnabled, setIsLocalMFAEnabled] = useState<boolean>(() => {
+    try {
+      return account?.settings?.local_mfa_enabled || false;
+    } catch (error) {
+      return false;
+    }
+  });
+
   // Peer Expiration
   const [
     loginExpiration,
@@ -105,6 +115,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
     peerInactivityExpirationEnabled,
     peerInactivityExpiresIn,
     peerInactivityExpireInterval,
+    isLocalMFAEnabled,
   ]);
 
   const saveChanges = async () => {
@@ -129,6 +140,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               peer_approval_enabled: peerApproval,
               user_approval_required: userApprovalRequired,
             },
+            local_mfa_enabled: isLocalMFAEnabled
           },
         } as Account)
         .then(() => {
@@ -212,6 +224,33 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
               disabled={!permission.settings.update}
             />
           </div>
+
+          {!account.settings.local_auth_disabled && account.settings.embedded_idp_enabled ?
+            (
+              <div className={"flex flex-col"}>
+                <FancyToggleSwitch
+                  value={isLocalMFAEnabled}
+                  onChange={setIsLocalMFAEnabled}
+                  dataCy={"local-mfa-enabled"}
+                  label={
+                    <>
+                      <KeyRound size={15} />
+                      Enable Local MFA
+                    </>
+                  }
+                  helpText={
+                    <>
+                      Require multi-factor authentication for users
+                      <br />
+                      authenticating with local credentials.
+                    </>
+                  }
+                  disabled={!permission.settings.update}
+                />
+              </div>
+            ) : null
+          }
+
 
           <div className={"flex flex-col"}>
             <FancyToggleSwitch
