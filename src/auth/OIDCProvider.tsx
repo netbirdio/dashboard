@@ -59,9 +59,8 @@ export default function OIDCProvider({ children }: Props) {
       refresh_time_before_tokens_expiration_in_second: 30,
       silent_redirect_uri: window.location.origin + config.silentRedirectURI,
       scope: config.scopesSupported,
-      // disabling service worker
-      //service_worker_relative_url: "/OidcServiceWorker.js",
-      service_worker_only: false,
+      service_worker_relative_url: "/OidcServiceWorker.js",
+      service_worker_only: true,
       authority_configuration: config.auth0Auth
         ? auth0AuthorityConfig
         : undefined,
