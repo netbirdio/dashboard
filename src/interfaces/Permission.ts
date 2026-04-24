@@ -35,6 +35,13 @@ export interface Permissions {
     proxy_configuration: Permission;
 
     services: Permission;
+
+    /**
+     * Entra device authentication integration (optional so the UI stays
+     * backwards-compatible with management servers that don't expose this
+     * module yet — all call sites use optional chaining).
+     */
+    entra_device_auth?: Permission;
   };
 }
 
