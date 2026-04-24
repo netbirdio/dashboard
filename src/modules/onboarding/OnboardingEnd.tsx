@@ -97,6 +97,7 @@ const VideoGuide = ({
           "border border-nb-gray-900 rounded-lg p-[2px] bg-nb-gray-920 min-w-[160px] max-w-[160px] relative group hover:bg-nb-gray-900 transition-all"
         }
         target={"_blank"}
+        rel="noopener noreferrer"
         href={href}
       >
         <span

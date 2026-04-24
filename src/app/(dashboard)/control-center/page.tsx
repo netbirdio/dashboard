@@ -1843,7 +1843,7 @@ function ControlCenterView() {
 
         <div className={"absolute right-0 bottom-0 z-10"}>
           <div className={"px-6 py-4"}>
-            <a href={"https://forms.gle/MKJnVXCiUM1KtxLy6"} target={"_blank"}>
+            <a href={"https://forms.gle/MKJnVXCiUM1KtxLy6"} target={"_blank"} rel="noopener noreferrer">
               <Button variant={"secondary"} size={"xs"}>
                 <MessageSquareShareIcon size={12} />
                 Feedback

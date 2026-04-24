@@ -66,7 +66,7 @@ export default function SidebarItem({
     if (collapsible && mobileNavOpen) return;
     if (collapsible && open) return;
     if (preventRedirect) return;
-    if (target == "_blank") return window.open(href, "_blank");
+    if (target == "_blank") return window.open(href, "_blank", "noopener,noreferrer");
     if (mobileNavOpen) toggleMobileNav();
     router.push(href);
   };
