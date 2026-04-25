@@ -232,7 +232,7 @@ export function AccessControlModalContent({
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-3xl"} data-nb-explain-docs='["https://docs.netbird.io/manage/access-control", "https://docs.netbird.io/manage/access-control/manage-network-access"]'>
+    <ModalContent maxWidthClass={"max-w-3xl"}>
       <div className="flex items-start justify-between">
         <ModalHeader
           icon={<AccessControlIcon className={"fill-netbird"} />}

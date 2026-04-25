@@ -91,7 +91,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
   };
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"} data-nb-explain-docs='["https://docs.netbird.io/manage/networks"]'>
+    <ModalContent maxWidthClass={"max-w-xl"}>
       <div className="flex items-start justify-between">
         <ModalHeader
           icon={<NetworkRoutesIcon className={"fill-netbird"} />}

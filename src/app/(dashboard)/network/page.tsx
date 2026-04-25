@@ -100,7 +100,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
     <PageContainer>
       <NetworkAccessControlProvider>
         <NetworkProvider network={network}>
-          <div data-nb-explain-docs='["https://docs.netbird.io/manage/networks"]'>
+          <div>
           <div className={"p-default py-6"}>
             <Breadcrumbs>
               <Breadcrumbs.Item
@@ -335,7 +335,6 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
         <Card.ListItem
           tooltip={false}
           data-nb-explain="Active Policies"
-          data-nb-explain-docs='["https://docs.netbird.io/manage/access-control/manage-network-access"]'
           label={
             policyCount > 0 ? (
               <>

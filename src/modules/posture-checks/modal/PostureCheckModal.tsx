@@ -71,7 +71,6 @@ export default function PostureCheckModal({
         <ModalContent
           maxWidthClass={cn("relative", "max-w-2xl")}
           showClose={true}
-          data-nb-explain-docs='["https://docs.netbird.io/manage/access-control/posture-checks"]'
         >
           <div className="flex items-start justify-between">
             <ModalHeader

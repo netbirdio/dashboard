@@ -119,7 +119,6 @@ export function ResourceModalContent({
     setExplainContext({
       modalName: resource ? "Edit Resource" : "Add Resource",
       pageName: "Networks",
-      docsUrls: ["https://docs.netbird.io/manage/networks"],
     });
     return () => clearExplainContext();
   }, [resource, setExplainContext, clearExplainContext]);

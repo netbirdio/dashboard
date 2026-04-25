@@ -200,7 +200,7 @@ function RoutingPeerModalContent({
   const canContinue = routingPeer !== undefined || routingPeerGroups.length > 0;
 
   return (
-    <ModalContent maxWidthClass={"max-w-xl"} data-nb-explain-docs='["https://docs.netbird.io/manage/networks"]'>
+    <ModalContent maxWidthClass={"max-w-xl"}>
       <div className="flex items-start justify-between">
         <ModalHeader
           icon={<Share2Icon size={16} />}

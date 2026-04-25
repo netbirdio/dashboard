@@ -87,7 +87,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     id: "policies",
     accessorKey: "id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}><span data-nb-explain="Access Control Policies" data-nb-explain-docs='["https://docs.netbird.io/manage/access-control/manage-network-access"]'>Policies</span></DataTableHeader>;
+      return <DataTableHeader column={column}><span data-nb-explain="Access Control Policies">Policies</span></DataTableHeader>;
     },
     cell: ({ row }) => {
       return <ResourcePolicyCell resource={row.original} />;
@@ -97,7 +97,7 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
     id: "expose_service",
     accessorKey: "id",
     header: ({ column }) => {
-      return <DataTableHeader column={column}><span data-nb-explain="Expose Service" data-nb-explain-docs='["https://docs.netbird.io/manage/reverse-proxy"]'>Expose Service</span></DataTableHeader>;
+      return <DataTableHeader column={column}><span data-nb-explain="Expose Service">Expose Service</span></DataTableHeader>;
     },
     cell: ({ row }) => {
       return <ResourceExposeServiceCell resource={row.original} />;
