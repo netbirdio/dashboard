@@ -2,5 +2,8 @@
 // Domains used by OIDC server must be also declared here
 
 const trustedDomains = {
-  default:["$NETBIRD_MGMT_API_ENDPOINT", "$NETBIRD_MGMT_GRPC_API_ENDPOINT"],
+  default: [
+    "$NETBIRD_MGMT_API_ENDPOINT",
+    "$NETBIRD_MGMT_GRPC_API_ENDPOINT",
+  ].filter((d) => d && d.length > 0),
 };

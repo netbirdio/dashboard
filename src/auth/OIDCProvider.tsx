@@ -52,6 +52,15 @@ export default function OIDCProvider({ children }: Props) {
   };
 
   useEffect(() => {
+    // The service worker is disabled in two cases:
+    //  1. tokenSource === "idtoken" — the SW would overwrite the manually-set
+    //     idToken header with the access_token, breaking the idToken path.
+    //  2. NETBIRD_DISABLE_SERVICE_WORKER=true — operator escape hatch for
+    //     debugging or deployments that hit edge cases with the SW.
+    const useServiceWorker =
+      !config.disableServiceWorker &&
+      config.tokenSource?.toLowerCase() !== "idtoken";
+
     setProviderConfig({
       authority: config.authority,
       client_id: config.clientId,
@@ -59,8 +68,12 @@ export default function OIDCProvider({ children }: Props) {
       refresh_time_before_tokens_expiration_in_second: 30,
       silent_redirect_uri: window.location.origin + config.silentRedirectURI,
       scope: config.scopesSupported,
-      service_worker_relative_url: "/OidcServiceWorker.js",
-      service_worker_only: true,
+      ...(useServiceWorker
+        ? {
+            service_worker_relative_url: "/OidcServiceWorker.js",
+            service_worker_only: false,
+          }
+        : {}),
       authority_configuration: config.auth0Auth
         ? auth0AuthorityConfig
         : undefined,
@@ -88,8 +101,13 @@ export default function OIDCProvider({ children }: Props) {
       loadingComponent={FullScreenLoading}
       callbackSuccessComponent={FullScreenLoading}
       onEvent={onEvent}
-      onSessionLost={() => void 0}
-      //sessionLostComponent={SessionLost}
+      // If session is lost, try to re-initiate authentication flow
+      onSessionLost={() => window.location.replace("/")}
+      // Another tab logged out — fires a separate event in @axa-fr/react-oidc,
+      // not covered by onSessionLost. Without this handler the library would
+      // render its default "Session timed out" UI instead of redirecting.
+      onLogoutFromAnotherTab={() => window.location.replace("/")}
+      // sessionLostComponent={SessionLost}
     >
       <SecureProvider>{children}</SecureProvider>
     </OidcProvider>

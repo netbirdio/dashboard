@@ -1,4 +1,5 @@
 import {
+  OidcClient,
   useOidc,
   useOidcFetch,
   useOidcIdToken,
@@ -85,13 +86,26 @@ export function useNetBirdFetch(ignoreError: boolean = false): {
   const { fetch: oidcFetch } = useOidcFetch();
   const handleErrors = useApiErrorHandling(ignoreError);
 
+  // Read the current idToken imperatively so the polling loop and the final
+  // header value see refreshed tokens without waiting for a re-render.
+  const getCurrentIdToken = (): string | undefined => {
+    try {
+      return OidcClient.get().tokens?.idToken;
+    } catch {
+      return undefined;
+    }
+  };
+
   const isIdTokenExpired = async () => {
     let attempts = 4;
-    while (isExpired(idToken) && attempts > 0) {
+    while (attempts > 0) {
+      const current = getCurrentIdToken();
+      if (current && !isExpired(current)) return false;
       await sleep(500);
       attempts = attempts - 1;
     }
-    return isExpired(idToken);
+    const current = getCurrentIdToken();
+    return !current || isExpired(current);
   };
 
   const nativeFetch = async (input: RequestInfo, init?: RequestInit) => {
@@ -110,7 +124,7 @@ export function useNetBirdFetch(ignoreError: boolean = false): {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          Authorization: `Bearer ${idToken}`,
+          Authorization: `Bearer ${getCurrentIdToken() ?? idToken}`,
         },
       });
     }
