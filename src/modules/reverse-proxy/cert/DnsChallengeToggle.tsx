@@ -1,6 +1,6 @@
 "use client";
 
-// Phase 3 (p3-plan.md Wave 3) drives `enabled` ON when the parent's
+// Phase 2 (p2-plan.md Wave 3) drives `enabled` ON when the parent's
 // "Private service" flag is set. Keep this component controlled so the
 // flag can flip the toggle without owning state here.
 
@@ -18,7 +18,7 @@ import {
 } from "@components/Select";
 import { KeyRound } from "lucide-react";
 import * as React from "react";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 import { Credential, CredentialProviderType } from "@/interfaces/Credential";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
@@ -93,7 +93,15 @@ export function DnsChallengeToggle({
     return credentials.filter((c) => c.provider_type === state.dnsProvider);
   }, [credentials, state.dnsProvider]);
 
-  const sourceMode: "saved" | "new" =
+  // Default mode is derived; explicit user clicks on the segmented tabs
+  // pin the choice so picking "Create new credential" sticks even when
+  // no fields are typed yet (without this, the derivation snaps back to
+  // "saved" whenever a matching credential exists).
+  const [explicitSourceMode, setExplicitSourceMode] = useState<
+    "saved" | "new" | null
+  >(null);
+
+  const derivedSourceMode: "saved" | "new" =
     state.credentialId !== ""
       ? "saved"
       : Object.values(state.secretFields).some((v) => v !== "")
@@ -102,8 +110,12 @@ export function DnsChallengeToggle({
       ? "saved"
       : "new";
 
+  const sourceMode = explicitSourceMode ?? derivedSourceMode;
+
   const setSourceMode = (mode: string) => {
-    if (mode === "saved") {
+    const next = mode as "saved" | "new";
+    setExplicitSourceMode(next);
+    if (next === "saved") {
       onStateChange({ ...state, secretFields: {} });
     } else {
       onStateChange({ ...state, credentialId: "" });
