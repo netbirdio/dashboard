@@ -5,7 +5,7 @@ import { CredentialProviderType } from "@/interfaces/Credential";
 // renders the field set dynamically based on the selected provider.
 //
 // Keep in sync with the proxy-side adapter registry at
-// netbird/proxy/internal/acme/legoclient/providers.go (Wave 4).
+// netbird/proxy/internal/acme/legoclient/providers.go.
 
 export type ProviderFieldSchema = {
   // Key under `secret_fields` on the credential POST. Must match the
@@ -26,6 +26,14 @@ export type ProviderSchema = {
   label: string;
   description: string;
   fields: ProviderFieldSchema[];
+  // Per-provider scope warning shown only when CredentialPicker is
+  // rendered with scopeContext="auto-configure". Cert issuance via
+  // DNS-01 needs a narrower scope (write to _acme-challenge.<zone>);
+  // auto-configure needs to write a CNAME at *.<zone>, which most
+  // providers express as a much broader permission. The dashboard
+  // surfaces this so users don't reuse a Phase-1-scoped token and
+  // hit a 403 at write time.
+  autoConfigureScopeHelper?: string;
 };
 
 export const dnsProviders: ReadonlyArray<ProviderSchema> = [
@@ -33,6 +41,8 @@ export const dnsProviders: ReadonlyArray<ProviderSchema> = [
     id: "cloudflare",
     label: "Cloudflare",
     description: "Verified via Cloudflare API token (Zone:DNS:Edit).",
+    autoConfigureScopeHelper:
+      "Auto-configure needs a Cloudflare API token with Zone:DNS:Edit on the target zone (not just the _acme-challenge subdomain). The token will be used to create, read, and delete records anywhere in the zone.",
     fields: [
       {
         key: "auth_token",
@@ -49,6 +59,8 @@ export const dnsProviders: ReadonlyArray<ProviderSchema> = [
     id: "route53",
     label: "AWS Route 53",
     description: "Verified via AWS IAM credentials.",
+    autoConfigureScopeHelper:
+      "Auto-configure needs an IAM credential with route53:ListHostedZones, route53:ListResourceRecordSets, and route53:ChangeResourceRecordSets on the hosted zone — broader than the cert-issuance policy. We recommend scoping the policy to a specific HostedZoneId via the optional Hosted Zone ID field below.",
     fields: [
       {
         key: "access_key_id",
@@ -92,6 +104,8 @@ export const dnsProviders: ReadonlyArray<ProviderSchema> = [
     id: "digitalocean",
     label: "DigitalOcean",
     description: "Verified via DigitalOcean personal access token.",
+    autoConfigureScopeHelper:
+      "Auto-configure needs a DigitalOcean API token with read+write on Domains. DigitalOcean tokens are not zone-scoped — the token will have access to every domain in your DO account.",
     fields: [
       {
         key: "auth_token",
@@ -107,6 +121,8 @@ export const dnsProviders: ReadonlyArray<ProviderSchema> = [
     id: "rfc2136",
     label: "RFC 2136 (BIND, PowerDNS, Knot, NSD)",
     description: "Verified via TSIG-secured dynamic DNS update.",
+    autoConfigureScopeHelper:
+      "Auto-configure uses the same TSIG key as cert issuance. Verify your nameserver's update-policy grants this key permission to write CNAME records (not just TXT). A common mistake is granting `name _acme-challenge.* TXT` only — auto-configure also needs `name *.<zone> CNAME`.",
     fields: [
       {
         key: "nameserver",

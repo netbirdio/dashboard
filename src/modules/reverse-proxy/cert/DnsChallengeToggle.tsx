@@ -1,44 +1,28 @@
 "use client";
 
-// Phase 2 (p2-plan.md Wave 3) drives `enabled` ON when the parent's
-// "Private service" flag is set. Keep this component controlled so the
-// flag can flip the toggle without owning state here.
+// The "Private service" flag on the parent modal drives `enabled` ON.
+// Keep this component controlled so the flag can flip the toggle
+// without owning state here.
+//
+// The inner credential picker is shared with the custom-domain
+// auto-configure flow via CredentialPicker — this file is a thin
+// wrapper that adds the FancyToggleSwitch around it for the cert tab.
 
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
-import HelpText from "@components/HelpText";
-import { Label } from "@components/Label";
-import { SegmentedTabs } from "@components/SegmentedTabs";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@components/Select";
 import { KeyRound } from "lucide-react";
 import * as React from "react";
-import { useMemo, useState } from "react";
 
-import { Credential, CredentialProviderType } from "@/interfaces/Credential";
-import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { ProviderFields } from "./ProviderFields";
-import { dnsProviders, getProviderSchema } from "./providers";
+import {
+  CredentialPicker,
+  CredentialPickerState,
+  initialCredentialPickerState,
+} from "./CredentialPicker";
 
-export type DnsChallengeState = {
-  dnsProvider: CredentialProviderType | "";
-  // If set, the service should reference this saved credential. When
-  // empty AND there is non-empty input in secretFields, the modal will
-  // POST a fresh credential on save.
-  credentialId: string;
-  secretFields: Record<string, string>;
-};
-
-export const initialDnsChallengeState: DnsChallengeState = {
-  dnsProvider: "",
-  credentialId: "",
-  secretFields: {},
-};
+// Re-exported under the historical name so other modules don't need to
+// rename their imports. New code should import CredentialPickerState
+// from CredentialPicker directly.
+export type DnsChallengeState = CredentialPickerState;
+export const initialDnsChallengeState = initialCredentialPickerState;
 
 type Props = {
   enabled: boolean;
@@ -58,70 +42,6 @@ export function DnsChallengeToggle({
   onStateChange,
   editingExisting,
 }: Props) {
-  const { credentials } = useReverseProxies();
-
-  const setProvider = (value: string) => {
-    const provider = value as CredentialProviderType;
-    if (provider === state.dnsProvider) return;
-    // Switching providers wipes both the saved-credential pick and the
-    // inline field map (different schemas).
-    onStateChange({
-      dnsProvider: provider,
-      credentialId: "",
-      secretFields: {},
-    });
-  };
-
-  const setCredentialId = (value: string) => {
-    if (value === state.credentialId) return;
-    onStateChange({ ...state, credentialId: value, secretFields: {} });
-  };
-
-  const setSecretField = (key: string, value: string) => {
-    onStateChange({
-      ...state,
-      secretFields: { ...state.secretFields, [key]: value },
-    });
-  };
-
-  const schema = getProviderSchema(
-    state.dnsProvider === "" ? undefined : state.dnsProvider,
-  );
-
-  const matchingCredentials = useMemo<Credential[]>(() => {
-    if (!credentials || state.dnsProvider === "") return [];
-    return credentials.filter((c) => c.provider_type === state.dnsProvider);
-  }, [credentials, state.dnsProvider]);
-
-  // Default mode is derived; explicit user clicks on the segmented tabs
-  // pin the choice so picking "Create new credential" sticks even when
-  // no fields are typed yet (without this, the derivation snaps back to
-  // "saved" whenever a matching credential exists).
-  const [explicitSourceMode, setExplicitSourceMode] = useState<
-    "saved" | "new" | null
-  >(null);
-
-  const derivedSourceMode: "saved" | "new" =
-    state.credentialId !== ""
-      ? "saved"
-      : Object.values(state.secretFields).some((v) => v !== "")
-      ? "new"
-      : matchingCredentials.length > 0
-      ? "saved"
-      : "new";
-
-  const sourceMode = explicitSourceMode ?? derivedSourceMode;
-
-  const setSourceMode = (mode: string) => {
-    const next = mode as "saved" | "new";
-    setExplicitSourceMode(next);
-    if (next === "saved") {
-      onStateChange({ ...state, secretFields: {} });
-    } else {
-      onStateChange({ ...state, credentialId: "" });
-    }
-  };
-
   return (
     <FancyToggleSwitch
       value={enabled}
@@ -134,92 +54,12 @@ export function DnsChallengeToggle({
       }
       helpText="By default, services use the proxy's automatic TLS challenge (TLS-ALPN-01). Enable this to issue certs via DNS instead — required for private services and wildcard domains."
     >
-      <div className={"flex-col flex gap-6"}>
-        <div className={"flex flex-col gap-2"}>
-          <Label>DNS Provider</Label>
-          <Select value={state.dnsProvider} onValueChange={setProvider}>
-            <SelectTrigger>
-              <SelectValue placeholder={"Choose a provider…"} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                {dnsProviders.map((p) => (
-                  <SelectItem
-                    key={p.id}
-                    value={p.id}
-                    description={p.description}
-                  >
-                    {p.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-        </div>
-
-        {schema && (
-          <>
-            <div className={"flex flex-col gap-2"}>
-              <Label>Credential</Label>
-              <SegmentedTabs value={sourceMode} onChange={setSourceMode}>
-                <SegmentedTabs.List>
-                  <SegmentedTabs.Trigger value={"saved"}>
-                    Use saved credential
-                  </SegmentedTabs.Trigger>
-                  <SegmentedTabs.Trigger value={"new"}>
-                    Create new credential
-                  </SegmentedTabs.Trigger>
-                </SegmentedTabs.List>
-              </SegmentedTabs>
-            </div>
-
-            {sourceMode === "saved" && (
-              <div className={"flex flex-col gap-2"}>
-                <Label>Saved Credential</Label>
-                {matchingCredentials.length === 0 ? (
-                  <HelpText className={"!mt-0"}>
-                    No saved credentials for this provider. Switch to
-                    “Create new credential” or add one from the DNS
-                    Credentials page.
-                  </HelpText>
-                ) : (
-                  <Select
-                    value={state.credentialId}
-                    onValueChange={setCredentialId}
-                  >
-                    <SelectTrigger>
-                      <SelectValue
-                        placeholder={"Choose a saved credential…"}
-                      />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        {matchingCredentials.map((c) => (
-                          <SelectItem key={c.id} value={c.id}>
-                            {c.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            )}
-
-            {sourceMode === "new" && (
-              <div className={"flex flex-col gap-2"}>
-                <Label>Provider Credentials</Label>
-                <ProviderFields
-                  schema={schema}
-                  values={state.secretFields}
-                  onChange={setSecretField}
-                  editingExisting={editingExisting}
-                />
-              </div>
-            )}
-          </>
-        )}
-      </div>
+      <CredentialPicker
+        state={state}
+        onStateChange={onStateChange}
+        editingExisting={editingExisting}
+        scopeContext={"cert"}
+      />
     </FancyToggleSwitch>
   );
 }

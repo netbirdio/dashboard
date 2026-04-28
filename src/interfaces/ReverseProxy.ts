@@ -20,7 +20,7 @@ export interface ReverseProxy {
   auth?: ReverseProxyAuth;
   access_restrictions?: AccessRestrictions;
   meta?: ReverseProxyMeta;
-  // Wave 1+ ACME challenge configuration. Empty challenge_type means
+  // ACME challenge configuration. Empty challenge_type means
   // "use the proxy's globally-configured default."
   challenge_type?: import("./Credential").ChallengeType;
   dns_provider?: import("./Credential").CredentialProviderType;
@@ -118,6 +118,37 @@ export interface ReverseProxyDomain {
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
   supports_crowdsec?: boolean;
+  // Auto-configure metadata. Set when NetBird wrote the wildcard CNAME
+  // automatically via a stored DNS provider credential. Manual-flow
+  // domains have these undefined or auto_configured: false.
+  auto_configured?: boolean;
+  auto_configured_provider?: string;
+  auto_configured_credential_id?: string;
+}
+
+// AutoConfigureRequest mirrors the backend's AutoConfigureRequest
+// (shared/management/http/api/openapi.yml). Sent as part of
+// POST /reverse-proxies/domains when the user picks the "Auto-configure"
+// mode in the Add Custom Domain modal.
+export interface AutoConfigureRequest {
+  credential_id: string;
+  provider: "cloudflare" | "route53" | "digitalocean" | "rfc2136";
+}
+
+// AutoConfigureError is the structured error body returned by the
+// backend when an auto-configure write fails. The dashboard renders
+// these inline (without parsing the message string) so the UX can be
+// targeted to each error_code.
+export interface AutoConfigureError {
+  error_code:
+    | "CREDENTIAL_INSUFFICIENT_SCOPE"
+    | "ZONE_NOT_FOUND"
+    | "RECORD_ALREADY_EXISTS"
+    | "PROVIDER_RATE_LIMITED"
+    | "PROVIDER_UNAVAILABLE";
+  message: string;
+  provider?: string;
+  fqdn?: string;
 }
 
 export enum ReverseProxyDomainType {

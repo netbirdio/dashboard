@@ -15,6 +15,7 @@ import { Credential, CredentialRequest } from "@/interfaces/Credential";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
+  AutoConfigureRequest,
   ReverseProxy,
   ReverseProxyDomain,
   ReverseProxyFlatTarget,
@@ -51,6 +52,7 @@ type ReverseProxiesContextValue = {
   createDomain: (
     domain: string,
     targetCluster: string,
+    autoConfigure?: AutoConfigureRequest,
   ) => Promise<ReverseProxyDomain>;
   credentials: Credential[] | undefined;
   isLoadingCredentials: boolean;
@@ -416,22 +418,33 @@ export default function ReverseProxiesProvider({
     async (
       domain: string,
       targetCluster: string,
+      autoConfigure?: AutoConfigureRequest,
     ): Promise<ReverseProxyDomain> => {
-      const promise = domainRequest
-        .post({
-          domain,
-          target_cluster: targetCluster,
-        })
-        .then((d) => {
-          mutate("/reverse-proxies/domains");
-          return d;
-        });
-      notify({
-        title: "Add Custom Domain",
-        description: "Domain successfully added",
-        promise,
-        loadingMessage: "Adding domain...",
+      // Build payload — auto_configure is omitted for the manual flow
+      // so the request body is byte-identical to pre-auto-configure
+      // behavior on the wire.
+      const payload: Record<string, unknown> = {
+        domain,
+        target_cluster: targetCluster,
+      };
+      if (autoConfigure) {
+        payload.auto_configure = autoConfigure;
+      }
+      const promise = domainRequest.post(payload).then((d) => {
+        mutate("/reverse-proxies/domains");
+        return d;
       });
+      // Suppress the success toast on auto-configure — the modal already
+      // shows a clearer "we wrote the CNAME" inline state. notify() still
+      // surfaces failures.
+      if (!autoConfigure) {
+        notify({
+          title: "Add Custom Domain",
+          description: "Domain successfully added",
+          promise,
+          loadingMessage: "Adding domain...",
+        });
+      }
       return promise;
     },
     [domainRequest, mutate],
@@ -499,10 +512,18 @@ export default function ReverseProxiesProvider({
 
   const deleteDomain = useCallback(
     async (domain: ReverseProxyDomain) => {
+      // For auto-configured domains, the wildcard CNAME we wrote into
+      // the user's DNS will remain after deletion (v1 doesn't reach
+      // back to the provider on delete). Surface this in the
+      // confirmation so the user knows to clean up manually if they
+      // want a clean teardown.
+      const description = domain.auto_configured
+        ? `Are you sure you want to delete this domain? This action cannot be undone. The wildcard CNAME for *.${domain.domain} will remain in your ${domain.auto_configured_provider ?? "DNS"} provider — remove it manually if no longer needed.`
+        : "Are you sure you want to delete this domain? This action cannot be undone.";
+
       const choice = await confirm({
         title: `Delete '${domain.domain}'?`,
-        description:
-          "Are you sure you want to delete this domain? This action cannot be undone.",
+        description,
         confirmText: "Delete",
         cancelText: "Cancel",
         type: "danger",
