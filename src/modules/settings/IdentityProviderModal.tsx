@@ -49,6 +49,7 @@ const issuerHints: Partial<Record<SSOIdentityProviderType, string>> = {
   okta: "https://{ORG}.okta.com",
   entra: "https://login.microsoftonline.com/{TENANT_ID}/v2.0",
   pocketid: "https://pocketid.example.com",
+  adfs: "https://adfs.example.com/adfs",
 };
 
 const defaultNames: Record<SSOIdentityProviderType, string> = {
@@ -61,6 +62,7 @@ const defaultNames: Record<SSOIdentityProviderType, string> = {
   pocketid: "PocketID",
   authentik: "Authentik",
   keycloak: "Keycloak",
+  adfs: "Microsoft AD FS",
 };
 
 type Props = {
