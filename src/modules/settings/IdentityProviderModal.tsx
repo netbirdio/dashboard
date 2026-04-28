@@ -1,5 +1,6 @@
 import Button from "@components/Button";
 import Code from "@components/Code";
+import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
@@ -30,6 +31,8 @@ import {
   PlusCircle,
   SaveIcon,
   TagIcon,
+  ShieldCheck,
+  FileLock2,
 } from "lucide-react";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -96,6 +99,8 @@ export default function IdentityProviderModal({
   const [issuer, setIssuer] = useState(provider?.issuer ?? "");
   const [clientId, setClientId] = useState(provider?.client_id ?? "");
   const [clientSecret, setClientSecret] = useState("");
+  const [pkce, setPkce] = useState(provider?.pkce ?? false);
+  const [jwksUrl, setJwksUrl] = useState(provider?.jwks_url ?? "");
 
   const requiresIssuer = type !== "google" && type !== "microsoft";
 
@@ -110,12 +115,13 @@ export default function IdentityProviderModal({
     if (trimmedName.length === 0) return true;
     if (requiresIssuer && trimmedIssuer.length === 0) return true;
     if (trimmedClientId.length === 0) return true;
-    // Client secret required for new providers, or when client ID changed during edit
-    if ((!isEditing || clientIdChanged) && trimmedClientSecret.length === 0)
+    // Client secret required for new providers, or when client ID changed during edit,
+    // unless PKCE is enabled which allows public clients without a secret.
+    if ((!isEditing || clientIdChanged) && trimmedClientSecret.length === 0 && !pkce)
       return true;
 
     return false;
-  }, [name, issuer, clientId, clientSecret, isEditing, clientIdChanged, requiresIssuer]);
+  }, [name, issuer, clientId, clientSecret, isEditing, clientIdChanged, requiresIssuer, pkce]);
 
   const submit = () => {
     const payload: SSOIdentityProviderRequest = {
@@ -124,6 +130,8 @@ export default function IdentityProviderModal({
       issuer: trim(issuer),
       client_id: trim(clientId),
       client_secret: trim(clientSecret),
+      pkce,
+      jwks_url: trim(jwksUrl),
     };
 
     if (isEditing) {
@@ -260,6 +268,35 @@ export default function IdentityProviderModal({
                 }
               />
             </div>
+
+            <div>
+              <Label>JWKS URL (Optional)</Label>
+              <HelpText>
+                Override the default JSON Web Key Set URL from discovery
+              </HelpText>
+              <Input
+                placeholder={"https://login.example.com/common/discovery/keys"}
+                value={jwksUrl}
+                onChange={(e) => setJwksUrl(e.target.value)}
+                customPrefix={
+                  <FileLock2 size={16} className="text-nb-gray-300" />
+                }
+              />
+            </div>
+
+            <FancyToggleSwitch
+              value={pkce}
+              onChange={setPkce}
+              label={
+                <div className={"flex items-center gap-2"}>
+                  <ShieldCheck size={16} />
+                  Enable PKCE
+                </div>
+              }
+              helpText={
+                "Use Proof Key for Code Exchange (PKCE) for more secure authentication flows"
+              }
+            />
 
             <Separator />
 
