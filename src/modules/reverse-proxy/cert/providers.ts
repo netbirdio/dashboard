@@ -145,3 +145,20 @@ export function getProviderSchema(id: CredentialProviderType | undefined): Provi
   if (!id) return undefined;
   return dnsProviders.find((p) => p.id === id);
 }
+
+// hasNewCredentialPayload reports whether the inline DNS form has at
+// least one required field filled. The modal uses this to decide
+// whether to POST a fresh /credentials record on save.
+export function hasNewCredentialPayload(
+  provider: CredentialProviderType | "",
+  credentialId: string,
+  secretFields: Record<string, string>,
+): boolean {
+  if (provider === "") return false;
+  if (credentialId !== "") return false;
+  const schema = getProviderSchema(provider);
+  if (!schema) return false;
+  return schema.fields.some(
+    (f) => f.required && (secretFields[f.key] ?? "") !== "",
+  );
+}

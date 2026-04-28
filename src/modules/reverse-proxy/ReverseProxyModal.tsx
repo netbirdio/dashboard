@@ -23,7 +23,6 @@ import {
   ExternalLinkIcon,
   FileCode2Icon,
   GlobeIcon,
-  KeyRound,
   LockKeyhole,
   MapPinned,
   PlusCircle,
@@ -57,10 +56,14 @@ import {
 } from "@/interfaces/ReverseProxy";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import {
-  CertificateTabState,
+  DnsChallengeState,
+  DnsChallengeToggle,
+  initialDnsChallengeState,
+} from "@/modules/reverse-proxy/cert/DnsChallengeToggle";
+import {
+  getProviderSchema,
   hasNewCredentialPayload,
-  ReverseProxyCertificateTab,
-} from "@/modules/reverse-proxy/cert/ReverseProxyCertificateTab";
+} from "@/modules/reverse-proxy/cert/providers";
 import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
 import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
 import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
@@ -256,14 +259,16 @@ export default function ReverseProxyModal({
     reverseProxy?.auth?.header_auths ?? [],
   );
 
-  const [certificateState, setCertificateState] = useState<CertificateTabState>(
+  const [dnsChallengeEnabled, setDnsChallengeEnabled] = useState(
+    reverseProxy?.challenge_type === "dns-01",
+  );
+  const [dnsChallengeState, setDnsChallengeState] = useState<DnsChallengeState>(
     {
-      challengeType: reverseProxy?.challenge_type ?? "",
+      ...initialDnsChallengeState,
       dnsProvider: reverseProxy?.dns_provider ?? "",
       // On edit, default to "use saved credential" pre-pointing at the
       // existing ref. The user can switch to "create new" to replace it.
       credentialId: reverseProxy?.dns_credentials_ref ?? "",
-      secretFields: {},
     },
   );
 
@@ -272,6 +277,23 @@ export default function ReverseProxyModal({
   >(reverseProxy?.access_restrictions);
 
   const [accessControlHasErrors, setAccessControlHasErrors] = useState(false);
+
+  const certError = useMemo<string | undefined>(() => {
+    if (!dnsChallengeEnabled) return undefined;
+    if (dnsChallengeState.dnsProvider === "")
+      return "Choose a DNS provider";
+    if (dnsChallengeState.credentialId !== "") return undefined;
+    // "Create new credential" mode — require every field the schema
+    // marks as required.
+    const schema = getProviderSchema(dnsChallengeState.dnsProvider);
+    if (!schema) return undefined;
+    const allRequiredFilled = schema.fields
+      .filter((f) => f.required)
+      .every((f) => (dnsChallengeState.secretFields[f.key] ?? "") !== "");
+    return allRequiredFilled
+      ? undefined
+      : "Fill in all required credential fields";
+  }, [dnsChallengeEnabled, dnsChallengeState]);
 
   // Auth modal states
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -428,29 +450,30 @@ export default function ReverseProxyModal({
     //   use the new ref.
     // - Else (edit with no changes), keep the existing ref.
     let credentialsRef =
-      certificateState.credentialId !== ""
-        ? certificateState.credentialId
+      dnsChallengeState.credentialId !== ""
+        ? dnsChallengeState.credentialId
         : reverseProxy?.dns_credentials_ref;
-    const challengeType =
-      certificateState.challengeType === ""
-        ? undefined
-        : certificateState.challengeType;
+    const challengeType = dnsChallengeEnabled ? "dns-01" : undefined;
     const dnsProvider =
-      challengeType === "dns-01" && certificateState.dnsProvider !== ""
-        ? certificateState.dnsProvider
+      dnsChallengeEnabled && dnsChallengeState.dnsProvider !== ""
+        ? dnsChallengeState.dnsProvider
         : undefined;
 
     if (
-      challengeType === "dns-01" &&
+      dnsChallengeEnabled &&
       dnsProvider &&
-      certificateState.credentialId === "" &&
-      hasNewCredentialPayload(certificateState)
+      dnsChallengeState.credentialId === "" &&
+      hasNewCredentialPayload(
+        dnsChallengeState.dnsProvider,
+        dnsChallengeState.credentialId,
+        dnsChallengeState.secretFields,
+      )
     ) {
       try {
         const created = await createCredential({
           provider_type: dnsProvider,
           name: fullDomain,
-          secret_fields: certificateState.secretFields,
+          secret_fields: dnsChallengeState.secretFields,
         });
         credentialsRef = created.id;
       } catch {
@@ -473,8 +496,7 @@ export default function ReverseProxyModal({
         access_restrictions: accessRestrictions,
         challenge_type: challengeType,
         dns_provider: dnsProvider,
-        dns_credentials_ref:
-          challengeType === "dns-01" ? credentialsRef : undefined,
+        dns_credentials_ref: dnsChallengeEnabled ? credentialsRef : undefined,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -532,13 +554,6 @@ export default function ReverseProxyModal({
             <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
               <Settings size={14} />
               Advanced Settings
-            </TabsTrigger>
-            <TabsTrigger
-              value={"certificate"}
-              disabled={!canContinueToSettings}
-            >
-              <KeyRound size={14} />
-              Certificate
             </TabsTrigger>
           </TabsList>
 
@@ -740,14 +755,12 @@ export default function ReverseProxyModal({
                   />
                 </div>
               )}
-            </div>
-          </TabsContent>
 
-          <TabsContent value={"certificate"} className={"pb-8"}>
-            <div className={"px-8"}>
-              <ReverseProxyCertificateTab
-                state={certificateState}
-                onChange={setCertificateState}
+              <DnsChallengeToggle
+                enabled={dnsChallengeEnabled}
+                onEnabledChange={setDnsChallengeEnabled}
+                state={dnsChallengeState}
+                onStateChange={setDnsChallengeState}
                 editingExisting={!!reverseProxy?.dns_credentials_ref}
               />
             </div>
@@ -851,28 +864,12 @@ export default function ReverseProxyModal({
                     </Button>
                     <Button
                       variant={"primary"}
-                      onClick={() => setTab("certificate")}
-                    >
-                      Continue
-                    </Button>
-                  </>
-                )}
-
-                {tab === "certificate" && (
-                  <>
-                    <Button
-                      variant={"secondary"}
-                      onClick={() => setTab("settings")}
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      variant={"primary"}
                       disabled={
                         !canContinueToSettings ||
                         !permission?.services?.create ||
                         !!timeoutError ||
-                        accessControlHasErrors
+                        accessControlHasErrors ||
+                        !!certError
                       }
                       onClick={handleSubmit}
                     >
@@ -893,7 +890,8 @@ export default function ReverseProxyModal({
                     !canContinueToSettings ||
                     !permission?.services?.update ||
                     !!timeoutError ||
-                    accessControlHasErrors
+                    accessControlHasErrors ||
+                    !!certError
                   }
                   onClick={handleSubmit}
                 >
