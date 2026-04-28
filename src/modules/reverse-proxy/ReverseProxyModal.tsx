@@ -23,6 +23,7 @@ import {
   ExternalLinkIcon,
   FileCode2Icon,
   GlobeIcon,
+  KeyRound,
   LockKeyhole,
   MapPinned,
   PlusCircle,
@@ -55,6 +56,11 @@ import {
   ServiceMode,
 } from "@/interfaces/ReverseProxy";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import {
+  CertificateTabState,
+  hasNewCredentialPayload,
+  ReverseProxyCertificateTab,
+} from "@/modules/reverse-proxy/cert/ReverseProxyCertificateTab";
 import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
 import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
 import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
@@ -107,7 +113,7 @@ export default function ReverseProxyModal({
   const router = useRouter();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
-  const { handleCreateOrUpdateProxy } = useReverseProxies();
+  const { handleCreateOrUpdateProxy, createCredential } = useReverseProxies();
 
   const {
     subdomain,
@@ -248,6 +254,17 @@ export default function ReverseProxyModal({
   );
   const [headerAuths, setHeaderAuths] = useState<HeaderAuthConfig[]>(
     reverseProxy?.auth?.header_auths ?? [],
+  );
+
+  const [certificateState, setCertificateState] = useState<CertificateTabState>(
+    {
+      challengeType: reverseProxy?.challenge_type ?? "",
+      dnsProvider: reverseProxy?.dns_provider ?? "",
+      // On edit, default to "use saved credential" pre-pointing at the
+      // existing ref. The user can switch to "create new" to replace it.
+      credentialId: reverseProxy?.dns_credentials_ref ?? "",
+      secretFields: {},
+    },
   );
 
   const [accessRestrictions, setAccessRestrictions] = useState<
@@ -405,6 +422,43 @@ export default function ReverseProxyModal({
         }
       : undefined;
 
+    // Resolve the credential ref:
+    // - If the user picked a saved credential, use it directly.
+    // - Else if they entered fresh secret fields, POST /credentials and
+    //   use the new ref.
+    // - Else (edit with no changes), keep the existing ref.
+    let credentialsRef =
+      certificateState.credentialId !== ""
+        ? certificateState.credentialId
+        : reverseProxy?.dns_credentials_ref;
+    const challengeType =
+      certificateState.challengeType === ""
+        ? undefined
+        : certificateState.challengeType;
+    const dnsProvider =
+      challengeType === "dns-01" && certificateState.dnsProvider !== ""
+        ? certificateState.dnsProvider
+        : undefined;
+
+    if (
+      challengeType === "dns-01" &&
+      dnsProvider &&
+      certificateState.credentialId === "" &&
+      hasNewCredentialPayload(certificateState)
+    ) {
+      try {
+        const created = await createCredential({
+          provider_type: dnsProvider,
+          name: fullDomain,
+          secret_fields: certificateState.secretFields,
+        });
+        credentialsRef = created.id;
+      } catch {
+        // Toast surfaced by the API layer; abort save so the user can retry.
+        return;
+      }
+    }
+
     handleCreateOrUpdateProxy({
       data: {
         name: fullDomain,
@@ -417,6 +471,10 @@ export default function ReverseProxyModal({
         rewrite_redirects: isL4Mode ? undefined : rewriteRedirects,
         auth: isL4Mode ? undefined : auth,
         access_restrictions: accessRestrictions,
+        challenge_type: challengeType,
+        dns_provider: dnsProvider,
+        dns_credentials_ref:
+          challengeType === "dns-01" ? credentialsRef : undefined,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -474,6 +532,13 @@ export default function ReverseProxyModal({
             <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
               <Settings size={14} />
               Advanced Settings
+            </TabsTrigger>
+            <TabsTrigger
+              value={"certificate"}
+              disabled={!canContinueToSettings}
+            >
+              <KeyRound size={14} />
+              Certificate
             </TabsTrigger>
           </TabsList>
 
@@ -677,12 +742,22 @@ export default function ReverseProxyModal({
               )}
             </div>
           </TabsContent>
+
+          <TabsContent value={"certificate"} className={"pb-8"}>
+            <div className={"px-8"}>
+              <ReverseProxyCertificateTab
+                state={certificateState}
+                onChange={setCertificateState}
+                editingExisting={!!reverseProxy?.dns_credentials_ref}
+              />
+            </div>
+          </TabsContent>
         </Tabs>
 
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             {(() => {
-              const docsLink = {
+              const docsLink: { href: string; label: string } | undefined = {
                 targets: {
                   href: REVERSE_PROXY_SERVICES_DOCS_LINK,
                   label: "Services",
@@ -771,6 +846,23 @@ export default function ReverseProxyModal({
                     <Button
                       variant={"secondary"}
                       onClick={() => setTab("access-control")}
+                    >
+                      Back
+                    </Button>
+                    <Button
+                      variant={"primary"}
+                      onClick={() => setTab("certificate")}
+                    >
+                      Continue
+                    </Button>
+                  </>
+                )}
+
+                {tab === "certificate" && (
+                  <>
+                    <Button
+                      variant={"secondary"}
+                      onClick={() => setTab("settings")}
                     >
                       Back
                     </Button>

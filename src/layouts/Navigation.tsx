@@ -165,6 +165,13 @@ export default function Navigation({
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
+                  <SidebarItem
+                    label="DNS Credentials"
+                    isChild
+                    href={"/reverse-proxy/dns-credentials"}
+                    exactPathMatch={true}
+                    visible={permission?.services?.read}
+                  />
                 </SidebarItem>
 
                 <SidebarItem

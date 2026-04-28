@@ -11,6 +11,7 @@ import React, {
 } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { Credential, CredentialRequest } from "@/interfaces/Credential";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
@@ -51,6 +52,14 @@ type ReverseProxiesContextValue = {
     domain: string,
     targetCluster: string,
   ) => Promise<ReverseProxyDomain>;
+  credentials: Credential[] | undefined;
+  isLoadingCredentials: boolean;
+  createCredential: (req: CredentialRequest) => Promise<Credential>;
+  updateCredential: (
+    id: string,
+    req: CredentialRequest,
+  ) => Promise<Credential>;
+  deleteCredential: (credential: Credential) => Promise<void>;
 };
 
 type OpenModalOptions = {
@@ -130,6 +139,13 @@ export default function ReverseProxiesProvider({
     "/reverse-proxies/domains",
     true,
   );
+
+  // Credentials: POST/PUT/DELETE go through useApiCall; the list view
+  // fetches via useFetchApi so SWR keeps it in sync after mutations.
+  const credentialsRequest = useApiCall<Credential>("/credentials", true);
+  const { data: credentials, isLoading: isLoadingCredentials } = useFetchApi<
+    Credential[]
+  >("/credentials");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [currentProxy, setCurrentProxy] = useState<ReverseProxy | undefined>();
@@ -439,6 +455,48 @@ export default function ReverseProxiesProvider({
     [domainRequest, mutate],
   );
 
+  const createCredential = useCallback(
+    async (req: CredentialRequest): Promise<Credential> => {
+      const created = await credentialsRequest.post(req);
+      mutate("/credentials");
+      return created;
+    },
+    [credentialsRequest, mutate],
+  );
+
+  const updateCredential = useCallback(
+    async (id: string, req: CredentialRequest): Promise<Credential> => {
+      const updated = await credentialsRequest.put(req, `/${id}`);
+      mutate("/credentials");
+      return updated;
+    },
+    [credentialsRequest, mutate],
+  );
+
+  const deleteCredential = useCallback(
+    async (credential: Credential) => {
+      const choice = await confirm({
+        title: `Delete '${credential.name}'?`,
+        description:
+          "Are you sure you want to delete this credential? Any service still referencing it will fail to renew until repointed at a different credential. This action cannot be undone.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        type: "danger",
+      });
+      if (!choice) return;
+
+      notify({
+        title: credential.name,
+        description: "Credential was successfully deleted",
+        promise: credentialsRequest.del({}, `/${credential.id}`).then(() => {
+          mutate("/credentials");
+        }),
+        loadingMessage: "Deleting credential...",
+      });
+    },
+    [confirm, credentialsRequest, mutate],
+  );
+
   const deleteDomain = useCallback(
     async (domain: ReverseProxyDomain) => {
       const choice = await confirm({
@@ -483,6 +541,11 @@ export default function ReverseProxiesProvider({
         createDomain,
         validateDomain,
         deleteDomain,
+        credentials,
+        isLoadingCredentials,
+        createCredential,
+        updateCredential,
+        deleteCredential,
       }}
     >
       {children}

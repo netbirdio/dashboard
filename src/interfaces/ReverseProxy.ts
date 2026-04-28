@@ -20,6 +20,12 @@ export interface ReverseProxy {
   auth?: ReverseProxyAuth;
   access_restrictions?: AccessRestrictions;
   meta?: ReverseProxyMeta;
+  // Wave 1+ ACME challenge configuration. Empty challenge_type means
+  // "use the proxy's globally-configured default."
+  challenge_type?: import("./Credential").ChallengeType;
+  dns_provider?: import("./Credential").CredentialProviderType;
+  // Opaque reference into the encrypted credential store.
+  dns_credentials_ref?: string;
 }
 
 export const CrowdSecMode = {
