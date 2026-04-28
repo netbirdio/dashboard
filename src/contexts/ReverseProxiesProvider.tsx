@@ -452,16 +452,32 @@ export default function ReverseProxiesProvider({
 
   const validateDomain = useCallback(
     async (domainId: string) => {
-      // Delay refetch to allow the server to propagate the validation result
-      const DOMAIN_VALIDATION_REFETCH_DELAY_MS = 2000;
+      // The /validate endpoint kicks off validation in a server-side
+      // goroutine and returns 202 immediately. We then poll the domains
+      // list on a backoff: when the row flips to validated:true we stop,
+      // and at the cap we give up silently (the goroutine has likely
+      // succeeded outside our window — the user can click Verify again
+      // to start a fresh poll).
+      const POLL_INTERVAL_MS = 3000;
+      const MAX_POLL_ATTEMPTS = 10; // ~30s total
+
+      const promise = (async () => {
+        await domainRequest.get(`/${domainId}/validate`);
+
+        for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+          await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+          const data = (await mutate("/reverse-proxies/domains")) as
+            | ReverseProxyDomain[]
+            | undefined;
+          const domain = data?.find((d) => d.id === domainId);
+          if (domain?.validated) return;
+        }
+      })();
+
       notify({
         title: "Domain Validation",
         description: "Domain validation started",
-        promise: domainRequest.get(`/${domainId}/validate`).then(() => {
-          setTimeout(() => {
-            mutate("/reverse-proxies/domains");
-          }, DOMAIN_VALIDATION_REFETCH_DELAY_MS);
-        }),
+        promise,
         loadingMessage: "Validating domain...",
       });
     },
