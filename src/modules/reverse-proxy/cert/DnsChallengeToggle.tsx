@@ -52,7 +52,7 @@ export function DnsChallengeToggle({
           Use DNS Challenge for Certificate Issuance
         </>
       }
-      helpText="By default, services use the proxy's automatic TLS challenge (TLS-ALPN-01). Enable this to issue certs via DNS instead — required for private services and wildcard domains."
+      helpText="Issue certs via DNS. Required for private services and wildcard domains."
     >
       <CredentialPicker
         state={state}

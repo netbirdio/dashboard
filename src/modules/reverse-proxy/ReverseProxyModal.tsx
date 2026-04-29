@@ -611,22 +611,13 @@ export default function ReverseProxyModal({
                     Private service
                   </>
                 }
-                helpText="When enabled, this service is reachable only from inside your NetBird network. No public DNS record, no public listener — just a real Let's Encrypt cert via DNS-01."
+                helpText="When enabled, this service is reachable only from inside your NetBird network."
               >
                 <Callout variant={"info"}>
-                  <span className={"flex items-start gap-2"}>
-                    <ShieldCheckIcon
-                      size={16}
-                      className={"shrink-0 mt-0.5"}
-                    />
-                    <span>
-                      NetBird will auto-create an internal DNS record
-                      pointing
-                      <strong> {fullDomain || "<your domain>"}</strong> at
-                      this proxy cluster's mesh IP. The service won't exist
-                      on the public internet.
-                    </span>
-                  </span>
+                  NetBird will auto-create an internal DNS record pointing
+                  <strong> {fullDomain || "<your domain>"}</strong> at this
+                  proxy cluster's mesh IP. The service won't exist on the
+                  public internet.
                 </Callout>
               </FancyToggleSwitch>
 
