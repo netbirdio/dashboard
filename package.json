@@ -6,11 +6,10 @@
     "node": ">=20.9.0"
   },
   "scripts": {
-    "copy": "copyfiles -f ./node_modules/@axa-fr/react-oidc/dist/OidcServiceWorker.js ./public",
-    "copytrusted": "copyfiles -f ./public/local/OidcTrustedDomains.js ./public",
+    "oidc-gen": "node ./node_modules/@axa-fr/react-oidc/bin/copy-service-worker-files.mjs public",
     "dev": "next dev -p 3000",
     "turbo": "next dev -p 3000 --turbo",
-    "build": "next build",
+    "build": "npm run oidc-gen && next build",
     "start": "next start",
     "lint": "next lint",
     "cypress:open": "cypress open"

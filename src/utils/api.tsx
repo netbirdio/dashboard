@@ -1,6 +1,7 @@
 import {
+  OidcClient,
   useOidc,
-  useOidcAccessToken,
+  useOidcFetch,
   useOidcIdToken,
 } from "@axa-fr/react-oidc";
 import loadConfig from "@utils/config";
@@ -75,38 +76,70 @@ export function useNetBirdFetch(ignoreError: boolean = false): {
   fetch: (input: RequestInfo, init?: RequestInit) => Promise<Response>;
 } {
   const tokenSource = config.tokenSource || "accessToken";
-  const { idToken } = useOidcIdToken();
-  const { accessToken } = useOidcAccessToken();
-  const token = tokenSource.toLowerCase() == "idtoken" ? idToken : accessToken;
-  const handleErrors = useApiErrorHandling(ignoreError);
+  const useIdToken = tokenSource.toLowerCase() === "idtoken";
 
-  const isTokenExpired = async () => {
+  // Always call hooks unconditionally (React rules), but only use the values
+  // relevant to the configured token source.
+  const { idToken } = useOidcIdToken();
+  // useOidcFetch lets the service worker inject the Authorization header
+  // transparently, so the access token never reaches page-level JS.
+  const { fetch: oidcFetch } = useOidcFetch();
+  // Keep the parameter for API compatibility. Error handling happens in callers
+  // via the rejected ErrorResponse rather than in this low-level fetch wrapper.
+  void ignoreError;
+
+  // Read the current idToken imperatively so the polling loop and the final
+  // header value see refreshed tokens without waiting for a re-render.
+  const getCurrentIdToken = (): string | undefined => {
+    try {
+      return OidcClient.get().tokens?.idToken;
+    } catch {
+      return undefined;
+    }
+  };
+
+  const isIdTokenExpired = async () => {
     let attempts = 4;
-    while (isExpired(token) && attempts > 0) {
+    while (attempts > 0) {
+      const current = getCurrentIdToken();
+      if (current && !isExpired(current)) return false;
       await sleep(500);
       attempts = attempts - 1;
     }
-    return isExpired(token);
+    const current = getCurrentIdToken();
+    return !current || isExpired(current);
   };
 
   const nativeFetch = async (input: RequestInfo, init?: RequestInit) => {
-    const tokenExpired = await isTokenExpired();
-    if (tokenExpired) {
-      return handleErrors({
-        code: 401,
-        message: "token expired",
-      } as ErrorResponse);
+    // Non-default idToken path: token must be extracted to JS to build the
+    // header manually, since the service worker only injects the access token.
+    if (useIdToken) {
+      const tokenExpired = await isIdTokenExpired();
+      if (tokenExpired) {
+        return Promise.reject({
+          code: 401,
+          message: "token expired",
+        } as ErrorResponse);
+      }
+      return fetch(input, {
+        ...init,
+        headers: {
+          ...(init?.headers || {}),
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${getCurrentIdToken() ?? idToken}`,
+        },
+      });
     }
 
-    const headers = {
-      "Content-Type": "application/json",
-      Accept: "application/json",
-      Authorization: `Bearer ${token}`,
-    };
-
-    return fetch(input, {
+    // Default access token path: the service worker intercepts the request and
+    // injects the Authorization header without exposing the token to page JS.
+    return oidcFetch(input, {
       ...init,
-      headers,
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
     });
   };
 

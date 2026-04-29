@@ -10,6 +10,7 @@
   "redirectURI": "$AUTH_REDIRECT_URI",
   "silentRedirectURI": "$AUTH_SILENT_REDIRECT_URI",
   "tokenSource": "$NETBIRD_TOKEN_SOURCE",
+  "disableServiceWorker": "$NETBIRD_DISABLE_SERVICE_WORKER",
   "dragQueryParams": "$NETBIRD_DRAG_QUERY_PARAMS",
   "hotjarTrackID": "$NETBIRD_HOTJAR_TRACK_ID",
   "googleAnalyticsID": "$NETBIRD_GOOGLE_ANALYTICS_ID",
