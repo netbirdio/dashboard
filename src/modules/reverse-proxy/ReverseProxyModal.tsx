@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
@@ -32,7 +33,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -272,6 +273,20 @@ export default function ReverseProxyModal({
     },
   );
 
+  const [privateService, setPrivateService] = useState(
+    reverseProxy?.private ?? false,
+  );
+
+  // Private services require dns-01 (http-01 / tls-alpn-01 can't reach a
+  // service with no public listener). Auto-enable the DNS challenge toggle
+  // when the user flips Private ON; the user still has to pick a provider
+  // and credential before submit becomes enabled (gated by certError).
+  useEffect(() => {
+    if (privateService && !dnsChallengeEnabled) {
+      setDnsChallengeEnabled(true);
+    }
+  }, [privateService, dnsChallengeEnabled]);
+
   const [accessRestrictions, setAccessRestrictions] = useState<
     AccessRestrictions | undefined
   >(reverseProxy?.access_restrictions);
@@ -392,6 +407,19 @@ export default function ReverseProxyModal({
       if (!confirmed) return;
     }
 
+    if (reverseProxy && !reverseProxy.private && privateService) {
+      const confirmed = await confirm({
+        title: "Convert to private service?",
+        description:
+          "Saving will: (1) reissue the certificate via DNS-01, (2) auto-create an internal NetBird DNS record, and (3) make this service unreachable from the public internet. The service will be briefly interrupted while the cert reissues.",
+        type: "warning",
+        confirmText: "Yes, make private",
+        cancelText: "Cancel",
+        maxWidthClass: "max-w-lg",
+      });
+      if (!confirmed) return;
+    }
+
     const savedGroups = await saveGroups();
 
     const auth: ReverseProxyAuth = {
@@ -497,6 +525,7 @@ export default function ReverseProxyModal({
         challenge_type: challengeType,
         dns_provider: dnsProvider,
         dns_credentials_ref: dnsChallengeEnabled ? credentialsRef : undefined,
+        private: privateService,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -572,6 +601,34 @@ export default function ReverseProxyModal({
                     : undefined
                 }
               />
+
+              <FancyToggleSwitch
+                value={privateService}
+                onChange={setPrivateService}
+                label={
+                  <>
+                    <LockKeyhole size={15} />
+                    Private service
+                  </>
+                }
+                helpText="When enabled, this service is reachable only from inside your NetBird network. No public DNS record, no public listener — just a real Let's Encrypt cert via DNS-01."
+              >
+                <Callout variant={"info"}>
+                  <span className={"flex items-start gap-2"}>
+                    <ShieldCheckIcon
+                      size={16}
+                      className={"shrink-0 mt-0.5"}
+                    />
+                    <span>
+                      NetBird will auto-create an internal DNS record
+                      pointing
+                      <strong> {fullDomain || "<your domain>"}</strong> at
+                      this proxy cluster's mesh IP. The service won't exist
+                      on the public internet.
+                    </span>
+                  </span>
+                </Callout>
+              </FancyToggleSwitch>
 
               {!reverseProxy && (
                 <ReverseProxyServiceModeSelector

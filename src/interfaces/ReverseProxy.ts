@@ -26,6 +26,10 @@ export interface ReverseProxy {
   dns_provider?: import("./Credential").CredentialProviderType;
   // Opaque reference into the encrypted credential store.
   dns_credentials_ref?: string;
+  // When true, the service is local-only — reachable only from inside
+  // the NetBird mesh. Auto-creates an internal DNS record, requires
+  // dns-01 challenge, and the proxy rejects public connections.
+  private?: boolean;
 }
 
 export const CrowdSecMode = {
