@@ -2,6 +2,10 @@ import { OidcSecure, useOidc } from "@axa-fr/react-oidc";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { useEffect } from "react";
+import {
+  clearSessionLostRedirectPath,
+  getSessionLostRedirectPath,
+} from "@/auth/sessionRedirect";
 
 const QUERY_PARAMS_KEY = "netbird-query-params";
 const PRESERVE_QUERY_PARAMS_PATHS = ["/peer/ssh", "/peer/rdp"];
@@ -27,11 +31,15 @@ type Props = {
 export const SecureProvider = ({ children }: Props) => {
   const { isAuthenticated, login } = useOidc();
   const currentPath = usePathname();
+  const callbackPath = getSessionLostRedirectPath() ?? currentPath;
 
   useEffect(() => {
-    if (isAuthenticated && !PRESERVE_QUERY_PARAMS_PATHS.includes(currentPath)) {
-      localStorage.removeItem(QUERY_PARAMS_KEY);
-    } else if (!isAuthenticated) {
+    if (isAuthenticated) {
+      clearSessionLostRedirectPath();
+      if (!PRESERVE_QUERY_PARAMS_PATHS.includes(currentPath)) {
+        localStorage.removeItem(QUERY_PARAMS_KEY);
+      }
+    } else {
       try {
         const params = window.location.search.substring(1);
         if (params) {
@@ -49,18 +57,18 @@ export const SecureProvider = ({ children }: Props) => {
     if (!isAuthenticated) {
       timeout = setTimeout(async () => {
         if (!isAuthenticated) {
-          await login(currentPath);
+          await login(callbackPath);
         }
       }, 1500);
     }
     return () => {
       clearTimeout(timeout);
     };
-  }, [currentPath, isAuthenticated, login]);
+  }, [callbackPath, isAuthenticated, login]);
 
   return (
     <>
-      <OidcSecure callbackPath={currentPath}>{children}</OidcSecure>
+      <OidcSecure callbackPath={callbackPath}>{children}</OidcSecure>
     </>
   );
 };

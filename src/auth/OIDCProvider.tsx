@@ -7,10 +7,11 @@ import {
 } from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import loadConfig, { buildExtras } from "@utils/config";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { OIDCError } from "@/auth/OIDCError";
 import { SecureProvider } from "@/auth/SecureProvider";
+import { storeSessionLostRedirectPath } from "@/auth/sessionRedirect";
 
 type Props = {
   children: React.ReactNode;
@@ -40,7 +41,6 @@ const onEvent = (configurationName: any, eventName: any, data: any) => {
 export default function OIDCProvider({ children }: Props) {
   const [providerConfig, setProviderConfig] = useState<OidcConfiguration>();
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
   const path = usePathname();
 
   const withCustomHistory = () => {
@@ -85,6 +85,11 @@ export default function OIDCProvider({ children }: Props) {
     setMounted(true);
   }, []);
 
+  const handleSessionLost = () => {
+    storeSessionLostRedirectPath();
+    window.location.replace("/");
+  };
+
   // We bypass authentication for pages that do not require auth.
   // E.g., when we just want to show installation steps for public.
   // Or the instance setup wizard for first-time setup.
@@ -101,13 +106,13 @@ export default function OIDCProvider({ children }: Props) {
       loadingComponent={FullScreenLoading}
       callbackSuccessComponent={FullScreenLoading}
       onEvent={onEvent}
-      // If session is lost, try to re-initiate authentication flow
-      onSessionLost={() => window.location.replace("/")}
+      // If session is lost, try to re-initiate authentication flow while
+      // preserving the current deep link for the post-login redirect.
+      onSessionLost={handleSessionLost}
       // Another tab logged out — fires a separate event in @axa-fr/react-oidc,
       // not covered by onSessionLost. Without this handler the library would
       // render its default "Session timed out" UI instead of redirecting.
-      onLogoutFromAnotherTab={() => window.location.replace("/")}
-      // sessionLostComponent={SessionLost}
+      onLogoutFromAnotherTab={handleSessionLost}
     >
       <SecureProvider>{children}</SecureProvider>
     </OidcProvider>

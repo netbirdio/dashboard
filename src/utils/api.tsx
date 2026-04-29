@@ -84,7 +84,9 @@ export function useNetBirdFetch(ignoreError: boolean = false): {
   // useOidcFetch lets the service worker inject the Authorization header
   // transparently, so the access token never reaches page-level JS.
   const { fetch: oidcFetch } = useOidcFetch();
-  const handleErrors = useApiErrorHandling(ignoreError);
+  // Keep the parameter for API compatibility. Error handling happens in callers
+  // via the rejected ErrorResponse rather than in this low-level fetch wrapper.
+  void ignoreError;
 
   // Read the current idToken imperatively so the polling loop and the final
   // header value see refreshed tokens without waiting for a re-render.
@@ -114,7 +116,7 @@ export function useNetBirdFetch(ignoreError: boolean = false): {
     if (useIdToken) {
       const tokenExpired = await isIdTokenExpired();
       if (tokenExpired) {
-        return handleErrors({
+        return Promise.reject({
           code: 401,
           message: "token expired",
         } as ErrorResponse);
