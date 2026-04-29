@@ -124,6 +124,7 @@ export function useNetBirdFetch(ignoreError: boolean = false): {
       return fetch(input, {
         ...init,
         headers: {
+          ...(init?.headers || {}),
           "Content-Type": "application/json",
           Accept: "application/json",
           Authorization: `Bearer ${getCurrentIdToken() ?? idToken}`,
