@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
+import { Callout } from "@components/Callout";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
@@ -32,7 +33,7 @@ import {
   Users,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -55,6 +56,15 @@ import {
   ServiceMode,
 } from "@/interfaces/ReverseProxy";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
+import {
+  DnsChallengeState,
+  DnsChallengeToggle,
+  initialDnsChallengeState,
+} from "@/modules/reverse-proxy/cert/DnsChallengeToggle";
+import {
+  getProviderSchema,
+  hasNewCredentialPayload,
+} from "@/modules/reverse-proxy/cert/providers";
 import ReverseProxyDomainInput from "./domain/ReverseProxyDomainInput";
 import { useReverseProxyDomain } from "./domain/useReverseProxyDomain";
 import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
@@ -107,7 +117,7 @@ export default function ReverseProxyModal({
   const router = useRouter();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
-  const { handleCreateOrUpdateProxy } = useReverseProxies();
+  const { handleCreateOrUpdateProxy, createCredential } = useReverseProxies();
 
   const {
     subdomain,
@@ -250,11 +260,55 @@ export default function ReverseProxyModal({
     reverseProxy?.auth?.header_auths ?? [],
   );
 
+  const [dnsChallengeEnabled, setDnsChallengeEnabled] = useState(
+    reverseProxy?.challenge_type === "dns-01",
+  );
+  const [dnsChallengeState, setDnsChallengeState] = useState<DnsChallengeState>(
+    {
+      ...initialDnsChallengeState,
+      dnsProvider: reverseProxy?.dns_provider ?? "",
+      // On edit, default to "use saved credential" pre-pointing at the
+      // existing ref. The user can switch to "create new" to replace it.
+      credentialId: reverseProxy?.dns_credentials_ref ?? "",
+    },
+  );
+
+  const [privateService, setPrivateService] = useState(
+    reverseProxy?.private ?? false,
+  );
+
+  // Private services require dns-01 (http-01 / tls-alpn-01 can't reach a
+  // service with no public listener). Auto-enable the DNS challenge toggle
+  // when the user flips Private ON; the user still has to pick a provider
+  // and credential before submit becomes enabled (gated by certError).
+  useEffect(() => {
+    if (privateService && !dnsChallengeEnabled) {
+      setDnsChallengeEnabled(true);
+    }
+  }, [privateService, dnsChallengeEnabled]);
+
   const [accessRestrictions, setAccessRestrictions] = useState<
     AccessRestrictions | undefined
   >(reverseProxy?.access_restrictions);
 
   const [accessControlHasErrors, setAccessControlHasErrors] = useState(false);
+
+  const certError = useMemo<string | undefined>(() => {
+    if (!dnsChallengeEnabled) return undefined;
+    if (dnsChallengeState.dnsProvider === "")
+      return "Choose a DNS provider";
+    if (dnsChallengeState.credentialId !== "") return undefined;
+    // "Create new credential" mode — require every field the schema
+    // marks as required.
+    const schema = getProviderSchema(dnsChallengeState.dnsProvider);
+    if (!schema) return undefined;
+    const allRequiredFilled = schema.fields
+      .filter((f) => f.required)
+      .every((f) => (dnsChallengeState.secretFields[f.key] ?? "") !== "");
+    return allRequiredFilled
+      ? undefined
+      : "Fill in all required credential fields";
+  }, [dnsChallengeEnabled, dnsChallengeState]);
 
   // Auth modal states
   const [passwordModalOpen, setPasswordModalOpen] = useState(false);
@@ -353,6 +407,19 @@ export default function ReverseProxyModal({
       if (!confirmed) return;
     }
 
+    if (reverseProxy && !reverseProxy.private && privateService) {
+      const confirmed = await confirm({
+        title: "Convert to private service?",
+        description:
+          "Saving will: (1) reissue the certificate via DNS-01, (2) auto-create an internal NetBird DNS record, and (3) make this service unreachable from the public internet. The service will be briefly interrupted while the cert reissues.",
+        type: "warning",
+        confirmText: "Yes, make private",
+        cancelText: "Cancel",
+        maxWidthClass: "max-w-lg",
+      });
+      if (!confirmed) return;
+    }
+
     const savedGroups = await saveGroups();
 
     const auth: ReverseProxyAuth = {
@@ -405,6 +472,44 @@ export default function ReverseProxyModal({
         }
       : undefined;
 
+    // Resolve the credential ref:
+    // - If the user picked a saved credential, use it directly.
+    // - Else if they entered fresh secret fields, POST /credentials and
+    //   use the new ref.
+    // - Else (edit with no changes), keep the existing ref.
+    let credentialsRef =
+      dnsChallengeState.credentialId !== ""
+        ? dnsChallengeState.credentialId
+        : reverseProxy?.dns_credentials_ref;
+    const challengeType = dnsChallengeEnabled ? "dns-01" : undefined;
+    const dnsProvider =
+      dnsChallengeEnabled && dnsChallengeState.dnsProvider !== ""
+        ? dnsChallengeState.dnsProvider
+        : undefined;
+
+    if (
+      dnsChallengeEnabled &&
+      dnsProvider &&
+      dnsChallengeState.credentialId === "" &&
+      hasNewCredentialPayload(
+        dnsChallengeState.dnsProvider,
+        dnsChallengeState.credentialId,
+        dnsChallengeState.secretFields,
+      )
+    ) {
+      try {
+        const created = await createCredential({
+          provider_type: dnsProvider,
+          name: fullDomain,
+          secret_fields: dnsChallengeState.secretFields,
+        });
+        credentialsRef = created.id;
+      } catch {
+        // Toast surfaced by the API layer; abort save so the user can retry.
+        return;
+      }
+    }
+
     handleCreateOrUpdateProxy({
       data: {
         name: fullDomain,
@@ -417,6 +522,10 @@ export default function ReverseProxyModal({
         rewrite_redirects: isL4Mode ? undefined : rewriteRedirects,
         auth: isL4Mode ? undefined : auth,
         access_restrictions: accessRestrictions,
+        challenge_type: challengeType,
+        dns_provider: dnsProvider,
+        dns_credentials_ref: dnsChallengeEnabled ? credentialsRef : undefined,
+        private: privateService,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -492,6 +601,25 @@ export default function ReverseProxyModal({
                     : undefined
                 }
               />
+
+              <FancyToggleSwitch
+                value={privateService}
+                onChange={setPrivateService}
+                label={
+                  <>
+                    <LockKeyhole size={15} />
+                    Private service
+                  </>
+                }
+                helpText="When enabled, this service is reachable only from inside your NetBird network."
+              >
+                <Callout variant={"info"}>
+                  NetBird will auto-create an internal DNS record pointing
+                  <strong> {fullDomain || "<your domain>"}</strong> at this
+                  proxy cluster's mesh IP. The service won't exist on the
+                  public internet.
+                </Callout>
+              </FancyToggleSwitch>
 
               {!reverseProxy && (
                 <ReverseProxyServiceModeSelector
@@ -675,6 +803,14 @@ export default function ReverseProxyModal({
                   />
                 </div>
               )}
+
+              <DnsChallengeToggle
+                enabled={dnsChallengeEnabled}
+                onEnabledChange={setDnsChallengeEnabled}
+                state={dnsChallengeState}
+                onStateChange={setDnsChallengeState}
+                editingExisting={!!reverseProxy?.dns_credentials_ref}
+              />
             </div>
           </TabsContent>
         </Tabs>
@@ -682,7 +818,7 @@ export default function ReverseProxyModal({
         <ModalFooter className={"items-center"}>
           <div className={"w-full"}>
             {(() => {
-              const docsLink = {
+              const docsLink: { href: string; label: string } | undefined = {
                 targets: {
                   href: REVERSE_PROXY_SERVICES_DOCS_LINK,
                   label: "Services",
@@ -780,7 +916,8 @@ export default function ReverseProxyModal({
                         !canContinueToSettings ||
                         !permission?.services?.create ||
                         !!timeoutError ||
-                        accessControlHasErrors
+                        accessControlHasErrors ||
+                        !!certError
                       }
                       onClick={handleSubmit}
                     >
@@ -801,7 +938,8 @@ export default function ReverseProxyModal({
                     !canContinueToSettings ||
                     !permission?.services?.update ||
                     !!timeoutError ||
-                    accessControlHasErrors
+                    accessControlHasErrors ||
+                    !!certError
                   }
                   onClick={handleSubmit}
                 >

@@ -26,6 +26,7 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import {
+  AutoConfigureError,
   REVERSE_PROXY_DOCS_LINK,
   ReverseProxyDomain,
   ReverseProxyDomainType,
@@ -114,6 +115,38 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
             setAddModalOpen(false);
             setVerificationModalOpen(true);
           });
+        }}
+        onAutoConfigureSubmit={async (
+          domainName,
+          targetCluster,
+          autoConfigure,
+        ) => {
+          // Auto-configure: backend writes the CNAME via the stored
+          // credential, so we skip the verification modal entirely.
+          // On success, kick off /validate so the domain transitions
+          // to validated as DNS propagates. On structured-error
+          // failure, return the error so the modal can render it
+          // inline with a "Switch to Manual" recovery.
+          try {
+            const created = await createDomain(
+              domainName,
+              targetCluster,
+              autoConfigure,
+            );
+            // Fire-and-forget validation. The dashboard polls /domains
+            // via SWR so the row will pick up validated=true on its
+            // own cycle.
+            void validateDomain(created.id);
+            setAddModalOpen(false);
+            return null;
+          } catch (e) {
+            // Backend returns the structured error body for
+            // record-writer failures. Fall back to a generic message
+            // for unexpected error shapes so the modal still surfaces
+            // *something* useful.
+            const parsed = parseAutoConfigureError(e);
+            return parsed;
+          }
         }}
         key={addModalOpen ? 1 : 0}
       />
@@ -348,4 +381,49 @@ function CustomDomainActionCell({ domain }: Readonly<CellProps>) {
       </Button>
     </div>
   );
+}
+
+// parseAutoConfigureError extracts the structured AutoConfigureError
+// shape from a rejected fetch promise. The api.tsx error path rejects
+// with the parsed JSON body verbatim when ignoreError is true (which
+// the domain endpoint uses), so a structured error from the backend
+// arrives here as an object with the expected fields. Anything else
+// (network error, opaque 500) falls back to a generic message so the
+// modal still surfaces something actionable.
+function parseAutoConfigureError(e: unknown): AutoConfigureError {
+  if (e && typeof e === "object" && "error_code" in e) {
+    const obj = e as Record<string, unknown>;
+    const code = obj.error_code;
+    if (
+      typeof code === "string" &&
+      [
+        "CREDENTIAL_INSUFFICIENT_SCOPE",
+        "ZONE_NOT_FOUND",
+        "RECORD_ALREADY_EXISTS",
+        "PROVIDER_RATE_LIMITED",
+        "PROVIDER_UNAVAILABLE",
+      ].includes(code)
+    ) {
+      return {
+        error_code: code as AutoConfigureError["error_code"],
+        message:
+          typeof obj.message === "string"
+            ? obj.message
+            : "Auto-configure failed.",
+        provider:
+          typeof obj.provider === "string" ? obj.provider : undefined,
+        fqdn: typeof obj.fqdn === "string" ? obj.fqdn : undefined,
+      };
+    }
+  }
+  // Fallback for unexpected error shapes — surface as PROVIDER_UNAVAILABLE
+  // so the modal still renders the "Switch to Manual" recovery button.
+  const msg =
+    e && typeof e === "object" && "message" in e
+      ? String((e as { message: unknown }).message)
+      : "An unexpected error occurred.";
+  return {
+    error_code: "PROVIDER_UNAVAILABLE",
+    message: msg,
+  };
 }

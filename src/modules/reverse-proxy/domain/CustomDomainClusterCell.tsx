@@ -1,7 +1,8 @@
 "use client";
 
 import Badge from "@components/Badge";
-import { Globe, Server } from "lucide-react";
+import FullTooltip from "@components/FullTooltip";
+import { Globe, Server, Sparkles } from "lucide-react";
 import React from "react";
 import { ReverseProxyDomain } from "@/interfaces/ReverseProxy";
 
@@ -29,6 +30,22 @@ export default function CustomDomainClusterCell({ domain }: Readonly<Props>) {
         <Server size={11} className={"text-nb-gray-400"} />
         {domain.target_cluster}
       </Badge>
+      {domain.auto_configured && (
+        <FullTooltip
+          content={
+            <div className={"text-xs max-w-xs"}>
+              CNAME managed by NetBird via your{" "}
+              {domain.auto_configured_provider ?? "DNS"} credential.
+            </div>
+          }
+          interactive={false}
+        >
+          <Badge variant={"blue"} className={"font-normal cursor-help"}>
+            <Sparkles size={11} />
+            Auto
+          </Badge>
+        </FullTooltip>
+      )}
     </div>
   );
 }

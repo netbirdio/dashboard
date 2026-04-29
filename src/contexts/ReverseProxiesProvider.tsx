@@ -11,9 +11,11 @@ import React, {
 } from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
+import { Credential, CredentialRequest } from "@/interfaces/Credential";
 import { Network, NetworkResource } from "@/interfaces/Network";
 import { Peer } from "@/interfaces/Peer";
 import {
+  AutoConfigureRequest,
   ReverseProxy,
   ReverseProxyDomain,
   ReverseProxyFlatTarget,
@@ -50,7 +52,16 @@ type ReverseProxiesContextValue = {
   createDomain: (
     domain: string,
     targetCluster: string,
+    autoConfigure?: AutoConfigureRequest,
   ) => Promise<ReverseProxyDomain>;
+  credentials: Credential[] | undefined;
+  isLoadingCredentials: boolean;
+  createCredential: (req: CredentialRequest) => Promise<Credential>;
+  updateCredential: (
+    id: string,
+    req: CredentialRequest,
+  ) => Promise<Credential>;
+  deleteCredential: (credential: Credential) => Promise<void>;
 };
 
 type OpenModalOptions = {
@@ -130,6 +141,13 @@ export default function ReverseProxiesProvider({
     "/reverse-proxies/domains",
     true,
   );
+
+  // Credentials: POST/PUT/DELETE go through useApiCall; the list view
+  // fetches via useFetchApi so SWR keeps it in sync after mutations.
+  const credentialsRequest = useApiCall<Credential>("/credentials", true);
+  const { data: credentials, isLoading: isLoadingCredentials } = useFetchApi<
+    Credential[]
+  >("/credentials");
 
   const [modalOpen, setModalOpen] = useState(false);
   const [currentProxy, setCurrentProxy] = useState<ReverseProxy | undefined>();
@@ -400,22 +418,33 @@ export default function ReverseProxiesProvider({
     async (
       domain: string,
       targetCluster: string,
+      autoConfigure?: AutoConfigureRequest,
     ): Promise<ReverseProxyDomain> => {
-      const promise = domainRequest
-        .post({
-          domain,
-          target_cluster: targetCluster,
-        })
-        .then((d) => {
-          mutate("/reverse-proxies/domains");
-          return d;
-        });
-      notify({
-        title: "Add Custom Domain",
-        description: "Domain successfully added",
-        promise,
-        loadingMessage: "Adding domain...",
+      // Build payload — auto_configure is omitted for the manual flow
+      // so the request body is byte-identical to pre-auto-configure
+      // behavior on the wire.
+      const payload: Record<string, unknown> = {
+        domain,
+        target_cluster: targetCluster,
+      };
+      if (autoConfigure) {
+        payload.auto_configure = autoConfigure;
+      }
+      const promise = domainRequest.post(payload).then((d) => {
+        mutate("/reverse-proxies/domains");
+        return d;
       });
+      // Suppress the success toast on auto-configure — the modal already
+      // shows a clearer "we wrote the CNAME" inline state. notify() still
+      // surfaces failures.
+      if (!autoConfigure) {
+        notify({
+          title: "Add Custom Domain",
+          description: "Domain successfully added",
+          promise,
+          loadingMessage: "Adding domain...",
+        });
+      }
       return promise;
     },
     [domainRequest, mutate],
@@ -423,28 +452,94 @@ export default function ReverseProxiesProvider({
 
   const validateDomain = useCallback(
     async (domainId: string) => {
-      // Delay refetch to allow the server to propagate the validation result
-      const DOMAIN_VALIDATION_REFETCH_DELAY_MS = 2000;
+      // The /validate endpoint kicks off validation in a server-side
+      // goroutine and returns 202 immediately. We then poll the domains
+      // list on a backoff: when the row flips to validated:true we stop,
+      // and at the cap we give up silently (the goroutine has likely
+      // succeeded outside our window — the user can click Verify again
+      // to start a fresh poll).
+      const POLL_INTERVAL_MS = 3000;
+      const MAX_POLL_ATTEMPTS = 10; // ~30s total
+
+      const promise = (async () => {
+        await domainRequest.get(`/${domainId}/validate`);
+
+        for (let attempt = 0; attempt < MAX_POLL_ATTEMPTS; attempt++) {
+          await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS));
+          const data = (await mutate("/reverse-proxies/domains")) as
+            | ReverseProxyDomain[]
+            | undefined;
+          const domain = data?.find((d) => d.id === domainId);
+          if (domain?.validated) return;
+        }
+      })();
+
       notify({
         title: "Domain Validation",
         description: "Domain validation started",
-        promise: domainRequest.get(`/${domainId}/validate`).then(() => {
-          setTimeout(() => {
-            mutate("/reverse-proxies/domains");
-          }, DOMAIN_VALIDATION_REFETCH_DELAY_MS);
-        }),
+        promise,
         loadingMessage: "Validating domain...",
       });
     },
     [domainRequest, mutate],
   );
 
+  const createCredential = useCallback(
+    async (req: CredentialRequest): Promise<Credential> => {
+      const created = await credentialsRequest.post(req);
+      mutate("/credentials");
+      return created;
+    },
+    [credentialsRequest, mutate],
+  );
+
+  const updateCredential = useCallback(
+    async (id: string, req: CredentialRequest): Promise<Credential> => {
+      const updated = await credentialsRequest.put(req, `/${id}`);
+      mutate("/credentials");
+      return updated;
+    },
+    [credentialsRequest, mutate],
+  );
+
+  const deleteCredential = useCallback(
+    async (credential: Credential) => {
+      const choice = await confirm({
+        title: `Delete '${credential.name}'?`,
+        description:
+          "Are you sure you want to delete this credential? Any service still referencing it will fail to renew until repointed at a different credential. This action cannot be undone.",
+        confirmText: "Delete",
+        cancelText: "Cancel",
+        type: "danger",
+      });
+      if (!choice) return;
+
+      notify({
+        title: credential.name,
+        description: "Credential was successfully deleted",
+        promise: credentialsRequest.del({}, `/${credential.id}`).then(() => {
+          mutate("/credentials");
+        }),
+        loadingMessage: "Deleting credential...",
+      });
+    },
+    [confirm, credentialsRequest, mutate],
+  );
+
   const deleteDomain = useCallback(
     async (domain: ReverseProxyDomain) => {
+      // For auto-configured domains, the wildcard CNAME we wrote into
+      // the user's DNS will remain after deletion (v1 doesn't reach
+      // back to the provider on delete). Surface this in the
+      // confirmation so the user knows to clean up manually if they
+      // want a clean teardown.
+      const description = domain.auto_configured
+        ? `Are you sure you want to delete this domain? This action cannot be undone. The wildcard CNAME for *.${domain.domain} will remain in your ${domain.auto_configured_provider ?? "DNS"} provider — remove it manually if no longer needed.`
+        : "Are you sure you want to delete this domain? This action cannot be undone.";
+
       const choice = await confirm({
         title: `Delete '${domain.domain}'?`,
-        description:
-          "Are you sure you want to delete this domain? This action cannot be undone.",
+        description,
         confirmText: "Delete",
         cancelText: "Cancel",
         type: "danger",
@@ -483,6 +578,11 @@ export default function ReverseProxiesProvider({
         createDomain,
         validateDomain,
         deleteDomain,
+        credentials,
+        isLoadingCredentials,
+        createCredential,
+        updateCredential,
+        deleteCredential,
       }}
     >
       {children}
