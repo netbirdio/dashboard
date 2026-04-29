@@ -20,7 +20,7 @@ export const ReverseProxyTypeCell = ({ reverseProxy }: Props) => {
   }, [reverseProxy]);
 
   return (
-    <div className={"flex"}>
+    <div className={"flex items-center gap-1"}>
       <Badge variant={"gray"} className={"font-normal"}>
         <ReverseProxyServiceIcon
           reverseProxy={reverseProxy}
@@ -29,6 +29,12 @@ export const ReverseProxyTypeCell = ({ reverseProxy }: Props) => {
         />
         {serviceModeLabel}
       </Badge>
+      {reverseProxy?.private && (
+        <Badge variant={"netbird"} className={"font-normal"}>
+          <LockKeyhole size={11} />
+          Private
+        </Badge>
+      )}
     </div>
   );
 };

@@ -7,15 +7,20 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
-import { ColumnDef, SortingState } from "@tanstack/react-table";
+import {
+  ColumnDef,
+  ColumnFiltersState,
+  SortingState,
+} from "@tanstack/react-table";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import useUrlTab from "@/hooks/useUrlTab";
 import {
   isL4Mode,
   REVERSE_PROXY_DOCS_LINK,
@@ -119,6 +124,14 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
       ]?.join("");
     },
   },
+  {
+    // Hidden filter-only column for the Public/Private/All toolbar.
+    // No header / no cell — the visual signal lives in ReverseProxyTypeCell.
+    id: "private",
+    accessorFn: (row) => row.private ?? false,
+    enableHiding: true,
+    size: 0,
+  },
 ];
 
 type Props = {
@@ -141,6 +154,23 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
     ],
   );
 
+  const [visibility, setVisibility] = useUrlTab(
+    ["all", "public", "private"],
+    "all",
+    "visibility",
+  );
+
+  // Initial filter state derived from the URL on mount. Subsequent
+  // changes flow through the button handlers (which update both URL
+  // and column filter). Back-button URL changes are not auto-synced
+  // into the table.
+  const initialFilters = useMemo<ColumnFiltersState>(() => {
+    if (visibility === "private") return [{ id: "private", value: true }];
+    if (visibility === "public") return [{ id: "private", value: false }];
+    return [];
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   return (
     <DataTable
       headingTarget={headingTarget}
@@ -153,7 +183,8 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       data={reverseProxies}
       useRowId={true}
       searchPlaceholder={"Search by URL, domain, or target..."}
-      columnVisibility={{ searchString: false }}
+      columnVisibility={{ searchString: false, private: false }}
+      initialFilters={initialFilters}
       tableCellClassName={"h-[80px]"}
       renderExpandedRow={(reverseProxy) => {
         if (isL4Mode(reverseProxy.mode)) return;
@@ -262,6 +293,53 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
               }
             >
               Inactive
+            </ButtonGroup.Button>
+          </ButtonGroup>
+          <ButtonGroup disabled={reverseProxies?.length == 0}>
+            <ButtonGroup.Button
+              onClick={() => {
+                table.setPageIndex(0);
+                table.getColumn("private")?.setFilterValue(undefined);
+                setVisibility("all");
+              }}
+              disabled={reverseProxies?.length == 0}
+              variant={
+                table.getColumn("private")?.getFilterValue() === undefined
+                  ? "tertiary"
+                  : "secondary"
+              }
+            >
+              All
+            </ButtonGroup.Button>
+            <ButtonGroup.Button
+              onClick={() => {
+                table.setPageIndex(0);
+                table.getColumn("private")?.setFilterValue(false);
+                setVisibility("public");
+              }}
+              disabled={reverseProxies?.length == 0}
+              variant={
+                table.getColumn("private")?.getFilterValue() === false
+                  ? "tertiary"
+                  : "secondary"
+              }
+            >
+              Public
+            </ButtonGroup.Button>
+            <ButtonGroup.Button
+              onClick={() => {
+                table.setPageIndex(0);
+                table.getColumn("private")?.setFilterValue(true);
+                setVisibility("private");
+              }}
+              disabled={reverseProxies?.length == 0}
+              variant={
+                table.getColumn("private")?.getFilterValue() === true
+                  ? "tertiary"
+                  : "secondary"
+              }
+            >
+              Private
             </ButtonGroup.Button>
           </ButtonGroup>
           <DataTableRowsPerPage

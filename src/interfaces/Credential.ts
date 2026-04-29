@@ -17,7 +17,7 @@ export interface Credential {
 
 // Either `secret` (legacy single string) or `secret_fields` (multi-field
 // map) is used. The dashboard always sends `secret_fields`; `secret` is
-// retained for compatibility with any clients/tests pre-Wave 4.
+// retained for compatibility with legacy clients.
 export interface CredentialRequest {
   provider_type: CredentialProviderType;
   name: string;
