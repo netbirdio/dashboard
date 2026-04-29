@@ -2,6 +2,7 @@
 
 import {
   AuthorityConfiguration,
+  OidcClient,
   OidcConfiguration,
   OidcProvider,
 } from "@axa-fr/react-oidc";
@@ -18,6 +19,30 @@ type Props = {
 };
 
 const config = loadConfig();
+const AUTHENTICATED_CALLBACK_REDIRECT_PATH = "/peers";
+
+const getOidcRoutePath = (href: string, origin: string) => {
+  try {
+    const url = new URL(href, origin);
+    let path = url.pathname;
+    if (path.endsWith("/")) path = path.slice(0, -1);
+
+    let hash = url.hash;
+    if (hash === "#_=_") hash = "";
+    if (hash) path += hash.split("?")[0];
+
+    return path;
+  } catch {
+    return "";
+  }
+};
+
+const isOidcCallbackRoute = (href: string, redirectUri: string) =>
+  getOidcRoutePath(href, window.location.origin) ===
+  getOidcRoutePath(redirectUri, window.location.origin);
+
+const hasUsableTokens = (tokens: { expiresAt?: number } | null | undefined) =>
+  typeof tokens?.expiresAt === "number" && tokens.expiresAt > Date.now() / 1000;
 
 /**
  * Unfortunately Auth0 https://<DOMAIN>/.well-known/openid-configuration doesn't contain end_session_endpoint that
@@ -52,6 +77,8 @@ export default function OIDCProvider({ children }: Props) {
   };
 
   useEffect(() => {
+    let isMounted = true;
+
     // The service worker is disabled in two cases:
     //  1. tokenSource === "idtoken" — the SW would overwrite the manually-set
     //     idToken header with the access_token, breaking the idToken path.
@@ -61,7 +88,7 @@ export default function OIDCProvider({ children }: Props) {
       !config.disableServiceWorker &&
       config.tokenSource?.toLowerCase() !== "idtoken";
 
-    setProviderConfig({
+    const nextProviderConfig: OidcConfiguration = {
       authority: config.authority,
       client_id: config.clientId,
       redirect_uri: window.location.origin + config.redirectURI,
@@ -81,8 +108,46 @@ export default function OIDCProvider({ children }: Props) {
       ...(config.clientSecret
         ? { token_request_extras: { client_secret: config.clientSecret } }
         : null),
-    });
-    setMounted(true);
+    };
+
+    const finishMounting = () => {
+      if (isMounted) setMounted(true);
+    };
+
+    const redirectAuthenticatedCallback = async () => {
+      // OidcRoutes handles the callback route before OidcSession restores
+      // existing tokens. If a callback URL is reached while the app already
+      // has a valid OIDC session, leave the callback route instead of trying
+      // to process a stale/duplicate callback.
+      if (
+        !isOidcCallbackRoute(
+          window.location.href,
+          nextProviderConfig.redirect_uri,
+        )
+      ) {
+        finishMounting();
+        return;
+      }
+
+      try {
+        const oidc = OidcClient.getOrCreate(() => fetch)(nextProviderConfig);
+        await oidc.tryKeepExistingSessionAsync();
+        if (!isMounted) return;
+        if (hasUsableTokens(oidc.tokens)) {
+          window.location.replace(AUTHENTICATED_CALLBACK_REDIRECT_PATH);
+          return;
+        }
+      } catch {}
+
+      finishMounting();
+    };
+
+    setProviderConfig(nextProviderConfig);
+    void redirectAuthenticatedCallback();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const handleSessionLost = () => {
