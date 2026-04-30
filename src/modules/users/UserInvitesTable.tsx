@@ -26,6 +26,7 @@ import {
   Link2,
   MailPlus,
   NetworkIcon,
+  ShieldCheckIcon,
   Trash2,
   User2,
 } from "lucide-react";
@@ -113,6 +114,12 @@ function InviteRoleCell({ invite }: { invite: UserInvite }) {
           <>
             <NetworkIcon size={14} />
             Network Admin
+          </>
+        )}
+        {role === Role.CertApprover && (
+          <>
+            <ShieldCheckIcon size={14} />
+            Cert Approver
           </>
         )}
       </Badge>

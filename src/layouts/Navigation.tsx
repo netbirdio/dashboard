@@ -5,6 +5,7 @@ import { cn } from "@utils/helpers";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import ControlCenterIcon from "@/assets/icons/ControlCenterIcon";
 import DNSIcon from "@/assets/icons/DNSIcon";
+import DeviceSecurityIcon from "@/assets/icons/DeviceSecurityIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
@@ -191,6 +192,58 @@ export default function Navigation({
                     isChild
                     href={"/dns/settings"}
                     visible={permission.dns.read}
+                  />
+                </SidebarItem>
+                <SidebarItem
+                  icon={<DeviceSecurityIcon size={16} />}
+                  label={
+                    <div className={"flex items-center gap-2"}>
+                      Device Security
+                      <SmallBadge
+                        text={"Beta"}
+                        variant={"sky"}
+                        className={"text-[8px] leading-none py-[3px] px-[5px]"}
+                        textClassName={"top-0"}
+                      />
+                    </div>
+                  }
+                  collapsible
+                  visible={!isRestricted}
+                >
+                  <SidebarItem
+                    label="Settings"
+                    href="/device-security/settings"
+                    isChild
+                    exactPathMatch={true}
+                    visible={!isRestricted}
+                  />
+                  <SidebarItem
+                    label="Inventory"
+                    href="/device-security/inventory"
+                    isChild
+                    exactPathMatch={true}
+                    visible={!isRestricted}
+                  />
+                  <SidebarItem
+                    label="Enrollments"
+                    href="/device-security/enrollments"
+                    isChild
+                    exactPathMatch={true}
+                    visible={!isRestricted}
+                  />
+                  <SidebarItem
+                    label="Devices"
+                    href="/device-security/devices"
+                    isChild
+                    exactPathMatch={true}
+                    visible={!isRestricted}
+                  />
+                  <SidebarItem
+                    label="Trusted CAs"
+                    href="/device-security/trusted-cas"
+                    isChild
+                    exactPathMatch={true}
+                    visible={!isRestricted}
                   />
                 </SidebarItem>
                 <SidebarItem
