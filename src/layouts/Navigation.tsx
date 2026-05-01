@@ -21,6 +21,7 @@ import { SmallBadge } from "@components/ui/SmallBadge";
 import * as React from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import ActivityIcon from "@/assets/icons/ActivityIcon";
+import EntraDeviceIcon from "@/assets/icons/EntraDeviceIcon";
 
 type Props = {
   fullWidth?: boolean;
@@ -213,6 +214,7 @@ export default function Navigation({
                   />
                 </SidebarItem>
                 <ActivityNavigationItem />
+                <EntraDeviceAuthNavigationItem />
               </SidebarItemGroup>
 
               <SidebarItemGroup>
@@ -281,5 +283,25 @@ const ActivityNavigationItem = () => {
         visible={permission.events.read}
       />
     </SidebarItem>
+  );
+};
+
+// Entra device authentication admin UI. The permission module is optional on
+// the backend for backwards compatibility, so we default to showing the link
+// when `entra_device_auth` isn't published — the server-side permission
+// check remains the source of truth, and admins on older builds will simply
+// see a 403 when they hit the endpoints.
+const EntraDeviceAuthNavigationItem = () => {
+  const { permission } = usePermissions();
+  const visible = permission?.entra_device_auth?.read ?? true;
+
+  return (
+    <SidebarItem
+      icon={<EntraDeviceIcon size={16} />}
+      label="Entra Device Auth"
+      href={"/integrations/entra-device-auth"}
+      exactPathMatch={false}
+      visible={visible}
+    />
   );
 };
