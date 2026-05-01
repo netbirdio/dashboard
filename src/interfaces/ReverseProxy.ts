@@ -94,6 +94,10 @@ export interface ReverseProxyAuth {
   link_auth?: {
     enabled: boolean;
   };
+  mtls_auth?: {
+    enabled: boolean;
+    ca_cert_pem?: string;
+  };
   header_auths?: HeaderAuthConfig[];
 }
 
