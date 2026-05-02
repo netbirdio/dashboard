@@ -47,6 +47,7 @@ function validateCertificatePEM(value: string): string | undefined {
 
   const leftover = trimmed
     .replace(/-----BEGIN CERTIFICATE-----[\s\S]+?-----END CERTIFICATE-----/g, "")
+    .replace(/^\s*#.*$/gm, "")
     .trim();
   if (leftover.length > 0) {
     return "Only PEM certificate data is allowed";
@@ -162,11 +163,20 @@ export default function AuthMTLSModal({
                 "bg-nb-gray-930/50 hover:bg-nb-gray-930/40 cursor-pointer transition-all px-4 pb-8 pt-6",
               )}
               onClick={() => inputRef.current?.click()}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  inputRef.current?.click();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label="Upload client CA certificate file"
             >
               <input
                 ref={inputRef}
                 type="file"
-                className="hidden"
+                className="sr-only"
                 accept=".pem,.crt,.cer,.txt"
                 onChange={(e) => handleFileUpload(e.target.files)}
               />
