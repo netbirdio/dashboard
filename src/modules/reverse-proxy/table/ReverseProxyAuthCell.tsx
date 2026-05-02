@@ -18,6 +18,7 @@ import {
   LucideIcon,
   RectangleEllipsis,
   Settings,
+  ShieldCheckIcon,
   Users,
 } from "lucide-react";
 import * as React from "react";
@@ -29,7 +30,7 @@ import { isL4Mode, ReverseProxy } from "@/interfaces/ReverseProxy";
 import FullTooltip from "@components/FullTooltip";
 
 const AUTH_METHODS: {
-  key: "password_auth" | "pin_auth" | "bearer_auth";
+  key: "password_auth" | "pin_auth" | "bearer_auth" | "mtls_auth";
   label: string;
   hoverLabel: string;
   Icon: LucideIcon;
@@ -46,6 +47,12 @@ const AUTH_METHODS: {
     label: "SSO",
     hoverLabel: "SSO (Single Sign On)",
     Icon: Users,
+  },
+  {
+    key: "mtls_auth",
+    label: "mTLS",
+    hoverLabel: "mTLS",
+    Icon: ShieldCheckIcon,
   },
 ];
 

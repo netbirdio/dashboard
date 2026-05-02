@@ -8,6 +8,7 @@ import {
   Network,
   RectangleEllipsis,
   ShieldAlert,
+  ShieldCheckIcon,
   ShieldOff,
   Users,
 } from "lucide-react";
@@ -48,6 +49,11 @@ export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
         return {
           icon: <FileCode2Icon size={12} />,
           label: "HTTP Headers",
+        };
+      case "mtls":
+        return {
+          icon: <ShieldCheckIcon size={12} />,
+          label: "mTLS",
         };
       case "link":
       case "magic_link":
