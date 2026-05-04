@@ -7,6 +7,7 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
 import Paragraph from "@components/Paragraph";
+import { SmallBadge } from "@components/ui/SmallBadge";
 import {
   Select,
   SelectContent,
@@ -236,6 +237,12 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
                     <>
                       <KeyRound size={15} />
                       Enable Local MFA
+                      <SmallBadge
+                        text={"Beta"}
+                        variant={"sky"}
+                        className={"text-[9px] leading-none py-[3px] px-[5px]"}
+                        textClassName={"top-0"}
+                      />
                     </>
                   }
                   helpText={
