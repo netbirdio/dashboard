@@ -32,8 +32,8 @@ import {
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import type { PlatformType, VersionRelease } from "./VersionReleasesTab";
-import { platformTypeLabels } from "./VersionReleasesTab";
+import type { PlatformType, ArchitectureType, VersionRelease } from "./VersionReleasesTab";
+import { platformTypeLabels, architectureTypeLabels } from "./VersionReleasesTab";
 
 const config = loadConfig();
 
@@ -60,12 +60,26 @@ export default function VersionModal({
 
   const [version, setVersion] = useState(versionRelease?.version ?? "");
   const [platform, setPlatform] = useState<PlatformType>(versionRelease?.platform ?? "macos");
+  const [architecture, setArchitecture] = useState<ArchitectureType>(versionRelease?.architecture ?? "amd64");
   const [downloadUrl, setDownloadUrl] = useState(versionRelease?.downloadUrl ?? "");
   const [description, setDescription] = useState(versionRelease?.description ?? "");
   const [isLatest, setIsLatest] = useState(versionRelease?.isLatest ?? false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploadedFileId, setUploadedFileId] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+
+  React.useEffect(() => {
+    if (open) {
+      setVersion(versionRelease?.version ?? "");
+      setPlatform(versionRelease?.platform ?? "macos");
+      setArchitecture(versionRelease?.architecture ?? "amd64");
+      setDownloadUrl(versionRelease?.downloadUrl ?? "");
+      setDescription(versionRelease?.description ?? "");
+      setIsLatest(versionRelease?.isLatest ?? false);
+      setSelectedFile(null);
+      setUploadedFileId(null);
+    }
+  }, [open, versionRelease]);
 
   const isDisabled = useMemo(() => {
     const trimmedVersion = trim(version);
@@ -115,6 +129,7 @@ export default function VersionModal({
     const payload: any = {
       version: trim(version),
       platform,
+      architecture,
       downloadUrl: finalDownloadUrl,
       description: trim(description),
       isLatest,
@@ -185,6 +200,30 @@ export default function VersionModal({
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(platformTypeLabels).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    <div className="flex items-center gap-2">
+                      <span>{label}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>架构</Label>
+            <HelpText>选择目标架构</HelpText>
+            <Select
+              value={architecture}
+              onValueChange={(v) => {
+                setArchitecture(v as ArchitectureType);
+              }}
+            >
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder="选择架构" />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(architectureTypeLabels).map(([value, label]) => (
                   <SelectItem key={value} value={value}>
                     <div className="flex items-center gap-2">
                       <span>{label}</span>

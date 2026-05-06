@@ -2,9 +2,10 @@
 
 import useFetchApi from "@utils/api";
 import * as d3 from "d3";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Peer } from "@/interfaces/Peer";
+import { useOverviewRefresh } from "@/app/(dashboard)/overview/page";
 
 type DeviceTypeSlice = {
   key: string;
@@ -55,7 +56,22 @@ const formatPercent = (value: number, total: number) => {
 export function DeviceTypeDistribution() {
   const { t } = useI18n();
   const [hoveredSlice, setHoveredSlice] = useState<SliceHover | null>(null);
-  const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
+  const { refreshTrigger, refreshInterval } = useOverviewRefresh();
+  const { data: peers, isLoading, mutate } = useFetchApi<Peer[]>(
+    "/peers",
+    false,
+    false,
+    true,
+    {
+      refreshInterval: refreshInterval > 0 ? refreshInterval : undefined,
+    },
+  );
+
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      mutate();
+    }
+  }, [refreshTrigger, mutate]);
 
   const slices = useMemo<DeviceTypeSlice[]>(() => {
     const counts = new Map<string, number>();

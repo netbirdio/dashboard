@@ -10,6 +10,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { Peer } from "@/interfaces/Peer";
 import { User } from "@/interfaces/User";
 import world from "@/modules/overview/world-countries.json";
+import { useOverviewRefresh } from "@/app/(dashboard)/overview/page";
 
 type CityPoint = {
   key: string;
@@ -294,10 +295,33 @@ export function DeviceDistributionMap() {
   const [zoomScale, setZoomScale] = useState(1);
   const [hoveredCountry, setHoveredCountry] = useState<CountryHover | null>(null);
   const { countries } = useCountries();
-  const { data: peers, isLoading: isPeersLoading } = useFetchApi<Peer[]>("/peers");
-  const { data: users, isLoading: isUsersLoading } = useFetchApi<User[]>(
-    "/users?service_user=false",
+  const { refreshTrigger, refreshInterval } = useOverviewRefresh();
+
+  const { data: peers, isLoading: isPeersLoading, mutate: mutatePeers } = useFetchApi<Peer[]>(
+    "/peers",
+    false,
+    false,
+    true,
+    {
+      refreshInterval: refreshInterval > 0 ? refreshInterval : undefined,
+    },
   );
+  const { data: users, isLoading: isUsersLoading, mutate: mutateUsers } = useFetchApi<User[]>(
+    "/users?service_user=false",
+    false,
+    false,
+    true,
+    {
+      refreshInterval: refreshInterval > 0 ? refreshInterval : undefined,
+    },
+  );
+
+  useEffect(() => {
+    if (refreshTrigger > 0) {
+      mutatePeers();
+      mutateUsers();
+    }
+  }, [refreshTrigger, mutatePeers, mutateUsers]);
 
   const features = (world.features ?? []) as WorldFeature[];
   const isChinese = locale === "zh-CN";

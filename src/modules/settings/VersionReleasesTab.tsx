@@ -41,6 +41,9 @@ import VersionModal from "./VersionModal";
 // 定义平台类型
 export type PlatformType = "macos" | "windows" | "linux" | "android";
 
+// 定义架构类型
+export type ArchitectureType = "amd64" | "arm64" | "armv7" | "universal";
+
 // 平台图标
 export const platformTypeLabels: Record<PlatformType, string> = {
   macos: "macOS",
@@ -49,11 +52,20 @@ export const platformTypeLabels: Record<PlatformType, string> = {
   android: "Android",
 };
 
+// 架构标签
+export const architectureTypeLabels: Record<ArchitectureType, string> = {
+  amd64: "Intel / AMD64",
+  arm64: "ARM64",
+  armv7: "ARMv7",
+  universal: "通用",
+};
+
 // 版本信息接口
 export interface VersionRelease {
   id: string;
   version: string;
   platform: PlatformType;
+  architecture: ArchitectureType;
   downloadUrl: string;
   description?: string;
   isLatest?: boolean;
@@ -183,6 +195,15 @@ export default function VersionReleasesTab() {
       ),
       cell: ({ row }) => (
         <span className="text-nb-gray-400">{platformTypeLabels[row.original.platform]}</span>
+      ),
+    },
+    {
+      accessorKey: "architecture",
+      header: ({ column }) => (
+        <DataTableHeader column={column}>架构</DataTableHeader>
+      ),
+      cell: ({ row }) => (
+        <span className="text-nb-gray-400">{architectureTypeLabels[row.original.architecture] || row.original.architecture}</span>
       ),
     },
     {
