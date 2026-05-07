@@ -50,11 +50,11 @@ function CardListItem({
   return (
     <li
       className={cn(
-        "flex justify-between px-4 border-b border-nb-gray-900 py-4 last:border-b-0 items-center h-full",
+        "flex justify-between px-4 border-b border-nb-gray-900 py-3.5 last:border-b-0 items-center h-full",
         className,
       )}
     >
-      <div className={"flex gap-2.5 items-center text-sm"}>{label}</div>
+      <div className={"flex gap-2.5 items-center text-[0.84rem]"}>{label}</div>
       <div className={"flex flex-col gap-2"}>
         <CardTextItem
           label={label}
@@ -100,7 +100,7 @@ const CardTextItem = ({
   return (
     <div
       className={cn(
-        "text-right text-nb-gray-400 text-sm flex items-center gap-2",
+        "text-right text-nb-gray-400 text-[0.84rem] flex items-center gap-2",
         copy && "cursor-pointer hover:text-nb-gray-300 transition-all",
       )}
       onClick={() =>

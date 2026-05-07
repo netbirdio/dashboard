@@ -214,6 +214,10 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
       </PeerProvider>
     ),
   },
+  {
+    id: "ipv6",
+    accessorFn: (row) => row.ipv6,
+  },
 ];
 
 type Props = {
@@ -327,6 +331,7 @@ export default function PeersTable({
           connect: permission.peers.update,
           groups: permission.groups.read,
           os: false,
+          ipv6: false,
         }}
         isLoading={isLoading}
         getStartedCard={<NoPeersGettingStarted showBackground={true} />}

@@ -11,6 +11,7 @@ import { PeerAddressTooltipContent } from "@/modules/peers/PeerAddressTooltipCon
 type Props = {
   peer: Peer;
 };
+
 export default function PeerAddressCell({ peer }: Props) {
   return (
     <FullTooltip

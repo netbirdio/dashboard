@@ -224,6 +224,7 @@ export const useNetBirdClient = () => {
       port: number,
       username: string,
       jwtToken?: string,
+      ipVersion?: string,
     ): Promise<any> => {
       if (!netBirdClient.current?.createSSHConnection) {
         throw new Error("Go client not ready");
@@ -233,6 +234,7 @@ export const useNetBirdClient = () => {
         port,
         username,
         jwtToken,
+        ipVersion,
       );
     },
     [],

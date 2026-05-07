@@ -18,7 +18,7 @@ import {
 } from "@utils/version";
 
 export default function SSHPage() {
-  const { peerId, username, port } = useSSHQueryParams();
+  const { peerId, username, port, ipVersion } = useSSHQueryParams();
 
   const {
     data: peer,
@@ -48,6 +48,7 @@ export default function SSHPage() {
           peer={peer}
           username={username}
           port={port}
+          ipVersion={ipVersion}
         />
       ) : (
         <LoadingMessage message={"Starting ssh session..."} />
@@ -60,9 +61,10 @@ type Props = {
   username: string;
   port: string;
   peer: Peer;
+  ipVersion: string | null;
 };
 
-function SSHTerminal({ username, port, peer }: Props) {
+function SSHTerminal({ username, port, peer, ipVersion }: Props) {
   const client = useNetBirdClient();
   const connected = useRef(false);
   const sshConnectedOnce = useRef(false);
@@ -81,9 +83,12 @@ function SSHTerminal({ username, port, peer }: Props) {
   const isClientDisconnected = client.status === NetBirdStatus.DISCONNECTED;
   const isClientConnecting = client.status === NetBirdStatus.CONNECTING;
 
+  // Use the FQDN when an IP version is specified so the dialer resolves to the correct address family.
+  const sshHost = ipVersion ? peer.dns_label || peer.ip : peer.ip;
+
   useEffect(() => {
-    document.title = `${username}@${peer.ip} - ${peer.hostname}`;
-  }, [username, peer, client]);
+    document.title = `${username}@${sshHost} - ${peer.hostname}`;
+  }, [username, peer, client, sshHost]);
 
   const handleReconnect = async () => {
     if (!peer?.id) return;
@@ -97,9 +102,10 @@ function SSHTerminal({ username, port, peer }: Props) {
       const rules = [`${protocol}/${aclPort}`];
       await client?.connectTemporary(peer.id, rules);
       await ssh({
-        hostname: peer.ip,
+        hostname: sshHost,
         port: Number(port),
         username,
+        ipVersion: ipVersion || undefined,
       });
     } catch (error) {
       console.error("Reconnection failed:", error);
@@ -123,9 +129,10 @@ function SSHTerminal({ username, port, peer }: Props) {
         const rules = [`${protocol}/${aclPort}`];
         await client?.connectTemporary(peer.id, rules);
         const res = await ssh({
-          hostname: peer.ip,
+          hostname: sshHost,
           port: Number(port),
           username,
+          ipVersion: ipVersion || undefined,
         });
         if (res === SSHStatus.CONNECTED) {
           sshConnectedOnce.current = true;

@@ -34,7 +34,7 @@ export const NetworkRoutingPeersTabContent = ({
 
       return {
         ...router,
-        search: `${peer?.name ?? ""} ${peer?.ip ?? ""} ${user?.name ?? ""} ${user?.id ?? ""} ${group?.name ?? ""}`,
+        search: `${peer?.name ?? ""} ${peer?.ip ?? ""} ${peer?.ipv6 ?? ""} ${user?.name ?? ""} ${user?.id ?? ""} ${group?.name ?? ""}`,
       };
     });
   }, [users, peers, routers, groups]);
