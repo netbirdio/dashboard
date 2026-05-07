@@ -55,7 +55,7 @@ export default function NetworkEventsPage() {
       >
         <ServerPaginationProvider
           url="/events/network-traffic"
-          defaultPageSize={1000}
+          defaultPageSize={10000}
           defaultFilters={defaultFilters}
         >
           <NetworkLogsTable headingTarget={portalTarget} />

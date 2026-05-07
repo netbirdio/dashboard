@@ -80,7 +80,7 @@ export function RelayTrafficStats() {
     params.set("end_date", endDate.toISOString());
     params.set("sort_by", "timestamp");
     params.set("sort_order", "asc");
-    return "/events/network-traffic";
+    return `/events/network-traffic?${params.toString()}`;
   }, [endDate, startDate]);
 
   const { data: response, isLoading, mutate } = useFetchApi<Pagination<NetworkLog[]>>(
@@ -309,12 +309,18 @@ export function RelayTrafficStats() {
       const bisect = d3.bisector<TrafficPoint, Date>((d) => d.timestamp).center;
 
       const handleMouseMove = (event: MouseEvent) => {
+        if (points.length === 0) return;
+
         const [mouseX] = d3.pointer(event);
         const x0 = currentX.invert(mouseX);
         const i = bisect(points, x0);
         const d0 = points[i - 1];
         const d1 = points[i];
-        const d = (x0.getTime() - d0.timestamp.getTime() > d1.timestamp.getTime() - x0.getTime()) ? d1 : d0;
+        const d = d0 && d1
+          ? (x0.getTime() - d0.timestamp.getTime() > d1.timestamp.getTime() - x0.getTime() ? d1 : d0)
+          : d0 ?? d1;
+
+        if (!d) return;
 
         focus.style("display", null);
         tooltip.style("display", null);
