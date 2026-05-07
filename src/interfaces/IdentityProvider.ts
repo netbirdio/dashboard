@@ -74,6 +74,7 @@ export interface SSOIdentityProvider {
   name: string;
   issuer: string;
   client_id: string;
+  agent_id?: string;
   redirect_url?: string;
 }
 
@@ -82,5 +83,6 @@ export interface SSOIdentityProviderRequest {
   name: string;
   issuer: string;
   client_id: string;
+  agent_id?: string;
   client_secret: string;
 }

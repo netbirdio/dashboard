@@ -1,20 +1,24 @@
 "use client";
 
-import { useOidc } from "@axa-fr/react-oidc";
+import { useOidc, useOidcAccessToken, useOidcIdToken } from "@axa-fr/react-oidc";
 import Button from "@components/Button";
 import Paragraph from "@components/Paragraph";
 import loadConfig from "@utils/config";
-import { ArrowRightIcon, RefreshCw } from "lucide-react";
+import { ArrowRightIcon, RefreshCw, Loader2 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 import { useI18n } from "@/i18n/I18nProvider";
+import { isExpired } from "react-jwt";
+import { sleep } from "@utils/helpers";
 
 const config = loadConfig();
 
 export default function ErrorPage() {
   const { t } = useI18n();
   const { logout, isAuthenticated } = useOidc();
+  const { idToken } = useOidcIdToken();
+  const { accessToken } = useOidcAccessToken();
   const router = useRouter();
   const searchParams = useSearchParams();
   const [error, setError] = useState<{
@@ -22,6 +26,45 @@ export default function ErrorPage() {
     message: string;
     type: string;
   } | null>(null);
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+
+  const tokenSource = config.tokenSource || "accessToken";
+  const token = tokenSource.toLowerCase() == "idtoken" ? idToken : accessToken;
+
+  const checkUserStatus = async () => {
+    // 检查 token 是否过期
+    let attempts = 4;
+    while (isExpired(token) && attempts > 0) {
+      await sleep(500);
+      attempts = attempts - 1;
+    }
+
+    if (isExpired(token)) {
+      return;
+    }
+
+    try {
+      setIsCheckingStatus(true);
+      const response = await fetch(`${config.apiOrigin}/api/users`, {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (response.ok) {
+        // 如果 API 成功返回，说明用户已经被批准，重定向到主页
+        router.push("/");
+      }
+    } catch (e) {
+      // API 调用失败，继续显示错误页面
+      console.log("Failed to check user status:", e);
+    } finally {
+      setIsCheckingStatus(false);
+    }
+  };
 
   useEffect(() => {
     // Get error details from URL params
@@ -38,6 +81,22 @@ export default function ErrorPage() {
     }
   }, [searchParams]);
 
+  useEffect(() => {
+    const isPendingApproval =
+      error?.code === 403 &&
+      error?.message?.toLowerCase().includes("pending approval");
+
+    if (isPendingApproval && isAuthenticated) {
+      // 立即检查一次状态
+      checkUserStatus();
+
+      // 每 5 秒检查一次用户状态
+      const intervalId = setInterval(checkUserStatus, 5000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [error, isAuthenticated, token]);
+
   const handleLogout = () => {
     // Use the same logout pattern as OIDCError
     logout("/", { client_id: config.clientId });
@@ -45,6 +104,10 @@ export default function ErrorPage() {
 
   const handleRetry = () => {
     router.push("/");
+  };
+
+  const handleCheckStatus = () => {
+    checkUserStatus();
   };
 
   if (!isAuthenticated) {
@@ -102,6 +165,22 @@ export default function ErrorPage() {
       </Paragraph>
 
       <div className="mt-5 space-y-3">
+        {isPendingApproval && (
+          <Button variant="default-outline" size="sm" onClick={handleCheckStatus} disabled={isCheckingStatus}>
+            {isCheckingStatus ? (
+              <>
+                <Loader2 size={16} className="mr-2 animate-spin" />
+                检查状态中...
+              </>
+            ) : (
+              <>
+                <RefreshCw size={16} className="mr-2" />
+                检查审批状态
+              </>
+            )}
+          </Button>
+        )}
+
         {!isBlockedUser && !isPendingApproval && (
           <Button variant="default-outline" size="sm" onClick={handleRetry}>
             <RefreshCw size={16} className="mr-2" />

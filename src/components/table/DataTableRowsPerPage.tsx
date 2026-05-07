@@ -10,13 +10,15 @@ import { useI18n } from "@/i18n/I18nProvider";
 interface DataTablePaginationProps<TData> {
   table: Table<TData>;
   disabled?: boolean;
+  rowsSelection?: number[];
 }
 
-const rowsSelection = [10, 25, 50, 100, 1000];
+const defaultRowsSelection = [10, 25, 50, 100, 1000];
 
 export function DataTableRowsPerPage<TData>({
   table,
   disabled,
+  rowsSelection = defaultRowsSelection,
 }: DataTablePaginationProps<TData>) {
   const { t } = useI18n();
   const [open, setOpen] = React.useState(false);

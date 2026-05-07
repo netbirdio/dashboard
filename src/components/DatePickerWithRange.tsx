@@ -20,6 +20,22 @@ interface Props {
 }
 
 const defaultRanges = {
+  last5Minutes: {
+    from: dayjs().subtract(5, "minute").toDate(),
+    to: dayjs().toDate(),
+  },
+  last15Minutes: {
+    from: dayjs().subtract(15, "minute").toDate(),
+    to: dayjs().toDate(),
+  },
+  last30Minutes: {
+    from: dayjs().subtract(30, "minute").toDate(),
+    to: dayjs().toDate(),
+  },
+  last1Hour: {
+    from: dayjs().subtract(1, "hour").toDate(),
+    to: dayjs().toDate(),
+  },
   today: {
     from: dayjs().startOf("day").toDate(),
     to: dayjs().endOf("day").toDate(),
@@ -51,12 +67,16 @@ const defaultRanges = {
 };
 
 const isEqualDateRange = (a: DateRange | undefined, b: DateRange) => {
-  if (!a) return false;
-  const aFromDay = dayjs(a.from).format("YYYY-MM-DD");
-  const aToDay = dayjs(a.to).format("YYYY-MM-DD");
-  const bFromDay = dayjs(b.from).format("YYYY-MM-DD");
-  const bToDay = dayjs(b.to).format("YYYY-MM-DD");
-  return aFromDay === bFromDay && aToDay === bToDay;
+  if (!a || !a.from) return false;
+  // 对于短时间范围，精确到分钟比较
+  const aFrom = dayjs(a.from);
+  const aTo = a.to ? dayjs(a.to) : aFrom;
+  const bFrom = dayjs(b.from);
+  const bTo = b.to ? dayjs(b.to) : bFrom;
+  return (
+    Math.abs(aFrom.diff(bFrom, "minute")) < 1 &&
+    Math.abs(aTo.diff(bTo, "minute")) < 1
+  );
 };
 
 export function DatePickerWithRange({
@@ -68,6 +88,10 @@ export function DatePickerWithRange({
   const { t } = useI18n();
   const isActive = useMemo(() => {
     return {
+      last5Minutes: isEqualDateRange(value, defaultRanges.last5Minutes),
+      last15Minutes: isEqualDateRange(value, defaultRanges.last15Minutes),
+      last30Minutes: isEqualDateRange(value, defaultRanges.last30Minutes),
+      last1Hour: isEqualDateRange(value, defaultRanges.last1Hour),
       today: isEqualDateRange(value, defaultRanges.today),
       yesterday: isEqualDateRange(value, defaultRanges.yesterday),
       last14Days: isEqualDateRange(value, defaultRanges.last14Days),
@@ -88,11 +112,15 @@ export function DatePickerWithRange({
     if (isActive.last7Days) return t("datePicker.last7Days");
     if (isActive.yesterday) return t("datePicker.yesterday");
     if (isActive.today) return t("datePicker.today");
+    if (isActive.last1Hour) return t("datePicker.last1Hour");
+    if (isActive.last30Minutes) return t("datePicker.last30Minutes");
+    if (isActive.last15Minutes) return t("datePicker.last15Minutes");
+    if (isActive.last5Minutes) return t("datePicker.last5Minutes");
 
-    if (!value.to) return dayjs(value.from).format("MMM DD, YYYY").toString();
-    return `${dayjs(value.from).format("MMM DD, YYYY")} - ${dayjs(
+    if (!value.to) return dayjs(value.from).format("MMM DD, HH:mm").toString();
+    return `${dayjs(value.from).format("MMM DD, HH:mm")} - ${dayjs(
       value.to,
-    ).format("MMM DD, YYYY")}`;
+    ).format("MMM DD, HH:mm")}`;
   }, [value, isActive, t]);
 
   const [calendarOpen, setCalendarOpen] = useState(false);
@@ -143,7 +171,44 @@ export function DatePickerWithRange({
               "px-3 py-2 flex flex-wrap gap-2 max-w-[280px] sm:max-w-none border-b border-nb-gray-800 items-center justify-between w-full"
             }
           >
-            <div>
+            <div className="flex gap-2 flex-wrap">
+              <CalendarButton
+                label={t("datePicker.last5Minutes")}
+                active={isActive.last5Minutes}
+                onClick={() => updateRangeAndClose(defaultRanges.last5Minutes)}
+              />
+              <CalendarButton
+                label={t("datePicker.last15Minutes")}
+                active={isActive.last15Minutes}
+                onClick={() => updateRangeAndClose(defaultRanges.last15Minutes)}
+              />
+              <CalendarButton
+                label={t("datePicker.last30Minutes")}
+                active={isActive.last30Minutes}
+                onClick={() => updateRangeAndClose(defaultRanges.last30Minutes)}
+              />
+              <CalendarButton
+                label={t("datePicker.last1Hour")}
+                active={isActive.last1Hour}
+                onClick={() => updateRangeAndClose(defaultRanges.last1Hour)}
+              />
+            </div>
+            <div className={"flex gap-2 flex-wrap"}>
+              <CalendarButton
+                label={t("datePicker.today")}
+                active={isActive.today}
+                onClick={() => updateRangeAndClose(defaultRanges.today)}
+              />
+              <CalendarButton
+                label={t("datePicker.yesterday")}
+                active={isActive.yesterday}
+                onClick={() => updateRangeAndClose(defaultRanges.yesterday)}
+              />
+              <CalendarButton
+                label={t("datePicker.last7Days")}
+                active={isActive.last7Days}
+                onClick={() => updateRangeAndClose(defaultRanges.last7Days)}
+              />
               <CalendarButton
                 label={
                   <>
@@ -153,28 +218,6 @@ export function DatePickerWithRange({
                 }
                 active={isActive.allTime}
                 onClick={() => updateRangeAndClose(defaultRanges.allTime)}
-              />
-            </div>
-            <div className={"flex gap-2 flex-wrap"}>
-              <CalendarButton
-                label={t("datePicker.lastMonth")}
-                active={isActive.lastMonth}
-                onClick={() => updateRangeAndClose(defaultRanges.lastMonth)}
-              />
-              <CalendarButton
-                label={t("datePicker.last14Days")}
-                active={isActive.last14Days}
-                onClick={() => updateRangeAndClose(defaultRanges.last14Days)}
-              />
-              <CalendarButton
-                label={t("datePicker.yesterday")}
-                active={isActive.yesterday}
-                onClick={() => updateRangeAndClose(defaultRanges.yesterday)}
-              />
-              <CalendarButton
-                label={t("datePicker.today")}
-                active={isActive.today}
-                onClick={() => updateRangeAndClose(defaultRanges.today)}
               />
             </div>
           </div>

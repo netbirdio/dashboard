@@ -7,6 +7,7 @@ import {
 import Button from "@components/Button";
 import Code from "@components/Code";
 import Separator from "@components/Separator";
+import { SelectDropdown, SelectOption } from "@components/select/SelectDropdown";
 import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
 import { getNetBirdUpCommand, GRPC_API_ORIGIN } from "@utils/netbird";
@@ -18,14 +19,16 @@ import {
   TerminalSquareIcon,
 } from "lucide-react";
 import Link from "next/link";
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { useI18n } from "@/i18n/I18nProvider";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
+import useFetchApi from "@utils/api";
 import {
   HostnameParameter,
   RoutingPeerSetupKeyInfo,
   SetupKeyParameter,
 } from "@/modules/setup-netbird-modal/SetupModal";
+import { VersionRelease } from "@/modules/settings/VersionReleasesTab";
 
 type Props = {
   setupKey?: string;
@@ -39,6 +42,25 @@ export default function MacOSTab({
   hostname,
 }: Readonly<Props>) {
   const { t } = useI18n();
+  const { data: versions, isLoading } = useFetchApi<VersionRelease[]>("/version-releases");
+  const [selectedVersion, setSelectedVersion] = useState<string>("");
+
+  const macVersions = (versions || []).filter((v) => v.platform === "macos");
+  
+  // Only show published versions
+  const versionOptions: SelectOption[] = macVersions.map((v) => ({
+    label: v.version + (v.isLatest ? " (最新)" : ""),
+    value: v.downloadUrl,
+  }));
+
+  useEffect(() => {
+    if (macVersions.length > 0) {
+      const latestVersion = macVersions.find((v) => v.isLatest) || macVersions[0];
+      setSelectedVersion(latestVersion.downloadUrl);
+    }
+  }, [macVersions]);
+
+  const currentUrl = selectedVersion || "";
 
   return (
     <TabsContent value={String(OperatingSystem.APPLE)}>
@@ -52,17 +74,28 @@ export default function MacOSTab({
             <div className={"flex items-center gap-1 text-sm font-light"}>
               {t("setupModal.macosStep1")}
             </div>
-            <div className={"flex gap-4 mt-1 flex-wrap"}>
-              <Link
-                href={"https://pkgs.netbird.io/macos/universal"}
-                passHref
-                target={"_blank"}
-              >
-                <Button variant={"primary"}>
+            <div className={"flex gap-4 mt-1 flex-wrap items-center"}>
+              <SelectDropdown
+                value={currentUrl}
+                className={"w-[170px]"}
+                onChange={setSelectedVersion}
+                placeholder={versionOptions.length === 0 ? "请先发布版本" : t("setupModal.selectArchitecture")}
+                options={versionOptions}
+              />
+              {versionOptions.length > 0 ? (
+                <Button 
+                  variant={"primary"} 
+                  onClick={() => window.open(currentUrl, "_blank", "noopener noreferrer")}
+                >
                   <DownloadIcon size={14} />
                   {t("setupModal.downloadNetBird")}
                 </Button>
-              </Link>
+              ) : (
+                <Button variant={"primary"} disabled>
+                  <DownloadIcon size={14} />
+                  请先在设置中发布版本
+                </Button>
+              )}
             </div>
           </Steps.Step>
 

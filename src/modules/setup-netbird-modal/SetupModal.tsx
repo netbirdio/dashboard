@@ -125,7 +125,7 @@ export function SetupModalContent({
         </div>
       )}
 
-      <Tabs defaultValue={String(setupKey ? OperatingSystem.LINUX : os)}>
+      <Tabs defaultValue={String(setupKey ? OperatingSystem.LINUX : (isInstallPage ? OperatingSystem.WINDOWS : os))}>
         <TabsList justify={tabAlignment} className={"pt-2 px-3"}>
           <TabsTrigger value={String(OperatingSystem.LINUX)}>
             <ShellIcon

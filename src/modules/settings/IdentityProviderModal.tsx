@@ -62,7 +62,7 @@ const defaultNames: Record<SSOIdentityProviderType, string> = {
   pocketid: "PocketID",
   authentik: "Authentik",
   keycloak: "Keycloak",
-  wechatwork: "WeChat Work",
+  wechatwork: "企业微信",
 };
 
 type Props = {
@@ -95,20 +95,25 @@ export default function IdentityProviderModal({
   const [name, setName] = useState(provider?.name ?? "");
   const [issuer, setIssuer] = useState(provider?.issuer ?? "");
   const [clientId, setClientId] = useState(provider?.client_id ?? "");
+  const [agentId, setAgentId] = useState(provider?.agent_id ?? "");
   const [clientSecret, setClientSecret] = useState("");
 
-  const requiresIssuer = type !== "google" && type !== "microsoft";
+  const isWeChatWork = type === "wechatwork";
+  const requiresIssuer =
+    type !== "google" && type !== "microsoft" && type !== "wechatwork";
   const clientIdChanged = isEditing && trim(clientId) !== provider?.client_id;
 
   const isDisabled = useMemo(() => {
     const trimmedName = trim(name);
     const trimmedIssuer = trim(issuer);
     const trimmedClientId = trim(clientId);
+    const trimmedAgentId = trim(agentId);
     const trimmedClientSecret = trim(clientSecret);
 
     if (trimmedName.length === 0) return true;
     if (requiresIssuer && trimmedIssuer.length === 0) return true;
     if (trimmedClientId.length === 0) return true;
+    if (isWeChatWork && trimmedAgentId.length === 0) return true;
     if ((!isEditing || clientIdChanged) && trimmedClientSecret.length === 0)
       return true;
 
@@ -117,9 +122,11 @@ export default function IdentityProviderModal({
     name,
     issuer,
     clientId,
+    agentId,
     clientSecret,
     isEditing,
     clientIdChanged,
+    isWeChatWork,
     requiresIssuer,
   ]);
 
@@ -129,6 +136,7 @@ export default function IdentityProviderModal({
       name: trim(name),
       issuer: trim(issuer),
       client_id: trim(clientId),
+      agent_id: isWeChatWork ? trim(agentId) : undefined,
       client_secret: trim(clientSecret),
     };
 
@@ -238,31 +246,66 @@ export default function IdentityProviderModal({
           )}
 
           <div>
-            <Label>{t("identityProviderModal.clientId")}</Label>
-            <HelpText>{t("identityProviderModal.clientIdHelp")}</HelpText>
+            <Label>
+              {isWeChatWork ? "Corp ID" : t("identityProviderModal.clientId")}
+            </Label>
+            <HelpText>
+              {isWeChatWork
+                ? "填写企业微信的 Corp ID。"
+                : t("identityProviderModal.clientIdHelp")}
+            </HelpText>
             <Input
-              placeholder={t("identityProviderModal.clientIdPlaceholder")}
+              placeholder={
+                isWeChatWork
+                  ? "输入企业微信 Corp ID"
+                  : t("identityProviderModal.clientIdPlaceholder")
+              }
               value={clientId}
               onChange={(e) => setClientId(e.target.value)}
               customPrefix={<IdCard size={16} className="text-nb-gray-300" />}
             />
           </div>
 
+          {isWeChatWork && (
+            <div>
+              <Label>Agent ID</Label>
+              <HelpText>
+                填写企业微信应用的 Agent ID，官方登录组件会使用该值初始化登录面板。
+              </HelpText>
+              <Input
+                placeholder="输入企业微信 Agent ID"
+                value={agentId}
+                onChange={(e) => setAgentId(e.target.value)}
+                customPrefix={<IdCard size={16} className="text-nb-gray-300" />}
+              />
+            </div>
+          )}
+
           <div>
-            <Label>{t("identityProviderModal.clientSecret")}</Label>
+            <Label>
+              {isWeChatWork ? "Secret" : t("identityProviderModal.clientSecret")}
+            </Label>
             <HelpText>
-              {isEditing
-                ? clientIdChanged
-                  ? t("identityProviderModal.clientSecretChangedHelp")
-                  : t("identityProviderModal.clientSecretOptionalHelp")
-                : t("identityProviderModal.clientSecretHelp")}
+              {isWeChatWork
+                ? isEditing
+                  ? "留空将保留现有企业微信应用 Secret。"
+                  : "填写企业微信自建应用的 Secret。"
+                : isEditing
+                  ? clientIdChanged
+                    ? t("identityProviderModal.clientSecretChangedHelp")
+                    : t("identityProviderModal.clientSecretOptionalHelp")
+                  : t("identityProviderModal.clientSecretHelp")}
             </HelpText>
             <Input
               type="password"
               placeholder={
-                isEditing
-                  ? t("identityProviderModal.clientSecretMaskedPlaceholder")
-                  : t("identityProviderModal.clientSecretPlaceholder")
+                isWeChatWork
+                  ? isEditing
+                    ? "留空则不修改 Secret"
+                    : "输入企业微信应用 Secret"
+                  : isEditing
+                    ? t("identityProviderModal.clientSecretMaskedPlaceholder")
+                    : t("identityProviderModal.clientSecretPlaceholder")
               }
               value={clientSecret}
               onChange={(e) => setClientSecret(e.target.value)}
@@ -279,7 +322,9 @@ export default function IdentityProviderModal({
               codeToCopy={redirectUrl}
               message={t("identityProviderModal.redirectCopied")}
             >
-              <Code.Line>{redirectUrl}</Code.Line>
+              <Code.Line>
+                {isWeChatWork ? `${redirectUrl}/{connector_id}` : redirectUrl}
+              </Code.Line>
             </Code>
           </div>
         </div>

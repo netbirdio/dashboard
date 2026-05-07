@@ -96,6 +96,9 @@ const ModalContent = React.forwardRef<
           <VisuallyHidden asChild>
             <DialogPrimitive.Title>Dialog</DialogPrimitive.Title>
           </VisuallyHidden>
+          <VisuallyHidden asChild>
+            <DialogPrimitive.Description>Modal dialog</DialogPrimitive.Description>
+          </VisuallyHidden>
           {children}
           {showClose && (
             <DialogPrimitive.Close
@@ -153,6 +156,9 @@ const SidebarModalContent = React.forwardRef<
           >
             <VisuallyHidden asChild>
               <DialogPrimitive.Title>Dialog</DialogPrimitive.Title>
+            </VisuallyHidden>
+            <VisuallyHidden asChild>
+              <DialogPrimitive.Description>Modal dialog</DialogPrimitive.Description>
             </VisuallyHidden>
             {children}
             {showClose && (

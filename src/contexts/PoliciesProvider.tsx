@@ -52,8 +52,6 @@ export default function PoliciesProvider({ children }: Props) {
     resource: NetworkResource,
     knownGroups?: Group[],
   ) => {
-    const rule = policy.rules[0];
-
     const allGroups = [...(knownGroups || []), ...(groups || [])];
     const resolveGroup = async (g: Group | string): Promise<string> => {
       if (typeof g === "string") return g;
@@ -64,33 +62,37 @@ export default function PoliciesProvider({ children }: Props) {
       return created.id!;
     };
 
-    const sources = await Promise.all(
-      (rule.sources ?? []).map(resolveGroup),
-    ).then((ids) => ids.filter(Boolean) as string[]);
+    const rules = await Promise.all(
+      (policy.rules ?? []).map(async (rule) => {
+        const sources = await Promise.all(
+          (rule.sources ?? []).map(resolveGroup),
+        ).then((ids) => ids.filter(Boolean) as string[]);
 
-    const destinations = rule.destinationResource
-      ? undefined
-      : await Promise.all((rule.destinations ?? []).map(resolveGroup)).then(
-          (ids) => ids.filter(Boolean) as string[],
-        );
+        const destinations = rule.destinationResource
+          ? undefined
+          : await Promise.all((rule.destinations ?? []).map(resolveGroup)).then(
+              (ids) => ids.filter(Boolean) as string[],
+            );
 
-    const destinationResource = rule.destinationResource
-      ? { id: resource.id, type: resource.type }
-      : undefined;
+        const destinationResource = rule.destinationResource
+          ? { id: resource.id, type: resource.type }
+          : undefined;
+
+        return {
+          ...rule,
+          sources,
+          destinations,
+          destinationResource,
+        };
+      }),
+    );
 
     return createPolicy({
       ...policy,
       source_posture_checks: (policy.source_posture_checks ?? []).map((c) =>
         typeof c === "string" ? c : c.id,
       ),
-      rules: [
-        {
-          ...rule,
-          sources,
-          destinations,
-          destinationResource,
-        },
-      ],
+      rules,
     } as Policy);
   };
 
@@ -138,6 +140,10 @@ export default function PoliciesProvider({ children }: Props) {
     onSuccess?: (p: Policy) => void,
     message?: string,
   ) => {
+    const rules = toUpdate.rules
+      ? serializeRules(toUpdate.rules, toUpdate.enabled ?? policy.enabled)
+      : policy.rules ?? [];
+
     notify({
       title: "Access Control Policy " + policy.name,
       description:
@@ -149,10 +155,14 @@ export default function PoliciesProvider({ children }: Props) {
             description: toUpdate.description ?? policy.description ?? "",
             enabled: toUpdate.enabled ?? policy.enabled,
             query: toUpdate.query ?? policy.query ?? "",
-            rules: toUpdate.rules ?? policy.rules ?? [],
+            rules,
             source_posture_checks:
-              toUpdate.source_posture_checks ??
-              policy.source_posture_checks ??
+              toUpdate.source_posture_checks?.map((c) =>
+                typeof c === "string" ? c : c.id,
+              ) ??
+              policy.source_posture_checks?.map((c) =>
+                typeof c === "string" ? c : c.id,
+              ) ??
               [],
           },
           `/${policy.id}`,

@@ -136,12 +136,15 @@ export function ResourceModalContent({
     if (!groups.length || !allPolicies) return 0;
     const groupIds = new Set(groups.map((g) => g.id));
     return allPolicies.filter((policy) => {
-      const rule = policy.rules?.[0];
-      if (!rule || rule.destinationResource) return false;
-      const destinations = rule.destinations as (Group | string)[] | undefined;
-      return destinations?.some((d) => {
-        const id = typeof d === "string" ? d : d.id;
-        return !!id && groupIds.has(id);
+      return policy.rules?.some((rule) => {
+        if (!rule || rule.destinationResource) return false;
+        const destinations = rule.destinations as
+          | (Group | string)[]
+          | undefined;
+        return destinations?.some((d) => {
+          const id = typeof d === "string" ? d : d.id;
+          return !!id && groupIds.has(id);
+        });
       });
     }).length;
   }, [groups, allPolicies]);
@@ -161,7 +164,9 @@ export function ResourceModalContent({
       title: t("networkResources.noPoliciesTitle"),
       description: t("networkResources.noPoliciesDescription"),
       type: "warning",
-      confirmText: resource ? t("actions.saveChanges") : t("networkResources.add"),
+      confirmText: resource
+        ? t("actions.saveChanges")
+        : t("networkResources.add"),
       cancelText: t("actions.cancel"),
       maxWidthClass: "max-w-lg",
     });
@@ -232,7 +237,9 @@ export function ResourceModalContent({
         description={
           resource
             ? `${resource.name}`
-            : t("networkResources.addModalDescription", { network: network?.name })
+            : t("networkResources.addModalDescription", {
+                network: network?.name,
+              })
         }
         color={"yellow"}
       />
@@ -274,15 +281,11 @@ export function ResourceModalContent({
               description={
                 <>
                   {t("networkResources.addressDescriptionPrefix")}{" "}
-                  <HelpTooltip
-                    content={t("networkResources.addressIpHelp")}
-                  >
+                  <HelpTooltip content={t("networkResources.addressIpHelp")}>
                     {t("networkResources.ipAddress")}
                   </HelpTooltip>
                   ,{" "}
-                  <HelpTooltip
-                    content={t("networkResources.addressCidrHelp")}
-                  >
+                  <HelpTooltip content={t("networkResources.addressCidrHelp")}>
                     {t("networkResources.cidrBlock")}
                   </HelpTooltip>{" "}
                   {t("networkResources.or")}{" "}
@@ -313,9 +316,13 @@ export function ResourceModalContent({
                   <div className={"flex flex-col gap-6 pb-4 pt-2"}>
                     <div>
                       <Label>{t("network.descriptionLabel")}</Label>
-                      <HelpText>{t("networkResources.descriptionHelp")}</HelpText>
+                      <HelpText>
+                        {t("networkResources.descriptionHelp")}
+                      </HelpText>
                       <Input
-                        placeholder={t("networkResources.descriptionPlaceholder")}
+                        placeholder={t(
+                          "networkResources.descriptionPlaceholder",
+                        )}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                       />

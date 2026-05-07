@@ -3,9 +3,11 @@
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { VerticalTabs } from "@components/VerticalTabs";
 import {
+  ActivityIcon,
   AlertOctagonIcon,
   FingerprintIcon,
   FolderGit2Icon,
+  GlobeIcon,
   LockIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
@@ -21,10 +23,12 @@ import { useAccount } from "@/modules/account/useAccount";
 import AuthenticationTab from "@/modules/settings/AuthenticationTab";
 import ClientSettingsTab from "@/modules/settings/ClientSettingsTab";
 import DangerZoneTab from "@/modules/settings/DangerZoneTab";
+import FlowLogsSettingsTab from "@/modules/settings/FlowLogsSettingsTab";
 import IdentityProvidersTab from "@/modules/settings/IdentityProvidersTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 import GroupsSettings from "@/modules/settings/GroupsSettings";
+import VersionReleasesTab from "@/modules/settings/VersionReleasesTab";
 
 export default function NetBirdSettings() {
   const queryParams = useSearchParams();
@@ -80,6 +84,14 @@ export default function NetBirdSettings() {
                 <MonitorSmartphoneIcon size={14} />
                 {t("settings.clients")}
               </VerticalTabs.Trigger>
+              <VerticalTabs.Trigger value="flow-logs">
+                <ActivityIcon size={14} />
+                {t("settings.flowLogs")}
+              </VerticalTabs.Trigger>
+              <VerticalTabs.Trigger value="version-releases">
+                <GlobeIcon size={14} />
+                版本发布
+              </VerticalTabs.Trigger>
             </>
           )}
 
@@ -97,6 +109,8 @@ export default function NetBirdSettings() {
             {account && <GroupsSettings account={account} />}
             {account && <NetworkSettingsTab account={account} />}
             {account && <ClientSettingsTab account={account} />}
+            {account && <FlowLogsSettingsTab account={account} />}
+            {account && <VersionReleasesTab />}
             {account && <DangerZoneTab account={account} />}
           </div>
         </RestrictedAccess>

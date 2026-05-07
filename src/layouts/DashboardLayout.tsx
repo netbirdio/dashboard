@@ -10,9 +10,6 @@ import { useIsSm, useIsXs } from "@utils/responsive";
 import { AnimatePresence, motion } from "framer-motion";
 import { XIcon } from "lucide-react";
 import React from "react";
-import AnnouncementProvider, {
-  useAnnouncement,
-} from "@/contexts/AnnouncementProvider";
 import ApplicationProvider, {
   useApplicationContext,
 } from "@/contexts/ApplicationProvider";
@@ -32,14 +29,12 @@ export default function DashboardLayout({
   return (
     <ApplicationProvider>
       <UsersProvider>
-        <AnnouncementProvider>
-          <GroupsProvider>
-            <CountryProvider>
-              {!isNetBirdHosted() && <OnboardingProvider />}
-              <DashboardPageContent>{children}</DashboardPageContent>
-            </CountryProvider>
-          </GroupsProvider>
-        </AnnouncementProvider>
+        <GroupsProvider>
+          <CountryProvider>
+            {!isNetBirdHosted() && <OnboardingProvider />}
+            <DashboardPageContent>{children}</DashboardPageContent>
+          </CountryProvider>
+        </GroupsProvider>
       </UsersProvider>
     </ApplicationProvider>
   );
@@ -55,7 +50,6 @@ function DashboardPageContent({
   const { isRestricted } = usePermissions();
 
   const navOpenPageWidth = isSm ? "45%" : isXs ? "60%" : "80%";
-  const { bannerHeight } = useAnnouncement();
   return (
     <div className={cn("flex flex-col h-screen", mobileNavOpen && "flex")}>
       {mobileNavOpen && (
@@ -160,7 +154,7 @@ function DashboardPageContent({
             <div
               className={"flex flex-row flex-grow"}
               style={{
-                height: `calc(100vh - ${headerHeight + bannerHeight}px)`,
+                height: `calc(100vh - ${headerHeight}px)`,
               }}
             >
               {!isRestricted && <Navigation hideOnMobile />}

@@ -2,13 +2,11 @@
 
 import Button from "@components/Button";
 import { NetBirdLogo } from "@components/NetBirdLogo";
-import { AnnouncementBanner } from "@components/ui/AnnouncementBanner";
 import UserDropdown from "@components/ui/UserDropdown";
 import { cn } from "@utils/helpers";
 import { MenuIcon, PanelLeftCloseIcon, PanelLeftOpenIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import React from "react";
-import { useAnnouncement } from "@/contexts/AnnouncementProvider";
 import { useApplicationContext } from "@/contexts/ApplicationProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import HelpAndSupportButton from "@components/ui/HelpAndSupportButton";
@@ -18,7 +16,6 @@ export const headerHeight = 65;
 export default function NavbarWithDropdown() {
   const router = useRouter();
   const { toggleMobileNav } = useApplicationContext();
-  const { bannerHeight } = useAnnouncement();
   const { isRestricted } = usePermissions();
 
   return (
@@ -26,10 +23,9 @@ export default function NavbarWithDropdown() {
       <div
         className={"fixed z-50 w-full"}
         style={{
-          height: headerHeight + bannerHeight,
+          height: headerHeight,
         }}
       >
-        <AnnouncementBanner />
         <div
           className={cn(
             "bg-white px-2 py-3 dark:border-gray-700 dark:bg-nb-gray backdrop-blur-lg sm:px-6",
@@ -71,7 +67,7 @@ export default function NavbarWithDropdown() {
       </div>
       <div
         style={{
-          height: headerHeight + bannerHeight,
+          height: headerHeight,
         }}
       ></div>
     </>

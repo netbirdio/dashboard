@@ -50,7 +50,7 @@ export const idpTypeLabels: Record<SSOIdentityProviderType, string> = {
   microsoft: "Microsoft",
   authentik: "Authentik",
   keycloak: "Keycloak",
-  wechatwork: "WeChat Work",
+  wechatwork: "企业微信",
 };
 
 type ActionCellProps = {

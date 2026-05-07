@@ -1,14 +1,10 @@
 import Badge from "@components/Badge";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@components/Tooltip";
+import { HoverCard, HoverCardTrigger } from "@components/HoverCard";
 import React, { useMemo } from "react";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Policy } from "@/interfaces/Policy";
 import { parsePortsToStrings } from "@/modules/access-control/useAccessControl";
+import { AccessControlRulesOverviewHoverContent } from "@/modules/access-control/table/AccessControlRuleEndpointCell";
 
 type Props = {
   policy: Policy;
@@ -20,16 +16,13 @@ export default function AccessControlPortsCell({
   visiblePorts = 2,
 }: Readonly<Props>) {
   const { t } = useI18n();
-  const rule = useMemo(() => {
-    if (policy.rules.length > 0) return policy.rules[0];
-    return undefined;
-  }, [policy]);
-
-  const hasPorts = rule?.ports && rule?.ports?.length > 0;
-  const hasPortRanges = rule?.port_ranges && rule?.port_ranges?.length > 0;
-  const hasAnyPorts = hasPorts || hasPortRanges;
-
-  const allPorts = useMemo(() => parsePortsToStrings(rule), [rule]);
+  const allPorts = useMemo(() => {
+    const ports = policy.rules?.flatMap((rule) => {
+      const parsed = parsePortsToStrings(rule);
+      return parsed.length === 0 ? [t("filters.all")] : parsed;
+    });
+    return [...new Set(ports)];
+  }, [policy.rules, t]);
 
   const visiblePortsList = useMemo(() => {
     return allPorts?.slice(0, visiblePorts) ?? [];
@@ -39,62 +32,43 @@ export default function AccessControlPortsCell({
     return allPorts?.slice(visiblePorts) ?? [];
   }, [allPorts, visiblePorts]);
 
+  if (allPorts.length === 0) return null;
+
   return (
     <div className={"flex-1"}>
-      <TooltipProvider>
-        <Tooltip delayDuration={1}>
-          <TooltipTrigger asChild={true}>
-            <div className={"inline-flex items-center gap-2"}>
-              {!hasAnyPorts && (
-                <Badge
-                  variant={"gray"}
-                  className={"uppercase tracking-wider font-medium"}
-                >
-                  {t("filters.all")}
-                </Badge>
-              )}
+      <HoverCard openDelay={200} closeDelay={100}>
+        <HoverCardTrigger>
+          <div className={"inline-flex items-center gap-2"}>
+            {visiblePortsList?.map((port) => (
+              <Badge
+                key={port}
+                variant={"gray"}
+                className={
+                  "px-3 gap-2 whitespace-nowrap uppercase tracking-wider font-medium"
+                }
+              >
+                {port}
+              </Badge>
+            ))}
 
-              {visiblePortsList?.map((port) => {
-                return (
-                  <Badge
-                    key={port}
-                    variant={"gray"}
-                    className={
-                      "px-3 gap-2 whitespace-nowrap uppercase tracking-wider font-medium"
-                    }
-                  >
-                    {port}
-                  </Badge>
-                );
-              })}
-
-              {otherPorts && otherPorts.length > 0 && (
-                <Badge
-                  variant={"gray"}
-                  className={
-                    "px-3 gap-2 whitespace-nowrap uppercase tracking-wider font-medium"
-                  }
-                >
-                  + {otherPorts.length}
-                </Badge>
-              )}
-            </div>
-          </TooltipTrigger>
-          {otherPorts && otherPorts.length > 0 && (
-            <TooltipContent className={"p-3"}>
-              <div className={"flex gap-2 items-start flex-wrap max-w-sm"}>
-                {otherPorts.map((port) => {
-                  return (
-                    <Badge key={port} variant={"gray"}>
-                      {port}
-                    </Badge>
-                  );
-                })}
-              </div>
-            </TooltipContent>
-          )}
-        </Tooltip>
-      </TooltipProvider>
+            {otherPorts && otherPorts.length > 0 && (
+              <Badge
+                variant={"gray-ghost"}
+                useHover={true}
+                className={
+                  "px-3 gap-2 whitespace-nowrap uppercase tracking-wider font-medium"
+                }
+              >
+                + {otherPorts.length}
+              </Badge>
+            )}
+          </div>
+        </HoverCardTrigger>
+        <AccessControlRulesOverviewHoverContent
+          policy={policy}
+          disableRedirect={false}
+        />
+      </HoverCard>
     </div>
   );
 }

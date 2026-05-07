@@ -31,6 +31,7 @@ import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
+import { useEmbeddedIdentityProviders } from "@/hooks/useEmbeddedIdentityProviders";
 import { useI18n } from "@/i18n/I18nProvider";
 import { Account } from "@/interfaces/Account";
 
@@ -41,8 +42,17 @@ type Props = {
 export default function AuthenticationTab({ account }: Readonly<Props>) {
   const { permission } = usePermissions();
   const { t } = useI18n();
+  const { providers } = useEmbeddedIdentityProviders();
 
   const { mutate } = useSWRConfig();
+
+  const hasWeChatWorkProvider = !!providers?.some(
+    (provider) => provider.type === "wechatwork",
+  );
+  const localAuthDisabled = account.settings.local_auth_disabled === true;
+  const [loginMethod, setLoginMethod] = useState<"all" | "email" | "wechatwork">(
+    () => account.settings.login_method || "all",
+  );
 
   /**
    * Peer approval enabled
@@ -99,6 +109,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
   const saveRequest = useApiCall<Account>("/accounts/" + account.id);
 
   const { hasChanges, updateRef } = useHasChanges([
+    loginMethod,
     peerApproval,
     userApprovalRequired,
     loginExpiration,
@@ -120,6 +131,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
           id: account.id,
           settings: {
             ...account.settings,
+            login_method: loginMethod,
             peer_login_expiration_enabled: loginExpiration,
             peer_login_expiration: loginExpiration ? expiration : 86400,
             peer_inactivity_expiration_enabled: loginExpiration
@@ -136,6 +148,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
         .then(() => {
           mutate("/accounts");
           updateRef([
+            loginMethod,
             peerApproval,
             userApprovalRequired,
             loginExpiration,
@@ -194,6 +207,52 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
         </div>
 
         <div className={"flex flex-col gap-6 w-full mt-8 mb-3"}>
+          {account.settings.embedded_idp_enabled && (
+            <div className={"flex flex-col gap-3"}>
+              <div>
+                <Label>{t("authenticationTab.loginMethodLabel")}</Label>
+                <HelpText>{t("authenticationTab.loginMethodHelp")}</HelpText>
+              </div>
+              <Select
+                value={loginMethod}
+                onValueChange={(value: "all" | "email" | "wechatwork") =>
+                  setLoginMethod(value)
+                }
+                disabled={!permission.settings.update}
+              >
+                <SelectTrigger data-cy={"account-login-method-select"}>
+                  <SelectValue
+                    placeholder={t("authenticationTab.loginMethodPlaceholder")}
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">
+                    {t("authenticationTab.loginMethodAll")}
+                  </SelectItem>
+                  <SelectItem value="email" disabled={localAuthDisabled}>
+                    {t("authenticationTab.loginMethodEmail")}
+                  </SelectItem>
+                  <SelectItem
+                    value="wechatwork"
+                    disabled={!hasWeChatWorkProvider}
+                  >
+                    {t("authenticationTab.loginMethodWeChatWork")}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+              {localAuthDisabled && (
+                <HelpText>
+                  {t("authenticationTab.loginMethodEmailDisabled")}
+                </HelpText>
+              )}
+              {!hasWeChatWorkProvider && (
+                <HelpText>
+                  {t("authenticationTab.loginMethodWeChatWorkDisabled")}
+                </HelpText>
+              )}
+            </div>
+          )}
+
           <div className={"flex flex-col"}>
             <FancyToggleSwitch
               value={userApprovalRequired}
