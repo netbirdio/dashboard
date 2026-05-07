@@ -46,9 +46,12 @@ async function apiRequest<T>(
     options?.ignoreGlobalParams ? undefined : options?.globalParams,
   );
 
+  // check if data is FormData
+  const isFormData = data instanceof FormData;
+
   const res = await oidcFetch(`${origin}${newUrl}`, {
     method,
-    body: JSON.stringify(data),
+    body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
     signal: options?.signal,
   });
 
@@ -98,15 +101,25 @@ export function useNetBirdFetch(ignoreError: boolean = false): {
       } as ErrorResponse);
     }
 
-    const headers = {
-      "Content-Type": "application/json",
+    const headers: Record<string, string> = {
       Accept: "application/json",
       Authorization: `Bearer ${token}`,
     };
 
+    // don't set Content-Type for FormData (browser handles it automatically with boundary)
+    if (!(init?.body instanceof FormData)) {
+      headers["Content-Type"] = "application/json";
+    }
+
+    // merge with existing headers
+    const finalHeaders = {
+      ...headers,
+      ...init?.headers,
+    };
+
     return fetch(input, {
       ...init,
-      headers,
+      headers: finalHeaders,
     });
   };
 

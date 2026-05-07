@@ -153,6 +153,7 @@ export function PeerGroupSelector({
   >();
 
   const [open, setOpen] = useState(false);
+  const radioGroupId = React.useId();
 
   const sortedDropdownOptions = useSortedDropdownOptions(
     dropdownOptions,
@@ -646,6 +647,7 @@ export function PeerGroupSelector({
                     isLoading={isResourcesLoading}
                     value={resource}
                     onChange={selectResource}
+                    radioName={`${radioGroupId}-resource`}
                   />
                 </TabsContent>
               )}
@@ -657,6 +659,7 @@ export function PeerGroupSelector({
                     isLoading={isPeersLoading}
                     value={resource}
                     onChange={selectPeer}
+                    radioName={`${radioGroupId}-peer`}
                   />
                 </TabsContent>
               )}
@@ -846,12 +849,14 @@ const PolicyCounter = ({
   const count = useMemo(() => {
     if (!group.id) return 0;
     return policies.filter((policy) => {
-      const destinations = policy.rules?.[0]?.destinations as
-        | (Group | string)[]
-        | undefined;
-      return destinations?.some((d) =>
-        typeof d === "string" ? d === group.id : d.id === group.id,
-      );
+      return policy.rules?.some((rule) => {
+        const destinations = rule.destinations as
+          | (Group | string)[]
+          | undefined;
+        return destinations?.some((d) =>
+          typeof d === "string" ? d === group.id : d.id === group.id,
+        );
+      });
     }).length;
   }, [group.id, policies]);
 
@@ -866,7 +871,8 @@ const PolicyCounter = ({
       }
     >
       <ShieldCheck size={14} className={"shrink-0"} />
-      {count} {count === 1 ? t("groups.count.policy") : t("groups.count.policies")}
+      {count}{" "}
+      {count === 1 ? t("groups.count.policy") : t("groups.count.policies")}
     </div>
   );
 };
@@ -883,12 +889,14 @@ const ResourcesList = ({
   isLoading,
   value,
   onChange,
+  radioName,
 }: {
   search: string;
   resources?: NetworkResource[];
   isLoading: boolean;
   value?: PolicyRuleResource;
   onChange: (resource: NetworkResource) => void;
+  radioName: string;
 }) => {
   const { t } = useI18n();
   const [filteredItems, _, setSearch] = useSearch(
@@ -924,13 +932,17 @@ const ResourcesList = ({
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
         {t("peerGroupSelector.noResourcesAvailable")} <br />
-        {t("peerGroupSelector.toAddResourcesPrefix")} <InlineLink href={"/networks"}>{t("peerGroupSelector.goToNetworksToAdd")}</InlineLink> {t("peerGroupSelector.toAddResourcesSuffix")}
+        {t("peerGroupSelector.toAddResourcesPrefix")}{" "}
+        <InlineLink href={"/networks"}>
+          {t("peerGroupSelector.goToNetworksToAdd")}
+        </InlineLink>{" "}
+        {t("peerGroupSelector.toAddResourcesSuffix")}
       </DropdownInfoText>
     );
   }
 
   return (
-    <Radio defaultValue={value?.id} name={"resource"} value={value?.id}>
+    <Radio defaultValue={value?.id} name={radioName} value={value?.id}>
       <VirtualScrollAreaList
         items={filteredItems}
         onSelect={onChange}
@@ -993,12 +1005,14 @@ const PeersList = ({
   isLoading,
   value,
   onChange,
+  radioName,
 }: {
   search: string;
   peers?: Peer[];
   isLoading: boolean;
   value?: PolicyRuleResource;
   onChange: (peer: Peer) => void;
+  radioName: string;
 }) => {
   const { t } = useI18n();
   const [filteredItems, _, setSearch] = useSearch(
@@ -1034,13 +1048,17 @@ const PeersList = ({
     return (
       <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
         {t("peerGroupSelector.noPeersAvailable")} <br />
-        {t("peerGroupSelector.toAddPeersPrefix")} <InlineLink href={"/peers"}>{t("peerGroupSelector.goToPeersToAdd")}</InlineLink> {t("peerGroupSelector.toAddPeersSuffix")}
+        {t("peerGroupSelector.toAddPeersPrefix")}{" "}
+        <InlineLink href={"/peers"}>
+          {t("peerGroupSelector.goToPeersToAdd")}
+        </InlineLink>{" "}
+        {t("peerGroupSelector.toAddPeersSuffix")}
       </DropdownInfoText>
     );
   }
 
   return (
-    <Radio defaultValue={value?.id} name={"peer"} value={value?.id}>
+    <Radio defaultValue={value?.id} name={radioName} value={value?.id}>
       <VirtualScrollAreaList
         items={filteredItems}
         onSelect={onChange}

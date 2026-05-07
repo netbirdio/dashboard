@@ -7,6 +7,7 @@ import {
   AlertOctagonIcon,
   FingerprintIcon,
   FolderGit2Icon,
+  GlobeIcon,
   LockIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
@@ -27,6 +28,7 @@ import IdentityProvidersTab from "@/modules/settings/IdentityProvidersTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
 import GroupsSettings from "@/modules/settings/GroupsSettings";
+import VersionReleasesTab from "@/modules/settings/VersionReleasesTab";
 
 export default function NetBirdSettings() {
   const queryParams = useSearchParams();
@@ -86,6 +88,10 @@ export default function NetBirdSettings() {
                 <ActivityIcon size={14} />
                 {t("settings.flowLogs")}
               </VerticalTabs.Trigger>
+              <VerticalTabs.Trigger value="version-releases">
+                <GlobeIcon size={14} />
+                版本发布
+              </VerticalTabs.Trigger>
             </>
           )}
 
@@ -104,6 +110,7 @@ export default function NetBirdSettings() {
             {account && <NetworkSettingsTab account={account} />}
             {account && <ClientSettingsTab account={account} />}
             {account && <FlowLogsSettingsTab account={account} />}
+            {account && <VersionReleasesTab />}
             {account && <DangerZoneTab account={account} />}
           </div>
         </RestrictedAccess>

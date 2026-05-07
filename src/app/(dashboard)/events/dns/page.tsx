@@ -3,17 +3,18 @@
 import Breadcrumbs from "@components/Breadcrumbs";
 import Paragraph from "@components/Paragraph";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
+import { usePortalElement } from "@hooks/usePortalElement";
 import dayjs from "dayjs";
+import { Globe2 } from "lucide-react";
 import React, { useMemo } from "react";
 import ActivityIcon from "@/assets/icons/ActivityIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
 import { useI18n } from "@/i18n/I18nProvider";
 import PageContainer from "@/layouts/PageContainer";
-import NetworkLogsTable from "@/modules/activity/NetworkLogsTable";
-import { usePortalElement } from "@hooks/usePortalElement";
+import DNSLogsTable from "@/modules/activity/DNSLogsTable";
 
-export default function NetworkEventsPage() {
+export default function DNSEventsPage() {
   const { permission } = usePermissions();
   const { t } = useI18n();
   const { ref: headingRef, portalTarget } =
@@ -23,6 +24,7 @@ export default function NetworkEventsPage() {
     () => ({
       start_date: dayjs().subtract(5, "minute").toISOString(),
       end_date: dayjs().toISOString(),
+      dns: "true",
       sort_by: "timestamp",
       sort_order: "desc",
     }),
@@ -39,26 +41,26 @@ export default function NetworkEventsPage() {
             icon={<ActivityIcon size={13} />}
           />
           <Breadcrumbs.Item
-            href="/events/network"
-            label={t("nav.networkLogs")}
-            icon={<ActivityIcon size={15} />}
+            href="/events/dns"
+            label={t("nav.dnsLogs")}
+            icon={<Globe2 size={15} />}
           />
         </Breadcrumbs>
 
-        <h1 ref={headingRef}>{t("networkLogs.title")}</h1>
-        <Paragraph>{t("networkLogs.description")}</Paragraph>
+        <h1 ref={headingRef}>{t("dnsLogs.title")}</h1>
+        <Paragraph>{t("dnsLogs.description")}</Paragraph>
       </div>
 
       <RestrictedAccess
-        page={t("nav.networkLogs")}
+        page={t("nav.dnsLogs")}
         hasAccess={permission?.events?.read}
       >
         <ServerPaginationProvider
           url="/events/network-traffic"
-          defaultPageSize={10000}
+          defaultPageSize={500}
           defaultFilters={defaultFilters}
         >
-          <NetworkLogsTable headingTarget={portalTarget} />
+          <DNSLogsTable headingTarget={portalTarget} />
         </ServerPaginationProvider>
       </RestrictedAccess>
     </PageContainer>

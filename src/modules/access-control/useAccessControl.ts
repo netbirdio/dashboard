@@ -1,22 +1,27 @@
 import { notify } from "@components/Notification";
-import { Direction } from "@components/ui/PolicyDirection";
 import useFetchApi, { useApiCall } from "@utils/api";
-import { merge, orderBy, uniqBy } from "lodash";
+import { merge } from "lodash";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePolicies } from "@/contexts/PoliciesProvider";
+import { useGroups } from "@/contexts/GroupsProvider";
 import { Group } from "@/interfaces/Group";
-import {
-  AuthorizedGroups,
-  Policy,
-  PolicyRule,
-  PolicyRuleResource,
-  PortRange,
-  Protocol,
-} from "@/interfaces/Policy";
+import { Policy, PolicyRuleResource, Protocol } from "@/interfaces/Policy";
 import { PostureCheck } from "@/interfaces/PostureCheck";
-import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { usePostureCheck } from "@/modules/posture-checks/usePostureCheck";
+import {
+  buildEditablePolicyRules,
+  buildGroupCreatePayload,
+  buildInitialRules,
+  buildPolicyPayload,
+  createDefaultRule,
+  getPostureChecksWithoutId,
+  getUniqueRuleGroups,
+  mergeCreatedPostureChecks,
+  parsePortsToStrings,
+  RuleState,
+} from "@/modules/access-control/useAccessControl.helpers";
+export type { RuleState } from "@/modules/access-control/useAccessControl.helpers";
 
 type Props = {
   policy?: Policy;
@@ -29,8 +34,6 @@ type Props = {
   initialPorts?: number[];
   initialDestinationResource?: PolicyRuleResource;
 };
-
-// TODO add reducer
 
 export const useAccessControl = ({
   policy,
@@ -45,6 +48,7 @@ export const useAccessControl = ({
 }: Props = {}) => {
   const { data: allPostureChecks, isLoading: isPostureChecksLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
+  const { groups } = useGroups();
 
   const [postureChecks, setPostureChecks] = useState<PostureCheck[]>([]);
   const postureChecksLoaded = useRef(false);
@@ -83,153 +87,118 @@ export const useAccessControl = ({
   }, [initialPostureChecks]);
 
   const { updatePolicy } = usePolicies();
-  const firstRule = policy?.rules ? policy.rules[0] : undefined;
 
-  const [enabled, setEnabled] = useState<boolean>(policy?.enabled ?? true);
+  const initRules = useMemo((): RuleState[] => {
+    return buildInitialRules({
+      policy,
+      groups,
+      initialDestinationGroups,
+      initialProtocol,
+      initialPorts,
+      initialDestinationResource,
+    });
+  }, [
+    policy,
+    groups,
+    initialDestinationGroups,
+    initialProtocol,
+    initialPorts,
+    initialDestinationResource,
+  ]);
 
-  const [ports, setPorts] = useState<number[]>(() => {
-    if (initialPorts) return initialPorts;
-    if (!firstRule) return [];
-    if (firstRule.ports == undefined) return [];
-    if (firstRule.ports.length > 0) {
-      return firstRule.ports.map((p) => Number(p));
-    }
-    return [];
-  });
-
-  const [portRanges, setPortRanges] = useState<PortRange[]>(() => {
-    if (!firstRule) return [];
-    if (firstRule.port_ranges == undefined) return [];
-    if (firstRule.port_ranges.length > 0) {
-      return firstRule.port_ranges;
-    }
-    return [];
-  });
-
-  const [protocol, setProtocol] = useState<Protocol>(
-    firstRule ? firstRule.protocol : initialProtocol ?? "all",
+  const [rules, setRules] = useState<RuleState[]>(initRules);
+  const initializedRulesKey = useRef<string | undefined>(
+    policy || !groups ? undefined : "__create__",
   );
-  const [direction, setDirection] = useState<Direction>(() => {
-    if (!firstRule) return "bi";
-    if (firstRule.bidirectional) return "bi";
-    return "in";
-  });
-  const [name, setName] = useState(policy?.name || initialName || "");
-  const [description, setDescription] = useState(
+
+  useEffect(() => {
+    if (!groups) return;
+
+    const key = policy?.id ?? "__create__";
+    if (initializedRulesKey.current === key) return;
+
+    initializedRulesKey.current = key;
+    setRules(initRules);
+  }, [policy, groups, initRules]);
+
+  const [policyName, setPolicyName] = useState(
+    policy?.name || initialName || "",
+  );
+  const [policyDescription, setPolicyDescription] = useState(
     policy?.description || initialDescription || "",
   );
+  const [policyEnabled, setPolicyEnabled] = useState<boolean>(
+    policy?.enabled ?? true,
+  );
+
+  // 当 policy 变化时更新 policyName 和 policyDescription
+  useEffect(() => {
+    if (policy) {
+      setPolicyName(policy.name || initialName || "");
+      setPolicyDescription(policy.description || initialDescription || "");
+      setPolicyEnabled(policy.enabled ?? true);
+    }
+  }, [policy, initialName, initialDescription]);
   const { mutate } = useSWRConfig();
 
   const policyRequest = useApiCall<Policy>("/policies");
+  const groupRequest = useApiCall<Group>("/groups");
 
-  const [
-    sourceGroups,
-    setSourceGroups,
-    { getGroupsToUpdate: getSourceGroupsToUpdate },
-  ] = useGroupHelper({
-    initial: firstRule ? (firstRule.sources as Group[]) : [],
-  });
+  const addRule = () => {
+    setRules((prev) => [...prev, createDefaultRule()]);
+  };
 
-  const [
-    destinationGroups,
-    setDestinationGroups,
-    { getGroupsToUpdate: getDestinationGroupsToUpdate },
-  ] = useGroupHelper({
-    initial: firstRule
-      ? (firstRule.destinations as Group[])
-      : initialDestinationGroups ?? [],
-  });
+  const removeRule = (index: number) => {
+    if (rules.length <= 1) return;
+    setRules((prev) => prev.filter((_, i) => i !== index));
+  };
 
-  const [sourceResource, setSourceResource] = useState(
-    firstRule?.sourceResource,
-  );
-
-  const [destinationResource, setDestinationResource] = useState(
-    firstRule?.destinationResource ?? initialDestinationResource,
-  );
-
-  const [sshAccessType, setSshAccessType] = useState<"full" | "limited">(() => {
-    if (protocol === "netbird-ssh") {
-      return firstRule?.authorized_groups !== undefined &&
-        Object.keys(firstRule?.authorized_groups).length > 0
-        ? "limited"
-        : "full";
-    } else {
-      return "full";
-    }
-  });
-
-  const [sshAuthorizedGroups, setSshAuthorizedGroups] = useState<
-    AuthorizedGroups | undefined
-  >(firstRule?.authorized_groups);
+  const updateRule = (index: number, updates: Partial<RuleState>) => {
+    setRules((prev) =>
+      prev.map((rule, i) => (i === index ? { ...rule, ...updates } : rule)),
+    );
+  };
 
   const { updateOrCreateAndNotify: checkToCreate } = usePostureCheck({});
   const createPostureChecksWithoutID = async () => {
-    const checks = postureChecks.filter(
-      (check) => check?.id === undefined || check?.id === "",
-    );
+    const checks = getPostureChecksWithoutId(postureChecks);
     const createChecks = checks.map((check) => checkToCreate(check));
     return Promise.all(createChecks);
   };
 
   const getPolicyData = () => {
-    let sources = sourceGroups;
-    let destinations = destinationGroups;
-    if (direction == "out") {
-      const tmp = sourceGroups;
-      sources = destinations;
-      destinations = tmp;
-    }
-
-    const [newPorts, newPortRanges] = parseAccessControlPorts(
-      ports,
-      portRanges,
-    );
-
     return {
-      name,
-      description,
-      enabled,
+      name: policyName,
+      description: policyDescription,
+      enabled: policyEnabled,
       source_posture_checks: postureChecks,
-      rules: [
-        {
-          bidirectional: direction == "bi",
-          description,
-          name,
-          sources: sourceResource ? undefined : sources,
-          destinations: destinationResource ? undefined : destinations,
-          sourceResource: sourceResource || undefined,
-          destinationResource: destinationResource || undefined,
-          action: "accept",
-          protocol,
-          enabled,
-          ports: newPorts,
-          port_ranges: newPortRanges,
-          authorized_groups: sshAuthorizedGroups,
-        },
-      ],
+      rules: buildEditablePolicyRules(rules),
     } as Policy;
   };
 
   const submit = async () => {
-    const g1 = getSourceGroupsToUpdate();
-    const g2 = getDestinationGroupsToUpdate();
-    const createOrUpdateGroups = uniqBy([...g1, ...g2], "name").map(
-      (g) => g.promise,
-    );
-    const groups = await Promise.all(
-      createOrUpdateGroups.map((call) => call()),
-    ).then((groups) => {
+    const uniqueGroups = getUniqueRuleGroups(rules);
+
+    const groupPromises = uniqueGroups.map(async (group) => {
+      if (group.id) {
+        return group;
+      }
+      return groupRequest.post(buildGroupCreatePayload(group));
+    });
+
+    const groups = await Promise.all(groupPromises).then((groups) => {
       mutate("/groups");
       return groups;
     });
 
-    // Create posture checks if they don't have an ID
     let hasError = false;
     let allChecks = postureChecks;
     await createPostureChecksWithoutID()
       .then((checks) => {
-        allChecks = [...allChecks, ...(checks as PostureCheck[])];
+        allChecks = mergeCreatedPostureChecks(
+          postureChecks,
+          checks as PostureCheck[],
+        );
       })
       .catch((e) => {
         hasError = true;
@@ -237,80 +206,14 @@ export const useAccessControl = ({
       });
     if (hasError) return;
 
-    let sources = sourceGroups
-      .map((g) => {
-        const find = groups.find((group) => group.name === g.name);
-        return find?.id;
-      })
-      .filter((g) => g !== undefined) as string[];
-    let destinations = destinationGroups
-      .map((g) => {
-        const find = groups.find((group) => group.name === g.name);
-        return find?.id;
-      })
-      .filter((g) => g !== undefined) as string[];
-
-    if (direction == "out") {
-      const tmp = sources;
-      sources = destinations;
-      destinations = tmp;
-    }
-
-    let [newPorts, newPortRanges] = parseAccessControlPorts(ports, portRanges);
-
-    let authorizedGroups: AuthorizedGroups = {};
-    if (protocol === "netbird-ssh") {
-      // Set port 22 for SSH protocol
-      newPorts = ["22"];
-      newPortRanges = [];
-
-      const isEmpty =
-        !sshAuthorizedGroups ||
-        Object.keys(sshAuthorizedGroups).length === 0 ||
-        sshAccessType === "full";
-
-      if (!isEmpty) {
-        Object.entries(sshAuthorizedGroups).reduce(
-          (acc, [groupName, usernames]) => {
-            const group = groups?.find((group) => group.name === groupName);
-            if (group?.id) {
-              authorizedGroups[group.id] = usernames;
-            }
-            return acc;
-          },
-          {} as AuthorizedGroups,
-        );
-      } else {
-        authorizedGroups = {};
-      }
-    }
-
-    const policyObj = {
-      name,
-      description,
-      enabled,
-      source_posture_checks: postureChecks
-        ? postureChecks.map((c) => c.id)
-        : undefined,
-      rules: [
-        {
-          bidirectional: direction == "bi",
-          description,
-          name,
-          action: "accept",
-          protocol,
-          enabled,
-          sources: sourceResource ? undefined : sources,
-          destinations: destinationResource ? undefined : destinations,
-          sourceResource: sourceResource || undefined,
-          destinationResource: destinationResource || undefined,
-          ports: newPorts,
-          port_ranges: newPortRanges,
-          authorized_groups:
-            protocol === "netbird-ssh" ? authorizedGroups : undefined,
-        },
-      ],
-    } as Policy;
+    const policyObj = buildPolicyPayload({
+      name: policyName,
+      description: policyDescription,
+      enabled: policyEnabled,
+      postureChecks: allChecks,
+      rules,
+      groups,
+    });
 
     if (policy && policy?.id !== undefined) {
       updatePolicy(
@@ -336,122 +239,25 @@ export const useAccessControl = ({
   };
 
   const hasPortSupport = (p: Protocol) => p === "tcp" || p === "udp";
-  const portDisabled = !hasPortSupport(protocol);
-
-  const isDestinationPeer = destinationResource?.type === "peer";
-
-  const destinationHasResources = useMemo(() => {
-    if (isDestinationPeer) return false;
-    if (destinationResource) return true;
-
-    return destinationGroups.some((group) => {
-      if (group.resources_count !== undefined) {
-        return group.resources_count > 0;
-      }
-      if (group.resources && Array.isArray(group.resources)) {
-        return group.resources.length > 0;
-      }
-      return false;
-    });
-  }, [destinationGroups, destinationResource, isDestinationPeer]);
-
-  const destinationOnlyResources = useMemo(() => {
-    if (isDestinationPeer) return false;
-    if (destinationResource) return true;
-
-    return (
-      destinationGroups.length > 0 &&
-      destinationGroups.every((group) => {
-        const hasPeers =
-          group.peers_count !== undefined
-            ? group.peers_count > 0
-            : group.peers &&
-              Array.isArray(group.peers) &&
-              group.peers.length > 0;
-        const hasResources =
-          group.resources_count !== undefined
-            ? group.resources_count > 0
-            : group.resources &&
-              Array.isArray(group.resources) &&
-              group.resources.length > 0;
-
-        return hasResources && !hasPeers;
-      })
-    );
-  }, [destinationGroups, destinationResource, isDestinationPeer]);
-
-  useEffect(() => {
-    if (destinationOnlyResources && direction !== "in" && !isDestinationPeer) {
-      setDirection("in");
-    }
-  }, [destinationOnlyResources, direction, setDirection, isDestinationPeer]);
 
   return {
-    protocol,
-    setProtocol,
-    direction,
-    setDirection,
-    name,
-    setName,
-    description,
-    setDescription,
-    enabled,
-    setEnabled,
-    ports,
-    setPorts,
-    portRanges,
-    setPortRanges,
-    sourceGroups,
-    setSourceGroups,
-    destinationGroups,
-    setDestinationGroups,
+    rules,
+    addRule,
+    removeRule,
+    updateRule,
+    policyName,
+    setPolicyName,
+    policyDescription,
+    setPolicyDescription,
+    policyEnabled,
+    setPolicyEnabled,
     postureChecks,
     setPostureChecks,
     submit,
     getPolicyData,
-    portDisabled,
     isPostureChecksLoading,
-    sourceResource,
-    setSourceResource,
-    destinationResource,
-    setDestinationResource,
-    destinationHasResources,
-    destinationOnlyResources,
     hasPortSupport,
-    sshAccessType,
-    setSshAccessType,
-    sshAuthorizedGroups,
-    setSshAuthorizedGroups,
   } as const;
 };
 
-const parseAccessControlPorts = (ports: number[], portRanges: PortRange[]) => {
-  const hasRanges = portRanges.length > 0;
-  const hasPorts = ports.length > 0;
-  if (!hasPorts && !hasRanges) return [undefined, undefined];
-  if (!hasRanges) return [ports.map(String), undefined];
-  if (!hasPorts) return [undefined, portRanges];
-
-  const portRangesFromPorts = ports.map((port) => ({
-    start: port,
-    end: port,
-  })) as PortRange[];
-
-  const allRanges = [...portRanges, ...portRangesFromPorts];
-  return [undefined, allRanges];
-};
-
-export const parsePortsToStrings = (rule?: PolicyRule): string[] => {
-  if (!rule) return [];
-  const ports = rule?.ports ?? [];
-  const portRanges =
-    rule?.port_ranges?.map((r) => {
-      if (r.start === r.end) return `${r.start}`;
-      return `${r.start}-${r.end}`;
-    }) ?? [];
-  return orderBy(
-    [...portRanges, ...ports],
-    [(p) => Number(p.split("-")[0])],
-    ["asc"],
-  );
-};
+export { parsePortsToStrings };

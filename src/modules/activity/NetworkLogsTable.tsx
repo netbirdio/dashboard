@@ -395,7 +395,11 @@ export default function NetworkLogsTable({ headingTarget }: Readonly<Props>) {
                 mutate().then();
               }}
             />
-            <DataTableRowsPerPage table={table} disabled={groupedData.length === 0} />
+            <DataTableRowsPerPage
+              table={table}
+              disabled={groupedData.length === 0}
+              rowsSelection={[20, 50, 100, 200]}
+            />
           </ButtonGroup>
         </div>
       )}

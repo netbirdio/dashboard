@@ -18,6 +18,7 @@ import { useI18n } from "@/i18n/I18nProvider";
 import { headerHeight } from "@/layouts/Header";
 import { NetworkNavigation } from "@/modules/networks/misc/NetworkNavigation";
 import { SmallBadge } from "@components/ui/SmallBadge";
+import { LayoutDashboardIcon } from "lucide-react";
 import * as React from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import ActivityIcon from "@/assets/icons/ActivityIcon";
@@ -68,6 +69,14 @@ export default function Navigation({
           >
             <div>
               <SidebarItemGroup>
+                <SidebarItem
+                  icon={<LayoutDashboardIcon size={16} />}
+                  label={t("nav.overview")}
+                  href={"/overview"}
+                  exactPathMatch={true}
+                  visible={!isRestricted}
+                />
+
                 <SidebarItem
                   icon={<ControlCenterIcon size={16} />}
                   label={
@@ -281,6 +290,13 @@ const ActivityNavigationItem = () => {
         label={t("nav.networkLogs")}
         isChild
         href={"/events/network"}
+        exactPathMatch={true}
+        visible={permission.events.read}
+      />
+      <SidebarItem
+        label={t("nav.dnsLogs")}
+        isChild
+        href={"/events/dns"}
         exactPathMatch={true}
         visible={permission.events.read}
       />

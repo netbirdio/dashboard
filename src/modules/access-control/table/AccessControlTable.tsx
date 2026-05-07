@@ -29,12 +29,16 @@ import AccessControlModal, {
 import AccessControlActionCell from "@/modules/access-control/table/AccessControlActionCell";
 import AccessControlActiveCell from "@/modules/access-control/table/AccessControlActiveCell";
 import AccessControlDestinationsCell from "@/modules/access-control/table/AccessControlDestinationsCell";
-import AccessControlDirectionCell from "@/modules/access-control/table/AccessControlDirectionCell";
+import AccessControlDirectionCell, {
+  getPolicyDirectionSummaryCount,
+} from "@/modules/access-control/table/AccessControlDirectionCell";
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
 import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
 import AccessControlPostureCheckCell from "@/modules/access-control/table/AccessControlPostureCheckCell";
 import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
+import { collectRuleEndpointItems } from "@/modules/access-control/table/AccessControlRuleEndpointCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
+import { parsePortsToStrings } from "@/modules/access-control/useAccessControl";
 
 type Props = {
   policies?: Policy[];
@@ -52,11 +56,15 @@ function useAccessControlTableColumns(): ColumnDef<Policy>[] {
         id: "name",
         accessorFn: (row) => removeAllSpaces(row?.name),
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>{t("table.name")}</DataTableHeader>
+          );
         },
         sortingFn: "text",
         filterFn: "fuzzy",
-        cell: ({ cell }) => <AccessControlNameCell policy={cell.row.original} />,
+        cell: ({ cell }) => (
+          <AccessControlNameCell policy={cell.row.original} />
+        ),
       },
       {
         id: "description",
@@ -70,39 +78,41 @@ function useAccessControlTableColumns(): ColumnDef<Policy>[] {
         accessorFn: (row) => row.enabled,
         sortingFn: "basic",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("table.active")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>
+              {t("table.active")}
+            </DataTableHeader>
+          );
         },
-        cell: ({ cell }) => <AccessControlActiveCell policy={cell.row.original} />,
+        cell: ({ cell }) => (
+          <AccessControlActiveCell policy={cell.row.original} />
+        ),
       },
       {
         id: "sources",
-        accessorFn: (row) => {
-          try {
-            return row.rules[0].sources?.length || 0;
-          } catch (error) {
-            console.log(error);
-          }
-          return 0;
-        },
+        accessorFn: (row) => collectRuleEndpointItems(row, "sources").length,
         sortingFn: "basic",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("table.sources")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>
+              {t("table.sources")}
+            </DataTableHeader>
+          );
         },
-        cell: ({ cell }) => <AccessControlSourcesCell policy={cell.row.original} />,
+        cell: ({ cell }) => (
+          <AccessControlSourcesCell policy={cell.row.original} />
+        ),
       },
       {
         id: "direction",
-        accessorFn: (row) => {
-          try {
-            return row.rules[0].bidirectional || true;
-          } catch (error) {
-            console.log(error);
-          }
-          return 0;
-        },
+        accessorFn: (row) => getPolicyDirectionSummaryCount(row),
         sortingFn: "basic",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("table.direction")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>
+              {t("table.direction")}
+            </DataTableHeader>
+          );
         },
         cell: ({ cell }) => (
           <AccessControlDirectionCell policy={cell.row.original} />
@@ -110,18 +120,14 @@ function useAccessControlTableColumns(): ColumnDef<Policy>[] {
       },
       {
         id: "destinations",
-        accessorFn: (row) => {
-          try {
-            return row.rules[0].destinations?.length || 0;
-          } catch (error) {
-            console.log(error);
-          }
-          return 0;
-        },
+        accessorFn: (row) =>
+          collectRuleEndpointItems(row, "destinations").length,
         sortingFn: "basic",
         header: ({ column }) => {
           return (
-            <DataTableHeader column={column}>{t("table.destinations")}</DataTableHeader>
+            <DataTableHeader column={column}>
+              {t("table.destinations")}
+            </DataTableHeader>
           );
         },
         cell: ({ cell }) => (
@@ -130,17 +136,15 @@ function useAccessControlTableColumns(): ColumnDef<Policy>[] {
       },
       {
         id: "protocol",
-        accessorFn: (row) => {
-          try {
-            return row.rules[0].protocol || 0;
-          } catch (error) {
-            console.log(error);
-          }
-          return 0;
-        },
+        accessorFn: (row) =>
+          new Set(row.rules?.map((rule) => rule.protocol)).size,
         sortingFn: "basic",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("table.protocol")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>
+              {t("table.protocol")}
+            </DataTableHeader>
+          );
         },
         cell: ({ cell }) => (
           <AccessControlProtocolCell policy={cell.row.original} />
@@ -148,19 +152,24 @@ function useAccessControlTableColumns(): ColumnDef<Policy>[] {
       },
       {
         id: "ports",
-        accessorFn: (row) => {
-          try {
-            return row.rules[0].ports?.length || 0;
-          } catch (error) {
-            console.log(error);
-          }
-          return 0;
-        },
+        accessorFn: (row) =>
+          new Set(
+            row.rules?.flatMap((rule) => {
+              const ports = parsePortsToStrings(rule);
+              return ports.length === 0 ? ["all"] : ports;
+            }),
+          ).size,
         sortingFn: "basic",
         header: ({ column }) => {
-          return <DataTableHeader column={column}>{t("table.ports")}</DataTableHeader>;
+          return (
+            <DataTableHeader column={column}>
+              {t("table.ports")}
+            </DataTableHeader>
+          );
         },
-        cell: ({ cell }) => <AccessControlPortsCell policy={cell.row.original} />,
+        cell: ({ cell }) => (
+          <AccessControlPortsCell policy={cell.row.original} />
+        ),
       },
       {
         id: "posture_checks",
@@ -168,7 +177,9 @@ function useAccessControlTableColumns(): ColumnDef<Policy>[] {
         sortingFn: "basic",
         header: ({ column }) => {
           return (
-            <DataTableHeader column={column}>{t("nav.postureChecks")}</DataTableHeader>
+            <DataTableHeader column={column}>
+              {t("nav.postureChecks")}
+            </DataTableHeader>
           );
         },
         cell: ({ cell }) => (
@@ -184,7 +195,9 @@ function useAccessControlTableColumns(): ColumnDef<Policy>[] {
         id: "actions",
         accessorKey: "id",
         header: "",
-        cell: ({ cell }) => <AccessControlActionCell policy={cell.row.original} />,
+        cell: ({ cell }) => (
+          <AccessControlActionCell policy={cell.row.original} />
+        ),
       },
     ],
     [t],
@@ -329,7 +342,10 @@ export default function AccessControlTable({
               icon={
                 <SquareIcon
                   icon={
-                    <AccessControlIcon className={"fill-nb-gray-200"} size={20} />
+                    <AccessControlIcon
+                      className={"fill-nb-gray-200"}
+                      size={20}
+                    />
                   }
                   color={"gray"}
                   size={"large"}
@@ -354,7 +370,9 @@ export default function AccessControlTable({
                 <>
                   {t("common.learnMorePrefix")}{" "}
                   <InlineLink
-                    href={"https://docs.netbird.io/how-to/manage-network-access"}
+                    href={
+                      "https://docs.netbird.io/how-to/manage-network-access"
+                    }
                     target={"_blank"}
                   >
                     {t("accessControl.learnMoreLink")}

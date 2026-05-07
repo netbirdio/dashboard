@@ -42,6 +42,7 @@ export const messages = {
     "actions.add": "Add",
     "actions.remove": "Remove",
     "actions.goBack": "Go Back",
+    "nav.overview": "Overview",
     "nav.controlCenter": "Control Center",
     "nav.peers": "Peers",
     "nav.setupKeys": "Setup Keys",
@@ -63,8 +64,48 @@ export const messages = {
     "nav.auditEvents": "Audit Events",
     "nav.proxyEvents": "Proxy Events",
     "nav.networkLogs": "Network Logs",
+    "nav.dnsLogs": "DNS Logs",
     "nav.settings": "Settings",
     "nav.documentation": "Documentation",
+    "overview.title": "Overview",
+    "overview.deviceDistribution": "Network Device Distribution",
+    "overview.deviceTypeDistribution": "Device Type Distribution",
+    "overview.deviceType": "Device Type",
+    "overview.totalUsers": "Total Users",
+    "overview.onlineUsers": "Online Users",
+    "overview.totalDevices": "Total Devices",
+    "overview.onlineDevices": "Online Devices",
+    "overview.city": "City",
+    "overview.totalDevicesShort": "Total",
+    "overview.onlineDevicesShort": "Online",
+    "overview.noLocationData": "No location data",
+    "overview.noDeviceTypeData": "No device type data",
+    "overview.loadingDistribution": "Loading distribution...",
+    "overview.unknownCity": "Unknown",
+    "overview.users": "Users",
+    "overview.devices": "Devices",
+    "overview.relayTrafficStats": "Relay Traffic Statistics",
+    "overview.last6Hours": "Last 6 Hours",
+    "overview.last12Hours": "Last 12 Hours",
+    "overview.last24Hours": "Last 24 Hours",
+    "overview.last3Days": "Last 3 Days",
+    "overview.last7Days": "Last 7 Days",
+    "overview.uploadRate": "Upload Rate",
+    "overview.downloadRate": "Download Rate",
+    "overview.uploadPeak": "Peak Upload",
+    "overview.downloadPeak": "Peak Download",
+    "overview.uploadTotal": "Total Upload",
+    "overview.downloadTotal": "Total Download",
+    "overview.resetZoom": "Reset View",
+    "overview.zoomHint": "🔍 Scroll to zoom, drag to pan, hover for details",
+    "overview.refresh": "Refresh",
+    "overview.refreshInterval.off": "Off",
+    "overview.refreshInterval.5s": "5s",
+    "overview.refreshInterval.10s": "10s",
+    "overview.refreshInterval.30s": "30s",
+    "overview.refreshInterval.1m": "1m",
+    "overview.refreshInterval.5m": "5m",
+    "overview.refreshInterval.15m": "15m",
     "help.title": "Help and Support",
     "help.documentation": "Documentation",
     "help.troubleshooting": "Troubleshooting",
@@ -121,7 +162,8 @@ export const messages = {
       "Create a group to manage and organize access in your network",
     "groups.createdDescription": "Group '{name}' successfully created",
     "groups.assignedGroups": "Assigned Groups",
-    "groups.useGroupsToControlAccess": "Use groups to control what this peer can access",
+    "groups.useGroupsToControlAccess":
+      "Use groups to control what this peer can access",
     "groups.searchPlaceholder": "Search groups...",
     "groups.count.peers": "Peer(s)",
     "groups.count.resources": "Resource(s)",
@@ -191,8 +233,7 @@ export const messages = {
     "nameservers.addDomain": "Add Domain",
     "nameservers.matchDomainsHelp":
       "Add domain if you want to have a specific one resolved by this nameserver.",
-    "nameservers.searchDomainsLabel":
-      "Mark match domains as search domains",
+    "nameservers.searchDomainsLabel": "Mark match domains as search domains",
     "nameservers.searchDomainsHelp":
       "E.g., 'peer.example.com' will be accessible with 'peer'",
     "nameservers.dnsName": "DNS Name",
@@ -204,8 +245,7 @@ export const messages = {
     "nameservers.descriptionPlaceholder":
       "e.g., Berlin office resolver for remote developers",
     "nameservers.nameLengthError": "Name should be less than 40 characters",
-    "nameservers.validIpError":
-      "Please enter a valid IP, e.g., 192.168.1.0",
+    "nameservers.validIpError": "Please enter a valid IP, e.g., 192.168.1.0",
     "nameservers.ipPlaceholder": "e.g., 172.16.0.0",
     "nameservers.updateSuccessDescription":
       "Nameserver was updated successfully.",
@@ -254,7 +294,8 @@ export const messages = {
       "Please enter a valid domain, e.g. internal, company.internal or intra.example.com",
     "zones.distributionGroupsHelp":
       "Advertise this zone and its records to peers that belong to the following groups",
-    "zones.distributionGroupsDescription": "Advertise this zone to peers that belong to the following groups",
+    "zones.distributionGroupsDescription":
+      "Advertise this zone to peers that belong to the following groups",
     "zones.enableSearchDomains": "Enable Search Domains",
     "zones.enableSearchDomainsHelp":
       "E.g., 'server.company.internal' will be accessible with 'server'",
@@ -566,11 +607,11 @@ export const messages = {
     "reverseProxy.networks": "Networks",
     "reverseProxy.headerInvalidName":
       "Invalid characters in header name. Please use another one.",
-    "reverseProxy.headerReserved": "\"{name}\" is a reserved header. Please use another one.",
+    "reverseProxy.headerReserved":
+      '"{name}" is a reserved header. Please use another one.',
     "reverseProxy.headerDuplicate":
       "Duplicate header name. Please use another one.",
-    "reverseProxy.headerLineBreaks":
-      "Value must not contain line breaks",
+    "reverseProxy.headerLineBreaks": "Value must not contain line breaks",
     "reverseProxy.verifyDomainTitle": "Verify Domain",
     "reverseProxy.verifyDomainDescription": "{domain}",
     "reverseProxy.verifyStepLogin":
@@ -591,8 +632,7 @@ export const messages = {
     "reverseProxy.targetResourceLabel": "Resource",
     "reverseProxy.targetPeerHelp":
       "A peer is a machine (e.g., laptop, server, container) running Cloink. Select a peer if your service runs directly on it.",
-    "reverseProxy.targetPeerInstall":
-      "If you don't have a peer yet, you can",
+    "reverseProxy.targetPeerInstall": "If you don't have a peer yet, you can",
     "reverseProxy.targetPeerOrResourceConnector": "or",
     "reverseProxy.targetResourceHelp":
       "A resource is a destination (IP, subnet, or domain) that can't run Cloink directly. Resources are part of a network and are reached through a routing peer that forwards traffic to them.",
@@ -611,10 +651,8 @@ export const messages = {
       "Add additional headers to include when forwarding requests. Hop-by-hop headers like Host or Connection are not allowed.",
     "reverseProxy.headerNameEntry": "Header name for entry {id}",
     "reverseProxy.headerValueEntry": "Header value for entry {id}",
-    "reverseProxy.headerNamePlaceholder":
-      "Header, e.g., Authorization",
-    "reverseProxy.headerValuePlaceholder":
-      "Value, e.g., Bearer eyJhbGci...",
+    "reverseProxy.headerNamePlaceholder": "Header, e.g., Authorization",
+    "reverseProxy.headerValuePlaceholder": "Value, e.g., Bearer eyJhbGci...",
     "reverseProxy.removeHeader": "Remove header",
     "reverseProxy.addHeader": "Add Header",
     "reverseProxy.authPasswordTitle": "Password",
@@ -745,7 +783,8 @@ export const messages = {
       "Share this link with the user. They will be able to set their own password.",
     "invite.expiresOn": "Expires on",
     "invite.acceptMissingToken": "No invite token provided",
-    "invite.acceptRateLimited": "Too many attempts. Please wait a moment and try again.",
+    "invite.acceptRateLimited":
+      "Too many attempts. Please wait a moment and try again.",
     "invite.acceptInvalidLink": "Invalid or expired invite link",
     "invite.acceptFailed": "Failed to accept invite",
     "invite.tooManyRequests": "Too Many Requests",
@@ -762,7 +801,8 @@ export const messages = {
     "invite.expiredDescription":
       "This invite link has expired. Please contact your administrator to receive a new invitation.",
     "invite.welcomeTitle": "Welcome to Cloink",
-    "auth.accountLinkedSuccessfully": "Your account has been linked successfully. Please log in again to complete the setup.",
+    "auth.accountLinkedSuccessfully":
+      "Your account has been linked successfully. Please log in again to complete the setup.",
     "auth.somethingWentWrong": "Oops, something went wrong",
     "auth.alreadyVerifiedEmail": "Already verified your email address?",
     "auth.troubleLoggingIn": "Trouble logging in? Try again.",
@@ -774,37 +814,50 @@ export const messages = {
     "group.groupDeleted": "Group successfully deleted",
     "group.deletingGroup": "Deleting group...",
     "group.deleteGroupConfirm": "Delete '{{name}}'?",
-    "group.deleteGroupDescription": "Are you sure you want to delete this group? This action cannot be undone.",
+    "group.deleteGroupDescription":
+      "Are you sure you want to delete this group? This action cannot be undone.",
     "group.notAllowedToRename": "Not allowed to rename",
     "group.renameGroup": "Rename Group",
     "group.groupRenamed": "Group successfully renamed to {{name}}",
     "group.renamingGroup": "Renaming group...",
-    "group.removePeerConfirm": "Remove peer '{{peerName}}' from '{{groupName}}'?",
+    "group.removePeerConfirm":
+      "Remove peer '{{peerName}}' from '{{groupName}}'?",
     "group.removePeersConfirm": "Remove peers from '{{groupName}}'?",
-    "group.removePeerDescription": "Are you sure you want to remove this peer from the group? You can add it back later if needed.",
-    "group.removePeersDescription": "Are you sure you want to remove these peers from the group? You can add them back later if needed.",
+    "group.removePeerDescription":
+      "Are you sure you want to remove this peer from the group? You can add it back later if needed.",
+    "group.removePeersDescription":
+      "Are you sure you want to remove these peers from the group? You can add them back later if needed.",
     "group.removePeerFromGroup": "Remove Peer from Group",
-    "group.peerRemoved": "Peer '{{peerName}}' successfully removed from group '{{groupName}}'",
-    "group.peersRemoved": "Peers successfully removed from group '{{groupName}}'",
+    "group.peerRemoved":
+      "Peer '{{peerName}}' successfully removed from group '{{groupName}}'",
+    "group.peersRemoved":
+      "Peers successfully removed from group '{{groupName}}'",
     "group.removingPeerFromGroup": "Removing peer from group...",
     "group.removingPeersFromGroup": "Removing peers from group...",
     "group.addingPeersToGroup": "Adding peers to group",
     "group.peersAdded": "Peers were successfully added to {{groupName}}.",
     "group.removeUserFromGroup": "Remove User from Group",
-    "group.userRemoved": "User '{{userName}}' was successfully removed from group '{{groupName}}'.",
+    "group.userRemoved":
+      "User '{{userName}}' was successfully removed from group '{{groupName}}'.",
     "group.removingUserFromGroup": "Removing user from group...",
-    "group.removeUserConfirm": "Remove user '{{userName}}' from '{{groupName}}'?",
+    "group.removeUserConfirm":
+      "Remove user '{{userName}}' from '{{groupName}}'?",
     "group.removeUsersConfirm": "Remove users from '{{groupName}}'?",
-    "group.removeUserDescription": "Are you sure you want to remove this user from the group? You can add it back later if needed.",
-    "group.removeUsersDescription": "Are you sure you want to remove these users from the group? You can add them back later if needed.",
+    "group.removeUserDescription":
+      "Are you sure you want to remove this user from the group? You can add it back later if needed.",
+    "group.removeUsersDescription":
+      "Are you sure you want to remove these users from the group? You can add them back later if needed.",
     "group.removeUsersFromGroup": "Remove Users from Group",
-    "group.usersRemoved": "Users were successfully removed from group '{{groupName}}'.",
+    "group.usersRemoved":
+      "Users were successfully removed from group '{{groupName}}'.",
     "group.removingUsersFromGroup": "Removing users from group...",
     "group.addUserToGroup": "Add User to Group",
-    "group.userAdded": "User '{{userName}}' was successfully added to group '{{groupName}}'.",
+    "group.userAdded":
+      "User '{{userName}}' was successfully added to group '{{groupName}}'.",
     "group.addingUserToGroup": "Adding user to group...",
     "group.addUsersToGroup": "Add Users to Group",
-    "group.usersAdded": "Users were successfully added to group '{{groupName}}'.",
+    "group.usersAdded":
+      "Users were successfully added to group '{{groupName}}'.",
     "group.addingUsersToGroup": "Adding users to group...",
     "common.textCopied": "Text has been copied to your clipboard.",
     "invite.welcomeDescription":
@@ -817,45 +870,61 @@ export const messages = {
     "invite.passwordRuleUppercase": "One uppercase letter",
     "invite.passwordRuleLowercase": "One lowercase letter",
     "invite.passwordRuleNumber": "One number",
-    "invite.passwordRuleSpecial":
-      "One special character (!@#$%^&*)",
+    "invite.passwordRuleSpecial": "One special character (!@#$%^&*)",
     "invite.acceptExpiresOnFormat": "D MMMM, YYYY [at] h:mm A",
     "invite.copyAndClose": "Copy & Close",
     "onboarding.installNetBird": "Install Cloink",
     "onboarding.addClientDevice": "Time to add your client device",
-    "onboarding.addClientDeviceDescription": "Your first resource and routing peer are all set. Now, take your device, install Cloink, and let's get you connected.",
+    "onboarding.addClientDeviceDescription":
+      "Your first resource and routing peer are all set. Now, take your device, install Cloink, and let's get you connected.",
     "onboarding.testConnection": "Let's put that connection to the test",
-    "onboarding.testConnectionDescription": "Nice work connecting your client device! Now, let's have a little fun and test if it can reach your resource.",
-    "onboarding.openCommandLine": "Open your command line and run this command from",
+    "onboarding.testConnectionDescription":
+      "Nice work connecting your client device! Now, let's have a little fun and test if it can reach your resource.",
+    "onboarding.openCommandLine":
+      "Open your command line and run this command from",
     "onboarding.yourDevice": "your device",
     "onboarding.toPingResource": "to ping your resource.",
-    "onboarding.everythingWorking": "Everything working? Great! You can now continue with the onboarding. If something isn't right, please check our",
+    "onboarding.everythingWorking":
+      "Everything working? Great! You can now continue with the onboarding. If something isn't right, please check our",
     "onboarding.checkTroubleshooting": "",
     "onboarding.troubleshootingGuide": "troubleshooting guide",
     "onboarding.itWorksContinue": "It works! - Continue",
     "onboarding.getFirstDeviceOnline": "Let's get your first device online",
-    "onboarding.getFirstDeviceOnlineDescription": "To access other machines, install Cloink, sign in, and your device joins the network. Every device you add becomes a Cloink peer in your network. It's that simple.",
+    "onboarding.getFirstDeviceOnlineDescription":
+      "To access other machines, install Cloink, sign in, and your device joins the network. Every device you add becomes a Cloink peer in your network. It's that simple.",
     "onboarding.bringSecondDevice": "Time to bring in your second device",
-    "onboarding.eachDeviceGetsPrivateIP": "Each device (a.k.a. peer) in your Cloink network gets its own private IP and name to communicate securely in the network.",
-    "onboarding.shareLinkToCompleteSetup": "To complete the setup, just share this link or email it to yourself to set up your next device with ease.",
-    "onboarding.installationLinkCopied": "Installation link successfully copied",
+    "onboarding.eachDeviceGetsPrivateIP":
+      "Each device (a.k.a. peer) in your Cloink network gets its own private IP and name to communicate securely in the network.",
+    "onboarding.shareLinkToCompleteSetup":
+      "To complete the setup, just share this link or email it to yourself to set up your next device with ease.",
+    "onboarding.installationLinkCopied":
+      "Installation link successfully copied",
     "onboarding.shareLink": "Share Link",
-    "onboarding.useHeadlessSetup": "Use the headless setup to register a peer without a browser or user interaction.",
+    "onboarding.useHeadlessSetup":
+      "Use the headless setup to register a peer without a browser or user interaction.",
     "onboarding.installWithSetupKey": "Install with a setup key",
-    "onboarding.installNetBirdOnAnotherDevice": "Install Cloink on another device using this link.",
+    "onboarding.installNetBirdOnAnotherDevice":
+      "Install Cloink on another device using this link.",
     "onboarding.createSetupKey": "Create a Setup Key?",
-    "onboarding.createSetupKeyDescription": "If you continue, a one-off setup key will be automatically created and you will be able to install Cloink.",
+    "onboarding.createSetupKeyDescription":
+      "If you continue, a one-off setup key will be automatically created and you will be able to install Cloink.",
     "onboarding.dialogTitle": "Onboarding",
     "onboarding.getStartedWithNetBird": "Get started with Cloink",
-    "onboarding.netbirdFlexibility": "Cloink provides the flexibility of both a peer-to-peer overlay network and a remote network access solution. Choose what fits your needs, you can always combine both.",
+    "onboarding.netbirdFlexibility":
+      "Cloink provides the flexibility of both a peer-to-peer overlay network and a remote network access solution. Choose what fits your needs, you can always combine both.",
     "onboarding.peerToPeerNetwork": "Peer-to-Peer Network",
-    "onboarding.p2pBusinessDescription": "Install Cloink on two or more devices to create secure, direct WireGuard connections, like laptop to server or server to database. Add at least two machines to get started.",
-    "onboarding.p2pHomelabDescription": "Install Cloink on two or more devices in your homelab, such as your laptop, NAS, or Raspberry Pi, to create secure, direct WireGuard connections.",
+    "onboarding.p2pBusinessDescription":
+      "Install Cloink on two or more devices to create secure, direct WireGuard connections, like laptop to server or server to database. Add at least two machines to get started.",
+    "onboarding.p2pHomelabDescription":
+      "Install Cloink on two or more devices in your homelab, such as your laptop, NAS, or Raspberry Pi, to create secure, direct WireGuard connections.",
     "onboarding.remoteNetworkAccess": "Remote Network Access",
-    "onboarding.remoteAccessBusinessDescription": "Enable employee remote access to VMs, Kubernetes clusters, and cloud or on-prem resources without installing Cloink on every machine.",
-    "onboarding.remoteAccessHomelabDescription": "Securely access your homelab remotely from anywhere without installing Cloink on every device.",
+    "onboarding.remoteAccessBusinessDescription":
+      "Enable employee remote access to VMs, Kubernetes clusters, and cloud or on-prem resources without installing Cloink on every machine.",
+    "onboarding.remoteAccessHomelabDescription":
+      "Securely access your homelab remotely from anywhere without installing Cloink on every device.",
     "onboarding.recommended": "Recommended",
-    "onboarding.recommendedBasedOnChoices": "Based on your previous choices, we recommend starting with {title}. You can always combine both options later.",
+    "onboarding.recommendedBasedOnChoices":
+      "Based on your previous choices, we recommend starting with {title}. You can always combine both options later.",
     "onboarding.welcome": "Welcome to Cloink!",
     "onboarding.welcomeWithName": "Welcome to Cloink, {name}!",
     "onboarding.shareDetails":
@@ -864,11 +933,9 @@ export const messages = {
     "onboarding.personal": "Personal",
     "onboarding.companySizeQuestion":
       "How many people at your company will use Cloink?",
-    "onboarding.howHeardAboutNetBird":
-      "How did you hear about Cloink?",
+    "onboarding.howHeardAboutNetBird": "How did you hear about Cloink?",
     "onboarding.selectOption": "Select an option...",
-    "onboarding.howPlanToUseNetBird":
-      "How do you plan to use Cloink?",
+    "onboarding.howPlanToUseNetBird": "How do you plan to use Cloink?",
     "onboarding.selectMultipleUseCases": "Select one or more use cases.",
     "onboarding.zeroTrustSecurity": "Zero Trust Security",
     "onboarding.employeeRemoteAccess": "Employee Remote Access",
@@ -888,9 +955,12 @@ export const messages = {
     "onboarding.anySubdomainOf": "(any subdomain of {address})",
     "onboarding.resourceIpInYourSubnet": "(resource IP in your subnet)",
     "onboarding.networkLabel": "Network",
-    "onboarding.waitingForFirstDevice": "Waiting for your first device to connect",
-    "onboarding.waitingForSecondDevice": "Waiting for your second device to connect",
-    "onboarding.waitingForRoutingPeer": "Waiting for your routing peer to connect",
+    "onboarding.waitingForFirstDevice":
+      "Waiting for your first device to connect",
+    "onboarding.waitingForSecondDevice":
+      "Waiting for your second device to connect",
+    "onboarding.waitingForRoutingPeer":
+      "Waiting for your routing peer to connect",
     "onboarding.waitingForOwnDevice": "Waiting for your own device to connect",
     "onboarding.skipPrompt": "Already know how Cloink works?",
     "onboarding.skipToDashboard": "Skip to Dashboard",
@@ -904,8 +974,7 @@ export const messages = {
     "onboarding.referralSource.Other": "Other",
     "onboarding.referralSource.NetBird YouTube Channel":
       "Cloink YouTube Channel",
-    "onboarding.referralSource.Other YouTube Channel":
-      "Other YouTube Channel",
+    "onboarding.referralSource.Other YouTube Channel": "Other YouTube Channel",
     "onboarding.referralSource.NetBird SubReddit": "Cloink SubReddit",
     "onboarding.referralSource.Other Reddit Thread": "Other Reddit Thread",
     "onboarding.referralSource.GitHub": "GitHub",
@@ -937,8 +1006,7 @@ export const messages = {
     "invite.tabInvite": "Invite User",
     "invite.tabCreate": "Create User",
     "invites.regenerateTitle": "Regenerate Invite",
-    "invites.regeneratingDescription":
-      "Regenerating invite link for {name}...",
+    "invites.regeneratingDescription": "Regenerating invite link for {name}...",
     "invites.regenerating": "Regenerating...",
     "invites.regeneratedTitle": "Invite link regenerated!",
     "invites.inviteFallback": "Invite",
@@ -984,8 +1052,7 @@ export const messages = {
     "userGroups.label": "Auto-assigned Groups",
     "userGroups.description":
       "Groups will be assigned to peers added by this user.",
-    "userGroups.savedDescription":
-      "Groups of the user were successfully saved",
+    "userGroups.savedDescription": "Groups of the user were successfully saved",
     "userGroups.updating": "Updating groups...",
     "userRoles.user": "User",
     "userRoles.admin": "Admin",
@@ -1030,8 +1097,7 @@ export const messages = {
     "userInvites.showUsers": "Show Users",
     "userInvites.regenerate": "Regenerate",
     "userInvites.resendTitle": "Resend Invite",
-    "userInvites.resendDescription":
-      "The invitation is being sent to {email}",
+    "userInvites.resendDescription": "The invitation is being sent to {email}",
     "userInvites.sending": "Sending invitation...",
     "userInvites.sendingShort": "Sending...",
     "userInvites.resend": "Resend Invite",
@@ -1087,13 +1153,15 @@ export const messages = {
     "versionInfo.dashboard": "Dashboard",
     "versionInfo.updateAvailable": "Update available",
     "groupDetails.title": "Group Information",
-    "groupDetails.notFound": "The group you are attempting to access cannot be found. It may have been deleted, or you may not have permission to view it. Please verify the URL or return to the dashboard.",
+    "groupDetails.notFound":
+      "The group you are attempting to access cannot be found. It may have been deleted, or you may not have permission to view it. Please verify the URL or return to the dashboard.",
     "analytics.googleTagManager": "Google Tag Manager",
     "instanceSetup.welcomeTitle": "Welcome to Cloink",
     "instanceSetup.welcomeDescription":
       "Create the first admin account to get started",
     "instanceSetup.accountCreated": "Account Created!",
-    "instanceSetup.redirectingToLoginIn": "You are being redirected to login in",
+    "instanceSetup.redirectingToLoginIn":
+      "You are being redirected to login in",
     "instanceSetup.goToLogin": "Go to Login",
     "instanceSetup.nameLabel": "Name",
     "instanceSetup.emailLabel": "Email",
@@ -1108,11 +1176,9 @@ export const messages = {
     "instanceSetup.emailRequired": "Email is required",
     "instanceSetup.invalidEmail": "Please enter a valid email address",
     "instanceSetup.passwordRequired": "Password is required",
-    "instanceSetup.passwordMinLength":
-      "Password must be at least 8 characters",
+    "instanceSetup.passwordMinLength": "Password must be at least 8 characters",
     "instanceSetup.genericError": "An error occurred. Please try again.",
-    "instanceSetup.invalidRequest":
-      "Invalid request. Please check your input.",
+    "instanceSetup.invalidRequest": "Invalid request. Please check your input.",
     "instanceSetup.alreadyCompleted":
       "Setup has already been completed. Redirecting to login...",
     "instanceSetup.validationError":
@@ -1123,6 +1189,32 @@ export const messages = {
     "activity.code": "Code",
     "activity.searchPlaceholder": "Search event...",
     "activity.allEventTypes": "All Event Types",
+    "activity.dateTimeFormat": "MMM D, YYYY [at] h:mm:s A",
+    "activity.external": "External",
+    "activity.from": "from",
+    "activity.setupkey": "Setup-Key",
+    "activity.withKey": "with key",
+    "activity.peer": "Peer",
+    "activity.wasAddedWithCloinkIp": "was added with the Cloink IP",
+    "activity.usingSetupKey": "using the setup key",
+    "activity.domainS": "domain(s)",
+    "activity.range": "range",
+    "activity.with": "with",
+    "activity.user": "User",
+    "activity.serviceUser": "Service user",
+    "activity.sshServer": "SSH Server",
+    "activity.postureCheck": "Posture check",
+    "activity.resource": "Resource",
+    "activity.network": "Network",
+    "activity.withName": "with name",
+    "activity.remoteJob": "Remote job",
+    "activity.limitTrafficEventGroup": "Limit traffic event group",
+    "activity.identityProvider": "Identity provider",
+    "route.title": "Route",
+    "group.title": "Group",
+    "user.account.role": "Role",
+    "nameserver.title": "Nameserver",
+    "access.token.title": "Access token",
     "activity.eventCount": "Event(s)",
     "activity.globalLoginExpirationUpdated":
       "Global login expiration was updated",
@@ -1187,7 +1279,8 @@ export const messages = {
     "activity.groupDelete": "was deleted",
     "activity.groupUpdate": "was renamed to",
     "activity.accountCreate": "created an account",
-    "activity.accountNetworkRangeUpdate": "Account network range was updated from",
+    "activity.accountNetworkRangeUpdate":
+      "Account network range was updated from",
     "activity.nameserverGroupAdd": "was added",
     "activity.nameserverGroupDelete": "was deleted",
     "activity.nameserverGroupUpdate": "was updated",
@@ -1199,8 +1292,10 @@ export const messages = {
     "activity.integrationCreate": "integration created",
     "activity.integrationDelete": "integration deleted",
     "activity.integrationUpdate": "integration updated",
-    "activity.dnsSettingDisabledManagementGroupAdd": "was added to disabled DNS group setting",
-    "activity.dnsSettingDisabledManagementGroupDelete": "was removed from disabled DNS group setting",
+    "activity.dnsSettingDisabledManagementGroupAdd":
+      "was added to disabled DNS group setting",
+    "activity.dnsSettingDisabledManagementGroupDelete":
+      "was removed from disabled DNS group setting",
     "activity.postureCheckUpdated": "was updated",
     "activity.postureCheckCreated": "was created",
     "activity.postureCheckDeleted": "was deleted",
@@ -1265,6 +1360,24 @@ export const messages = {
     "networkLogs.protocol.tcp": "TCP",
     "networkLogs.protocol.udp": "UDP",
     "networkLogs.protocol.sctp": "SCTP",
+    "dnsLogs.title": "DNS Logs",
+    "dnsLogs.description":
+      "View DNS resolution activity reported by clients in the last selected time window.",
+    "dnsLogs.searchPlaceholder":
+      "Search by user, device, domain, type, or result...",
+    "dnsLogs.emptyTitle": "No DNS logs yet",
+    "dnsLogs.emptyDescription":
+      "DNS resolution events will appear here after clients report DNS flow activity.",
+    "dnsLogs.time": "Time",
+    "dnsLogs.user": "User",
+    "dnsLogs.device": "Device",
+    "dnsLogs.domain": "Domain",
+    "dnsLogs.type": "Type",
+    "dnsLogs.result": "Resolution Result",
+    "dnsLogs.flowCount": "Flows",
+    "dnsLogs.domainFilterPlaceholder": "Filter domain...",
+    "dnsLogs.typeFilter": "DNS type",
+    "dnsLogs.allTypes": "All types",
     "flowLogsSettings.description":
       "Enable client-side network flow collection so administrators can review zero-trust traffic in the network logs view.",
     "flowLogsSettings.enable": "Enable Flow Logs",
@@ -1276,8 +1389,7 @@ export const messages = {
     "flowLogsSettings.enableDnsCollection": "Enable DNS Collection",
     "flowLogsSettings.enableDnsCollectionHelp":
       "Collect DNS query-related flow events from supported clients.",
-    "flowLogsSettings.enableExitNodeCollection":
-      "Enable Exit Node Collection",
+    "flowLogsSettings.enableExitNodeCollection": "Enable Exit Node Collection",
     "flowLogsSettings.enableExitNodeCollectionHelp":
       "Collect flow events generated while a client acts as an exit node.",
     "flowLogsSettings.windowsCallout":
@@ -1288,7 +1400,8 @@ export const messages = {
     "flowLogsSettings.updating": "Updating flow log settings...",
     "flowLogsSettings.localStorage": "Local Storage",
     "flowLogsSettings.enableLocalStorage": "Enable Local Storage",
-    "flowLogsSettings.enableLocalStorageHelp": "Store flow logs locally on disk",
+    "flowLogsSettings.enableLocalStorageHelp":
+      "Store flow logs locally on disk",
     "flowLogsSettings.storagePath": "Storage Path",
     "flowLogsSettings.storagePathPlaceholder": "/var/log/netbird",
     "flowLogsSettings.maxFileSize": "Max File Size (MB)",
@@ -1354,8 +1467,7 @@ export const messages = {
     "routeActions.newNetworkRouteHelp":
       "Create a new network route with this peer",
     "routeActions.existingNetwork": "Existing Network",
-    "routeActions.existingNetworkHelp":
-      "Add this peer to an existing network",
+    "routeActions.existingNetworkHelp": "Add this peer to an existing network",
     "routeModal.createPolicyTitle":
       "Do you want to create a new access control policy for the route '{name}'?",
     "routeModal.createPolicyDescription":
@@ -1372,10 +1484,8 @@ export const messages = {
     "routeModal.createRoute": "Create New Route",
     "routeModal.routeAllTrafficPeer":
       "Route all traffic through the peer '{name}'",
-    "routeModal.routeAllTraffic":
-      "Route all internet traffic through a peer",
-    "routeModal.description":
-      "Access LANs and VPC by adding a network route.",
+    "routeModal.routeAllTraffic": "Route all internet traffic through a peer",
+    "routeModal.description": "Access LANs and VPC by adding a network route.",
     "routeModal.routeTab": "Route",
     "routeModal.groupsTab": "Groups",
     "routeModal.generalTab": "Name & Description",
@@ -1413,7 +1523,8 @@ export const messages = {
       "SSH Access is currently disabled for this peer. Please enable SSH access for this peer and make sure to add an explicit access control policy allowing SSH access.",
     "remoteAccess.enableSsh": "Enable SSH Access",
     "remoteAccess.usernameEmpty": "Username cannot be empty.",
-    "remoteAccess.portError": "Port must be a valid number between 1 and 65535.",
+    "remoteAccess.portError":
+      "Port must be a valid number between 1 and 65535.",
     "remoteAccess.connectViaSsh": "Connect to {ip} via SSH.",
     "remoteAccess.usernamePort": "Username & Port",
     "remoteAccess.sshCredentialsHelp":
@@ -1474,8 +1585,7 @@ export const messages = {
       "IronRDP components not available from client",
     "remoteAccess.ironrdpInitFailed": "Failed to initialize IronRDP",
     "remoteAccess.wasmLoadFailed": "Failed to load WASM runtime",
-    "remoteAccess.wasmInitTimeout":
-      "Cloink WASM failed to initialize in time",
+    "remoteAccess.wasmInitTimeout": "Cloink WASM failed to initialize in time",
     "remoteAccess.wasmInitFailed": "Failed to initialize WASM",
     "remoteAccess.netbirdClientUnavailable":
       "CloinkClient is not available or not a function",
@@ -1509,8 +1619,7 @@ export const messages = {
     "routeModal.autoApplyRoute": "Auto Apply Route",
     "routeModal.autoApplyRouteHelp":
       "Automatically apply this exit node to your distribution groups. This requires Cloink client v0.55.0 or higher.",
-    "routeModal.metricHelp":
-      "A lower metric indicates higher priority routes.",
+    "routeModal.metricHelp": "A lower metric indicates higher priority routes.",
     "minimalPeers.searchPlaceholder":
       "Search peers by name, IP, OS, or version...",
     "minimalPeers.emptyTitle": "No peers found",
@@ -1560,7 +1669,8 @@ export const messages = {
     "networkDetails.goToPolicies": "Go to Policies",
     "networkDetails.network": "Network",
     "networkDetails.type": "Type",
-    "routeTable.searchPlaceholder": "Search by network, range, name or groups...",
+    "routeTable.searchPlaceholder":
+      "Search by network, range, name or groups...",
     "routeTable.emptyGroupTitle":
       "This group is not used within any network routes yet",
     "routeTable.emptyGroupDescription":
@@ -1609,8 +1719,7 @@ export const messages = {
     "routeAddRoutingPeer.networkHelp":
       "Network name and CIDR that you are adding the route to.",
     "routeAddRoutingPeer.addRoute": "Add Route",
-    "routeAddRoutingPeer.success":
-      "Peer was successfully added to the route",
+    "routeAddRoutingPeer.success": "Peer was successfully added to the route",
     "routeMetric.priorityHelp": "Lower metrics have higher priority.",
     "peerRoutes.emptyTitle": "This peer has no network routes",
     "peerRoutes.emptyDescription":
@@ -1638,7 +1747,7 @@ export const messages = {
       "Starting from Cloink v0.61.0, SSH requires an explicit access control policy to allow SSH connections to this machine.",
     "peerSsh.createPolicy": "Create SSH Policy",
     "peerSsh.finishStepPrefix":
-      "Once the Cloink SSH server is allowed on the client,", 
+      "Once the Cloink SSH server is allowed on the client,",
     "peerSsh.finishStepMiddle": "click",
     "peerSsh.confirmAndEnable": "Confirm & Enable",
     "peerSsh.finishStepSuffix": "below to finish the setup.",
@@ -1672,10 +1781,8 @@ export const messages = {
       "{peer} is part of a group used in a network route.",
     "peerRouteActions.groupRestrictionSuffix":
       "To remove this peer from the network route, first remove it from the group used by this route.",
-    "peerRouteActions.enabled":
-      "The network route was successfully enabled",
-    "peerRouteActions.disabled":
-      "The network route was successfully disabled",
+    "peerRouteActions.enabled": "The network route was successfully enabled",
+    "peerRouteActions.disabled": "The network route was successfully disabled",
     "routeActions.confirmDeleteTitle": "Delete '{name}'?",
     "routeActions.confirmDeleteDescription":
       "Are you sure you want to delete this route? This action cannot be undone.",
@@ -1887,8 +1994,7 @@ export const messages = {
       "When enabled, users must re-authenticate after being disconnected from management for 10 minutes.",
     "peer.accessiblePeersDescription":
       "This peer can connect to the following peers within the Cloink network.",
-    "peer.loginExpiredTooltipLine1":
-      "This peer is offline and needs to be",
+    "peer.loginExpiredTooltipLine1": "This peer is offline and needs to be",
     "peer.loginExpiredTooltipLine2":
       "re-authenticated because its login has expired.",
     "peer.expirationDisabledTooltip": "Expiration is disabled for this peer.",
@@ -1910,7 +2016,8 @@ export const messages = {
     "groups.searchGroups": "Search groups...",
     "groups.allGroups": "All Groups",
     "groups.notFound": "Seems like you don't have any groups.",
-    "groups.noMatching": "There are no groups matching your search. Try another search term.",
+    "groups.noMatching":
+      "There are no groups matching your search. Try another search term.",
     "groups.count.groups": "Group(s)",
     "groups.used": "Used",
     "groups.unused": "Unused",
@@ -1932,9 +2039,11 @@ export const messages = {
     "groups.count.zones": "Zone(s)",
     "groups.count.setupKeys": "Setup Key(s)",
     "groups.renameTitle": "Rename Group",
-    "groups.renameDescription": "Set an easily identifiable name for your group.",
+    "groups.renameDescription":
+      "Set an easily identifiable name for your group.",
     "groups.renamePlaceholder": "e.g., Developers",
-    "groups.renameExists": "This group already exists. Please choose another name.",
+    "groups.renameExists":
+      "This group already exists. Please choose another name.",
     "accessPolicies.searchPlaceholder": "Search by name and description...",
     "accessPolicies.emptyGroupTitle":
       "This group is not used within any policies yet",
@@ -2049,8 +2158,7 @@ export const messages = {
     "identityProviderModal.issuerUrlHelp":
       "The OIDC issuer URL for this provider",
     "identityProviderModal.clientId": "Client ID",
-    "identityProviderModal.clientIdHelp":
-      "The OAuth2 confidential client ID",
+    "identityProviderModal.clientIdHelp": "The OAuth2 confidential client ID",
     "identityProviderModal.clientIdPlaceholder": "Enter client ID",
     "identityProviderModal.clientSecret": "Client Secret",
     "identityProviderModal.clientSecretHelp": "The OAuth2 client secret",
@@ -2058,8 +2166,7 @@ export const messages = {
       "Required when client ID is changed",
     "identityProviderModal.clientSecretOptionalHelp":
       "Leave empty to keep the existing secret, or enter a new one",
-    "identityProviderModal.clientSecretPlaceholder":
-      "Enter client secret",
+    "identityProviderModal.clientSecretPlaceholder": "Enter client secret",
     "identityProviderModal.clientSecretMaskedPlaceholder": "••••••••",
     "identityProviderModal.redirectUrl": "Redirect / Callback URL",
     "identityProviderModal.redirectUrlHelp":
@@ -2069,8 +2176,7 @@ export const messages = {
     "identityProviderModal.addProvider": "Add Provider",
     "networkResources.addModalTitle": "Add Resource",
     "networkResources.editModalTitle": "Edit Resource",
-    "networkResources.addModalDescription":
-      "Add new resource to '{network}'",
+    "networkResources.addModalDescription": "Add new resource to '{network}'",
     "networkResources.resourceTab": "Resource",
     "networkResources.accessControlTab": "Access Control",
     "networkResources.nameHelp":
@@ -2101,8 +2207,7 @@ export const messages = {
     "networkResources.optionalSettings": "Optional Settings",
     "networkResources.descriptionHelp":
       "Write a short description to add more context to this resource.",
-    "networkResources.descriptionPlaceholder":
-      "e.g., Production, Development",
+    "networkResources.descriptionPlaceholder": "e.g., Production, Development",
     "networkResources.groupsLabel": "Resource Groups",
     "networkResources.groupsHelpLine1":
       "Add this resource to a group (e.g., Databases, Web Servers) and reference the group",
@@ -2147,8 +2252,7 @@ export const messages = {
     "networkRoutingPeers.masqueradeWarningPrefix": "Group ",
     "networkRoutingPeers.masqueradeWarningSuffix":
       " contains at least one non-Linux peer. Disabled Masquerade will have no effect on non-Linux routing peers.",
-    "networkResources.groupsPlaceholder":
-      "Add or select resource group(s)...",
+    "networkResources.groupsPlaceholder": "Add or select resource group(s)...",
     "networkResources.groupsUpdateTitle": "Update Resource",
     "networkResources.groupsUpdateDescription": "'{name}' groups updated",
     "networkResources.groupsUpdating": "Updating resource groups...",
@@ -2165,8 +2269,7 @@ export const messages = {
     "networkResources.reviewPoliciesSuffix": "tab.",
     "networkResources.reviewPoliciesInline":
       "Please review them in the Access Control tab.",
-    "networkResources.noPoliciesTitle":
-      "No Access Control Policies Configured",
+    "networkResources.noPoliciesTitle": "No Access Control Policies Configured",
     "networkResources.noPoliciesDescription":
       "Without access control policies, this resource will not be accessible by any peers. You can also create policies later. Are you sure you want to continue?",
     "networkResources.createdTitle": "Resource Created",
@@ -2251,16 +2354,14 @@ export const messages = {
       "DNS Wildcard Routing successfully enabled.",
     "networkSettings.dnsWildcardDisabled":
       "DNS Wildcard Routing successfully disabled.",
-    "networkSettings.dnsWildcardUpdating":
-      "Updating DNS wildcard setting...",
+    "networkSettings.dnsWildcardUpdating": "Updating DNS wildcard setting...",
     "networkSettings.notifyTitle": "Network Settings",
     "networkSettings.updatedDescription":
       "Network settings successfully updated.",
     "networkSettings.updating": "Updating network settings...",
     "networkSettings.domainError":
       "Please enter a valid domain, e.g. example.com or intra.example.com",
-    "networkSettings.networkRangeEmptyError":
-      "Network range cannot be empty",
+    "networkSettings.networkRangeEmptyError": "Network range cannot be empty",
     "networkSettings.networkRangeError":
       "Please enter a valid IPv4 CIDR range, e.g. 100.64.0.0/16 or 192.168.1.0/24",
     "networkSettings.dnsDomain": "DNS Domain",
@@ -2270,21 +2371,18 @@ export const messages = {
     "networkSettings.networkRangeHelp":
       "Specify a custom IPv4 range for your network in CIDR format. All peer IPs will be re-allocated when changed.",
     "networkSettings.networkRangePlaceholder": "e.g. 100.64.0.0/16",
-    "networkSettings.enableDnsWildcardRouting":
-      "Enable DNS Wildcard Routing",
+    "networkSettings.enableDnsWildcardRouting": "Enable DNS Wildcard Routing",
     "networkSettings.enableDnsWildcardRoutingHelp":
       "Allow routing using DNS wildcards. This requires Cloink client v0.35 or higher. Changes will only take effect after restarting the clients.",
     "permissionsTab.notifyTitle": "Permission Settings",
     "permissionsTab.updatedDescription":
       "Permissions were updated successfully.",
     "permissionsTab.updating": "Updating permissions...",
-    "permissionsTab.restrictDashboard":
-      "Restrict dashboard for regular users",
+    "permissionsTab.restrictDashboard": "Restrict dashboard for regular users",
     "permissionsTab.restrictDashboardHelp":
       "Access to the dashboard will be limited and regular users will not be able to view any peers.",
     "dangerZone.deleteAccountTitle": "Delete Cloink account",
-    "dangerZone.deletedDescription":
-      "Cloink account was successfully deleted.",
+    "dangerZone.deletedDescription": "Cloink account was successfully deleted.",
     "dangerZone.deleting": "Deleting the account...",
     "dangerZone.confirmDescription":
       "Are you sure you want to delete your Cloink account? This action cannot be undone.",
@@ -2326,8 +2424,7 @@ export const messages = {
     "accessTokens.emptyTitle": "No access tokens",
     "accessTokens.emptyDescription":
       "You don't have any access tokens yet. You can add a token to access the Cloink API.",
-    "accessTokens.deletedDescription":
-      "Access token was successfully deleted",
+    "accessTokens.deletedDescription": "Access token was successfully deleted",
     "accessTokens.deleting": "Deleting the access token...",
     "accessTokens.deleteConfirmTitle": "Delete '{name}'?",
     "accessTokens.deleteConfirmDescription":
@@ -2336,8 +2433,7 @@ export const messages = {
     "accessTokens.createdHelp":
       "This token will not be shown again, so be sure to copy it and store in a secure location.",
     "accessTokens.copied": "Access token was copied to your clipboard!",
-    "accessTokens.createFailedFallback":
-      "Access token could not be created...",
+    "accessTokens.createFailedFallback": "Access token could not be created...",
     "accessTokens.close": "Close",
     "accessTokens.copyToClipboard": "Copy to clipboard",
     "accessTokens.creatingTitle": "Creating access token",
@@ -2346,8 +2442,7 @@ export const messages = {
     "accessTokens.modalTitle": "Create Access Token",
     "accessTokens.modalDescription":
       "Use this token to access Cloink's public API",
-    "accessTokens.nameHelp":
-      "Set an easily identifiable name for your token",
+    "accessTokens.nameHelp": "Set an easily identifiable name for your token",
     "accessTokens.namePlaceholder": "e.g., Infra token",
     "accessTokens.expiresIn": "Expires in",
     "accessTokens.expiresInHelp": "Should be between 1 and 365 days.",
@@ -2370,8 +2465,7 @@ export const messages = {
     "postureChecks.descriptionPlaceholder":
       "e.g., Check if the Cloink version is bigger than 0.25.0",
     "postureChecks.createButton": "Create Posture Check",
-    "postureChecks.searchPlaceholder":
-      "Search by name and description...",
+    "postureChecks.searchPlaceholder": "Search by name and description...",
     "postureChecks.addButton": "Add Posture Check",
     "postureChecks.emptyTitle": "Create Posture Check",
     "postureChecks.emptyDescription":
@@ -2395,8 +2489,7 @@ export const messages = {
     "postureChecks.goToPoliciesTooltip":
       "To assign this posture check to your policies, visit the Policies page.",
     "postureChecks.goToPolicies": "Go to Policies",
-    "postureChecks.noChecksTitle":
-      "You haven't added any posture checks yet",
+    "postureChecks.noChecksTitle": "You haven't added any posture checks yet",
     "postureChecks.disableCheckTitle": "Disable this check?",
     "postureChecks.disableCheckDescription":
       "Are you sure you want to disable this check? All settings of this check will be lost.",
@@ -2457,8 +2550,7 @@ export const messages = {
       "Use a custom version number if you need more control.",
     "postureChecks.macPathError": "Please enter a valid macOS file path",
     "postureChecks.unixPathError": "Please enter a valid Unix file path",
-    "postureChecks.windowsPathError":
-      "Please enter a valid Windows file path",
+    "postureChecks.windowsPathError": "Please enter a valid Windows file path",
     "postureChecks.processesLabel": "Processes",
     "postureChecks.processesHelp":
       "Add the path of an executable file of the process. You can define a path for Linux, macOS and Windows. Peers will only be allowed to connect if the process is running on their system.",
@@ -2506,11 +2598,10 @@ export const messages = {
     "setupModal.archArm64Msi": "ARM64 (MSI)",
     "setupModal.downloadNetBird": "Download Cloink",
     "setupModal.managementUrlInstructions":
-      "Click on \"Settings\" then \"Advanced Settings\" from the Cloink icon in your system tray and enter the following \"Management URL\"",
-    "setupModal.openCommandLineRunNetBird":
-      "Open Command-line and run Cloink",
+      'Click on "Settings" then "Advanced Settings" from the Cloink icon in your system tray and enter the following "Management URL"',
+    "setupModal.openCommandLineRunNetBird": "Open Command-line and run Cloink",
     "setupModal.clickConnectTray":
-      "Click on \"Connect\" from the Cloink icon in your system tray",
+      'Click on "Connect" from the Cloink icon in your system tray',
     "setupModal.signUpWithEmail": "Sign up using your email address",
     "setupModal.macosInstallTitle": "Install on macOS",
     "setupModal.macosStep1": "Download and run macOS Installer",
@@ -2532,9 +2623,9 @@ export const messages = {
       "Download and install the application from Google Play Store:",
     "setupModal.googlePlayAlt": "Download Cloink from Google Play",
     "setupModal.changeServerInstructions":
-      "Click on \"Change Server\" and enter the following \"Server\"",
+      'Click on "Change Server" and enter the following "Server"',
     "setupModal.clickConnectCenter":
-      "Click on the \"Connect\" button in the middle of the screen",
+      'Click on the "Connect" button in the middle of the screen',
     "setupModal.iosInstallTitle": "Install on iOS",
     "setupModal.iosStep1":
       "Download and install the application on the App Store:",
@@ -2593,20 +2684,28 @@ export const messages = {
     "accessControl.ruleDisabled": "The rule was successfully disabled",
     "accessControl.postureChecksCount": "{count} Posture Check(s)",
     "accessControl.addPostureCheck": "Add Posture Check",
-    "accessControl.ruleName": "Name of the Rule",
-    "accessControl.ruleNameHelp":
-      "Set an easily identifiable name for your policy.",
-    "accessControl.ruleNamePlaceholder": "e.g., Devs to Servers",
-    "accessControl.ruleDescription": "Description (optional)",
-    "accessControl.ruleDescriptionHelp":
-      "Write a short description to add more context to this policy.",
-    "accessControl.ruleDescriptionPlaceholder":
-      "e.g., Devs are allowed to access servers and servers are allowed to access Devs.",
+    "accessControl.rule": "Rule",
+    "accessControl.ruleNumber": "Rule {number}",
+    "accessControl.ruleNumberAndAction": "Rule {number} - {action}",
+    "accessControl.action": "Action",
+    "accessControl.actionAllow": "Allow (Accept)",
+    "accessControl.actionDrop": "Deny (Drop)",
+    "accessControl.selectAction": "Select action...",
+    "accessControl.removeRule": "Remove Rule",
+    "accessControl.addRule": "Add Rule",
+    "accessControl.ruleOverview": "Rule Overview",
+    "accessControl.untitledRule": "Untitled Rule",
+    "accessControl.ruleNameRequired": "Rule Name",
+    "accessControl.ruleName": "Rule Group Name",
+    "accessControl.ruleNamePlaceholder": "Rule name",
+    "accessControl.ruleDescription": "Rule Description (Optional)",
+    "accessControl.ruleDescriptionPlaceholder": "Rule description",
+    "accessControl.rules": "Policy Rules",
     "groups.actionRenameDisabledIntegration":
       "This group name is managed by an integration and cannot be renamed.",
-    "groups.actionRenameDisabledJwt":
-      "This JWT group cannot be renamed.",
-    "groups.actionDeleteDisabled": "This group is currently in use and cannot be deleted.",
+    "groups.actionRenameDisabledJwt": "This JWT group cannot be renamed.",
+    "groups.actionDeleteDisabled":
+      "This group is currently in use and cannot be deleted.",
     "groups.actionDeleteDisabledIntegration":
       "This group is managed by an integration and cannot be deleted.",
     "policies.deleteTitle": "Delete '{name}'?",
@@ -2615,12 +2714,11 @@ export const messages = {
     "notification.genericError": "Something went wrong...",
     "peerGroupSelector.addOrSelectGroups": "Add or select group(s)...",
     "peerGroupSelector.searchGroups":
-      "Search groups or add new group by pressing \"Enter\"...",
+      'Search groups or add new group by pressing "Enter"...',
     "peerGroupSelector.searchResource": "Search resource...",
     "peerGroupSelector.searchPeer": "Search peer...",
     "peerGroupSelector.search": "Search...",
-    "peerGroupSelector.addGroupByPressingPrefix":
-      "Add this group by pressing",
+    "peerGroupSelector.addGroupByPressingPrefix": "Add this group by pressing",
     "peerGroupSelector.addGroupByPressingSuffix": "",
     "peerGroupSelector.enterKey": "'Enter'",
     "peerGroupSelector.routingPeerGroupDisabled":
@@ -2632,8 +2730,7 @@ export const messages = {
       "There are no resources available yet.",
     "peerGroupSelector.noMatchingPeers":
       "There are no peers matching your search. Please try a different search term.",
-    "peerGroupSelector.noPeersAvailable":
-      "There are no peers available yet.",
+    "peerGroupSelector.noPeersAvailable": "There are no peers available yet.",
     "peerGroupSelector.resourceCount": "{count} Resource(s)",
     "peers.searchPlaceholder": "Search by name, IP, owner or group...",
     "peers.browserPeersTooltip":
@@ -2672,39 +2769,43 @@ export const messages = {
     "lastTimeRow.lastSeenOn": "Last seen on",
     "peerGroupSelector.goToNetworksToAdd": "Networks",
     "peerGroupSelector.goToPeersToAdd": "Peers",
-    "peerGroupSelector.toAddResourcesPrefix":
-      "Go to",
-    "peerGroupSelector.toAddResourcesSuffix":
-      "to add some resources.",
-    "peerGroupSelector.toAddPeersPrefix":
-      "Go to",
-    "peerGroupSelector.toAddPeersSuffix":
-      "to add some peers.",
-  
+    "peerGroupSelector.toAddResourcesPrefix": "Go to",
+    "peerGroupSelector.toAddResourcesSuffix": "to add some resources.",
+    "peerGroupSelector.toAddPeersPrefix": "Go to",
+    "peerGroupSelector.toAddPeersSuffix": "to add some peers.",
+
     "peerSelector.selectPeer": "Select a peer...",
     "peerSelector.searchPlaceholder": "Search for peers by name or ip...",
     "peerSelector.noPeersAvailable": "No peers available to select.",
     "peerSelector.noMatchingPeers": "There are no peers matching your search.",
-    "peerSelector.updateNetBirdTooltip": "Please update Cloink to at least v0.36.6 or later to use this peer as a routing peer.",
+    "peerSelector.updateNetBirdTooltip":
+      "Please update Cloink to at least v0.36.6 or later to use this peer as a routing peer.",
     "networkRouteSelector.selectNetwork": "Select an existing network...",
-    "networkRouteSelector.searchPlaceholder": "Search for network by name or cidr...",
-    "networkRouteSelector.noRoutes": "Seems like you don't have any network routes created yet.",
-    "networkRouteSelector.noMatchingNetworks": "There are no networks matching your search.",
+    "networkRouteSelector.searchPlaceholder":
+      "Search for network by name or cidr...",
+    "networkRouteSelector.noRoutes":
+      "Seems like you don't have any network routes created yet.",
+    "networkRouteSelector.noMatchingNetworks":
+      "There are no networks matching your search.",
     "userSelector.selectUser": "Select a user...",
     "userSelector.searchPlaceholder": "Search for users by name or email...",
-    "userSelector.noUsers": "There are no users to select. Invite some users for this tenant before unlinking.",
+    "userSelector.noUsers":
+      "There are no users to select. Invite some users for this tenant before unlinking.",
     "userSelector.noMatchingUsers": "There are no users matching your search.",
     "userSelector.system": "System",
     "noPeersGettingStarted.title": "Get Started with Cloink",
-    "noPeersGettingStarted.description": "It looks like you don't have any connected machines. Get started by adding one to your network.",
+    "noPeersGettingStarted.description":
+      "It looks like you don't have any connected machines. Get started by adding one to your network.",
     "noPeersGettingStarted.learnMorePrefix": "Learn more in our",
     "noPeersGettingStarted.gettingStartedGuide": "Getting Started Guide",
     "noPeersGettingStarted.learnMoreSuffix": "",
     "noResults.title": "Could not find any results",
-    "noResults.description": "We couldn't find any results. Please try a different search term or change your filters.",
+    "noResults.description":
+      "We couldn't find any results. Please try a different search term or change your filters.",
     "noResults.resetFilters": "Reset Filters & Search",
     "pageNotFound.title": "The requested page was not found",
-    "pageNotFound.description": "The page you are attempting to access cannot be found. Please verify the URL or return to the dashboard to continue browsing.",
+    "pageNotFound.description":
+      "The page you are attempting to access cannot be found. Please verify the URL or return to the dashboard to continue browsing.",
     "pageNotFound.goBack": "Go Back",
     "dataTable.refresh": "Refresh",
     "dataTable.refreshCooldown": "You can refresh it again in 5 seconds",
@@ -2731,11 +2832,14 @@ export const messages = {
     "countrySelector.placeholder": "Select country...",
     "countrySelector.searchPlaceholder": "Search country...",
     "inputDomain.placeholder": "e.g., example.com",
-    "inputDomain.error": "Please enter a valid domain, e.g. example.com or intra.example.com",
+    "inputDomain.error":
+      "Please enter a valid domain, e.g. example.com or intra.example.com",
     "portSelector.selectPorts": "Select ports...",
     "portSelector.all": "All",
-    "portSelector.placeholder": "Add a port or a range e.g. 80 or 1-1023 and press \"Enter\" to add...",
-    "portSelector.invalidPort": "Please add a valid port or port range (e.g. 80, 443, 1-1023)",
+    "portSelector.placeholder":
+      'Add a port or a range e.g. 80 or 1-1023 and press "Enter" to add...',
+    "portSelector.invalidPort":
+      "Please add a valid port or port range (e.g. 80, 443, 1-1023)",
     "portSelector.addByEnter": "Add this port or range by pressing",
     "portSelector.enterKey": "Enter",
     "portSelector.addThisPort": "to add this port or range",
@@ -2745,13 +2849,15 @@ export const messages = {
     "dropdownInput.searchPlaceholder": "Search...",
     "selectDropdown.placeholder": "Select...",
     "selectDropdown.searchPlaceholder": "Search...",
-    "selectDropdown.noResults": "There are no results matching your search. Please try a different search term.",
+    "selectDropdown.noResults":
+      "There are no results matching your search. Please try a different search term.",
     "dataTable.searchPlaceholder": "Search...",
     "dataTable.searchShortcut": "⌘ K",
 
     "jsonFileUpload.wrongFileType": "You uploaded the wrong file type",
     "jsonFileUpload.uploadJsonFile": "Please upload a JSON file",
-    "jsonFileUpload.successDescription": "You successfully uploaded your service account key",
+    "jsonFileUpload.successDescription":
+      "You successfully uploaded your service account key",
     "jsonFileUpload.uploadLabel": "Upload your service account key (.json)",
     "jsonFileUpload.clickToUpload": "Click to upload",
     "jsonFileUpload.dragAndDrop": "or drag and drop your file here",
@@ -2764,31 +2870,39 @@ export const messages = {
     "darkModeToggle.dark": "Dark",
     "darkModeToggle.system": "System",
     "dialog.confirmation": "Confirmation",
-    "dialog.confirmationDescription": "Are you sure you want to continue? This action cannot be undone.",
+    "dialog.confirmationDescription":
+      "Are you sure you want to continue? This action cannot be undone.",
     "dialog.confirm": "Confirm",
 
-    "peerActionCell.sessionExpirationDisabled": "Session expiration is disabled",
+    "peerActionCell.sessionExpirationDisabled":
+      "Session expiration is disabled",
     "peerActionCell.sessionExpirationEnabled": "Session expiration is enabled",
-    "peerActionCell.sessionExpirationDescriptionDisabled": "Session expiration for peer {name} was successfully disabled.",
-    "peerActionCell.sessionExpirationDescriptionEnabled": "Session expiration for peer {name} was successfully enabled.",
-    "peerActionCell.updatingSessionExpiration": "Updating session expiration...",
+    "peerActionCell.sessionExpirationDescriptionDisabled":
+      "Session expiration for peer {name} was successfully disabled.",
+    "peerActionCell.sessionExpirationDescriptionEnabled":
+      "Session expiration for peer {name} was successfully enabled.",
+    "peerActionCell.updatingSessionExpiration":
+      "Updating session expiration...",
     "peerActionCell.disableSessionExpiration": "Disable Session Expiration",
     "peerActionCell.enableSessionExpiration": "Enable Session Expiration",
     "peerActionCell.disableSshAccess": "Disable SSH Access",
     "peerActionCell.enableSshAccess": "Enable SSH Access",
-    "peerActionCell.expirationDisabledTooltip": "Expiration is disabled for all peers added with an setup-key.",
+    "peerActionCell.expirationDisabledTooltip":
+      "Expiration is disabled for all peers added with an setup-key.",
     "peerAddress.netBirdIp": "Cloink IP",
     "peerAddress.publicIp": "Public IP",
     "peerAddress.domain": "Domain",
     "peerAddress.region": "Region",
-    "peerAddress.netBirdIpCopied": "Cloink IP has been copied to your clipboard",
+    "peerAddress.netBirdIpCopied":
+      "Cloink IP has been copied to your clipboard",
     "peerAddress.publicIpCopied": "Public IP has been copied to your clipboard",
     "peerAddress.dnsLabelCopied": "DNS label has been copied to your clipboard",
     "peerAddress.regionCopied": "Region has been copied to your clipboard",
     "peerGroupCell.saved": "Groups of the peer were successfully saved",
     "peerGroupCell.saving": "Saving the groups of the peer...",
     "peerVersion.updateAvailable": "Update available",
-    "peerVersion.updateDescription": "A new version of Cloink is available. Please update your client to get the latest features and bug fixes.",
+    "peerVersion.updateDescription":
+      "A new version of Cloink is available. Please update your client to get the latest features and bug fixes.",
     "peerVersion.downloadChangelog": "Download & Changelog",
     "peerVersion.serial": "Serial:",
     "table.type": "Type",
@@ -2797,7 +2911,7 @@ export const messages = {
     "table.ttl": "TTL",
     "dns.records": "DNS Records",
     "networkResources.saveGroups": "Save Groups",
-},
+  },
   "zh-CN": {
     "common.language": "语言",
     "common.language.en": "English",
@@ -2815,6 +2929,7 @@ export const messages = {
     "common.username": "用户名",
     "common.password": "密码",
     "common.value": "值",
+    "common.remove": "移除",
     "table.destination": "目标地址",
     "table.location": "位置",
     "table.resource": "资源",
@@ -2830,8 +2945,7 @@ export const messages = {
     "reverseProxy.cidrBlock": "CIDR 网段",
     "reverseProxy.ipAddressPlaceholder": "例如：85.203.15.42",
     "reverseProxy.cidrBlockPlaceholder": "例如：74.125.0.0/16",
-    "reverseProxy.validIpAddress":
-      "请输入有效的 IP 地址，例如：85.203.15.42",
+    "reverseProxy.validIpAddress": "请输入有效的 IP 地址，例如：85.203.15.42",
     "reverseProxy.validCidrBlock":
       "请输入有效的 CIDR 网段，例如：74.125.0.0/16",
     "reverseProxy.removeRule": "移除规则",
@@ -2856,6 +2970,7 @@ export const messages = {
     "actions.add": "添加",
     "actions.remove": "移除",
     "actions.goBack": "返回",
+    "nav.overview": "总览",
     "nav.controlCenter": "控制中心",
     "nav.peers": "设备",
     "nav.setupKeys": "注册密钥",
@@ -2877,8 +2992,48 @@ export const messages = {
     "nav.auditEvents": "审计事件",
     "nav.proxyEvents": "代理事件",
     "nav.networkLogs": "网络日志",
+    "nav.dnsLogs": "DNS 日志",
     "nav.settings": "设置",
     "nav.documentation": "文档",
+    "overview.title": "总览",
+    "overview.deviceDistribution": "全网设备分布",
+    "overview.deviceTypeDistribution": "设备类型分布",
+    "overview.deviceType": "设备类型",
+    "overview.totalUsers": "总用户数",
+    "overview.onlineUsers": "在线用户",
+    "overview.totalDevices": "总设备数",
+    "overview.onlineDevices": "在线设备",
+    "overview.city": "城市",
+    "overview.totalDevicesShort": "总设备",
+    "overview.onlineDevicesShort": "总在线",
+    "overview.noLocationData": "暂无位置数据",
+    "overview.noDeviceTypeData": "暂无设备类型数据",
+    "overview.loadingDistribution": "正在加载分布...",
+    "overview.unknownCity": "未知",
+    "overview.users": "用户",
+    "overview.devices": "设备",
+    "overview.relayTrafficStats": "中继流量统计",
+    "overview.last6Hours": "近 6 小时",
+    "overview.last12Hours": "近 12 小时",
+    "overview.last24Hours": "近 24 小时",
+    "overview.last3Days": "近 3 天",
+    "overview.last7Days": "近 7 天",
+    "overview.uploadRate": "上行速率",
+    "overview.downloadRate": "下行速率",
+    "overview.uploadPeak": "上行峰值",
+    "overview.downloadPeak": "下行峰值",
+    "overview.uploadTotal": "上行总量",
+    "overview.downloadTotal": "下行总量",
+    "overview.resetZoom": "重置视图",
+    "overview.zoomHint": "🔍 滚轮缩放，拖拽平移，悬停详情",
+    "overview.refresh": "刷新",
+    "overview.refreshInterval.off": "关闭",
+    "overview.refreshInterval.5s": "5秒",
+    "overview.refreshInterval.10s": "10秒",
+    "overview.refreshInterval.30s": "30秒",
+    "overview.refreshInterval.1m": "1分钟",
+    "overview.refreshInterval.5m": "5分钟",
+    "overview.refreshInterval.15m": "15分钟",
     "help.title": "帮助与支持",
     "help.documentation": "文档",
     "help.troubleshooting": "故障排查",
@@ -2895,8 +3050,7 @@ export const messages = {
     "errorPage.defaultDescription":
       "访问控制台时发生错误。请重试，或联系管理员获取帮助。",
     "errorPage.responseMessage": "响应消息",
-    "errorPage.contactAdmin":
-      "如果你认为这是一个错误，请联系你的管理员。",
+    "errorPage.contactAdmin": "如果你认为这是一个错误，请联系你的管理员。",
     "errorPage.tryAgain": "重试",
     "errorPage.signOut": "退出登录",
     "controlCenter.allNetworks": "所有网络",
@@ -3030,8 +3184,7 @@ export const messages = {
       "确定要删除这个域名服务器吗？此操作无法撤销。",
     "zones.title": "区域",
     "zones.pageTitle": "DNS 区域",
-    "zones.description":
-      "管理 DNS 区域，以控制你网络中的域名解析行为。",
+    "zones.description": "管理 DNS 区域，以控制你网络中的域名解析行为。",
     "zones.learnMoreLink": "DNS 区域",
     "zones.tableTitle": "DNS 区域",
     "zones.searchPlaceholder": "按域名、IP、内容或分组搜索...",
@@ -3071,8 +3224,7 @@ export const messages = {
     "zones.deletedDescription": "DNS 区域已成功删除。",
     "zones.deleting": "正在删除 DNS 区域...",
     "zones.deleteConfirmTitle": "删除区域“{domain}”？",
-    "zones.deleteConfirmDescription":
-      "确定要删除这个区域吗？此操作无法撤销。",
+    "zones.deleteConfirmDescription": "确定要删除这个区域吗？此操作无法撤销。",
     "zones.recordNotifyTitle": "{type} 记录“{name}”",
     "zones.recordCreatedDescription": "DNS 记录已成功添加。",
     "zones.recordCreating": "正在添加 DNS 记录...",
@@ -3161,8 +3313,7 @@ export const messages = {
     "reverseProxy.serviceModeUdpDescription":
       "通过专用端口将原始 UDP 流量转发到后端，通常用于语音、视频或流媒体等实时服务。",
     "reverseProxy.modalL4Description": "将流量直接转发到你的后端服务。",
-    "reverseProxy.modalHttpDescription":
-      "通过 Cloink 的反向代理安全暴露服务。",
+    "reverseProxy.modalHttpDescription": "通过 Cloink 的反向代理安全暴露服务。",
     "reverseProxy.tabService": "服务",
     "reverseProxy.tabAuthentication": "身份验证",
     "reverseProxy.tabAccessControl": "访问控制",
@@ -3296,19 +3447,16 @@ export const messages = {
     "reverseProxy.proxyClusters": "代理集群",
     "reverseProxy.domainLabel": "域名",
     "reverseProxy.domainPlaceholder": "例如：company.com",
-    "reverseProxy.customDomainError":
-      "请输入有效的顶级域名，例如 company.com",
+    "reverseProxy.customDomainError": "请输入有效的顶级域名，例如 company.com",
     "reverseProxy.targetProxyCluster": "目标代理集群",
-    "reverseProxy.targetProxyClusterHelp":
-      "选择你的 CNAME 记录应指向的集群",
+    "reverseProxy.targetProxyClusterHelp": "选择你的 CNAME 记录应指向的集群",
     "reverseProxy.selectProxyCluster": "选择代理集群...",
     "reverseProxy.targetsLearnMore": "目标",
     "reverseProxy.targetModalEditTitle": "编辑目标",
     "reverseProxy.targetModalAddTitle": "添加目标",
     "reverseProxy.targetModalDescription": "为你的反向代理配置目标。",
     "reverseProxy.locationOptional": "位置（可选）",
-    "reverseProxy.locationHelp":
-      "指定一个可选路径，用于将请求路由到你的服务。",
+    "reverseProxy.locationHelp": "指定一个可选路径，用于将请求路由到你的服务。",
     "reverseProxy.targetLocationDuplicate":
       "这个位置已被另一个目标使用，无法再次添加。",
     "reverseProxy.targetLocationDuplicateHelp": "请使用其他位置。",
@@ -3330,22 +3478,16 @@ export const messages = {
       "UDP 会话在无流量情况下保持存活的时间（例如 30s、2m）。留空时默认为 30s。",
     "reverseProxy.timeoutPlaceholderShort": "例如：30s、2m、5m",
     "reverseProxy.targetDomainFallback": "domain.example.com",
-    "reverseProxy.preservePathDisabledPrefix":
-      "关闭时，例如发往",
+    "reverseProxy.preservePathDisabledPrefix": "关闭时，例如发往",
     "reverseProxy.preservePathDisabledMiddle": "的请求会被转发为",
-    "reverseProxy.preservePathEnabledPrefix":
-      "开启时，例如发往",
+    "reverseProxy.preservePathEnabledPrefix": "开启时，例如发往",
     "reverseProxy.preservePathEnabledMiddle": "的请求会被转发为",
     "reverseProxy.installNetBird": "安装 Cloink",
     "reverseProxy.networks": "网络",
-    "reverseProxy.headerInvalidName":
-      "请求头名称包含无效字符，请更换一个。",
-    "reverseProxy.headerReserved":
-      "\"{name}\" 是保留请求头，请更换一个。",
-    "reverseProxy.headerDuplicate":
-      "请求头名称重复，请更换一个。",
-    "reverseProxy.headerLineBreaks":
-      "值中不能包含换行符",
+    "reverseProxy.headerInvalidName": "请求头名称包含无效字符，请更换一个。",
+    "reverseProxy.headerReserved": '"{name}" 是保留请求头，请更换一个。',
+    "reverseProxy.headerDuplicate": "请求头名称重复，请更换一个。",
+    "reverseProxy.headerLineBreaks": "值中不能包含换行符",
     "reverseProxy.verifyDomainTitle": "验证域名",
     "reverseProxy.verifyDomainDescription": "{domain}",
     "reverseProxy.verifyStepLogin":
@@ -3366,16 +3508,13 @@ export const messages = {
     "reverseProxy.targetResourceLabel": "资源",
     "reverseProxy.targetPeerHelp":
       "对等端是运行 Cloink 的机器（例如笔记本、服务器、容器）。如果你的服务直接运行在其上，请选择对等端。",
-    "reverseProxy.targetPeerInstall":
-      "如果你还没有对等端，可以",
+    "reverseProxy.targetPeerInstall": "如果你还没有对等端，可以",
     "reverseProxy.targetPeerOrResourceConnector": "或",
     "reverseProxy.targetResourceHelp":
       "资源是无法直接运行 Cloink 的目标（IP、子网或域名）。资源属于某个网络，并通过转发流量的路由对等端访问。",
-    "reverseProxy.targetResourceCreate":
-      "如果你还没有资源，请前往",
+    "reverseProxy.targetResourceCreate": "如果你还没有资源，请前往",
     "reverseProxy.targetCreateSome": "去创建一些。",
-    "reverseProxy.targetSelectResourceHelp":
-      "选择你想要暴露的网络资源。",
+    "reverseProxy.targetSelectResourceHelp": "选择你想要暴露的网络资源。",
     "reverseProxy.targetSelectPeerOrResourceHelp":
       "选择你的服务正在运行的对等端或资源。",
     "reverseProxy.targetSelectResourcePlaceholder": "选择资源...",
@@ -3385,10 +3524,8 @@ export const messages = {
       "添加转发请求时附带的额外请求头。不允许使用 Host、Connection 之类的逐跳请求头。",
     "reverseProxy.headerNameEntry": "条目 {id} 的请求头名称",
     "reverseProxy.headerValueEntry": "条目 {id} 的请求头值",
-    "reverseProxy.headerNamePlaceholder":
-      "请求头，例如 Authorization",
-    "reverseProxy.headerValuePlaceholder":
-      "值，例如 Bearer eyJhbGci...",
+    "reverseProxy.headerNamePlaceholder": "请求头，例如 Authorization",
+    "reverseProxy.headerValuePlaceholder": "值，例如 Bearer eyJhbGci...",
     "reverseProxy.removeHeader": "移除请求头",
     "reverseProxy.addHeader": "添加请求头",
     "reverseProxy.authPasswordTitle": "密码",
@@ -3397,8 +3534,7 @@ export const messages = {
     "reverseProxy.addPassword": "添加密码",
     "reverseProxy.listenPort": "监听端口",
     "reverseProxy.listenPortHelp": "输入该服务对外可访问的公网监听端口。",
-    "reverseProxy.listenPortAutoHelp":
-      "服务创建后会自动分配监听端口。",
+    "reverseProxy.listenPortAutoHelp": "服务创建后会自动分配监听端口。",
     "reverseProxy.listenPortAutoPlaceholder": "自动",
     "reverseProxy.publicListenPort": "公网监听端口",
     "reverseProxy.hostIp": "主机 / IP",
@@ -3419,7 +3555,7 @@ export const messages = {
       "Cloink 反向代理目前处于测试阶段。功能与能力在正式发布时可能发生变化。",
     "networks.title": "网络",
     "networks.description":
-      "网络功能让你无需在每台机器上都安装 NetBird，也能访问局域网和 VPC 中的内部资源。",
+      "网络功能让你无需在每台机器上都安装 Cloink，也能访问局域网和 VPC 中的内部资源。",
     "networks.policyLabel": "策略",
     "networks.defaultPolicyName": "{name} 策略",
     "networks.multiPolicyTitle": "此策略被多个资源使用",
@@ -3520,8 +3656,7 @@ export const messages = {
     "invite.acceptInvalidLink": "邀请链接无效或已过期",
     "invite.acceptFailed": "接受邀请失败",
     "invite.tooManyRequests": "请求过多",
-    "invite.tooManyRequestsDescription":
-      "你的请求次数过多。请稍候片刻后再试。",
+    "invite.tooManyRequestsDescription": "你的请求次数过多。请稍候片刻后再试。",
     "invite.invalidTitle": "邀请无效",
     "invite.invalidDescription":
       "此邀请链接无效或已过期。请联系管理员重新获取邀请。",
@@ -3530,10 +3665,10 @@ export const messages = {
     "invite.accountCreatedDescription":
       "你的账号已成功创建。现在可以使用邮箱和密码登录。",
     "invite.expiredTitle": "邀请已过期",
-    "invite.expiredDescription":
-      "此邀请链接已过期。请联系管理员重新获取邀请。",
+    "invite.expiredDescription": "此邀请链接已过期。请联系管理员重新获取邀请。",
     "invite.welcomeTitle": "欢迎使用 云链-Cloink",
-    "auth.accountLinkedSuccessfully": "你的账户已成功关联。请再次登录以完成设置。",
+    "auth.accountLinkedSuccessfully":
+      "你的账户已成功关联。请再次登录以完成设置。",
     "auth.somethingWentWrong": "哦，出现了一些问题",
     "auth.alreadyVerifiedEmail": "已经验证了你的邮箱地址？",
     "auth.troubleLoggingIn": "登录遇到问题？再试一次。",
@@ -3552,22 +3687,28 @@ export const messages = {
     "group.renamingGroup": "正在重命名组...",
     "group.removePeerConfirm": "从 '{{groupName}}' 中移除节点 '{{peerName}}'？",
     "group.removePeersConfirm": "从 '{{groupName}}' 中移除节点？",
-    "group.removePeerDescription": "确定要从组中移除这个节点吗？如果需要，稍后可以重新添加。",
-    "group.removePeersDescription": "确定要从组中移除这些节点吗？如果需要，稍后可以重新添加。",
+    "group.removePeerDescription":
+      "确定要从组中移除这个节点吗？如果需要，稍后可以重新添加。",
+    "group.removePeersDescription":
+      "确定要从组中移除这些节点吗？如果需要，稍后可以重新添加。",
     "group.removePeerFromGroup": "从组中移除节点",
-    "group.peerRemoved": "节点 '{{peerName}}' 已成功从组 '{{groupName}}' 中移除",
+    "group.peerRemoved":
+      "节点 '{{peerName}}' 已成功从组 '{{groupName}}' 中移除",
     "group.peersRemoved": "节点已成功从组 '{{groupName}}' 中移除",
     "group.removingPeerFromGroup": "正在从组中移除节点...",
     "group.removingPeersFromGroup": "正在从组中移除节点...",
     "group.addingPeersToGroup": "正在向组中添加节点",
     "group.peersAdded": "节点已成功添加到 {{groupName}}。",
     "group.removeUserFromGroup": "从组中移除用户",
-    "group.userRemoved": "用户 '{{userName}}' 已成功从组 '{{groupName}}' 中移除。",
+    "group.userRemoved":
+      "用户 '{{userName}}' 已成功从组 '{{groupName}}' 中移除。",
     "group.removingUserFromGroup": "正在从组中移除用户...",
     "group.removeUserConfirm": "从 '{{groupName}}' 中移除用户 '{{userName}}'？",
     "group.removeUsersConfirm": "从 '{{groupName}}' 中移除用户？",
-    "group.removeUserDescription": "确定要从组中移除这个用户吗？如果需要，稍后可以重新添加。",
-    "group.removeUsersDescription": "确定要从组中移除这些用户吗？如果需要，稍后可以重新添加。",
+    "group.removeUserDescription":
+      "确定要从组中移除这个用户吗？如果需要，稍后可以重新添加。",
+    "group.removeUsersDescription":
+      "确定要从组中移除这些用户吗？如果需要，稍后可以重新添加。",
     "group.removeUsersFromGroup": "从组中移除用户",
     "group.usersRemoved": "用户已成功从组 '{{groupName}}' 中移除。",
     "group.removingUsersFromGroup": "正在从组中移除用户...",
@@ -3593,42 +3734,58 @@ export const messages = {
     "invite.copyAndClose": "复制并关闭",
     "onboarding.installNetBird": "安装 云链-Cloink",
     "onboarding.addClientDevice": "现在添加你的客户端设备",
-    "onboarding.addClientDeviceDescription": "你的第一个资源和路由设备已经设置好了。现在，拿起你的设备，安装 云链-Cloink，让我们连接起来。",
+    "onboarding.addClientDeviceDescription":
+      "你的第一个资源和路由设备已经设置好了。现在，拿起你的设备，安装 云链-Cloink，让我们连接起来。",
     "onboarding.testConnection": "让我们测试一下这个连接",
-    "onboarding.testConnectionDescription": "很好！你已经成功连接了客户端设备。现在，让我们测试一下它是否能够访问你的资源。",
+    "onboarding.testConnectionDescription":
+      "很好！你已经成功连接了客户端设备。现在，让我们测试一下它是否能够访问你的资源。",
     "onboarding.openCommandLine": "打开命令行并在",
     "onboarding.yourDevice": "你的设备",
     "onboarding.toPingResource": "上运行此命令来 ping 你的资源。",
-    "onboarding.everythingWorking": "一切正常吗？太好了！你现在可以继续完成引导流程。如果有任何问题，请查看我们的",
+    "onboarding.everythingWorking":
+      "一切正常吗？太好了！你现在可以继续完成引导流程。如果有任何问题，请查看我们的",
     "onboarding.checkTroubleshooting": "",
     "onboarding.troubleshootingGuide": "故障排查指南",
     "onboarding.itWorksContinue": "一切正常！- 继续",
     "onboarding.getFirstDeviceOnline": "让我们让你的第一台设备上线",
-    "onboarding.getFirstDeviceOnlineDescription": "要访问其他机器，安装 云链-Cloink，登录，你的设备就会加入网络。你添加的每台设备都会成为你网络中的 云链-Cloink 对等端。就这么简单。",
+    "onboarding.getFirstDeviceOnlineDescription":
+      "要访问其他机器，安装 云链-Cloink，登录，你的设备就会加入网络。你添加的每台设备都会成为你网络中的 云链-Cloink 对等端。就这么简单。",
     "onboarding.bringSecondDevice": "现在添加你的第二台设备",
-    "onboarding.eachDeviceGetsPrivateIP": "在你的 云链-Cloink 网络中，每台设备（也称为对等端）都有自己的私有 IP 和名称，以便在网络中安全通信。",
-    "onboarding.shareLinkToCompleteSetup": "要完成设置，只需分享此链接或将其通过电子邮件发送给自己，以便轻松设置你的下一台设备。",
+    "onboarding.eachDeviceGetsPrivateIP":
+      "在你的 云链-Cloink 网络中，每台设备（也称为对等端）都有自己的私有 IP 和名称，以便在网络中安全通信。",
+    "onboarding.shareLinkToCompleteSetup":
+      "要完成设置，只需分享此链接或将其通过电子邮件发送给自己，以便轻松设置你的下一台设备。",
     "onboarding.installationLinkCopied": "安装链接已成功复制",
     "onboarding.shareLink": "分享链接",
-    "onboarding.useHeadlessSetup": "使用无头设置来注册没有浏览器或用户交互的对等端。",
+    "onboarding.useHeadlessSetup":
+      "使用无头设置来注册没有浏览器或用户交互的对等端。",
     "onboarding.installWithSetupKey": "使用设置密钥安装",
-    "onboarding.installNetBirdOnAnotherDevice": "使用此链接在另一台设备上安装 云链-Cloink。",
+    "onboarding.installNetBirdOnAnotherDevice":
+      "使用此链接在另一台设备上安装 云链-Cloink。",
     "onboarding.createSetupKey": "创建设置密钥？",
-    "onboarding.createSetupKeyDescription": "如果继续，系统将自动创建一个一次性设置密钥，你可以使用它来安装 云链-Cloink。",
+    "onboarding.createSetupKeyDescription":
+      "如果继续，系统将自动创建一个一次性设置密钥，你可以使用它来安装 云链-Cloink。",
     "onboarding.dialogTitle": "引导流程",
     "onboarding.getStartedWithNetBird": "开始使用 云链-Cloink",
-    "onboarding.netbirdFlexibility": "云链-Cloink 提供了点对点覆盖网络和远程网络访问解决方案的灵活性。选择适合你需求的方案，你始终可以结合使用两者。",
+    "onboarding.netbirdFlexibility":
+      "云链-Cloink 提供了点对点覆盖网络和远程网络访问解决方案的灵活性。选择适合你需求的方案，你始终可以结合使用两者。",
     "onboarding.peerToPeerNetwork": "点对点网络",
-    "onboarding.p2pBusinessDescription": "在两台或更多设备上安装 云链-Cloink，创建安全、直接的 WireGuard 连接，例如笔记本电脑到服务器或服务器到数据库。至少添加两台机器开始使用。",
-    "onboarding.p2pHomelabDescription": "在你的 homelab 中的两台或更多设备上安装 云链-Cloink，例如你的笔记本电脑、NAS 或树莓派，以创建安全、直接的 WireGuard 连接。",
+    "onboarding.p2pBusinessDescription":
+      "在两台或更多设备上安装 云链-Cloink，创建安全、直接的 WireGuard 连接，例如笔记本电脑到服务器或服务器到数据库。至少添加两台机器开始使用。",
+    "onboarding.p2pHomelabDescription":
+      "在你的 homelab 中的两台或更多设备上安装 云链-Cloink，例如你的笔记本电脑、NAS 或树莓派，以创建安全、直接的 WireGuard 连接。",
     "onboarding.remoteNetworkAccess": "远程网络访问",
-    "onboarding.remoteAccessBusinessDescription": "无需在每台机器上安装 云链-Cloink，即可为员工提供对 VM、Kubernetes 集群以及云或本地资源的远程访问。",
-    "onboarding.remoteAccessHomelabDescription": "无需在每台设备上安装 云链-Cloink，即可从任何地方安全访问你的 homelab。",
+    "onboarding.remoteAccessBusinessDescription":
+      "无需在每台机器上安装 云链-Cloink，即可为员工提供对 VM、Kubernetes 集群以及云或本地资源的远程访问。",
+    "onboarding.remoteAccessHomelabDescription":
+      "无需在每台设备上安装 云链-Cloink，即可从任何地方安全访问你的 homelab。",
     "onboarding.recommended": "推荐",
-    "onboarding.recommendedBasedOnChoices": "根据你之前的选择，我们建议从 {title} 开始。你始终可以稍后结合使用两种选项。",
+    "onboarding.recommendedBasedOnChoices":
+      "根据你之前的选择，我们建议从 {title} 开始。你始终可以稍后结合使用两种选项。",
     "onboarding.welcome": "欢迎使用 云链-Cloink！",
     "onboarding.welcomeWithName": "欢迎使用 云链-Cloink，{{name}}！",
-    "onboarding.shareDetails": "分享一些关于你的使用场景的详细信息，以帮助我们顺利开始。",
+    "onboarding.shareDetails":
+      "分享一些关于你的使用场景的详细信息，以帮助我们顺利开始。",
     "onboarding.business": "商业",
     "onboarding.personal": "个人",
     "onboarding.companySizeQuestion": "贵公司有多少人将使用 云链-Cloink？",
@@ -3666,17 +3823,16 @@ export const messages = {
     "onboarding.referralSource.Comparison Sites": "对比网站",
     "onboarding.referralSource.Slack": "Slack",
     "onboarding.referralSource.Other": "其他",
-    "onboarding.referralSource.NetBird YouTube Channel":
-      "Cloink YouTube 频道",
-    "onboarding.referralSource.Other YouTube Channel":
-      "其他 YouTube 频道",
+    "onboarding.referralSource.NetBird YouTube Channel": "Cloink YouTube 频道",
+    "onboarding.referralSource.Other YouTube Channel": "其他 YouTube 频道",
     "onboarding.referralSource.NetBird SubReddit": "Cloink SubReddit",
     "onboarding.referralSource.Other Reddit Thread": "其他 Reddit 讨论串",
     "onboarding.referralSource.GitHub": "GitHub",
     "peer.expirationUpdated": "过期时间已成功更新",
     "peer.updatingSetting": "更新设置中...",
     "peer.requireLoginAfterDisconnect": "断开连接后需要登录",
-    "peer.requireLoginAfterDisconnectDescription": "启用后，用户从管理中断开连接 10 分钟后需要重新认证。",
+    "peer.requireLoginAfterDisconnectDescription":
+      "启用后，用户从管理中断开连接 10 分钟后需要重新认证。",
     "peer.accessiblePeersDescription":
       "此设备可以连接到 Cloink 网络中的以下设备。",
     "peer.loginExpiredTooltipLine1": "此设备当前离线，需要重新认证，",
@@ -3686,15 +3842,15 @@ export const messages = {
       "此设备是临时设备。如果断开连接超过 10 分钟，它将被移除。",
     "peer.sessionExpirationSetupKeyDisabled":
       "通过安装密钥添加的所有设备都无法使用此设置。",
-    "peer.updateSettingPermissionDenied":
-      "你没有更新此设置所需的权限。",
+    "peer.updateSettingPermissionDenied": "你没有更新此设置所需的权限。",
     "peer.peerSessionExpirationLabel": "设备会话过期",
     "peer.globalSettingDisabledPrefix":
       "全局设置“{setting}”当前已禁用。请先启用全局设置，然后才能为单个设备单独切换。",
     "peer.goToSettings": "前往设置",
     "peerNameCell.viewPeerDetails": "查看设备 {name} 的详情",
     "peerNameCell.userIdFallback": "用户：{id}",
-    "peerConnect.offlineHelp": "只有当设备在线时，才能通过 SSH 或 RDP 进行连接。",
+    "peerConnect.offlineHelp":
+      "只有当设备在线时，才能通过 SSH 或 RDP 进行连接。",
     "invite.createUserTitle": "创建用户",
     "invite.inviteUserTitle": "邀请用户",
     "invite.cloudDescription": "邀请用户加入你的网络，并为他们设置权限。",
@@ -3833,13 +3989,11 @@ export const messages = {
     "setupKey.expiresIn": "有效期",
     "setupKey.expiresHelp": "密钥失效前的天数。留空表示永不过期。",
     "setupKey.ephemeralPeers": "临时设备",
-    "setupKey.ephemeralPeersHelp":
-      "离线超过 10 分钟的设备会被自动移除",
+    "setupKey.ephemeralPeersHelp": "离线超过 10 分钟的设备会被自动移除",
     "setupKey.extraDnsLabels": "允许额外 DNS 标签",
     "setupKey.extraDnsLabelsHelp":
       "注册设备时允许使用多个子域标签，例如 host.dev.example.com。",
-    "setupKey.autoGroupsHelp":
-      "使用此密钥注册的设备会被自动分配到这些分组",
+    "setupKey.autoGroupsHelp": "使用此密钥注册的设备会被自动分配到这些分组",
     "table.active": "启用",
     "table.sources": "来源",
     "table.direction": "方向",
@@ -3882,6 +4036,32 @@ export const messages = {
     "activity.code": "代码",
     "activity.searchPlaceholder": "搜索事件...",
     "activity.allEventTypes": "所有事件类型",
+    "activity.dateTimeFormat": "YYYY年M月D日 HH:mm:ss",
+    "activity.external": "外部",
+    "activity.from": "从",
+    "activity.setupkey": "注册密钥",
+    "activity.withKey": "使用密钥",
+    "activity.peer": "设备",
+    "activity.wasAddedWithCloinkIp": "已添加，Cloink IP为",
+    "activity.usingSetupKey": "使用注册密钥",
+    "activity.domainS": "域名",
+    "activity.range": "范围",
+    "activity.with": "使用",
+    "activity.user": "用户",
+    "activity.serviceUser": "服务用户",
+    "activity.sshServer": "SSH 服务器",
+    "activity.postureCheck": "安全健康检查",
+    "activity.resource": "资源",
+    "activity.network": "网络",
+    "activity.withName": "名称为",
+    "activity.remoteJob": "远程任务",
+    "activity.limitTrafficEventGroup": "流量限制事件组",
+    "activity.identityProvider": "身份提供方",
+    "route.title": "路由",
+    "group.title": "组",
+    "user.account.role": "角色",
+    "nameserver.title": "域名服务器",
+    "access.token.title": "访问令牌",
     "activity.eventCount": "个事件",
     "activity.globalLoginExpirationUpdated": "全局登录过期时间已更新",
     "activity.globalLoginExpirationEnabled": "全局登录过期时间已启用",
@@ -3908,9 +4088,9 @@ export const messages = {
     "activity.routeUpdate": "被更新",
     "activity.routeAdd": "被创建",
     "activity.userPeerDelete": "被删除",
-    "activity.userPeerAdd": "已添加，NetBird IP为",
+    "activity.userPeerAdd": "已添加，Cloink IP为",
     "activity.userPeerUpdate": "已更新",
-    "activity.userJoin": "加入了NetBird",
+    "activity.userJoin": "加入了 Cloink",
     "activity.userInvite": "已被邀请。",
     "activity.userCreate": "被创建，创建者为",
     "activity.userGroupAdd": "被添加至用户",
@@ -3928,8 +4108,8 @@ export const messages = {
     "activity.userInviteLinkDelete": "邀请链接已为以下用户删除",
     "activity.serviceUserCreate": "已被创建",
     "activity.serviceUserDelete": "已被删除",
-    "activity.peerGroupDelete": "被从NetBird IP为的设备中移除",
-    "activity.peerGroupAdd": "被添加至NetBird IP为的设备",
+    "activity.peerGroupDelete": "被从 Cloink IP 为的设备中移除",
+    "activity.peerGroupAdd": "被添加至 Cloink IP 为的设备",
     "activity.peerLoginExpire": "已过期",
     "activity.peerSshDisable": "已被禁用",
     "activity.peerSshEnable": "已被启用",
@@ -3938,7 +4118,7 @@ export const messages = {
     "activity.peerRename": "已被重命名为",
     "activity.peerApprove": "已被批准",
     "activity.peerIpUpdate": "IP地址已从以下地址更新为",
-    "activity.peerUserAdd": "已添加，NetBird IP为",
+    "activity.peerUserAdd": "已添加，Cloink IP 为",
     "activity.groupAdd": "已被创建",
     "activity.groupDelete": "已被删除",
     "activity.groupUpdate": "已被重命名为",
@@ -3955,8 +4135,10 @@ export const messages = {
     "activity.integrationCreate": "集成已创建",
     "activity.integrationDelete": "集成已删除",
     "activity.integrationUpdate": "集成已更新",
-    "activity.dnsSettingDisabledManagementGroupAdd": "已被添加至禁用DNS设置群组",
-    "activity.dnsSettingDisabledManagementGroupDelete": "已被从禁用DNS设置群组中移除",
+    "activity.dnsSettingDisabledManagementGroupAdd":
+      "已被添加至禁用DNS设置群组",
+    "activity.dnsSettingDisabledManagementGroupDelete":
+      "已被从禁用DNS设置群组中移除",
     "activity.postureCheckUpdated": "已被更新",
     "activity.postureCheckCreated": "已被创建",
     "activity.postureCheckDeleted": "已被删除",
@@ -4020,6 +4202,23 @@ export const messages = {
     "networkLogs.protocol.tcp": "TCP",
     "networkLogs.protocol.udp": "UDP",
     "networkLogs.protocol.sctp": "SCTP",
+    "dnsLogs.title": "DNS 日志",
+    "dnsLogs.description":
+      "查看客户端上报的 DNS 解析活动，默认时间窗口与网络日志一致。",
+    "dnsLogs.searchPlaceholder": "按用户、设备、域名、类型或解析结果搜索...",
+    "dnsLogs.emptyTitle": "暂无 DNS 日志",
+    "dnsLogs.emptyDescription":
+      "客户端开始回传 DNS 相关流量后，解析日志会显示在这里。",
+    "dnsLogs.time": "时间",
+    "dnsLogs.user": "用户",
+    "dnsLogs.device": "设备",
+    "dnsLogs.domain": "域名",
+    "dnsLogs.type": "类型",
+    "dnsLogs.result": "解析结果",
+    "dnsLogs.flowCount": "流数量",
+    "dnsLogs.domainFilterPlaceholder": "筛选域名...",
+    "dnsLogs.typeFilter": "DNS 类型",
+    "dnsLogs.allTypes": "全部类型",
     "flowLogsSettings.description":
       "开启客户端网络流量采集后，管理员可以在网络日志页面查看零信任网络内的访问流量。",
     "flowLogsSettings.enable": "启用流日志",
@@ -4090,12 +4289,12 @@ export const messages = {
     "jobs.durationHelp": "设置在创建调试包前需要收集日志的时间范围。",
     "jobs.minutesSuffix": "分钟",
     "jobs.anonymizeLabel": "匿名化日志数据",
-    "jobs.anonymizeHelp":
-      "在创建调试包前移除敏感信息，例如 IP 地址、域名等。",
+    "jobs.anonymizeHelp": "在创建调试包前移除敏感信息，例如 IP 地址、域名等。",
     "jobs.createDebugBundle": "创建调试包",
     "remoteJobs.run": "运行远程任务",
     "remoteJobs.peer": "设备",
-    "remoteJobs.offlineMessage": "当前处于离线状态。请先连接该设备后再运行远程任务。",
+    "remoteJobs.offlineMessage":
+      "当前处于离线状态。请先连接该设备后再运行远程任务。",
     "remoteJobs.debugBundleHelp": "收集调试信息以便排查问题",
     "routeActions.addRoute": "添加路由",
     "routeActions.newNetworkRoute": "新建网络路由",
@@ -4108,8 +4307,7 @@ export const messages = {
     "routeModal.createPolicy": "创建策略",
     "routeModal.later": "稍后",
     "routeModal.validCidrError": "请输入有效的 CIDR，例如：192.168.1.0/24",
-    "routeModal.networkIdentifierError":
-      "网络标识符长度必须少于 40 个字符",
+    "routeModal.networkIdentifierError": "网络标识符长度必须少于 40 个字符",
     "routeModal.metricError": "Metric 必须在 1 到 9999 之间",
     "routeModal.setupExitNode": "设置出口节点",
     "routeModal.addExitNode": "添加出口节点",
@@ -4139,7 +4337,8 @@ export const messages = {
     "routeModal.peerGroup": "设备分组",
     "routeModal.singlePeerExitNode": "为出口节点分配单个设备作为路由设备。",
     "routeModal.singlePeerRoute": "为网络路由分配单个设备作为路由设备。",
-    "routeModal.peerGroupExitNode": "分配一个设备分组，将其中设备用作出口节点。",
+    "routeModal.peerGroupExitNode":
+      "分配一个设备分组，将其中设备用作出口节点。",
     "routeModal.peerGroupRoute": "分配一个设备分组，将其中设备用作路由设备。",
     "remoteAccess.sshNoPermission": "你没有权限启动 SSH 控制台。请联系管理员。",
     "remoteAccess.sshOffline": "仅当设备在线时，才能通过 SSH 建立连接。",
@@ -4185,23 +4384,20 @@ export const messages = {
     "remoteAccess.certSerialNumber": "序列号",
     "remoteAccess.certFingerprint": "指纹",
     "remoteAccess.notAvailable": "不可用",
-    "remoteAccess.peerNotFound":
-      "该设备可能已被删除，或者你没有权限查看它。",
+    "remoteAccess.peerNotFound": "该设备可能已被删除，或者你没有权限查看它。",
     "remoteAccess.sshStartingSession": "正在启动 SSH 会话...",
     "remoteAccess.sshConnectingTo": "正在连接到 {target}...",
     "remoteAccess.sshDisconnectedFrom": "已从 {target} 断开连接",
     "remoteAccess.reconnect": "重新连接",
     "remoteAccess.noAccessToken": "没有可用的访问令牌。",
-    "remoteAccess.sshConnectionFailed":
-      "SSH 连接失败。请查看控制台了解详情。",
+    "remoteAccess.sshConnectionFailed": "SSH 连接失败。请查看控制台了解详情。",
     "remoteAccess.netbirdConnectionError": "Cloink 连接错误",
     "remoteAccess.rdpConnectionError": "RDP 连接错误",
     "remoteAccess.rdpGenericError": "RDP 连接失败",
     "remoteAccess.rdpError": "RDP 错误",
     "remoteAccess.netbirdClientError": "Cloink 客户端错误",
     "remoteAccess.canvasUnavailable": "没有可用于 RDP 渲染的画布",
-    "remoteAccess.ironrdpUnavailable":
-      "客户端未提供可用的 IronRDP 组件",
+    "remoteAccess.ironrdpUnavailable": "客户端未提供可用的 IronRDP 组件",
     "remoteAccess.ironrdpInitFailed": "初始化 IronRDP 失败",
     "remoteAccess.wasmLoadFailed": "加载 WASM 运行时失败",
     "remoteAccess.wasmInitTimeout": "Cloink WASM 初始化超时",
@@ -4216,8 +4412,7 @@ export const messages = {
       "将所有互联网流量通过此设备转发给以下分组",
     "routeModal.distributionGroupsPeersHelp":
       "将所有互联网流量通过这些设备转发给以下分组",
-    "routeModal.distributionGroupsHelp":
-      "将此路由广播给属于以下分组的设备",
+    "routeModal.distributionGroupsHelp": "将此路由广播给属于以下分组的设备",
     "routeModal.accessControlGroups": "访问控制分组",
     "routeModal.accessControlGroupsOptional": "访问控制分组（可选）",
     "routeModal.accessControlGroupsHelp":
@@ -4238,7 +4433,8 @@ export const messages = {
     "routeModal.metricHelp": "更低的 Metric 表示更高优先级的路由。",
     "minimalPeers.searchPlaceholder": "按名称、IP、系统或版本搜索设备...",
     "minimalPeers.emptyTitle": "未找到设备",
-    "minimalPeers.emptyDescription": "尝试调整筛选条件或搜索词以查找匹配的设备。",
+    "minimalPeers.emptyDescription":
+      "尝试调整筛选条件或搜索词以查找匹配的设备。",
     "peerFilters.online": "在线",
     "peerFilters.offline": "离线",
     "routeModal.exitNodes": "出口节点",
@@ -4257,7 +4453,7 @@ export const messages = {
       "这些分组中的设备将需要手动进行域名解析",
     "networkRoutesPage.title": "网络路由",
     "networkRoutesPage.description":
-      "网络路由允许你访问其他网络，例如局域网和 VPC，而无需在每个资源上安装 NetBird。",
+      "网络路由允许你访问其他网络，例如局域网和 VPC，而无需在每个资源上安装 Cloink。",
     "networkRoutesPage.callout":
       "我们建议使用新的 Networks 概念，以更直观地查看并管理你的资源访问权限。",
     "networkRoutesPage.goToNetworks": "前往 Networks",
@@ -4363,7 +4559,8 @@ export const messages = {
       "从 Cloink v0.61.0 开始，一旦禁用 SSH 访问，你将无法再从控制台重新启用。你需要创建显式访问控制策略并更新 Cloink 客户端，才能恢复 SSH 功能。",
     "peerSsh.disable": "禁用",
     "peerSsh.noPermission": "你没有更新此设置所需的权限。",
-    "peerSsh.toggleHelp": "启用此设备上的 SSH 服务，以便通过安全 Shell 访问该机器。",
+    "peerSsh.toggleHelp":
+      "启用此设备上的 SSH 服务，以便通过安全 Shell 访问该机器。",
     "peerSsh.setupHelp":
       "设置 SSH，并创建显式访问控制策略，用于定义哪些用户可以通过 SSH 访问此机器上的特定本地用户名。",
     "peerSsh.clientUpdateWarning":
@@ -4405,11 +4602,9 @@ export const messages = {
     "peerApproval.approvedDescription":
       "这台设备已获批准，现在可以连接到其他设备。",
     "peerApproval.approving": "正在批准设备...",
-    "peerApproval.help":
-      "该设备需要由管理员批准后，才能连接到其他设备。",
+    "peerApproval.help": "该设备需要由管理员批准后，才能连接到其他设备。",
     "peerApproval.required": "需要批准",
-    "reverseProxyTargets.description":
-      "通过 Cloink 的反向代理安全地暴露服务。",
+    "reverseProxyTargets.description": "通过 Cloink 的反向代理安全地暴露服务。",
     "reverseProxyTargets.emptyTitle": "此网络没有服务",
     "reverseProxyTargets.emptyDescription":
       "创建资源并通过 Cloink 的反向代理安全地暴露服务。",
@@ -4518,7 +4713,8 @@ export const messages = {
     "userDetails.saved": "更改已成功保存。",
     "userDetails.saving": "正在保存更改...",
     "userDetails.autoAssignedGroups": "自动分配的分组",
-    "userDetails.autoAssignedGroupsHelp": "该用户添加的设备会自动被分配到这些分组。",
+    "userDetails.autoAssignedGroupsHelp":
+      "该用户添加的设备会自动被分配到这些分组。",
     "userDetails.userRole": "用户角色",
     "userDetails.userRoleHelp": "为用户设置角色以分配访问权限。",
     "userDetails.accessTokensDescription": "访问令牌可用于访问 Cloink API。",
@@ -4624,7 +4820,8 @@ export const messages = {
     "networks.routingPeers": "路由设备",
     "network.modalUpdateTitle": "更新网络",
     "network.modalAddTitle": "添加网络",
-    "network.modalAddDescription": "通过添加网络来访问局域网和 VPC 中的内部资源。",
+    "network.modalAddDescription":
+      "通过添加网络来访问局域网和 VPC 中的内部资源。",
     "network.updated": "网络更新成功。",
     "network.updating": "正在更新网络...",
     "network.created": "网络创建成功。",
@@ -4645,13 +4842,11 @@ export const messages = {
     "authenticationTab.saveDescription": "认证设置已成功保存。",
     "authenticationTab.saving": "正在保存认证设置...",
     "authenticationTab.userApprovalLabel": "需要用户审批",
-    "authenticationTab.userApprovalHelpLine1":
-      "要求通过域名匹配加入的新用户",
+    "authenticationTab.userApprovalHelpLine1": "要求通过域名匹配加入的新用户",
     "authenticationTab.userApprovalHelpLine2":
       "必须经过人工审批后才能使用，审批前将被阻止访问。",
     "authenticationTab.peerSessionLabel": "设备会话过期",
-    "authenticationTab.peerSessionHelpLine1":
-      "要求已通过 SSO 注册的设备",
+    "authenticationTab.peerSessionHelpLine1": "要求已通过 SSO 注册的设备",
     "authenticationTab.peerSessionHelpLine2": "定期重新进行身份认证。",
     "authenticationTab.sessionExpiration": "会话过期时间",
     "authenticationTab.sessionExpirationHelp":
@@ -4674,74 +4869,58 @@ export const messages = {
     "authenticationTab.requireLoginAfterDisconnectHelp":
       "启用后，用户与管理连接断开 10 分钟后将需要重新认证。",
     "identityProviders.type": "类型",
-    "identityProviders.description":
-      "为你的网络配置用于用户认证的身份提供商。",
+    "identityProviders.description": "为你的网络配置用于用户认证的身份提供商。",
     "identityProviders.searchPlaceholder": "按名称或类型搜索...",
     "identityProviders.emptyTitle": "添加身份提供商",
     "identityProviders.emptyDescription":
       "配置身份提供商，为你的用户启用 SSO 认证。",
     "identityProviders.add": "添加身份提供商",
     "identityProviders.deleteTitle": "删除身份提供商",
-    "identityProviders.deletedDescription":
-      "身份提供商已成功删除。",
+    "identityProviders.deletedDescription": "身份提供商已成功删除。",
     "identityProviders.deleting": "正在删除身份提供商...",
     "identityProviders.deleteConfirmTitle": "删除“{name}”？",
     "identityProviders.deleteConfirmDescription":
       "你确定要删除这个身份提供商吗？此操作无法撤销。",
     "identityProviderModal.updateTitle": "更新身份提供商",
-    "identityProviderModal.updatedDescription":
-      "身份提供商已成功更新。",
+    "identityProviderModal.updatedDescription": "身份提供商已成功更新。",
     "identityProviderModal.updating": "正在更新身份提供商...",
     "identityProviderModal.createTitle": "创建身份提供商",
-    "identityProviderModal.createdDescription":
-      "身份提供商已成功创建。",
+    "identityProviderModal.createdDescription": "身份提供商已成功创建。",
     "identityProviderModal.creating": "正在创建身份提供商...",
     "identityProviderModal.editModalTitle": "编辑身份提供商",
     "identityProviderModal.addModalTitle": "添加身份提供商",
-    "identityProviderModal.editModalDescription":
-      "更新身份提供商配置",
-    "identityProviderModal.addModalDescription":
-      "为认证配置一个新的身份提供商",
+    "identityProviderModal.editModalDescription": "更新身份提供商配置",
+    "identityProviderModal.addModalDescription": "为认证配置一个新的身份提供商",
     "identityProviderModal.providerType": "提供商类型",
-    "identityProviderModal.providerTypeHelp":
-      "选择身份提供商的类型",
+    "identityProviderModal.providerTypeHelp": "选择身份提供商的类型",
     "identityProviderModal.selectProviderType": "选择提供商类型...",
-    "identityProviderModal.nameHelp":
-      "输入一个便于识别该提供商的名称",
+    "identityProviderModal.nameHelp": "输入一个便于识别该提供商的名称",
     "identityProviderModal.namePlaceholder": "例如：企业 SSO",
     "identityProviderModal.issuerUrl": "颁发者 URL",
-    "identityProviderModal.issuerUrlHelp":
-      "该提供商的 OIDC 颁发者 URL",
+    "identityProviderModal.issuerUrlHelp": "该提供商的 OIDC 颁发者 URL",
     "identityProviderModal.clientId": "客户端 ID",
-    "identityProviderModal.clientIdHelp":
-      "OAuth2 机密客户端 ID",
+    "identityProviderModal.clientIdHelp": "OAuth2 机密客户端 ID",
     "identityProviderModal.clientIdPlaceholder": "输入客户端 ID",
     "identityProviderModal.clientSecret": "客户端密钥",
     "identityProviderModal.clientSecretHelp": "OAuth2 客户端密钥",
-    "identityProviderModal.clientSecretChangedHelp":
-      "修改客户端 ID 时必须填写",
+    "identityProviderModal.clientSecretChangedHelp": "修改客户端 ID 时必须填写",
     "identityProviderModal.clientSecretOptionalHelp":
       "留空可保留现有密钥，或输入新的密钥",
-    "identityProviderModal.clientSecretPlaceholder":
-      "输入客户端密钥",
+    "identityProviderModal.clientSecretPlaceholder": "输入客户端密钥",
     "identityProviderModal.clientSecretMaskedPlaceholder": "••••••••",
     "identityProviderModal.redirectUrl": "重定向 / 回调 URL",
     "identityProviderModal.redirectUrlHelp":
       "将此 URL 复制到你的身份提供商配置中",
-    "identityProviderModal.redirectCopied":
-      "回调 URL 已复制到剪贴板。",
+    "identityProviderModal.redirectCopied": "回调 URL 已复制到剪贴板。",
     "identityProviderModal.addProvider": "添加提供商",
     "networkResources.addModalTitle": "添加资源",
     "networkResources.editModalTitle": "编辑资源",
-    "networkResources.addModalDescription":
-      "向“{network}”添加新资源",
+    "networkResources.addModalDescription": "向“{network}”添加新资源",
     "networkResources.resourceTab": "资源",
     "networkResources.accessControlTab": "访问控制",
-    "networkResources.nameHelp":
-      "为你的资源设置一个易于识别的名称",
+    "networkResources.nameHelp": "为你的资源设置一个易于识别的名称",
     "networkResources.namePlaceholder": "例如：Postgres 数据库",
-    "networkResources.nameExistsError":
-      "已存在同名资源，请使用其他名称。",
+    "networkResources.nameExistsError": "已存在同名资源，请使用其他名称。",
     "networkResources.addressDescriptionPrefix": "输入一个",
     "networkResources.addressLabel": "地址",
     "networkResources.addressHelp": "输入单个 IP 地址、CIDR 网段或域名",
@@ -4764,13 +4943,11 @@ export const messages = {
     "networkResources.optionalSettings": "可选设置",
     "networkResources.descriptionHelp":
       "写一段简短描述，为这个资源补充更多上下文。",
-    "networkResources.descriptionPlaceholder":
-      "例如：生产环境、开发环境",
+    "networkResources.descriptionPlaceholder": "例如：生产环境、开发环境",
     "networkResources.groupsLabel": "资源分组",
     "networkResources.groupsHelpLine1":
       "将此资源加入一个分组（例如：数据库、Web 服务器），并在",
-    "networkResources.groupsHelpLine2":
-      "访问策略中引用该分组，以简化管理。",
+    "networkResources.groupsHelpLine2": "访问策略中引用该分组，以简化管理。",
     "networkRoutingPeers.addTitle": "添加路由设备",
     "networkRoutingPeers.updateTitle": "更新路由设备",
     "networkRoutingPeers.description": "将流量路由到“{name}”",
@@ -4789,16 +4966,13 @@ export const messages = {
       "您可以使用安装密钥在一台或多台机器上安装 Cloink 作为路由设备。",
     "networkRoutingPeers.notifyTitle": "网络路由设备",
     "networkRoutingPeers.toggleDescription": "路由设备当前为{status}",
-    "networkRoutingPeers.masqueradeToggleDescription":
-      "地址伪装当前为{status}",
+    "networkRoutingPeers.masqueradeToggleDescription": "地址伪装当前为{status}",
     "networkRoutingPeers.updating": "正在更新路由设备...",
     "networkRoutingPeers.updatingMasquerade": "正在更新地址伪装...",
     "networkRoutingPeers.enable": "启用路由设备",
-    "networkRoutingPeers.enableHelp":
-      "使用此开关可启用或禁用此路由设备。",
+    "networkRoutingPeers.enableHelp": "使用此开关可启用或禁用此路由设备。",
     "networkRoutingPeers.metric": "跃点数 (Metric)",
-    "networkRoutingPeers.metricHelp":
-      "较小的跃点数表示较高的路由优先级。",
+    "networkRoutingPeers.metricHelp": "较小的跃点数表示较高的路由优先级。",
     "networkRoutingPeers.createSetupKeyTitle": "创建安装密钥？",
     "networkRoutingPeers.createSetupKeyDescription":
       "如果继续，将自动创建一个一次性安装密钥，你随后就可以安装 Cloink。",
@@ -4810,35 +4984,28 @@ export const messages = {
     "networkRoutingPeers.masqueradeWarningPrefix": "分组 ",
     "networkRoutingPeers.masqueradeWarningSuffix":
       " 至少包含一个非 Linux 设备。禁用地址伪装对非 Linux 路由设备无效。",
-    "networkResources.groupsPlaceholder":
-      "添加或选择资源分组...",
+    "networkResources.groupsPlaceholder": "添加或选择资源分组...",
     "networkResources.groupsUpdateTitle": "更新资源",
     "networkResources.groupsUpdateDescription": "“{name}”的分组已更新",
     "networkResources.groupsUpdating": "正在更新资源分组...",
     "networkResources.groupsModalDescription":
       "将此资源添加到分组中（例如：数据库、Web服务器），并在访问策略中引用该分组以简化管理。",
-    "networkResources.groupPolicyPrefix":
-      "你选择的资源分组已被用于",
+    "networkResources.groupPolicyPrefix": "你选择的资源分组已被用于",
     "networkResources.groupPolicyCount": "{count} 条访问控制策略",
-    "networkResources.groupPolicyInheritance":
-      "该资源将继承来自",
+    "networkResources.groupPolicyInheritance": "该资源将继承来自",
     "networkResources.thisPolicy": "该策略",
     "networkResources.thesePolicies": "这些策略",
     "networkResources.reviewPoliciesPrefix": "请在",
     "networkResources.reviewPoliciesSuffix": "标签页中查看。",
-    "networkResources.reviewPoliciesInline":
-      "请在访问控制标签页中查看。",
-    "networkResources.noPoliciesTitle":
-      "尚未配置访问控制策略",
+    "networkResources.reviewPoliciesInline": "请在访问控制标签页中查看。",
+    "networkResources.noPoliciesTitle": "尚未配置访问控制策略",
     "networkResources.noPoliciesDescription":
       "如果没有访问控制策略，任何设备都无法访问该资源。你也可以稍后再创建策略。确定要继续吗？",
     "networkResources.createdTitle": "资源已创建",
-    "networkResources.createdDescription":
-      "资源“{name}”已成功创建。",
+    "networkResources.createdDescription": "资源“{name}”已成功创建。",
     "networkResources.creating": "正在创建资源...",
     "networkResources.updatedTitle": "资源已更新",
-    "networkResources.updatedDescription":
-      "资源“{name}”已成功更新。",
+    "networkResources.updatedDescription": "资源“{name}”已成功更新。",
     "networkResources.toggleDescription": "“{name}”当前为{status}",
     "networkResources.updating": "正在更新资源...",
     "networkResources.add": "添加资源",
@@ -4872,12 +5039,9 @@ export const messages = {
     "clientSettings.versionError":
       "请输入有效版本号，例如 0.2、0.2.0、0.2.0-alpha.1",
     "clientSettings.lazyConnectionsTitle": "懒连接",
-    "clientSettings.lazyConnectionsEnabled":
-      "懒连接已成功启用。",
-    "clientSettings.lazyConnectionsDisabled":
-      "懒连接已成功禁用。",
-    "clientSettings.lazyConnectionsUpdating":
-      "正在更新懒连接设置...",
+    "clientSettings.lazyConnectionsEnabled": "懒连接已成功启用。",
+    "clientSettings.lazyConnectionsDisabled": "懒连接已成功禁用。",
+    "clientSettings.lazyConnectionsUpdating": "正在更新懒连接设置...",
     "clientSettings.automaticUpdates": "自动更新",
     "clientSettings.automaticUpdatesHelpPrefix":
       "配置 Cloink 客户端接收更新通知的方式。",
@@ -4909,19 +5073,15 @@ export const messages = {
     "clientSettings.enableLazyConnectionsHelp":
       "仅在需要时才在设备之间建立连接。此功能要求 Cloink 客户端版本不低于 v0.45。修改后需要重启客户端才会生效。",
     "networkSettings.dnsWildcardTitle": "DNS 通配符路由",
-    "networkSettings.dnsWildcardEnabled":
-      "DNS 通配符路由已成功启用。",
-    "networkSettings.dnsWildcardDisabled":
-      "DNS 通配符路由已成功禁用。",
-    "networkSettings.dnsWildcardUpdating":
-      "正在更新 DNS 通配符设置...",
+    "networkSettings.dnsWildcardEnabled": "DNS 通配符路由已成功启用。",
+    "networkSettings.dnsWildcardDisabled": "DNS 通配符路由已成功禁用。",
+    "networkSettings.dnsWildcardUpdating": "正在更新 DNS 通配符设置...",
     "networkSettings.notifyTitle": "网络设置",
     "networkSettings.updatedDescription": "网络设置已成功更新。",
     "networkSettings.updating": "正在更新网络设置...",
     "networkSettings.domainError":
       "请输入有效域名，例如 example.com 或 intra.example.com",
-    "networkSettings.networkRangeEmptyError":
-      "网络范围不能为空",
+    "networkSettings.networkRangeEmptyError": "网络范围不能为空",
     "networkSettings.networkRangeError":
       "请输入有效的 IPv4 CIDR 范围，例如 100.64.0.0/16 或 192.168.1.0/24",
     "networkSettings.dnsDomain": "DNS 域名",
@@ -4931,20 +5091,17 @@ export const messages = {
     "networkSettings.networkRangeHelp":
       "以 CIDR 格式为你的网络指定自定义 IPv4 范围。修改后，所有设备 IP 都会重新分配。",
     "networkSettings.networkRangePlaceholder": "例如：100.64.0.0/16",
-    "networkSettings.enableDnsWildcardRouting":
-      "启用 DNS 通配符路由",
+    "networkSettings.enableDnsWildcardRouting": "启用 DNS 通配符路由",
     "networkSettings.enableDnsWildcardRoutingHelp":
       "允许使用 DNS 通配符进行路由。此功能要求 Cloink 客户端版本不低于 v0.35。修改后需要重启客户端才会生效。",
     "permissionsTab.notifyTitle": "权限设置",
     "permissionsTab.updatedDescription": "权限已成功更新。",
     "permissionsTab.updating": "正在更新权限...",
-    "permissionsTab.restrictDashboard":
-      "限制普通用户的控制台访问",
+    "permissionsTab.restrictDashboard": "限制普通用户的控制台访问",
     "permissionsTab.restrictDashboardHelp":
       "控制台访问将受到限制，普通用户将无法查看任何设备。",
     "dangerZone.deleteAccountTitle": "删除 Cloink 账户",
-    "dangerZone.deletedDescription":
-      "Cloink 账户已成功删除。",
+    "dangerZone.deletedDescription": "Cloink 账户已成功删除。",
     "dangerZone.deleting": "正在删除账户...",
     "dangerZone.confirmDescription":
       "你确定要删除你的 Cloink 账户吗？此操作无法撤销。",
@@ -4954,8 +5111,7 @@ export const messages = {
     "groupsSettings.title": "用户分组",
     "groupsSettings.save": "保存",
     "groupsSettings.notifyTitle": "分组设置",
-    "groupsSettings.updatedDescription":
-      "分组设置已成功更新。",
+    "groupsSettings.updatedDescription": "分组设置已成功更新。",
     "groupsSettings.updating": "正在更新分组设置...",
     "groupsSettings.enablePropagation": "启用用户分组传播",
     "groupsSettings.enablePropagationHelp":
@@ -4986,28 +5142,23 @@ export const messages = {
     "accessTokens.emptyTitle": "暂无访问令牌",
     "accessTokens.emptyDescription":
       "你还没有任何访问令牌。你可以创建一个令牌来访问 Cloink API。",
-    "accessTokens.deletedDescription":
-      "访问令牌已成功删除",
+    "accessTokens.deletedDescription": "访问令牌已成功删除",
     "accessTokens.deleting": "正在删除访问令牌...",
     "accessTokens.deleteConfirmTitle": "删除“{name}”？",
     "accessTokens.deleteConfirmDescription":
       "你确定要删除这个令牌吗？此操作无法撤销。",
     "accessTokens.createdTitle": "访问令牌已成功创建！",
-    "accessTokens.createdHelp":
-      "这个令牌不会再次显示，请务必复制并安全保存。",
+    "accessTokens.createdHelp": "这个令牌不会再次显示，请务必复制并安全保存。",
     "accessTokens.copied": "访问令牌已复制到剪贴板！",
-    "accessTokens.createFailedFallback":
-      "访问令牌创建失败...",
+    "accessTokens.createFailedFallback": "访问令牌创建失败...",
     "accessTokens.close": "关闭",
     "accessTokens.copyToClipboard": "复制到剪贴板",
     "accessTokens.creatingTitle": "正在创建访问令牌",
     "accessTokens.createdDescription": "{name} 已成功创建",
     "accessTokens.creating": "正在创建访问令牌...",
     "accessTokens.modalTitle": "创建访问令牌",
-    "accessTokens.modalDescription":
-      "使用此令牌访问 Cloink 的公开 API",
-    "accessTokens.nameHelp":
-      "为你的令牌设置一个易于识别的名称",
+    "accessTokens.modalDescription": "使用此令牌访问 Cloink 的公开 API",
+    "accessTokens.nameHelp": "为你的令牌设置一个易于识别的名称",
     "accessTokens.namePlaceholder": "例如：基础设施令牌",
     "accessTokens.expiresIn": "有效期",
     "accessTokens.expiresInHelp": "应介于 1 到 365 天之间。",
@@ -5016,13 +5167,11 @@ export const messages = {
     "postureChecks.title": "姿态检查",
     "postureChecks.updateModalTitle": "更新姿态检查",
     "postureChecks.createModalTitle": "创建姿态检查",
-    "postureChecks.modalDescription":
-      "使用姿态检查进一步限制你网络中的访问。",
+    "postureChecks.modalDescription": "使用姿态检查进一步限制你网络中的访问。",
     "postureChecks.checks": "检查项",
     "postureChecks.nameDescription": "名称和描述",
     "postureChecks.nameLabel": "姿态检查名称",
-    "postureChecks.nameHelp":
-      "为你的姿态检查设置一个易于识别的名称。",
+    "postureChecks.nameHelp": "为你的姿态检查设置一个易于识别的名称。",
     "postureChecks.namePlaceholder": "例如：Cloink 版本 > 0.25.0",
     "postureChecks.descriptionLabel": "描述（可选）",
     "postureChecks.descriptionHelp":
@@ -5030,8 +5179,7 @@ export const messages = {
     "postureChecks.descriptionPlaceholder":
       "例如：检查 Cloink 版本是否高于 0.25.0",
     "postureChecks.createButton": "创建姿态检查",
-    "postureChecks.searchPlaceholder":
-      "按名称和描述搜索...",
+    "postureChecks.searchPlaceholder": "按名称和描述搜索...",
     "postureChecks.addButton": "添加姿态检查",
     "postureChecks.emptyTitle": "创建姿态检查",
     "postureChecks.emptyDescription":
@@ -5047,16 +5195,14 @@ export const messages = {
     "postureChecks.deleteConfirmTitle": "删除“{name}”？",
     "postureChecks.deleteConfirmDescription":
       "你确定要删除这个姿态检查吗？此操作无法撤销。",
-    "postureChecks.deletedDescription":
-      "姿态检查已成功删除",
+    "postureChecks.deletedDescription": "姿态检查已成功删除",
     "postureChecks.deleting": "正在删除姿态检查...",
     "postureChecks.deleteDisabledTooltip":
       "该姿态检查已被分配到策略中，无法删除。请先将它从所有策略中移除后再删除。",
     "postureChecks.goToPoliciesTooltip":
       "若要将此姿态检查分配给策略，请前往策略页面。",
     "postureChecks.goToPolicies": "前往策略",
-    "postureChecks.noChecksTitle":
-      "你还没有添加任何姿态检查",
+    "postureChecks.noChecksTitle": "你还没有添加任何姿态检查",
     "postureChecks.disableCheckTitle": "禁用此检查？",
     "postureChecks.disableCheckDescription":
       "你确定要禁用此检查吗？该检查的所有设置都会丢失。",
@@ -5084,8 +5230,7 @@ export const messages = {
     "postureChecks.peerNetworkRangeTitle": "设备网络范围",
     "postureChecks.peerNetworkRangeDescription":
       "通过允许或阻止设备网络范围来限制访问。",
-    "postureChecks.cidrError":
-      "请输入有效的 CIDR，例如 192.168.1.0/24",
+    "postureChecks.cidrError": "请输入有效的 CIDR，例如 192.168.1.0/24",
     "postureChecks.allowOrBlockRanges": "允许或阻止网络范围",
     "postureChecks.allowOrBlockRangesHelp":
       "选择你希望允许还是阻止特定设备网络范围的访问",
@@ -5108,8 +5253,7 @@ export const messages = {
     "postureChecks.equalOrGreaterThan": "大于或等于",
     "postureChecks.kernelVersion": "内核版本",
     "postureChecks.allowOrBlock": "允许或阻止",
-    "postureChecks.allowOrBlockOsHelp":
-      "选择你希望允许还是阻止该操作系统。",
+    "postureChecks.allowOrBlockOsHelp": "选择你希望允许还是阻止该操作系统。",
     "postureChecks.selectVersion": "选择版本...",
     "postureChecks.osVersionPlaceholder": "例如：6.0.0",
     "postureChecks.useCustomVersionNumber": "使用自定义版本号",
@@ -5117,8 +5261,7 @@ export const messages = {
       "如果你需要更精细的控制，可以使用自定义版本号。",
     "postureChecks.macPathError": "请输入有效的 macOS 文件路径",
     "postureChecks.unixPathError": "请输入有效的 Unix 文件路径",
-    "postureChecks.windowsPathError":
-      "请输入有效的 Windows 文件路径",
+    "postureChecks.windowsPathError": "请输入有效的 Windows 文件路径",
     "postureChecks.processesLabel": "进程",
     "postureChecks.processesHelp":
       "添加进程可执行文件的路径。你可以分别填写 Linux、macOS 和 Windows 的路径。只有当该进程正在设备系统上运行时，设备才被允许连接。",
@@ -5153,8 +5296,7 @@ export const messages = {
       "完成后你应该已经连接成功。你可以继续为网络添加更多设备，或在管理面板中管理现有设备。如果还有疑问，可以查看我们的",
     "setupModal.setupKeyInfoLine1":
       "这个 setup key 只能在接下来的 24 小时内使用一次。",
-    "setupModal.setupKeyInfoLine2":
-      "过期后，同一个 key 不能再次使用。",
+    "setupModal.setupKeyInfoLine2": "过期后，同一个 key 不能再次使用。",
     "setupModal.windowsInstallTitle": "在 Windows 上安装",
     "setupModal.windowsStep1": "下载并运行 Windows 安装程序",
     "setupModal.selectArchitecture": "选择架构",
@@ -5165,8 +5307,7 @@ export const messages = {
     "setupModal.managementUrlInstructions":
       "点击系统托盘中的 Cloink 图标，依次进入“Settings”和“Advanced Settings”，然后输入下面的“Management URL”",
     "setupModal.openCommandLineRunNetBird": "打开命令行并运行 Cloink",
-    "setupModal.clickConnectTray":
-      "点击系统托盘中 Cloink 图标里的“Connect”",
+    "setupModal.clickConnectTray": "点击系统托盘中 Cloink 图标里的“Connect”",
     "setupModal.signUpWithEmail": "使用你的邮箱地址注册/登录",
     "setupModal.macosInstallTitle": "在 macOS 上安装",
     "setupModal.macosStep1": "下载并运行 macOS 安装程序",
@@ -5244,14 +5385,23 @@ export const messages = {
     "accessControl.ruleDisabled": "规则已成功停用",
     "accessControl.postureChecksCount": "{count} 个姿态检查",
     "accessControl.addPostureCheck": "添加姿态检查",
-    "accessControl.ruleName": "规则名称",
-    "accessControl.ruleNameHelp": "为你的策略设置一个易于识别的名称。",
-    "accessControl.ruleNamePlaceholder": "例如：开发到服务器",
-    "accessControl.ruleDescription": "描述（可选）",
-    "accessControl.ruleDescriptionHelp":
-      "写一段简短描述，为这个策略补充更多上下文。",
-    "accessControl.ruleDescriptionPlaceholder":
-      "例如：开发人员可以访问服务器，服务器也可以访问开发人员。",
+    "accessControl.rule": "规则",
+    "accessControl.ruleNumber": "规则 {number}",
+    "accessControl.ruleNumberAndAction": "规则 {number} - {action}",
+    "accessControl.action": "动作",
+    "accessControl.actionAllow": "允许（Accept）",
+    "accessControl.actionDrop": "拒绝（Drop）",
+    "accessControl.selectAction": "选择动作...",
+    "accessControl.removeRule": "删除规则",
+    "accessControl.addRule": "添加规则",
+    "accessControl.ruleOverview": "规则概览",
+    "accessControl.untitledRule": "未命名规则",
+    "accessControl.ruleNameRequired": "规则名称",
+    "accessControl.ruleName": "规则组名称",
+    "accessControl.ruleNamePlaceholder": "规则名称",
+    "accessControl.ruleDescription": "规则描述（可选）",
+    "accessControl.ruleDescriptionPlaceholder": "规则描述",
+    "accessControl.rules": "策略规则",
     "groups.actionRenameDisabledIntegration":
       "这个分组名称由集成系统管理，无法重命名。",
     "groups.actionRenameDisabledJwt": "这个 JWT 分组无法重命名。",
@@ -5263,8 +5413,7 @@ export const messages = {
       "你确定要删除这个访问控制策略吗？此操作无法撤销。",
     "notification.genericError": "发生了一些问题...",
     "peerGroupSelector.addOrSelectGroups": "添加或选择分组...",
-    "peerGroupSelector.searchGroups":
-      "搜索分组或按 \"Enter\" 添加新分组...",
+    "peerGroupSelector.searchGroups": '搜索分组或按 "Enter" 添加新分组...',
     "peerGroupSelector.searchResource": "搜索资源...",
     "peerGroupSelector.searchPeer": "搜索设备...",
     "peerGroupSelector.search": "搜索...",
@@ -5323,18 +5472,21 @@ export const messages = {
     "peerSelector.searchPlaceholder": "按名称或 IP 搜索设备...",
     "peerSelector.noPeersAvailable": "没有可供选择的设备。",
     "peerSelector.noMatchingPeers": "没有匹配搜索条件的设备。",
-    "peerSelector.updateNetBirdTooltip": "请将 Cloink 更新到至少 v0.36.6 或更高版本，以便将此设备用作路由设备。",
+    "peerSelector.updateNetBirdTooltip":
+      "请将 Cloink 更新到至少 v0.36.6 或更高版本，以便将此设备用作路由设备。",
     "networkRouteSelector.selectNetwork": "选择现有网络...",
     "networkRouteSelector.searchPlaceholder": "按名称或 CIDR 搜索网络...",
     "networkRouteSelector.noRoutes": "您似乎还没有创建任何网络路由。",
     "networkRouteSelector.noMatchingNetworks": "没有匹配搜索条件的网络。",
     "userSelector.selectUser": "选择用户...",
     "userSelector.searchPlaceholder": "按名称或邮箱搜索用户...",
-    "userSelector.noUsers": "没有可供选择的用户。请在解除关联之前为此租户邀请一些用户。",
+    "userSelector.noUsers":
+      "没有可供选择的用户。请在解除关联之前为此租户邀请一些用户。",
     "userSelector.noMatchingUsers": "没有匹配搜索条件的用户。",
     "userSelector.system": "系统",
     "noPeersGettingStarted.title": "开始使用 Cloink",
-    "noPeersGettingStarted.description": "您似乎还没有任何已连接的机器。开始向您的网络添加一台设备。",
+    "noPeersGettingStarted.description":
+      "您似乎还没有任何已连接的机器。开始向您的网络添加一台设备。",
     "noPeersGettingStarted.learnMorePrefix": "在我们的",
     "noPeersGettingStarted.gettingStartedGuide": "入门指南",
     "noPeersGettingStarted.learnMoreSuffix": "中了解更多",
@@ -5342,7 +5494,8 @@ export const messages = {
     "noResults.description": "未找到任何结果。请尝试其他搜索词或更改筛选条件。",
     "noResults.resetFilters": "重置筛选和搜索",
     "pageNotFound.title": "请求的页面不存在",
-    "pageNotFound.description": "您尝试访问的页面不存在。请检查 URL 或返回仪表板继续浏览。",
+    "pageNotFound.description":
+      "您尝试访问的页面不存在。请检查 URL 或返回仪表板继续浏览。",
     "pageNotFound.goBack": "返回",
     "dataTable.refresh": "刷新",
     "dataTable.refreshCooldown": "5 秒后可再次刷新",
@@ -5369,11 +5522,14 @@ export const messages = {
     "countrySelector.placeholder": "选择国家/地区...",
     "countrySelector.searchPlaceholder": "搜索国家/地区...",
     "inputDomain.placeholder": "例如：example.com",
-    "inputDomain.error": "请输入有效的域名，例如 example.com 或 intra.example.com",
+    "inputDomain.error":
+      "请输入有效的域名，例如 example.com 或 intra.example.com",
     "portSelector.selectPorts": "选择端口...",
     "portSelector.all": "全部",
-    "portSelector.placeholder": "添加端口或范围，例如 80 或 1-1023，然后按\"回车\"添加...",
-    "portSelector.invalidPort": "请输入有效的端口或端口范围（例如 80、443、1-1023）",
+    "portSelector.placeholder":
+      '添加端口或范围，例如 80 或 1-1023，然后按"回车"添加...',
+    "portSelector.invalidPort":
+      "请输入有效的端口或端口范围（例如 80、443、1-1023）",
     "portSelector.addByEnter": "按",
     "portSelector.enterKey": "回车",
     "portSelector.addThisPort": "添加此端口或范围",
@@ -5394,7 +5550,8 @@ export const messages = {
     "jsonFileUpload.clickToUpload": "点击上传",
     "jsonFileUpload.dragAndDrop": "或将文件拖拽到此处",
     "jsonFileUpload.googleWorkspace": "Google Workspace",
-    "dataTablePagination.showing": "显示第 {from} 至 {to} 行，共 {total} {text}",
+    "dataTablePagination.showing":
+      "显示第 {from} 至 {to} 行，共 {total} {text}",
     "dataTablePagination.rows": "行",
     "dataTablePagination.pageOf": "第 {currentPage} 页，共 {pageCount} 页",
     "accessControlGroupCount.routes": "路由",
@@ -5405,18 +5562,19 @@ export const messages = {
     "dialog.confirmationDescription": "您确定要继续吗？此操作无法撤销。",
     "dialog.confirm": "确认",
 
-
-
     "peerActionCell.sessionExpirationDisabled": "会话过期已禁用",
     "peerActionCell.sessionExpirationEnabled": "会话过期已启用",
-    "peerActionCell.sessionExpirationDescriptionDisabled": "设备 {name} 的会话过期已成功禁用。",
-    "peerActionCell.sessionExpirationDescriptionEnabled": "设备 {name} 的会话过期已成功启用。",
+    "peerActionCell.sessionExpirationDescriptionDisabled":
+      "设备 {name} 的会话过期已成功禁用。",
+    "peerActionCell.sessionExpirationDescriptionEnabled":
+      "设备 {name} 的会话过期已成功启用。",
     "peerActionCell.updatingSessionExpiration": "正在更新会话过期设置...",
     "peerActionCell.disableSessionExpiration": "禁用会话过期",
     "peerActionCell.enableSessionExpiration": "启用会话过期",
     "peerActionCell.disableSshAccess": "禁用 SSH 访问",
     "peerActionCell.enableSshAccess": "启用 SSH 访问",
-    "peerActionCell.expirationDisabledTooltip": "通过安装密钥添加的所有设备均禁用过期设置。",
+    "peerActionCell.expirationDisabledTooltip":
+      "通过安装密钥添加的所有设备均禁用过期设置。",
     "peerAddress.netBirdIp": "Cloink IP",
     "peerAddress.publicIp": "公网 IP",
     "peerAddress.domain": "域名",
@@ -5428,7 +5586,8 @@ export const messages = {
     "peerGroupCell.saved": "设备分组保存成功",
     "peerGroupCell.saving": "正在保存设备分组...",
     "peerVersion.updateAvailable": "有可用更新",
-    "peerVersion.updateDescription": "Cloink 新版本可用。请更新客户端以获取最新功能和错误修复。",
+    "peerVersion.updateDescription":
+      "Cloink 新版本可用。请更新客户端以获取最新功能和错误修复。",
     "peerVersion.downloadChangelog": "下载与更新日志",
     "peerVersion.serial": "序列号：",
     "table.type": "类型",
