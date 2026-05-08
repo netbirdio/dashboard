@@ -6,6 +6,7 @@ interface SSHQueryParams {
   peerId: string | null;
   username: string | null;
   port: string | null;
+  ipVersion: string | null;
 }
 
 export function useSSHQueryParams() {
@@ -15,6 +16,7 @@ export function useSSHQueryParams() {
     peerId: null,
     username: null,
     port: null,
+    ipVersion: null,
   });
   const [, setLocalQueryParams] = useLocalStorage("netbird-query-params", "");
 
@@ -22,10 +24,11 @@ export function useSSHQueryParams() {
     const peerId = searchParams.get("id");
     const username = searchParams.get("user");
     const port = searchParams.get("port");
+    const ipVersion = searchParams.get("ip_version");
 
     // If all params are present in URL, use them
     if (peerId && username && port) {
-      setParams({ peerId, username, port });
+      setParams({ peerId, username, port, ipVersion });
       return;
     }
 
@@ -47,18 +50,23 @@ export function useSSHQueryParams() {
     const storedPeerId = urlParams.get("id");
     const storedUsername = urlParams.get("user");
     const storedPort = urlParams.get("port");
+    const storedIpVersion = urlParams.get("ip_version");
 
     if (storedPeerId && storedUsername && storedPort) {
       const newSearchParams = new URLSearchParams();
       newSearchParams.set("id", storedPeerId);
       newSearchParams.set("user", storedUsername);
       newSearchParams.set("port", storedPort);
+      if (storedIpVersion) {
+        newSearchParams.set("ip_version", storedIpVersion);
+      }
 
       router.replace(`/peer/ssh?${newSearchParams.toString()}`);
       setParams({
         peerId: storedPeerId,
         username: storedUsername,
         port: storedPort,
+        ipVersion: storedIpVersion,
       });
 
       // Clear stored params after restoring

@@ -7,6 +7,8 @@ import {
   Mail,
   Network,
   RectangleEllipsis,
+  ShieldAlert,
+  ShieldOff,
   Users,
 } from "lucide-react";
 import * as React from "react";
@@ -68,6 +70,26 @@ export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
         return {
           icon: <GlobeOff size={12} />,
           label: "Geo Unavailable",
+        };
+      case "crowdsec_ban":
+        return {
+          icon: <ShieldAlert size={12} />,
+          label: "CrowdSec Ban",
+        };
+      case "crowdsec_captcha":
+        return {
+          icon: <ShieldAlert size={12} />,
+          label: "CrowdSec Captcha",
+        };
+      case "crowdsec_throttle":
+        return {
+          icon: <ShieldAlert size={12} />,
+          label: "CrowdSec Throttle",
+        };
+      case "crowdsec_unavailable":
+        return {
+          icon: <ShieldOff size={12} />,
+          label: "CrowdSec Unavailable",
         };
       default:
         return {

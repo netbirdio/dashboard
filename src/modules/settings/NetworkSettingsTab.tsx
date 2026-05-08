@@ -6,6 +6,7 @@ import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { notify } from "@components/Notification";
+import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { useHasChanges } from "@hooks/useHasChanges";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
@@ -18,12 +19,25 @@ import { useSWRConfig } from "swr";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Account } from "@/interfaces/Account";
+import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useGroups } from "@/contexts/GroupsProvider";
+import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
 
 type Props = {
   account: Account;
 };
 
 export default function NetworkSettingsTab({ account }: Readonly<Props>) {
+  const { isLoading: isGroupsLoading } = useGroups();
+
+  return isGroupsLoading ? (
+    <SkeletonSettings />
+  ) : (
+    <NetworkSettingsTabContent account={account} />
+  );
+}
+
+function NetworkSettingsTabContent({ account }: Readonly<Props>) {
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -37,6 +51,17 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
   );
   const [networkRange, setNetworkRange] = useState(
     account.settings.network_range || "",
+  );
+  const [networkRangeV6, setNetworkRangeV6] = useState(
+    account.settings.network_range_v6 || "",
+  );
+  const [ipv6EnabledGroups, setIpv6EnabledGroups, { save: saveGroups }] =
+    useGroupHelper({
+      initial: account.settings?.ipv6_enabled_groups,
+    });
+  const ipv6GroupNames = useMemo(
+    () => ipv6EnabledGroups.map((g) => g.name).sort(),
+    [ipv6EnabledGroups],
   );
 
   const toggleNetworkDNSSetting = async (toggle: boolean) => {
@@ -64,19 +89,37 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
   const { hasChanges, updateRef } = useHasChanges([
     customDNSDomain,
     networkRange,
+    networkRangeV6,
+    ipv6GroupNames,
   ]);
 
   const saveChanges = async () => {
+    const groups = await saveGroups();
+    const ipv6EnabledGroupIds = groups
+      .map((group) => group.id)
+      .filter(Boolean) as string[];
+
     const updatedSettings = {
       ...account.settings,
+      ipv6_enabled_groups: ipv6EnabledGroupIds,
     };
 
     if (customDNSDomain !== "" || account.settings.dns_domain) {
       updatedSettings.dns_domain = customDNSDomain;
     }
 
-    if (networkRange !== "") {
+    // Only send network ranges when the user actually changed them, to avoid
+    // triggering a reallocation when the server hasn't stored an explicit override.
+    if (networkRange !== (account.settings.network_range || "")) {
       updatedSettings.network_range = networkRange;
+    } else {
+      delete updatedSettings.network_range;
+    }
+
+    if (networkRangeV6 !== (account.settings.network_range_v6 || "")) {
+      updatedSettings.network_range_v6 = networkRangeV6;
+    } else {
+      delete updatedSettings.network_range_v6;
     }
 
     notify({
@@ -89,7 +132,12 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
         })
         .then(() => {
           mutate("/accounts");
-          updateRef([customDNSDomain, networkRange]);
+          updateRef([
+            customDNSDomain,
+            networkRange,
+            networkRangeV6,
+            ipv6GroupNames,
+          ]);
         }),
       loadingMessage: "Updating network settings...",
     });
@@ -124,6 +172,17 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
     }
   }, [networkRange, account.settings.network_range]);
 
+  const networkRangeV6Error = useMemo(() => {
+    if (networkRangeV6 == "") return "";
+    if (!networkRangeV6.includes(":") || !cidr.isValidCIDR(networkRangeV6)) {
+      return "Please enter a valid IPv6 CIDR range, e.g. fd00:1234::/64";
+    }
+    const prefixLen = parseInt(networkRangeV6.split("/")[1], 10);
+    if (prefixLen < 48 || prefixLen > 112) {
+      return "Prefix length must be between /48 and /112";
+    }
+  }, [networkRangeV6]);
+
   return (
     <Tabs.Content value={"networks"}>
       <div className={"p-default py-6 max-w-2xl"}>
@@ -150,7 +209,8 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
               !hasChanges ||
               !permission.settings.update ||
               !!domainError ||
-              !!networkRangeError
+              !!networkRangeError ||
+              !!networkRangeV6Error
             }
             onClick={saveChanges}
           >
@@ -215,6 +275,51 @@ export default function NetworkSettingsTab({ account }: Readonly<Props>) {
               </div>
             </div>
           </div>
+
+          <div>
+            <div
+              className={
+                "flex flex-col gap-1 sm:flex-row w-full sm:gap-4 items-center"
+              }
+            >
+              <div className={"min-w-[330px]"}>
+                <Label>IPv6 Network Range</Label>
+                <HelpText>
+                  Specify a custom IPv6 range for your network in CIDR format.
+                  All peer IPv6 addresses will be re-allocated when changed.
+                </HelpText>
+              </div>
+              <div className={"w-full"}>
+                <Input
+                  placeholder={"e.g. fd00:1234:5678::/64"}
+                  errorTooltip={true}
+                  errorTooltipPosition={"top"}
+                  error={networkRangeV6Error}
+                  value={networkRangeV6}
+                  disabled={!permission.settings.update}
+                  onChange={(e) => setNetworkRangeV6(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div>
+            <Label>IPv6 Enabled Groups</Label>
+            <HelpText>
+              Peers in the selected groups will receive IPv6 overlay addresses
+              (dual-stack). Remove all groups to disable IPv6. Changes apply on
+              save and will restart affected clients.
+            </HelpText>
+            <PeerGroupSelector
+              values={ipv6EnabledGroups}
+              onChange={setIpv6EnabledGroups}
+              placeholder="Select groups to enable IPv6..."
+              showResourceCounter={false}
+              disabled={!permission.settings.update}
+            />
+          </div>
+
+          <div className={"mt-4"} />
 
           <FancyToggleSwitch
             value={routingPeerDNSSetting}

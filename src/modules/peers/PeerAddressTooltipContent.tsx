@@ -38,6 +38,21 @@ export const PeerAddressTooltipContent = ({ peer }: Props) => {
           </CopyToClipboardText>
         }
       />
+      {peer.ipv6 && (
+        <ListItem
+          icon={<MapPin size={14} />}
+          label={"NetBird IPv6"}
+          value={
+            <CopyToClipboardText
+              iconAlignment={"right"}
+              message={"NetBird IPv6 has been copied to your clipboard"}
+              alwaysShowIcon={true}
+            >
+              {peer.ipv6}
+            </CopyToClipboardText>
+          }
+        />
+      )}
       <ListItem
         icon={<NetworkIcon size={14} />}
         label={"Public IP"}

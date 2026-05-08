@@ -29,6 +29,8 @@ export interface Account {
     auto_update_always: boolean;
     local_auth_disabled?: boolean;
     local_mfa_enabled?: boolean;
+    ipv6_enabled_groups?: string[];
+    network_range_v6?: string;
   };
   onboarding?: AccountOnboarding;
 }

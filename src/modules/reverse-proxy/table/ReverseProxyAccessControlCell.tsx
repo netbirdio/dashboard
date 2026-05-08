@@ -10,6 +10,7 @@ import {
   LucideIcon,
   NetworkIcon,
   Settings,
+  ShieldAlert,
   ShieldCheck,
   ShieldOff,
   WorkflowIcon,
@@ -19,7 +20,7 @@ import { useMemo } from "react";
 import { useCountries } from "@/contexts/CountryProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
-import { ReverseProxy } from "@/interfaces/ReverseProxy";
+import { CrowdSecMode, ReverseProxy } from "@/interfaces/ReverseProxy";
 
 type RuleEntry = {
   key: string;
@@ -37,17 +38,27 @@ export default function ReverseProxyAccessControlCell({
   reverseProxy,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
-  const { openModal } = useReverseProxies();
+  const { openModal, domains } = useReverseProxies();
   const { countries } = useCountries();
 
   const canConfigure = !!permission?.services?.update;
   const restrictions = reverseProxy.access_restrictions;
 
+  const supportsCrowdSec = domains?.find(
+    (d) => d.domain === reverseProxy.proxy_cluster,
+  )?.supports_crowdsec;
+
+  const hasCrowdSec =
+    supportsCrowdSec &&
+    restrictions?.crowdsec_mode != null &&
+    restrictions.crowdsec_mode !== CrowdSecMode.OFF;
+
   const ruleCount =
     (restrictions?.allowed_cidrs?.length ?? 0) +
     (restrictions?.blocked_cidrs?.length ?? 0) +
     (restrictions?.allowed_countries?.length ?? 0) +
-    (restrictions?.blocked_countries?.length ?? 0);
+    (restrictions?.blocked_countries?.length ?? 0) +
+    (hasCrowdSec ? 1 : 0);
 
   const rulesBadge =
     ruleCount > 0 ? (
@@ -92,21 +103,23 @@ export default function ReverseProxyAccessControlCell({
       });
     }
 
+    const isHostCidr = (c: string) =>
+      c.includes(":") ? c.endsWith("/128") : c.endsWith("/32");
     const allowedIps =
-      restrictions?.allowed_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
+      restrictions?.allowed_cidrs?.filter(isHostCidr) ?? [];
     const allowedCidrs =
-      restrictions?.allowed_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
+      restrictions?.allowed_cidrs?.filter((c) => !isHostCidr(c)) ?? [];
     const blockedIps =
-      restrictions?.blocked_cidrs?.filter((c) => c.endsWith("/32")) ?? [];
+      restrictions?.blocked_cidrs?.filter(isHostCidr) ?? [];
     const blockedCidrs =
-      restrictions?.blocked_cidrs?.filter((c) => !c.endsWith("/32")) ?? [];
+      restrictions?.blocked_cidrs?.filter((c) => !isHostCidr(c)) ?? [];
 
     if (allowedIps.length) {
       entries.push({
         key: "allowed-ips",
         label: allowedIps.length === 1 ? "Allowed IP" : "Allowed IPs",
         Icon: WorkflowIcon,
-        value: allowedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
+        value: allowedIps.map((c) => c.replace(/\/(32|128)$/, "")).join(", "),
       });
     }
 
@@ -124,7 +137,7 @@ export default function ReverseProxyAccessControlCell({
         key: "blocked-ips",
         label: blockedIps.length === 1 ? "Blocked IP" : "Blocked IPs",
         Icon: WorkflowIcon,
-        value: blockedIps.map((c) => c.replace(/\/32$/, "")).join(", "),
+        value: blockedIps.map((c) => c.replace(/\/(32|128)$/, "")).join(", "),
         blocked: true,
       });
     }
@@ -139,8 +152,20 @@ export default function ReverseProxyAccessControlCell({
       });
     }
 
+    if (hasCrowdSec) {
+      entries.push({
+        key: "crowdsec",
+        label: "CrowdSec",
+        Icon: ShieldAlert,
+        value:
+          restrictions?.crowdsec_mode === CrowdSecMode.ENFORCE
+            ? "Enforce"
+            : "Observe",
+      });
+    }
+
     return entries;
-  }, [restrictions, countries]);
+  }, [restrictions, countries, hasCrowdSec]);
 
   const showRulesHover = ruleGroups.length > 0;
 
