@@ -12,7 +12,7 @@ export default function FullScreenLoading({ fullScreen = true }: Props) {
         fullScreen && "h-screen",
       )}
     >
-      <LoadingIcon className="fill-netbird" size={44} />
+      <LoadingIcon className="fill-netbird" size={68} />
     </div>
   );
 }
