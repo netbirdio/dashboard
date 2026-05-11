@@ -20,6 +20,7 @@ export interface ReverseProxy {
   auth?: ReverseProxyAuth;
   access_restrictions?: AccessRestrictions;
   meta?: ReverseProxyMeta;
+  private?: boolean;
 }
 
 export const CrowdSecMode = {
@@ -62,6 +63,13 @@ export interface ServiceTargetOptions {
   path_rewrite?: ServiceTargetOptionsPathRewrite;
   custom_headers?: Record<string, string>;
   proxy_protocol?: boolean;
+  /**
+   * When true, the proxy dials this target via the host's network stack
+   * instead of through its embedded NetBird client. Use for upstreams
+   * reachable without WireGuard (public APIs, LAN services, localhost
+   * sidecars).
+   */
+  direct_upstream?: boolean;
 }
 
 export interface ReverseProxyTarget {
@@ -124,6 +132,7 @@ export enum ReverseProxyTargetType {
   HOST = "host",
   DOMAIN = "domain",
   SUBNET = "subnet",
+  CLUSTER = "cluster",
 }
 
 export enum ReverseProxyTargetProtocol {

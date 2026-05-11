@@ -25,6 +25,7 @@ import {
   GlobeIcon,
   LockKeyhole,
   MapPinned,
+  NetworkIcon,
   PlusCircle,
   RectangleEllipsis,
   Settings,
@@ -198,6 +199,32 @@ export default function ReverseProxyModal({
     reverseProxy?.targets || [],
   );
 
+  const [isPrivate, setIsPrivate] = useState<boolean>(
+    reverseProxy?.private ?? false,
+  );
+
+  // togglePrivate normalises related state when the operator flips
+  // Private. Private services are HTTP-only and require cluster targets,
+  // so dropping out of L4 mode and clearing incompatible targets keeps
+  // the validation gates from deadlocking when toggling.
+  const togglePrivate = (next: boolean) => {
+    setIsPrivate(next);
+    if (next) {
+      setServiceMode(ServiceMode.HTTP);
+      setTargets((prev) =>
+        prev.filter(
+          (t) => t.target_type === ReverseProxyTargetType.CLUSTER,
+        ),
+      );
+    } else {
+      setTargets((prev) =>
+        prev.filter(
+          (t) => t.target_type !== ReverseProxyTargetType.CLUSTER,
+        ),
+      );
+    }
+  };
+
   const selectedDomain = useMemo(
     () =>
       domains?.find(
@@ -268,6 +295,11 @@ export default function ReverseProxyModal({
     null,
   );
 
+  // canContinueToSettings gates tab navigation and the Continue button.
+  // It only needs domain + at least one valid endpoint so the operator
+  // can freely move between tabs to configure the rest of the service
+  // (auth, access control, advanced) — including reaching the Auth tab
+  // to enable bearer auth for a private service.
   const canContinueToSettings = useMemo(() => {
     const subdomainRequired =
       selectedDomain?.require_subdomain === true;
@@ -278,6 +310,7 @@ export default function ReverseProxyModal({
     const isValidPort = (port: number) => port >= 1 && port <= 65535;
     const hasHttpEndpoint = !isL4Mode && targets.length > 0;
     const hasL4Endpoint =
+      !isPrivate &&
       isL4Mode &&
       !!l4Target &&
       l4IsValidCidrHost &&
@@ -298,7 +331,19 @@ export default function ReverseProxyModal({
     port,
     isListenPortSupported,
     listenPort,
+    isPrivate,
   ]);
+
+  // canSaveService is the Save / Add Service button gate. Layers the
+  // private-service requirement on top of canContinueToSettings: bearer
+  // auth must be enabled with at least one distribution group when the
+  // service is private, so management's auto-policy has SSO sources to
+  // gate inbound traffic.
+  const canSaveService = useMemo(() => {
+    if (!canContinueToSettings) return false;
+    if (!isPrivate) return true;
+    return bearerEnabled && bearerGroups.length > 0;
+  }, [canContinueToSettings, isPrivate, bearerEnabled, bearerGroups.length]);
 
   const saveTarget = (targetData: ReverseProxyTarget) => {
     if (editingTargetIndex !== null) {
@@ -405,18 +450,23 @@ export default function ReverseProxyModal({
         }
       : undefined;
 
+    const submittedTargets =
+      isL4Mode && l4TargetPayload ? [l4TargetPayload] : targets;
+
     handleCreateOrUpdateProxy({
       data: {
         name: fullDomain,
         domain: fullDomain,
         mode: isL4Mode ? (serviceMode as ServiceMode) : undefined,
-        listen_port: isL4Mode && isListenPortSupported ? listenPort : undefined,
-        targets: isL4Mode && l4TargetPayload ? [l4TargetPayload] : targets,
+        listen_port:
+          isL4Mode && isListenPortSupported ? listenPort : undefined,
+        targets: submittedTargets,
         enabled: reverseProxy?.enabled ?? true,
         pass_host_header: isL4Mode ? undefined : passHostHeader,
         rewrite_redirects: isL4Mode ? undefined : rewriteRedirects,
         auth: isL4Mode ? undefined : auth,
         access_restrictions: accessRestrictions,
+        private: isPrivate ? true : undefined,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -493,7 +543,7 @@ export default function ReverseProxyModal({
                 }
               />
 
-              {!reverseProxy && (
+              {!reverseProxy && !isPrivate && (
                 <ReverseProxyServiceModeSelector
                   onChange={setServiceMode}
                   value={serviceMode}
@@ -501,7 +551,26 @@ export default function ReverseProxyModal({
                 />
               )}
 
-              {isL4Mode ? (
+              <FancyToggleSwitch
+                value={isPrivate}
+                onChange={togglePrivate}
+                label={
+                  <>
+                    <NetworkIcon size={15} />
+                    Private (NetBird-only)
+                  </>
+                }
+                helpText="Reachable only from peers in the bearer auth distribution groups. Targets pick a proxy cluster instead of a peer/resource; the proxy dials each target's upstream via the host network stack. Requires bearer auth (SSO) enabled with at least one distribution group on the Authentication tab."
+              />
+              {isPrivate && (!bearerEnabled || bearerGroups.length === 0) && (
+                <Paragraph className={"!text-yellow-400 !text-xs !mt-0"}>
+                  Private services require bearer auth (SSO) enabled with at
+                  least one distribution group. Configure it on the
+                  Authentication tab before saving.
+                </Paragraph>
+              )}
+
+              {isL4Mode && !isPrivate ? (
                 <ReverseProxyLayer4Content
                   l4Target={l4Target}
                   setL4Target={setL4Target}
@@ -777,7 +846,7 @@ export default function ReverseProxyModal({
                     <Button
                       variant={"primary"}
                       disabled={
-                        !canContinueToSettings ||
+                        !canSaveService ||
                         !permission?.services?.create ||
                         !!timeoutError ||
                         accessControlHasErrors
@@ -798,7 +867,7 @@ export default function ReverseProxyModal({
                 <Button
                   variant={"primary"}
                   disabled={
-                    !canContinueToSettings ||
+                    !canSaveService ||
                     !permission?.services?.update ||
                     !!timeoutError ||
                     accessControlHasErrors
@@ -835,6 +904,7 @@ export default function ReverseProxyModal({
         initialResource={initialResource}
         initialPeer={initialPeer}
         initialNetwork={initialNetwork}
+        isPrivate={isPrivate}
       />
 
       <AuthPasswordModal

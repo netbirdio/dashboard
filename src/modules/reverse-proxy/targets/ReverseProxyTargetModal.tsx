@@ -19,6 +19,7 @@ import {
   ClockFadingIcon,
   ExternalLinkIcon,
   PlusCircle,
+  RouteIcon,
   Server,
   ShieldXIcon,
 } from "lucide-react";
@@ -47,6 +48,7 @@ import ReverseProxyTargetCustomHeaders from "@/modules/reverse-proxy/targets/Rev
 import ReverseProxyTargetSelector, {
   Target,
 } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
+import ReverseProxyClusterTargetSelector from "@/modules/reverse-proxy/targets/ReverseProxyClusterTargetSelector";
 import { useReverseProxyTargetOptions } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 import ReverseProxyAddressInput, {
   CidrHelpText,
@@ -79,6 +81,9 @@ type Props = {
   initialResource?: NetworkResource;
   initialPeer?: Peer;
   initialNetwork?: Network;
+  /** When true, swap the peer/resource picker for a cluster picker and
+   *  emit the target as target_type=cluster with direct_upstream=true. */
+  isPrivate?: boolean;
 };
 
 export default function ReverseProxyTargetModal({
@@ -90,31 +95,42 @@ export default function ReverseProxyTargetModal({
   initialResource,
   initialPeer,
   initialNetwork,
+  isPrivate,
 }: Readonly<Props>) {
   const existingTargets = reverseProxy.targets || [];
   const domain = reverseProxy.domain;
 
-  const [target, setTarget] = useState<Target | undefined>(
-    currentTarget || initialResource || initialPeer
-      ? {
-          type:
-            currentTarget?.target_type ??
-            (initialResource
-              ? (initialResource.type as ReverseProxyTargetType) ??
-                ReverseProxyTargetType.HOST
-              : ReverseProxyTargetType.PEER),
-          peerId:
-            currentTarget?.target_type === ReverseProxyTargetType.PEER
-              ? currentTarget?.target_id
-              : initialPeer?.id,
-          resourceId:
-            currentTarget && isResourceTargetType(currentTarget.target_type)
-              ? currentTarget?.target_id
-              : initialResource?.id,
-          host: getInitialHost(currentTarget, initialResource, initialPeer),
-        }
-      : undefined,
-  );
+  const [target, setTarget] = useState<Target | undefined>(() => {
+    if (
+      currentTarget?.target_type === ReverseProxyTargetType.CLUSTER
+    ) {
+      return {
+        type: ReverseProxyTargetType.CLUSTER,
+        resourceId: currentTarget.target_id ?? "",
+        host: currentTarget.host ?? "",
+      };
+    }
+    if (currentTarget || initialResource || initialPeer) {
+      return {
+        type:
+          currentTarget?.target_type ??
+          (initialResource
+            ? (initialResource.type as ReverseProxyTargetType) ??
+              ReverseProxyTargetType.HOST
+            : ReverseProxyTargetType.PEER),
+        peerId:
+          currentTarget?.target_type === ReverseProxyTargetType.PEER
+            ? currentTarget?.target_id
+            : initialPeer?.id,
+        resourceId:
+          currentTarget && isResourceTargetType(currentTarget.target_type)
+            ? currentTarget?.target_id
+            : initialResource?.id,
+        host: getInitialHost(currentTarget, initialResource, initialPeer),
+      };
+    }
+    return undefined;
+  });
 
   const [targetProtocol, setTargetProtocol] =
     useState<ReverseProxyTargetProtocol>(
@@ -174,6 +190,9 @@ export default function ReverseProxyTargetModal({
     if (target.type === ReverseProxyTargetType.PEER) {
       return !!target.peerId;
     }
+    if (target.type === ReverseProxyTargetType.CLUSTER) {
+      return !!target.resourceId && !!target.host?.trim();
+    }
     if (isResourceTargetType(target.type)) {
       return !!target.resourceId && isValidCidrHost;
     }
@@ -196,6 +215,28 @@ export default function ReverseProxyTargetModal({
       : target.type;
     const resolvedIsResource =
       isResourceTargetType(resolvedType) || !!initialResource;
+    const opts = getTargetOptions();
+    // Cluster targets imply direct_upstream — the proxy peer dials the
+    // operator-supplied upstream via the host network stack instead of
+    // through the embedded WG client.
+    const resolvedOpts =
+      resolvedType === ReverseProxyTargetType.CLUSTER
+        ? { ...(opts ?? {}), direct_upstream: true }
+        : opts;
+    // Subnet and Cluster targets always own their Host. For peer/host/
+    // domain types the backend resolves Host from the peer/resource —
+    // except when direct_upstream is set and the operator typed an
+    // explicit override, in which case ship Host through so the proxy
+    // dials exactly that address via the host's network stack.
+    let resolvedHost: string | undefined;
+    if (
+      resolvedType === ReverseProxyTargetType.SUBNET ||
+      resolvedType === ReverseProxyTargetType.CLUSTER
+    ) {
+      resolvedHost = target.host?.trim();
+    } else if (resolvedOpts?.direct_upstream && target.host?.trim()) {
+      resolvedHost = target.host.trim();
+    }
     const targetData: ReverseProxyTarget = {
       target_type: resolvedType,
       target_id:
@@ -203,15 +244,12 @@ export default function ReverseProxyTargetModal({
           ? target.peerId
           : target.resourceId,
       protocol: targetProtocol,
-      host:
-        resolvedType === ReverseProxyTargetType.SUBNET
-          ? target.host
-          : undefined,
+      host: resolvedHost,
       port: targetPort,
       path: targetPath || undefined,
       enabled: currentTarget?.enabled ?? true,
       access_local: resolvedIsResource ? accessLocal : undefined,
-      options: getTargetOptions(),
+      options: resolvedOpts,
     };
     onSave(targetData);
     onOpenChange(false);
@@ -232,16 +270,28 @@ export default function ReverseProxyTargetModal({
 
           <div className="px-8 pt-5 pb-4 flex flex-col gap-6">
             {!initialResource && !initialPeer && (
-              <ReverseProxyTargetSelector
-                value={target}
-                initialNetwork={initialNetwork}
-                onChange={(selection) => {
-                  setTarget(selection);
-                  if (selection) {
-                    setTimeout(() => portInputRef.current?.focus(), 0);
-                  }
-                }}
-              />
+              isPrivate ? (
+                <ReverseProxyClusterTargetSelector
+                  value={target}
+                  onChange={(selection) => {
+                    setTarget(selection);
+                    if (selection) {
+                      setTimeout(() => portInputRef.current?.focus(), 0);
+                    }
+                  }}
+                />
+              ) : (
+                <ReverseProxyTargetSelector
+                  value={target}
+                  initialNetwork={initialNetwork}
+                  onChange={(selection) => {
+                    setTarget(selection);
+                    if (selection) {
+                      setTimeout(() => portInputRef.current?.focus(), 0);
+                    }
+                  }}
+                />
+              )
             )}
 
             <div>
@@ -437,6 +487,50 @@ export default function ReverseProxyTargetModal({
                     }
                     helpText="Skip certificate verification when connecting to this target. Useful if your service already uses a self-signed certificate."
                   />
+                )}
+              {hasTarget && target?.type !== ReverseProxyTargetType.CLUSTER && (
+                <FancyToggleSwitch
+                  className={"mt-3.5"}
+                  value={options.direct_upstream ?? false}
+                  onChange={(v) =>
+                    setOption("direct_upstream", v || undefined)
+                  }
+                  label={
+                    <>
+                      <RouteIcon size={15} />
+                      Direct upstream
+                    </>
+                  }
+                  helpText="Bypass the proxy's NetBird tunnel and dial this target via the proxy host's network stack. Use for upstreams reachable without WireGuard (public APIs, LAN services, localhost sidecars)."
+                />
+              )}
+              {hasTarget &&
+                options.direct_upstream &&
+                target?.type !== ReverseProxyTargetType.SUBNET &&
+                target?.type !== ReverseProxyTargetType.CLUSTER && (
+                  <div className={"mt-3.5 flex flex-col gap-2"}>
+                    <Label>Upstream host</Label>
+                    <HelpText className={"mb-0"}>
+                      Address the proxy host dials directly. Defaults to
+                      the peer&apos;s tunnel IP / resource address.
+                      Override with a LAN IP, localhost, or internal DNS
+                      name reachable from the proxy host without
+                      WireGuard.
+                    </HelpText>
+                    <Input
+                      placeholder={
+                        initialPeer?.ip ?? "host.internal or 10.0.0.5"
+                      }
+                      value={target?.host ?? ""}
+                      onChange={(e) =>
+                        setTarget((prev) =>
+                          prev
+                            ? { ...prev, host: e.target.value }
+                            : prev,
+                        )
+                      }
+                    />
+                  </div>
                 )}
             </div>
 

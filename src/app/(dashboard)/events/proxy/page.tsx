@@ -9,6 +9,7 @@ import { ExternalLinkIcon } from "lucide-react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import React, { useMemo } from "react";
 import ActivityIcon from "@/assets/icons/ActivityIcon";
+import PeersProvider from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ServerPaginationProvider from "@/contexts/ServerPaginationProvider";
 import PageContainer from "@/layouts/PageContainer";
@@ -72,7 +73,9 @@ export default function ProxyEventsPage() {
           defaultPageSize={10}
           defaultFilters={defaultFilters}
         >
-          <ReverseProxyEventsTable headingTarget={portalTarget} />
+          <PeersProvider>
+            <ReverseProxyEventsTable headingTarget={portalTarget} />
+          </PeersProvider>
         </ServerPaginationProvider>
       </RestrictedAccess>
     </PageContainer>
