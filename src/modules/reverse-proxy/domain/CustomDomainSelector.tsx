@@ -35,7 +35,9 @@ export function CustomDomainSelector({
     domains
       ?.filter((d) => d.type === ReverseProxyDomainType.FREE)
       .forEach((domain) => {
-        const isSelfHosted = isSelfHostedCluster(domain?.target_cluster);
+        const isSelfHosted = isSelfHostedCluster(
+          domain?.target_cluster ?? domain?.domain,
+        );
         opts.push({
           value: domain.domain,
           label: `.${domain.domain}`,
