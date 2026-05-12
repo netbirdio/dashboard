@@ -37,6 +37,7 @@ export default function Navigation({
 
   return (
     <div
+      data-navigation
       className={cn(
         "whitespace-nowrap md:border-r dark:border-zinc-700/40 bg-gray-50 dark:bg-nb-gray relative group/navigation transition-all",
         hideOnMobile ? "hidden md:block" : "",
@@ -162,6 +163,13 @@ export default function Navigation({
                     label="Custom Domains"
                     isChild
                     href={"/reverse-proxy/custom-domains"}
+                    exactPathMatch={true}
+                    visible={permission?.services?.read}
+                  />
+                  <SidebarItem
+                    label="Self-Hosted Proxies"
+                    isChild
+                    href={"/reverse-proxy/self-hosted-proxies"}
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />

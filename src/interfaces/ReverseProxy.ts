@@ -15,6 +15,7 @@ export interface ReverseProxy {
   proxy_cluster?: string;
   targets: ReverseProxyTarget[];
   enabled: boolean;
+  terminated?: boolean;
   pass_host_header?: boolean;
   rewrite_redirects?: boolean;
   auth?: ReverseProxyAuth;
@@ -160,6 +161,24 @@ export interface ReverseProxyEvent {
   bytes_download: number;
   protocol?: EventProtocol;
   metadata?: Record<string, string>;
+}
+
+export interface ReverseProxyCluster {
+  id?: string;
+  address: string;
+  connected_proxies: number;
+  self_hosted: boolean;
+}
+
+export interface ReverseProxyClusterToken {
+  id?: string;
+  name: string;
+  plain_token?: string;
+  expires_at?: string;
+  expires_in?: number;
+  created_at?: string;
+  last_used?: string;
+  revoked?: boolean;
 }
 
 export function isL4Event(event: ReverseProxyEvent): boolean {

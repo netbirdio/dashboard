@@ -146,7 +146,7 @@ export default function CustomDomainsTable({ headingTarget }: Readonly<Props>) {
           <GetStartedTest
             icon={
               <SquareIcon
-                icon={<GlobeIcon className={"fill-nb-gray-200"} size={20} />}
+                icon={<GlobeIcon className={"text-nb-gray-200"} size={20} />}
                 color={"gray"}
                 size={"large"}
               />
