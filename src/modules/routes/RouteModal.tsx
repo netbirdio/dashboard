@@ -505,7 +505,7 @@ export function RouteModalContent({
                 <Input
                   ref={networkRangeRef}
                   customPrefix={<NetworkIcon size={16} />}
-                  placeholder={"e.g., 172.16.0.1, 172.16.0.0/16 or 2001:db8::/64"}
+                  placeholder={"e.g., 172.16.0.1, 172.16.0.0/16, 2001:db8::1 or 2001:db8::/64"}
                   value={networkRange}
                   data-cy={"network-range"}
                   className={"font-mono !text-[13px]"}
