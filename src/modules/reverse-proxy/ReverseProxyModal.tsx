@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import {
   ArrowRight,
   Binary,
+  CircleUser,
   ClockFadingIcon,
   ExternalLinkIcon,
   FileCode2Icon,
@@ -28,6 +29,7 @@ import {
   NetworkIcon,
   PlusCircle,
   RectangleEllipsis,
+  RouteIcon,
   Settings,
   ShieldCheckIcon,
   Users,
@@ -72,6 +74,10 @@ import {
   validateTimeout,
 } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { Group } from "@/interfaces/Group";
+import { useUsers } from "@/contexts/UsersProvider";
+import { PeerGroupSelector } from "@components/PeerGroupSelector";
+import Badge from "@components/Badge";
 import {
   ReverseProxyServiceModeSelector,
   SERVICE_MODES,
@@ -108,6 +114,7 @@ export default function ReverseProxyModal({
   const router = useRouter();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
+  const { users } = useUsers();
   const { handleCreateOrUpdateProxy } = useReverseProxies();
 
   const {
@@ -204,9 +211,11 @@ export default function ReverseProxyModal({
   );
 
   // togglePrivate normalises related state when the operator flips
-  // Private. Private services are HTTP-only and require cluster targets,
-  // so dropping out of L4 mode and clearing incompatible targets keeps
-  // the validation gates from deadlocking when toggling.
+  // NetBird-only access. Private services are HTTP-only and require
+  // cluster targets, so we drop out of L4 mode and clear incompatible
+  // targets. NetBird-only and the other auth modes are mutually
+  // exclusive — entering private clears bearer/password/pin/header/link
+  // state so the inbound peer's tunnel identity is the only auth path.
   const togglePrivate = (next: boolean) => {
     setIsPrivate(next);
     if (next) {
@@ -216,12 +225,22 @@ export default function ReverseProxyModal({
           (t) => t.target_type === ReverseProxyTargetType.CLUSTER,
         ),
       );
+      // Clear mutually-exclusive auth modes.
+      setBearerEnabled(false);
+      setBearerGroups([]);
+      setPasswordEnabled(false);
+      setPassword("");
+      setPinEnabled(false);
+      setPin("");
+      setHeaderAuthsEnabled(false);
+      setLinkAuthEnabled(false);
     } else {
       setTargets((prev) =>
         prev.filter(
           (t) => t.target_type !== ReverseProxyTargetType.CLUSTER,
         ),
       );
+      setAccessGroups([]);
     }
   };
 
@@ -265,6 +284,29 @@ export default function ReverseProxyModal({
   const [bearerGroups, setBearerGroups, { save: saveGroups }] = useGroupHelper({
     initial: reverseProxy?.auth?.bearer_auth?.distribution_groups ?? [],
   });
+
+  // Access groups for NetBird-only services. Distinct from bearerGroups
+  // (which gates SSO callers); these groups gate inbound peers on
+  // private services and feed the auto-generated private-access policy.
+  const [
+    accessGroups,
+    setAccessGroups,
+    { save: saveAccessGroups },
+  ] = useGroupHelper({
+    initial:
+      reverseProxy?.access_groups
+        ?.map((id) => ({ id } as Group))
+        ?? [],
+  });
+
+  // Direct upstream is service-level in the UI; on save it patches the
+  // (single) cluster target's options.direct_upstream. Only meaningful
+  // when the service is private.
+  const [directUpstream, setDirectUpstream] = useState<boolean>(
+    reverseProxy?.targets?.some(
+      (t) => t.options?.direct_upstream === true,
+    ) ?? true,
+  );
 
   const [linkAuthEnabled, setLinkAuthEnabled] = useState(
     reverseProxy?.auth?.link_auth?.enabled ?? false,
@@ -335,15 +377,14 @@ export default function ReverseProxyModal({
   ]);
 
   // canSaveService is the Save / Add Service button gate. Layers the
-  // private-service requirement on top of canContinueToSettings: bearer
-  // auth must be enabled with at least one distribution group when the
-  // service is private, so management's auto-policy has SSO sources to
-  // gate inbound traffic.
+  // private-service requirement on top of canContinueToSettings: a
+  // NetBird-only service must declare at least one access group so the
+  // auto-generated policy has sources to allow inbound peers from.
   const canSaveService = useMemo(() => {
     if (!canContinueToSettings) return false;
     if (!isPrivate) return true;
-    return bearerEnabled && bearerGroups.length > 0;
-  }, [canContinueToSettings, isPrivate, bearerEnabled, bearerGroups.length]);
+    return accessGroups.length > 0;
+  }, [canContinueToSettings, isPrivate, accessGroups.length]);
 
   const saveTarget = (targetData: ReverseProxyTarget) => {
     if (editingTargetIndex !== null) {
@@ -399,6 +440,7 @@ export default function ReverseProxyModal({
     }
 
     const savedGroups = await saveGroups();
+    const savedAccessGroups = isPrivate ? await saveAccessGroups() : [];
 
     const auth: ReverseProxyAuth = {
       password_auth: {
@@ -450,8 +492,25 @@ export default function ReverseProxyModal({
         }
       : undefined;
 
-    const submittedTargets =
+    const rawSubmittedTargets =
       isL4Mode && l4TargetPayload ? [l4TargetPayload] : targets;
+
+    // For private services, patch every cluster target with the
+    // service-level direct_upstream choice. This is the only call
+    // site that should write that flag on a private service's targets.
+    const submittedTargets = isPrivate
+      ? rawSubmittedTargets.map((t) =>
+          t.target_type === ReverseProxyTargetType.CLUSTER
+            ? {
+                ...t,
+                options: {
+                  ...(t.options ?? {}),
+                  direct_upstream: directUpstream || undefined,
+                },
+              }
+            : t,
+        )
+      : rawSubmittedTargets;
 
     handleCreateOrUpdateProxy({
       data: {
@@ -467,6 +526,9 @@ export default function ReverseProxyModal({
         auth: isL4Mode ? undefined : auth,
         access_restrictions: accessRestrictions,
         private: isPrivate ? true : undefined,
+        access_groups: isPrivate
+          ? savedAccessGroups.map((g) => g.id as string)
+          : undefined,
       },
       proxyId: reverseProxy?.id,
       onSuccess: () => {
@@ -551,22 +613,11 @@ export default function ReverseProxyModal({
                 />
               )}
 
-              <FancyToggleSwitch
-                value={isPrivate}
-                onChange={togglePrivate}
-                label={
-                  <>
-                    <NetworkIcon size={15} />
-                    Private (NetBird-only)
-                  </>
-                }
-                helpText="Reachable only from peers in the bearer auth distribution groups. Targets pick a proxy cluster instead of a peer/resource; the proxy dials each target's upstream via the host network stack. Requires bearer auth (SSO) enabled with at least one distribution group on the Authentication tab."
-              />
-              {isPrivate && (!bearerEnabled || bearerGroups.length === 0) && (
+              {isPrivate && accessGroups.length === 0 && (
                 <Paragraph className={"!text-yellow-400 !text-xs !mt-0"}>
-                  Private services require bearer auth (SSO) enabled with at
-                  least one distribution group. Configure it on the
-                  Authentication tab before saving.
+                  This service is set to NetBird-only access but has no
+                  access groups. Pick at least one group on the Authentication
+                  tab before saving.
                 </Paragraph>
               )}
 
@@ -604,6 +655,61 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"auth"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-4"}>
+              {serviceMode === ServiceMode.HTTP && (
+                <>
+                  <FancyToggleSwitch
+                    value={isPrivate}
+                    onChange={togglePrivate}
+                    disabled={selectedDomain?.supports_private !== true}
+                    label={
+                      <>
+                        <NetworkIcon size={15} />
+                        NetBird-only access
+                      </>
+                    }
+                    helpText="Only peers in the chosen Access Groups can reach this service. Authentication happens via the WireGuard tunnel identity — no OIDC redirect, no password. Disables all other authentication options. Requires a cluster that supports private services."
+                  />
+                  {selectedDomain?.supports_private !== true && (
+                    <Paragraph
+                      className={"!text-yellow-400 !text-xs !mt-0"}
+                    >
+                      The selected cluster doesn&apos;t support NetBird-only
+                      access. Pick a cluster that has at least one embedded
+                      proxy (peers running <code>netbird proxy</code>) to
+                      enable this option.
+                    </Paragraph>
+                  )}
+                  {isPrivate && (
+                    <div className={"flex flex-col gap-2"}>
+                      <Label>Access Groups</Label>
+                      <HelpText className={"mb-0"}>
+                        Peers in any of these NetBird groups will be allowed
+                        through. Peers outside these groups get a 403 from
+                        the proxy even if they can reach it over the tunnel.
+                      </HelpText>
+                      <PeerGroupSelector
+                        values={accessGroups}
+                        onChange={setAccessGroups}
+                        placeholder={
+                          <div className={"flex items-center gap-2"}>
+                            <Badge
+                              className={"py-[3px]"}
+                              variant={"gray-ghost"}
+                            >
+                              <CircleUser size={12} />
+                              Pick groups
+                            </Badge>
+                            Select access groups...
+                          </div>
+                        }
+                        users={users}
+                        hideAllGroup={true}
+                      />
+                    </div>
+                  )}
+                </>
+              )}
+              {!isPrivate && (
               <SettingCard>
                 <SettingCard.Item
                   label={
@@ -650,6 +756,7 @@ export default function ReverseProxyModal({
                   onClick={() => setHeaderModalOpen(true)}
                 />
               </SettingCard>
+              )}
             </div>
           </TabsContent>
 
@@ -742,6 +849,20 @@ export default function ReverseProxyModal({
                     }
                     helpText="Rewrite Location headers in backend responses to use the public domain instead of the internal backend address."
                   />
+                  {isPrivate &&
+                    selectedDomain?.supports_private === true && (
+                      <FancyToggleSwitch
+                        value={directUpstream}
+                        onChange={setDirectUpstream}
+                        label={
+                          <>
+                            <RouteIcon size={15} />
+                            Direct upstream
+                          </>
+                        }
+                        helpText="Dial the upstream from the proxy host's network stack instead of through the WireGuard tunnel. Turn this on when the upstream is reachable on the public internet or the proxy host's LAN (the proxy peer is in the tunnel, but the upstream isn't). Turn it off when the upstream is itself a NetBird peer."
+                      />
+                    )}
                 </div>
               )}
             </div>

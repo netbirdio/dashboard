@@ -22,6 +22,7 @@ export interface ReverseProxy {
   access_restrictions?: AccessRestrictions;
   meta?: ReverseProxyMeta;
   private?: boolean;
+  access_groups?: string[];
 }
 
 export const CrowdSecMode = {
@@ -121,6 +122,7 @@ export interface ReverseProxyDomain {
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
   supports_crowdsec?: boolean;
+  supports_private?: boolean;
 }
 
 export enum ReverseProxyDomainType {
