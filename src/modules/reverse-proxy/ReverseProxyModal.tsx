@@ -406,6 +406,7 @@ export default function ReverseProxyModal({
   };
 
   const isUnprotected =
+    !isPrivate &&
     !passwordEnabled &&
     !pinEnabled &&
     !bearerEnabled &&
