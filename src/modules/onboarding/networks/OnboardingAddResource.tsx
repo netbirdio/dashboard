@@ -179,15 +179,15 @@ export const OnboardingAddResource = ({
 
   const description = useMemo(() => {
     if (resourceType === "ip")
-      return "Enter a single IPv4 address of your resource";
+      return "Enter a single IPv4 or IPv6 address of your resource";
     if (resourceType === "subnet") return "Enter a CIDR range of your network";
     if (resourceType === "domain")
       return "Enter a domain name of your resource";
   }, [resourceType]);
 
   const placeholder = useMemo(() => {
-    if (resourceType === "ip") return "e.g., 192.168.31.45";
-    if (resourceType === "subnet") return "e.g., 192.168.1.0/24";
+    if (resourceType === "ip") return "e.g., 192.168.31.45 or 2001:db8::1";
+    if (resourceType === "subnet") return "e.g., 192.168.1.0/24 or 2001:db8::/64";
     if (resourceType === "domain")
       return "e.g., service.internal or *.services.internal";
   }, [resourceType]);
@@ -212,13 +212,13 @@ export const OnboardingAddResource = ({
             value={"ip"}
             title={"Single IP Address"}
             icon={<WorkflowIcon size={12} />}
-            description={"IPv4 address like 192.168.31.45"}
+            description={"IPv4 or IPv6 address like 192.168.31.45"}
           />
           <RadioCard
             value={"subnet"}
             title={"Entire Subnet"}
             icon={<NetworkIcon size={12} />}
-            description={"CIDR range like 192.168.0.0/24"}
+            description={"CIDR range like 192.168.0.0/24 or 2001:db8::/64"}
           />
           <RadioCard
             value={"domain"}

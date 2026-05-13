@@ -335,7 +335,7 @@ export function RouteModalContent({
   const cidrError = useMemo(() => {
     if (networkRange == "") return "";
     const validCIDR = cidr.isValidAddress(networkRange);
-    if (!validCIDR) return "Please enter a valid CIDR, e.g., 192.168.1.0/24 or 2001:db8::/64";
+    if (!validCIDR) return "Please enter a valid IP or CIDR, e.g., 192.168.1.1, 192.168.1.0/24 or 2001:db8::/64";
   }, [networkRange]);
 
   const isGroupsEntered = useMemo(() => {
@@ -501,11 +501,11 @@ export function RouteModalContent({
                 )}
               >
                 <Label>Network Range</Label>
-                <HelpText>Add a private IPv4 or IPv6 address range</HelpText>
+                <HelpText>Add a private IPv4 or IPv6 address or range</HelpText>
                 <Input
                   ref={networkRangeRef}
                   customPrefix={<NetworkIcon size={16} />}
-                  placeholder={"e.g., 172.16.0.0/16 or 2001:db8::/64"}
+                  placeholder={"e.g., 172.16.0.1, 172.16.0.0/16 or 2001:db8::/64"}
                   value={networkRange}
                   data-cy={"network-range"}
                   className={"font-mono !text-[13px]"}
