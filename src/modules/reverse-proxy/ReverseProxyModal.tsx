@@ -371,12 +371,8 @@ export default function ReverseProxyModal({
   const canSaveService = useMemo(() => {
     if (!canContinueToSettings) return false;
     if (!isPrivate) return true;
-    if (accessGroups.length === 0) return false;
-    const allClusterTargets = targets.every(
-      (t) => t.target_type === ReverseProxyTargetType.CLUSTER,
-    );
-    return allClusterTargets;
-  }, [canContinueToSettings, isPrivate, accessGroups.length, targets]);
+    return accessGroups.length > 0;
+  }, [canContinueToSettings, isPrivate, accessGroups.length]);
 
   const saveTarget = (targetData: ReverseProxyTarget) => {
     if (editingTargetIndex !== null) {
@@ -487,21 +483,19 @@ export default function ReverseProxyModal({
     const rawSubmittedTargets =
       isL4Mode && l4TargetPayload ? [l4TargetPayload] : targets;
 
-    // For private services, patch every cluster target with the
-    // service-level direct_upstream choice. This is the only call
-    // site that should write that flag on a private service's targets.
+    // For private services, the service-level Direct upstream toggle
+    // applies to every target (regardless of type) so the operator can
+    // mix cluster + peer/host/domain targets and still control the dial
+    // path globally. This is the only call site that writes the flag
+    // on a private service's targets.
     const submittedTargets = isPrivate
-      ? rawSubmittedTargets.map((t) =>
-          t.target_type === ReverseProxyTargetType.CLUSTER
-            ? {
-                ...t,
-                options: {
-                  ...(t.options ?? {}),
-                  direct_upstream: directUpstream || undefined,
-                },
-              }
-            : t,
-        )
+      ? rawSubmittedTargets.map((t) => ({
+          ...t,
+          options: {
+            ...(t.options ?? {}),
+            direct_upstream: directUpstream || undefined,
+          },
+        }))
       : rawSubmittedTargets;
 
     handleCreateOrUpdateProxy({
@@ -612,17 +606,6 @@ export default function ReverseProxyModal({
                 </Paragraph>
               )}
 
-              {isPrivate &&
-                targets.some(
-                  (t) =>
-                    t.target_type !== ReverseProxyTargetType.CLUSTER,
-                ) && (
-                  <Paragraph className={"!text-yellow-400 !text-xs !mt-0"}>
-                    Private services only support cluster targets. Edit each
-                    target and change its type, or remove it.
-                  </Paragraph>
-                )}
-
               {isL4Mode && !isPrivate ? (
                 <ReverseProxyLayer4Content
                   l4Target={l4Target}
@@ -668,7 +651,7 @@ export default function ReverseProxyModal({
                     }
                     description={
                       selectedDomain?.supports_private === true
-                        ? "Reachable only from peers in the selected NetBird groups."
+                        ? "Reachable only from connected peers in the selected NetBird groups."
                         : "The selected cluster doesn't support NetBird-only access."
                     }
                     enabled={isPrivate}
@@ -831,7 +814,7 @@ export default function ReverseProxyModal({
                             Direct upstream
                           </>
                         }
-                        helpText="Dial the upstream from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream isn't a NetBird peer."
+                        helpText="Dial the upstream from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a Wireguard connection."
                       />
                     )}
                 </div>
