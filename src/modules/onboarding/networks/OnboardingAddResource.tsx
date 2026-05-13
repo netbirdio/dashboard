@@ -2,6 +2,7 @@ import Button from "@components/Button";
 import { notify } from "@components/Notification";
 import { RadioCard, RadioCardGroup } from "@components/RadioCard";
 import { useApiCall } from "@utils/api";
+import { normalizeHostCIDR } from "@utils/ip";
 import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
@@ -67,7 +68,7 @@ export const OnboardingAddResource = ({
           {
             name: resourceType === "subnet" ? "My Subnet" : "My Resource",
             description: "Created during onboarding",
-            address: resourceAddress,
+            address: normalizeHostCIDR(resourceAddress),
             enabled: true,
             groups: [],
           },
