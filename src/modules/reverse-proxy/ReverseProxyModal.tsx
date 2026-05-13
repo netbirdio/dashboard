@@ -19,7 +19,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import {
   ArrowRight,
   Binary,
-  CircleUser,
   ClockFadingIcon,
   ExternalLinkIcon,
   FileCode2Icon,
@@ -64,6 +63,7 @@ import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
 import AuthHeaderModal from "@/modules/reverse-proxy/auth/AuthHeaderModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
+import AuthNetBirdOnlyModal from "@/modules/reverse-proxy/auth/AuthNetBirdOnlyModal";
 import ReverseProxyHTTPTargets from "@/modules/reverse-proxy/ReverseProxyHTTPTargets";
 import ReverseProxyLayer4Content from "@/modules/reverse-proxy/ReverseProxyLayer4Content";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
@@ -75,9 +75,6 @@ import {
 } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { Group } from "@/interfaces/Group";
-import { useUsers } from "@/contexts/UsersProvider";
-import { PeerGroupSelector } from "@components/PeerGroupSelector";
-import Badge from "@components/Badge";
 import {
   ReverseProxyServiceModeSelector,
   SERVICE_MODES,
@@ -114,7 +111,6 @@ export default function ReverseProxyModal({
   const router = useRouter();
   const { permission } = usePermissions();
   const { confirm } = useDialog();
-  const { users } = useUsers();
   const { handleCreateOrUpdateProxy } = useReverseProxies();
 
   const {
@@ -211,21 +207,17 @@ export default function ReverseProxyModal({
   );
 
   // togglePrivate normalises related state when the operator flips
-  // NetBird-only access. Private services are HTTP-only and require
-  // cluster targets, so we drop out of L4 mode and clear incompatible
-  // targets. NetBird-only and the other auth modes are mutually
+  // NetBird-only access. Private services are HTTP-only, so we drop out
+  // of L4 mode. NetBird-only and the other auth modes are mutually
   // exclusive — entering private clears bearer/password/pin/header/link
   // state so the inbound peer's tunnel identity is the only auth path.
+  // Existing targets are preserved; the backend rejects non-cluster
+  // targets on save, but operators expect their input to persist while
+  // they reshape it.
   const togglePrivate = (next: boolean) => {
     setIsPrivate(next);
     if (next) {
       setServiceMode(ServiceMode.HTTP);
-      setTargets((prev) =>
-        prev.filter(
-          (t) => t.target_type === ReverseProxyTargetType.CLUSTER,
-        ),
-      );
-      // Clear mutually-exclusive auth modes.
       setBearerEnabled(false);
       setBearerGroups([]);
       setPasswordEnabled(false);
@@ -235,11 +227,6 @@ export default function ReverseProxyModal({
       setHeaderAuthsEnabled(false);
       setLinkAuthEnabled(false);
     } else {
-      setTargets((prev) =>
-        prev.filter(
-          (t) => t.target_type !== ReverseProxyTargetType.CLUSTER,
-        ),
-      );
       setAccessGroups([]);
     }
   };
@@ -330,6 +317,7 @@ export default function ReverseProxyModal({
   const [ssoModalOpen, setSsoModalOpen] = useState(false);
   const [pinModalOpen, setPinModalOpen] = useState(false);
   const [headerModalOpen, setHeaderModalOpen] = useState(false);
+  const [netBirdOnlyModalOpen, setNetBirdOnlyModalOpen] = useState(false);
 
   // Target being added/edited
   const [targetModalOpen, setTargetModalOpen] = useState(false);
@@ -383,8 +371,12 @@ export default function ReverseProxyModal({
   const canSaveService = useMemo(() => {
     if (!canContinueToSettings) return false;
     if (!isPrivate) return true;
-    return accessGroups.length > 0;
-  }, [canContinueToSettings, isPrivate, accessGroups.length]);
+    if (accessGroups.length === 0) return false;
+    const allClusterTargets = targets.every(
+      (t) => t.target_type === ReverseProxyTargetType.CLUSTER,
+    );
+    return allClusterTargets;
+  }, [canContinueToSettings, isPrivate, accessGroups.length, targets]);
 
   const saveTarget = (targetData: ReverseProxyTarget) => {
     if (editingTargetIndex !== null) {
@@ -615,11 +607,21 @@ export default function ReverseProxyModal({
 
               {isPrivate && accessGroups.length === 0 && (
                 <Paragraph className={"!text-yellow-400 !text-xs !mt-0"}>
-                  This service is set to NetBird-only access but has no
-                  access groups. Pick at least one group on the Authentication
-                  tab before saving.
+                  NetBird-only is on but no access groups are set. Open it
+                  on the Authentication tab and pick at least one group.
                 </Paragraph>
               )}
+
+              {isPrivate &&
+                targets.some(
+                  (t) =>
+                    t.target_type !== ReverseProxyTargetType.CLUSTER,
+                ) && (
+                  <Paragraph className={"!text-yellow-400 !text-xs !mt-0"}>
+                    Private services only support cluster targets. Edit each
+                    target and change its type, or remove it.
+                  </Paragraph>
+                )}
 
               {isL4Mode && !isPrivate ? (
                 <ReverseProxyLayer4Content
@@ -655,108 +657,77 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"auth"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-4"}>
-              {serviceMode === ServiceMode.HTTP && (
-                <>
-                  <FancyToggleSwitch
-                    value={isPrivate}
-                    onChange={togglePrivate}
-                    disabled={selectedDomain?.supports_private !== true}
+              <SettingCard>
+                {serviceMode === ServiceMode.HTTP && (
+                  <SettingCard.Item
                     label={
                       <>
                         <NetworkIcon size={15} />
                         NetBird-only access
                       </>
                     }
-                    helpText="Only peers in the chosen Access Groups can reach this service. Authentication happens via the WireGuard tunnel identity — no OIDC redirect, no password. Disables all other authentication options. Requires a cluster that supports private services."
+                    description={
+                      selectedDomain?.supports_private === true
+                        ? "Reachable only from peers in the selected NetBird groups."
+                        : "The selected cluster doesn't support NetBird-only access."
+                    }
+                    enabled={isPrivate}
+                    onClick={() => {
+                      if (selectedDomain?.supports_private === true) {
+                        setNetBirdOnlyModalOpen(true);
+                      }
+                    }}
                   />
-                  {selectedDomain?.supports_private !== true && (
-                    <Paragraph
-                      className={"!text-yellow-400 !text-xs !mt-0"}
-                    >
-                      The selected cluster doesn&apos;t support NetBird-only
-                      access. Pick a cluster that has at least one embedded
-                      proxy (peers running <code>netbird proxy</code>) to
-                      enable this option.
-                    </Paragraph>
-                  )}
-                  {isPrivate && (
-                    <div className={"flex flex-col gap-2"}>
-                      <Label>Access Groups</Label>
-                      <HelpText className={"mb-0"}>
-                        Peers in any of these NetBird groups will be allowed
-                        through. Peers outside these groups get a 403 from
-                        the proxy even if they can reach it over the tunnel.
-                      </HelpText>
-                      <PeerGroupSelector
-                        values={accessGroups}
-                        onChange={setAccessGroups}
-                        placeholder={
-                          <div className={"flex items-center gap-2"}>
-                            <Badge
-                              className={"py-[3px]"}
-                              variant={"gray-ghost"}
-                            >
-                              <CircleUser size={12} />
-                              Pick groups
-                            </Badge>
-                            Select access groups...
-                          </div>
-                        }
-                        users={users}
-                        hideAllGroup={true}
-                      />
-                    </div>
-                  )}
-                </>
-              )}
-              {!isPrivate && (
-              <SettingCard>
-                <SettingCard.Item
-                  label={
-                    <>
-                      <Users size={15} />
-                      SSO (Single Sign-On)
-                    </>
-                  }
-                  description="Require users to authenticate via SSO to access this service."
-                  enabled={bearerEnabled}
-                  onClick={() => setSsoModalOpen(true)}
-                />
-                <SettingCard.Item
-                  label={
-                    <>
-                      <RectangleEllipsis size={15} />
-                      Password
-                    </>
-                  }
-                  description="Require a password to access this service."
-                  enabled={passwordEnabled}
-                  onClick={() => setPasswordModalOpen(true)}
-                />
-                <SettingCard.Item
-                  label={
-                    <>
-                      <Binary size={15} />
-                      PIN Code
-                    </>
-                  }
-                  description="Require a numeric PIN code to access this service."
-                  enabled={pinEnabled}
-                  onClick={() => setPinModalOpen(true)}
-                />
-                <SettingCard.Item
-                  label={
-                    <>
-                      <FileCode2Icon size={15} />
-                      HTTP Headers
-                    </>
-                  }
-                  description="Require specific HTTP headers to access this service."
-                  enabled={headerAuthsEnabled}
-                  onClick={() => setHeaderModalOpen(true)}
-                />
+                )}
+                {!isPrivate && (
+                  <>
+                    <SettingCard.Item
+                      label={
+                        <>
+                          <Users size={15} />
+                          SSO (Single Sign-On)
+                        </>
+                      }
+                      description="Require users to authenticate via SSO to access this service."
+                      enabled={bearerEnabled}
+                      onClick={() => setSsoModalOpen(true)}
+                    />
+                    <SettingCard.Item
+                      label={
+                        <>
+                          <RectangleEllipsis size={15} />
+                          Password
+                        </>
+                      }
+                      description="Require a password to access this service."
+                      enabled={passwordEnabled}
+                      onClick={() => setPasswordModalOpen(true)}
+                    />
+                    <SettingCard.Item
+                      label={
+                        <>
+                          <Binary size={15} />
+                          PIN Code
+                        </>
+                      }
+                      description="Require a numeric PIN code to access this service."
+                      enabled={pinEnabled}
+                      onClick={() => setPinModalOpen(true)}
+                    />
+                    <SettingCard.Item
+                      label={
+                        <>
+                          <FileCode2Icon size={15} />
+                          HTTP Headers
+                        </>
+                      }
+                      description="Require specific HTTP headers to access this service."
+                      enabled={headerAuthsEnabled}
+                      onClick={() => setHeaderModalOpen(true)}
+                    />
+                  </>
+                )}
               </SettingCard>
-              )}
             </div>
           </TabsContent>
 
@@ -860,7 +831,7 @@ export default function ReverseProxyModal({
                             Direct upstream
                           </>
                         }
-                        helpText="Dial the upstream from the proxy host's network stack instead of through the WireGuard tunnel. Turn this on when the upstream is reachable on the public internet or the proxy host's LAN (the proxy peer is in the tunnel, but the upstream isn't). Turn it off when the upstream is itself a NetBird peer."
+                        helpText="Dial the upstream from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream isn't a NetBird peer."
                       />
                     )}
                 </div>
@@ -1064,6 +1035,25 @@ export default function ReverseProxyModal({
           setTimeout(() => {
             setBearerGroups([]);
             setBearerEnabled(false);
+          }, 200);
+        }}
+      />
+
+      <AuthNetBirdOnlyModal
+        open={netBirdOnlyModalOpen}
+        onOpenChange={setNetBirdOnlyModalOpen}
+        key={netBirdOnlyModalOpen ? "nb1" : "nb0"}
+        currentGroups={accessGroups}
+        isEnabled={isPrivate}
+        onSave={(groups) => {
+          setTimeout(() => {
+            setAccessGroups(groups);
+            togglePrivate(true);
+          }, 200);
+        }}
+        onRemove={() => {
+          setTimeout(() => {
+            togglePrivate(false);
           }, 200);
         }}
       />

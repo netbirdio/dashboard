@@ -19,7 +19,6 @@ import {
   ClockFadingIcon,
   ExternalLinkIcon,
   PlusCircle,
-  RouteIcon,
   Server,
   ShieldXIcon,
 } from "lucide-react";
@@ -487,50 +486,6 @@ export default function ReverseProxyTargetModal({
                     }
                     helpText="Skip certificate verification when connecting to this target. Useful if your service already uses a self-signed certificate."
                   />
-                )}
-              {hasTarget && target?.type !== ReverseProxyTargetType.CLUSTER && (
-                <FancyToggleSwitch
-                  className={"mt-3.5"}
-                  value={options.direct_upstream ?? false}
-                  onChange={(v) =>
-                    setOption("direct_upstream", v || undefined)
-                  }
-                  label={
-                    <>
-                      <RouteIcon size={15} />
-                      Direct upstream
-                    </>
-                  }
-                  helpText="Bypass the proxy's NetBird tunnel and dial this target via the proxy host's network stack. Use for upstreams reachable without WireGuard (public APIs, LAN services, localhost sidecars)."
-                />
-              )}
-              {hasTarget &&
-                options.direct_upstream &&
-                target?.type !== ReverseProxyTargetType.SUBNET &&
-                target?.type !== ReverseProxyTargetType.CLUSTER && (
-                  <div className={"mt-3.5 flex flex-col gap-2"}>
-                    <Label>Upstream host</Label>
-                    <HelpText className={"mb-0"}>
-                      Address the proxy host dials directly. Defaults to
-                      the peer&apos;s tunnel IP / resource address.
-                      Override with a LAN IP, localhost, or internal DNS
-                      name reachable from the proxy host without
-                      WireGuard.
-                    </HelpText>
-                    <Input
-                      placeholder={
-                        initialPeer?.ip ?? "host.internal or 10.0.0.5"
-                      }
-                      value={target?.host ?? ""}
-                      onChange={(e) =>
-                        setTarget((prev) =>
-                          prev
-                            ? { ...prev, host: e.target.value }
-                            : prev,
-                        )
-                      }
-                    />
-                  </div>
                 )}
             </div>
 
