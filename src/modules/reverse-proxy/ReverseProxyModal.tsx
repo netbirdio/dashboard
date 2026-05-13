@@ -280,10 +280,7 @@ export default function ReverseProxyModal({
     setAccessGroups,
     { save: saveAccessGroups },
   ] = useGroupHelper({
-    initial:
-      reverseProxy?.access_groups
-        ?.map((id) => ({ id } as Group))
-        ?? [],
+    initial: reverseProxy?.access_groups ?? [],
   });
 
   // Direct upstream is service-level in the UI; on save it patches the

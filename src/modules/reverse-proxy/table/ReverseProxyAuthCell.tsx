@@ -11,6 +11,7 @@ import { UserCountStack } from "@components/ui/MultipleGroups";
 import {
   ArrowRightIcon,
   Binary,
+  CircleUser,
   FileCode2Icon,
   HelpCircle,
   LockKeyhole,
@@ -55,6 +56,12 @@ const HEADER_AUTH_METHOD = {
   Icon: FileCode2Icon,
 };
 
+const NETBIRD_ONLY_METHOD = {
+  label: "NetBird Only",
+  hoverLabel: "NetBird-only access",
+  Icon: CircleUser,
+};
+
 type Props = {
   reverseProxy: ReverseProxy;
 };
@@ -87,10 +94,12 @@ export default function ReverseProxyAuthCell({
   }
 
   const auth = reverseProxy.auth;
+  const isPrivate = !!reverseProxy.private;
 
   const enabled = AUTH_METHODS.filter((m) => auth?.[m.key]?.enabled);
   const hasHeaderAuths = (auth?.header_auths ?? []).some((h) => h.enabled);
-  const authCount = enabled.length + (hasHeaderAuths ? 1 : 0);
+  const authCount =
+    enabled.length + (hasHeaderAuths ? 1 : 0) + (isPrivate ? 1 : 0);
 
   const ssoGroups = auth?.bearer_auth?.enabled
     ? (auth.bearer_auth.distribution_groups ?? [])
@@ -98,12 +107,20 @@ export default function ReverseProxyAuthCell({
         .filter((g): g is Group => g != undefined)
     : [];
 
+  const accessGroups = isPrivate
+    ? (reverseProxy.access_groups ?? [])
+        .map((groupId) => groups?.find((g) => g.id === groupId))
+        .filter((g): g is Group => g != undefined)
+    : [];
+
   const canConfigure = !!permission?.services?.update;
   const singleAuth =
     authCount === 1
-      ? enabled.length === 1
-        ? enabled[0]
-        : HEADER_AUTH_METHOD
+      ? isPrivate
+        ? NETBIRD_ONLY_METHOD
+        : enabled.length === 1
+          ? enabled[0]
+          : HEADER_AUTH_METHOD
       : null;
   const SingleAuthIcon = singleAuth?.Icon ?? null;
 
@@ -135,7 +152,8 @@ export default function ReverseProxyAuthCell({
 
   const showAuthHover =
     authCount > 1 ||
-    (authCount === 1 && (auth?.bearer_auth?.enabled || hasHeaderAuths));
+    (authCount === 1 &&
+      (auth?.bearer_auth?.enabled || hasHeaderAuths || isPrivate));
 
   return (
     <div
@@ -210,6 +228,39 @@ export default function ReverseProxyAuthCell({
                         </div>
                       }
                     />
+                  )}
+                  {isPrivate && (
+                    <ListItem
+                      className={"py-0.5"}
+                      icon={<CircleUser size={14} />}
+                      label={NETBIRD_ONLY_METHOD.hoverLabel}
+                      value={
+                        <div className={"text-green-500"}>
+                          {accessGroups.length === 0
+                            ? "No groups"
+                            : accessGroups.length === 1
+                              ? "1 Group"
+                              : `${accessGroups.length} Groups`}
+                        </div>
+                      }
+                    >
+                      {accessGroups.length > 0 && (
+                        <div className={"flex flex-col gap-2 px-4 pt-2 pb-3"}>
+                          {accessGroups.map((group) => (
+                            <div
+                              key={group.id}
+                              className={
+                                "flex gap-2 items-center justify-between"
+                              }
+                            >
+                              <GroupBadge group={group} />
+                              <ArrowRightIcon size={14} />
+                              <UserCountStack group={group} />
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ListItem>
                   )}
                 </div>
               </HoverCardContent>
