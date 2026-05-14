@@ -58,7 +58,7 @@ const HEADER_AUTH_METHOD = {
 
 const NETBIRD_ONLY_METHOD = {
   label: "NetBird Only",
-  hoverLabel: "NetBird-only access",
+  hoverLabel: "NetBird-Only Access",
   Icon: CircleUser,
 };
 

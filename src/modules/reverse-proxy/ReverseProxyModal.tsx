@@ -294,6 +294,19 @@ export default function ReverseProxyModal({
     ) ?? true,
   );
 
+  // Cluster targets are reached over the embedded proxy's host stack —
+  // turning Direct Upstream off would route them back through the
+  // WireGuard tunnel they have no other endpoint for, so we force the
+  // toggle on and lock it whenever any target is a cluster.
+  const hasClusterTarget = useMemo(
+    () =>
+      targets.some(
+        (t) => t.target_type === ReverseProxyTargetType.CLUSTER,
+      ),
+    [targets],
+  );
+  const effectiveDirectUpstream = hasClusterTarget || directUpstream;
+
   const [linkAuthEnabled, setLinkAuthEnabled] = useState(
     reverseProxy?.auth?.link_auth?.enabled ?? false,
   );
@@ -493,7 +506,7 @@ export default function ReverseProxyModal({
           ...t,
           options: {
             ...(t.options ?? {}),
-            direct_upstream: directUpstream || undefined,
+            direct_upstream: effectiveDirectUpstream || undefined,
           },
         }))
       : rawSubmittedTargets;
@@ -646,13 +659,13 @@ export default function ReverseProxyModal({
                     label={
                       <>
                         <NetworkIcon size={15} />
-                        NetBird-only access
+                        NetBird-Only Access
                       </>
                     }
                     description={
                       selectedDomain?.supports_private === true
                         ? "Reachable only from connected peers in the selected NetBird groups."
-                        : "The selected cluster doesn't support NetBird-only access."
+                        : "The selected cluster doesn't support NetBird-Only Access."
                     }
                     enabled={isPrivate}
                     onClick={() => {
@@ -821,15 +834,20 @@ export default function ReverseProxyModal({
                   {isPrivate &&
                     selectedDomain?.supports_private === true && (
                       <FancyToggleSwitch
-                        value={directUpstream}
+                        value={effectiveDirectUpstream}
                         onChange={setDirectUpstream}
+                        disabled={hasClusterTarget}
                         label={
                           <>
                             <RouteIcon size={15} />
-                            Direct upstream
+                            Direct Upstream
                           </>
                         }
-                        helpText="Dial the upstream from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a Wireguard connection."
+                        helpText={
+                          hasClusterTarget
+                            ? "Required and locked on for proxy-cluster targets: the cluster has no WireGuard endpoint to fall back to."
+                            : "Dial the upstream from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a WireGuard connection."
+                        }
                       />
                     )}
                 </div>

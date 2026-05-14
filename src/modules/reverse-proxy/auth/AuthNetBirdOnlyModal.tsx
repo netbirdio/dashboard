@@ -45,7 +45,7 @@ export default function AuthNetBirdOnlyModal({
     <Modal open={open} onOpenChange={onOpenChange}>
       <ModalContent maxWidthClass="max-w-xl">
         <ModalHeader
-          title="NetBird-only access"
+          title="NetBird-Only Access"
           description="Reachable only from peers in the selected groups."
         />
 
