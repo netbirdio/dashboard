@@ -166,13 +166,6 @@ export default function Navigation({
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
-                  <SidebarItem
-                    label="Self-Hosted Proxies"
-                    isChild
-                    href={"/reverse-proxy/self-hosted-proxies"}
-                    exactPathMatch={true}
-                    visible={permission?.services?.read}
-                  />
                 </SidebarItem>
 
                 <SidebarItem
