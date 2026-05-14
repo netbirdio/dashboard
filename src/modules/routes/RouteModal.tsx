@@ -26,6 +26,7 @@ import InputDomain, { domainReducer } from "@components/ui/InputDomain";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { IconDirectionSign } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
+import { normalizeHostCIDR } from "@utils/ip";
 import cidr from "ip-cidr";
 import { uniqBy } from "lodash";
 import {
@@ -308,7 +309,7 @@ export function RouteModalContent({
         enabled: enabled,
         peer: useSinglePeer ? routingPeer?.id : undefined,
         peer_groups: useSinglePeer ? undefined : peerGroups || undefined,
-        network: routeType === "ip-range" ? networkRange : undefined,
+        network: routeType === "ip-range" ? normalizeHostCIDR(networkRange) : undefined,
         domains: domainRouteNames,
         keep_route: useKeepRoute,
         metric: Number(metric) || 9999,
@@ -334,7 +335,7 @@ export function RouteModalContent({
   const cidrError = useMemo(() => {
     if (networkRange == "") return "";
     const validCIDR = cidr.isValidAddress(networkRange);
-    if (!validCIDR) return "Please enter a valid CIDR, e.g., 192.168.1.0/24";
+    if (!validCIDR) return "Please enter a valid IP or CIDR, e.g., 192.168.1.1, 192.168.1.0/24 or 2001:db8::/64";
   }, [networkRange]);
 
   const isGroupsEntered = useMemo(() => {
@@ -500,11 +501,11 @@ export function RouteModalContent({
                 )}
               >
                 <Label>Network Range</Label>
-                <HelpText>Add a private IPv4 address range</HelpText>
+                <HelpText>Add a private IPv4 or IPv6 address or range</HelpText>
                 <Input
                   ref={networkRangeRef}
                   customPrefix={<NetworkIcon size={16} />}
-                  placeholder={"e.g., 172.16.0.0/16"}
+                  placeholder={"e.g., 172.16.0.1, 172.16.0.0/16, 2001:db8::1 or 2001:db8::/64"}
                   value={networkRange}
                   data-cy={"network-range"}
                   className={"font-mono !text-[13px]"}

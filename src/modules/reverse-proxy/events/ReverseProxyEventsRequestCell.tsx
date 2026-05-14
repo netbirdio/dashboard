@@ -1,5 +1,6 @@
 import CopyToClipboardText from "@components/CopyToClipboardText";
 import TruncatedText from "@components/ui/TruncatedText";
+import { wrapIPv6 } from "@utils/ip";
 import * as React from "react";
 import {
   isL4Event,
@@ -32,9 +33,10 @@ export const ReverseProxyEventsUrlCell = ({ event, service }: Props) => {
   const isL4 = isL4Event(event);
   const listenPort = service?.listen_port;
 
+  const wrappedHost = wrapIPv6(event.host || "");
   const hostWithPort =
-    isL4 && listenPort ? `${event.host}:${listenPort}` : event.host || "-";
-  const fullUrl = isL4 ? hostWithPort : `${event.host}${event.path}`;
+    isL4 && listenPort ? `${wrappedHost}:${listenPort}` : wrappedHost || "-";
+  const fullUrl = isL4 ? hostWithPort : `${wrappedHost}${event.path}`;
 
   return (
     <TruncatedText
@@ -51,7 +53,7 @@ export const ReverseProxyEventsUrlCell = ({ event, service }: Props) => {
     >
       <CopyToClipboardText message={"URL has been copied to your clipboard"}>
         <span className="font-mono text-[0.82rem] whitespace-nowrap">
-          <span className="text-nb-gray-200">{event.host}</span>
+          <span className="text-nb-gray-200">{wrappedHost}</span>
           {isL4 && listenPort && (
             <span className="text-nb-gray-300">:{listenPort}</span>
           )}

@@ -58,7 +58,7 @@ export const ResourceSingleAddressInput = ({
 
     // Case 2: If it's not a valid domain, check if it's a valid CIDR
     if (!cidr.isValidAddress(value)) {
-      return "Please enter a valid IP or CIDR, e.g., 10.0.0.21, 192.168.1.0/24";
+      return "Please enter a valid IP or CIDR, e.g., 10.0.0.21, 192.168.1.0/24, 2001:db8::1 or 2001:db8::/64";
     }
 
     return ""; // Valid CIDR
