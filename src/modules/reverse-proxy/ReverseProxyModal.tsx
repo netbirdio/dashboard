@@ -19,6 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
 import {
   ArrowRight,
   Binary,
+  CircleUser,
   ClockFadingIcon,
   ExternalLinkIcon,
   FileCode2Icon,
@@ -33,6 +34,7 @@ import {
   ShieldCheckIcon,
   Users,
 } from "lucide-react";
+import { Callout } from "@components/Callout";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
@@ -714,6 +716,21 @@ export default function ReverseProxyModal({
 
           <TabsContent value={"access-control"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-4"}>
+              {isPrivate && (
+                <Callout
+                  variant="info"
+                  icon={
+                    <CircleUser
+                      size={14}
+                      className="shrink-0 relative top-[3px]"
+                    />
+                  }
+                >
+                  This service is NetBird-only. An allow rule for the NetBird
+                  network range is applied by default — any rules you add here
+                  are layered on top of that baseline.
+                </Callout>
+              )}
               <ReverseProxyAccessControlRules
                 value={accessRestrictions}
                 onChange={setAccessRestrictions}
@@ -970,6 +987,7 @@ export default function ReverseProxyModal({
           id: reverseProxy?.id || "",
           name: fullDomain,
           domain: fullDomain,
+          proxy_cluster: selectedDomain?.target_cluster || baseDomain || undefined,
           targets: targets,
           enabled: reverseProxy?.enabled ?? true,
           mode: serviceMode,
@@ -977,7 +995,23 @@ export default function ReverseProxyModal({
         initialResource={initialResource}
         initialPeer={initialPeer}
         initialNetwork={initialNetwork}
-        isPrivate={isPrivate}
+        onClusterPick={(cluster) => {
+          // Picking a cluster from the target selector commits it as
+          // the service's domain when none is set yet. We update
+          // baseDomain — selectedDomain is derived from it via useMemo.
+          if (!baseDomain) {
+            setBaseDomain(cluster);
+          }
+          // Cluster targets are reached over the WireGuard overlay, so
+          // the only callers that ever hit the proxy are NetBird peers.
+          // Auto-flip the service to NetBird-only so the auth model
+          // matches the wire reality instead of advertising SSO/PW/PIN
+          // that no public client could ever exercise. No-op when
+          // already private.
+          if (!isPrivate) {
+            togglePrivate(true);
+          }
+        }}
       />
 
       <AuthPasswordModal

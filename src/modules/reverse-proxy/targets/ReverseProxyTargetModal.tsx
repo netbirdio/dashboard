@@ -47,7 +47,6 @@ import ReverseProxyTargetCustomHeaders from "@/modules/reverse-proxy/targets/Rev
 import ReverseProxyTargetSelector, {
   Target,
 } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
-import ReverseProxyClusterTargetSelector from "@/modules/reverse-proxy/targets/ReverseProxyClusterTargetSelector";
 import { useReverseProxyTargetOptions } from "@/modules/reverse-proxy/targets/useReverseProxyTargetOptions";
 import ReverseProxyAddressInput, {
   CidrHelpText,
@@ -80,9 +79,11 @@ type Props = {
   initialResource?: NetworkResource;
   initialPeer?: Peer;
   initialNetwork?: Network;
-  /** When true, swap the peer/resource picker for a cluster picker and
-   *  emit the target as target_type=cluster with direct_upstream=true. */
-  isPrivate?: boolean;
+  /** Called when the operator picks a cluster in the target selector
+   *  and the parent service does not yet have a proxy_cluster set. The
+   *  parent uses this to commit the cluster choice as the service's
+   *  domain so the cluster + upstream stay consistent. */
+  onClusterPick?: (cluster: string) => void;
 };
 
 export default function ReverseProxyTargetModal({
@@ -94,7 +95,7 @@ export default function ReverseProxyTargetModal({
   initialResource,
   initialPeer,
   initialNetwork,
-  isPrivate,
+  onClusterPick,
 }: Readonly<Props>) {
   const existingTargets = reverseProxy.targets || [];
   const domain = reverseProxy.domain;
@@ -269,28 +270,18 @@ export default function ReverseProxyTargetModal({
 
           <div className="px-8 pt-5 pb-4 flex flex-col gap-6">
             {!initialResource && !initialPeer && (
-              isPrivate ? (
-                <ReverseProxyClusterTargetSelector
-                  value={target}
-                  onChange={(selection) => {
-                    setTarget(selection);
-                    if (selection) {
-                      setTimeout(() => portInputRef.current?.focus(), 0);
-                    }
-                  }}
-                />
-              ) : (
-                <ReverseProxyTargetSelector
-                  value={target}
-                  initialNetwork={initialNetwork}
-                  onChange={(selection) => {
-                    setTarget(selection);
-                    if (selection) {
-                      setTimeout(() => portInputRef.current?.focus(), 0);
-                    }
-                  }}
-                />
-              )
+              <ReverseProxyTargetSelector
+                value={target}
+                initialNetwork={initialNetwork}
+                serviceCluster={reverseProxy.proxy_cluster}
+                onClusterPick={onClusterPick}
+                onChange={(selection) => {
+                  setTarget(selection);
+                  if (selection) {
+                    setTimeout(() => portInputRef.current?.focus(), 0);
+                  }
+                }}
+              />
             )}
 
             <div>
