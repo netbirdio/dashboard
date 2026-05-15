@@ -17,6 +17,7 @@ import { Peer } from "@/interfaces/Peer";
 import {
   ReverseProxy,
   ReverseProxyCluster,
+  ReverseProxyClusterType,
   ReverseProxyDomain,
   ReverseProxyFlatTarget,
   ReverseProxyTarget,
@@ -152,7 +153,10 @@ export default function ReverseProxiesProvider({
   const isSelfHostedCluster = useCallback(
     (clusterAddress?: string) => {
       if (!clusterAddress) return false;
-      return !!clusters?.find((c) => c.address === clusterAddress)?.self_hosted;
+      return (
+        clusters?.find((c) => c.address === clusterAddress)?.type ===
+        ReverseProxyClusterType.ACCOUNT
+      );
     },
     [clusters],
   );

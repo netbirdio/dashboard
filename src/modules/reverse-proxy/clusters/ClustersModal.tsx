@@ -39,7 +39,7 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
-export const SelfHostedProxiesModal = ({ open, onOpenChange }: Props) => {
+export const ClustersModal = ({ open, onOpenChange }: Props) => {
   const { mutate } = useSWRConfig();
   const [tab, setTab] = useState("domain");
   const [domain, setDomain] = useState("");

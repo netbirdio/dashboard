@@ -166,6 +166,13 @@ export default function Navigation({
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
+                  <SidebarItem
+                    label="Clusters"
+                    isChild
+                    href={"/reverse-proxy/clusters"}
+                    exactPathMatch={true}
+                    visible={permission?.services?.read}
+                  />
                 </SidebarItem>
 
                 <SidebarItem

@@ -6,19 +6,27 @@ import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
+import {
+  ReverseProxyCluster,
+  ReverseProxyClusterType,
+} from "@/interfaces/ReverseProxy";
 
 type Props = {
   cluster: ReverseProxyCluster;
 };
 
-export default function SelfHostedProxiesActionCell({
-  cluster,
-}: Readonly<Props>) {
+export default function ClustersActionCell({ cluster }: Readonly<Props>) {
   const { confirm } = useDialog();
   const request = useApiCall<ReverseProxyCluster>("/reverse-proxies/clusters");
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
+
+  // Shared clusters are operated by NetBird; only account-owned (BYOP)
+  // clusters can be deleted from this page. Rendering nothing for
+  // shared rows keeps the cell column-aligned without an inert button.
+  if (cluster.type !== ReverseProxyClusterType.ACCOUNT) {
+    return <div className={"pr-4"} />;
+  }
 
   const handleDelete = async () => {
     const choice = await confirm({

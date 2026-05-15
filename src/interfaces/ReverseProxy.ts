@@ -163,11 +163,20 @@ export interface ReverseProxyEvent {
   metadata?: Record<string, string>;
 }
 
+export enum ReverseProxyClusterType {
+  ACCOUNT = "account",
+  SHARED = "shared",
+}
+
 export interface ReverseProxyCluster {
   id?: string;
   address: string;
+  type: ReverseProxyClusterType;
+  online: boolean;
   connected_proxies: number;
-  self_hosted: boolean;
+  supports_custom_ports?: boolean;
+  require_subdomain?: boolean;
+  supports_crowdsec?: boolean;
 }
 
 export interface ReverseProxyClusterToken {
