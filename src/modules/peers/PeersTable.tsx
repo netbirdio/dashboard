@@ -220,16 +220,29 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   },
 ];
 
+export type PeersTableKind = "users" | "servers";
+
 type Props = {
   peers?: Peer[];
   isLoading: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  kind?: PeersTableKind;
+};
+
+// Peers split into two kinds:
+//   users   – owner is a real (non-service) user, typically added via SSO
+//   servers – no owner, or owner is a service user, typically enrolled via setup key
+const matchesKind = (peer: Peer, kind?: PeersTableKind) => {
+  if (!kind) return true;
+  const hasRealUser = !!peer.user && !peer.user.is_service_user;
+  return kind === "users" ? hasRealUser : !hasRealUser;
 };
 
 export default function PeersTable({
   peers,
   isLoading,
   headingTarget,
+  kind,
 }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
@@ -250,12 +263,17 @@ export default function PeersTable({
     ],
   );
 
+  const kindFilteredPeers = useMemo(
+    () => peers?.filter((p) => matchesKind(p, kind)),
+    [peers, kind],
+  );
+
   const pendingApprovalCount =
-    peers?.filter((p) => p.approval_required).length || 0;
+    kindFilteredPeers?.filter((p) => p.approval_required).length || 0;
 
   const tableGroups =
     (uniqBy(
-      peers?.map((p) => p.groups?.map((g) => g)).flatMap((g) => g),
+      kindFilteredPeers?.map((p) => p.groups?.map((g) => g)).flatMap((g) => g),
       "name",
     ) as Group[]) || ([] as Group[]);
 
@@ -278,12 +296,12 @@ export default function PeersTable({
       };
 
       return (
-        peers?.filter((peer) =>
+        kindFilteredPeers?.filter((peer) =>
           condition ? isWebClient(peer) : !isWebClient(peer),
         ) ?? []
       );
     },
-    [peers],
+    [kindFilteredPeers],
   );
 
   const browserPeers = useMemo(() => {
