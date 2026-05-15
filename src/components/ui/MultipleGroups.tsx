@@ -27,6 +27,11 @@ type Props = {
   redirectGroupTab?: string;
   showUsers?: boolean;
   disableRedirect?: boolean;
+  // countOnly collapses the visible chip to a single "N Groups" badge
+  // when there are 2+ groups. The first-group + "+N" pattern is
+  // suppressed in favour of a count summary; the hover card still
+  // shows the full list.
+  countOnly?: boolean;
 };
 
 export default function MultipleGroups({
@@ -39,6 +44,7 @@ export default function MultipleGroups({
   showUsers = false,
   redirectGroupTab,
   disableRedirect = false,
+  countOnly = false,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
 
@@ -63,16 +69,7 @@ export default function MultipleGroups({
             data-cy={"multiple-groups"}
             onClick={onClick}
           >
-            {firstGroup && (
-              <GroupBadge
-                group={firstGroup}
-                showNewBadge={true}
-                className={
-                  permission.groups.update ? "group-hover:bg-nb-gray-800" : ""
-                }
-              />
-            )}
-            {otherGroups && otherGroups.length > 0 && (
+            {countOnly && orderedGroups.length > 1 ? (
               <Badge
                 variant={"gray-ghost"}
                 useHover={true}
@@ -81,8 +78,36 @@ export default function MultipleGroups({
                   permission.groups.update ? "group-hover:bg-nb-gray-800" : "",
                 )}
               >
-                + {otherGroups.length}
+                {orderedGroups.length} Groups
               </Badge>
+            ) : (
+              <>
+                {firstGroup && (
+                  <GroupBadge
+                    group={firstGroup}
+                    showNewBadge={true}
+                    className={
+                      permission.groups.update
+                        ? "group-hover:bg-nb-gray-800"
+                        : ""
+                    }
+                  />
+                )}
+                {otherGroups && otherGroups.length > 0 && (
+                  <Badge
+                    variant={"gray-ghost"}
+                    useHover={true}
+                    className={cn(
+                      "px-3 gap-2 whitespace-nowrap",
+                      permission.groups.update
+                        ? "group-hover:bg-nb-gray-800"
+                        : "",
+                    )}
+                  >
+                    + {otherGroups.length}
+                  </Badge>
+                )}
+              </>
             )}
           </div>
         </HoverCardTrigger>

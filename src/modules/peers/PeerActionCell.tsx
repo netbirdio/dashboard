@@ -8,6 +8,7 @@ import {
 } from "@components/DropdownMenu";
 import FullTooltip from "@components/FullTooltip";
 import { notify } from "@components/Notification";
+import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { IconInfoCircle } from "@tabler/icons-react";
 import {
   ExternalLinkIcon,
@@ -22,7 +23,10 @@ import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePeer } from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { ExitNodeDropdownButton } from "@/modules/exit-node/ExitNodeDropdownButton";
+import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
+import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
 import InlineLink from "@components/InlineLink";
 import { useDialog } from "@/contexts/DialogProvider";
 
@@ -40,6 +44,15 @@ export default function PeerActionCell() {
     if (isDashboardSSHEnabled) return true;
     return !isClientSSHEnabled;
   }, [peer]);
+
+  // The Connect column previously hosted SSH / RDP entry points. We
+  // fold those into the action menu — gated on a non-mobile, online
+  // peer — so the table loses a column and the connect affordance is
+  // one click away inside the three-dot menu.
+  const peerOs = getOperatingSystem(peer?.os);
+  const isMobile =
+    peerOs === OperatingSystem.ANDROID || peerOs === OperatingSystem.IOS;
+  const showRemoteAccessItems = !isMobile && !!peer.connected;
 
   const toggleLoginExpiration = async () => {
     const text = peer.login_expiration_enabled ? "disabled" : "enabled";
@@ -112,6 +125,14 @@ export default function PeerActionCell() {
               View Details
             </div>
           </DropdownMenuItem>
+
+          {showRemoteAccessItems && (
+            <>
+              <DropdownMenuSeparator />
+              <SSHButton peer={peer} isDropdown={true} />
+              <RDPButton peer={peer} isDropdown={true} />
+            </>
+          )}
 
           <DropdownMenuSeparator />
           <FullTooltip
