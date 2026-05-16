@@ -1,44 +1,31 @@
 import Button from "@components/Button";
+import ButtonGroup from "@components/ButtonGroup";
 import { Checkbox } from "@components/Checkbox";
 import FullTooltip from "@components/FullTooltip";
 import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@components/Popover";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
+import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import AddPeerButton from "@components/ui/AddPeerButton";
 import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import {
   ColumnDef,
   RowSelectionState,
   SortingState,
-  Table as TableType,
 } from "@tanstack/react-table";
-import { cn } from "@utils/helpers";
-import { Command, CommandGroup, CommandItem } from "cmdk";
 import { trim, uniqBy } from "lodash";
-import {
-  Check,
-  ChevronsUpDown,
-  MonitorDotIcon,
-  WifiIcon,
-} from "lucide-react";
+import { MonitorDotIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import PeerProvider from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { useLoggedInUser, useUsers } from "@/contexts/UsersProvider";
+import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
-import { User } from "@/interfaces/User";
 import { GroupFilterSelector } from "@/modules/groups/GroupFilterSelector";
-import { UserFilterSelector } from "@/modules/users/UserFilterSelector";
 import PeerActionCell from "@/modules/peers/PeerActionCell";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerGroupCell from "@/modules/peers/PeerGroupCell";
@@ -106,11 +93,6 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "user_email",
     accessorFn: (peer) => (peer.user ? peer.user?.email : "Unknown"),
-  },
-  {
-    id: "user_id_filter",
-    accessorFn: (peer) => peer.user_id,
-    filterFn: "arrIncludesSome",
   },
   {
     id: "dns_label",
@@ -285,18 +267,6 @@ export default function PeersTable({
     ) as Group[]) || ([] as Group[]);
 
   const { isUser } = useLoggedInUser();
-  const { users: accountUsers } = useUsers();
-
-  // The user filter only offers users who actually own at least one peer
-  // in the current view — keeps the list short and meaningful.
-  const tableUsers = useMemo(() => {
-    if (!accountUsers || !kindFilteredPeers) return [] as User[];
-    const owning = new Set<string>();
-    kindFilteredPeers.forEach((p) => {
-      if (p.user_id) owning.add(p.user_id);
-    });
-    return accountUsers.filter((u) => owning.has(u.id));
-  }, [accountUsers, kindFilteredPeers]);
 
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
 
@@ -351,7 +321,6 @@ export default function PeersTable({
         text={"Peers"}
         sorting={sorting}
         setSorting={setSorting}
-        initialPageSize={25}
         columns={PeersTableColumns}
         data={showBrowserPeers ? browserPeers : regularPeers}
         searchPlaceholder={"Search by name, IP, owner or group..."}
@@ -365,7 +334,6 @@ export default function PeersTable({
           serial: false,
           user_name: false,
           user_email: false,
-          user_id_filter: false,
           actions: permission.peers.update,
           groups: permission.groups.read,
           os: false,
@@ -377,6 +345,110 @@ export default function PeersTable({
       >
         {(table) => (
           <>
+            <ButtonGroup disabled={peers?.length == 0}>
+              <ButtonGroup.Button
+                disabled={peers?.length == 0}
+                onClick={() => {
+                  table.setPageIndex(0);
+                  let groupFilters = table
+                    .getColumn("group_names")
+                    ?.getFilterValue();
+                  table.setColumnFilters([
+                    {
+                      id: "connected",
+                      value: undefined,
+                    },
+                    {
+                      id: "approval_required",
+                      value: undefined,
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                  ]);
+                  resetSelectedRows();
+                }}
+                variant={
+                  table.getColumn("connected")?.getFilterValue() == undefined
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                All
+              </ButtonGroup.Button>
+              <ButtonGroup.Button
+                onClick={() => {
+                  table.setPageIndex(0);
+                  let groupFilters = table
+                    .getColumn("group_names")
+                    ?.getFilterValue();
+                  table.setColumnFilters([
+                    {
+                      id: "connected",
+                      value: true,
+                    },
+                    {
+                      id: "approval_required",
+                      value: undefined,
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                  ]);
+                  resetSelectedRows();
+                }}
+                disabled={peers?.length == 0}
+                variant={
+                  table.getColumn("connected")?.getFilterValue() == true
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                Online
+              </ButtonGroup.Button>
+              <ButtonGroup.Button
+                onClick={() => {
+                  table.setPageIndex(0);
+                  let groupFilters = table
+                    .getColumn("group_names")
+                    ?.getFilterValue();
+                  table.setColumnFilters([
+                    {
+                      id: "connected",
+                      value: false,
+                    },
+                    {
+                      id: "approval_required",
+                      value: undefined,
+                    },
+                    {
+                      id: "group_names",
+                      value: groupFilters ?? [],
+                    },
+                  ]);
+                  resetSelectedRows();
+                }}
+                disabled={peers?.length == 0}
+                variant={
+                  table.getColumn("connected")?.getFilterValue() == false
+                    ? "tertiary"
+                    : "secondary"
+                }
+              >
+                Offline
+              </ButtonGroup.Button>
+            </ButtonGroup>
+
             {pendingApprovalCount > 0 && (
               <Button
                 disabled={peers?.length == 0}
@@ -413,11 +485,7 @@ export default function PeersTable({
               </Button>
             )}
 
-            <OnlineStatusFilter
-              table={table}
-              disabled={peers?.length == 0}
-              resetSelectedRows={resetSelectedRows}
-            />
+            <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
 
             {!isUser && (
               <GroupFilterSelector
@@ -438,31 +506,6 @@ export default function PeersTable({
                   resetSelectedRows();
                 }}
                 groups={tableGroups}
-              />
-            )}
-
-            {!isUser && tableUsers.length > 0 && (
-              <UserFilterSelector
-                disabled={peers?.length == 0}
-                values={
-                  (table
-                    .getColumn("user_id_filter")
-                    ?.getFilterValue() as string[]) || []
-                }
-                onChange={(userIds) => {
-                  table.setPageIndex(0);
-                  if (userIds.length === 0) {
-                    table
-                      .getColumn("user_id_filter")
-                      ?.setFilterValue(undefined);
-                  } else {
-                    table
-                      .getColumn("user_id_filter")
-                      ?.setFilterValue(userIds);
-                  }
-                  resetSelectedRows();
-                }}
-                users={tableUsers}
               />
             )}
 
@@ -500,114 +543,5 @@ export default function PeersTable({
         )}
       </DataTable>
     </>
-  );
-}
-
-type StatusFilterOption = {
-  value: "all" | "online" | "offline";
-  label: string;
-  filterValue: boolean | undefined;
-  dotClass: string;
-};
-
-const STATUS_OPTIONS: StatusFilterOption[] = [
-  {
-    value: "all",
-    label: "All",
-    filterValue: undefined,
-    dotClass: "bg-nb-gray-500",
-  },
-  {
-    value: "online",
-    label: "Online",
-    filterValue: true,
-    dotClass: "bg-green-500",
-  },
-  {
-    value: "offline",
-    label: "Offline",
-    filterValue: false,
-    dotClass: "bg-nb-gray-700",
-  },
-];
-
-function OnlineStatusFilter({
-  table,
-  disabled,
-  resetSelectedRows,
-}: {
-  table: TableType<Peer>;
-  disabled: boolean;
-  resetSelectedRows: () => void;
-}) {
-  const [open, setOpen] = useState(false);
-  const filterValue = table.getColumn("connected")?.getFilterValue();
-  const current =
-    STATUS_OPTIONS.find((o) => o.filterValue === filterValue) ??
-    STATUS_OPTIONS[0];
-
-  const apply = (option: StatusFilterOption) => {
-    table.setPageIndex(0);
-    const groupFilters = table.getColumn("group_names")?.getFilterValue();
-    table.setColumnFilters([
-      { id: "connected", value: option.filterValue },
-      { id: "approval_required", value: undefined },
-      { id: "group_names", value: groupFilters ?? [] },
-    ]);
-    resetSelectedRows();
-    setOpen(false);
-  };
-
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <Button variant={"secondary"} disabled={disabled}>
-          <WifiIcon size={16} className={"shrink-0"} />
-          <div className={"w-full flex justify-between"}>
-            {current.label}
-            <div className={"pl-2"}>
-              <ChevronsUpDown size={18} className={"shrink-0"} />
-            </div>
-          </div>
-        </Button>
-      </PopoverTrigger>
-      <PopoverContent className={"w-[180px] p-0"} sideOffset={7}>
-        <Command value={current.value}>
-          <CommandGroup>
-            {STATUS_OPTIONS.map((option) => (
-              <CommandItem
-                key={option.value}
-                value={option.value}
-                onSelect={() => apply(option)}
-              >
-                <div
-                  className={cn(
-                    "cursor-pointer flex gap-2 px-2 py-1.5 my-1 mx-1 rounded-md items-center hover:dark:bg-nb-gray-800 text-nb-gray-400 hover:text-white w-full",
-                    current.value === option.value ? "text-white" : "",
-                  )}
-                >
-                  <Check
-                    size={15}
-                    className={cn(
-                      "text-white shrink-0",
-                      current.value === option.value
-                        ? "opacity-100"
-                        : "opacity-0",
-                    )}
-                  />
-                  <span
-                    className={cn(
-                      "h-2 w-2 rounded-full shrink-0",
-                      option.dotClass,
-                    )}
-                  />
-                  {option.label}
-                </div>
-              </CommandItem>
-            ))}
-          </CommandGroup>
-        </Command>
-      </PopoverContent>
-    </Popover>
   );
 }
