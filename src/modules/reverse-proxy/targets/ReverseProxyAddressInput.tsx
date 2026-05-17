@@ -20,8 +20,10 @@ export function useReverseProxyAddress(target: Target | undefined) {
     if (!resourceAddress) return false;
     if (!cidr.isValidCIDR(resourceAddress)) return false;
     const parts = resourceAddress.split("/");
-    const mask = parts.length === 2 ? parseInt(parts[1], 10) : 32;
-    return mask < 32;
+    if (parts.length !== 2) return false;
+    const mask = parseInt(parts[1], 10);
+    const hostMask = resourceAddress.includes(":") ? 128 : 32;
+    return mask < hostMask;
   }, [target?.type, resourceAddress]);
 
   const cidrInfo = useMemo(() => {
@@ -97,14 +99,14 @@ export default function ReverseProxyAddressInput({
     <Input
       value={target?.host ?? ""}
       onChange={(e) => {
-        const host = restrictToIPv4
-          ? e.target.value.replace(/[^0-9.]/g, "")
+        const host = isHostEditable
+          ? e.target.value.replace(/[^0-9a-fA-F.:]/g, "")
           : e.target.value;
         onChange((prev) => prev && { ...prev, host });
       }}
       maxWidthClass={"w-full"}
       customSuffix={":"}
-      placeholder={placeholder}
+      placeholder="e.g., 192.168.0.10 or 2001:db8::1"
       disabled={!target}
       readOnly={target && !isHostEditable ? true : undefined}
       className={cn("rounded-r-none border-r-0", className)}

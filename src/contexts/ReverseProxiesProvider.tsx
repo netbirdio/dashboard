@@ -2,6 +2,7 @@
 
 import { notify } from "@components/Notification";
 import useFetchApi, { useApiCall } from "@utils/api";
+import { wrapIPv6 } from "@utils/ip";
 import React, {
   createContext,
   useCallback,
@@ -644,7 +645,7 @@ function formatTargetDestination(
   target: ReverseProxyTarget,
   resolvedHost?: string,
 ): string {
-  const host = target.host || resolvedHost || "localhost";
+  const host = wrapIPv6(target.host || resolvedHost || "localhost");
   const isDefault =
     (target.protocol === "http" && target.port === 80) ||
     (target.protocol === "https" && target.port === 443) ||
