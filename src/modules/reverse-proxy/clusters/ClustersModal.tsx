@@ -119,8 +119,8 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
       <ModalContent maxWidthClass={"relative max-w-[600px]"} showClose={true}>
         <ModalHeader
           icon={<ServerIcon size={16} />}
-          title={"Setup Proxy"}
-          description={"Setup a self-hosted reverse proxy"}
+          title={"Setup Cluster"}
+          description={"Setup a self-hosted cluster"}
           color={"netbird"}
         />
 
@@ -154,7 +154,7 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
               <div>
                 <Label>Domain</Label>
                 <HelpText>
-                  Enter a domain name that will be used for your proxy.
+                  Enter a domain name that will be used for your cluster.
                 </HelpText>
                 <Input
                   autoFocus={true}
@@ -201,13 +201,13 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
               </div>
               <CardTable>
                 <CardTable.Header>
-                  <CardTable.HeaderCell width={120}>Type</CardTable.HeaderCell>
+                  <CardTable.HeaderCell width={100}>Type</CardTable.HeaderCell>
                   <CardTable.HeaderCell>Name</CardTable.HeaderCell>
                   <CardTable.HeaderCell>Content</CardTable.HeaderCell>
                 </CardTable.Header>
                 <CardTable.Body>
                   <CardTable.Row>
-                    <CardTable.Cell>A Record</CardTable.Cell>
+                    <CardTable.Cell>A</CardTable.Cell>
                     <CardTable.Cell copy copyText={domain}>
                       {domain}
                     </CardTable.Cell>
@@ -216,12 +216,12 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
                     </CardTable.Cell>
                   </CardTable.Row>
                   <CardTable.Row>
-                    <CardTable.Cell>A Record</CardTable.Cell>
+                    <CardTable.Cell>CNAME</CardTable.Cell>
                     <CardTable.Cell copy copyText={`*.${domain}`}>
                       {`*.${domain}`}
                     </CardTable.Cell>
-                    <CardTable.Cell className={"italic"}>
-                      Your machine&apos;s IP
+                    <CardTable.Cell copy copyText={domain}>
+                      {domain}
                     </CardTable.Cell>
                   </CardTable.Row>
                 </CardTable.Body>
@@ -291,7 +291,7 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
                 href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
                 target={"_blank"}
               >
-                Self-Hosted Proxies
+                Self-Hosted Cluster
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>

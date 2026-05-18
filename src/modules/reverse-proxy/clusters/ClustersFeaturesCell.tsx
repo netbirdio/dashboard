@@ -2,6 +2,7 @@ import Badge from "@components/Badge";
 import FullTooltip from "@components/FullTooltip";
 import { ShieldAlert, SlidersHorizontal, Globe } from "lucide-react";
 import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
+import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
 type Props = {
   cluster: ReverseProxyCluster;
@@ -25,7 +26,7 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
       key: "custom-ports",
       label: "Custom Ports",
       description: "Cluster can bind arbitrary TCP/UDP ports for services.",
-      icon: <SlidersHorizontal size={11} className={"text-netbird"} />,
+      icon: <SlidersHorizontal size={14} className={"text-netbird"} />,
     });
   }
   if (cluster.require_subdomain) {
@@ -34,7 +35,7 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
       label: "Subdomain Required",
       description:
         "Services on this cluster must use a subdomain — the bare cluster domain is not addressable.",
-      icon: <Globe size={11} className={"text-nb-gray-300"} />,
+      icon: <Globe size={14} className={"text-nb-gray-300"} />,
     });
   }
   if (cluster.supports_crowdsec) {
@@ -43,12 +44,12 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
       label: "CrowdSec",
       description:
         "Cluster has CrowdSec IP reputation configured across all active proxies.",
-      icon: <ShieldAlert size={11} className={"text-green-500"} />,
+      icon: <ShieldAlert size={14} className={"text-green-500"} />,
     });
   }
 
   if (features.length === 0) {
-    return <span className={"text-nb-gray-400 text-xs"}>—</span>;
+    return <EmptyRow />;
   }
 
   return (
@@ -63,7 +64,7 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
             </div>
           }
         >
-          <Badge variant={"gray"}>
+          <Badge variant={"gray"} className={"h-[34px] cursor-help"}>
             {f.icon}
             <span className="font-medium text-xs">{f.label}</span>
           </Badge>

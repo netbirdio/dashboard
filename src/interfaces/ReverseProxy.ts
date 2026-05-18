@@ -226,7 +226,7 @@ export const REVERSE_PROXY_SETTINGS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy#step-4-configure-advanced-settings";
 
 export const REVERSE_PROXY_CLUSTERS_DOCS_LINK =
-  "https://docs.netbird.io/manage/reverse-proxy#self-hosted-proxy-setup";
+  "https://docs.netbird.io/manage/reverse-proxy/bring-your-own-proxy";
 
 export const REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy/custom-domains";

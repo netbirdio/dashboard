@@ -1,3 +1,4 @@
+import Badge from "@components/Badge";
 import { Server } from "lucide-react";
 import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
 
@@ -8,9 +9,13 @@ type Props = {
 export default function ClustersConnectedCell({ cluster }: Readonly<Props>) {
   const count = cluster.connected_proxies;
   return (
-    <div className="flex items-center gap-2 text-nb-gray-300">
-      <Server size={12} className={"shrink-0"} />
-      <span className="font-medium tabular-nums">{count}</span>
+    <div className={"flex"}>
+      <Badge variant={"gray"}>
+        <Server size={11} />
+        <div>
+          <span className={"font-medium text-xs"}>{count}</span>
+        </div>
+      </Badge>
     </div>
   );
 }
