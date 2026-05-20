@@ -163,11 +163,20 @@ export interface ReverseProxyEvent {
   metadata?: Record<string, string>;
 }
 
+export enum ReverseProxyClusterType {
+  ACCOUNT = "account",
+  SHARED = "shared",
+}
+
 export interface ReverseProxyCluster {
   id?: string;
   address: string;
+  type: ReverseProxyClusterType;
+  online: boolean;
   connected_proxies: number;
-  self_hosted: boolean;
+  supports_custom_ports?: boolean;
+  require_subdomain?: boolean;
+  supports_crowdsec?: boolean;
 }
 
 export interface ReverseProxyClusterToken {
@@ -217,19 +226,19 @@ export const REVERSE_PROXY_SETTINGS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy#step-4-configure-advanced-settings";
 
 export const REVERSE_PROXY_CLUSTERS_DOCS_LINK =
-  "https://docs.netbird.io/manage/reverse-proxy#self-hosted-proxy-setup";
+  "https://docs.netbird.io/manage/reverse-proxy/bring-your-own-proxy#shared-and-account-clusters";
 
 export const REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy/custom-domains";
 
 export const REVERSE_PROXY_DOMAIN_VERIFICATION_LINK =
-  "https://docs.netbird.io/manage/reverse-proxy/custom-domains#validating-a-custom-domain";
+  "https://docs.netbird.io/manage/reverse-proxy/custom-domains#verifying-a-custom-domain";
 
 export const REVERSE_PROXY_EVENTS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy/access-logs";
 
 export const REVERSE_PROXY_ACCESS_CONTROL_DOCS_LINK =
-  "https://docs.netbird.io/manage/reverse-proxy";
+  "https://docs.netbird.io/manage/reverse-proxy#step-3b-configure-access-control";
 
 export const REVERSE_PROXY_TROUBLESHOOTING_DOCS_LINK =
-  "https://docs.netbird.io/manage/reverse-proxy#troubleshooting";
+  "https://docs.netbird.io/manage/reverse-proxy/troubleshooting";

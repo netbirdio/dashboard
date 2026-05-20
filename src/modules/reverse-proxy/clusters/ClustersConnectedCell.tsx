@@ -6,18 +6,14 @@ type Props = {
   cluster: ReverseProxyCluster;
 };
 
-export default function SelfHostedProxiesConnectedCell({
-  cluster,
-}: Readonly<Props>) {
+export default function ClustersConnectedCell({ cluster }: Readonly<Props>) {
   const count = cluster.connected_proxies;
   return (
-    <div className="flex items-center w-full">
+    <div className={"flex"}>
       <Badge variant={"gray"}>
-        <Server size={11} className={"relative -top-[0.5px]"} />
+        <Server size={11} />
         <div>
-          <span className="font-medium text-xs">
-            {count > 0 ? count : "No Proxies Connected"}
-          </span>
+          <span className={"font-medium text-xs"}>{count}</span>
         </div>
       </Badge>
     </div>

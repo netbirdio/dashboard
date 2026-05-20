@@ -10,25 +10,26 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { PlusCircle, ServerIcon } from "lucide-react";
 
 import { usePathname } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
 import useFetchApi from "@/utils/api";
-import SelfHostedProxiesActionCell from "@/modules/reverse-proxy/self-hosted-proxies/SelfHostedProxiesActionCell";
-import SelfHostedProxiesConnectedCell from "@/modules/reverse-proxy/self-hosted-proxies/SelfHostedProxiesConnectedCell";
-import { SelfHostedProxiesModal } from "@/modules/reverse-proxy/self-hosted-proxies/SelfHostedProxiesModal";
-import SelfHostedProxiesNameCell from "@/modules/reverse-proxy/self-hosted-proxies/SelfHostedProxiesNameCell";
+import ClustersActionCell from "@/modules/reverse-proxy/clusters/ClustersActionCell";
+import ClustersConnectedCell from "@/modules/reverse-proxy/clusters/ClustersConnectedCell";
+import ClustersFeaturesCell from "@/modules/reverse-proxy/clusters/ClustersFeaturesCell";
+import { ClustersModal } from "@/modules/reverse-proxy/clusters/ClustersModal";
+import ClustersNameCell from "@/modules/reverse-proxy/clusters/ClustersNameCell";
 
 const ClustersColumns: ColumnDef<ReverseProxyCluster>[] = [
   {
     accessorKey: "address",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Proxy Cluster</DataTableHeader>;
+      return <DataTableHeader column={column}>Cluster</DataTableHeader>;
     },
     sortingFn: "text",
-    cell: ({ row }) => <SelfHostedProxiesNameCell cluster={row.original} />,
+    cell: ({ row }) => <ClustersNameCell cluster={row.original} />,
   },
   {
     accessorKey: "connected_proxies",
@@ -37,9 +38,14 @@ const ClustersColumns: ColumnDef<ReverseProxyCluster>[] = [
         <DataTableHeader column={column}>Connected Proxies</DataTableHeader>
       );
     },
-    cell: ({ row }) => (
-      <SelfHostedProxiesConnectedCell cluster={row.original} />
-    ),
+    sortingFn: "basic",
+    cell: ({ row }) => <ClustersConnectedCell cluster={row.original} />,
+  },
+  {
+    id: "features",
+    header: () => <span className={"font-medium text-xs"}>Features</span>,
+    enableSorting: false,
+    cell: ({ row }) => <ClustersFeaturesCell cluster={row.original} />,
   },
   {
     id: "searchString",
@@ -49,7 +55,7 @@ const ClustersColumns: ColumnDef<ReverseProxyCluster>[] = [
     id: "actions",
     accessorKey: "address",
     header: "",
-    cell: ({ row }) => <SelfHostedProxiesActionCell cluster={row.original} />,
+    cell: ({ row }) => <ClustersActionCell cluster={row.original} />,
   },
 ];
 
@@ -57,9 +63,7 @@ type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
-export default function SelfHostedProxiesTable({
-  headingTarget,
-}: Readonly<Props>) {
+export default function ClustersTable({ headingTarget }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const { permission } = usePermissions();
@@ -67,9 +71,7 @@ export default function SelfHostedProxiesTable({
     "/reverse-proxies/clusters",
   );
 
-  const selfHostedClusters = useMemo(() => {
-    return clusters?.filter((c) => c.self_hosted) ?? [];
-  }, [clusters]);
+  const rows = clusters ?? [];
 
   const [addModalOpen, setAddModalOpen] = useState(false);
 
@@ -85,7 +87,7 @@ export default function SelfHostedProxiesTable({
 
   return (
     <>
-      <SelfHostedProxiesModal
+      <ClustersModal
         open={addModalOpen}
         onOpenChange={setAddModalOpen}
         key={addModalOpen ? 1 : 0}
@@ -96,13 +98,13 @@ export default function SelfHostedProxiesTable({
         isLoading={isLoading}
         inset={false}
         keepStateInLocalStorage={false}
-        text={"Self-Hosted Proxies"}
+        text={"Clusters"}
         sorting={sorting}
         setSorting={setSorting}
         columns={ClustersColumns}
-        data={selfHostedClusters}
+        data={rows}
         useRowId={true}
-        searchPlaceholder={"Search by proxy cluster domain..."}
+        searchPlaceholder={"Search by cluster domain..."}
         columnVisibility={{ searchString: false }}
         getStartedCard={
           <GetStartedTest
@@ -113,9 +115,9 @@ export default function SelfHostedProxiesTable({
                 size={"large"}
               />
             }
-            title={"Setup Your Own Self-Hosted Proxy Cluster"}
+            title={"No clusters available"}
             description={
-              "Setup self-hosted proxies on your own infrastructure for full control over traffic and geographic location."
+              "There are no shared clusters connected to your account and no self-hosted clusters configured. Set up a self-hosted cluster to route traffic through your own infrastructure — see the documentation linked above for setup steps."
             }
             button={
               <Button
@@ -124,14 +126,14 @@ export default function SelfHostedProxiesTable({
                 disabled={!permission?.services?.create}
               >
                 <PlusCircle size={16} />
-                Setup Proxy
+                Setup Self-Hosted Cluster
               </Button>
             }
           />
         }
         rightSide={() => (
           <>
-            {selfHostedClusters.length > 0 && (
+            {rows.length > 0 && (
               <Button
                 variant={"primary"}
                 className={"ml-auto"}
@@ -139,7 +141,7 @@ export default function SelfHostedProxiesTable({
                 disabled={!permission?.services?.create}
               >
                 <PlusCircle size={16} />
-                Setup Proxy
+                Setup Self-Hosted Cluster
               </Button>
             )}
           </>
@@ -149,10 +151,10 @@ export default function SelfHostedProxiesTable({
           <>
             <DataTableRowsPerPage
               table={table}
-              disabled={selfHostedClusters.length === 0}
+              disabled={rows.length === 0}
             />
             <DataTableRefreshButton
-              isDisabled={selfHostedClusters.length === 0}
+              isDisabled={rows.length === 0}
               onClick={() => {
                 mutate("/reverse-proxies/clusters").then();
               }}
