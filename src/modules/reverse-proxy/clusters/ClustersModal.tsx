@@ -120,7 +120,7 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
         <ModalHeader
           icon={<ServerIcon size={16} />}
           title={"Setup Cluster"}
-          description={"Setup a self-hosted cluster"}
+          description={"Setup a proxy cluster"}
           color={"netbird"}
         />
 
@@ -291,7 +291,7 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
                 href={REVERSE_PROXY_CLUSTERS_DOCS_LINK}
                 target={"_blank"}
               >
-                Self-Hosted Cluster
+                Proxy Cluster
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </Paragraph>
