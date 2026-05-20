@@ -13,11 +13,8 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 import { REVERSE_PROXY_CLUSTERS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 
-const SelfHostedProxiesTable = lazy(
-  () =>
-    import(
-      "@/modules/reverse-proxy/self-hosted-proxies/SelfHostedProxiesTable"
-    ),
+const ClustersTable = lazy(
+  () => import("@/modules/reverse-proxy/clusters/ClustersTable"),
 );
 
 export default function ReverseProxyClustersPage() {
@@ -36,31 +33,32 @@ export default function ReverseProxyClustersPage() {
             icon={<ReverseProxyIcon size={16} />}
           />
           <Breadcrumbs.Item
-            href={"/reverse-proxy/self-hosted-proxies"}
-            label={"Self-Hosted Proxies"}
+            href={"/reverse-proxy/clusters"}
+            label={"Clusters"}
             active={true}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Self-Hosted Proxies</h1>
+        <h1 ref={headingRef}>Clusters</h1>
         <Paragraph>
-          Setup self-hosted proxies on your own infrastructure for full control
-          over traffic and geographic location.
+          Proxy clusters that route inbound traffic to your services. Shared
+          clusters are deployed at the server level; account clusters are
+          self-hosted on your own infrastructure.
         </Paragraph>
         <Paragraph>
           Learn more about
           <InlineLink href={REVERSE_PROXY_CLUSTERS_DOCS_LINK} target={"_blank"}>
-            Self-Hosted Proxies
+            Clusters
             <ExternalLinkIcon size={12} />
           </InlineLink>
           in our documentation.
         </Paragraph>
       </div>
       <RestrictedAccess
-        page={"Self-Hosted Proxies"}
+        page={"Clusters"}
         hasAccess={permission?.services?.read}
       >
         <Suspense fallback={<SkeletonTable />}>
-          <SelfHostedProxiesTable headingTarget={portalTarget} />
+          <ClustersTable headingTarget={portalTarget} />
         </Suspense>
       </RestrictedAccess>
     </PageContainer>
