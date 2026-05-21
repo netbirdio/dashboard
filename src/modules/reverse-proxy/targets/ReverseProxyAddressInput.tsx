@@ -99,14 +99,14 @@ export default function ReverseProxyAddressInput({
     <Input
       value={target?.host ?? ""}
       onChange={(e) => {
-        const host = isHostEditable
+        const host = restrictToIPv4
           ? e.target.value.replace(/[^0-9a-fA-F.:]/g, "")
           : e.target.value;
         onChange((prev) => prev && { ...prev, host });
       }}
       maxWidthClass={"w-full"}
       customSuffix={":"}
-      placeholder="e.g., 192.168.0.10 or 2001:db8::1"
+      placeholder={placeholder}
       disabled={!target}
       readOnly={target && !isHostEditable ? true : undefined}
       className={cn("rounded-r-none border-r-0", className)}
