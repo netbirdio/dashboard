@@ -45,4 +45,5 @@ export interface PeerLocalFlags {
   rosenpass_enabled: boolean;
   rosenpass_permissive: boolean;
   server_ssh_allowed: boolean;
+  server_vnc_allowed: boolean;
 }
