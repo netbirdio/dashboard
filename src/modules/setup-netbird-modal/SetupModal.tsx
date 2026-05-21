@@ -35,6 +35,10 @@ type Props = {
   setupKey?: string;
   showOnlyRoutingPeerOS?: boolean;
   className?: string;
+  // isUserDevice tailors the modal for a personal device (laptop/phone).
+  // Currently this hides the Docker tab; further server-vs-user-device
+  // differences (OS list, copy, defaults) hang off the same flag.
+  isUserDevice?: boolean;
 };
 
 export default function SetupModal({
@@ -43,6 +47,7 @@ export default function SetupModal({
   setupKey,
   showOnlyRoutingPeerOS = false,
   className,
+  isUserDevice = false,
 }: Readonly<Props>) {
   return (
     <ModalContent showClose={showClose} className={className}>
@@ -50,6 +55,7 @@ export default function SetupModal({
         user={user}
         setupKey={setupKey}
         showOnlyRoutingPeerOS={showOnlyRoutingPeerOS}
+        isUserDevice={isUserDevice}
       />
     </ModalContent>
   );
@@ -64,7 +70,7 @@ type SetupModalContentProps = {
   showOnlyRoutingPeerOS?: boolean;
   title?: string;
   hostname?: string;
-  hideDocker?: boolean;
+  isUserDevice?: boolean;
 };
 
 export function SetupModalContent({
@@ -76,8 +82,12 @@ export function SetupModalContent({
   showOnlyRoutingPeerOS,
   title,
   hostname,
-  hideDocker = false,
+  isUserDevice = false,
 }: Readonly<SetupModalContentProps>) {
+  // Display flags derived from isUserDevice. Keeping the derivations
+  // localised here means callers only pick the audience and the modal
+  // takes care of the rest.
+  const hideDocker = isUserDevice;
   const os = useOperatingSystem();
   const [isFirstRun] = useLocalStorage<boolean>("netbird-first-run", true);
   const pathname = usePathname();

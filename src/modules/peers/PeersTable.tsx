@@ -341,7 +341,13 @@ export default function PeersTable({
         }}
         isLoading={isLoading}
         getStartedCard={<NoPeersGettingStarted showBackground={true} />}
-        rightSide={() => <>{peers && peers.length > 0 && <AddPeerButton />}</>}
+        rightSide={() => (
+          <>
+            {peers && peers.length > 0 && (
+              <AddPeerButton isUserDevice={kind === "users"} />
+            )}
+          </>
+        )}
       >
         {(table) => (
           <>
