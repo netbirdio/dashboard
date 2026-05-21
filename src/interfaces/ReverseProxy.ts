@@ -188,6 +188,11 @@ export interface ReverseProxyCluster {
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
   supports_crowdsec?: boolean;
+  // True when at least one connected proxy in this cluster is running embedded
+  // in a netbird client (`netbird proxy`) and serving over a WireGuard tunnel.
+  // Lets the dashboard distinguish per-peer / private clusters from centralised
+  // ones.
+  private?: boolean;
 }
 
 export interface ReverseProxyClusterToken {

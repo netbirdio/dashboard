@@ -1,6 +1,6 @@
 import Badge from "@components/Badge";
 import FullTooltip from "@components/FullTooltip";
-import { ShieldAlert, SlidersHorizontal, Globe } from "lucide-react";
+import { Lock, ShieldAlert, SlidersHorizontal, Globe } from "lucide-react";
 import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
@@ -45,6 +45,15 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
       description:
         "Cluster has CrowdSec IP reputation configured across all active proxies.",
       icon: <ShieldAlert size={14} className={"text-green-500"} />,
+    });
+  }
+  if (cluster.private) {
+    features.push({
+      key: "private",
+      label: "Private",
+      description:
+        "At least one connected proxy in this cluster runs embedded in a NetBird client (`netbird proxy`) and serves over the WireGuard tunnel. Required for NetBird-only services.",
+      icon: <Lock size={14} className={"text-netbird"} />,
     });
   }
 

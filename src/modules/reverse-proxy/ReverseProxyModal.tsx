@@ -2,6 +2,7 @@
 
 import Button from "@components/Button";
 import FancyToggleSwitch from "@components/FancyToggleSwitch";
+import FullTooltip from "@components/FullTooltip";
 import HelpText from "@components/HelpText";
 import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
@@ -655,25 +656,33 @@ export default function ReverseProxyModal({
             <div className={"px-8 flex-col flex gap-4"}>
               <SettingCard>
                 {serviceMode === ServiceMode.HTTP && (
-                  <SettingCard.Item
-                    label={
-                      <>
-                        <NetworkIcon size={15} />
-                        NetBird-Only Access
-                      </>
+                  <FullTooltip
+                    disabled={selectedDomain?.supports_private === true}
+                    content={
+                      <div className={"text-xs max-w-xs"}>
+                        NetBird-Only Access requires a proxy cluster with at
+                        least one connected embedded proxy (
+                        <code>netbird proxy</code>). The selected cluster
+                        doesn't have one. Connect an embedded proxy to this
+                        cluster to enable this option.
+                      </div>
                     }
-                    description={
-                      selectedDomain?.supports_private === true
-                        ? "Reachable only from connected peers in the selected NetBird groups."
-                        : "The selected cluster doesn't support NetBird-Only Access."
-                    }
-                    enabled={isPrivate}
-                    onClick={() => {
-                      if (selectedDomain?.supports_private === true) {
-                        setNetBirdOnlyModalOpen(true);
+                  >
+                    <SettingCard.Item
+                      label={
+                        <>
+                          <NetworkIcon size={15} />
+                          NetBird-Only Access
+                        </>
                       }
-                    }}
-                  />
+                      description="Reachable only from connected peers in the selected NetBird groups."
+                      enabled={isPrivate}
+                      disabled={selectedDomain?.supports_private !== true}
+                      onClick={() => {
+                        setNetBirdOnlyModalOpen(true);
+                      }}
+                    />
+                  </FullTooltip>
                 )}
                 {!isPrivate && (
                   <>
@@ -831,12 +840,25 @@ export default function ReverseProxyModal({
                     }
                     helpText="Rewrite Location headers in backend responses to use the public domain instead of the internal backend address."
                   />
-                  {isPrivate &&
-                    selectedDomain?.supports_private === true && (
+                  {isPrivate && (
+                    <FullTooltip
+                      disabled={selectedDomain?.supports_private === true}
+                      content={
+                        <div className={"text-xs max-w-xs"}>
+                          Direct Upstream is only configurable on clusters with
+                          at least one connected embedded proxy (
+                          <code>netbird proxy</code>). The selected cluster
+                          doesn't have one.
+                        </div>
+                      }
+                    >
                       <FancyToggleSwitch
                         value={effectiveDirectUpstream}
                         onChange={setDirectUpstream}
-                        disabled={hasClusterTarget}
+                        disabled={
+                          hasClusterTarget ||
+                          selectedDomain?.supports_private !== true
+                        }
                         label={
                           <>
                             <RouteIcon size={15} />
@@ -849,7 +871,8 @@ export default function ReverseProxyModal({
                             : "Dial the upstream from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a WireGuard connection."
                         }
                       />
-                    )}
+                    </FullTooltip>
+                  )}
                 </div>
               )}
             </div>
