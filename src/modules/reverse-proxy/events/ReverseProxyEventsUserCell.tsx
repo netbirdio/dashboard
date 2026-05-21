@@ -50,7 +50,7 @@ export const ReverseProxyEventsUserCell = ({ event }: Props) => {
     };
   } else if (peer) {
     displayName = peer.name || peer.hostname || event.user_id;
-    displaySub = "Agent";
+    displaySub = "Peer";
     identityForColor = {
       id: peer.id ?? event.user_id,
       name: displayName,
