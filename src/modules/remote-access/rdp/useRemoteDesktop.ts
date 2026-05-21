@@ -20,6 +20,8 @@ export interface RDPCredentials {
   password: string;
   domain?: string;
   port: number;
+  // ipVersion selects the IP version used to reach the peer: "4" or "6".
+  ipVersion?: string;
 }
 
 interface RDPConnection {

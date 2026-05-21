@@ -24,6 +24,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
+import { IPVersionSelect } from "@/modules/remote-access/IPVersionSelect";
 import { SSH_DOCS_LINK } from "@/modules/remote-access/ssh/useSSH";
 
 type Props = {
@@ -41,6 +42,7 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
 
   const initialPort = isNativeSSHSupported(peer.version) ? "22" : "44338";
   const [port, setPort] = useState(initialPort);
+  const [ipVersion, setIpVersion] = useState("4");
 
   const userNameError = useMemo(() => {
     if (username?.length === 0) return "Username cannot be empty";
@@ -61,9 +63,10 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
   const openSSHWindow = () => {
     const encodedUsername = encodeURIComponent(username.trim());
     const encodedPort = encodeURIComponent(port.trim());
+    const ipVersionParam = ipVersion === "6" ? "&ip_version=6" : "";
 
     window.open(
-      `/peer/ssh?id=${peer.id}&user=${encodedUsername}&port=${encodedPort}`,
+      `/peer/ssh?id=${peer.id}&user=${encodedUsername}&port=${encodedPort}${ipVersionParam}`,
       "_blank",
       "noopener,noreferrer,width=800,height=450,left=100,top=100,location=no,toolbar=no,menubar=no,status=no",
     );
@@ -92,7 +95,9 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
                 placeholder={"root"}
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                customSuffix={`@${peer.ip}`}
+                customSuffix={`@${
+                  ipVersion === "6" && peer.ipv6 ? peer.ipv6 : peer.ip
+                }`}
                 data-1p-ignore
                 autoComplete={"off"}
                 error={userNameError}
@@ -121,6 +126,17 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
                 }
               />
             </div>
+          </div>
+          <div>
+            <Label>IP Version</Label>
+            <HelpText>
+              The IP version used to connect to the remote host.
+            </HelpText>
+            <IPVersionSelect
+              value={ipVersion}
+              onChange={setIpVersion}
+              hasIPv6={!!peer.ipv6}
+            />
           </div>
         </div>
 
