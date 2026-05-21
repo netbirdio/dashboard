@@ -77,7 +77,11 @@ export default function AuthNetBirdOnlyModal({
                   <ModalClose asChild>
                     <Button variant="secondary">Cancel</Button>
                   </ModalClose>
-                  <Button variant="primary" onClick={handleSave}>
+                  <Button
+                    variant="primary"
+                    onClick={handleSave}
+                    disabled={groups.length === 0}
+                  >
                     Save
                   </Button>
                 </div>
