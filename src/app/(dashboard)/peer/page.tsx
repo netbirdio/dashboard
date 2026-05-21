@@ -70,9 +70,13 @@ import ReverseProxiesProvider, {
 import { ReverseProxyFlatTargetsTabContent } from "@/modules/reverse-proxy/targets/flat/ReverseProxyFlatTargetsTabContent";
 import { PeerEditIPModal } from "@/modules/peer/PeerEditIPModal";
 import { PeerSSHToggle } from "@/modules/peer/PeerSSHToggle";
-import { isSSHSupportedOnOS } from "@/modules/remote-access/osSupport";
+import {
+  isSSHSupportedOnOS,
+  isVNCSupportedOnOS,
+} from "@/modules/remote-access/osSupport";
 import { RDPButton } from "@/modules/remote-access/rdp/RDPButton";
 import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
+import { VNCButton } from "@/modules/remote-access/vnc/VNCButton";
 import { PeerExpirationSettings } from "@/modules/peer/PeerExpirationSettings";
 
 export default function PeerPage() {
@@ -432,6 +436,15 @@ const PeerOverviewTabContent = () => {
   const { permission } = usePermissions();
   const { selectedGroups, setSelectedGroups } = usePeerSettings();
   const isSSHSupported = isSSHSupportedOnOS(peer?.os);
+  // Named in the order the buttons appear below, and only the ones that do.
+  // RDP is unconditional: the server is not ours, so any system may run one.
+  const remoteAccessMethods = [
+    isSSHSupported && "SSH",
+    "RDP",
+    isVNCSupportedOnOS(peer?.os) && "VNC",
+  ]
+    .filter(Boolean)
+    .join(", ");
 
   return (
     <div className={"px-8"}>
@@ -465,12 +478,12 @@ const PeerOverviewTabContent = () => {
           <div>
             <Label>Remote Access</Label>
             <HelpText>
-              Connect directly to this peer via{" "}
-              {isSSHSupported ? "SSH or RDP" : "RDP"}.
+              Connect directly to this peer via {remoteAccessMethods}.
             </HelpText>
             <div className="flex gap-3">
               <SSHButton peer={peer} />
               <RDPButton peer={peer} />
+              <VNCButton peer={peer} />
             </div>
           </div>
         </div>
