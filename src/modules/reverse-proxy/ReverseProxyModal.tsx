@@ -61,6 +61,7 @@ import AuthPasswordModal from "@/modules/reverse-proxy/auth/AuthPasswordModal";
 import AuthHeaderModal from "@/modules/reverse-proxy/auth/AuthHeaderModal";
 import AuthPinModal from "@/modules/reverse-proxy/auth/AuthPinModal";
 import AuthSSOModal from "@/modules/reverse-proxy/auth/AuthSSOModal";
+import AuthMTLSModal from "@/modules/reverse-proxy/auth/AuthMTLSModal";
 import ReverseProxyHTTPTargets from "@/modules/reverse-proxy/ReverseProxyHTTPTargets";
 import ReverseProxyLayer4Content from "@/modules/reverse-proxy/ReverseProxyLayer4Content";
 import ReverseProxyTargetModal from "@/modules/reverse-proxy/targets/ReverseProxyTargetModal";
@@ -242,6 +243,12 @@ export default function ReverseProxyModal({
   const [linkAuthEnabled, setLinkAuthEnabled] = useState(
     reverseProxy?.auth?.link_auth?.enabled ?? false,
   );
+  const [mtlsEnabled, setMTLSEnabled] = useState(
+    reverseProxy?.auth?.mtls_auth?.enabled ?? false,
+  );
+  const [mtlsCACertPEM, setMTLSCACertPEM] = useState(
+    reverseProxy?.auth?.mtls_auth?.ca_cert_pem ?? "",
+  );
 
   const [headerAuthsEnabled, setHeaderAuthsEnabled] = useState(
     (reverseProxy?.auth?.header_auths ?? []).some((h) => h.enabled),
@@ -261,6 +268,7 @@ export default function ReverseProxyModal({
   const [ssoModalOpen, setSsoModalOpen] = useState(false);
   const [pinModalOpen, setPinModalOpen] = useState(false);
   const [headerModalOpen, setHeaderModalOpen] = useState(false);
+  const [mtlsModalOpen, setMTLSModalOpen] = useState(false);
 
   // Target being added/edited
   const [targetModalOpen, setTargetModalOpen] = useState(false);
@@ -331,11 +339,21 @@ export default function ReverseProxyModal({
     );
   };
 
+  const canReuseStoredMTLSCert =
+    reverseProxy?.auth?.mtls_auth?.enabled === true;
+  const mtlsError =
+    mtlsEnabled &&
+    !canReuseStoredMTLSCert &&
+    mtlsCACertPEM.trim().length === 0
+      ? "CA certificate PEM is required when mTLS is enabled"
+      : undefined;
+
   const isUnprotected =
     !passwordEnabled &&
     !pinEnabled &&
     !bearerEnabled &&
     !linkAuthEnabled &&
+    !mtlsEnabled &&
     !headerAuthsEnabled &&
     !accessRestrictions;
 
@@ -370,6 +388,13 @@ export default function ReverseProxyModal({
       },
       link_auth: {
         enabled: linkAuthEnabled,
+      },
+      mtls_auth: {
+        enabled: mtlsEnabled,
+        ca_cert_pem:
+          mtlsEnabled && mtlsCACertPEM.trim().length > 0
+            ? mtlsCACertPEM
+            : undefined,
       },
       header_auths: headerAuthsEnabled
         ? headerAuths.map((h) => ({ ...h, enabled: true }))
@@ -572,6 +597,17 @@ export default function ReverseProxyModal({
                 <SettingCard.Item
                   label={
                     <>
+                      <ShieldCheckIcon size={15} />
+                      mTLS
+                    </>
+                  }
+                  description="Require clients to present a certificate signed by your trusted CA."
+                  enabled={mtlsEnabled}
+                  onClick={() => setMTLSModalOpen(true)}
+                />
+                <SettingCard.Item
+                  label={
+                    <>
                       <FileCode2Icon size={15} />
                       HTTP Headers
                     </>
@@ -742,6 +778,7 @@ export default function ReverseProxyModal({
                     <Button
                       variant={"primary"}
                       onClick={() => setTab("access-control")}
+                      disabled={!!mtlsError}
                     >
                       Continue
                     </Button>
@@ -780,6 +817,7 @@ export default function ReverseProxyModal({
                         !canContinueToSettings ||
                         !permission?.services?.create ||
                         !!timeoutError ||
+                        !!mtlsError ||
                         accessControlHasErrors
                       }
                       onClick={handleSubmit}
@@ -801,6 +839,7 @@ export default function ReverseProxyModal({
                     !canContinueToSettings ||
                     !permission?.services?.update ||
                     !!timeoutError ||
+                    !!mtlsError ||
                     accessControlHasErrors
                   }
                   onClick={handleSubmit}
@@ -912,6 +951,26 @@ export default function ReverseProxyModal({
           setTimeout(() => {
             setHeaderAuths([]);
             setHeaderAuthsEnabled(false);
+          }, 200);
+        }}
+      />
+
+      <AuthMTLSModal
+        open={mtlsModalOpen}
+        onOpenChange={setMTLSModalOpen}
+        key={mtlsModalOpen ? "m1" : "m0"}
+        currentCACertPEM={mtlsCACertPEM}
+        isEnabled={mtlsEnabled}
+        onSave={(caCertPEM) => {
+          setTimeout(() => {
+            setMTLSCACertPEM(caCertPEM);
+            setMTLSEnabled(true);
+          }, 200);
+        }}
+        onRemove={() => {
+          setTimeout(() => {
+            setMTLSCACertPEM("");
+            setMTLSEnabled(false);
           }, 200);
         }}
       />
