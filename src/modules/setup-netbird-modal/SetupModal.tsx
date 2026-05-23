@@ -1,6 +1,7 @@
 "use client";
 
 import Button from "@components/Button";
+import Code from "@components/Code";
 import { HelpTooltip } from "@components/HelpTooltip";
 import InlineLink from "@components/InlineLink";
 import { ModalContent, ModalFooter } from "@components/modal/Modal";
@@ -11,6 +12,7 @@ import { Tabs, TabsList, TabsTrigger } from "@components/Tabs";
 import { IconInfoCircle } from "@tabler/icons-react";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
+import { getNetBirdUpCommand } from "@utils/netbird";
 import {
   CopyIcon,
   ExternalLinkIcon,
@@ -350,6 +352,49 @@ export const SetupKeyParameter = ({
     <>
       {" "}
       --setup-key <span className={"text-netbird"}>{display}</span>
+    </>
+  );
+};
+
+type NetBirdUpCommandProps = {
+  setupKey?: string;
+  setupKeyPlaceholder?: string;
+  hostname?: string;
+};
+
+// NetBirdUpCommand renders `netbird up` inside a <Code> block. When
+// extra flags are present it splits across multiple lines with shell
+// continuations so long commands stay readable and still copy/paste
+// cleanly into a terminal.
+export const NetBirdUpCommand = ({
+  setupKey,
+  setupKeyPlaceholder,
+  hostname,
+}: NetBirdUpCommandProps) => {
+  const keyValue = setupKey ?? setupKeyPlaceholder;
+  const hasKey = !!keyValue;
+  const hasHostname = !!hostname;
+
+  if (!hasKey && !hasHostname) {
+    return <Code.Line>{getNetBirdUpCommand()}</Code.Line>;
+  }
+
+  return (
+    <>
+      <Code.Line>{getNetBirdUpCommand()} \</Code.Line>
+      {hasKey && (
+        <Code.Line>
+          {"  --setup-key "}
+          <span className={"text-netbird"}>{keyValue}</span>
+          {hasHostname && " \\"}
+        </Code.Line>
+      )}
+      {hasHostname && (
+        <Code.Line>
+          {"  --hostname "}
+          <span className={"text-netbird"}>{`'${hostname}'`}</span>
+        </Code.Line>
+      )}
     </>
   );
 };

@@ -3,15 +3,14 @@ import Code from "@components/Code";
 import { SelectDropdown } from "@components/select/SelectDropdown";
 import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
-import { getNetBirdUpCommand, GRPC_API_ORIGIN } from "@utils/netbird";
+import { GRPC_API_ORIGIN } from "@utils/netbird";
 import { DownloadIcon, PackageOpenIcon } from "lucide-react";
 import Link from "next/link";
 import React, { useState } from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
-  HostnameParameter,
+  NetBirdUpCommand,
   RoutingPeerSetupKeyInfo,
-  SetupKeyParameter,
 } from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
@@ -112,14 +111,11 @@ export default function WindowsTab({
               </p>
 
               <Code>
-                <Code.Line>
-                  {getNetBirdUpCommand()}
-                  <SetupKeyParameter
-                    setupKey={setupKey}
-                    placeholder={setupKeyPlaceholder}
-                  />
-                  <HostnameParameter hostname={hostname} />
-                </Code.Line>
+                <NetBirdUpCommand
+                  setupKey={setupKey}
+                  setupKeyPlaceholder={setupKeyPlaceholder}
+                  hostname={hostname}
+                />
               </Code>
             </Steps.Step>
           ) : (

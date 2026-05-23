@@ -9,14 +9,12 @@ import Separator from "@components/Separator";
 import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
 import { IconBrandUbuntu } from "@tabler/icons-react";
-import { getNetBirdUpCommand } from "@utils/netbird";
 import { TerminalSquareIcon } from "lucide-react";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
-  HostnameParameter,
+  NetBirdUpCommand,
   RoutingPeerSetupKeyInfo,
-  SetupKeyParameter,
 } from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
@@ -56,14 +54,11 @@ export default function LinuxTab({
               {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
             </p>
             <Code>
-              <Code.Line>
-                {getNetBirdUpCommand()}
-                <SetupKeyParameter
-                  setupKey={setupKey}
-                  placeholder={setupKeyPlaceholder}
-                />
-                <HostnameParameter hostname={hostname} />
-              </Code.Line>
+              <NetBirdUpCommand
+                setupKey={setupKey}
+                setupKeyPlaceholder={setupKeyPlaceholder}
+                hostname={hostname}
+              />
             </Code>
           </Steps.Step>
         </Steps>
@@ -117,14 +112,11 @@ export default function LinuxTab({
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <Code>
-                    <Code.Line>
-                      {getNetBirdUpCommand()}
-                      <SetupKeyParameter
-                        setupKey={setupKey}
-                        placeholder={setupKeyPlaceholder}
-                      />
-                      <HostnameParameter hostname={hostname} />
-                    </Code.Line>
+                    <NetBirdUpCommand
+                      setupKey={setupKey}
+                      setupKeyPlaceholder={setupKeyPlaceholder}
+                      hostname={hostname}
+                    />
                   </Code>
                 </Steps.Step>
               </Steps>

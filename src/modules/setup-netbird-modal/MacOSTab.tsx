@@ -9,7 +9,7 @@ import Code from "@components/Code";
 import Separator from "@components/Separator";
 import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
-import { getNetBirdUpCommand, GRPC_API_ORIGIN } from "@utils/netbird";
+import { GRPC_API_ORIGIN } from "@utils/netbird";
 import {
   BeerIcon,
   DownloadIcon,
@@ -21,9 +21,8 @@ import Link from "next/link";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
-  HostnameParameter,
+  NetBirdUpCommand,
   RoutingPeerSetupKeyInfo,
-  SetupKeyParameter,
 } from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
@@ -97,14 +96,11 @@ export default function MacOSTab({
               </p>
 
               <Code>
-                <Code.Line>
-                  {getNetBirdUpCommand()}
-                  <SetupKeyParameter
-                    setupKey={setupKey}
-                    placeholder={setupKeyPlaceholder}
-                  />
-                  <HostnameParameter hostname={hostname} />
-                </Code.Line>
+                <NetBirdUpCommand
+                  setupKey={setupKey}
+                  setupKeyPlaceholder={setupKeyPlaceholder}
+                  hostname={hostname}
+                />
               </Code>
             </Steps.Step>
           ) : (
@@ -143,14 +139,11 @@ export default function MacOSTab({
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <Code>
-                    <Code.Line>
-                      {getNetBirdUpCommand()}
-                      <SetupKeyParameter
-                        setupKey={setupKey}
-                        placeholder={setupKeyPlaceholder}
-                      />
-                      <HostnameParameter hostname={hostname} />
-                    </Code.Line>
+                    <NetBirdUpCommand
+                      setupKey={setupKey}
+                      setupKeyPlaceholder={setupKeyPlaceholder}
+                      hostname={hostname}
+                    />
                   </Code>
                 </Steps.Step>
               </Steps>
@@ -207,14 +200,11 @@ export default function MacOSTab({
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <Code>
-                    <Code.Line>
-                      {getNetBirdUpCommand()}
-                      <SetupKeyParameter
-                        setupKey={setupKey}
-                        placeholder={setupKeyPlaceholder}
-                      />
-                      <HostnameParameter hostname={hostname} />
-                    </Code.Line>
+                    <NetBirdUpCommand
+                      setupKey={setupKey}
+                      setupKeyPlaceholder={setupKeyPlaceholder}
+                      hostname={hostname}
+                    />
                   </Code>
                 </Steps.Step>
               </Steps>
