@@ -12,7 +12,7 @@ type Props = {
   isUserDevice?: boolean;
 };
 
-function AddPeerButton({ isUserDevice = false }: Readonly<Props>) {
+function AddPeerButton({ isUserDevice }: Readonly<Props>) {
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const { oidcUser: user } = useOidcUser();
 

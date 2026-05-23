@@ -21,15 +21,21 @@ import {
 
 type Props = {
   setupKey?: string;
+  setupKeyContent?: React.ReactNode;
+  setupKeyPlaceholder?: string;
   showSetupKeyInfo?: boolean;
   hostname?: string;
 };
 
 export default function LinuxTab({
   setupKey,
+  setupKeyContent,
+  setupKeyPlaceholder,
   showSetupKeyInfo = false,
   hostname,
 }: Readonly<Props>) {
+  const runStep = setupKeyContent ? 3 : 2;
+  const usingSetupKey = !!setupKey || !!setupKeyPlaceholder;
   return (
     <TabsContent value={String(OperatingSystem.LINUX)}>
       <TabsContentPadding>
@@ -41,15 +47,21 @@ export default function LinuxTab({
           <Steps.Step step={1}>
             <Code>curl -fsSL https://pkgs.netbird.io/install.sh | sh</Code>
           </Steps.Step>
-          <Steps.Step step={2} line={false}>
+          {setupKeyContent && (
+            <Steps.Step step={2}>{setupKeyContent}</Steps.Step>
+          )}
+          <Steps.Step step={runStep} line={false}>
             <p>
-              Run NetBird {!setupKey && "and log in the browser"}
+              Run NetBird {!usingSetupKey && "and log in the browser"}
               {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
             </p>
             <Code>
               <Code.Line>
                 {getNetBirdUpCommand()}
-                <SetupKeyParameter setupKey={setupKey} />
+                <SetupKeyParameter
+                  setupKey={setupKey}
+                  placeholder={setupKeyPlaceholder}
+                />
                 <HostnameParameter hostname={hostname} />
               </Code.Line>
             </Code>
@@ -101,13 +113,16 @@ export default function LinuxTab({
                 </Steps.Step>
                 <Steps.Step step={3} line={false}>
                   <p>
-                    Run NetBird {!setupKey && "and log in the browser"}
+                    Run NetBird {!usingSetupKey && "and log in the browser"}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <Code>
                     <Code.Line>
                       {getNetBirdUpCommand()}
-                      <SetupKeyParameter setupKey={setupKey} />
+                      <SetupKeyParameter
+                        setupKey={setupKey}
+                        placeholder={setupKeyPlaceholder}
+                      />
                       <HostnameParameter hostname={hostname} />
                     </Code.Line>
                   </Code>
