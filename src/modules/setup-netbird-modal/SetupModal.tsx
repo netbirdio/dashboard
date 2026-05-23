@@ -197,11 +197,9 @@ export function SetupModalContent({
               effectiveSetupKey ? "max-w-sm" : "max-w-xs",
             )}
           >
-            {isUserDevice === false
-              ? "Generate a setup key and run NetBird with it as a parameter on the target machine."
-              : effectiveSetupKey
-                ? "To get started, install and run NetBird with the setup key as a parameter."
-                : "To get started, install NetBird and log in with your email account."}
+            {isUserDevice === false || effectiveSetupKey
+              ? "To get started, install and run NetBird with the setup key as a parameter."
+              : "To get started, install NetBird and log in with your email account."}
           </Paragraph>
         </div>
       )}
@@ -448,7 +446,6 @@ function SetupKeyGenerator({
       <div className={"mt-2"}>
         <Button
           variant={"primary"}
-          size={"xs"}
           onClick={generate}
           disabled={isGenerating}
         >
@@ -457,7 +454,7 @@ function SetupKeyGenerator({
           ) : (
             <KeyRoundIcon size={14} />
           )}
-          Generate
+          Generate Key
         </Button>
       </div>
     );
@@ -485,10 +482,10 @@ function SetupKeyGenerator({
         </div>
         <div
           className={
-            "text-nb-gray-400 text-[0.72rem] mt-1.5 flex items-center gap-1"
+            "text-nb-gray-400 text-[0.72rem] flex items-center gap-1"
           }
         >
-          <IconInfoCircle size={12} />
+
           This setup key can be used only once and expires in 24 hours.
         </div>
       </div>
