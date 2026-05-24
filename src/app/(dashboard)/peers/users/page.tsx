@@ -6,7 +6,7 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
-import React, { lazy, Suspense } from "react";
+import React, { lazy, Suspense, useMemo } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -33,18 +33,23 @@ export default function UserDevicesPage() {
 }
 
 function UserDevicesView() {
-  const { peers, isLoading } = usePeers();
-  const { users } = useUsers();
+  const { peers, isLoading: isPeersLoading } = usePeers();
+  const { users, isLoading: isUsersLoading } = useUsers();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
-  const peersWithUser = peers?.map((peer) => {
-    if (!users) return peer;
-    return {
+  // The kind filter classifies peers by whether their owner is a real
+  // user vs a service/no-user, so we must wait until both peers and
+  // users have loaded before joining them — otherwise peers temporarily
+  // render with peer.user === undefined and get misclassified.
+  const isLoading = isPeersLoading || isUsersLoading;
+  const peersWithUser = useMemo(() => {
+    if (!peers || !users) return undefined;
+    return peers.map((peer) => ({
       ...peer,
-      user: users?.find((user) => user.id === peer.user_id),
-    };
-  });
+      user: users.find((u) => u.id === peer.user_id),
+    }));
+  }, [peers, users]);
 
   return (
     <>
