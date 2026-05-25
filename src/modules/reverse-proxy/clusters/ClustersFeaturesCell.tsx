@@ -11,7 +11,7 @@ type Props = {
 type Feature = {
   key: string;
   label: string;
-  description: string;
+  description: React.ReactNode;
   icon: React.ReactNode;
 };
 
@@ -51,8 +51,16 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
     features.push({
       key: "private",
       label: "Private",
-      description:
-        "At least one connected proxy in this cluster runs embedded in a NetBird client (`netbird proxy`) and serves over the WireGuard tunnel. Required for NetBird-only services.",
+      description: (
+        <>
+          Lets you publish services that are only reachable from peers in your
+          NetBird network. Required for{" "}
+          <span className={"font-medium text-white"}>NetBird-Only Access</span>{" "}
+          and{" "}
+          <span className={"font-medium text-white"}>Proxy Cluster</span>{" "}
+          target types.
+        </>
+      ),
       icon: <Lock size={14} className={"text-netbird"} />,
     });
   }

@@ -137,9 +137,9 @@ export default function ReverseProxyTargetSelector({
                       A <span className={"text-white font-medium"}>
                         proxy cluster
                       </span>{" "}
-                      forwards inbound traffic to an upstream you provide
-                      (hostname or IP). The cluster&apos;s embedded proxy peer
-                      dials that upstream directly via the host network stack.
+                      forwards inbound traffic to an upstream the proxy reaches
+                        without WireGuard. Useful for external APIs and services
+                        co-located with the proxy.
                     </>
                   }
                   interactive={true}
@@ -154,9 +154,7 @@ export default function ReverseProxyTargetSelector({
       <HelpText>
         {initialNetwork
           ? "Select the resource from your network you want to expose."
-          : showClusters
-          ? "Select a peer, resource, or proxy cluster to terminate inbound traffic."
-          : "Select the peer or resource where your service is running."}
+          : "Choose where the proxy should forward incoming requests."}
       </HelpText>
       <PeerGroupSelector
         values={[]}
