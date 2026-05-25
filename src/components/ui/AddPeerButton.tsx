@@ -8,7 +8,11 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Peer } from "@/interfaces/Peer";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
 
-function AddPeerButton() {
+type Props = {
+  isUserDevice?: boolean;
+};
+
+function AddPeerButton({ isUserDevice }: Readonly<Props>) {
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const { oidcUser: user } = useOidcUser();
 
@@ -44,7 +48,7 @@ function AddPeerButton() {
             Add Peer
           </Button>
         </ModalTrigger>
-        <SetupModal user={user} />
+        <SetupModal user={user} isUserDevice={isUserDevice} />
       </Modal>
     </>
   );

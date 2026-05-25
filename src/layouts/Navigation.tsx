@@ -8,7 +8,6 @@ import DNSIcon from "@/assets/icons/DNSIcon";
 import DocsIcon from "@/assets/icons/DocsIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
-import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import SidebarItem from "@/components/SidebarItem";
 import { NavigationVersionInfo } from "@/components/VersionInfo";
@@ -75,17 +74,7 @@ export default function Navigation({
               <SidebarItemGroup>
                 <SidebarItem
                   icon={<ControlCenterIcon size={16} />}
-                  label={
-                    <div className={"flex items-center gap-2"}>
-                      Control Center
-                      <SmallBadge
-                        text={"Beta"}
-                        variant={"sky"}
-                        className={"text-[8px] leading-none py-[3px] px-[5px]"}
-                        textClassName={"top-0"}
-                      />
-                    </div>
-                  }
+                  label="Control Center"
                   href={"/control-center"}
                   visible={permission.policies.read}
                 />
@@ -93,16 +82,31 @@ export default function Navigation({
                 <SidebarItem
                   icon={<PeerIcon />}
                   label="Peers"
-                  href={"/peers"}
+                  collapsible
                   visible={!isRestricted}
-                />
+                >
+                  <SidebarItem
+                    label="User Devices"
+                    isChild
+                    href={"/peers/users"}
+                    exactPathMatch={true}
+                    visible={!isRestricted}
+                  />
+                  <SidebarItem
+                    label="Servers"
+                    isChild
+                    href={"/peers/servers"}
+                    exactPathMatch={true}
+                    visible={!isRestricted}
+                  />
+                  <SidebarItem
+                    label="Setup Keys"
+                    isChild
+                    href={"/setup-keys"}
+                    visible={permission.setup_keys.read}
+                  />
+                </SidebarItem>
 
-                <SidebarItem
-                  icon={<SetupKeysIcon />}
-                  label="Setup Keys"
-                  href={"/setup-keys"}
-                  visible={permission.setup_keys.read}
-                />
                 <SidebarItem
                   icon={<AccessControlIcon />}
                   label="Access Control"

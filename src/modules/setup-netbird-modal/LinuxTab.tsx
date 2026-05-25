@@ -9,27 +9,31 @@ import Separator from "@components/Separator";
 import Steps from "@components/Steps";
 import TabsContentPadding, { TabsContent } from "@components/Tabs";
 import { IconBrandUbuntu } from "@tabler/icons-react";
-import { getNetBirdUpCommand } from "@utils/netbird";
 import { TerminalSquareIcon } from "lucide-react";
 import React from "react";
 import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import {
-  HostnameParameter,
+  NetBirdUpCommand,
   RoutingPeerSetupKeyInfo,
-  SetupKeyParameter,
 } from "@/modules/setup-netbird-modal/SetupModal";
 
 type Props = {
   setupKey?: string;
+  setupKeyContent?: React.ReactNode;
+  setupKeyPlaceholder?: string;
   showSetupKeyInfo?: boolean;
   hostname?: string;
 };
 
 export default function LinuxTab({
   setupKey,
+  setupKeyContent,
+  setupKeyPlaceholder,
   showSetupKeyInfo = false,
   hostname,
 }: Readonly<Props>) {
+  const runStep = setupKeyContent ? 3 : 2;
+  const usingSetupKey = !!setupKey || !!setupKeyPlaceholder;
   return (
     <TabsContent value={String(OperatingSystem.LINUX)}>
       <TabsContentPadding>
@@ -41,17 +45,20 @@ export default function LinuxTab({
           <Steps.Step step={1}>
             <Code>curl -fsSL https://pkgs.netbird.io/install.sh | sh</Code>
           </Steps.Step>
-          <Steps.Step step={2} line={false}>
+          {setupKeyContent && (
+            <Steps.Step step={2}>{setupKeyContent}</Steps.Step>
+          )}
+          <Steps.Step step={runStep} line={false}>
             <p>
-              Run NetBird {!setupKey && "and log in the browser"}
+              Run NetBird {!usingSetupKey && "and log in the browser"}
               {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
             </p>
             <Code>
-              <Code.Line>
-                {getNetBirdUpCommand()}
-                <SetupKeyParameter setupKey={setupKey} />
-                <HostnameParameter hostname={hostname} />
-              </Code.Line>
+              <NetBirdUpCommand
+                setupKey={setupKey}
+                setupKeyPlaceholder={setupKeyPlaceholder}
+                hostname={hostname}
+              />
             </Code>
           </Steps.Step>
         </Steps>
@@ -101,15 +108,15 @@ export default function LinuxTab({
                 </Steps.Step>
                 <Steps.Step step={3} line={false}>
                   <p>
-                    Run NetBird {!setupKey && "and log in the browser"}
+                    Run NetBird {!usingSetupKey && "and log in the browser"}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
                   <Code>
-                    <Code.Line>
-                      {getNetBirdUpCommand()}
-                      <SetupKeyParameter setupKey={setupKey} />
-                      <HostnameParameter hostname={hostname} />
-                    </Code.Line>
+                    <NetBirdUpCommand
+                      setupKey={setupKey}
+                      setupKeyPlaceholder={setupKeyPlaceholder}
+                      hostname={hostname}
+                    />
                   </Code>
                 </Steps.Step>
               </Steps>

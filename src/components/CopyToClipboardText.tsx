@@ -9,6 +9,11 @@ type Props = {
   iconAlignment?: "left" | "right";
   className?: string;
   alwaysShowIcon?: boolean;
+  // Overrides the rendered innerText as the value written to the
+  // clipboard. Use when the displayed text is an abbreviation of the
+  // canonical value (e.g. the short DNS label) but the user should
+  // still get the full string when they click.
+  textToCopy?: string;
 };
 
 export default function CopyToClipboardText({
@@ -17,8 +22,9 @@ export default function CopyToClipboardText({
   iconAlignment = "right",
   className,
   alwaysShowIcon = false,
+  textToCopy,
 }: Props) {
-  const [wrapper, copyToClipboard, copied] = useCopyToClipboard();
+  const [wrapper, copyToClipboard, copied] = useCopyToClipboard(textToCopy);
 
   return (
     <div
