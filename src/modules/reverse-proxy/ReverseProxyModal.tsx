@@ -890,7 +890,7 @@ export default function ReverseProxyModal({
                         helpText={
                           hasClusterTarget
                             ? "Required and locked on for proxy-cluster targets: the cluster has no WireGuard endpoint to fall back to."
-                            : "Dial the upstream from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a WireGuard connection."
+                            : "Dial the upstream target from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a WireGuard connection."
                         }
                       />
                     </FullTooltip>
