@@ -287,12 +287,14 @@ export default function ReverseProxyModal({
   });
 
   // Direct upstream is service-level in the UI; on save it patches the
-  // (single) cluster target's options.direct_upstream. Only meaningful
-  // when the service is private.
+  // (single) cluster target's options.direct_upstream. Defaults off for
+  // peer/resource targets — cluster targets force it on via
+  // effectiveDirectUpstream below since they have no WireGuard endpoint
+  // to fall back to.
   const [directUpstream, setDirectUpstream] = useState<boolean>(
     reverseProxy?.targets?.some(
       (t) => t.options?.direct_upstream === true,
-    ) ?? true,
+    ) ?? false,
   );
 
   // Cluster targets are reached over the embedded proxy's host stack —
@@ -655,19 +657,8 @@ export default function ReverseProxyModal({
           <TabsContent value={"auth"} className={"pb-8"}>
             <div className={"px-8 flex-col flex gap-4"}>
               <SettingCard>
-                {serviceMode === ServiceMode.HTTP && (
-                  <FullTooltip
-                    disabled={selectedDomain?.supports_private === true}
-                    content={
-                      <div className={"text-xs max-w-xs"}>
-                        NetBird-Only Access requires a proxy cluster with at
-                        least one connected embedded proxy (
-                        <code>netbird proxy</code>). The selected cluster
-                        doesn't have one. Connect an embedded proxy to this
-                        cluster to enable this option.
-                      </div>
-                    }
-                  >
+                {serviceMode === ServiceMode.HTTP &&
+                  (selectedDomain?.supports_private === true ? (
                     <SettingCard.Item
                       label={
                         <>
@@ -677,13 +668,44 @@ export default function ReverseProxyModal({
                       }
                       description="Reachable only from connected peers in the selected NetBird groups."
                       enabled={isPrivate}
-                      disabled={selectedDomain?.supports_private !== true}
                       onClick={() => {
                         setNetBirdOnlyModalOpen(true);
                       }}
                     />
-                  </FullTooltip>
-                )}
+                  ) : (
+                    // Cluster doesn't advertise supports_private: keep the
+                    // row visible but disabled, with a tooltip explaining
+                    // why. FullTooltip's inline-flex wrapper makes this
+                    // row a bit narrower than the others; that's
+                    // acceptable for the disabled state.
+                    <FullTooltip
+                      className={"w-full"}
+                      content={
+                        <div className={"text-xs max-w-xs"}>
+                          NetBird-Only Access requires a proxy cluster with
+                          at least one connected embedded proxy (
+                          <code>netbird proxy</code>). The selected cluster
+                          doesn't have one. Connect an embedded proxy to
+                          this cluster to enable this option.
+                        </div>
+                      }
+                    >
+                      <SettingCard.Item
+                        label={
+                          <>
+                            <NetworkIcon size={15} />
+                            NetBird-Only Access
+                          </>
+                        }
+                        description="Reachable only from connected peers in the selected NetBird groups."
+                        enabled={isPrivate}
+                        disabled={true}
+                        onClick={() => {
+                          setNetBirdOnlyModalOpen(true);
+                        }}
+                      />
+                    </FullTooltip>
+                  ))}
                 {!isPrivate && (
                   <>
                     <SettingCard.Item
@@ -748,9 +770,9 @@ export default function ReverseProxyModal({
                     />
                   }
                 >
-                  This service is NetBird-only. An allow rule for the NetBird
-                  network range is applied by default — any rules you add here
-                  are layered on top of that baseline.
+                  This service is accessible via NetBird only. An allow rule
+                  for the NetBird network range is applied by default. Any
+                  rules you add here are layered on top.
                 </Callout>
               )}
               <ReverseProxyAccessControlRules
@@ -868,7 +890,7 @@ export default function ReverseProxyModal({
                         helpText={
                           hasClusterTarget
                             ? "Required and locked on for proxy-cluster targets: the cluster has no WireGuard endpoint to fall back to."
-                            : "Dial the upstream from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a WireGuard connection."
+                            : "Dial the upstream target from the proxy host instead of through the WireGuard tunnel. Turn on when the upstream is reachable without a WireGuard connection."
                         }
                       />
                     </FullTooltip>

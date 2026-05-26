@@ -33,6 +33,7 @@ import {
   ServerIcon,
   ShieldCheck,
   WorkflowIcon,
+  XIcon,
 } from "lucide-react";
 import * as React from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -416,6 +417,36 @@ export function PeerGroupSelector({
                   showX={true}
                 />
               )}
+              {selectedCluster && (
+                <Badge
+                  useHover={true}
+                  data-cy={"cluster-badge"}
+                  variant={"gray-ghost"}
+                  className={
+                    "py-[3px] transition-all group whitespace-nowrap"
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onClusterChange?.(undefined);
+                  }}
+                >
+                  <ServerIcon size={12} className={"shrink-0"} />
+                  <TruncatedText
+                    text={
+                      (clusters ?? []).find((c) => c.domain === selectedCluster)
+                        ?.label ?? selectedCluster
+                    }
+                    maxChars={20}
+                  />
+                  <XIcon
+                    size={12}
+                    className={
+                      "cursor-pointer group-hover:text-nb-gray-100 transition-all shrink-0"
+                    }
+                  />
+                </Badge>
+              )}
               {values.map((group) => {
                 return (
                   <div
@@ -459,7 +490,7 @@ export function PeerGroupSelector({
                 );
               })}
 
-              {values.length == 0 && !resource && (
+              {values.length == 0 && !resource && !selectedCluster && (
                 <span className={cn(typeof placeholder === "string" && "pl-1")}>
                   {placeholder}
                 </span>
