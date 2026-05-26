@@ -68,7 +68,8 @@ function ServersView() {
         <h1 ref={headingRef}>Servers</h1>
         <Paragraph>
           Servers, VMs, autonomous agents and other unattended machines with no
-          user behind them, typically enrolled with a setup key.{" "}
+          user behind them, typically enrolled with a{" "}
+          <InlineLink href={"/settings?tab=setup-keys"}>setup key.</InlineLink>{" "}
           <InlineLink
             href={
               "https://docs.netbird.io/how-to/register-machines-using-setup-keys"

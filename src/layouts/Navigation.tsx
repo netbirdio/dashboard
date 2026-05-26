@@ -99,12 +99,6 @@ export default function Navigation({
                     exactPathMatch={true}
                     visible={!isRestricted}
                   />
-                  <SidebarItem
-                    label="Setup Keys"
-                    isChild
-                    href={"/setup-keys"}
-                    visible={permission.setup_keys.read}
-                  />
                 </SidebarItem>
 
                 <SidebarItem
