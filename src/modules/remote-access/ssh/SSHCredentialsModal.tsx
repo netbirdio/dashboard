@@ -63,7 +63,7 @@ export const SSHCredentialsModal = ({ open, onOpenChange, peer }: Props) => {
     const encodedPort = encodeURIComponent(port.trim());
 
     window.open(
-      `peer/ssh?id=${peer.id}&user=${encodedUsername}&port=${encodedPort}`,
+      `/peer/ssh?id=${peer.id}&user=${encodedUsername}&port=${encodedPort}`,
       "_blank",
       "noopener,noreferrer,width=800,height=450,left=100,top=100,location=no,toolbar=no,menubar=no,status=no",
     );
