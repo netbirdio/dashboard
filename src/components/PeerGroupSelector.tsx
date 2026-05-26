@@ -30,8 +30,10 @@ import {
   MonitorSmartphoneIcon,
   NetworkIcon,
   SearchIcon,
+  ServerIcon,
   ShieldCheck,
   WorkflowIcon,
+  XIcon,
 } from "lucide-react";
 import * as React from "react";
 import { Fragment, useEffect, useMemo, useState } from "react";
@@ -47,7 +49,15 @@ import { HorizontalUsersStack } from "@/modules/users/HorizontalUsersStack";
 import { PeerOperatingSystemIcon } from "@/modules/peers/PeerOperatingSystemIcon";
 import TruncatedText from "@components/ui/TruncatedText";
 
-type PeerGroupSelectorTab = "peers" | "groups" | "resources";
+type PeerGroupSelectorTab = "peers" | "groups" | "resources" | "clusters";
+
+export type ClusterOption = {
+  /** Cluster apex domain (e.g. "eu.proxy.netbird.io"); also the value
+   *  that downstream code stores in target_id / proxy_cluster. */
+  domain: string;
+  /** Human-friendly label; falls back to domain. */
+  label?: string;
+};
 
 const groupsSearchPredicate = (item: Group, query: string) => {
   const lowerCaseQuery = query.toLowerCase();
@@ -74,8 +84,16 @@ interface MultiSelectProps {
   showPeers?: boolean;
   showPeerCounter?: boolean;
   hideGroupsTab?: boolean;
-  tabOrder?: ("groups" | "peers" | "resources")[];
+  tabOrder?: PeerGroupSelectorTab[];
   closeOnSelect?: boolean;
+  /** Show a Clusters tab. Off by default; flip on with clusters list. */
+  showClusters?: boolean;
+  /** Clusters offered in the Clusters tab. When empty the tab is hidden. */
+  clusters?: ClusterOption[];
+  /** Currently-selected cluster (domain string), if any. */
+  selectedCluster?: string;
+  /** Called when the user picks (or clears) a cluster. */
+  onClusterChange?: (cluster?: string) => void;
   resource?: PolicyRuleResource;
   onResourceChange?: (resource?: PolicyRuleResource) => void;
   placeholder?: React.ReactNode | string;
@@ -120,6 +138,10 @@ export function PeerGroupSelector({
   resourceIds,
   additionalResources,
   policies,
+  showClusters = false,
+  clusters,
+  selectedCluster,
+  onClusterChange,
 }: Readonly<MultiSelectProps>) {
   const { data: fetchedResources, isLoading: isResourcesLoading } = useFetchApi<
     NetworkResource[]
@@ -291,8 +313,28 @@ export function PeerGroupSelector({
     if (tab === "groups") return placeholderForSearch;
     if (tab === "resources") return "Search resource...";
     if (tab === "peers") return "Search peer by name or ip...";
+    if (tab === "clusters") return "Search cluster...";
     return "Search...";
   }, [tab, placeholderForSearch]);
+
+  const filteredClusters = useMemo(() => {
+    if (!clusters || clusters.length === 0) return [];
+    if (!search) return clusters;
+    const q = search.toLowerCase();
+    return clusters.filter(
+      (c) =>
+        c.domain.toLowerCase().includes(q) ||
+        c.label?.toLowerCase().includes(q),
+    );
+  }, [clusters, search]);
+
+  const selectCluster = (cluster?: ClusterOption) => {
+    onClusterChange?.(cluster?.domain);
+    onChange([]);
+    if (closeOnSelect) {
+      setOpen(false);
+    }
+  };
 
   const selectResource = (resource?: NetworkResource) => {
     onResourceChange?.(
@@ -375,6 +417,36 @@ export function PeerGroupSelector({
                   showX={true}
                 />
               )}
+              {selectedCluster && (
+                <Badge
+                  useHover={true}
+                  data-cy={"cluster-badge"}
+                  variant={"gray-ghost"}
+                  className={
+                    "py-[3px] transition-all group whitespace-nowrap"
+                  }
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onClusterChange?.(undefined);
+                  }}
+                >
+                  <ServerIcon size={12} className={"shrink-0"} />
+                  <TruncatedText
+                    text={
+                      (clusters ?? []).find((c) => c.domain === selectedCluster)
+                        ?.label ?? selectedCluster
+                    }
+                    maxChars={20}
+                  />
+                  <XIcon
+                    size={12}
+                    className={
+                      "cursor-pointer group-hover:text-nb-gray-100 transition-all shrink-0"
+                    }
+                  />
+                </Badge>
+              )}
               {values.map((group) => {
                 return (
                   <div
@@ -418,7 +490,7 @@ export function PeerGroupSelector({
                 );
               })}
 
-              {values.length == 0 && !resource && (
+              {values.length == 0 && !resource && !selectedCluster && (
                 <span className={cn(typeof placeholder === "string" && "pl-1")}>
                   {placeholder}
                 </span>
@@ -497,6 +569,7 @@ export function PeerGroupSelector({
                 searchRef={searchRef}
                 showPeers={showPeers}
                 showResources={showResources}
+                showClusters={showClusters}
                 hideGroupsTab={hideGroupsTab}
                 tabOrder={tabOrder}
               />
@@ -646,6 +719,15 @@ export function PeerGroupSelector({
                   />
                 </TabsContent>
               )}
+              {showClusters && (
+                <TabsContent value={"clusters"} className={"p-0 my-0"}>
+                  <ClustersList
+                    clusters={filteredClusters}
+                    value={selectedCluster}
+                    onChange={selectCluster}
+                  />
+                </TabsContent>
+              )}
             </Tabs>
           </CommandList>
         </Command>
@@ -658,17 +740,22 @@ const TabTriggers = ({
   searchRef,
   showResources = false,
   showPeers = false,
+  showClusters = false,
   hideGroupsTab = false,
   tabOrder,
 }: {
   searchRef: React.MutableRefObject<HTMLInputElement | null>;
   showResources?: boolean;
   showPeers?: boolean;
+  showClusters?: boolean;
   hideGroupsTab?: boolean;
-  tabOrder?: ("groups" | "peers" | "resources")[];
+  tabOrder?: PeerGroupSelectorTab[];
 }) => {
   const tabCount =
-    (!hideGroupsTab ? 1 : 0) + (showResources ? 1 : 0) + (showPeers ? 1 : 0);
+    (!hideGroupsTab ? 1 : 0) +
+    (showResources ? 1 : 0) +
+    (showPeers ? 1 : 0) +
+    (showClusters ? 1 : 0);
   if (tabCount <= 1) return null;
 
   const groupsTab = !hideGroupsTab && (
@@ -722,10 +809,28 @@ const TabTriggers = ({
     </TabsTrigger>
   );
 
-  const tabMap = {
+  const clustersTab = showClusters && (
+    <TabsTrigger
+      key="clusters"
+      value={"clusters"}
+      className={"text-[.8rem] font-normal"}
+      onClick={() => searchRef.current?.focus()}
+    >
+      <ServerIcon
+        className={
+          "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
+        }
+        size={14}
+      />
+      Proxy Clusters
+    </TabsTrigger>
+  );
+
+  const tabMap: Record<PeerGroupSelectorTab, React.ReactNode> = {
     groups: groupsTab,
     peers: peersTab,
     resources: resourcesTab,
+    clusters: clustersTab,
   };
 
   if (tabOrder) {
@@ -741,6 +846,7 @@ const TabTriggers = ({
       {groupsTab}
       {resourcesTab}
       {peersTab}
+      {clustersTab}
     </TabsList>
   );
 };
@@ -958,6 +1064,69 @@ const ResourcesList = ({
           );
         }}
       />
+    </Radio>
+  );
+};
+
+const ClustersList = ({
+  clusters,
+  value,
+  onChange,
+}: {
+  clusters: ClusterOption[];
+  value?: string;
+  onChange: (cluster?: ClusterOption) => void;
+}) => {
+  if (clusters.length === 0) {
+    return (
+      <DropdownInfoText className={"mt-5 max-w-sm mx-auto"}>
+        No proxy clusters available. Go to{" "}
+        <InlineLink href={"/reverse-proxy/custom-domains"}>
+          Custom Domains
+        </InlineLink>{" "}
+        to configure one that supports private services.
+      </DropdownInfoText>
+    );
+  }
+
+  return (
+    <Radio defaultValue={value} name={"cluster"} value={value}>
+      <ScrollArea
+        className={"max-h-[195px] flex flex-col gap-1 py-2 px-2"}
+      >
+        {clusters.map((c) => (
+          <CommandItem
+            key={c.domain}
+            value={c.domain}
+            onSelect={() => onChange(c)}
+            onClick={(e) => e.preventDefault()}
+          >
+            <div className={"flex items-center gap-2"}>
+              <Badge
+                useHover={false}
+                variant={"gray-ghost"}
+                className={cn(
+                  "transition-all group whitespace-nowrap h-7 px-2",
+                )}
+                onClick={(e) => {
+                  e.preventDefault();
+                }}
+              >
+                <ServerIcon size={12} className={"shrink-0"} />
+                <TextWithTooltip text={c.label ?? c.domain} maxChars={32} />
+              </Badge>
+            </div>
+            <div
+              className={
+                "text-neutral-500 dark:text-nb-gray-300 font-medium flex items-center gap-2"
+              }
+            >
+              {c.label && c.label !== c.domain ? c.domain : null}
+              <RadioItem value={c.domain} />
+            </div>
+          </CommandItem>
+        ))}
+      </ScrollArea>
     </Radio>
   );
 };

@@ -1,6 +1,6 @@
 import Badge from "@components/Badge";
 import FullTooltip from "@components/FullTooltip";
-import { ShieldAlert, SlidersHorizontal, Globe } from "lucide-react";
+import { Lock, ShieldAlert, SlidersHorizontal, Globe } from "lucide-react";
 import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
 import EmptyRow from "@/modules/common-table-rows/EmptyRow";
 
@@ -11,7 +11,7 @@ type Props = {
 type Feature = {
   key: string;
   label: string;
-  description: string;
+  description: React.ReactNode;
   icon: React.ReactNode;
 };
 
@@ -45,6 +45,23 @@ export default function ClustersFeaturesCell({ cluster }: Readonly<Props>) {
       description:
         "Cluster has CrowdSec IP reputation configured across all active proxies.",
       icon: <ShieldAlert size={14} className={"text-green-500"} />,
+    });
+  }
+  if (cluster.private) {
+    features.push({
+      key: "private",
+      label: "Private",
+      description: (
+        <>
+          Lets you publish services that are only reachable from peers in your
+          NetBird network. Required for{" "}
+          <span className={"font-medium text-white"}>NetBird-Only Access</span>{" "}
+          and{" "}
+          <span className={"font-medium text-white"}>Proxy Cluster</span>{" "}
+          target types.
+        </>
+      ),
+      icon: <Lock size={14} className={"text-netbird"} />,
     });
   }
 

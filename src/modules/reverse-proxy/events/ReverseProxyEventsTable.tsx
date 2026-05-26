@@ -34,6 +34,7 @@ import { ReverseProxyEventsAuthMethodCell } from "@/modules/reverse-proxy/events
 import { ReverseProxyEventsReasonCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsReasonCell";
 import { ReverseProxyEventsDurationCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsDurationCell";
 import { ReverseProxyEventsBytesCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsBytesCell";
+import ReverseProxyEventExpandedRow from "@/modules/reverse-proxy/events/ReverseProxyEventExpandedRow";
 
 export const makeEventsColumns = (
   servicesMap: Map<string, ReverseProxy>,
@@ -242,6 +243,9 @@ export default function ReverseProxyEventsTable({
       setSorting={setSorting}
       columns={columns}
       columnVisibility={{ is_success: false, id: false }}
+      renderExpandedRow={(event) => (
+        <ReverseProxyEventExpandedRow event={event} />
+      )}
       searchPlaceholder={"Search by IP, host, path, user..."}
       getStartedCard={
         <GetStartedTest

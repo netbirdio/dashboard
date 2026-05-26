@@ -618,7 +618,19 @@ export function sanitizeTargets(
 ): ReverseProxyTarget[] {
   return targets.map((t) => {
     const { destination: _, ...target } = t;
+    // Subnet targets always own their Host. Cluster targets do too,
+    // and they imply direct_upstream — the proxy peer dials the
+    // operator-supplied upstream via the host network stack instead of
+    // through the embedded WG client. For peer/host/domain targets the
+    // backend resolves Host from the peer/resource unless the operator
+    // explicitly opted into direct_upstream.
     if (t.target_type === ReverseProxyTargetType.SUBNET)
+      return target as ReverseProxyTarget;
+    if (t.target_type === ReverseProxyTargetType.CLUSTER) {
+      const opts = { ...(target.options ?? {}), direct_upstream: true };
+      return { ...target, options: opts } as ReverseProxyTarget;
+    }
+    if (target.options?.direct_upstream && target.host?.trim())
       return target as ReverseProxyTarget;
     const { host: __, ...rest } = target;
     return rest as ReverseProxyTarget;

@@ -21,6 +21,8 @@ export interface ReverseProxy {
   auth?: ReverseProxyAuth;
   access_restrictions?: AccessRestrictions;
   meta?: ReverseProxyMeta;
+  private?: boolean;
+  access_groups?: string[];
 }
 
 export const CrowdSecMode = {
@@ -63,6 +65,13 @@ export interface ServiceTargetOptions {
   path_rewrite?: ServiceTargetOptionsPathRewrite;
   custom_headers?: Record<string, string>;
   proxy_protocol?: boolean;
+  /**
+   * When true, the proxy dials this target via the host's network stack
+   * instead of through its embedded NetBird client. Use for upstreams
+   * reachable without WireGuard (public APIs, LAN services, localhost
+   * sidecars).
+   */
+  direct_upstream?: boolean;
 }
 
 export interface ReverseProxyTarget {
@@ -113,6 +122,7 @@ export interface ReverseProxyDomain {
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
   supports_crowdsec?: boolean;
+  supports_private?: boolean;
 }
 
 export enum ReverseProxyDomainType {
@@ -125,6 +135,7 @@ export enum ReverseProxyTargetType {
   HOST = "host",
   DOMAIN = "domain",
   SUBNET = "subnet",
+  CLUSTER = "cluster",
 }
 
 export enum ReverseProxyTargetProtocol {
@@ -177,6 +188,11 @@ export interface ReverseProxyCluster {
   supports_custom_ports?: boolean;
   require_subdomain?: boolean;
   supports_crowdsec?: boolean;
+  // True when at least one connected proxy in this cluster is running embedded
+  // in a netbird client (`netbird proxy`) and serving over a WireGuard tunnel.
+  // Lets the dashboard distinguish per-peer / private clusters from centralised
+  // ones.
+  private?: boolean;
 }
 
 export interface ReverseProxyClusterToken {

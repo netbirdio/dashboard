@@ -79,6 +79,11 @@ type Props = {
   initialResource?: NetworkResource;
   initialPeer?: Peer;
   initialNetwork?: Network;
+  /** Called when the operator picks a cluster in the target selector
+   *  and the parent service does not yet have a proxy_cluster set. The
+   *  parent uses this to commit the cluster choice as the service's
+   *  domain so the cluster + upstream stay consistent. */
+  onClusterPick?: (cluster: string) => void;
 };
 
 export default function ReverseProxyTargetModal({
@@ -90,31 +95,42 @@ export default function ReverseProxyTargetModal({
   initialResource,
   initialPeer,
   initialNetwork,
+  onClusterPick,
 }: Readonly<Props>) {
   const existingTargets = reverseProxy.targets || [];
   const domain = reverseProxy.domain;
 
-  const [target, setTarget] = useState<Target | undefined>(
-    currentTarget || initialResource || initialPeer
-      ? {
-          type:
-            currentTarget?.target_type ??
-            (initialResource
-              ? (initialResource.type as ReverseProxyTargetType) ??
-                ReverseProxyTargetType.HOST
-              : ReverseProxyTargetType.PEER),
-          peerId:
-            currentTarget?.target_type === ReverseProxyTargetType.PEER
-              ? currentTarget?.target_id
-              : initialPeer?.id,
-          resourceId:
-            currentTarget && isResourceTargetType(currentTarget.target_type)
-              ? currentTarget?.target_id
-              : initialResource?.id,
-          host: getInitialHost(currentTarget, initialResource, initialPeer),
-        }
-      : undefined,
-  );
+  const [target, setTarget] = useState<Target | undefined>(() => {
+    if (
+      currentTarget?.target_type === ReverseProxyTargetType.CLUSTER
+    ) {
+      return {
+        type: ReverseProxyTargetType.CLUSTER,
+        resourceId: currentTarget.target_id ?? "",
+        host: currentTarget.host ?? "",
+      };
+    }
+    if (currentTarget || initialResource || initialPeer) {
+      return {
+        type:
+          currentTarget?.target_type ??
+          (initialResource
+            ? (initialResource.type as ReverseProxyTargetType) ??
+              ReverseProxyTargetType.HOST
+            : ReverseProxyTargetType.PEER),
+        peerId:
+          currentTarget?.target_type === ReverseProxyTargetType.PEER
+            ? currentTarget?.target_id
+            : initialPeer?.id,
+        resourceId:
+          currentTarget && isResourceTargetType(currentTarget.target_type)
+            ? currentTarget?.target_id
+            : initialResource?.id,
+        host: getInitialHost(currentTarget, initialResource, initialPeer),
+      };
+    }
+    return undefined;
+  });
 
   const [targetProtocol, setTargetProtocol] =
     useState<ReverseProxyTargetProtocol>(
@@ -174,6 +190,9 @@ export default function ReverseProxyTargetModal({
     if (target.type === ReverseProxyTargetType.PEER) {
       return !!target.peerId;
     }
+    if (target.type === ReverseProxyTargetType.CLUSTER) {
+      return !!target.resourceId && !!target.host?.trim();
+    }
     if (isResourceTargetType(target.type)) {
       return !!target.resourceId && isValidCidrHost;
     }
@@ -196,6 +215,28 @@ export default function ReverseProxyTargetModal({
       : target.type;
     const resolvedIsResource =
       isResourceTargetType(resolvedType) || !!initialResource;
+    const opts = getTargetOptions();
+    // Cluster targets imply direct_upstream — the proxy peer dials the
+    // operator-supplied upstream via the host network stack instead of
+    // through the embedded WG client.
+    const resolvedOpts =
+      resolvedType === ReverseProxyTargetType.CLUSTER
+        ? { ...(opts ?? {}), direct_upstream: true }
+        : opts;
+    // Subnet and Cluster targets always own their Host. For peer/host/
+    // domain types the backend resolves Host from the peer/resource —
+    // except when direct_upstream is set and the operator typed an
+    // explicit override, in which case ship Host through so the proxy
+    // dials exactly that address via the host's network stack.
+    let resolvedHost: string | undefined;
+    if (
+      resolvedType === ReverseProxyTargetType.SUBNET ||
+      resolvedType === ReverseProxyTargetType.CLUSTER
+    ) {
+      resolvedHost = target.host?.trim();
+    } else if (resolvedOpts?.direct_upstream && target.host?.trim()) {
+      resolvedHost = target.host.trim();
+    }
     const targetData: ReverseProxyTarget = {
       target_type: resolvedType,
       target_id:
@@ -203,15 +244,12 @@ export default function ReverseProxyTargetModal({
           ? target.peerId
           : target.resourceId,
       protocol: targetProtocol,
-      host:
-        resolvedType === ReverseProxyTargetType.SUBNET
-          ? target.host
-          : undefined,
+      host: resolvedHost,
       port: targetPort,
       path: targetPath || undefined,
       enabled: currentTarget?.enabled ?? true,
       access_local: resolvedIsResource ? accessLocal : undefined,
-      options: getTargetOptions(),
+      options: resolvedOpts,
     };
     onSave(targetData);
     onOpenChange(false);
@@ -235,6 +273,8 @@ export default function ReverseProxyTargetModal({
               <ReverseProxyTargetSelector
                 value={target}
                 initialNetwork={initialNetwork}
+                serviceCluster={reverseProxy.proxy_cluster}
+                onClusterPick={onClusterPick}
                 onChange={(selection) => {
                   setTarget(selection);
                   if (selection) {

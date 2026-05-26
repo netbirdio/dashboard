@@ -36,7 +36,10 @@ export function useReverseProxyAddress(target: Target | undefined) {
     }
   }, [resourceAddress]);
 
-  const isHostEditable = isCidrRange;
+  // Cluster targets carry an operator-supplied upstream as host, dialed
+  // directly via the host network stack (direct_upstream is implied).
+  const isHostEditable =
+    isCidrRange || target?.type === ReverseProxyTargetType.CLUSTER;
 
   const isHostInCidrRange = useMemo(() => {
     if (!cidrInfo || !target?.host) return false;
@@ -81,18 +84,29 @@ export default function ReverseProxyAddressInput({
 }: Readonly<Props>) {
   const { isHostEditable } = useReverseProxyAddress(target);
 
+  // Cluster targets accept hostnames or IPs; CIDR-mode targets are
+  // restricted to numeric/dot characters because the value must fall
+  // inside a known IPv4 range.
+  const restrictToIPv4 =
+    isHostEditable && target?.type !== ReverseProxyTargetType.CLUSTER;
+
+  const placeholder =
+    target?.type === ReverseProxyTargetType.CLUSTER
+      ? "e.g., 127.0.0.1 or backend.lan"
+      : "e.g., 192.168.0.10";
+
   return (
     <Input
       value={target?.host ?? ""}
       onChange={(e) => {
-        const host = isHostEditable
+        const host = restrictToIPv4
           ? e.target.value.replace(/[^0-9a-fA-F.:]/g, "")
           : e.target.value;
         onChange((prev) => prev && { ...prev, host });
       }}
       maxWidthClass={"w-full"}
       customSuffix={":"}
-      placeholder="e.g., 192.168.0.10 or 2001:db8::1"
+      placeholder={placeholder}
       disabled={!target}
       readOnly={target && !isHostEditable ? true : undefined}
       className={cn("rounded-r-none border-r-0", className)}
