@@ -82,6 +82,7 @@ export default function Navigation({
                 <SidebarItem
                   icon={<PeerIcon />}
                   label="Peers"
+                  href={"/peers"}
                   collapsible
                   visible={!isRestricted}
                 >
@@ -98,12 +99,6 @@ export default function Navigation({
                     href={"/peers/servers"}
                     exactPathMatch={true}
                     visible={!isRestricted}
-                  />
-                  <SidebarItem
-                    label="Setup Keys"
-                    isChild
-                    href={"/setup-keys"}
-                    visible={permission.setup_keys.read}
                   />
                 </SidebarItem>
 

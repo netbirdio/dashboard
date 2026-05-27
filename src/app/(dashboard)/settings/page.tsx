@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
+import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import PageContainer from "@/layouts/PageContainer";
@@ -23,6 +24,7 @@ import DangerZoneTab from "@/modules/settings/DangerZoneTab";
 import IdentityProvidersTab from "@/modules/settings/IdentityProvidersTab";
 import NetworkSettingsTab from "@/modules/settings/NetworkSettingsTab";
 import PermissionsTab from "@/modules/settings/PermissionsTab";
+import SetupKeysTab from "@/modules/settings/SetupKeysTab";
 import GroupsSettings from "@/modules/settings/GroupsSettings";
 
 export default function NetBirdSettings() {
@@ -55,6 +57,12 @@ export default function NetBirdSettings() {
                 <ShieldIcon size={14} />
                 Authentication
               </VerticalTabs.Trigger>
+              {permission.setup_keys.read && (
+                <VerticalTabs.Trigger value="setup-keys">
+                  <SetupKeysIcon size={14} />
+                  Setup Keys
+                </VerticalTabs.Trigger>
+              )}
               {account?.settings?.embedded_idp_enabled &&
                 permission?.identity_providers?.read && (
                   <VerticalTabs.Trigger value="identity-providers">
@@ -89,6 +97,7 @@ export default function NetBirdSettings() {
         >
           <div className={"border-l border-nb-gray-930 w-full"}>
             {account && <AuthenticationTab account={account} />}
+            {permission.setup_keys.read && <SetupKeysTab />}
             {account?.settings?.embedded_idp_enabled &&
               permission.identity_providers.read && <IdentityProvidersTab />}
             {account && <PermissionsTab account={account} />}
