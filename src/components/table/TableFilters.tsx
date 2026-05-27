@@ -169,7 +169,7 @@ export function TableFilterChips<TData>({
   return (
     <div
       className={cn(
-        "flex flex-wrap items-center gap-2 p-default pt-4 pb-2",
+        "flex flex-wrap items-center gap-2 p-default pt-6",
         className,
       )}
     >
