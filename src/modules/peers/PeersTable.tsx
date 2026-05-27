@@ -1,12 +1,29 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import { Checkbox } from "@components/Checkbox";
 import FullTooltip from "@components/FullTooltip";
 import { NoPeersGettingStarted } from "@components/NoPeersGettingStarted";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatGroupsChip,
+  GroupsPicker,
+} from "@components/table/filters/GroupsPicker";
+import {
+  formatStatusChip,
+  StatusPicker,
+} from "@components/table/filters/StatusPicker";
+import {
+  formatUsersChip,
+  UserOption,
+  UsersPicker,
+} from "@components/table/filters/UsersPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import AddPeerButton from "@components/ui/AddPeerButton";
 import { NotificationCountBadge } from "@components/ui/NotificationCountBadge";
 import {
@@ -15,7 +32,12 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import { trim, uniqBy } from "lodash";
-import { MonitorDotIcon } from "lucide-react";
+import {
+  FolderGit2Icon,
+  MonitorDotIcon,
+  UserCircle2,
+  WifiIcon,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -25,7 +47,6 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { Group } from "@/interfaces/Group";
 import { Peer } from "@/interfaces/Peer";
-import { GroupFilterSelector } from "@/modules/groups/GroupFilterSelector";
 import PeerActionCell from "@/modules/peers/PeerActionCell";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerGroupCell from "@/modules/peers/PeerGroupCell";
@@ -93,6 +114,7 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
   {
     id: "user_email",
     accessorFn: (peer) => (peer.user ? peer.user?.email : "Unknown"),
+    filterFn: "equalsString",
   },
   {
     id: "dns_label",
@@ -266,6 +288,22 @@ export default function PeersTable({
       "name",
     ) as Group[]) || ([] as Group[]);
 
+  // Users derived from the current kind-filtered set, so the Users
+  // filter offers only owners that actually appear in the table.
+  const tableUsers = useMemo<UserOption[]>(() => {
+    if (!kindFilteredPeers) return [];
+    const map = new Map<string, UserOption>();
+    kindFilteredPeers.forEach((p) => {
+      if (!p.user || !p.user.email) return;
+      map.set(p.user.id, {
+        id: p.user.id,
+        name: p.user.name || p.user.email,
+        email: p.user.email,
+      });
+    });
+    return Array.from(map.values());
+  }, [kindFilteredPeers]);
+
   const { isUser } = useLoggedInUser();
 
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
@@ -307,6 +345,60 @@ export default function PeersTable({
     }
   }, [showBrowserPeers, browserPeers]);
 
+  // Filter definitions powering the consolidated `Filters` button +
+  // chip row. The Users filter is only meaningful for the User Devices
+  // view; servers (no real owner) skip it.
+  const filterDefs = useMemo<TableFilterDef[]>(() => {
+    const defs: TableFilterDef[] = [
+      {
+        id: "connected",
+        label: "Status",
+        icon: <WifiIcon size={14} />,
+        renderPicker: (p) => (
+          <StatusPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+          />
+        ),
+        formatChip: (v) => formatStatusChip(v as boolean | undefined),
+      },
+    ];
+    if (!isUser) {
+      defs.push({
+        id: "group_names",
+        label: "Groups",
+        icon: <FolderGit2Icon size={14} />,
+        renderPicker: (p) => (
+          <GroupsPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            groups={tableGroups}
+          />
+        ),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+      });
+    }
+    if (kind === "users" && !isUser && tableUsers.length > 0) {
+      defs.push({
+        id: "user_email",
+        label: "Users",
+        icon: <UserCircle2 size={14} />,
+        renderPicker: (p) => (
+          <UsersPicker
+            value={p.value as string | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={tableUsers}
+          />
+        ),
+        formatChip: (v) => formatUsersChip(v as string | undefined, tableUsers),
+      });
+    }
+    return defs;
+  }, [isUser, kind, tableGroups, tableUsers]);
+
   return (
     <>
       <PeerMultiSelect
@@ -321,6 +413,8 @@ export default function PeersTable({
         text={"Peers"}
         sorting={sorting}
         setSorting={setSorting}
+        initialPageSize={25}
+        showResetFilterButton={false}
         columns={PeersTableColumns}
         data={showBrowserPeers ? browserPeers : regularPeers}
         searchPlaceholder={"Search by name, IP, owner or group..."}
@@ -348,112 +442,27 @@ export default function PeersTable({
             )}
           </>
         )}
+        aboveTable={(table) => (
+          <TableFilterChips table={table} filters={filterDefs} />
+        )}
       >
         {(table) => (
           <>
-            <ButtonGroup disabled={peers?.length == 0}>
-              <ButtonGroup.Button
-                disabled={peers?.length == 0}
-                onClick={() => {
-                  table.setPageIndex(0);
-                  let groupFilters = table
-                    .getColumn("group_names")
-                    ?.getFilterValue();
-                  table.setColumnFilters([
-                    {
-                      id: "connected",
-                      value: undefined,
-                    },
-                    {
-                      id: "approval_required",
-                      value: undefined,
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
-                  ]);
-                  resetSelectedRows();
-                }}
-                variant={
-                  table.getColumn("connected")?.getFilterValue() == undefined
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                All
-              </ButtonGroup.Button>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  let groupFilters = table
-                    .getColumn("group_names")
-                    ?.getFilterValue();
-                  table.setColumnFilters([
-                    {
-                      id: "connected",
-                      value: true,
-                    },
-                    {
-                      id: "approval_required",
-                      value: undefined,
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
-                  ]);
-                  resetSelectedRows();
-                }}
-                disabled={peers?.length == 0}
-                variant={
-                  table.getColumn("connected")?.getFilterValue() == true
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Online
-              </ButtonGroup.Button>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  let groupFilters = table
-                    .getColumn("group_names")
-                    ?.getFilterValue();
-                  table.setColumnFilters([
-                    {
-                      id: "connected",
-                      value: false,
-                    },
-                    {
-                      id: "approval_required",
-                      value: undefined,
-                    },
-                    {
-                      id: "group_names",
-                      value: groupFilters ?? [],
-                    },
-                  ]);
-                  resetSelectedRows();
-                }}
-                disabled={peers?.length == 0}
-                variant={
-                  table.getColumn("connected")?.getFilterValue() == false
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Offline
-              </ButtonGroup.Button>
-            </ButtonGroup>
+            <TableFiltersButton
+              table={table}
+              filters={filterDefs}
+              disabled={peers?.length == 0}
+            />
+
+            <DataTableResetFilterButton
+              table={table}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.resetColumnFilters();
+                table.resetGlobalFilter();
+                resetSelectedRows();
+              }}
+            />
 
             {pendingApprovalCount > 0 && (
               <Button
@@ -489,30 +498,6 @@ export default function PeersTable({
                 Pending Approvals
                 <NotificationCountBadge count={pendingApprovalCount} />
               </Button>
-            )}
-
-            <DataTableRowsPerPage table={table} disabled={peers?.length == 0} />
-
-            {!isUser && (
-              <GroupFilterSelector
-                disabled={peers?.length == 0}
-                values={
-                  (table
-                    .getColumn("group_names")
-                    ?.getFilterValue() as string[]) || []
-                }
-                onChange={(groups) => {
-                  table.setPageIndex(0);
-                  if (groups.length == 0) {
-                    table.getColumn("group_names")?.setFilterValue(undefined);
-                    return;
-                  } else {
-                    table.getColumn("group_names")?.setFilterValue(groups);
-                  }
-                  resetSelectedRows();
-                }}
-                groups={tableGroups}
-              />
             )}
 
             {browserPeers?.length > 0 && (
