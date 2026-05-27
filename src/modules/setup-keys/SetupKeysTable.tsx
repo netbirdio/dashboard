@@ -1,19 +1,39 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatGroupsChip,
+  GroupsPicker,
+} from "@components/table/filters/GroupsPicker";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import { ExternalLinkIcon, PlusCircle } from "lucide-react";
+import {
+  CircleCheckIcon,
+  ExternalLinkIcon,
+  FolderGit2Icon,
+  PlusCircle,
+  RefreshCcwIcon,
+} from "lucide-react";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
+import { uniqBy } from "lodash";
 import { useSWRConfig } from "swr";
 import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -64,6 +84,11 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
     ),
   },
   {
+    id: "type",
+    accessorKey: "type",
+    filterFn: "equalsString",
+  },
+  {
     accessorKey: "last_used",
     header: ({ column }) => {
       return <DataTableHeader column={column}>Last used</DataTableHeader>;
@@ -77,6 +102,11 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
     id: "group_strings",
     accessorKey: "group_strings",
     accessorFn: (s) => s.groups?.map((g) => g?.name || "").join(", "),
+  },
+  {
+    id: "group_names",
+    accessorFn: (s) => s.groups?.map((g) => g?.name || ""),
+    filterFn: "arrIncludesSome",
   },
   {
     accessorFn: (item) => item.auto_groups?.length,
@@ -158,6 +188,88 @@ export default function SetupKeysTable({
 
   const [open, setOpen] = useState(false);
 
+  // Groups derived from the current setup keys, so the Groups filter
+  // only offers groups that actually appear in the table.
+  const tableGroups = useMemo<Group[]>(
+    () =>
+      (uniqBy(
+        setupKeys?.flatMap((k) => k.groups || []),
+        "name",
+      ) as Group[]) || [],
+    [setupKeys],
+  );
+
+  // Single-radio status filter mirroring the previous All / Valid /
+  // Expired ButtonGroup. The `valid` column already exists; we just
+  // re-route it through the consolidated filter UI.
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Valid", dotClass: "bg-green-500" },
+      { value: false, label: "Expired", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const usageOptions = useMemo<RadioOption<string | undefined>[]>(
+    () => [
+      { value: undefined, label: "All" },
+      { value: "one-off", label: "One-off" },
+      { value: "reusable", label: "Reusable" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "valid",
+        label: "Status",
+        icon: <CircleCheckIcon size={14} />,
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+      {
+        id: "type",
+        label: "Usage",
+        icon: <RefreshCcwIcon size={14} />,
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as string | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={usageOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as string | undefined, usageOptions),
+      },
+      {
+        id: "group_names",
+        label: "Groups",
+        icon: <FolderGit2Icon size={14} />,
+        renderPicker: (p) => (
+          <GroupsPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            groups={tableGroups}
+          />
+        ),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+      },
+    ],
+    [statusOptions, usageOptions, tableGroups],
+  );
+
   return (
     <>
       {open && <SetupKeyModal open={open} setOpen={setOpen} groups={groups} />}
@@ -174,13 +286,20 @@ export default function SetupKeysTable({
         text={"Setup Keys"}
         sorting={sorting}
         setSorting={setSorting}
+        initialPageSize={25}
+        showResetFilterButton={false}
         columns={SetupKeysTableColumns}
         data={setupKeys}
         searchPlaceholder={"Search by name, type or group..."}
         columnVisibility={{
           valid: false,
           group_strings: false,
+          group_names: false,
+          type: false,
         }}
+        aboveTable={(table) => (
+          <TableFilterChips table={table} filters={filterDefs} />
+        )}
         getStartedCard={
           isGroupPage ? (
             <NoResults
@@ -198,7 +317,7 @@ export default function SetupKeysTable({
                 disabled={!permission.setup_keys.create}
               >
                 <PlusCircle size={16} />
-                Create Setup Key
+                Create Key
               </Button>
             </NoResults>
           ) : (
@@ -224,7 +343,7 @@ export default function SetupKeysTable({
                   disabled={!permission.setup_keys.create}
                 >
                   <PlusCircle size={16} />
-                  Create Setup Key
+                  Create Key
                 </Button>
               }
               learnMore={
@@ -254,7 +373,7 @@ export default function SetupKeysTable({
                 disabled={!permission.setup_keys.create}
               >
                 <PlusCircle size={16} />
-                Create Setup Key
+                Create Key
               </Button>
             )}
           </>
@@ -262,54 +381,21 @@ export default function SetupKeysTable({
       >
         {(table) => (
           <>
-            <ButtonGroup disabled={setupKeys?.length == 0}>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("valid")?.setFilterValue(undefined);
-                }}
-                disabled={setupKeys?.length == 0}
-                variant={
-                  table.getColumn("valid")?.getFilterValue() == undefined
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                All
-              </ButtonGroup.Button>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("valid")?.setFilterValue(true);
-                }}
-                disabled={setupKeys?.length == 0}
-                variant={
-                  table.getColumn("valid")?.getFilterValue() == true
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Valid
-              </ButtonGroup.Button>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("valid")?.setFilterValue(false);
-                }}
-                disabled={setupKeys?.length == 0}
-                variant={
-                  table.getColumn("valid")?.getFilterValue() == false
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Expired
-              </ButtonGroup.Button>
-            </ButtonGroup>
-            <DataTableRowsPerPage
+            <TableFiltersButton
               table={table}
+              filters={filterDefs}
               disabled={setupKeys?.length == 0}
             />
+
+            <DataTableResetFilterButton
+              table={table}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.resetColumnFilters();
+                table.resetGlobalFilter();
+              }}
+            />
+
             <DataTableRefreshButton
               isDisabled={setupKeys?.length == 0}
               onClick={() => {

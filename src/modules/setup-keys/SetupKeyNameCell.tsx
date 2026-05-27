@@ -11,16 +11,18 @@ export default function SetupKeyNameCell({
   secret,
 }: Readonly<Props>) {
   return (
-    <ActiveInactiveRow
-      active={valid || false}
-      inactiveDot={"red"}
-      text={name || ""}
-    >
-      {secret && (
-        <span className={"font-mono text-xs text-nb-gray-400 mt-1"}>
-          {secret.substring(0, 5) + "****"}
-        </span>
-      )}
-    </ActiveInactiveRow>
+    <div className={"max-w-[200px]"}>
+      <ActiveInactiveRow
+        active={valid || false}
+        inactiveDot={"red"}
+        text={name || ""}
+      >
+        {secret && (
+          <span className={"font-mono text-xs text-nb-gray-400 mt-1"}>
+            {secret.substring(0, 5) + "****"}
+          </span>
+        )}
+      </ActiveInactiveRow>
+    </div>
   );
 }
