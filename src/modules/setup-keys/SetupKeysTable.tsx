@@ -24,13 +24,7 @@ import GetStartedTest from "@components/ui/GetStartedTest";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import dayjs from "dayjs";
-import {
-  CircleCheckIcon,
-  ExternalLinkIcon,
-  FolderGit2Icon,
-  PlusCircle,
-  RefreshCcwIcon,
-} from "lucide-react";
+import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { uniqBy } from "lodash";
@@ -225,7 +219,6 @@ export default function SetupKeysTable({
       {
         id: "valid",
         label: "Status",
-        icon: <CircleCheckIcon size={14} />,
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -240,7 +233,6 @@ export default function SetupKeysTable({
       {
         id: "type",
         label: "Usage",
-        icon: <RefreshCcwIcon size={14} />,
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -255,7 +247,6 @@ export default function SetupKeysTable({
       {
         id: "group_names",
         label: "Groups",
-        icon: <FolderGit2Icon size={14} />,
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}

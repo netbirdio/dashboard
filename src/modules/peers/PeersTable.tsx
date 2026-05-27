@@ -32,12 +32,7 @@ import {
   SortingState,
 } from "@tanstack/react-table";
 import { trim, uniqBy } from "lodash";
-import {
-  FolderGit2Icon,
-  MonitorDotIcon,
-  UserCircle2,
-  WifiIcon,
-} from "lucide-react";
+import { MonitorDotIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -353,7 +348,6 @@ export default function PeersTable({
       {
         id: "connected",
         label: "Status",
-        icon: <WifiIcon size={14} />,
         renderPicker: (p) => (
           <StatusPicker
             value={p.value as boolean | undefined}
@@ -368,7 +362,6 @@ export default function PeersTable({
       defs.push({
         id: "group_names",
         label: "Groups",
-        icon: <FolderGit2Icon size={14} />,
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -384,7 +377,6 @@ export default function PeersTable({
       defs.push({
         id: "user_email",
         label: "Users",
-        icon: <UserCircle2 size={14} />,
         renderPicker: (p) => (
           <UsersPicker
             value={p.value as string | undefined}

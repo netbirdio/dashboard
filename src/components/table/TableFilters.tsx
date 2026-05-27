@@ -18,7 +18,6 @@ import { useState } from "react";
 export type TableFilterDef<V = unknown> = {
   id: string; // tan-stack column id
   label: string;
-  icon?: React.ReactNode;
   renderPicker: (props: {
     value: V | undefined;
     onChange: (next: V | undefined) => void;
@@ -127,10 +126,13 @@ export function TableFiltersButton<TData>({
                   }
                   onClick={() => setActiveFilterId(f.id)}
                 >
-                  <span className={"shrink-0 text-nb-gray-400"}>{f.icon}</span>
                   <span className={"flex-1"}>{f.label}</span>
                   {chip && (
-                    <span className={"text-xs text-nb-gray-400 truncate max-w-[110px]"}>
+                    <span
+                      className={
+                        "text-xs text-nb-gray-400 truncate max-w-[110px]"
+                      }
+                    >
                       {chip}
                     </span>
                   )}
@@ -236,7 +238,6 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
               "flex items-center gap-2 px-3 py-2 border-b border-nb-gray-900"
             }
           >
-            <span className={"shrink-0 text-nb-gray-400"}>{def.icon}</span>
             <span className={"text-sm font-medium text-nb-gray-100"}>
               {def.label}
             </span>
