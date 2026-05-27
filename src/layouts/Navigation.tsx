@@ -82,6 +82,7 @@ export default function Navigation({
                 <SidebarItem
                   icon={<PeerIcon />}
                   label="Peers"
+                  href={"/peers"}
                   collapsible
                   visible={!isRestricted}
                 >
