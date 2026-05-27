@@ -193,15 +193,15 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
     <Popover open={open} onOpenChange={setOpen}>
       <div
         className={cn(
-          "flex items-stretch rounded-md border border-nb-gray-900",
-          "bg-nb-gray-930/40 text-xs text-nb-gray-200 overflow-hidden",
+          "flex items-stretch h-8 rounded-md border border-nb-gray-900",
+          "bg-nb-gray-930/40 text-sm text-nb-gray-200 overflow-hidden",
           "hover:border-nb-gray-700 transition-colors",
         )}
       >
         <PopoverTrigger asChild>
           <button
             className={cn(
-              "flex items-center gap-2 px-2.5 py-1",
+              "flex items-center gap-2 px-3",
               "hover:bg-nb-gray-900 transition-colors",
             )}
           >
@@ -212,7 +212,7 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
         <button
           aria-label={`Remove ${def.label} filter`}
           className={cn(
-            "flex items-center justify-center px-1.5",
+            "flex items-center justify-center px-2",
             "border-l border-nb-gray-900",
             "text-nb-gray-400 hover:bg-nb-gray-900 hover:text-white transition-colors",
           )}
@@ -222,7 +222,7 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
             table.getColumn(def.id)?.setFilterValue(undefined);
           }}
         >
-          <XIcon size={12} />
+          <XIcon size={14} />
         </button>
       </div>
       <PopoverContent
