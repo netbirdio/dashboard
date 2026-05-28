@@ -50,9 +50,7 @@ import AccessControlActiveCell from "@/modules/access-control/table/AccessContro
 import AccessControlDestinationsCell from "@/modules/access-control/table/AccessControlDestinationsCell";
 import AccessControlDirectionCell from "@/modules/access-control/table/AccessControlDirectionCell";
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
-import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
-import AccessControlPostureCheckCell from "@/modules/access-control/table/AccessControlPostureCheckCell";
-import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
+import AccessControlProtoPortsCell from "@/modules/access-control/table/AccessControlProtoPortsCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
 
 type Props = {
@@ -143,48 +141,14 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
   },
 
   {
-    id: "protocol",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].protocol || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
-    },
-    sortingFn: "basic",
+    id: "proto_ports",
+    accessorFn: (row) => row.rules?.[0]?.protocol || "",
+    sortingFn: "text",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Protocol</DataTableHeader>;
+      return <DataTableHeader column={column}>Proto & Ports</DataTableHeader>;
     },
     cell: ({ cell }) => (
-      <AccessControlProtocolCell policy={cell.row.original} />
-    ),
-  },
-  {
-    id: "ports",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].ports?.length || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
-    },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Ports</DataTableHeader>;
-    },
-    cell: ({ cell }) => <AccessControlPortsCell policy={cell.row.original} />,
-  },
-  {
-    id: "posture_checks",
-    accessorFn: (row) => row.source_posture_checks?.length || 0,
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Posture Checks</DataTableHeader>;
-    },
-    cell: ({ cell }) => (
-      <AccessControlPostureCheckCell policy={cell.row.original} />
+      <AccessControlProtoPortsCell policy={cell.row.original} />
     ),
   },
   {

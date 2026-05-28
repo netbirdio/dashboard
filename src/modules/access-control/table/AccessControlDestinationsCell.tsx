@@ -32,7 +32,7 @@ export default function AccessControlDestinationsCell({
 
   return firstRule ? (
     <div className={cn("flex items-center gap-1", canUpdate && "group")}>
-      <MultipleGroups groups={firstRule.destinations as Group[]} />
+      <MultipleGroups groups={firstRule.destinations as Group[]} countOnly />
       {canUpdate && <TransparentEditIconButton />}
     </div>
   ) : (
