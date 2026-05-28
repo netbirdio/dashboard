@@ -486,7 +486,12 @@ export default function PeersTable({
           ipv6: false,
         }}
         isLoading={isLoading}
-        getStartedCard={<NoPeersGettingStarted showBackground={true} />}
+        getStartedCard={
+          <NoPeersGettingStarted
+            showBackground={true}
+            isUserDevice={kind ? kind === "users" : undefined}
+          />
+        }
         rightSide={() => (
           <>
             {peers && peers.length > 0 && (
