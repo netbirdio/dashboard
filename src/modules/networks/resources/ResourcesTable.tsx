@@ -7,7 +7,8 @@ import NoResults from "@components/ui/NoResults";
 import { IconCirclePlus } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
-import { ArrowUpRightIcon, Layers3Icon } from "lucide-react";
+import { ArrowUpRightIcon, ExternalLinkIcon, Layers3Icon } from "lucide-react";
+import InlineLink from "@components/InlineLink";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useState } from "react";
@@ -210,10 +211,24 @@ export default function ResourcesTable({
       }
     >
       {(table) => (
-        <DataTableRowsPerPage
-          table={table}
-          disabled={!resources || resources?.length == 0}
-        />
+        <>
+          <DataTableRowsPerPage
+            table={table}
+            disabled={!resources || resources?.length == 0}
+          />
+          {!isGroupPage && (
+            <InlineLink
+              href={
+                "https://docs.netbird.io/manage/networks#manage-access-to-routing-peer"
+              }
+              target={"_blank"}
+              className={"text-xs whitespace-nowrap"}
+            >
+              Trying to access resources on the routing peer?
+              <ExternalLinkIcon size={12} />
+            </InlineLink>
+          )}
+        </>
       )}
     </DataTable>
   );
