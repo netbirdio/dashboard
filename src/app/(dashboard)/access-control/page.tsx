@@ -41,18 +41,14 @@ export default function AccessControlPage() {
           <h1 ref={headingRef}>Access Control Policies</h1>
           <Paragraph>
             Create rules to manage access in your network and define what peers
-            can connect.
-          </Paragraph>
-          <Paragraph>
-            Learn more about
+            can connect.{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/manage-network-access"}
               target={"_blank"}
             >
-              Access Controls
+              Learn more
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
           </Paragraph>
         </div>
 
