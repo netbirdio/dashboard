@@ -20,7 +20,7 @@ import UserBlockCell from "@/modules/users/table-cells/UserBlockCell";
 import UserNameCell from "@/modules/users/table-cells/UserNameCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
-import { InviteUserButton } from "@/modules/users/UsersTable";
+import { InviteUserButton } from "@/modules/users/UserInvitesTable";
 
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 

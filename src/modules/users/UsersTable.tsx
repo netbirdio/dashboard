@@ -1,6 +1,5 @@
 import Button from "@components/Button";
 import Card from "@components/Card";
-import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
@@ -19,14 +18,13 @@ import {
 import useFetchApi from "@utils/api";
 import { isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
-import { ExternalLinkIcon, Link2, MailPlus } from "lucide-react";
+import { ExternalLinkIcon, Link2 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { Group } from "@/interfaces/Group";
 import { User, UserInvite } from "@/interfaces/User";
 import LastTimeRow from "@/modules/common-table-rows/LastTimeRow";
 import { PendingApprovalFilter } from "@/modules/users/PendingApprovalFilter";
@@ -36,8 +34,7 @@ import UserGroupCell from "@/modules/users/table-cells/UserGroupCell";
 import UserNameCell from "@/modules/users/table-cells/UserNameCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
-import UserInviteModal from "@/modules/users/UserInviteModal";
-import UserInvitesTable from "@/modules/users/UserInvitesTable";
+import UserInvitesTable, { InviteUserButton } from "@/modules/users/UserInvitesTable";
 import { useAccount } from "@/modules/account/useAccount";
 
 export const UsersTableColumns: ColumnDef<User>[] = [
@@ -299,72 +296,3 @@ export default function UsersTable({
     </DataTable>
   );
 }
-
-type InviteUserButtonProps = {
-  show?: boolean;
-  className?: string;
-  groups?: Group[];
-};
-
-export const InviteUserButton = ({
-  show = false,
-  className,
-  groups,
-}: InviteUserButtonProps) => {
-  const { permission } = usePermissions();
-  const account = useAccount();
-
-  if (!show) return null;
-
-  // On cloud: always show "Invite User"
-  // On self-hosted: only show when embedded_idp_enabled is true
-  const isCloud = isNetBirdHosted();
-  const embeddedIdpEnabled = account?.settings.embedded_idp_enabled;
-  const localAuthDisabled = account?.settings.local_auth_disabled;
-
-  if (!isCloud && !embeddedIdpEnabled) return null;
-
-  const isDisabled = !permission.users.create || localAuthDisabled;
-
-  const button = (
-    <Button
-      variant={"primary"}
-      className={className}
-      disabled={isDisabled}
-    >
-      <MailPlus size={16} />
-      {isCloud ? "Invite User" : "Add User"}
-    </Button>
-  );
-
-  if (localAuthDisabled) {
-    return (
-      <FullTooltip
-        className={className}
-        interactive={true}
-        content={
-          <div className={"flex flex-col"}>
-            <p className={"max-w-[200px] text-xs"}>
-              Local authentication is disabled. Use your IdP for authentication.
-            </p>
-            <div className={"text-xs mt-1.5"}>
-              <InlineLink
-                href={"https://docs.netbird.io/selfhosted/identity-providers/disable-local-authentication"}
-                target={"_blank"}
-                className={"flex gap-1 items-center"}
-              >
-                Learn more
-                <ExternalLinkIcon size={12} />
-              </InlineLink>
-            </div>
-          </div>
-        }
-      >
-        {button}
-      </FullTooltip>
-    );
-  }
-
-  return <UserInviteModal groups={groups}>{button}</UserInviteModal>;
-};
-
