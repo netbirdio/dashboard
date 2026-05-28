@@ -41,7 +41,6 @@ import SetupKeyActionCell from "@/modules/setup-keys/SetupKeyActionCell";
 import SetupKeyGroupsCell from "@/modules/setup-keys/SetupKeyGroupsCell";
 import SetupKeyModal from "@/modules/setup-keys/SetupKeyModal";
 import SetupKeyNameCell from "@/modules/setup-keys/SetupKeyNameCell";
-import SetupKeyStatusCell from "@/modules/setup-keys/SetupKeyStatusCell";
 import SetupKeyUsageCell from "@/modules/setup-keys/SetupKeyUsageCell";
 
 export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
@@ -56,6 +55,8 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
         name={row.original.name}
         valid={row.original.valid}
         secret={row.original.key}
+        ephemeral={row.original.ephemeral}
+        allowExtraDnsLabels={row.original.allow_extra_dns_labels}
       />
     ),
   },
@@ -125,12 +126,6 @@ export const SetupKeysTableColumns: ColumnDef<SetupKey>[] = [
         <EmptyRow className={"px-3"} />
       );
     },
-  },
-  {
-    id: "status",
-    accessorKey: "id",
-    header: ({ column }) => "",
-    cell: ({ row }) => <SetupKeyStatusCell setupKey={row.original} />,
   },
   {
     accessorKey: "id",

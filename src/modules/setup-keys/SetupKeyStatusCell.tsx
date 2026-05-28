@@ -1,6 +1,5 @@
-import Badge from "@components/Badge";
 import FullTooltip from "@components/FullTooltip";
-import { GlobeIcon, HelpCircle, PowerOffIcon } from "lucide-react";
+import { PowerOffIcon } from "lucide-react";
 import * as React from "react";
 import { SetupKey } from "@/interfaces/SetupKey";
 
@@ -9,14 +8,14 @@ type Props = {
 };
 export default function SetupKeyStatusCell({ setupKey }: Readonly<Props>) {
   return (
-    <div className={"flex gap-4"}>
+    <div className={"flex items-center gap-1.5"}>
       {setupKey?.ephemeral && <Ephemeral />}
       {setupKey?.allow_extra_dns_labels && <AllowExtraDNSLabels />}
     </div>
   );
 }
 
-const AllowExtraDNSLabels = () => {
+export const AllowExtraDNSLabels = () => {
   return (
     <FullTooltip
       interactive={false}
@@ -27,16 +26,18 @@ const AllowExtraDNSLabels = () => {
         </div>
       }
     >
-      <Badge variant="gray">
-        <GlobeIcon size={12} className={"shrink-0"} />
-        Extra DNS Labels
-        <HelpCircle size={12} />
-      </Badge>
+      <span
+        className={
+          "font-mono text-[9px] font-medium tracking-wider leading-none px-1 py-0.5 rounded border border-nb-gray-700 text-nb-gray-300 cursor-help"
+        }
+      >
+        DNS
+      </span>
     </FullTooltip>
   );
 };
 
-const Ephemeral = () => {
+export const Ephemeral = () => {
   return (
     <FullTooltip
       interactive={false}
@@ -47,11 +48,10 @@ const Ephemeral = () => {
         </div>
       }
     >
-      <Badge variant={"gray"}>
-        <PowerOffIcon size={12} className={"shrink-0 text-yellow-400"} />
-        Ephemeral
-        <HelpCircle size={12} />
-      </Badge>
+      <PowerOffIcon
+        size={12}
+        className={"shrink-0 text-yellow-400 cursor-help"}
+      />
     </FullTooltip>
   );
 };
