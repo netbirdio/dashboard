@@ -203,6 +203,10 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     filterFn: "equalsString",
   },
   {
+    id: "direction_filter",
+    accessorFn: (row) => !!row.rules?.[0]?.bidirectional,
+  },
+  {
     id: "actions",
     accessorKey: "id",
     header: "",
@@ -278,8 +282,8 @@ export default function AccessControlTable({
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
       { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      { value: true, label: "Enabled", dotClass: "bg-green-500" },
+      { value: false, label: "Disabled", dotClass: "bg-nb-gray-700" },
     ],
     [],
   );
@@ -299,6 +303,15 @@ export default function AccessControlTable({
       { value: undefined, label: "All" },
       { value: "with", label: "With" },
       { value: "without", label: "Without" },
+    ],
+    [],
+  );
+
+  const directionOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All" },
+      { value: true, label: "Bidirectional" },
+      { value: false, label: "One-way" },
     ],
     [],
   );
@@ -369,6 +382,20 @@ export default function AccessControlTable({
         formatChip: (v) => formatGroupsChip(v as string[] | undefined),
       },
       {
+        id: "direction_filter",
+        label: "Direction",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={directionOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, directionOptions),
+      },
+      {
         id: "protocol_filter",
         label: "Protocol",
         renderPicker: (p) => (
@@ -414,7 +441,13 @@ export default function AccessControlTable({
           formatRadioChip(v as string | undefined, postureOptions),
       },
     ],
-    [statusOptions, protocolOptions, postureOptions, tableGroups],
+    [
+      statusOptions,
+      protocolOptions,
+      postureOptions,
+      directionOptions,
+      tableGroups,
+    ],
   );
 
   return (
@@ -466,6 +499,7 @@ export default function AccessControlTable({
           protocol_filter: false,
           ports_filter: false,
           has_posture_checks: false,
+          direction_filter: false,
         }}
         data={showTemporaryPolicies ? tempPolicies : regularPolicies}
         onRowClick={(row, cell) => {
