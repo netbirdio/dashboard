@@ -7,6 +7,11 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
+  CheckboxListPicker,
+  CheckboxOption,
+  formatCheckboxChip,
+} from "@components/table/filters/CheckboxListPicker";
+import {
   formatGroupsChip,
   GroupsPicker,
 } from "@components/table/filters/GroupsPicker";
@@ -40,7 +45,9 @@ import PeerProvider from "@/contexts/PeerProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
+import { getOperatingSystem } from "@/hooks/useOperatingSystem";
 import { Group } from "@/interfaces/Group";
+import { OperatingSystem } from "@/interfaces/OperatingSystem";
 import { Peer } from "@/interfaces/Peer";
 import PeerActionCell from "@/modules/peers/PeerActionCell";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
@@ -52,6 +59,25 @@ import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 import PeerStatusCell from "@/modules/peers/PeerStatusCell";
 import PeerVersionCell from "@/modules/peers/PeerVersionCell";
 import { removeAllSpaces } from "@utils/helpers";
+
+// Stable key per OS family for the filter column. Mirrors the icon
+// selection in PeerOSCell so the chip label and the displayed OS icon
+// always agree.
+function peerOsKey(os: string | undefined): string {
+  const kind = getOperatingSystem(os || "");
+  switch (kind) {
+    case OperatingSystem.WINDOWS:
+      return "windows";
+    case OperatingSystem.APPLE:
+      return "mac";
+    case OperatingSystem.ANDROID:
+      return "android";
+    case OperatingSystem.IOS:
+      return "ios";
+    default:
+      return "linux";
+  }
+}
 
 const PeersTableColumns: ColumnDef<Peer>[] = [
   {
@@ -169,6 +195,11 @@ const PeersTableColumns: ColumnDef<Peer>[] = [
     cell: ({ row }) => (
       <PeerOSCell os={row.original.os} serial={row.original.serial_number} />
     ),
+  },
+  {
+    id: "os_kind",
+    accessorFn: (peer) => peerOsKey(peer.os),
+    filterFn: "arrIncludesSome",
   },
   {
     id: "serial",
@@ -340,6 +371,20 @@ export default function PeersTable({
     }
   }, [showBrowserPeers, browserPeers]);
 
+  // Operating system options. Same set as the OS icons rendered in
+  // PeerOSCell — we don't expose FreeBSD / Docker as separate filter
+  // entries since they fold into Linux for the chosen icon.
+  const osOptions = useMemo<CheckboxOption<string>[]>(
+    () => [
+      { value: "linux", label: "Linux" },
+      { value: "windows", label: "Windows" },
+      { value: "mac", label: "macOS" },
+      { value: "android", label: "Android" },
+      { value: "ios", label: "iOS" },
+    ],
+    [],
+  );
+
   // Filter definitions powering the consolidated `Filters` button +
   // chip row. The Users filter is only meaningful for the User Devices
   // view; servers (no real owner) skip it.
@@ -356,6 +401,20 @@ export default function PeersTable({
           />
         ),
         formatChip: (v) => formatStatusChip(v as boolean | undefined),
+      },
+      {
+        id: "os_kind",
+        label: "OS",
+        renderPicker: (p) => (
+          <CheckboxListPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={osOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatCheckboxChip(v as string[] | undefined, osOptions, "platforms"),
       },
     ];
     if (!isUser) {
@@ -389,7 +448,7 @@ export default function PeersTable({
       });
     }
     return defs;
-  }, [isUser, kind, tableGroups, tableUsers]);
+  }, [isUser, kind, osOptions, tableGroups, tableUsers]);
 
   return (
     <>
@@ -423,6 +482,7 @@ export default function PeersTable({
           actions: permission.peers.update,
           groups: permission.groups.read,
           os: false,
+          os_kind: false,
           ipv6: false,
         }}
         isLoading={isLoading}
