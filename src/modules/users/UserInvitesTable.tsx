@@ -376,7 +376,7 @@ export const InvitesTableColumns: ColumnDef<UserInvite>[] = [
     sortingFn: "datetime",
     cell: ({ row }) => (
       <span className="text-nb-gray-400">
-        {dayjs(row.original.expires_at).format("D MMM, YYYY")}
+        {dayjs(row.original.expires_at).format("L")}
       </span>
     ),
   },

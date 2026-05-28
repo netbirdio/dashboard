@@ -300,7 +300,7 @@ function InviteAcceptContent() {
         </div>
 
         <p className="text-center text-xs text-nb-gray-500">
-          Invite expires on {dayjs(inviteInfo.expires_at).format("D MMMM, YYYY [at] h:mm A")}
+          Invite expires on {dayjs(inviteInfo.expires_at).format("L [at] LT")}
         </p>
       </div>
     </div>

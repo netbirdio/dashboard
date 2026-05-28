@@ -665,7 +665,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
                 </>
               }
               value={
-                dayjs(peer.created_at).format("D MMMM, YYYY [at] h:mm A") +
+                dayjs(peer.created_at).format("L [at] LT") +
                 " (" +
                 dayjs().to(peer.created_at) +
                 ")"
@@ -683,7 +683,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             value={
               peer.connected
                 ? "just now"
-                : dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
+                : dayjs(peer.last_seen).format("L [at] LT") +
                   " (" +
                   dayjs().to(peer.last_seen) +
                   ")"

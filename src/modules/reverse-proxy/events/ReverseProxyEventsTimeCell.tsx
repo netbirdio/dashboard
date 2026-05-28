@@ -23,10 +23,10 @@ export const ReverseProxyEventsTimeCell = ({ timestamp, className }: Props) => {
           )}
         >
           <span className={"text-nb-gray-200 flex gap-2 items-center"}>
-            {dayjs(timestamp).format("MMM D, YYYY")}
+            {dayjs(timestamp).format("L")}
           </span>
           <span className={"text-nb-gray-400"}>
-            {dayjs(timestamp).format("h:mm:ss A")}
+            {dayjs(timestamp).format("LT")}
           </span>
         </div>
       </div>

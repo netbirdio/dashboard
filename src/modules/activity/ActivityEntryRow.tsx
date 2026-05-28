@@ -120,7 +120,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
             className={"flex gap-2 items-center text-nb-gray-400 text-xs mr-1"}
           >
             <div className={"h-1 w-1 bg-nb-gray-700 rounded-full"}></div>
-            {dayjs(event?.timestamp).format("MMM D, YYYY [at] h:mm:s A")}
+            {dayjs(event?.timestamp).format("L [at] LT")}
           </span>
         </div>
 

@@ -12,7 +12,7 @@ export default function ExpirationDateRow({ date }: Props) {
       }
     >
       <Calendar size={14} />
-      {dayjs(date).format("ddd, D MMMM YYYY")}
+      {dayjs(date).format("l, L")}
     </div>
   );
 }
