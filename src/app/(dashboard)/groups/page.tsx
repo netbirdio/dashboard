@@ -31,19 +31,14 @@ export default function GroupsPage() {
         </Breadcrumbs>
         <h1 ref={headingRef}>Groups</h1>
         <Paragraph>
-          Here is the overview of the groups of your organization. You can
-          delete the unused ones.
-        </Paragraph>
-        <Paragraph>
-          Learn more about{" "}
+          Organize peers, users and resources into groups to manage access.{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-network-access"}
             target={"_blank"}
           >
-            Groups
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
       </div>
       <RestrictedAccess hasAccess={permission.groups.read} page={"Groups"}>
