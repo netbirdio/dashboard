@@ -172,7 +172,7 @@ export default function NetworkRoutingPeersTable({
           disabled={!permission.networks.update}
         >
           <IconCirclePlus size={16} />
-          Add Routing Peer
+          Add
         </Button>
       )}
     >

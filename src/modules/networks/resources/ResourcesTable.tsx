@@ -4,6 +4,10 @@ import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
+  formatGroupsChip,
+  GroupsPicker,
+} from "@components/table/filters/GroupsPicker";
+import {
   formatRadioChip,
   RadioOption,
   RadioPicker,
@@ -22,6 +26,10 @@ import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import {
+  isResourceTargetType,
+  useReverseProxies,
+} from "@/contexts/ReverseProxiesProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
@@ -87,11 +95,19 @@ const NetworkResourceColumns: ColumnDef<NetworkResource>[] = [
       return groups.map((group) => group.name).join(", ");
     },
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Resource Groups</DataTableHeader>;
+      return <DataTableHeader column={column}>Groups</DataTableHeader>;
     },
     cell: ({ row }) => {
       return <ResourceGroupCell resource={row.original} />;
     },
+  },
+  {
+    id: "group_names",
+    accessorFn: (resource) => {
+      const groups = (resource?.groups ?? []) as Group[];
+      return groups.map((g) => g.name).filter((n): n is string => !!n);
+    },
+    filterFn: "arrIncludesSome",
   },
   {
     id: "policies",
@@ -139,12 +155,61 @@ export default function ResourcesTable({
   ]);
   const { openResourceModal, network } = useNetworksContext();
   const router = useRouter();
+  const { reverseProxies } = useReverseProxies();
+
+  const exposedResourceIds = useMemo(() => {
+    const ids = new Set<string>();
+    if (!reverseProxies) return ids;
+    for (const proxy of reverseProxies) {
+      for (const target of proxy.targets ?? []) {
+        if (isResourceTargetType(target.target_type) && target.target_id) {
+          ids.add(target.target_id);
+        }
+      }
+    }
+    return ids;
+  }, [reverseProxies]);
+
+  const tableGroups = useMemo(() => {
+    if (!resources) return [];
+    const map = new Map<string, { id?: string; name: string }>();
+    for (const resource of resources) {
+      const groups = (resource?.groups ?? []) as Group[];
+      for (const g of groups) {
+        if (g?.name && !map.has(g.name)) {
+          map.set(g.name, { id: g.id, name: g.name });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [resources]);
+
+  const columns = useMemo<ColumnDef<NetworkResource>[]>(
+    () => [
+      ...NetworkResourceColumns,
+      {
+        id: "exposed",
+        accessorFn: (resource) =>
+          resource?.id ? exposedResourceIds.has(resource.id) : false,
+      },
+    ],
+    [exposedResourceIds],
+  );
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
       { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
       { value: true, label: "Active", dotClass: "bg-green-500" },
       { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const exposedOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All" },
+      { value: true, label: "Exposed" },
+      { value: false, label: "Not Exposed" },
     ],
     [],
   );
@@ -165,8 +230,35 @@ export default function ResourcesTable({
         formatChip: (v) =>
           formatRadioChip(v as boolean | undefined, statusOptions),
       },
+      {
+        id: "group_names",
+        label: "Groups",
+        renderPicker: (p) => (
+          <GroupsPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            groups={tableGroups}
+          />
+        ),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+      },
+      {
+        id: "exposed",
+        label: "Service",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={exposedOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, exposedOptions),
+      },
     ],
-    [statusOptions],
+    [statusOptions, exposedOptions, tableGroups],
   );
 
   const removeResourceParam = React.useCallback(() => {
@@ -188,7 +280,7 @@ export default function ResourcesTable({
       inset={false}
       tableClassName={"mt-0"}
       text={"Resources"}
-      columns={NetworkResourceColumns}
+      columns={columns}
       keepStateInLocalStorage={false}
       initialPageSize={25}
       showResetFilterButton={false}
@@ -235,6 +327,8 @@ export default function ResourcesTable({
       columnVisibility={{
         description: false,
         id: false,
+        group_names: false,
+        exposed: false,
       }}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={
@@ -247,7 +341,7 @@ export default function ResourcesTable({
                 disabled={!permission.networks.update}
               >
                 <IconCirclePlus size={16} />
-                Add Resource
+                Add
               </Button>
             )
           : undefined

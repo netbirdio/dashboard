@@ -99,12 +99,12 @@ export default function NetworkRoutingPeerCell({ network }: Props) {
       <Button
         size={"xs"}
         variant={"secondary"}
-        className={"min-w-[130px]"}
+        className={"!px-3"}
         onClick={() => openAddRoutingPeerModal(network)}
         disabled={!permission.networks.update}
       >
         <PlusCircle size={12} />
-        Add Routing Peer
+        Add
       </Button>
     </div>
   );
