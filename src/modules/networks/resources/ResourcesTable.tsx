@@ -2,7 +2,17 @@ import Button from "@components/Button";
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import NoResults from "@components/ui/NoResults";
 import { IconCirclePlus } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
@@ -10,7 +20,7 @@ import { removeAllSpaces } from "@utils/helpers";
 import { ArrowUpRightIcon, Layers3Icon } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
 import { NetworkResource } from "@/interfaces/Network";
@@ -130,6 +140,35 @@ export default function ResourcesTable({
   const { openResourceModal, network } = useNetworksContext();
   const router = useRouter();
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "enabled",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+    ],
+    [statusOptions],
+  );
+
   const removeResourceParam = React.useCallback(() => {
     if (!resourceId) return;
     const newParams = new URLSearchParams(params.toString());
@@ -151,11 +190,16 @@ export default function ResourcesTable({
       text={"Resources"}
       columns={NetworkResourceColumns}
       keepStateInLocalStorage={false}
+      initialPageSize={25}
+      showResetFilterButton={false}
       initialFilters={
         resourceId ? [{ id: "id", value: resourceId }] : undefined
       }
       initialSearch={resourceId}
       onFilterReset={removeResourceParam}
+      aboveTable={(table) => (
+        <TableFilterChips table={table} filters={filterDefs} />
+      )}
       data={resources}
       searchPlaceholder={"Search by name, address or group..."}
       isLoading={isLoading}
@@ -210,10 +254,22 @@ export default function ResourcesTable({
       }
     >
       {(table) => (
-        <DataTableRowsPerPage
-          table={table}
-          disabled={!resources || resources?.length == 0}
-        />
+        <>
+          <TableFiltersButton
+            table={table}
+            filters={filterDefs}
+            disabled={!resources || resources?.length == 0}
+          />
+          <DataTableResetFilterButton
+            table={table}
+            onClick={() => {
+              table.setPageIndex(0);
+              table.resetColumnFilters();
+              table.resetGlobalFilter();
+              removeResourceParam();
+            }}
+          />
+        </>
       )}
     </DataTable>
   );

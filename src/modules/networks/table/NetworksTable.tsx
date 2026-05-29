@@ -4,13 +4,23 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -65,6 +75,10 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
     cell: ({ row }) => <NetworkRoutingPeerCell network={row.original} />,
   },
   {
+    id: "active",
+    accessorFn: (network) => (network?.routing_peers_count ?? 0) > 0,
+  },
+  {
     accessorKey: "id",
     header: "",
     cell: ({ row }) => <NetworkActionCell network={row.original} />,
@@ -97,6 +111,35 @@ export default function NetworksTable({
     ],
   );
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "active",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+    ],
+    [statusOptions],
+  );
+
   return (
     <>
       <GlobalSearchModal open={searchModal} setOpen={setSearchModal} />
@@ -110,10 +153,16 @@ export default function NetworksTable({
             setSorting={setSorting}
             columns={NetworkTableColumns}
             data={data}
+            initialPageSize={25}
+            showResetFilterButton={false}
             searchPlaceholder={"Search by network name or description..."}
             columnVisibility={{
               description: false,
+              active: false,
             }}
+            aboveTable={(table) => (
+              <TableFilterChips table={table} filters={filterDefs} />
+            )}
             onSearchClick={() => setSearchModal(true)}
             getStartedCard={
               <GetStartedTest
@@ -163,9 +212,18 @@ export default function NetworksTable({
           >
             {(table) => (
               <>
-                <DataTableRowsPerPage
+                <TableFiltersButton
                   table={table}
+                  filters={filterDefs}
                   disabled={data?.length == 0}
+                />
+                <DataTableResetFilterButton
+                  table={table}
+                  onClick={() => {
+                    table.setPageIndex(0);
+                    table.resetColumnFilters();
+                    table.resetGlobalFilter();
+                  }}
                 />
                 <DataTableRefreshButton
                   isDisabled={data?.length == 0}

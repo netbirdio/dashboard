@@ -2,13 +2,23 @@ import Button from "@components/Button";
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import NoResults from "@components/ui/NoResults";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { PlusCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import * as React from "react";
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
@@ -195,6 +205,35 @@ export const ReverseProxyFlatTargetsTable = ({
     router.replace(`?${newParams.toString()}`, { scroll: false });
   }, [resourceId, params, router]);
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "enabled",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+    ],
+    [statusOptions],
+  );
+
   return (
     <DataTable
       wrapperComponent={Card}
@@ -210,12 +249,17 @@ export const ReverseProxyFlatTargetsTable = ({
       columns={FlatTargetsTableColumns}
       data={targets}
       keepStateInLocalStorage={false}
+      initialPageSize={25}
+      showResetFilterButton={false}
       searchPlaceholder="Search by URL, destination, or target..."
       initialFilters={
         resourceId ? [{ id: "target_id", value: resourceId }] : undefined
       }
       initialSearch={resourceId}
       onFilterReset={removeResourceParam}
+      aboveTable={(table) => (
+        <TableFilterChips table={table} filters={filterDefs} />
+      )}
       columnVisibility={{
         searchString: false,
         target_id: false,
@@ -243,10 +287,22 @@ export const ReverseProxyFlatTargetsTable = ({
       )}
     >
       {(table) => (
-        <DataTableRowsPerPage
-          table={table}
-          disabled={!targets || targets.length === 0}
-        />
+        <>
+          <TableFiltersButton
+            table={table}
+            filters={filterDefs}
+            disabled={!targets || targets.length === 0}
+          />
+          <DataTableResetFilterButton
+            table={table}
+            onClick={() => {
+              table.setPageIndex(0);
+              table.resetColumnFilters();
+              table.resetGlobalFilter();
+              removeResourceParam();
+            }}
+          />
+        </>
       )}
     </DataTable>
   );
