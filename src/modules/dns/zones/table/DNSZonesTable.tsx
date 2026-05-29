@@ -1,12 +1,21 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
@@ -137,6 +146,35 @@ export default function DNSZonesTable({
     );
   }, [data, groups]);
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "enabled",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+    ],
+    [statusOptions],
+  );
+
   return (
     <DataTable
       headingTarget={headingTarget}
@@ -154,7 +192,12 @@ export default function DNSZonesTable({
       inset={false}
       minimal={isGroupPage}
       keepStateInLocalStorage={!isGroupPage}
+      initialPageSize={25}
+      showResetFilterButton={false}
       searchPlaceholder={"Search by domain, ip, content or group..."}
+      aboveTable={(table) => (
+        <TableFilterChips table={table} filters={filterDefs} />
+      )}
       columnVisibility={{ searchString: false }}
       renderExpandedRow={(zone) => {
         const hasRecords = (zone?.records?.length ?? 0) > 0;
@@ -223,51 +266,19 @@ export default function DNSZonesTable({
     >
       {(table) => (
         <>
-          <ButtonGroup disabled={data?.length == 0}>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(undefined);
-              }}
-              disabled={data?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() === undefined
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              All
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(true);
-              }}
-              disabled={data?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() === true
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Active
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(false);
-              }}
-              disabled={data?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() === false
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Inactive
-            </ButtonGroup.Button>
-          </ButtonGroup>
-          <DataTableRowsPerPage table={table} disabled={data?.length == 0} />
+          <TableFiltersButton
+            table={table}
+            filters={filterDefs}
+            disabled={data?.length == 0}
+          />
+          <DataTableResetFilterButton
+            table={table}
+            onClick={() => {
+              table.setPageIndex(0);
+              table.resetColumnFilters();
+              table.resetGlobalFilter();
+            }}
+          />
           <DataTableRefreshButton
             isDisabled={data?.length == 0}
             onClick={() => {

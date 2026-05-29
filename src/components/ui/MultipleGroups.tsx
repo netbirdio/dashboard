@@ -32,6 +32,10 @@ type Props = {
   // suppressed in favour of a count summary; the hover card still
   // shows the full list.
   countOnly?: boolean;
+  // countThreshold raises the size at which countOnly kicks in.
+  // Default 1 means "collapse when length > 1". A threshold of 2
+  // shows up to 2 groups inline and only collapses when there are 3+.
+  countThreshold?: number;
 };
 
 export default function MultipleGroups({
@@ -45,6 +49,7 @@ export default function MultipleGroups({
   redirectGroupTab,
   disableRedirect = false,
   countOnly = false,
+  countThreshold = 1,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
 
@@ -69,7 +74,7 @@ export default function MultipleGroups({
             data-cy={"multiple-groups"}
             onClick={onClick}
           >
-            {countOnly && orderedGroups.length > 1 ? (
+            {countOnly && orderedGroups.length > countThreshold ? (
               <Badge
                 variant={"gray-ghost"}
                 useHover={true}
@@ -80,6 +85,21 @@ export default function MultipleGroups({
               >
                 {orderedGroups.length} Groups
               </Badge>
+            ) : countOnly ? (
+              <div className={"inline-flex items-center gap-2"}>
+                {orderedGroups.map((group) => (
+                  <GroupBadge
+                    key={group?.id || group?.name}
+                    group={group}
+                    showNewBadge={true}
+                    className={
+                      permission.groups.update
+                        ? "group-hover:bg-nb-gray-800"
+                        : ""
+                    }
+                  />
+                ))}
+              </div>
             ) : (
               <>
                 {firstGroup && (
