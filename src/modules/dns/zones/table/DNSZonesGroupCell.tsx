@@ -55,6 +55,7 @@ export const DNSZonesGroupCell = ({ zone }: Props) => {
       onSave={handleSave}
       modal={modal}
       setModal={setModal}
+      countOnly={true}
     />
   );
 };

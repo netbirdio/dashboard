@@ -7,6 +7,10 @@ import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
 import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
+  formatGroupsChip,
+  GroupsPicker,
+} from "@components/table/filters/GroupsPicker";
+import {
   formatRadioChip,
   RadioOption,
   RadioPicker,
@@ -65,9 +69,15 @@ export const DNSZonesColumns: ColumnDef<DNSZone>[] = [
   {
     accessorKey: "distribution_groups",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Distribution Groups</DataTableHeader>
+      <DataTableHeader column={column}>Groups</DataTableHeader>
     ),
     cell: ({ row }) => <DNSZonesGroupCell zone={row.original} />,
+  },
+  {
+    id: "group_names_filter",
+    accessorFn: (row) =>
+      ((row as DNSZone & { _group_names?: string[] })._group_names) ?? [],
+    filterFn: "arrIncludesSome",
   },
   {
     accessorKey: "enable_search_domain",
@@ -134,17 +144,27 @@ export default function DNSZonesTable({
   const zonesWithGroups = useMemo(() => {
     return (
       data?.map((zone) => {
+        const groupNames = (zone?.distribution_groups ?? [])
+          .map((id) => groups?.find((g) => g.id === id)?.name)
+          .filter((n): n is string => !!n);
         return {
           ...zone,
-          groups_search: groups
-            ?.map((g) =>
-              zone?.distribution_groups?.includes(g?.id ?? "") ? g.name : "",
-            )
-            .join(""),
-        } as DNSZone;
+          _group_names: groupNames,
+          groups_search: groupNames.join(""),
+        } as DNSZone & { _group_names: string[] };
       }) ?? []
     );
   }, [data, groups]);
+
+  const tableGroups = useMemo(() => {
+    const map = new Map<string, { id?: string; name: string }>();
+    for (const zone of zonesWithGroups) {
+      for (const name of zone._group_names ?? []) {
+        if (name && !map.has(name)) map.set(name, { name });
+      }
+    }
+    return Array.from(map.values());
+  }, [zonesWithGroups]);
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
@@ -171,8 +191,21 @@ export default function DNSZonesTable({
         formatChip: (v) =>
           formatRadioChip(v as boolean | undefined, statusOptions),
       },
+      {
+        id: "group_names_filter",
+        label: "Groups",
+        renderPicker: (p) => (
+          <GroupsPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            groups={tableGroups}
+          />
+        ),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+      },
     ],
-    [statusOptions],
+    [statusOptions, tableGroups],
   );
 
   return (
@@ -198,7 +231,7 @@ export default function DNSZonesTable({
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />
       )}
-      columnVisibility={{ searchString: false }}
+      columnVisibility={{ searchString: false, group_names_filter: false }}
       renderExpandedRow={(zone) => {
         const hasRecords = (zone?.records?.length ?? 0) > 0;
         if (!hasRecords) return;
