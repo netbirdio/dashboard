@@ -46,18 +46,14 @@ export default function TeamUsers() {
         <h1 ref={headingRef}>Users</h1>
         <Paragraph>
           Manage users and their permissions. Same-domain email users are added
-          automatically on first sign-in.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          automatically on first sign-in.{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/add-users-to-your-network"}
             target={"_blank"}
           >
-            Users
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
       </div>
       <RestrictedAccess page={"Users"} hasAccess={permission.users.read}>
