@@ -46,18 +46,14 @@ export default function PostureChecksPage() {
           </Breadcrumbs>
           <h1 ref={headingRef}>Posture Checks</h1>
           <Paragraph>
-            Use posture checks to further restrict access in your network.
-          </Paragraph>
-          <Paragraph>
-            Learn more about
+            Use posture checks to further restrict access in your network.{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/manage-posture-checks"}
               target={"_blank"}
             >
-              Posture Checks
+              Learn more
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
           </Paragraph>
         </div>
 

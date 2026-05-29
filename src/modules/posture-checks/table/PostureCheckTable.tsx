@@ -1,11 +1,20 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { useLocalStorage } from "@hooks/useLocalStorage";
 import { IconCirclePlus } from "@tabler/icons-react";
@@ -111,6 +120,35 @@ export default function PostureCheckTable({
   const [currentRow, setCurrentRow] = useState<PostureCheck>();
   const [, setCurrentCellClicked] = useState("");
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "active",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+    ],
+    [statusOptions],
+  );
+
   return (
     <div className={""}>
       {postureCheckModal && (
@@ -132,9 +170,14 @@ export default function PostureCheckTable({
           setSorting={setSorting}
           columns={Columns}
           showHeader={true}
+          initialPageSize={25}
+          showResetFilterButton={false}
           columnVisibility={{
             active: false,
           }}
+          aboveTable={(table) => (
+            <TableFilterChips table={table} filters={filterDefs} />
+          )}
           onRowClick={(row, cell) => {
             setCurrentRow(row.original);
             setPostureCheckModal(true);
@@ -208,39 +251,18 @@ export default function PostureCheckTable({
           {(table) => {
             return (
               <>
-                <ButtonGroup disabled={data?.length == 0}>
-                  <ButtonGroup.Button
-                    onClick={() => {
-                      table.setPageIndex(0);
-                      table.getColumn("active")?.setFilterValue(true);
-                    }}
-                    disabled={data?.length == 0}
-                    variant={
-                      table.getColumn("active")?.getFilterValue() == true
-                        ? "tertiary"
-                        : "secondary"
-                    }
-                  >
-                    Active
-                  </ButtonGroup.Button>
-                  <ButtonGroup.Button
-                    onClick={() => {
-                      table.setPageIndex(0);
-                      table.getColumn("active")?.setFilterValue("");
-                    }}
-                    disabled={data?.length == 0}
-                    variant={
-                      table.getColumn("active")?.getFilterValue() != true
-                        ? "tertiary"
-                        : "secondary"
-                    }
-                  >
-                    All
-                  </ButtonGroup.Button>
-                </ButtonGroup>
-                <DataTableRowsPerPage
+                <TableFiltersButton
                   table={table}
+                  filters={filterDefs}
                   disabled={data?.length == 0}
+                />
+                <DataTableResetFilterButton
+                  table={table}
+                  onClick={() => {
+                    table.setPageIndex(0);
+                    table.resetColumnFilters();
+                    table.resetGlobalFilter();
+                  }}
                 />
                 <DataTableRefreshButton
                   isDisabled={data?.length == 0}
