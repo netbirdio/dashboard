@@ -44,21 +44,17 @@ export default function NetworkRoutes() {
             </Breadcrumbs>
             <h1 ref={headingRef}>Network Routes</h1>
             <Paragraph>
-              Network routes allow you to access other networks like LANs and
-              VPCs without installing NetBird on every resource.
-            </Paragraph>
-            <Paragraph>
-              Learn more about
+              Access other networks like LANs and VPCs without installing
+              NetBird on every resource.{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                 }
                 target={"_blank"}
               >
-                Network Routes
+                Learn more
                 <ExternalLinkIcon size={12} />
               </InlineLink>
-              in our documentation.
             </Paragraph>
 
             <Callout className={"max-w-xl mt-5"} variant={"warning"}>

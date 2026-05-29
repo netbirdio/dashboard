@@ -1,19 +1,32 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatGroupsChip,
+  GroupsPicker,
+} from "@components/table/filters/GroupsPicker";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cloneDeep } from "lodash";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import GroupRouteProvider from "@/contexts/GroupRouteProvider";
@@ -62,6 +75,11 @@ export const GroupedRouteTableColumns: ColumnDef<GroupedRoute>[] = [
     accessorFn: (row) => {
       return row.group_names?.map((name) => name).join(", ");
     },
+  },
+  {
+    id: "group_names_filter",
+    accessorFn: (row) => row.group_names ?? [],
+    filterFn: "arrIncludesSome",
   },
   {
     accessorKey: "routes_search",
@@ -156,6 +174,61 @@ export default function NetworkRoutesTable({
 
   const [routeModal, setRouteModal] = useState(false);
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Enabled", dotClass: "bg-green-500" },
+      { value: false, label: "Disabled", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const tableGroups = useMemo(() => {
+    if (!groupedRoutes) return [];
+    const map = new Map<string, { id?: string; name: string }>();
+    for (const route of groupedRoutes) {
+      for (const name of route.group_names ?? []) {
+        if (name && !map.has(name)) {
+          map.set(name, { name });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [groupedRoutes]);
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "enabled",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+      {
+        id: "group_names_filter",
+        label: "Groups",
+        renderPicker: (p) => (
+          <GroupsPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            groups={tableGroups}
+          />
+        ),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+      },
+    ],
+    [statusOptions, tableGroups],
+  );
+
   return (
     <RouteAddRoutingPeerProvider>
       <RouteModal
@@ -178,12 +251,18 @@ export default function NetworkRoutesTable({
         inset={false}
         minimal={isGroupPage}
         keepStateInLocalStorage={!isGroupPage}
+        initialPageSize={25}
+        showResetFilterButton={false}
         searchPlaceholder={"Search by network, range, name or groups..."}
+        aboveTable={(table) => (
+          <TableFilterChips table={table} filters={filterDefs} />
+        )}
         columnVisibility={{
           enabled: false,
           description: false,
           description_search: false,
           group_names: false,
+          group_names_filter: false,
           domains: false,
           domain_search: false,
           routes_search: false,
@@ -291,39 +370,18 @@ export default function NetworkRoutesTable({
       >
         {(table) => (
           <>
-            <ButtonGroup disabled={routes?.length == 0}>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("enabled")?.setFilterValue(true);
-                }}
-                disabled={routes?.length == 0}
-                variant={
-                  table.getColumn("enabled")?.getFilterValue() == true
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                Enabled
-              </ButtonGroup.Button>
-              <ButtonGroup.Button
-                onClick={() => {
-                  table.setPageIndex(0);
-                  table.getColumn("enabled")?.setFilterValue(undefined);
-                }}
-                disabled={routes?.length == 0}
-                variant={
-                  table.getColumn("enabled")?.getFilterValue() == undefined
-                    ? "tertiary"
-                    : "secondary"
-                }
-              >
-                All
-              </ButtonGroup.Button>
-            </ButtonGroup>
-            <DataTableRowsPerPage
+            <TableFiltersButton
               table={table}
+              filters={filterDefs}
               disabled={routes?.length == 0}
+            />
+            <DataTableResetFilterButton
+              table={table}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.resetColumnFilters();
+                table.resetGlobalFilter();
+              }}
             />
             <DataTableRefreshButton
               isDisabled={routes?.length == 0}
