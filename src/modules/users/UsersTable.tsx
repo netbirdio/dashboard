@@ -410,8 +410,8 @@ export default function UsersTable({
             <DataTableRefreshButton
               isDisabled={users?.length == 0}
               onClick={() => {
-                mutate("/users?service_user=false");
-                mutate("/groups");
+                mutate("/users?service_user=false").then();
+                mutate("/groups").then();
               }}
             />
             {showInvitesToggle && (
