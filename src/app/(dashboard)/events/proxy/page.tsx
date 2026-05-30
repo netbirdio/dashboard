@@ -52,15 +52,10 @@ export default function ProxyEventsPage() {
 
         <Paragraph>
           View access logs for your reverse proxy services, including allowed
-          and denied requests.
-        </Paragraph>
-
-        <Paragraph>
-          Learn more about{" "}
+          and denied requests.{" "}
           <InlineLink href={REVERSE_PROXY_EVENTS_DOCS_LINK} target="_blank">
-            Proxy Events <ExternalLinkIcon size={12} />
-          </InlineLink>{" "}
-          in our documentation.
+            Learn more <ExternalLinkIcon size={12} />
+          </InlineLink>
         </Paragraph>
       </div>
 
@@ -70,7 +65,7 @@ export default function ProxyEventsPage() {
       >
         <ServerPaginationProvider
           url="/events/proxy"
-          defaultPageSize={10}
+          defaultPageSize={25}
           defaultFilters={defaultFilters}
         >
           <PeersProvider>

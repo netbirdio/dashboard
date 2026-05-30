@@ -6,7 +6,6 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ExternalLinkIcon } from "lucide-react";
@@ -303,11 +302,6 @@ export default function ReverseProxyEventsTable({
           <DatePickerWithRange
             value={dateRange}
             onChange={handleDateFilterChange}
-            disabled={!events?.length && !hasActiveFilters}
-          />
-
-          <DataTableRowsPerPage
-            table={table}
             disabled={!events?.length && !hasActiveFilters}
           />
 
