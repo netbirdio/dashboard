@@ -324,7 +324,7 @@ export default function ReverseProxyEventsTable({
           }
           title={"No Proxy Events Yet"}
           description={
-            "We haven't detected any proxy events yet. This could be because you haven't configured any reverse proxy services, or there hasn't been any traffic."
+            "No proxy traffic yet. Events appear here once your reverse proxy services start serving requests."
           }
           learnMore={
             <>
