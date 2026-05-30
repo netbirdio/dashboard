@@ -1,11 +1,21 @@
 "use client";
 
-import ButtonGroup from "@components/ButtonGroup";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ExternalLinkIcon } from "lucide-react";
@@ -106,6 +116,12 @@ export const makeEventsColumns = (
   {
     id: "is_success",
     accessorFn: (row) => row.status_code >= 200 && row.status_code < 400,
+    filterFn: "exactMatch",
+  },
+  {
+    id: "status_filter",
+    accessorFn: (row) =>
+      row.status_code >= 200 && row.status_code < 400 ? "success" : "failed",
     filterFn: "exactMatch",
   },
   {
@@ -229,6 +245,46 @@ export default function ReverseProxyEventsTable({
     },
   ]);
 
+  const statusOptions = useMemo<RadioOption<string | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: "success", label: "Success", dotClass: "bg-green-500" },
+      { value: "failed", label: "Failed", dotClass: "bg-red-500" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "status_filter",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as string | undefined}
+            onChange={(next) => {
+              p.onChange(next);
+              setFilter("status", next ?? undefined);
+            }}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as string | undefined, statusOptions),
+      },
+    ],
+    [statusOptions, setFilter],
+  );
+
+  const initialColumnFilters = useMemo(
+    () =>
+      activeStatus
+        ? [{ id: "status_filter", value: activeStatus as string }]
+        : [],
+    [activeStatus],
+  );
+
   return (
     <DataTable
       {...paginationProps}
@@ -241,7 +297,16 @@ export default function ReverseProxyEventsTable({
       sorting={sorting}
       setSorting={setSorting}
       columns={columns}
-      columnVisibility={{ is_success: false, id: false }}
+      initialFilters={initialColumnFilters}
+      showResetFilterButton={false}
+      aboveTable={(table) => (
+        <TableFilterChips table={table} filters={filterDefs} />
+      )}
+      columnVisibility={{
+        is_success: false,
+        id: false,
+        status_filter: false,
+      }}
       renderExpandedRow={(event) => (
         <ReverseProxyEventExpandedRow event={event} />
       )}
@@ -278,33 +343,27 @@ export default function ReverseProxyEventsTable({
     >
       {(table) => (
         <>
-          <ButtonGroup disabled={!events?.length && !hasActiveFilters}>
-            <ButtonGroup.Button
-              onClick={() => setFilter("status", undefined)}
-              variant={activeStatus === undefined ? "tertiary" : "secondary"}
-            >
-              All
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => setFilter("status", "success")}
-              variant={activeStatus === "success" ? "tertiary" : "secondary"}
-            >
-              Success
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => setFilter("status", "failed")}
-              variant={activeStatus === "failed" ? "tertiary" : "secondary"}
-            >
-              Failed
-            </ButtonGroup.Button>
-          </ButtonGroup>
-
           <DatePickerWithRange
             value={dateRange}
             onChange={handleDateFilterChange}
             disabled={!events?.length && !hasActiveFilters}
           />
-
+          <TableFiltersButton
+            table={table}
+            filters={filterDefs}
+            disabled={!events?.length && !hasActiveFilters}
+          />
+          <DataTableResetFilterButton
+            table={table}
+            onClick={() => {
+              table.setPageIndex(0);
+              table.resetColumnFilters();
+              table.resetGlobalFilter();
+              setFilter("status", undefined);
+              setFilter("start_date", undefined);
+              setFilter("end_date", undefined);
+            }}
+          />
           <DataTableRefreshButton
             isDisabled={!events?.length && !hasActiveFilters}
             onClick={() => mutate()}
