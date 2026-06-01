@@ -3,9 +3,16 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
+import {
+  CirclePauseIcon,
+  CirclePlayIcon,
+  MoreVertical,
+  SquarePenIcon,
+  Trash2,
+} from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
@@ -19,7 +26,7 @@ export default function ReverseProxyActionCell({
   reverseProxy,
 }: Readonly<Props>) {
   const { permission } = usePermissions();
-  const { openModal, handleDelete } = useReverseProxies();
+  const { openModal, handleDelete, handleToggle } = useReverseProxies();
 
   return (
     <div className={"flex justify-end pr-4"}>
@@ -49,6 +56,25 @@ export default function ReverseProxyActionCell({
               Edit
             </div>
           </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggle(reverseProxy);
+            }}
+            disabled={!permission?.services?.update}
+          >
+            <div className={"flex gap-3 items-center"}>
+              {reverseProxy.enabled ? (
+                <CirclePauseIcon size={14} className={"shrink-0"} />
+              ) : (
+                <CirclePlayIcon size={14} className={"shrink-0"} />
+              )}
+              {reverseProxy.enabled ? "Disable" : "Enable"}
+            </div>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
 
           <DropdownMenuItem
             onClick={(e) => {

@@ -36,14 +36,11 @@ import {
   ReverseProxy,
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyActionCell from "@/modules/reverse-proxy/table/ReverseProxyActionCell";
-import ReverseProxyActiveCell from "@/modules/reverse-proxy/table/ReverseProxyActiveCell";
 import ReverseProxyAccessControlCell from "@/modules/reverse-proxy/table/ReverseProxyAccessControlCell";
 import ReverseProxyAuthCell from "@/modules/reverse-proxy/table/ReverseProxyAuthCell";
-import ReverseProxyClusterCell from "@/modules/reverse-proxy/table/ReverseProxyClusterCell";
 import ReverseProxyNameCell from "@/modules/reverse-proxy/table/ReverseProxyNameCell";
 import ReverseProxyTargetsCell from "@/modules/reverse-proxy/table/ReverseProxyTargetsCell";
 import ReverseProxyTargetsTable from "@/modules/reverse-proxy/targets/ReverseProxyTargetsTable";
-import ReverseProxyStatusCell from "@/modules/reverse-proxy/table/ReverseProxyStatusCell";
 import { ReverseProxyTypeCell } from "@/modules/reverse-proxy/table/ReverseProxyTypeCell";
 
 const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
@@ -65,32 +62,8 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
     filterFn: "arrIncludesSomeExact",
   },
   {
-    id: "status",
-    accessorFn: (proxy) => proxy?.meta?.certificate_issued_at,
-    header: "",
-    cell: ({ row }) =>
-      row.original.id ? (
-        <ReverseProxyStatusCell
-          serviceId={row.original.id}
-          meta={row.original.meta}
-          enabled={row.original.enabled}
-          isL4={isL4Mode(row.original.mode)}
-        />
-      ) : null,
-  },
-  {
+    id: "enabled",
     accessorKey: "enabled",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
-    },
-    cell: ({ row }) => <ReverseProxyActiveCell reverseProxy={row.original} />,
-  },
-  {
-    accessorKey: "proxy_cluster",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Cluster</DataTableHeader>;
-    },
-    cell: ({ row }) => <ReverseProxyClusterCell reverseProxy={row.original} />,
   },
   {
     accessorKey: "targets",
@@ -223,10 +196,11 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       initialPageSize={25}
       showResetFilterButton={false}
       searchPlaceholder={"Search by URL, domain, or target..."}
+      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />
       )}
-      columnVisibility={{ searchString: false }}
+      columnVisibility={{ searchString: false, enabled: false }}
       tableCellClassName={"h-[80px]"}
       renderExpandedRow={(reverseProxy) => {
         if (isL4Mode(reverseProxy.mode)) return;
