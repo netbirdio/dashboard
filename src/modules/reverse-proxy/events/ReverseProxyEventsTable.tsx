@@ -51,7 +51,6 @@ import {
 } from "@/modules/reverse-proxy/events/ReverseProxyEventsRequestCell";
 import { ReverseProxyEventsTimeCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsTimeCell";
 import { ReverseProxyEventsAuthMethodCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsAuthMethodCell";
-import { ReverseProxyEventsReasonCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsReasonCell";
 import { ReverseProxyEventsDurationCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsDurationCell";
 import { ReverseProxyEventsBytesCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsBytesCell";
 import ReverseProxyEventExpandedRow from "@/modules/reverse-proxy/events/ReverseProxyEventExpandedRow";
@@ -92,26 +91,19 @@ export const makeEventsColumns = (
     accessorKey: "method",
     header: ({ column }) => (
       <DataTableHeader column={column} name="method">
-        Method
-      </DataTableHeader>
-    ),
-    cell: ({ row }) => <ReverseProxyEventsMethodCell event={row.original} />,
-    filterFn: "exactMatch",
-  },
-  {
-    id: "url",
-    accessorFn: (row) => `${row.host} ${row.path || ""}`,
-    header: ({ column }) => (
-      <DataTableHeader column={column} name="url" sorting={false}>
-        Host / URL
+        Request
       </DataTableHeader>
     ),
     cell: ({ row }) => (
-      <ReverseProxyEventsUrlCell
-        event={row.original}
-        service={servicesMap.get(row.original.service_id)}
-      />
+      <div className={"flex items-baseline gap-3"}>
+        <ReverseProxyEventsMethodCell event={row.original} />
+        <ReverseProxyEventsUrlCell
+          event={row.original}
+          service={servicesMap.get(row.original.service_id)}
+        />
+      </div>
     ),
+    filterFn: "exactMatch",
   },
   {
     id: "status",
@@ -167,16 +159,6 @@ export const makeEventsColumns = (
     cell: ({ row }) => (
       <ReverseProxyEventsAuthMethodCell event={row.original} />
     ),
-  },
-  {
-    id: "reason",
-    accessorKey: "reason",
-    header: ({ column }) => (
-      <DataTableHeader column={column} name="reason">
-        Reason
-      </DataTableHeader>
-    ),
-    cell: ({ row }) => <ReverseProxyEventsReasonCell event={row.original} />,
   },
   {
     id: "user",

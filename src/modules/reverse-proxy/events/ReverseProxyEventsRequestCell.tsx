@@ -14,19 +14,18 @@ type Props = {
 };
 
 export const ReverseProxyEventsMethodCell = ({ event }: Props) => {
+  const className =
+    "font-mono text-[0.82rem] font-medium text-nb-gray-300 min-w-[56px] inline-flex justify-center";
+
   if (isL4Event(event)) {
     return (
-      <span className="font-mono text-[0.82rem] font-medium py-2 text-nb-gray-200 uppercase">
+      <span className={`${className} text-nb-gray-200 uppercase`}>
         {event.protocol}
       </span>
     );
   }
 
-  return (
-    <span className="font-mono text-[0.82rem] font-medium py-2 text-nb-gray-300">
-      {event.method}
-    </span>
-  );
+  return <span className={className}>{event.method}</span>;
 };
 
 export const ReverseProxyEventsUrlCell = ({ event, service }: Props) => {
