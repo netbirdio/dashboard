@@ -12,6 +12,15 @@ import {
   RadioPicker,
 } from "@components/table/filters/RadioPicker";
 import {
+  formatTextChip,
+  TextInputPicker,
+} from "@components/table/filters/TextInputPicker";
+import {
+  formatUsersChip,
+  UserOption,
+  UsersPicker,
+} from "@components/table/filters/UsersPicker";
+import {
   TableFilterChips,
   TableFilterDef,
   TableFiltersButton,
@@ -24,7 +33,9 @@ import dayjs from "dayjs";
 import React, { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@components/DatePickerWithRange";
+import { usePeers } from "@/contexts/PeersProvider";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
+import { useUsers } from "@/contexts/UsersProvider";
 import {
   REVERSE_PROXY_EVENTS_DOCS_LINK,
   ReverseProxy,
@@ -74,6 +85,7 @@ export const makeEventsColumns = (
     cell: ({ row }) => (
       <ReverseProxyEventsLocationIpCell event={row.original} />
     ),
+    filterFn: "includesString",
   },
   {
     id: "method",
@@ -84,7 +96,7 @@ export const makeEventsColumns = (
       </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsMethodCell event={row.original} />,
-    filterFn: "arrIncludesSomeExact",
+    filterFn: "exactMatch",
   },
   {
     id: "url",
@@ -175,6 +187,7 @@ export const makeEventsColumns = (
       </DataTableHeader>
     ),
     cell: ({ row }) => <ReverseProxyEventsUserCell event={row.original} />,
+    filterFn: "exactMatch",
   },
   {
     accessorKey: "id",
@@ -201,6 +214,8 @@ export default function ReverseProxyEventsTable({
   const { data: services } = useFetchApi<ReverseProxy[]>(
     "/reverse-proxies/services",
   );
+  const { users } = useUsers();
+  const { peers } = usePeers();
 
   const servicesMap = useMemo(() => {
     const map = new Map<string, ReverseProxy>();
@@ -254,6 +269,48 @@ export default function ReverseProxyEventsTable({
     [],
   );
 
+  const methodOptions = useMemo<RadioOption<string | undefined>[]>(
+    () => [
+      { value: undefined, label: "All" },
+      { value: "GET", label: "GET" },
+      { value: "POST", label: "POST" },
+      { value: "PUT", label: "PUT" },
+      { value: "PATCH", label: "PATCH" },
+      { value: "DELETE", label: "DELETE" },
+      { value: "HEAD", label: "HEAD" },
+      { value: "OPTIONS", label: "OPTIONS" },
+    ],
+    [],
+  );
+
+  const userOptions = useMemo<UserOption[]>(() => {
+    const map = new Map<string, UserOption>();
+    for (const event of events ?? []) {
+      const id = event.user_id;
+      if (!id || map.has(id)) continue;
+      const user = users?.find((u) => u.id === id);
+      if (user) {
+        map.set(id, {
+          id: user.id,
+          name: user.name || user.email || id,
+          email: id,
+        });
+        continue;
+      }
+      const peer = peers?.find((p) => p.id === id);
+      if (peer) {
+        map.set(id, {
+          id,
+          name: peer.name || peer.hostname || id,
+          email: id,
+        });
+        continue;
+      }
+      map.set(id, { id, name: id, email: id });
+    }
+    return Array.from(map.values());
+  }, [events, users, peers]);
+
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
@@ -273,17 +330,80 @@ export default function ReverseProxyEventsTable({
         formatChip: (v) =>
           formatRadioChip(v as string | undefined, statusOptions),
       },
+      {
+        id: "method",
+        label: "Method",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as string | undefined}
+            onChange={(next) => {
+              p.onChange(next);
+              setFilter("method", next ?? undefined);
+            }}
+            close={p.close}
+            options={methodOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as string | undefined, methodOptions),
+      },
+      {
+        id: "user",
+        label: "User",
+        renderPicker: (p) => (
+          <UsersPicker
+            value={p.value as string | undefined}
+            onChange={(next) => {
+              p.onChange(next);
+              setFilter("user_id", next ?? undefined);
+            }}
+            close={p.close}
+            options={userOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatUsersChip(v as string | undefined, userOptions),
+      },
+      {
+        id: "location_ip",
+        label: "Location / IP",
+        renderPicker: (p) => (
+          <TextInputPicker
+            value={p.value as string | undefined}
+            onChange={(next) => {
+              const trimmed = next?.trim() ?? "";
+              p.onChange(trimmed ? trimmed : undefined);
+              setFilter("source_ip", trimmed ? trimmed : undefined);
+            }}
+            close={p.close}
+            placeholder={"e.g. 10.0.0.5 or Berlin"}
+          />
+        ),
+        formatChip: (v) => formatTextChip(v as string | undefined),
+      },
     ],
-    [statusOptions, setFilter],
+    [statusOptions, methodOptions, userOptions, setFilter],
   );
 
-  const initialColumnFilters = useMemo(
-    () =>
-      activeStatus
-        ? [{ id: "status_filter", value: activeStatus as string }]
-        : [],
-    [activeStatus],
-  );
+  const initialColumnFilters = useMemo(() => {
+    const filters: { id: string; value: unknown }[] = [];
+    if (activeStatus) {
+      filters.push({ id: "status_filter", value: activeStatus });
+    }
+    const activeMethod = getFilter("method");
+    if (activeMethod) {
+      filters.push({ id: "method", value: activeMethod });
+    }
+    const activeIp = getFilter("source_ip");
+    if (activeIp) {
+      filters.push({ id: "location_ip", value: activeIp });
+    }
+    const activeUser = getFilter("user_id");
+    if (activeUser) {
+      filters.push({ id: "user", value: activeUser });
+    }
+    return filters;
+  }, [activeStatus, getFilter]);
 
   return (
     <DataTable
@@ -362,6 +482,9 @@ export default function ReverseProxyEventsTable({
               setFilter("status", undefined);
               setFilter("start_date", undefined);
               setFilter("end_date", undefined);
+              setFilter("method", undefined);
+              setFilter("source_ip", undefined);
+              setFilter("user_id", undefined);
             }}
           />
           <DataTableRefreshButton
