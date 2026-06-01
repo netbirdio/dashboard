@@ -33,7 +33,6 @@ import dayjs from "dayjs";
 import React, { useCallback, useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { DatePickerWithRange } from "@components/DatePickerWithRange";
-import { usePeers } from "@/contexts/PeersProvider";
 import { useServerPagination } from "@/contexts/ServerPaginationProvider";
 import { useUsers } from "@/contexts/UsersProvider";
 import {
@@ -41,6 +40,7 @@ import {
   ReverseProxy,
   ReverseProxyEvent,
 } from "@/interfaces/ReverseProxy";
+import type { User } from "@/interfaces/User";
 import useFetchApi from "@/utils/api";
 import { ReverseProxyEventsStatusCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsStatusCell";
 import { ReverseProxyEventsUserCell } from "@/modules/reverse-proxy/events/ReverseProxyEventsUserCell";
@@ -57,6 +57,7 @@ import ReverseProxyEventExpandedRow from "@/modules/reverse-proxy/events/Reverse
 
 export const makeEventsColumns = (
   servicesMap: Map<string, ReverseProxy>,
+  userById: Map<string, User>,
 ): ColumnDef<ReverseProxyEvent>[] => [
   {
     id: "timestamp",
@@ -104,6 +105,8 @@ export const makeEventsColumns = (
       </div>
     ),
     filterFn: "exactMatch",
+    size: 380,
+    maxSize: 420,
   },
   {
     id: "status",
@@ -113,9 +116,12 @@ export const makeEventsColumns = (
         Status
       </DataTableHeader>
     ),
-    cell: ({ row }) => <ReverseProxyEventsStatusCell event={row.original} />,
-    size: 80,
-    maxSize: 80,
+    cell: ({ row }) => (
+      <div className={"flex items-center gap-3"}>
+        <ReverseProxyEventsStatusCell event={row.original} />
+        <ReverseProxyEventsDurationCell event={row.original} />
+      </div>
+    ),
   },
   {
     id: "is_success",
@@ -129,16 +135,6 @@ export const makeEventsColumns = (
     filterFn: "exactMatch",
   },
   {
-    id: "duration",
-    accessorKey: "duration_ms",
-    header: ({ column }) => (
-      <DataTableHeader column={column} name="duration">
-        Duration
-      </DataTableHeader>
-    ),
-    cell: ({ row }) => <ReverseProxyEventsDurationCell event={row.original} />,
-  },
-  {
     id: "bytes",
     accessorFn: (row) => (row.bytes_download ?? 0) + (row.bytes_upload ?? 0),
     header: ({ column }) => (
@@ -149,26 +145,22 @@ export const makeEventsColumns = (
     cell: ({ row }) => <ReverseProxyEventsBytesCell event={row.original} />,
   },
   {
-    id: "auth_method",
-    accessorKey: "auth_method_used",
-    header: ({ column }) => (
-      <DataTableHeader column={column} name="auth_method">
-        Auth Method
-      </DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <ReverseProxyEventsAuthMethodCell event={row.original} />
-    ),
-  },
-  {
     id: "user",
-    accessorFn: (row) => row.user_id || "",
+    accessorFn: (row) => {
+      if (!row.user_id) return "";
+      return userById.get(row.user_id)?.email ?? "";
+    },
     header: ({ column }) => (
       <DataTableHeader column={column} name="user_id">
         User
       </DataTableHeader>
     ),
-    cell: ({ row }) => <ReverseProxyEventsUserCell event={row.original} />,
+    cell: ({ row }) => (
+      <div className={"flex items-center gap-2"}>
+        <ReverseProxyEventsUserCell event={row.original} />
+        <ReverseProxyEventsAuthMethodCell event={row.original} compact={true} />
+      </div>
+    ),
     filterFn: "exactMatch",
   },
   {
@@ -197,7 +189,6 @@ export default function ReverseProxyEventsTable({
     "/reverse-proxies/services",
   );
   const { users } = useUsers();
-  const { peers } = usePeers();
 
   const servicesMap = useMemo(() => {
     const map = new Map<string, ReverseProxy>();
@@ -207,7 +198,19 @@ export default function ReverseProxyEventsTable({
     return map;
   }, [services]);
 
-  const columns = useMemo(() => makeEventsColumns(servicesMap), [servicesMap]);
+  const userById = useMemo(() => {
+    const map = new Map<string, User>();
+    for (const user of users ?? []) {
+      if (!user.id || user.is_service_user) continue;
+      map.set(user.id, user);
+    }
+    return map;
+  }, [users]);
+
+  const columns = useMemo(
+    () => makeEventsColumns(servicesMap, userById),
+    [servicesMap, userById],
+  );
 
   const activeStatus = getFilter("status");
 
@@ -267,31 +270,16 @@ export default function ReverseProxyEventsTable({
 
   const userOptions = useMemo<UserOption[]>(() => {
     const map = new Map<string, UserOption>();
-    for (const event of events ?? []) {
-      const id = event.user_id;
-      if (!id || map.has(id)) continue;
-      const user = users?.find((u) => u.id === id);
-      if (user) {
-        map.set(id, {
-          id: user.id,
-          name: user.name || user.email || id,
-          email: id,
-        });
-        continue;
-      }
-      const peer = peers?.find((p) => p.id === id);
-      if (peer) {
-        map.set(id, {
-          id,
-          name: peer.name || peer.hostname || id,
-          email: id,
-        });
-        continue;
-      }
-      map.set(id, { id, name: id, email: id });
+    for (const user of users ?? []) {
+      if (!user.id || !user.email || user.is_service_user) continue;
+      map.set(user.id, {
+        id: user.id,
+        name: user.name || user.email,
+        email: user.email,
+      });
     }
     return Array.from(map.values());
-  }, [events, users, peers]);
+  }, [users]);
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
@@ -337,7 +325,10 @@ export default function ReverseProxyEventsTable({
             value={p.value as string | undefined}
             onChange={(next) => {
               p.onChange(next);
-              setFilter("user_id", next ?? undefined);
+              const id = next
+                ? userOptions.find((u) => u.email === next)?.id
+                : undefined;
+              setFilter("user_id", id);
             }}
             close={p.close}
             options={userOptions}
@@ -367,7 +358,7 @@ export default function ReverseProxyEventsTable({
     [statusOptions, methodOptions, userOptions, setFilter],
   );
 
-  const initialColumnFilters = useMemo(() => {
+  const initialColumnFilters = useMemo<{ id: string; value: unknown }[]>(() => {
     const filters: { id: string; value: unknown }[] = [];
     if (activeStatus) {
       filters.push({ id: "status_filter", value: activeStatus });
@@ -380,12 +371,15 @@ export default function ReverseProxyEventsTable({
     if (activeIp) {
       filters.push({ id: "location_ip", value: activeIp });
     }
-    const activeUser = getFilter("user_id");
-    if (activeUser) {
-      filters.push({ id: "user", value: activeUser });
+    const activeUserId = getFilter("user_id");
+    if (activeUserId) {
+      const email = userOptions.find((u) => u.id === activeUserId)?.email;
+      if (email) {
+        filters.push({ id: "user", value: email });
+      }
     }
     return filters;
-  }, [activeStatus, getFilter]);
+  }, [activeStatus, getFilter, userOptions]);
 
   return (
     <DataTable
