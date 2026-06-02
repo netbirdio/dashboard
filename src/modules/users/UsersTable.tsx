@@ -82,7 +82,15 @@ export const UsersTableColumns: ColumnDef<User>[] = [
     cell: ({ row }) => <UserRoleCell user={row.original} />,
   },
   {
-    accessorKey: "status",
+    id: "status",
+    // Derive a semantic status that matches what UserStatusCell renders so
+    // the filter and the visible label stay in sync. `pending_approval`
+    // users render as "Pending" regardless of their raw `status`, so we
+    // collapse both into a single "pending" key here.
+    accessorFn: (row) => {
+      if (row.pending_approval || row.status === "invited") return "pending";
+      return row.status ?? "";
+    },
     header: ({ column }) => {
       return <DataTableHeader column={column}>Status</DataTableHeader>;
     },
@@ -227,7 +235,7 @@ export default function UsersTable({
     () => [
       { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
       { value: "active", label: "Active", dotClass: "bg-green-500" },
-      { value: "invited", label: "Pending", dotClass: "bg-yellow-400" },
+      { value: "pending", label: "Pending", dotClass: "bg-yellow-400" },
       { value: "blocked", label: "Blocked", dotClass: "bg-red-500" },
     ],
     [],

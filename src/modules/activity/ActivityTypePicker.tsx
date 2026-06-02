@@ -113,7 +113,7 @@ export function ActivityTypePicker({
                     return (
                       <CommandItem
                         key={code}
-                        value={code}
+                        value={`${code} ${event.activity ?? ""}`}
                         className={"p-1"}
                         onSelect={() => {
                           toggle(code);

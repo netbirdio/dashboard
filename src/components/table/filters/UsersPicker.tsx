@@ -104,7 +104,9 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
           }}
           renderItem={(user) => {
             const isSystemUser = user.email === "NetBird";
-            const isSelected = value === user.email;
+            const isSelected =
+              value === user.email ||
+              (user.id === ALL_USERS_ID && !value);
             return (
               <div
                 className={"flex items-center gap-2 w-full"}

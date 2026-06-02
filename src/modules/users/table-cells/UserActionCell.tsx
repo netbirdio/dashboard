@@ -157,7 +157,10 @@ export default function UserActionCell({
             <Button
               variant={"secondary"}
               size={"xs"}
-              onClick={approveUser}
+              onClick={(e) => {
+                e.stopPropagation();
+                approveUser();
+              }}
               data-cy={"approve-user"}
             >
               Approve
@@ -166,7 +169,10 @@ export default function UserActionCell({
               variant={"danger-outline"}
               size={"xs"}
               className={"!px-3"}
-              onClick={rejectUser}
+              onClick={(e) => {
+                e.stopPropagation();
+                rejectUser();
+              }}
               data-cy={"reject-user"}
             >
               <XCircle size={14} />
@@ -191,7 +197,11 @@ export default function UserActionCell({
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} className={"!px-3"}>
+          <Button
+            variant={"secondary"}
+            className={"!px-3"}
+            aria-label={"User actions"}
+          >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
@@ -199,7 +209,10 @@ export default function UserActionCell({
           {canShowBlock && (
             <>
               <DropdownMenuItem
-                onClick={toggleBlocked}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggleBlocked();
+                }}
                 disabled={blockDisabled}
                 variant={user.is_blocked ? undefined : "danger"}
                 data-cy={user.is_blocked ? "unblock-user" : "block-user"}
@@ -217,7 +230,10 @@ export default function UserActionCell({
             </>
           )}
           <DropdownMenuItem
-            onClick={openDeleteConfirm}
+            onClick={(e) => {
+              e.stopPropagation();
+              openDeleteConfirm();
+            }}
             disabled={deleteDisabled}
             variant={"danger"}
             data-cy={"delete-user"}
