@@ -65,7 +65,7 @@ export default function PeerAddressCell({ peer }: Props) {
             message={"IP address has been copied to your clipboard"}
           >
             <span
-              className={"dark:text-nb-gray-400 font-mono font-thin text-xs"}
+              className={"text-nb-gray-400 font-mono font-thin text-xs"}
             >
               {peer.ip}
             </span>

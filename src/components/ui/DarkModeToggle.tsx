@@ -13,7 +13,7 @@ import { useEffect, useState } from "react";
 
 export default function DarkModeToggle() {
   const [mounted, setMounted] = useState(false);
-  const { setTheme } = useTheme();
+  const { theme, setTheme } = useTheme();
 
   useEffect(() => {
     setMounted(true);
@@ -24,14 +24,20 @@ export default function DarkModeToggle() {
       <DropdownMenuTrigger asChild>
         <Button className={"!px-3"} variant={"default"}>
           <div>
-            <SunIcon
-              size={16}
-              className={"scale-100 dark:scale-0 dark:absolute relative"}
-            />
-            <MoonIcon
-              size={16}
-              className={"scale-0 dark:scale-100 absolute dark:relative"}
-            />
+            {theme === "system" ? (
+              <MonitorIcon size={16} className={"relative"} />
+            ) : (
+              <>
+                <SunIcon
+                  size={16}
+                  className={"scale-100 dark:scale-0 dark:absolute relative"}
+                />
+                <MoonIcon
+                  size={16}
+                  className={"scale-0 dark:scale-100 absolute dark:relative"}
+                />
+              </>
+            )}
           </div>
         </Button>
       </DropdownMenuTrigger>
@@ -39,7 +45,6 @@ export default function DarkModeToggle() {
         <DropdownMenuItem
           onClick={() => setTheme("light")}
           className={"flex gap-2"}
-          disabled={true}
         >
           <SunIcon size={16} />
           Light
@@ -52,7 +57,6 @@ export default function DarkModeToggle() {
           Dark
         </DropdownMenuItem>
         <DropdownMenuItem
-          disabled={true}
           onClick={() => setTheme("system")}
           className={"flex gap-2"}
         >

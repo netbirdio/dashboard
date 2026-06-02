@@ -23,7 +23,7 @@ export const NetworkInformationSquare = ({
       className={cn(
         "flex w-full min-w-0 items-center max-w-[450px] gap-4 dark:text-neutral-300 text-neutral-500 transition-all group/network rounded-md",
         onClick
-          ? "hover:text-neutral-100 hover:bg-nb-gray-900/60 cursor-pointer py-2 pl-3 pr-14 relative"
+          ? "hover:text-nb-gray-100 hover:bg-nb-gray-900/60 cursor-pointer py-2 pl-3 pr-14 relative"
           : "cursor-default",
       )}
       onClick={onClick}
