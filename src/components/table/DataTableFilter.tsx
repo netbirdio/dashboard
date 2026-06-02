@@ -188,7 +188,7 @@ export function DataTableFilter<TData>({
         <Button variant={"secondary"} disabled={disabled}>
           <FilterIcon size={15} className={"shrink-0"} />
           <span>
-            <span className={"text-white"}>
+            <span className={"text-nb-gray-100"}>
               {activeFiltersCount > 0 && activeFiltersCount}
             </span>
             {activeFiltersCount > 0 ? ` Filter(s)` : "Filter"}

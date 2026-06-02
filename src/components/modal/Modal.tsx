@@ -135,7 +135,7 @@ const SidebarModalContent = React.forwardRef<
           <DialogPrimitive.Content
             ref={ref}
             className={cn(
-              "ml-auto mt-auto relative bottom-0 z-[52] grid w-full border border-zinc-700/40 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0  data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
+              "ml-auto mt-auto relative bottom-0 z-[52] grid w-full border border-neutral-200 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0  data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 md:w-full dark:border-nb-gray-900 dark:bg-nb-gray",
               "border-t-0 border-r-0 border-b-0 shadow-2xl",
               className,
               maxWidthClass,

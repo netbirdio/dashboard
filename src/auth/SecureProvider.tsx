@@ -2,6 +2,7 @@ import { OidcSecure, useOidc } from "@axa-fr/react-oidc";
 import { usePathname } from "next/navigation";
 import * as React from "react";
 import { useEffect } from "react";
+import { MOCK_ENABLED } from "@utils/mockData";
 
 const QUERY_PARAMS_KEY = "netbird-query-params";
 const PRESERVE_QUERY_PARAMS_PATHS = ["/peer/ssh", "/peer/rdp"];
@@ -46,7 +47,7 @@ export const SecureProvider = ({ children }: Props) => {
 
   useEffect(() => {
     let timeout: NodeJS.Timeout | undefined = undefined;
-    if (!isAuthenticated) {
+    if (!isAuthenticated && !MOCK_ENABLED) {
       timeout = setTimeout(async () => {
         if (!isAuthenticated) {
           await login(currentPath);
@@ -57,6 +58,9 @@ export const SecureProvider = ({ children }: Props) => {
       clearTimeout(timeout);
     };
   }, [currentPath, isAuthenticated, login]);
+
+  // THROWAWAY local preview: skip OIDC enforcement and render the app directly.
+  if (MOCK_ENABLED) return <>{children}</>;
 
   return (
     <>

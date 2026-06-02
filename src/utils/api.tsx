@@ -5,6 +5,7 @@ import {
 } from "@axa-fr/react-oidc";
 import loadConfig from "@utils/config";
 import { sleep } from "@utils/helpers";
+import { MOCK_ENABLED, mockApiRequest } from "@utils/mockData";
 import { usePathname } from "next/navigation";
 import { isExpired } from "react-jwt";
 import useSWR from "swr";
@@ -45,6 +46,9 @@ async function apiRequest<T>(
     url,
     options?.ignoreGlobalParams ? undefined : options?.globalParams,
   );
+
+  // THROWAWAY local preview: serve filler data instead of hitting the API.
+  if (MOCK_ENABLED) return mockApiRequest<T>(method, newUrl, data);
 
   const res = await oidcFetch(`${origin}${newUrl}`, {
     method,

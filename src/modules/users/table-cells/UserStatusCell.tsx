@@ -67,7 +67,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
           Settings
         </InlineLink>{" "}
         and disable{" "}
-        <span className={"font-medium text-white"}>
+        <span className={"font-medium text-nb-gray-100"}>
           {"'User Approval Required'"}
         </span>
         .

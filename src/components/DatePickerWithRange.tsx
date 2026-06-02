@@ -207,7 +207,7 @@ function CalendarButton({
       className={cn(
         "py-1.5 leading-none px-2.5 rounded-md text-center text-xs transition-all flex gap-2",
         active
-          ? "bg-nb-gray-800 text-white"
+          ? "bg-nb-gray-800 text-nb-gray-100"
           : "bg-transparent text-nb-gray-300 hover:bg-nb-gray-900 hover:text-nb-gray-100",
       )}
       onClick={onClick}

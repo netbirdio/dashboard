@@ -52,7 +52,7 @@ export default function PeerVersionCell({
         <TooltipProvider>
           <Tooltip delayDuration={10}>
             <TooltipTrigger>
-              <div className="flex gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all rounded-md items-center">
+              <div className="flex gap-2 dark:text-neutral-300 text-neutral-500 hover:text-nb-gray-100 transition-all rounded-md items-center">
                 <MemoizedNetBirdIcon />
                 {version == "development" ? "dev" : version}
                 <div className={"relative"}>

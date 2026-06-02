@@ -1,4 +1,5 @@
 import loadConfig from "@utils/config";
+import { MOCK_ENABLED, mockUnauthenticated } from "@utils/mockData";
 import {
   ApiError,
   InstanceStatus,
@@ -14,6 +15,9 @@ async function unauthenticatedRequest<T>(
   endpoint: string,
   data?: unknown,
 ): Promise<T> {
+  // THROWAWAY local preview: serve filler data instead of hitting the API.
+  if (MOCK_ENABLED) return mockUnauthenticated<T>(endpoint);
+
   const url = `${config.apiOrigin}/api${endpoint}`;
 
   const res = await fetch(url, {
