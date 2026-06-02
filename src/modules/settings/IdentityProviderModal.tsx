@@ -72,8 +72,10 @@ type Props = {
 };
 
 const copyMessage = "Redirect URL was copied to your clipboard!";
+const logoutCopyMessage = "Logout URL was copied to your clipboard!";
 const config = loadConfig();
 const redirectUrl = `${config.apiOrigin}/oauth2/callback`;
+const logoutUrl = `${config.apiOrigin}/oauth2/logout/callback`;
 
 export default function IdentityProviderModal({
   open,
@@ -270,6 +272,17 @@ export default function IdentityProviderModal({
               </HelpText>
               <Code codeToCopy={redirectUrl} message={copyMessage}>
                 <Code.Line>{redirectUrl}</Code.Line>
+              </Code>
+            </div>
+
+            <div>
+              <Label>Logout URL</Label>
+              <HelpText>
+                Copy this URL to your identity provider&apos;s logout / post-logout
+                redirect configuration
+              </HelpText>
+              <Code codeToCopy={logoutUrl} message={logoutCopyMessage}>
+                <Code.Line>{logoutUrl}</Code.Line>
               </Code>
             </div>
           </div>
