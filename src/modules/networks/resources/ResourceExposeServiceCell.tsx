@@ -69,7 +69,7 @@ export const ResourceExposeServiceCell = ({ resource }: Props) => {
         disabled={!permission.services?.create}
       >
         <CirclePlusIcon size={12} />
-        Expose Service
+        Expose
       </Button>
     </div>
   );
