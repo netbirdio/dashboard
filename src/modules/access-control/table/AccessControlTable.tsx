@@ -46,7 +46,6 @@ import AccessControlModal, {
   AccessControlUpdateModal,
 } from "@/modules/access-control/AccessControlModal";
 import AccessControlActionCell from "@/modules/access-control/table/AccessControlActionCell";
-import AccessControlActiveCell from "@/modules/access-control/table/AccessControlActiveCell";
 import AccessControlDestinationsCell from "@/modules/access-control/table/AccessControlDestinationsCell";
 import AccessControlDirectionCell from "@/modules/access-control/table/AccessControlDirectionCell";
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
@@ -82,10 +81,6 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     accessorKey: "enabled",
     accessorFn: (row) => row.enabled,
     sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
-    },
-    cell: ({ cell }) => <AccessControlActiveCell policy={cell.row.original} />,
   },
   {
     id: "sources",
@@ -493,6 +488,7 @@ export default function AccessControlTable({
         columnVisibility={{
           description: false,
           id: false,
+          enabled: false,
           temporary: false,
           source_group_names: false,
           destination_group_names: false,
@@ -501,6 +497,7 @@ export default function AccessControlTable({
           has_posture_checks: false,
           direction_filter: false,
         }}
+        rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
         data={showTemporaryPolicies ? tempPolicies : regularPolicies}
         onRowClick={(row, cell) => {
           setCurrentRow(row.original);
