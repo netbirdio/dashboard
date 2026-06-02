@@ -1,4 +1,5 @@
 import Badge from "@components/Badge";
+import FullTooltip from "@components/FullTooltip";
 import {
   Tooltip,
   TooltipContent,
@@ -33,12 +34,32 @@ export default function AccessControlProtoPortsCell({
 
   if (!rule) return <EmptyRow />;
 
+  const isNetBirdSSH = rule.protocol?.toLowerCase() === "netbird-ssh";
+  const protocolLabel = isNetBirdSSH ? "NB-SSH" : rule.protocol;
+  const protocolBadge = (
+    <Badge
+      variant={"gray"}
+      className={"uppercase tracking-wider font-medium"}
+    >
+      <Share2 size={12} />
+      {protocolLabel}
+    </Badge>
+  );
+
   return (
     <div className={"flex items-center gap-2"}>
-      <Badge variant={"gray"} className={"uppercase tracking-wider font-medium"}>
-        <Share2 size={12} />
-        {rule.protocol}
-      </Badge>
+      {isNetBirdSSH ? (
+        <FullTooltip
+          interactive={false}
+          content={
+            <span className={"text-xs text-nb-gray-100"}>NETBIRD-SSH</span>
+          }
+        >
+          <span className={"cursor-help"}>{protocolBadge}</span>
+        </FullTooltip>
+      ) : (
+        protocolBadge
+      )}
 
       <TooltipProvider>
         <Tooltip delayDuration={1}>
