@@ -5,7 +5,6 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
 import {
   formatRadioChip,
   RadioOption,
@@ -394,7 +393,6 @@ export default function ReverseProxyEventsTable({
       setSorting={setSorting}
       columns={columns}
       initialFilters={initialColumnFilters}
-      showResetFilterButton={false}
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />
       )}
@@ -448,20 +446,6 @@ export default function ReverseProxyEventsTable({
             table={table}
             filters={filterDefs}
             disabled={!events?.length && !hasActiveFilters}
-          />
-          <DataTableResetFilterButton
-            table={table}
-            onClick={() => {
-              table.setPageIndex(0);
-              table.resetColumnFilters();
-              table.resetGlobalFilter();
-              setFilter("status", undefined);
-              setFilter("start_date", undefined);
-              setFilter("end_date", undefined);
-              setFilter("method", undefined);
-              setFilter("source_ip", undefined);
-              setFilter("user_id", undefined);
-            }}
           />
           <DataTableRefreshButton
             isDisabled={!events?.length && !hasActiveFilters}

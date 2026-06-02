@@ -301,6 +301,20 @@ export default function UsersTable({
     );
   }
 
+  // Filter the consolidated filter defs to only those whose backing column
+  // exists in the current `columns` set. Callers can override `columns`
+  // (e.g. GroupUsersSection), so a hardcoded filter for `role_filter` /
+  // `group_names_filter` would silently no-op when those columns aren't
+  // registered.
+  const columnIds = new Set<string>();
+  for (const c of columns) {
+    const id =
+      (c as { id?: string }).id ??
+      (c as { accessorKey?: string }).accessorKey;
+    if (id) columnIds.add(String(id));
+  }
+  const activeFilterDefs = filterDefs.filter((f) => columnIds.has(f.id));
+
   return (
     <DataTable
       headingTarget={headingTarget}
@@ -320,7 +334,7 @@ export default function UsersTable({
       initialPageSize={25}
       showResetFilterButton={false}
       aboveTable={(table) => (
-        <TableFilterChips table={table} filters={filterDefs} />
+        <TableFilterChips table={table} filters={activeFilterDefs} />
       )}
       columnVisibility={{
         select: permission?.groups?.update,
@@ -389,11 +403,13 @@ export default function UsersTable({
       {(table) => {
         return (
           <>
-            <TableFiltersButton
-              table={table}
-              filters={filterDefs}
-              disabled={users?.length == 0}
-            />
+            {activeFilterDefs.length > 0 && (
+              <TableFiltersButton
+                table={table}
+                filters={activeFilterDefs}
+                disabled={users?.length == 0}
+              />
+            )}
             <DataTableResetFilterButton
               table={table}
               onClick={() => {
