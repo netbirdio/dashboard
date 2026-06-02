@@ -121,7 +121,7 @@ export default function ReverseProxyClusterCell({
       {compact ? (
         <span
           className={
-            "inline-flex items-center gap-1.5 text-red-400 cursor-help truncate"
+            "inline-flex items-center gap-1.5 text-red-500 cursor-help truncate"
           }
         >
           <AlertTriangle size={11} className={"shrink-0"} />

@@ -6,13 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import {
-  CirclePauseIcon,
-  CirclePlayIcon,
-  MoreVertical,
-  SquarePenIcon,
-  Trash2,
-} from "lucide-react";
+import { MoreVertical, PowerIcon, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
@@ -65,11 +59,7 @@ export default function ReverseProxyActionCell({
             disabled={!permission?.services?.update}
           >
             <div className={"flex gap-3 items-center"}>
-              {reverseProxy.enabled ? (
-                <CirclePauseIcon size={14} className={"shrink-0"} />
-              ) : (
-                <CirclePlayIcon size={14} className={"shrink-0"} />
-              )}
+              <PowerIcon size={14} className={"shrink-0"} />
               {reverseProxy.enabled ? "Disable" : "Enable"}
             </div>
           </DropdownMenuItem>
