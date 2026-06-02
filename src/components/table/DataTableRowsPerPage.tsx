@@ -33,7 +33,7 @@ export function DataTableRowsPerPage<TData>({
           >
             <RowsIcon size={15} className={"text-nb-gray-300 shrink-0"} />
             <div>
-              <span className={"text-white"}>
+              <span className={"text-nb-gray-100"}>
                 {table.getState().pagination.pageSize}
               </span>
               <span className={"text-nb-gray-300"}> rows per page</span>
@@ -57,16 +57,16 @@ export function DataTableRowsPerPage<TData>({
                   <div
                     className={cn(
                       "cursor-pointer",
-                      "flex gap-2 px-2 py-1.5 my-1 mx-1 rounded-md items-center hover:dark:bg-nb-gray-800 text-nb-gray-400 hover:text-white",
+                      "flex gap-2 px-2 py-1.5 my-1 mx-1 rounded-md items-center hover:bg-nb-gray-800 text-nb-gray-400 hover:text-nb-gray-100",
                       table.getState().pagination.pageSize === val
-                        ? "text-white"
+                        ? "text-nb-gray-100"
                         : "",
                     )}
                   >
                     <Check
                       size={15}
                       className={cn(
-                        "text-white shrink-0",
+                        "text-nb-gray-100 shrink-0",
                         table.getState().pagination.pageSize === val
                           ? "opacity-100"
                           : "opacity-0",

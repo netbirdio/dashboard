@@ -2,14 +2,24 @@
 
 import "@xterm/xterm/css/xterm.css";
 import { cn } from "@utils/helpers";
-import { useCallback, useEffect, useRef } from "react";
+import { useTheme } from "next-themes";
+import { useCallback, useEffect, useMemo, useRef } from "react";
+
+const DARK_TERMINAL_THEME = {
+  background: "#181a1d",
+  foreground: "#e4e7e9",
+  cursor: "#e4e7e9",
+  selectionBackground: "#3a3f44",
+};
+
+const LIGHT_TERMINAL_THEME = {
+  background: "#ffffff",
+  foreground: "#181a1d",
+  cursor: "#181a1d",
+  selectionBackground: "#d4d7d9",
+};
 
 const TERMINAL_OPTIONS = {
-  theme: {
-    background: "#181a1d",
-    foreground: "#e4e7e9",
-    cursor: "#e4e7e9",
-  },
   fontFamily: 'Monaco, Menlo, "Ubuntu Mono", monospace',
   fontSize: 13,
   cursorBlink: true,
@@ -20,6 +30,7 @@ const TERMINAL_OPTIONS = {
 
 interface TerminalWithCore {
   _core?: { _isDisposed: boolean };
+  options: { theme?: Record<string, string> };
   dispose(): void;
   write(data: string | Uint8Array): void;
   writeln(data: string): void;
@@ -43,12 +54,19 @@ export const Terminal = ({
   onClose,
   className = "",
 }: SSHTerminalWrapperProps) => {
+  const { resolvedTheme } = useTheme();
   const terminalRef = useRef<HTMLDivElement>(null);
   const terminalInstanceRef = useRef<{
     terminal: TerminalWithCore;
     fitAddon: any;
   } | null>(null);
   const handlersSetRef = useRef(false);
+
+  const terminalTheme = useMemo(
+    () =>
+      resolvedTheme === "light" ? LIGHT_TERMINAL_THEME : DARK_TERMINAL_THEME,
+    [resolvedTheme],
+  );
 
   const fitTerminal = useCallback(() => {
     if (terminalInstanceRef.current?.fitAddon) {
@@ -62,7 +80,10 @@ export const Terminal = ({
     const { Terminal: XTerminal } = await import("@xterm/xterm");
     const { FitAddon } = await import("@xterm/addon-fit");
 
-    const terminal = new XTerminal(TERMINAL_OPTIONS);
+    const terminal = new XTerminal({
+      ...TERMINAL_OPTIONS,
+      theme: terminalTheme,
+    });
 
     const fitAddon = new FitAddon();
     terminal.loadAddon(fitAddon);
@@ -90,7 +111,7 @@ export const Terminal = ({
     setTimeout(fitTerminal, 100);
 
     return terminal as TerminalWithCore;
-  }, [fitTerminal]);
+  }, [fitTerminal, terminalTheme]);
 
   const setupSSHHandlers = useCallback(async () => {
     if (!session || handlersSetRef.current) return;
@@ -148,6 +169,14 @@ export const Terminal = ({
   useEffect(() => {
     setupSSHHandlers().then();
   }, [setupSSHHandlers]);
+
+  // Apply theme changes to an already-running terminal
+  useEffect(() => {
+    const terminal = terminalInstanceRef.current?.terminal;
+    if (terminal && !terminal._core?._isDisposed) {
+      terminal.options.theme = terminalTheme;
+    }
+  }, [terminalTheme]);
 
   // Cleanup on unmount
   useEffect(() => {

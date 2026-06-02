@@ -109,7 +109,7 @@ export function NetworkRouteSelector({
             {value ? (
               <div
                 className={
-                  "flex items-center justify-between text-sm text-white w-full pr-4 pl-1 gap-2"
+                  "flex items-center justify-between text-sm text-nb-gray-100 w-full pr-4 pl-1 gap-2"
                 }
               >
                 <div className={"flex items-center gap-2.5 text-sm"}>

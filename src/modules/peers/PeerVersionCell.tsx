@@ -63,7 +63,7 @@ export default function PeerVersionCell({
         <TooltipProvider>
           <Tooltip delayDuration={10}>
             <TooltipTrigger className={"flex max-w-full min-w-0"}>
-              <div className="flex gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all rounded-md items-center min-w-0">
+              <div className="flex gap-2 dark:text-neutral-300 text-neutral-500 hover:text-nb-gray-100 transition-all rounded-md items-center min-w-0">
                 <MemoizedNetBirdIcon />
                 {/* The update tooltip shows the full version. */}
                 <span className={"truncate"}>{displayVersion}</span>

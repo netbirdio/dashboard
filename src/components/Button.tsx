@@ -69,20 +69,19 @@ export const buttonVariants = cva(
           "dark:focus:ring-zinc-800/50 dark:bg-transparent dark:text-netbird dark:border-netbird dark:hover:bg-nb-gray-900/30",
         ],
         "danger-outline": [
-          "", // TODO - add danger button styles for light mode
-          "enabled:dark:focus:ring-red-800/20 enabled:dark:focus:bg-red-950/40 enabled:hover:dark:bg-red-950/50 enabled:dark:hover:border-red-800/50 dark:bg-transparent dark:text-red-500",
-          "",
+          "bg-transparent text-red-600 border-red-300 hover:bg-red-50 hover:border-red-400 focus:ring-red-500/30",
+          "enabled:dark:focus:ring-red-800/20 enabled:dark:focus:bg-red-950/40 enabled:hover:dark:bg-red-950/50 enabled:dark:hover:border-red-800/50 dark:bg-transparent dark:text-red-500 dark:border-transparent",
         ],
         "danger-text": [
-          "dark:bg-transparent dark:text-red-500 dark:hover:text-red-600 dark:border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 dark:ring-offset-neutral-950/50 rounded-sm",
+          "bg-transparent text-red-500 hover:text-red-600 border-transparent !px-0 !shadow-none !py-0 focus:ring-red-500/30 ring-offset-nb-gray-950/50 rounded-sm",
         ],
         "default-outline": [
-          "dark:ring-offset-nb-gray-950/50 dark:focus:ring-nb-gray-500/20",
-          "dark:bg-transparent dark:text-nb-gray-400 dark:border-transparent dark:hover:text-white dark:hover:bg-nb-gray-900/30 dark:hover:border-nb-gray-800/50",
-          "data-[state=open]:dark:text-white data-[state=open]:dark:bg-nb-gray-900/30 data-[state=open]:dark:border-nb-gray-800/50",
+          "ring-offset-nb-gray-950/50 focus:ring-nb-gray-500/20",
+          "bg-transparent text-nb-gray-400 border-transparent hover:text-nb-gray-50 hover:bg-nb-gray-900/30 hover:border-nb-gray-800/50",
+          "data-[state=open]:text-nb-gray-50 data-[state=open]:bg-nb-gray-900/30 data-[state=open]:border-nb-gray-800/50",
         ],
         danger: [
-          "", // TODO - add danger button styles for light mode
+          "enabled:bg-red-600 enabled:text-white enabled:hover:bg-red-700 enabled:focus:bg-red-700 enabled:focus:ring-red-400/50 border-red-600 disabled:bg-red-300 disabled:text-white",
           "dark:focus:ring-red-700/20 dark:focus:bg-red-700 hover:dark:bg-red-700 dark:hover:border-red-800/50 dark:bg-red-600 dark:text-red-100",
         ],
       },

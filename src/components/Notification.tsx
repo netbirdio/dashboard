@@ -197,7 +197,7 @@ export default function Notification<T>({
                 : "success"
             }
             className={classNames(
-              "h-8 w-8  shadow-sm text-white flex items-center justify-center rounded-md shrink-0",
+              "h-8 w-8  shadow-sm text-nb-gray-100 flex items-center justify-center rounded-md shrink-0",
               loading
                 ? "bg-nb-gray-900"
                 : error

@@ -115,7 +115,7 @@ const GroupDetailsName = () => {
             >
               <div
                 className={cn(
-                  "flex h-8 w-8 items-center justify-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-neutral-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer",
+                  "flex h-8 w-8 items-center justify-center gap-2 dark:text-neutral-300 text-neutral-500 hover:text-nb-gray-100 transition-all hover:bg-nb-gray-800/60 rounded-md cursor-pointer",
                   !isAllowedToRename &&
                     "opacity-40 cursor-not-allowed pointer-events-none",
                 )}

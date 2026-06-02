@@ -70,11 +70,11 @@ export const RDPCertificateModal = ({
             />
             <div className={"font-normal text-sm text-nb-gray-200"}>
               Always trust{" "}
-              <span className={"text-white font-medium"}>
+              <span className={"text-nb-gray-100 font-medium"}>
                 {'"' + certificate?.issuer?.replace("CN=", "") + '"'}
               </span>{" "}
               when connecting to{" "}
-              <span className={"text-white font-medium"}>
+              <span className={"text-nb-gray-100 font-medium"}>
                 {'"' + hostname + '"'}
               </span>
             </div>
