@@ -8,6 +8,7 @@ import {
 } from "@components/DropdownMenu";
 import { MoreVertical, PowerIcon, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
+import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useReverseProxies } from "@/contexts/ReverseProxiesProvider";
 import { ReverseProxy } from "@/interfaces/ReverseProxy";
@@ -21,10 +22,11 @@ export default function ReverseProxyActionCell({
 }: Readonly<Props>) {
   const { permission } = usePermissions();
   const { openModal, handleDelete, handleToggle } = useReverseProxies();
+  const [open, setOpen] = useState(false);
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <DropdownMenu modal={false}>
+      <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
           asChild={true}
           onClick={(e) => {
@@ -54,6 +56,7 @@ export default function ReverseProxyActionCell({
           <DropdownMenuItem
             onClick={(e) => {
               e.stopPropagation();
+              setOpen(false);
               handleToggle(reverseProxy);
             }}
             disabled={!permission?.services?.update}
