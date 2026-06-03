@@ -6,7 +6,7 @@ import { VirtualScrollAreaList } from "@components/VirtualScrollAreaList";
 import TextWithTooltip from "@components/ui/TextWithTooltip";
 import { useSearch } from "@hooks/useSearch";
 import { sortBy, uniqBy } from "lodash";
-import { Cog, UserCircle2 } from "lucide-react";
+import { UserCircle2 } from "lucide-react";
 import * as React from "react";
 import { useMemo } from "react";
 import { SmallUserAvatar } from "@/modules/users/SmallUserAvatar";
@@ -130,9 +130,6 @@ export function UsersPicker({ value, onChange, close, options }: Props) {
 
                 <div className={"flex flex-col text-xs w-full min-w-0"}>
                   <span className={"text-nb-gray-200 flex items-center gap-1.5"}>
-                    {isSystemUser ? (
-                      <Cog size={12} />
-                    ) : null}
                     <TextWithTooltip
                       text={isSystemUser ? "System" : user?.name || user?.id}
                       maxChars={22}
