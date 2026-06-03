@@ -5,6 +5,7 @@ import {
   getSmoothStepPath,
   getStraightPath,
 } from "@xyflow/react";
+import { useTheme } from "next-themes";
 import React from "react";
 
 type Props = {
@@ -25,6 +26,7 @@ export function DirectionIn({
   data,
 }: Props) {
   const { enabled, type = "straight" } = data;
+  const { resolvedTheme } = useTheme();
 
   const getPath = () => {
     switch (type) {
@@ -74,7 +76,11 @@ export function DirectionIn({
       style={{
         opacity: enabled ? 1 : 0.6,
         strokeWidth: 2,
-        stroke: enabled ? "#0e9f6e" : "#787878",
+        stroke: enabled
+          ? "#0e9f6e"
+          : resolvedTheme === "light"
+            ? "#b7c0c6"
+            : "#787878",
         strokeDasharray: "5, 5",
       }}
     >
