@@ -30,7 +30,7 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
       return { text: "Blocked", color: "bg-red-500" };
     }
     if (status === "invited") {
-      return { text: "Pending", color: "bg-yellow-400" };
+      return { text: "Invited", color: "bg-yellow-400" };
     }
     if (status === "active") {
       return { text: "Active", color: "bg-green-500" };
