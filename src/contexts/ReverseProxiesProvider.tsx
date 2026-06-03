@@ -333,7 +333,18 @@ export default function ReverseProxiesProvider({
   const handleToggleTarget = useCallback(
     async (proxy: ReverseProxy, target: ReverseProxyTarget) => {
       const newEnabled = !target.enabled;
-      const targetIndex = proxy.targets.indexOf(target);
+      let targetIndex = proxy.targets.indexOf(target);
+      if (targetIndex === -1) {
+        targetIndex = proxy.targets.findIndex(
+          (t) =>
+            t.target_id === target.target_id &&
+            t.target_type === target.target_type &&
+            t.path === target.path &&
+            t.host === target.host &&
+            t.port === target.port,
+        );
+      }
+      if (targetIndex === -1) return;
       const updatedTargets = proxy.targets.map((t, i) => {
         return i === targetIndex ? { ...t, enabled: newEnabled } : t;
       });
@@ -403,7 +414,18 @@ export default function ReverseProxiesProvider({
           loadingMessage: "Deleting service...",
         });
       } else {
-        const targetIndex = proxy.targets.indexOf(target);
+        let targetIndex = proxy.targets.indexOf(target);
+        if (targetIndex === -1) {
+          targetIndex = proxy.targets.findIndex(
+            (t) =>
+              t.target_id === target.target_id &&
+              t.target_type === target.target_type &&
+              t.path === target.path &&
+              t.host === target.host &&
+              t.port === target.port,
+          );
+        }
+        if (targetIndex === -1) return;
         const updatedTargets = proxy.targets.filter(
           (_, i) => i !== targetIndex,
         );
