@@ -27,7 +27,7 @@ export default function AccessControlDirectionCell({
           <LongArrowBidirectionalIcon
             size={60}
             autoHeight={true}
-            className={"fill-green-500"}
+            className={"fill-green-600 dark:fill-green-500"}
           />
         </Badge>
       ) : (
@@ -35,7 +35,7 @@ export default function AccessControlDirectionCell({
           <LongArrowLeftIcon
             size={60}
             autoHeight={true}
-            className={"fill-sky-400 rotate-180"}
+            className={"fill-sky-600 dark:fill-sky-400 rotate-180"}
           />
         </Badge>
       )}
