@@ -50,7 +50,7 @@ const Step = ({
       {line && (
         <span
           className={cn(
-            "bg-nb-gray-100 dark:bg-nb-gray-800  z-0 transition-all",
+            "bg-neutral-200 dark:bg-nb-gray-800  z-0 transition-all",
             horizontal
               ? "w-full h-[2px] absolute mt-[16px] transform translate-x-1/2"
               : "h-full w-[2px] absolute left-0 ml-[18px]",
@@ -62,7 +62,7 @@ const Step = ({
         className={cn(
           "h-[34px] w-[34px] shrink-0 rounded-full  flex items-center justify-center font-medium text-xs relative z-0 border-4  transition-all",
           "dark:bg-nb-gray-900 dark:text-nb-gray-400 dark:border-nb-gray dark:group-hover:bg-nb-gray-800",
-          "bg-nb-gray-100 text-nb-gray-400 border-white group-hover:bg-nb-gray-200 step-circle",
+          "bg-neutral-200 text-nb-gray-400 border-white group-hover:bg-neutral-300 step-circle",
           "[.stepper-bg-variant]:border-nb-gray-940",
         )}
       >

@@ -179,7 +179,7 @@ const ModalFooter = ({
 }: React.HTMLAttributes<HTMLDivElement> & ModalFooterProps) => (
   <div
     className={cn(
-      "dark:border-nb-gray-800/70 border-nb-gray-100",
+      "dark:border-nb-gray-800/70 border-neutral-200",
       separator && "border-t",
     )}
   >

@@ -39,7 +39,7 @@ export default function LastTimeRow({
         <TooltipContent>
           <div className={"dark:text-neutral-300 text-neutral-500 flex flex-col gap-1"}>
             <span className={"text-xs"}>{text}</span>
-            <span className={"text-neutral-200"}>
+            <span className={"dark:text-neutral-200 text-neutral-800"}>
               {dayjs(date).format("D MMMM, YYYY [at] h:mm A")}
             </span>
           </div>

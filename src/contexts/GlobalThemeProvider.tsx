@@ -23,8 +23,8 @@ function ThemedSkeleton({ children }: { children: React.ReactNode }) {
 
   return (
     <SkeletonTheme
-      baseColor={isLight ? "#e4e7e9" : "#25282d"}
-      highlightColor={isLight ? "#f4f6f7" : "#33373e"}
+      baseColor={isLight ? "#edeff1" : "#25282d"}
+      highlightColor={isLight ? "#f8fafb" : "#33373e"}
     >
       {children}
     </SkeletonTheme>

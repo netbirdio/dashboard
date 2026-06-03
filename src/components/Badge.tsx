@@ -23,9 +23,15 @@ const variants = cva("", {
       "blue-darker": [
         "bg-sky-100 border-sky-500 text-sky-800 border dark:bg-sky-900 dark:text-white",
       ],
-      red: ["bg-red-950/40 border-red-500 border text-red-500"],
-      purple: ["bg-purple-950/50 border-purple-500 border text-purple-500"],
-      yellow: ["bg-yellow-950 border-yellow-500 border text-yellow-400"],
+      red: [
+        "bg-red-100 border-red-500 border text-red-700 dark:bg-red-950/40 dark:text-red-500",
+      ],
+      purple: [
+        "bg-purple-100 border-purple-500 border text-purple-700 dark:bg-purple-950/50 dark:text-purple-500",
+      ],
+      yellow: [
+        "bg-yellow-100 border-yellow-500 border text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400",
+      ],
       gray: ["bg-nb-gray-930/60 border-nb-gray-800/40 text-nb-gray-300 border"],
       lightGray: ["bg-nb-gray-910  text-nb-gray-200 border border-nb-gray-900"],
       grayer: [
@@ -37,7 +43,9 @@ const variants = cva("", {
       green: [
         "bg-green-100 border-green-500 border text-green-700 dark:bg-green-950 dark:text-green-400",
       ],
-      netbird: ["bg-netbird-950 border-netbird-500 border text-netbird-500"],
+      netbird: [
+        "bg-netbird-100 border-netbird-500 border text-netbird-700 dark:bg-netbird-950 dark:text-netbird-500",
+      ],
     },
     size: {
       default: "text-[0.75rem] py-1.5 px-3",
