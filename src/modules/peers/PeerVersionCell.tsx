@@ -89,7 +89,7 @@ export default function PeerVersionCell({
 
               <div
                 className={
-                  "text-neutral-300 flex flex-col gap-1 max-w-[300px] text-xs mt-1"
+                  "dark:text-neutral-300 text-neutral-500 flex flex-col gap-1 max-w-[300px] text-xs mt-1"
                 }
               >
                 A new version of Netbird is available. Please update your client
@@ -135,7 +135,7 @@ export default function PeerVersionCell({
         >
           <div
             className={
-              "flex items-center gap-2 text-neutral-300 whitespace-nowrap min-w-0"
+              "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 whitespace-nowrap min-w-0"
             }
           >
             <span className={"shrink-0"}>

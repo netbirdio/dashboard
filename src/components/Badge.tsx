@@ -17,8 +17,12 @@ const variants = cva("", {
       blue: [
         "bg-sky-100 border-sky-500 text-sky-800 border border-transparent",
       ],
-      blueDark: ["bg-sky-900 border-sky-500 text-white border"],
-      "blue-darker": ["bg-sky-900 border-sky-500 text-white border"],
+      blueDark: [
+        "bg-sky-100 border-sky-500 text-sky-800 border dark:bg-sky-900 dark:text-white",
+      ],
+      "blue-darker": [
+        "bg-sky-100 border-sky-500 text-sky-800 border dark:bg-sky-900 dark:text-white",
+      ],
       red: ["bg-red-950/40 border-red-500 border text-red-500"],
       purple: ["bg-purple-950/50 border-purple-500 border text-purple-500"],
       yellow: ["bg-yellow-950 border-yellow-500 border text-yellow-400"],
@@ -30,7 +34,9 @@ const variants = cva("", {
       "gray-ghost": [
         "bg-nb-gray-900 border-nb-gray-800 text-nb-gray-300 border border-nb-gray-800/50",
       ],
-      green: ["bg-green-950 border-green-500 border text-green-400"],
+      green: [
+        "bg-green-100 border-green-500 border text-green-700 dark:bg-green-950 dark:text-green-400",
+      ],
       netbird: ["bg-netbird-950 border-netbird-500 border text-netbird-500"],
     },
     size: {
