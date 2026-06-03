@@ -167,7 +167,7 @@ export default function NetworkRoutingPeersTable({
       rightSide={() => (
         <Button
           variant={"primary"}
-          className={"ml-auto"}
+          className={"ml-auto mr-4"}
           onClick={() => network && openAddRoutingPeerModal(network)}
           disabled={!permission.networks.update}
         >

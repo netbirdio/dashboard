@@ -26,12 +26,9 @@ import { ReverseProxyFlatTarget } from "@/interfaces/ReverseProxy";
 import ReverseProxyArrowCell from "@/modules/reverse-proxy/table/ReverseProxyArrowCell";
 import ReverseProxyAccessControlCell from "@/modules/reverse-proxy/table/ReverseProxyAccessControlCell";
 import ReverseProxyAuthCell from "@/modules/reverse-proxy/table/ReverseProxyAuthCell";
-import ReverseProxyClusterCell from "@/modules/reverse-proxy/table/ReverseProxyClusterCell";
 import ReverseProxyDestinationCell from "@/modules/reverse-proxy/table/ReverseProxyDestinationCell";
 import ReverseProxyNameCell from "@/modules/reverse-proxy/table/ReverseProxyNameCell";
 import ReverseProxyFlatTargetActionCell from "@/modules/reverse-proxy/targets/flat/ReverseProxyFlatTargetActionCell";
-import ReverseProxyTargetActiveCell from "@/modules/reverse-proxy/targets/ReverseProxyTargetActiveCell";
-import { ReverseProxyTargetProvider } from "@/modules/reverse-proxy/targets/ReverseProxyTargetContext";
 import { ReverseProxyTargetDevice } from "@/modules/reverse-proxy/targets/ReverseProxyTargetDevice";
 
 const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
@@ -55,23 +52,16 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
           : `/${target.path}`
         : "";
       const fullUrl = `${target.proxy.domain}${path}`;
-      const disabled = !target.enabled;
       const isEnabled = target.proxy.enabled && target.enabled;
 
       return (
-        <div className="flex items-center gap-2">
-          <div
-            className={disabled ? "opacity-40" : ""}
-            data-proxy-id={target.proxy.id}
-          >
-            <ReverseProxyNameCell
-              domain={fullUrl}
-              enabled={isEnabled}
-              reverseProxy={row.original.proxy}
-              showChevron={false}
-            />
-          </div>
-          <div data-status-cell />
+        <div data-proxy-id={target.proxy.id}>
+          <ReverseProxyNameCell
+            domain={fullUrl}
+            enabled={isEnabled}
+            reverseProxy={row.original.proxy}
+            showChevron={false}
+          />
         </div>
       );
     },
@@ -97,28 +87,8 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
     ),
   },
   {
-    accessorKey: "enabled",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Active</DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyTargetProvider value={row.original.proxy}>
-          <ReverseProxyTargetActiveCell target={row.original} />
-        </ReverseProxyTargetProvider>
-      </div>
-    ),
-  },
-  {
-    accessorKey: "proxy_cluster",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Cluster</DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyClusterCell reverseProxy={row.original.proxy} />
-      </div>
-    ),
+    id: "enabled",
+    accessorFn: (row) => row.enabled,
   },
   {
     accessorKey: "target_type",
@@ -127,28 +97,25 @@ const FlatTargetsTableColumns: ColumnDef<ReverseProxyFlatTarget>[] = [
     ),
     cell: ({ row }) => (
       <div data-proxy-id={row.original.proxy.id}>
-        <ReverseProxyTargetDevice target={row.original} showDescription />
+        <ReverseProxyTargetDevice
+          target={row.original}
+          showDescription
+          deviceClassName={"w-[160px]"}
+        />
       </div>
     ),
   },
   {
-    accessorKey: "auth",
+    id: "auth_and_access",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Auth Methods</DataTableHeader>
+      <DataTableHeader column={column}>Auth &amp; Access</DataTableHeader>
     ),
     cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
+      <div
+        className={"flex items-center gap-2"}
+        data-proxy-id={row.original.proxy.id}
+      >
         <ReverseProxyAuthCell reverseProxy={row.original.proxy} />
-      </div>
-    ),
-  },
-  {
-    id: "access_control",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Access Control</DataTableHeader>
-    ),
-    cell: ({ row }) => (
-      <div data-proxy-id={row.original.proxy.id}>
         <ReverseProxyAccessControlCell reverseProxy={row.original.proxy} />
       </div>
     ),
@@ -263,8 +230,10 @@ export const ReverseProxyFlatTargetsTable = ({
       columnVisibility={{
         searchString: false,
         target_id: false,
+        enabled: false,
         target_type: !hideResourceColumn,
       }}
+      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
       paginationPaddingClassName="px-0 pt-8"
       getStartedCard={
         <NoResults
@@ -277,7 +246,7 @@ export const ReverseProxyFlatTargetsTable = ({
       rightSide={() => (
         <Button
           variant={"primary"}
-          className={"ml-auto"}
+          className={"ml-auto mr-4"}
           onClick={() => openModal()}
           disabled={!permission?.services?.create}
         >

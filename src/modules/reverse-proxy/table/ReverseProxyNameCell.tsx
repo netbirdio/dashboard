@@ -82,7 +82,7 @@ export default function ReverseProxyNameCell({
           <div className={"font-medium flex gap-2 items-center justify-start"}>
             {domainNode}
           </div>
-          {showChevron && reverseProxy && (
+          {reverseProxy && (
             <div className={"text-nb-gray-400 font-light truncate"}>
               {reverseProxy.id ? (
                 <ReverseProxyStatusCell

@@ -73,21 +73,15 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
     cell: ({ row }) => <ReverseProxyTargetsCell reverseProxy={row.original} />,
   },
   {
-    accessorKey: "auth",
+    id: "auth_and_access",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Auth Methods</DataTableHeader>;
-    },
-    cell: ({ row }) => <ReverseProxyAuthCell reverseProxy={row.original} />,
-  },
-  {
-    id: "access_rules",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader column={column}>Access Control</DataTableHeader>
-      );
+      return <DataTableHeader column={column}>Auth &amp; Access</DataTableHeader>;
     },
     cell: ({ row }) => (
-      <ReverseProxyAccessControlCell reverseProxy={row.original} />
+      <div className={"flex items-center gap-2"}>
+        <ReverseProxyAuthCell reverseProxy={row.original} />
+        <ReverseProxyAccessControlCell reverseProxy={row.original} />
+      </div>
     ),
   },
   {
