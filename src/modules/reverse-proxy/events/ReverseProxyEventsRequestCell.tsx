@@ -45,7 +45,7 @@ export const ReverseProxyEventsUrlCell = ({ event, service }: Props) => {
       side={"top"}
       sideOffset={10}
       tooltipContent={
-        <div className="max-w-sm break-all whitespace-normal text-xs dark:text-neutral-300 text-neutral-500">
+        <div className="max-w-sm break-all whitespace-normal text-xs text-nb-gray-300">
           {fullUrl}
         </div>
       }

@@ -35,7 +35,7 @@ export default function ResourceNameCell({ resource }: Readonly<Props>) {
       </div>
       <div
         className={cn(
-          "flex flex-col gap-0 dark:text-neutral-300 text-neutral-500  font-light truncate",
+          "flex flex-col gap-0 text-nb-gray-300  font-light truncate",
           "group-hover:text-nb-gray-100 text-left",
         )}
       >
