@@ -128,7 +128,7 @@ const TableHead = React.forwardRef<
       "h-12 px-4 text-left align-middle uppercase font-medium  [&:has([role=checkbox])]:pr-0 w-auto",
       minimal
         ? "px-6"
-        : "text-neutral-500 dark:text-nb-gray-400 bg-nb-gray-900",
+        : "text-nb-gray-500 dark:text-nb-gray-400 bg-nb-gray-900",
       inset && "first:pl-[52px]",
       className,
     )}

@@ -15,7 +15,7 @@ export default function GroupsNameCell({ active, group }: Readonly<Props>) {
     <div className={""}>
       <div
         className={
-          "inline-flex items-center justify-start dark:text-neutral-300 text-neutral-500 gap-2.5 py-2 px-3 pr-4 hover:bg-nb-gray-800/60 cursor-pointer rounded-md"
+          "inline-flex items-center justify-start text-nb-gray-300 gap-2.5 py-2 px-3 pr-4 hover:bg-nb-gray-800/60 cursor-pointer rounded-md"
         }
         onClick={() => router.push("/group?id=" + group.id)}
       >

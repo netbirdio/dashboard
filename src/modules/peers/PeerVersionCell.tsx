@@ -52,7 +52,7 @@ export default function PeerVersionCell({
         <TooltipProvider>
           <Tooltip delayDuration={10}>
             <TooltipTrigger>
-              <div className="flex gap-2 dark:text-neutral-300 text-neutral-500 hover:text-nb-gray-100 transition-all rounded-md items-center">
+              <div className="flex gap-2 text-nb-gray-300 hover:text-nb-gray-100 transition-all rounded-md items-center">
                 <MemoizedNetBirdIcon />
                 {version == "development" ? "dev" : version}
                 <div className={"relative"}>
@@ -77,7 +77,7 @@ export default function PeerVersionCell({
 
               <div
                 className={
-                  "dark:text-neutral-300 text-neutral-500 flex flex-col gap-1 max-w-[300px] text-xs mt-1"
+                  "text-nb-gray-300 flex flex-col gap-1 max-w-[300px] text-xs mt-1"
                 }
               >
                 A new version of Netbird is available. Please update your client
@@ -95,7 +95,7 @@ export default function PeerVersionCell({
           </Tooltip>
         </TooltipProvider>
       ) : (
-        <div className="inline-flex gap-2 dark:text-neutral-300 text-neutral-500 items-center">
+        <div className="inline-flex gap-2 text-nb-gray-300 items-center">
           <MemoizedNetBirdIcon />
           {version == "development" ? "dev" : version}
         </div>
@@ -114,7 +114,7 @@ export default function PeerVersionCell({
         >
           <div
             className={
-              "flex items-center gap-2 dark:text-neutral-300 text-neutral-500 whitespace-nowrap"
+              "flex items-center gap-2 text-nb-gray-300 whitespace-nowrap"
             }
           >
             <PeerOperatingSystemIcon os={os} />

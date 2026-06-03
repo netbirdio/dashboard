@@ -109,7 +109,7 @@ const PinCodeInput = forwardRef<PinCodeInputRef, Props>(function PinCodeInput(
           className={cn(
             "w-[42px] h-[42px] text-center text-sm rounded-md",
             "bg-nb-gray-900 border border-nb-gray-700",
-            "dark:placeholder:text-neutral-400/70",
+            "placeholder:text-nb-gray-400/70",
             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2",
             "ring-offset-neutral-200/20 dark:ring-offset-neutral-950/50 dark:focus-visible:ring-neutral-500/20",
             "disabled:cursor-not-allowed disabled:opacity-40",

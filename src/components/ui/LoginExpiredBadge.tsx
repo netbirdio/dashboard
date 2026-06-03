@@ -15,7 +15,7 @@ export default function LoginExpiredBadge({ loginExpired }: Props) {
         </Badge>
       </TooltipTrigger>
       <TooltipContent>
-        <div className={"dark:text-neutral-300 text-neutral-500 text-xs leading-1.5"}>
+        <div className={"text-nb-gray-300 text-xs leading-1.5"}>
           This peer is offline and needs to be <br />
           re-authenticated because its login has expired.
         </div>

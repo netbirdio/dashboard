@@ -31,7 +31,7 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
     <div>
       <div
         className={cn(
-          "flex items-center max-w-[280px] gap-2 dark:text-neutral-300 text-neutral-500 transition-all py-2 px-3 rounded-md ",
+          "flex items-center max-w-[280px] gap-2 text-nb-gray-300 transition-all py-2 px-3 rounded-md ",
           linkToPeer &&
             "hover:text-nb-gray-100 hover:bg-nb-gray-900/60 cursor-pointer",
         )}
