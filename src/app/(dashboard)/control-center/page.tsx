@@ -11,6 +11,7 @@ import {
   ReactFlowProvider,
   SelectionMode,
 } from "@xyflow/react";
+import { useTheme } from "next-themes";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import GroupsProvider from "@/contexts/GroupsProvider";
@@ -108,6 +109,8 @@ const PRO_OPTIONS = { hideAttribution: true };
 const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: EMPTY_STATE_ZOOM };
 
 function ControlCenterCanvas() {
+  const { resolvedTheme } = useTheme();
+  const isLight = resolvedTheme === "light";
   const canvas = useCanvasState();
   const ui = useControlCenterUI();
   const draft = useDraft();
@@ -288,7 +291,7 @@ function ControlCenterCanvas() {
         onInit={stableOnInit}
         maxZoom={DEFAULT_MAX_ZOOM}
         minZoom={DEFAULT_MIN_ZOOM}
-        colorMode={"dark"}
+        colorMode={isLight ? "light" : "dark"}
         panOnDrag={canInteract}
         panOnScroll={draft.isSelectMode && !emptyState}
         zoomOnScroll={canInteract}
@@ -302,7 +305,11 @@ function ControlCenterCanvas() {
         selectionOnDrag={draft.isSelectMode && !emptyState}
         selectionMode={SelectionMode.Partial}
       >
-        <Background bgColor={"#181a1d"} gap={20} color={"#717171"} />
+        <Background
+          bgColor={isLight ? "#f8fafb" : "#181a1d"}
+          gap={20}
+          color={isLight ? "#9aa5ad" : "#717171"}
+        />
         <CanvasContextMenu onOpenChange={setContextMenuOpen} />
         <NodeContextMenu
           position={nodeContextMenuPos}
