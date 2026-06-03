@@ -113,7 +113,7 @@ export function UsersDropdownSelector({
               <React.Fragment>
                 <div
                   className={
-                    "w-5 h-5 rounded-full flex items-center justify-center text-white uppercase text-[9px] font-medium bg-nb-gray-900"
+                    "w-5 h-5 rounded-full flex items-center justify-center text-neutral-700 dark:text-white uppercase text-[9px] font-medium bg-nb-gray-900"
                   }
                   style={{
                     color:

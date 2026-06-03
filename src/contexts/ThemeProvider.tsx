@@ -15,7 +15,7 @@ const SKELETON_COLORS: Record<
   { base: string; highlight: string }
 > = {
   dark: { base: "#25282d", highlight: "#33373e" },
-  light: { base: "#e4e7e9", highlight: "#f4f6f7" },
+  light: { base: "#edeff1", highlight: "#f8fafb" },
 };
 
 type Props = {
