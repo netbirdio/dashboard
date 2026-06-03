@@ -11,22 +11,23 @@ const variants = cva(
     variants: {
       variant: {
         default:
-          "bg-nb-gray-900/50 border-nb-gray-800/30 border-b text-nb-gray-200",
+          "bg-neutral-100 border-neutral-200 text-neutral-700 dark:bg-nb-gray-900/50 dark:border-nb-gray-800/30 dark:text-nb-gray-200 border-b",
         important:
           "from-netbird to-netbird-400 bg-gradient-to-b text-black font-normal",
       },
       tagBadge: {
-        default: "bg-nb-gray-200/10 text-nb-gray-100 font-medium",
+        default:
+          "bg-neutral-200 text-neutral-700 dark:bg-nb-gray-200/10 dark:text-nb-gray-100 font-medium",
         important: "bg-nb-gray-900 text-nb-gray-200 font-medium",
       },
       closeButton: {
         default:
-          "bg-nb-gray-900 rounded-md p-1 text-nb-gray-300 hover:bg-nb-gray-800",
+          "bg-neutral-200 text-neutral-600 hover:bg-neutral-300 dark:bg-nb-gray-900 dark:text-nb-gray-300 dark:hover:bg-nb-gray-800 rounded-md p-1",
         important:
           "bg-netbird rounded-md p-1 text-nb-gray-900 hover:bg-nb-gray-900 hover:text-nb-gray-200",
       },
       inlineLink: {
-        default: "text-nb-blue-400 hover:underline",
+        default: "text-nb-blue-500 dark:text-nb-blue-400 hover:underline",
         important: "!text-black underline hover:opacity-80",
       },
     },
