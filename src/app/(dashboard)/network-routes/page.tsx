@@ -37,12 +37,12 @@ export default function NetworkRoutes() {
           <div className={"p-default py-6"}>
             <Breadcrumbs>
               <Breadcrumbs.Item
-                href={"/network-routes"}
-                label={"Network Routes"}
+                label={"Network Routing"}
                 icon={<NetworkRoutesIcon size={13} />}
               />
+              <Breadcrumbs.Item href={"/network-routes"} label={"Routes"} />
             </Breadcrumbs>
-            <h1 ref={headingRef}>Network Routes</h1>
+            <h1 ref={headingRef}>Routes</h1>
             <Paragraph>
               Access other networks like LANs and VPCs without installing
               NetBird on every resource.{" "}
