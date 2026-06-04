@@ -35,7 +35,7 @@ export function CustomDomainSelector({
     domains
       ?.filter((d) => d.type === ReverseProxyDomainType.FREE)
       .forEach((domain) => {
-        const isSelfHosted = isSelfHostedCluster(
+        const isAccountCluster = isSelfHostedCluster(
           domain?.target_cluster ?? domain?.domain,
         );
         opts.push({
@@ -46,12 +46,12 @@ export function CustomDomainSelector({
               <div className="flex items-center gap-2">
                 <TruncatedText text={`.${domain.domain}`} maxWidth={"260px"} />
               </div>
-              {isSelfHosted ? (
-                <SmallBadge text="Self-hosted" variant="sky" size="md" />
+              {isAccountCluster ? (
+                <SmallBadge text="Account" variant="sky" size="md" />
               ) : isNetBirdHosted() ? (
                 <SmallBadge text="Free" variant="green" size="md" />
               ) : (
-                <SmallBadge text="Cluster" variant="green" size="md" />
+                <SmallBadge text="Shared" variant="green" size="md" />
               )}
             </div>
           ),

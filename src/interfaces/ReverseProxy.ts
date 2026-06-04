@@ -244,6 +244,12 @@ export const REVERSE_PROXY_SETTINGS_DOCS_LINK =
 export const REVERSE_PROXY_CLUSTERS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy/bring-your-own-proxy#shared-and-account-clusters";
 
+export const REVERSE_PROXY_SELFHOSTED_ROUTING_DOCS_LINK =
+  "https://docs.netbird.io/selfhosted/migration/enable-reverse-proxy#connecting-through-traefik-instead-of-docker-network";
+
+export const REVERSE_PROXY_ENV_REFERENCE_DOCS_LINK =
+  "https://docs.netbird.io/selfhosted/migration/enable-reverse-proxy#environment-variable-reference";
+
 export const REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK =
   "https://docs.netbird.io/manage/reverse-proxy/custom-domains";
 

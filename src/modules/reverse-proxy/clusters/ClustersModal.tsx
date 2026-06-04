@@ -29,8 +29,11 @@ import { useSWRConfig } from "swr";
 import { useApiCall } from "@/utils/api";
 import { cn, validator } from "@utils/helpers";
 import { GRPC_API_ORIGIN, isNetBirdHosted } from "@/utils/netbird";
+import { SelectDropdown } from "@components/select/SelectDropdown";
 import {
   REVERSE_PROXY_CLUSTERS_DOCS_LINK,
+  REVERSE_PROXY_ENV_REFERENCE_DOCS_LINK,
+  REVERSE_PROXY_SELFHOSTED_ROUTING_DOCS_LINK,
   ReverseProxyClusterToken,
 } from "@/interfaces/ReverseProxy";
 
@@ -39,12 +42,43 @@ type Props = {
   onOpenChange: (open: boolean) => void;
 };
 
+type DeployMethod = "docker" | "compose" | "kubernetes";
+
+const escapeRegExp = (value: string) =>
+  value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+
+const renderHighlightedCommand = (command: string, highlights: string[]) => {
+  const valid = highlights.filter((h) => h && h.trim().length > 0);
+  const pattern =
+    valid.length > 0
+      ? new RegExp(`(${valid.map(escapeRegExp).join("|")})`, "g")
+      : null;
+
+  return command.split("\n").map((line, lineIndex) => (
+    <Code.Line key={lineIndex}>
+      {pattern
+        ? line.split(pattern).map((part, partIndex) =>
+            valid.includes(part) ? (
+              <span key={partIndex} className={"text-netbird"}>
+                {part}
+              </span>
+            ) : (
+              part
+            ),
+          )
+        : line}
+    </Code.Line>
+  ));
+};
+
 export const ClustersModal = ({ open, onOpenChange }: Props) => {
   const { mutate } = useSWRConfig();
   const [tab, setTab] = useState("domain");
   const [domain, setDomain] = useState("");
   const [token, setToken] = useState("");
   const [isGeneratingToken, setIsGeneratingToken] = useState(true);
+  const [deployMethod, setDeployMethod] = useState<DeployMethod>("docker");
 
   const tokenRequest = useApiCall<ReverseProxyClusterToken>(
     "/reverse-proxies/proxy-tokens",
@@ -67,17 +101,121 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
     ? "https://api.netbird.io"
     : GRPC_API_ORIGIN || "";
 
+  const tokenValue = token || "<TOKEN>";
+
   const dockerCommand = `docker run -d \\
- -v /var/lib/certs:/certs \\
+ -v proxy_certs:/certs \\
  -e NB_PROXY_CERTIFICATE_DIRECTORY=/certs \\
  -e NB_PROXY_ALLOW_INSECURE=true \\
  -e NB_PROXY_MANAGEMENT_ADDRESS=${managementUrl} \\
  -e NB_PROXY_ACME_CERTIFICATES=true \\
  -e NB_PROXY_DOMAIN=${domain} \\
  -e NB_PROXY_LOG_LEVEL=info \\
- -e NB_PROXY_TOKEN=${token || "<TOKEN>"} \\
+ -e NB_PROXY_TOKEN=${tokenValue} \\
+ -e NB_PROXY_PRIVATE=true \\
+ -e NB_PROXY_ADDRESS=:443 \\
  -p 80:80 -p 443:443 \\
  netbirdio/reverse-proxy:latest`;
+
+  const composeCommand = `services:
+  reverse-proxy:
+    image: netbirdio/reverse-proxy:latest
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      NB_PROXY_CERTIFICATE_DIRECTORY: /certs
+      NB_PROXY_ALLOW_INSECURE: "true"
+      NB_PROXY_MANAGEMENT_ADDRESS: "${managementUrl}"
+      NB_PROXY_ACME_CERTIFICATES: "true"
+      NB_PROXY_DOMAIN: "${domain}"
+      NB_PROXY_LOG_LEVEL: info
+      NB_PROXY_TOKEN: "${tokenValue}"
+      NB_PROXY_PRIVATE: "true"
+      NB_PROXY_ADDRESS: ":443"
+    volumes:
+      - proxy_certs:/certs
+volumes:
+  proxy_certs:`;
+
+  const kubernetesCommand = `apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: netbird-reverse-proxy
+  labels:
+    app: netbird-reverse-proxy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: netbird-reverse-proxy
+  template:
+    metadata:
+      labels:
+        app: netbird-reverse-proxy
+    spec:
+      containers:
+        - name: reverse-proxy
+          image: netbirdio/reverse-proxy:latest
+          ports:
+            - containerPort: 80
+            - containerPort: 443
+          env:
+            - name: NB_PROXY_CERTIFICATE_DIRECTORY
+              value: /certs
+            - name: NB_PROXY_ALLOW_INSECURE
+              value: "true"
+            - name: NB_PROXY_MANAGEMENT_ADDRESS
+              value: "${managementUrl}"
+            - name: NB_PROXY_ACME_CERTIFICATES
+              value: "true"
+            - name: NB_PROXY_DOMAIN
+              value: "${domain}"
+            - name: NB_PROXY_LOG_LEVEL
+              value: info
+            - name: NB_PROXY_TOKEN
+              value: "${tokenValue}"
+            - name: NB_PROXY_PRIVATE
+              value: "true"              
+            - name: NB_PROXY_ADDRESS
+              value: ":443"
+          volumeMounts:
+            - name: certs
+              mountPath: /certs
+      volumes:
+        - name: certs
+          emptyDir: {}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: netbird-reverse-proxy
+spec:
+  type: LoadBalancer
+  selector:
+    app: netbird-reverse-proxy
+  ports:
+    - name: http
+      port: 80
+      targetPort: 80
+    - name: https
+      port: 443
+      targetPort: 443`;
+
+  const deployment = {
+    docker: { label: "Docker", title: "Run the Proxy with Docker", command: dockerCommand },
+    compose: {
+      label: "Docker Compose",
+      title: "Run the Proxy with Docker Compose",
+      command: composeCommand,
+    },
+    kubernetes: {
+      label: "Kubernetes",
+      title: "Deploy the Proxy on Kubernetes",
+      command: kubernetesCommand,
+    },
+  }[deployMethod];
 
   const generateToken = useCallback(async () => {
     setIsGeneratingToken(true);
@@ -230,15 +368,48 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
           </TabsContent>
 
           <TabsContent value={"install"} className={"pb-8"}>
-            <div className={"px-8 flex flex-col"}>
-              <div>
-                <Label>Run the Proxy with Docker</Label>
-                <HelpText>
-                  Run the following command on your machine to start the proxy.
-                </HelpText>
+            <div className={"px-8 flex flex-col gap-4"}>
+              <div className={"flex items-end justify-between gap-4"}>
+                <div>
+                  <Label>{deployment.title}</Label>
+                  <HelpText className={"mb-0"}>
+                    {deployMethod === "kubernetes"
+                      ? "Apply the following manifest to your cluster to start the proxy."
+                      : "Run the following on your machine to start the proxy."}
+                  </HelpText>
+                </div>
+                <div className={"w-[180px] shrink-0"}>
+                  <SelectDropdown
+                    value={deployMethod}
+                    onChange={(v) => setDeployMethod(v as DeployMethod)}
+                    options={[
+                      { value: "docker", label: "Docker" },
+                      { value: "compose", label: "Docker Compose" },
+                      { value: "kubernetes", label: "Kubernetes" },
+                    ]}
+                  />
+                </div>
               </div>
+
+              {!isNetBirdHosted() && (
+                <Callout variant={"warning"}>
+                  For self-hosted deployments, make sure the proxy service
+                  routes are configured on your NetBird management server before
+                  starting the proxy.&nbsp;
+                  <InlineLink
+                    href={REVERSE_PROXY_SELFHOSTED_ROUTING_DOCS_LINK}
+                    target={"_blank"}
+                    className={"block mt-1"}
+                  >
+                     Required routing endpoints
+                    <ExternalLinkIcon size={12} />
+                  </InlineLink>
+                </Callout>
+              )}
+
               <Code
-                codeToCopy={dockerCommand}
+                key={deployMethod}
+                codeToCopy={deployment.command}
                 className={cn(
                   "overflow-hidden",
                   isGeneratingToken && "!border-nb-gray-930",
@@ -252,33 +423,23 @@ export const ClustersModal = ({ open, onOpenChange }: Props) => {
                   </div>
                 )}
 
-                <Code.Line>docker run -d \</Code.Line>
-                <Code.Line> -v /var/lib/certs:/certs \</Code.Line>
-                <Code.Line>
-                  {" "}
-                  -e NB_PROXY_CERTIFICATE_DIRECTORY=/certs \
-                </Code.Line>
-                <Code.Line> -e NB_PROXY_ALLOW_INSECURE=true \</Code.Line>
-                <Code.Line>
-                  {" "}
-                  -e NB_PROXY_MANAGEMENT_ADDRESS=
-                  <span className={"text-netbird"}>{managementUrl}</span> \
-                </Code.Line>
-                <Code.Line> -e NB_PROXY_ACME_CERTIFICATES=true \</Code.Line>
-                <Code.Line>
-                  {" "}
-                  -e NB_PROXY_DOMAIN=
-                  <span className={"text-netbird"}>{domain}</span> \
-                </Code.Line>
-                <Code.Line> -e NB_PROXY_LOG_LEVEL=info \</Code.Line>
-                <Code.Line>
-                  {" "}
-                  -e NB_PROXY_TOKEN=
-                  <span className={"text-netbird"}>{token || "<TOKEN>"}</span> \
-                </Code.Line>
-                <Code.Line> -p 80:80 -p 443:443 \</Code.Line>
-                <Code.Line> netbirdio/reverse-proxy:latest</Code.Line>
+                {renderHighlightedCommand(deployment.command, [
+                  managementUrl,
+                  domain,
+                  tokenValue,
+                ])}
               </Code>
+
+              <HelpText className={"mb-0"}>
+                Need to fine-tune the proxy? See all available&nbsp;
+                <InlineLink
+                  href={REVERSE_PROXY_ENV_REFERENCE_DOCS_LINK}
+                  target={"_blank"}
+                >
+                  environment variables
+                  <ExternalLinkIcon size={12} />
+                </InlineLink>
+              </HelpText>
             </div>
           </TabsContent>
         </Tabs>
