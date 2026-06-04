@@ -70,7 +70,7 @@ export function TableFiltersButton<TData>({
             {activeCount > 0 && (
               <span
                 className={
-                  "inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-netbird text-white text-[10px] font-semibold leading-none px-1.5"
+                  "inline-flex items-center justify-center min-w-[18px] h-[18px] rounded-full bg-netbird text-white text-[10px] font-semibold !leading-[0] px-1.5"
                 }
               >
                 {activeCount}
