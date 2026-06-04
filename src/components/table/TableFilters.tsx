@@ -89,11 +89,11 @@ export function TableFiltersButton<TData>({
               <button
                 aria-label={"Back"}
                 className={
-                  "text-nb-gray-400 hover:text-white p-1 -m-1 rounded transition-colors"
+                  "flex items-center justify-center w-7 h-7 -ml-1 shrink-0 text-nb-gray-400 hover:text-white hover:bg-nb-gray-900 rounded transition-colors"
                 }
                 onClick={() => setActiveFilterId(null)}
               >
-                <ChevronLeftIcon size={14} />
+                <ChevronLeftIcon size={16} />
               </button>
               <span className={"text-sm font-medium text-nb-gray-100"}>
                 {activeFilter.label}
