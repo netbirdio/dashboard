@@ -246,6 +246,9 @@ export default function ActivityTable({
                 const date = { from: defaultFromDate, to: defaultToDate };
                 setInitialDateRange(date);
                 setDateRange(date);
+                table
+                  .getColumn("timestamp")
+                  ?.setFilterValue([date.from, date.to]);
               }}
             />
             <DataTableRefreshButton

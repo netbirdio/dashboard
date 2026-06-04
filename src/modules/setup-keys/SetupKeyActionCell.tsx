@@ -93,7 +93,11 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} className={"!px-3"}>
+          <Button
+            variant={"secondary"}
+            className={"!px-3"}
+            aria-label={"Open actions menu"}
+          >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>

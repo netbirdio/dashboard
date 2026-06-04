@@ -51,6 +51,9 @@ export default function NetworkRoutes() {
                   "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                 }
                 target={"_blank"}
+                aria-label={
+                  "Learn more about routing traffic to private networks"
+                }
               >
                 Learn more
                 <ExternalLinkIcon size={12} />

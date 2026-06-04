@@ -46,7 +46,8 @@ export default function PeerProvider({
 }: Props) {
   const { user, isLoading: isUserLoading } = usePeerUser(peer);
   const { peerGroups, isLoading: isGroupsLoading } = usePeerGroups(peer);
-  const isLoading = isGroupsLoading || isUserLoading;
+  const isLoading =
+    isGroupsLoading || (peer.user_id ? isUserLoading : false);
   const peerRequest = useApiCall<Peer>("/peers", true);
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();

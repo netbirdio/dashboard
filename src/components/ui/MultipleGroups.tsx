@@ -54,7 +54,7 @@ export default function MultipleGroups({
   const { permission } = usePermissions();
 
   if (!groups || groups?.length === 0) return <EmptyRow />;
-  const orderedGroups = groups.sort((a, b) => {
+  const orderedGroups = [...groups].sort((a, b) => {
     if (a.name === "All") return 1;
     if (b.name === "All") return -1;
     const aPeerCount = a.peers_count ?? 0;
