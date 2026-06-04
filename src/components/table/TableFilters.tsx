@@ -8,7 +8,13 @@ import {
 } from "@components/Popover";
 import { Table } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
-import { ChevronLeftIcon, ChevronsUpDown, FilterIcon, XIcon } from "lucide-react";
+import {
+  ChevronLeftIcon,
+  ChevronRightIcon,
+  ChevronsUpDown,
+  FilterIcon,
+  XIcon,
+} from "lucide-react";
 import * as React from "react";
 import { useState } from "react";
 
@@ -136,6 +142,10 @@ export function TableFiltersButton<TData>({
                       {chip}
                     </span>
                   )}
+                  <ChevronRightIcon
+                    size={14}
+                    className={"shrink-0 text-nb-gray-400"}
+                  />
                 </button>
               );
             })}
