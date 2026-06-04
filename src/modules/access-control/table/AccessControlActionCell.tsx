@@ -8,6 +8,7 @@ import {
 } from "@components/DropdownMenu";
 import { MoreVertical, PowerIcon, Trash2 } from "lucide-react";
 import * as React from "react";
+import { useState } from "react";
 import { mutate } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -22,6 +23,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
   const { confirm } = useDialog();
   const { permission } = usePermissions();
   const { deletePolicy, updatePolicy, serializeRules } = usePolicies();
+  const [open, setOpen] = useState(false);
 
   const canUpdate = permission.policies.update;
   const canDelete = permission.policies.delete;
@@ -55,7 +57,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <DropdownMenu modal={false}>
+      <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
           asChild={true}
           onClick={(e) => {
@@ -72,7 +74,13 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent className={"w-auto"} align={"end"}>
-          <DropdownMenuItem onClick={handleToggle} disabled={!canUpdate}>
+          <DropdownMenuItem
+            onClick={() => {
+              setOpen(false);
+              handleToggle();
+            }}
+            disabled={!canUpdate}
+          >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
               {policy.enabled ? "Disable" : "Enable"}
