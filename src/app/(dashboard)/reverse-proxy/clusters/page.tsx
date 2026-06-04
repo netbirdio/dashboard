@@ -42,15 +42,11 @@ export default function ReverseProxyClustersPage() {
         <Paragraph>
           Proxy clusters that route inbound traffic to your services. Shared
           clusters are deployed at the server level; account clusters are
-          self-hosted on your own infrastructure.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          self-hosted on your own infrastructure.{" "}
           <InlineLink href={REVERSE_PROXY_CLUSTERS_DOCS_LINK} target={"_blank"}>
-            Clusters
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
       </div>
       <RestrictedAccess
