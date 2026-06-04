@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { Callout } from "@components/Callout";
 import { useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -209,6 +209,12 @@ export default function ReverseProxyModal({
     reverseProxy?.private ?? false,
   );
 
+  // Tracks whether NetBird-only was switched on automatically because the
+  // operator picked a cluster target (see onClusterPick), as opposed to an
+  // explicit choice in the NetBird-Only modal. Only auto-enabled private is
+  // reverted when the cluster target is later removed or changed.
+  const [privateFromCluster, setPrivateFromCluster] = useState(false);
+
   // togglePrivate normalises related state when the operator flips
   // NetBird-only access. Private services are HTTP-only, so we drop out
   // of L4 mode. NetBird-only and the other auth modes are mutually
@@ -309,6 +315,18 @@ export default function ReverseProxyModal({
     [targets],
   );
   const effectiveDirectUpstream = hasClusterTarget || directUpstream;
+
+  // When the operator changes the only cluster target to another type, the
+  // auto-applied NetBird-only state no longer matches reality: revert it so
+  // the auth, access, and advanced steps return to their public-service
+  // layout. Explicit NetBird-only choices (privateFromCluster === false) are
+  // left untouched.
+  useEffect(() => {
+    if (privateFromCluster && !hasClusterTarget) {
+      togglePrivate(false);
+      setPrivateFromCluster(false);
+    }
+  }, [privateFromCluster, hasClusterTarget]);
 
   const [linkAuthEnabled, setLinkAuthEnabled] = useState(
     reverseProxy?.auth?.link_auth?.enabled ?? false,
@@ -1073,6 +1091,7 @@ export default function ReverseProxyModal({
           // already private.
           if (!isPrivate) {
             togglePrivate(true);
+            setPrivateFromCluster(true);
           }
         }}
       />
@@ -1127,11 +1146,13 @@ export default function ReverseProxyModal({
           setTimeout(() => {
             setAccessGroups(groups);
             togglePrivate(true);
+            setPrivateFromCluster(false);
           }, 200);
         }}
         onRemove={() => {
           setTimeout(() => {
             togglePrivate(false);
+            setPrivateFromCluster(false);
           }, 200);
         }}
       />

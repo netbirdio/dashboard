@@ -65,7 +65,6 @@ export default function AuthNetBirdOnlyModal({
               </div>
             }
             users={users}
-            hideAllGroup={true}
           />
           <div className="flex gap-3 w-full justify-between mt-6">
             {isEditing ? (
