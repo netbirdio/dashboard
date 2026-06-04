@@ -37,7 +37,7 @@ import {
 } from "lucide-react";
 import { Callout } from "@components/Callout";
 import { useRouter } from "next/navigation";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -316,17 +316,19 @@ export default function ReverseProxyModal({
   );
   const effectiveDirectUpstream = hasClusterTarget || directUpstream;
 
-  // When the operator changes the only cluster target to another type, the
-  // auto-applied NetBird-only state no longer matches reality: revert it so
-  // the auth, access, and advanced steps return to their public-service
-  // layout. Explicit NetBird-only choices (privateFromCluster === false) are
-  // left untouched.
-  useEffect(() => {
-    if (privateFromCluster && !hasClusterTarget) {
+  // Reverts the NetBird-only state that was auto-applied when a cluster
+  // target was picked, once the committed targets no longer include a
+  // cluster. Explicit NetBird-only choices (privateFromCluster === false)
+  // are left untouched.
+  const resetClusterPrivateIfNeeded = (next: ReverseProxyTarget[]) => {
+    if (
+      privateFromCluster &&
+      !next.some((t) => t.target_type === ReverseProxyTargetType.CLUSTER)
+    ) {
       togglePrivate(false);
       setPrivateFromCluster(false);
     }
-  }, [privateFromCluster, hasClusterTarget]);
+  };
 
   const [linkAuthEnabled, setLinkAuthEnabled] = useState(
     reverseProxy?.auth?.link_auth?.enabled ?? false,
@@ -408,17 +410,14 @@ export default function ReverseProxyModal({
   }, [canContinueToSettings, isPrivate, accessGroups.length]);
 
   const saveTarget = (targetData: ReverseProxyTarget) => {
-    if (editingTargetIndex !== null) {
-      // Update existing target
-      setTargets(
-        targets.map((t, i) =>
-          i === editingTargetIndex ? { ...t, ...targetData } : t,
-        ),
-      );
-    } else {
-      // Add new target
-      setTargets([...targets, targetData]);
-    }
+    const next =
+      editingTargetIndex !== null
+        ? targets.map((t, i) =>
+            i === editingTargetIndex ? { ...t, ...targetData } : t,
+          )
+        : [...targets, targetData];
+    setTargets(next);
+    resetClusterPrivateIfNeeded(next);
     setTargetModalOpen(false);
     setEditingTargetIndex(null);
   };
@@ -429,7 +428,9 @@ export default function ReverseProxyModal({
   };
 
   const removeTarget = (index: number) => {
-    setTargets(targets.filter((_, i) => i !== index));
+    const next = targets.filter((_, i) => i !== index);
+    setTargets(next);
+    resetClusterPrivateIfNeeded(next);
   };
 
   const toggleTargetEnabled = (index: number) => {
