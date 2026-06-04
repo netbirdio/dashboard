@@ -3,18 +3,31 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { PlusCircle, ServerIcon } from "lucide-react";
 
 import { usePathname } from "next/navigation";
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
-import { ReverseProxyCluster } from "@/interfaces/ReverseProxy";
+import {
+  ReverseProxyCluster,
+  ReverseProxyClusterType,
+} from "@/interfaces/ReverseProxy";
 import useFetchApi from "@/utils/api";
 import ClustersActionCell from "@/modules/reverse-proxy/clusters/ClustersActionCell";
 import ClustersConnectedCell from "@/modules/reverse-proxy/clusters/ClustersConnectedCell";
@@ -52,6 +65,16 @@ const ClustersColumns: ColumnDef<ReverseProxyCluster>[] = [
     accessorFn: (row) => row.address,
   },
   {
+    id: "online",
+    accessorKey: "online",
+    filterFn: "exactMatch",
+  },
+  {
+    id: "type",
+    accessorKey: "type",
+    filterFn: "exactMatch",
+  },
+  {
     id: "actions",
     accessorKey: "address",
     header: "",
@@ -85,6 +108,58 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
     ],
   );
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Online", dotClass: "bg-green-500" },
+      { value: false, label: "Offline", dotClass: "bg-red-500" },
+    ],
+    [],
+  );
+
+  const typeOptions = useMemo<RadioOption<string | undefined>[]>(
+    () => [
+      { value: undefined, label: "All" },
+      { value: ReverseProxyClusterType.SHARED, label: "Shared" },
+      { value: ReverseProxyClusterType.ACCOUNT, label: "Self-Hosted" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "online",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+      {
+        id: "type",
+        label: "Type",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as string | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={typeOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as string | undefined, typeOptions),
+      },
+    ],
+    [statusOptions, typeOptions],
+  );
+
   return (
     <>
       <ClustersModal
@@ -98,6 +173,8 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
         isLoading={isLoading}
         inset={false}
         keepStateInLocalStorage={false}
+        initialPageSize={25}
+        showResetFilterButton={false}
         text={"Clusters"}
         sorting={sorting}
         setSorting={setSorting}
@@ -105,7 +182,14 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
         data={rows}
         useRowId={true}
         searchPlaceholder={"Search by cluster domain..."}
-        columnVisibility={{ searchString: false }}
+        aboveTable={(table) => (
+          <TableFilterChips table={table} filters={filterDefs} />
+        )}
+        columnVisibility={{
+          searchString: false,
+          online: false,
+          type: false,
+        }}
         getStartedCard={
           <GetStartedTest
             icon={
@@ -149,9 +233,18 @@ export default function ClustersTable({ headingTarget }: Readonly<Props>) {
       >
         {(table) => (
           <>
-            <DataTableRowsPerPage
+            <TableFiltersButton
               table={table}
+              filters={filterDefs}
               disabled={rows.length === 0}
+            />
+            <DataTableResetFilterButton
+              table={table}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.resetColumnFilters();
+                table.resetGlobalFilter();
+              }}
             />
             <DataTableRefreshButton
               isDisabled={rows.length === 0}

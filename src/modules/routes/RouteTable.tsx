@@ -6,7 +6,6 @@ import { useGroups } from "@/contexts/GroupsProvider";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import RouteAccessControlGroups from "@/modules/routes/RouteAccessControlGroups";
 import RouteActionCell from "@/modules/routes/RouteActionCell";
-import RouteActiveCell from "@/modules/routes/RouteActiveCell";
 import RouteAutoApplyCell from "@/modules/routes/RouteAutoApplyCell";
 import RouteDistributionGroupsCell from "@/modules/routes/RouteDistributionGroupsCell";
 import RouteMetricCell from "@/modules/routes/RouteMetricCell";
@@ -53,10 +52,6 @@ export const RouteTableColumns: ColumnDef<Route>[] = [
     id: "enabled",
     accessorKey: "enabled",
     sortingFn: "basic",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Active</DataTableHeader>
-    ),
-    cell: ({ row }) => <RouteActiveCell route={row.original} />,
   },
   {
     id: "groups",
@@ -158,8 +153,10 @@ export default function RouteTable({ row }: Props) {
           domains: false,
           domain_search: false,
           network: false,
+          enabled: false,
           skipAutoApply: !!hasAtLeastOneExitNode,
         }}
+        rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
         setSorting={setSorting}
         columns={RouteTableColumns}
         data={data}

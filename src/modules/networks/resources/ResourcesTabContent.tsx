@@ -23,18 +23,14 @@ export const ResourcesTabContent = ({
       <div className={"flex justify-between items-center mb-5"}>
         <div>
           <Paragraph>
-            Add resources to this network to control what peers can access.
-          </Paragraph>
-          <Paragraph>
-            Learn more about{" "}
+            Add resources to this network to control what peers can access.{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/networks#resources"}
               target={"_blank"}
             >
-              Resources
+              Learn more
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
           </Paragraph>
         </div>
       </div>

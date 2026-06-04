@@ -1,9 +1,11 @@
 import { cn } from "@utils/helpers";
-import { ChevronDown, ChevronRightIcon, LockIcon } from "lucide-react";
+import { ChevronDown, ChevronRightIcon } from "lucide-react";
 import * as React from "react";
 import { isL4Mode, ReverseProxy, ServiceMode } from "@/interfaces/ReverseProxy";
 import ExternalLinkText from "@components/ExternalLinkText";
 import CopyToClipboardText from "@components/CopyToClipboardText";
+import ReverseProxyClusterCell from "@/modules/reverse-proxy/table/ReverseProxyClusterCell";
+import ReverseProxyStatusCell from "@/modules/reverse-proxy/table/ReverseProxyStatusCell";
 
 type Props = {
   reverseProxy?: ReverseProxy;
@@ -23,10 +25,25 @@ export default function ReverseProxyNameCell({
   const portSuffix =
     isL4 && reverseProxy?.listen_port ? `:${reverseProxy.listen_port}` : "";
   const isLinkable = !isL4 || reverseProxy?.mode === ServiceMode.TLS;
-
   const isEnabled = enabled ?? reverseProxy?.enabled ?? false;
   const hasExpandableTargets =
     (reverseProxy?.targets?.length ?? 0) > 0 && !isL4Mode(reverseProxy?.mode);
+
+  const domainNode = displayDomain ? (
+    isLinkable ? (
+      <ExternalLinkText href={`https://${displayDomain}${portSuffix}`}>
+        <span className="font-medium truncate">
+          {displayDomain}
+          {portSuffix}
+        </span>
+      </ExternalLinkText>
+    ) : (
+      <CopyToClipboardText>
+        {displayDomain}
+        {portSuffix}
+      </CopyToClipboardText>
+    )
+  ) : null;
 
   return (
     <div
@@ -56,30 +73,39 @@ export default function ReverseProxyNameCell({
           />
         </>
       )}
-      <div className={"flex items-center gap-2.5"}>
-        <LockIcon
-          size={14}
-          className={cn(
-            "shrink-0",
-            isEnabled ? "text-green-500" : "text-nb-gray-400",
-          )}
-        />
-        <div className="flex flex-col gap-0 dark:text-neutral-300 text-neutral-500 truncate">
-          <div className="flex items-center gap-2">
-            {displayDomain && isLinkable ? (
-              <ExternalLinkText href={`https://${displayDomain}${portSuffix}`}>
-                <span className="font-medium truncate">
-                  {displayDomain}
-                  {portSuffix}
-                </span>
-              </ExternalLinkText>
-            ) : (
-              <CopyToClipboardText>
-                {displayDomain}
-                {portSuffix}
-              </CopyToClipboardText>
-            )}
+      <div
+        className={
+          "gap-3 dark:text-neutral-300 text-neutral-500 min-w-0 flex"
+        }
+      >
+        <div className={"flex flex-col min-w-0"}>
+          <div className={"font-medium flex gap-2 items-center justify-start"}>
+            {domainNode}
           </div>
+          {reverseProxy && (
+            <div className={"text-nb-gray-400 font-light truncate"}>
+              {reverseProxy.id ? (
+                <ReverseProxyStatusCell
+                  serviceId={reverseProxy.id}
+                  meta={reverseProxy.meta}
+                  enabled={reverseProxy.enabled}
+                  isL4={isL4Mode(reverseProxy.mode)}
+                  compact={true}
+                  readyFallback={
+                    <ReverseProxyClusterCell
+                      reverseProxy={reverseProxy}
+                      compact={true}
+                    />
+                  }
+                />
+              ) : (
+                <ReverseProxyClusterCell
+                  reverseProxy={reverseProxy}
+                  compact={true}
+                />
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

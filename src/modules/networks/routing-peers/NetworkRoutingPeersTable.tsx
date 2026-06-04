@@ -2,19 +2,28 @@ import Button from "@components/Button";
 import Card from "@components/Card";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import NoResults from "@components/ui/NoResults";
 import { IconCirclePlus } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import * as React from "react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { NetworkRouter } from "@/interfaces/Network";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { NetworkRoutingPeerName } from "@/modules/networks/routing-peers/NetworkRoutingPeerName";
 import { RoutingPeersActionCell } from "@/modules/networks/routing-peers/RoutingPeersActionCell";
-import { RoutingPeersEnabledCell } from "@/modules/networks/routing-peers/RoutingPeersEnabledCell";
 import { RoutingPeersMasqueradeCell } from "@/modules/networks/routing-peers/RoutingPeersMasqueradeCell";
 import RouteMetricCell from "@/modules/routes/RouteMetricCell";
 
@@ -37,10 +46,6 @@ const NetworkRouterColumns: ColumnDef<NetworkRouter>[] = [
   {
     id: "enabled",
     accessorKey: "enabled",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
-    },
-    cell: ({ row }) => <RoutingPeersEnabledCell router={row.original} />,
   },
   {
     id: "metric",
@@ -91,6 +96,35 @@ export default function NetworkRoutingPeersTable({
     },
   ]);
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "enabled",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+    ],
+    [statusOptions],
+  );
+
   return (
     <DataTable
       wrapperComponent={Card}
@@ -105,6 +139,11 @@ export default function NetworkRoutingPeersTable({
       text={"Routing Peers"}
       columns={NetworkRouterColumns}
       keepStateInLocalStorage={false}
+      initialPageSize={25}
+      showResetFilterButton={false}
+      aboveTable={(table) => (
+        <TableFilterChips table={table} filters={filterDefs} />
+      )}
       data={routers}
       searchPlaceholder={"Search by peer name, group name..."}
       isLoading={isLoading}
@@ -118,25 +157,37 @@ export default function NetworkRoutingPeersTable({
           icon={<PeerIcon size={18} className={"fill-nb-gray-400"} />}
         />
       }
-      columnVisibility={{ search: false }}
+      columnVisibility={{ search: false, enabled: false }}
+      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
       paginationPaddingClassName={"px-0 pt-8"}
       rightSide={() => (
         <Button
           variant={"primary"}
-          className={"ml-auto"}
+          className={"ml-auto mr-4"}
           onClick={() => network && openAddRoutingPeerModal(network)}
           disabled={!permission.networks.update}
         >
           <IconCirclePlus size={16} />
-          Add Routing Peer
+          Add
         </Button>
       )}
     >
       {(table) => (
-        <DataTableRowsPerPage
-          table={table}
-          disabled={!routers || routers?.length == 0}
-        />
+        <>
+          <TableFiltersButton
+            table={table}
+            filters={filterDefs}
+            disabled={!routers || routers?.length == 0}
+          />
+          <DataTableResetFilterButton
+            table={table}
+            onClick={() => {
+              table.setPageIndex(0);
+              table.resetColumnFilters();
+              table.resetGlobalFilter();
+            }}
+          />
+        </>
       )}
     </DataTable>
   );

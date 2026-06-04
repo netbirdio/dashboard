@@ -1,12 +1,11 @@
 import Badge from "@components/Badge";
+import FullTooltip from "@components/FullTooltip";
 import {
-  Binary,
-  FileCode2Icon,
+  Braces,
   Flag,
   GlobeOff,
-  Mail,
+  Link2,
   Network,
-  RectangleEllipsis,
   ShieldAlert,
   ShieldOff,
   Users,
@@ -16,12 +15,17 @@ import { ReverseProxyEvent } from "@/interfaces/ReverseProxy";
 
 type Props = {
   event: ReverseProxyEvent;
+  compact?: boolean;
 };
 
-export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
+export const ReverseProxyEventsAuthMethodCell = ({
+  event,
+  compact = false,
+}: Props) => {
   const authMethod = event.auth_method_used;
 
   if (!authMethod) {
+    if (compact) return null;
     return <span className="text-nb-gray-400 text-sm px-3 py-2">-</span>;
   }
 
@@ -36,24 +40,40 @@ export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
         };
       case "password":
         return {
-          icon: <RectangleEllipsis size={12} />,
+          icon: (
+            <span
+              className={
+                "font-mono text-[9px] font-medium tracking-wider leading-none px-1 py-0.5 rounded border border-current"
+              }
+            >
+              PWD
+            </span>
+          ),
           label: "Password",
         };
       case "pin":
         return {
-          icon: <Binary size={12} />,
+          icon: (
+            <span
+              className={
+                "font-mono text-[9px] font-medium tracking-wider leading-none px-1 py-0.5 rounded border border-current"
+              }
+            >
+              PIN
+            </span>
+          ),
           label: "PIN Code",
         };
       case "header":
         return {
-          icon: <FileCode2Icon size={12} />,
+          icon: <Braces size={12} />,
           label: "HTTP Headers",
         };
       case "link":
       case "magic_link":
       case "magic-link":
         return {
-          icon: <Mail size={12} />,
+          icon: <Link2 size={12} />,
           label: "Magic Link",
         };
       case "ip_restricted":
@@ -100,6 +120,28 @@ export const ReverseProxyEventsAuthMethodCell = ({ event }: Props) => {
   };
 
   const { icon, label } = getAuthMethodDisplay();
+
+  if (compact) {
+    return (
+      <FullTooltip
+        interactive={false}
+        content={
+          <span className={"text-xs"}>
+            <span className={"text-nb-gray-400"}>Auth: </span>
+            <span className={"text-nb-gray-100"}>{label}</span>
+          </span>
+        }
+      >
+        <span
+          className={
+            "inline-flex items-center justify-center text-nb-gray-300 cursor-help"
+          }
+        >
+          {icon}
+        </span>
+      </FullTooltip>
+    );
+  }
 
   return (
     <div className="px-3 py-2">

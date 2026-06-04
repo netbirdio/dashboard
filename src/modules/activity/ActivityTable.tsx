@@ -4,7 +4,17 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatUsersChip,
+  UserOption,
+  UsersPicker,
+} from "@components/table/filters/UsersPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import AddPeerButton from "@components/ui/AddPeerButton";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
@@ -19,11 +29,10 @@ import PeerIcon from "@/assets/icons/PeerIcon";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { ActivityEvent } from "@/interfaces/ActivityEvent";
 import { ActivityEntryRow } from "@/modules/activity/ActivityEntryRow";
-import { ActivityEventCodeSelector } from "@/modules/activity/ActivityEventCodeSelector";
 import {
-  UsersDropdownSelector,
-  UserSelectOption,
-} from "@/modules/activity/UsersDropdownSelector";
+  ActivityTypePicker,
+  formatActivityTypeChip,
+} from "@/modules/activity/ActivityTypePicker";
 
 type Props = {
   events?: ActivityEvent[];
@@ -106,17 +115,48 @@ export default function ActivityTable({
     to: dayjs(initialDateRange?.to).toDate(),
   });
 
-  const userSelectOptions = useMemo(() => {
+  const userOptions = useMemo<UserOption[]>(() => {
     const uniqueUsers = uniqBy(events, (event) => event.initiator_email);
-    return uniqueUsers.map((event) => {
-      return {
-        name: event.initiator_name,
-        id: event.initiator_id,
-        email: event.initiator_email || "NetBird",
-        external: !!event?.meta?.external,
-      } as UserSelectOption;
-    });
+    return uniqueUsers.map((event) => ({
+      name: event.initiator_name,
+      id: event.initiator_id,
+      email: event.initiator_email || "NetBird",
+      external: !!event?.meta?.external,
+    }));
   }, [events]);
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "activity_code",
+        label: "Type",
+        renderPicker: (p) => (
+          <ActivityTypePicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            events={events ?? []}
+          />
+        ),
+        formatChip: (v) => formatActivityTypeChip(v as string[] | undefined),
+      },
+      {
+        id: "initiator_email",
+        label: "Initiator",
+        renderPicker: (p) => (
+          <UsersPicker
+            value={p.value as string | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={userOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatUsersChip(v as string | undefined, userOptions),
+      },
+    ],
+    [events, userOptions],
+  );
 
   return (
     <DataTable
@@ -126,12 +166,17 @@ export default function ActivityTable({
       text={"Audit Events"}
       sorting={sorting}
       setSorting={setSorting}
+      initialPageSize={25}
+      showResetFilterButton={false}
       wrapperClassName={"gap-0 flex flex-col"}
       tableClassName={"px-8 pt-4"}
       columns={ActivityFeedColumnsTable}
       data={events}
       searchPlaceholder={"Search by audit name, user, peer, meta..."}
       isLoading={isLoading}
+      aboveTable={(table) => (
+        <TableFilterChips table={table} filters={filterDefs} />
+      )}
       columnVisibility={{
         timestamp: false,
         name: false,
@@ -187,42 +232,24 @@ export default function ActivityTable({
                   ?.setFilterValue([range?.from, range?.to]);
               }}
             />
-            {events && (
-              <ActivityEventCodeSelector
-                events={events}
-                values={
-                  (table
-                    .getColumn("activity_code")
-                    ?.getFilterValue() as string[]) || []
-                }
-                onChange={(items) => {
-                  table.setPageIndex(0);
-                  if (items.length == 0) {
-                    table.getColumn("activity_code")?.setFilterValue(undefined);
-                    return;
-                  } else {
-                    table.getColumn("activity_code")?.setFilterValue(items);
-                  }
-                }}
-              />
-            )}
-            {events && (
-              <UsersDropdownSelector
-                options={userSelectOptions}
-                value={
-                  (table
-                    .getColumn("initiator_email")
-                    ?.getFilterValue() as string) || ""
-                }
-                onChange={(item) => {
-                  table.setPageIndex(0);
-                  table.getColumn("initiator_email")?.setFilterValue(item);
-                }}
-              />
-            )}
-            <DataTableRowsPerPage
+            <TableFiltersButton
               table={table}
+              filters={filterDefs}
               disabled={events?.length == 0}
+            />
+            <DataTableResetFilterButton
+              table={table}
+              onClick={() => {
+                table.setPageIndex(0);
+                table.resetColumnFilters();
+                table.resetGlobalFilter();
+                const date = { from: defaultFromDate, to: defaultToDate };
+                setInitialDateRange(date);
+                setDateRange(date);
+                table
+                  .getColumn("timestamp")
+                  ?.setFilterValue([date.from, date.to]);
+              }}
             />
             <DataTableRefreshButton
               isDisabled={events?.length == 0}

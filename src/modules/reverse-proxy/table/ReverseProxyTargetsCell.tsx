@@ -1,5 +1,12 @@
 import Badge from "@components/Badge";
 import Button from "@components/Button";
+import FullTooltip from "@components/FullTooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@components/Tooltip";
 import { wrapIPv6 } from "@utils/ip";
 import { PlusCircle, Server } from "lucide-react";
 import * as React from "react";
@@ -18,53 +25,80 @@ export default function ReverseProxyTargetsCell({
   const { permission } = usePermissions();
   const { openTargetModal } = useReverseProxies();
 
-  if (isL4Mode(reverseProxy.mode)) {
-    const target = reverseProxy?.targets?.[0];
-    const address = target.host
-      ? `${wrapIPv6(target.host)}:${target.port}`
-      : `:${target.port}`;
+  const isL4 = isL4Mode(reverseProxy.mode);
+  const targets = reverseProxy?.targets ?? [];
+  const targetsCount = targets.length;
 
-    return (
-      <ReverseProxyTargetDevice
-        target={target}
-        address={address}
-        wrapperClassName={"h-[48px]"}
-        skeletonClassName={"h-[48px]"}
-      />
-    );
-  }
-
-  const targetsCount = reverseProxy?.targets?.length ?? 0;
+  const addButton = (
+    <Button
+      size={"xs"}
+      variant={"secondary"}
+      onClick={(e) => {
+        e.stopPropagation();
+        openTargetModal({ proxy: reverseProxy });
+      }}
+      className={"!px-3"}
+      disabled={isL4 || !permission?.services?.create}
+    >
+      <PlusCircle size={12} />
+      Add
+    </Button>
+  );
 
   return (
     <div className={"flex gap-3"} data-targets-cell>
       {targetsCount > 0 && (
-        <Badge
-          variant={"gray"}
-          useHover={true}
-          className={"cursor-pointer"}
-          onClick={() => void 0}
-        >
-          <Server size={11} />
-          <div>
-            <span className={"font-medium text-xs"}>{targetsCount}</span>
-          </div>
-        </Badge>
+        <TooltipProvider>
+          <Tooltip delayDuration={1}>
+            <TooltipTrigger asChild={true}>
+              <Badge
+                variant={"gray"}
+                useHover={true}
+                className={"cursor-help"}
+              >
+                <Server size={14} />
+                <div>
+                  <span className={"font-medium text-xs"}>{targetsCount}</span>
+                </div>
+              </Badge>
+            </TooltipTrigger>
+            <TooltipContent className={"p-2 w-fit max-w-md"}>
+              <div className={"flex flex-col gap-1 items-start w-fit"}>
+                {targets.map((target, i) => {
+                  const host = target.host ? wrapIPv6(target.host) : "";
+                  const address = host
+                    ? `${host}:${target.port}`
+                    : `:${target.port}`;
+                  return (
+                    <ReverseProxyTargetDevice
+                      key={`${target.target_id ?? "target"}-${i}`}
+                      target={target}
+                      address={address}
+                      wrapperClassName={"h-auto w-fit"}
+                      skeletonClassName={"h-[40px]"}
+                    />
+                  );
+                })}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
       )}
 
-      <Button
-        size={"xs"}
-        variant={"secondary"}
-        onClick={(e) => {
-          e.stopPropagation();
-          openTargetModal({ proxy: reverseProxy });
-        }}
-        className={"!px-3"}
-        disabled={!permission?.services?.create}
-      >
-        <PlusCircle size={12} />
-        Add Target
-      </Button>
+      {isL4 ? (
+        <FullTooltip
+          interactive={false}
+          content={
+            <span className={"text-xs text-nb-gray-100 max-w-[200px]"}>
+              L4 services (TCP / UDP / TLS) only support a single target.
+            </span>
+          }
+        >
+          <span className={"inline-flex"}>{addButton}</span>
+        </FullTooltip>
+      ) : (
+        addButton
+      )}
     </div>
   );
 }

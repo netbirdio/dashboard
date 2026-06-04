@@ -42,15 +42,11 @@ export default function DNSZonePage() {
         </Breadcrumbs>
         <h1 ref={headingRef}>Zones</h1>
         <Paragraph>
-          Manage DNS zones to control domain name resolution for your network.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          Manage DNS zones to control domain name resolution for your network.{" "}
           <InlineLink href={DNS_ZONE_DOCS_LINK} target={"_blank"}>
-            DNS Zones
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
       </div>
 

@@ -25,7 +25,7 @@ export default function NameserverDistributionGroupsCell({ ns }: Props) {
 
   return (
     <div className={cn("flex items-center gap-1", canUpdate && "group")}>
-      <MultipleGroups groups={allGroups} />
+      <MultipleGroups groups={allGroups} countOnly={true} />
       {canUpdate && <TransparentEditIconButton />}
     </div>
   );

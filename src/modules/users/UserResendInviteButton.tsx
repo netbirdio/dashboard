@@ -38,7 +38,7 @@ export const UserResendInviteButton = ({ user }: Props) => {
   const DefaultMessage = () => (
     <>
       <MailIcon size={13} />
-      Resend Invite
+      Resend
     </>
   );
 
@@ -49,7 +49,7 @@ export const UserResendInviteButton = ({ user }: Props) => {
         variant={"secondary"}
         size={"xs"}
         onClick={inviteUser}
-        className={cn("min-w-[160px]", isLoading && "animate-pulse")}
+        className={cn("!px-3", isLoading && "animate-pulse")}
       >
         {isLoading ? <LoadingMessage /> : <DefaultMessage />}
       </Button>

@@ -172,6 +172,13 @@ export default function Navigation({
                     exactPathMatch={true}
                     visible={permission?.services?.read}
                   />
+                  <SidebarItem
+                    label="Access Logs"
+                    isChild
+                    href={"/reverse-proxy/logs"}
+                    exactPathMatch={true}
+                    visible={permission?.services?.read}
+                  />
                 </SidebarItem>
 
                 <SidebarItem
@@ -277,13 +284,6 @@ const ActivityNavigationItem = () => {
         label="Audit Events"
         href={"/events/audit"}
         isChild
-        exactPathMatch={true}
-        visible={permission.events.read}
-      />
-      <SidebarItem
-        label="Proxy Events"
-        isChild
-        href={"/events/proxy"}
         exactPathMatch={true}
         visible={permission.events.read}
       />

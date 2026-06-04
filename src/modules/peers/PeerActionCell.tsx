@@ -11,6 +11,7 @@ import { notify } from "@components/Notification";
 import { getOperatingSystem } from "@hooks/useOperatingSystem";
 import { IconInfoCircle } from "@tabler/icons-react";
 import {
+  CheckCircle2,
   ExternalLinkIcon,
   MonitorIcon,
   MoreVertical,
@@ -44,6 +45,33 @@ export default function PeerActionCell() {
     if (isDashboardSSHEnabled) return true;
     return !isClientSSHEnabled;
   }, [peer]);
+
+  const showApprove = peer.approval_required && permission.peers.update;
+
+  const approvePeer = async () => {
+    const choice = await confirm({
+      title: `Approve peer '${peer.name}'?`,
+      description: "Are you sure you want to approve this peer?",
+      confirmText: "Approve",
+      cancelText: "Cancel",
+      type: "default",
+    });
+    if (!choice) return;
+    notify({
+      title: `Peer ${peer.name} approved`,
+      description: `This peer was approved and can now connect to other peers.`,
+      promise: update({
+        name: peer.name,
+        ssh: peer.ssh_enabled,
+        loginExpiration: peer.login_expiration_enabled,
+        approval_required: false,
+      }).then(() => {
+        mutate("/peers");
+        mutate("/groups");
+      }),
+      loadingMessage: "Approving peer...",
+    });
+  };
 
   // The Connect column previously hosted SSH / RDP entry points. We
   // fold those into the action menu — gated on a non-mobile, online
@@ -125,6 +153,18 @@ export default function PeerActionCell() {
               View Details
             </div>
           </DropdownMenuItem>
+
+          {showApprove && (
+            <>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={approvePeer}>
+                <div className={"flex gap-3 items-center"}>
+                  <CheckCircle2 size={14} className={"shrink-0"} />
+                  Approve
+                </div>
+              </DropdownMenuItem>
+            </>
+          )}
 
           {showRemoteAccessItems && (
             <>

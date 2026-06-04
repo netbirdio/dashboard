@@ -1,5 +1,4 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import Card from "@components/Card";
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
@@ -7,7 +6,30 @@ import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  CheckboxListPicker,
+  CheckboxOption,
+  formatCheckboxChip,
+} from "@components/table/filters/CheckboxListPicker";
+import {
+  formatGroupsChip,
+  GroupsPicker,
+} from "@components/table/filters/GroupsPicker";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  formatTextChip,
+  TextInputPicker,
+} from "@components/table/filters/TextInputPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import type { ColumnDef, SortingState } from "@tanstack/react-table";
 import { removeAllSpaces } from "@utils/helpers";
@@ -24,13 +46,10 @@ import AccessControlModal, {
   AccessControlUpdateModal,
 } from "@/modules/access-control/AccessControlModal";
 import AccessControlActionCell from "@/modules/access-control/table/AccessControlActionCell";
-import AccessControlActiveCell from "@/modules/access-control/table/AccessControlActiveCell";
 import AccessControlDestinationsCell from "@/modules/access-control/table/AccessControlDestinationsCell";
 import AccessControlDirectionCell from "@/modules/access-control/table/AccessControlDirectionCell";
 import AccessControlNameCell from "@/modules/access-control/table/AccessControlNameCell";
-import AccessControlPortsCell from "@/modules/access-control/table/AccessControlPortsCell";
-import AccessControlPostureCheckCell from "@/modules/access-control/table/AccessControlPostureCheckCell";
-import AccessControlProtocolCell from "@/modules/access-control/table/AccessControlProtocolCell";
+import AccessControlProtoPortsCell from "@/modules/access-control/table/AccessControlProtoPortsCell";
 import AccessControlSourcesCell from "@/modules/access-control/table/AccessControlSourcesCell";
 
 type Props = {
@@ -62,10 +81,6 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
     accessorKey: "enabled",
     accessorFn: (row) => row.enabled,
     sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
-    },
-    cell: ({ cell }) => <AccessControlActiveCell policy={cell.row.original} />,
   },
   {
     id: "sources",
@@ -121,54 +136,70 @@ export const AccessControlTableColumns: ColumnDef<Policy>[] = [
   },
 
   {
-    id: "protocol",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].protocol || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
-    },
-    sortingFn: "basic",
+    id: "proto_ports",
+    accessorFn: (row) => row.rules?.[0]?.protocol || "",
+    sortingFn: "text",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Protocol</DataTableHeader>;
+      return <DataTableHeader column={column}>Proto & Ports</DataTableHeader>;
     },
     cell: ({ cell }) => (
-      <AccessControlProtocolCell policy={cell.row.original} />
-    ),
-  },
-  {
-    id: "ports",
-    accessorFn: (row) => {
-      try {
-        return row.rules[0].ports?.length || 0;
-      } catch (e) {
-        console.log(e);
-      }
-      return 0;
-    },
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Ports</DataTableHeader>;
-    },
-    cell: ({ cell }) => <AccessControlPortsCell policy={cell.row.original} />,
-  },
-  {
-    id: "posture_checks",
-    accessorFn: (row) => row.source_posture_checks?.length || 0,
-    sortingFn: "basic",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Posture Checks</DataTableHeader>;
-    },
-    cell: ({ cell }) => (
-      <AccessControlPostureCheckCell policy={cell.row.original} />
+      <AccessControlProtoPortsCell policy={cell.row.original} />
     ),
   },
   {
     id: "id",
     accessorKey: "id",
     filterFn: "exactMatch",
+  },
+  // Hidden filter columns powering the consolidated Filters UI.
+  {
+    id: "source_group_names",
+    accessorFn: (row) => {
+      const sources = row.rules?.[0]?.sources;
+      if (!sources) return [];
+      return (sources as { name?: string }[])
+        .map((s) => s?.name)
+        .filter((n): n is string => !!n);
+    },
+    filterFn: "arrIncludesSome",
+  },
+  {
+    id: "destination_group_names",
+    accessorFn: (row) => {
+      const destinations = row.rules?.[0]?.destinations;
+      if (!destinations) return [];
+      return (destinations as { name?: string }[])
+        .map((d) => d?.name)
+        .filter((n): n is string => !!n);
+    },
+    filterFn: "arrIncludesSome",
+  },
+  {
+    id: "protocol_filter",
+    accessorFn: (row) => [row.rules?.[0]?.protocol || "all"],
+    filterFn: "arrIncludesSome",
+  },
+  {
+    id: "ports_filter",
+    accessorFn: (row) => {
+      const rule = row.rules?.[0];
+      const ports = rule?.ports || [];
+      const ranges = (rule?.port_ranges || []).map(
+        (r) => `${r.start}-${r.end}`,
+      );
+      return [...ports, ...ranges].join(" ");
+    },
+    filterFn: "includesString",
+  },
+  {
+    id: "has_posture_checks",
+    accessorFn: (row) =>
+      (row.source_posture_checks?.length ?? 0) > 0 ? "with" : "without",
+    filterFn: "equalsString",
+  },
+  {
+    id: "direction_filter",
+    accessorFn: (row) => !!row.rules?.[0]?.bidirectional,
   },
   {
     id: "actions",
@@ -241,6 +272,179 @@ export default function AccessControlTable({
     }
   }, [showTemporaryPolicies, tempPolicies]);
 
+  // Single-radio status filter mirroring the previous All / Active /
+  // Inactive ButtonGroup. Routed through the consolidated Filters UI.
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Enabled", dotClass: "bg-green-500" },
+      { value: false, label: "Disabled", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const protocolOptions = useMemo<CheckboxOption<string>[]>(
+    () => [
+      { value: "tcp", label: "TCP" },
+      { value: "udp", label: "UDP" },
+      { value: "icmp", label: "ICMP" },
+      { value: "netbird-ssh", label: "NetBird SSH" },
+    ],
+    [],
+  );
+
+  const postureOptions = useMemo<RadioOption<string | undefined>[]>(
+    () => [
+      { value: undefined, label: "All" },
+      { value: "with", label: "With" },
+      { value: "without", label: "Without" },
+    ],
+    [],
+  );
+
+  const directionOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All" },
+      { value: true, label: "Bidirectional" },
+      { value: false, label: "One-way" },
+    ],
+    [],
+  );
+
+  // Groups derived from the current policies' sources + destinations,
+  // so the Sources/Destinations filters only offer groups that actually
+  // appear in the table.
+  const tableGroups = useMemo(() => {
+    if (!policies) return [];
+    const map = new Map<string, { id?: string; name: string }>();
+    for (const policy of policies) {
+      const rule = policy.rules?.[0];
+      if (!rule) continue;
+      const both = [
+        ...((rule.sources as { id?: string; name?: string }[] | null) ?? []),
+        ...((rule.destinations as { id?: string; name?: string }[] | null) ??
+          []),
+      ];
+      for (const g of both) {
+        if (g?.name && !map.has(g.name)) {
+          map.set(g.name, { id: g.id, name: g.name });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [policies]);
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "enabled",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+      {
+        id: "source_group_names",
+        label: "Sources",
+        renderPicker: (p) => (
+          <GroupsPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            groups={tableGroups}
+          />
+        ),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+      },
+      {
+        id: "destination_group_names",
+        label: "Destinations",
+        renderPicker: (p) => (
+          <GroupsPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            groups={tableGroups}
+          />
+        ),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+      },
+      {
+        id: "direction_filter",
+        label: "Direction",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={directionOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, directionOptions),
+      },
+      {
+        id: "protocol_filter",
+        label: "Protocol",
+        renderPicker: (p) => (
+          <CheckboxListPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={protocolOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatCheckboxChip(
+            v as string[] | undefined,
+            protocolOptions,
+            "protocols",
+          ),
+      },
+      {
+        id: "ports_filter",
+        label: "Port",
+        renderPicker: (p) => (
+          <TextInputPicker
+            value={p.value as string | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            placeholder={"e.g. 443"}
+          />
+        ),
+        formatChip: (v) => formatTextChip(v as string | undefined),
+      },
+      {
+        id: "has_posture_checks",
+        label: "Posture Checks",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as string | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={postureOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as string | undefined, postureOptions),
+      },
+    ],
+    [
+      statusOptions,
+      protocolOptions,
+      postureOptions,
+      directionOptions,
+      tableGroups,
+    ],
+  );
+
   return (
     <>
       {editModal && currentRow && (
@@ -275,12 +479,25 @@ export default function AccessControlTable({
         text={"Access Control Policies"}
         sorting={sorting}
         setSorting={setSorting}
+        initialPageSize={25}
+        showResetFilterButton={false}
         columns={AccessControlTableColumns}
+        aboveTable={(table) => (
+          <TableFilterChips table={table} filters={filterDefs} />
+        )}
         columnVisibility={{
           description: false,
           id: false,
+          enabled: false,
           temporary: false,
+          source_group_names: false,
+          destination_group_names: false,
+          protocol_filter: false,
+          ports_filter: false,
+          has_posture_checks: false,
+          direction_filter: false,
         }}
+        rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
         data={showTemporaryPolicies ? tempPolicies : regularPolicies}
         onRowClick={(row, cell) => {
           setCurrentRow(row.original);
@@ -383,53 +600,19 @@ export default function AccessControlTable({
         {(table) => {
           return (
             <>
-              <ButtonGroup disabled={policies?.length == 0}>
-                <ButtonGroup.Button
-                  onClick={() => {
-                    table.setPageIndex(0);
-                    table.getColumn("enabled")?.setFilterValue(undefined);
-                  }}
-                  disabled={policies?.length == 0}
-                  variant={
-                    table.getColumn("enabled")?.getFilterValue() === undefined
-                      ? "tertiary"
-                      : "secondary"
-                  }
-                >
-                  All
-                </ButtonGroup.Button>
-                <ButtonGroup.Button
-                  onClick={() => {
-                    table.setPageIndex(0);
-                    table.getColumn("enabled")?.setFilterValue(true);
-                  }}
-                  disabled={policies?.length == 0}
-                  variant={
-                    table.getColumn("enabled")?.getFilterValue() === true
-                      ? "tertiary"
-                      : "secondary"
-                  }
-                >
-                  Active
-                </ButtonGroup.Button>
-                <ButtonGroup.Button
-                  onClick={() => {
-                    table.setPageIndex(0);
-                    table.getColumn("enabled")?.setFilterValue(false);
-                  }}
-                  disabled={policies?.length == 0}
-                  variant={
-                    table.getColumn("enabled")?.getFilterValue() === false
-                      ? "tertiary"
-                      : "secondary"
-                  }
-                >
-                  Inactive
-                </ButtonGroup.Button>
-              </ButtonGroup>
-              <DataTableRowsPerPage
+              <TableFiltersButton
                 table={table}
+                filters={filterDefs}
                 disabled={policies?.length == 0}
+              />
+
+              <DataTableResetFilterButton
+                table={table}
+                onClick={() => {
+                  table.setPageIndex(0);
+                  table.resetColumnFilters();
+                  table.resetGlobalFilter();
+                }}
               />
 
               {tempPolicies?.length > 0 && (

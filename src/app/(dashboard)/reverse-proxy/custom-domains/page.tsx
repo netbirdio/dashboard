@@ -41,18 +41,14 @@ export default function ReverseProxyCustomDomainsPage() {
         </Breadcrumbs>
         <h1 ref={headingRef}>Domains</h1>
         <Paragraph>
-          Add and manage custom domains for your reverse proxy services.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          Add and manage custom domains for your reverse proxy services.{" "}
           <InlineLink
             href={REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK}
             target={"_blank"}
           >
-            Custom Domains
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
       </div>
       <RestrictedAccess

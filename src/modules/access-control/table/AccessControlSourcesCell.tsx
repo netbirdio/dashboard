@@ -43,6 +43,7 @@ export default function AccessControlSourcesCell({
         groups={firstRule.sources as Group[]}
         showUsers={firstRule.protocol === "netbird-ssh"}
         disableRedirect={disableRedirect}
+        countOnly
       />
       {canUpdate && !hideEdit && <TransparentEditIconButton />}
     </div>

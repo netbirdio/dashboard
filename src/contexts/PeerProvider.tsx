@@ -44,8 +44,10 @@ export default function PeerProvider({
   peer,
   isPeerDetailPage = false,
 }: Props) {
-  const user = usePeerUser(peer);
-  const { peerGroups, isLoading } = usePeerGroups(peer);
+  const { user, isLoading: isUserLoading } = usePeerUser(peer);
+  const { peerGroups, isLoading: isGroupsLoading } = usePeerGroups(peer);
+  const isLoading =
+    isGroupsLoading || (peer.user_id ? isUserLoading : false);
   const peerRequest = useApiCall<Peer>("/peers", true);
   const { confirm } = useDialog();
   const { mutate } = useSWRConfig();
@@ -183,11 +185,13 @@ export const usePeerGroups = (peer?: Peer) => {
  * @param peer
  */
 export const usePeerUser = (peer: Peer) => {
-  const { users } = useUsers();
+  const { users, isLoading } = useUsers();
 
-  return useMemo(() => {
-    return users?.find((user) => user.id === peer.user_id);
+  const user = useMemo(() => {
+    return users?.find((u) => u.id === peer.user_id);
   }, [users, peer]);
+
+  return { user, isLoading };
 };
 
 /**

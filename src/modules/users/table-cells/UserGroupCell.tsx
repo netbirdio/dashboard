@@ -78,6 +78,7 @@ export default function UserGroupCell({ user }: Readonly<Props>) {
       showAddGroupButton={permission.users.update}
       modal={modal}
       setModal={setModal}
+      countOnly={true}
     />
   );
 }

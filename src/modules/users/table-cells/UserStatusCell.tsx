@@ -1,6 +1,7 @@
 import FullTooltip from "@components/FullTooltip";
 import InlineLink from "@components/InlineLink";
 import { cn } from "@utils/helpers";
+import { isNetBirdHosted } from "@utils/netbird";
 import { ExternalLinkIcon, HelpCircle } from "lucide-react";
 import React from "react";
 import { User } from "@/interfaces/User";
@@ -23,19 +24,21 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
       return { text: "Disabled", color: "bg-gray-400" };
     }
     if (isPendingApproval) {
-      return { text: "Pending Approval", color: "bg-netbird" };
+      return { text: "Pending", color: "bg-netbird" };
     }
     if (status === "blocked") {
       return { text: "Blocked", color: "bg-red-500" };
     }
     if (status === "invited") {
-      return { text: "Pending", color: "bg-yellow-400" };
+      return { text: "Invited", color: "bg-yellow-400" };
     }
     if (status === "active") {
       return { text: "Active", color: "bg-green-500" };
     }
     return { text: status || "Unknown", color: "bg-gray-400" };
   };
+
+  const isInvitedOnCloud = status === "invited" && isNetBirdHosted();
 
   const tooltipContent = isLocalAuthDisabled ? (
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
@@ -54,37 +57,38 @@ export default function UserStatusCell({ user }: Readonly<Props>) {
         </InlineLink>
       </div>
     </div>
+  ) : isInvitedOnCloud ? (
+    <div className={"max-w-xs text-xs flex flex-col gap-2"}>
+      <div>
+        This user was invited but has not accepted the invitation yet. Use the
+        Resend button to send another invitation email.
+      </div>
+    </div>
   ) : (
     <div className={"max-w-xs text-xs flex flex-col gap-2"}>
       <div>
-        This user needs to be approved by an administrator before it can
-        join your organization.
-      </div>
-
-      <div>
-        If you want to disable approval for new users, go to{" "}
-        <InlineLink href={"/settings?tab=authentication"}>
-          Settings
-        </InlineLink>{" "}
-        and disable{" "}
+        This user needs admin approval before joining your organization. To
+        disable approvals, turn off{" "}
         <span className={"font-medium text-white"}>
           {"'User Approval Required'"}
-        </span>
+        </span>{" "}
+        in{" "}
+        <InlineLink href={"/settings?tab=authentication"}>Settings</InlineLink>
         .
       </div>
       <div>
-        Learn more about{" "}
         <InlineLink
           href={"https://docs.netbird.io/how-to/approve-users"}
           target={"_blank"}
         >
-          User Approval <ExternalLinkIcon size={12} />
+          Learn more <ExternalLinkIcon size={12} />
         </InlineLink>
       </div>
     </div>
   );
 
-  const showTooltip = isLocalAuthDisabled || isPendingApproval;
+  const showTooltip =
+    isLocalAuthDisabled || isPendingApproval || isInvitedOnCloud;
   const { text, color } = getStatusDisplay();
 
   return (

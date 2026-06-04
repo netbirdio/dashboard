@@ -1,16 +1,30 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  CheckboxListPicker,
+  CheckboxOption,
+  formatCheckboxChip,
+} from "@components/table/filters/CheckboxListPicker";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
-import React from "react";
+import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -22,14 +36,11 @@ import {
   ReverseProxy,
 } from "@/interfaces/ReverseProxy";
 import ReverseProxyActionCell from "@/modules/reverse-proxy/table/ReverseProxyActionCell";
-import ReverseProxyActiveCell from "@/modules/reverse-proxy/table/ReverseProxyActiveCell";
 import ReverseProxyAccessControlCell from "@/modules/reverse-proxy/table/ReverseProxyAccessControlCell";
 import ReverseProxyAuthCell from "@/modules/reverse-proxy/table/ReverseProxyAuthCell";
-import ReverseProxyClusterCell from "@/modules/reverse-proxy/table/ReverseProxyClusterCell";
 import ReverseProxyNameCell from "@/modules/reverse-proxy/table/ReverseProxyNameCell";
 import ReverseProxyTargetsCell from "@/modules/reverse-proxy/table/ReverseProxyTargetsCell";
 import ReverseProxyTargetsTable from "@/modules/reverse-proxy/targets/ReverseProxyTargetsTable";
-import ReverseProxyStatusCell from "@/modules/reverse-proxy/table/ReverseProxyStatusCell";
 import { ReverseProxyTypeCell } from "@/modules/reverse-proxy/table/ReverseProxyTypeCell";
 
 const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
@@ -48,34 +59,11 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
     },
     sortingFn: "text",
     cell: ({ row }) => <ReverseProxyTypeCell reverseProxy={row.original} />,
+    filterFn: "arrIncludesSomeExact",
   },
   {
-    id: "status",
-    accessorFn: (proxy) => proxy?.meta?.certificate_issued_at,
-    header: "",
-    cell: ({ row }) =>
-      row.original.id ? (
-        <ReverseProxyStatusCell
-          serviceId={row.original.id}
-          meta={row.original.meta}
-          enabled={row.original.enabled}
-          isL4={isL4Mode(row.original.mode)}
-        />
-      ) : null,
-  },
-  {
+    id: "enabled",
     accessorKey: "enabled",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Active</DataTableHeader>;
-    },
-    cell: ({ row }) => <ReverseProxyActiveCell reverseProxy={row.original} />,
-  },
-  {
-    accessorKey: "proxy_cluster",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Cluster</DataTableHeader>;
-    },
-    cell: ({ row }) => <ReverseProxyClusterCell reverseProxy={row.original} />,
   },
   {
     accessorKey: "targets",
@@ -85,21 +73,15 @@ const ReverseProxyColumns: ColumnDef<ReverseProxy>[] = [
     cell: ({ row }) => <ReverseProxyTargetsCell reverseProxy={row.original} />,
   },
   {
-    accessorKey: "auth",
+    id: "auth_and_access",
     header: ({ column }) => {
-      return <DataTableHeader column={column}>Auth Methods</DataTableHeader>;
-    },
-    cell: ({ row }) => <ReverseProxyAuthCell reverseProxy={row.original} />,
-  },
-  {
-    id: "access_rules",
-    header: ({ column }) => {
-      return (
-        <DataTableHeader column={column}>Access Control</DataTableHeader>
-      );
+      return <DataTableHeader column={column}>Auth &amp; Access</DataTableHeader>;
     },
     cell: ({ row }) => (
-      <ReverseProxyAccessControlCell reverseProxy={row.original} />
+      <div className={"flex items-center gap-2"}>
+        <ReverseProxyAuthCell reverseProxy={row.original} />
+        <ReverseProxyAccessControlCell reverseProxy={row.original} />
+      </div>
     ),
   },
   {
@@ -141,6 +123,59 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
     ],
   );
 
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const typeOptions = useMemo<CheckboxOption<string>[]>(
+    () => [
+      { value: "http", label: "HTTP" },
+      { value: "tcp", label: "TCP" },
+      { value: "udp", label: "UDP" },
+      { value: "tls", label: "TLS" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "enabled",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+      {
+        id: "mode",
+        label: "Type",
+        renderPicker: (p) => (
+          <CheckboxListPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={typeOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatCheckboxChip(v as string[] | undefined, typeOptions, "types"),
+      },
+    ],
+    [statusOptions, typeOptions],
+  );
+
   return (
     <DataTable
       headingTarget={headingTarget}
@@ -152,8 +187,14 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
       columns={ReverseProxyColumns}
       data={reverseProxies}
       useRowId={true}
+      initialPageSize={25}
+      showResetFilterButton={false}
       searchPlaceholder={"Search by URL, domain, or target..."}
-      columnVisibility={{ searchString: false }}
+      rowClassName={(row) => (row.original.enabled ? "" : "opacity-50")}
+      aboveTable={(table) => (
+        <TableFilterChips table={table} filters={filterDefs} />
+      )}
+      columnVisibility={{ searchString: false, enabled: false }}
       tableCellClassName={"h-[80px]"}
       renderExpandedRow={(reverseProxy) => {
         if (isL4Mode(reverseProxy.mode)) return;
@@ -220,53 +261,18 @@ export default function ReverseProxyTable({ headingTarget }: Readonly<Props>) {
     >
       {(table) => (
         <>
-          <ButtonGroup disabled={reverseProxies?.length == 0}>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(undefined);
-              }}
-              disabled={reverseProxies?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() === undefined
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              All
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(true);
-              }}
-              disabled={reverseProxies?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() === true
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Active
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(false);
-              }}
-              disabled={reverseProxies?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() === false
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Inactive
-            </ButtonGroup.Button>
-          </ButtonGroup>
-          <DataTableRowsPerPage
+          <TableFiltersButton
             table={table}
+            filters={filterDefs}
             disabled={reverseProxies?.length == 0}
+          />
+          <DataTableResetFilterButton
+            table={table}
+            onClick={() => {
+              table.setPageIndex(0);
+              table.resetColumnFilters();
+              table.resetGlobalFilter();
+            }}
           />
           <DataTableRefreshButton
             isDisabled={reverseProxies?.length == 0}

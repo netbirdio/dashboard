@@ -5,10 +5,9 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import * as Tabs from "@radix-ui/react-tabs";
 import useFetchApi from "@utils/api";
-import { ExternalLinkIcon } from "lucide-react";
+import { ExternalLinkIcon, KeyRound } from "lucide-react";
 import React, { lazy, Suspense, useMemo } from "react";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
-import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Group } from "@/interfaces/Group";
@@ -49,7 +48,7 @@ export default function SetupKeysTab() {
           <Breadcrumbs.Item
             href={"/settings?tab=setup-keys"}
             label={"Setup Keys"}
-            icon={<SetupKeysIcon size={14} />}
+            icon={<KeyRound size={14} />}
             active
           />
         </Breadcrumbs>
