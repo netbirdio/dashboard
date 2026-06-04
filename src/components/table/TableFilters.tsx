@@ -114,7 +114,7 @@ export function TableFiltersButton<TData>({
             </div>
           </div>
         ) : (
-          <div className={"py-1"}>
+          <div className={"p-2 flex flex-col gap-0.5"}>
             {filters.map((f) => {
               const v = table.getColumn(f.id)?.getFilterValue();
               const chip = f.formatChip(v as never);
@@ -122,7 +122,7 @@ export function TableFiltersButton<TData>({
                 <button
                   key={f.id}
                   className={
-                    "w-full text-left px-3 py-2 hover:bg-nb-gray-900 text-sm flex items-center gap-2.5 text-nb-gray-200"
+                    "w-full text-left px-2 py-1.5 rounded hover:bg-nb-gray-900 transition-colors text-sm flex items-center gap-2.5 text-nb-gray-200"
                   }
                   onClick={() => setActiveFilterId(f.id)}
                 >
