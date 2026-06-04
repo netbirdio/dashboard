@@ -26,10 +26,10 @@ export default function Networks() {
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            href={"/networks"}
-            label={"Networks"}
+            label={"Network Routing"}
             icon={<NetworkRoutesIcon size={13} />}
           />
+          <Breadcrumbs.Item href={"/networks"} label={"Networks"} />
         </Breadcrumbs>
         <h1 ref={headingRef}>Networks</h1>
         <Paragraph>

@@ -38,11 +38,31 @@ export default function SidebarItem({
 }: Readonly<SidebarItemProps>) {
   const path = usePathname();
 
+  // Hrefs of nested child items, so a collapsible parent without its
+  // own href (e.g. "Network Routing") can still tell when one of its
+  // children matches the current route.
+  const childRoutes = useMemo(() => {
+    const routes: { href: string; exact: boolean }[] = [];
+    React.Children.forEach(children, (child) => {
+      if (!React.isValidElement(child)) return;
+      const props = child.props as Partial<SidebarItemProps>;
+      if (props.href) {
+        routes.push({ href: props.href, exact: !!props.exactPathMatch });
+      }
+    });
+    return routes;
+  }, [children]);
+
   // Check if any child route is active (for collapsible items)
   const hasActiveChild = useMemo(() => {
-    if (!collapsible || !href) return false;
-    return path === href || path.startsWith(href + "/");
-  }, [collapsible, href, path]);
+    if (!collapsible) return false;
+    if (href && (path === href || path.startsWith(href + "/"))) return true;
+    return childRoutes.some(({ href: childHref, exact }) =>
+      exact
+        ? path === childHref
+        : path === childHref || path.startsWith(childHref + "/"),
+    );
+  }, [collapsible, href, path, childRoutes]);
 
   const [open, setOpen] = React.useState(hasActiveChild);
 

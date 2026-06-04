@@ -6,19 +6,26 @@ import { usePermissions } from "@/contexts/PermissionsProvider";
 export const NetworkNavigation = () => {
   const { permission } = usePermissions();
   return (
-    <>
+    <SidebarItem
+      icon={<NetworkRoutesIcon />}
+      label={"Network Routing"}
+      collapsible
+      visible={permission.networks.read || permission.routes.read}
+    >
       <SidebarItem
-        icon={<NetworkRoutesIcon />}
         label={"Networks"}
+        isChild
         href={"/networks"}
+        exactPathMatch={true}
         visible={permission.networks.read}
       />
       <SidebarItem
-        icon={<NetworkRoutesIcon />}
+        label={"Routes"}
+        isChild
         href={"/network-routes"}
-        label={"Network Routes"}
+        exactPathMatch={true}
         visible={permission.routes.read}
       />
-    </>
+    </SidebarItem>
   );
 };
