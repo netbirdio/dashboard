@@ -39,18 +39,26 @@ export function CheckboxListPicker<V extends string | number>({
       {options.map((option) => {
         const isSelected = selected.includes(option.value);
         return (
-          <button
+          <div
             key={String(option.value)}
+            role={"button"}
+            tabIndex={0}
             className={cn(
-              "flex items-center gap-2.5 px-2 py-1.5 rounded text-sm transition-colors",
+              "flex items-center gap-2.5 px-2 py-1.5 rounded text-sm transition-colors cursor-pointer",
               "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-white",
               isSelected && "text-white",
             )}
             onClick={() => toggle(option.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                toggle(option.value);
+              }
+            }}
           >
-            <Checkbox checked={isSelected} />
+            <Checkbox checked={isSelected} tabIndex={-1} />
             {option.label}
-          </button>
+          </div>
         );
       })}
     </div>
