@@ -99,7 +99,7 @@ export function TableFiltersButton<TData>({
               <button
                 aria-label={"Back"}
                 className={
-                  "flex items-center justify-center w-7 h-7 -ml-1 shrink-0 text-nb-gray-400 hover:text-white hover:bg-nb-gray-900 rounded transition-colors"
+                  "flex items-center justify-center w-7 h-7 -ml-1 shrink-0 text-nb-gray-400 hover:text-nb-gray-100 hover:bg-nb-gray-900 rounded transition-colors"
                 }
                 onClick={() => setActiveFilterId(null)}
               >
@@ -231,7 +231,7 @@ function FilterChip<TData>({ def, text, table }: FilterChipProps<TData>) {
           className={cn(
             "flex items-center justify-center px-2",
             "border-l border-nb-gray-900",
-            "text-nb-gray-400 hover:bg-nb-gray-900 hover:text-white transition-colors",
+            "text-nb-gray-400 hover:bg-nb-gray-900 hover:text-nb-gray-100 transition-colors",
           )}
           onClick={(e) => {
             e.stopPropagation();
