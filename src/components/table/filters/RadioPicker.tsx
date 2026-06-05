@@ -38,8 +38,8 @@ export function RadioPicker<V>({
               .toLowerCase()}`}
             className={cn(
               "flex items-center gap-2.5 px-2 py-1.5 rounded text-sm transition-colors",
-              "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-white",
-              selected && "text-white",
+              "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-nb-gray-100",
+              selected && "text-nb-gray-100",
             )}
             onClick={() => {
               onChange(option.value);
@@ -49,7 +49,7 @@ export function RadioPicker<V>({
             <CheckIcon
               size={14}
               className={cn(
-                "shrink-0 text-white",
+                "shrink-0 text-nb-gray-100",
                 selected ? "opacity-100" : "opacity-0",
               )}
             />
