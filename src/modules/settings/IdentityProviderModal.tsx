@@ -1,6 +1,7 @@
 import Button from "@components/Button";
 import Code from "@components/Code";
 import HelpText from "@components/HelpText";
+import InlineLink from "@components/InlineLink";
 import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import {
@@ -72,8 +73,10 @@ type Props = {
 };
 
 const copyMessage = "Redirect URL was copied to your clipboard!";
+const logoutCopyMessage = "Logout URL was copied to your clipboard!";
 const config = loadConfig();
 const redirectUrl = `${config.apiOrigin}/oauth2/callback`;
+const logoutUrl = `${config.apiOrigin}/oauth2/logout/callback`;
 
 export default function IdentityProviderModal({
   open,
@@ -263,14 +266,38 @@ export default function IdentityProviderModal({
 
             <Separator />
 
-            <div>
-              <Label>Redirect / Callback URL</Label>
-              <HelpText>
-                Copy this URL to your identity provider configuration
-              </HelpText>
-              <Code codeToCopy={redirectUrl} message={copyMessage}>
-                <Code.Line>{redirectUrl}</Code.Line>
-              </Code>
+            <div className={"flex flex-col gap-3"}>
+              <div>
+                <Label>Endpoint URLs</Label>
+                <HelpText margin={false}>
+                  Add these to your identity provider configuration
+                </HelpText>
+              </div>
+
+              <div>
+                <Label className={"text-xs mb-1"}>Redirect / Callback</Label>
+                <Code codeToCopy={redirectUrl} message={copyMessage}>
+                  <Code.Line>{redirectUrl}</Code.Line>
+                </Code>
+              </div>
+
+              <div>
+                <Label className={"text-xs mb-1"}>Logout</Label>
+                <Code codeToCopy={logoutUrl} message={logoutCopyMessage}>
+                  <Code.Line>{logoutUrl}</Code.Line>
+                </Code>
+                <HelpText margin={false} className={"mt-1.5"}>
+                  Not all identity providers support logout.{" "}
+                  <InlineLink
+                    href={
+                      "https://docs.netbird.io/selfhosted/identity-providers"
+                    }
+                    target={"_blank"}
+                  >
+                    Learn more
+                  </InlineLink>
+                </HelpText>
+              </div>
             </div>
           </div>
 
