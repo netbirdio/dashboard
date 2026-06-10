@@ -1,12 +1,25 @@
 import Button from "@components/Button";
-import ButtonGroup from "@components/ButtonGroup";
 import Card from "@components/Card";
 import InlineLink from "@components/InlineLink";
 import SquareIcon from "@components/SquareIcon";
 import { DataTable } from "@components/table/DataTable";
 import DataTableHeader from "@components/table/DataTableHeader";
 import DataTableRefreshButton from "@components/table/DataTableRefreshButton";
-import { DataTableRowsPerPage } from "@components/table/DataTableRowsPerPage";
+import DataTableResetFilterButton from "@components/table/DataTableResetFilterButton";
+import {
+  formatGroupsChip,
+  GroupsPicker,
+} from "@components/table/filters/GroupsPicker";
+import {
+  formatRadioChip,
+  RadioOption,
+  RadioPicker,
+} from "@components/table/filters/RadioPicker";
+import {
+  TableFilterChips,
+  TableFilterDef,
+  TableFiltersButton,
+} from "@components/table/TableFilters";
 import GetStartedTest from "@components/ui/GetStartedTest";
 import NoResults from "@components/ui/NoResults";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
@@ -56,9 +69,15 @@ export const DNSZonesColumns: ColumnDef<DNSZone>[] = [
   {
     accessorKey: "distribution_groups",
     header: ({ column }) => (
-      <DataTableHeader column={column}>Distribution Groups</DataTableHeader>
+      <DataTableHeader column={column}>Groups</DataTableHeader>
     ),
     cell: ({ row }) => <DNSZonesGroupCell zone={row.original} />,
+  },
+  {
+    id: "group_names_filter",
+    accessorFn: (row) =>
+      ((row as DNSZone & { _group_names?: string[] })._group_names) ?? [],
+    filterFn: "arrIncludesSome",
   },
   {
     accessorKey: "enable_search_domain",
@@ -125,17 +144,69 @@ export default function DNSZonesTable({
   const zonesWithGroups = useMemo(() => {
     return (
       data?.map((zone) => {
+        const groupNames = (zone?.distribution_groups ?? [])
+          .map((id) => groups?.find((g) => g.id === id)?.name)
+          .filter((n): n is string => !!n);
         return {
           ...zone,
-          groups_search: groups
-            ?.map((g) =>
-              zone?.distribution_groups?.includes(g?.id ?? "") ? g.name : "",
-            )
-            .join(""),
-        } as DNSZone;
+          _group_names: groupNames,
+          groups_search: groupNames.join(""),
+        } as DNSZone & { _group_names: string[] };
       }) ?? []
     );
   }, [data, groups]);
+
+  const tableGroups = useMemo(() => {
+    const map = new Map<string, { id?: string; name: string }>();
+    for (const zone of zonesWithGroups) {
+      for (const name of zone._group_names ?? []) {
+        if (name && !map.has(name)) map.set(name, { name });
+      }
+    }
+    return Array.from(map.values());
+  }, [zonesWithGroups]);
+
+  const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
+    () => [
+      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
+      { value: true, label: "Active", dotClass: "bg-green-500" },
+      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+    ],
+    [],
+  );
+
+  const filterDefs = useMemo<TableFilterDef[]>(
+    () => [
+      {
+        id: "enabled",
+        label: "Status",
+        renderPicker: (p) => (
+          <RadioPicker
+            value={p.value as boolean | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            options={statusOptions}
+          />
+        ),
+        formatChip: (v) =>
+          formatRadioChip(v as boolean | undefined, statusOptions),
+      },
+      {
+        id: "group_names_filter",
+        label: "Groups",
+        renderPicker: (p) => (
+          <GroupsPicker
+            value={p.value as string[] | undefined}
+            onChange={p.onChange}
+            close={p.close}
+            groups={tableGroups}
+          />
+        ),
+        formatChip: (v) => formatGroupsChip(v as string[] | undefined),
+      },
+    ],
+    [statusOptions, tableGroups],
+  );
 
   return (
     <DataTable
@@ -154,8 +225,13 @@ export default function DNSZonesTable({
       inset={false}
       minimal={isGroupPage}
       keepStateInLocalStorage={!isGroupPage}
+      initialPageSize={25}
+      showResetFilterButton={false}
       searchPlaceholder={"Search by domain, ip, content or group..."}
-      columnVisibility={{ searchString: false }}
+      aboveTable={(table) => (
+        <TableFilterChips table={table} filters={filterDefs} />
+      )}
+      columnVisibility={{ searchString: false, group_names_filter: false }}
       renderExpandedRow={(zone) => {
         const hasRecords = (zone?.records?.length ?? 0) > 0;
         if (!hasRecords) return;
@@ -223,51 +299,19 @@ export default function DNSZonesTable({
     >
       {(table) => (
         <>
-          <ButtonGroup disabled={data?.length == 0}>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(undefined);
-              }}
-              disabled={data?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() === undefined
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              All
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(true);
-              }}
-              disabled={data?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() === true
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Active
-            </ButtonGroup.Button>
-            <ButtonGroup.Button
-              onClick={() => {
-                table.setPageIndex(0);
-                table.getColumn("enabled")?.setFilterValue(false);
-              }}
-              disabled={data?.length == 0}
-              variant={
-                table.getColumn("enabled")?.getFilterValue() === false
-                  ? "tertiary"
-                  : "secondary"
-              }
-            >
-              Inactive
-            </ButtonGroup.Button>
-          </ButtonGroup>
-          <DataTableRowsPerPage table={table} disabled={data?.length == 0} />
+          <TableFiltersButton
+            table={table}
+            filters={filterDefs}
+            disabled={data?.length == 0}
+          />
+          <DataTableResetFilterButton
+            table={table}
+            onClick={() => {
+              table.setPageIndex(0);
+              table.resetColumnFilters();
+              table.resetGlobalFilter();
+            }}
+          />
           <DataTableRefreshButton
             isDisabled={data?.length == 0}
             onClick={() => {

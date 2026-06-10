@@ -34,6 +34,7 @@ export const ResourceGroupCell = ({ resource }: Props) => {
             groups={groups}
             showResources={true}
             redirectGroupTab={"resources"}
+            countOnly={true}
           />
           {permission.networks.update && <TransparentEditIconButton />}
         </>
@@ -44,7 +45,7 @@ export const ResourceGroupCell = ({ resource }: Props) => {
           disabled={!permission.networks.update}
         >
           <IconCirclePlus size={14} />
-          Add Groups
+          Add
         </Badge>
       )}
     </button>

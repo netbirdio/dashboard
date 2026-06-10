@@ -39,17 +39,16 @@ export default function Activity() {
           />
         </Breadcrumbs>
         <h1 ref={headingRef}>Audit Events</h1>
-        <Paragraph>Here you can see all the audit activity events.</Paragraph>
         <Paragraph>
-          Learn more about{" "}
+          Audit configuration changes, access policy updates, and peer
+          registration and login events across your network.{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/audit-events-logging"}
             target={"_blank"}
           >
-            Audit Events
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
       </div>
       <RestrictedAccess page={"Activity"} hasAccess={permission.events.read}>

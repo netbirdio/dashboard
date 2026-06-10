@@ -61,6 +61,7 @@ import RoutesProvider from "@/contexts/RoutesProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import type { Group } from "@/interfaces/Group";
 import type { Peer } from "@/interfaces/Peer";
+import type { User } from "@/interfaces/User";
 import PageContainer from "@/layouts/PageContainer";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { AccessiblePeersSection } from "@/modules/peer/AccessiblePeersSection";
@@ -119,8 +120,17 @@ export default function PeerPage() {
   );
 }
 
+// Route the user back to the list view that matches the peer's kind
+// (a real user owner → /peers/users, otherwise /peers/servers). Used
+// for the breadcrumb and the Cancel back-button so they don't bounce
+// through the legacy /peers redirect.
+function peerListPath(user: User | undefined): string {
+  const hasRealUser = !!user && !user.is_service_user;
+  return hasRealUser ? "/peers/users" : "/peers/servers";
+}
+
 function PeerOverview() {
-  const { peer } = usePeer();
+  const { peer, user } = usePeer();
 
   return (
     <PageContainer>
@@ -129,7 +139,7 @@ function PeerOverview() {
           <div className={"p-default py-6 pb-0"}>
             <Breadcrumbs>
               <Breadcrumbs.Item
-                href={"/peers"}
+                href={peerListPath(user)}
                 label={"Peers"}
                 icon={<PeerIcon size={13} />}
               />
@@ -298,7 +308,7 @@ const PeerHeader = () => {
             <Button
               variant={"default"}
               className={"w-full"}
-              onClick={() => router.push("/peers")}
+              onClick={() => router.push(peerListPath(user))}
             >
               Cancel
             </Button>

@@ -32,15 +32,11 @@ export const ReverseProxyFlatTargetsTabContent = ({
       <div className={"flex justify-between items-center mb-5"}>
         <div>
           <Paragraph>
-            Expose services securely through NetBird&apos;s reverse proxy.
-          </Paragraph>
-          <Paragraph>
-            Learn more about
+            Expose services securely through NetBird&apos;s reverse proxy.{" "}
             <InlineLink href={REVERSE_PROXY_DOCS_LINK} target={"_blank"}>
-              Services
+              Learn more
               <ExternalLinkIcon size={12} />
             </InlineLink>
-            in our documentation.
           </Paragraph>
         </div>
       </div>

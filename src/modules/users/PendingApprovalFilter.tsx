@@ -45,7 +45,7 @@ export const PendingApprovalFilter = <T,>({ table, data, count }: Props<T>) => {
           : "secondary"
       }
     >
-      Pending Approvals
+      Pending Approval
       <NotificationCountBadge count={count} />
     </Button>
   );

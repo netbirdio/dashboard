@@ -1,7 +1,14 @@
 import Button from "@components/Button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@components/DropdownMenu";
 import { notify } from "@components/Notification";
 import { useApiCall } from "@utils/api";
-import { Trash2, Undo2Icon } from "lucide-react";
+import { MoreVertical, Trash2, Undo2Icon } from "lucide-react";
 import * as React from "react";
 import { useSWRConfig } from "swr";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -16,6 +23,10 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
   const request = useApiCall<SetupKey>("/setup-keys/" + setupKey.id);
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
+
+  const canRevoke =
+    !setupKey.revoked && setupKey.valid && permission.setup_keys.update;
+  const canDelete = permission.setup_keys.delete;
 
   const handleRevoke = async () => {
     const choice = await confirm({
@@ -74,26 +85,46 @@ export default function SetupKeyActionCell({ setupKey }: Readonly<Props>) {
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <Button
-        variant={"danger-outline"}
-        size={"sm"}
-        onClick={handleRevoke}
-        disabled={
-          setupKey.revoked || !setupKey.valid || !permission.setup_keys.update
-        }
-      >
-        <Undo2Icon size={16} />
-        Revoke
-      </Button>
-      <Button
-        variant={"danger-outline"}
-        size={"sm"}
-        onClick={handleDelete}
-        disabled={!permission.setup_keys.delete}
-      >
-        <Trash2 size={16} />
-        Delete
-      </Button>
+      <DropdownMenu modal={false}>
+        <DropdownMenuTrigger
+          asChild={true}
+          onClick={(e) => {
+            e.stopPropagation();
+            e.preventDefault();
+          }}
+        >
+          <Button
+            variant={"secondary"}
+            className={"!px-3"}
+            aria-label={"Open actions menu"}
+          >
+            <MoreVertical size={16} className={"shrink-0"} />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className={"w-auto"} align={"end"}>
+          <DropdownMenuItem
+            onClick={handleRevoke}
+            disabled={!canRevoke}
+            variant={"danger"}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <Undo2Icon size={14} className={"shrink-0"} />
+              Revoke
+            </div>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem
+            onClick={handleDelete}
+            disabled={!canDelete}
+            variant={"danger"}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <Trash2 size={14} className={"shrink-0"} />
+              Delete
+            </div>
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
   );
 }

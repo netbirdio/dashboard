@@ -37,28 +37,27 @@ export default function NetworkRoutes() {
           <div className={"p-default py-6"}>
             <Breadcrumbs>
               <Breadcrumbs.Item
-                href={"/network-routes"}
-                label={"Network Routes"}
+                label={"Network Routing"}
                 icon={<NetworkRoutesIcon size={13} />}
               />
+              <Breadcrumbs.Item href={"/network-routes"} label={"Routes"} />
             </Breadcrumbs>
-            <h1 ref={headingRef}>Network Routes</h1>
+            <h1 ref={headingRef}>Routes</h1>
             <Paragraph>
-              Network routes allow you to access other networks like LANs and
-              VPCs without installing NetBird on every resource.
-            </Paragraph>
-            <Paragraph>
-              Learn more about
+              Access other networks like LANs and VPCs without installing
+              NetBird on every resource.{" "}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/routing-traffic-to-private-networks"
                 }
                 target={"_blank"}
+                aria-label={
+                  "Learn more about routing traffic to private networks"
+                }
               >
-                Network Routes
+                Learn more
                 <ExternalLinkIcon size={12} />
               </InlineLink>
-              in our documentation.
             </Paragraph>
 
             <Callout className={"max-w-xl mt-5"} variant={"warning"}>

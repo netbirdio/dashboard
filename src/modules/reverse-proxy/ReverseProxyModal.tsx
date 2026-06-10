@@ -209,6 +209,12 @@ export default function ReverseProxyModal({
     reverseProxy?.private ?? false,
   );
 
+  // Tracks whether NetBird-only was switched on automatically because the
+  // operator picked a cluster target (see onClusterPick), as opposed to an
+  // explicit choice in the NetBird-Only modal. Only auto-enabled private is
+  // reverted when the cluster target is later removed or changed.
+  const [privateFromCluster, setPrivateFromCluster] = useState(false);
+
   // togglePrivate normalises related state when the operator flips
   // NetBird-only access. Private services are HTTP-only, so we drop out
   // of L4 mode. NetBird-only and the other auth modes are mutually
@@ -310,6 +316,20 @@ export default function ReverseProxyModal({
   );
   const effectiveDirectUpstream = hasClusterTarget || directUpstream;
 
+  // Reverts the NetBird-only state that was auto-applied when a cluster
+  // target was picked, once the committed targets no longer include a
+  // cluster. Explicit NetBird-only choices (privateFromCluster === false)
+  // are left untouched.
+  const resetClusterPrivateIfNeeded = (next: ReverseProxyTarget[]) => {
+    if (
+      privateFromCluster &&
+      !next.some((t) => t.target_type === ReverseProxyTargetType.CLUSTER)
+    ) {
+      togglePrivate(false);
+      setPrivateFromCluster(false);
+    }
+  };
+
   const [linkAuthEnabled, setLinkAuthEnabled] = useState(
     reverseProxy?.auth?.link_auth?.enabled ?? false,
   );
@@ -390,17 +410,14 @@ export default function ReverseProxyModal({
   }, [canContinueToSettings, isPrivate, accessGroups.length]);
 
   const saveTarget = (targetData: ReverseProxyTarget) => {
-    if (editingTargetIndex !== null) {
-      // Update existing target
-      setTargets(
-        targets.map((t, i) =>
-          i === editingTargetIndex ? { ...t, ...targetData } : t,
-        ),
-      );
-    } else {
-      // Add new target
-      setTargets([...targets, targetData]);
-    }
+    const next =
+      editingTargetIndex !== null
+        ? targets.map((t, i) =>
+            i === editingTargetIndex ? { ...t, ...targetData } : t,
+          )
+        : [...targets, targetData];
+    setTargets(next);
+    resetClusterPrivateIfNeeded(next);
     setTargetModalOpen(false);
     setEditingTargetIndex(null);
   };
@@ -411,7 +428,9 @@ export default function ReverseProxyModal({
   };
 
   const removeTarget = (index: number) => {
-    setTargets(targets.filter((_, i) => i !== index));
+    const next = targets.filter((_, i) => i !== index);
+    setTargets(next);
+    resetClusterPrivateIfNeeded(next);
   };
 
   const toggleTargetEnabled = (index: number) => {
@@ -1073,6 +1092,7 @@ export default function ReverseProxyModal({
           // already private.
           if (!isPrivate) {
             togglePrivate(true);
+            setPrivateFromCluster(true);
           }
         }}
       />
@@ -1127,11 +1147,13 @@ export default function ReverseProxyModal({
           setTimeout(() => {
             setAccessGroups(groups);
             togglePrivate(true);
+            setPrivateFromCluster(false);
           }, 200);
         }}
         onRemove={() => {
           setTimeout(() => {
             togglePrivate(false);
+            setPrivateFromCluster(false);
           }, 200);
         }}
       />

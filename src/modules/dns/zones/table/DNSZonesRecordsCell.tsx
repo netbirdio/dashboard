@@ -35,12 +35,12 @@ export const DNSZonesRecordsCell = ({ zone }: Props) => {
       <Button
         size={"xs"}
         variant={"secondary"}
-        className={"min-w-[130px]"}
+        className={"!px-3"}
         onClick={() => openRecordModal(zone)}
         disabled={!permission?.dns?.create}
       >
         <PlusCircle size={12} />
-        Add Record
+        Add
       </Button>
     </div>
   );

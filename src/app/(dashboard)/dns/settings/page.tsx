@@ -52,17 +52,15 @@ export default function NameServerSettings() {
           />
         </Breadcrumbs>
         <h1>DNS Settings</h1>
-        <Paragraph>{"Manage your account's DNS settings."}</Paragraph>
         <Paragraph>
-          Learn more about
+          {"Manage your account's DNS settings."}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
             target={"_blank"}
           >
-            DNS
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
         <RestrictedAccess page={"DNS Settings"} hasAccess={permission.dns.read}>
           {!isLoading && initialDNSGroups !== undefined ? (

@@ -6,6 +6,7 @@ import {
   AlertOctagonIcon,
   FingerprintIcon,
   FolderGit2Icon,
+  KeyRound,
   LockIcon,
   MonitorSmartphoneIcon,
   NetworkIcon,
@@ -13,7 +14,6 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
-import SetupKeysIcon from "@/assets/icons/SetupKeysIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
 import PageContainer from "@/layouts/PageContainer";
@@ -59,7 +59,7 @@ export default function NetBirdSettings() {
               </VerticalTabs.Trigger>
               {permission.setup_keys.read && (
                 <VerticalTabs.Trigger value="setup-keys">
-                  <SetupKeysIcon size={14} />
+                  <KeyRound size={14} />
                   Setup Keys
                 </VerticalTabs.Trigger>
               )}

@@ -47,18 +47,14 @@ export default function ServiceUsers() {
         <h1 ref={headingRef}>Service Users</h1>
         <Paragraph>
           Use service users to create API tokens and avoid losing automated
-          access.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          access.{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/access-netbird-public-api"}
             target={"_blank"}
           >
-            Service Users
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
       </div>
       <RestrictedAccess

@@ -12,62 +12,47 @@ type Props = {
   domains: string[];
 };
 export default function MultipleDomains({ domains }: Props) {
-  const firstDomain = domains.length > 0 ? domains[0] : undefined;
-  const otherDomains = domains.length > 0 ? domains.slice(1) : [];
+  if (domains.length === 0) {
+    return (
+      <Badge
+        variant={"blue-darker"}
+        className={"uppercase tracking-wider font-medium"}
+      >
+        <GlobeIcon size={10} />
+        All
+      </Badge>
+    );
+  }
 
-  return domains.length > 0 ? (
-    <TooltipProvider>
-      <Tooltip delayDuration={1}>
-        <TooltipTrigger asChild={true}>
-          <div className={"inline-flex items-center gap-2"}>
-            {firstDomain && (
-              <Badge variant={"blue-darker"}>
-                <GlobeIcon size={10} />
-                {firstDomain}
-              </Badge>
-            )}
-            {otherDomains && otherDomains.length > 0 && (
-              <Badge
-                variant={"blue-darker"}
-                className={"px-3 gap-2 whitespace-nowrap"}
-              >
-                + {otherDomains.length}
-              </Badge>
-            )}
-          </div>
-        </TooltipTrigger>
-        {otherDomains && otherDomains.length > 0 && (
-          <TooltipContent sideOffset={10}>
-            <div className={"flex flex-col gap-2 items-start "}>
-              {otherDomains.map((domain) => {
-                return (
-                  domain && (
-                    <div
-                      key={domain}
-                      className={
-                        "flex gap-2 items-center justify-between w-full"
-                      }
-                    >
-                      <Badge variant={"blue-darker"}>
-                        <GlobeIcon size={10} />
-                        {domain}
-                      </Badge>
-                    </div>
-                  )
-                );
-              })}
+  if (domains.length > 1) {
+    return (
+      <TooltipProvider>
+        <Tooltip delayDuration={1}>
+          <TooltipTrigger asChild={true}>
+            <Badge variant={"blue-darker"} className={"cursor-help"}>
+              <GlobeIcon size={10} />
+              {domains.length} Domains
+            </Badge>
+          </TooltipTrigger>
+          <TooltipContent className={"p-3"}>
+            <div className={"flex flex-col gap-1.5 items-start max-w-sm"}>
+              {domains.map((domain) => (
+                <Badge key={domain} variant={"blue-darker"}>
+                  <GlobeIcon size={10} />
+                  {domain}
+                </Badge>
+              ))}
             </div>
           </TooltipContent>
-        )}
-      </Tooltip>
-    </TooltipProvider>
-  ) : (
-    <Badge
-      variant={"blue-darker"}
-      className={"uppercase tracking-wider font-medium"}
-    >
+        </Tooltip>
+      </TooltipProvider>
+    );
+  }
+
+  return (
+    <Badge variant={"blue-darker"}>
       <GlobeIcon size={10} />
-      All
+      {domains[0]}
     </Badge>
   );
 }

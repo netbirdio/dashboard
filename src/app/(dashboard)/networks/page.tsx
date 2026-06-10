@@ -26,26 +26,22 @@ export default function Networks() {
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            href={"/networks"}
-            label={"Networks"}
+            label={"Network Routing"}
             icon={<NetworkRoutesIcon size={13} />}
           />
+          <Breadcrumbs.Item href={"/networks"} label={"Networks"} />
         </Breadcrumbs>
         <h1 ref={headingRef}>Networks</h1>
         <Paragraph>
-          Networks allow you to access internal resources in LANs and VPCs
-          without installing NetBird on every machine.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          Access internal resources in LANs and VPCs without installing NetBird
+          on every machine.{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/networks"}
             target={"_blank"}
           >
-            Networks
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
       </div>
 

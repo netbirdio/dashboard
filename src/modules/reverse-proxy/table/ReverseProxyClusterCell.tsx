@@ -15,10 +15,12 @@ import InlineLink from "@components/InlineLink";
 
 type Props = {
   reverseProxy: ReverseProxy;
+  compact?: boolean;
 };
 
 export default function ReverseProxyClusterCell({
   reverseProxy,
+  compact,
 }: Readonly<Props>) {
   const { domains } = useReverseProxies();
 
@@ -30,7 +32,26 @@ export default function ReverseProxyClusterCell({
   );
 
   if (!hasCluster) {
-    return (
+    return compact ? (
+      <FullTooltip
+        interactive={false}
+        content={
+          <span className={"text-xs"}>
+            <span className={"text-nb-gray-400"}>Cluster: </span>
+            <span className={"text-nb-gray-100"}>All</span>
+          </span>
+        }
+      >
+        <span
+          className={
+            "inline-flex items-center gap-1.5 truncate cursor-help"
+          }
+        >
+          <Globe size={11} className={"shrink-0"} />
+          All
+        </span>
+      </FullTooltip>
+    ) : (
       <div className="flex items-center gap-2" data-cluster-cell>
         <Badge variant="gray" className="font-normal">
           <Globe size={12} />
@@ -41,7 +62,28 @@ export default function ReverseProxyClusterCell({
   }
 
   if (isConnected) {
-    return (
+    return compact ? (
+      <FullTooltip
+        interactive={false}
+        content={
+          <span className={"text-xs"}>
+            <span className={"text-nb-gray-400"}>Cluster: </span>
+            <span className={"text-nb-gray-100"}>
+              {reverseProxy.proxy_cluster}
+            </span>
+          </span>
+        }
+      >
+        <span
+          className={
+            "inline-flex items-center gap-1.5 truncate cursor-help"
+          }
+        >
+          <Server size={11} className={"shrink-0"} />
+          {reverseProxy.proxy_cluster}
+        </span>
+      </FullTooltip>
+    ) : (
       <div className="flex items-center gap-2" data-cluster-cell>
         <Badge variant={"gray"} className={cn("font-normal")}>
           <Server size={11} className={cn("text-green-500")} />
@@ -76,12 +118,23 @@ export default function ReverseProxyClusterCell({
       align={"center"}
       alignOffset={0}
     >
-      <div className="flex items-center gap-2" data-cluster-cell>
-        <Badge variant={"red"} className={cn("font-normal")}>
-          <AlertTriangle size={11} />
+      {compact ? (
+        <span
+          className={
+            "inline-flex items-center gap-1.5 text-red-500 cursor-help truncate"
+          }
+        >
+          <AlertTriangle size={11} className={"shrink-0"} />
           {reverseProxy.proxy_cluster}
-        </Badge>
-      </div>
+        </span>
+      ) : (
+        <div className="flex items-center gap-2" data-cluster-cell>
+          <Badge variant={"red"} className={cn("font-normal")}>
+            <AlertTriangle size={11} />
+            {reverseProxy.proxy_cluster}
+          </Badge>
+        </div>
+      )}
     </FullTooltip>
   );
 }

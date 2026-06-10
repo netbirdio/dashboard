@@ -129,7 +129,7 @@ export function SetupModalContent({
   // same generated key (and the command updates everywhere).
   const setupKeyContent = showKeyGenerator ? (
     <>
-      <p className={"flex items-center gap-1.5 flex-wrap"}>
+      <div className={"flex items-center gap-1.5 flex-wrap"}>
         Generate a setup key
         <HelpTooltip
           content={
@@ -150,7 +150,7 @@ export function SetupModalContent({
           Learn more
           <ExternalLinkIcon size={12} />
         </InlineLink>
-      </p>
+      </div>
       <SetupKeyGenerator
         generatedKey={generatedKey}
         onGenerated={setGeneratedKey}

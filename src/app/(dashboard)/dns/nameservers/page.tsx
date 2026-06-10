@@ -45,18 +45,14 @@ export default function NameServers() {
         </Breadcrumbs>
         <h1 ref={headingRef}>Nameservers</h1>
         <Paragraph>
-          Add nameservers for domain name resolution in your NetBird network.
-        </Paragraph>
-        <Paragraph>
-          Learn more about
+          Add nameservers for domain name resolution in your NetBird network.{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
             target={"_blank"}
           >
-            DNS
+            Learn more
             <ExternalLinkIcon size={12} />
           </InlineLink>
-          in our documentation.
         </Paragraph>
       </div>
 
