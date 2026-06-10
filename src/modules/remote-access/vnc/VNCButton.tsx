@@ -32,7 +32,7 @@ export const VNCButton = ({ peer, isDropdown = false }: Props) => {
 
   const openVNCPage = () => {
     window.open(
-      `peer/vnc?id=${peer.id}`,
+      `/peer/vnc?id=${peer.id}`,
       "_blank",
       "noopener,noreferrer,width=1200,height=800,left=100,top=100,location=no,toolbar=no,menubar=no,status=no",
     );

@@ -129,6 +129,10 @@ function VNCSession({ peer, initialMode, initialUsername, settings }: Props) {
         setKeySessionId(result.keySessionId);
       }
     } catch (error) {
+      // Latch the failure so the auto-connect effect doesn't re-fire the
+      // moment connectTemporary resets the status to DISCONNECTED, which
+      // would spam the toast in a tight loop. User clears it via Reconnect.
+      setConnectFailed(true);
       sendErrorNotification(
         "NetBird Connection Error",
         (error as Error).message,
@@ -139,10 +143,15 @@ function VNCSession({ peer, initialMode, initialUsername, settings }: Props) {
   }, [peer?.id, client, sendErrorNotification]);
 
   useEffect(() => {
-    if (client.status === NetBirdStatus.DISCONNECTED && !isNetBirdConnecting && !connected.current) {
+    if (
+      client.status === NetBirdStatus.DISCONNECTED &&
+      !isNetBirdConnecting &&
+      !connected.current &&
+      !connectFailed
+    ) {
       connectNetBird().catch(console.error);
     }
-  }, [client.status, connectNetBird, isNetBirdConnecting]);
+  }, [client.status, connectNetBird, isNetBirdConnecting, connectFailed]);
 
   // Start VNC session when NetBird is connected (auto-connect unless setup is shown).
   useEffect(() => {
