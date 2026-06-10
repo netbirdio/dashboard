@@ -26,7 +26,7 @@ export const PeerRemoteJobsSection = ({ peerID }: Props) => {
             <Paragraph>
               Remotely trigger actions such as debug bundles or other tasks on
               this peer, without requiring CLI access.{" "}
-              <InlineLink href={"https://docs.netbird.io"} target={"_blank"}>
+              <InlineLink href={"https://docs.netbird.io/manage/peers/remote-jobs"} target={"_blank"}>
                 Learn more
                 <ExternalLinkIcon size={12} />
               </InlineLink>
