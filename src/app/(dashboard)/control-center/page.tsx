@@ -11,11 +11,11 @@ import {
   ReactFlowProvider,
   SelectionMode,
 } from "@xyflow/react";
-import { useTheme } from "next-themes";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
 import GroupsProvider from "@/contexts/GroupsProvider";
 import PeersProvider from "@/contexts/PeersProvider";
+import { useTheme } from "@/contexts/ThemeProvider";
 import PoliciesProvider from "@/contexts/PoliciesProvider";
 import { Network } from "@/interfaces/Network";
 import PageContainer from "@/layouts/PageContainer";

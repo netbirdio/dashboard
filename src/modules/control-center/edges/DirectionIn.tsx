@@ -5,7 +5,7 @@ import {
   getSmoothStepPath,
   getStraightPath,
 } from "@xyflow/react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/contexts/ThemeProvider";
 import React from "react";
 
 type Props = {

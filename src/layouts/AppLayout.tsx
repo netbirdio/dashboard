@@ -47,9 +47,9 @@ export default function AppLayout({
     <html lang="en" className="dark" style={{ colorScheme: "dark" }}>
       <head>
         {/* Set the theme class before first paint to avoid a flash.
-            Mirrors next-themes (storageKey "netbird-theme", default "dark",
+            Mirrors ThemeProvider (storageKey "netbird-theme", default "dark",
             system-aware) — required because GlobalThemeProvider is ssr:false,
-            so next-themes' own pre-hydration script never runs on the server. */}
+            so the provider only applies the class after hydration. */}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{var t=localStorage.getItem('netbird-theme')||'dark';var d=t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches);document.documentElement.classList[d?'add':'remove']('dark');}catch(e){document.documentElement.classList.add('dark');}})();`,
