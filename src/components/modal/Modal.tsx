@@ -70,7 +70,7 @@ const ModalContent = React.forwardRef<
         <DialogPrimitive.Content
           ref={ref}
           className={cn(
-            "mx-auto relative top-0 z-[52] grid w-full focus:outline-0 border border-nb-gray-900 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 sm:rounded-lg md:w-full dark:bg-nb-gray",
+            "mx-auto relative top-0 z-[52] grid w-full focus:outline-0 border border-nb-gray-700 dark:border-nb-gray-900 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 sm:rounded-lg md:w-full dark:bg-nb-gray",
             className,
             maxWidthClass,
           )}
@@ -135,7 +135,7 @@ const SidebarModalContent = React.forwardRef<
           <DialogPrimitive.Content
             ref={ref}
             className={cn(
-              "ml-auto mt-auto relative bottom-0 z-[52] grid w-full border border-nb-gray-900 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0  data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 md:w-full dark:bg-nb-gray",
+              "ml-auto mt-auto relative bottom-0 z-[52] grid w-full border border-nb-gray-700 dark:border-nb-gray-900 bg-white py-6 dark:shadow-lg shadow-sm duration-200 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0  data-[state=closed]:slide-out-to-left-1  data-[state=open]:slide-in-from-left-1 md:w-full dark:bg-nb-gray",
               "border-t-0 border-r-0 border-b-0 shadow-2xl",
               className,
               maxWidthClass,
@@ -179,8 +179,11 @@ const ModalFooter = ({
 }: React.HTMLAttributes<HTMLDivElement> & ModalFooterProps) => (
   <div
     className={cn(
-      "dark:border-nb-gray-800/70 border-nb-gray-900",
+      "dark:border-nb-gray-800/70 border-nb-gray-800",
       separator && "border-t",
+      // Tinted footer (light mode only): bleed over the modal's bottom
+      // padding so the band reaches the rounded bottom edge.
+      "bg-nb-gray dark:bg-transparent -mb-6 pb-6 sm:rounded-b-lg",
     )}
   >
     <div
