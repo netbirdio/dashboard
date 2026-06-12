@@ -32,13 +32,21 @@ const variants = cva("", {
       yellow: [
         "bg-yellow-100 border-yellow-500 border text-yellow-700 dark:bg-yellow-950 dark:text-yellow-400",
       ],
-      gray: ["bg-nb-gray-930/60 border-nb-gray-800/40 text-nb-gray-300 border"],
-      lightGray: ["bg-nb-gray-910  text-nb-gray-200 border border-nb-gray-900"],
+      gray: [
+        "bg-white border-nb-gray-700 text-nb-gray-300 border",
+        "dark:bg-nb-gray-930/60 dark:border-nb-gray-800/40",
+      ],
+      lightGray: [
+        "bg-white border-nb-gray-700 text-nb-gray-200 border",
+        "dark:bg-nb-gray-910 dark:border-nb-gray-900",
+      ],
       grayer: [
-        "bg-nb-gray-900/40 border-nb-gray-800/40 text-nb-gray-300 border",
+        "bg-white border-nb-gray-700 text-nb-gray-300 border",
+        "dark:bg-nb-gray-900/40 dark:border-nb-gray-800/40",
       ],
       "gray-ghost": [
-        "bg-nb-gray-900 border-nb-gray-800 text-nb-gray-300 border border-nb-gray-800/50",
+        "bg-white border-nb-gray-700 text-nb-gray-300 border",
+        "dark:bg-nb-gray-900 dark:border-nb-gray-800/50",
       ],
       green: [
         "bg-green-100 border-green-500 border text-green-700 dark:bg-green-950 dark:text-green-400",
