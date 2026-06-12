@@ -15,11 +15,15 @@ type ThemeContextValue = {
 const STORAGE_KEY = "netbird-theme";
 const DEFAULT_THEME: Theme = "dark";
 
-const ThemeContext = React.createContext<ThemeContextValue>({
+const ThemeContext = React.createContext<ThemeContextValue | null>(null);
+
+/* Production fallback when useTheme is called outside ThemeProvider —
+   in development the same misuse throws instead. */
+const FALLBACK_CONTEXT: ThemeContextValue = {
   theme: DEFAULT_THEME,
   resolvedTheme: "dark",
   setTheme: () => undefined,
-});
+};
 
 const getStoredTheme = (): Theme => {
   if (typeof window === "undefined") return DEFAULT_THEME;
@@ -51,14 +55,19 @@ const withTransitionsDisabled = (apply: () => void) => {
     ),
   );
   document.head.appendChild(style);
-  apply();
-  window.getComputedStyle(document.documentElement);
-  setTimeout(() => document.head.removeChild(style), 1);
+  try {
+    apply();
+  } finally {
+    window.getComputedStyle(document.documentElement);
+    setTimeout(() => style.remove(), 1);
+  }
 };
 
 /**
  * Wraps the skeleton loader theme so its colors follow the active theme.
  * Uses `resolvedTheme` so the "system" option resolves to the real OS value.
+ * The palette is correct from the first render: ThemeProvider initializes
+ * `resolvedTheme` synchronously from storage / the system preference.
  */
 function ThemedSkeleton({
   resolvedTheme,
@@ -71,8 +80,12 @@ function ThemedSkeleton({
 
   return (
     <SkeletonTheme
-      baseColor={isLight ? "#edeff1" : "#25282d"}
-      highlightColor={isLight ? "#f8fafb" : "#33373e"}
+      baseColor={
+        isLight ? "rgb(var(--nb-gray-900))" : "rgb(var(--nb-gray-920))"
+      }
+      highlightColor={
+        isLight ? "rgb(var(--nb-gray-940))" : "rgb(var(--nb-gray-850))"
+      }
     >
       {children}
     </SkeletonTheme>
@@ -122,4 +135,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useTheme = () => React.useContext(ThemeContext);
+export const useTheme = (): ThemeContextValue => {
+  const ctx = React.useContext(ThemeContext);
+  if (!ctx) {
+    if (process.env.NODE_ENV !== "production") {
+      throw new Error("useTheme must be used within a ThemeProvider");
+    }
+    return FALLBACK_CONTEXT;
+  }
+  return ctx;
+};
