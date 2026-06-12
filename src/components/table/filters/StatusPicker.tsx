@@ -34,6 +34,7 @@ export function StatusPicker({ value, onChange, close }: Props) {
         return (
           <button
             key={option.label}
+            type={"button"}
             className={cn(
               "flex items-center gap-2.5 px-2 py-1.5 rounded text-sm transition-colors",
               "text-nb-gray-300 hover:bg-nb-gray-900 hover:text-nb-gray-100",

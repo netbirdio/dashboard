@@ -33,6 +33,7 @@ export function RadioPicker<V>({
         return (
           <button
             key={option.label}
+            type={"button"}
             data-testid={`radio-option-${option.label
               .replace(/\s+/g, "-")
               .toLowerCase()}`}
