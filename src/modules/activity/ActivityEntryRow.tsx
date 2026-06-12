@@ -60,7 +60,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
 
       <div
         className={cn(
-          "w-10 h-10 shrink-0 relative rounded-full border-0 bg-nb-gray-900 border-nb-gray-800 flex items-center justify-center uppercase text-sm font-medium text-nb-gray-300",
+          "w-10 h-10 shrink-0 relative rounded-full border-0 bg-nb-gray-800 dark:bg-nb-gray-900 border-nb-gray-800 flex items-center justify-center uppercase text-sm font-medium text-nb-gray-300",
         )}
       >
         <ActivityTypeIcon code={event.activity_code} />
@@ -130,7 +130,7 @@ export const ActivityEntryRow = ({ event }: { event: ActivityEvent }) => {
 
         <Card
           className={
-            "w-full relative bg-nb-gray-925 text-sm text-nb-gray-300 flex flex-col px-4 pt-3 pb-3"
+            "w-full relative bg-white dark:bg-nb-gray-925 border-nb-gray-800 dark:border-nb-gray-900 text-sm text-nb-gray-300 flex flex-col px-4 pt-3 pb-3"
           }
         >
           <div className={"flex gap-4"}>
@@ -152,7 +152,7 @@ function VerticalLine() {
   return (
     <div
       className={
-        "absolute left-0 top-0 translate-y-12 h-[56%] bg-nb-gray-900/50 w-[2px] ml-[20px] z-0"
+        "absolute left-0 top-0 translate-y-12 h-[56%] bg-nb-gray-700 dark:bg-nb-gray-900/50 w-[2px] ml-[20px] z-0"
       }
     ></div>
   );
