@@ -13,11 +13,15 @@ type ThemeContextValue = {
 const STORAGE_KEY = "netbird-theme";
 const DEFAULT_THEME: Theme = "dark";
 
-const ThemeContext = React.createContext<ThemeContextValue>({
+const ThemeContext = React.createContext<ThemeContextValue | null>(null);
+
+/* Production fallback when useTheme is called outside ThemeProvider —
+   in development the same misuse throws instead. */
+const FALLBACK_CONTEXT: ThemeContextValue = {
   theme: DEFAULT_THEME,
   resolvedTheme: "dark",
   setTheme: () => undefined,
-});
+};
 
 const getStoredTheme = (): Theme => {
   if (typeof window === "undefined") return DEFAULT_THEME;
@@ -49,9 +53,12 @@ const withTransitionsDisabled = (apply: () => void) => {
     ),
   );
   document.head.appendChild(style);
-  apply();
-  window.getComputedStyle(document.documentElement);
-  setTimeout(() => document.head.removeChild(style), 1);
+  try {
+    apply();
+  } finally {
+    window.getComputedStyle(document.documentElement);
+    setTimeout(() => style.remove(), 1);
+  }
 };
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
@@ -95,4 +102,13 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   );
 }
 
-export const useTheme = () => React.useContext(ThemeContext);
+export const useTheme = (): ThemeContextValue => {
+  const ctx = React.useContext(ThemeContext);
+  if (!ctx) {
+    if (process.env.NODE_ENV !== "production") {
+      throw new Error("useTheme must be used within a ThemeProvider");
+    }
+    return FALLBACK_CONTEXT;
+  }
+  return ctx;
+};

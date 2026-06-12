@@ -14,7 +14,8 @@ const ThemeProvider = dynamic(
 /**
  * Wraps the skeleton loader theme so its colors follow the active theme.
  * Uses `resolvedTheme` so the "system" option resolves to the real OS value.
- * Defaults to the dark palette before mount to match the dark default theme.
+ * The palette is correct from the first render: ThemeProvider initializes
+ * `resolvedTheme` synchronously from storage / the system preference.
  */
 function ThemedSkeleton({ children }: { children: React.ReactNode }) {
   const { resolvedTheme } = useTheme();
@@ -22,8 +23,12 @@ function ThemedSkeleton({ children }: { children: React.ReactNode }) {
 
   return (
     <SkeletonTheme
-      baseColor={isLight ? "#edeff1" : "#25282d"}
-      highlightColor={isLight ? "#f8fafb" : "#33373e"}
+      baseColor={
+        isLight ? "rgb(var(--nb-gray-900))" : "rgb(var(--nb-gray-920))"
+      }
+      highlightColor={
+        isLight ? "rgb(var(--nb-gray-940))" : "rgb(var(--nb-gray-850))"
+      }
     >
       {children}
     </SkeletonTheme>
