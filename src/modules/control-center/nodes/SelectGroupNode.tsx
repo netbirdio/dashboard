@@ -7,7 +7,7 @@ import useFetchApi from "@utils/api";
 import { Handle, type Node, Position } from "@xyflow/react";
 import { sortBy } from "lodash";
 import { ChevronsUpDown } from "lucide-react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/contexts/ThemeProvider";
 import * as React from "react";
 import { useMemo } from "react";
 import { Group } from "@/interfaces/Group";

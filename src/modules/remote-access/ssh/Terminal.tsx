@@ -2,7 +2,7 @@
 
 import "@xterm/xterm/css/xterm.css";
 import { cn } from "@utils/helpers";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/contexts/ThemeProvider";
 import { useCallback, useEffect, useMemo, useRef } from "react";
 
 const DARK_TERMINAL_THEME = {

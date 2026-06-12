@@ -1,5 +1,5 @@
 import { BaseEdge, type EdgeProps, getSimpleBezierPath } from "@xyflow/react";
-import { useTheme } from "next-themes";
+import { useTheme } from "@/contexts/ThemeProvider";
 import React from "react";
 import { useSourceGroupEnabled } from "@/modules/control-center/utils/helpers";
 

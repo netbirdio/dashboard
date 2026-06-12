@@ -2,13 +2,12 @@
 
 import "react-loading-skeleton/dist/skeleton.css";
 import dynamic from "next/dynamic";
-import { type ThemeProviderProps } from "next-themes/dist/types";
-import { useTheme } from "next-themes";
 import * as React from "react";
 import { SkeletonTheme } from "react-loading-skeleton";
+import { useTheme } from "@/contexts/ThemeProvider";
 
-const NextThemesProvider = dynamic(
-  () => import("next-themes").then((mod) => mod.ThemeProvider),
+const ThemeProvider = dynamic(
+  () => import("@/contexts/ThemeProvider").then((mod) => mod.ThemeProvider),
   { ssr: false },
 );
 
@@ -33,18 +32,12 @@ function ThemedSkeleton({ children }: { children: React.ReactNode }) {
 
 export function GlobalThemeProvider({
   children,
-  ...props
-}: ThemeProviderProps) {
+}: {
+  children: React.ReactNode;
+}) {
   return (
-    <NextThemesProvider
-      attribute="class"
-      defaultTheme="dark"
-      storageKey="netbird-theme"
-      enableSystem={true}
-      disableTransitionOnChange
-      {...props}
-    >
+    <ThemeProvider>
       <ThemedSkeleton>{children}</ThemedSkeleton>
-    </NextThemesProvider>
+    </ThemeProvider>
   );
 }
