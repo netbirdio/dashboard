@@ -153,7 +153,7 @@ export function UsersDropdownSelector({
         </Button>
       </PopoverTrigger>
       <PopoverContent
-        className="w-full p-0 shadow-sm  shadow-nb-gray-950 min-w-[300px]"
+        className="w-full p-0 shadow-sm  dark:shadow-nb-gray-950 min-w-[300px]"
         style={{
           width: popoverWidth === "auto" ? width : popoverWidth,
         }}
