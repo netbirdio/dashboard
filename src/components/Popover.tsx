@@ -11,11 +11,11 @@ export const popoverVariants = cva([], {
   variants: {
     variant: {
       lighter: [
-        "rounded-md border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-950 shadow-md",
+        "rounded-md border border-neutral-300 bg-white px-5 py-3 text-sm text-neutral-950 shadow-md",
         "dark:border-nb-gray-800 dark:bg-nb-gray-920 dark:text-neutral-50",
       ],
       dark: [
-        "rounded-md border border-neutral-200 bg-white px-5 py-3 text-sm text-neutral-950 shadow-md",
+        "rounded-md border border-neutral-300 bg-white px-5 py-3 text-sm text-neutral-950 shadow-md",
         "dark:border-nb-gray-900 dark:bg-nb-gray-940 dark:text-gray-50",
       ],
     },
