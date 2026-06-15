@@ -1,11 +1,12 @@
 import { Table } from "@tanstack/react-table";
 import * as React from "react";
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 
 type Props<TData> = {
   table: Table<TData> | null;
   headingTarget?: HTMLHeadingElement | null;
+  countLabel?: string;
   totalRecords?: number;
   manualPagination?: boolean;
   hasActiveFilters?: boolean;
@@ -14,12 +15,18 @@ type Props<TData> = {
 export const DataTableHeadingPortal = function <TData>({
   table,
   headingTarget,
+  countLabel = "",
   totalRecords,
   manualPagination,
   hasActiveFilters,
 }: Props<TData>) {
   const hasMounted = useRef(false);
   const initialTotalRecords = useRef<number | undefined>(undefined);
+  const portalContainer = useRef<HTMLSpanElement | null>(null);
+
+  if (!portalContainer.current && typeof document !== "undefined") {
+    portalContainer.current = document.createElement("span");
+  }
 
   if (
     manualPagination &&
@@ -29,7 +36,6 @@ export const DataTableHeadingPortal = function <TData>({
     initialTotalRecords.current = totalRecords;
   }
 
-  if (!headingTarget) return;
   if (!hasMounted.current) hasMounted.current = true;
 
   const filteredItems = manualPagination
@@ -48,8 +54,6 @@ export const DataTableHeadingPortal = function <TData>({
     ? getTotalRecords()
     : table?.getPreFilteredRowModel().rows.length;
 
-  if (!totalItems || totalItems == 1) return;
-
   const hasAnyFiltersActive = manualPagination
     ? hasActiveFilters ?? totalRecords !== initialTotalRecords.current
     : table &&
@@ -58,27 +62,48 @@ export const DataTableHeadingPortal = function <TData>({
         table?.getState().globalFilter === ""
       );
 
-  const portalContainer = document.createElement("span");
-  headingTarget.prepend(portalContainer);
+  const showHeadingCount = !!totalItems && totalItems !== 1;
+
+  useEffect(() => {
+    const container = portalContainer.current;
+    if (!container) return;
+
+    if (!headingTarget || !showHeadingCount) {
+      container.remove();
+      return;
+    }
+
+    headingTarget.prepend(container);
+    return () => {
+      container.remove();
+    };
+  }, [headingTarget, showHeadingCount]);
+
+  if (!headingTarget || !showHeadingCount || !portalContainer.current) {
+    return null;
+  }
 
   return createPortal(
     <Heading
       hasAnyFilterActive={hasAnyFiltersActive}
+      countLabel={countLabel}
       totalItems={totalItems}
       filteredItems={filteredItems}
     />,
-    portalContainer,
+    portalContainer.current,
   );
 };
 
 type HeadingProps = {
   hasAnyFilterActive: boolean | null;
+  countLabel: string;
   filteredItems?: number;
   totalItems?: number;
 };
 
 const Heading = ({
   hasAnyFilterActive,
+  countLabel,
   filteredItems,
   totalItems,
 }: HeadingProps) => {
@@ -86,9 +111,10 @@ const Heading = ({
     return (
       <>
         <span className={"text-netbird"}>{filteredItems}</span> of {totalItems}{" "}
+        {countLabel}
       </>
     );
   }
 
-  return `${totalItems} `;
+  return `${totalItems} ${countLabel}`;
 };

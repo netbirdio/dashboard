@@ -1,5 +1,6 @@
 import { Group } from "@/interfaces/Group";
 import { User } from "@/interfaces/User";
+import type { PeerKind } from "@/modules/peers/peerKind";
 
 export interface Peer {
   id?: string;
@@ -31,6 +32,7 @@ export interface Peer {
   connection_ip: string;
   serial_number: string;
   ephemeral: boolean;
+  kind?: PeerKind;
   local_flags?: PeerLocalFlags;
 }
 

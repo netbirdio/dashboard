@@ -9,6 +9,7 @@ type Props = {
   inactiveDot?: "gray" | "red";
   leftSection?: React.ReactNode;
   text?: string | React.ReactNode;
+  textPrefix?: React.ReactNode;
   className?: string;
   additionalInfo?: React.ReactNode;
   dataCy?: string;
@@ -18,6 +19,7 @@ export default function ActiveInactiveRow({
   active,
   children,
   text,
+  textPrefix,
   leftSection,
   inactiveDot = "gray",
   className,
@@ -45,6 +47,7 @@ export default function ActiveInactiveRow({
             <div
               className={"font-medium flex gap-2 items-center justify-start"}
             >
+              {textPrefix}
               <TextWithTooltip text={text as string} maxChars={25} />
               {additionalInfo}
             </div>

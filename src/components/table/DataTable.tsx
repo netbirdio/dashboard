@@ -160,6 +160,7 @@ interface DataTableProps<TData, TValue> {
   setRowSelection?: React.Dispatch<React.SetStateAction<RowSelectionState>>;
   useRowId?: boolean;
   headingTarget?: HTMLHeadingElement | null;
+  headingCountLabel?: string;
   showResetFilterButton?: boolean;
   serverSidePagination?: boolean;
   hasServerSideFilters?: boolean;
@@ -224,6 +225,7 @@ export function DataTable<TData, TValue>({
   setRowSelection,
   useRowId,
   headingTarget,
+  headingCountLabel,
   showResetFilterButton = true,
   serverSidePagination = false,
   hasServerSideFilters,
@@ -643,6 +645,7 @@ export function DataTable<TData, TValue>({
       <DataTableHeadingPortal
         table={table}
         headingTarget={headingTarget}
+        countLabel={headingCountLabel}
         totalRecords={totalRecords}
         manualPagination={manualPagination}
         hasActiveFilters={hasServerSideFilters}
