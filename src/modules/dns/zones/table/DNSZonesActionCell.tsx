@@ -3,10 +3,12 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
-import { MoreVertical, SquarePenIcon, Trash2 } from "lucide-react";
+import { MoreVertical, PowerIcon, SquarePenIcon, Trash2 } from "lucide-react";
 import * as React from "react";
+import { useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { DNSZone } from "@/interfaces/DNS";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
@@ -17,11 +19,12 @@ type Props = {
 
 export const DNSZonesActionCell = ({ zone }: Props) => {
   const { permission } = usePermissions();
-  const { openZoneModal, deleteZone } = useDNSZones();
+  const { openZoneModal, deleteZone, updateZone } = useDNSZones();
+  const [open, setOpen] = useState(false);
 
   return (
     <div className={"flex justify-end pr-4"}>
-      <DropdownMenu modal={false}>
+      <DropdownMenu modal={false} open={open} onOpenChange={setOpen}>
         <DropdownMenuTrigger
           asChild={true}
           onClick={(e) => {
@@ -29,7 +32,11 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
             e.preventDefault();
           }}
         >
-          <Button variant={"secondary"} className={"!px-3"}>
+          <Button
+            variant={"secondary"}
+            className={"!px-3"}
+            aria-label={"Zone actions"}
+          >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
         </DropdownMenuTrigger>
@@ -40,6 +47,21 @@ export const DNSZonesActionCell = ({ zone }: Props) => {
               Edit
             </div>
           </DropdownMenuItem>
+
+          <DropdownMenuItem
+            onClick={() => {
+              setOpen(false);
+              updateZone({ ...zone, enabled: !zone.enabled });
+            }}
+            disabled={!permission?.dns?.update}
+          >
+            <div className={"flex gap-3 items-center"}>
+              <PowerIcon size={14} className={"shrink-0"} />
+              {zone.enabled ? "Disable" : "Enable"}
+            </div>
+          </DropdownMenuItem>
+
+          <DropdownMenuSeparator />
 
           <DropdownMenuItem
             onClick={() => deleteZone(zone)}

@@ -15,7 +15,7 @@ type Props = {
 export default function NameserverNameserversCell({ ns }: Props) {
   const nameservers = ns.nameservers ?? [];
 
-  if (nameservers.length > 2) {
+  if (nameservers.length > 3) {
     return (
       <TooltipProvider>
         <Tooltip delayDuration={1}>
