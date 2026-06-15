@@ -95,13 +95,11 @@ export default function MacOSTab({
                 {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
               </p>
 
-              <Code>
-                <NetBirdUpCommand
-                  setupKey={setupKey}
-                  setupKeyPlaceholder={setupKeyPlaceholder}
-                  hostname={hostname}
-                />
-              </Code>
+              <NetBirdUpCommand
+                setupKey={setupKey}
+                setupKeyPlaceholder={setupKeyPlaceholder}
+                hostname={hostname}
+              />
             </Steps.Step>
           ) : (
             <>
@@ -138,13 +136,11 @@ export default function MacOSTab({
                     Run NetBird {!usingSetupKeyParam && "and log in the browser"}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
-                  <Code>
-                    <NetBirdUpCommand
-                      setupKey={setupKey}
-                      setupKeyPlaceholder={setupKeyPlaceholder}
-                      hostname={hostname}
-                    />
-                  </Code>
+                  <NetBirdUpCommand
+                    setupKey={setupKey}
+                    setupKeyPlaceholder={setupKeyPlaceholder}
+                    hostname={hostname}
+                  />
                 </Steps.Step>
               </Steps>
             </AccordionContent>
@@ -199,13 +195,11 @@ export default function MacOSTab({
                     Run NetBird {!usingSetupKeyParam && "and log in the browser"}
                     {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
                   </p>
-                  <Code>
-                    <NetBirdUpCommand
-                      setupKey={setupKey}
-                      setupKeyPlaceholder={setupKeyPlaceholder}
-                      hostname={hostname}
-                    />
-                  </Code>
+                  <NetBirdUpCommand
+                    setupKey={setupKey}
+                    setupKeyPlaceholder={setupKeyPlaceholder}
+                    hostname={hostname}
+                  />
                 </Steps.Step>
               </Steps>
             </AccordionContent>

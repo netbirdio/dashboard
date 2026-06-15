@@ -110,13 +110,12 @@ export default function WindowsTab({
                 {showSetupKeyInfo && <RoutingPeerSetupKeyInfo />}
               </p>
 
-              <Code>
-                <NetBirdUpCommand
-                  setupKey={setupKey}
-                  setupKeyPlaceholder={setupKeyPlaceholder}
-                  hostname={hostname}
-                />
-              </Code>
+              <NetBirdUpCommand
+                setupKey={setupKey}
+                setupKeyPlaceholder={setupKeyPlaceholder}
+                hostname={hostname}
+                continuation={"^"}
+              />
             </Steps.Step>
           ) : (
             <>

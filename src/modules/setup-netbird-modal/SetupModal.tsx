@@ -360,33 +360,57 @@ type NetBirdUpCommandProps = {
   setupKey?: string;
   setupKeyPlaceholder?: string;
   hostname?: string;
+  // Shell line-continuation character used for the *visual* multi-line
+  // display. Unix shells use "\"; Windows Command Prompt uses "^". The
+  // copied command (codeToCopy) is always a clean single line regardless,
+  // so it runs on any shell.
+  continuation?: string;
 };
 
 // NetBirdUpCommand renders `netbird up` inside a <Code> block. When
-// extra flags are present it splits across multiple lines with shell
-// continuations so long commands stay readable and still copy/paste
-// cleanly into a terminal.
+// extra flags are present it splits across multiple lines with the
+// shell's line-continuation character (purely visual) so long commands
+// stay readable; the clipboard always gets the single-line form.
 export const NetBirdUpCommand = ({
   setupKey,
   setupKeyPlaceholder,
   hostname,
+  continuation = "\\",
 }: NetBirdUpCommandProps) => {
   const keyValue = setupKey ?? setupKeyPlaceholder;
   const hasKey = !!keyValue;
   const hasHostname = !!hostname;
 
+  // Canonical, OS-agnostic single-line command for the clipboard. The
+  // copy button always yields this, so the pasted command runs on every
+  // shell (bash, zsh, cmd, PowerShell) regardless of how it's displayed
+  // — the line continuations below are purely a visual aid.
+  const copyCommand = [
+    getNetBirdUpCommand(),
+    hasKey && `--setup-key ${keyValue}`,
+    hasHostname && `--hostname '${hostname}'`,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
   if (!hasKey && !hasHostname) {
-    return <Code.Line>{getNetBirdUpCommand()}</Code.Line>;
+    return (
+      <Code codeToCopy={copyCommand}>
+        <Code.Line>{getNetBirdUpCommand()}</Code.Line>
+      </Code>
+    );
   }
 
   return (
-    <>
-      <Code.Line>{getNetBirdUpCommand()} \</Code.Line>
+    <Code codeToCopy={copyCommand}>
+      <Code.Line>
+        {getNetBirdUpCommand()} {continuation}
+      </Code.Line>
       {hasKey && (
         <Code.Line>
           {"  --setup-key "}
           <span className={"text-netbird"}>{keyValue}</span>
-          {hasHostname && " \\"}
+          {hasHostname && ` ${continuation}`}
         </Code.Line>
       )}
       {hasHostname && (
@@ -395,7 +419,7 @@ export const NetBirdUpCommand = ({
           <span className={"text-netbird"}>{`'${hostname}'`}</span>
         </Code.Line>
       )}
-    </>
+    </Code>
   );
 };
 
