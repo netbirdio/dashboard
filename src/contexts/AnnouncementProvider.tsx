@@ -8,13 +8,14 @@ import React, {
   useState,
 } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
-import { isLocalDev, isNetBirdHosted } from "@utils/netbird";
+import { isLocalDev } from "@utils/netbird";
 import announcementFile from "../../announcements.json";
 
 const ANNOUNCEMENTS_URL =
   "https://raw.githubusercontent.com/netbirdio/dashboard/main/announcements.json";
 const STORAGE_KEY = "netbird-announcements";
 const CACHE_DURATION_MS = 30 * 60 * 1000;
+const TARGET = "selfhosted";
 const BANNER_HEIGHT = 40;
 
 interface AnnouncementStore {
@@ -30,7 +31,7 @@ export interface Announcement extends AnnouncementVariant {
   linkText?: string;
   isExternal?: boolean;
   closeable: boolean;
-  isCloudOnly: boolean;
+  targets?: string[];
 }
 
 interface AnnouncementInfo extends Announcement {
@@ -76,8 +77,7 @@ const getAnnouncements = async (): Promise<AnnouncementInfo[]> => {
       raw = await response.json();
     }
 
-    const isCloud = isNetBirdHosted();
-    const filtered = raw.filter((a) => !a.isCloudOnly || isCloud);
+    const filtered = raw.filter((a) => a.targets?.includes(TARGET));
     const hashes = new Set(filtered.map((a) => md5(a.text).toString()));
     const closed = (stored?.closedAnnouncements ?? []).filter((h) =>
       hashes.has(h),
