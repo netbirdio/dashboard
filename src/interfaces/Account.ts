@@ -24,6 +24,12 @@ export interface Account {
     dns_domain: string;
     network_range?: string;
     lazy_connection_enabled: boolean;
+    // Phase 1 of issue #5989: connection-mode + idle timeouts. All three
+    // fields are optional and nullable on the wire (NULL means "use
+    // built-in default"). The dashboard treats null and undefined the same.
+    connection_mode?: "relay-forced" | "p2p" | "p2p-lazy" | "p2p-dynamic" | null;
+    relay_timeout_seconds?: number | null;
+    p2p_timeout_seconds?: number | null;
     embedded_idp_enabled?: boolean;
     auto_update_version: string;
     auto_update_always: boolean;

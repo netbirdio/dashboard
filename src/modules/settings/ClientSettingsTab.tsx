@@ -34,6 +34,14 @@ import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { SkeletonSettings } from "@components/skeletons/SkeletonSettings";
+import {
+  ConnectionModeValue,
+  DEFAULT_RELAY_TIMEOUT_SECONDS,
+  MODE_META,
+  VISIBLE_MODE_OPTIONS,
+  modeImpliesLegacyLazy,
+  resolveLegacyLazyBool,
+} from "@/modules/settings/connectionmode/modeOptions";
 
 type Props = {
   account: Account;
@@ -70,8 +78,16 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
   const { mutate } = useSWRConfig();
   const saveRequest = useApiCall<Account>("/accounts/" + account.id, true);
 
-  const [lazyConnection, setLazyConnection] = useState(
-    account.settings?.lazy_connection_enabled ?? false,
+  // Phase 1 of issue #5989: replaced the binary lazy-toggle with a
+  // 2-value dropdown (p2p / p2p-lazy). The dashboard preserves the legacy
+  // lazy_connection_enabled boolean alongside the new connection_mode for
+  // backwards-compat with older daemon versions.
+  const [connectionMode, setConnectionMode] = useState<ConnectionModeValue>(
+    (account.settings?.connection_mode as ConnectionModeValue | null | undefined) ??
+      resolveLegacyLazyBool(account.settings?.lazy_connection_enabled),
+  );
+  const [relayTimeoutSeconds, setRelayTimeoutSeconds] = useState<number | null>(
+    account.settings?.relay_timeout_seconds ?? null,
   );
 
   const autoUpdateSetting = account.settings?.auto_update_version;
@@ -181,27 +197,54 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
     });
   };
 
-  const toggleLazyConnection = async (toggle: boolean) => {
+  // Phase 1 (#5989): persist mode + timeout, AND mirror onto the legacy
+  // lazy_connection_enabled boolean so older daemon versions stay in sync.
+  const saveConnectionMode = async (
+    nextMode: ConnectionModeValue,
+    nextRelayTimeout: number | null,
+  ) => {
+    setConnectionMode(nextMode);
+    setRelayTimeoutSeconds(nextRelayTimeout);
+
     notify({
-      title: "Lazy Connections",
-      description: `Lazy Connections successfully ${
-        toggle ? "enabled" : "disabled"
-      }.`,
+      title: "Connection Mode",
+      description: "Connection mode updated.",
       promise: saveRequest
         .put({
           id: account.id,
           settings: {
             ...account.settings,
-            lazy_connection_enabled: toggle,
+            connection_mode: nextMode,
+            relay_timeout_seconds: nextRelayTimeout,
+            lazy_connection_enabled: modeImpliesLegacyLazy(nextMode),
           },
         })
         .then(() => {
-          setLazyConnection(toggle);
           mutate("/accounts");
         }),
-      loadingMessage: "Updating Lazy Connections setting...",
+      loadingMessage: "Updating connection mode...",
     });
   };
+
+  const handleModeChange = (next: string) => {
+    // Mode-change preserves the persisted relay timeout (per spec
+    // section 5.3): users only lose their entered value if they clear
+    // the input explicitly, not via mode-switch.
+    saveConnectionMode(next as ConnectionModeValue, relayTimeoutSeconds);
+  };
+
+  const handleRelayTimeoutChange = (raw: string) => {
+    const trimmed = raw.trim();
+    if (trimmed === "") {
+      saveConnectionMode(connectionMode, null);
+      return;
+    }
+    const parsed = Number(trimmed);
+    if (!Number.isInteger(parsed) || parsed < 0) return;
+    saveConnectionMode(connectionMode, parsed);
+  };
+
+  const currentMeta = MODE_META[connectionMode];
 
   return (
     <Tabs.Content value={"clients"}>
@@ -368,13 +411,17 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
           <div>
             <Label>
               <FlaskConicalIcon size={15} />
-              Experimental
+              Experimental: Connection Mode
             </Label>
 
             <HelpText>
-              Lazy connections are an experimental feature. Functionality and
-              behavior may evolve. Instead of maintaining always-on connections,
-              NetBird activates them on-demand based on activity or signaling.{" "}
+              Choose how NetBird clients establish peer-to-peer connections.{" "}
+              <span className={"text-white font-medium"}>P2P</span> keeps
+              connections always on (best latency, more bandwidth).{" "}
+              <span className={"text-white font-medium"}>P2P Lazy</span>{" "}
+              opens connections on demand and tears them down after the relay
+              timeout (much lower bandwidth on metered links like LTE).
+              Changes take effect after the client restarts.{" "}
               <InlineLink
                 href={"https://docs.netbird.io/how-to/lazy-connection"}
                 target={"_blank"}
@@ -383,25 +430,33 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </HelpText>
-            <FancyToggleSwitch
-              className={"mt-2"}
-              value={lazyConnection}
-              onChange={toggleLazyConnection}
-              label={
-                <>
-                  <ClockFadingIcon size={15} />
-                  Enable Lazy Connections
-                </>
-              }
-              helpText={
-                <>
-                  Allow to establish connections between peers only when
-                  required. This requires NetBird client v0.45 or higher.
-                  Changes will only take effect after restarting the clients.
-                </>
-              }
-              disabled={!permission.settings.update}
-            />
+            <div className={"gap-4 items-center grid grid-cols-2 mt-2"}>
+              <SelectDropdown
+                value={connectionMode}
+                onChange={handleModeChange}
+                options={VISIBLE_MODE_OPTIONS}
+              />
+              {currentMeta.showsRelayTimeout && (
+                <Input
+                  value={
+                    relayTimeoutSeconds === null
+                      ? ""
+                      : String(relayTimeoutSeconds)
+                  }
+                  customPrefix={<ClockFadingIcon size={14} />}
+                  placeholder={String(DEFAULT_RELAY_TIMEOUT_SECONDS)}
+                  onChange={(e) => handleRelayTimeoutChange(e.target.value)}
+                  disabled={!permission.settings.update}
+                />
+              )}
+            </div>
+            {currentMeta.showsRelayTimeout && (
+              <HelpText className={"mt-2"}>
+                Relay timeout in seconds. Empty = use built-in default
+                ({DEFAULT_RELAY_TIMEOUT_SECONDS}s = 5 min). Set to 0 to keep
+                the relay alive indefinitely.
+              </HelpText>
+            )}
           </div>
         </div>
       </div>
