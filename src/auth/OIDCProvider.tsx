@@ -2,21 +2,47 @@
 
 import {
   AuthorityConfiguration,
+  OidcClient,
   OidcConfiguration,
   OidcProvider,
 } from "@axa-fr/react-oidc";
 import FullScreenLoading from "@components/ui/FullScreenLoading";
 import loadConfig, { buildExtras } from "@utils/config";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import React, { useEffect, useState } from "react";
 import { OIDCError } from "@/auth/OIDCError";
 import { SecureProvider } from "@/auth/SecureProvider";
+import { storeSessionLostRedirectPath } from "@/auth/sessionRedirect";
 
 type Props = {
   children: React.ReactNode;
 };
 
 const config = loadConfig();
+const AUTHENTICATED_CALLBACK_REDIRECT_PATH = "/peers";
+
+const getOidcRoutePath = (href: string, origin: string) => {
+  try {
+    const url = new URL(href, origin);
+    let path = url.pathname;
+    if (path.endsWith("/")) path = path.slice(0, -1);
+
+    let hash = url.hash;
+    if (hash === "#_=_") hash = "";
+    if (hash) path += hash.split("?")[0];
+
+    return path;
+  } catch {
+    return "";
+  }
+};
+
+const isOidcCallbackRoute = (href: string, redirectUri: string) =>
+  getOidcRoutePath(href, window.location.origin) ===
+  getOidcRoutePath(redirectUri, window.location.origin);
+
+const hasUsableTokens = (tokens: { expiresAt?: number } | null | undefined) =>
+  typeof tokens?.expiresAt === "number" && tokens.expiresAt > Date.now() / 1000;
 
 /**
  * Unfortunately Auth0 https://<DOMAIN>/.well-known/openid-configuration doesn't contain end_session_endpoint that
@@ -40,7 +66,6 @@ const onEvent = (configurationName: any, eventName: any, data: any) => {
 export default function OIDCProvider({ children }: Props) {
   const [providerConfig, setProviderConfig] = useState<OidcConfiguration>();
   const [mounted, setMounted] = useState(false);
-  const router = useRouter();
   const path = usePathname();
 
   const withCustomHistory = () => {
@@ -52,16 +77,30 @@ export default function OIDCProvider({ children }: Props) {
   };
 
   useEffect(() => {
-    setProviderConfig({
+    let isMounted = true;
+
+    // The service worker is disabled in two cases:
+    //  1. tokenSource === "idtoken" — the SW would overwrite the manually-set
+    //     idToken header with the access_token, breaking the idToken path.
+    //  2. NETBIRD_DISABLE_SERVICE_WORKER=true — operator escape hatch for
+    //     debugging or deployments that hit edge cases with the SW.
+    const useServiceWorker =
+      !config.disableServiceWorker &&
+      config.tokenSource?.toLowerCase() !== "idtoken";
+
+    const nextProviderConfig: OidcConfiguration = {
       authority: config.authority,
       client_id: config.clientId,
       redirect_uri: window.location.origin + config.redirectURI,
       refresh_time_before_tokens_expiration_in_second: 30,
       silent_redirect_uri: window.location.origin + config.silentRedirectURI,
       scope: config.scopesSupported,
-      // disabling service worker
-      //service_worker_relative_url: "/OidcServiceWorker.js",
-      service_worker_only: false,
+      ...(useServiceWorker
+        ? {
+            service_worker_relative_url: "/OidcServiceWorker.js",
+            service_worker_only: false,
+          }
+        : {}),
       authority_configuration: config.auth0Auth
         ? auth0AuthorityConfig
         : undefined,
@@ -69,9 +108,52 @@ export default function OIDCProvider({ children }: Props) {
       ...(config.clientSecret
         ? { token_request_extras: { client_secret: config.clientSecret } }
         : null),
-    });
-    setMounted(true);
+    };
+
+    const finishMounting = () => {
+      if (isMounted) setMounted(true);
+    };
+
+    const redirectAuthenticatedCallback = async () => {
+      // OidcRoutes handles the callback route before OidcSession restores
+      // existing tokens. If a callback URL is reached while the app already
+      // has a valid OIDC session, leave the callback route instead of trying
+      // to process a stale/duplicate callback.
+      if (
+        !isOidcCallbackRoute(
+          window.location.href,
+          nextProviderConfig.redirect_uri,
+        )
+      ) {
+        finishMounting();
+        return;
+      }
+
+      try {
+        const oidc = OidcClient.getOrCreate(() => fetch)(nextProviderConfig);
+        await oidc.tryKeepExistingSessionAsync();
+        if (!isMounted) return;
+        if (hasUsableTokens(oidc.tokens)) {
+          window.location.replace(AUTHENTICATED_CALLBACK_REDIRECT_PATH);
+          return;
+        }
+      } catch {}
+
+      finishMounting();
+    };
+
+    setProviderConfig(nextProviderConfig);
+    void redirectAuthenticatedCallback();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
+
+  const handleSessionLost = () => {
+    storeSessionLostRedirectPath();
+    window.location.replace("/");
+  };
 
   // We bypass authentication for pages that do not require auth.
   // E.g., when we just want to show installation steps for public.
@@ -89,8 +171,13 @@ export default function OIDCProvider({ children }: Props) {
       loadingComponent={FullScreenLoading}
       callbackSuccessComponent={FullScreenLoading}
       onEvent={onEvent}
-      onSessionLost={() => void 0}
-      //sessionLostComponent={SessionLost}
+      // If session is lost, try to re-initiate authentication flow while
+      // preserving the current deep link for the post-login redirect.
+      onSessionLost={handleSessionLost}
+      // Another tab logged out — fires a separate event in @axa-fr/react-oidc,
+      // not covered by onSessionLost. Without this handler the library would
+      // render its default "Session timed out" UI instead of redirecting.
+      onLogoutFromAnotherTab={handleSessionLost}
     >
       <SecureProvider>{children}</SecureProvider>
     </OidcProvider>

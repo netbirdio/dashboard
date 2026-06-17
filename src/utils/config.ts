@@ -13,6 +13,7 @@ interface Config {
   redirectURI: string;
   silentRedirectURI: string;
   tokenSource: string;
+  disableServiceWorker: boolean;
   dragQueryParams: boolean;
   hotjarTrackID?: number;
   googleAnalyticsID?: string;
@@ -63,6 +64,7 @@ const loadConfig = (): Config => {
     redirectURI: redirectURI,
     silentRedirectURI: silentRedirectURI,
     tokenSource: tokenSource,
+    disableServiceWorker: configJson.disableServiceWorker == "true", // Due to substitution we can't use boolean in the config
     dragQueryParams: configJson.dragQueryParams == "true", // Drags all the query params to the auth layer specified in the URL when accessing dashboard.
     hotjarTrackID: configJson?.hotjarTrackID || undefined,
     googleAnalyticsID: configJson?.googleAnalyticsID || undefined,
