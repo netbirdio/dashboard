@@ -214,3 +214,11 @@ export function notify<T>(props: NotifyProps<T>) {
     duration: Infinity,
   });
 }
+
+notify.error = function notifyError(message: string) {
+  return notify({
+    title: "Error",
+    description: message,
+    promise: Promise.reject(new Error(message)),
+  });
+};

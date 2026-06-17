@@ -106,6 +106,9 @@ export const useLoggedInUser = () => {
   const { setGlobalApiParams } = useApplicationContext();
   const isOwner = loggedInUser ? loggedInUser?.role === Role.Owner : false;
   const isAdmin = loggedInUser ? loggedInUser?.role === Role.Admin : false;
+  const isCertApprover = loggedInUser
+    ? loggedInUser?.role === Role.CertApprover
+    : false;
 
   const isUser = !isOwner && !isAdmin;
   const isOwnerOrAdmin = isOwner || isAdmin;
@@ -120,6 +123,7 @@ export const useLoggedInUser = () => {
     loggedInUser,
     isOwner,
     isAdmin,
+    isCertApprover,
     isUser,
     isOwnerOrAdmin,
     logout,
