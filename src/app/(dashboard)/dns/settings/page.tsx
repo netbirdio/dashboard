@@ -13,6 +13,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { IconSettings2 } from "@tabler/icons-react";
 import useFetchApi, { useApiCall } from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import React from "react";
 import Skeleton from "react-loading-skeleton";
 import { useSWRConfig } from "swr";
@@ -26,6 +27,8 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { useGroupIdsToGroups } from "@/modules/groups/useGroupIdsToGroups";
 
 export default function NameServerSettings() {
+  const t = useTranslations('dns');
+  const tCommon = useTranslations('common');
   const { permission } = usePermissions();
 
   const { data: settings, isLoading } =
@@ -41,28 +44,28 @@ export default function NameServerSettings() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/dns"}
-            label={"DNS"}
+            label={t('title')}
             icon={<DNSIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/dns/settings"}
-            label={"DNS Settings"}
+            label={t('dnsSettings')}
             active
             icon={<IconSettings2 size={15} />}
           />
         </Breadcrumbs>
-        <h1>DNS Settings</h1>
+        <h1>{t('dnsSettings')}</h1>
         <Paragraph>
-          {"Manage your account's DNS settings."}{" "}
+          {t('dnsSettingsDescription')}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
             target={"_blank"}
           >
-            Learn more
+            {tCommon('learnMore')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
-        <RestrictedAccess page={"DNS Settings"} hasAccess={permission.dns.read}>
+        <RestrictedAccess page={t('dnsSettings')} hasAccess={permission.dns.read}>
           {!isLoading && initialDNSGroups !== undefined ? (
             <SettingDisabledManagementGroups initialGroups={initialDNSGroups} />
           ) : (
@@ -85,6 +88,7 @@ const SettingDisabledManagementGroups = ({
 }: {
   initialGroups: Group[];
 }) => {
+  const t = useTranslations('dns');
   const settingRequest = useApiCall<NameserverSettings>("/dns/settings");
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
@@ -101,8 +105,8 @@ const SettingDisabledManagementGroups = ({
   const saveSettings = async () => {
     const savedGroups = await saveGroups();
     notify({
-      title: "DNS Settings",
-      description: "Settings saved successfully.",
+      title: t('dnsSettings'),
+      description: t('settingsSaved'),
       promise: settingRequest
         .put({
           disabled_management_groups: savedGroups.map((g) => g.id),
@@ -111,16 +115,16 @@ const SettingDisabledManagementGroups = ({
           mutate("/dns/settings");
           updateChangesRef([selectedGroups]);
         }),
-      loadingMessage: "Saving the settings...",
+      loadingMessage: t('settingsSaving'),
     });
   };
 
   return (
     <Card className={"mt-8 max-w-xl"}>
       <div className={"px-8 py-8"}>
-        <Label>Disable DNS management for these groups</Label>
+        <Label>{t('disabledManagementGroup')}</Label>
         <HelpText>
-          Peers in these groups will require manual domain name resolution
+          {t('disabledManagementGroupHelp')}
         </HelpText>
         <PeerGroupSelector
           dataCy={"dns-groups-selector"}
@@ -141,7 +145,7 @@ const SettingDisabledManagementGroups = ({
           disabled={!hasChanges || !permission.dns.update}
           data-cy={"save-changes"}
         >
-          Save Changes
+          {t('saveChanges')}
         </Button>
       </div>
     </Card>

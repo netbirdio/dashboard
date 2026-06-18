@@ -8,7 +8,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, User2 } from "lucide-react";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import React, { lazy, Suspense } from "react";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
@@ -19,53 +19,53 @@ import PageContainer from "@/layouts/PageContainer";
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 
 export default function TeamUsers() {
-  const t = useTranslations('users');
-  const { isLoading: isGroupsLoading } = useGroups();
-  const { permission } = usePermissions();
-  const { data: users, isLoading } = useFetchApi<User[]>(
-    "/users?service_user=false",
-  );
+	const t = useTranslations("users");
+	const { isLoading: isGroupsLoading } = useGroups();
+	const { permission } = usePermissions();
+	const { data: users, isLoading } = useFetchApi<User[]>(
+		"/users?service_user=false",
+	);
 
-  const { ref: headingRef, portalTarget } =
-    usePortalElement<HTMLHeadingElement>();
+	const { ref: headingRef, portalTarget } =
+		usePortalElement<HTMLHeadingElement>();
 
-  return (
-    <PageContainer>
-      <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/team"}
-            label={t('team')}
-            icon={<TeamIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/team/users"}
-            label={t('title')}
-            active
-            icon={<User2 size={16} />}
-          />
-        </Breadcrumbs>
-        <h1 ref={headingRef}>{t('title')}</h1>
-        <Paragraph>
-          {t('usersPageDescription')}{" "}
-          <InlineLink
-            href={"https://docs.netbird.io/how-to/add-users-to-your-network"}
-            target={"_blank"}
-          >
-            {t('learnMore')}
-            <ExternalLinkIcon size={12} />
-          </InlineLink>
-        </Paragraph>
-      </div>
-      <RestrictedAccess page={t('title')} hasAccess={permission.users.read}>
-        <Suspense fallback={<SkeletonTable />}>
-          <UsersTable
-            users={users}
-            isLoading={isLoading || isGroupsLoading}
-            headingTarget={portalTarget}
-          />
-        </Suspense>
-      </RestrictedAccess>
-    </PageContainer>
-  );
+	return (
+		<PageContainer>
+			<div className={"p-default py-6"}>
+				<Breadcrumbs>
+					<Breadcrumbs.Item
+						href={"/team"}
+						label={t("team")}
+						icon={<TeamIcon size={13} />}
+					/>
+					<Breadcrumbs.Item
+						href={"/team/users"}
+						label={t("title")}
+						active
+						icon={<User2 size={16} />}
+					/>
+				</Breadcrumbs>
+				<h1 ref={headingRef}>{t("title")}</h1>
+				<Paragraph>
+					{t("usersPageDescription")}{" "}
+					<InlineLink
+						href={"https://docs.netbird.io/how-to/add-users-to-your-network"}
+						target={"_blank"}
+					>
+						{t("learnMore")}
+						<ExternalLinkIcon size={12} />
+					</InlineLink>
+				</Paragraph>
+			</div>
+			<RestrictedAccess page={t("title")} hasAccess={permission.users.read}>
+				<Suspense fallback={<SkeletonTable />}>
+					<UsersTable
+						users={users}
+						isLoading={isLoading || isGroupsLoading}
+						headingTarget={portalTarget}
+					/>
+				</Suspense>
+			</RestrictedAccess>
+		</PageContainer>
+	);
 }

@@ -7,7 +7,8 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
-import React, { lazy, Suspense } from "react";
+import { useTranslations } from 'next-intl';
+import { lazy, Suspense } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
@@ -19,6 +20,8 @@ const CustomDomainsTable = lazy(
 );
 
 export default function ReverseProxyCustomDomainsPage() {
+  const t = useTranslations('reverseProxy');
+  const tCommon = useTranslations('common');
   const { permission } = usePermissions();
 
   const { ref: headingRef, portalTarget } =
@@ -30,37 +33,31 @@ export default function ReverseProxyCustomDomainsPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/reverse-proxy/services"}
-            label={"Reverse Proxy"}
+            label={t('title')}
             icon={<ReverseProxyIcon size={16} />}
           />
           <Breadcrumbs.Item
             href={"/reverse-proxy/custom-domains"}
-            label={"Custom Domains"}
+            label={t('customDomains')}
             active={true}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Domains</h1>
+        <h1 ref={headingRef}>{t('customDomains')}</h1>
         <Paragraph>
-          Add and manage custom domains for your reverse proxy services.{" "}
-          <InlineLink
-            href={REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK}
-            target={"_blank"}
-          >
-            Learn more
+          {t('customDomainsDescription')}{" "}
+          <InlineLink href={REVERSE_PROXY_CUSTOM_DOMAINS_DOCS_LINK} target={"_blank"}>
+            {tCommon('learnMore')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
-      </div>
-      <RestrictedAccess
-        page={"Custom Domains"}
-        hasAccess={permission?.services?.read}
-      >
-        <ReverseProxiesProvider>
+        <RestrictedAccess page={t('customDomains')} hasAccess={permission.services?.read}>
           <Suspense fallback={<SkeletonTable />}>
-            <CustomDomainsTable headingTarget={portalTarget} />
+            <ReverseProxiesProvider>
+              <CustomDomainsTable headingTarget={portalTarget} />
+            </ReverseProxiesProvider>
           </Suspense>
-        </ReverseProxiesProvider>
-      </RestrictedAccess>
+        </RestrictedAccess>
+      </div>
     </PageContainer>
   );
 }

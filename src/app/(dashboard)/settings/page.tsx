@@ -12,6 +12,7 @@ import {
   NetworkIcon,
   ShieldIcon,
 } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -28,6 +29,7 @@ import SetupKeysTab from "@/modules/settings/SetupKeysTab";
 import GroupsSettings from "@/modules/settings/GroupsSettings";
 
 export default function NetBirdSettings() {
+  const t = useTranslations('settings');
   const queryParams = useSearchParams();
   const queryTab = queryParams.get("tab");
   const { permission } = usePermissions();
@@ -55,36 +57,36 @@ export default function NetBirdSettings() {
             <>
               <VerticalTabs.Trigger value="authentication">
                 <ShieldIcon size={14} />
-                Authentication
+                {t('authentication')}
               </VerticalTabs.Trigger>
               {permission.setup_keys.read && (
                 <VerticalTabs.Trigger value="setup-keys">
                   <KeyRound size={14} />
-                  Setup Keys
+                  {t('setupKeys')}
                 </VerticalTabs.Trigger>
               )}
               {account?.settings?.embedded_idp_enabled &&
                 permission?.identity_providers?.read && (
                   <VerticalTabs.Trigger value="identity-providers">
                     <FingerprintIcon size={14} />
-                    Identity Providers
+                    {t('identityProviders')}
                   </VerticalTabs.Trigger>
                 )}
               <VerticalTabs.Trigger value="groups">
                 <FolderGit2Icon size={14} />
-                Groups
+                {t('groupsTab')}
               </VerticalTabs.Trigger>
               <VerticalTabs.Trigger value="permissions">
                 <LockIcon size={14} />
-                Permissions
+                {t('permissions')}
               </VerticalTabs.Trigger>
               <VerticalTabs.Trigger value="networks">
                 <NetworkIcon size={14} />
-                Networks
+                {t('networksTab')}
               </VerticalTabs.Trigger>
               <VerticalTabs.Trigger value="clients">
                 <MonitorSmartphoneIcon size={14} />
-                Clients
+                {t('clients')}
               </VerticalTabs.Trigger>
             </>
           )}
@@ -92,7 +94,7 @@ export default function NetBirdSettings() {
           <DangerZoneTabTrigger />
         </VerticalTabs.List>
         <RestrictedAccess
-          page={"Settings"}
+          page={t('title')}
           hasAccess={permission.settings.read}
         >
           <div className={"border-l border-nb-gray-930 w-full"}>
@@ -113,13 +115,14 @@ export default function NetBirdSettings() {
 }
 
 const DangerZoneTabTrigger = () => {
+  const t = useTranslations('settings');
   const { isOwner } = useLoggedInUser();
 
   return (
     isOwner && (
       <VerticalTabs.Trigger value="danger-zone" disabled={!isOwner}>
         <AlertOctagonIcon size={14} />
-        Danger zone
+        {t('dangerZone')}
       </VerticalTabs.Trigger>
     )
   );

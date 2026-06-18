@@ -7,9 +7,11 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
-import React, { lazy, Suspense } from "react";
+import { useTranslations } from 'next-intl';
+import { lazy, Suspense } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
+import ReverseProxiesProvider from "@/contexts/ReverseProxiesProvider";
 import { REVERSE_PROXY_CLUSTERS_DOCS_LINK } from "@/interfaces/ReverseProxy";
 import PageContainer from "@/layouts/PageContainer";
 
@@ -18,6 +20,8 @@ const ClustersTable = lazy(
 );
 
 export default function ReverseProxyClustersPage() {
+  const t = useTranslations('reverseProxy');
+  const tCommon = useTranslations('common');
   const { permission } = usePermissions();
 
   const { ref: headingRef, portalTarget } =
@@ -29,34 +33,31 @@ export default function ReverseProxyClustersPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/reverse-proxy/services"}
-            label={"Reverse Proxy"}
+            label={t('title')}
             icon={<ReverseProxyIcon size={16} />}
           />
           <Breadcrumbs.Item
             href={"/reverse-proxy/clusters"}
-            label={"Clusters"}
+            label={t('clusters')}
             active={true}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Clusters</h1>
+        <h1 ref={headingRef}>{t('clusters')}</h1>
         <Paragraph>
-          Proxy clusters that route inbound traffic to your services. Shared
-          clusters are deployed at the server level; account clusters are
-          self-hosted on your own infrastructure.{" "}
+          {t('clustersDescription')}{" "}
           <InlineLink href={REVERSE_PROXY_CLUSTERS_DOCS_LINK} target={"_blank"}>
-            Learn more
+            {tCommon('learnMore')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
+        <RestrictedAccess page={t('clusters')} hasAccess={permission.services?.read}>
+          <Suspense fallback={<SkeletonTable />}>
+            <ReverseProxiesProvider>
+              <ClustersTable headingTarget={portalTarget} />
+            </ReverseProxiesProvider>
+          </Suspense>
+        </RestrictedAccess>
       </div>
-      <RestrictedAccess
-        page={"Clusters"}
-        hasAccess={permission?.services?.read}
-      >
-        <Suspense fallback={<SkeletonTable />}>
-          <ClustersTable headingTarget={portalTarget} />
-        </Suspense>
-      </RestrictedAccess>
     </PageContainer>
   );
 }

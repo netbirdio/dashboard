@@ -8,6 +8,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import React, { lazy, Suspense } from "react";
 import DNSIcon from "@/assets/icons/DNSIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -19,6 +20,8 @@ const NameserverGroupTable = lazy(
 );
 
 export default function NameServers() {
+  const t = useTranslations('dns');
+  const tCommon = useTranslations('common');
   const { permission } = usePermissions();
 
   const { data: nameserverGroups, isLoading } =
@@ -33,31 +36,31 @@ export default function NameServers() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/dns/nameservers"}
-            label={"DNS"}
+            label={t('title')}
             icon={<DNSIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/dns/nameservers"}
-            label={"Nameservers"}
+            label={t('nameservers')}
             active
             icon={<DNSIcon size={13} />}
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Nameservers</h1>
+        <h1 ref={headingRef}>{t('nameservers')}</h1>
         <Paragraph>
-          Add nameservers for domain name resolution in your NetBird network.{" "}
+          {t('nameserversDescription')}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
             target={"_blank"}
           >
-            Learn more
+            {tCommon('learnMore')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
 
       <RestrictedAccess
-        page={"Nameservers"}
+        page={t('nameservers')}
         hasAccess={permission.nameservers.read}
       >
         <Suspense fallback={<SkeletonTable />}>

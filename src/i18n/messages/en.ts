@@ -52,7 +52,8 @@ export default {
     selectCityOptional: "Select city (optional)...",
     searchCity: "Search city...",
     selectCountry: "Select country...",
-    searchCountry: "Search country..."
+searchCountry: "Search country...",
+    learnMore: "Learn more"
   },
   navigation: {
     controlCenter: "Control Center",
@@ -555,7 +556,15 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     confirmPassword: "Confirm Password",
     twoFactor: "Two-Factor Authentication",
     enable2FA: "Enable 2FA",
-    disable2FA: "Disable 2FA"
+    disable2FA: "Disable 2FA",
+    authentication: "Authentication",
+    setupKeys: "Setup Keys",
+    identityProviders: "Identity Providers",
+    groupsTab: "Groups",
+    permissions: "Permissions",
+    networksTab: "Networks",
+    clients: "Clients",
+    dangerZone: "Danger zone"
   },
   reverseProxy: {
     title: "Reverse Proxy",
@@ -597,7 +606,10 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     clusterNamePlaceholder: "e.g., Production Cluster",
     clusterDescription: "Description",
     accessLogsDescription: "View access logs for your reverse proxy services",
-    noAccessLogs: "No access logs available"
+    noAccessLogs: "No access logs available",
+    servicesDescription: "Expose services securely through NetBird's reverse proxy.",
+    betaNoticeCloud: "NetBird's Reverse Proxy is currently in beta and available at no cost during this period. Features, functionality, and pricing are subject to change upon release.",
+    betaNoticeSelfHosted: "NetBird's Reverse Proxy is currently in beta. Features, functionality, and pricing are subject to change upon release."
   },
   dns: {
     title: "DNS",
@@ -625,7 +637,12 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     noZones: "No zones available",
     searchZones: "Search zones...",
     dnsSettings: "DNS Settings",
-    disabledManagementGroup: "Disabled Management Group"
+    dnsSettingsDescription: "Manage your account's DNS settings.",
+    disabledManagementGroup: "Disable DNS management for these groups",
+    disabledManagementGroupHelp: "Peers in these groups will require manual domain name resolution",
+    settingsSaved: "Settings saved successfully.",
+    settingsSaving: "Saving the settings...",
+    saveChanges: "Save Changes"
   },
   networks: {
     title: "Networks",
@@ -651,6 +668,9 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     addRoutingPeer: "Add Routing Peer",
     removeRoutingPeer: "Remove Routing Peer",
     networkRoutes: "Network Routes",
+    routesDescription: "Access other networks like LANs and VPCs without installing NetBird on every resource.",
+    newNetworksRecommendation: "We recommend using the new Networks concept to easier visualise and manage access to your resources.",
+    goToNetworks: "Go to Networks",
     createRoute: "Create Route",
     editRoute: "Edit Route",
     deleteRoute: "Delete Route",
@@ -683,7 +703,8 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     maxVersion: "Maximum Version",
     country: "Country",
     selectCountry: "Select country...",
-    networkRange: "Network Range"
+    networkRange: "Network Range",
+    pageDescription: "Define posture checks to ensure peers meet security requirements."
   },
   setupKeys: {
     title: "Setup Keys",
