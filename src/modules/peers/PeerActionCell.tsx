@@ -19,6 +19,7 @@ import {
   TimerResetIcon,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import { useRouter } from "next/navigation";
 import React, { useMemo } from "react";
 import { useSWRConfig } from "swr";
@@ -32,6 +33,8 @@ import InlineLink from "@components/InlineLink";
 import { useDialog } from "@/contexts/DialogProvider";
 
 export default function PeerActionCell() {
+  const t = useTranslations('peers');
+  const tCommon = useTranslations('common');
   const { peer, deletePeer, update, toggleSSH, setSSHInstructionsModal } =
     usePeer();
   const router = useRouter();
@@ -50,16 +53,16 @@ export default function PeerActionCell() {
 
   const approvePeer = async () => {
     const choice = await confirm({
-      title: `Approve peer '${peer.name}'?`,
-      description: "Are you sure you want to approve this peer?",
-      confirmText: "Approve",
-      cancelText: "Cancel",
+      title: t('confirmApprove', { name: peer.name }),
+      description: t('confirmApproveDescription'),
+      confirmText: t('approve'),
+      cancelText: tCommon('cancel'),
       type: "default",
     });
     if (!choice) return;
     notify({
-      title: `Peer ${peer.name} approved`,
-      description: `This peer was approved and can now connect to other peers.`,
+      title: t('approveSuccess', { name: peer.name }),
+      description: t('approveSuccessDescription'),
       promise: update({
         name: peer.name,
         ssh: peer.ssh_enabled,
@@ -69,7 +72,7 @@ export default function PeerActionCell() {
         mutate("/peers");
         mutate("/groups");
       }),
-      loadingMessage: "Approving peer...",
+      loadingMessage: t('approveLoading'),
     });
   };
 
@@ -83,11 +86,11 @@ export default function PeerActionCell() {
   const showRemoteAccessItems = !isMobile && !!peer.connected;
 
   const toggleLoginExpiration = async () => {
-    const text = peer.login_expiration_enabled ? "disabled" : "enabled";
+    const text = peer.login_expiration_enabled ? tCommon('disabled') : tCommon('enabled');
     const disableLoginExpiration = peer.login_expiration_enabled;
     notify({
-      title: `Session expiration is ${text}`,
-      description: `Session expiration for peer ${peer.name} was successfully ${text}.`,
+      title: t('loginExpirationUpdated', { state: text }),
+      description: t('loginExpirationUpdateDescription', { name: peer.name, state: text }),
       promise: update({
         loginExpiration: !peer.login_expiration_enabled,
         inactivityExpiration: disableLoginExpiration
@@ -97,31 +100,28 @@ export default function PeerActionCell() {
         mutate("/peers");
         mutate("/groups");
       }),
-      loadingMessage: "Updating session expiration...",
+      loadingMessage: t('loginExpirationUpdating'),
     });
   };
 
   const disableDashboardSSH = async () => {
     const choice = await confirm({
-      title: `Disable SSH Access?`,
+      title: t('disableSSHConfirmation'),
       description: (
         <div>
-          Starting from NetBird v0.61.0, once SSH access is disabled, you cannot
-          re-enable it again from the dashboard. You&apos;ll need to create an
-          explicit access control policy and update your NetBird client to
-          restore SSH functionality.{" "}
+          {t('disableSSHDescription')}{" "}
           <InlineLink
             href={"https://docs.netbird.io/manage/peers/ssh"}
             target={"_blank"}
             onClick={(e) => e.stopPropagation()}
           >
-            Learn more
+            {t('sshLearnMore')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </div>
       ),
-      confirmText: "Disable",
-      cancelText: "Cancel",
+      confirmText: t('disableSSH'),
+      cancelText: tCommon('cancel'),
       type: "warning",
       maxWidthClass: "max-w-xl",
     });
@@ -150,7 +150,7 @@ export default function PeerActionCell() {
           >
             <div className={"flex gap-3 items-center"}>
               <MonitorIcon size={14} className={"shrink-0"} />
-              View Details
+              {t('viewDetails')}
             </div>
           </DropdownMenuItem>
 
@@ -160,7 +160,7 @@ export default function PeerActionCell() {
               <DropdownMenuItem onClick={approvePeer}>
                 <div className={"flex gap-3 items-center"}>
                   <CheckCircle2 size={14} className={"shrink-0"} />
-                  Approve
+                  {t('approve')}
                 </div>
               </DropdownMenuItem>
             </>
@@ -181,9 +181,7 @@ export default function PeerActionCell() {
                 className={"flex gap-2 items-center !text-nb-gray-300 text-xs"}
               >
                 <IconInfoCircle size={14} />
-                <span>
-                  Expiration is disabled for all peers added with an setup-key.
-                </span>
+                <span>{t('expirationDisabledTooltip')}</span>
               </div>
             }
             className={"w-full block"}
@@ -195,8 +193,7 @@ export default function PeerActionCell() {
             >
               <div className={"flex gap-3 items-center w-full"}>
                 <TimerResetIcon size={14} className={"shrink-0"} />
-                {peer.login_expiration_enabled ? "Disable" : "Enable"} Session
-                Expiration
+                {peer.login_expiration_enabled ? t('disableLoginExpiration') : t('enableLoginExpiration')}
               </div>
             </DropdownMenuItem>
           </FullTooltip>
@@ -213,7 +210,7 @@ export default function PeerActionCell() {
               <div className={"flex gap-3 items-center w-full"}>
                 <TerminalSquare size={14} className={"shrink-0"} />
                 <div className={"flex justify-between items-center w-full"}>
-                  {peer.ssh_enabled ? "Disable" : "Enable"} SSH Access
+                  {peer.ssh_enabled ? t('disableSSH') : t('enableSSH')}
                 </div>
               </div>
             </DropdownMenuItem>
@@ -230,7 +227,7 @@ export default function PeerActionCell() {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {t('delete')}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

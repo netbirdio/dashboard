@@ -6,6 +6,7 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import React, { lazy, Suspense, useMemo } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
@@ -33,6 +34,7 @@ export default function ServersPage() {
 }
 
 function ServersView() {
+  const t = useTranslations('peers');
   const { peers, isLoading: isPeersLoading } = usePeers();
   const { users, isLoading: isUsersLoading } = useUsers();
   const { ref: headingRef, portalTarget } =
@@ -56,26 +58,25 @@ function ServersView() {
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            label={"Peers"}
+            label={t('title')}
             icon={<PeerIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/peers/servers"}
-            label={"Servers"}
+            label={t('servers')}
             active
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Servers</h1>
+        <h1 ref={headingRef}>{t('servers')}</h1>
         <Paragraph>
-          Servers, VMs, autonomous agents and other unattended machines with no
-          user behind them, typically enrolled with a setup key.{" "}
+          {t('serversDescription')}{" "}
           <InlineLink
             href={
               "https://docs.netbird.io/how-to/register-machines-using-setup-keys"
             }
             target={"_blank"}
           >
-            Learn more
+            {t('learnMore')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
@@ -93,18 +94,18 @@ function ServersView() {
 }
 
 function ServersBlockedView() {
+  const t = useTranslations('peers');
   return (
     <div className={"flex items-center justify-center flex-col"}>
       <div className={"p-default py-6 max-w-3xl text-center"}>
-        <h1>Add new server to your network</h1>
+        <h1>{t('addNewServerTitle')}</h1>
         <Paragraph className={"inline"}>
-          To get started, install NetBird on the server and enroll it using a
-          setup key. If you have further questions check out our{" "}
+          {t('addNewServerDescription')}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/getting-started#installation"}
             target={"_blank"}
           >
-            Installation Guide
+            {t('installationGuide')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>

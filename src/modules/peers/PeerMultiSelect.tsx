@@ -20,6 +20,7 @@ import {
   RedoDot,
   Trash2,
 } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import * as React from "react";
 import { useEffect, useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
@@ -51,6 +52,8 @@ const PeerGroupMassAssignmentContent = ({
   selectedPeers = {},
   onCanceled,
 }: Props) => {
+  const t = useTranslations('peers');
+  const tCommon = useTranslations('common');
   const { mutate } = useSWRConfig();
   const { confirm } = useDialog();
   const { permission } = usePermissions();
@@ -89,10 +92,10 @@ const PeerGroupMassAssignmentContent = ({
   const addGroupsToPeers = async () => {
     if (replaceAllGroups) {
       const choice = await confirm({
-        title: `Overwrite existing groups?`,
-        description: `Are you sure you want to overwrite the existing groups of your ${peerCount} selected peer(s)? This action cannot be undone.`,
-        confirmText: "Overwrite",
-        cancelText: "Cancel",
+        title: t('overwriteGroupsConfirm'),
+        description: t('overwriteGroupsConfirmDescription', { count: peerCount }),
+        confirmText: t('overwrite'),
+        cancelText: tCommon('cancel'),
         type: "warning",
       });
       if (!choice) return;
@@ -192,8 +195,8 @@ const PeerGroupMassAssignmentContent = ({
         );
 
       notify({
-        title: "Assign Groups to Peers",
-        description: "Groups were successfully assigned to the peers",
+        title: t('assignGroups'),
+        description: t('groupsAssigned'),
         promise: updateGroupCalls()
           .then(() => {
             if (currentSelectedGroups.length > 0) {
@@ -205,7 +208,7 @@ const PeerGroupMassAssignmentContent = ({
           .finally(() => {
             setIsLoading(false);
           }),
-        loadingMessage: "Updating the groups of the selected peers...",
+        loadingMessage: t('groupsAssigning'),
       });
     } catch (e) {
       setIsLoading(false);
@@ -213,11 +216,12 @@ const PeerGroupMassAssignmentContent = ({
   };
 
   const deleteAllPeers = async () => {
+    const peerWord = peerCount > 1 ? t('peersWord') : t('peerWord');
     const choice = await confirm({
-      title: `Delete '${peerCount}' ${peerCount > 1 ? "peers" : "peer"}?`,
-      description: `Are you sure you want to delete these peers? This action cannot be undone.`,
-      confirmText: "Delete All",
-      cancelText: "Cancel",
+      title: t('deleteAllConfirm', { count: peerCount, peerWord }),
+      description: t('deleteAllConfirmDescription'),
+      confirmText: t('deleteAllConfirmText'),
+      cancelText: tCommon('cancel'),
       type: "danger",
     });
     if (!choice) return;
@@ -228,13 +232,13 @@ const PeerGroupMassAssignmentContent = ({
       });
 
     notify({
-      title: "Delete Peers",
-      description: "Peers were successfully deleted",
+      title: t('deleteAll'),
+      description: t('peersDeleted'),
       promise: Promise.all(batchDeleteCalls()).then(() => {
         mutate("/peers");
         onCanceled?.();
       }),
-      loadingMessage: "Deleting the selected peers...",
+      loadingMessage: t('peersDeleting'),
     });
   };
 
@@ -299,13 +303,13 @@ const PeerGroupMassAssignmentContent = ({
                       {isLoading && (
                         <>
                           <Loader2 size={14} className={"animate-spin"} />
-                          <span>Assigning groups...</span>
+                          <span>{t('assigningGroups')}</span>
                         </>
                       )}
                       {!isLoading && isSuccess && (
                         <>
                           <CheckCircle size={14} className={"text-green-400"} />
-                          <span>Groups successfully assigned</span>
+                          <span>{t('groupsAssignedSuccess')}</span>
                         </>
                       )}
                     </motion.span>
@@ -313,11 +317,9 @@ const PeerGroupMassAssignmentContent = ({
                 )}
               </AnimatePresence>
               <div>
-                <Label>Assign Groups</Label>
+                <Label>{t('assignGroups')}</Label>
                 <HelpText>
-                  Assign the following groups to the selected peers. Previously
-                  assigned groups will be kept unless you choose to overwrite
-                  them.
+                  {t('assignGroupsDescription')}
                 </HelpText>
                 <PeerGroupSelector
                   onChange={setSelectedGroups}
@@ -331,13 +333,12 @@ const PeerGroupMassAssignmentContent = ({
                 label={
                   <div className={"flex gap-2"}>
                     <RedoDot size={14} />
-                    Overwrite Existing Groups
+                    {t('overwriteGroups')}
                   </div>
                 }
                 helpText={
                   <div>
-                    Overwrite the existing groups of the peers with the selected
-                    ones. Previously assigned groups will be removed.
+                    {t('overwriteGroupsHelp')}
                   </div>
                 }
               />
@@ -372,7 +373,7 @@ const PeerGroupMassAssignmentContent = ({
                     <span className={"font-medium text-white"}>
                       {peerCount}
                     </span>{" "}
-                    Peer(s) selected
+                    {t('selectedCount', { count: peerCount })}
                   </span>
                 </div>
                 <div className={"flex gap-2 items-center"}>
@@ -380,7 +381,7 @@ const PeerGroupMassAssignmentContent = ({
                     <>
                       <FullTooltip
                         content={
-                          <span className={"text-xs"}>Assign Groups</span>
+                          <span className={"text-xs"}>{t('assignGroups')}</span>
                         }
                       >
                         <Button
@@ -398,7 +399,7 @@ const PeerGroupMassAssignmentContent = ({
                         </Button>
                       </FullTooltip>
                       <FullTooltip
-                        content={<span className={"text-xs"}>Delete All</span>}
+                        content={<span className={"text-xs"}>{t('deleteAll')}</span>}
                       >
                         <Button
                           variant={"danger-outline"}
@@ -411,7 +412,7 @@ const PeerGroupMassAssignmentContent = ({
                         </Button>
                       </FullTooltip>
                       <FullTooltip
-                        content={<span className={"text-xs"}>Cancel</span>}
+                        content={<span className={"text-xs"}>{tCommon('cancel')}</span>}
                       >
                         <Button
                           onClick={onCanceled}
@@ -431,7 +432,7 @@ const PeerGroupMassAssignmentContent = ({
                         className={"!h-9 !px-3.5"}
                         onClick={onCanceled}
                       >
-                        Cancel
+                        {tCommon('cancel')}
                       </Button>
                       <Button
                         size={"xs"}
@@ -449,7 +450,7 @@ const PeerGroupMassAssignmentContent = ({
                         ) : (
                           <CirclePlus size={14} />
                         )}
-                        {replaceAllGroups ? "Overwrite" : "Add"} Groups
+                        {replaceAllGroups ? t('overwrite') : t('addGroups')}
                       </Button>
                     </>
                   )}

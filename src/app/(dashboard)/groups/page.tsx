@@ -5,6 +5,7 @@ import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon, FolderGit2Icon } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import React, { lazy, Suspense } from "react";
 import Breadcrumbs from "@/components/Breadcrumbs";
 import InlineLink from "@/components/InlineLink";
@@ -14,6 +15,7 @@ import PageContainer from "@/layouts/PageContainer";
 const GroupsTable = lazy(() => import("@/modules/groups/table/GroupsTable"));
 
 export default function GroupsPage() {
+  const t = useTranslations('groups');
   const { permission } = usePermissions();
   const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
@@ -24,24 +26,24 @@ export default function GroupsPage() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/groups"}
-            label={"Groups"}
+            label={t('title')}
             icon={<FolderGit2Icon size={14} />}
             active
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>Groups</h1>
+        <h1 ref={headingRef}>{t('title')}</h1>
         <Paragraph>
-          Organize peers, users and resources into groups to manage access.{" "}
+          {t('groupsDescription')}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/manage-network-access"}
             target={"_blank"}
           >
-            Learn more
+            {t('learnMore')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
       </div>
-      <RestrictedAccess hasAccess={permission.groups.read} page={"Groups"}>
+      <RestrictedAccess hasAccess={permission.groups.read} page={t('title')}>
         <Suspense fallback={<SkeletonTable />}>
           <GroupsTable headingTarget={portalTarget} />
         </Suspense>

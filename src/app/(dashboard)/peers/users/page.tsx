@@ -6,6 +6,7 @@ import Paragraph from "@components/Paragraph";
 import SkeletonTable from "@components/skeletons/SkeletonTable";
 import { usePortalElement } from "@hooks/usePortalElement";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import React, { lazy, Suspense, useMemo } from "react";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import PeersProvider, { usePeers } from "@/contexts/PeersProvider";
@@ -33,6 +34,7 @@ export default function UserDevicesPage() {
 }
 
 function UserDevicesView() {
+  const t = useTranslations('peers');
   const { peers, isLoading: isPeersLoading } = usePeers();
   const { users, isLoading: isUsersLoading } = useUsers();
   const { ref: headingRef, portalTarget } =
@@ -56,24 +58,23 @@ function UserDevicesView() {
       <div className={"p-default py-6"}>
         <Breadcrumbs>
           <Breadcrumbs.Item
-            label={"Peers"}
+            label={t('title')}
             icon={<PeerIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/peers/users"}
-            label={"User Devices"}
+            label={t('userDevices')}
             active
           />
         </Breadcrumbs>
-        <h1 ref={headingRef}>User Devices</h1>
+        <h1 ref={headingRef}>{t('userDevices')}</h1>
         <Paragraph>
-          Laptops, phones and other personal devices with a user behind them,
-          typically added when the user signs in with SSO.{" "}
+          {t('userDevicesDescription')}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/add-machines-to-your-network"}
             target={"_blank"}
           >
-            Learn more
+            {t('learnMore')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>
@@ -91,19 +92,18 @@ function UserDevicesView() {
 }
 
 function UserDevicesBlockedView() {
+  const t = useTranslations('peers');
   return (
     <div className={"flex items-center justify-center flex-col"}>
       <div className={"p-default py-6 max-w-3xl text-center"}>
-        <h1>Add new device to your network</h1>
+        <h1>{t('addNewDeviceTitle')}</h1>
         <Paragraph className={"inline"}>
-          To get started, install NetBird and log in using your email account.
-          After that you should be connected. If you have further questions
-          check out our{" "}
+          {t('addNewDeviceDescription')}{" "}
           <InlineLink
             href={"https://docs.netbird.io/how-to/getting-started#installation"}
             target={"_blank"}
           >
-            Installation Guide
+            {t('installationGuide')}
             <ExternalLinkIcon size={12} />
           </InlineLink>
         </Paragraph>

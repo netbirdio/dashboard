@@ -8,6 +8,7 @@ import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { usePortalElement } from "@hooks/usePortalElement";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import React, { lazy, Suspense } from "react";
 import AccessControlIcon from "@/assets/icons/AccessControlIcon";
 import GroupsProvider from "@/contexts/GroupsProvider";
@@ -20,6 +21,7 @@ const AccessControlTable = lazy(
   () => import("@/modules/access-control/table/AccessControlTable"),
 );
 export default function AccessControlPage() {
+  const t = useTranslations('policies');
   const { permission } = usePermissions();
 
   const { data: policies, isLoading } = useFetchApi<Policy[]>("/policies");
@@ -34,26 +36,25 @@ export default function AccessControlPage() {
           <Breadcrumbs>
             <Breadcrumbs.Item
               href={"/access-control"}
-              label={"Access Control"}
+              label={t('title')}
               icon={<AccessControlIcon size={14} />}
             />
           </Breadcrumbs>
-          <h1 ref={headingRef}>Access Control Policies</h1>
+          <h1 ref={headingRef}>{t('title')}</h1>
           <Paragraph>
-            Create rules to manage access in your network and define what peers
-            can connect.{" "}
+            {t('accessControlDescription')}{" "}
             <InlineLink
               href={"https://docs.netbird.io/how-to/manage-network-access"}
               target={"_blank"}
             >
-              Learn more
+              {t('learnMore')}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
         </div>
 
         <RestrictedAccess
-          page={"Access Control"}
+          page={t('title')}
           hasAccess={permission.policies.read}
         >
           <PoliciesProvider>

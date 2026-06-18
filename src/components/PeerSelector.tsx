@@ -10,6 +10,7 @@ import { cn } from "@utils/helpers";
 import { isRoutingPeerSupported } from "@utils/version";
 import { sortBy, unionBy } from "lodash";
 import { ArrowUpCircleIcon, ChevronsUpDown, MapPin } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import * as React from "react";
 import { memo, useEffect, useState } from "react";
 import { useElementSize } from "@/hooks/useElementSize";
@@ -40,6 +41,7 @@ export function PeerSelector({
   excludedPeers,
   disabled = false,
 }: MultiSelectProps) {
+  const t = useTranslations('peers');
   const { data: peers } = useFetchApi<Peer[]>("/peers");
   const [inputRef, { width }] = useElementSize<HTMLButtonElement>();
 
@@ -129,7 +131,7 @@ export function PeerSelector({
                 </div>
               </div>
             ) : (
-              <span>Select a peer...</span>
+              <span>{t('selectPeer')}</span>
             )}
           </div>
 
@@ -150,20 +152,20 @@ export function PeerSelector({
           <DropdownInput
             value={search}
             onChange={setSearch}
-            placeholder={"Search for peers by name or ip..."}
+            placeholder={t('searchPlaceholder')}
           />
 
           {unfilteredItems.length == 0 && !search && (
             <div className={"max-w-xs mx-auto"}>
               <DropdownInfoText>
-                {"No peers available to select."}
+                {t('noPeersAvailable')}
               </DropdownInfoText>
             </div>
           )}
 
           {filteredItems.length == 0 && search != "" && (
             <DropdownInfoText>
-              There are no peers matching your search.
+              {t('noPeersMatching')}
             </DropdownInfoText>
           )}
 
@@ -193,9 +195,7 @@ export function PeerSelector({
                     className={"w-full flex items-center justify-between"}
                     content={
                       <div className={"max-w-[240px] text-xs"}>
-                        Please update NetBird to at least{" "}
-                        <span className={"text-netbird"}>v0.36.6</span> or later
-                        to use this peer as a routing peer.
+                        {t('updateRequired')}
                       </div>
                     }
                   >

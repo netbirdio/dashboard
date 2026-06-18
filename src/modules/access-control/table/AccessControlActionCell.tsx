@@ -7,6 +7,7 @@ import {
   DropdownMenuTrigger,
 } from "@components/DropdownMenu";
 import { MoreVertical, PowerIcon, Trash2 } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import * as React from "react";
 import { useState } from "react";
 import { mutate } from "swr";
@@ -20,6 +21,8 @@ type Props = {
 };
 
 export default function AccessControlActionCell({ policy }: Readonly<Props>) {
+  const t = useTranslations('policies');
+  const tCommon = useTranslations('common');
   const { confirm } = useDialog();
   const { permission } = usePermissions();
   const { deletePolicy, updatePolicy, serializeRules } = usePolicies();
@@ -37,18 +40,17 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
         mutate("/policies");
       },
       nextEnabled
-        ? "The rule was successfully enabled"
-        : "The rule was successfully disabled",
+        ? t('policyEnabledSuccess')
+        : t('policyDisabledSuccess'),
     );
   };
 
   const handleDelete = async () => {
     const choice = await confirm({
-      title: `Delete '${policy.name}'?`,
-      description:
-        "Are you sure you want to delete this access control policy? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
+      title: t('confirmDeleteTitle', { name: policy.name }),
+      description: t('confirmDeleteDescription'),
+      confirmText: tCommon('delete'),
+      cancelText: tCommon('cancel'),
       type: "danger",
     });
     if (!choice) return;
@@ -68,7 +70,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
           <Button
             variant={"secondary"}
             className={"!px-3"}
-            aria-label={"Policy actions"}
+            aria-label={t('policyActions')}
           >
             <MoreVertical size={16} className={"shrink-0"} />
           </Button>
@@ -83,7 +85,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center"}>
               <PowerIcon size={14} className={"shrink-0"} />
-              {policy.enabled ? "Disable" : "Enable"}
+              {policy.enabled ? t('disable') : t('enable')}
             </div>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
@@ -94,7 +96,7 @@ export default function AccessControlActionCell({ policy }: Readonly<Props>) {
           >
             <div className={"flex gap-3 items-center"}>
               <Trash2 size={14} className={"shrink-0"} />
-              Delete
+              {tCommon('delete')}
             </div>
           </DropdownMenuItem>
         </DropdownMenuContent>

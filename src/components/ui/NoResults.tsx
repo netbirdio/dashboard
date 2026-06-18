@@ -2,6 +2,7 @@ import Button from "@components/Button";
 import Paragraph from "@components/Paragraph";
 import { cn } from "@utils/helpers";
 import { FilterX } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import React, { useCallback } from "react";
 import Skeleton from "react-loading-skeleton";
@@ -20,17 +21,21 @@ type Props = {
 
 export default function NoResults({
   icon,
-  title = "Could not find any results",
-  description = "We couldn't find any results. Please try a different search term or change your filters.",
+  title,
+  description,
   children,
   className,
   hasFiltersApplied = false,
   onResetFilters,
   contentClassName,
 }: Props) {
+  const t = useTranslations('table');
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
+
+  const defaultTitle = title || t('noResults');
+  const defaultDescription = description || t('noResultsDescription');
 
   const handleResetClick = useCallback(() => {
     if (onResetFilters) {
@@ -83,9 +88,9 @@ export default function NoResults({
         </div>
 
         <div className={"text-center"}>
-          <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{title}</h1>
+          <h1 className={"text-2xl font-medium max-w-lg mx-auto"}>{defaultTitle}</h1>
           <Paragraph className={"justify-center my-2 !text-nb-gray-400"}>
-            {description}
+            {defaultDescription}
           </Paragraph>
           {hasFiltersApplied && onResetFilters && (
             <Button
@@ -94,7 +99,7 @@ export default function NoResults({
               className="mt-4"
             >
               <FilterX size={16} />
-              Reset Filters & Search
+              {t('resetFilters')}
             </Button>
           )}
           {children}

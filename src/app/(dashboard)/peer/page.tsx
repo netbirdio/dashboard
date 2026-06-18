@@ -43,6 +43,7 @@ import {
   PencilIcon,
   RadioTowerIcon,
 } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toASCII } from "punycode";
@@ -79,6 +80,7 @@ import { SSHButton } from "@/modules/remote-access/ssh/SSHButton";
 import { PeerExpirationSettings } from "@/modules/peer/PeerExpirationSettings";
 
 export default function PeerPage() {
+  const t = useTranslations('peers');
   const queryParameter = useSearchParams();
   const { isRestricted } = usePermissions();
   const peerId = queryParameter.get("id");
@@ -93,7 +95,7 @@ export default function PeerPage() {
   if (isRestricted) {
     return (
       <PageContainer>
-        <RestrictedAccess page={"Peer Information"} />
+        <RestrictedAccess page={t('title')} />
       </PageContainer>
     );
   }
@@ -102,9 +104,7 @@ export default function PeerPage() {
     return (
       <PageNotFound
         title={error?.message}
-        description={
-          "The peer you are attempting to access cannot be found. It may have been deleted, or you may not have permission to view it. Please verify the URL or return to the dashboard."
-        }
+        description={t('peerNotFoundDescription')}
       />
     );
 
@@ -129,6 +129,7 @@ function peerListPath(user: User | undefined): string {
 }
 
 function PeerOverview() {
+  const t = useTranslations('peers');
   const { peer, user } = usePeer();
 
   return (
@@ -139,7 +140,7 @@ function PeerOverview() {
             <Breadcrumbs>
               <Breadcrumbs.Item
                 href={peerListPath(user)}
-                label={"Peers"}
+                label={t('title')}
                 icon={<PeerIcon size={13} />}
               />
               <Breadcrumbs.Item label={peer.ip} active />
@@ -177,6 +178,7 @@ const usePeerSettings = () => {
 };
 
 const PeerSettingsProvider = ({ children }: { children: React.ReactNode }) => {
+  const t = useTranslations('peers');
   const { mutate } = useSWRConfig();
   const { peer, peerGroups, update } = usePeer();
   const { permission } = usePermissions();
@@ -207,13 +209,13 @@ const PeerSettingsProvider = ({ children }: { children: React.ReactNode }) => {
 
     notify({
       title: name,
-      description: "Peer was successfully saved",
+      description: t('peerSaved'),
       promise: Promise.all(batchCall).then(() => {
         mutate("/peers/" + peer.id);
         mutate("/groups");
         updateHasChangedRef([selectedGroups]);
       }),
-      loadingMessage: "Saving the peer...",
+      loadingMessage: t('peerSaving'),
     });
   };
 
@@ -236,6 +238,8 @@ const PeerSettingsProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 const PeerHeader = () => {
+  const t = useTranslations('peers');
+  const tCommon = useTranslations('common');
   const router = useRouter();
   const { peer, user } = usePeer();
   const { permission } = usePermissions();
@@ -309,7 +313,7 @@ const PeerHeader = () => {
               className={"w-full"}
               onClick={() => router.push(peerListPath(user))}
             >
-              Cancel
+              {tCommon('cancel')}
             </Button>
             <Button
               variant={"primary"}
@@ -321,7 +325,7 @@ const PeerHeader = () => {
                 !permission.groups.update
               }
             >
-              Save Changes
+              {tCommon('save')}
             </Button>
           </div>
         )}
@@ -331,6 +335,8 @@ const PeerHeader = () => {
 };
 
 const PeerOverviewTabs = () => {
+  const t = useTranslations('peers');
+  const tReverse = useTranslations('reverseProxy');
   const { peer } = usePeer();
   const { permission } = usePermissions();
   const { reverseProxies, isLoading: isServicesLoading } = useReverseProxies();
@@ -351,20 +357,20 @@ const PeerOverviewTabs = () => {
       <TabsList justify={"start"} className={"px-8"}>
         <TabsTrigger value={"overview"}>
           <ListIcon size={16} />
-          Overview
+          {t('tabOverview')}
         </TabsTrigger>
 
         {permission.routes.read && (
           <TabsTrigger value={"network-routes"}>
             <NetworkIcon size={16} />
-            Network Routes
+            {t('tabNetworkRoutes')}
           </TabsTrigger>
         )}
 
         {peer?.id && permission.peers.read && (
           <TabsTrigger value={"accessible-peers"}>
             <MonitorSmartphoneIcon size={16} />
-            Accessible Peers
+            {t('tabAccessiblePeers')}
           </TabsTrigger>
         )}
 
@@ -374,14 +380,14 @@ const PeerOverviewTabs = () => {
               size={16}
               className="fill-nb-gray-400 group-data-[state=active]/trigger:fill-netbird"
             />
-            {singularize("Services", flatTargets.length)}
+            {singularize(tReverse('services'), flatTargets.length)}
           </TabsTrigger>
         )}
 
         {peer?.id && permission.peers.delete && (
           <TabsTrigger value={"peer-job"}>
             <RadioTowerIcon size={16} />
-            Remote Jobs
+            {t('tabRemoteJobs')}
           </TabsTrigger>
         )}
       </TabsList>
@@ -408,10 +414,8 @@ const PeerOverviewTabs = () => {
             targets={flatTargets}
             isLoading={isServicesLoading}
             hideResourceColumn
-            emptyTableTitle={"This peer has no services"}
-            emptyTableDescription={
-              "Add your services to this peer and securely expose them through NetBird's reverse proxy"
-            }
+            emptyTableTitle={t('noServicesForPeer')}
+            emptyTableDescription={t('addServicesDescription')}
           />
         </TabsContent>
       )}
@@ -426,6 +430,7 @@ const PeerOverviewTabs = () => {
 };
 
 const PeerOverviewTabContent = () => {
+  const t = useTranslations('peers');
   const { peer } = usePeer();
   const { permission } = usePermissions();
   const { selectedGroups, setSelectedGroups } = usePeerSettings();
@@ -443,9 +448,9 @@ const PeerOverviewTabContent = () => {
           <PeerExpirationSettings />
           {permission.groups.read && (
             <div>
-              <Label>Assigned Groups</Label>
+              <Label>{t('assignedGroups')}</Label>
               <HelpText>
-                Use groups to control what this peer can access.
+                {t('assignedGroupsDescription')}
               </HelpText>
               <PeerGroupSelector
                 disabled={!permission.groups.update}
@@ -461,8 +466,8 @@ const PeerOverviewTabContent = () => {
 
           {/* Remote Access Buttons */}
           <div>
-            <Label>Remote Access</Label>
-            <HelpText>Connect directly to this peer via SSH or RDP.</HelpText>
+            <Label>{t('remoteAccess')}</Label>
+            <HelpText>{t('remoteAccessDescription')}</HelpText>
             <div className="flex gap-3">
               <SSHButton peer={peer} />
               <RDPButton peer={peer} />
@@ -475,6 +480,8 @@ const PeerOverviewTabContent = () => {
 };
 
 function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
+  const t = useTranslations('peers');
+  const tCommon = useTranslations('common');
   const { isLoading, getRegionByPeer } = useCountries();
   const { update } = usePeer();
   const { mutate } = useSWRConfig();
@@ -489,24 +496,24 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
   const handleSaveIP = (newIP: string) => {
     notify({
       title: peer.name,
-      description: "NetBird Peer IP was successfully updated",
+      description: t('peerIpUpdated'),
       promise: update({ ip: newIP }).then(() => {
         mutate("/peers/" + peer.id);
         setShowEditIPModal(false);
       }),
-      loadingMessage: "Updating peer IP...",
+      loadingMessage: t('peerIpUpdating'),
     });
   };
 
   const handleSaveIPv6 = (newIPv6: string) => {
     notify({
       title: peer.name,
-      description: "NetBird Peer IPv6 was successfully updated",
+      description: t('peerIpv6Updated'),
       promise: update({ ipv6: newIPv6 }).then(() => {
         mutate("/peers/" + peer.id);
         setShowEditIPv6Modal(false);
       }),
-      loadingMessage: "Updating peer IPv6...",
+      loadingMessage: t('peerIpv6Updating'),
     });
   };
 
@@ -533,11 +540,11 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
           <Card.ListItem
             copy
             tooltip={false}
-            copyText={"NetBird IP Address"}
+            copyText={t('netbirdIp')}
             label={
               <>
                 <MapPin size={16} className={"shrink-0"} />
-                NetBird IP Address
+                {t('netbirdIp')}
               </>
             }
             valueToCopy={peer.ip}
@@ -554,11 +561,11 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             <Card.ListItem
               copy
               tooltip={false}
-              copyText={"NetBird IPv6 Address"}
+              copyText={t('netbirdIpv6')}
               label={
                 <>
                   <MapPin size={16} className={"shrink-0"} />
-                  NetBird IPv6 Address
+                  {t('netbirdIpv6')}
                 </>
               }
               valueToCopy={peer.ipv6}
@@ -574,11 +581,11 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
 
           <Card.ListItem
             copy
-            copyText={"Public IP Address"}
+            copyText={t('publicIp')}
             label={
               <>
                 <NetworkIcon size={16} className={"shrink-0"} />
-                Public IP Address
+                {t('publicIp')}
               </>
             }
             value={peer.connection_ip}
@@ -586,11 +593,11 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
 
           <Card.ListItem
             copy
-            copyText={"DNS label"}
+            copyText={t('domain')}
             label={
               <>
                 <Globe size={16} className={"shrink-0"} />
-                Domain Name
+                {t('domainName')}
               </>
             }
             className={
@@ -604,11 +611,11 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
 
           <Card.ListItem
             copy
-            copyText={"Hostname"}
+            copyText={t('hostname')}
             label={
               <>
                 <MonitorSmartphoneIcon size={16} className={"shrink-0"} />
-                Hostname
+                {t('hostname')}
               </>
             }
             value={peer.hostname}
@@ -618,13 +625,13 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             label={
               <>
                 <FlagIcon size={16} className={"shrink-0"} />
-                Region
+                {t('region')}
               </>
             }
             tooltip={false}
             value={
               isEmpty(peer.country_code) ? (
-                "Unknown"
+                tCommon('unknown')
               ) : (
                 <>
                   {isLoading ? (
@@ -648,7 +655,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             label={
               <>
                 <Cpu size={16} className={"shrink-0"} />
-                Operating System
+                {t('operatingSystemLabel')}
               </>
             }
             value={peer.os}
@@ -659,7 +666,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
               label={
                 <>
                   <Barcode size={16} className={"shrink-0"} />
-                  Serial Number
+                  {t('serialNumber')}
                 </>
               }
               value={peer.serial_number}
@@ -671,7 +678,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
               label={
                 <>
                   <CalendarDays size={16} className={"shrink-0"} />
-                  Registered on
+                  {t('registeredOn')}
                 </>
               }
               value={
@@ -687,12 +694,12 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             label={
               <>
                 <History size={16} className={"shrink-0"} />
-                Last seen
+                {t('lastSeen')}
               </>
             }
             value={
               peer.connected
-                ? "just now"
+                ? t('justNow')
                 : dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
                   " (" +
                   dayjs().to(peer.last_seen) +
@@ -704,7 +711,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
             label={
               <>
                 <NetBirdIcon size={16} className={"shrink-0"} />
-                Agent Version
+                {t('agentVersion')}
               </>
             }
             value={peer.version}
@@ -715,7 +722,7 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
               label={
                 <>
                   <NetBirdIcon size={16} className={"shrink-0"} />
-                  UI Version
+                  {t('uiVersion')}
                 </>
               }
               value={peer.ui_version?.replace("netbird-desktop-ui/", "")}
@@ -734,6 +741,8 @@ interface ModalProps {
 }
 
 function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
+  const t = useTranslations('peers');
+  const tCommon = useTranslations('common');
   const [name, setName] = useState(initialName);
 
   const isDisabled = useMemo(() => {
@@ -760,15 +769,15 @@ function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
     <ModalContent maxWidthClass={"max-w-md"}>
       <form>
         <ModalHeader
-          title={"Edit Peer Name"}
-          description={"Set an easily identifiable name for your peer."}
+          title={t('editPeerName')}
+          description={t('editPeerNameDescription')}
           color={"blue"}
         />
 
         <div className={"p-default flex flex-col gap-4"}>
           <div>
             <Input
-              placeholder={"e.g., AWS Servers"}
+              placeholder={t('peerNamePlaceholder')}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
@@ -776,11 +785,10 @@ function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
           <Card className={"w-full px-6 pt-5 pb-4"}>
             <Label>
               <Globe size={15} />
-              Domain Name Preview
+              {t('domainNamePreview')}
             </Label>
             <HelpText className={"mt-2"}>
-              If the domain name already exists, we add an increment number
-              suffix to it.
+              {t('domainNamePreviewHelp')}
             </HelpText>
             <div className={"text-netbird text-sm break-all whitespace-normal"}>
               {domainNamePreview}
@@ -792,7 +800,7 @@ function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
               <Button variant={"secondary"} className={"w-full"}>
-                Cancel
+                {tCommon('cancel')}
               </Button>
             </ModalClose>
 
@@ -803,7 +811,7 @@ function EditNameModal({ onSuccess, peer, initialName }: Readonly<ModalProps>) {
               disabled={isDisabled}
               type={"submit"}
             >
-              Save
+              {tCommon('save')}
             </Button>
           </div>
         </ModalFooter>

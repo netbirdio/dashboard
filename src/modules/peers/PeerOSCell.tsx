@@ -5,6 +5,7 @@ import {
   TooltipTrigger,
 } from "@components/Tooltip";
 import { Barcode, CpuIcon } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import Image from "next/image";
 import React, { useMemo } from "react";
 import { FaWindows } from "react-icons/fa6";
@@ -20,6 +21,7 @@ type Props = {
   serial?: string;
 };
 export function PeerOSCell({ os, serial }: Readonly<Props>) {
+  const t = useTranslations('peers');
   return (
     <TooltipProvider>
       <Tooltip delayDuration={1}>
@@ -40,11 +42,11 @@ export function PeerOSCell({ os, serial }: Readonly<Props>) {
         </TooltipTrigger>
         <TooltipContent className={"!p-0"}>
           <div>
-            <ListItem icon={<CpuIcon size={14} />} label={"OS"} value={os} />
+            <ListItem icon={<CpuIcon size={14} />} label={t('os')} value={os} />
             {serial && serial !== "" && (
               <ListItem
                 icon={<Barcode size={14} />}
-                label={"Serial Number"}
+                label={t('serialNumber')}
                 value={serial}
               />
             )}

@@ -16,6 +16,7 @@ import MultipleGroups, {
 import { IconCirclePlus } from "@tabler/icons-react";
 import { cn } from "@utils/helpers";
 import { FolderGit2 } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import * as React from "react";
 import { useMemo } from "react";
 import { useGroups } from "@/contexts/GroupsProvider";
@@ -43,14 +44,18 @@ export default function GroupsRow({
   onSave,
   modal,
   setModal,
-  label = "Assigned Groups",
-  description = "Use groups to control what this peer can access",
+  label,
+  description,
   peer,
   showAddGroupButton = false,
   hideAllGroup = false,
   disabled = false,
   countOnly = false,
 }: Readonly<Props>) {
+  const t = useTranslations('peers');
+  const tCommon = useTranslations('common');
+  const resolvedLabel = label ?? t('assignedGroups');
+  const resolvedDescription = description ?? t('assignedGroupsDescription');
   const { groups: allGroups } = useGroups();
   const { permission } = usePermissions();
 
@@ -75,7 +80,7 @@ export default function GroupsRow({
         {foundGroups?.length == 0 && showAddGroupButton ? (
           <Badge variant={"gray"} useHover={true}>
             <IconCirclePlus size={14} />
-            Add Groups
+            {t('addGroups')}
           </Badge>
         ) : (
           <div
@@ -86,7 +91,7 @@ export default function GroupsRow({
           >
             <MultipleGroups
               groups={foundGroups}
-              label={label}
+              label={resolvedLabel}
               countOnly={countOnly}
             />
             {!disabled && <TransparentEditIconButton />}
@@ -96,8 +101,8 @@ export default function GroupsRow({
       <EditGroupsModal
         groups={foundGroups}
         onSave={onSave}
-        label={label}
-        description={description}
+        label={resolvedLabel}
+        description={resolvedDescription}
         peer={peer}
         hideAllGroup={hideAllGroup}
         disabled={disabled}
@@ -125,6 +130,9 @@ export function EditGroupsModal({
   hideAllGroup = false,
   disabled,
 }: Readonly<EditGroupsModalProps>) {
+  const t = useTranslations('peers');
+  const tCommon = useTranslations('common');
+  const resolvedLabel = label ?? t('assignedGroups');
   const [selectedGroups, setSelectedGroups, { getAllGroupCalls }] =
     useGroupHelper({
       initial: groups,
@@ -139,7 +147,7 @@ export function EditGroupsModal({
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<FolderGit2 size={18} />}
-        title={label || "Assigned Groups"}
+        title={resolvedLabel}
         description={description}
         color={"blue"}
       />
@@ -160,11 +168,11 @@ export function EditGroupsModal({
       <ModalFooter className={"items-center"}>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{tCommon('cancel')}</Button>
           </ModalClose>
 
           <Button variant={"primary"} onClick={handleSave} disabled={disabled}>
-            Save Groups
+            {t('saveGroups')}
           </Button>
         </div>
       </ModalFooter>

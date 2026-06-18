@@ -1,4 +1,5 @@
 import { cn } from "@utils/helpers";
+import { useTranslations } from 'next-intl';
 import { useRouter } from "next/navigation";
 import * as React from "react";
 import { useMemo } from "react";
@@ -15,6 +16,7 @@ type Props = {
   linkToPeer?: boolean;
 };
 export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
+  const t = useTranslations('peers');
   const { users } = useUsers();
   const router = useRouter();
   const { isOwnerOrAdmin } = useLoggedInUser();
@@ -36,7 +38,7 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
             "hover:text-neutral-100 hover:bg-nb-gray-900/60 cursor-pointer",
         )}
         data-testid="peer-name-cell"
-        aria-label={`View details of peer ${peer.name}`}
+        aria-label={`${t('viewDetailsOf')} ${peer.name}`}
         onClick={(e) => {
           if (!linkToPeer) return;
           e.preventDefault();
@@ -59,7 +61,7 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
         >
           <div className={"text-nb-gray-400 font-light truncate"}>
             {displayUserEmailOrName ||
-              (displayUserId && `user: ${displayUserId}`)}
+              (displayUserId && t('userLabel', { id: displayUserId }))}
           </div>
         </ActiveInactiveRow>
         {isOwnerOrAdmin && (
