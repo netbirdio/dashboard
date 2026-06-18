@@ -86,6 +86,58 @@ export const NetworkTableColumns: ColumnDef<Network>[] = [
   },
 ];
 
+function useNetworkTableColumns(t: ReturnType<typeof useTranslations>): ColumnDef<Network>[] {
+  return useMemo<ColumnDef<Network>[]>(
+    () => [
+      {
+        accessorKey: "name",
+        header: ({ column }) => (
+          <DataTableHeader column={column}>{t("title")}</DataTableHeader>
+        ),
+        sortingFn: "text",
+        cell: ({ row }) => <NetworkNameCell network={row.original} />,
+      },
+      {
+        accessorKey: "description",
+      },
+      {
+        accessorKey: "resources",
+        accessorFn: (network) => network?.resources?.length,
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("resources")}</DataTableHeader>;
+        },
+        cell: ({ row }) => <NetworkResourceCell network={row.original} />,
+      },
+      {
+        accessorKey: "policies",
+        accessorFn: (network) => network?.policies?.length,
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("policies")}</DataTableHeader>;
+        },
+        cell: ({ row }) => <NetworkPolicyCell network={row.original} />,
+      },
+      {
+        accessorKey: "routers",
+        accessorFn: (network) => network?.routers?.length,
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("routingPeers")}</DataTableHeader>;
+        },
+        cell: ({ row }) => <NetworkRoutingPeerCell network={row.original} />,
+      },
+      {
+        id: "active",
+        accessorFn: (network) => (network?.routing_peers_count ?? 0) > 0,
+      },
+      {
+        accessorKey: "id",
+        header: "",
+        cell: ({ row }) => <NetworkActionCell network={row.original} />,
+      },
+    ],
+    [t],
+  );
+}
+
 type Props = {
   data?: Network[];
   isLoading: boolean;
@@ -102,6 +154,7 @@ export default function NetworksTable({
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const [searchModal, setSearchModal] = useState(false);
+  const columns = useNetworkTableColumns(t);
 
   // Default sorting state of the table
   const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -154,7 +207,7 @@ export default function NetworksTable({
             text={t("title")}
             sorting={sorting}
             setSorting={setSorting}
-            columns={NetworkTableColumns}
+            columns={columns}
             data={data}
             initialPageSize={25}
             showResetFilterButton={false}

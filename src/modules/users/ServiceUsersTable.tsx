@@ -38,49 +38,56 @@ import UserActionCell from "@/modules/users/table-cells/UserActionCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 
-export const ServiceUsersTableColumns: ColumnDef<User>[] = [
-	{
-		accessorKey: "name",
-		header: ({ column }) => {
-			return <DataTableHeader column={column}>Name</DataTableHeader>;
-		},
-		sortingFn: "text",
-		cell: ({ row }) => <ServiceUserNameCell user={row.original} />,
-	},
-	{
-		accessorKey: "is_current",
-		sortingFn: "basic",
-	},
-	{
-		accessorKey: "role",
-		header: ({ column }) => {
-			return <DataTableHeader column={column}>Role</DataTableHeader>;
-		},
-		sortingFn: "text",
-		cell: ({ row }) => <UserRoleCell user={row.original} />,
-	},
-	{
-		accessorKey: "status",
-		header: ({ column }) => {
-			return <DataTableHeader column={column}>Status</DataTableHeader>;
-		},
-		sortingFn: "text",
-		cell: ({ row }) => <UserStatusCell user={row.original} />,
-	},
-	{
-		id: "role_filter",
-		accessorFn: (u) => [u?.role],
-		filterFn: "arrIncludesSome",
-	},
-	{
-		accessorKey: "id",
-		header: "",
-		sortingFn: "text",
-		cell: ({ row }) => (
-			<UserActionCell user={row.original} serviceUser={true} />
-		),
-	},
-];
+function useServiceUsersTableColumns(
+	t: ReturnType<typeof useTranslations>,
+): ColumnDef<User>[] {
+	return useMemo<ColumnDef<User>[]>(
+		() => [
+			{
+				accessorKey: "name",
+				header: ({ column }) => {
+					return <DataTableHeader column={column}>{t("name")}</DataTableHeader>;
+				},
+				sortingFn: "text",
+				cell: ({ row }) => <ServiceUserNameCell user={row.original} />,
+			},
+			{
+				accessorKey: "is_current",
+				sortingFn: "basic",
+			},
+			{
+				accessorKey: "role",
+				header: ({ column }) => {
+					return <DataTableHeader column={column}>{t("role")}</DataTableHeader>;
+				},
+				sortingFn: "text",
+				cell: ({ row }) => <UserRoleCell user={row.original} />,
+			},
+			{
+				accessorKey: "status",
+				header: ({ column }) => {
+					return <DataTableHeader column={column}>{t("status")}</DataTableHeader>;
+				},
+				sortingFn: "text",
+				cell: ({ row }) => <UserStatusCell user={row.original} />,
+			},
+			{
+				id: "role_filter",
+				accessorFn: (u) => [u?.role],
+				filterFn: "arrIncludesSome",
+			},
+			{
+				accessorKey: "id",
+				header: "",
+				sortingFn: "text",
+				cell: ({ row }) => (
+					<UserActionCell user={row.original} serviceUser={true} />
+				),
+			},
+		],
+		[t],
+	);
+}
 
 type Props = {
 	users?: User[];
@@ -100,6 +107,7 @@ export default function ServiceUsersTable({
 	const router = useRouter();
 	const path = usePathname();
 	const { permission } = usePermissions();
+	const columns = useServiceUsersTableColumns(t);
 
 	// Default sorting state of the table
 	const [sorting, setSorting] = useLocalStorage<SortingState>(
@@ -177,7 +185,7 @@ export default function ServiceUsersTable({
 			text={t("title")}
 			sorting={sorting}
 			setSorting={setSorting}
-			columns={ServiceUsersTableColumns}
+			columns={columns}
 			data={users}
 			onRowClick={(row) => {
 				router.push(`/team/user?id=${row.original.id}&service_user=true`);

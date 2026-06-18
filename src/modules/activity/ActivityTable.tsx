@@ -41,48 +41,6 @@ type Props = {
   headingTarget?: HTMLHeadingElement | null;
 };
 
-const ActivityFeedColumnsTable: ColumnDef<ActivityEvent>[] = [
-  {
-    accessorKey: "activity_code",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Code</DataTableHeader>;
-    },
-    sortingFn: "text",
-    filterFn: "arrIncludesSomeExact",
-    cell: ({ row }) => <ActivityEntryRow event={row.original} />,
-  },
-  {
-    id: "activity_text",
-    accessorFn: (event) => {
-      try {
-        if (event.meta) {
-          return Object.keys(event.meta)
-            .map((key) => {
-              return `${event?.meta[key]}`;
-            })
-            .join(" ");
-        }
-      } catch (error) {
-        return "";
-      }
-    },
-  },
-  {
-    accessorKey: "timestamp",
-    id: "timestamp",
-    filterFn: "dateRange",
-  },
-  {
-    accessorKey: "activity",
-    id: "name",
-  },
-  {
-    id: "initiator_email",
-    accessorFn: (row) => row.initiator_email || "NetBird",
-    filterFn: "exactMatch",
-  },
-];
-
 const defaultFromDate = dayjs().subtract(14, "day").toDate();
 const defaultToDate = dayjs().toDate();
 
@@ -95,6 +53,51 @@ export default function ActivityTable({
   const tPeers = useTranslations("peers");
   const { mutate } = useSWRConfig();
   const path = usePathname();
+
+  const columns = useMemo<ColumnDef<ActivityEvent>[]>(
+    () => [
+      {
+        accessorKey: "activity_code",
+        header: ({ column }) => {
+          return <DataTableHeader column={column}>{t("code")}</DataTableHeader>;
+        },
+        sortingFn: "text",
+        filterFn: "arrIncludesSomeExact",
+        cell: ({ row }) => <ActivityEntryRow event={row.original} />,
+      },
+      {
+        id: "activity_text",
+        accessorFn: (event) => {
+          try {
+            if (event.meta) {
+              return Object.keys(event.meta)
+                .map((key) => {
+                  return `${event?.meta[key]}`;
+                })
+                .join(" ");
+            }
+          } catch (error) {
+            return "";
+          }
+        },
+      },
+      {
+        accessorKey: "timestamp",
+        id: "timestamp",
+        filterFn: "dateRange",
+      },
+      {
+        accessorKey: "activity",
+        id: "name",
+      },
+      {
+        id: "initiator_email",
+        accessorFn: (row) => row.initiator_email || "NetBird",
+        filterFn: "exactMatch",
+      },
+    ],
+    [t],
+  );
 
   // Default sorting state of the table
   const [sorting, setSorting] = useState<SortingState>([
@@ -173,7 +176,7 @@ export default function ActivityTable({
       showResetFilterButton={false}
       wrapperClassName={"gap-0 flex flex-col"}
       tableClassName={"px-8 pt-4"}
-      columns={ActivityFeedColumnsTable}
+      columns={columns}
       data={events}
       searchPlaceholder={t("searchByAuditNameUserPeerMeta")}
       isLoading={isLoading}

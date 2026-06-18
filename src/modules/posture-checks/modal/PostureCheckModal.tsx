@@ -192,7 +192,7 @@ export default function PostureCheckModal({
                   />
                 </div>
                 <div>
-                  <Label>Description (optional)</Label>
+                  <Label>{t("descriptionOptional")}</Label>
                   <HelpText>{t("postureCheckDescriptionHelp")}</HelpText>
                   <Textarea
                     value={check?.description}

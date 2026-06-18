@@ -202,7 +202,7 @@ export function DNSRecordModalContent({
                 className="w-full pl-4"
                 data-cy={"dns-record-type-select"}
               >
-                <SelectValue placeholder="Select type..." />
+                <SelectValue placeholder={t("selectType")} />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="A">A</SelectItem>
@@ -298,7 +298,7 @@ export function DNSRecordModalContent({
                 >
                   <div className={"flex items-center gap-2"}>
                     <ClockIcon size={14} className={"text-nb-gray-300"} />
-                    <SelectValue placeholder="Select TTL..." />
+                    <SelectValue placeholder={t("selectTTL")} />
                   </div>
                 </SelectTrigger>
                 <SelectContent>

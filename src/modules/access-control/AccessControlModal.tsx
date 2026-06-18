@@ -287,7 +287,7 @@ export function AccessControlModalContent({
 									</div>
 								</SelectTrigger>
 								<SelectContent data-cy={"protocol-selection"}>
-									<SelectItem value="all">ALL</SelectItem>
+									<SelectItem value="all">{t("all")}</SelectItem>
 									<SelectItem value="tcp">{t("tcp")}</SelectItem>
 									<SelectItem value="udp">{t("udp")}</SelectItem>
 									<SelectItem value="icmp">{t("icmp")}</SelectItem>
