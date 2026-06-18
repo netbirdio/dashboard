@@ -3,16 +3,16 @@
 import { RestrictedAccess } from "@components/ui/RestrictedAccess";
 import { VerticalTabs } from "@components/VerticalTabs";
 import {
-  AlertOctagonIcon,
-  FingerprintIcon,
-  FolderGit2Icon,
-  KeyRound,
-  LockIcon,
-  MonitorSmartphoneIcon,
-  NetworkIcon,
-  ShieldIcon,
+	AlertOctagonIcon,
+	FingerprintIcon,
+	FolderGit2Icon,
+	KeyRound,
+	LockIcon,
+	MonitorSmartphoneIcon,
+	NetworkIcon,
+	ShieldIcon,
 } from "lucide-react";
-import { useTranslations } from 'next-intl';
+import { useTranslations } from "next-intl";
 import { useSearchParams } from "next/navigation";
 import React, { useEffect, useMemo, useState } from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -29,101 +29,101 @@ import SetupKeysTab from "@/modules/settings/SetupKeysTab";
 import GroupsSettings from "@/modules/settings/GroupsSettings";
 
 export default function NetBirdSettings() {
-  const t = useTranslations('settings');
-  const queryParams = useSearchParams();
-  const queryTab = queryParams.get("tab");
-  const { permission } = usePermissions();
+	const t = useTranslations("settings");
+	const queryParams = useSearchParams();
+	const queryTab = queryParams.get("tab");
+	const { permission } = usePermissions();
 
-  const initialTab = useMemo(() => {
-    if (permission.settings.read) return "authentication";
-    return "authentication";
-  }, [permission]);
+	const initialTab = useMemo(() => {
+		if (permission.settings.read) return "authentication";
+		return "authentication";
+	}, [permission]);
 
-  const [tab, setTab] = useState(queryTab ?? initialTab);
+	const [tab, setTab] = useState(queryTab ?? initialTab);
 
-  const account = useAccount();
+	const account = useAccount();
 
-  useEffect(() => {
-    if (queryTab) {
-      setTab(queryTab);
-    }
-  }, [queryTab]);
+	useEffect(() => {
+		if (queryTab) {
+			setTab(queryTab);
+		}
+	}, [queryTab]);
 
-  return (
-    <PageContainer>
-      <VerticalTabs value={tab} onChange={setTab}>
-        <VerticalTabs.List>
-          {permission.settings.read && (
-            <>
-              <VerticalTabs.Trigger value="authentication">
-                <ShieldIcon size={14} />
-                {t('authentication')}
-              </VerticalTabs.Trigger>
-              {permission.setup_keys.read && (
-                <VerticalTabs.Trigger value="setup-keys">
-                  <KeyRound size={14} />
-                  {t('setupKeys')}
-                </VerticalTabs.Trigger>
-              )}
-              {account?.settings?.embedded_idp_enabled &&
-                permission?.identity_providers?.read && (
-                  <VerticalTabs.Trigger value="identity-providers">
-                    <FingerprintIcon size={14} />
-                    {t('identityProviders')}
-                  </VerticalTabs.Trigger>
-                )}
-              <VerticalTabs.Trigger value="groups">
-                <FolderGit2Icon size={14} />
-                {t('groupsTab')}
-              </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="permissions">
-                <LockIcon size={14} />
-                {t('permissions')}
-              </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="networks">
-                <NetworkIcon size={14} />
-                {t('networksTab')}
-              </VerticalTabs.Trigger>
-              <VerticalTabs.Trigger value="clients">
-                <MonitorSmartphoneIcon size={14} />
-                {t('clients')}
-              </VerticalTabs.Trigger>
-            </>
-          )}
+	return (
+		<PageContainer>
+			<VerticalTabs value={tab} onChange={setTab}>
+				<VerticalTabs.List>
+					{permission.settings.read && (
+						<>
+							<VerticalTabs.Trigger value="authentication">
+								<ShieldIcon size={14} />
+								{t("authentication")}
+							</VerticalTabs.Trigger>
+							{permission.setup_keys.read && (
+								<VerticalTabs.Trigger value="setup-keys">
+									<KeyRound size={14} />
+									{t("setupKeys")}
+								</VerticalTabs.Trigger>
+							)}
+							{account?.settings?.embedded_idp_enabled &&
+								permission?.identity_providers?.read && (
+									<VerticalTabs.Trigger value="identity-providers">
+										<FingerprintIcon size={14} />
+										{t("identityProviders")}
+									</VerticalTabs.Trigger>
+								)}
+							<VerticalTabs.Trigger value="groups">
+								<FolderGit2Icon size={14} />
+								{t("groupsTab")}
+							</VerticalTabs.Trigger>
+							<VerticalTabs.Trigger value="permissions">
+								<LockIcon size={14} />
+								{t("permissions")}
+							</VerticalTabs.Trigger>
+							<VerticalTabs.Trigger value="networks">
+								<NetworkIcon size={14} />
+								{t("networksTab")}
+							</VerticalTabs.Trigger>
+							<VerticalTabs.Trigger value="clients">
+								<MonitorSmartphoneIcon size={14} />
+								{t("clients")}
+							</VerticalTabs.Trigger>
+						</>
+					)}
 
-          <DangerZoneTabTrigger />
-        </VerticalTabs.List>
-        <RestrictedAccess
-          page={t('title')}
-          hasAccess={permission.settings.read}
-        >
-          <div className={"border-l border-nb-gray-930 w-full"}>
-            {account && <AuthenticationTab account={account} />}
-            {permission.setup_keys.read && <SetupKeysTab />}
-            {account?.settings?.embedded_idp_enabled &&
-              permission.identity_providers.read && <IdentityProvidersTab />}
-            {account && <PermissionsTab account={account} />}
-            {account && <GroupsSettings account={account} />}
-            {account && <NetworkSettingsTab account={account} />}
-            {account && <ClientSettingsTab account={account} />}
-            {account && <DangerZoneTab account={account} />}
-          </div>
-        </RestrictedAccess>
-      </VerticalTabs>
-    </PageContainer>
-  );
+					<DangerZoneTabTrigger />
+				</VerticalTabs.List>
+				<RestrictedAccess
+					page={t("title")}
+					hasAccess={permission.settings.read}
+				>
+					<div className={"border-l border-nb-gray-930 w-full"}>
+						{account && <AuthenticationTab account={account} />}
+						{permission.setup_keys.read && <SetupKeysTab />}
+						{account?.settings?.embedded_idp_enabled &&
+							permission.identity_providers.read && <IdentityProvidersTab />}
+						{account && <PermissionsTab account={account} />}
+						{account && <GroupsSettings account={account} />}
+						{account && <NetworkSettingsTab account={account} />}
+						{account && <ClientSettingsTab account={account} />}
+						{account && <DangerZoneTab account={account} />}
+					</div>
+				</RestrictedAccess>
+			</VerticalTabs>
+		</PageContainer>
+	);
 }
 
 const DangerZoneTabTrigger = () => {
-  const t = useTranslations('settings');
-  const { isOwner } = useLoggedInUser();
+	const t = useTranslations("settings");
+	const { isOwner } = useLoggedInUser();
 
-  return (
-    isOwner && (
-      <VerticalTabs.Trigger value="danger-zone" disabled={!isOwner}>
-        <AlertOctagonIcon size={14} />
-        {t('dangerZone')}
-      </VerticalTabs.Trigger>
-    )
-  );
+	return (
+		isOwner && (
+			<VerticalTabs.Trigger value="danger-zone" disabled={!isOwner}>
+				<AlertOctagonIcon size={14} />
+				{t("dangerZone")}
+			</VerticalTabs.Trigger>
+		)
+	);
 };
