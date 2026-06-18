@@ -22,7 +22,7 @@ export function DataTableMultiSelectPopup<T>({
 }: Props<T>) {
   const t = useTranslations('table');
   const count = selectedItems?.length || 0;
-  const defaultLabel = label || t('selected', { count });
+  const defaultLabel = label ? `${count} ${label}` : t('selected', { count });
   
   return (
     <AnimatePresence>
@@ -59,12 +59,7 @@ export function DataTableMultiSelectPopup<T>({
                   >
                     <div className={"flex gap-2 items-center"}>
                       <MonitorSmartphoneIcon size={16} className={""} />
-                      <span>
-                        <span className={"font-medium text-white"}>
-                          {count}
-                        </span>{" "}
-                        {defaultLabel}
-                      </span>
+                      <span>{defaultLabel}</span>
                     </div>
                     <div className={"flex gap-2 items-center"}>
                       {rightSide}

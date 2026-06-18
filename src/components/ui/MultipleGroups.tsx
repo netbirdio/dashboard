@@ -10,6 +10,7 @@ import PeerCountBadge from "@components/ui/PeerCountBadge";
 import ResourceCountBadge from "@components/ui/ResourceCountBadge";
 import { cn } from "@utils/helpers";
 import { ArrowRightIcon, PencilLineIcon } from "lucide-react";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useUsers } from "@/contexts/UsersProvider";
@@ -51,6 +52,7 @@ export default function MultipleGroups({
   countOnly = false,
   countThreshold = 1,
 }: Readonly<Props>) {
+  const tGroups = useTranslations("groups");
   const { permission } = usePermissions();
 
   if (!groups || groups?.length === 0) return <EmptyRow />;
@@ -83,7 +85,7 @@ export default function MultipleGroups({
                   permission.groups.update ? "group-hover:bg-nb-gray-800" : "",
                 )}
               >
-                {orderedGroups.length} Groups
+                {tGroups("nGroups", { n: orderedGroups.length })}
               </Badge>
             ) : countOnly ? (
               <div className={"inline-flex items-center gap-2"}>

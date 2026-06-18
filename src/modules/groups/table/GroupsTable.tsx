@@ -166,7 +166,7 @@ export default function GroupsTable({ headingTarget }: Readonly<Props>) {
 						<DataTableHeader
 							column={column}
 							tooltip={
-								<div className={"text-xs normal-case"}>{tTable("of")}</div>
+								<div className={"text-xs normal-case"}>{t("policies")}</div>
 							}
 						>
 							<AccessControlIcon size={12} />

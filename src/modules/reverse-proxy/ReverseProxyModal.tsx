@@ -454,9 +454,8 @@ export default function ReverseProxyModal({
   const handleSubmit = async () => {
     if (isUnprotected) {
       const confirmed = await confirm({
-        title: "No Protection Configured",
-        description:
-          "This service has no authentication or access control rules configured. It will be publicly accessible to everyone on the internet. Are you sure you want to continue?",
+        title: t("noProtectionTitle"),
+        description: t("noProtectionDescription"),
         type: "warning",
         confirmText: reverseProxy ? t("saveChanges") : t("addServiceBtn"),
         cancelText: tCommon("cancel"),
@@ -565,16 +564,22 @@ export default function ReverseProxyModal({
   const modalTitle = useMemo(() => {
     if (!serviceMode)
       return reverseProxy ? t("editServiceBtn") : t("addServiceBtn");
+    const serviceModeLabel = {
+      [ServiceMode.HTTP]: t("httpsService"),
+      [ServiceMode.TLS]: t("tlsPassthrough"),
+      [ServiceMode.TCP]: t("tcpService"),
+      [ServiceMode.UDP]: t("udpService"),
+    }[serviceMode];
     const prefix = reverseProxy ? tCommon("edit") : tCommon("create");
-    return `${prefix} ${SERVICE_MODES[serviceMode].label}`;
+    return `${prefix} ${serviceModeLabel}`;
   }, [reverseProxy, serviceMode, t, tCommon]);
 
   const modalDescription = useMemo(
     () =>
       isL4Mode
-        ? "Forward traffic directly to your backend service."
-        : "Expose services securely through NetBird's reverse proxy.",
-    [isL4Mode],
+        ? t("forwardTrafficDesc")
+        : t("exposeServicesDesc"),
+    [isL4Mode, t],
   );
 
   return (

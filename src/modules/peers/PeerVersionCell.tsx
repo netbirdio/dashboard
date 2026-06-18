@@ -84,14 +84,16 @@ export default function PeerVersionCell({
 							>
 								{t("updateDescription")}
 							</div>
+						{latestUrl && (
 							<InlineLink
 								onClick={(e) => e.stopPropagation()}
-								href={latestUrl as string}
+								href={latestUrl}
 								target={"_blank"}
 								className={"mt-2 mb-2 text-xs"}
 							>
 								{t("downloadChangelog")}
 							</InlineLink>
+						)}
 						</TooltipContent>
 					</Tooltip>
 				</TooltipProvider>

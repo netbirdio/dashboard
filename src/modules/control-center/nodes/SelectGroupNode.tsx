@@ -49,10 +49,10 @@ export const SelectGroupNode = ({ data, id }: NodeProps) => {
       return t("nGroups", { n: peerCount });
     }
     if (peerCount === 0) {
-      return `${resourceCount} Resource(s)`;
+      return t("nResources", { n: resourceCount });
     }
-    return `${peerCount} Peer(s), ${resourceCount} Resource(s)`;
-  }, [group]);
+    return `${t("nPeers", { n: peerCount })}, ${t("nResources", { n: resourceCount })}`;
+  }, [group, t]);
 
   return (
     <div

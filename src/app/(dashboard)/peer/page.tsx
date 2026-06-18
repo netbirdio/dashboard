@@ -679,12 +679,14 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
 									{t("registeredOn")}
 								</>
 							}
-							value={
-								dayjs(peer.created_at).format("D MMMM, YYYY [at] h:mm A") +
-								" (" +
-								dayjs().to(peer.created_at) +
-								")"
-							}
+						value={
+							dayjs(peer.created_at).format("D MMMM, YYYY") +
+							` ${t("at")} ` +
+							dayjs(peer.created_at).format("h:mm A") +
+							" (" +
+							dayjs().to(peer.created_at) +
+							")"
+						}
 						/>
 					)}
 
@@ -698,7 +700,9 @@ function PeerInformationCard({ peer }: Readonly<{ peer: Peer }>) {
 						value={
 							peer.connected
 								? t("justNow")
-								: dayjs(peer.last_seen).format("D MMMM, YYYY [at] h:mm A") +
+								: dayjs(peer.last_seen).format("D MMMM, YYYY") +
+									` ${t("at")} ` +
+									dayjs(peer.last_seen).format("h:mm A") +
 									" (" +
 									dayjs().to(peer.last_seen) +
 									")"

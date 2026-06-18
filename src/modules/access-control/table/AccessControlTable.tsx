@@ -259,7 +259,7 @@ export default function AccessControlTable({
 					formatCheckboxChip(
 						v as string[] | undefined,
 						protocolOptions,
-						tTable("of"),
+						t("protocols"),
 					),
 			},
 			{
@@ -352,7 +352,7 @@ export default function AccessControlTable({
 				id: "direction",
 				accessorFn: (row) => {
 					try {
-						return row.rules[0].bidirectional || true;
+						return row.rules[0].bidirectional ?? true;
 					} catch (e) {
 						console.log(e);
 					}

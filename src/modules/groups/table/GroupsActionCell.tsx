@@ -77,9 +77,9 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
 								<FullTooltip
 									content={
 										<div className={"text-xs max-w-xs"}>
-											{isJWTGroup
-												? GROUP_TOOLTIP_TEXT.RENAME.JWT
-												: GROUP_TOOLTIP_TEXT.RENAME.INTEGRATION}
+								{isJWTGroup
+									? t("renameDisabledJWT")
+									: t("renameDisabledIdP")}
 										</div>
 									}
 									interactive={false}
@@ -102,9 +102,9 @@ export default function GroupsActionCell({ group, inUse }: Readonly<Props>) {
 							<FullTooltip
 								content={
 									<div className={"text-xs max-w-xs"}>
-										{isIntegrationGroup
-											? GROUP_TOOLTIP_TEXT.DELETE.INTEGRATION
-											: GROUP_TOOLTIP_TEXT.IN_USE}
+									{isIntegrationGroup
+										? t("deleteDisabledIdP")
+										: t("deleteDisabledInUse")}
 									</div>
 								}
 								interactive={false}

@@ -38,7 +38,7 @@ export default function PeerNameCell({ peer, linkToPeer = true }: Props) {
 						"hover:text-neutral-100 hover:bg-nb-gray-900/60 cursor-pointer",
 				)}
 				data-testid="peer-name-cell"
-				aria-label={`${t("viewDetailsOf")} ${peer.name}`}
+				aria-label={t("viewDetailsOf", { name: peer.name })}
 				onClick={(e) => {
 					if (!linkToPeer) return;
 					e.preventDefault();
