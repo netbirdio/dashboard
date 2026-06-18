@@ -1,6 +1,8 @@
 export default {
   common: {
     loading: "加载中...",
+    restrictedAccessHeading: "您无权访问",
+    restrictedAccessDescription: "您似乎无权访问此页面。只有具有相应权限的用户才能访问此页面。请联系您的网络管理员获取更多信息。",
     error: "错误",
     success: "成功",
     cancel: "取消",

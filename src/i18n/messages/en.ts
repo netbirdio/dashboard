@@ -1,6 +1,8 @@
 export default {
   common: {
     loading: "Loading...",
+    restrictedAccessHeading: "You don't have access to",
+    restrictedAccessDescription: "Seems like you don't have access to this page. Only users with proper permissions can visit this page. Please contact your network administrator for further information.",
     error: "Error",
     success: "Success",
     cancel: "Cancel",
