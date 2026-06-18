@@ -99,7 +99,9 @@ function resolvePath(url) {
   // Try path/index.html
   const asDirIndex = safePath(p + '/index.html');
   if (asDirIndex && isFile(asDirIndex)) return asDirIndex;
-  // Try /zh prefix (next-intl locale)
+  // Single-locale build: the static export places pages under /zh/.
+  // Fall back to /zh so that paths like /networks still resolve when the
+  // user navigates directly to a non-prefixed URL.
   if (!p.startsWith('/zh')) {
     const zh = safePath('/zh' + p);
     if (zh && isFile(zh)) return zh;
