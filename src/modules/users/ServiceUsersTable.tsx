@@ -25,8 +25,9 @@ import { IconSettings2 } from "@tabler/icons-react";
 import { ColumnDef, SortingState } from "@tanstack/react-table";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from "next/navigation";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
 import { useSWRConfig } from "swr";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
@@ -92,6 +93,8 @@ export default function ServiceUsersTable({
   isLoading,
   headingTarget,
 }: Readonly<Props>) {
+  const t = useTranslations('serviceUsers');
+  const tCommon = useTranslations('common');
   useFetchApi("/groups");
   const { mutate } = useSWRConfig();
   const router = useRouter();
@@ -115,17 +118,17 @@ export default function ServiceUsersTable({
 
   const statusOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: "active", label: "Active", dotClass: "bg-green-500" },
-      { value: "blocked", label: "Blocked", dotClass: "bg-red-500" },
+      { value: undefined, label: tCommon('all'), dotClass: "bg-nb-gray-500" },
+      { value: "active", label: tCommon('active'), dotClass: "bg-green-500" },
+      { value: "blocked", label: t('blocked'), dotClass: "bg-red-500" },
     ],
     [],
   );
 
   const roleOptions = useMemo<CheckboxOption<string>[]>(
     () => [
-      { value: "admin", label: "Admin" },
-      { value: "user", label: "User" },
+      { value: "admin", label: tCommon('admin' as any) || "Admin" },
+      { value: "user", label: tCommon('user' as any) || "User" },
       { value: "network_admin", label: "Network Admin" },
       { value: "billing_admin", label: "Billing Admin" },
       { value: "auditor", label: "Auditor" },
@@ -137,7 +140,7 @@ export default function ServiceUsersTable({
     () => [
       {
         id: "status",
-        label: "Status",
+        label: tCommon('status'),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -151,7 +154,7 @@ export default function ServiceUsersTable({
       },
       {
         id: "role_filter",
-        label: "Role",
+        label: tCommon('role' as any) || "Role",
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -164,14 +167,14 @@ export default function ServiceUsersTable({
           formatCheckboxChip(v as string[] | undefined, roleOptions, "roles"),
       },
     ],
-    [statusOptions, roleOptions],
+    [statusOptions, roleOptions, tCommon],
   );
 
   return (
     <DataTable
       headingTarget={headingTarget}
       isLoading={isLoading}
-      text={"Service Users"}
+      text={t('title')}
       sorting={sorting}
       setSorting={setSorting}
       columns={ServiceUsersTableColumns}
@@ -189,7 +192,7 @@ export default function ServiceUsersTable({
         is_current: false,
         role_filter: false,
       }}
-      searchPlaceholder={"Search by name or role..."}
+      searchPlaceholder={t('searchPlaceholder')}
       getStartedCard={
         <GetStartedTest
           icon={
@@ -199,10 +202,8 @@ export default function ServiceUsersTable({
               size={"large"}
             />
           }
-          title={"Create Service User"}
-          description={
-            "It looks like you don't have any service users. Get started by creating a service user."
-          }
+          title={t('create')}
+          description={t('serviceUsersEmptyDescription')}
           button={
             <div className={"flex flex-col"}>
               <div>
@@ -214,7 +215,7 @@ export default function ServiceUsersTable({
                     disabled={!permission.users.create}
                   >
                     <PlusCircle size={16} />
-                    Create Service User
+                    {t('create')}
                   </Button>
                 </ServiceUserModal>
               </div>
@@ -222,14 +223,14 @@ export default function ServiceUsersTable({
           }
           learnMore={
             <>
-              Learn more about
+              {t('learnMoreAbout')}
               <InlineLink
                 href={
                   "https://docs.netbird.io/how-to/access-netbird-public-api"
                 }
                 target={"_blank"}
               >
-                Service Users
+                {t('title')}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>
@@ -247,7 +248,7 @@ export default function ServiceUsersTable({
                 disabled={!permission.users.create}
               >
                 <PlusCircle size={16} />
-                Create Service User
+                {t('create')}
               </Button>
             </ServiceUserModal>
           )}

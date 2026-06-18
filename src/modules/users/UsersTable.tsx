@@ -39,8 +39,9 @@ import useFetchApi from "@utils/api";
 import { isNetBirdHosted } from "@utils/netbird";
 import dayjs from "dayjs";
 import { ExternalLinkIcon, Link2, MailPlus } from "lucide-react";
+import { useTranslations } from 'next-intl';
 import { usePathname, useRouter } from "next/navigation";
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -58,93 +59,6 @@ import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import UserInviteModal from "@/modules/users/UserInviteModal";
 import UserInvitesTable from "@/modules/users/UserInvitesTable";
 import { useAccount } from "@/modules/account/useAccount";
-
-export const UsersTableColumns: ColumnDef<User>[] = [
-  {
-    accessorKey: "name",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Name</DataTableHeader>;
-    },
-    accessorFn: (row) => row.name + " " + row.email,
-    sortingFn: "text",
-    cell: ({ row }) => <UserNameCell user={row.original} />,
-  },
-  {
-    accessorKey: "is_current",
-    sortingFn: "basic",
-  },
-  {
-    accessorKey: "role",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Role</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserRoleCell user={row.original} />,
-  },
-  {
-    id: "status",
-    // Derive a semantic status that matches what UserStatusCell renders so
-    // the filter and the visible label stay in sync. `pending_approval`
-    // is a separate bucket from `invited` (the cell renders the former as
-    // "Pending" and the latter as "Invited").
-    accessorFn: (row) => {
-      if (row.pending_approval) return "pending";
-      if (row.status === "invited") return "invited";
-      return row.status ?? "";
-    },
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Status</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserStatusCell user={row.original} />,
-  },
-
-  {
-    accessorKey: "auto_groups",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Groups</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => <UserGroupCell user={row.original} />,
-  },
-
-  {
-    accessorKey: "last_login",
-    header: ({ column }) => {
-      return <DataTableHeader column={column}>Last Login</DataTableHeader>;
-    },
-    sortingFn: "text",
-    cell: ({ row }) => (
-      <LastTimeRow
-        date={dayjs(row.original.last_login).toDate()}
-        text={"Last login on"}
-      />
-    ),
-  },
-  {
-    id: "approval_required",
-    accessorKey: "approval_required",
-    sortingFn: "basic",
-    accessorFn: (u) => u?.pending_approval,
-  },
-  {
-    id: "role_filter",
-    accessorFn: (u) => [u?.role],
-    filterFn: "arrIncludesSome",
-  },
-  {
-    id: "group_names_filter",
-    accessorFn: (row) =>
-      ((row as User & { _group_names?: string[] })._group_names) ?? [],
-    filterFn: "arrIncludesSome",
-  },
-  {
-    accessorKey: "id",
-    header: "",
-    sortingFn: "text",
-    cell: ({ row }) => <UserActionCell user={row.original} />,
-  },
-];
 
 type Props = {
   users?: User[];
@@ -167,12 +81,15 @@ export default function UsersTable({
   minimal,
   rightSide,
   getStartedCard,
-  columns = UsersTableColumns,
+  columns: columnsProp,
   selectedRows,
   setSelectedRows,
   onRowClick,
   keepStateInLocalStorage = true,
 }: Readonly<Props>) {
+  const t = useTranslations('users');
+  const tTable = useTranslations('table');
+  const tCommon = useTranslations('common');
   useFetchApi("/groups");
   const { groups } = useGroups();
   const { mutate } = useSWRConfig();
@@ -234,32 +151,32 @@ export default function UsersTable({
 
   const statusOptions = useMemo<RadioOption<string | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: "active", label: "Active", dotClass: "bg-green-500" },
-      { value: "pending", label: "Pending", dotClass: "bg-netbird" },
-      { value: "invited", label: "Invited", dotClass: "bg-yellow-400" },
-      { value: "blocked", label: "Blocked", dotClass: "bg-red-500" },
+      { value: undefined, label: tCommon('all'), dotClass: "bg-nb-gray-500" },
+      { value: "active", label: t('active'), dotClass: "bg-green-500" },
+      { value: "pending", label: t('pending'), dotClass: "bg-netbird" },
+      { value: "invited", label: t('invited'), dotClass: "bg-yellow-400" },
+      { value: "blocked", label: t('blocked'), dotClass: "bg-red-500" },
     ],
-    [],
+    [t, tCommon],
   );
 
   const roleOptions = useMemo<CheckboxOption<string>[]>(
     () => [
-      { value: "owner", label: "Owner" },
-      { value: "admin", label: "Admin" },
-      { value: "user", label: "User" },
-      { value: "network_admin", label: "Network Admin" },
-      { value: "billing_admin", label: "Billing Admin" },
-      { value: "auditor", label: "Auditor" },
+      { value: "owner", label: t('roleOwner') },
+      { value: "admin", label: t('roleAdmin') },
+      { value: "user", label: t('roleUser') },
+      { value: "network_admin", label: t('networkAdmin') },
+      { value: "billing_admin", label: t('billingAdmin') },
+      { value: "auditor", label: t('auditor') },
     ],
-    [],
+    [t],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "status",
-        label: "Status",
+        label: t('status'),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as string | undefined}
@@ -273,7 +190,7 @@ export default function UsersTable({
       },
       {
         id: "role_filter",
-        label: "Role",
+        label: t('role'),
         renderPicker: (p) => (
           <CheckboxListPicker
             value={p.value as string[] | undefined}
@@ -283,11 +200,11 @@ export default function UsersTable({
           />
         ),
         formatChip: (v) =>
-          formatCheckboxChip(v as string[] | undefined, roleOptions, "roles"),
+          formatCheckboxChip(v as string[] | undefined, roleOptions, tTable('of')),
       },
       {
         id: "group_names_filter",
-        label: "Groups",
+        label: t('groups'),
         renderPicker: (p) => (
           <GroupsPicker
             value={p.value as string[] | undefined}
@@ -299,8 +216,89 @@ export default function UsersTable({
         formatChip: (v) => formatGroupsChip(v as string[] | undefined),
       },
     ],
-    [statusOptions, roleOptions, tableGroups],
+    [statusOptions, roleOptions, tableGroups, t, tTable],
   );
+
+  const columns = useMemo<ColumnDef<User>[]>(() => [
+    {
+      accessorKey: "name",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t('name')}</DataTableHeader>;
+      },
+      accessorFn: (row) => row.name + " " + row.email,
+      sortingFn: "text",
+      cell: ({ row }) => <UserNameCell user={row.original} />,
+    },
+    {
+      accessorKey: "is_current",
+      sortingFn: "basic",
+    },
+    {
+      accessorKey: "role",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t('role')}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <UserRoleCell user={row.original} />,
+    },
+    {
+      id: "status",
+      accessorFn: (row) => {
+        if (row.pending_approval) return "pending";
+        if (row.status === "invited") return "invited";
+        return row.status ?? "";
+      },
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t('status')}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <UserStatusCell user={row.original} />,
+    },
+    {
+      accessorKey: "auto_groups",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t('groups')}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => <UserGroupCell user={row.original} />,
+    },
+    {
+      accessorKey: "last_login",
+      header: ({ column }) => {
+        return <DataTableHeader column={column}>{t('lastLogin')}</DataTableHeader>;
+      },
+      sortingFn: "text",
+      cell: ({ row }) => (
+        <LastTimeRow
+          date={dayjs(row.original.last_login).toDate()}
+          text={t('lastLoginOn')}
+        />
+      ),
+    },
+    {
+      id: "approval_required",
+      accessorKey: "approval_required",
+      sortingFn: "basic",
+      accessorFn: (u) => u?.pending_approval,
+    },
+    {
+      id: "role_filter",
+      accessorFn: (u) => [u?.role],
+      filterFn: "arrIncludesSome",
+    },
+    {
+      id: "group_names_filter",
+      accessorFn: (row) =>
+        ((row as User & { _group_names?: string[] })._group_names) ?? [],
+      filterFn: "arrIncludesSome",
+    },
+    {
+      accessorKey: "id",
+      header: "",
+      sortingFn: "text",
+      cell: ({ row }) => <UserActionCell user={row.original} />,
+    },
+  ], [t]);
 
   if (showInvites) {
     return (
@@ -316,8 +314,9 @@ export default function UsersTable({
   // (e.g. GroupUsersSection), so a hardcoded filter for `role_filter` /
   // `group_names_filter` would silently no-op when those columns aren't
   // registered.
+  const effectiveColumns = columnsProp ?? columns;
   const columnIds = new Set<string>();
-  for (const c of columns) {
+  for (const c of effectiveColumns) {
     const id =
       (c as { id?: string }).id ??
       (c as { accessorKey?: string }).accessorKey;
@@ -330,10 +329,10 @@ export default function UsersTable({
       headingTarget={headingTarget}
       isLoading={isLoading}
       keepStateInLocalStorage={keepStateInLocalStorage}
-      text={"Users"}
+      text={t('title')}
       sorting={sorting}
       setSorting={setSorting}
-      columns={columns}
+      columns={effectiveColumns}
       wrapperComponent={minimal ? Card : undefined}
       wrapperProps={minimal && { className: "mt-6 w-full" }}
       minimal={minimal}
@@ -360,7 +359,7 @@ export default function UsersTable({
             }
           : onRowClick
       }
-      searchPlaceholder={"Search by name, email or role..."}
+      searchPlaceholder={t('searchPlaceholder')}
       getStartedCard={
         !getStartedCard ? (
           <GetStartedTest
@@ -371,10 +370,8 @@ export default function UsersTable({
                 size={"large"}
               />
             }
-            title={"Add New Users"}
-            description={
-              "It looks like you don't have any users yet. Get started by inviting users to your account."
-            }
+            title={t('addNewUsers')}
+            description={t('addNewUsersDescription')}
             button={
               <div className={"flex flex-col items-center justify-center"}>
                 <InviteUserButton show={true} />
@@ -382,14 +379,14 @@ export default function UsersTable({
             }
             learnMore={
               <>
-                Learn more about
+                {t('learnMoreAbout')}
                 <InlineLink
                   href={
                     "https://docs.netbird.io/how-to/add-users-to-your-network"
                   }
                   target={"_blank"}
                 >
-                  Users
+                  {t('title')}
                   <ExternalLinkIcon size={12} />
                 </InlineLink>
               </>
@@ -446,7 +443,7 @@ export default function UsersTable({
                 onClick={() => setShowInvites(true)}
               >
                 <Link2 size={14} />
-                Show Invites
+                {t('showInvites')}
                 <NotificationCountBadge count={validInvitesCount} />
               </Button>
             )}
@@ -468,6 +465,8 @@ export const InviteUserButton = ({
   className,
   groups,
 }: InviteUserButtonProps) => {
+  const t = useTranslations('users');
+  const tCommon = useTranslations('common');
   const { permission } = usePermissions();
   const account = useAccount();
 
@@ -490,7 +489,7 @@ export const InviteUserButton = ({
       disabled={isDisabled}
     >
       <MailPlus size={16} />
-      {isCloud ? "Invite User" : "Add User"}
+      {isCloud ? t('inviteUser') : t('addUser')}
     </Button>
   );
 
@@ -502,7 +501,7 @@ export const InviteUserButton = ({
         content={
           <div className={"flex flex-col"}>
             <p className={"max-w-[200px] text-xs"}>
-              Local authentication is disabled. Use your IdP for authentication.
+              {t('localAuthDisabled')}
             </p>
             <div className={"text-xs mt-1.5"}>
               <InlineLink
@@ -510,7 +509,7 @@ export const InviteUserButton = ({
                 target={"_blank"}
                 className={"flex gap-1 items-center"}
               >
-                Learn more
+                {tCommon('learnMore')}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </div>
@@ -524,4 +523,3 @@ export const InviteUserButton = ({
 
   return <UserInviteModal groups={groups}>{button}</UserInviteModal>;
 };
-
