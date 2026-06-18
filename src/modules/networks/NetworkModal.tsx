@@ -17,6 +17,7 @@ import Paragraph from "@components/Paragraph";
 import Separator from "@components/Separator";
 import { Textarea } from "@components/Textarea";
 import { useApiCall } from "@utils/api";
+import { useTranslations } from "next-intl";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import React, { useState } from "react";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
@@ -62,6 +63,8 @@ type ContentProps = {
 };
 
 const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
+  const t = useTranslations("networks");
+  const tCommon = useTranslations("common");
   const [name, setName] = useState(network?.name || "");
   const [description, setDescription] = useState(network?.description || "");
   const create = useApiCall<Network>("/networks").post;
@@ -93,7 +96,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<NetworkRoutesIcon className={"fill-netbird"} />}
-        title={network ? "Update Network" : "Add Network"}
+        title={network ? t("updateNetwork") : t("addNetwork")}
         description={
           network
             ? network.name
@@ -104,22 +107,20 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
       <Separator />
       <div className={"px-8 flex-col flex gap-6 py-6"}>
         <div>
-          <Label>Network Name</Label>
-          <HelpText>Provide a unique name for the network.</HelpText>
+          <Label>{t("networkNameLabel")}</Label>
+          <HelpText>{t("networkNameHelp")}</HelpText>
           <Input
             tabIndex={0}
-            placeholder={"e.g., Office Network"}
+            placeholder={t("networkNameModalPlaceholder")}
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
         </div>
         <div>
-          <Label>Description (optional)</Label>
-          <HelpText>
-            Write a short description to add more context to this network.
-          </HelpText>
+          <Label>{t("networkDescriptionLabel")}</Label>
+          <HelpText>{t("networkDescriptionHelp")}</HelpText>
           <Textarea
-            placeholder={"e.g., Berlin, Münzstraße 12 "}
+            placeholder={t("networkDescriptionPlaceholder")}
             value={description}
             rows={3}
             onChange={(e) => setDescription(e.target.value)}
@@ -142,7 +143,7 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{tCommon("cancel")}</Button>
           </ModalClose>
 
           <Button
@@ -152,11 +153,11 @@ const Content = ({ network, onCreated, onUpdated }: ContentProps) => {
             onClick={network ? updateNetwork : createNetwork}
           >
             {network ? (
-              "Save Changes"
+              t("saveChanges")
             ) : (
               <>
                 <PlusCircle size={16} />
-                Add Network
+                {t("addNetwork")}
               </>
             )}
           </Button>

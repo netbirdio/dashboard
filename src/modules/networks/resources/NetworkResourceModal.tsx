@@ -18,6 +18,7 @@ import Paragraph from "@components/Paragraph";
 import { HelpTooltip } from "@components/HelpTooltip";
 import { PeerGroupSelector } from "@components/PeerGroupSelector";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@components/Tabs";
+import { useTranslations } from "next-intl";
 import { useApiCall } from "@utils/api";
 import { normalizeHostCIDR } from "@utils/ip";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -91,6 +92,8 @@ export function ResourceModalContent({
   resource,
   initialTab,
 }: ModalProps) {
+  const t = useTranslations("networks");
+  const tCommon = useTranslations("common");
   const create = useApiCall<NetworkResource>(
     `/networks/${network.id}/resources`,
   ).post;
@@ -161,8 +164,8 @@ export function ResourceModalContent({
       description:
         "Without access control policies, this resource will not be accessible by any peers. You can also create policies later. Are you sure you want to continue?",
       type: "warning",
-      confirmText: resource ? "Save Changes" : "Add Resource",
-      cancelText: "Cancel",
+      confirmText: resource ? t("saveChanges") : t("addResource"),
+      cancelText: tCommon("cancel"),
       maxWidthClass: "max-w-lg",
     });
   };
@@ -224,7 +227,7 @@ export function ResourceModalContent({
     >
       <ModalHeader
         icon={<WorkflowIcon size={20} />}
-        title={resource ? "Edit Resource" : "Add Resource"}
+        title={resource ? t("editResourceBtn") : t("addResource")}
         description={
           resource
             ? `${resource.name}`
@@ -237,29 +240,27 @@ export function ResourceModalContent({
         <TabsList justify={"start"} className={"px-8"}>
           <TabsTrigger value={"resource"}>
             <WorkflowIcon size={16} />
-            Resource
+            {t("resourceTab")}
           </TabsTrigger>
           <TabsTrigger
             value={"access-control"}
             disabled={!resource && !canCreate}
           >
             <ShieldCheck size={16} />
-            Access Control
+            {t("accessControl")}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value={"resource"} className={"pb-4"}>
           <div className={"px-8 flex-col flex gap-6"}>
             <div>
-              <Label>Name</Label>
-              <HelpText>
-                Set an easily identifiable name for your resource
-              </HelpText>
+              <Label>{t("resourceNameLabel")}</Label>
+              <HelpText>{t("resourceNameHelp")}</HelpText>
               <Input
                 ref={nameRef}
                 autoFocus={true}
                 tabIndex={0}
-                placeholder={"e.g., Postgres Database"}
+                placeholder={t("resourceNamePlaceholder")}
                 value={name}
                 error={nameError}
                 onChange={(e) => setName(e.target.value)}
@@ -310,36 +311,31 @@ export function ResourceModalContent({
                   }
                 >
                   <span className={"relative top-[1px]"}>
-                    Optional Settings
+                    {t("optionalSettings")}
                   </span>
                 </AccordionTrigger>
                 <AccordionContent className={""}>
                   <div className={"flex flex-col gap-6 pb-4 pt-2"}>
                     <div>
-                      <Label>Description</Label>
-                      <HelpText>
-                        Write a short description to add more context to this
-                        resource.
-                      </HelpText>
+                      <Label>{t("resourceDescriptionLabel")}</Label>
+                      <HelpText>{t("resourceDescriptionHelp")}</HelpText>
                       <Input
-                        placeholder={"e.g., Production, Development"}
+                        placeholder={t("resourceDescriptionPlaceholder")}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                       />
                     </div>
                     <div>
-                      <Label>Resource Groups</Label>
+                      <Label>{t("resourceGroupsLabel")}</Label>
                       <HelpText className={"mt-1"}>
-                        Add this resource to a group (e.g., Databases, Web
-                        Servers) and reference the group <br /> in access
-                        policies to simplify management.
+                        {t("resourceGroupsHelp")}
                       </HelpText>
                       <PeerGroupSelector
                         side={"top"}
                         onChange={setGroups}
                         values={groups}
                         showPeerCounter={false}
-                        placeholder={"Add or select resource group(s)..."}
+                        placeholder={t("resourceGroupsPlaceholder")}
                         policies={allPolicies}
                       />
                       {groupPolicyCount > 0 && (
@@ -411,14 +407,14 @@ export function ResourceModalContent({
               {tab === "resource" && (
                 <>
                   <ModalClose asChild={true}>
-                    <Button variant={"secondary"}>Cancel</Button>
+                    <Button variant={"secondary"}>{tCommon("cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant={"primary"}
                     onClick={() => setTab("access-control")}
                     disabled={!canCreate}
                   >
-                    Continue
+                    {tCommon("next")}
                   </Button>
                 </>
               )}
@@ -429,7 +425,7 @@ export function ResourceModalContent({
                     variant={"secondary"}
                     onClick={() => setTab("resource")}
                   >
-                    Back
+                    {tCommon("back")}
                   </Button>
                   <Button
                     variant={"primary"}
@@ -438,7 +434,7 @@ export function ResourceModalContent({
                     disabled={!canCreate}
                   >
                     <PlusCircle size={16} />
-                    Add Resource
+                    {t("addResource")}
                   </Button>
                 </>
               )}
@@ -446,7 +442,7 @@ export function ResourceModalContent({
           ) : (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{tCommon("cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
@@ -454,7 +450,7 @@ export function ResourceModalContent({
                 onClick={updateResource}
                 disabled={!canCreate}
               >
-                Save Changes
+                {t("saveChanges")}
               </Button>
             </>
           )}

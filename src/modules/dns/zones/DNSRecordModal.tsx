@@ -31,6 +31,7 @@ import {
   DNSZone,
 } from "@/interfaces/DNS";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
+import { useTranslations } from "next-intl";
 
 type Props = {
   children?: React.ReactNode;
@@ -166,10 +167,13 @@ export function DNSRecordModalContent({
     !domainError &&
     recordValue !== "";
 
+  const t = useTranslations("dns");
+  const tCommon = useTranslations("common");
+
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
-        title={record ? "Update DNS Record" : "Add DNS Record"}
+        title={record ? t("updateDNSRecord") : t("addDNSRecord")}
         description={
           record
             ? `Update record of '${zone.domain}' zone`
@@ -181,9 +185,9 @@ export function DNSRecordModalContent({
       <div className={"px-8 py-6 flex flex-col gap-6"}>
         <div className={"flex items-center justify-between gap-10"}>
           <div>
-            <Label>Record Type</Label>
+            <Label>{t("recordType")}</Label>
             <HelpText className={"max-w-sm"}>
-              Select the type of record you want to add
+              {t("recordTypeHelp")}
             </HelpText>
           </div>
           <div className={"min-w-[130px]"}>
@@ -209,15 +213,14 @@ export function DNSRecordModalContent({
           </div>
         </div>
         <div className={"w-full mb-3"}>
-          <Label>Hostname</Label>
+          <Label>{t("hostname")}</Label>
           <HelpText>
-            Enter a subdomain, wildcard or leave empty to use the primary
-            domain.
+            {t("hostnameHelp")}
           </HelpText>
           <div className={"flex w-full"}>
             <Input
               autoFocus={true}
-              placeholder={"E.g., dev, * or leave empty for primary domain"}
+              placeholder={t("hostnamePlaceholder")}
               errorTooltip={true}
               errorTooltipPosition={"bottom"}
               error={domainError}
@@ -239,7 +242,7 @@ export function DNSRecordModalContent({
         <div className={"flex gap-4 items-start mb-3"}>
           {type === "A" && (
             <div className={"flex-1"}>
-              <Label>IPv4 Address</Label>
+              <Label>{t("ipv4Address")}</Label>
               <Input
                 className={"mt-1.5 font-mono text-[0.82rem]"}
                 placeholder={"192.168.1.1"}
@@ -255,7 +258,7 @@ export function DNSRecordModalContent({
 
           {type === "AAAA" && (
             <div className={"flex-1"}>
-              <Label>IPv6 Address</Label>
+              <Label>{t("ipv6Address")}</Label>
               <Input
                 className={"mt-1.5 font-mono text-[0.82rem]"}
                 placeholder={"2001:0db8:85a3::8a2e:0370:7334"}
@@ -271,7 +274,7 @@ export function DNSRecordModalContent({
 
           {type === "CNAME" && (
             <div className={"flex-1"}>
-              <Label>Target Domain</Label>
+              <Label>{t("targetDomain")}</Label>
               <Input
                 className={"mt-1.5"}
                 placeholder={"e.g., example.com or intra.example.com"}
@@ -286,7 +289,7 @@ export function DNSRecordModalContent({
           )}
 
           <div className={"min-w-[200px]"}>
-            <Label>TTL (Time to Live)</Label>
+            <Label>{t("ttl")}</Label>
             <div className={"mt-2.5"}>
               <Select value={ttl} onValueChange={(v) => setTtl(v)}>
                 <SelectTrigger
@@ -319,9 +322,9 @@ export function DNSRecordModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("learnMoreAbout")}
             <InlineLink href={DNS_RECORDS_DOCS_LINK} target={"_blank"}>
-              DNS Records
+              {t("dnsRecords")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -330,14 +333,14 @@ export function DNSRecordModalContent({
         <div className={"flex gap-3 w-full justify-end"}>
           <>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{tCommon("cancel")}</Button>
             </ModalClose>
             <Button
               variant={"primary"}
               onClick={handleAddRecord}
               disabled={!canUpdateOrCreate}
             >
-              {record ? "Save Changes" : "Add Record"}
+              {record ? t("saveChanges") : t("addDNSRecord")}
             </Button>
           </>
         </div>

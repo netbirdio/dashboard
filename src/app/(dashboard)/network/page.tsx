@@ -27,6 +27,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useMemo } from "react";
 import useUrlTab from "@/hooks/useUrlTab";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
@@ -71,6 +72,8 @@ export default function NetworkDetailPage() {
 }
 
 function NetworkOverview({ network }: Readonly<{ network: Network }>) {
+  const t = useTranslations("networks");
+  const tReverseProxy = useTranslations("reverseProxy");
   const { permission } = usePermissions();
 
   const { data: resources, isLoading: isResourcesLoading } = useFetchApi<
@@ -103,7 +106,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
             <Breadcrumbs>
               <Breadcrumbs.Item
                 href={"/networks"}
-                label={"Networks"}
+                label={t("title")}
                 disabled={!permission.networks.read}
                 icon={<NetworkRoutesIcon size={13} />}
               />
@@ -149,7 +152,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
             <TabsList justify={"start"} className={"px-8"}>
               <TabsTrigger value={"resources"}>
                 <Layers3Icon size={14} />
-                {singularize("Resources", network?.resources?.length)}
+                {singularize(t("resources"), network?.resources?.length)}
               </TabsTrigger>
               <TabsTrigger value={"routing-peers"}>
                 <PeerIcon
@@ -158,7 +161,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                     "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
                   }
                 />
-                {singularize("Routing Peers", network?.routing_peers_count)}
+                {singularize(t("routingPeers"), network?.routing_peers_count)}
               </TabsTrigger>
               <TabsTrigger value={"services"}>
                 <ReverseProxyIcon
@@ -167,7 +170,7 @@ function NetworkOverview({ network }: Readonly<{ network: Network }>) {
                     "fill-nb-gray-500 group-data-[state=active]/trigger:fill-netbird transition-all"
                   }
                 />
-                {singularize("Services", services.length)}
+                {singularize(tReverseProxy("services"), services.length)}
               </TabsTrigger>
             </TabsList>
 
@@ -249,6 +252,8 @@ function NetworkActions() {
 }
 
 function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
+  const t = useTranslations("networks");
+  const tCommon = useTranslations("common");
   const isHighlyAvailable = !!(
     network?.routing_peers_count && network?.routing_peers_count >= 2
   );
@@ -257,22 +262,26 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
     () => (
       <>
         High availability is currently{" "}
-        <span className={"text-yellow-400 font-medium"}>inactive</span> for this
-        network.
+        <span className={"text-yellow-400 font-medium"}>
+          {tCommon("inactive")}
+        </span>{" "}
+        for this network.
       </>
     ),
-    [],
+    [tCommon],
   );
 
   const enabledText = useMemo(
     () => (
       <>
         High availability is{" "}
-        <span className={"text-green-500 font-medium"}>active</span> for this
-        network.
+        <span className={"text-green-500 font-medium"}>
+          {tCommon("active")}
+        </span>{" "}
+        for this network.
       </>
     ),
-    [],
+    [tCommon],
   );
 
   const policyCount = network.policies?.length ?? 0;
@@ -319,7 +328,7 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
                     !isHighlyAvailable ? "bg-yellow-400" : "bg-green-500",
                   )}
                 ></span>
-                {isHighlyAvailable ? "Active" : "Inactive"}
+                {isHighlyAvailable ? tCommon("active") : tCommon("inactive")}
                 <HelpCircle size={12} />
               </div>
             </FullTooltip>
@@ -331,20 +340,19 @@ function NetworkInformationCard({ network }: Readonly<{ network: Network }>) {
             policyCount > 0 ? (
               <>
                 <ShieldCheckIcon size={16} className={"text-green-500"} />
-                {policyCount}{" "}
-                {policyCount === 1 ? "Active Policy" : "Active Policies"}
+                {t("activePoliciesCount", { count: policyCount })}
               </>
             ) : (
               <>
                 <ShieldXIcon size={16} className={"text-red-500"} />
-                No Active Policies
+                {t("noActivePolicies")}
               </>
             )
           }
           value={
             policyCount > 0 ? (
               <InlineLink href={"/access-control"}>
-                Go to Policies
+                {t("goToPolicies")}
                 <ArrowUpRightIcon size={14} />
               </InlineLink>
             ) : null

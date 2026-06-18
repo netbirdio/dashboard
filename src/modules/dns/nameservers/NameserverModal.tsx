@@ -39,6 +39,7 @@ import DNSIcon from "@/assets/icons/DNSIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { Nameserver, NameserverGroup } from "@/interfaces/Nameserver";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useTranslations } from "next-intl";
 
 type Props = {
   children?: React.ReactNode;
@@ -249,12 +250,15 @@ export function NameserverModalContent({
       : permission.nameservers.create;
   }, [isUpdate, permission]);
 
+  const t = useTranslations("dns");
+  const tCommon = useTranslations("common");
+
   return (
     <ModalContent maxWidthClass={"max-w-xl"}>
       <ModalHeader
         icon={<DNSIcon className={"fill-netbird"} />}
-        title={isUpdate ? preset?.name : "Add Nameserver"}
-        description={"Use a nameserver to resolve domains in your network"}
+        title={isUpdate ? preset?.name : t("createNameserver")}
+        description={t("nameserverModalDescription")}
         color={"netbird"}
       />
 
@@ -267,7 +271,7 @@ export function NameserverModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Nameserver
+            {t("tabNameserver")}
           </TabsTrigger>
           <TabsTrigger value={"domains"} disabled={!canContinueToDomains}>
             <GlobeIcon
@@ -276,7 +280,7 @@ export function NameserverModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Domains
+            {t("tabDomains")}
           </TabsTrigger>
           <TabsTrigger value={"general"} disabled={!canContinueToGeneral}>
             <Text
@@ -285,7 +289,7 @@ export function NameserverModalContent({
                 "text-nb-gray-500 group-data-[state=active]/trigger:text-netbird transition-all"
               }
             />
-            Name & Description
+            {t("tabNameDescription")}
           </TabsTrigger>
         </TabsList>
 
@@ -325,15 +329,14 @@ export function NameserverModalContent({
                 onClick={() => setNameservers({ type: "ADD" })}
               >
                 <PlusIcon size={14} />
-                Add Nameserver
+                {t("createNameserver")}
               </Button>
             </div>
 
             <div>
-              <Label>Distribution Groups</Label>
+              <Label>{t("distributionGroups")}</Label>
               <HelpText>
-                Advertise this nameserver to peers that belong to the following
-                groups
+                {t("advertiseToGroups")}
               </HelpText>
               <PeerGroupSelector
                 onChange={setGroups}
@@ -348,10 +351,10 @@ export function NameserverModalContent({
               label={
                 <>
                   <Power size={15} />
-                  Enable Nameserver
+                  {t("enableNameserver")}
                 </>
               }
-              helpText={"Use this switch to enable or disable the nameserver."}
+              helpText={t("enableDisableNameserver")}
               disabled={!canAction}
             />
           </div>
@@ -359,10 +362,9 @@ export function NameserverModalContent({
         <TabsContent value={"domains"} className={"pb-8"}>
           <div className={"px-8 flex flex-col gap-6"}>
             <div>
-              <Label>Match Domains</Label>
+              <Label>{t("matchDomains")}</Label>
               <HelpText>
-                Add domain if you want to have a specific one resolved by this
-                nameserver.
+                {t("addDomainHelp")}
               </HelpText>
               <div>
                 {domains.length > 0 && (
@@ -400,7 +402,7 @@ export function NameserverModalContent({
                   disabled={!canAction}
                 >
                   <PlusIcon size={14} />
-                  Add Domain
+                  {t("addDomain")}
                 </Button>
               </div>
             </div>
@@ -415,12 +417,10 @@ export function NameserverModalContent({
                 label={
                   <>
                     <Scan size={15} />
-                    Mark match domains as search domains
+                    {t("enableSearchDomainsNS")}
                   </>
                 }
-                helpText={
-                  "E.g., 'peer.example.com' will be accessible with 'peer'"
-                }
+                helpText={t("searchDomainHelp")}
                 disabled={!canAction}
               />
             </div>
@@ -429,28 +429,25 @@ export function NameserverModalContent({
         <TabsContent value={"general"} className={"px-8 pb-6"}>
           <div className={"flex flex-col gap-6"}>
             <div>
-              <Label>DNS Name</Label>
-              <HelpText>Enter a name for this nameserver.</HelpText>
+              <Label>{t("DNSName")}</Label>
+              <HelpText>{t("enterNameserverName")}</HelpText>
               <Input
                 autoFocus={true}
                 tabIndex={0}
                 error={nameLengthError}
-                placeholder={"e.g., Public DNS"}
+                placeholder={t("nameserverNameInputPlaceholder")}
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 disabled={!canAction}
               />
             </div>
             <div>
-              <Label>Description (optional)</Label>
+              <Label>{t("descriptionOptional")}</Label>
               <HelpText>
-                Write a short description to add more context to this
-                nameserver.
+                {t("writeDescription")}
               </HelpText>
               <Textarea
-                placeholder={
-                  "e.g., Berlin office resolver for remote developers"
-                }
+                placeholder={t("descriptionPlaceholder")}
                 value={description}
                 rows={3}
                 disabled={!canAction}
@@ -464,12 +461,12 @@ export function NameserverModalContent({
       <ModalFooter className={"items-center"}>
         <div className={"w-full"}>
           <Paragraph className={"text-sm mt-auto"}>
-            Learn more about
+            {t("learnMoreAbout")}
             <InlineLink
               href={"https://docs.netbird.io/how-to/manage-dns-in-your-network"}
               target={"_blank"}
             >
-              DNS
+              {t("dns")}
               <ExternalLinkIcon size={12} />
             </InlineLink>
           </Paragraph>
@@ -479,7 +476,7 @@ export function NameserverModalContent({
             <>
               {tab == "nameserver" && (
                 <ModalClose asChild={true}>
-                  <Button variant={"secondary"}>Cancel</Button>
+                  <Button variant={"secondary"}>{tCommon("cancel")}</Button>
                 </ModalClose>
               )}
 
@@ -488,7 +485,7 @@ export function NameserverModalContent({
                   variant={"secondary"}
                   onClick={() => setTab("nameserver")}
                 >
-                  Back
+                  {tCommon("back")}
                 </Button>
               )}
 
@@ -498,7 +495,7 @@ export function NameserverModalContent({
                   onClick={() => setTab("domains")}
                   disabled={!canContinueToDomains}
                 >
-                  Continue
+                  {tCommon("next")}
                 </Button>
               )}
 
@@ -508,7 +505,7 @@ export function NameserverModalContent({
                   onClick={() => setTab("general")}
                   disabled={!canContinueToGeneral}
                 >
-                  Continue
+                  {tCommon("next")}
                 </Button>
               )}
 
@@ -518,7 +515,7 @@ export function NameserverModalContent({
                     variant={"secondary"}
                     onClick={() => setTab("domains")}
                   >
-                    Back
+                    {tCommon("back")}
                   </Button>
 
                   <Button
@@ -527,7 +524,7 @@ export function NameserverModalContent({
                     onClick={submit}
                   >
                     <PlusCircle size={16} />
-                    Add Nameserver
+                    {t("createNameserver")}
                   </Button>
                 </>
               )}
@@ -535,14 +532,14 @@ export function NameserverModalContent({
           ) : (
             <>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{tCommon("cancel")}</Button>
               </ModalClose>
               <Button
                 variant={"primary"}
                 disabled={!canSubmit || !canAction}
                 onClick={submit}
               >
-                Save Changes
+                {t("saveChanges")}
               </Button>
             </>
           )}

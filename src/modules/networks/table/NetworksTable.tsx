@@ -20,6 +20,7 @@ import { ColumnDef, SortingState } from "@tanstack/react-table";
 import { cn } from "@utils/helpers";
 import { ExternalLinkIcon, PlusCircle } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
@@ -96,6 +97,8 @@ export default function NetworksTable({
   data,
   headingTarget,
 }: Readonly<Props>) {
+  const t = useTranslations("networks");
+  const tCommon = useTranslations("common");
   const { mutate } = useSWRConfig();
   const path = usePathname();
   const [searchModal, setSearchModal] = useState(false);
@@ -113,18 +116,18 @@ export default function NetworksTable({
 
   const statusOptions = useMemo<RadioOption<boolean | undefined>[]>(
     () => [
-      { value: undefined, label: "All", dotClass: "bg-nb-gray-500" },
-      { value: true, label: "Active", dotClass: "bg-green-500" },
-      { value: false, label: "Inactive", dotClass: "bg-nb-gray-700" },
+      { value: undefined, label: tCommon("all"), dotClass: "bg-nb-gray-500" },
+      { value: true, label: tCommon("active"), dotClass: "bg-green-500" },
+      { value: false, label: tCommon("inactive"), dotClass: "bg-nb-gray-700" },
     ],
-    [],
+    [tCommon],
   );
 
   const filterDefs = useMemo<TableFilterDef[]>(
     () => [
       {
         id: "active",
-        label: "Status",
+        label: tCommon("status"),
         renderPicker: (p) => (
           <RadioPicker
             value={p.value as boolean | undefined}
@@ -137,7 +140,7 @@ export default function NetworksTable({
           formatRadioChip(v as boolean | undefined, statusOptions),
       },
     ],
-    [statusOptions],
+    [statusOptions, tCommon],
   );
 
   return (
@@ -148,14 +151,14 @@ export default function NetworksTable({
           <DataTable
             headingTarget={headingTarget}
             isLoading={isLoading}
-            text={"Networks"}
+            text={t("title")}
             sorting={sorting}
             setSorting={setSorting}
             columns={NetworkTableColumns}
             data={data}
             initialPageSize={25}
             showResetFilterButton={false}
-            searchPlaceholder={"Search by network name or description..."}
+            searchPlaceholder={t("searchByNameOrDescription")}
             columnVisibility={{
               description: false,
               active: false,
@@ -178,10 +181,8 @@ export default function NetworksTable({
                     size={"large"}
                   />
                 }
-                title={"Create New Network"}
-                description={
-                  "It looks like you don't have any networks. Access internal resources in your LANs and VPC by adding a network."
-                }
+                title={t("createNetwork")}
+                description={t("routesDescription")}
                 button={
                   <div className={"gap-x-4 flex items-center justify-center"}>
                     <AddNetworkButton />
@@ -189,12 +190,12 @@ export default function NetworksTable({
                 }
                 learnMore={
                   <>
-                    Learn more about
+                    {t("learnMoreAbout")}{" "}
                     <InlineLink
                       href={"https://docs.netbird.io/how-to/networks"}
                       target={"_blank"}
                     >
-                      Networks
+                      {t("title")}
                       <ExternalLinkIcon size={12} />
                     </InlineLink>
                   </>
@@ -241,6 +242,7 @@ export default function NetworksTable({
 }
 
 const AddNetworkButton = () => {
+  const t = useTranslations("networks");
   const { permission } = usePermissions();
 
   const { openCreateNetworkModal } = useNetworksContext();
@@ -251,7 +253,7 @@ const AddNetworkButton = () => {
       disabled={!permission.networks.create}
     >
       <PlusCircle size={16} />
-      Add Network
+      {t("addNetwork")}
     </Button>
   );
 };

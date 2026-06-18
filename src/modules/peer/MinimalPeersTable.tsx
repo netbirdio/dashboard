@@ -12,6 +12,7 @@ import {
   SortingState,
   Table,
 } from "@tanstack/react-table";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useState } from "react";
 import { useSWRConfig } from "swr";
@@ -98,6 +99,8 @@ export default function MinimalPeersTable({
   onRowClick,
   getStartedCard,
 }: Props) {
+  const t = useTranslations("peers");
+  const tCommon = useTranslations("common");
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
 
@@ -132,20 +135,18 @@ export default function MinimalPeersTable({
       showSearchAndFilters={true}
       inset={false}
       tableClassName={"mt-0"}
-      text={"Peers"}
+      text={t("title")}
       columns={columns}
       keepStateInLocalStorage={false}
       data={peers}
-      searchPlaceholder={"Search by name, IP, owner or group..."}
+      searchPlaceholder={t("searchByNameIpOwnerOrGroup")}
       isLoading={isLoading}
       getStartedCard={
         !getStartedCard ? (
           <NoResults
             className={"py-4"}
-            title={"This peer has no accessible peers"}
-            description={
-              "Add more peers to your network or check your access control policies."
-            }
+            title={t("noAccessiblePeersTitle")}
+            description={t("noAccessiblePeersDescription")}
             icon={<PeerIcon size={20} className={"fill-nb-gray-300"} />}
           />
         ) : (
@@ -182,7 +183,7 @@ export default function MinimalPeersTable({
                   : "secondary"
               }
             >
-              All
+              {tCommon("all")}
             </ButtonGroup.Button>
             <ButtonGroup.Button
               onClick={() => {
@@ -201,7 +202,7 @@ export default function MinimalPeersTable({
                   : "secondary"
               }
             >
-              Online
+              {tCommon("online")}
             </ButtonGroup.Button>
             <ButtonGroup.Button
               onClick={() => {
@@ -220,7 +221,7 @@ export default function MinimalPeersTable({
                   : "secondary"
               }
             >
-              Offline
+              {tCommon("offline")}
             </ButtonGroup.Button>
           </ButtonGroup>
 

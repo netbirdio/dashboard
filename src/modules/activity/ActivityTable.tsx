@@ -22,6 +22,7 @@ import dayjs from "dayjs";
 import { uniqBy } from "lodash";
 import { ExternalLinkIcon } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import React, { useMemo, useState } from "react";
 import { DateRange } from "react-day-picker";
 import { useSWRConfig } from "swr";
@@ -90,6 +91,8 @@ export default function ActivityTable({
   isLoading,
   headingTarget,
 }: Props) {
+  const t = useTranslations("activity");
+  const tPeers = useTranslations("peers");
   const { mutate } = useSWRConfig();
   const path = usePathname();
 
@@ -163,7 +166,7 @@ export default function ActivityTable({
       headingTarget={headingTarget}
       paginationClassName={"max-w-[800px]"}
       as={"div"}
-      text={"Audit Events"}
+      text={t("auditEvents")}
       sorting={sorting}
       setSorting={setSorting}
       initialPageSize={25}
@@ -172,7 +175,7 @@ export default function ActivityTable({
       tableClassName={"px-8 pt-4"}
       columns={ActivityFeedColumnsTable}
       data={events}
-      searchPlaceholder={"Search by audit name, user, peer, meta..."}
+      searchPlaceholder={t("searchByAuditNameUserPeerMeta")}
       isLoading={isLoading}
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />
@@ -192,20 +195,17 @@ export default function ActivityTable({
               size={"large"}
             />
           }
-          title={"Get Started with NetBird"}
-          description={
-            "It looks like you don't have any connected machines.\n" +
-            "Get started by adding one to your network."
-          }
+          title={tPeers("getStarted")}
+          description={tPeers("getStartedDescription")}
           button={<AddPeerButton />}
           learnMore={
             <>
-              Learn more in our{" "}
+              {tPeers("learnMoreInOur")}{" "}
               <InlineLink
                 href={"https://docs.netbird.io/how-to/getting-started"}
                 target={"_blank"}
               >
-                Getting Started Guide
+                {tPeers("gettingStartedGuide")}
                 <ExternalLinkIcon size={12} />
               </InlineLink>
             </>

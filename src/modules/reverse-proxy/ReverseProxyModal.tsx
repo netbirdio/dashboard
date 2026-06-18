@@ -36,6 +36,7 @@ import {
   Users,
 } from "lucide-react";
 import { Callout } from "@components/Callout";
+import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import ReverseProxyIcon from "@/assets/icons/ReverseProxyIcon";
@@ -115,6 +116,8 @@ export default function ReverseProxyModal({
   const { permission } = usePermissions();
   const { confirm } = useDialog();
   const { handleCreateOrUpdateProxy } = useReverseProxies();
+  const t = useTranslations("reverseProxy");
+  const tCommon = useTranslations("common");
 
   const {
     subdomain,
@@ -455,8 +458,8 @@ export default function ReverseProxyModal({
         description:
           "This service has no authentication or access control rules configured. It will be publicly accessible to everyone on the internet. Are you sure you want to continue?",
         type: "warning",
-        confirmText: reverseProxy ? "Save Changes" : "Add Service",
-        cancelText: "Cancel",
+        confirmText: reverseProxy ? t("saveChanges") : t("addServiceBtn"),
+        cancelText: tCommon("cancel"),
         maxWidthClass: "max-w-lg",
       });
       if (!confirmed) return;
@@ -560,10 +563,11 @@ export default function ReverseProxyModal({
   };
 
   const modalTitle = useMemo(() => {
-    const prefix = reverseProxy ? "Edit" : "Add";
-    const label = serviceMode ? SERVICE_MODES[serviceMode].label : "Service";
-    return `${prefix} ${label}`;
-  }, [reverseProxy, serviceMode]);
+    if (!serviceMode)
+      return reverseProxy ? t("editServiceBtn") : t("addServiceBtn");
+    const prefix = reverseProxy ? tCommon("edit") : tCommon("create");
+    return `${prefix} ${SERVICE_MODES[serviceMode].label}`;
+  }, [reverseProxy, serviceMode, t, tCommon]);
 
   const modalDescription = useMemo(
     () =>
@@ -589,12 +593,12 @@ export default function ReverseProxyModal({
           <TabsList justify={"start"} className={"px-8"}>
             <TabsTrigger value={"targets"}>
               <ReverseProxyIcon size={14} />
-              Service
+              {t("service")}
             </TabsTrigger>
             {!isL4Mode && (
               <TabsTrigger value={"auth"} disabled={!canContinueToSettings}>
                 <LockKeyhole size={14} />
-                Authentication
+                {t("authentication")}
               </TabsTrigger>
             )}
             <TabsTrigger
@@ -602,11 +606,11 @@ export default function ReverseProxyModal({
               disabled={!canContinueToSettings}
             >
               <ShieldCheckIcon size={14} />
-              Access Control
+              {t("accessControl")}
             </TabsTrigger>
             <TabsTrigger value={"settings"} disabled={!canContinueToSettings}>
               <Settings size={14} />
-              Advanced Settings
+              {t("advancedSettings")}
             </TabsTrigger>
           </TabsList>
 
@@ -958,7 +962,7 @@ export default function ReverseProxyModal({
                 {tab === "targets" && (
                   <>
                     <ModalClose asChild>
-                      <Button variant={"secondary"}>Cancel</Button>
+                      <Button variant={"secondary"}>{tCommon("cancel")}</Button>
                     </ModalClose>
                     <Button
                       variant={"primary"}
@@ -967,7 +971,7 @@ export default function ReverseProxyModal({
                       }
                       disabled={!canContinueToSettings}
                     >
-                      Continue
+                      {tCommon("next")}
                     </Button>
                   </>
                 )}
@@ -978,13 +982,13 @@ export default function ReverseProxyModal({
                       variant={"secondary"}
                       onClick={() => setTab("targets")}
                     >
-                      Back
+                      {tCommon("back")}
                     </Button>
                     <Button
                       variant={"primary"}
                       onClick={() => setTab("access-control")}
                     >
-                      Continue
+                      {tCommon("next")}
                     </Button>
                   </>
                 )}
@@ -995,14 +999,14 @@ export default function ReverseProxyModal({
                       variant={"secondary"}
                       onClick={() => setTab(isL4Mode ? "targets" : "auth")}
                     >
-                      Back
+                      {tCommon("back")}
                     </Button>
                     <Button
                       variant={"primary"}
                       onClick={() => setTab("settings")}
                       disabled={accessControlHasErrors}
                     >
-                      Continue
+                      {tCommon("next")}
                     </Button>
                   </>
                 )}
@@ -1013,7 +1017,7 @@ export default function ReverseProxyModal({
                       variant={"secondary"}
                       onClick={() => setTab("access-control")}
                     >
-                      Back
+                      {tCommon("back")}
                     </Button>
                     <Button
                       variant={"primary"}
@@ -1026,7 +1030,7 @@ export default function ReverseProxyModal({
                       onClick={handleSubmit}
                     >
                       <PlusCircle size={16} />
-                      Add Service
+                      {t("addServiceBtn")}
                     </Button>
                   </>
                 )}
@@ -1034,7 +1038,7 @@ export default function ReverseProxyModal({
             ) : (
               <>
                 <ModalClose asChild>
-                  <Button variant={"secondary"}>Cancel</Button>
+                  <Button variant={"secondary"}>{tCommon("cancel")}</Button>
                 </ModalClose>
                 <Button
                   variant={"primary"}
@@ -1046,7 +1050,7 @@ export default function ReverseProxyModal({
                   }
                   onClick={handleSubmit}
                 >
-                  Save Changes
+                  {t("saveChanges")}
                 </Button>
               </>
             )}
