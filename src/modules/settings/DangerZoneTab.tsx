@@ -42,7 +42,7 @@ export default function DangerZoneTab({ account }: Props) {
 				.catch((error) => reject(error));
 		});
 
-			notify({
+		notify({
 			title: t("deleteAccountTitle"),
 			description: t("deleteAccountSuccess"),
 			promise: deletePromise,
@@ -50,7 +50,7 @@ export default function DangerZoneTab({ account }: Props) {
 		});
 	};
 
-			const handleConfirm = async () => {
+	const handleConfirm = async () => {
 		const choice = await confirm({
 			title: t("deleteAccountTitle"),
 			description: t("deleteAccountConfirm"),
@@ -87,15 +87,13 @@ export default function DangerZoneTab({ account }: Props) {
 					>
 						<div className={"px-8 py-6"}>
 							<p className={"text-xl font-medium mb-2 !text-red-50"}>
-							{t("deleteAccountCardTitle")}
-						</p>
-						<p className={"!text-red-50/80"}>
-							{t("deleteAccountWarning")}
-						</p>
-						<div className={"mt-6"}>
-							<Button variant={"danger"} onClick={handleConfirm} size={"xs"}>
-								{t("deleteAccountButton")}
-							</Button>
+								{t("deleteAccountCardTitle")}
+							</p>
+							<p className={"!text-red-50/80"}>{t("deleteAccountWarning")}</p>
+							<div className={"mt-6"}>
+								<Button variant={"danger"} onClick={handleConfirm} size={"xs"}>
+									{t("deleteAccountButton")}
+								</Button>
 							</div>
 						</div>
 					</Card>

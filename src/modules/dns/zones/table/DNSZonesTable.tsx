@@ -33,7 +33,6 @@ import { DNS_ZONE_DOCS_LINK, DNSZone } from "@/interfaces/DNS";
 import { useDNSZones } from "@/modules/dns/zones/DNSZonesProvider";
 import DNSRecordsTable from "@/modules/dns/zones/records/DNSRecordsTable";
 import { DNSZonesActionCell } from "@/modules/dns/zones/table/DNSZonesActionCell";
-import { DNSZonesActiveCell } from "@/modules/dns/zones/table/DNSZonesActiveCell";
 import { DNSZonesGroupCell } from "@/modules/dns/zones/table/DNSZonesGroupCell";
 import { DNSZonesNameCell } from "@/modules/dns/zones/table/DNSZonesNameCell";
 import { DNSZonesRecordsCell } from "@/modules/dns/zones/table/DNSZonesRecordsCell";
@@ -53,10 +52,6 @@ export const DNSZonesColumns: ColumnDef<DNSZone>[] = [
   },
   {
     accessorKey: "enabled",
-    header: ({ column }) => (
-      <DataTableHeader column={column}>Active</DataTableHeader>
-    ),
-    cell: ({ row }) => <DNSZonesActiveCell zone={row.original} />,
   },
   {
     accessorKey: "records",
@@ -231,7 +226,11 @@ export default function DNSZonesTable({
       aboveTable={(table) => (
         <TableFilterChips table={table} filters={filterDefs} />
       )}
-      columnVisibility={{ searchString: false, group_names_filter: false }}
+      columnVisibility={{
+        searchString: false,
+        group_names_filter: false,
+        enabled: false,
+      }}
       renderExpandedRow={(zone) => {
         const hasRecords = (zone?.records?.length ?? 0) > 0;
         if (!hasRecords) return;

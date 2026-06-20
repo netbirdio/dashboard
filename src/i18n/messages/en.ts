@@ -611,7 +611,13 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     deleteAccountLoading: "Deleting the account...",
     deleteAccountCardTitle: "Delete NetBird account",
     deleteAccountWarning: "Before proceeding to delete your Netbird account, please be aware that this action is irreversible. Once your account is deleted, you will permanently lose access to all associated data, including your peers, users, groups, policies, and routes.",
-    deleteAccountButton: "Delete Account"
+    deleteAccountButton: "Delete Account",
+    endpointUrls: "Endpoint URLs",
+    endpointUrlsHelp: "Add these to your identity provider configuration",
+    redirectCallback: "Redirect / Callback",
+    logoutLabel: "Logout",
+    notAllProvidersLogout: "Not all identity providers support logout.",
+    learnMore: "Learn more"
   },
   reverseProxy: {
     title: "Reverse Proxy",

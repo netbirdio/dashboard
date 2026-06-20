@@ -611,7 +611,13 @@ disable2FA: "禁用两步验证",
     deleteAccountLoading: "正在删除账户...",
     deleteAccountCardTitle: "删除 NetBird 账户",
     deleteAccountWarning: "在继续删除 NetBird 账户之前，请注意此操作不可撤销。一旦您的账户被删除，您将永久失去对所有关联数据的访问权限，包括您的节点、用户、组、策略和路由。",
-    deleteAccountButton: "删除账户"
+    deleteAccountButton: "删除账户",
+    endpointUrls: "端点 URL",
+    endpointUrlsHelp: "将这些添加到您的身份提供者配置中",
+    redirectCallback: "重定向 / 回调",
+    logoutLabel: "登出",
+    notAllProvidersLogout: "并非所有身份提供者都支持登出。",
+    learnMore: "了解更多"
   },
   reverseProxy: {
     title: "反向代理",
