@@ -20,6 +20,7 @@ import AppleIcon from "@/assets/icons/AppleIcon";
 import WindowsIcon from "@/assets/icons/WindowsIcon";
 import { Process, ProcessCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
+import { useTranslations } from "next-intl";
 
 type Props = {
   value?: ProcessCheck;
@@ -58,6 +59,7 @@ export const PostureCheckProcess = ({ value, onChange, disabled }: Props) => {
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations("common");
   const [processes, setProcesses] = useState<Process[]>(
     value?.processes
       ? value.processes.map((p) => {
@@ -288,7 +290,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}

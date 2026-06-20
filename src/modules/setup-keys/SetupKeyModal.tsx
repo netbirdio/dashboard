@@ -37,6 +37,7 @@ import { Group } from "@/interfaces/Group";
 import { SetupKey } from "@/interfaces/SetupKey";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import SetupModal from "@/modules/setup-netbird-modal/SetupModal";
+import { useTranslations } from "next-intl";
 
 type Props = {
   children?: React.ReactNode;
@@ -57,6 +58,7 @@ export default function SetupKeyModal({
   showOnlyRoutingPeerOS,
   groups,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
   const [successModal, setSuccessModal] = useState(false);
   const [setupKey, setSetupKey] = useState<SetupKey>();
   const [installModal, setInstallModal] = useState(false);
@@ -170,6 +172,7 @@ export function SetupKeyModalContent({
   predefinedName = "",
   groups,
 }: Readonly<ModalProps>) {
+  const t = useTranslations("common");
   const setupKeyRequest = useApiCall<SetupKey>("/setup-keys", true);
   const { mutate } = useSWRConfig();
 
@@ -380,7 +383,7 @@ export function SetupKeyModalContent({
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
 
           <Button

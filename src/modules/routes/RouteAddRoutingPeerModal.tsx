@@ -24,6 +24,7 @@ import { useRoutes } from "@/contexts/RoutesProvider";
 import { Peer } from "@/interfaces/Peer";
 import { GroupedRoute, Route } from "@/interfaces/Route";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
+import { useTranslations } from "next-intl";
 
 type Props = {
   groupedRoute?: GroupedRoute;
@@ -38,6 +39,7 @@ export default function RouteAddRoutingPeerModal({
   setModal,
   peer,
 }: Props) {
+  const t = useTranslations("common");
   return (
     <Modal open={modal} onOpenChange={setModal}>
       {modal && (
@@ -58,6 +60,7 @@ type ModalProps = {
 };
 
 function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
+  const t = useTranslations("common");
   const { createRoute } = useRoutes();
 
   const [routingPeer, setRoutingPeer] = useState<Peer | undefined>(
@@ -234,7 +237,7 @@ function Content({ onSuccess, groupedRoute, peer }: ModalProps) {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
 
           <Button

@@ -21,6 +21,7 @@ import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
 import { Role, User } from "@/interfaces/User";
 import { UserRoleSelector } from "@/modules/users/UserRoleSelector";
+import { useTranslations } from "next-intl";
 
 type Props = {
   children: React.ReactNode;
@@ -46,6 +47,8 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
   const { mutate } = useSWRConfig();
   const [name, setName] = useState("");
   const [role, setRole] = useState("user");
+
+  const t = useTranslations("common");
 
   const create = async () => {
     notify({
@@ -123,7 +126,7 @@ export function ServiceUserModalContent({ onSuccess }: Readonly<ModalProps>) {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
 
           <Button

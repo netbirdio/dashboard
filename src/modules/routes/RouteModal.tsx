@@ -58,6 +58,7 @@ import { Route } from "@/interfaces/Route";
 import { AccessControlModalContent } from "@/modules/access-control/AccessControlModal";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { RoutingPeerMasqueradeSwitch } from "@/modules/networks/routing-peers/RoutingPeerMasqueradeSwitch";
+import { useTranslations } from "next-intl";
 
 type Props = {
   children?: React.ReactNode;
@@ -72,6 +73,7 @@ export default function RouteModal({
   setOpen,
   distributionGroups,
 }: Props) {
+  const t = useTranslations("common");
   const { confirm } = useDialog();
   const router = useRouter();
   const [routePolicyModal, setRoutePolicyModal] = useState(false);
@@ -158,6 +160,7 @@ export function RouteModalContent({
   isFirstExitNode = false,
   distributionGroups,
 }: ModalProps) {
+  const t = useTranslations("common");
   const { createRoute } = useRoutes();
   const [tab, setTab] = useState(
     exitNode && peer ? "access-control" : "network",
@@ -806,7 +809,7 @@ export function RouteModalContent({
         <div className={"flex gap-3 w-full justify-end"}>
           {(tab == "network" || (tab == "access-control" && exitNode)) && (
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("cancel")}</Button>
             </ModalClose>
           )}
 

@@ -39,6 +39,7 @@ import {
   windowsKernelVersions,
 } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
+import { useTranslations } from "next-intl";
 
 type Props = {
   value?: OperatingSystemVersionCheck;
@@ -81,6 +82,7 @@ export const PostureCheckOperatingSystem = ({
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations("common");
   const [tab] = useState(String(OperatingSystem.LINUX));
 
   const firstTimeCheck = value === undefined;
@@ -244,7 +246,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
           <Button
             disabled={!!versionError}

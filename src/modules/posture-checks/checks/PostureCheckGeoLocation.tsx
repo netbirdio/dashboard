@@ -20,6 +20,7 @@ import * as React from "react";
 import { useState } from "react";
 import { GeoLocation, GeoLocationCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
+import { useTranslations } from "next-intl";
 
 type Props = {
   value?: GeoLocationCheck;
@@ -69,6 +70,7 @@ export const PostureCheckGeoLocation = ({
 };
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations("common");
   const [allowDenyLocation, setAllowDenyLocation] = useState<string>(
     value?.action ? value.action : "allow",
   );
@@ -190,7 +192,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}

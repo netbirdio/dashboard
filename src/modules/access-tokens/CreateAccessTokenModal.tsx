@@ -31,6 +31,7 @@ import { useSWRConfig } from "swr";
 import useCopyToClipboard from "@/hooks/useCopyToClipboard";
 import { AccessToken } from "@/interfaces/AccessToken";
 import { User } from "@/interfaces/User";
+import { useTranslations } from "next-intl";
 
 type Props = {
   children: React.ReactNode;
@@ -41,6 +42,7 @@ export default function CreateAccessTokenModal({
   children,
   user,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
   const [modal, setModal] = useState(false);
   const [successModal, setSuccessModal] = useState(false);
   const [token, setToken] = useState<string>("");
@@ -132,6 +134,7 @@ export function AccessTokenModalContent({
   onSuccess,
   user,
 }: Readonly<ModalProps>) {
+  const t = useTranslations("common");
   const tokenRequest = useApiCall<AccessToken>(`/users/${user.id}/tokens`);
   const { mutate } = useSWRConfig();
 
@@ -221,7 +224,7 @@ export function AccessTokenModalContent({
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
 
           <Button

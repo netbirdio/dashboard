@@ -43,6 +43,7 @@ import { Peer } from "@/interfaces/Peer";
 import { Route } from "@/interfaces/Route";
 import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { RoutingPeerMasqueradeSwitch } from "@/modules/networks/routing-peers/RoutingPeerMasqueradeSwitch";
+import { useTranslations } from "next-intl";
 
 type Props = {
   route: Route;
@@ -57,6 +58,7 @@ export default function RouteUpdateModal({
   onOpenChange,
   cell,
 }: Props) {
+  const t = useTranslations("common");
   return (
     <>
       <Modal open={open} onOpenChange={onOpenChange} key={open ? 1 : 0}>
@@ -79,6 +81,7 @@ type ModalProps = {
 };
 
 function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
+  const t = useTranslations("common");
   const { updateRoute } = useRoutes();
   const { peers } = usePeers();
   const { groups: allGroups } = useGroups();
@@ -528,7 +531,7 @@ function RouteUpdateModalContent({ onSuccess, route, cell }: ModalProps) {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
 
           <Button

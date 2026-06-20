@@ -14,97 +14,97 @@ import { useLoggedInUser } from "@/contexts/UsersProvider";
 import { Account } from "@/interfaces/Account";
 
 type Props = {
-  account: Account;
+	account: Account;
 };
 const config = loadConfig();
 
 export default function DangerZoneTab({ account }: Props) {
-  const t = useTranslations("settings");
-  const { confirm } = useDialog();
-  const deleteRequest = useApiCall<Account>("/accounts/" + account.id);
-  const { logout } = useLoggedInUser();
+	const t = useTranslations("settings");
+	const { confirm } = useDialog();
+	const deleteRequest = useApiCall<Account>("/accounts/" + account.id);
+	const { logout } = useLoggedInUser();
 
-  const deleteAccount = async () => {
-    const deletePromise = new Promise<void>((resolve, reject) => {
-      return deleteRequest
-        .del()
-        .then(() => {
-          // Clear browser storage only after confirmed account deletion
-          if (typeof window !== "undefined") {
-            localStorage.clear();
-            sessionStorage.clear();
-            // Optionally, clear cookies if needed
-            // document.cookie = ... (set cookies to expire)
-          }
-          logout().then();
-          resolve();
-        })
-        .catch((error) => reject(error));
-    });
+	const deleteAccount = async () => {
+		const deletePromise = new Promise<void>((resolve, reject) => {
+			return deleteRequest
+				.del()
+				.then(() => {
+					// Clear browser storage only after confirmed account deletion
+					if (typeof window !== "undefined") {
+						localStorage.clear();
+						sessionStorage.clear();
+						// Optionally, clear cookies if needed
+						// document.cookie = ... (set cookies to expire)
+					}
+					logout().then();
+					resolve();
+				})
+				.catch((error) => reject(error));
+		});
 
-    notify({
-      title: "Delete NetBird account",
-      description: "NetBird account was successfully deleted.",
-      promise: deletePromise,
-      loadingMessage: "Deleting the account...",
-    });
-  };
+		notify({
+			title: "Delete NetBird account",
+			description: "NetBird account was successfully deleted.",
+			promise: deletePromise,
+			loadingMessage: "Deleting the account...",
+		});
+	};
 
-  const handleConfirm = async () => {
-    const choice = await confirm({
-      title: "Delete NetBird account",
-      description:
-        "Are you sure you want to delete your NetBird account? This action cannot be undone.",
-      confirmText: "Delete",
-      cancelText: "Cancel",
-      type: "danger",
-    });
-    if (!choice) return;
-    deleteAccount().then();
-  };
+	const handleConfirm = async () => {
+		const choice = await confirm({
+			title: "Delete NetBird account",
+			description:
+				"Are you sure you want to delete your NetBird account? This action cannot be undone.",
+			confirmText: "Delete",
+			cancelText: "Cancel",
+			type: "danger",
+		});
+		if (!choice) return;
+		deleteAccount().then();
+	};
 
-  return (
-    <Tabs.Content value={"danger-zone"}>
-      <div className={"p-default py-6"}>
-        <Breadcrumbs>
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={t("title")}
-            icon={<SettingsIcon size={13} />}
-          />
-          <Breadcrumbs.Item
-            href={"/settings"}
-            label={t("dangerZone")}
-            icon={<AlertOctagonIcon size={14} />}
-            active
-          />
-        </Breadcrumbs>
-        <h1>{t("dangerZone")}</h1>
-        <div className={"gap-6 mt-6 max-w-lg"}>
-          <Card
-            className={
-              "w-full flex flex-col gap-2 border-red-600 bg-red-950/50"
-            }
-          >
-            <div className={"px-8 py-6"}>
-              <p className={"text-xl font-medium mb-2 !text-red-50"}>
-                Delete NetBird account
-              </p>
-              <p className={"!text-red-50/80"}>
-                Before proceeding to delete your Netbird account, please be
-                aware that this action is irreversible. Once your account is
-                deleted, you will permanently lose access to all associated
-                data, including your peers, users, groups, policies, and routes.
-              </p>
-              <div className={"mt-6"}>
-                <Button variant={"danger"} onClick={handleConfirm} size={"xs"}>
-                  Delete Account
-                </Button>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </Tabs.Content>
-  );
+	return (
+		<Tabs.Content value={"danger-zone"}>
+			<div className={"p-default py-6"}>
+				<Breadcrumbs>
+					<Breadcrumbs.Item
+						href={"/settings"}
+						label={t("title")}
+						icon={<SettingsIcon size={13} />}
+					/>
+					<Breadcrumbs.Item
+						href={"/settings"}
+						label={t("dangerZone")}
+						icon={<AlertOctagonIcon size={14} />}
+						active
+					/>
+				</Breadcrumbs>
+				<h1>{t("dangerZone")}</h1>
+				<div className={"gap-6 mt-6 max-w-lg"}>
+					<Card
+						className={
+							"w-full flex flex-col gap-2 border-red-600 bg-red-950/50"
+						}
+					>
+						<div className={"px-8 py-6"}>
+							<p className={"text-xl font-medium mb-2 !text-red-50"}>
+								Delete NetBird account
+							</p>
+							<p className={"!text-red-50/80"}>
+								Before proceeding to delete your Netbird account, please be
+								aware that this action is irreversible. Once your account is
+								deleted, you will permanently lose access to all associated
+								data, including your peers, users, groups, policies, and routes.
+							</p>
+							<div className={"mt-6"}>
+								<Button variant={"danger"} onClick={handleConfirm} size={"xs"}>
+									Delete Account
+								</Button>
+							</div>
+						</div>
+					</Card>
+				</div>
+			</div>
+		</Tabs.Content>
+	);
 }

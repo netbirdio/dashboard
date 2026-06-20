@@ -17,6 +17,7 @@ import {
   UserIcon,
 } from "lucide-react";
 import React, { useMemo, useReducer, useRef } from "react";
+import { useTranslations } from "next-intl";
 import { useHasChanges } from "@/hooks/useHasChanges";
 import type { HeaderAuthConfig } from "@/interfaces/ReverseProxy";
 
@@ -201,6 +202,7 @@ export default function AuthHeaderModal({
   onSave,
   onRemove,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
   const [items, dispatch] = useReducer(
     headersReducer,
     currentHeaders,
@@ -280,7 +282,7 @@ export default function AuthHeaderModal({
                 </Button>
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"
@@ -296,7 +298,7 @@ export default function AuthHeaderModal({
                 <div />
                 <div className="flex gap-3">
                   <ModalClose asChild>
-                    <Button variant="secondary">Cancel</Button>
+                    <Button variant="secondary">{t("cancel")}</Button>
                   </ModalClose>
                   <Button
                     variant="primary"

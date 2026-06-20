@@ -11,6 +11,7 @@ import {
 } from "@components/modal/Modal";
 import ModalHeader from "@components/modal/ModalHeader";
 import { notify } from "@components/Notification";
+import { useTranslations } from "next-intl";
 import {
   Select,
   SelectContent,
@@ -80,6 +81,7 @@ export default function IdentityProviderModal({
   onClose,
   provider,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
   const { mutate } = useSWRConfig();
   const { permission } = usePermissions();
   const isEditing = !!provider;
@@ -277,7 +279,7 @@ export default function IdentityProviderModal({
           <ModalFooter className={"items-center"}>
             <div className={"flex gap-3 w-full justify-end"}>
               <ModalClose asChild={true}>
-                <Button variant={"secondary"}>Cancel</Button>
+                <Button variant={"secondary"}>{t("cancel")}</Button>
               </ModalClose>
 
               <Button

@@ -15,6 +15,7 @@ import useGroupHelper from "@/modules/groups/useGroupHelper";
 import { useNetworksContext } from "@/modules/networks/NetworkProvider";
 import { FolderGit2 } from "lucide-react";
 import Separator from "@components/Separator";
+import { useTranslations } from "next-intl";
 
 type ResourceGroupModalProps = {
   resource?: NetworkResource;
@@ -55,6 +56,7 @@ const ResourceGroupModalContent = ({
   network,
   onUpdated,
 }: ModalProps) => {
+  const t = useTranslations("common");
   const update = useApiCall<NetworkResource>(
     `/networks/${network?.id}/resources/${resource?.id}`,
   ).put;
@@ -106,7 +108,7 @@ const ResourceGroupModalContent = ({
       <ModalFooter className={"items-center"}>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
 
           <Button variant={"primary"} onClick={updateResource}>

@@ -22,6 +22,7 @@ import { notify } from "@/components/Notification";
 import Separator from "@/components/Separator";
 import { Workload } from "@/interfaces/Job";
 import { useApiCall } from "@/utils/api";
+import { useTranslations } from "next-intl";
 
 type Props = {
   peerID: string;
@@ -29,6 +30,7 @@ type Props = {
 };
 
 export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
+  const t = useTranslations("common");
   const jobRequest = useApiCall<Workload>(`/peers/${peerID}/jobs`, true);
   const { mutate } = useSWRConfig();
 
@@ -177,7 +179,7 @@ export function CreateDebugJobModalContent({ peerID, onSuccess }: Props) {
       <ModalFooter className="items-center">
         <div className="flex gap-3 w-full justify-end">
           <ModalClose asChild>
-            <Button variant="secondary">Cancel</Button>
+            <Button variant="secondary">{t("cancel")}</Button>
           </ModalClose>
           <Button
             variant="primary"

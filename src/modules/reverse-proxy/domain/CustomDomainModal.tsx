@@ -28,6 +28,7 @@ import {
   SelectDropdown,
   SelectOption,
 } from "@components/select/SelectDropdown";
+import { useTranslations } from "next-intl";
 
 type Props = {
   open: boolean;
@@ -40,6 +41,7 @@ export const CustomDomainModal = ({
   onOpenChange,
   onDomainSubmit,
 }: Props) => {
+  const t = useTranslations("common");
   const { domains } = useReverseProxies();
   const [domain, setDomain] = useState("");
   const [selectedCluster, setSelectedCluster] = useState("");
@@ -178,7 +180,7 @@ export const CustomDomainModal = ({
           </div>
           <div className={"flex gap-3 w-full justify-end"}>
             <ModalClose asChild={true}>
-              <Button variant={"secondary"}>Cancel</Button>
+              <Button variant={"secondary"}>{t("cancel")}</Button>
             </ModalClose>
 
             <Button

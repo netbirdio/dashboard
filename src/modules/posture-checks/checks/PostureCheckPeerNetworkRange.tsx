@@ -20,6 +20,7 @@ import * as React from "react";
 import { useMemo, useState } from "react";
 import { PeerNetworkRangeCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckCard } from "@/modules/posture-checks/ui/PostureCheckCard";
+import { useTranslations } from "next-intl";
 
 type Props = {
   value?: PeerNetworkRangeCheck;
@@ -67,6 +68,7 @@ interface NetworkRange {
 }
 
 const CheckContent = ({ value, onChange, disabled }: Props) => {
+  const t = useTranslations("common");
   const [allowOrDeny, setAllowOrDeny] = useState<string>(
     value?.action ? value.action : "allow",
   );
@@ -205,7 +207,7 @@ const CheckContent = ({ value, onChange, disabled }: Props) => {
         </div>
         <div className={"flex gap-3 w-full justify-end"}>
           <ModalClose asChild={true}>
-            <Button variant={"secondary"}>Cancel</Button>
+            <Button variant={"secondary"}>{t("cancel")}</Button>
           </ModalClose>
           <Button
             variant={"primary"}
