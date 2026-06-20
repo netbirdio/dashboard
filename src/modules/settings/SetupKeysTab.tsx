@@ -56,21 +56,20 @@ export default function SetupKeysTab() {
 				</Breadcrumbs>
 				<h1>{t("setupKeys")}</h1>
 				<Paragraph>
-					Setup keys are pre-authentication keys that allow to register new
-					machines in your network.{" "}
+					{t("setupKeysDescription")}{" "}
 					<InlineLink
 						href={
 							"https://docs.netbird.io/how-to/register-machines-using-setup-keys"
 						}
 						target={"_blank"}
 					>
-						Learn more
+						{t("learnMore")}
 						<ExternalLinkIcon size={12} />
 					</InlineLink>
 				</Paragraph>
 			</div>
 			<RestrictedAccess
-				page={"Setup Keys"}
+				page={t("setupKeys")}
 				hasAccess={permission.setup_keys.read}
 			>
 				<Suspense fallback={<SkeletonTable />}>

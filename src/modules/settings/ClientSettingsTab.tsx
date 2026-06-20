@@ -229,7 +229,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 						onClick={saveChanges}
 						data-cy={"save-clients-settings"}
 					>
-						Save Changes
+						{t("saveChanges")}
 					</Button>
 				</div>
 
@@ -237,24 +237,21 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 					<div className={"flex flex-col relative"}>
 						<Label>
 							<RefreshCcw size={15} />
-							Automatic Updates
+							{t("automaticUpdates")}
 							<SmallBadge
-								text={"Beta"}
+								text={t("beta")}
 								variant={"sky"}
 								className={"text-[9px] leading-none py-[3px] px-[5px]"}
 								textClassName={"top-0"}
 							/>
 						</Label>
 						<HelpText>
-							Configure how NetBird clients receive update notifications. When
-							enabled, users will be prompted to install the selected version.
-							This requires at least NetBird{" "}
-							<span className={"text-white font-medium"}>v0.61.0</span>.{" "}
+							{t("automaticUpdatesHelp")}{" "}
 							<InlineLink
 								href={"https://docs.netbird.io/manage/peers/auto-update"}
 								target={"_blank"}
 							>
-								Learn more
+								{t("learnMore")}
 								<ExternalLinkIcon size={12} />
 							</InlineLink>
 						</HelpText>
@@ -266,8 +263,8 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 							/>
 							<Input
 								value={autoUpdateCustomVersion}
-								customPrefix={"Version"}
-								placeholder={"e.g., 0.52.2"}
+								customPrefix={t("versionCustomPrefix")}
+								placeholder={t("versionCustomPlaceholder")}
 								error={versionError}
 								errorTooltip={true}
 								disabled={autoUpdateMethod !== "custom"}
@@ -283,11 +280,11 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 							label={
 								<>
 									<AlertTriangle size={15} className={"text-yellow-400"} />
-									Force Automatic Updates
+									{t("forceAutomaticUpdates")}
 								</>
 							}
 							helpText={
-								"When enabled, updates are installed automatically in the background without user interaction."
+								t("forceAutomaticUpdatesHelp")
 							}
 							disabled={
 								!permission.settings.update || autoUpdateMethod === "disabled"
@@ -304,9 +301,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 									/>
 								}
 							>
-								Enabling automatic updates will restart the NetBird client
-								during updates, which can temporarily disrupt active
-								connections. Use with caution in production environments.
+								{t("automaticUpdatesWarning")}
 							</Callout>
 						)}
 					</div>
@@ -315,19 +310,17 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 						<div>
 							<Label>
 								<ReverseProxyIcon size={15} className={"fill-nb-gray-300"} />
-								Expose Services from CLI
+								{t("exposeServicesFromCli")}
 							</Label>
 							<HelpText>
-								Allow peers to expose local services through the NetBird reverse
-								proxy using the CLI. <br /> This requires at least NetBird{" "}
-								<span className={"text-white font-medium"}>v0.66.0</span>.{" "}
+								{t("exposeServicesFromCliHelp")}{" "}
 								<InlineLink
 									href={
 										"https://docs.netbird.io/manage/reverse-proxy/expose-from-cli"
 									}
 									target={"_blank"}
 								>
-									Learn more
+									{t("learnMore")}
 									<ExternalLinkIcon size={12} />
 								</InlineLink>
 							</HelpText>
@@ -337,9 +330,9 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 							className={"mt-2"}
 							value={peerExposeEnabled}
 							onChange={setPeerExposeEnabled}
-							label={"Enable Peer Expose"}
+							label={t("enablePeerExpose")}
 							helpText={
-								"When enabled, peers can expose local HTTP services accessible via a public URL."
+								t("enablePeerExposeHelp")
 							}
 							disabled={!permission.settings.update}
 						/>
@@ -353,15 +346,14 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 							)}
 						>
 							<div className={"mt-2"}>
-								<Label>Allowed peer groups</Label>
+								<Label>{t("allowedPeerGroups")}</Label>
 								<HelpText>
-									Select which peer groups are allowed to expose services. At
-									least one group is required.
+									{t("allowedPeerGroupsHelp")}
 								</HelpText>
 								<PeerGroupSelector
 									values={peerExposeGroups}
 									onChange={setPeerExposeGroups}
-									placeholder="Select peer groups..."
+									placeholder={t("selectPeerGroups")}
 								/>
 							</div>
 						</div>
@@ -370,18 +362,16 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 					<div>
 						<Label>
 							<FlaskConicalIcon size={15} />
-							Experimental
+							{t("experimental")}
 						</Label>
 
 						<HelpText>
-							Lazy connections are an experimental feature. Functionality and
-							behavior may evolve. Instead of maintaining always-on connections,
-							NetBird activates them on-demand based on activity or signaling.{" "}
+							{t("experimentalHelp")}{" "}
 							<InlineLink
 								href={"https://docs.netbird.io/how-to/lazy-connection"}
 								target={"_blank"}
 							>
-								Learn more
+								{t("learnMore")}
 								<ExternalLinkIcon size={12} />
 							</InlineLink>
 						</HelpText>
@@ -392,7 +382,7 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
 							label={
 								<>
 									<ClockFadingIcon size={15} />
-									Enable Lazy Connections
+									{t("enableLazyConnections")}
 								</>
 							}
 							helpText={

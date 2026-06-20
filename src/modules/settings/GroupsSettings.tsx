@@ -158,7 +158,7 @@ export default function GroupsSettings({ account }: Props) {
 						disabled={!hasChanges}
 						onClick={saveChanges}
 					>
-						Save Changes
+						{t("saveChanges")}
 					</Button>
 				</div>
 
@@ -169,11 +169,11 @@ export default function GroupsSettings({ account }: Props) {
 						label={
 							<>
 								<FolderInput size={15} />
-								Enable user group propagation
+								{t("enableGroupPropagation")}
 							</>
 						}
 						helpText={
-							"Allow group propagation from user's auto-groups to peers, sharing membership information."
+							t("groupPropagationHelp")
 						}
 						disabled={!permission.settings.update}
 					/>
@@ -184,11 +184,11 @@ export default function GroupsSettings({ account }: Props) {
 							label={
 								<>
 									<FolderSync size={15} />
-									Enable JWT group sync
+									{t("enableJwtGroupSync")}
 								</>
 							}
 							helpText={
-								"Extract & sync groups from JWT claims with user's auto-groups, auto-creating groups from tokens."
+								t("jwtGroupSyncHelp")
 							}
 							disabled={!permission.settings.update}
 						/>
@@ -212,11 +212,9 @@ export default function GroupsSettings({ account }: Props) {
 										)}
 									>
 										<div>
-											<Label>JWT claim</Label>
+											<Label>{t("jwtClaim")}</Label>
 											<HelpText>
-												Specify the JWT claim for extracting group names, e.g.,
-												roles or groups, to add to account groups (this claim
-												should contain a list of group names).
+												{t("jwtClaimHelp")}
 											</HelpText>
 											<Input
 												customPrefix={
@@ -225,7 +223,7 @@ export default function GroupsSettings({ account }: Props) {
 												onKeyDown={(event) => {
 													if (event.code === "Space") event.preventDefault();
 												}}
-												placeholder={"e.g., roles"}
+												placeholder={t("jwtClaimPlaceholder")}
 												value={jwtGroupsClaimName}
 												onChange={(e) => {
 													setJwtGroupsClaimName(
@@ -235,11 +233,9 @@ export default function GroupsSettings({ account }: Props) {
 											/>
 										</div>
 										<div>
-											<Label>JWT allow groups</Label>
+											<Label>{t("jwtAllowGroups")}</Label>
 											<HelpText>
-												Limit access to NetBird for the specified group names,
-												e.g., NetBird users. To use the groups, you need to
-												configure them first in your IdP.
+												{t("jwtAllowGroupsHelp")}
 											</HelpText>
 											<div>
 												{jwtAllowGroups.length > 0 && (
@@ -280,7 +276,7 @@ export default function GroupsSettings({ account }: Props) {
 															className={"text-nb-gray-300"}
 														/>
 													}
-													placeholder={"Add a group and press Enter"}
+													placeholder={t("addGroupPlaceholder")}
 													onKeyDown={(e) => {
 														if (e.key === "Enter") {
 															e.preventDefault();
@@ -305,8 +301,7 @@ export default function GroupsSettings({ account }: Props) {
 												}
 											>
 												<AlertCircle size={14} />
-												To prevent losing access, ensure you are part of this
-												group.
+												{t("jwtGroupAccessWarning")}
 											</div>
 										)}
 									</div>

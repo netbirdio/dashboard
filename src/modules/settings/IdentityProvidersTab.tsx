@@ -155,7 +155,7 @@ export default function IdentityProvidersTab() {
 		{
 			accessorKey: "name",
 			header: ({ column }) => (
-				<DataTableHeader column={column}>Name</DataTableHeader>
+				<DataTableHeader column={column}>{t("name")}</DataTableHeader>
 			),
 			sortingFn: "text",
 			cell: ({ row }) => (
@@ -170,7 +170,7 @@ export default function IdentityProvidersTab() {
 		{
 			accessorKey: "type",
 			header: ({ column }) => (
-				<DataTableHeader column={column}>Type</DataTableHeader>
+				<DataTableHeader column={column}>{t("type")}</DataTableHeader>
 			),
 			cell: ({ row }) => (
 				<span className="text-nb-gray-400">
@@ -208,8 +208,7 @@ export default function IdentityProvidersTab() {
 					<div>
 						<h1>{t("identityProviders")}</h1>
 						<Paragraph>
-							Configure identity providers for user authentication in your
-							network.
+							{t("configureIdpDescription")}
 						</Paragraph>
 					</div>
 				</div>

@@ -177,11 +177,11 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 	const networkRangeV6Error = useMemo(() => {
 		if (networkRangeV6 == "") return "";
 		if (!networkRangeV6.includes(":") || !cidr.isValidCIDR(networkRangeV6)) {
-			return "Please enter a valid IPv6 CIDR range, e.g. fd00:1234::/64";
+			return t("ipv6FormatError");
 		}
 		const prefixLen = parseInt(networkRangeV6.split("/")[1], 10);
 		if (prefixLen < 48 || prefixLen > 112) {
-			return "Prefix length must be between /48 and /112";
+			return t("ipv6PrefixLengthError");
 		}
 	}, [networkRangeV6]);
 
@@ -216,7 +216,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 						}
 						onClick={saveChanges}
 					>
-						Save Changes
+						{t("saveChanges")}
 					</Button>
 				</div>
 
@@ -228,17 +228,15 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 							}
 						>
 							<div className={"min-w-[330px]"}>
-								<Label>DNS Domain</Label>
+								<Label>{t("dnsDomain")}</Label>
 								<HelpText>
-									Specify a custom peer DNS domain for your network. This should
-									not point to a domain that is already in use elsewhere, to
-									avoid overriding DNS results.
+									{t("dnsDomainHelp")}
 								</HelpText>
 							</div>
 							<div className={"w-full"}>
 								<Input
 									placeholder={
-										isNetBirdHosted() ? "netbird.cloud" : "netbird.selfhosted"
+										isNetBirdHosted() ? t("dnsDomainHostedPlaceholder") : t("dnsDomainSelfhostedPlaceholder")
 									}
 									errorTooltip={true}
 									errorTooltipPosition={"top"}
@@ -258,15 +256,14 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 							}
 						>
 							<div className={"min-w-[330px]"}>
-								<Label>Network Range</Label>
+								<Label>{t("networkRange")}</Label>
 								<HelpText>
-									Specify a custom IPv4 range for your network in CIDR format.
-									All peer IPs will be re-allocated when changed.
+									{t("networkRangeHelp")}
 								</HelpText>
 							</div>
 							<div className={"w-full"}>
 								<Input
-									placeholder={"e.g. 100.64.0.0/16"}
+									placeholder={t("networkRangePlaceholder")}
 									errorTooltip={true}
 									errorTooltipPosition={"top"}
 									error={networkRangeError}
@@ -285,15 +282,14 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 							}
 						>
 							<div className={"min-w-[330px]"}>
-								<Label>IPv6 Network Range</Label>
+								<Label>{t("ipv6NetworkRange")}</Label>
 								<HelpText>
-									Specify a custom IPv6 range for your network in CIDR format.
-									All peer IPv6 addresses will be re-allocated when changed.
+									{t("ipv6NetworkRangeHelp")}
 								</HelpText>
 							</div>
 							<div className={"w-full"}>
 								<Input
-									placeholder={"e.g. fd00:1234:5678::/64"}
+									placeholder={t("ipv6NetworkRangePlaceholder")}
 									errorTooltip={true}
 									errorTooltipPosition={"top"}
 									error={networkRangeV6Error}
@@ -306,16 +302,14 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 					</div>
 
 					<div>
-						<Label>IPv6 Enabled Groups</Label>
+						<Label>{t("ipv6EnabledGroups")}</Label>
 						<HelpText>
-							Peers in the selected groups will receive IPv6 overlay addresses
-							(dual-stack). Remove all groups to disable IPv6. Changes apply on
-							save and will restart affected clients.
+							{t("ipv6EnabledGroupsHelp")}
 						</HelpText>
 						<PeerGroupSelector
 							values={ipv6EnabledGroups}
 							onChange={setIpv6EnabledGroups}
-							placeholder="Select groups to enable IPv6..."
+							placeholder={t("selectIpv6Groups")}
 							showResourceCounter={false}
 							disabled={!permission.settings.update}
 						/>
@@ -329,14 +323,12 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 						label={
 							<>
 								<GlobeIcon size={15} />
-								Enable DNS Wildcard Routing
+								{t("enableDnsWildcardRouting")}
 							</>
 						}
 						helpText={
 							<>
-								Allow routing using DNS wildcards. This requires NetBird client
-								v0.35 or higher. Changes will only take effect after restarting
-								the clients.{" "}
+								{t("dnsWildcardRoutingHelp")}{" "}
 								<InlineLink
 									href={
 										"https://docs.netbird.io/how-to/accessing-entire-domains-within-networks#enabling-dns-wildcard-routing"
@@ -344,7 +336,7 @@ function NetworkSettingsTabContent({ account }: Readonly<Props>) {
 									target={"_blank"}
 									onClick={(e) => e.stopPropagation()}
 								>
-									Learn more
+									{t("learnMore")}
 									<ExternalLinkIcon size={12} />
 								</InlineLink>
 							</>

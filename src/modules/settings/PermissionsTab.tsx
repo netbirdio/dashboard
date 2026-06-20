@@ -73,7 +73,7 @@ export default function PermissionsTab({ account }: Props) {
 						disabled={!hasChanges || !permission.settings.update}
 						onClick={saveChanges}
 					>
-						Save Changes
+						{t("saveChanges")}
 					</Button>
 				</div>
 
@@ -84,11 +84,11 @@ export default function PermissionsTab({ account }: Props) {
 						label={
 							<>
 								<GaugeIcon size={15} />
-								Restrict dashboard for regular users
+								{t("restrictDashboard")}
 							</>
 						}
 						helpText={
-							"Access to the dashboard will be limited and regular users will not be able to view any peers."
+							t("restrictDashboardHelp")
 						}
 						disabled={!permission.settings.update}
 					/>

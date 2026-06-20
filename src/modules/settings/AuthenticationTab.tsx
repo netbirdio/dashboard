@@ -183,14 +183,14 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 					<div>
 						<h1>{t("authentication")}</h1>
 						<Paragraph>
-							Learn more about
+							{t("learnMoreAbout")}
 							<InlineLink
 								href={
 									"https://docs.netbird.io/how-to/enforce-periodic-user-authentication"
 								}
 								target={"_blank"}
 							>
-								Authentication
+								{t("authentication")}
 								<ExternalLinkIcon size={12} />
 							</InlineLink>
 						</Paragraph>
@@ -202,7 +202,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 						onClick={saveChanges}
 						data-cy={"save-authentication-settings"}
 					>
-						Save Changes
+						{t("saveChanges")}
 					</Button>
 				</div>
 
@@ -215,13 +215,12 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 							label={
 								<>
 									<ShieldUserIcon size={15} />
-									User Approval Required
+									{t("userApprovalRequired")}
 								</>
 							}
 							helpText={
 								<>
-									Require manual approval for new users joining via <br />
-									domain matching. Users will be blocked until approved.
+									{t("userApprovalHelp")}
 								</>
 							}
 							disabled={!permission.settings.update}
@@ -238,9 +237,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 								label={
 									<>
 										<KeyRound size={15} />
-										Enable Local MFA
+										{t("enableLocalMFA")}
 										<SmallBadge
-											text={"Beta"}
+											text={t("beta")}
 											variant={"sky"}
 											className={"text-[9px] leading-none py-[3px] px-[5px]"}
 											textClassName={"top-0"}
@@ -249,9 +248,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 								}
 								helpText={
 									<>
-										Require multi-factor authentication for users
-										<br />
-										authenticating with local credentials.
+										{t("localMfaHelp")}
 									</>
 								}
 								disabled={!permission.settings.update}
@@ -270,13 +267,12 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 							label={
 								<>
 									<TimerResetIcon size={15} />
-									Peer Session Expiration
+									{t("peerSessionExpiration")}
 								</>
 							}
 							helpText={
 								<>
-									Request periodic re-authentication of peers <br />
-									registered with SSO.
+									{t("peerSessionExpirationHelp")}
 								</>
 							}
 							disabled={!permission.settings.update}
@@ -292,10 +288,9 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 						>
 							<div className={cn("flex justify-between gap-10 mt-2")}>
 								<div className={"w-full"}>
-									<Label>Session Expiration</Label>
+									<Label>{t("sessionExpiration")}</Label>
 									<HelpText>
-										Time after which every peer added with SSO login will
-										require re-authentication.
+										{t("sessionExpirationHelp")}
 									</HelpText>
 								</div>
 								<div className={"w-full flex gap-3"}>
@@ -326,7 +321,7 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 													className={"text-nb-gray-300"}
 												/>
 												<SelectValue
-													placeholder="Select interval..."
+													placeholder={t("selectInterval")}
 													data-cy={"peer-login-expiration-select-value"}
 												/>
 											</div>
@@ -334,8 +329,8 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 										<SelectContent
 											data-cy={"peer-login-expiration-select-content"}
 										>
-											<SelectItem value="days">Days</SelectItem>
-											<SelectItem value="hours">Hours</SelectItem>
+											<SelectItem value="days">{t("days")}</SelectItem>
+											<SelectItem value="hours">{t("hours")}</SelectItem>
 										</SelectContent>
 									</Select>
 								</div>
@@ -345,12 +340,11 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
 								value={peerInactivityExpirationEnabled}
 								onChange={setPeerInactivityExpirationEnabled}
 								dataCy={"peer-inactivity-expiration"}
-								label={<>Require login after disconnect</>}
+								label={t("requireLoginAfterDisconnect")}
 								disabled={!permission.settings.update}
 								helpText={
 									<>
-										Enable to require authentication after users disconnect from
-										management for 10 minutes.
+										{t("requireLoginHelp")}
 									</>
 								}
 							/>
