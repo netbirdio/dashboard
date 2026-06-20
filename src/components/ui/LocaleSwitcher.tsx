@@ -15,6 +15,7 @@ import { CheckIcon, GlobeIcon } from "lucide-react";
 import { useState } from "react";
 import { useLocale } from "@/contexts/LocaleProvider";
 import { locales, type Locale } from "@/i18n/config";
+import { useTranslations } from "next-intl";
 
 /** Human-readable label for each locale, shown in the switcher. */
 const LOCALE_LABELS: Record<Locale, string> = {
@@ -31,6 +32,8 @@ const LOCALE_LABELS: Record<Locale, string> = {
  * stale/default selection during hydration.
  */
 export default function LocaleSwitcher() {
+  const t = useTranslations("common");
+
   const { locale, setLocale, mounted } = useLocale();
   const [open, setOpen] = useState(false);
 
@@ -41,7 +44,7 @@ export default function LocaleSwitcher() {
         size={"xs"}
         variant={"default-outline"}
         className={cn("!rounded-full h-[38px] w-[38px] !p-0")}
-        aria-label="Select language"
+        aria-label={t("selectLanguage")}
         disabled
       >
         <GlobeIcon size={18} />
@@ -59,7 +62,7 @@ export default function LocaleSwitcher() {
             "!rounded-full h-[38px] w-[38px] !p-0",
             open && "text-white",
           )}
-          aria-label="Select language"
+          aria-label={t("selectLanguage")}
         >
           <GlobeIcon size={18} />
         </Button>

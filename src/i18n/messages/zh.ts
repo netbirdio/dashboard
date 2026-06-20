@@ -55,7 +55,17 @@ export default {
     searchCity: "搜索城市...",
     selectCountry: "选择国家...",
     searchCountry: "搜索国家...",
-    learnMore: "了解更多"
+    learnMore: "了解更多",
+    selectAll: "全选",
+    selectRow: "选择行",
+    selectLanguage: "选择语言",
+    configurePolicies: "配置策略",
+    configureAccessControl: "配置访问控制",
+    configureAuthentication: "配置认证",
+    removeRule: "移除规则",
+    removeHeader: "移除标头",
+    publicListenPort: "公共监听端口",
+    destinationPort: "目标端口"
   },
   navigation: {
     controlCenter: "控制中心",

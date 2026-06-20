@@ -21,10 +21,11 @@ import UserNameCell from "@/modules/users/table-cells/UserNameCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
 import { InviteUserButton } from "@/modules/users/UsersTable";
+import { useTranslations } from "next-intl";
 
 const UsersTable = lazy(() => import("@/modules/users/UsersTable"));
 
-export const GroupUsersTableColumns: ColumnDef<User>[] = [
+export function GroupUsersTableColumns(t: (key: string) => string): ColumnDef<User>[] { return [
   {
     id: "select",
     header: ({ table }) => (
@@ -32,7 +33,7 @@ export const GroupUsersTableColumns: ColumnDef<User>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={t("selectAll")}
         />
       </div>
     ),
@@ -42,7 +43,7 @@ export const GroupUsersTableColumns: ColumnDef<User>[] = [
           checked={row.getIsSelected()}
           variant={"tableCell"}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={t("selectRow")}
         />
       </div>
     ),
@@ -52,6 +53,7 @@ export const GroupUsersTableColumns: ColumnDef<User>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
+
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
     accessorFn: (row) => row.name + " " + row.email,
@@ -112,6 +114,7 @@ export const GroupUsersTableColumns: ColumnDef<User>[] = [
     cell: ({ row }) => <GroupUsersRemoveCell user={row.original} />,
   },
 ];
+}
 
 type Props = {
   users?: User[];
@@ -119,6 +122,7 @@ type Props = {
 };
 
 export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
+  const t = useTranslations("common");
   const { group, addUsersToGroup, removeUsersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
@@ -128,7 +132,7 @@ export const GroupUsersSection = ({ users, isLoading = true }: Props) => {
     <GroupDetailsTableContainer>
       <UsersTable
         isLoading={isLoading}
-        columns={GroupUsersTableColumns}
+        columns={GroupUsersTableColumns(t)}
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
         onRowClick={(row) => row.toggleSelected()}

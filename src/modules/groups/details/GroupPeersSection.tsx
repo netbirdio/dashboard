@@ -20,10 +20,11 @@ import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerLastSeenCell from "@/modules/peers/PeerLastSeenCell";
 import PeerNameCell from "@/modules/peers/PeerNameCell";
 import { PeerOSCell } from "@/modules/peers/PeerOSCell";
+import { useTranslations } from "next-intl";
 
 const GroupPeersTable = lazy(() => import("@/modules/peer/MinimalPeersTable"));
 
-const GroupPeersTableColumns: ColumnDef<Peer>[] = [
+function GroupPeersTableColumns(t: (key: string) => string): ColumnDef<Peer>[] { return [
   {
     id: "select",
     header: ({ table }) => (
@@ -31,7 +32,7 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={t("selectAll")}
         />
       </div>
     ),
@@ -41,7 +42,7 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
           checked={row.getIsSelected()}
           variant={"tableCell"}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={t("selectRow")}
         />
       </div>
     ),
@@ -51,6 +52,8 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
   {
     accessorKey: "name",
     header: ({ column }) => {
+  const t = useTranslations("common");
+
       return <DataTableHeader column={column}>Name</DataTableHeader>;
     },
     sortingFn: "text",
@@ -102,6 +105,7 @@ const GroupPeersTableColumns: ColumnDef<Peer>[] = [
     cell: ({ row }) => <GroupPeersRemoveCell peer={row.original} />,
   },
 ];
+}
 
 type Props = {
   peers?: Peer[];
@@ -109,6 +113,7 @@ type Props = {
 };
 
 export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
+  const t = useTranslations("common");
   const { group, addPeersToGroup, removePeersFromGroup } = useGroupContext();
   const [selectedRows, setSelectedRows] = useState<RowSelectionState>({});
   const [open, setOpen] = useState(false);
@@ -119,7 +124,7 @@ export const GroupPeersSection = ({ peers, isLoading = true }: Props) => {
       <GroupPeersTable
         isLoading={isLoading}
         peers={peers}
-        columns={GroupPeersTableColumns}
+        columns={GroupPeersTableColumns(t)}
         selectedRows={selectedRows}
         setSelectedRows={setSelectedRows}
         getStartedCard={

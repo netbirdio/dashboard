@@ -11,6 +11,7 @@ import ReverseProxyTargetSelector, {
   type Target,
 } from "@/modules/reverse-proxy/targets/ReverseProxyTargetSelector";
 import { HelpTooltip } from "@components/HelpTooltip";
+import { useTranslations } from "next-intl";
 
 type Props = {
   l4Target: Target | undefined;
@@ -37,6 +38,8 @@ export default function ReverseProxyLayer4Content({
   initialPeer,
   initialNetwork,
 }: Readonly<Props>) {
+  const t = useTranslations("common");
+
   const listenPortRef = useRef<HTMLInputElement>(null);
   const portRef = useRef<HTMLInputElement>(null);
 
@@ -84,7 +87,7 @@ export default function ReverseProxyLayer4Content({
               value={!isListenPortSupported ? "" : listenPort || ""}
               onChange={(e) => setListenPort(parseInt(e.target.value) || 0)}
               disabled={!isListenPortSupported || !l4Target}
-              aria-label="Public listen port"
+              aria-label={t("publicListenPort")}
             />
           </div>
         </div>
@@ -121,7 +124,7 @@ export default function ReverseProxyLayer4Content({
                 value={port || ""}
                 onChange={(e) => setPort(parseInt(e.target.value) || 0)}
                 disabled={!l4Target}
-                aria-label="Destination port"
+                aria-label={t("destinationPort")}
                 className={"rounded-l-none"}
               />
             </div>

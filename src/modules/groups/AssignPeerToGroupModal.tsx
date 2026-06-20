@@ -21,6 +21,7 @@ import { EditGroupNameModal } from "@/modules/groups/EditGroupNameModal";
 import PeerAddressCell from "@/modules/peers/PeerAddressCell";
 import PeerNameCell from "@/modules/peers/PeerNameCell";
 import { PeerOSCell } from "@/modules/peers/PeerOSCell";
+import { useTranslations } from "next-intl";
 
 type Props = {
   group: Group;
@@ -47,6 +48,8 @@ export const AssignPeerToGroupModal = ({
   buttonText,
   selectInitialPeers,
 }: Props) => {
+  const t = useTranslations("common");
+
   return (
     <Modal open={open} onOpenChange={setOpen} key={open ? "1" : "0"}>
       {open && (
@@ -89,6 +92,7 @@ export const AssignGroupToPeerModalContent = ({
   buttonText = "Confirm Changes",
   selectInitialPeers = true,
 }: ContentProps) => {
+  const t = useTranslations("common");
   const { data: peers, isLoading } = useFetchApi<Peer[]>("/peers");
   const { mutate } = useSWRConfig();
   const groupRequest = useApiCall<Group>("/groups");
@@ -263,7 +267,7 @@ export const AssignGroupToPeerModalContent = ({
           sorting={sorting}
           keepStateInLocalStorage={false}
           setSorting={setSorting}
-          columns={PeersTableColumns}
+          columns={PeersTableColumns(t)}
           data={data}
           isLoading={isLoading && !initialPeersSet}
           tableCellClassName={"!py-1 scale-[95%]"}
@@ -330,7 +334,7 @@ export const AssignGroupToPeerModalContent = ({
   );
 };
 
-export const PeersTableColumns: ColumnDef<Peer>[] = [
+export function PeersTableColumns(t: (key: string) => string): ColumnDef<Peer>[] { return [
   {
     id: "select",
     header: ({ table, column }) => (
@@ -338,7 +342,7 @@ export const PeersTableColumns: ColumnDef<Peer>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={t("selectAll")}
         />
       </div>
     ),
@@ -351,7 +355,7 @@ export const PeersTableColumns: ColumnDef<Peer>[] = [
             variant={"tableCell"}
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(!!value)}
-            aria-label="Select row"
+            aria-label={t("selectRow")}
           />
         </div>
       );
@@ -416,3 +420,4 @@ export const PeersTableColumns: ColumnDef<Peer>[] = [
     ),
   },
 ];
+}

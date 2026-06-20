@@ -4,6 +4,7 @@ import { Input } from "@components/Input";
 import { Label } from "@components/Label";
 import { MinusCircleIcon, PlusIcon } from "lucide-react";
 import { useCallback, useState } from "react";
+import { useTranslations } from "next-intl";
 
 const HEADER_NAME_RE = /^[A-Za-z0-9!#$%&'*+\-.^_`|~]+$/;
 const BLOCKED_HEADERS = new Set([
@@ -130,6 +131,7 @@ export default function ReverseProxyTargetCustomHeaders({
   updateHeaderEntry,
   headerErrors,
 }: CustomHeadersProps) {
+  const t = useTranslations("common");
   return (
     <div>
       <Label>Custom Headers</Label>
@@ -168,7 +170,7 @@ export default function ReverseProxyTargetCustomHeaders({
                 variant="default-outline"
                 className="!px-2 shrink-0"
                 onClick={() => removeHeader(entry.id)}
-                aria-label="Remove header"
+                aria-label={t("removeHeader")}
               >
                 <MinusCircleIcon size={14} />
               </Button>

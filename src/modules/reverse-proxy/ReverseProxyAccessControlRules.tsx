@@ -21,6 +21,7 @@ import {
 import { CountrySelector } from "@/components/ui/CountrySelector";
 import { AccessRestrictions, CrowdSecMode } from "@/interfaces/ReverseProxy";
 import { ReverseProxyCrowdSecIPReputation } from "@/modules/reverse-proxy/ReverseProxyCrowdSecIPReputation";
+import { useTranslations } from "next-intl";
 
 type AccessAction = "allow" | "block";
 type AccessRuleType = "country" | "ip" | "cidr";
@@ -77,6 +78,7 @@ const nextId = () => crypto.randomUUID();
 
 function rulesReducer(state: AccessRule[], action: RulesAction): AccessRule[] {
   switch (action.type) {
+
     case "add":
       return [
         ...state,
@@ -203,6 +205,7 @@ export const ReverseProxyAccessControlRules = ({
   onValidationChange,
   supportsCrowdSec,
 }: Props) => {
+  const t = useTranslations("common");
   const [rules, dispatch] = useReducer(
     rulesReducer,
     value,
@@ -340,7 +343,7 @@ export const ReverseProxyAccessControlRules = ({
                 variant="default-outline"
                 className="h-[42px] w-[42px] !px-0 shrink-0 ml-2"
                 onClick={() => dispatch({ type: "remove", id: rule.id })}
-                aria-label="Remove rule"
+                aria-label={t("removeRule")}
               >
                 <MinusCircleIcon size={14} />
               </Button>

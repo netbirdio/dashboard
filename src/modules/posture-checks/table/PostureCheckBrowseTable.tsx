@@ -14,12 +14,15 @@ import { useSWRConfig } from "swr";
 import { PostureCheck } from "@/interfaces/PostureCheck";
 import { PostureCheckChecksCell } from "@/modules/posture-checks/table/cells/PostureCheckChecksCell";
 import { PostureCheckNameCell } from "@/modules/posture-checks/table/cells/PostureCheckNameCell";
+import { useTranslations } from "next-intl";
 
 type Props = {
   onAdd: (checks: PostureCheck[]) => void;
 };
 
 export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
+  const t = useTranslations("common");
+
   const { data: postureChecks, isLoading } =
     useFetchApi<PostureCheck[]>("/posture-checks");
   const { mutate } = useSWRConfig();
@@ -46,7 +49,7 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
         sorting={sorting}
         wrapperClassName={""}
         setSorting={setSorting}
-        columns={PostureChecksColumns}
+        columns={PostureChecksColumns(t)}
         showHeader={true}
         columnVisibility={{
           description: false,
@@ -90,7 +93,7 @@ export default function PostureCheckBrowseTable({ onAdd }: Readonly<Props>) {
   );
 }
 
-export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
+export function PostureChecksColumns(t: (key: string) => string): ColumnDef<PostureCheck>[] { return [
   {
     id: "select",
     header: ({ table }) => (
@@ -98,7 +101,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={t("selectAll")}
         />
       </div>
     ),
@@ -107,7 +110,7 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
         <Checkbox
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={t("selectRow")}
           variant={"tableCell"}
         />
       </div>
@@ -132,3 +135,4 @@ export const PostureChecksColumns: ColumnDef<PostureCheck>[] = [
     cell: ({ row }) => <PostureCheckChecksCell check={row.original} />,
   },
 ];
+}

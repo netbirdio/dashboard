@@ -20,6 +20,7 @@ import { PeerOSCell } from "@/modules/peers/PeerOSCell";
 import UserNameCell from "@/modules/users/table-cells/UserNameCell";
 import UserRoleCell from "@/modules/users/table-cells/UserRoleCell";
 import UserStatusCell from "@/modules/users/table-cells/UserStatusCell";
+import { useTranslations } from "next-intl";
 
 type Props = {
   group: Group;
@@ -40,6 +41,8 @@ export const AssignUserToGroupModal = ({
   showClose,
   buttonText,
 }: Props) => {
+  const t = useTranslations("common");
+
   return (
     <Modal open={open} onOpenChange={setOpen} key={open ? "1" : "0"}>
       {open && (
@@ -73,6 +76,7 @@ export const AssignUserToGroupModalContent = ({
   showClose = true,
   buttonText = "Assign Users",
 }: ContentProps) => {
+  const t = useTranslations("common");
   const { data: users, isLoading } = useFetchApi<User[]>(
     "/users?service_user=false",
   );
@@ -109,7 +113,7 @@ export const AssignUserToGroupModalContent = ({
         sorting={sorting}
         keepStateInLocalStorage={false}
         setSorting={setSorting}
-        columns={UsersTableColumns}
+        columns={UsersTableColumns(t)}
         data={data}
         isLoading={isLoading}
         tableCellClassName={"!py-1 scale-[95%]"}
@@ -163,7 +167,7 @@ export const AssignUserToGroupModalContent = ({
   );
 };
 
-const UsersTableColumns: ColumnDef<User>[] = [
+function UsersTableColumns(t: (key: string) => string): ColumnDef<any>[] { return [
   {
     id: "select",
     header: ({ table }) => (
@@ -171,7 +175,7 @@ const UsersTableColumns: ColumnDef<User>[] = [
         <Checkbox
           checked={table.getIsAllPageRowsSelected()}
           onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
-          aria-label="Select all"
+          aria-label={t("selectAll")}
         />
       </div>
     ),
@@ -181,7 +185,7 @@ const UsersTableColumns: ColumnDef<User>[] = [
           checked={row.getIsSelected()}
           variant={"tableCell"}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
+          aria-label={t("selectRow")}
         />
       </div>
     ),
@@ -227,3 +231,4 @@ const UsersTableColumns: ColumnDef<User>[] = [
     ),
   },
 ];
+}

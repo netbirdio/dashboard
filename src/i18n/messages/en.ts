@@ -55,7 +55,17 @@ export default {
     searchCity: "Search city...",
     selectCountry: "Select country...",
 searchCountry: "Search country...",
-    learnMore: "Learn more"
+    learnMore: "Learn more",
+    selectAll: "Select all",
+    selectRow: "Select row",
+    selectLanguage: "Select language",
+    configurePolicies: "Configure policies",
+    configureAccessControl: "Configure access control",
+    configureAuthentication: "Configure authentication",
+    removeRule: "Remove rule",
+    removeHeader: "Remove header",
+    publicListenPort: "Public listen port",
+    destinationPort: "Destination port"
   },
   navigation: {
     controlCenter: "Control Center",
