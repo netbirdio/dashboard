@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Suspense, useMemo } from "react";
 import { usePortalElement } from "@hooks/usePortalElement";
+import { useTranslations } from "next-intl";
 import SkeletonTable, {
   SkeletonTableHeader,
 } from "@components/skeletons/SkeletonTable";
@@ -17,7 +18,7 @@ type Props = {
 };
 
 export const UserPeersSection = ({ user }: Props) => {
-  const { ref: headingRef, portalTarget } =
+  const t = useTranslations("peers");  const { ref: headingRef, portalTarget } =
     usePortalElement<HTMLHeadingElement>();
 
   const { data: peers, isLoading: isPeersLoading } =
@@ -36,8 +37,8 @@ export const UserPeersSection = ({ user }: Props) => {
       <div className={"max-w-6xl"}>
         <div className={"flex justify-between items-center mb-5"}>
           <div>
-            <h2 ref={headingRef}>Peers</h2>
-            <Paragraph>View all peers registered by this user.</Paragraph>
+            <h2 ref={headingRef}>{t("title")}</h2>
+            <Paragraph>{t("userPeersDescription")}</Paragraph>
           </div>
         </div>
 

@@ -300,7 +300,8 @@ saveGroups: "Save Groups",
     getStarted: "Get Started with NetBird",
     getStartedDescription: "It looks like you don't have any connected machines.\nGet started by adding one to your network.",
     learnMoreInOur: "Learn more in our",
-    gettingStartedGuide: "Getting Started Guide"
+    gettingStartedGuide: "Getting Started Guide",
+    userPeersDescription: "View all peers registered by this user."
   },
   policies: {
     title: "Policies",
@@ -554,7 +555,9 @@ localAuthDisabled: "Local authentication is disabled. Use your IdP for authentic
 deleteLoading: "Deleting service user...",
 serviceUsersDescription: "Use service users to create API tokens and avoid losing automated access.",
     serviceUsersEmptyDescription: "It looks like you don't have any service users. Get started by creating a service user.",
-    blocked: "Blocked"
+    blocked: "Blocked",
+    accessTokens: "Access Tokens",
+    accessTokensDescription: "Access tokens give access to NetBird API."
   },
   settings: {
     title: "Settings",
@@ -930,5 +933,9 @@ serviceUsersDescription: "Use service users to create API tokens and avoid losin
     totalUsers: "Total Users",
     totalNetworks: "Total Networks",
     networkOverview: "Network Overview"
+  },
+  onboarding: {
+    title: "Get started with NetBird",
+    addResource: "Add your first resource"
   }
 };

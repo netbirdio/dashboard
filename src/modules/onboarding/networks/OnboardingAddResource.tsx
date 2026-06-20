@@ -7,6 +7,7 @@ import { GlobeIcon, NetworkIcon, WorkflowIcon } from "lucide-react";
 import * as React from "react";
 import { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { Group } from "@/interfaces/Group";
 import { Network, NetworkResource } from "@/interfaces/Network";
@@ -24,6 +25,7 @@ export const OnboardingAddResource = ({
   onResourceCreation,
   onBack,
 }: Props) => {
+  const t = useTranslations("onboarding");
   const [resourceType, setResourceType] = useState("");
   const [resourceAddress, setResourceAddress] = useState("");
   const [error, setError] = useState("");
@@ -196,7 +198,7 @@ export const OnboardingAddResource = ({
     <div className={"relative flex flex-col h-full gap-4"}>
       <div className={"flex flex-col gap-8"}>
         <div>
-          <h1 className={"text-xl text-center"}>Add your first resource</h1>
+          <h1 className={"text-xl text-center"}>{t("addResource")}</h1>
           <div
             className={
               "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"

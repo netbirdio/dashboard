@@ -29,6 +29,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import React, { useMemo, useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import TeamIcon from "@/assets/icons/TeamIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -88,6 +89,7 @@ type Props = {
 };
 
 function UserOverview({ user, initialGroups }: Readonly<Props>) {
+  const t = useTranslations("users");
   const router = useRouter();
   const userRequest = useApiCall<User>("/users");
   const isServiceUser = !!user?.is_service_user;
@@ -287,7 +289,7 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
           {showAccessTokens && (
             <TabsTrigger value={"access-tokens"}>
               <KeyRoundIcon size={16} />
-              Access Tokens
+              {t("accessTokens")}
             </TabsTrigger>
           )}
         </TabsList>
@@ -302,9 +304,9 @@ function UserOverview({ user, initialGroups }: Readonly<Props>) {
               <div className={"max-w-6xl"}>
                 <div className={"flex justify-between items-center"}>
                   <div>
-                    <h2>Access Tokens</h2>
+                    <h2>{t("accessTokens")}</h2>
                     <Paragraph>
-                      Access tokens give access to NetBird API.
+                      {t("accessTokensDescription")}
                     </Paragraph>
                   </div>
                   <div className={"inline-flex gap-4 justify-end"}>

@@ -4,6 +4,7 @@ import {cn} from "@utils/helpers";
 import {HelpCircle} from "lucide-react";
 import * as React from "react";
 import {useMemo} from "react";
+import { useTranslations } from "next-intl";
 import NetworkRoutesIcon from "@/assets/icons/NetworkRoutesIcon";
 import PeerIcon from "@/assets/icons/PeerIcon";
 import {Intent} from "@/modules/onboarding/Onboarding";
@@ -15,6 +16,7 @@ type Props =   {
 };
 
 export const OnboardingIntent = ({onSelect, useCases, isBusiness}: Props) => {
+    const t = useTranslations("onboarding");
     /**
      * Recommend Networks if users ticks any of these use cases
      */
@@ -58,7 +60,7 @@ export const OnboardingIntent = ({onSelect, useCases, isBusiness}: Props) => {
     return (
         <div className={"relative flex flex-col h-full justify-between"}>
             <div>
-                <h1 className={"text-xl text-center"}>Get started with NetBird</h1>
+                <h1 className={"text-xl text-center"}>{t("title")}</h1>
                 <div
                     className={
                         "text-sm text-nb-gray-300 font-light mt-2 block text-center sm:px-4"
