@@ -4,6 +4,7 @@ import Paragraph from "@components/Paragraph";
 import loadConfig from "@utils/config";
 import { LogIn } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useTranslations } from "next-intl";
 import * as React from "react";
 import { useEffect } from "react";
 import NetBirdIcon from "@/assets/icons/NetBirdIcon";
@@ -11,6 +12,7 @@ import NetBirdIcon from "@/assets/icons/NetBirdIcon";
 const config = loadConfig();
 
 export const SessionLost = () => {
+  const t = useTranslations("auth");
   const router = useRouter();
   const { logout } = useOidc();
 
@@ -31,10 +33,9 @@ export const SessionLost = () => {
       >
         <NetBirdIcon size={20} />
       </div>
-      <h1>Session Expired</h1>
+      <h1>{t("sessionExpired")}</h1>
       <Paragraph className={"text-center"}>
-        It looks like your login session is no longer active or has expired.
-        Please login again to continue using the app.
+        {t("sessionExpiredDescription")}
       </Paragraph>
       <Button
         variant={"primary"}
@@ -42,7 +43,7 @@ export const SessionLost = () => {
         className={"mt-5"}
         onClick={() => logout("", { client_id: config.clientId })}
       >
-        Login
+        {t("login")}
         <LogIn size={16} />
       </Button>
     </div>

@@ -7,6 +7,7 @@ import { useApiCall } from "@utils/api";
 import { GaugeIcon, LockIcon } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { usePermissions } from "@/contexts/PermissionsProvider";
 import { useHasChanges } from "@/hooks/useHasChanges";
@@ -17,6 +18,7 @@ type Props = {
 };
 
 export default function PermissionsTab({ account }: Props) {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -54,18 +56,18 @@ export default function PermissionsTab({ account }: Props) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=permissions"}
-            label={"Permissions"}
+            label={t("permissions")}
             icon={<LockIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between"}>
-          <h1>Permissions</h1>
+          <h1>{t("permissions")}</h1>
           <Button
             variant={"primary"}
             disabled={!hasChanges || !permission.settings.update}

@@ -20,6 +20,7 @@ import { convertToSeconds } from "@hooks/useTimeFormatter";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { cn } from "@utils/helpers";
+import { useTranslations } from "next-intl";
 import {
   CalendarClock,
   ExternalLinkIcon,
@@ -40,6 +41,7 @@ type Props = {
 };
 
 export default function AuthenticationTab({ account }: Readonly<Props>) {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -172,14 +174,14 @@ export default function AuthenticationTab({ account }: Readonly<Props>) {
           />
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Authentication"}
+            label={t("authentication")}
             icon={<ShieldIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between"}>
           <div>
-            <h1>Authentication</h1>
+            <h1>{t("authentication")}</h1>
             <Paragraph>
               Learn more about
               <InlineLink

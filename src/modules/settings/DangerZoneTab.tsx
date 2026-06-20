@@ -7,6 +7,7 @@ import { useApiCall } from "@utils/api";
 import loadConfig from "@utils/config";
 import { AlertOctagonIcon } from "lucide-react";
 import React from "react";
+import { useTranslations } from "next-intl";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { useLoggedInUser } from "@/contexts/UsersProvider";
@@ -18,6 +19,7 @@ type Props = {
 const config = loadConfig();
 
 export default function DangerZoneTab({ account }: Props) {
+  const t = useTranslations("settings");
   const { confirm } = useDialog();
   const deleteRequest = useApiCall<Account>("/accounts/" + account.id);
   const { logout } = useLoggedInUser();
@@ -67,17 +69,17 @@ export default function DangerZoneTab({ account }: Props) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Danger Zone"}
+            label={t("dangerZone")}
             icon={<AlertOctagonIcon size={14} />}
             active
           />
         </Breadcrumbs>
-        <h1>Danger Zone</h1>
+        <h1>{t("dangerZone")}</h1>
         <div className={"gap-6 mt-6 max-w-lg"}>
           <Card
             className={

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useDialog } from "@/contexts/DialogProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -118,6 +119,7 @@ function ActionCell({ provider, onEdit }: ActionCellProps) {
 }
 
 export default function IdentityProvidersTab() {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
   const { mutate } = useSWRConfig();
   const { data: providers, isLoading } = useFetchApi<SSOIdentityProvider[]>(
@@ -192,19 +194,19 @@ export default function IdentityProvidersTab() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=identity-providers"}
-            label={"Identity Providers"}
+            label={t("identityProviders")}
             icon={<FingerprintIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between"}>
           <div>
-            <h1>Identity Providers</h1>
+            <h1>{t("identityProviders")}</h1>
             <Paragraph>
               Configure identity providers for user authentication in your
               network.

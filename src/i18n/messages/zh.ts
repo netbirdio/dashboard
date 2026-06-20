@@ -124,6 +124,7 @@ export default {
     accountBlocked: "账户已被阻止",
     accountPending: "账户待审批",
     sessionExpired: "会话已过期",
+    sessionExpiredDescription: "您的登录会话似乎不再活跃或已过期。请重新登录以继续使用应用。",
     loginRequired: "需要登录",
     unauthorized: "未授权",
     forbidden: "禁止访问",

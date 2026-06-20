@@ -7,6 +7,7 @@ import * as Tabs from "@radix-ui/react-tabs";
 import useFetchApi from "@utils/api";
 import { ExternalLinkIcon, KeyRound } from "lucide-react";
 import React, { lazy, Suspense, useMemo } from "react";
+import { useTranslations } from "next-intl";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import { useGroups } from "@/contexts/GroupsProvider";
 import { usePermissions } from "@/contexts/PermissionsProvider";
@@ -18,6 +19,7 @@ const SetupKeysTable = lazy(
 );
 
 export default function SetupKeysTab() {
+  const t = useTranslations("settings");
   const { data: setupKeys, isLoading } = useFetchApi<SetupKey[]>("/setup-keys");
   const { permission } = usePermissions();
   const { groups } = useGroups();
@@ -42,17 +44,17 @@ export default function SetupKeysTab() {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=setup-keys"}
-            label={"Setup Keys"}
+            label={t("setupKeys")}
             icon={<KeyRound size={14} />}
             active
           />
         </Breadcrumbs>
-        <h1>Setup Keys</h1>
+        <h1>{t("setupKeys")}</h1>
         <Paragraph>
           Setup keys are pre-authentication keys that allow to register new
           machines in your network.{" "}

@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import React, { useState } from "react";
 import { useSWRConfig } from "swr";
+import { useTranslations } from "next-intl";
 import SettingsIcon from "@/assets/icons/SettingsIcon";
 import Badge from "@/components/Badge";
 import { useDialog } from "@/contexts/DialogProvider";
@@ -37,6 +38,7 @@ type Props = {
 };
 
 export default function GroupsSettings({ account }: Props) {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
   const router = useRouter();
   const { mutate } = useSWRConfig();
@@ -139,18 +141,18 @@ export default function GroupsSettings({ account }: Props) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"User Groups"}
+            label={t("groupsTab")}
             icon={<FolderGit2Icon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between"}>
-          <h1>User Groups</h1>
+          <h1>{t("groupsTab")}</h1>
           <Button
             variant={"primary"}
             disabled={!hasChanges}

@@ -16,6 +16,7 @@ import { useHasChanges } from "@hooks/useHasChanges";
 import * as Tabs from "@radix-ui/react-tabs";
 import { useApiCall } from "@utils/api";
 import { cn, validator } from "@utils/helpers";
+import { useTranslations } from "next-intl";
 import {
   ClockFadingIcon,
   ExternalLinkIcon,
@@ -65,6 +66,7 @@ export default function ClientSettingsTab({ account }: Readonly<Props>) {
 }
 
 function ClientSettingsTabContent({ account }: Readonly<Props>) {
+  const t = useTranslations("settings");
   const { permission } = usePermissions();
 
   const { mutate } = useSWRConfig();
@@ -209,18 +211,18 @@ function ClientSettingsTabContent({ account }: Readonly<Props>) {
         <Breadcrumbs>
           <Breadcrumbs.Item
             href={"/settings"}
-            label={"Settings"}
+            label={t("title")}
             icon={<SettingsIcon size={13} />}
           />
           <Breadcrumbs.Item
             href={"/settings?tab=clients"}
-            label={"Clients"}
+            label={t("clients")}
             icon={<MonitorSmartphoneIcon size={14} />}
             active
           />
         </Breadcrumbs>
         <div className={"flex items-start justify-between"}>
-          <h1>Clients</h1>
+          <h1>{t("clients")}</h1>
           <Button
             variant={"primary"}
             disabled={isSaveButtonDisabled}
